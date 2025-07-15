@@ -110,7 +110,12 @@ public class WalkModule : AModule, IInputPart
                 new ModelCacheParams()
                 {
                     Url = CharacterModelDescription.ModelUrl,
-                    Params = instantiateModelParams
+                    Params = instantiateModelParams,
+                    Properties = new() {Properties = new()
+                    {
+                        { "AdditionalUrls", CharacterModelDescription.AnimationUrls },
+                        { "Scale", CharacterModelDescription.Scale }
+                    }}
                 });
 
             /*

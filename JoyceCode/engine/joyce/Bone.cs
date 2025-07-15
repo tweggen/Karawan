@@ -55,9 +55,9 @@ public class Bone
      * This matrix transforms from model space to bone space.
      * As such, it shall be the first part of any bone transformation.
      */
-    public Matrix4x4 Model2Bone;
+    public Matrix4x4 Model2Bone = Matrix4x4.Identity;
 
-    public Matrix4x4 Bone2Model;
+    public Matrix4x4 Bone2Model = Matrix4x4.Identity;
     
     public uint Index;
 

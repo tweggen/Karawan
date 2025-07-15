@@ -14,7 +14,7 @@ using engine.news;
 using Org.Libsdl.App;
 using Silk.NET.SDL;
 using Silk.NET.Windowing.Sdl.Android;
-using static engine.Logger;
+using View = Android.Views.View;
 
 namespace Wuka
 {
@@ -56,21 +56,12 @@ namespace Wuka
         }
 
 
-        /**
-         * Override on touch event to read finger events from the system.-
-         */
-        public override bool OnTouchEvent(MotionEvent e)
-        {
-            System.Console.WriteLine($"Motion event received.");
-            return base.OnTouchEvent(e);
-        }
-
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
         }
-        
-        
+
+
         protected override void OnRestart()
         {
             //_engine.Resume();
@@ -82,8 +73,14 @@ namespace Wuka
         private EventQueue _eq = null;
 
         private int _eventIteration = 0;
+
+        protected override unsafe Org.Libsdl.App.SDLSurface CreateSDLSurface(Android.Content.Context? context)
+        {
+            var surface = new GameSurface(context);
+            return surface;
+        }
         
-        private unsafe void _beforeDoEvents()
+        private void _beforeDoEvents()
         {
             if (null == _sdl)
             {
@@ -105,20 +102,6 @@ namespace Wuka
             for (int i = 0; i < nEvents; ++i)
             {
                 Vector2 v2PhysicalPosition = new(events[i].Tfinger.X, events[i].Tfinger.Y);
-
-                /*
-                 * Dump finger states.
-                 */
-                if (false) {
-                    for (int fidx = 0; fidx < 9; ++fidx)
-                    {
-                        var f = _sdl.GetTouchFinger(4, fidx);
-                        if (null != f)
-                        {
-                            Trace($"Finger {fidx}: id: {f->Id}, pos: {{x: {f->X}, y: {f->Y}}}");
-                        }
-                    }
-                }
                 
                 switch ((EventType) events[i].Type)
                 {
@@ -146,7 +129,6 @@ namespace Wuka
                             Data4 = (uint) _eventIteration
                         });
                         break;
-                    
                     case EventType.Fingermotion:
                         _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_MOVED, "")
                         {

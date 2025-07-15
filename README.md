@@ -375,3 +375,51 @@ is populated from the game definition json.
 During serialization, pickable objects refer to their description using a 
 string path.
 
+
+# Animation mapping
+
+These are the rig namings of our favourite models.
+
+breast.L
+breast.R
+Fingers.L.001
+Fingers.L.002
+Fingers.R.001
+Fingers.R.002
+foot.L
+foot.R
+forearm.L
+forearm.R
+hand.L
+hand.R
+heel.02.L
+heel.02.R
+Index.L.001
+Index.L.002
+Index.R.001
+Index.R.002
+pelvis.L
+pelvis.R
+shin.L
+shin.R
+shoulder.L
+shoulder.R
+spine
+spine.001
+spine.002
+spine.003
+spine.004
+spine.005
+spine.006
+thigh.L
+thigh.R
+Thumb.L.001
+Thumb.L.002
+Thumb.L.003
+Thumb.R.001
+Thumb.R.002
+Thumb.R.003
+toe.L
+toe.R
+upper_arm.L
+upper_arm.R

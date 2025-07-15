@@ -32,6 +32,7 @@ public class ModelAnimChannel
     private KeyFrame<Vector3> _lerpVector3(ref KeyFrame<Vector3>[] keyframes, uint frameno)
     {
         int l = keyframes.Length;
+        float animLength = ModelAnimation.Duration;
         float frametime = Single.Min(frameno / 60f, ModelAnimation.Duration);
         var key = new KeyFrame<Vector3>() { Time = frametime };
 
@@ -59,9 +60,15 @@ public class ModelAnimChannel
             return keyframes[l-1];
         }
 
-        ref KeyFrame<Vector3> prevKey = ref keyframes[idx - 1];
+        ref KeyFrame<Vector3> prevKey = ref keyframes[(idx+l - 1) % l];
         ref KeyFrame<Vector3> nextKey = ref keyframes[idx];
-        float t = (frametime - prevKey.Time) / (nextKey.Time - prevKey.Time);
+        float tPrev = prevKey.Time;
+        float tNext = nextKey.Time;
+        if (tPrev > tNext)
+        {
+            tPrev -= animLength;
+        }
+        float t = (frametime - tPrev) / (tNext - tPrev);
         return new KeyFrame<Vector3>()
             {
                 Time = frametime,
@@ -73,6 +80,7 @@ public class ModelAnimChannel
     private KeyFrame<Quaternion> _slerpQuaternion(ref KeyFrame<Quaternion>[] keyframes, uint frameno)
     {
         int l = keyframes.Length;
+        float animLength = ModelAnimation.Duration;
         float frametime = Single.Min(frameno / 60f, ModelAnimation.Duration);
         var key = new KeyFrame<Quaternion>() { Time = frametime };
 
@@ -100,9 +108,15 @@ public class ModelAnimChannel
             return keyframes[l-1];
         }
 
-        ref KeyFrame<Quaternion> prevKey = ref keyframes[idx - 1];
+        ref KeyFrame<Quaternion> prevKey = ref keyframes[(idx+l - 1) % l];
         ref KeyFrame<Quaternion> nextKey = ref keyframes[idx];
-        float t = (frametime - prevKey.Time) / (nextKey.Time - prevKey.Time);
+        float tPrev = prevKey.Time;
+        float tNext = nextKey.Time;
+        if (tPrev > tNext)
+        {
+            tPrev -= animLength;
+        }
+        float t = (frametime - tPrev) / (tNext - tPrev);
         return new KeyFrame<Quaternion>()
         {
             Time = frametime,

@@ -55,6 +55,60 @@ public class FbxModel : IDisposable
     }
 
 
+    private static unsafe void DumpMetadata(Scene* pScene)
+    {
+        if (null == pScene->MMetaData)
+        {
+            return;
+        }
+
+        Metadata* metadata = pScene->MMetaData;
+        for (uint i = 0; i < metadata->MNumProperties; i++)
+        {
+            string strValue = "(unknown)";
+            void* p = metadata->MValues[i].MData;
+            switch (metadata->MValues[i].MType)
+            {
+                case MetadataType.Bool:
+                    strValue = (*(bool*)p).ToString();
+                    break;
+
+                case MetadataType.Int32:
+                    strValue = (*(int*)p).ToString();
+                    break;
+
+                case MetadataType.Uint64:
+                    strValue = (*(ulong*)p).ToString();
+                    break;
+
+                case MetadataType.Float:
+                    strValue = (*(float*)p).ToString();
+                    break;
+
+                case MetadataType.Double:
+                    strValue = (*(double*)p).ToString();
+                    break;
+
+                case MetadataType.Aistring:
+                case MetadataType.Aivector3D:
+                case MetadataType.Aimetadata:
+                    break;
+
+                case MetadataType.Int64:
+                    strValue = (*(long*)p).ToString();
+                    break;
+
+                case MetadataType.Uint32:
+                    strValue = (*(uint*)p).ToString();
+                    break;
+
+            }
+
+            Trace($"\"{metadata->MKeys[i].ToString()}\": \"{strValue}\"");
+        }
+    }
+
+
     private unsafe string GetMetadata(string key, string defaultValue="")
     {
         if (null == _scene->MMetaData)
@@ -101,18 +155,43 @@ public class FbxModel : IDisposable
     }
 
     
-    unsafe public void Load(string path, out engine.joyce.Model model)
+    /**
+     * Load a given fbx file into this model.
+     * You can also pass additional files to add e.g. animation data.
+     */
+    public unsafe void Load(string path, List<string>? additionalUrls, float scale, out engine.joyce.Model model)
     {
         if (null != _model)
         {
             ErrorThrow<InvalidOperationException>($"Unable to load model {path}. model already loaded.");
         }
+
+        /*
+         * Prepare loading modes
+         */
+        
+        /*
+         * That's a bit hacky, but load the main file animations and the bones only, if
+         * there are no additional files.
+         */
+        bool haveAdditionalFiles = (additionalUrls == null || additionalUrls.Count == 0);
+        bool loadMainAnimations = haveAdditionalFiles;
+        bool loadMainNodes = haveAdditionalFiles;
+
+        /*
+         * Prepare data structures.
+         */
         _model = model = new engine.joyce.Model();
         _model.Name = path;
+        _model.MapAnimations = new();
 
+        /*
+         * Load the actual file.
+         */
+        
         Directory = path;
         _needAssimp();
-
+        
         FileIO fileIO = fbx.Assets.Get();
         FileIO* pFileIO = &fileIO;
         _scene = _assimp.ImportFileEx(
@@ -120,49 +199,118 @@ public class FbxModel : IDisposable
             (uint)PostProcessSteps.Triangulate,
             pFileIO
         );
+        Trace($"Loaded \"{path}\"");
+        DumpMetadata(_scene);
         if (_scene == null || _scene->MFlags == Assimp.SceneFlagsIncomplete || _scene->MRootNode == null)
         {
             var error = _assimp.GetErrorStringS();
             throw new Exception(error);
         }
 
-        model.RootNode = ProcessNode(_scene->MRootNode);
+        model.RootNode = _processNode(null, _scene->MRootNode, true, loadMainNodes, out var _);
+        _model.MapNodes[model.RootNode.Name] = model.RootNode;
+        
+        /*
+         * Now load all the animations. First the ones from the main file.
+         */
 
-        _loadAnimations();
+        if (loadMainAnimations)
+        {
+            _loadAnimations(_scene, "");
+        }
+
+        /*
+         * Now go through the extra fbx files and load the animations from
+         * them to this model.
+         */
+        if (additionalUrls != null)
+        {
+            foreach (var url in additionalUrls)
+            {
+                try
+                {
+                    Trace($"Import additional animation data from {url}...");
+                    var additionalScene = _assimp.ImportFileEx(
+                        url,
+                        (uint)PostProcessSteps.Triangulate,
+                        pFileIO
+                    );
+                    if (additionalScene == null  || additionalScene->MRootNode == null)
+                    {
+                        continue;
+                    }
+
+                    DumpMetadata(additionalScene);
+
+                    /*
+                     * We parse the additional files' children to make sure they match.
+                     */
+                    _processNode(null, additionalScene->MRootNode, false, true, out var _);
+                    
+                    string strFallbackName = url;
+                    int idx = strFallbackName.LastIndexOf('/');
+                    if (-1 != idx)
+                    {
+                        if (idx + 1 < strFallbackName.Length)
+                        {
+                            strFallbackName = strFallbackName.Substring(idx + 1);
+                        }
+                    }
+                    idx = strFallbackName.LastIndexOf('.');
+                    if (0 < idx)
+                    {
+                        strFallbackName = strFallbackName.Substring(0, idx);
+                    }
+                    _loadAnimations(additionalScene, strFallbackName);
+                    Trace($"Done importing additional animation data from {url}.");
+                }
+                catch (Exception e)
+                {
+                    Error($"Exception while loading additional animation data: {e}");
+                }
+            }
+        }
         
         var strUnitscale = GetMetadata("UnitScaleFactor", "1.");
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
         model.Scale = unitscale / 100f;
+
+        if (GetMetadata("CustomFrameRate", "-1") == "24")
+        {
+            model.WorkAroundInverseRestPose = true;
+        }
+        else
+        {
+            model.WorkAroundInverseRestPose = false;
+        }
 
         /*
          * Baking animations must include the root matrix corrections.
          */
         model.BakeAnimations();
 
-        model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
+        model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f*scale) * model.RootNode.Transform.Matrix;
 
         model.Polish();
     }
     
     
-    private unsafe void _loadAnimations()
+    private unsafe void _loadAnimations(Scene *scene, string strFallbackName)
     {
-        if (null == _scene->MAnimations)
+        if (null == scene->MAnimations)
         {
             return;
         }
         
-        uint nAnimations = _scene->MNumAnimations;
+        uint nAnimations = scene->MNumAnimations;
         if (0 == nAnimations)
         {
             return;
         }
 
-        _model.MapAnimations = new();
-        
         for (int i = 0; i < nAnimations; ++i)
         {
-            var aiAnim = _scene->MAnimations[i];
+            var aiAnim = scene->MAnimations[i];
             if (null == aiAnim || 0 == aiAnim->MNumChannels)
             {
                 continue;
@@ -171,7 +319,8 @@ public class FbxModel : IDisposable
             uint nChannels = aiAnim->MNumChannels;
 
             ModelAnimation ma = _model.CreateAnimation();
-            ma.Name = aiAnim->MName.ToString();
+            ma.Name = String.IsNullOrWhiteSpace(strFallbackName)?aiAnim->MName.ToString():strFallbackName;
+            Trace($"Found Animation \"{ma.Name}\" with {nChannels} channels.");
             ma.Duration = (float)aiAnim->MDuration / (float)aiAnim->MTicksPerSecond;
             ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
             ma.NTicks = (aiAnim->MTicksPerSecond < 0.015f) ? 1 : (uint)(aiAnim->MDuration / aiAnim->MTicksPerSecond);
@@ -189,6 +338,7 @@ public class FbxModel : IDisposable
                 }
                 
                 string channelNodeName = aiChannel->MNodeName.ToString();
+                // Trace($"Animation \"{ma.Name}\" controls channel: {channelNodeName}");
                 if (!_model.MapNodes.ContainsKey(channelNodeName))
                 {
                     Warning($"Found animation channel for unknown node {channelNodeName}, ignoring.");
@@ -256,7 +406,7 @@ public class FbxModel : IDisposable
     }
 
 
-    private unsafe engine.joyce.Material FindMaterial(uint materialIndex, AssimpMesh.MColorsBuffer* colorsBuffer)
+    private unsafe engine.joyce.Material _findMaterial(uint materialIndex, AssimpMesh.MColorsBuffer* colorsBuffer)
     {
         /*
          * We create a new material looking it up in our internal cache
@@ -341,30 +491,63 @@ public class FbxModel : IDisposable
     }
     
     
-    private unsafe engine.joyce.ModelNode ProcessNode(Node* node)
+    private unsafe engine.joyce.ModelNode _processNode(
+        ModelNode mnParent,
+        Node* node, bool loadMeshes, 
+        bool loadMainNodes,
+        out bool meshInOrBelowMe)
     {
-        engine.joyce.ModelNode mn = _model.CreateNode();
+        string strName = node->MName.ToString();
+        meshInOrBelowMe = false;
+        var skeleton = _model!.FindSkeleton(); 
 
-        mn.Name = node->MName.ToString();
-        _model!.MapNodes[mn.Name] = mn;
+        /*
+         * We may be asked to load contents for a node that previously had been loaded.
+         * Our job is to enrich the node, not to override it.
+         * To have some security while debugging, we verify that the data does
+         * not contradict.
+         */
+        bool verifyData = false;
+        bool iHaveMesh = false;
+        ModelNode mn = null; 
+        if (_model!.MapNodes.ContainsKey(strName))
+        {
+            mn = _model.MapNodes[strName];
+            
+            /*
+             * We silently assume the similarily named node also had the same parent.
+             */
+            verifyData = true;
+        }
+        else
+        {
+            mn = _model.CreateNode();
+            mn.Name = strName;
+        }
         
         /*
-        * If there are meshes, add them.
-        */
-        if (node->MNumMeshes > 0)
+         * If there are meshes, add them.
+         * We do not support adding meshes. 
+         */
+        if (loadMeshes && node->MNumMeshes > 0)
         {
+            if (verifyData)
+            {
+                ErrorThrow<InvalidOperationException>($"Node {mn.Name} already contained meshes. Mesh extension not supported.");
+            }
+            
             engine.joyce.MatMesh matMesh = new();
             for (var i = 0; i < node->MNumMeshes; i++)
             {
                 var pMesh = _scene->MMeshes[node->MMeshes[i]];
                 if (pMesh != null)
                 {
-                    var jMesh = ProcessMesh(pMesh);
+                    var jMesh = _processMesh(pMesh);
                     
                     /*
                      * Now find the material associated with the mesh
                      */
-                    var jMaterial = FindMaterial(pMesh->MMaterialIndex, &pMesh->MColors);
+                    var jMaterial = _findMaterial(pMesh->MMaterialIndex, &pMesh->MColors);
                     
                     matMesh.Add(jMaterial, jMesh, mn);
 
@@ -372,32 +555,99 @@ public class FbxModel : IDisposable
             }
 
             mn.InstanceDesc = InstanceDesc.CreateFromMatMesh(matMesh, 400f);
+            meshInOrBelowMe = true;
         }
 
         /*
-         * If there are children, add them.
+         * If there are children, parsing them according to load mode.
          */
         if (node->MNumChildren > 0)
         {
-            // Trace($"{node->MNumChildren} children.");
-            
             for (var i = 0; i < node->MNumChildren; i++)
             {
-                mn.AddChild(ProcessNode(node->MChildren[i]));
+                var aiChild = node->MChildren[i];
+                var mnChild = _processNode(mn, aiChild, loadMeshes, loadMainNodes, out var childOrBelowHasMesh);
+                meshInOrBelowMe |= childOrBelowHasMesh;
+                bool isChildNewNode = !_model.MapNodes.ContainsKey(mnChild.Name);
+                
+                /*
+                 * If this is a new node,
+                 * we want to add this node if it either contains a child with a
+                 * mesh or we are in loadMainNodes mode.
+                 */
+                if (isChildNewNode &&
+                    (childOrBelowHasMesh || loadMainNodes)
+                   )
+                {
+                    mn.AddChild(mnChild);
+                    _model!.MapNodes[mnChild.Name] = mnChild;
+                    
+                    /*
+                     * Also look, if this node is known in the skeleton.
+                     * If not, add it.
+                     */
+                    if (!skeleton.MapBones.ContainsKey(mnChild.Name))
+                    {
+                        skeleton.FindBone(mnChild.Name);
+                    }
+                }
             }
         }
 
-        var mToParent = Matrix4x4.Transpose(node->MTransformation);
-        
-        mn.Transform = new Transform3ToParent(
-            true, 0xffffffff, mToParent);
-        // Trace($"My transform is {mn.Transform.Matrix}");
-        
+        if (true || loadMainNodes)
+        {
+            var mToParent = Matrix4x4.Transpose(node->MTransformation);
+
+            if (verifyData)
+            {
+                if (!EqualsRoughly(mn.Transform.Matrix, mToParent))
+                {
+                    Warning($"Model already contained a node with the same name \"{strName}\".");
+                    Warning(
+                        $"Loading additional fbx node \"{mn.Name}\" matrix mismatch: \nhad {mn.Transform.Matrix}, \nnow {mToParent}.");
+                }
+            }
+
+            mn.Transform = new Transform3ToParent(true, 0xffffffff, mToParent);
+        }
+        else
+        {
+            mn.Transform = new Transform3ToParent(true, 0xffffffff, Matrix4x4.Identity);
+        }
+
         return mn;
     }
 
+
+    private static bool EqualsRoughly(in Matrix4x4 a, in Matrix4x4 b)
+    {
+        if (false
+            || ((int)(a.M11 * 1000f)) != ((int)(b.M11 * 1000f))
+            || ((int)(a.M12 * 1000f)) != ((int)(b.M12 * 1000f))
+            || ((int)(a.M13 * 1000f)) != ((int)(b.M13 * 1000f))
+            || ((int)(a.M14 * 1000f)) != ((int)(b.M14 * 1000f))
+            || ((int)(a.M21 * 1000f)) != ((int)(b.M21 * 1000f))
+            || ((int)(a.M22 * 1000f)) != ((int)(b.M22 * 1000f))
+            || ((int)(a.M23 * 1000f)) != ((int)(b.M23 * 1000f))
+            || ((int)(a.M24 * 1000f)) != ((int)(b.M24 * 1000f))
+            || ((int)(a.M31 * 1000f)) != ((int)(b.M31 * 1000f))
+            || ((int)(a.M32 * 1000f)) != ((int)(b.M32 * 1000f))
+            || ((int)(a.M33 * 1000f)) != ((int)(b.M33 * 1000f))
+            || ((int)(a.M34 * 1000f)) != ((int)(b.M34 * 1000f))
+            || ((int)(a.M41 * 1000f)) != ((int)(b.M41 * 1000f))
+            || ((int)(a.M42 * 1000f)) != ((int)(b.M42 * 1000f))
+            || ((int)(a.M43 * 1000f)) != ((int)(b.M43 * 1000f))
+            || ((int)(a.M44 * 1000f)) != ((int)(b.M44 * 1000f))
+           )
+        {
+            return false;
+        }
+
+        return true;
+    }
     
-    private unsafe engine.joyce.Mesh ProcessMesh(AssimpMesh* mesh)
+    
+    private unsafe engine.joyce.Mesh _processMesh(AssimpMesh* mesh)
     {
         // data to fill
         List<Vertex> vertices = new List<Vertex>();

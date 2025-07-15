@@ -20,8 +20,8 @@ public class ClickModule : AModule, engine.IInputPart
     {
         new SharedModule<InputEventPipeline>()    
     };
-
-
+    
+    private bool _trace = false;
     private float MY_Z_ORDER = 20f;
     
     private object _lo = new();
@@ -31,7 +31,8 @@ public class ClickModule : AModule, engine.IInputPart
     
     private void _handleClickEvent(Event ev)
     {
-        Trace($"Handling {ev}");
+        if (_trace) Trace($"Handling {ev}");
+        
         _clickableHandler.OnClick(new Event(Event.INPUT_LOGICAL_PRESSED, ev.Code)
         {
             PhysicalPosition = ev.PhysicalPosition,
@@ -46,7 +47,8 @@ public class ClickModule : AModule, engine.IInputPart
 
     private void _handleReleaseEvent(Event ev)
     {
-        Trace($"Handling {ev}");
+        if (_trace) Trace($"Handling {ev}");
+        
         _clickableHandler.OnRelease(new Event(Event.INPUT_LOGICAL_RELEASED, ev.Code)
         {
             PhysicalPosition = ev.PhysicalPosition,

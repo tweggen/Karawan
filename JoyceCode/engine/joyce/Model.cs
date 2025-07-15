@@ -63,6 +63,8 @@ public class Model
     
     public float Scale = 1.0f;
     
+    public bool WorkAroundInverseRestPose = true;
+    
     /**
      * Convenience method to create a model from a single InstanceDesc
      */
@@ -108,6 +110,11 @@ public class Model
         if (mn.InstanceDesc != null)
         {
             return mn;
+        }
+
+        if (mn.Children == null)
+        {
+            return null;
         }
 
         foreach (var mnChild in mn.Children)
@@ -264,13 +271,15 @@ public class Model
              * it from the static matrices defining the pose transformation in the bones.
              */
             Matrix4x4 m4Baked =
-                m4GlobalTransform *
-                
                 /*
                  * First from model coordinate space to bone local coordinate space
                  */
-                //m4MyModelSpaceToPoseSpace *
+#if true                   
+                m4GlobalTransform *
                 m4Model2Bone * 
+#else                
+                m4MyModelSpaceToPoseSpace *
+#endif
                 
                 /*
                  * Go from global space to bone
@@ -336,7 +345,18 @@ public class Model
         Trace($"Baking animations for {Name}");
 
         var skeleton = FindSkeleton();
-            
+
+        if (false)
+        {
+            /*
+             * Debugging: Write the bone names
+             */
+            foreach (var kvp in skeleton.MapBones)
+            {
+                Trace($"Bone {kvp.Key}");
+            }
+        }
+
         /*
          * We assume there is only one instancedesc. Don't know if this is true
          * for all formats.
