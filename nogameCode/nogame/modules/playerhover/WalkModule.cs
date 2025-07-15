@@ -113,7 +113,8 @@ public class WalkModule : AModule, IInputPart
                     Params = instantiateModelParams,
                     Properties = new() {Properties = new()
                     {
-                        { "AdditionalUrls", CharacterModelDescription.AnimationUrls }
+                        { "AdditionalUrls", CharacterModelDescription.AnimationUrls },
+                        { "Scale", CharacterModelDescription.Scale }
                     }}
                 });
 

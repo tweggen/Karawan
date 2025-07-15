@@ -26,15 +26,21 @@ public class Fbx
             new List<engine.joyce.ModelNode>(),
             400f);
 
+        float scale = 1f;
         List<string>? additionalUrls = null;
         if (modelProperties.Properties.ContainsKey("AdditionalUrls"))
         {
             additionalUrls = modelProperties.Properties["AdditionalUrls"].Split(';',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).ToList();
         }
+
+        if (modelProperties.Properties.ContainsKey("Scale"))
+        {
+            scale = float.Parse(modelProperties.Properties["Scale"]);
+        }
         
         using (var fbxModel = new fbx.FbxModel())
         {
-            fbxModel.Load(url, additionalUrls, out model);
+            fbxModel.Load(url, additionalUrls, scale, out model);
         }
     }
     

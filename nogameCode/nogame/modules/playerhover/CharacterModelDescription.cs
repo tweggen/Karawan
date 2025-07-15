@@ -13,7 +13,7 @@ public class CharacterModelDescription
     public string ModelUrl { get; set; } = "player.glb";
     #endif
     
-    #if false
+    #if true
     /*
      * Studio Ochi
      */
@@ -23,7 +23,8 @@ public class CharacterModelDescription
     public string JumpAnimName { get; set; } = "Metarig Man B|Run Mid";
     
     public string ModelUrl { get; set;  } = "Studio Ochi Spring Man B_ANIM.fbx";
-    public string AdditionalUrls { get; set; } = "";
+    public string AnimationUrls { get; set; } = "";
+    public string Scale { get; set; } = "1.0";
     #endif
     
     #if false
@@ -37,9 +38,10 @@ public class CharacterModelDescription
     public string AdditionalUrls { get; set; } = "cover to stand (2).fbx;cover to stand.fbx;crouched sneaking left.fbx;crouched sneaking right.fbx;falling idle.fbx;falling to roll.fbx;hard landing.fbx;idle (2).fbx;idle (3).fbx;idle (4).fbx;idle (5).fbx;idle.fbx;jumping up.fbx;left cover sneak.fbx;left turn.fbx;right cover sneak.fbx;right turn.fbx;run to stop.fbx;running.fbx;stand to cover (2).fbx;stand to cover.fbx;walking.fbx";
     
     public string ModelUrl { get; set;  } = "mixamo_ochi_man_b.fbx";
+    public string Scale { get; set; } = "1.0";
     #endif
 
-    #if true
+    #if false
     /*
      * polyperfect
      */
@@ -52,7 +54,9 @@ public class CharacterModelDescription
         "Idle_Generic.fbx;Idle_HardDay.fbx;Idle_Texting.fbx;Idle_Waving.fbx;Kick_LeftFoot.fbx;Punch_LeftHand.fbx;Punch_RightHand.fbx;Run_InPlace.fbx;Running_Jump.fbx;Standing_Jump.fbx;Walk_InPlace_Female.fbx;Walk_Left.fbx;Walk_Male.fbx"; 
     
     public string ModelUrl { get; set;  } = "man_casual_Rig.fbx";
-    
+
+    public string Scale { get; set; } = "100";
+
     #endif
     
     public int ModelGeomFlags { get; set; } = 0

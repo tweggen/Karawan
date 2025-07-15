@@ -159,7 +159,7 @@ public class FbxModel : IDisposable
      * Load a given fbx file into this model.
      * You can also pass additional files to add e.g. animation data.
      */
-    public unsafe void Load(string path, List<string>? additionalUrls, out engine.joyce.Model model)
+    public unsafe void Load(string path, List<string>? additionalUrls, float scale, out engine.joyce.Model model)
     {
         if (null != _model)
         {
@@ -289,7 +289,7 @@ public class FbxModel : IDisposable
          */
         model.BakeAnimations();
 
-        model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
+        model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f*scale) * model.RootNode.Transform.Matrix;
 
         model.Polish();
     }
