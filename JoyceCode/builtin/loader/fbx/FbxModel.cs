@@ -273,7 +273,7 @@ public class FbxModel : IDisposable
         
         var strUnitscale = GetMetadata("UnitScaleFactor", "1.");
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
-        model.Scale = unitscale / 100f;
+        model.Scale = unitscale / 100f * scale;
 
         if (GetMetadata("CustomFrameRate", "-1") == "24")
         {
@@ -289,7 +289,7 @@ public class FbxModel : IDisposable
          */
         model.BakeAnimations();
 
-        model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f*scale) * model.RootNode.Transform.Matrix;
+        model.RootNode.Transform.Matrix = Matrix4x4.CreateScale(model.Scale) * model.RootNode.Transform.Matrix;
 
         model.Polish();
     }
