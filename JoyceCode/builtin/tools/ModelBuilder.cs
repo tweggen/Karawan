@@ -185,7 +185,7 @@ public class ModelBuilder
             eRoot = eUserRoot.Value;
         }
 
-        _buildNodeInto(eRoot, mnRoot);
+        _buildNodeInto(eRoot, mnFirstInstanceDesc);
 
         if (_isHierarchical)
         {
@@ -200,6 +200,7 @@ public class ModelBuilder
             cTransformToParent.Matrix *= v4GlobalTransform;
             if (mnAdjust != null)
             {
+                // #error This applies the root transformation twice.
                 cTransformToParent.Matrix *= mAdjust;
             }
             

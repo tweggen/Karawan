@@ -82,11 +82,13 @@ namespace Wuka
         
         private void _beforeDoEvents()
         {
+            
             if (null == _sdl)
             {
                 System.Console.WriteLine("Fetching sdl.");
                 _sdl = Silk.NET.SDL.Sdl.GetApi();
             }
+            #if false
 
             if (null == _eq)
             {
@@ -147,6 +149,7 @@ namespace Wuka
                         break;
                 }
             }
+            #endif
         }
 
 
