@@ -24,7 +24,7 @@ public class CharacterModelDescription
     
     public string ModelUrl { get; set;  } = "Studio Ochi Spring Man B_ANIM.fbx";
     public string AnimationUrls { get; set; } = "";
-    public string Scale { get; set; } = "1.0";
+    public string Scale { get; set; } = "1";
     #endif
     
     #if false
@@ -38,7 +38,7 @@ public class CharacterModelDescription
     public string AdditionalUrls { get; set; } = "cover to stand (2).fbx;cover to stand.fbx;crouched sneaking left.fbx;crouched sneaking right.fbx;falling idle.fbx;falling to roll.fbx;hard landing.fbx;idle (2).fbx;idle (3).fbx;idle (4).fbx;idle (5).fbx;idle.fbx;jumping up.fbx;left cover sneak.fbx;left turn.fbx;right cover sneak.fbx;right turn.fbx;run to stop.fbx;running.fbx;stand to cover (2).fbx;stand to cover.fbx;walking.fbx";
     
     public string ModelUrl { get; set;  } = "mixamo_ochi_man_b.fbx";
-    public string Scale { get; set; } = "1.0";
+    public string Scale { get; set; } = "1";
     #endif
 
     #if false
