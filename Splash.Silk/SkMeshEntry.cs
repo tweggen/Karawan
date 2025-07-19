@@ -31,7 +31,7 @@ namespace Splash.Silk
             ++_nMeshes;
             if (_nMeshes > 5000)
             {
-                Warning($"Uploaded {_nMeshes} more than 2000 meshes.");
+                Warning($"Uploaded {_nMeshes} more than 5000 meshes.");
             }
 
             _isUploaded = true;

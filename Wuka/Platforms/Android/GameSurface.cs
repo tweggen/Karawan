@@ -36,7 +36,7 @@ public class GameSurface : SDLSurface
         if (touchDevId < 0) {
             touchDevId -= 1;
         }
-        
+            
         switch (action)
         {
             case MotionEventActions.Down:
