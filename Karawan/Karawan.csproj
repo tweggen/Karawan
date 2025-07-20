@@ -48,6 +48,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Boom.OpenAL\Boom.OpenAL.csproj" />
+    <ProjectReference Include="..\Boom\Boom.csproj" />
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
     <ProjectReference Include="..\nogame\nogame.csproj" />
     <ProjectReference Include="..\Splash.Silk\Splash.Silk.csproj" />
