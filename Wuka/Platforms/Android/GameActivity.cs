@@ -45,7 +45,7 @@ namespace Wuka
                  */
                 I.Get<engine.Saver>()?.Save("OnStop");
             }
-            catch (Exception e)
+            catch (System.Exception e)
             {
                 // It is perfectly ok we didn't have the DB or the gamestate yet.
             }

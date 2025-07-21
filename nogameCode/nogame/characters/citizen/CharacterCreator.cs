@@ -201,7 +201,11 @@ public class CharacterCreator
         ModelCacheParams mcp = new()
         {
             Url = strModel,
-            Properties = new(modelProperties),
+            Properties = new(modelProperties) { Properties = new()
+                {
+                    { "Scale", "0,01" }
+                } 
+            },
             Params = new()
             {
                 GeomFlags = 0
