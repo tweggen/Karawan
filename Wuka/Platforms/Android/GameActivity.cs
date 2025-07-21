@@ -11,6 +11,7 @@ using Android.Views;
 using engine;
 using AndroidX.Core.App;
 using engine.news;
+using Java.Lang;
 using Org.Libsdl.App;
 using Silk.NET.SDL;
 using Silk.NET.Windowing.Sdl.Android;

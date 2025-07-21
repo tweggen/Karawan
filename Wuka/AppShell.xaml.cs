@@ -1,4 +1,6 @@
-﻿namespace Wuka
+﻿using Microsoft.Maui.Controls;
+
+namespace Wuka
 {
     public partial class AppShell : Shell
     {

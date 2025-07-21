@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using Silk.NET.OpenAL;
 using static engine.Logger;
