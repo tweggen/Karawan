@@ -1,6 +1,3 @@
-using System.ComponentModel;
-using engine;
-using engine.joyce;
 using Silk.NET.OpenGL;
 using Texture = engine.joyce.Texture;
 using static engine.Logger;

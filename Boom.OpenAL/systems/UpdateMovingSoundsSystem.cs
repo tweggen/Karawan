@@ -3,6 +3,7 @@ using static engine.Logger;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.Intrinsics.X86;
+using System.Threading;
 using engine.joyce.components;
 using Silk.NET.OpenAL;
 

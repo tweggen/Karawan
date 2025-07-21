@@ -1,7 +1,10 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 using Android.App;
 using Android.Media;
 using Android.Runtime;
+using Microsoft.Maui;
+using Microsoft.Maui.Hosting;
 using Wuka.Platforms.Android;
 
 namespace Wuka

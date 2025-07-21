@@ -1,4 +1,5 @@
-﻿using Silk.NET.OpenGL;
+﻿using System;
+using Silk.NET.OpenGL;
 using static engine.Logger;
 using static Splash.Silk.GLCheck;
 

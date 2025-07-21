@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace Boom;
 
 public interface ISoundAPI : System.IDisposable
