@@ -699,9 +699,16 @@ public class FbxModel : IDisposable
         {
             Face face = mesh->MFaces[i];
             // retrieve all indices of the face and store them in the indices vector
-            for (uint j = 0; j < face.MNumIndices; j++)
+            if (face.MNumIndices == 3)
             {
-                indices.Add(face.MIndices[j]);
+                for (uint j = 0; j < face.MNumIndices; j++)
+                {
+                    indices.Add(face.MIndices[j]);
+                }
+            }
+            else
+            {
+                int a = 1;
             }
         }
 
