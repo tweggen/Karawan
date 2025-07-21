@@ -26,9 +26,22 @@ public class GameSurface : SDLSurface
         }
         
         int touchDevId = e.DeviceId;
+        
+        /*
+         * The number of pointers in this event. 
+         */
         int pointerCount = e.PointerCount;
+        
+        /*
+         * The event action that happended. 
+         */
         var action = e.ActionMasked;
+        
+        /*
+         * The finger id of the current pointer index         
+         */
         int pointerFingerId;
+        
         int i = -1;
         float p;
         Vector2 v2Physical;
