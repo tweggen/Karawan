@@ -45,8 +45,9 @@ public class AssetImplementation : IAssetImplementation
             stream = System.IO.File.OpenRead(resourcePath + tag);
             return stream;
         }
-        catch (System.Exception _)
+        catch (System.Exception e)
         {
+            // Error($"Unable to open file \"{resourcePath + tag}\" for reading: {e}");
         }
 
         if (uri != null)

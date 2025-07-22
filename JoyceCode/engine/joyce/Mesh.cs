@@ -376,7 +376,7 @@ public class Mesh : IComparable<Mesh>
         WriteIndexVertices = Vertices.Count;
         WriteIndexIndices = Indices.Count;
         WriteIndexUVs = Vertices.Count;
-        WriteIndexNormals = 0;
+        WriteIndexNormals = Normals!=null?Normals.Count:0;
     }
 
 

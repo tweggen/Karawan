@@ -14,7 +14,7 @@ public struct VertexWeight
  * A bone may very well influence other meshes as well.
  * Also other bones may influence this mesh as well.
  *
- * However, we allow a maximum of 4 bones to influence a given mesh.
+ * However, we allow a maximum of 4 bones to influence a given vertex.
  *
  * While loading meshes, we build up this data structure to gather
  * the weight information per mesh.

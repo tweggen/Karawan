@@ -649,208 +649,224 @@ public class FbxModel : IDisposable
     
     private unsafe engine.joyce.Mesh _processMesh(AssimpMesh* mesh)
     {
-        // data to fill
-        List<Vertex> vertices = new List<Vertex>();
-        List<uint> indices = new List<uint>();
-        
-        uint nMeshVertices = mesh->MNumVertices;
-
-        // walk through each of the mesh's vertices
-        for (uint i = 0; i < nMeshVertices; i++)
+        try
         {
-            Vertex vertex = new Vertex();
-            vertex.BoneIds = new int[Vertex.MAX_BONE_INFLUENCE];
-            vertex.Weights = new float[Vertex.MAX_BONE_INFLUENCE];
+            // data to fill
+            List<Vertex> vertices = new List<Vertex>();
+            List<uint> indices = new List<uint>();
 
-            vertex.Position = mesh->MVertices[i];
+            uint nMeshVertices = mesh->MNumVertices;
 
-            // normals
-            if (mesh->MNormals != null)
+            // walk through each of the mesh's vertices
+            for (uint i = 0; i < nMeshVertices; i++)
             {
-                vertex.Normal = mesh->MNormals[i];
-            }
+                Vertex vertex = new Vertex();
+                vertex.BoneIds = new int[Vertex.MAX_BONE_INFLUENCE];
+                vertex.Weights = new float[Vertex.MAX_BONE_INFLUENCE];
 
-            // tangent
-            if (mesh->MTangents != null)
-            {
-                vertex.Tangent = mesh->MTangents[i];
-            }
+                vertex.Position = mesh->MVertices[i];
 
-            // bitangent
-            if (mesh->MBitangents != null)
-            {
-                vertex.Bitangent = mesh->MBitangents[i];
-            }
-
-            // texture coordinates
-            if (mesh->MTextureCoords[0] != null) // does the mesh contain texture coordinates?
-            {
-                // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
-                // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
-                Vector3 texcoord3 = mesh->MTextureCoords[0][i];
-                vertex.TexCoords = new Vector2(texcoord3.X, texcoord3.Y);
-            }
-
-            vertices.Add(vertex);
-        }
-
-        // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
-        for (uint i = 0; i < mesh->MNumFaces; i++)
-        {
-            Face face = mesh->MFaces[i];
-            // retrieve all indices of the face and store them in the indices vector
-            if (face.MNumIndices == 3)
-            {
-                for (uint j = 0; j < face.MNumIndices; j++)
+                // normals
+                if (mesh->MNormals != null)
                 {
-                    indices.Add(face.MIndices[j]);
+                    vertex.Normal = mesh->MNormals[i];
                 }
-            }
-            else
-            {
-                int a = 1;
-            }
-        }
 
-        
-        /*
-         * return a mesh object created from the extracted mesh data
-         */
-        var fbxMesh = new Mesh(BuildVertices(vertices), BuildIndices(indices) /* , textures */);
-        var jMesh = fbxMesh.ToJoyceMesh();
-        
-       
-        /*
-         * If there is a bone, create it.
-         */
-        if (mesh->MNumBones > 0 && mesh->MBones != null)
-        {
-            /*
-             * For this mesh, there a bones given that influence the mesh.
-             * So collect the information about each individual bone.
-             * This gathers the vertex and weight infos of each of the bones.
-             */
-            BoneMesh[] boneMeshes = new BoneMesh [mesh->MNumBones];
-            var skeleton = _model.FindSkeleton(); 
-            
-            for (int i = 0; i < mesh->MNumBones; ++i)
-            {
-                var aiBone = mesh->MBones[i];
-
-                var jBone = skeleton.FindBone(aiBone->MName.ToString());
-                jBone.Model2Bone = Matrix4x4.Transpose (aiBone->MOffsetMatrix) ;
-                jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
-                
-                var nBoneVertices = aiBone->MNumWeights;
-                boneMeshes[i] = new BoneMesh(jBone, nBoneVertices);
-            
-                for (int j = 0; j < nBoneVertices; ++j)
+                // tangent
+                if (mesh->MTangents != null)
                 {
-                    boneMeshes[i].SetVertexWeight(aiBone->MWeights[j].MVertexId, aiBone->MWeights[j].MWeight);
+                    vertex.Tangent = mesh->MTangents[i];
                 }
-            }
-            
-            // TXWTODO: MNumBones seems to contain most of the bones and not just the ones relevant for this mesh.
-            
-            /*
-             * Now read the first nBones bones back into the influence lists for each of the
-             * vertices.
-             */
-            jMesh.BoneIndices = new List<Int4>(new Int4[nMeshVertices]);
-            for (int j = 0; j < nMeshVertices; ++j)
-            {
-                jMesh.BoneIndices[j] = new Int4(-1);
-            }
-            
-            jMesh.BoneWeights = new List<Vector4>(new Vector4[nMeshVertices]);
-            uint maxBoneIndex = 0;
-            for (int j = 0; j < mesh->MNumBones; j++)
-            {
-                var boneMesh = boneMeshes[j];
-                
-                uint boneIndex = boneMesh.Bone.Index;
-                int nBoneVertices = (boneMesh.VertexWeights != null)?(boneMesh.VertexWeights.Length):0;
-                maxBoneIndex = UInt32.Max(boneIndex, maxBoneIndex);
-                for (int k = 0; k < nBoneVertices; ++k)
+
+                // bitangent
+                if (mesh->MBitangents != null)
                 {
-                    Int4 i4;
-                    Vector4 w4;
+                    vertex.Bitangent = mesh->MBitangents[i];
+                }
 
-                    ref VertexWeight vw = ref boneMesh.VertexWeights[k];
-                    int vertexIndex = (int)vw.VertexIndex;
-                    float weight = vw.Weight;
+                // texture coordinates
+                if (mesh->MTextureCoords[0] != null) // does the mesh contain texture coordinates?
+                {
+                    // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
+                    // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
+                    Vector3 texcoord3 = mesh->MTextureCoords[0][i];
+                    vertex.TexCoords = new Vector2(texcoord3.X, texcoord3.Y);
+                }
 
-                    i4 = jMesh.BoneIndices[vertexIndex];
-                    w4 = jMesh.BoneWeights[vertexIndex];
+                vertices.Add(vertex);
+            }
 
-                    int l;
-                    for (l = 0; l < 4; ++l)
+            // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+            for (uint i = 0; i < mesh->MNumFaces; i++)
+            {
+                Face face = mesh->MFaces[i];
+                // retrieve all indices of the face and store them in the indices vector
+                if (face.MNumIndices == 3)
+                {
+                    for (uint j = 0; j < face.MNumIndices; j++)
                     {
-                        if (-1 == i4[l])
-                        {
-                            i4[l] = (int)boneIndex;
-                            w4[l] = weight;
-                            break;
-                        }
+                        indices.Add(face.MIndices[j]);
                     }
+                }
+                else
+                {
+                    int a = 1;
+                }
+            }
 
-                    if (4 == l)
+
+            /*
+             * return a mesh object created from the extracted mesh data
+             */
+            var fbxMesh = new Mesh(BuildVertices(vertices), BuildIndices(indices) /* , textures */);
+            var jMesh = fbxMesh.ToJoyceMesh();
+
+
+            /*
+             * If there is a bone, create it.
+             */
+            if (mesh->MNumBones > 0 && mesh->MBones != null)
+            {
+                /*
+                 * For this mesh, there a bones given that influence the mesh.
+                 * So collect the information about each individual bone.
+                 * This gathers the vertex and weight infos of each of the bones.
+                 */
+                BoneMesh[] boneMeshes = new BoneMesh [mesh->MNumBones];
+                var skeleton = _model.FindSkeleton();
+
+                for (int i = 0; i < mesh->MNumBones; ++i)
+                {
+                    var aiBone = mesh->MBones[i];
+
+                    var jBone = skeleton.FindBone(aiBone->MName.ToString());
+                    jBone.Model2Bone = Matrix4x4.Transpose(aiBone->MOffsetMatrix);
+                    jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
+
+                    var nBoneVertices = aiBone->MNumWeights;
+                    boneMeshes[i] = new BoneMesh(jBone, nBoneVertices);
+
+                    for (int j = 0; j < nBoneVertices; ++j)
                     {
-                        int minL = -1;
-                        float minW = Single.MaxValue;
+                        boneMeshes[i].SetVertexWeight(aiBone->MWeights[j].MVertexId, aiBone->MWeights[j].MWeight);
+                    }
+                }
+
+                // TXWTODO: MNumBones seems to contain most of the bones and not just the ones relevant for this mesh.
+
+                /*
+                 * Now read the first nBones bones back into the influence lists for each of the
+                 * vertices.
+                 */
+                jMesh.BoneIndices = new List<Int4>(new Int4[nMeshVertices]);
+                for (int j = 0; j < nMeshVertices; ++j)
+                {
+                    jMesh.BoneIndices[j] = new Int4(-1);
+                }
+
+                jMesh.BoneWeights = new List<Vector4>(new Vector4[nMeshVertices]);
+                uint maxBoneIndex = 0;
+                for (int j = 0; j < mesh->MNumBones; j++)
+                {
+                    var boneMesh = boneMeshes[j];
+
+                    uint boneIndex = boneMesh.Bone.Index;
+                    int nBoneVertices = (boneMesh.VertexWeights != null) ? (boneMesh.VertexWeights.Length) : 0;
+                    maxBoneIndex = UInt32.Max(boneIndex, maxBoneIndex);
+                    for (int k = 0; k < nBoneVertices; ++k)
+                    {
+                        Int4 i4;
+                        Vector4 w4;
+
+                        ref VertexWeight vw = ref boneMesh.VertexWeights[k];
+                        int vertexIndex = (int)vw.VertexIndex;
+                        float weight = vw.Weight;
+
+                        i4 = jMesh.BoneIndices[vertexIndex];
+                        w4 = jMesh.BoneWeights[vertexIndex];
+
+                        int l;
                         for (l = 0; l < 4; ++l)
                         {
-                            if (w4[l] < minW)
+                            if (-1 == i4[l])
                             {
-                                minL = l;
-                                minW = w4[l];
+                                i4[l] = (int)boneIndex;
+                                w4[l] = weight;
+                                break;
                             }
                         }
 
-                        w4[minL] = weight;
-                        i4[minL] = (int)boneIndex;
-                    }
-                    
-                    jMesh.BoneIndices[vertexIndex] = i4;
-                    jMesh.BoneWeights[vertexIndex] = w4;
-                }
-            }
-            
-            
-            /*
-             * Finally, normalize the weights
-             */
-            for (int j = 0; j < nMeshVertices; ++j)
-            {
-                float totalWeight = 0f;
-                var i4 = jMesh.BoneIndices[j];
-                var w4 = jMesh.BoneWeights[j];
-                for (int l = 0; l < 4; ++l)
-                {
-                    if (i4[l] != -1)
-                    {
-                        totalWeight += w4[l];
+                        if (4 == l)
+                        {
+                            int minL = -1;
+                            float minW = Single.MaxValue;
+                            for (l = 0; l < 4; ++l)
+                            {
+                                if (w4[l] < minW)
+                                {
+                                    minL = l;
+                                    minW = w4[l];
+                                }
+                            }
+
+                            if (minL != -1)
+                            {
+                                w4[minL] = weight;
+                                i4[minL] = (int)boneIndex;
+                            }
+                            else
+                            {
+                                int a = 1;
+                            }
+                        }
+
+                        jMesh.BoneIndices[vertexIndex] = i4;
+                        jMesh.BoneWeights[vertexIndex] = w4;
                     }
                 }
 
-                if (totalWeight != 0f)
+
+                /*
+                 * Finally, normalize the weights
+                 */
+                for (int j = 0; j < nMeshVertices; ++j)
                 {
-                    float inv = 1f / totalWeight;
+                    float totalWeight = 0f;
+                    var i4 = jMesh.BoneIndices[j];
+                    var w4 = jMesh.BoneWeights[j];
                     for (int l = 0; l < 4; ++l)
                     {
                         if (i4[l] != -1)
                         {
-                            w4[l] *= inv;
+                            totalWeight += w4[l];
                         }
                     }
-                }
-                jMesh.BoneIndices[j] = i4;
-                jMesh.BoneWeights[j] = w4;
 
+                    if (totalWeight != 0f)
+                    {
+                        float inv = 1f / totalWeight;
+                        for (int l = 0; l < 4; ++l)
+                        {
+                            if (i4[l] != -1)
+                            {
+                                w4[l] *= inv;
+                            }
+                        }
+                    }
+
+                    jMesh.BoneIndices[j] = i4;
+                    jMesh.BoneWeights[j] = w4;
+
+                }
             }
+
+            return jMesh;
         }
-        
-        return jMesh;
+        catch (Exception e)
+        {
+            Error($"Exception processing mesh; {e}");
+            return null;    
+        }
     }
     
 

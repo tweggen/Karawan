@@ -338,7 +338,7 @@ public class Model
      */
     public void BakeAnimations()
     {
-        if (null == MapAnimations || null == Skeleton)
+        if (null == MapAnimations || null == Skeleton || MapAnimations.Count == 0)
         {
             return;
         }
