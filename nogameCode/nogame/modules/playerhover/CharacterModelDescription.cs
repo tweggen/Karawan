@@ -60,7 +60,7 @@ public class CharacterModelDescription
     public string IdleAnimName { get; set; } = "Idle_Generic";
     public string JumpAnimName { get; set; } = "Standing_Jump";
 
-    public string AnimationUrls { get; set; } = "";
+    public string AnimationUrls { get; set; } = "Idle_Generic.fbx;Run_InPlace.fbx;Walk_Male.fbx;Standing_Jump.fbx";
         // "Idle_Generic.fbx;Idle_HardDay.fbx;Idle_Texting.fbx;Idle_Waving.fbx;Kick_LeftFoot.fbx;Punch_LeftHand.fbx;Punch_RightHand.fbx;Run_InPlace.fbx;Running_Jump.fbx;Standing_Jump.fbx;Walk_InPlace_Female.fbx;Walk_Left.fbx;Walk_Male.fbx"; 
     
     public string ModelUrl { get; set;  } = "man_casual_Rig.fbx";
@@ -68,7 +68,9 @@ public class CharacterModelDescription
     public string Scale { get; set; } = "1";
 
     public int ModelGeomFlags { get; set; } = 0
-                                              | InstantiateModelParams.ROTATE_Y180
+                                              | InstantiateModelParams.ROTATE_X90
+                                              | InstantiateModelParams.ROTATE_X180
+                                              //| InstantiateModelParams.ROTATE_Y180
         ;
 
     #endif
