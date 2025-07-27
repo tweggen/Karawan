@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Numerics;
 using BepuUtilities;
 using builtin.extensions;
+using FbxSharp;
 using static engine.Logger;
 
 namespace engine.joyce;
@@ -168,17 +169,27 @@ public class Model
 
         return m4ParentTransform;
     }
+
+
+    public enum BakeMode
+    {
+        Relative = 0,
+        Absolute = 1
+    }
     
     
     /**
      * Bake all animations for the given node.
      *
-     * @param m4ParentTransform
-     *     How do I transform from the model to my parent.
      * @param m4GlobalTransform
      *     How do I transform from root to the mesh.
+     * @param m4ModelSpaceToBoneSpace
+     *     How do I transform from the model to the individual bone 
+     * @param m4BoneSpaceToModelSpace
+     *     How do I transform from the individual bone to the model.
      */
     private void _bakeRecursive(ModelNode me, 
+        BakeMode bakeMode,
         Matrix4x4 m4GlobalTransform,
         Matrix4x4 m4ModelSpaceToPoseSpace, 
         Matrix4x4 m4BoneSpaceToModelSpace, 
@@ -325,6 +336,7 @@ public class Model
             foreach (var child in me.Children)
             {
                 _bakeRecursive(child,
+                    bakeMode,
                     m4GlobalTransform,
                     m4MyModelSpaceToPoseSpace,  
                     m4MyBoneSpaceToModelSpace, ma, frameno);
@@ -418,11 +430,21 @@ public class Model
                  * Plus, I need to apply the scale (which I also could do later).
                  */
                 _bakeRecursive(RootNode,
+                    BakeMode.Absolute,
+                    /*
+                     * m4GlobalTransform here is required to have the ochi person looking correctly
+                     * with animations and not to be apart. It is however too large.
+                     */
                     m4GlobalTransform,
-                    m4GlobalTransform,
-                    m4InverseGlobalTransform * Scale,
-                     //Matrix4x4.Identity,
-                     //Matrix4x4.Identity,
+                    //Matrix4x4.Identity,
+                    
+                    /*
+                     * With these two commented out, scaling still is wrong.
+                     */
+                    //m4GlobalTransform,
+                    //m4InverseGlobalTransform * Scale,
+                     Matrix4x4.Identity,
+                     Matrix4x4.Identity,
                      // m4InverseGlobalTransform, 
                     //  m4GlobalTransform,  
                     ma, frameno);

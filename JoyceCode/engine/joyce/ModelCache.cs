@@ -80,8 +80,10 @@ public class ModelCache
                 /*
                  * If this is an non-hjierarchical model, we bake the model params
                  * directly into the instancedesc.
+                 *
+                 * The model adjustment matrix is
+                 * stored inside the InstanceDescription's ModelTranslation matrix.
                  */
-                // TXWTODO: Where do we apply maximal distance for hierarchical models? 
                 if (id != null && (mnRoot.Children == null || mnRoot.Children.Count == 0))
                 {
                     Matrix4x4 m = Matrix4x4.Identity;

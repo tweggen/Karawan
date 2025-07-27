@@ -286,7 +286,7 @@ public class InstanceDesc
     
     /**
      * Compute a model adjustment matrix based on the model info
-     * and thge InstantiateModelParams
+     * and the InstantiateModelParams. 
      */
     public void ComputeAdjustMatrix(InstantiateModelParams? p, ref Matrix4x4 m)
     {
