@@ -223,7 +223,7 @@ public class ModelCache
             if (!_cache.TryGetValue(hash, out modelCacheEntry))
             {
                 modelCacheEntry = new(mcp);
-                modelCacheEntry.Model = new Model();
+                modelCacheEntry.Model = new Model() { Name = $"Lading {mcp.Url}"};
                 modelCacheEntry.State = ModelCacheEntry.EntryState.Placeholder;
                 _cache.TryAdd(hash, modelCacheEntry);
                 
