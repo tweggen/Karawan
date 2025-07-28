@@ -531,7 +531,7 @@ public class Model
         _polishChildrenRecursively(RootNode);
         if (FirstInstanceDescNode != null)
         {
-            FirstInstanceDescTransform = _computeGlobalTransform(FirstInstanceDescNode) * Matrix4x4.CreateScale(Scale);
+//            FirstInstanceDescTransform = _computeGlobalTransform(FirstInstanceDescNode) * Matrix4x4.CreateScale(Scale);
         }
     }
     

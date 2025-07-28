@@ -72,10 +72,10 @@ public class ModelCache
     {
         return _engine.Run(() =>
         {
-            var mnRoot = model.RootNode;
-            if (mnRoot != null)
+            var mnInstance = model.FirstInstanceDescNode;
+            if (mnInstance != null && !model.IsHierarchical)
             {
-                var id = mnRoot.InstanceDesc;
+                var id = mnInstance.InstanceDesc;
 
                 /*
                  * If this is an non-hjierarchical model, we bake the model params
@@ -84,13 +84,11 @@ public class ModelCache
                  * The model adjustment matrix is
                  * stored inside the InstanceDescription's ModelTranslation matrix.
                  */
-                if (id != null && (mnRoot.Children == null || mnRoot.Children.Count == 0))
-                {
-                    Matrix4x4 m = Matrix4x4.Identity;
-                    id.ComputeAdjustMatrix(p, ref m);
-                    id.ModelTransform *= m;
-                    id.MaxDistance = p.MaxDistance;
-                }
+
+                Matrix4x4 m = Matrix4x4.Identity;
+                id.ComputeAdjustMatrix(p, ref m);
+                id.ModelTransform *= m;
+                id.MaxDistance = p.MaxDistance;
             }
             return model;
         });

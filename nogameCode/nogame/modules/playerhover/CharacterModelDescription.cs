@@ -24,7 +24,7 @@ public class CharacterModelDescription
     
     public string ModelUrl { get; set;  } = "Studio Ochi Spring Man B_ANIM.fbx";
     public string AnimationUrls { get; set; } = "";
-    public string Scale { get; set; } = "0,01";
+    public string Scale { get; set; } = "1";
     public int ModelGeomFlags { get; set; } = 0
                                               | InstantiateModelParams.ROTATE_Y180
                                               | InstantiateModelParams.ROTATE_X90
