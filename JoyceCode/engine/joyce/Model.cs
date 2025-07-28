@@ -271,7 +271,11 @@ public class Model
         {
             /*
              * baked shall define how I come from mesh local position to bone
-             * transformed mesh position
+             * transformed mesh position.
+             *
+             * In other words, after applying these transformations, also the instancedesc
+             * transformations are applied, including all transformations "above" the instance
+             * desc node.
              *
              * Warning: For reasons I do not understand now, I wrote this in M*V order instead
              * of the usual V*M order in this project. Hence, the vertex shader also multiplies
@@ -439,6 +443,8 @@ public class Model
                     /*
                      * m4GlobalTransform here is required to have the ochi person looking correctly
                      * with animations and not to be apart. It is however too large.
+                     *
+                     * Global transform already contains the scale factor.
                      */
                     m4GlobalTransform,
                     //Matrix4x4.Identity,
@@ -449,8 +455,8 @@ public class Model
                     //m4GlobalTransform,
                     //m4InverseGlobalTransform * Scale,
                      Matrix4x4.Identity,
-                     Matrix4x4.Identity,
-                     // m4InverseGlobalTransform, 
+                     // Matrix4x4.Identity,
+                     m4InverseGlobalTransform, 
                     //  m4GlobalTransform,  
                     ma, frameno);
             }
