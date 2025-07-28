@@ -53,6 +53,12 @@ public class ModelBuilder
     
     private void _buildNodeInto(in DefaultEcs.Entity eNode, in ModelNode mn)
     {
+        /*
+         * If it is hierarcical, we have an extra node for applying the
+         * transformation.
+         *
+         * Otherwise, this is baked directly into the instancedesc root.
+         */
         if (_isHierarchical)
         {
             eNode.Set(mn.Transform);

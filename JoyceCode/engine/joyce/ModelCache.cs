@@ -86,8 +86,17 @@ public class ModelCache
                  */
 
                 Matrix4x4 m = Matrix4x4.Identity;
+                /*
+                 * Note that the results of the adjust matrix always are
+                 * relative to the mesh itself.
+                 *
+                 * So when baking in other transforms, it's mesh adjustment
+                 * first, then other transforms, such as the nodes above
+                 * the mesh in the model tree.
+                 */
                 id.ComputeAdjustMatrix(p, ref m);
                 id.ModelTransform *= m;
+                id.ModelTransform *= model.FirstInstanceDescTransform;
                 id.MaxDistance = p.MaxDistance;
             }
             return model;
