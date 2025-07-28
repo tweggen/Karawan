@@ -598,6 +598,7 @@ public class FbxModel : IDisposable
         {
             var mToParent = Matrix4x4.Transpose(node->MTransformation);
 
+            bool dontOverwrite = false;
             if (verifyData)
             {
                 if (!EqualsRoughly(mn.Transform.Matrix, mToParent))
@@ -607,8 +608,6 @@ public class FbxModel : IDisposable
                         $"Loading additional fbx node \"{mn.Name}\" matrix mismatch: \nhad {mn.Transform.Matrix}, \nnow {mToParent}.");
                 }
             }
-
-            mn.Transform = new Transform3ToParent(true, 0xffffffff, mToParent);
         }
         else
         {

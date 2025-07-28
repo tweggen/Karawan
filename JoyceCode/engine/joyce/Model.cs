@@ -243,7 +243,7 @@ public class Model
             var kfScaling = mac.LerpScaling(frameno);
 
             m4Anim = 
-                Matrix4x4.CreateScale(kfScaling.Value)
+                  Matrix4x4.CreateScale(kfScaling.Value)
                 * Matrix4x4.CreateFromQuaternion(kfRotation.Value)
                 * Matrix4x4.CreateTranslation(kfPosition.Value)
                 ;
