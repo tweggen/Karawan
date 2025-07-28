@@ -64,8 +64,13 @@ public class Model
     
     public float Scale = 1.0f;
     
-    public bool WorkAroundInverseRestPose = true;
+    public ModelNode? FirstInstanceDescNode { get; private set; } = null;
+    public Matrix4x4 FirstInstanceDescTransform { get; private set; } = Matrix4x4.Identity;
     
+    public bool IsHierarchical { get; private set; } = false;
+
+    public bool WorkAroundInverseRestPose = false;
+        
     /**
      * Convenience method to create a model from a single InstanceDesc
      */
@@ -457,6 +462,7 @@ public class Model
      * Fill my model structure and my root instance desc with the
      * contents from the other model.
      */
+    
     public void FillPlaceholderFrom(Model other)
     {
         /*
@@ -464,13 +470,19 @@ public class Model
          * as we already gave out our instanceDesc to clients.
          */
         Name = other.Name;
+        RootNode = other.RootNode;
         _nextNodeIndex = other._nextNodeIndex;
         _nextAnimIndex = other._nextAnimIndex;
+        _nextAnimFrame = other._nextAnimFrame;
         Skeleton = other.Skeleton;
         MapAnimations = other.MapAnimations;
         MapNodes = other.MapNodes;
-        RootNode = other.RootNode;
-        Name = other.Name;
+        AllBakedMatrices = other.AllBakedMatrices;
+        Scale = other.Scale;
+        FirstInstanceDescNode = other.FirstInstanceDescNode;
+        FirstInstanceDescTransform = other.FirstInstanceDescTransform;
+        IsHierarchical = other.IsHierarchical;  
+        WorkAroundInverseRestPose = other.WorkAroundInverseRestPose;
     }
 
 
@@ -490,6 +502,15 @@ public class Model
         if (mn.InstanceDesc != null)
         {
             mn.EntityData = 1;
+            if (FirstInstanceDescNode == null)
+            {
+                FirstInstanceDescNode = mn;
+            }
+
+            if (mn.Children != null && mn.Children.Count > 0)
+            {
+                IsHierarchical = true;
+            }
         }
         if (mn.Children != null)
         {
@@ -508,6 +529,10 @@ public class Model
     public void Polish()
     {
         _polishChildrenRecursively(RootNode);
+        if (FirstInstanceDescNode != null)
+        {
+            FirstInstanceDescTransform = _computeGlobalTransform(FirstInstanceDescNode) * Matrix4x4.CreateScale(Scale);
+        }
     }
     
 

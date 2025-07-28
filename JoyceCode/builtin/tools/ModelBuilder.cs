@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Numerics;
 using engine;
@@ -33,6 +34,7 @@ public class ModelBuilder
     private readonly HierarchyApi _aHierarchy;
     private readonly InstantiateModelParams _instantiateModelParams;
     private readonly bool _isHierarchical;
+    private readonly ModelNode _mnFirstInstanceDesc;
 
     /**
      * Today, we use the topmost modelnode containing an instancedesc
@@ -63,6 +65,10 @@ public class ModelBuilder
             //}
         }
 
+        if (null == mn)
+        {
+            int a = 1;
+        }
         if (mn.InstanceDesc != null)
         {
             _buildInstanceDescInto(eNode, mn.InstanceDesc);
@@ -96,45 +102,12 @@ public class ModelBuilder
     
     
     /**
-     * Return the first instance desc below the given root node, returning the global transform
-     * accumulated up to and including the root node.
-     */
-    private ModelNode _findFirstInstanceDesc(ModelNode mnRoot, out Matrix4x4 m4GlobalTransform)
-    {
-        if (null != mnRoot.InstanceDesc)
-        {
-            m4GlobalTransform = mnRoot.Transform.Matrix;
-            return mnRoot;
-        }
-
-
-        if (null == mnRoot.Children)
-        {
-            m4GlobalTransform = mnRoot.Transform.Matrix;
-            return null;
-        }
-
-        foreach (var mnChild in mnRoot.Children)
-        {
-            var mnFirst = _findFirstInstanceDesc(mnChild, out var m4ChildTransform);
-            if (null != mnFirst)
-            {
-                m4GlobalTransform = m4ChildTransform * mnRoot.Transform.Matrix;
-                return mnFirst;
-            }
-        }
-
-        m4GlobalTransform = Matrix4x4.Identity;
-        return null;
-    }
-    
-    
-
-    /**
      * Given a certain root, build the model into the property.
-     * This handles the shortcut cases, where a model without any hierarchy
-     * gets baked directly into that entity, where as a hierarchical model
-     * becomes an additional hierarchy of, well hierarchical nodes.
+     *
+     * @param eUserRoot
+     *     If supplied, this becomes the root entity into which the model
+     *     will be built. If not supplied, a new entity is created and
+     *     used as root.
      */
     public DefaultEcs.Entity BuildEntity(DefaultEcs.Entity? eUserRoot)
     {
@@ -143,7 +116,7 @@ public class ModelBuilder
             eUserRoot = _engine.CreateEntity($"br {_jModel.Name}");
         }
         
-        var mnRoot = _jModel.RootNode;
+        ModelNode? mnRoot = _jModel.RootNode;
         if (mnRoot == null)
         {
             Warning("Model has no resulting in an empty instance.");
@@ -154,10 +127,13 @@ public class ModelBuilder
 
         /*
          * Now find the first instance desc that we compute our adjustment from.
+         * While finding the first instance desc we will accumulate all transformations
+         * we encounter our way down the tree.
          */
-        ModelNode mnAdjust = null;
+        ModelNode? mnAdjust = null;
 
-        ModelNode mnFirstInstanceDesc = _findFirstInstanceDesc(mnRoot, out var v4GlobalTransform); 
+        Matrix4x4 v4GlobalTransform = _jModel.FirstInstanceDescTransform;
+        ModelNode mnFirstInstanceDesc = _jModel.FirstInstanceDescNode; 
         if (_isHierarchical)
         {
             mnAdjust = mnFirstInstanceDesc;
@@ -171,14 +147,13 @@ public class ModelBuilder
         
         /*
          * if we are hierarchical, we possibly need to create a root node
-         * to enable separate.
+         * to enable separate control.
+         * The model will be built into that root we store in eRoot.
          */
         if (_isHierarchical)
         {
-            {
-                eRoot = _engine.CreateEntity($"ba {_jModel.Name}");
-                _aHierarchy.SetParent(eRoot, eUserRoot);
-            }
+            eRoot = _engine.CreateEntity($"ba {_jModel.Name}");
+            _aHierarchy.SetParent(eRoot, eUserRoot);
         }
         else
         {
@@ -189,6 +164,8 @@ public class ModelBuilder
 
         if (_isHierarchical)
         {
+            ErrorThrow<NotSupportedException>($"Using hierarchical models is not yet supported.");
+            
             /*
              * If we are hierarchical, we need to find the first root node to compute
              * the adjustment from.
@@ -221,13 +198,23 @@ public class ModelBuilder
     {
         return _eAnimations;
     }
-    
+ 
+    /**    
+     * This implementation supports models containing a single
+     * instancedesc in the model.
+     *
+     * If the model node with the instancedesc does not contain
+     * any children, this model is considered non-hierarchical.
+     * Any non-hierachical model will build the instancedesc straight
+     * into the root node.
+     */
     public ModelBuilder(Engine engine, Model jModel, InstantiateModelParams? instantiateModelParams)
     {
         _engine = engine;
         _jModel = jModel;
         _instantiateModelParams = instantiateModelParams;
         _aHierarchy = I.Get<HierarchyApi>();
-        _isHierarchical = (_jModel.RootNode.Children != null && _jModel.RootNode.Children.Count > 0);
+        _mnFirstInstanceDesc = jModel.FirstInstanceDescNode;
+        _isHierarchical = jModel.IsHierarchical;
     }
 }
