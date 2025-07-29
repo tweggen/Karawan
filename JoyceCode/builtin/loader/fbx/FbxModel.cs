@@ -155,6 +155,31 @@ public class FbxModel : IDisposable
     }
 
     
+    private unsafe void _compareBoneHierarchies(Scene* meshScene, Scene* animScene) {
+        // Check if root nodes match
+        _compareNodeRecursive(meshScene->MRootNode, animScene->MRootNode);
+    }
+
+    private unsafe void _compareNodeRecursive(Node* meshNode, Node* animNode) {
+        if (null == meshNode || null == animNode) {
+            ErrorThrow<InvalidOperationException>("Hierarchy mismatch: one node is null\n");
+        }
+    
+        if (meshNode->MName != animNode->MName) {
+            ErrorThrow<InvalidOperationException>($"Node name mismatch: {meshNode->MName} vs {animNode->MName} vs %s\n");
+        }
+    
+        if (meshNode->MNumChildren != animNode->MNumChildren) {
+            ErrorThrow<InvalidOperationException>($"Child count mismatch for {meshNode->MName}: {meshNode->MNumChildren} vs {animNode->MNumChildren}\n");
+        }
+    
+        // Compare transformations
+        if (!EqualsRoughly(meshNode->MTransformation, animNode->MTransformation)) {
+            Error<InvalidOperationException>($"Transformation differs for node: {meshNode->MName}\n");
+        }
+    }
+    
+    
     /**
      * Load a given fbx file into this model.
      * You can also pass additional files to add e.g. animation data.
@@ -242,6 +267,8 @@ public class FbxModel : IDisposable
 
                     DumpMetadata(additionalScene);
 
+                    _compareBoneHierarchies(additionalScene, _scene);
+                    
                     /*
                      * We parse the additional files' children to make sure they match.
                      */
