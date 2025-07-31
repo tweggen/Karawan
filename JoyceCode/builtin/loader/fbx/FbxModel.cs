@@ -155,6 +155,31 @@ public class FbxModel : IDisposable
     }
 
     
+    private unsafe void _compareBoneHierarchies(Scene* meshScene, Scene* animScene) {
+        // Check if root nodes match
+        _compareNodeRecursive(meshScene->MRootNode, animScene->MRootNode);
+    }
+
+    private unsafe void _compareNodeRecursive(Node* meshNode, Node* animNode) {
+        if (null == meshNode || null == animNode) {
+            ErrorThrow<InvalidOperationException>("Hierarchy mismatch: one node is null\n");
+        }
+    
+        if (meshNode->MName != animNode->MName) {
+            ErrorThrow<InvalidOperationException>($"Node name mismatch: {meshNode->MName} vs {animNode->MName} vs %s\n");
+        }
+    
+        if (meshNode->MNumChildren != animNode->MNumChildren) {
+            ErrorThrow<InvalidOperationException>($"Child count mismatch for {meshNode->MName}: {meshNode->MNumChildren} vs {animNode->MNumChildren}\n");
+        }
+    
+        // Compare transformations
+        if (!EqualsRoughly(meshNode->MTransformation, animNode->MTransformation)) {
+            ErrorThrow<InvalidOperationException>($"Transformation differs for node: {meshNode->MName}\n");
+        }
+    }
+    
+    
     /**
      * Load a given fbx file into this model.
      * You can also pass additional files to add e.g. animation data.
@@ -242,6 +267,8 @@ public class FbxModel : IDisposable
 
                     DumpMetadata(additionalScene);
 
+                    _compareBoneHierarchies(additionalScene, _scene);
+                    
                     /*
                      * We parse the additional files' children to make sure they match.
                      */
@@ -507,7 +534,7 @@ public class FbxModel : IDisposable
          * To have some security while debugging, we verify that the data does
          * not contradict.
          */
-        bool verifyData = false;
+        bool isOverridingNode = false;
         bool iHaveMesh = false;
         ModelNode mn = null; 
         if (_model!.MapNodes.ContainsKey(strName))
@@ -517,7 +544,7 @@ public class FbxModel : IDisposable
             /*
              * We silently assume the similarily named node also had the same parent.
              */
-            verifyData = true;
+            isOverridingNode = true;
         }
         else
         {
@@ -531,7 +558,7 @@ public class FbxModel : IDisposable
          */
         if (loadMeshes && node->MNumMeshes > 0)
         {
-            if (verifyData)
+            if (isOverridingNode)
             {
                 ErrorThrow<InvalidOperationException>($"Node {mn.Name} already contained meshes. Mesh extension not supported.");
             }
@@ -598,8 +625,7 @@ public class FbxModel : IDisposable
         {
             var mToParent = Matrix4x4.Transpose(node->MTransformation);
 
-            bool dontOverwrite = false;
-            if (verifyData)
+            if (isOverridingNode)
             {
                 if (!EqualsRoughly(mn.Transform.Matrix, mToParent))
                 {
@@ -607,7 +633,13 @@ public class FbxModel : IDisposable
                     Warning(
                         $"Loading additional fbx node \"{mn.Name}\" matrix mismatch: \nhad {mn.Transform.Matrix}, \nnow {mToParent}.");
                 }
+                // mn.Transform = new Transform3ToParent(true, 0xffffffff, mToParent);
             }
+            else
+            {
+                mn.Transform = new Transform3ToParent(true, 0xffffffff, mToParent);
+            }
+
         }
         else
         {
@@ -620,23 +652,26 @@ public class FbxModel : IDisposable
 
     private static bool EqualsRoughly(in Matrix4x4 a, in Matrix4x4 b)
     {
+        float scale = 1000f;
+        float bias = 500f;
+        
         if (false
-            || ((int)(a.M11 * 1000f)) != ((int)(b.M11 * 1000f))
-            || ((int)(a.M12 * 1000f)) != ((int)(b.M12 * 1000f))
-            || ((int)(a.M13 * 1000f)) != ((int)(b.M13 * 1000f))
-            || ((int)(a.M14 * 1000f)) != ((int)(b.M14 * 1000f))
-            || ((int)(a.M21 * 1000f)) != ((int)(b.M21 * 1000f))
-            || ((int)(a.M22 * 1000f)) != ((int)(b.M22 * 1000f))
-            || ((int)(a.M23 * 1000f)) != ((int)(b.M23 * 1000f))
-            || ((int)(a.M24 * 1000f)) != ((int)(b.M24 * 1000f))
-            || ((int)(a.M31 * 1000f)) != ((int)(b.M31 * 1000f))
-            || ((int)(a.M32 * 1000f)) != ((int)(b.M32 * 1000f))
-            || ((int)(a.M33 * 1000f)) != ((int)(b.M33 * 1000f))
-            || ((int)(a.M34 * 1000f)) != ((int)(b.M34 * 1000f))
-            || ((int)(a.M41 * 1000f)) != ((int)(b.M41 * 1000f))
-            || ((int)(a.M42 * 1000f)) != ((int)(b.M42 * 1000f))
-            || ((int)(a.M43 * 1000f)) != ((int)(b.M43 * 1000f))
-            || ((int)(a.M44 * 1000f)) != ((int)(b.M44 * 1000f))
+            || ((int)(a.M11 * scale+bias)) != ((int)(b.M11 * scale+bias))
+            || ((int)(a.M12 * scale+bias)) != ((int)(b.M12 * scale+bias))
+            || ((int)(a.M13 * scale+bias)) != ((int)(b.M13 * scale+bias))
+            || ((int)(a.M14 * scale+bias)) != ((int)(b.M14 * scale+bias))
+            || ((int)(a.M21 * scale+bias)) != ((int)(b.M21 * scale+bias))
+            || ((int)(a.M22 * scale+bias)) != ((int)(b.M22 * scale+bias))
+            || ((int)(a.M23 * scale+bias)) != ((int)(b.M23 * scale+bias))
+            || ((int)(a.M24 * scale+bias)) != ((int)(b.M24 * scale+bias))
+            || ((int)(a.M31 * scale+bias)) != ((int)(b.M31 * scale+bias))
+            || ((int)(a.M32 * scale+bias)) != ((int)(b.M32 * scale+bias))
+            || ((int)(a.M33 * scale+bias)) != ((int)(b.M33 * scale+bias))
+            || ((int)(a.M34 * scale+bias)) != ((int)(b.M34 * scale+bias))
+            || ((int)(a.M41 * scale+bias)) != ((int)(b.M41 * scale+bias))
+            || ((int)(a.M42 * scale+bias)) != ((int)(b.M42 * scale+bias))
+            || ((int)(a.M43 * scale+bias)) != ((int)(b.M43 * scale+bias))
+            || ((int)(a.M44 * scale+bias)) != ((int)(b.M44 * scale+bias))
            )
         {
             return false;

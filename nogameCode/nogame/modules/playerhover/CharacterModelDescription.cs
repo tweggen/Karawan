@@ -26,7 +26,8 @@ public class CharacterModelDescription
     public string AnimationUrls { get; set; } = "";
     public string Scale { get; set; } = "1";
     public int ModelGeomFlags { get; set; } = 0
-        ;
+                                              | InstantiateModelParams.ROTATE_Y180
+                                              ;
 
     #endif
     
