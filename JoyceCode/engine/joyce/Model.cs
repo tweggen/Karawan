@@ -568,6 +568,8 @@ public class Model
     private void _loadNodesRecursively(ModelNode mn)
     {
         MapNodes[mn.Name] = mn;
+        FindSkeleton().FindBone(mn.Name);
+        
         if (mn.Children != null)
         {
             foreach (var mnChild in mn.Children)
@@ -656,10 +658,7 @@ public class Model
                     /*
                      * All new children need to have bones associated with them.
                      */
-                    if (!skeleton.MapBones.ContainsKey(mnNewChild.Name))
-                    {
-                        skeleton.FindBone(mnNewChild.Name);
-                    }
+                    skeleton.FindBone(mnNewChild.Name);
                     
                     /*
                      * This is a new child. Add it.
