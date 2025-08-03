@@ -67,8 +67,8 @@ public class CharacterModelDescription
     public string Scale { get; set; } = "1";
 
     public int ModelGeomFlags { get; set; } = 0
-                                              | InstantiateModelParams.ROTATE_X90
-                                              | InstantiateModelParams.ROTATE_X180
+                                              // | InstantiateModelParams.ROTATE_X90
+                                              // | InstantiateModelParams.ROTATE_X180
                                               //| InstantiateModelParams.ROTATE_Y180
         ;
 

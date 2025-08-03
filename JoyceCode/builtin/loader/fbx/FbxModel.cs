@@ -8,6 +8,7 @@ using builtin.extensions;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
+using FbxSharp;
 using Silk.NET.Assimp;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 using Material = Silk.NET.Assimp.Material;
@@ -57,6 +58,7 @@ public class FbxModel : IDisposable
 
     private static unsafe void DumpMetadata(Scene* pScene)
     {
+        return;
         if (null == pScene->MMetaData)
         {
             return;
@@ -199,7 +201,7 @@ public class FbxModel : IDisposable
          * That's a bit hacky, but load the main file animations and the bones only, if
          * there are no additional files.
          */
-        bool haveAdditionalFiles = (additionalUrls == null || additionalUrls.Count == 0);
+        bool haveAdditionalFiles = !(additionalUrls == null || additionalUrls.Count == 0);
         bool loadMainAnimations = haveAdditionalFiles;
         bool loadMainNodes = !haveAdditionalFiles;
 
@@ -219,11 +221,16 @@ public class FbxModel : IDisposable
         
         FileIO fileIO = fbx.Assets.Get();
         FileIO* pFileIO = &fileIO;
-        _scene = _assimp.ImportFileEx(
+        PropertyStore *properties = _assimp.CreatePropertyStore();
+        // TXWTODO: Does not work.
+        // _assimp.SetImportPropertyInteger(properties, "IMPORT_FBX_PRESERVE_PIVOT", 1);
+        _scene = _assimp.ImportFileExWithProperties(
             path,
             (uint)PostProcessSteps.Triangulate,
-            pFileIO
+            pFileIO,
+            properties
         );
+        _assimp.ReleasePropertyStore(properties);
         Trace($"Loaded \"{path}\"");
         DumpMetadata(_scene);
         if (_scene == null || _scene->MFlags == Assimp.SceneFlagsIncomplete || _scene->MRootNode == null)
@@ -232,8 +239,14 @@ public class FbxModel : IDisposable
             throw new Exception(error);
         }
 
-        model.RootNode = _processNode(null, _scene->MRootNode, true, loadMainNodes, out var _);
-        _model.MapNodes[model.RootNode.Name] = model.RootNode;
+        model.SetRootNode(_processNode(null, _scene->MRootNode,
+            new MergePolicy()
+            {
+                LoadMainNodes = loadMainNodes,
+                LoadMeshes = true
+            },
+            out var _));
+        Trace(model.RootNode.DumpNode());
         
         /*
          * Now load all the animations. First the ones from the main file.
@@ -241,6 +254,10 @@ public class FbxModel : IDisposable
 
         if (loadMainAnimations)
         {
+            /*
+             * Note, that if we load the main animations, we also already had loaded the main nodes,
+             * i.e. the bones.
+             */
             _loadAnimations(_scene, "");
         }
 
@@ -272,7 +289,19 @@ public class FbxModel : IDisposable
                     /*
                      * We parse the additional files' children to make sure they match.
                      */
-                    _processNode(null, additionalScene->MRootNode, false, true, out var _);
+                    MergePolicy mp = new()
+                    {
+                        LoadMeshes = false,
+                        LoadMainNodes = true
+                    };
+                    ModelNode? mnNewRoot = _processNode(
+                        null, additionalScene->MRootNode,
+                        mp, out var _);
+                    if (null != mnNewRoot)
+                    {
+                        Trace(mnNewRoot.DumpNode());
+                        _model.MergeInModelNode(mnNewRoot, mp);
+                    }
                     
                     string strFallbackName = url;
                     int idx = strFallbackName.LastIndexOf('/');
@@ -627,7 +656,7 @@ public class FbxModel : IDisposable
         {
             var mToParent = Matrix4x4.Transpose(node->MTransformation);
             mn.Transform = new Transform3ToParent(true, 0xffffffff, mToParent);
-
+            
             return mn;
 
         }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BepuPhysics.Collidables;
 
 namespace engine.joyce;
 
@@ -26,10 +27,10 @@ public class ModelNode
      */
     public string Name;
 
-    /**
+    /*
      * A node index unique within the parent model.
      */
-    public int Index;
+    // public int Index;
 
     /**
      * What kind of entity relevant data does this one carry below in its children?
@@ -58,13 +59,43 @@ public class ModelNode
     public InstanceDesc? InstanceDesc;
 
     /**
-     * If non-null describes the skin.
-     */
-    public Skin? Skin;
-    
-    /**
      * If non-null, contains a transformation relative to the parent.
      */
     public engine.joyce.components.Transform3ToParent Transform;
+    
+    
+    private string _dumpNodeLevel(int level)
+    {
+        string s = "";
+        string t = new(' ', level * 4);
+        {
+            s += "{\n";
+            s += $"{t}\"name\": \"{Name}\",\n";
+            if (Children != null)
+            {
+                s += $"{t}\"children\": ";
+                if (Children != null)
+                {
+                    foreach (var mnChild in Children)
+                    {
+                        s += $"{mnChild._dumpNodeLevel(level + 1)}";
+                    }
+                }
+                else
+                {
+                    s += "null";
+                }
+            }
+
+            s += $"{t}}},\n";
+        }
+        return s;
+    }
+
+    public string DumpNode()
+    {
+        return _dumpNodeLevel(0);
+    }
+
 }
 

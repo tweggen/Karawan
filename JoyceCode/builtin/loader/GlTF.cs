@@ -16,7 +16,6 @@ using engine.joyce.components;
 using glTFLoader;
 using glTFLoader.Schema;
 using static engine.Logger;
-using Skin = engine.joyce.Skin;
 
 namespace builtin.loader;
 

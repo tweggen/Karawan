@@ -23,13 +23,6 @@ public class Joint
 }
 
 
-public class Skin
-{
-    public string Name;
-    public IList<Joint> Joints;
-}
-
-
 /**
  * Represent a loaded or generated model.
  *
@@ -97,7 +90,7 @@ public class Model
         {
             Parent = null,
             Model = this,
-            Index = _nextNodeIndex++
+            // Index = _nextNodeIndex++
         };
     }
 
@@ -550,10 +543,59 @@ public class Model
     {
         mn.Transform = mnNew.Transform;
     }
+
+
+    public string DumpNodes()
+    {
+        string s = "";
+        s += "{\n";
+        s += "    \"nodes\": \n";
+        if (RootNode != null)
+        {
+            s += RootNode.DumpNode();
+        }
+        else
+        {
+            s += "null,";
+        }
+
+        s += "},\n";
+
+        return s;
+    }
     
 
-    public void MergeInModelNode(ModelNode mn, ModelNode mnNew, MergePolicy mp)
+    private void _loadNodesRecursively(ModelNode mn)
     {
+        MapNodes[mn.Name] = mn;
+        if (mn.Children != null)
+        {
+            foreach (var mnChild in mn.Children)
+            {
+                _loadNodesRecursively(mnChild);
+            }
+        }
+    }
+    
+
+    public void SetRootNode(ModelNode mn)
+    {
+        RootNode = mn;
+        _loadNodesRecursively(mn);
+    }
+
+
+    /**
+     * Recursively merge in the given node into the model.
+     * We, the parent node, are responsible of merging in the nodes into the MapNodes.
+     */
+    private void _mergeInModelNode(ModelNode mn, ModelNode mnNew, MergePolicy mp)
+    {
+        /*
+         * Step zero: Add this node to the node map if it did not exist.
+         */
+        bool didExist = MapNodes.TryGetValue(mnNew.Name, out var mnOld);
+        
         /*
          * Step one: Make sure mn will have all the children mnNew already has.
          * Ensure that the new bones are part of the skeleton.
@@ -580,8 +622,9 @@ public class Model
                  * the same parent.
                  */
                 bool nodeExistingModel = MapNodes.TryGetValue(mnNewChild.Name, out var mnOldByMap);
-                
+
                 ModelNode? mnOldChild = mn.Children.FirstOrDefault(mnCand => mnCand.Name == mnNewChild.Name);
+
                 if (mnOldChild != null)
                 {
                     /*
@@ -596,22 +639,20 @@ public class Model
                     /*
                      * We need to merge an old child with a new one.
                      */
-                    MergeInModelNode(mnOldChild, mnNewChild, mp);
-                    
+                    _mergeInModelNode(mnOldChild, mnNewChild, mp);
                 }
                 else
                 {
                     /*
-                     * If it was not found in the parent node, it must not already exist in the node map.
+                     * If it was not found in the parent node, it must not exist in the node map.
                      */
                     if (nodeExistingModel)
                     {
                         ErrorThrow<InvalidDataException>(
                             $"Node {mnNewChild.Name} was not known to the parent but in node map.");
                     }
+                    MapNodes[mnNewChild.Name] = mnNewChild;
 
-                    MapNodes.Add(mnNewChild.Name, mnNewChild);
-                    
                     /*
                      * All new children need to have bones associated with them.
                      */
@@ -632,12 +673,49 @@ public class Model
         }
 
         /*
-         * Step two: Merge the contents of mnNew with the existing content
-         * in mn
+         * Step two: Merge the actual contents.
          */
+        {
+            // TXWTODO: Care about the entity data
+
+            /*
+             * Children already are merged.
+             */
+            
+            /*
+             * Instance desc cannot be merged, only ovetwritten
+             */
+            if (mnNew.InstanceDesc != null)
+            {
+                if (mn.InstanceDesc == mnNew.InstanceDesc)
+                {
+                    ErrorThrow<InvalidDataException>($"Trying to merge two different instancedesc on {mn.Name}");
+                }
+                mn.InstanceDesc = mnNew.InstanceDesc;
+            }
+            
+            /*
+             * Finally, merge the transformation
+             */
+            _mergeInModelNodeTransformation(mn, mnNew, mp);
+        }
     }
 
 
+    /**
+     * Merge in the given node into this model.
+     */
+    public void MergeInModelNode(ModelNode mnNew, MergePolicy mp)
+    {
+        if (null == RootNode)
+        {
+            RootNode = mnNew;
+            MapNodes[mnNew.Name] = mnNew;
+        }
+        _mergeInModelNode(RootNode, mnNew, mp);
+    }
+
+    
     public Model()
     {
     }
