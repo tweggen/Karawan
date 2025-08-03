@@ -201,7 +201,7 @@ public class FbxModel : IDisposable
          */
         bool haveAdditionalFiles = (additionalUrls == null || additionalUrls.Count == 0);
         bool loadMainAnimations = haveAdditionalFiles;
-        bool loadMainNodes = haveAdditionalFiles;
+        bool loadMainNodes = !haveAdditionalFiles;
 
         /*
          * Prepare data structures.
@@ -518,10 +518,16 @@ public class FbxModel : IDisposable
     }
     
     
-    private unsafe engine.joyce.ModelNode _processNode(
+    /**
+     * Iterate through the hierarchy of assimp nodes. Depending on the mode of operation, only load and
+     * create the nodes
+     * - containing the mesh
+     * - containg other data
+     * Return the corresponding model node and wether we had a mesh below of us.
+     */
+    private unsafe engine.joyce.ModelNode? _processNode(
         ModelNode mnParent,
-        Node* node, bool loadMeshes, 
-        bool loadMainNodes,
+        Node* node, MergePolicy mp,
         out bool meshInOrBelowMe)
     {
         string strName = node->MName.ToString();
@@ -529,36 +535,31 @@ public class FbxModel : IDisposable
         var skeleton = _model!.FindSkeleton(); 
 
         /*
-         * We may be asked to load contents for a node that previously had been loaded.
-         * Our job is to enrich the node, not to override it.
-         * To have some security while debugging, we verify that the data does
-         * not contradict.
+         * We need a model node to load our data into.
+         * We start by creating a temporary node. After loading we
+         * decide if we want to override an existing node.
          */
-        bool isOverridingNode = false;
+        bool couldOverrideNode = false;
         bool iHaveMesh = false;
-        ModelNode mn = null; 
+
+        ModelNode mn = _model.CreateNode();
+        mn.Name = strName;
+
         if (_model!.MapNodes.ContainsKey(strName))
         {
-            mn = _model.MapNodes[strName];
-            
             /*
              * We silently assume the similarily named node also had the same parent.
              */
-            isOverridingNode = true;
-        }
-        else
-        {
-            mn = _model.CreateNode();
-            mn.Name = strName;
+            couldOverrideNode = true;
         }
         
         /*
          * If there are meshes, add them.
          * We do not support adding meshes. 
          */
-        if (loadMeshes && node->MNumMeshes > 0)
+        if (mp.LoadMeshes && node->MNumMeshes > 0)
         {
-            if (isOverridingNode)
+            if (couldOverrideNode)
             {
                 ErrorThrow<InvalidOperationException>($"Node {mn.Name} already contained meshes. Mesh extension not supported.");
             }
@@ -586,67 +587,54 @@ public class FbxModel : IDisposable
         }
 
         /*
-         * If there are children, parsing them according to load mode.
+         * If there are children, parse them according to load mode.
+         * Remember, we are loading into a temporary node.
+         * The children will later be merged with the real tree.
          */
         if (node->MNumChildren > 0)
         {
             for (var i = 0; i < node->MNumChildren; i++)
             {
                 var aiChild = node->MChildren[i];
-                var mnChild = _processNode(mn, aiChild, loadMeshes, loadMainNodes, out var childOrBelowHasMesh);
-                meshInOrBelowMe |= childOrBelowHasMesh;
-                bool isChildNewNode = !_model.MapNodes.ContainsKey(mnChild.Name);
-                
-                /*
-                 * If this is a new node,
-                 * we want to add this node if it either contains a child with a
-                 * mesh or we are in loadMainNodes mode.
-                 */
-                if (isChildNewNode &&
-                    (childOrBelowHasMesh || loadMainNodes)
-                   )
+                var mnChild = _processNode(mn, aiChild, mp, out var childOrBelowHasMesh);
+                if (null != mnChild)
                 {
+                    meshInOrBelowMe |= childOrBelowHasMesh;
+                
                     mn.AddChild(mnChild);
-                    _model!.MapNodes[mnChild.Name] = mnChild;
                     
+                } 
+                else
+                {
                     /*
-                     * Also look, if this node is known in the skeleton.
-                     * If not, add it.
+                     * If the child is irrelevant in the context of the call
+                     * we skip it.
                      */
-                    if (!skeleton.MapBones.ContainsKey(mnChild.Name))
-                    {
-                        skeleton.FindBone(mnChild.Name);
-                    }
+
                 }
             }
         }
 
-        if (true || loadMainNodes)
+        /*
+         * Look if we want to store the model node we wrote, either by adding it to a
+         * parent or by overriding an existing node. 
+         *
+         * We would do so, if
+         * - I am supposed to load the mesh and any of my children contains a mesh.
+         * - If I am supposed to load the main nodes, store my matrix as well.
+         */
+        if ((mp.LoadMeshes && meshInOrBelowMe) || mp.LoadMainNodes)
         {
             var mToParent = Matrix4x4.Transpose(node->MTransformation);
+            mn.Transform = new Transform3ToParent(true, 0xffffffff, mToParent);
 
-            if (isOverridingNode)
-            {
-                if (!EqualsRoughly(mn.Transform.Matrix, mToParent))
-                {
-                    Warning($"Model already contained a node with the same name \"{strName}\".");
-                    Warning(
-                        $"Loading additional fbx node \"{mn.Name}\" matrix mismatch: \nhad {mn.Transform.Matrix}, \nnow {mToParent}.");
-                }
-                // mn.Transform = new Transform3ToParent(true, 0xffffffff, mToParent);
-            }
-            else
-            {
-                mn.Transform = new Transform3ToParent(true, 0xffffffff, mToParent);
-            }
+            return mn;
 
         }
         else
         {
-            mn.Transform = new Transform3ToParent(true, 0xffffffff, Matrix4x4.Identity);
+            return null;
         }
-
-        return mn;
     }
 
 

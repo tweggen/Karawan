@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Numerics;
 using BepuUtilities;
 using builtin.extensions;
+using builtin.loader;
+using engine.joyce.components;
 using FbxSharp;
 using static engine.Logger;
 
@@ -541,6 +545,98 @@ public class Model
         }
     }
     
+
+    private void _mergeInModelNodeTransformation(ModelNode mn, ModelNode mnNew, MergePolicy mp)
+    {
+        mn.Transform = mnNew.Transform;
+    }
+    
+
+    public void MergeInModelNode(ModelNode mn, ModelNode mnNew, MergePolicy mp)
+    {
+        /*
+         * Step one: Make sure mn will have all the children mnNew already has.
+         * Ensure that the new bones are part of the skeleton.
+         */
+
+        if (mnNew.Children != null) 
+        {
+            if (mn.Children == null)
+            {
+                mn.Children = new List<ModelNode>();
+            }
+            
+            var skeleton = FindSkeleton();
+            
+            /*
+             * We keep a list of children to add to this node.
+             */
+            List<ModelNode> newChildren = new(); 
+
+            foreach (var mnNewChild in mnNew.Children)
+            {
+                /*
+                 * If this model node exists in the current model, it has to have
+                 * the same parent.
+                 */
+                bool nodeExistingModel = MapNodes.TryGetValue(mnNewChild.Name, out var mnOldByMap);
+                
+                ModelNode? mnOldChild = mn.Children.FirstOrDefault(mnCand => mnCand.Name == mnNewChild.Name);
+                if (mnOldChild != null)
+                {
+                    /*
+                     * If it was found in the parent node, it must also already exist in the node map.
+                     */
+                    if (!nodeExistingModel)
+                    {
+                        ErrorThrow<InvalidDataException>(
+                            $"Node {mnNewChild.Name} was known to the parent but not in node map.");
+                    }
+                    
+                    /*
+                     * We need to merge an old child with a new one.
+                     */
+                    MergeInModelNode(mnOldChild, mnNewChild, mp);
+                    
+                }
+                else
+                {
+                    /*
+                     * If it was not found in the parent node, it must not already exist in the node map.
+                     */
+                    if (nodeExistingModel)
+                    {
+                        ErrorThrow<InvalidDataException>(
+                            $"Node {mnNewChild.Name} was not known to the parent but in node map.");
+                    }
+
+                    MapNodes.Add(mnNewChild.Name, mnNewChild);
+                    
+                    /*
+                     * All new children need to have bones associated with them.
+                     */
+                    if (!skeleton.MapBones.ContainsKey(mnNewChild.Name))
+                    {
+                        skeleton.FindBone(mnNewChild.Name);
+                    }
+                    
+                    /*
+                     * This is a new child. Add it.
+                     */
+                    newChildren.Add(mnNewChild);
+                }
+                
+            }
+
+            mn.Children.AddRange(newChildren);
+        }
+
+        /*
+         * Step two: Merge the contents of mnNew with the existing content
+         * in mn
+         */
+    }
+
 
     public Model()
     {

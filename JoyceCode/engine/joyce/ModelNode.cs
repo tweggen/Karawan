@@ -39,7 +39,7 @@ public class ModelNode
     /**
      * If non-null, contains a list of children of this node.
      */
-    public IList<ModelNode>? Children;
+    public List<ModelNode>? Children;
 
     public void AddChild(ModelNode mnChild)
     {
