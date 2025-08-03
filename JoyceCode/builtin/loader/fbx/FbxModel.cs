@@ -247,7 +247,7 @@ public class FbxModel : IDisposable
             },
             out var _));
         Trace(model.RootNode.DumpNode());
-        
+
         /*
          * Now load all the animations. First the ones from the main file.
          */
@@ -300,7 +300,15 @@ public class FbxModel : IDisposable
                     if (null != mnNewRoot)
                     {
                         Trace(mnNewRoot.DumpNode());
-                        _model.MergeInModelNode(mnNewRoot, mp);
+                        try
+                        {
+                            _model.MergeInModelNode(mnNewRoot, mp);
+                        }
+                        catch (Exception e)
+                        {
+                            Trace($"Exception while merging model: {e}");
+                        }
+
                         Trace($"Afer merge");
                         Trace(_model.RootNode.DumpNode());;
 
@@ -397,7 +405,7 @@ public class FbxModel : IDisposable
                 }
                 
                 string channelNodeName = aiChannel->MNodeName.ToString();
-                // Trace($"Animation \"{ma.Name}\" controls channel: {channelNodeName}");
+                Trace($"Animation \"{ma.Name}\" controls channel: {channelNodeName}");
                 if (!_model.MapNodes.ContainsKey(channelNodeName))
                 {
                     Warning($"Found animation channel for unknown node {channelNodeName}, ignoring.");
