@@ -586,6 +586,24 @@ public class Model
         _loadNodesRecursively(mn);
     }
 
+    
+    private void _addChildrenRecursively(ModelNode mn, MergePolicy mp)
+    {
+        if (mn.Children != null)
+        {
+            foreach (var mnChild in mn.Children)
+            {
+                if (MapNodes.ContainsKey(mnChild.Name))
+                {
+                    ErrorThrow<InvalidDataException>($"Node {mnChild.Name} already exists in the model, structure clash.");
+                }
+                MapNodes[mnChild.Name] = mnChild;
+                FindSkeleton().FindBone(mnChild.Name);
+                _addChildrenRecursively(mnChild, mp);
+            }
+        }
+    }
+        
 
     /**
      * Recursively merge in the given node into the model.
@@ -664,6 +682,8 @@ public class Model
                      * This is a new child. Add it.
                      */
                     newChildren.Add(mnNewChild);
+                    
+                    _addChildrenRecursively(mnNewChild, mp);
                 }
                 
             }

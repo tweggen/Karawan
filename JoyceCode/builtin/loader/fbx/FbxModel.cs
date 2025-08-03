@@ -290,7 +290,7 @@ public class FbxModel : IDisposable
                      * We parse the additional files' children to make sure they match.
                      */
                     MergePolicy mp = new()
-                    {
+                    { 
                         LoadMeshes = false,
                         LoadMainNodes = true
                     };
@@ -301,6 +301,9 @@ public class FbxModel : IDisposable
                     {
                         Trace(mnNewRoot.DumpNode());
                         _model.MergeInModelNode(mnNewRoot, mp);
+                        Trace($"Afer merge");
+                        Trace(_model.RootNode.DumpNode());;
+
                     }
                     
                     string strFallbackName = url;

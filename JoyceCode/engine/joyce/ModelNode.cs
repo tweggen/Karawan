@@ -70,7 +70,19 @@ public class ModelNode
         string t = new(' ', level * 4);
         {
             s += "{\n";
-            s += $"{t}\"name\": \"{Name}\",\n";
+            s += $"{t}\"name\": \"{Name}\"";
+            if (Model != null && Model.MapNodes != null)
+            {
+                if (Model.MapNodes.ContainsKey(Name))
+                {
+                    s += " (added)";
+                }
+                else
+                {
+                    s += " (standalone)";
+                }
+            }
+            s += ",\n";
             if (Children != null)
             {
                 s += $"{t}\"children\": ";
