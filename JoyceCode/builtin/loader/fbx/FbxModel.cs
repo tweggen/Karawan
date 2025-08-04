@@ -223,7 +223,8 @@ public class FbxModel : IDisposable
         FileIO* pFileIO = &fileIO;
         PropertyStore *properties = _assimp.CreatePropertyStore();
         // TXWTODO: Does not work.
-        // _assimp.SetImportPropertyInteger(properties, "IMPORT_FBX_PRESERVE_PIVOT", 1);
+        _assimp.SetImportPropertyInteger(properties, "IMPORT_FBX_PRESERVE_PIVOT", 1);
+        _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_REMOVE_EMPTY_BONES", 0);
         _scene = _assimp.ImportFileExWithProperties(
             path,
             (uint)PostProcessSteps.Triangulate,
