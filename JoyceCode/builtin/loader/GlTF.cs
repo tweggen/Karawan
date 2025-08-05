@@ -564,7 +564,8 @@ public class GlTF
                 gltfNode.Rotation[2], gltfNode.Rotation[3]));
         m *= Matrix4x4.CreateTranslation(
             gltfNode.Translation[0], gltfNode.Translation[1], gltfNode.Translation[2]);
-        mn = new() { Model = _jModel, Parent = mnParent, Name = gltfNode.Name };
+        mn = _jModel.ModelNodeTree.CreateNode(_jModel, mnParent);
+        mn.Name = gltfNode.Name;
         _dictNodesByGltf[idxGltfNode] = mn;
         mn.Transform = new Transform3ToParent(
             true, 0xffffffff, m
@@ -760,7 +761,7 @@ public class GlTF
 
         foreach (var glAnimation in glAnimations)
         {
-            ModelAnimation ma = jModel.CreateAnimation();
+            ModelAnimation ma = jModel.CreateAnimation(null);
             ma.Name = glAnimation.Name;
             
             /*
@@ -913,7 +914,7 @@ public class GlTF
          */
         if (rootNodes.Count == 1)
         {
-            jModel.RootNode = rootNodes[0];
+            jModel.ModelNodeTree.RootNode = rootNodes[0];
         }
         else if (rootNodes.Count > 0)
         {
@@ -921,9 +922,10 @@ public class GlTF
             {
                 Parent = null,
                 Children = rootNodes,
-                Model = jModel
+                Model = jModel,
+                ModelNodeTree = jModel.ModelNodeTree
             };
-            jModel.RootNode = mnRoot;
+            jModel.ModelNodeTree.RootNode = mnRoot;
             foreach (var mnRootChild in rootNodes)
             {
                 mnRootChild.Parent = mnRoot;

@@ -80,18 +80,8 @@ public class Obj
         List<engine.joyce.Mesh> meshes = new();
         List<engine.joyce.Material> materials = new();
         List<int> meshMaterials = new();
-        List<ModelNode> modelNodes = new();
 
         List<ObjLoader.Loader.Data.Material> listMaterials = new();
-
-        model = new Model();
-        ModelNode mnRoot = new()
-        {
-            Model = model,
-            Parent = null,
-            Transform = new(true, 0xffff, Matrix4x4.Identity)
-        };
-
 
         string primarycolor = "";
         if (modelProperties != null && modelProperties.Properties.TryGetValue("primarycolor", out var col))
@@ -99,6 +89,8 @@ public class Obj
             primarycolor = col;
         }
 
+        model = new();
+        var mnRoot = model.ModelNodeTree.CreateNode(model);
         foreach (var loadedMaterial in loadedObject.Materials)
         {
             engine.joyce.Material jMaterial = new();
@@ -231,13 +223,15 @@ public class Obj
             }
 
             meshes.Add(jMesh);
-            modelNodes.Add(mnRoot);
             int idxMaterial = listMaterials.IndexOf(loadedGroup.Material);
             meshMaterials.Add(idxMaterial);
         }
-
-        mnRoot.InstanceDesc = new(meshes, meshMaterials, materials, modelNodes, 100f);
-        model.RootNode = mnRoot;
+        
+        InstanceDesc id = new(meshes, meshMaterials, materials, new List<ModelNode>() {mnRoot}, 100f);
+        mnRoot.SetInstanceDesc(id);
+        mnRoot.SetModel(model);
+        model.ModelNodeTree.RootNode = mnRoot;
+            
         model.Polish();
         // TXWTODO: read the maximal distance from some properties
     }

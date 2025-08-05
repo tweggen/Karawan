@@ -71,7 +71,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
             estate.GetCenter()) with { Y = _clusterDesc.AverageHeight + 2.5f };
         worldFragment.AddStaticInstance(
             0x00000001,
-            "nogame.furniture.polytopeStand", modelStand.RootNode.InstanceDesc,
+            "nogame.furniture.polytopeStand", modelStand.ModelNodeTree.RootNode.InstanceDesc,
                 vPos, Quaternion.Identity, null);
         // Trace($"in frag {worldFragment.GetId()} Placing polytope @{worldFragment.Position+vPos}");
         
@@ -97,9 +97,9 @@ public class GeneratePolytopeOperator : IFragmentOperator
          */
         var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
         {
-            var jInstanceDesc = modelBall.RootNode.InstanceDesc;
+            var jInstanceDesc = modelBall.ModelNodeTree.RootNode.InstanceDesc;
             eTarget.Set(new engine.world.components.Owner(worldFragment.NumericalId));
-            eTarget.Set(new engine.joyce.components.Instance3(modelBall.RootNode.InstanceDesc));
+            eTarget.Set(new engine.joyce.components.Instance3(modelBall.ModelNodeTree.RootNode.InstanceDesc));
             
             //eTarget.Set(new engine.audio.components.MovingSound(
             //    _getCar3Sound(carIdx), 150f));

@@ -185,7 +185,7 @@ public class FindLights
                 IsBillboardTransform = true
             });
         
-        ModelNode mnRoot = model.RootNode;
+        ModelNode mnRoot = model.ModelNodeTree.RootNode;
         _processNode(mnRoot);
         
         return model;

@@ -13,7 +13,7 @@ public class CharacterModelDescription
     public string ModelUrl { get; set; } = "player.glb";
     #endif
     
-    #if false
+    #if true
     /*
      * Studio Ochi
      */
@@ -50,7 +50,7 @@ public class CharacterModelDescription
 
     #endif
 
-    #if true
+    #if false
     /*
      * polyperfect
      */

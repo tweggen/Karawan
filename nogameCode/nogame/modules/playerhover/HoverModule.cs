@@ -255,8 +255,8 @@ public class HoverModule : AModule, IInputPart
              * thing bounces away to nirvana very soon.
              * Therefore we set the previously hard coded 1.4 as a lower limit.
              */
-            float bodyRadius = _model.RootNode.InstanceDesc != null
-                ? _model.RootNode.InstanceDesc.AABBTransformed.Radius
+            float bodyRadius = _model.ModelNodeTree.RootNode.InstanceDesc != null
+                ? _model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.Radius
                 : 1.4f;
 
             engine.physics.CollisionProperties collisionProperties =
@@ -276,8 +276,8 @@ public class HoverModule : AModule, IInputPart
                 uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
                     _engine.PLog, _engine.Simulation,
                     Single.Max(1.4f, bodyRadius), 
-                    _model.RootNode.InstanceDesc != null 
-                        ? _model.RootNode.InstanceDesc.AABBTransformed.BB.Y-_model.RootNode.InstanceDesc.AABBTransformed.BB.Y
+                    _model.ModelNodeTree.RootNode.InstanceDesc != null 
+                        ? _model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.BB.Y-_model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.BB.Y
                         : 1.0f,
                     out var pbody);
                 var inertia = pbody.ComputeInertia(MassShip);

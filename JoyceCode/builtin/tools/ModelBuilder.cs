@@ -122,7 +122,7 @@ public class ModelBuilder
             eUserRoot = _engine.CreateEntity($"br {_jModel.Name}");
         }
         
-        ModelNode? mnRoot = _jModel.RootNode;
+        ModelNode? mnRoot = _jModel.ModelNodeTree.RootNode;
         if (mnRoot == null)
         {
             Warning("Model has no resulting in an empty instance.");

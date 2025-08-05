@@ -58,6 +58,29 @@ public class ModelNode
         mnChild.Parent = this;
     }
 
+
+    public void SetInstanceDesc(InstanceDesc id)
+    {
+        InstanceDesc = id;
+        Transform = new(true, 0xffff, Matrix4x4.Identity);
+    }
+
+
+    public void SetModel(Model model, ModelNodeTree? modelNodeTree = null)
+    {
+        Model = model;
+        if (modelNodeTree != null)
+        {
+            ModelNodeTree = modelNodeTree;
+        }
+        else
+        {
+            ModelNodeTree = Model.ModelNodeTree;
+        }
+            
+    }
+    
+    
     /**
      * If non-null, contains a instance desc with meshes and
      * materials associated with this node.
@@ -185,4 +208,3 @@ public class ModelNode
         return m4ParentTransform;
     }
 }
-

@@ -55,18 +55,9 @@ public class Model
     public ModelNode? FirstInstanceDescNode { get; private set; } = null;
     public Matrix4x4 FirstInstanceDescTransform { get; private set; } = Matrix4x4.Identity;
 
-    public ModelNodeTree ModelNodeTree { get; set; } 
+    public ModelNodeTree ModelNodeTree { get; private set; } 
     
     
-    /**
-     * Convenience method to create a model from a single InstanceDesc
-     */
-    public Model(InstanceDesc instanceDesc)
-    {
-        ModelNodeTree = new(this, instanceDesc);
-    }
-
-
     public ModelAnimation CreateAnimation(ModelNode? mnRestPose)
     {
         return new ModelAnimation()
@@ -460,7 +451,18 @@ public class Model
         ModelNodeTree.DumpNodes();
     }
 
+    
     public Model()
     {
+        ModelNodeTree = new();
+    }
+    
+    
+    /**
+     * Convenience method to create a model from a single InstanceDesc
+     */
+    public Model(InstanceDesc instanceDesc)
+    {
+        ModelNodeTree = new(this, instanceDesc);
     }
 }

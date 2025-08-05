@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -220,11 +221,11 @@ public class ModelNodeTree
     }
 
     
-    public ModelNode CreateNode(Model model)
+    public ModelNode CreateNode(Model model, ModelNode? parent = null)
     {
         return new()
         {
-            Parent = null,
+            Parent = parent,
             Model = model,
             ModelNodeTree = this,
         };
@@ -240,5 +241,10 @@ public class ModelNodeTree
             InstanceDesc = instanceDesc,
             Transform = new(true, 0xffff, Matrix4x4.Identity)
         };
+        instanceDesc.ModelNodes = new List<ModelNode>() { mnRoot }.AsReadOnly();
+    }
+
+    public ModelNodeTree()
+    {
     }
 }
