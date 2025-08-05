@@ -61,7 +61,7 @@ public class ModelNodeTree
         {
             foreach (var mnChild in mn.Children)
             {
-                _loadNodesRecursively(mnChild);
+                _loadNodesRecursively(mnChild, skeleton);
             }
         }
     }
@@ -94,9 +94,9 @@ public class ModelNodeTree
 
     /**
      * Recursively merge in the given node into the model.
-     * We, the parent node, are responsible of merging in the nodes into the MapNodes.
+     * We, the parent node, are responsible for merging in the nodes into the MapNodes.
      */
-    private void _mergeInModelNode(ModelNode mn, ModelNode mnNew, MergePolicy mp)
+    private void _mergeInModelNode(ModelNode mn, ModelNode mnNew, MergePolicy mp, Skeleton? skeleton)
     {
         /*
          * Step zero: Add this node to the node map if it did not exist.
@@ -114,8 +114,6 @@ public class ModelNodeTree
             {
                 mn.Children = new List<ModelNode>();
             }
-            
-            var skeleton = FindSkeleton();
             
             /*
              * We keep a list of children to add to this node.
@@ -146,7 +144,7 @@ public class ModelNodeTree
                     /*
                      * We need to merge an old child with a new one.
                      */
-                    _mergeInModelNode(mnOldChild, mnNewChild, mp);
+                    _mergeInModelNode(mnOldChild, mnNewChild, mp, skeleton);
                 }
                 else
                 {
@@ -163,14 +161,14 @@ public class ModelNodeTree
                     /*
                      * All new children need to have bones associated with them.
                      */
-                    skeleton.FindBone(mnNewChild.Name);
+                    skeleton?.FindBone(mnNewChild.Name);
                     
                     /*
                      * This is a new child. Add it.
                      */
                     newChildren.Add(mnNewChild);
                     
-                    _addChildrenRecursively(mnNewChild, mp);
+                    _addChildrenRecursively(mnNewChild, mp, skeleton);
                 }
                 
             }
@@ -211,14 +209,14 @@ public class ModelNodeTree
     /**
      * Merge in the given node into this model.
      */
-    public void MergeInModelNode(ModelNode mnNew, MergePolicy mp)
+    public void MergeInModelNode(ModelNode mnNew, MergePolicy mp, Skeleton? skeleton)
     {
         if (null == RootNode)
         {
             RootNode = mnNew;
             MapNodes[mnNew.Name] = mnNew;
         }
-        _mergeInModelNode(RootNode, mnNew, mp);
+        _mergeInModelNode(RootNode, mnNew, mp, skeleton);
     }
 
     

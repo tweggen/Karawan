@@ -175,8 +175,8 @@ public class WalkModule : AModule, IInputPart
                  * thing bounces away to nirvana very soon.
                  * Therefore we set the previously hard coded 1.4 as a lower limit.
                  */
-                float bodyRadius = _model.RootNode.InstanceDesc != null
-                    ? _model.RootNode.InstanceDesc.AABBTransformed.Radius
+                float bodyRadius = _model.ModelNodeTree.RootNode.InstanceDesc != null
+                    ? _model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.Radius
                     : 1.4f;
 
                 engine.physics.CollisionProperties collisionProperties =

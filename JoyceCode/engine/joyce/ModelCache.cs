@@ -132,7 +132,7 @@ public class ModelCache
 
         if (mcp.Params != null && (mcp.Params.GeomFlags & InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC) != 0)
         {
-            if (null == model.RootNode || null == model.RootNode.InstanceDesc)
+            if (null == model.ModelNodeTree || null == model.ModelNodeTree.RootNode || null == model.ModelNodeTree.RootNode.InstanceDesc)
             {
                 ErrorThrow($"Reading url {mcp.Url} model does not have a root model instance defined.",
                     m => new ArgumentException(m));
@@ -468,7 +468,7 @@ public class ModelCache
     public void BuildPerInstancePhysics(in DefaultEcs.Entity eRoot,
         ModelBuilder modelBuilder, Model model, ModelCacheParams mcp)
     {
-        if (model.RootNode == null || model.RootNode.InstanceDesc == null)
+        if (model.ModelNodeTree == null || model.ModelNodeTree.RootNode == null || model.ModelNodeTree.RootNode.InstanceDesc == null)
         {
             return;
         }
@@ -497,13 +497,13 @@ public class ModelCache
             float radius = 1f;
             float height = 1f;
             AABB aabb = new();
-            if (model.RootNode != null && model.RootNode.InstanceDesc != null)
+
             {
                 /*
                  * If we have aabbs, we can create a cuboid.
                  */
                 modelShape = ModelShape.Cuboid;
-                aabb = model.RootNode.InstanceDesc.AABBTransformed;
+                aabb = model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed;
                 Vector3 v3Size = aabb.BB - aabb.AA;
 
                 float rMin = Single.Min(v3Size.X, Single.Min(v3Size.Y, v3Size.Z));
@@ -664,7 +664,7 @@ public class ModelCache
      */
     public void BuildPerInstance(in DefaultEcs.Entity eRoot, Model model, ModelCacheParams mcp)
     {
-        if (model.RootNode == null || model.RootNode.InstanceDesc == null)
+        if (model.ModelNodeTree == null || model.ModelNodeTree.RootNode == null || model.ModelNodeTree.RootNode.InstanceDesc == null)
         {
             return;
         }
