@@ -83,6 +83,11 @@ public class ModelNode
                 }
             }
             s += ",\n";
+            if (!Transform.Matrix.IsIdentity)
+            {
+                s += $"{t}\"transform\": {Transform.Matrix.ToString()}";
+            }
+            s += $"{t}}},\n";
             if (Children != null)
             {
                 s += $"{t}\"children\": ";
