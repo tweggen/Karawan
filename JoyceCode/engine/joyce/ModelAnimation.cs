@@ -28,11 +28,13 @@ public class ModelAnimation
     public uint FirstFrame;
     public uint NTicks;
     public uint NFrames;
+    public ModelNode? RestPose;
     public Dictionary<ModelNode, ModelAnimChannel> MapChannels;
 
     public ModelBakedFrame[] BakedFrames;
 
-    public ModelAnimChannel CreateChannel(ModelNode modelNode,
+    public ModelAnimChannel CreateChannel(
+        ModelNode mnChannel,
         KeyFrame<Vector3>[]? positions,
         KeyFrame<Quaternion>[]? rotations,
         KeyFrame<Vector3>[]? scalings
@@ -41,7 +43,7 @@ public class ModelAnimation
         return new ModelAnimChannel()
         {
             ModelAnimation = this,
-            Target = modelNode,
+            Target = mnChannel,
             Positions = positions,
             Rotations = rotations,
             Scalings = scalings

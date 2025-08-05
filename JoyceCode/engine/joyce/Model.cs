@@ -95,12 +95,13 @@ public class Model
     }
 
 
-    public ModelAnimation CreateAnimation()
+    public ModelAnimation CreateAnimation(ModelNode? mnRestPose)
     {
         return new ModelAnimation()
         {
             Index = _nextAnimIndex++,
             FirstFrame = _nextAnimFrame,
+            RestPose = mnRestPose
         };
     }
 

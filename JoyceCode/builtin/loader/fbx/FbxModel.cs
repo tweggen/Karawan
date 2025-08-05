@@ -240,14 +240,15 @@ public class FbxModel : IDisposable
             throw new Exception(error);
         }
 
-        model.SetRootNode(_processNode(null, _scene->MRootNode,
+        ModelNode? mnPoseRoot = _processNode(null, _scene->MRootNode,
             new MergePolicy()
             {
                 LoadMainNodes = loadMainNodes,
                 LoadMeshes = true
             },
-            out var _));
-        Trace(model.RootNode.DumpNode());
+            out var _); 
+        model.SetRootNode(mnPoseRoot);
+        //Trace(model.RootNode.DumpNode());
 
         /*
          * Now load all the animations. First the ones from the main file.
@@ -259,7 +260,7 @@ public class FbxModel : IDisposable
              * Note, that if we load the main animations, we also already had loaded the main nodes,
              * i.e. the bones.
              */
-            _loadAnimations(_scene, "");
+            _loadAnimations("", _scene, mnPoseRoot);
         }
 
         /*
@@ -298,9 +299,10 @@ public class FbxModel : IDisposable
                     ModelNode? mnNewRoot = _processNode(
                         null, additionalScene->MRootNode,
                         mp, out var _);
+#if false
                     if (null != mnNewRoot)
                     {
-                        Trace(mnNewRoot.DumpNode());
+                        //Trace(mnNewRoot.DumpNode());
                         try
                         {
                             _model.MergeInModelNode(mnNewRoot, mp);
@@ -310,10 +312,10 @@ public class FbxModel : IDisposable
                             Trace($"Exception while merging model: {e}");
                         }
 
-                        Trace($"Afer merge");
-                        Trace(_model.RootNode.DumpNode());;
-
+                        //Trace($"Afer merge");
+                        //Trace(_model.RootNode.DumpNode());;
                     }
+#endif
                     
                     string strFallbackName = url;
                     int idx = strFallbackName.LastIndexOf('/');
@@ -329,7 +331,7 @@ public class FbxModel : IDisposable
                     {
                         strFallbackName = strFallbackName.Substring(0, idx);
                     }
-                    _loadAnimations(additionalScene, strFallbackName);
+                    _loadAnimations(strFallbackName, additionalScene, mnNewRoot);
                     Trace($"Done importing additional animation data from {url}.");
                 }
                 catch (Exception e)
@@ -363,7 +365,7 @@ public class FbxModel : IDisposable
     }
     
     
-    private unsafe void _loadAnimations(Scene *scene, string strFallbackName)
+    private unsafe void _loadAnimations(string strFallbackName, Scene *scene, ModelNode mnRestPose)
     {
         if (null == scene->MAnimations)
         {
