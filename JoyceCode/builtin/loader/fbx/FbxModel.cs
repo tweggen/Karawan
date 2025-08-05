@@ -226,12 +226,12 @@ public class FbxModel : IDisposable
                 
                 string channelNodeName = aiChannel->MNodeName.ToString();
                 Trace($"Animation \"{ma.Name}\" controls channel: {channelNodeName}");
-                if (!_model.MapNodes.ContainsKey(channelNodeName))
+                if (!_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
                 {
                     Warning($"Found animation channel for unknown node {channelNodeName}, ignoring.");
                     continue;
                 }
-                ModelNode channelNode = _model.MapNodes[channelNodeName];
+                ModelNode channelNode = _model.ModelNodeTree.MapNodes[channelNodeName];
 
                 if (ma.MapChannels.ContainsKey(channelNode))
                 {
@@ -402,10 +402,10 @@ public class FbxModel : IDisposable
         bool couldOverrideNode = false;
         bool iHaveMesh = false;
 
-        ModelNode mn = _model.CreateNode();
+        ModelNode mn = _model.ModelNodeTree.CreateNode(_model);
         mn.Name = strName;
 
-        if (_model!.MapNodes.ContainsKey(strName))
+        if (_model!.ModelNodeTree.MapNodes.ContainsKey(strName))
         {
             /*
              * We silently assume the similarily named node also had the same parent.
@@ -875,7 +875,7 @@ public class FbxModel : IDisposable
                 LoadMeshes = true
             },
             out var _); 
-        model.SetRootNode(mnPoseRoot);
+        model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
         //Trace(model.RootNode.DumpNode());
 
         /*
@@ -975,11 +975,11 @@ public class FbxModel : IDisposable
 
         if (GetMetadata("CustomFrameRate", "-1") == "24")
         {
-            model.WorkAroundInverseRestPose = true;
+            //model.WorkAroundInverseRestPose = true;
         }
         else
         {
-            model.WorkAroundInverseRestPose = false;
+            //model.WorkAroundInverseRestPose = false;
         }
 
         /*
@@ -987,7 +987,7 @@ public class FbxModel : IDisposable
          */
         model.BakeAnimations();
 
-        model.RootNode.Transform.Matrix = Matrix4x4.CreateScale(model.Scale) * model.RootNode.Transform.Matrix;
+        model.ModelNodeTree.RootNode.Transform.Matrix = Matrix4x4.CreateScale(model.Scale) * model.ModelNodeTree.RootNode.Transform.Matrix;
 
         model.Polish();
     }

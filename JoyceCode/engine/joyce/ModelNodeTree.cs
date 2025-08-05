@@ -25,7 +25,7 @@ public class ModelNodeTree
     private int _nextNodeIndex = 1;
 
     
-    public SortedDictionary<string, ModelNode> MapNodes = new();
+    public readonly SortedDictionary<string, ModelNode> MapNodes = new();
     
     public string DumpNodes()
     {
