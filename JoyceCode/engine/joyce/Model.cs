@@ -35,16 +35,6 @@ public class Model
     public string Name = "";
     public uint MAX_BONES = 70;
     
-    private ModelNode _mnRoot; 
-    public ModelNode RootNode
-    {
-        get => _mnRoot;
-        set
-        {
-            _mnRoot = value;
-        } 
-    }
-    private int _nextNodeIndex = 1;
     private int _nextAnimIndex = 1;
     private uint _nextAnimFrame = 0;
 
@@ -55,43 +45,25 @@ public class Model
     
     public Skeleton? Skeleton = null;
     public SortedDictionary<string, ModelAnimation> MapAnimations;
-    public SortedDictionary<string, ModelNode> MapNodes = new();
-
+    
     public Matrix4x4[]? AllBakedMatrices = null; 
     
     public float Scale = 1.0f;
     
-    public ModelNode? FirstInstanceDescNode { get; private set; } = null;
-    public Matrix4x4 FirstInstanceDescTransform { get; private set; } = Matrix4x4.Identity;
-    
     public bool IsHierarchical { get; private set; } = false;
 
-    public bool WorkAroundInverseRestPose = false;
-        
+    public ModelNode? FirstInstanceDescNode { get; private set; } = null;
+    public Matrix4x4 FirstInstanceDescTransform { get; private set; } = Matrix4x4.Identity;
+
+    public ModelNodeTree ModelNodeTree { get; set; } 
+    
+    
     /**
      * Convenience method to create a model from a single InstanceDesc
      */
     public Model(InstanceDesc instanceDesc)
     {
-        ModelNode mnRoot = new()
-        {
-            Model = this,
-            Parent = null,
-            InstanceDesc = instanceDesc,
-            Transform = new(true, 0xffff, Matrix4x4.Identity)
-        };
-        RootNode = mnRoot;
-    }
-
-
-    public ModelNode CreateNode()
-    {
-        return new()
-        {
-            Parent = null,
-            Model = this,
-            // Index = _nextNodeIndex++
-        };
+        ModelNodeTree = new(this, instanceDesc);
     }
 
 
@@ -103,74 +75,6 @@ public class Model
             FirstFrame = _nextAnimFrame,
             RestPose = mnRestPose
         };
-    }
-
-
-    /**
-     * For the classic skinned animation, find the first InstanceDesc node below the given root node.
-     */
-    private static ModelNode? _findInstanceDescNodeBelow(ModelNode mn)
-    {
-        if (mn.InstanceDesc != null)
-        {
-            return mn;
-        }
-
-        if (mn.Children == null)
-        {
-            return null;
-        }
-
-        foreach (var mnChild in mn.Children)
-        {
-            var mnInstanceDescNode = _findInstanceDescNodeBelow(mnChild);
-            if (mnInstanceDescNode != null)
-            {
-                return mnInstanceDescNode;
-            }
-        }
-
-        return null;
-    }
-
-
-    /**
-     * Find the closest instance desc node close to the animation node.
-     */
-    private static ModelNode? _findClosestInstanceDesc(ModelNode mn)
-    {
-        ModelNode? mnCurr = mn;
-
-        while (mnCurr != null)
-        {
-            ModelNode? mnBelowCurr = _findInstanceDescNodeBelow(mnCurr);
-            if (null != mnBelowCurr)
-            {
-                return mnBelowCurr;
-            }
-
-            mnCurr = mnCurr.Parent;
-        }
-
-        return null;
-    }
-
-
-    private static Matrix4x4 _computeGlobalTransform(ModelNode mn)
-    {
-        Matrix4x4 m4ParentTransform;
-        if (mn.Parent != null)
-        {
-            m4ParentTransform = _computeGlobalTransform(mn.Parent);
-        }
-        else
-        {
-            m4ParentTransform = Matrix4x4.Identity;
-        }
-
-        m4ParentTransform = mn.Transform.Matrix * m4ParentTransform;
-
-        return m4ParentTransform;
     }
 
 
@@ -220,11 +124,6 @@ public class Model
         {
             m4Model2Bone = Matrix4x4.Identity;
             m4Bone2Model = Matrix4x4.Identity;
-        
-            /*
-             * In case there is a bone missing.
-             */
-            int a = 1;
         }
 
         Matrix4x4 m4Anim;
@@ -245,7 +144,6 @@ public class Model
                 * Matrix4x4.CreateFromQuaternion(kfRotation.Value)
                 * Matrix4x4.CreateTranslation(kfPosition.Value)
                 ;
-            
         }
         else
         {
@@ -352,6 +250,23 @@ public class Model
     }
 
 
+    public void _bakeNew(ModelAnimation ma)
+    {
+        foreach (var mac in ma.MapChannels.Values)
+        {
+            /*
+             * Find the node in the model pose and in the rest pose.
+             * Compute the model pose to bone and the bone to rest pose matrix.
+             *
+             * TXWTODO: Depending on the mode of operation, apply the matrices plus
+             * plus the interpolated animation frame.
+             */
+
+
+        }
+    }
+    
+
     /**
      * Compute frame accurate interpolations for all bones for all animations.
      */
@@ -364,25 +279,15 @@ public class Model
         Trace($"Baking animations for {Name}");
 
         var skeleton = FindSkeleton();
-
-        if (false)
-        {
-            /*
-             * Debugging: Write the bone names
-             */
-            foreach (var kvp in skeleton.MapBones)
-            {
-                Trace($"Bone {kvp.Key}");
-            }
-        }
-
+        var mnRoot = ModelNodeTree.RootNode;
+        
         /*
          * We assume there is only one instancedesc. Don't know if this is true
          * for all formats.
          */
         Matrix4x4 m4GlobalTransform;
         {
-            ModelNode? mnInstanceDesc = _findInstanceDescNodeBelow(_mnRoot);
+            ModelNode? mnInstanceDesc = mnRoot.FindInstanceDescNodeBelow();
             if (null == mnInstanceDesc)
             {
                 /*
@@ -392,7 +297,7 @@ public class Model
                 return;
             }
 
-            m4GlobalTransform = _computeGlobalTransform(mnInstanceDesc);
+            m4GlobalTransform = mnInstanceDesc.ComputeGlobalTransform();
         }
         
         Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
@@ -416,6 +321,7 @@ public class Model
             ma.NFrames = nFrames;
             ma.BakedFrames = new ModelBakedFrame[ma.NFrames];
             // ma.AllBakedFrames = new Matrix4x4[ma.NFrames * Skeleton.NBones];
+            
             for (int frameno = 0; frameno < nFrames; ++frameno)
             {
                 ModelBakedFrame bakedFrame = new()
@@ -424,39 +330,51 @@ public class Model
                 };
                 ma.BakedFrames[frameno] = bakedFrame;
             }
-
+            
             /*
-             * Now for this animation, for every frame, recurse through the bones.
+             * Use current implementation if no rest pose is given explicitely
+             * If rest pose is not null, use different implementation that
+             * considers rest pose.
              */
-            for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
+            if (ma.RestPose == null)
             {
                 /*
-                 * I need to start with the inverse transform, as it will be reapplied in the end again
-                 * by the renderer.
-                 *
-                 * Plus, I need to apply the scale (which I also could do later).
+                 * Now for this animation, for every frame, recurse through the bones.
                  */
-                _bakeRecursive(RootNode,
-                    BakeMode.Absolute,
+                for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
+                {
                     /*
-                     * m4GlobalTransform here is required to have the ochi person looking correctly
-                     * with animations and not to be apart. It is however too large.
+                     * I need to start with the inverse transform, as it will be reapplied in the end again
+                     * by the renderer.
                      *
-                     * Global transform already contains the scale factor.
+                     * Plus, I need to apply the scale (which I also could do later).
                      */
-                    m4GlobalTransform,
-                    //Matrix4x4.Identity,
-                    
-                    /*
-                     * With these two commented out, scaling still is wrong.
-                     */
-                    //m4GlobalTransform,
-                    //m4InverseGlobalTransform * Scale,
-                     Matrix4x4.Identity,
-                     // Matrix4x4.Identity,
-                     m4InverseGlobalTransform, 
-                    //  m4GlobalTransform,  
-                    ma, frameno);
+                    _bakeRecursive(mnRoot,
+                        BakeMode.Absolute,
+                        /*
+                         * m4GlobalTransform here is required to have the ochi person looking correctly
+                         * with animations and not to be apart. It is however too large.
+                         *
+                         * Global transform already contains the scale factor.
+                         */
+                        m4GlobalTransform,
+                        //Matrix4x4.Identity,
+
+                        /*
+                         * With these two commented out, scaling still is wrong.
+                         */
+                        //m4GlobalTransform,
+                        //m4InverseGlobalTransform * Scale,
+                        Matrix4x4.Identity,
+                        // Matrix4x4.Identity,
+                        m4InverseGlobalTransform,
+                        //  m4GlobalTransform,  
+                        ma, frameno);
+                }
+            }
+            else
+            {
+                _bakeNew(ma);
             }
         }
     }
@@ -474,19 +392,16 @@ public class Model
          * as we already gave out our instanceDesc to clients.
          */
         Name = other.Name;
-        RootNode = other.RootNode;
-        _nextNodeIndex = other._nextNodeIndex;
+        ModelNodeTree = other.ModelNodeTree;
         _nextAnimIndex = other._nextAnimIndex;
         _nextAnimFrame = other._nextAnimFrame;
         Skeleton = other.Skeleton;
         MapAnimations = other.MapAnimations;
-        MapNodes = other.MapNodes;
         AllBakedMatrices = other.AllBakedMatrices;
         Scale = other.Scale;
         FirstInstanceDescNode = other.FirstInstanceDescNode;
         FirstInstanceDescTransform = other.FirstInstanceDescTransform;
         IsHierarchical = other.IsHierarchical;  
-        WorkAroundInverseRestPose = other.WorkAroundInverseRestPose;
     }
 
 
@@ -532,210 +447,19 @@ public class Model
      */
     public void Polish()
     {
-        _polishChildrenRecursively(RootNode);
+        _polishChildrenRecursively(ModelNodeTree.RootNode);
         if (FirstInstanceDescNode != null)
         {
-            FirstInstanceDescTransform = _computeGlobalTransform(FirstInstanceDescNode);
+            FirstInstanceDescTransform = FirstInstanceDescNode.ComputeGlobalTransform();
         }
     }
-    
 
-    private void _mergeInModelNodeTransformation(ModelNode mn, ModelNode mnNew, MergePolicy mp)
+
+    public void DumpNodes()
     {
-        mn.Transform = mnNew.Transform;
+        ModelNodeTree.DumpNodes();
     }
 
-
-    public string DumpNodes()
-    {
-        string s = "";
-        s += "{\n";
-        s += "    \"nodes\": \n";
-        if (RootNode != null)
-        {
-            s += RootNode.DumpNode();
-        }
-        else
-        {
-            s += "null,";
-        }
-
-        s += "},\n";
-
-        return s;
-    }
-    
-
-    private void _loadNodesRecursively(ModelNode mn)
-    {
-        MapNodes[mn.Name] = mn;
-        FindSkeleton().FindBone(mn.Name);
-        
-        if (mn.Children != null)
-        {
-            foreach (var mnChild in mn.Children)
-            {
-                _loadNodesRecursively(mnChild);
-            }
-        }
-    }
-    
-
-    public void SetRootNode(ModelNode mn)
-    {
-        RootNode = mn;
-        _loadNodesRecursively(mn);
-    }
-
-    
-    private void _addChildrenRecursively(ModelNode mn, MergePolicy mp)
-    {
-        if (mn.Children != null)
-        {
-            foreach (var mnChild in mn.Children)
-            {
-                if (MapNodes.ContainsKey(mnChild.Name))
-                {
-                    ErrorThrow<InvalidDataException>($"Node {mnChild.Name} already exists in the model, structure clash.");
-                }
-                MapNodes[mnChild.Name] = mnChild;
-                FindSkeleton().FindBone(mnChild.Name);
-                _addChildrenRecursively(mnChild, mp);
-            }
-        }
-    }
-        
-
-    /**
-     * Recursively merge in the given node into the model.
-     * We, the parent node, are responsible of merging in the nodes into the MapNodes.
-     */
-    private void _mergeInModelNode(ModelNode mn, ModelNode mnNew, MergePolicy mp)
-    {
-        /*
-         * Step zero: Add this node to the node map if it did not exist.
-         */
-        bool didExist = MapNodes.TryGetValue(mnNew.Name, out var mnOld);
-        
-        /*
-         * Step one: Make sure mn will have all the children mnNew already has.
-         * Ensure that the new bones are part of the skeleton.
-         */
-
-        if (mnNew.Children != null) 
-        {
-            if (mn.Children == null)
-            {
-                mn.Children = new List<ModelNode>();
-            }
-            
-            var skeleton = FindSkeleton();
-            
-            /*
-             * We keep a list of children to add to this node.
-             */
-            List<ModelNode> newChildren = new(); 
-
-            foreach (var mnNewChild in mnNew.Children)
-            {
-                /*
-                 * If this model node exists in the current model, it has to have
-                 * the same parent.
-                 */
-                bool nodeExistingModel = MapNodes.TryGetValue(mnNewChild.Name, out var mnOldByMap);
-
-                ModelNode? mnOldChild = mn.Children.FirstOrDefault(mnCand => mnCand.Name == mnNewChild.Name);
-
-                if (mnOldChild != null)
-                {
-                    /*
-                     * If it was found in the parent node, it must also already exist in the node map.
-                     */
-                    if (!nodeExistingModel)
-                    {
-                        ErrorThrow<InvalidDataException>(
-                            $"Node {mnNewChild.Name} was known to the parent but not in node map.");
-                    }
-                    
-                    /*
-                     * We need to merge an old child with a new one.
-                     */
-                    _mergeInModelNode(mnOldChild, mnNewChild, mp);
-                }
-                else
-                {
-                    /*
-                     * If it was not found in the parent node, it must not exist in the node map.
-                     */
-                    if (nodeExistingModel)
-                    {
-                        ErrorThrow<InvalidDataException>(
-                            $"Node {mnNewChild.Name} was not known to the parent but in node map.");
-                    }
-                    MapNodes[mnNewChild.Name] = mnNewChild;
-
-                    /*
-                     * All new children need to have bones associated with them.
-                     */
-                    skeleton.FindBone(mnNewChild.Name);
-                    
-                    /*
-                     * This is a new child. Add it.
-                     */
-                    newChildren.Add(mnNewChild);
-                    
-                    _addChildrenRecursively(mnNewChild, mp);
-                }
-                
-            }
-
-            mn.Children.AddRange(newChildren);
-        }
-
-        /*
-         * Step two: Merge the actual contents.
-         */
-        {
-            // TXWTODO: Care about the entity data
-
-            /*
-             * Children already are merged.
-             */
-            
-            /*
-             * Instance desc cannot be merged, only ovetwritten
-             */
-            if (mnNew.InstanceDesc != null)
-            {
-                if (mn.InstanceDesc == mnNew.InstanceDesc)
-                {
-                    ErrorThrow<InvalidDataException>($"Trying to merge two different instancedesc on {mn.Name}");
-                }
-                mn.InstanceDesc = mnNew.InstanceDesc;
-            }
-            
-            /*
-             * Finally, merge the transformation
-             */
-            _mergeInModelNodeTransformation(mn, mnNew, mp);
-        }
-    }
-
-
-    /**
-     * Merge in the given node into this model.
-     */
-    public void MergeInModelNode(ModelNode mnNew, MergePolicy mp)
-    {
-        if (null == RootNode)
-        {
-            RootNode = mnNew;
-            MapNodes[mnNew.Name] = mnNew;
-        }
-        _mergeInModelNode(RootNode, mnNew, mp);
-    }
-
-    
     public Model()
     {
     }

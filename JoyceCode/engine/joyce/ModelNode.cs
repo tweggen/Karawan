@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Numerics;
 using BepuPhysics.Collidables;
 
 namespace engine.joyce;
@@ -17,6 +18,11 @@ public class ModelNode
      */
     public required Model Model;
 
+    /**
+     * The model tree we belong to
+     */
+    public required ModelNodeTree ModelNodeTree;
+    
     /**
      * The parent model node
      */
@@ -71,9 +77,9 @@ public class ModelNode
         {
             s += "{\n";
             s += $"{t}\"name\": \"{Name}\"";
-            if (Model != null && Model.MapNodes != null)
+            if (ModelNodeTree != null && ModelNodeTree.MapNodes != null)
             {
-                if (Model.MapNodes.ContainsKey(Name))
+                if (ModelNodeTree.MapNodes.ContainsKey(Name))
                 {
                     s += " (added)";
                 }
@@ -114,5 +120,69 @@ public class ModelNode
         return _dumpNodeLevel(0);
     }
 
+    
+    public ModelNode? FindInstanceDescNodeBelow()
+    {
+        if (InstanceDesc != null)
+        {
+            return this;
+        }
+
+        if (Children == null)
+        {
+            return null;
+        }
+
+        foreach (var mnChild in Children)
+        {
+            var mnInstanceDescNode = mnChild.FindInstanceDescNodeBelow();
+            if (mnInstanceDescNode != null)
+            {
+                return mnInstanceDescNode;
+            }
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Find the closest instance desc node close to the animation node.
+     */
+    public ModelNode? FindClosestInstanceDesc()
+    {
+        ModelNode? mnCurr = this;
+
+        while (mnCurr != null)
+        {
+            ModelNode? mnBelowCurr = mnCurr.FindInstanceDescNodeBelow();
+            if (null != mnBelowCurr)
+            {
+                return mnBelowCurr;
+            }
+
+            mnCurr = mnCurr.Parent;
+        }
+
+        return null;
+    }
+
+
+    public Matrix4x4 ComputeGlobalTransform()
+    {
+        Matrix4x4 m4ParentTransform;
+        if (Parent != null)
+        {
+            m4ParentTransform = Parent.ComputeGlobalTransform();
+        }
+        else
+        {
+            m4ParentTransform = Matrix4x4.Identity;
+        }
+
+        m4ParentTransform = Transform.Matrix * m4ParentTransform;
+
+        return m4ParentTransform;
+    }
 }
 
