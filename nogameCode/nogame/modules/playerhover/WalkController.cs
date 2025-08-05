@@ -331,7 +331,7 @@ public class WalkController : AController, IInputPart
                     }
                     else
                     {
-                        Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
+                        Trace($"Test animation {strAnimation} not found.");
                     }
 
                     _characterAnimState = newAnimState;
