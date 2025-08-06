@@ -830,7 +830,7 @@ public class FbxModel : IDisposable
          * there are no additional files.
          */
         bool haveAdditionalFiles = !(additionalUrls == null || additionalUrls.Count == 0);
-        bool loadMainAnimations = haveAdditionalFiles;
+        bool loadMainAnimations = !haveAdditionalFiles;
         bool loadMainNodes = !haveAdditionalFiles;
 
         /*
