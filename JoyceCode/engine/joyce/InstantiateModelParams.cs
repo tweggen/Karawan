@@ -16,7 +16,7 @@ public class InstantiateModelParams
     public static int ROTATE_Z180 = 0x4000;
     public static int REQUIRE_ROOT_INSTANCEDESC = 0x10000;
 
-    /**
+    /*
      * With this flag the model builder omits creation of an
      * additional root aentity to ensure a transform component
      * can be added to the entity to have it
@@ -54,7 +54,12 @@ public class InstantiateModelParams
      */
     public static int PHYSICS_OWN_CALLBACKS = 0x800000;
 
-    public int GeomFlags { get; set; }= 0;
+    /**
+     * Flags to adjust the geometry of the model.
+     * Note, that the geometry is adjusted before any other modifications
+     * to the model.
+     */
+    public int GeomFlags { get; set; } = 0;
     public float MaxDistance { get; set; } = 10f;
 
     public ushort CollisionLayers { get; set; } = 0x0004;
