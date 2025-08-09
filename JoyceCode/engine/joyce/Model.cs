@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -53,6 +54,7 @@ public class Model
     public bool IsHierarchical { get; private set; } = false;
 
     public ModelNode? FirstInstanceDescNode { get; private set; } = null;
+    
     public Matrix4x4 FirstInstanceDescTransform { get; private set; } = Matrix4x4.Identity;
 
     public ModelNodeTree ModelNodeTree { get; private set; } 
@@ -243,11 +245,21 @@ public class Model
 
     public void _bakeNew(ModelAnimation ma)
     {
+        Debug.Assert(ma.RestPose != null);
+        Debug.Assert(ma.MapChannels != null);
+        
+        /*
+         * Iterate through all animated nodes. 
+         */
         foreach (var mac in ma.MapChannels.Values)
         {
             /*
-             * Find the node in the model pose and in the rest pose.
+             * Now, for each animated node find the node in the model pose
+             * and the rest pose respectively.
              * Compute the model pose to bone and the bone to rest pose matrix.
+             *
+             * Note, that through all animated frames, the basic model and rest pose
+             * matrices do not change, so we compute them just once.
              *
              * TXWTODO: Depending on the mode of operation, apply the matrices plus
              * plus the interpolated animation frame.
