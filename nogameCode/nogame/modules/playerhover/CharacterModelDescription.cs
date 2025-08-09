@@ -72,8 +72,8 @@ public class CharacterModelDescription
                                               // | InstantiateModelParams.ROTATE_X180
                                               //| InstantiateModelParams.ROTATE_Y180
         ;
+#endif
 
-    #endif
     
     public DefaultEcs.Entity EntityAnimations { get; set; } = default;
     public Model Model { get; set; } = null;

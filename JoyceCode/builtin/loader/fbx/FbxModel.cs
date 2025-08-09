@@ -225,7 +225,7 @@ public class FbxModel : IDisposable
                 }
                 
                 string channelNodeName = aiChannel->MNodeName.ToString();
-                Trace($"Animation \"{ma.Name}\" controls channel: {channelNodeName}");
+                // Trace($"Animation \"{ma.Name}\" controls channel: {channelNodeName}");
                 if (!_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
                 {
                     Warning($"Found animation channel for unknown node {channelNodeName}, ignoring.");
@@ -888,7 +888,7 @@ public class FbxModel : IDisposable
              * Note, that if we load the main animations, we also already had loaded the main nodes,
              * i.e. the bones.
              */
-            _loadAnimations("", _scene, mnPoseRoot);
+            _loadAnimations("", _scene, null);
         }
 
         /*
