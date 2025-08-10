@@ -386,7 +386,7 @@ public class Model
     }
 
     
-    #if false
+    #if true
     public void _bakeNew(ModelAnimation ma)
     {
         Debug.Assert(ma.RestPose != null);
@@ -394,6 +394,8 @@ public class Model
         
         ModelNodeTree mntModelPose = ModelNodeTree;
         ModelNodeTree mntRestPose = ma.RestPose.ModelNodeTree;
+        
+        Skeleton skeleton = FindSkeleton();
         
         /*
          * Iterate through all animated nodes. 
@@ -427,6 +429,14 @@ public class Model
             Matrix4x4 m4RestPose = Matrix4x4.Identity;
             mnRestPose.ComputeGlobalTransform(ref m4RestPose);
             
+            uint boneIndex = 0;
+            Bone bone;
+
+            if (skeleton.MapBones.TryGetValue(mnModelPose.Name, out bone))
+            {
+                boneIndex = bone.Index;
+            }
+            
             /*
              * How many real frames does this animation have?
              */
@@ -455,7 +465,8 @@ public class Model
                 _computeAnimFrame(mac, ref m4FrameAnim, frameno);;
                 m4FrameAnim = m4FrameAnim * m4RestPose;
                 
-                // TXWTODO: Write back to animation
+                AllBakedMatrices![(ma.FirstFrame+frameno) * skeleton.NBones + boneIndex] = m4FrameAnim;
+                
                 // TXWTODO: This does not consider the position of upper hierarchy bnones.
             }
         }
@@ -499,7 +510,7 @@ public class Model
         Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
         
         AllBakedMatrices = new Matrix4x4[_nextAnimFrame * Skeleton.NBones];
-
+        
         /*
          * First, for all animations, create the arrays of matrices for
          * each bone per frame.,
@@ -569,6 +580,9 @@ public class Model
             }
             else
             {
+#if false
+                _bakeNew(ma);
+#else
                 /*
                  * Now for this animation, for every frame, recurse through the bones.
                  */
@@ -582,6 +596,7 @@ public class Model
                         ma, 
                         frameno);
                 }
+#endif
             }
         }
     }

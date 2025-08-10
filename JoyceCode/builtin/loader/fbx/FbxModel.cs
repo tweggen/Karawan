@@ -831,7 +831,7 @@ public class FbxModel : IDisposable
          */
         bool haveAdditionalFiles = !(additionalUrls == null || additionalUrls.Count == 0);
         bool loadMainAnimations = !haveAdditionalFiles;
-        bool loadMainNodes = !haveAdditionalFiles;
+        bool loadMainNodes = true;
 
         /*
          * Prepare data structures.
@@ -927,21 +927,10 @@ public class FbxModel : IDisposable
                     ModelNode? mnNewRoot = _processNode(
                         null, additionalScene->MRootNode,
                         mp, out var _);
-#if false
+#if true
                     if (null != mnNewRoot)
                     {
-                        //Trace(mnNewRoot.DumpNode());
-                        try
-                        {
-                            _model.MergeInModelNode(mnNewRoot, mp);
-                        }
-                        catch (Exception e)
-                        {
-                            Trace($"Exception while merging model: {e}");
-                        }
-
-                        //Trace($"Afer merge");
-                        //Trace(_model.RootNode.DumpNode());;
+                        Trace(mnNewRoot.DumpNode());
                     }
 #endif
                     
