@@ -260,7 +260,8 @@ public class Model
      *     How do I transform from the individual bone to the model.
      */
     private void _bakeRecursiveNew(
-        ModelNode me, 
+        ModelNode mnRestPose,
+        ModelNodeTree mntModelPose,
         BakeMode bakeMode,
         Matrix4x4 m4BoneSpaceToRestPose,
         Matrix4x4 m4ModelPoseToBonePose, 
@@ -274,7 +275,7 @@ public class Model
         Bone? bone = null;
         uint boneIndex = 0; 
 
-        if (skeleton.MapBones.TryGetValue(me.Name, out bone))
+        if (skeleton.MapBones.TryGetValue(mnRestPose.Name, out bone))
         {
             boneIndex = bone.Index;
         }
@@ -288,7 +289,7 @@ public class Model
          * Then use it or concatenate it.
          */
         Matrix4x4 m4Anim;
-        if (ma.MapChannels.TryGetValue(me, out var mac))
+        if (ma.MapChannels.TryGetValue(mnRestPose, out var mac))
         {
             /*
              * We do have an animation channel for this node.
@@ -304,14 +305,25 @@ public class Model
             /*
              * In case my node cannot be found in the list of animation channels.
              */
-            m4Anim = me.Transform.Matrix;
+            m4Anim = mnRestPose.Transform.Matrix;
         }
 
-        Matrix4x4.Invert(me.Transform.Matrix, out var m4InverseBone);
-    
+        Matrix4x4 m4MyModelPoseToBonePose = Matrix4x4.Identity;
+        
+        /*
+         * We need to use the model pose to bone pose from the model pose tree.
+         */
+        if (mntModelPose.MapNodes.TryGetValue(mnRestPose.Name, out var mnModelPose))
+        {
+            mnModelPose.ComputeInverseGlobalTransform(ref m4MyModelPoseToBonePose);;
+        }
+        else
+        {
+            ErrorThrow<InvalidDataException>($"Node {mnRestPose.Name} not found in model pose tree.");
+        }
+        
         Matrix4x4 m4MyBoneSpaceToRestPose = m4Anim * m4BoneSpaceToRestPose; 
-        Matrix4x4 m4MyModelPoseToBonePose = m4ModelPoseToBonePose * m4InverseBone;
-
+        
         /*
          * Store resulting matrix if we have a bone that carries it.
          * Otherwise, just pass it on to the children.
@@ -365,7 +377,7 @@ public class Model
             }
             AllBakedMatrices[(ma.FirstFrame+frameno) * Skeleton.NBones + boneIndex] = m4Baked;
 
-            if (me.Children == null || me.Children.Count == 0)
+            if (mnRestPose.Children == null || mnRestPose.Children.Count == 0)
             {
                 // TXWTODO: We have problems with the hands, let's look if the terminal leaf case is a problem.
                 // Does not trigger at all
@@ -373,14 +385,15 @@ public class Model
             }
         }
         
-        if (me.Children != null)
+        if (mnRestPose.Children != null)
         {
             /*
              * Now call ourselves recursively for each of our children
              */
-            foreach (var child in me.Children)
+            foreach (var child in mnRestPose.Children)
             {
                 _bakeRecursiveNew(child,
+                    mntModelPose,
                     bakeMode,
                     m4MyBoneSpaceToRestPose,
                     m4MyModelPoseToBonePose,
@@ -594,6 +607,7 @@ public class Model
                 {
                     _bakeRecursiveNew(
                         mnRoot,
+                        ModelNodeTree,
                         BakeMode.Absolute,
                         Matrix4x4.Identity, 
                         Matrix4x4.Identity, 
