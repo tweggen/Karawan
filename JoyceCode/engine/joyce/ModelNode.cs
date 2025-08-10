@@ -191,6 +191,10 @@ public class ModelNode
     }
 
 
+    /**
+     * Compute a matrix that, applied to a bone local, creates the global
+     * coordinate. Or more generically, applies all model-nodes transformations.
+     */
     public Matrix4x4 ComputeGlobalTransform()
     {
         Matrix4x4 m4ParentTransform;
@@ -206,5 +210,28 @@ public class ModelNode
         m4ParentTransform = Transform.Matrix * m4ParentTransform;
 
         return m4ParentTransform;
+    }
+
+    
+    /**
+     * Compute a matrix that, applied to a bone local, creates the global
+     * coordinate. Or more generically, applies all model-nodes transformations.
+     */
+    public void ComputeGlobalTransform(ref Matrix4x4 m4)
+    {
+       m4 = Transform.Matrix * m4;
+       Parent?.ComputeGlobalTransform(ref m4);
+    }
+    
+    
+    /**
+     * Compute a matrix that, applied to a mesh, computes mesh local to bone local.
+     * Or more generically, un-applies all modelnode transformations.
+     */
+    public void ComputeInverseGlobalTransform(ref Matrix4x4 m4)
+    {
+        Matrix4x4.Invert(Transform.Matrix, out var mInverse);
+        m4 = m4 * mInverse;
+        Parent?.ComputeGlobalTransform(ref m4);
     }
 }

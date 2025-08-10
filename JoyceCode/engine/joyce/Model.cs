@@ -76,6 +76,19 @@ public class Model
         Relative = 0,
         Absolute = 1
     }
+
+
+    void _computeAnimFrame(in ModelAnimChannel mac, ref Matrix4x4 m4Anim, uint frameno)
+    {
+        var kfPosition = mac.LerpPosition(frameno);
+        var kfRotation = mac.SlerpRotation(frameno);
+        var kfScaling = mac.LerpScaling(frameno);
+        m4Anim = m4Anim 
+            * Matrix4x4.CreateScale(kfScaling.Value)
+            * Matrix4x4.CreateFromQuaternion(kfRotation.Value)
+            * Matrix4x4.CreateTranslation(kfPosition.Value)
+            ;
+    }
     
     
     /**
@@ -128,15 +141,8 @@ public class Model
              *
              * Apply it to the matrix.
              */
-            var kfPosition = mac.LerpPosition(frameno);
-            var kfRotation = mac.SlerpRotation(frameno);
-            var kfScaling = mac.LerpScaling(frameno);
-
-            m4Anim = 
-                  Matrix4x4.CreateScale(kfScaling.Value)
-                * Matrix4x4.CreateFromQuaternion(kfRotation.Value)
-                * Matrix4x4.CreateTranslation(kfPosition.Value)
-                ;
+            m4Anim = Matrix4x4.Identity;
+            _computeAnimFrame(mac, ref m4Anim, frameno);
         }
         else
         {
@@ -242,11 +248,152 @@ public class Model
         }
     }
 
+    
+    /**
+     * Bake all animations for the given node.
+     *
+     * @param m4GlobalTransform
+     *     How do I transform from root to the mesh.
+     * @param m4ModelSpaceToBoneSpace
+     *     How do I transform from the model to the individual bone 
+     * @param m4BoneSpaceToModelSpace
+     *     How do I transform from the individual bone to the model.
+     */
+    private void _bakeRecursiveNew(
+        ModelNode me, 
+        BakeMode bakeMode,
+        Matrix4x4 m4BoneSpaceToRestPose,
+        Matrix4x4 m4ModelPoseToBonePose, 
+        ModelAnimation ma, uint frameno)
+    {
+        var skeleton = Skeleton!;
+        
+        /*
+         * Find the appropriate bone.  
+         */
+        Bone? bone = null;
+        uint boneIndex = 0; 
 
+        if (skeleton.MapBones.TryGetValue(me.Name, out bone))
+        {
+            boneIndex = bone.Index;
+        }
+
+        /*
+         * Is there an animation stored inside this bone?
+         * Then use it or concatenate it.
+         */
+        Matrix4x4 m4Anim;
+        if (ma.MapChannels.TryGetValue(me, out var mac))
+        {
+            /*
+             * We do have an animation channel for this node.
+             * So consider the animation below.
+             *
+             * Apply it to the matrix.
+             */
+            m4Anim = Matrix4x4.Identity;
+            _computeAnimFrame(mac, ref m4Anim, frameno);
+        }
+        else
+        {
+            /*
+             * In case my node cannot be found in the list of animation channels.
+             */
+            m4Anim = me.Transform.Matrix;
+        }
+
+        Matrix4x4.Invert(me.Transform.Matrix, out var m4InverseBone);
+    
+        Matrix4x4 m4MyBoneSpaceToRestPose = m4Anim * m4BoneSpaceToRestPose; 
+        Matrix4x4 m4MyModelPoseToBonePose = m4ModelPoseToBonePose * m4InverseBone;
+
+        /*
+         * Store resulting matrix if we have a bone that carries it.
+         * Otherwise, just pass it on to the children.
+         */
+        if (bone != null)
+        {
+            /*
+             * baked shall define how I come from mesh local position to bone
+             * transformed mesh position.
+             *
+             * In other words, after applying these transformations, also the instancedesc
+             * transformations are applied, including all transformations "above" the instance
+             * desc node.
+             *
+             * Warning: For reasons I do not understand now, I wrote this in M*V order instead
+             * of the usual V*M order in this project. Hence, the vertex shader also multiplies
+             * M*V.
+             *
+             * Input to this matrix is the mesh before model to world transformation.
+             * Ultimately, we want to apply the transformation of all bones in that space.
+             *
+             * - apply my bone transformations until the moved me.
+             * - apply the inverse to get back to the model
+             */
+            Matrix4x4 m4Baked =
+                /*
+                 * First from model coordinate space to bone local coordinate space
+                 */
+                m4ModelPoseToBonePose *
+                m4Anim *
+                m4BoneSpaceToRestPose
+                ;
+            
+            /*
+             * For some strange reason, transferring matrices via ssbo does transpose the
+             * matrix whereas passing matrix as uniform doesnt, or vice cersea.
+             * So we must adjust for that.
+             */
+
+            {
+                var arr = ma.BakedFrames[frameno].BoneTransformations;
+                if (boneIndex < arr.Length)
+                {
+                    arr[boneIndex] = m4Baked;
+                }
+                else
+                {
+                    // Does not trigger.
+                    int a = 1;
+                }
+            }
+            AllBakedMatrices[(ma.FirstFrame+frameno) * Skeleton.NBones + boneIndex] = m4Baked;
+
+            if (me.Children == null || me.Children.Count == 0)
+            {
+                // TXWTODO: We have problems with the hands, let's look if the terminal leaf case is a problem.
+                // Does not trigger at all
+                int a = 1;
+            }
+        }
+        
+        if (me.Children != null)
+        {
+            /*
+             * Now call ourselves recursively for each of our children
+             */
+            foreach (var child in me.Children)
+            {
+                _bakeRecursiveNew(child,
+                    bakeMode,
+                    m4MyBoneSpaceToRestPose,
+                    m4MyModelPoseToBonePose,
+                    ma, frameno);
+            }
+        }
+    }
+
+    
+    #if false
     public void _bakeNew(ModelAnimation ma)
     {
         Debug.Assert(ma.RestPose != null);
         Debug.Assert(ma.MapChannels != null);
+        
+        ModelNodeTree mntModelPose = ModelNodeTree;
+        ModelNodeTree mntRestPose = ma.RestPose.ModelNodeTree;
         
         /*
          * Iterate through all animated nodes. 
@@ -265,9 +412,55 @@ public class Model
              * plus the interpolated animation frame.
              */
 
-
+            if (!mntModelPose.MapNodes.TryGetValue(mac.Target.Name, out var mnModelPose))
+            {
+                ErrorThrow<InvalidDataException>($"Node {mac.Target.Name} not found in model pose tree.");
+            }
+            if (!mntRestPose.MapNodes.TryGetValue(mac.Target.Name, out var mnRestPose))
+            {
+                ErrorThrow<InvalidDataException>($"Node {mac.Target.Name} not found in rest pose tree.");
+            }
+            
+            Matrix4x4 m4InverseModelPose = Matrix4x4.Identity;
+            mnModelPose.ComputeInverseGlobalTransform(ref m4InverseModelPose);
+            
+            Matrix4x4 m4RestPose = Matrix4x4.Identity;
+            mnRestPose.ComputeGlobalTransform(ref m4RestPose);
+            
+            /*
+             * How many real frames does this animation have?
+             */
+            float duration = ma.Duration;
+            uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
+            ma.NFrames = nFrames;
+            ma.BakedFrames = new ModelBakedFrame[ma.NFrames];
+            
+            for (uint frameno = 0; frameno < nFrames; ++frameno)
+            {
+                ModelBakedFrame bakedFrame = new()
+                {
+                    BoneTransformations = new Matrix4x4[UInt32.Max(Skeleton.NBones, MAX_BONES)]
+                };
+                ma.BakedFrames[frameno] = bakedFrame;
+            }
+            
+            // TXWTODO: What, if there is no model anim channel?
+            
+            /*
+             * Now for all frames apply the animation pose.
+             */
+            for (uint frameno = 0; frameno < nFrames; ++frameno)
+            {
+                Matrix4x4 m4FrameAnim = m4InverseModelPose;
+                _computeAnimFrame(mac, ref m4FrameAnim, frameno);;
+                m4FrameAnim = m4FrameAnim * m4RestPose;
+                
+                // TXWTODO: Write back to animation
+                // TXWTODO: This does not consider the position of upper hierarchy bnones.
+            }
         }
     }
+    #endif
     
 
     /**
@@ -323,7 +516,6 @@ public class Model
             uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
             ma.NFrames = nFrames;
             ma.BakedFrames = new ModelBakedFrame[ma.NFrames];
-            // ma.AllBakedFrames = new Matrix4x4[ma.NFrames * Skeleton.NBones];
             
             for (int frameno = 0; frameno < nFrames; ++frameno)
             {
@@ -377,7 +569,19 @@ public class Model
             }
             else
             {
-                _bakeNew(ma);
+                /*
+                 * Now for this animation, for every frame, recurse through the bones.
+                 */
+                for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
+                {
+                    _bakeRecursiveNew(
+                        mnRoot,
+                        BakeMode.Absolute,
+                        Matrix4x4.Identity, 
+                        Matrix4x4.Identity, 
+                        ma, 
+                        frameno);
+                }
             }
         }
     }
