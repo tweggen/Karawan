@@ -278,6 +278,10 @@ public class Model
         {
             boneIndex = bone.Index;
         }
+        else
+        {
+            int a = 1;
+        }
 
         /*
          * Is there an animation stored inside this bone?
@@ -336,9 +340,9 @@ public class Model
                 /*
                  * First from model coordinate space to bone local coordinate space
                  */
-                m4ModelPoseToBonePose *
+                m4ModelPoseToBonePose * Matrix4x4.CreateScale(0.01f) *
                 m4Anim *
-                m4BoneSpaceToRestPose
+                m4BoneSpaceToRestPose 
                 ;
             
             /*
