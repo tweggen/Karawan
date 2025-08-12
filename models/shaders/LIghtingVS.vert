@@ -16,7 +16,7 @@ layout(location = 6) in mat4 instanceTransform;
 layout(location = 10) in uint instanceFrameno;
 #endif
 
-const int MAX_BONES = 70;
+const int MAX_BONES = 120;
 const int MAX_BONE_INFLUENCE = 4;
 
 

@@ -34,7 +34,7 @@ public class Joint
 public class Model
 {
     public string Name = "";
-    public uint MAX_BONES = 70;
+    public uint MAX_BONES = 120;
     
     private int _nextAnimIndex = 1;
     private uint _nextAnimFrame = 0;
@@ -369,7 +369,7 @@ public class Model
                  * First from model coordinate space to bone local coordinate space
                  */
                 m4MyModelPoseToBonePose * 
-                Matrix4x4.CreateScale(0.001f) * 
+                //Matrix4x4.CreateScale(0.001f) * 
                 m4MyBoneSpaceToRestPose 
                 ;
             
