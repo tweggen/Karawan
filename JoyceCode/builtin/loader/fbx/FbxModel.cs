@@ -25,6 +25,7 @@ public class FbxModel : IDisposable
     public string Directory { get; protected set; } = string.Empty;
     private Model? _model = null;
     private unsafe Scene* _scene = null;
+    private Metadata _metadata;
 
     private static object _slo = new();
 
@@ -56,107 +57,6 @@ public class FbxModel : IDisposable
     }
 
 
-    private static unsafe void DumpMetadata(Scene* pScene)
-    {
-        return;
-        if (null == pScene->MMetaData)
-        {
-            return;
-        }
-
-        Metadata* metadata = pScene->MMetaData;
-        for (uint i = 0; i < metadata->MNumProperties; i++)
-        {
-            string strValue = "(unknown)";
-            void* p = metadata->MValues[i].MData;
-            switch (metadata->MValues[i].MType)
-            {
-                case MetadataType.Bool:
-                    strValue = (*(bool*)p).ToString();
-                    break;
-
-                case MetadataType.Int32:
-                    strValue = (*(int*)p).ToString();
-                    break;
-
-                case MetadataType.Uint64:
-                    strValue = (*(ulong*)p).ToString();
-                    break;
-
-                case MetadataType.Float:
-                    strValue = (*(float*)p).ToString();
-                    break;
-
-                case MetadataType.Double:
-                    strValue = (*(double*)p).ToString();
-                    break;
-
-                case MetadataType.Aistring:
-                case MetadataType.Aivector3D:
-                case MetadataType.Aimetadata:
-                    break;
-
-                case MetadataType.Int64:
-                    strValue = (*(long*)p).ToString();
-                    break;
-
-                case MetadataType.Uint32:
-                    strValue = (*(uint*)p).ToString();
-                    break;
-
-            }
-
-            Trace($"\"{metadata->MKeys[i].ToString()}\": \"{strValue}\"");
-        }
-    }
-
-
-    private unsafe string GetMetadata(string key, string defaultValue="")
-    {
-        if (null == _scene->MMetaData)
-        {
-            return defaultValue;
-        }
-
-        Metadata* metadata = _scene->MMetaData;
-        for (uint i = 0; i < metadata->MNumProperties; i++)
-        {
-            if (key == metadata->MKeys[i].ToString())
-            {
-                void* p = metadata->MValues[i].MData;
-                switch (metadata->MValues[i].MType)
-                {
-                    case MetadataType.Bool:
-                        return (*(bool*)p).ToString();
-                    
-                    case MetadataType.Int32:
-                        return (*(int*)p).ToString();
-
-                    case MetadataType.Uint64:
-                        return (*(ulong*)p).ToString();
-
-                    case MetadataType.Float:
-                        return (*(float*)p).ToString();
-
-                    case MetadataType.Double:
-                        return (*(double*)p).ToString();
-                    
-                    case MetadataType.Aistring:
-                    case MetadataType.Aivector3D: 
-                    case MetadataType.Aimetadata:
-                        return defaultValue;
-                    
-                    case MetadataType.Int64:
-                        return (*(long*)p).ToString();
-                    case MetadataType.Uint32:
-                        return (*(uint*)p).ToString();
-                }
-            }
-        }
-        return defaultValue;
-    }
-
-    
     private unsafe void _compareBoneHierarchies(Scene* meshScene, Scene* animScene) {
         // Check if root nodes match
         _compareNodeRecursive(meshScene->MRootNode, animScene->MRootNode);
@@ -861,7 +761,8 @@ public class FbxModel : IDisposable
         );
         _assimp.ReleasePropertyStore(properties);
         Trace($"Loaded \"{path}\"");
-        DumpMetadata(_scene);
+        _metadata = new(_scene);
+        _metadata.Dump();
         if (_scene == null || _scene->MFlags == Assimp.SceneFlagsIncomplete || _scene->MRootNode == null)
         {
             var error = _assimp.GetErrorStringS();
@@ -876,7 +777,7 @@ public class FbxModel : IDisposable
             },
             out var _); 
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
-        // Trace(model.ModelNodeTree.RootNode.DumpNode());
+        Trace(model.ModelNodeTree.RootNode.DumpNode());
 
         /*
          * Now load all the animations. First the ones from the main file.
@@ -912,7 +813,8 @@ public class FbxModel : IDisposable
                         continue;
                     }
 
-                    DumpMetadata(additionalScene);
+                    Metadata additionalMetadata = new(additionalScene);
+                    additionalMetadata.Dump();
 
                     _compareBoneHierarchies(additionalScene, _scene);
                     
@@ -927,7 +829,7 @@ public class FbxModel : IDisposable
                     ModelNode? mnNewRoot = _processNode(
                         null, additionalScene->MRootNode,
                         mp, out var _);
-#if false
+#if true
                     if (null != mnNewRoot)
                     {
                         Trace(mnNewRoot.DumpNode());
@@ -958,11 +860,11 @@ public class FbxModel : IDisposable
             }
         }
         
-        var strUnitscale = GetMetadata("UnitScaleFactor", "1.");
+        var strUnitscale = _metadata.GetString("UnitScaleFactor", "1.");
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
         model.Scale = unitscale / 100f * scale;
 
-        if (GetMetadata("CustomFrameRate", "-1") == "24")
+        if (_metadata.GetString("CustomFrameRate", "-1") == "24")
         {
             //model.WorkAroundInverseRestPose = true;
         }

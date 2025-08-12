@@ -4,6 +4,7 @@ using BepuPhysics.Collidables;
 
 namespace engine.joyce;
 
+
 /**
  * Represents one part of a loaded model.
  * Usually maps to a entity.
@@ -117,7 +118,7 @@ public class ModelNode
             {
                 s += $"{t}\"transform\": {Transform.Matrix.ToString()}";
             }
-            s += $"{t}}},\n";
+            //s += $"{t}}},\n";
             if (Children != null)
             {
                 s += $"{t}\"children\": ";
