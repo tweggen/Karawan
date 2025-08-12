@@ -876,7 +876,7 @@ public class FbxModel : IDisposable
             },
             out var _); 
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
-        Trace(model.ModelNodeTree.RootNode.DumpNode());
+        // Trace(model.ModelNodeTree.RootNode.DumpNode());
 
         /*
          * Now load all the animations. First the ones from the main file.

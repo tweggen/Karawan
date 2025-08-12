@@ -74,7 +74,8 @@ public class Model
     public enum BakeMode
     {
         Relative = 0,
-        Absolute = 1
+        Absolute = 1,
+        RelativeOnTop = 2
     }
 
 
@@ -287,8 +288,10 @@ public class Model
          * Is there an animation stored inside this bone?
          * Then use it or concatenate it.
          */
-        Matrix4x4 m4Anim;
-        if (false && ma.MapChannels.TryGetValue(mnRestPose, out var mac))
+        Matrix4x4 m4LocalAnim;
+        Matrix4x4 m4MyBoneSpaceToRestPose; // = m4LocalAnim * m4BoneSpaceToRestPose;
+
+        if (ma.MapChannels.TryGetValue(mnRestPose, out var mac))
         {
             /*
              * We do have an animation channel for this node.
@@ -296,16 +299,30 @@ public class Model
              *
              * Apply it to the matrix.
              */
-            m4Anim = Matrix4x4.Identity;
-            _computeAnimFrame(mac, ref m4Anim, frameno);
+            m4LocalAnim = Matrix4x4.Identity;
+            _computeAnimFrame(mac, ref m4LocalAnim, frameno);
+
+            switch (bakeMode)
+            {
+            case BakeMode.Absolute:
+                m4MyBoneSpaceToRestPose = m4LocalAnim;
+                break;
+            default:
+            case BakeMode.Relative:
+                m4MyBoneSpaceToRestPose = m4LocalAnim * m4BoneSpaceToRestPose;
+                break;
+            case BakeMode.RelativeOnTop:
+                m4MyBoneSpaceToRestPose = m4LocalAnim * mnRestPose.Transform.Matrix * m4BoneSpaceToRestPose;
+                break;
+            }
         }
         else
         {
             /*
              * In case my node cannot be found in the list of animation channels.
              */
-            m4Anim = mnRestPose.Transform.Matrix;
-            //Trace($"Using rest pose for {mnRestPose.Name}: {mnRestPose.Transform.Matrix}");
+            m4LocalAnim = mnRestPose.Transform.Matrix;
+            m4MyBoneSpaceToRestPose = m4LocalAnim * m4BoneSpaceToRestPose;
         }
 
         Matrix4x4 m4MyModelPoseToBonePose = Matrix4x4.Identity;
@@ -322,7 +339,6 @@ public class Model
             ErrorThrow<InvalidDataException>($"Node {mnRestPose.Name} not found in model pose tree.");
         }
         
-        Matrix4x4 m4MyBoneSpaceToRestPose = m4Anim * m4BoneSpaceToRestPose; 
         
         /*
          * Store resulting matrix if we have a bone that carries it.
@@ -352,9 +368,9 @@ public class Model
                 /*
                  * First from model coordinate space to bone local coordinate space
                  */
-                m4MyModelPoseToBonePose /* * Matrix4x4.CreateScale(0.01f) */ * 
-                m4Anim *
-                m4BoneSpaceToRestPose 
+                m4MyModelPoseToBonePose * 
+                Matrix4x4.CreateScale(0.001f) * 
+                m4MyBoneSpaceToRestPose 
                 ;
             
             /*
@@ -607,7 +623,7 @@ public class Model
                     _bakeRecursiveNew(
                         mnRoot,
                         ModelNodeTree,
-                        BakeMode.Absolute,
+                        BakeMode.RelativeOnTop,
                         Matrix4x4.Identity, 
                         ma, 
                         frameno);
