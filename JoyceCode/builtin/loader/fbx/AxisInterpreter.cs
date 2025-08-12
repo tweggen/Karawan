@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 
 namespace builtin.loader.fbx;
@@ -13,6 +14,23 @@ public class AxisInterpreter
     private bool _isLeftHanded = false;
 
     public Matrix4x4 M4ToJoyce;
+    public Matrix4x4 M4FromJoyce;
+
+
+    public Vector3 ToJoyce(in Vector3 v3) => Vector3.Transform(v3, M4ToJoyce);
+    
+    public Quaternion ToJoyce(in Quaternion q)
+    {
+        // q = [x, y, z, w] where (x,y,z) are the vector components
+        Vector3 oldVec = new(q.X, q.Y, q.Z);
+        
+        // Apply the transformation to the quaternion's vector part
+        float newX = M4ToJoyce.M11 * oldVec.X + M4ToJoyce.M12 * oldVec.Y + M4ToJoyce.M13 * oldVec.Z;
+        float newY = M4ToJoyce.M21 * oldVec.X + M4ToJoyce.M22 * oldVec.Y + M4ToJoyce.M23 * oldVec.Z;
+        float newZ = M4ToJoyce.M31 * oldVec.X + M4ToJoyce.M32 * oldVec.Y + M4ToJoyce.M33 * oldVec.Z;
+        
+        return new Quaternion(newX, newY, newZ, q.W); // w component unchanged
+    }
     
     public unsafe AxisInterpreter(Metadata metadata)
     {
@@ -81,5 +99,6 @@ public class AxisInterpreter
             _v3Front.X, _v3Front.Y, _v3Front.Z, 0f,
             0f, 0f, 0f, 1f
         );
+        Matrix4x4.Invert(M4ToJoyce, out M4FromJoyce);
     }
 }

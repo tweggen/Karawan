@@ -26,6 +26,7 @@ public class FbxModel : IDisposable
     private Model? _model = null;
     private unsafe Scene* _scene = null;
     private Metadata _metadata;
+    private AxisInterpreter _axi;
 
     private static object _slo = new();
 
@@ -162,7 +163,7 @@ public class FbxModel : IDisposable
                     mac.Positions![l] = new()
                     {
                         Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        Value = aiChannel->MPositionKeys[l].MValue
+                        Value = _axi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
                     };
                 }
                 
@@ -171,7 +172,7 @@ public class FbxModel : IDisposable
                     mac.Scalings![l] = new()
                     {
                         Time = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
-                        Value = aiChannel->MScalingKeys[l].MValue
+                        Value = _axi.ToJoyce(aiChannel->MScalingKeys[l].MValue)
                     };
                 }
                 
@@ -180,7 +181,7 @@ public class FbxModel : IDisposable
                     mac.Rotations![l] = new()
                     {
                         Time = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
-                        Value = aiChannel->MRotationKeys[l].MValue
+                        Value = _axi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
                     };
                 }
                 
@@ -385,7 +386,8 @@ public class FbxModel : IDisposable
          */
         if ((mp.LoadMeshes && meshInOrBelowMe) || mp.LoadMainNodes)
         {
-            var mToParent = Matrix4x4.Transpose(node->MTransformation);
+            var mToParent =
+                _axi.M4FromJoyce * Matrix4x4.Transpose(node->MTransformation) * _axi.M4ToJoyce;
             mn.Transform = new Transform3ToParent(true, 0xffffffff, mToParent);
             
             return mn;
@@ -446,24 +448,24 @@ public class FbxModel : IDisposable
                 vertex.BoneIds = new int[Vertex.MAX_BONE_INFLUENCE];
                 vertex.Weights = new float[Vertex.MAX_BONE_INFLUENCE];
 
-                vertex.Position = mesh->MVertices[i];
+                vertex.Position = Vector3.Transform(mesh->MVertices[i], _axi.M4ToJoyce);
 
                 // normals
                 if (mesh->MNormals != null)
                 {
-                    vertex.Normal = mesh->MNormals[i];
+                    vertex.Normal = Vector3.Transform(mesh->MNormals[i], _axi.M4ToJoyce);
                 }
 
                 // tangent
                 if (mesh->MTangents != null)
                 {
-                    vertex.Tangent = mesh->MTangents[i];
+                    vertex.Tangent = Vector3.Transform(mesh->MTangents[i], _axi.M4ToJoyce);
                 }
 
                 // bitangent
                 if (mesh->MBitangents != null)
                 {
-                    vertex.Bitangent = mesh->MBitangents[i];
+                    vertex.Bitangent = Vector3.Transform(mesh->MBitangents[i], _axi.M4ToJoyce);
                 }
 
                 // texture coordinates
@@ -522,7 +524,7 @@ public class FbxModel : IDisposable
                     var aiBone = mesh->MBones[i];
 
                     var jBone = skeleton.FindBone(aiBone->MName.ToString());
-                    jBone.Model2Bone = Matrix4x4.Transpose(aiBone->MOffsetMatrix);
+                    jBone.Model2Bone = _axi.M4FromJoyce * Matrix4x4.Transpose(aiBone->MOffsetMatrix) * _axi.M4ToJoyce;
                     jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
 
                     var nBoneVertices = aiBone->MNumWeights;
@@ -763,7 +765,7 @@ public class FbxModel : IDisposable
         Trace($"Loaded \"{path}\"");
         _metadata = new(_scene);
         _metadata.Dump();
-        AxisInterpreter axisInterpreter = new(_metadata);
+        _axi = new(_metadata);
         
         if (_scene == null || _scene->MFlags == Assimp.SceneFlagsIncomplete || _scene->MRootNode == null)
         {
