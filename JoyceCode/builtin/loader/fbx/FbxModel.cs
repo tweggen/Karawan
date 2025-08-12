@@ -763,6 +763,8 @@ public class FbxModel : IDisposable
         Trace($"Loaded \"{path}\"");
         _metadata = new(_scene);
         _metadata.Dump();
+        AxisInterpreter axisInterpreter = new(_metadata);
+        
         if (_scene == null || _scene->MFlags == Assimp.SceneFlagsIncomplete || _scene->MRootNode == null)
         {
             var error = _assimp.GetErrorStringS();

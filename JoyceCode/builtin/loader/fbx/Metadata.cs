@@ -73,9 +73,12 @@ public class Metadata
 
             }
 
-            strValue = value.ToString();
-            _mapMetadata[strKey] = value;
-            _mapMetadata[strKey] = strValue;
+            if (null != value)
+            {
+                strValue = value.ToString();
+                _mapMetadata[strKey] = value;
+                _mapMetadataStrings[strKey] = strValue;
+            }
         }
     }
 }

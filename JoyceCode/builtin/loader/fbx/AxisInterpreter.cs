@@ -1,26 +1,85 @@
-#if false
-using Silk.NET.Assimp;
+using System.Numerics;
 
 namespace builtin.loader.fbx;
 
 public class AxisInterpreter
 {
-    
-    public unsafe AxisInterpreter(Scene* pScene)
-    {
-        Metadata* metadata = pScene->MMetaData;
-        for (uint i = 0; i < metadata->MNumProperties; i++)
-        {
-            string key = metadata->MKeys[i].ToString();
-            
-            string strValue = "(unknown)";
-            void* p = metadata->MValues[i].MData;
-            switch (metadata->MValues[i].MType)
-            {
+    private readonly Metadata _metadata;
 
-            }
+    private Vector3 _v3Up;
+    private Vector3 _v3Front;
+    private Vector3 _v3Right;
+
+    private bool _isLeftHanded = false;
+
+    public Matrix4x4 M4ToJoyce;
+    
+    public unsafe AxisInterpreter(Metadata metadata)
+    {
+        _metadata = metadata;
+
+        int upAxis = _metadata.GetInteger("UpAxis");
+        int whichFrontAxis = _metadata.GetInteger("FrontAxis");
+        
+        int upSign = _metadata.GetInteger("UpAxisSign") == 1?1:-1;
+        int frontSign = _metadata.GetInteger("FrontAxisSign") == 1?1:-1;
+        int rightSign = _metadata.GetInteger("CoordAxisSign") == 1?1:-1;
+        
+        switch (upAxis)
+        {
+            case 1:
+                _v3Up = Vector3.UnitX;
+                if (whichFrontAxis == 1)
+                {
+                    _v3Front = Vector3.UnitY;
+                    _v3Right = Vector3.UnitZ;
+                }
+                else
+                {
+                    _v3Front = Vector3.UnitZ;
+                    _v3Right = Vector3.UnitY;
+                }
+                break;
+            case 2:
+            default:
+                _v3Up = Vector3.UnitY;
+                if (whichFrontAxis == 1)
+                {
+                    _v3Front = Vector3.UnitX;
+                    _v3Right = Vector3.UnitZ;
+                }
+                else
+                {
+                    _v3Front = Vector3.UnitZ;
+                    _v3Right = Vector3.UnitX;
+                }
+                break;
+            case 3:
+                _v3Up = Vector3.UnitZ;
+                if (whichFrontAxis == 1)
+                {
+                    _v3Front = Vector3.UnitY;
+                    _v3Right = Vector3.UnitZ;
+                }
+                else
+                {
+                    _v3Front = Vector3.UnitZ;
+                    _v3Right = Vector3.UnitY;
+                }
+                break;
         }
+
+        _v3Up *= upSign;
+        _v3Front *= frontSign;
+        _v3Right *= rightSign;
+
+        _isLeftHanded = Vector3.Dot(Vector3.Cross(_v3Right, _v3Up), _v3Front) < 0;
+
+        M4ToJoyce = new Matrix4x4(
+            _v3Right.X, _v3Right.Y, _v3Right.Z, 0f,
+            _v3Up.X, _v3Up.Y, _v3Up.Z, 0f,
+            _v3Front.X, _v3Front.Y, _v3Front.Z, 0f,
+            0f, 0f, 0f, 1f
+        );
     }
-    
-    
-    #endif
+}
