@@ -264,7 +264,6 @@ public class Model
         ModelNodeTree mntModelPose,
         BakeMode bakeMode,
         Matrix4x4 m4BoneSpaceToRestPose,
-        Matrix4x4 m4ModelPoseToBonePose, 
         ModelAnimation ma, uint frameno)
     {
         var skeleton = Skeleton!;
@@ -289,7 +288,7 @@ public class Model
          * Then use it or concatenate it.
          */
         Matrix4x4 m4Anim;
-        if (ma.MapChannels.TryGetValue(mnRestPose, out var mac))
+        if (false && ma.MapChannels.TryGetValue(mnRestPose, out var mac))
         {
             /*
              * We do have an animation channel for this node.
@@ -306,6 +305,7 @@ public class Model
              * In case my node cannot be found in the list of animation channels.
              */
             m4Anim = mnRestPose.Transform.Matrix;
+            //Trace($"Using rest pose for {mnRestPose.Name}: {mnRestPose.Transform.Matrix}");
         }
 
         Matrix4x4 m4MyModelPoseToBonePose = Matrix4x4.Identity;
@@ -352,7 +352,7 @@ public class Model
                 /*
                  * First from model coordinate space to bone local coordinate space
                  */
-                m4ModelPoseToBonePose * Matrix4x4.CreateScale(0.01f) *
+                m4MyModelPoseToBonePose /* * Matrix4x4.CreateScale(0.01f) */ * 
                 m4Anim *
                 m4BoneSpaceToRestPose 
                 ;
@@ -396,7 +396,6 @@ public class Model
                     mntModelPose,
                     bakeMode,
                     m4MyBoneSpaceToRestPose,
-                    m4MyModelPoseToBonePose,
                     ma, frameno);
             }
         }
@@ -609,7 +608,6 @@ public class Model
                         mnRoot,
                         ModelNodeTree,
                         BakeMode.Absolute,
-                        Matrix4x4.Identity, 
                         Matrix4x4.Identity, 
                         ma, 
                         frameno);

@@ -219,7 +219,7 @@ public class ModelNode
      */
     public void ComputeGlobalTransform(ref Matrix4x4 m4)
     {
-       m4 = Transform.Matrix * m4;
+       m4 = m4 * Transform.Matrix;
        Parent?.ComputeGlobalTransform(ref m4);
     }
     
@@ -230,8 +230,8 @@ public class ModelNode
      */
     public void ComputeInverseGlobalTransform(ref Matrix4x4 m4)
     {
+        Parent?.ComputeGlobalTransform(ref m4);
         Matrix4x4.Invert(Transform.Matrix, out var mInverse);
         m4 = m4 * mInverse;
-        Parent?.ComputeGlobalTransform(ref m4);
     }
 }
