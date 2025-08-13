@@ -14,7 +14,8 @@
     "nogame.LogosScene.PlayTitleMusic": "true",
     "engine.physics.TraceCalls": false,
     "debug.option.forceTouchInterface": "false",
-    "debug.option.mouseEnabled": "false"
+    "debug.option.mouseEnabled": "false",
+    "debug.option.autoLogin": "global"
   },
   "implementations":
   {

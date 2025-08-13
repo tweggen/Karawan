@@ -38,12 +38,23 @@ public class AxisInterpreter
     {
         _metadata = metadata;
 
-        int upAxis = _metadata.GetInteger("UpAxis");
-        int whichFrontAxis = _metadata.GetInteger("FrontAxis");
-        
         int upSign = _metadata.GetInteger("UpAxisSign") == 1?1:-1;
         int frontSign = _metadata.GetInteger("FrontAxisSign") == 1?1:-1;
         int rightSign = _metadata.GetInteger("CoordAxisSign") == 1?1:-1;
+
+        #if true
+        Vector3[] arrAxis = { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ };
+
+        _v3Front = arrAxis[_metadata.GetInteger("FrontAxis", 2)];
+        _v3Up = arrAxis[_metadata.GetInteger("UpAxis", 1)];
+        _v3Right = arrAxis[_metadata.GetInteger("CoordAxis", 0)];
+        
+        #else
+        /*
+         * This implementation is for the fnx axis system
+         */
+        int upAxis = _metadata.GetInteger("UpAxis");
+        int whichFrontAxis = _metadata.GetInteger("FrontAxis");
         
         switch (upAxis)
         {
@@ -88,7 +99,7 @@ public class AxisInterpreter
                 }
                 break;
         }
-
+        #endif
         _v3Up *= upSign;
         _v3Front *= frontSign;
         _v3Right *= rightSign;

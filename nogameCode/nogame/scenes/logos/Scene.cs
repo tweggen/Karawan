@@ -260,6 +260,26 @@ public class Scene : AModule, IScene
         I.Get<SubscriptionManager>().Subscribe("nogame.login.newGlobally", _onNewGlobally);
 
         ActivateMyModule<nogame.modules.menu.LoginMenuModule>();
+        
+        /*
+         * Handle autologin if requested
+         */
+        switch (engine.GlobalSettings.Get("debug.option.autoLogin"))
+        {
+            case "global":
+            case "globally":
+                I.Get<EventQueue>().Push(new Event("nogame.login.loginGlobally", ""));
+                break;
+            case "local":
+            case "locally":
+                I.Get<EventQueue>().Push(new Event("nogame.login.loginLocally", ""));
+                break;
+            case "new":
+                I.Get<EventQueue>().Push(new Event("nogame.login.newGlobally", ""));
+                break;
+            default:
+                break;
+        }
     }
 
     
