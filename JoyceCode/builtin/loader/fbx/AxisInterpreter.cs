@@ -18,6 +18,8 @@ public class AxisInterpreter
 
 
     public Vector3 ToJoyce(in Vector3 v3) => Vector3.Transform(v3, M4ToJoyce);
+
+    public Matrix4x4 ToJoyce(in Matrix4x4 m4) => M4FromJoyce * m4 * M4ToJoyce;
     
     public Quaternion ToJoyce(in Quaternion q)
     {

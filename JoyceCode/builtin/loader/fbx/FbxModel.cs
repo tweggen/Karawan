@@ -386,9 +386,8 @@ public class FbxModel : IDisposable
          */
         if ((mp.LoadMeshes && meshInOrBelowMe) || mp.LoadMainNodes)
         {
-            var mToParent =
-                _axi.M4FromJoyce * Matrix4x4.Transpose(node->MTransformation) * _axi.M4ToJoyce;
-            mn.Transform = new Transform3ToParent(true, 0xffffffff, mToParent);
+            var m4ToParent = _axi.ToJoyce(Matrix4x4.Transpose(node->MTransformation));
+            mn.Transform = new Transform3ToParent(true, 0xffffffff, m4ToParent);
             
             return mn;
 
@@ -448,24 +447,24 @@ public class FbxModel : IDisposable
                 vertex.BoneIds = new int[Vertex.MAX_BONE_INFLUENCE];
                 vertex.Weights = new float[Vertex.MAX_BONE_INFLUENCE];
 
-                vertex.Position = Vector3.Transform(mesh->MVertices[i], _axi.M4ToJoyce);
+                vertex.Position = _axi.ToJoyce(mesh->MVertices[i]);
 
                 // normals
                 if (mesh->MNormals != null)
                 {
-                    vertex.Normal = Vector3.Transform(mesh->MNormals[i], _axi.M4ToJoyce);
+                    vertex.Normal = _axi.ToJoyce(mesh->MNormals[i]);
                 }
 
                 // tangent
                 if (mesh->MTangents != null)
                 {
-                    vertex.Tangent = Vector3.Transform(mesh->MTangents[i], _axi.M4ToJoyce);
+                    vertex.Tangent = _axi.ToJoyce(mesh->MTangents[i]);
                 }
 
                 // bitangent
                 if (mesh->MBitangents != null)
                 {
-                    vertex.Bitangent = Vector3.Transform(mesh->MBitangents[i], _axi.M4ToJoyce);
+                    vertex.Bitangent = _axi.ToJoyce(mesh->MBitangents[i]);
                 }
 
                 // texture coordinates
@@ -524,7 +523,7 @@ public class FbxModel : IDisposable
                     var aiBone = mesh->MBones[i];
 
                     var jBone = skeleton.FindBone(aiBone->MName.ToString());
-                    jBone.Model2Bone = _axi.M4FromJoyce * Matrix4x4.Transpose(aiBone->MOffsetMatrix) * _axi.M4ToJoyce;
+                    jBone.Model2Bone = _axi.ToJoyce(Matrix4x4.Transpose(aiBone->MOffsetMatrix));
                     jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
 
                     var nBoneVertices = aiBone->MNumWeights;
