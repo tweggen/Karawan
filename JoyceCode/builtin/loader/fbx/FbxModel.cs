@@ -450,7 +450,7 @@ public class FbxModel : IDisposable
                 vertex.Weights = new float[Vertex.MAX_BONE_INFLUENCE];
 
                 vertex.Position = _axi.ToJoyce(mesh->MVertices[i]);
-
+                
                 // normals
                 if (mesh->MNormals != null)
                 {
