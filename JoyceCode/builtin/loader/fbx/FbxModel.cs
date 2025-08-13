@@ -30,6 +30,8 @@ public class FbxModel : IDisposable
 
     private static object _slo = new();
 
+    private Matrix4x4 _fbxTranspose(in Matrix4x4 m) => Matrix4x4.Transpose(m);
+
     private static void _needAssimp()
     {
         lock (_slo)
@@ -386,7 +388,7 @@ public class FbxModel : IDisposable
          */
         if ((mp.LoadMeshes && meshInOrBelowMe) || mp.LoadMainNodes)
         {
-            var m4ToParent = _axi.ToJoyce(Matrix4x4.Transpose(node->MTransformation));
+            var m4ToParent = _axi.ToJoyce(_fbxTranspose(node->MTransformation));
             mn.Transform = new Transform3ToParent(true, 0xffffffff, m4ToParent);
             
             return mn;
@@ -523,7 +525,7 @@ public class FbxModel : IDisposable
                     var aiBone = mesh->MBones[i];
 
                     var jBone = skeleton.FindBone(aiBone->MName.ToString());
-                    jBone.Model2Bone = _axi.ToJoyce(Matrix4x4.Transpose(aiBone->MOffsetMatrix));
+                    jBone.Model2Bone = _axi.ToJoyce(_fbxTranspose(aiBone->MOffsetMatrix));
                     jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
 
                     var nBoneVertices = aiBone->MNumWeights;

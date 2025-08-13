@@ -116,7 +116,7 @@ public class ModelNode
             s += ",\n";
             if (!Transform.Matrix.IsIdentity)
             {
-                s += $"{t}\"transform\": {Transform.Matrix.ToString()}";
+                s += $"{t}\"transform\": {Transform.Matrix.ToString()}\n";
             }
             //s += $"{t}}},\n";
             if (Children != null)
