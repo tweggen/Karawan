@@ -693,6 +693,7 @@ public class FbxModel : IDisposable
 
         foreach (var vertex in vertexCollection)
         {
+            #if true
             vertices.Add(vertex.Position.X);
             vertices.Add(vertex.Position.Y);
             vertices.Add(vertex.Position.Z);
@@ -701,6 +702,16 @@ public class FbxModel : IDisposable
             vertices.Add(vertex.Normal.Z);
             vertices.Add(vertex.TexCoords.X);
             vertices.Add(vertex.TexCoords.Y);
+            #else
+            vertices.Add(vertex.Position.X);
+            vertices.Add(vertex.Position.Z);
+            vertices.Add(-vertex.Position.Y);
+            vertices.Add(vertex.Normal.X);
+            vertices.Add(vertex.Normal.Z);
+            vertices.Add(-vertex.Normal.Y);
+            vertices.Add(vertex.TexCoords.X);
+            vertices.Add(vertex.TexCoords.Y);
+            #endif
         }
 
         return vertices.ToArray();
