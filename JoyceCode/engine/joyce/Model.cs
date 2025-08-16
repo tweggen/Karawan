@@ -384,6 +384,10 @@ public class Model
                 if (boneIndex < arr.Length)
                 {
                     arr[boneIndex] = m4Baked;
+                    if (frameno == 0)
+                    {
+                        Trace($"Baked \"{mnRestPose.Name}\": {m4Baked}");
+                    }
                 }
                 else
                 {
