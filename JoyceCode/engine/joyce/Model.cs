@@ -291,13 +291,13 @@ public class Model
         Matrix4x4 m4LocalAnim;
         Matrix4x4 m4MyBoneSpaceToRestPose; // = m4LocalAnim * m4BoneSpaceToRestPose;
 
-        if (ma.MapChannels.TryGetValue(mnRestPose, out var mac))
+        if (false && ma.MapChannels.TryGetValue(mnRestPose, out var mac))
         {
             /*
              * We do have an animation channel for this node.
              * So consider the animation below.
              *
-             * Apply it to the matrix.
+             * Apply it to the matrix.<
              */
             m4LocalAnim = Matrix4x4.Identity;
             _computeAnimFrame(mac, ref m4LocalAnim, frameno);
