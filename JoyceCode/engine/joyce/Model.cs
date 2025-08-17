@@ -281,7 +281,7 @@ public class Model
         Matrix4x4 m4LocalAnim;
         Matrix4x4 m4MyBoneSpaceToRestPose;
 
-        if (false && ma.MapChannels.TryGetValue(mnRestPose, out var mac))
+        if (ma.MapChannels.TryGetValue(mnRestPose, out var mac))
         {
             /*
              * We do have an animation channel for this node.

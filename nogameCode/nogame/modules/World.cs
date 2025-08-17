@@ -48,11 +48,13 @@ public class World : AController
         // TXWTODO: We don't precisely know when we have the first valid position 
         if (shouldTryLoad)
         {
-            if (_worldLoader == null)
+            /*
+             * During startup, _worldLoader still can be null at this point.
+             */
+            if (_worldLoader != null)
             {
-                ErrorThrow("WorldLoader is null here?", m => new InvalidOperationException(m));
+                _worldLoader.WorldLoaderProvideFragments();
             }
-            _worldLoader.WorldLoaderProvideFragments();
         }
     }
     
