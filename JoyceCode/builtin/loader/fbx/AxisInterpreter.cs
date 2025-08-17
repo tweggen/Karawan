@@ -33,6 +33,31 @@ public class AxisInterpreter
         
         return new Quaternion(newX, newY, newZ, q.W); // w component unchanged
     }
+
+
+    private void _afterInit()
+    {
+        _isLeftHanded = Vector3.Dot(Vector3.Cross(_v3Right, _v3Up), _v3Front) < 0;
+
+        M4ToJoyce = new Matrix4x4(
+            _v3Right.X, _v3Right.Y, _v3Right.Z, 0f,
+            _v3Up.X, _v3Up.Y, _v3Up.Z, 0f,
+            _v3Front.X, _v3Front.Y, _v3Front.Z, 0f,
+            0f, 0f, 0f, 1f
+        );
+        Matrix4x4.Invert(M4ToJoyce, out M4FromJoyce);
+    }
+    
+
+    public AxisInterpreter(in Vector3 v3Right, in Vector3 v3Up, in Vector3 v3Front)
+    {
+        _v3Front = v3Front;
+        _v3Up = v3Up;
+        _v3Right = v3Right;
+
+        _afterInit();
+    }
+    
     
     public unsafe AxisInterpreter(Metadata metadata)
     {
@@ -104,14 +129,6 @@ public class AxisInterpreter
         _v3Front *= frontSign;
         _v3Right *= rightSign;
 
-        _isLeftHanded = Vector3.Dot(Vector3.Cross(_v3Right, _v3Up), _v3Front) < 0;
-
-        M4ToJoyce = new Matrix4x4(
-            _v3Right.X, _v3Right.Y, _v3Right.Z, 0f,
-            _v3Up.X, _v3Up.Y, _v3Up.Z, 0f,
-            _v3Front.X, _v3Front.Y, _v3Front.Z, 0f,
-            0f, 0f, 0f, 1f
-        );
-        Matrix4x4.Invert(M4ToJoyce, out M4FromJoyce);
+        _afterInit();
     }
 }

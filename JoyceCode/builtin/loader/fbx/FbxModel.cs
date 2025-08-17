@@ -27,6 +27,11 @@ public class FbxModel : IDisposable
     private unsafe Scene* _scene = null;
     private Metadata _metadata;
     private AxisInterpreter _axi;
+    
+    /**
+     * The axis interpreter for loading animation.
+     */
+    private AxisInterpreter _baxi = new AxisInterpreter(Vector3.UnitX, -Vector3.UnitZ, Vector3.UnitY);
 
     private static object _slo = new();
 
@@ -165,7 +170,7 @@ public class FbxModel : IDisposable
                     mac.Positions![l] = new()
                     {
                         Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _axi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
+                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
                     };
                 }
                 
@@ -174,7 +179,7 @@ public class FbxModel : IDisposable
                     mac.Scalings![l] = new()
                     {
                         Time = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _axi.ToJoyce(aiChannel->MScalingKeys[l].MValue)
+                        Value = _baxi.ToJoyce(aiChannel->MScalingKeys[l].MValue)
                     };
                 }
                 
@@ -183,7 +188,7 @@ public class FbxModel : IDisposable
                     mac.Rotations![l] = new()
                     {
                         Time = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _axi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
+                        Value = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
                     };
                 }
                 
