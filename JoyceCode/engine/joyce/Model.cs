@@ -14,16 +14,6 @@ using static engine.Logger;
 
 namespace engine.joyce;
 
-public class Joint
-{
-    /**
-     * The node this joint controls
-     */
-    public IList<ModelNode> ControlledNodes;
-    public Matrix4x4 InverseBindMatrix;
-}
-
-
 /**
  * Represent a loaded or generated model.
  *
@@ -34,7 +24,7 @@ public class Joint
 public class Model
 {
     public string Name = "";
-    public uint MAX_BONES = 120;
+    public int MAX_BONES = 120;
     
     private int _nextAnimIndex = 1;
     private uint _nextAnimFrame = 0;
@@ -45,6 +35,7 @@ public class Model
     }
     
     public Skeleton? Skeleton = null;
+    
     public SortedDictionary<string, ModelAnimation> MapAnimations;
     
     public Matrix4x4[]? AllBakedMatrices = null; 
@@ -58,6 +49,7 @@ public class Model
     public Matrix4x4 FirstInstanceDescTransform { get; private set; } = Matrix4x4.Identity;
 
     public ModelNodeTree ModelNodeTree { get; private set; } 
+
     
     
     public ModelAnimation CreateAnimation(ModelNode? mnRestPose)
@@ -115,7 +107,7 @@ public class Model
          * Find the appropriate bone.  
          */
         Bone? bone = null;
-        uint boneIndex = 0; 
+        int boneIndex = -1; 
         
         
         Matrix4x4 m4Model2Bone;
@@ -270,26 +262,24 @@ public class Model
         var skeleton = Skeleton!;
         
         /*
-         * Find the appropriate bone.  
+         * Is the current node referenced as a bone that can influence vertices?
+         * Some nodes might be animated without directly influencing any vertices,
+         * others might not be animated at all.
          */
         Bone? bone = null;
-        uint boneIndex = 0; 
+        int boneIndex = -1; 
 
         if (skeleton.MapBones.TryGetValue(mnRestPose.Name, out bone))
         {
             boneIndex = bone.Index;
         }
-        else
-        {
-            int a = 1;
-        }
 
         /*
-         * Is there an animation stored inside this bone?
+         * Is there an animation applied to this node?
          * Then use it or concatenate it.
          */
         Matrix4x4 m4LocalAnim;
-        Matrix4x4 m4MyBoneSpaceToRestPose; // = m4LocalAnim * m4BoneSpaceToRestPose;
+        Matrix4x4 m4MyBoneSpaceToRestPose;
 
         if (false && ma.MapChannels.TryGetValue(mnRestPose, out var mac))
         {
@@ -341,7 +331,9 @@ public class Model
         
         
         /*
-         * Store resulting matrix if we have a bone that carries it.
+         * Store resulting matrix if we have a bone that carries it and thus might influence
+         * vertices.
+         * 
          * Otherwise, just pass it on to the children.
          */
         if (bone != null)
@@ -422,7 +414,7 @@ public class Model
     }
 
     
-    #if true
+    #if false
     public void _bakeNew(ModelAnimation ma)
     {
         Debug.Assert(ma.RestPose != null);
@@ -545,7 +537,7 @@ public class Model
         
         Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
         
-        AllBakedMatrices = new Matrix4x4[_nextAnimFrame * Skeleton.NBones];
+        AllBakedMatrices = new Matrix4x4[_nextAnimFrame * skeleton.NBones];
         
         /*
          * First, for all animations, create the arrays of matrices for
@@ -568,7 +560,7 @@ public class Model
             {
                 ModelBakedFrame bakedFrame = new()
                 {
-                    BoneTransformations = new Matrix4x4[UInt32.Max(Skeleton.NBones, MAX_BONES)]
+                    BoneTransformations = new Matrix4x4[Int32.Max(Skeleton.NBones, MAX_BONES)]
                 };
                 ma.BakedFrames[frameno] = bakedFrame;
             }

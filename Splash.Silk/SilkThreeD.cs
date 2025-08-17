@@ -449,7 +449,7 @@ public class SilkThreeD : IThreeD
             {
                 if (spanFramenos != null)
                 {
-                    uint nBones = aAnimationsEntry?.Model?.Skeleton?.NBones ?? 1;
+                    int nBones = aAnimationsEntry?.Model?.Skeleton?.NBones ?? 1;
                     if (nBones > 1)
                     {
                         if (skAnimationsEntry == null)

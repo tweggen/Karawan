@@ -7,7 +7,7 @@ public class Skeleton
     private SortedDictionary<string, Bone> _mapBones = new ();
     private List<Bone> _listBones = new();
     
-    private uint _nextBoneIndex = 0;
+    private int _nextBoneIndex = 0;
     
     
     public IList<Bone> ListBones
@@ -22,7 +22,7 @@ public class Skeleton
     }
     
     
-    public uint NBones
+    public int NBones
     {
         get => _nextBoneIndex;
     }

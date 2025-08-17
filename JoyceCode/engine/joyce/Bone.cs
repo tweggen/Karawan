@@ -59,8 +59,7 @@ public class Bone
 
     public Matrix4x4 Bone2Model = Matrix4x4.Identity;
     
-    public uint Index;
-
+    public int Index;
 }
 
 

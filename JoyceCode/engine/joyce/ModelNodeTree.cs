@@ -56,7 +56,7 @@ public class ModelNodeTree
     private void _loadNodesRecursively(ModelNode mn, Skeleton? skeleton)
     {
         MapNodes[mn.Name] = mn;
-        skeleton?.FindBone(mn.Name);
+        // skeleton?.FindBone(mn.Name);
         
         if (mn.Children != null)
         {
@@ -86,7 +86,7 @@ public class ModelNodeTree
                     ErrorThrow<InvalidDataException>($"Node {mnChild.Name} already exists in the model, structure clash.");
                 }
                 MapNodes[mnChild.Name] = mnChild;
-                skeleton?.FindBone(mnChild.Name);
+                // skeleton?.FindBone(mnChild.Name);
                 _addChildrenRecursively(mnChild, mp, skeleton);
             }
         }
@@ -162,7 +162,7 @@ public class ModelNodeTree
                     /*
                      * All new children need to have bones associated with them.
                      */
-                    skeleton?.FindBone(mnNewChild.Name);
+                    // skeleton?.FindBone(mnNewChild.Name);
                     
                     /*
                      * This is a new child. Add it.

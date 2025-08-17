@@ -30,7 +30,6 @@ public class ModelAnimation
     public uint NFrames;
     public ModelNode? RestPose;
     public Dictionary<ModelNode, ModelAnimChannel> MapChannels;
-
     public ModelBakedFrame[] BakedFrames;
 
     public ModelAnimChannel CreateChannel(
