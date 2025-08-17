@@ -693,7 +693,6 @@ public class FbxModel : IDisposable
 
         foreach (var vertex in vertexCollection)
         {
-            #if true
             vertices.Add(vertex.Position.X);
             vertices.Add(vertex.Position.Y);
             vertices.Add(vertex.Position.Z);
@@ -702,16 +701,6 @@ public class FbxModel : IDisposable
             vertices.Add(vertex.Normal.Z);
             vertices.Add(vertex.TexCoords.X);
             vertices.Add(vertex.TexCoords.Y);
-            #else
-            vertices.Add(vertex.Position.X);
-            vertices.Add(vertex.Position.Z);
-            vertices.Add(-vertex.Position.Y);
-            vertices.Add(vertex.Normal.X);
-            vertices.Add(vertex.Normal.Z);
-            vertices.Add(-vertex.Normal.Y);
-            vertices.Add(vertex.TexCoords.X);
-            vertices.Add(vertex.TexCoords.Y);
-            #endif
         }
 
         return vertices.ToArray();
@@ -793,7 +782,7 @@ public class FbxModel : IDisposable
             },
             out var _); 
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
-        Trace(model.ModelNodeTree.RootNode.DumpNode());
+        // Trace(model.ModelNodeTree.RootNode.DumpNode());
 
         /*
          * Now load all the animations. First the ones from the main file.
@@ -845,7 +834,7 @@ public class FbxModel : IDisposable
                     ModelNode? mnNewRoot = _processNode(
                         null, additionalScene->MRootNode,
                         mp, out var _);
-#if true
+#if false
                     if (null != mnNewRoot)
                     {
                         Trace(mnNewRoot.DumpNode());
