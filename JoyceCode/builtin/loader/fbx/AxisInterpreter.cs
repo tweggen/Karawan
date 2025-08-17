@@ -23,6 +23,9 @@ public class AxisInterpreter
     
     public Quaternion ToJoyce(in Quaternion q)
     {
+#if false
+        return q;
+#else
         // q = [x, y, z, w] where (x,y,z) are the vector components
         Vector3 oldVec = new(q.X, q.Y, q.Z);
         
@@ -32,6 +35,7 @@ public class AxisInterpreter
         float newZ = M4ToJoyce.M31 * oldVec.X + M4ToJoyce.M32 * oldVec.Y + M4ToJoyce.M33 * oldVec.Z;
         
         return new Quaternion(newX, newY, newZ, q.W); // w component unchanged
+#endif
     }
 
 
