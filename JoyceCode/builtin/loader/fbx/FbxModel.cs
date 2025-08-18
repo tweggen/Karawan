@@ -31,7 +31,7 @@ public class FbxModel : IDisposable
     /**
      * The axis interpreter for loading animation.
      */
-    private AxisInterpreter _baxi = new AxisInterpreter(Vector3.UnitX, Vector3.UnitY, -Vector3.UnitZ);
+    private AxisInterpreter _baxi = new AxisInterpreter(Vector3.UnitX, Vector3.UnitZ, -Vector3.UnitY);
 
     private static object _slo = new();
 
@@ -383,6 +383,13 @@ public class FbxModel : IDisposable
             }
         }
 
+        if (node->MMetaData != null && node->MMetaData->MNumProperties > 0)
+        {
+            Metadata metaNode = new(node->MMetaData);
+            Trace($"Node {mn.Name} has metadata:");
+            metaNode.Dump();
+        }
+        
         /*
          * Look if we want to store the model node we wrote, either by adding it to a
          * parent or by overriding an existing node. 
@@ -769,7 +776,7 @@ public class FbxModel : IDisposable
         );
         _assimp.ReleasePropertyStore(properties);
         Trace($"Loaded \"{path}\"");
-        _metadata = new(_scene);
+        _metadata = new(_scene->MMetaData);
         _metadata.Dump();
         _axi = new(_metadata);
         
@@ -823,7 +830,7 @@ public class FbxModel : IDisposable
                         continue;
                     }
 
-                    Metadata additionalMetadata = new(additionalScene);
+                    Metadata additionalMetadata = new(additionalScene->MMetaData);
                     additionalMetadata.Dump();
 
                     _compareBoneHierarchies(additionalScene, _scene);
