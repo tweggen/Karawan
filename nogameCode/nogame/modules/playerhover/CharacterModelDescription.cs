@@ -20,7 +20,7 @@ public class CharacterModelDescription
     public string WalkAnimName { get; set; } = "Metarig Man B|Child Walk Happy";
     public string RunAnimName { get; set; } = "Metarig Man B|Run Mid";
     public string IdleAnimName { get; set; } = "Metarig Man B|Idle 01";
-    public string JumpAnimName { get; set; } = "Metarig Man B|Run Mid";
+    public string JumpAnimName { get; set; } = "MetardAnimig Man B|Run Mid";
     
     public string ModelUrl { get; set;  } = "Studio Ochi Spring Man B_ANIM.fbx";
     public string AnimationUrls { get; set; } = "";

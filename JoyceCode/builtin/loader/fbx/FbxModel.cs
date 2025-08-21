@@ -31,7 +31,7 @@ public class FbxModel : IDisposable
     /**
      * The axis interpreter for loading animation.
      */
-    private AxisInterpreter _baxi = new AxisInterpreter(Vector3.UnitX, Vector3.UnitZ, -Vector3.UnitY);
+    private AxisInterpreter _baxi = new AxisInterpreter(Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ);
 
     private static object _slo = new();
 
@@ -170,7 +170,7 @@ public class FbxModel : IDisposable
                     mac.Positions![l] = new()
                     {
                         Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
+                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue) * 0.01f
                     };
                 }
                 
@@ -383,12 +383,14 @@ public class FbxModel : IDisposable
             }
         }
 
+        #if false
         if (node->MMetaData != null && node->MMetaData->MNumProperties > 0)
         {
             Metadata metaNode = new(node->MMetaData);
             Trace($"Node {mn.Name} has metadata:");
             metaNode.Dump();
         }
+        #endif
         
         /*
          * Look if we want to store the model node we wrote, either by adding it to a

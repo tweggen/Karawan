@@ -39,11 +39,17 @@ public class Mesh : IDisposable
 
             for (int i = 0; i < nVertices; i++)
             {
-                vertices.Add(new Vector3(Vertices[i * FLOATS_PER_VERTEX + 0], Vertices[i * FLOATS_PER_VERTEX + 1],
+                vertices.Add(new Vector3(
+                    Vertices[i * FLOATS_PER_VERTEX + 0], 
+                    Vertices[i * FLOATS_PER_VERTEX + 1],
                     Vertices[i * FLOATS_PER_VERTEX + 2]));
-                normals.Add(new Vector3(Vertices[i * FLOATS_PER_VERTEX + 3], Vertices[i * FLOATS_PER_VERTEX + 4],
+                normals.Add(new Vector3(
+                    Vertices[i * FLOATS_PER_VERTEX + 3], 
+                    Vertices[i * FLOATS_PER_VERTEX + 4],
                     Vertices[i * FLOATS_PER_VERTEX + 5]));
-                uvs.Add(new Vector2(Vertices[i * FLOATS_PER_VERTEX + 6], Vertices[i * FLOATS_PER_VERTEX + 7]));
+                uvs.Add(new Vector2(
+                    Vertices[i * FLOATS_PER_VERTEX + 6], 
+                    Vertices[i * FLOATS_PER_VERTEX + 7]));
             }
 
             List<uint> indices = new();

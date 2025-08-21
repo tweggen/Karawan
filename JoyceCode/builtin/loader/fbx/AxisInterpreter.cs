@@ -33,8 +33,15 @@ public class AxisInterpreter
         float newX = M4ToJoyce.M11 * oldVec.X + M4ToJoyce.M12 * oldVec.Y + M4ToJoyce.M13 * oldVec.Z;
         float newY = M4ToJoyce.M21 * oldVec.X + M4ToJoyce.M22 * oldVec.Y + M4ToJoyce.M23 * oldVec.Z;
         float newZ = M4ToJoyce.M31 * oldVec.X + M4ToJoyce.M32 * oldVec.Y + M4ToJoyce.M33 * oldVec.Z;
-        
-        return new Quaternion(newX, newY, newZ, q.W); // w component unchanged
+
+        if (!_isLeftHanded)
+        {
+            return new Quaternion(newX, newY, newZ, q.W); // w component unchanged
+        }
+        else
+        {
+            return new Quaternion(-newX, -newY, -newZ, q.W); // w component unchanged
+        }
 #endif
     }
 
@@ -51,7 +58,6 @@ public class AxisInterpreter
         );
         Matrix4x4.Invert(M4ToJoyce, out M4FromJoyce);
     }
-    
 
     public AxisInterpreter(in Vector3 v3Right, in Vector3 v3Up, in Vector3 v3Front)
     {
