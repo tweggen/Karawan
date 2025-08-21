@@ -621,7 +621,12 @@ public class Model
                         mnRoot,
                         ModelNodeTree,
                         BakeMode.RelativeOnTop,
-                        Matrix4x4.Identity, 
+                        Matrix4x4.Identity,
+                        /*new Matrix4x4(
+                            0f, 0f, 1f, 0f,
+                            1f, 0f, 0f, 0f,
+                            0f, 1f, 0f, 0f,
+                            0f, 0f, 0f, 1f),*/
                         ma, 
                         frameno);
                 }

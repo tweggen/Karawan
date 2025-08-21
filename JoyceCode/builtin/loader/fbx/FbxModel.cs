@@ -31,7 +31,10 @@ public class FbxModel : IDisposable
     /**
      * The axis interpreter for loading animation.
      */
-    private AxisInterpreter _baxi = new AxisInterpreter(Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ);
+    private AxisInterpreter _baxi = new AxisInterpreter(
+        Vector3.UnitX, 
+        Vector3.UnitY, 
+        Vector3.UnitZ);
 
     private static object _slo = new();
 
