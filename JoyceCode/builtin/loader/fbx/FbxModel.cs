@@ -200,7 +200,7 @@ public class FbxModel : IDisposable
             }
 
             _model.MapAnimations[ma.Name] = ma;
-        }
+        } 
     }
 
 
