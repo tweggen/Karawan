@@ -585,7 +585,7 @@ public class Model
                      * Plus, I need to apply the scale (which I also could do later).
                      */
                     _bakeRecursive(mnRoot,
-                        BakeMode.Absolute,
+                        BakeMode.RelativeOnTop,
                         /*
                          * m4GlobalTransform here is required to have the ochi person looking correctly
                          * with animations and not to be apart. It is however too large.
