@@ -50,7 +50,8 @@ public class Model
 
     public ModelNodeTree ModelNodeTree { get; private set; } 
 
-    
+    public Matrix4x4 _m4AntiCorrection;
+    public Matrix4x4 _m4Correction;
     
     public ModelAnimation CreateAnimation(ModelNode? mnRestPose)
     {
@@ -323,6 +324,7 @@ public class Model
         if (mntModelPose.MapNodes.TryGetValue(mnRestPose.Name, out var mnModelPose))
         {
             mnModelPose.ComputeInverseGlobalTransform(ref m4MyModelPoseToBonePose);;
+            m4MyModelPoseToBonePose = _m4AntiCorrection * m4MyModelPoseToBonePose;
         }
         else
         {
@@ -514,6 +516,13 @@ public class Model
         }
         Trace($"Baking animations for {Name}");
 
+        _m4AntiCorrection = new Matrix4x4(
+            0f, 1f, 0f, 0f,
+            0f, 0f, 1f, 0f,
+            1f, 0f, 0f, 0f,
+            0f, 0f, 0f, 1f);
+        Matrix4x4.Invert(_m4AntiCorrection, out _m4Correction);
+
         var skeleton = FindSkeleton();
         var mnRoot = ModelNodeTree.RootNode;
         
@@ -621,12 +630,8 @@ public class Model
                         mnRoot,
                         ModelNodeTree,
                         BakeMode.RelativeOnTop,
-                        Matrix4x4.Identity,
-                        /*new Matrix4x4(
-                            0f, 0f, 1f, 0f,
-                            1f, 0f, 0f, 0f,
-                            0f, 1f, 0f, 0f,
-                            0f, 0f, 0f, 1f),*/
+                        //Matrix4x4.Identity,
+                        _m4Correction,
                         ma, 
                         frameno);
                 }
