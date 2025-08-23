@@ -324,7 +324,7 @@ public class Model
         if (mntModelPose.MapNodes.TryGetValue(mnRestPose.Name, out var mnModelPose))
         {
             mnModelPose.ComputeInverseGlobalTransform(ref m4MyModelPoseToBonePose);;
-            m4MyModelPoseToBonePose = _m4AntiCorrection * m4MyModelPoseToBonePose;
+            m4MyModelPoseToBonePose = /* _m4AntiCorrection * */ m4MyModelPoseToBonePose;
         }
         else
         {
