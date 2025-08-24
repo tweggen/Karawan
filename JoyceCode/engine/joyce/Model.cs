@@ -306,6 +306,12 @@ public class Model
                 m4MyBoneSpaceToRestPose = m4LocalAnim * mnRestPose.Transform.Matrix * m4BoneSpaceToRestPose;
                 break;
             }
+
+            if (frameno == 0)
+            {
+                Trace($"Transform.Matrix {mnRestPose.Transform.Matrix}");
+                Trace($"Anim.Matrix {m4LocalAnim}");
+            }
         }
         else
         {
