@@ -729,8 +729,49 @@ public class FbxModel : IDisposable
         return indices.ToArray();
     }
 
+
+    /**
+     * I am a non-pivot thing. Merge all parents with the same beginning as my name into me.
+     */
+    private void _mergeParentsAssimpPivotsIntoMe(ModelNode mn)
+    {
+        Matrix4x4 m4Total = mn.Transform.Matrix;
+
+        var strPivotStem = $"{mn.Name}_$AssimpFbx$_";
+        for (ModelNode mnPivot = mn.Parent; mnPivot != null; mnPivot = mnPivot.Parent)
+        {
+            if (mnPivot.Name == null || !mnPivot.Name.StartsWith(strPivotStem))
+            {
+                break;
+            }
+            m4Total = mnPivot.Transform.Matrix * m4Total;
+            mnPivot.Transform.Matrix = Matrix4x4.Identity;
+        }
+        mn.Transform.Matrix = m4Total;
+    }
+
+    /**
+     * Iterate through all model nodes, removing transformations from
+     * *_$AssimpFbx$_Translation nodes into the first child with same name, without assimp postfix.
+     */
+    private void _mergeAssimpPivotsRecursively(ModelNode mn)
+    {
+        if (mn.Name != null && !mn.Name!.Contains($"_$AssimpFbx$_"))
+        {
+            _mergeParentsAssimpPivotsIntoMe(mn);
+        }
+
+        if (mn.Children != null)
+        {
+            foreach (var mnChild in mn.Children)
+            {
+                _mergeAssimpPivotsRecursively(mnChild);
+            }
+        }
+    }
+    
  
-        /**
+    /**
      * Load a given fbx file into this model.
      * You can also pass additional files to add e.g. animation data.
      */
@@ -771,7 +812,7 @@ public class FbxModel : IDisposable
         FileIO* pFileIO = &fileIO;
         PropertyStore *properties = _assimp.CreatePropertyStore();
         // TXWTODO: Does not work.
-        _assimp.SetImportPropertyInteger(properties, "IMPORT_FBX_PRESERVE_PIVOT", 1);
+        _assimp.SetImportPropertyInteger(properties, "IMPORT_FBX_PRESERVE_PIVOT", 0);
         _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_REMOVE_EMPTY_BONES", 0);
         _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_FBX_IGNORE_UP_DIRECTION", 1);
         _scene = _assimp.ImportFileExWithProperties(
@@ -799,8 +840,12 @@ public class FbxModel : IDisposable
                 LoadMeshes = true
             },
             out var _); 
+        /*
+         * Remove transformations of pivots in case assimp did not merge it.
+         */
+        _mergeAssimpPivotsRecursively(mnPoseRoot);
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
-        // Trace(model.ModelNodeTree.RootNode.DumpNode());
+        Trace(model.ModelNodeTree.RootNode.DumpNode());
 
         /*
          * Now load all the animations. First the ones from the main file.
@@ -852,7 +897,11 @@ public class FbxModel : IDisposable
                     ModelNode? mnNewRoot = _processNode(
                         null, additionalScene->MRootNode,
                         mp, out var _);
-#if false
+                    /*
+                     * Remove transformations of pivots in case assimp did not merge it.
+                     */
+                    _mergeAssimpPivotsRecursively(mnNewRoot);
+#if true
                     if (null != mnNewRoot)
                     {
                         Trace(mnNewRoot.DumpNode());

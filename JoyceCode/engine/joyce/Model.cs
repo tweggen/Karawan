@@ -516,12 +516,17 @@ public class Model
         }
         Trace($"Baking animations for {Name}");
 
+        #if false
         _m4AntiCorrection = new Matrix4x4(
             0f, 1f, 0f, 0f,
             0f, 0f, 1f, 0f,
             1f, 0f, 0f, 0f,
             0f, 0f, 0f, 1f);
         Matrix4x4.Invert(_m4AntiCorrection, out _m4Correction);
+        #else
+        _m4AntiCorrection = Matrix4x4.Identity;
+        _m4Correction = Matrix4x4.Identity;
+        #endif
 
         var skeleton = FindSkeleton();
         var mnRoot = ModelNodeTree.RootNode;
@@ -594,7 +599,7 @@ public class Model
                      * Plus, I need to apply the scale (which I also could do later).
                      */
                     _bakeRecursive(mnRoot,
-                        BakeMode.RelativeOnTop,
+                        BakeMode.Relative,
                         /*
                          * m4GlobalTransform here is required to have the ochi person looking correctly
                          * with animations and not to be apart. It is however too large.
@@ -629,7 +634,7 @@ public class Model
                     _bakeRecursiveNew(
                         mnRoot,
                         ModelNodeTree,
-                        BakeMode.RelativeOnTop,
+                        BakeMode.Relative,
                         //Matrix4x4.Identity,
                         _m4Correction,
                         ma, 
