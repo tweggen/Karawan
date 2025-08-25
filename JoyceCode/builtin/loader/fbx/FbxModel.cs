@@ -173,7 +173,7 @@ public class FbxModel : IDisposable
                     mac.Positions![l] = new()
                     {
                         Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue) // * 0.01f
+                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
                     };
                 }
                 
@@ -744,7 +744,15 @@ public class FbxModel : IDisposable
             {
                 break;
             }
-            m4Total = mnPivot.Transform.Matrix * m4Total;
+
+            if (mnPivot.Name.EndsWith("_Translation"))
+            {
+                m4Total = mnPivot.Transform.Matrix * Matrix4x4.CreateScale(0.01f) * m4Total;
+            }
+            else
+            {
+                m4Total = mnPivot.Transform.Matrix * m4Total;
+            }
             mnPivot.Transform.Matrix = Matrix4x4.Identity;
         }
         mn.Transform.Matrix = m4Total;
