@@ -747,7 +747,7 @@ public class FbxModel : IDisposable
 
             if (mnPivot.Name.EndsWith("_Translation"))
             {
-                m4Total = mnPivot.Transform.Matrix * Matrix4x4.CreateScale(0.01f) * m4Total;
+                m4Total = mnPivot.Transform.Matrix * m4Total;
             }
             else
             {
@@ -829,7 +829,6 @@ public class FbxModel : IDisposable
             pFileIO,
             properties
         );
-        _assimp.ReleasePropertyStore(properties);
         Trace($"Loaded \"{path}\"");
         _metadata = new(_scene->MMetaData);
         _metadata.Dump();
@@ -851,7 +850,7 @@ public class FbxModel : IDisposable
         /*
          * Remove transformations of pivots in case assimp did not merge it.
          */
-        _mergeAssimpPivotsRecursively(mnPoseRoot);
+        // _mergeAssimpPivotsRecursively(mnPoseRoot);
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
         Trace(model.ModelNodeTree.RootNode.DumpNode());
 
@@ -879,10 +878,11 @@ public class FbxModel : IDisposable
                 try
                 {
                     Trace($"Import additional animation data from {url}...");
-                    var additionalScene = _assimp.ImportFileEx(
+                    var additionalScene = _assimp.ImportFileExWithProperties(
                         url,
                         (uint)PostProcessSteps.Triangulate,
-                        pFileIO
+                        pFileIO,
+                        properties
                     );
                     if (additionalScene == null  || additionalScene->MRootNode == null)
                     {
@@ -939,6 +939,7 @@ public class FbxModel : IDisposable
                 }
             }
         }
+        _assimp.ReleasePropertyStore(properties);
         
         var strUnitscale = _metadata.GetString("UnitScaleFactor", "1.");
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
