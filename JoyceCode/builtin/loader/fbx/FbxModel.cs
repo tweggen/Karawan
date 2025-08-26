@@ -850,7 +850,7 @@ public class FbxModel : IDisposable
         /*
          * Remove transformations of pivots in case assimp did not merge it.
          */
-        // _mergeAssimpPivotsRecursively(mnPoseRoot);
+        _mergeAssimpPivotsRecursively(mnPoseRoot);
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
         Trace(model.ModelNodeTree.RootNode.DumpNode());
 
