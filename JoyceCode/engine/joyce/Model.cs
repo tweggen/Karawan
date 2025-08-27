@@ -77,10 +77,14 @@ public class Model
         var kfPosition = mac.LerpPosition(frameno);
         var kfRotation = mac.SlerpRotation(frameno);
         var kfScaling = mac.LerpScaling(frameno);
+        var v4Scaling = kfScaling.Value;
+        var v4Position = kfPosition.Value;
+        var qRotation = kfRotation.Value;
+        qRotation = new(qRotation.X, qRotation.Y, qRotation.Z, qRotation.W);
         m4Anim = m4Anim 
-            * Matrix4x4.CreateScale(kfScaling.Value)
-            * Matrix4x4.CreateFromQuaternion(kfRotation.Value)
-            * Matrix4x4.CreateTranslation(kfPosition.Value)
+            * Matrix4x4.CreateScale(v4Scaling)
+            * Matrix4x4.CreateFromQuaternion(qRotation)
+            * Matrix4x4.CreateTranslation(v4Position)
             ;
     }
     
@@ -418,6 +422,7 @@ public class Model
                     mntModelPose,
                     bakeMode,
                     m4MyBoneSpaceToRestPose,
+                    //mnRestPose.Transform.Matrix * m4BoneSpaceToRestPose,
                     ma, frameno);
             }
         }
