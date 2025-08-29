@@ -28,6 +28,11 @@ public class ModelAnimation
     public uint FirstFrame;
     public uint NTicks;
     public uint NFrames;
+    
+    /**
+     * This animation might have an animation specific rest pose
+     * different to the model we are associated with
+     */
     public ModelNode? RestPose;
     public Dictionary<ModelNode, ModelAnimChannel> MapChannels;
     public ModelBakedFrame[] BakedFrames;
