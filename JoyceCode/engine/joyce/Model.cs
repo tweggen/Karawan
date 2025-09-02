@@ -81,10 +81,18 @@ public class Model
         var v4Position = kfPosition.Value;
         var qRotation = kfRotation.Value;
         qRotation = new(qRotation.X, qRotation.Y, qRotation.Z, qRotation.W);
+        if (0 == frameno)
+        {
+            Trace($"First frame: {kfPosition.Value} {kfRotation.Value} {kfScaling.Value}");
+        }
+
+        var m4Scale = Matrix4x4.CreateScale(v4Scaling);
+        var m4Rotation = Matrix4x4.CreateFromQuaternion(qRotation);
+        var m4Translation = Matrix4x4.CreateTranslation(v4Position);
         m4Anim = m4Anim 
-            * Matrix4x4.CreateScale(v4Scaling)
-            * Matrix4x4.CreateFromQuaternion(qRotation)
-            * Matrix4x4.CreateTranslation(v4Position)
+            * m4Scale 
+            * m4Rotation
+            * m4Translation
             ;
     }
     
@@ -294,6 +302,13 @@ public class Model
                 Trace($"Model Transform.Matrix {mnModelPose.Transform.Matrix}");
             }
         }
+        else
+        {
+            if (!mnRestPose.Transform.Matrix.IsIdentity)
+            {
+                int a = 1;
+            }
+        }
 
         /*
          * Is there an animation applied to this node?
@@ -383,6 +398,11 @@ public class Model
              */
 
             {
+                if (mnModelPose == null)
+                {
+                    int a = 1;
+                    Trace($"Warning: Baking a pose without an inverse global transform.");
+                }
                 var arr = ma.BakedFrames[frameno].BoneTransformations;
                 if (boneIndex < arr.Length)
                 {

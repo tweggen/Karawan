@@ -869,6 +869,9 @@ public class FbxModel : IDisposable
          */
         _mergeAssimpPivotsRecursively(mnPoseRoot);
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
+        _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
+        _applyScalingToModel(model, _metadata, scale);
+        Trace("Pose model:");
         Trace(model.ModelNodeTree.RootNode.DumpNode());
 
         /*
@@ -931,6 +934,7 @@ public class FbxModel : IDisposable
 #if true
                     if (null != mnNewRoot)
                     {
+                        Trace($"Anim {url} model:");
                         Trace(mnNewRoot.DumpNode());
                     }
 #endif
@@ -960,9 +964,6 @@ public class FbxModel : IDisposable
         }
         _assimp.ReleasePropertyStore(properties);
 
-        _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
-        _applyScalingToModel(model, _metadata, scale);
-        
         if (_metadata.GetString("CustomFrameRate", "-1") == "24")
         {
             //model.WorkAroundInverseRestPose = true;
