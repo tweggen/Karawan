@@ -758,6 +758,23 @@ public class FbxModel : IDisposable
         mn.Transform.Matrix = m4Total;
     }
 
+    private void _applyScalingToModel(Model model, Metadata metadata, float scale)
+    {
+        var strUnitscale = _metadata.GetString("UnitScaleFactor", "1.");
+        float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
+        model.Scale = unitscale / 100f * scale;
+    }
+    
+    private void _applyScalingToRootNode(ModelNode mnRoot, Metadata metadata, float scale)
+    {
+        var strUnitscale = _metadata.GetString("UnitScaleFactor", "1.");
+        float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
+        float totalScale = unitscale / 100f * scale;
+        mnRoot.Transform.Matrix = 
+            Matrix4x4.CreateScale(totalScale) * 
+            mnRoot.Transform.Matrix;
+    }
+    
     /**
      * Iterate through all model nodes, removing transformations from
      * *_$AssimpFbx$_Translation nodes into the first child with same name, without assimp postfix.
@@ -909,6 +926,8 @@ public class FbxModel : IDisposable
                      * Remove transformations of pivots in case assimp did not merge it.
                      */
                     _mergeAssimpPivotsRecursively(mnNewRoot);
+                    
+                    _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
 #if true
                     if (null != mnNewRoot)
                     {
@@ -940,11 +959,10 @@ public class FbxModel : IDisposable
             }
         }
         _assimp.ReleasePropertyStore(properties);
-        
-        var strUnitscale = _metadata.GetString("UnitScaleFactor", "1.");
-        float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
-        model.Scale = unitscale / 100f * scale;
 
+        _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
+        _applyScalingToModel(model, _metadata, scale);
+        
         if (_metadata.GetString("CustomFrameRate", "-1") == "24")
         {
             //model.WorkAroundInverseRestPose = true;
@@ -959,10 +977,10 @@ public class FbxModel : IDisposable
          */
         model.BakeAnimations();
 
-        model.ModelNodeTree.RootNode.Transform.Matrix = 
-            Matrix4x4.CreateScale(model.Scale) * 
-            model.ModelNodeTree.RootNode.Transform.Matrix;
-
+        // model.ModelNodeTree.RootNode.Transform.Matrix = 
+        //    Matrix4x4.CreateScale(model.Scale) * 
+        //    model.ModelNodeTree.RootNode.Transform.Matrix;
+        
         model.Polish();
     }
         

@@ -369,11 +369,11 @@ public class Model
                     /*
                      * First from model coordinate space to bone local coordinate space
                      */
-                    Matrix4x4.CreateScale(100f) *
+                    // Matrix4x4.CreateScale(100f) *
                     m4MyModelPoseToBonePose *
                     // bone.Model2Bone *
-                    m4MyBoneSpaceToRestPose *
-                    Matrix4x4.CreateScale(0.01f)
+                    m4MyBoneSpaceToRestPose 
+                    // * Matrix4x4.CreateScale(0.01f)
                 ;
 
             /*
