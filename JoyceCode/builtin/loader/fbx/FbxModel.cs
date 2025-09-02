@@ -173,7 +173,7 @@ public class FbxModel : IDisposable
                     mac.Positions![l] = new()
                     {
                         Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue) * 0.01f
+                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
                     };
                 }
                 
