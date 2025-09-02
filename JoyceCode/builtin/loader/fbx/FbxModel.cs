@@ -173,7 +173,7 @@ public class FbxModel : IDisposable
                     mac.Positions![l] = new()
                     {
                         Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue) // * 0.01f
+                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
                     };
                 }
                 
@@ -744,7 +744,15 @@ public class FbxModel : IDisposable
             {
                 break;
             }
-            m4Total = mnPivot.Transform.Matrix * m4Total;
+
+            if (mnPivot.Name.EndsWith("_Translation"))
+            {
+                m4Total = mnPivot.Transform.Matrix * m4Total;
+            }
+            else
+            {
+                m4Total = mnPivot.Transform.Matrix * m4Total;
+            }
             mnPivot.Transform.Matrix = Matrix4x4.Identity;
         }
         mn.Transform.Matrix = m4Total;
@@ -821,7 +829,6 @@ public class FbxModel : IDisposable
             pFileIO,
             properties
         );
-        _assimp.ReleasePropertyStore(properties);
         Trace($"Loaded \"{path}\"");
         _metadata = new(_scene->MMetaData);
         _metadata.Dump();
@@ -871,10 +878,11 @@ public class FbxModel : IDisposable
                 try
                 {
                     Trace($"Import additional animation data from {url}...");
-                    var additionalScene = _assimp.ImportFileEx(
+                    var additionalScene = _assimp.ImportFileExWithProperties(
                         url,
                         (uint)PostProcessSteps.Triangulate,
-                        pFileIO
+                        pFileIO,
+                        properties
                     );
                     if (additionalScene == null  || additionalScene->MRootNode == null)
                     {
@@ -931,6 +939,7 @@ public class FbxModel : IDisposable
                 }
             }
         }
+        _assimp.ReleasePropertyStore(properties);
         
         var strUnitscale = _metadata.GetString("UnitScaleFactor", "1.");
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
