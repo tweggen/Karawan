@@ -641,8 +641,8 @@ public class Model
                         mnRoot,
                         ModelNodeTree,
                         BakeMode.Relative,
-                        //Matrix4x4.Identity,
-                        _m4Correction,
+                        Matrix4x4.Identity,
+                        //_m4Correction,
                         ma, 
                         frameno);
                 }
