@@ -173,7 +173,7 @@ public class FbxModel : IDisposable
                     mac.Positions![l] = new()
                     {
                         Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
+                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue) * 0.01f
                     };
                 }
                 
@@ -959,7 +959,9 @@ public class FbxModel : IDisposable
          */
         model.BakeAnimations();
 
-        model.ModelNodeTree.RootNode.Transform.Matrix = Matrix4x4.CreateScale(model.Scale) * model.ModelNodeTree.RootNode.Transform.Matrix;
+        model.ModelNodeTree.RootNode.Transform.Matrix = 
+            Matrix4x4.CreateScale(model.Scale) * 
+            model.ModelNodeTree.RootNode.Transform.Matrix;
 
         model.Polish();
     }
