@@ -26,6 +26,8 @@ public class Main
     private DefaultEcs.Entity _previousEntity = default;
     private string _currentClusterId = "";
     private byte[] _currentEntityFilterBytes = new byte[128];
+    
+    
 
 
     private void _setColorScheme()

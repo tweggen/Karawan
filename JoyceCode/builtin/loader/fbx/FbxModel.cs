@@ -37,6 +37,9 @@ public class FbxModel : IDisposable
         Vector3.UnitZ);
 
     private static object _slo = new();
+    
+    public Matrix4x4 _m4AntiCorrection;
+    public Matrix4x4 _m4Correction;
 
     private Matrix4x4 _fbxTranspose(in Matrix4x4 m) => Matrix4x4.Transpose(m);
 
@@ -867,8 +870,9 @@ public class FbxModel : IDisposable
         /*
          * Remove transformations of pivots in case assimp did not merge it.
          */
-          _mergeAssimpPivotsRecursively(mnPoseRoot);
+        _mergeAssimpPivotsRecursively(mnPoseRoot);
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
+        model.ModelNodeTree.RootNode.Transform.Matrix = _m4AntiCorrection * model.ModelNodeTree.RootNode.Transform.Matrix; 
         _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
         _applyScalingToModel(model, _metadata, scale);
         Trace("Pose model:");
@@ -925,18 +929,20 @@ public class FbxModel : IDisposable
                     ModelNode? mnNewRoot = _processNode(
                         null, additionalScene->MRootNode,
                         mp, out var _);
+
+                    if (null == mnNewRoot) continue;
+                    
                     /*
                      * Remove transformations of pivots in case assimp did not merge it.
                      */
                     _mergeAssimpPivotsRecursively(mnNewRoot);
                     
+                    mnNewRoot.Transform.Matrix = _m4AntiCorrection * mnNewRoot.Transform.Matrix; 
+
                     _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
 #if true
-                    if (null != mnNewRoot)
-                    {
-                        Trace($"Anim {url} model:");
-                        Trace(mnNewRoot.DumpNode());
-                    }
+                    Trace($"Anim {url} model:");
+                    Trace(mnNewRoot.DumpNode());
 #endif
                     
                     string strFallbackName = url;
@@ -991,4 +997,19 @@ public class FbxModel : IDisposable
         _texturesLoaded = null;
     }
 
+
+    public FbxModel()
+    {
+#if true
+        _m4AntiCorrection = new Matrix4x4(
+            0f, 1f, 0f, 0f,
+            0f, 0f, 1f, 0f,
+            1f, 0f, 0f, 0f,
+            0f, 0f, 0f, 1f);
+        Matrix4x4.Invert(_m4AntiCorrection, out _m4Correction);
+#else
+        _m4AntiCorrection = Matrix4x4.Identity;
+        _m4Correction = Matrix4x4.Identity;
+#endif
+    }
 }
