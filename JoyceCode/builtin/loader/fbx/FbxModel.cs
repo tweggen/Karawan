@@ -32,9 +32,9 @@ public class FbxModel : IDisposable
      * The axis interpreter for loading animation.
      */
     private AxisInterpreter _baxi = new AxisInterpreter(
-        Vector3.UnitX, 
         Vector3.UnitY, 
-        Vector3.UnitZ);
+        Vector3.UnitZ, 
+        Vector3.UnitX);
 
     private static object _slo = new();
     
@@ -872,7 +872,7 @@ public class FbxModel : IDisposable
          */
         _mergeAssimpPivotsRecursively(mnPoseRoot);
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
-        model.ModelNodeTree.RootNode.Transform.Matrix = _m4AntiCorrection * model.ModelNodeTree.RootNode.Transform.Matrix; 
+        // model.ModelNodeTree.RootNode.Transform.Matrix = _m4AntiCorrection * model.ModelNodeTree.RootNode.Transform.Matrix; 
         _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
         _applyScalingToModel(model, _metadata, scale);
         Trace("Pose model:");
@@ -937,7 +937,7 @@ public class FbxModel : IDisposable
                      */
                     _mergeAssimpPivotsRecursively(mnNewRoot);
                     
-                    mnNewRoot.Transform.Matrix = _m4AntiCorrection * mnNewRoot.Transform.Matrix; 
+                    // mnNewRoot.Transform.Matrix = _m4AntiCorrection * mnNewRoot.Transform.Matrix; 
 
                     _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
 #if true
@@ -1002,11 +1002,12 @@ public class FbxModel : IDisposable
     {
 #if true
         _m4AntiCorrection = new Matrix4x4(
-            0f, 1f, 0f, 0f,
             0f, 0f, 1f, 0f,
             1f, 0f, 0f, 0f,
+            0f, 1f, 0f, 0f,
             0f, 0f, 0f, 1f);
         Matrix4x4.Invert(_m4AntiCorrection, out _m4Correction);
+        Trace($"m4Correction is {_m4Correction}");
 #else
         _m4AntiCorrection = Matrix4x4.Identity;
         _m4Correction = Matrix4x4.Identity;

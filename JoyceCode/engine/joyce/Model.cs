@@ -50,9 +50,6 @@ public class Model
 
     public ModelNodeTree ModelNodeTree { get; private set; } 
 
-    public Matrix4x4 _m4AntiCorrection;
-    public Matrix4x4 _m4Correction;
-    
     public ModelAnimation CreateAnimation(ModelNode? mnRestPose)
     {
         return new ModelAnimation()
