@@ -317,6 +317,21 @@ public class Model
         Matrix4x4 m4LocalAnim;
         Matrix4x4 m4MyBoneSpaceToRestPose;
 
+        Matrix4x4 m4AnimBase;
+        if (true)
+        {
+            m4AnimBase = m4BoneSpaceToRestPose;
+        }
+        else
+        {
+            m4AnimBase = Matrix4x4.Identity;
+            if (mnRestPose.Parent != null)
+            {
+                mnRestPose.Parent.ComputeGlobalTransform(ref m4AnimBase);
+            }
+        }
+        
+
         if (mnModelPose != null && ma.MapChannels.TryGetValue(mnModelPose, out var mac))
         {
             /*
@@ -335,10 +350,10 @@ public class Model
                     break;
                 default:
                 case BakeMode.Relative:
-                    m4MyBoneSpaceToRestPose = m4LocalAnim * m4BoneSpaceToRestPose;
+                    m4MyBoneSpaceToRestPose = m4LocalAnim * m4AnimBase;
                     break;
                 case BakeMode.RelativeOnTop:
-                    m4MyBoneSpaceToRestPose = m4LocalAnim * mnRestPose.Transform.Matrix * m4BoneSpaceToRestPose;
+                    m4MyBoneSpaceToRestPose = m4LocalAnim * mnRestPose.Transform.Matrix * m4AnimBase;
                     break;
             }
 
