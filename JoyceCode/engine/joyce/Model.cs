@@ -296,7 +296,7 @@ public class Model
         if (mntModelPose.MapNodes.TryGetValue(mnRestPose.Name, out mnModelPose))
         {
             mnModelPose!.ComputeInverseGlobalTransform(ref m4MyModelPoseToBonePose);
-            // m4MyModelPoseToBonePose = /* _m4AntiCorrection * */ m4MyModelPoseToBonePose;
+            m4MyModelPoseToBonePose = _m4AntiCorrection * m4MyModelPoseToBonePose;
             if (frameno == 0)
             {
                 Trace($"Model Transform.Matrix {mnModelPose.Transform.Matrix}");
@@ -472,13 +472,13 @@ public class Model
         }
         Trace($"Baking animations for {Name}");
 
-        #if false
-        _m4AntiCorrection = new Matrix4x4(
+        #if true
+        _m4Correction = new Matrix4x4(
             0f, 1f, 0f, 0f,
             0f, 0f, 1f, 0f,
             1f, 0f, 0f, 0f,
             0f, 0f, 0f, 1f);
-        Matrix4x4.Invert(_m4AntiCorrection, out _m4Correction);
+        Matrix4x4.Invert(_m4Correction, out _m4AntiCorrection);
         #else
         _m4AntiCorrection = Matrix4x4.Identity;
         _m4Correction = Matrix4x4.Identity;
@@ -588,8 +588,8 @@ public class Model
                         ma.RestPose,
                         ModelNodeTree,
                         BakeMode.Relative,
-                        Matrix4x4.Identity,
-                        //_m4Correction,
+                        // Matrix4x4.Identity,
+                        _m4Correction,
                         ma, 
                         frameno);
                 }

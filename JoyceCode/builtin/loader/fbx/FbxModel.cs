@@ -867,7 +867,7 @@ public class FbxModel : IDisposable
         /*
          * Remove transformations of pivots in case assimp did not merge it.
          */
-          _mergeAssimpPivotsRecursively(mnPoseRoot);
+        _mergeAssimpPivotsRecursively(mnPoseRoot);
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
         _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
         _applyScalingToModel(model, _metadata, scale);
