@@ -49,6 +49,9 @@ public class Model
     public Matrix4x4 FirstInstanceDescTransform { get; private set; } = Matrix4x4.Identity;
 
     public ModelNodeTree ModelNodeTree { get; private set; } 
+
+    public Matrix4x4 _m4AntiCorrection;
+    public Matrix4x4 _m4Correction;
     
     public ModelAnimation CreateAnimation(ModelNode? mnRestPose)
     {
