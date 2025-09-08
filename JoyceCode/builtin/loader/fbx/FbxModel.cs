@@ -32,7 +32,7 @@ public class FbxModel : IDisposable
      * The axis interpreter for loading animation.
      */
     private AxisInterpreter _baxi = new AxisInterpreter(
-        #if true
+        #if false
         Vector3.UnitY, 
         Vector3.UnitZ, 
         Vector3.UnitX
@@ -1006,7 +1006,7 @@ public class FbxModel : IDisposable
 
     public FbxModel()
     {
-#if true
+#if false
         _m4AntiCorrection = new Matrix4x4(
             0f, 0f, 1f, 0f,
             1f, 0f, 0f, 0f,
