@@ -300,7 +300,17 @@ public class Model
         }
 
 
-        #if false
+        #if true
+        if (bone != null)
+        {
+            m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransform * bone.Model2Bone;
+        }
+        else
+        {
+            m4MyModelPoseToBonePose = Matrix4x4.Identity;
+        }
+        
+        #elif false
         m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransform;
         #else
         m4MyModelPoseToBonePose = Matrix4x4.Identity;
