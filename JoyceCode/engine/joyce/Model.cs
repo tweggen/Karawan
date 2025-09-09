@@ -47,6 +47,7 @@ public class Model
     public ModelNode? FirstInstanceDescNode { get; private set; } = null;
     
     public Matrix4x4 FirstInstanceDescTransform { get; private set; } = Matrix4x4.Identity;
+    private Matrix4x4 _m4InverseFirstInstanceDescTransform = Matrix4x4.Identity;
 
     public ModelNodeTree ModelNodeTree { get; private set; } 
 
@@ -284,13 +285,30 @@ public class Model
             boneIndex = bone.Index;
         }
 
-        Matrix4x4 m4MyModelPoseToBonePose = Matrix4x4.Identity;
+        Matrix4x4 m4MyModelPoseToBonePose;
 
         ModelNode? mnModelPose = null;
+        if (mntModelPose.MapNodes.TryGetValue(mnRestPose.Name, out mnModelPose))
+        {
+        }
+        else
+        {
+            if (!mnRestPose.Transform.Matrix.IsIdentity)
+            {
+                int a = 1;
+            }
+        }
+
+
+        #if false
+        m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransform;
+        #else
+        m4MyModelPoseToBonePose = Matrix4x4.Identity;
+        
         /*
          * We need to use the model pose to bone pose from the model pose tree.
          */
-        if (mntModelPose.MapNodes.TryGetValue(mnRestPose.Name, out mnModelPose))
+        if (null != mnModelPose)
         {
             mnModelPose!.ComputeInverseGlobalTransform(ref m4MyModelPoseToBonePose);
             // m4MyModelPoseToBonePose = /* _m4AntiCorrection * */ m4MyModelPoseToBonePose;
@@ -306,6 +324,7 @@ public class Model
                 int a = 1;
             }
         }
+        #endif
 
         /*
          * Is there an animation applied to this node?
@@ -655,6 +674,7 @@ public class Model
         if (FirstInstanceDescNode != null)
         {
             FirstInstanceDescTransform = FirstInstanceDescNode.ComputeGlobalTransform();
+            Matrix4x4.Invert(FirstInstanceDescTransform,  out _m4InverseFirstInstanceDescTransform);
         }
     }
 

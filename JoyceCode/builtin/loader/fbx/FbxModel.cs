@@ -980,6 +980,11 @@ public class FbxModel : IDisposable
         }
 
         /*
+         * Set model flags, find first instnace desc 
+         */
+        model.Polish();
+
+        /*
          * Baking animations must include the root matrix corrections.
          */
         model.BakeAnimations();
@@ -988,7 +993,6 @@ public class FbxModel : IDisposable
         //    Matrix4x4.CreateScale(model.Scale) * 
         //    model.ModelNodeTree.RootNode.Transform.Matrix;
         
-        model.Polish();
     }
         
         
