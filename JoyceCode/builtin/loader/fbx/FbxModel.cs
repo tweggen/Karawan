@@ -943,7 +943,7 @@ public class FbxModel : IDisposable
                      * Remove transformations of pivots in case assimp did not merge it.
                      */
                     _mergeAssimpPivotsRecursively(mnNewRoot);
-                    // mnNewRoot.Transform.Matrix = _m4AntiCorrection * mnNewRoot.Transform.Matrix; 
+                    // mnNewRoot.Transform.Matrix = _m4Correction * mnNewRoot.Transform.Matrix; 
 
                     _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
 #if true

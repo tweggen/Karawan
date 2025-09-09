@@ -300,7 +300,7 @@ public class Model
         }
 
 
-        #if true
+        #if false
         m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransform;
         #else
         m4MyModelPoseToBonePose = Matrix4x4.Identity;
@@ -377,6 +377,8 @@ public class Model
             {
                 Trace($"Anim.Matrix {m4LocalAnim}");
                 Trace($"Rest Transform.Matrix {mnRestPose.Transform.Matrix}");
+                Trace($"Inverse global: {_m4InverseFirstInstanceDescTransform}");
+                Trace($"GlobalTransform: {m4MyBoneSpaceToRestPose}");
             }
         }
         else
