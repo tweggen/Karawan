@@ -881,7 +881,7 @@ public class FbxModel : IDisposable
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
         _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
         _applyScalingToModel(model, _metadata, scale);
-        model.ModelNodeTree.RootNode.Transform.Matrix = _m4AntiCorrection * model.ModelNodeTree.RootNode.Transform.Matrix; 
+        // model.ModelNodeTree.RootNode.Transform.Matrix = _m4AntiCorrection * model.ModelNodeTree.RootNode.Transform.Matrix; 
         Trace("Pose model:");
         Trace(model.ModelNodeTree.RootNode.DumpNode());
 
@@ -943,7 +943,7 @@ public class FbxModel : IDisposable
                      * Remove transformations of pivots in case assimp did not merge it.
                      */
                     _mergeAssimpPivotsRecursively(mnNewRoot);
-                    mnNewRoot.Transform.Matrix = _m4AntiCorrection * mnNewRoot.Transform.Matrix; 
+                    // mnNewRoot.Transform.Matrix = _m4AntiCorrection * mnNewRoot.Transform.Matrix; 
 
                     _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
 #if true

@@ -300,7 +300,7 @@ public class Model
         }
 
 
-        #if false
+        #if true
         m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransform;
         #else
         m4MyModelPoseToBonePose = Matrix4x4.Identity;
