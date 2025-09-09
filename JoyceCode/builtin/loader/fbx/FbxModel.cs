@@ -32,9 +32,16 @@ public class FbxModel : IDisposable
      * The axis interpreter for loading animation.
      */
     private AxisInterpreter _baxi = new AxisInterpreter(
+        #if false
         Vector3.UnitY, 
         Vector3.UnitZ, 
-        Vector3.UnitX);
+        Vector3.UnitX
+        #else
+        Vector3.UnitX,
+        Vector3.UnitY,
+        Vector3.UnitZ
+        #endif
+        );
 
     private static object _slo = new();
     
@@ -872,9 +879,9 @@ public class FbxModel : IDisposable
          */
         _mergeAssimpPivotsRecursively(mnPoseRoot);
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
-        // model.ModelNodeTree.RootNode.Transform.Matrix = _m4AntiCorrection * model.ModelNodeTree.RootNode.Transform.Matrix; 
         _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
         _applyScalingToModel(model, _metadata, scale);
+        model.ModelNodeTree.RootNode.Transform.Matrix = _m4AntiCorrection * model.ModelNodeTree.RootNode.Transform.Matrix; 
         Trace("Pose model:");
         Trace(model.ModelNodeTree.RootNode.DumpNode());
 
@@ -936,8 +943,7 @@ public class FbxModel : IDisposable
                      * Remove transformations of pivots in case assimp did not merge it.
                      */
                     _mergeAssimpPivotsRecursively(mnNewRoot);
-                    
-                    // mnNewRoot.Transform.Matrix = _m4AntiCorrection * mnNewRoot.Transform.Matrix; 
+                    mnNewRoot.Transform.Matrix = _m4AntiCorrection * mnNewRoot.Transform.Matrix; 
 
                     _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
 #if true
@@ -1004,7 +1010,7 @@ public class FbxModel : IDisposable
 
     public FbxModel()
     {
-#if true
+#if false
         _m4AntiCorrection = new Matrix4x4(
             0f, 0f, 1f, 0f,
             1f, 0f, 0f, 0f,
@@ -1012,6 +1018,7 @@ public class FbxModel : IDisposable
             0f, 0f, 0f, 1f);
         Matrix4x4.Invert(_m4AntiCorrection, out _m4Correction);
         Trace($"m4Correction is {_m4Correction}");
+        Trace($"m4AntiCorrection is {_m4AntiCorrection}");
 #else
         _m4AntiCorrection = Matrix4x4.Identity;
         _m4Correction = Matrix4x4.Identity;
