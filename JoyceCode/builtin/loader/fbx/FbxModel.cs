@@ -147,6 +147,11 @@ public class FbxModel : IDisposable
                 
                 string channelNodeName = aiChannel->MNodeName.ToString();
                 // Trace($"Animation \"{ma.Name}\" controls channel: {channelNodeName}");
+                if (!_model.Skeleton.MapBones.ContainsKey(channelNodeName))
+                {
+                    Warning($"Found animation channel for unknown bone {channelNodeName}, ignoring.");
+                    continue;
+                }
                 if (!_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
                 {
                     Warning($"Found animation channel for unknown node {channelNodeName}, ignoring.");
@@ -948,6 +953,7 @@ public class FbxModel : IDisposable
                     _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
 #if true
                     Trace($"Anim {url} model:");
+                    Trace($"Model has {additionalScene->MAnimations[0]->MNumChannels} channels.");
                     Trace(mnNewRoot.DumpNode());
 #endif
                     
