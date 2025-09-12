@@ -252,6 +252,9 @@ public class Model
         }
     }
 
+
+    private int _bakeRecCount;
+    
     
     /**
      * Bake all animations for the given node.
@@ -372,7 +375,7 @@ public class Model
             switch (bakeMode)
             {
                 case BakeMode.Absolute:
-                    m4MyBoneSpaceToRestPose = m4LocalAnim;
+                    m4MyBoneSpaceToRestPose = FirstInstanceDescTransform * m4LocalAnim;
                     break;
                 default:
                 case BakeMode.Relative:
@@ -484,6 +487,11 @@ public class Model
              */
             foreach (var child in mnRestPose.Children)
             {
+                ++_bakeRecCount;
+                if (_bakeRecCount >= 20)
+                {
+                    //return;
+                }
                 _bakeRecursiveNew(child,
                     mntModelPose,
                     bakeMode,
@@ -532,6 +540,7 @@ public class Model
         Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
         
         AllBakedMatrices = new Matrix4x4[_nextAnimFrame * skeleton.NBones];
+        for (int i = 0; i < AllBakedMatrices.Length; ++i) AllBakedMatrices[i] = Matrix4x4.Identity;
         
         /*
          * First, for all animations, create the arrays of matrices for
@@ -556,6 +565,7 @@ public class Model
                 {
                     BoneTransformations = new Matrix4x4[Int32.Max(Skeleton.NBones, MAX_BONES)]
                 };
+                for (int i = 0; i < bakedFrame.BoneTransformations.Length; ++i) bakedFrame.BoneTransformations[i] = Matrix4x4.Identity;
                 ma.BakedFrames[frameno] = bakedFrame;
             }
             
@@ -607,6 +617,7 @@ public class Model
                  */
                 for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
                 {
+                    _bakeRecCount = 0;
                     _bakeRecursiveNew(
                         ma.RestPose,
                         ModelNodeTree,
