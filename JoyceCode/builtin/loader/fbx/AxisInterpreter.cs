@@ -21,9 +21,13 @@ public class AxisInterpreter
 
     public Vector3 ToJoyce(in Vector3 v3) => Vector3.Transform(v3, M4ToJoyce);
 
-    public Vector3 ToJoyceNormal(in Vector3 v3) => _isLeftHanded
-        ? Vector3.Transform(v3, M4ToJoyce) * -1f
-        : Vector3.Transform(v3, M4ToJoyce);
+    public Vector3 ToJoyceNormal(in Vector3 v3) => Vector3.Transform(v3, M4ToJoyce);  
+        
+        #if false
+_isLeftHanded
+        ? Vector3.Transform(v3, M4ToJoyce) * -1f 
+        : Vector3.Transform(v3, M4ToJoyce) * 1f;
+        #endif
 
     public Matrix4x4 ToJoyce(in Matrix4x4 m4)
     {

@@ -496,6 +496,11 @@ public class FbxModel : IDisposable
                 // normals
                 if (mesh->MNormals != null)
                 {
+                    if (_axi.IsLeftHanded)
+                    {
+                        int a = 1;
+                        
+                    }
                     vertex.Normal = _axi.ToJoyceNormal(mesh->MNormals[i]);
                 }
 
@@ -530,9 +535,19 @@ public class FbxModel : IDisposable
                 // retrieve all indices of the face and store them in the indices vector
                 if (face.MNumIndices == 3)
                 {
-                    for (uint j = 0; j < face.MNumIndices; j++)
+                    if (_axi.IsLeftHanded)
                     {
-                        indices.Add(face.MIndices[j]);
+                        for (int j = (int)face.MNumIndices-1; j >= 0; j--)
+                        {
+                            indices.Add(face.MIndices[j]);
+                        }
+                    }
+                    else
+                    {
+                        for (uint j = 0; j < face.MNumIndices; j++)
+                        {
+                            indices.Add(face.MIndices[j]);
+                        }
                     }
                 }
                 else
