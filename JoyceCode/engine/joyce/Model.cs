@@ -69,6 +69,8 @@ public class Model
         RelativeOnTop = 2
     }
 
+    private bool _traceAnim = false;
+
 
     void _computeAnimFrame(in ModelAnimChannel mac, ref Matrix4x4 m4Anim, uint frameno)
     {
@@ -79,7 +81,7 @@ public class Model
         var v4Position = kfPosition.Value;
         var qRotation = kfRotation.Value;
         qRotation = new(qRotation.X, qRotation.Y, qRotation.Z, qRotation.W);
-        if (0 == frameno)
+        if (_traceAnim &&  0 == frameno)
         {
             Trace($"First frame: {kfPosition.Value} {kfRotation.Value} {kfScaling.Value}");
         }
@@ -386,7 +388,7 @@ public class Model
                     break;
             }
 
-            if (frameno == 0)
+            if (_traceAnim && frameno == 0)
             {
                 Trace($"Anim.Matrix {m4LocalAnim}");
                 Trace($"Rest Transform.Matrix {mnRestPose.Transform.Matrix}");
@@ -459,7 +461,7 @@ public class Model
                 if (boneIndex < arr.Length)
                 {
                     arr[boneIndex] = m4Baked;
-                    if (frameno == 0)
+                    if (_traceAnim && frameno == 0)
                     {
                         Trace($"Baked \"{mnRestPose.Name}\": {m4Baked}");
                     }

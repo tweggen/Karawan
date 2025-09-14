@@ -59,7 +59,7 @@ public class CharacterModelDescription
     public string IdleAnimName { get; set; } = "Idle_Generic";
     public string JumpAnimName { get; set; } = "Standing_Jump";
 
-    public string AnimationUrls { get; set; } = "Idle_Generic.fbx;Run_InPlace.fbx";
+    public string AnimationUrls { get; set; } = "Idle_Generic.fbx;Run_InPlace.fbx;Walk_Male.fbx;Standing_Jump.fbx";
         // "Idle_Generic.fbx;Run_InPlace.fbx;Walk_Male.fbx;Standing_Jump.fbx";
         // "Idle_Generic.fbx;Idle_HardDay.fbx;Idle_Texting.fbx;Idle_Waving.fbx;Kick_LeftFoot.fbx;Punch_LeftHand.fbx;Punch_RightHand.fbx;Run_InPlace.fbx;Running_Jump.fbx;Standing_Jump.fbx;Walk_InPlace_Female.fbx;Walk_Left.fbx;Walk_Male.fbx"; 
     
@@ -78,43 +78,3 @@ public class CharacterModelDescription
     public DefaultEcs.Entity EntityAnimations { get; set; } = default;
     public Model Model { get; set; } = null;
 }
-
-
-#if false
-        "name": "Root_M_$AssimpFbx$_Translation" (added),
-        "transform": { {M11:1 M12:0 M13:0 M14:0} {M21:0 M22:1 M23:0 M24:0} {M31:0 M32:0 M33:1 M34:0} {M41:-0,0021632165 M42:95,90264 M43:-0,8097804 M44:1} }                },
-        "children": {
-            "name": "Root_M_$AssimpFbx$_PreRotation" (added),
-            "transform": { {M11:-4,3705985E-08 M12:0,9998764 M13:-0,01572287 M14:0} {M21:4,302412E-08 M22:0,01572287 M23:0,9998764 M24:0} {M31:1 M32:4,302412E-08 M33:-4,3705985E-08 M34:0} {M41:0 M42:0 M43:0 M44:1} }                    },
-            "children": {
-                "name": "Root_M_$AssimpFbx$_Rotation" (added),
-                "transform": { {M11:0,99953586 M12:0,029812554 M13:0,0062656486 M14:0} {M21:-0,029349592 M22:0,99750566 M23:-0,06419495 M24:0} {M31:-0,008163836 M32:0,06398126 M33:0,9979178 M34:0} {M41:0 M42:0 M43:0 M44:1} }                        },
-                "children": {
-                    "name": "Root_M" (added),
-                    },
-
-
-
-        "name": "Root_M_$AssimpFbx$_Translation" (standalone),
-        "transform": { {M11:1 M12:0 M13:0 M14:0} {M21:0 M22:1 M23:0 M24:0} {M31:0 M32:0 M33:1 M34:0} {M41:-0,0021632165 M42:95,90264 M43:-0,8097804 M44:1} }                },
-        "children": {
-            "name": "Root_M_$AssimpFbx$_PreRotation" (standalone),
-            "transform": { {M11:-4,3705985E-08 M12:0,9998764 M13:-0,01572287 M14:0} {M21:4,302412E-08 M22:0,01572287 M23:0,9998764 M24:0} {M31:1 M32:4,302412E-08 M33:-4,3705985E-08 M34:0} {M41:0 M42:0 M43:0 M44:1} }                    },
-            "children": {
-                "name": "Root_M_$AssimpFbx$_Rotation" (standalone),
-                "transform": { {M11:0,99953586 M12:0,029812554 M13:0,0062656486 M14:0} {M21:-0,029349592 M22:0,99750566 M23:-0,06419495 M24:0} {M31:-0,008163836 M32:0,06398126 M33:0,9979178 M34:0} {M41:0 M42:0 M43:0 M44:1} }                        },
-                "children": {
-                    "name": "Root_M" (standalone),
-                    },
-
-
-        "name": "Root_M_$AssimpFbx$_Translation" (added),
-        "transform": { {M11:1 M12:0 M13:0 M14:0} {M21:0 M22:1 M23:0 M24:0} {M31:0 M32:0 M33:1 M34:0} {M41:-0,34811354 M42:100,348076 M43:3,73994 M44:1} } },
-        "children": {
-            "name": "Root_M_$AssimpFbx$_PreRotation" (added),
-            "transform": { {M11:-4,3705985E-08 M12:0,9998764 M13:-0,01572287 M14:0} {M21:4,302412E-08 M22:0,01572287 M23:0,9998764 M24:0} {M31:1 M32:4,302412E-08 M33:-4,3705985E-08 M34:0} {M41:0 M42:0 M43:0 M44:1} }                    },
-            "children": {
-                "name": "Root_M" (added),
-                },
-
-#endif

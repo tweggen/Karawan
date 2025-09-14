@@ -60,6 +60,9 @@ public class FbxModel : IDisposable
 
     private Matrix4x4 _fbxTranspose(in Matrix4x4 m) => Matrix4x4.Transpose(m);
 
+    private bool _traceFbxTree = false;
+    private bool _traceFbxMetadata = false;
+    
     private static void _needAssimp()
     {
         lock (_slo)
@@ -889,7 +892,10 @@ public class FbxModel : IDisposable
         );
         Trace($"Loaded \"{path}\"");
         _metadata = new(_scene->MMetaData);
-        _metadata.Dump();
+        if (_traceFbxMetadata)
+        {
+            _metadata.Dump();
+        }
         //_axi = new(_metadata);
         
         
@@ -913,9 +919,12 @@ public class FbxModel : IDisposable
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
         _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
         _applyScalingToModel(model, _metadata, scale);
-        // model.ModelNodeTree.RootNode.Transform.Matrix = _m4AntiCorrection * model.ModelNodeTree.RootNode.Transform.Matrix; 
-        Trace("Pose model:");
-        Trace(model.ModelNodeTree.RootNode.DumpNode());
+        // model.ModelNodeTree.RootNode.Transform.Matrix = _m4AntiCorrection * model.ModelNodeTree.RootNode.Transform.Matrix;
+        if (_traceFbxTree)
+        {
+            Trace("Pose model:");
+            Trace(model.ModelNodeTree.RootNode.DumpNode());
+        }
 
         /*
          * Now load all the animations. First the ones from the main file.
@@ -953,7 +962,10 @@ public class FbxModel : IDisposable
                     }
 
                     Metadata additionalMetadata = new(additionalScene->MMetaData);
-                    additionalMetadata.Dump();
+                    if (_traceFbxMetadata)
+                    {
+                        additionalMetadata.Dump();
+                    }
 
                     _compareBoneHierarchies(additionalScene, _scene);
                     
@@ -978,11 +990,12 @@ public class FbxModel : IDisposable
                     // mnNewRoot.Transform.Matrix = _m4Correction * mnNewRoot.Transform.Matrix; 
 
                     _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
-#if true
-                    Trace($"Anim {url} model:");
-                    Trace($"Model has {additionalScene->MAnimations[0]->MNumChannels} channels.");
-                    Trace(mnNewRoot.DumpNode());
-#endif
+                    if (_traceFbxTree)
+                    {
+                        Trace($"Anim {url} model:");
+                        Trace($"Model has {additionalScene->MAnimations[0]->MNumChannels} channels.");
+                        Trace(mnNewRoot.DumpNode());
+                    }
                     
                     string strFallbackName = url;
                     int idx = strFallbackName.LastIndexOf('/');
