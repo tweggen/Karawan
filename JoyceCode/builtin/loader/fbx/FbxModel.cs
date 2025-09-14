@@ -27,14 +27,14 @@ public class FbxModel : IDisposable
     private unsafe Scene* _scene = null;
     private Metadata _metadata;
     private AxisInterpreter _axi = new(
-#if true
+#if false
         Vector3.UnitX,
         Vector3.UnitY, 
         Vector3.UnitZ
 #else
         Vector3.UnitX,
-        Vector3.UnitZ,
-        -Vector3.UnitY
+        Vector3.UnitY,
+        -Vector3.UnitZ
 #endif
     );
     

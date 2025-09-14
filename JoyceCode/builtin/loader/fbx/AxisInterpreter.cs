@@ -25,7 +25,25 @@ public class AxisInterpreter
         ? Vector3.Transform(v3, M4ToJoyce) * -1f
         : Vector3.Transform(v3, M4ToJoyce);
 
-    public Matrix4x4 ToJoyce(in Matrix4x4 m4) => M4FromJoyce * m4 * M4ToJoyce;
+    public Matrix4x4 ToJoyce(in Matrix4x4 m4)
+    {
+        if (Matrix4x4.Decompose(m4, out var v3Scale, out var qRotation, out var v3Translation))
+        {
+            return
+                Matrix4x4.CreateScale(Vector3.Transform(v3Scale, M4ToScaleJoyce))
+                *
+                Matrix4x4.CreateFromQuaternion(ToJoyce(qRotation))
+                *
+                Matrix4x4.CreateTranslation(Vector3.Transform(v3Translation, M4ToJoyce));
+        }
+        else
+        {
+            /*
+             * Not decomposable? Then do a brute-force transformation.
+             */
+            return M4FromJoyce * m4 * M4ToJoyce;
+        }
+    }
 
     public Vector3 ToJoyceScale(in Vector3 v3) => Vector3.Transform(v3, M4ToScaleJoyce);
 
