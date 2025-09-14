@@ -112,6 +112,12 @@ public class ModelAnimChannel
         ref KeyFrame<Quaternion> nextKey = ref keyframes[idx];
         float tPrev = prevKey.Time;
         float tNext = nextKey.Time;
+        Quaternion q1 = prevKey.Value;
+        Quaternion q2 = nextKey.Value;
+        if (Quaternion.Dot(q1, q2) < 0)
+        {
+            q2 = -q2;
+        }
         if (tPrev > tNext)
         {
             tPrev -= animLength;
@@ -120,7 +126,7 @@ public class ModelAnimChannel
         return new KeyFrame<Quaternion>()
         {
             Time = frametime,
-            Value = Quaternion.Slerp(prevKey.Value, nextKey.Value, t)
+            Value = Quaternion.Slerp(q1, q2, t)
         };
 
     }

@@ -198,7 +198,7 @@ public class FbxModel : IDisposable
                     mac.Positions![l] = new()
                     {
                         Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
+                        Value = aiChannel->MPositionKeys[l].MValue
                     };
                 }
                 
@@ -207,7 +207,7 @@ public class FbxModel : IDisposable
                     mac.Scalings![l] = new()
                     {
                         Time = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MScalingKeys[l].MValue)
+                        Value = aiChannel->MScalingKeys[l].MValue
                     };
                 }
                 
@@ -216,7 +216,7 @@ public class FbxModel : IDisposable
                     mac.Rotations![l] = new()
                     {
                         Time = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
+                        Value = aiChannel->MRotationKeys[l].MValue
                     };
                 }
                 
