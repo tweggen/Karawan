@@ -806,7 +806,6 @@ public class FbxModel : IDisposable
      */
     private void _mergeAssimpPivotsRecursively(ModelNode mn)
     {
-        // return;
         if (mn.Name != null && !mn.Name!.Contains($"_$AssimpFbx$_"))
         {
             _mergeParentsAssimpPivotsIntoMe(mn);
