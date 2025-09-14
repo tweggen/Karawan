@@ -12,14 +12,20 @@ public class AxisInterpreter
     private Vector3 _v3Right;
 
     private bool _isLeftHanded = false;
-
+    public bool IsLeftHanded => _isLeftHanded;
+    
     public Matrix4x4 M4ToJoyce;
     public Matrix4x4 M4FromJoyce;
 
 
     public Vector3 ToJoyce(in Vector3 v3) => Vector3.Transform(v3, M4ToJoyce);
 
+    public Vector3 ToJoyceNormal(in Vector3 v3) => _isLeftHanded
+        ? Vector3.Transform(v3, M4ToJoyce) * -1f
+        : Vector3.Transform(v3, M4ToJoyce);
+
     public Matrix4x4 ToJoyce(in Matrix4x4 m4) => M4FromJoyce * m4 * M4ToJoyce;
+    
     
     public Quaternion ToJoyce(in Quaternion q)
     {
@@ -40,7 +46,7 @@ public class AxisInterpreter
         }
         else
         {
-            return new Quaternion(-newX, -newY, -newZ, q.W); // w component unchanged
+            return new Quaternion(newX, newY, newZ, -q.W); // w component unchanged
         }
 #endif
     }

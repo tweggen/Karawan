@@ -496,7 +496,7 @@ public class FbxModel : IDisposable
                 // normals
                 if (mesh->MNormals != null)
                 {
-                    vertex.Normal = _axi.ToJoyce(mesh->MNormals[i]);
+                    vertex.Normal = _axi.ToJoyceNormal(mesh->MNormals[i]);
                 }
 
                 // tangent
