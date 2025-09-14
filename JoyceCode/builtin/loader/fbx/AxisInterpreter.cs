@@ -8,7 +8,7 @@ public class AxisInterpreter
     private readonly Metadata _metadata;
 
     private Vector3 _v3Up;
-    private Vector3 _v3Front;
+    private Vector3 _v3Viewer;
     private Vector3 _v3Right;
 
     private bool _isLeftHanded = false;
@@ -48,20 +48,20 @@ public class AxisInterpreter
 
     private void _afterInit()
     {
-        _isLeftHanded = Vector3.Dot(Vector3.Cross(_v3Right, _v3Up), _v3Front) < 0;
+        _isLeftHanded = Vector3.Dot(Vector3.Cross(_v3Right, _v3Up), _v3Viewer) < 0;
 
         M4ToJoyce = new Matrix4x4(
             _v3Right.X, _v3Right.Y, _v3Right.Z, 0f,
             _v3Up.X, _v3Up.Y, _v3Up.Z, 0f,
-            _v3Front.X, _v3Front.Y, _v3Front.Z, 0f,
+            _v3Viewer.X, _v3Viewer.Y, _v3Viewer.Z, 0f,
             0f, 0f, 0f, 1f
         );
         Matrix4x4.Invert(M4ToJoyce, out M4FromJoyce);
     }
 
-    public AxisInterpreter(in Vector3 v3Right, in Vector3 v3Up, in Vector3 v3Front)
+    public AxisInterpreter(in Vector3 v3Right, in Vector3 v3Up, in Vector3 v3Viewer)
     {
-        _v3Front = v3Front;
+        _v3Viewer = v3Viewer;
         _v3Up = v3Up;
         _v3Right = v3Right;
 
@@ -74,13 +74,13 @@ public class AxisInterpreter
         _metadata = metadata;
 
         int upSign = _metadata.GetInteger("UpAxisSign") == 1?1:-1;
-        int frontSign = _metadata.GetInteger("FrontAxisSign") == 1?1:-1;
+        int viewerSign = _metadata.GetInteger("FrontAxisSign") == 1?-1:1;
         int rightSign = _metadata.GetInteger("CoordAxisSign") == 1?1:-1;
 
         #if true
         Vector3[] arrAxis = { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ };
 
-        _v3Front = arrAxis[_metadata.GetInteger("FrontAxis", 2)];
+        _v3Viewer = arrAxis[_metadata.GetInteger("FrontAxis", 2)];
         _v3Up = arrAxis[_metadata.GetInteger("UpAxis", 1)];
         _v3Right = arrAxis[_metadata.GetInteger("CoordAxis", 0)];
         
@@ -136,7 +136,7 @@ public class AxisInterpreter
         }
         #endif
         _v3Up *= upSign;
-        _v3Front *= frontSign;
+        _v3Viewer *= viewerSign;
         _v3Right *= rightSign;
 
         _afterInit();

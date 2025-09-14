@@ -26,20 +26,30 @@ public class FbxModel : IDisposable
     private Model? _model = null;
     private unsafe Scene* _scene = null;
     private Metadata _metadata;
-    private AxisInterpreter _axi;
+    private AxisInterpreter _axi = new(
+#if true
+        Vector3.UnitX,
+        Vector3.UnitY, 
+        Vector3.UnitZ
+#else
+        Vector3.UnitX,
+        Vector3.UnitZ,
+        -Vector3.UnitY
+#endif
+    );
     
     /**
      * The axis interpreter for loading animation.
      */
     private AxisInterpreter _baxi = new AxisInterpreter(
         #if false
+        Vector3.UnitX, 
         Vector3.UnitY, 
-        Vector3.UnitZ, 
-        Vector3.UnitX
+        Vector3.UnitZ
         #else
         Vector3.UnitX,
         Vector3.UnitY,
-        Vector3.UnitZ
+        -Vector3.UnitZ
         #endif
         );
 
@@ -796,7 +806,7 @@ public class FbxModel : IDisposable
      */
     private void _mergeAssimpPivotsRecursively(ModelNode mn)
     {
-        return;
+        // return;
         if (mn.Name != null && !mn.Name!.Contains($"_$AssimpFbx$_"))
         {
             _mergeParentsAssimpPivotsIntoMe(mn);
@@ -866,7 +876,8 @@ public class FbxModel : IDisposable
         Trace($"Loaded \"{path}\"");
         _metadata = new(_scene->MMetaData);
         _metadata.Dump();
-        _axi = new(_metadata);
+        //_axi = new(_metadata);
+        
         
         if (_scene == null || _scene->MFlags == Assimp.SceneFlagsIncomplete || _scene->MRootNode == null)
         {
