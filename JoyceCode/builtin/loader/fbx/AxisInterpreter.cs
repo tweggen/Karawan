@@ -17,6 +17,7 @@ public class AxisInterpreter
     public Matrix4x4 M4ToJoyce;
     public Matrix4x4 M4FromJoyce;
 
+    public Matrix4x4 M4ToScaleJoyce;
 
     public Vector3 ToJoyce(in Vector3 v3) => Vector3.Transform(v3, M4ToJoyce);
 
@@ -26,6 +27,7 @@ public class AxisInterpreter
 
     public Matrix4x4 ToJoyce(in Matrix4x4 m4) => M4FromJoyce * m4 * M4ToJoyce;
 
+    public Vector3 ToJoyceScale(in Vector3 v3) => Vector3.Transform(v3, M4ToScaleJoyce);
 
     public Quaternion ToJoyceHandedness(in Quaternion q)
     {
@@ -73,6 +75,13 @@ public class AxisInterpreter
             _v3Right.X, _v3Right.Y, _v3Right.Z, 0f,
             _v3Up.X, _v3Up.Y, _v3Up.Z, 0f,
             _v3Viewer.X, _v3Viewer.Y, _v3Viewer.Z, 0f,
+            0f, 0f, 0f, 1f
+        );
+
+        M4ToScaleJoyce = new Matrix4x4(
+            Single.Abs(_v3Right.X), Single.Abs(_v3Right.Y), Single.Abs(_v3Right.Z), 0f,
+            Single.Abs(_v3Up.X), Single.Abs(_v3Up.Y), Single.Abs(_v3Up.Z), 0f,
+            Single.Abs(_v3Viewer.X), Single.Abs(_v3Viewer.Y), Single.Abs(_v3Viewer.Z), 0f,
             0f, 0f, 0f, 1f
         );
         Matrix4x4.Invert(M4ToJoyce, out M4FromJoyce);
