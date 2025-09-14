@@ -796,6 +796,7 @@ public class FbxModel : IDisposable
      */
     private void _mergeAssimpPivotsRecursively(ModelNode mn)
     {
+        return;
         if (mn.Name != null && !mn.Name!.Contains($"_$AssimpFbx$_"))
         {
             _mergeParentsAssimpPivotsIntoMe(mn);
@@ -852,9 +853,10 @@ public class FbxModel : IDisposable
         FileIO* pFileIO = &fileIO;
         PropertyStore *properties = _assimp.CreatePropertyStore();
         // TXWTODO: Does not work.
-        _assimp.SetImportPropertyInteger(properties, "IMPORT_FBX_PRESERVE_PIVOT", 0);
+        _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS", 0);
         _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_REMOVE_EMPTY_BONES", 0);
-        _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_FBX_IGNORE_UP_DIRECTION", 0);
+        _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_FBX_IGNORE_UP_DIRECTION", 1);
+        _assimp.ReleaseImport(_scene);
         _scene = _assimp.ImportFileExWithProperties(
             path,
             (uint)PostProcessSteps.Triangulate,

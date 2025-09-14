@@ -436,7 +436,7 @@ public class Model
                      */
                     // Matrix4x4.CreateScale(100f) *
                     FirstInstanceDescTransform *
-                    Matrix4x4.CreateScale(100f) *
+                    //Matrix4x4.CreateScale(100f) *
                     m4MyModelPoseToBonePose *
                     // bone.Model2Bone *
                     m4MyBoneSpaceToRestPose 
@@ -622,7 +622,8 @@ public class Model
                         ma.RestPose,
                         ModelNodeTree,
                         BakeMode.Relative,
-                        Matrix4x4.Identity,
+                        //Matrix4x4.Identity,
+                        m4InverseGlobalTransform,
                         //_m4Correction,
                         ma, 
                         frameno);
