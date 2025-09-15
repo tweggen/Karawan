@@ -1036,10 +1036,17 @@ public class FbxModel : IDisposable
          */
         model.Polish();
 
-        /*
-         * Baking animations must include the root matrix corrections.
-         */
-        model.BakeAnimations();
+        try
+        {
+            /*
+             * Baking animations must include the root matrix corrections.
+             */
+            model.BakeAnimations();
+        }
+        catch (Exception e)
+        {
+            Trace($"Caught exception: {e}");
+        }
 
         // model.ModelNodeTree.RootNode.Transform.Matrix = 
         //    Matrix4x4.CreateScale(model.Scale) * 

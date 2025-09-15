@@ -115,9 +115,9 @@ public class Model
         ModelAnimation ma, uint frameno)
     {
         var skeleton = Skeleton!;
-        
+
         /*
-         * Find the appropriate bone.  
+         * Find the appropriate bone.
          */
         Bone? bone = null;
         int boneIndex = -1; 
@@ -578,6 +578,8 @@ public class Model
              */
             if (ma.RestPose == null)
             {
+                mnRoot.DumpNode();
+                
                 /*
                  * Now for this animation, for every frame, recurse through the bones.
                  */
