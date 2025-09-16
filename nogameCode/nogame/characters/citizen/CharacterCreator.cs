@@ -223,7 +223,7 @@ public class CharacterCreator
 
         return _generateCharacter(
             clusterDesc, worldFragment,  
-            model, mcp, strAnimation, iBehavior, null);
+            model, mcp, null, /* strAnimation,*/ iBehavior, null);
     }
 
     
@@ -233,7 +233,7 @@ public class CharacterCreator
         Fragment worldFragment,
         Model model,
         ModelCacheParams mcp,
-        string strAnimation,
+        string? strAnimation,
         engine.behave.IBehavior? iBehavior,
         engine.audio.Sound? sound)
     {
@@ -279,7 +279,7 @@ public class CharacterCreator
             eAnimations = modelBuilder.GetAnimationsEntity();
         }
 
-        if (default != eAnimations)
+        if (strAnimation != null && default != eAnimations)
         {
             var mapAnimations = model.MapAnimations;
             if (mapAnimations != null && mapAnimations.Count > 0)
@@ -305,7 +305,7 @@ public class CharacterCreator
         Fragment worldFragment,
         Model model,
         ModelCacheParams mcp,
-        string strAnimation,
+        string? strAnimation,
         engine.behave.IBehavior? iBehavior,
         engine.audio.Sound? sound)
     {

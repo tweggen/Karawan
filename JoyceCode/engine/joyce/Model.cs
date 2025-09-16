@@ -585,6 +585,18 @@ public class Model
                  */
                 for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
                 {
+                    #if false
+                    _bakeRecCount = 0;
+                    _bakeRecursiveNew(
+                        ModelNodeTree.RootNode,
+                        ModelNodeTree,
+                        BakeMode.Relative,
+                        //Matrix4x4.Identity,
+                        m4InverseGlobalTransform,
+                        //_m4Correction,
+                        ma, 
+                        frameno);
+                    #else
                     /*
                      * I need to start with the inverse transform, as it will be reapplied in the end again
                      * by the renderer.
@@ -612,6 +624,7 @@ public class Model
                         m4InverseGlobalTransform,
                         //  m4GlobalTransform,  
                         ma, frameno);
+                    #endif
                 }
             }
             else
