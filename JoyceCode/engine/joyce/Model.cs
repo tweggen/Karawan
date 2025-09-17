@@ -283,8 +283,12 @@ public class Model
          * others might not be animated at all.
          */
         Bone? bone = null;
-        int boneIndex = -1; 
+        int boneIndex = -1;
 
+        if (null == mnRestPose)
+        {
+            mnRestPose = mntModelPose.RootNode;
+        }
         if (skeleton.MapBones.TryGetValue(mnRestPose.Name, out bone))
         {
             boneIndex = bone.Index;
@@ -576,7 +580,7 @@ public class Model
              * If rest pose is not null, use different implementation that
              * considers rest pose.
              */
-            if (ma.RestPose == null)
+            if (false && ma.RestPose == null)
             {
                 mnRoot.DumpNode();
                 

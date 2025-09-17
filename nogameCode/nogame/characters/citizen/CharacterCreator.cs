@@ -209,9 +209,9 @@ public class CharacterCreator
             Params = new()
             {
                 GeomFlags = 0
-                            | InstantiateModelParams.CENTER_X
-                            | InstantiateModelParams.ROTATE_X90
-                            | InstantiateModelParams.ROTATE_Y180
+                            //| InstantiateModelParams.CENTER_X
+                            //| InstantiateModelParams.ROTATE_X90
+                            //| InstantiateModelParams.ROTATE_Y180
                 ,
                 MaxDistance = propMaxDistance,
                 
