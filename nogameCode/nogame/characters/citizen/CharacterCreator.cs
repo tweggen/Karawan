@@ -117,7 +117,7 @@ public class CharacterCreator
             }
 
             float h = clusterDesc.AverageHeight + engine.world.MetaGen.ClusterStreetHeight +
-                      engine.world.MetaGen.QuaterSidewalkOffset;
+                      engine.world.MetaGen.QuaterSidewalkOffset + 2f;
             var v3This = new Vector3(dlThis.StartPoint.X, h, dlThis.StartPoint.Y );
             var v3Next = new Vector3(dlNext.StartPoint.X, h, dlNext.StartPoint.Y);
             var vu3Forward = Vector3.Normalize(v3Next - v3This);
@@ -203,7 +203,7 @@ public class CharacterCreator
             Url = strModel,
             Properties = new(modelProperties) { Properties = new()
                 {
-                    { "Scale", "0,01" }
+                    //{ "Scale", "0,01" }
                 } 
             },
             Params = new()
@@ -223,7 +223,7 @@ public class CharacterCreator
 
         return _generateCharacter(
             clusterDesc, worldFragment,  
-            model, mcp, null, /* strAnimation,*/ iBehavior, null);
+            model, mcp, strAnimation, iBehavior, null);
     }
 
     
