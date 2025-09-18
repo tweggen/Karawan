@@ -174,13 +174,13 @@ public class CharacterCreator
         string strAnimation = null;
         float which = rnd.GetFloat();
         float speed;
-        if (which < 0.2f)
+        if (false && which < 0.2f)
         {
             strModel = strModels[0];
             speed = (6f + rnd.GetFloat() * 2f) / 3.6f;
             strAnimation = "Metarig Boy|Run Mid";
         }
-        else if (which < 0.6f)
+        else if (true || which < 0.6f)
         {
             strModel = strModels[1];
             speed = (6.5f + rnd.GetFloat() * 2f) / 3.6f;
@@ -204,7 +204,7 @@ public class CharacterCreator
             Properties = new(modelProperties) { Properties = new()
                 {
                     //{ "Scale", "0,01" }
-                    {"Axis", "XzY"}
+                    {"Axis", "XZy"}
                 } 
             },
             Params = new()
