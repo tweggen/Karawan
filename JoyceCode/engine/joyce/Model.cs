@@ -97,164 +97,6 @@ public class Model
     }
     
     
-    /**
-     * Bake all animations for the given node.
-     *
-     * @param m4GlobalTransform
-     *     How do I transform from root to the mesh.
-     * @param m4ModelSpaceToBoneSpace
-     *     How do I transform from the model to the individual bone 
-     * @param m4BoneSpaceToModelSpace
-     *     How do I transform from the individual bone to the model.
-     */
-    private void _bakeRecursive(ModelNode me, 
-        BakeMode bakeMode,
-        Matrix4x4 m4GlobalTransform,
-        Matrix4x4 m4ModelSpaceToPoseSpace, 
-        Matrix4x4 m4BoneSpaceToModelSpace, 
-        ModelAnimation ma, uint frameno)
-    {
-        var skeleton = Skeleton!;
-
-        /*
-         * Find the appropriate bone.
-         */
-        Bone? bone = null;
-        int boneIndex = -1; 
-        
-        
-        Matrix4x4 m4Model2Bone;
-        Matrix4x4 m4Bone2Model;
-        
-        if (skeleton.MapBones.TryGetValue(me.Name, out bone))
-        {
-            m4Model2Bone = bone.Model2Bone;
-            m4Bone2Model = bone.Bone2Model;
-            boneIndex = bone.Index;
-        }
-        else
-        {
-            m4Model2Bone = Matrix4x4.Identity;
-            m4Bone2Model = Matrix4x4.Identity;
-        }
-
-        Matrix4x4 m4Anim;
-        if (ma.MapChannels.TryGetValue(me, out var mac))
-        {
-            /*
-             * We do have an animation channel for this node.
-             * So consider the animation below.
-             *
-             * Apply it to the matrix.
-             */
-            m4Anim = Matrix4x4.Identity;
-            _computeAnimFrame(mac, ref m4Anim, frameno);
-        }
-        else
-        {
-            /*
-             * In case my node cannot be found in the list of animation channels.
-             */
-            m4Anim = me.Transform.Matrix;
-        }
-
-        // Matrix4x4.Invert(m4Anim, out var m4InverseAnim);
-        Matrix4x4.Invert(me.Transform.Matrix, out var m4InverseBone);
-    
-        Matrix4x4 m4MyBoneSpaceToModelSpace = m4Anim * m4BoneSpaceToModelSpace; 
-        Matrix4x4 m4MyModelSpaceToPoseSpace = m4ModelSpaceToPoseSpace * m4InverseBone;
-
-        /*
-         * Store resulting matrix if we have a bone that carries it.
-         * Otherwise, just pass it on to the children.
-         */
-        if (bone != null)
-        {
-            /*
-             * baked shall define how I come from mesh local position to bone
-             * transformed mesh position.
-             *
-             * In other words, after applying these transformations, also the instancedesc
-             * transformations are applied, including all transformations "above" the instance
-             * desc node.
-             *
-             * Warning: For reasons I do not understand now, I wrote this in M*V order instead
-             * of the usual V*M order in this project. Hence, the vertex shader also multiplies
-             * M*V.
-             *
-             * Input to this matrix is the mesh before model to world transformation.
-             * Ultimately, we want to apply the transformation of all bones in that space.
-             *
-             * - apply my bone transformations until the moved me.
-             * - apply the inverse to get back to the model
-             *
-             * Unfortunately, as the "bone to model" matrix does not exist, we need to construct
-             * it from the static matrices defining the pose transformation in the bones.
-             */
-            Matrix4x4 m4Baked =
-                /*
-                 * First from model coordinate space to bone local coordinate space
-                 */
-#if true                   
-                m4GlobalTransform *
-                m4Model2Bone * 
-#else                
-                m4MyModelSpaceToPoseSpace *
-#endif
-                
-                /*
-                 * Go from global space to bone
-                  */
-                m4MyBoneSpaceToModelSpace
-                ;
-            // m4Baked = Matrix4x4.Transpose(m4Baked);
-            // Matrix4x4.Invert(m4Baked, out var m4InverseBaked);
-            
-            /*
-             * For some strange reason, transferring matrices via ssbo does transpose the
-             * matrix whereas passing matrix as uniform doesnt, or vice cersea.
-             * So we must adjust for that.
-             */
-
-            {
-                var arr = ma.BakedFrames[frameno].BoneTransformations;
-                if (boneIndex < arr.Length)
-                {
-                    arr[boneIndex] = m4Baked;
-                }
-                else
-                {
-                    // Does not trigger.
-                    int a = 1;
-                }
-            }
-            AllBakedMatrices[(ma.FirstFrame+frameno) * Skeleton.NBones + boneIndex] = m4Baked;
-
-            if (me.Children == null || me.Children.Count == 0)
-            {
-                // TXWTODO: We have problems with the hands, let's look if the terminal leaf case is a problem.
-                // Does not trigger at all
-                int a = 1;
-            }
-        }
-        
-        if (me.Children != null)
-        {
-            /*
-             * Now call ourselves recursively for each of our children
-             */
-            foreach (var child in me.Children)
-            {
-                _bakeRecursive(child,
-                    bakeMode,
-                    m4GlobalTransform,
-                    m4MyModelSpaceToPoseSpace,  
-                    m4MyBoneSpaceToModelSpace, ma, frameno);
-            }
-        }
-    }
-
-
     private int _bakeRecCount;
     
     
@@ -309,7 +151,6 @@ public class Model
         }
 
 
-        #if true
         if (bone != null)
         {
             m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransform * bone.Model2Bone;
@@ -319,32 +160,6 @@ public class Model
             m4MyModelPoseToBonePose = Matrix4x4.Identity;
         }
         
-        #elif false
-        m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransform;
-        #else
-        m4MyModelPoseToBonePose = Matrix4x4.Identity;
-        
-        /*
-         * We need to use the model pose to bone pose from the model pose tree.
-         */
-        if (null != mnModelPose)
-        {
-            mnModelPose!.ComputeInverseGlobalTransform(ref m4MyModelPoseToBonePose);
-            // m4MyModelPoseToBonePose = /* _m4AntiCorrection * */ m4MyModelPoseToBonePose;
-            if (frameno == 0)
-            {
-                Trace($"Model Transform.Matrix {mnModelPose.Transform.Matrix}");
-            }
-        }
-        else
-        {
-            if (!mnRestPose.Transform.Matrix.IsIdentity)
-            {
-                int a = 1;
-            }
-        }
-        #endif
-
         /*
          * Is there an animation applied to this node?
          * Then use it or concatenate it.

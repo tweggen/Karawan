@@ -224,7 +224,7 @@ public class CharacterCreator
 
         return _generateCharacter(
             clusterDesc, worldFragment,  
-            model, mcp, strAnimation, iBehavior, null);
+            model, mcp, null /* strAnimation */, iBehavior, null);
     }
 
     
