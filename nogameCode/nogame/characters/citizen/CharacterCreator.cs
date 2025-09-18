@@ -204,7 +204,7 @@ public class CharacterCreator
             Properties = new(modelProperties) { Properties = new()
                 {
                     //{ "Scale", "0,01" }
-                    {"Axis", "XZy"}
+                    {"Axis", "XzY"}
                 } 
             },
             Params = new()
