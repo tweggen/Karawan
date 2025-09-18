@@ -55,9 +55,6 @@ public class FbxModel : IDisposable
 
     private static object _slo = new();
     
-    public Matrix4x4 _m4AntiCorrection;
-    public Matrix4x4 _m4Correction;
-
     private Matrix4x4 _fbxTranspose(in Matrix4x4 m) => Matrix4x4.Transpose(m);
 
     private bool _traceFbxTree = false;
@@ -74,8 +71,6 @@ public class FbxModel : IDisposable
                 {
                     System.Console.WriteLine("Loading assimp...");
                     _assimp = Assimp.GetApi();
-                    //var customAssimpLibraryNameContainer = new CustomAssimpLibraryNameContainer();
-                    //_assimp = new(Silk.NET.Assimp.Assimp.CreateDefaultContext(customAssimpLibraryNameContainer.GetLibraryNames()));
                 }
                 else
                 {
@@ -843,7 +838,8 @@ public class FbxModel : IDisposable
      * Load a given fbx file into this model.
      * You can also pass additional files to add e.g. animation data.
      */
-    public unsafe void Load(string path, List<string>? additionalUrls, float scale, out engine.joyce.Model model)
+    public unsafe void Load(string path, List<string>? additionalUrls, float scale, AxisInterpreter? axisInterpreter, 
+        out engine.joyce.Model model)
     {
         if (null != _model)
         {
@@ -896,7 +892,11 @@ public class FbxModel : IDisposable
         {
             _metadata.Dump();
         }
-        //_axi = new(_metadata);
+
+        if (axisInterpreter != null)
+        {
+            _axi = _baxi = axisInterpreter;
+        }
         
         
         if (_scene == null || _scene->MFlags == Assimp.SceneFlagsIncomplete || _scene->MRootNode == null)
@@ -919,7 +919,7 @@ public class FbxModel : IDisposable
         model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
         _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
         _applyScalingToModel(model, _metadata, scale);
-        // model.ModelNodeTree.RootNode.Transform.Matrix = _m4AntiCorrection * model.ModelNodeTree.RootNode.Transform.Matrix;
+
         if (_traceFbxTree)
         {
             Trace("Pose model:");
@@ -987,7 +987,6 @@ public class FbxModel : IDisposable
                      * Remove transformations of pivots in case assimp did not merge it.
                      */
                     _mergeAssimpPivotsRecursively(mnNewRoot);
-                    // mnNewRoot.Transform.Matrix = _m4Correction * mnNewRoot.Transform.Matrix; 
 
                     _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
                     if (_traceFbxTree)
@@ -1047,11 +1046,6 @@ public class FbxModel : IDisposable
         {
             Trace($"Caught exception: {e}");
         }
-
-        // model.ModelNodeTree.RootNode.Transform.Matrix = 
-        //    Matrix4x4.CreateScale(model.Scale) * 
-        //    model.ModelNodeTree.RootNode.Transform.Matrix;
-        
     }
         
         
@@ -1063,18 +1057,5 @@ public class FbxModel : IDisposable
 
     public FbxModel()
     {
-#if false
-        _m4AntiCorrection = new Matrix4x4(
-            0f, 0f, 1f, 0f,
-            1f, 0f, 0f, 0f,
-            0f, 1f, 0f, 0f,
-            0f, 0f, 0f, 1f);
-        Matrix4x4.Invert(_m4AntiCorrection, out _m4Correction);
-        Trace($"m4Correction is {_m4Correction}");
-        Trace($"m4AntiCorrection is {_m4AntiCorrection}");
-#else
-        _m4AntiCorrection = Matrix4x4.Identity;
-        _m4Correction = Matrix4x4.Identity;
-#endif
     }
 }

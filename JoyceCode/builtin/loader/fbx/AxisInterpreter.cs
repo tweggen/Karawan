@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using static engine.Logger;
 
 namespace builtin.loader.fbx;
 
@@ -138,5 +139,44 @@ _isLeftHanded
         _v3Right *= rightSign;
 
         _afterInit();
+    }
+
+
+    public static AxisInterpreter CreateFromString(string desc)
+    {
+        if (desc.Length < 3)
+        {
+            ErrorThrow<ArgumentException>($"Invalid axis description: {desc}");
+        }
+        
+        Vector3[] v3AxisSystem = new Vector3[3];
+        
+        for (int i = 0; i < 3; i++)
+        {
+            Vector3 v3Axis;
+            switch (desc[i] & 0x5f)
+            {
+                case 'X':
+                    v3Axis = Vector3.UnitX;
+                    break;
+                case 'Y':
+                    v3Axis = Vector3.UnitY;
+                    break;
+                case 'Z':
+                    v3Axis = Vector3.UnitZ;
+                    break;
+                default:
+                    v3Axis = Vector3.UnitX;
+                    break;
+            }
+
+            if ((desc[i] & 0x20) == 0x20)
+            {
+                v3Axis = -v3Axis;
+            }
+            v3AxisSystem[i] = v3Axis;
+        }
+        
+        return new AxisInterpreter(v3AxisSystem[0], v3AxisSystem[1], v3AxisSystem[2]);
     }
 }
