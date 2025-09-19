@@ -69,7 +69,7 @@ public class Model
         RelativeOnTop = 2
     }
 
-    private bool _traceAnim = false;
+    private bool _traceAnim = true;
 
 
     void _computeAnimFrame(in ModelAnimChannel mac, ref Matrix4x4 m4Anim, uint frameno)
@@ -379,91 +379,33 @@ public class Model
             uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
             ma.NFrames = nFrames;
             ma.BakedFrames = new ModelBakedFrame[ma.NFrames];
-            
+
             for (int frameno = 0; frameno < nFrames; ++frameno)
             {
                 ModelBakedFrame bakedFrame = new()
                 {
                     BoneTransformations = new Matrix4x4[Int32.Max(Skeleton.NBones, MAX_BONES)]
                 };
-                for (int i = 0; i < bakedFrame.BoneTransformations.Length; ++i) bakedFrame.BoneTransformations[i] = Matrix4x4.Identity;
+                for (int i = 0; i < bakedFrame.BoneTransformations.Length; ++i)
+                    bakedFrame.BoneTransformations[i] = Matrix4x4.Identity;
                 ma.BakedFrames[frameno] = bakedFrame;
             }
-            
-            /*
-             * Use current implementation if no rest pose is given explicitely
-             * If rest pose is not null, use different implementation that
-             * considers rest pose.
-             */
-            if (false && ma.RestPose == null)
-            {
-                mnRoot.DumpNode();
-                
-                /*
-                 * Now for this animation, for every frame, recurse through the bones.
-                 */
-                for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
-                {
-                    #if false
-                    _bakeRecCount = 0;
-                    _bakeRecursiveNew(
-                        ModelNodeTree.RootNode,
-                        ModelNodeTree,
-                        BakeMode.Relative,
-                        //Matrix4x4.Identity,
-                        m4InverseGlobalTransform,
-                        //_m4Correction,
-                        ma, 
-                        frameno);
-                    #else
-                    /*
-                     * I need to start with the inverse transform, as it will be reapplied in the end again
-                     * by the renderer.
-                     *
-                     * Plus, I need to apply the scale (which I also could do later).
-                     */
-                    _bakeRecursive(mnRoot,
-                        BakeMode.Relative,
-                        /*
-                         * m4GlobalTransform here is required to have the ochi person looking correctly
-                         * with animations and not to be apart. It is however too large.
-                         *
-                         * Global transform already contains the scale factor.
-                         */
-                        m4GlobalTransform,
-                        //Matrix4x4.Identity,
 
-                        /*
-                         * With these two commented out, scaling still is wrong.
-                         */
-                        //m4GlobalTransform,
-                        //m4InverseGlobalTransform * Scale,
-                        Matrix4x4.Identity,
-                        // Matrix4x4.Identity,
-                        m4InverseGlobalTransform,
-                        //  m4GlobalTransform,  
-                        ma, frameno);
-                    #endif
-                }
-            }
-            else
+            /*
+             * Now for this animation, for every frame, recurse through the bones.
+             */
+            for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
             {
-                /*
-                 * Now for this animation, for every frame, recurse through the bones.
-                 */
-                for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
-                {
-                    _bakeRecCount = 0;
-                    _bakeRecursiveNew(
-                        ma.RestPose,
-                        ModelNodeTree,
-                        BakeMode.Relative,
-                        //Matrix4x4.Identity,
-                        m4InverseGlobalTransform,
-                        //_m4Correction,
-                        ma, 
-                        frameno);
-                }
+                _bakeRecCount = 0;
+                _bakeRecursiveNew(
+                    ma.RestPose,
+                    ModelNodeTree,
+                    BakeMode.Relative,
+                    //Matrix4x4.Identity,
+                    m4InverseGlobalTransform,
+                    //_m4Correction,
+                    ma,
+                    frameno);
             }
         }
     }

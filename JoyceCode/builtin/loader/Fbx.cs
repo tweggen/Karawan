@@ -29,6 +29,7 @@ public class Fbx
         float scale = 1f;
         List<string>? additionalUrls = null;
         AxisInterpreter? axisInterpreter = null;
+        AxisInterpreter? animAxisInterpreter = null;
         
         if (modelProperties.Properties.ContainsKey("AdditionalUrls"))
         {
@@ -45,9 +46,17 @@ public class Fbx
             axisInterpreter = AxisInterpreter.CreateFromString(modelProperties.Properties["Axis"]);
         }
         
+        if (modelProperties.Properties.ContainsKey("AnimAxis"))
+        {
+            animAxisInterpreter = AxisInterpreter.CreateFromString(modelProperties.Properties["AnimAxis"]);
+        }
+        
         using (var fbxModel = new fbx.FbxModel())
         {
-            fbxModel.Load(url, additionalUrls, scale, axisInterpreter, out model);
+            fbxModel.Load(url, additionalUrls, scale,
+                axisInterpreter, 
+                animAxisInterpreter,
+                out model);
         }
     }
     

@@ -838,7 +838,9 @@ public class FbxModel : IDisposable
      * Load a given fbx file into this model.
      * You can also pass additional files to add e.g. animation data.
      */
-    public unsafe void Load(string path, List<string>? additionalUrls, float scale, AxisInterpreter? axisInterpreter, 
+    public unsafe void Load(string path, List<string>? additionalUrls, float scale, 
+        AxisInterpreter? axisInterpreter,
+        AxisInterpreter? animAxisInterpreter,
         out engine.joyce.Model model)
     {
         if (null != _model)
@@ -895,7 +897,13 @@ public class FbxModel : IDisposable
 
         if (axisInterpreter != null)
         {
-            _axi = _baxi = axisInterpreter;
+            _axi = axisInterpreter;
+            _baxi = axisInterpreter;
+        }
+
+        if (animAxisInterpreter != null)
+        {
+            _baxi = animAxisInterpreter;
         }
         
         

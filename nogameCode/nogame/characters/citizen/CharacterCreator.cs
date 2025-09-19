@@ -204,7 +204,9 @@ public class CharacterCreator
             Properties = new(modelProperties) { Properties = new()
                 {
                     //{ "Scale", "0,01" }
-                    {"Axis", "XZy"}
+                    //{"Axis", "XzY"}
+                    { "Axis", "XYZ" },
+                    //{ "AnimAxis", "XZy" }
                 } 
             },
             Params = new()
@@ -224,7 +226,7 @@ public class CharacterCreator
 
         return _generateCharacter(
             clusterDesc, worldFragment,  
-            model, mcp, null /* strAnimation */, iBehavior, null);
+            model, mcp, strAnimation, iBehavior, null);
     }
 
     
