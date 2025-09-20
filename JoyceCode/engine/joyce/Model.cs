@@ -279,7 +279,7 @@ public class Model
                      * answer: I belive it also does 
                      */
                     m4MyBoneSpaceToRestPose *
-                    _m4InverseFirstInstanceDescTransformWoInstance
+                    _m4InverseFirstInstanceDescTransformWithInstance
                     ;
 
             /*

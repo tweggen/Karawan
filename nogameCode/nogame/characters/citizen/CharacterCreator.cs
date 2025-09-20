@@ -117,7 +117,7 @@ public class CharacterCreator
             }
 
             float h = clusterDesc.AverageHeight + engine.world.MetaGen.ClusterStreetHeight +
-                      engine.world.MetaGen.QuaterSidewalkOffset + 2f;
+                      engine.world.MetaGen.QuaterSidewalkOffset;
             var v3This = new Vector3(dlThis.StartPoint.X, h, dlThis.StartPoint.Y );
             var v3Next = new Vector3(dlNext.StartPoint.X, h, dlNext.StartPoint.Y);
             var vu3Forward = Vector3.Normalize(v3Next - v3This);
@@ -174,13 +174,13 @@ public class CharacterCreator
         string strAnimation = null;
         float which = rnd.GetFloat();
         float speed;
-        if (false && which < 0.2f)
+        if (which < 0.2f)
         {
             strModel = strModels[0];
             speed = (6f + rnd.GetFloat() * 2f) / 3.6f;
             strAnimation = "Metarig Boy|Run Mid";
         }
-        else if (true || which < 0.6f)
+        else if (which < 0.6f)
         {
             strModel = strModels[1];
             speed = (6.5f + rnd.GetFloat() * 2f) / 3.6f;
@@ -212,9 +212,9 @@ public class CharacterCreator
             Params = new()
             {
                 GeomFlags = 0
-                            //| InstantiateModelParams.CENTER_X
-                            //| InstantiateModelParams.ROTATE_X90
-                            //| InstantiateModelParams.ROTATE_Y180
+                            | InstantiateModelParams.CENTER_X
+                            // | InstantiateModelParams.ROTATE_X180
+                            | InstantiateModelParams.ROTATE_Z180
                 ,
                 MaxDistance = propMaxDistance,
                 
