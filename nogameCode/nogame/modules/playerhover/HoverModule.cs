@@ -227,7 +227,7 @@ public class HoverModule : AModule, IInputPart
                             ModelAnimation = animation,
                             ModelAnimationFrame = 0
                         });
-                        Trace($"Setting up animation {animation.Name}");
+                        // Trace($"Setting up animation {animation.Name}");
                     }
                     else
                     {

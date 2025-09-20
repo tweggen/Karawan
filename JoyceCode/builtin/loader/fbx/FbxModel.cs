@@ -57,8 +57,8 @@ public class FbxModel : IDisposable
     
     private Matrix4x4 _fbxTranspose(in Matrix4x4 m) => Matrix4x4.Transpose(m);
 
-    private bool _traceFbxTree = true;
-    private bool _traceFbxMetadata = true;
+    private bool _traceFbxTree = false;
+    private bool _traceFbxMetadata = false;
     
     private static void _needAssimp()
     {

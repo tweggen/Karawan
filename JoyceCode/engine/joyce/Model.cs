@@ -73,7 +73,7 @@ public class Model
         RelativeOnTop = 2
     }
 
-    private bool _traceAnim = true;
+    private bool _traceAnim = false;
 
 
     void _computeAnimFrame(in ModelAnimChannel mac, ref Matrix4x4 m4Anim, uint frameno)
