@@ -96,7 +96,7 @@ public class ModelCache
                  */
                 id.ComputeAdjustMatrix(p, ref m);
                 id.ModelTransform *= m;
-                id.ModelTransform *= model.FirstInstanceDescTransform;
+                id.ModelTransform *= model.FirstInstanceDescTransformWithInstance;
                 id.MaxDistance = p.MaxDistance;
             }
             return model;

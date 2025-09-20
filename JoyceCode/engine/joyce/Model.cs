@@ -46,9 +46,13 @@ public class Model
 
     public ModelNode? FirstInstanceDescNode { get; private set; } = null;
     
-    public Matrix4x4 FirstInstanceDescTransform { get; private set; } = Matrix4x4.Identity;
-    private Matrix4x4 _m4InverseFirstInstanceDescTransform = Matrix4x4.Identity;
+    public Matrix4x4 FirstInstanceDescTransformWithInstance { get; private set; } = Matrix4x4.Identity;
+    private Matrix4x4 _m4InverseFirstInstanceDescTransformWithInstance = Matrix4x4.Identity;
 
+    public Matrix4x4 FirstInstanceDescTransformWoInstance { get; private set; } = Matrix4x4.Identity;
+    private Matrix4x4 _m4InverseFirstInstanceDescTransformWoInstance = Matrix4x4.Identity;
+
+    
     public ModelNodeTree ModelNodeTree { get; private set; } 
 
     public ModelAnimation CreateAnimation(ModelNode? mnRestPose)
@@ -158,7 +162,7 @@ public class Model
              * This does not match for this model, assimp root is considered twice.
              * 
              */
-            m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransform * bone.Model2Bone;
+            m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransformWoInstance * bone.Model2Bone;
         }
         else
         {
@@ -193,7 +197,7 @@ public class Model
             switch (bakeMode)
             {
                 case BakeMode.Absolute:
-                    m4MyBoneSpaceToRestPose = FirstInstanceDescTransform * m4LocalAnim;
+                    m4MyBoneSpaceToRestPose = FirstInstanceDescTransformWoInstance * m4LocalAnim;
                     break;
                 default:
                 case BakeMode.Relative:
@@ -208,7 +212,7 @@ public class Model
             {
                 Trace($"Anim.Matrix {m4LocalAnim}");
                 Trace($"Rest Transform.Matrix {mnRestPose.Transform.Matrix}");
-                Trace($"Inverse global: {_m4InverseFirstInstanceDescTransform}");
+                Trace($"Inverse global w/o instance: {_m4InverseFirstInstanceDescTransformWoInstance}");
                 Trace($"GlobalTransform: {m4MyBoneSpaceToRestPose}");
             }
         }
@@ -255,7 +259,7 @@ public class Model
                      * This contains the scaling or matrix correction we apply because
                      * of the fbx local system, typically 0.01 
                      */
-                    FirstInstanceDescTransform *
+                    FirstInstanceDescTransformWithInstance *
                     
                     /*
                      * TXWTODO: TODO
@@ -275,7 +279,7 @@ public class Model
                      * answer: I belive it also does 
                      */
                     m4MyBoneSpaceToRestPose *
-                    _m4InverseFirstInstanceDescTransform
+                    _m4InverseFirstInstanceDescTransformWoInstance
                     ;
 
             /*
@@ -445,7 +449,8 @@ public class Model
         AllBakedMatrices = other.AllBakedMatrices;
         Scale = other.Scale;
         FirstInstanceDescNode = other.FirstInstanceDescNode;
-        FirstInstanceDescTransform = other.FirstInstanceDescTransform;
+        FirstInstanceDescTransformWithInstance = other.FirstInstanceDescTransformWithInstance;
+        FirstInstanceDescTransformWoInstance = other.FirstInstanceDescTransformWoInstance;
         IsHierarchical = other.IsHierarchical;  
     }
 
@@ -495,8 +500,14 @@ public class Model
         _polishChildrenRecursively(ModelNodeTree.RootNode);
         if (FirstInstanceDescNode != null)
         {
-            FirstInstanceDescTransform = FirstInstanceDescNode.ComputeGlobalTransform();
-            Matrix4x4.Invert(FirstInstanceDescTransform,  out _m4InverseFirstInstanceDescTransform);
+            FirstInstanceDescTransformWithInstance = FirstInstanceDescNode.ComputeGlobalTransform();
+            Matrix4x4.Invert(FirstInstanceDescTransformWithInstance,
+                out _m4InverseFirstInstanceDescTransformWithInstance);
+            if (FirstInstanceDescNode.Parent != null)
+            {
+                FirstInstanceDescTransformWoInstance = FirstInstanceDescNode.Parent.ComputeGlobalTransform();
+                Matrix4x4.Invert(FirstInstanceDescTransformWoInstance, out _m4InverseFirstInstanceDescTransformWoInstance);
+            }
         }
     }
 

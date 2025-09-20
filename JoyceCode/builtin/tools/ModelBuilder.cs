@@ -138,7 +138,7 @@ public class ModelBuilder
          */
         ModelNode? mnAdjust = null;
 
-        Matrix4x4 v4GlobalTransform = _jModel.FirstInstanceDescTransform;
+        Matrix4x4 v4GlobalTransform = _jModel.FirstInstanceDescTransformWithInstance;
         ModelNode mnFirstInstanceDesc = _jModel.FirstInstanceDescNode; 
         if (_isHierarchical)
         {
