@@ -251,18 +251,14 @@ public class Model
                     /*
                      * First transform the mesh to global as intended                    
                      */
-                    // FirstInstanceDescTransform *
                     /*
                      * First from model coordinate space to bone local coordinate space
                      */
-                    // Matrix4x4.CreateScale(100f) *
                     FirstInstanceDescTransform *
-                    //Matrix4x4.CreateScale(100f) *
                     m4MyModelPoseToBonePose *
-                    // bone.Model2Bone *
-                    m4MyBoneSpaceToRestPose 
-                    // * Matrix4x4.CreateScale(0.01f)
-                ;
+                    m4MyBoneSpaceToRestPose *
+                    _m4InverseFirstInstanceDescTransform
+                    ;
 
             /*
              * For some strange reason, transferring matrices via ssbo does transpose the
@@ -401,8 +397,8 @@ public class Model
                     ma.RestPose,
                     ModelNodeTree,
                     BakeMode.Relative,
-                    //Matrix4x4.Identity,
-                    m4InverseGlobalTransform,
+                    Matrix4x4.Identity,
+                    //m4InverseGlobalTransform,
                     //_m4Correction,
                     ma,
                     frameno);
