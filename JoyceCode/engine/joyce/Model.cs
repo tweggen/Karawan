@@ -153,10 +153,18 @@ public class Model
 
         if (bone != null)
         {
+            /*
+             * TXWTODO: The inverse has a magnitude of 1, model2bone 0,1. Root node is 0.01 setup by me, first instancedesc node is 100 setup by assimp.
+             * This does not match for this model, assimp root is considered twice.
+             * 
+             */
             m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransform * bone.Model2Bone;
         }
         else
         {
+            /*
+             * If bone is null, we would not translate anyway.
+             */
             m4MyModelPoseToBonePose = Matrix4x4.Identity;
         }
         
@@ -168,19 +176,8 @@ public class Model
         Matrix4x4 m4MyBoneSpaceToRestPose;
 
         Matrix4x4 m4AnimBase;
-        if (true)
-        {
-            m4AnimBase = m4BoneSpaceToRestPose;
-        }
-        else
-        {
-            m4AnimBase = Matrix4x4.Identity;
-            if (mnRestPose.Parent != null)
-            {
-                mnRestPose.Parent.ComputeGlobalTransform(ref m4AnimBase);
-            }
-        }
-        
+
+        m4AnimBase = m4BoneSpaceToRestPose;
 
         if (mnModelPose != null && ma.MapChannels.TryGetValue(mnModelPose, out var mac))
         {
@@ -252,10 +249,31 @@ public class Model
                      * First transform the mesh to global as intended                    
                      */
                     /*
-                     * First from model coordinate space to bone local coordinate space
+                     * First from model coordinate space to bone local coordinate space.
+                     * The vertex shader is called with the coordinates as stored in the mesh.
+                     *
+                     * This contains the scaling or matrix correction we apply because
+                     * of the fbx local system, typically 0.01 
                      */
                     FirstInstanceDescTransform *
+                    
+                    /*
+                     * TXWTODO: TODO
+                     * FirstInstanceDesc contains the root scaling, modelposetobonepose
+                     */
+                    
+                    /*
+                     * Now transform this back to bone coordinate system.
+                     * TXWTODO: Check, if this contains modified root scaling.
+                     * answer: Yes, it does, from _m4Inverse...
+                     */
                     m4MyModelPoseToBonePose *
+                    
+                    /*
+                     * Now transform bone space back to original coord system.
+                     * TXWTODO: Check, if this contains modified root scaling.
+                     * answer: I belive it also does 
+                     */
                     m4MyBoneSpaceToRestPose *
                     _m4InverseFirstInstanceDescTransform
                     ;
