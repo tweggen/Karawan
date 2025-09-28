@@ -14,6 +14,12 @@ namespace engine.behave.components;
 public struct Behavior
 {
     [JsonInclude] public IBehavior Provider;
+    
+    /**
+     * Within this distance, the behavior is applied.
+     * Out of distance, if it is not mission critical (see flags),
+     * the entity is made invisible and is not applied.
+     */
     [JsonInclude] public short MaxDistance = 150;
     [JsonInclude] public ushort Flags;
 
