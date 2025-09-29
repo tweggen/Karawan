@@ -177,7 +177,7 @@ public class HoverModule : AModule, IInputPart
         }
 
 
-        InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags, MaxDistance = 200f };
+        InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags, MaxVisibilityDistance = 200f };
 
         _model = await I.Get<ModelCache>().LoadModel( 
             new ModelCacheParams() {

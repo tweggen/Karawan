@@ -47,7 +47,7 @@ public class Factory : AModule
             // eTarget.Set(new engine.world.components.Owner(fragmentId));
             eTarget.Set(new engine.behave.components.Behavior(
                     new Behavior())
-                { MaxDistance = (short) mcp.Params.MaxDistance }
+                { MaxDistance = (short) mcp.Params.MaxVisibilityDistance }
             );
             I.Get<TransformApi>().SetTransforms(
                 eTarget, true, 0x00000001, Quaternion.Identity, v3Pos

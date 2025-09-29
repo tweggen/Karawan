@@ -215,8 +215,12 @@ public class CharacterCreator
                             | InstantiateModelParams.CENTER_X
                             // | InstantiateModelParams.ROTATE_X180
                             | InstantiateModelParams.ROTATE_Z180
+                            // | InstantiateModelParams.BUILD_PHYSICS
                 ,
-                MaxDistance = propMaxDistance,
+                MaxVisibilityDistance = propMaxDistance,
+                MaxBehaviorDistance = propMaxDistance,
+                MaxAudioDistance = propMaxDistance,
+                MaxPhysicsDistance = 4f 
                 
                 // CollisionLayers = 0x0002,
             }
@@ -256,14 +260,14 @@ public class CharacterCreator
             eTarget.Set(new engine.behave.components.Behavior()
             {
                 Provider = iBehavior,
-                MaxDistance = (short) mcp.Params.MaxDistance
+                MaxDistance = (short) mcp.Params.MaxBehaviorDistance
             });
         }
 
         if (sound != null)
         {
             eTarget.Set(new engine.audio.components.MovingSound(
-                sound, mcp.Params.MaxDistance));
+                sound, mcp.Params.MaxAudioDistance));
         }
 
         /*
@@ -273,6 +277,19 @@ public class CharacterCreator
         eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
             Matrix4x4.CreateTranslation(worldFragment.Position)));
 
+        /*
+         * If we created physics for this one, take care to minimize
+         * the distance for physics support.
+         */
+        if (eTarget.Has<engine.physics.components.Body>())
+        {
+            ref var cBody = ref eTarget.Get<engine.physics.components.Body>();
+            if (cBody.PhysicsObject != null)
+            {
+                cBody.PhysicsObject.MaxDistance = 10f;
+            }
+        }
+        
         DefaultEcs.Entity eAnimations;
         
         {

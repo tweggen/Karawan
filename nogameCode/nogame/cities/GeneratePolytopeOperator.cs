@@ -88,7 +88,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
                             | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
                 //| InstantiateModelParams.ROTATE_Y180
                 ,
-                MaxDistance = 800f
+                MaxVisibilityDistance = 800f
             }});
 
         /*

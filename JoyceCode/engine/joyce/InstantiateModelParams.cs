@@ -60,7 +60,24 @@ public class InstantiateModelParams
      * to the model.
      */
     public int GeomFlags { get; set; } = 0;
-    public float MaxDistance { get; set; } = 10f;
+    
+    
+    public float MaxDistance
+    {
+        set
+        {
+            MaxVisibilityDistance = value;
+            MaxBehaviorDistance = value;
+            MaxPhysicsDistance = value;
+            MaxAudioDistance = value;
+        }
+    }
+    
+
+    public float MaxVisibilityDistance { get; set; } = 10f;
+    public float MaxBehaviorDistance { get; set; } = 10f;
+    public float MaxPhysicsDistance { get; set; } = 10f;
+    public float MaxAudioDistance { get; set; } = 10f;
 
     public ushort CollisionLayers { get; set; } = 0x0004;
 
@@ -73,6 +90,6 @@ public class InstantiateModelParams
     
     public string Hash()
     {
-        return $"{{\"geomFlags\": {GeomFlags}, \"maxDistance\": {MaxDistance} }}";
+        return $"{{\"geomFlags\": {GeomFlags}, \"maxDistance\": {MaxVisibilityDistance} }}";
     }
 }

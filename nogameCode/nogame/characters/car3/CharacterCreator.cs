@@ -187,14 +187,14 @@ class CharacterCreator
             eTarget.Set(new engine.behave.components.Behavior()
             {
                 Provider = iBehavior,
-                MaxDistance = (short) mcp.Params.MaxDistance
+                MaxDistance = (short) mcp.Params.MaxBehaviorDistance
             });
         }
 
         if (sound != null)
         {
             eTarget.Set(new engine.audio.components.MovingSound(
-                sound, mcp.Params.MaxDistance));
+                sound, mcp.Params.MaxAudioDistance));
         }
 
         /*
