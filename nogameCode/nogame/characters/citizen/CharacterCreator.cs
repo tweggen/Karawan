@@ -215,7 +215,9 @@ public class CharacterCreator
                             | InstantiateModelParams.CENTER_X
                             // | InstantiateModelParams.ROTATE_X180
                             | InstantiateModelParams.ROTATE_Z180
-                            // | InstantiateModelParams.BUILD_PHYSICS
+                            | InstantiateModelParams.BUILD_PHYSICS
+                            | InstantiateModelParams.PHYSICS_TANGIBLE
+                            | InstantiateModelParams.PHYSICS_DETECTABLE
                 ,
                 MaxVisibilityDistance = propMaxDistance,
                 MaxBehaviorDistance = propMaxDistance,
