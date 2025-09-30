@@ -33,7 +33,7 @@ public struct MeshBatchKey
 public class MaterialBatch
 {
     public AMaterialEntry AMaterialEntry;
-    public Dictionary<MeshBatchKey, MeshBatch> MeshBatches;
+    private Dictionary<MeshBatchKey, MeshBatch> MeshBatches;
     public List<MeshBatch> ListMeshBatches = null;
 
     public int NMeshes = 0;
