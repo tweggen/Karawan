@@ -215,9 +215,9 @@ public class CharacterCreator
                             | InstantiateModelParams.CENTER_X
                             // | InstantiateModelParams.ROTATE_X180
                             | InstantiateModelParams.ROTATE_Z180
-                            | InstantiateModelParams.BUILD_PHYSICS
-                            | InstantiateModelParams.PHYSICS_TANGIBLE
-                            | InstantiateModelParams.PHYSICS_DETECTABLE
+                            //| InstantiateModelParams.BUILD_PHYSICS
+                            //| InstantiateModelParams.PHYSICS_TANGIBLE
+                            //| InstantiateModelParams.PHYSICS_DETECTABLE
                 ,
                 MaxVisibilityDistance = propMaxDistance,
                 MaxBehaviorDistance = propMaxDistance,
@@ -311,7 +311,7 @@ public class CharacterCreator
                 {
                     ModelAnimation = animation,
                     ModelAnimationFrame = (NDrawCallsPerCharacterBatch>0)?
-                        (I.Get<Engine>().FrameNumber % (animation.NFrames/NDrawCallsPerCharacterBatch+1))
+                        (I.Get<Engine>().FrameNumber % (animation.NFrames/NDrawCallsPerCharacterBatch))
                         :0
                 });
                 // Trace($"Setting up animation {animation.Name}");

@@ -80,9 +80,9 @@ public class MeshBatch
 
 
     public void Add(
-        AAnimationsEntry? aAnimationsEntry, AnimationState cAnimationState, 
+        in AAnimationsEntry? aAnimationsEntry, AnimationState cAnimationState, 
         in Matrix4x4 matrix, uint frameno,
-        FrameStats frameStats)
+        in FrameStats frameStats)
     {
         AnimationBatch animationBatch;
         if ((_animBatching & Flags.AnimBatching.ByAnimation) == 0)

@@ -1,15 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using builtin.loader.fbx;
 using engine.joyce.components;
 
 namespace Splash;
 
 
+public struct MeshBatchKey
+{
+    public AMeshParams MeshParams;
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(
+            MeshParams.JMesh,
+            MeshParams.UVOffset,
+            MeshParams.UVScale
+        );
+    }
+
+    public override bool Equals(object? o)
+    {
+        return o is MeshBatchKey other &&
+               other.MeshParams.JMesh == MeshParams.JMesh
+               && other.MeshParams.UVOffset == MeshParams.UVOffset
+               && other.MeshParams.UVScale == MeshParams.UVScale;
+    }
+}
+
+
 public class MaterialBatch
 {
     public AMaterialEntry AMaterialEntry;
-    public Dictionary<AMeshEntry, MeshBatch> MeshBatches;
+    public Dictionary<MeshBatchKey, MeshBatch> MeshBatches;
     public List<MeshBatch> ListMeshBatches = null;
 
     public int NMeshes = 0;
@@ -19,6 +43,23 @@ public class MaterialBatch
         get => NMeshes > 0 ? SumOfPositions / NMeshes : Vector3.Zero;
     }
 
+    public MeshBatch Add(in AMeshEntry aMeshEntry,
+        Flags.AnimBatching animBatching,
+        in FrameStats frameStats)
+    {
+        MeshBatchKey key = new() { MeshParams = aMeshEntry.Params };
+        
+        MeshBatch meshBatch;
+        MeshBatches.TryGetValue(key, out meshBatch);
+        if (null == meshBatch)
+        {
+            meshBatch = new MeshBatch(aMeshEntry, animBatching);
+            MeshBatches.Add(key, meshBatch);
+            frameStats.NMeshes++;
+        }
+
+        return meshBatch;
+    }
 
     public void Sort(Vector3 v3CameraPos, Vector3 v3CameraZ, float angleCamera)
     {

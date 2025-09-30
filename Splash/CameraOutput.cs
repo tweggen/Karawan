@@ -278,18 +278,8 @@ public class CameraOutput
             mbs[materialBatchKey] = materialBatch;
             _frameStats.NMaterials++;
         }
-
-        /*
-         * And do we have an entry for the mesh in the material?
-         */
-        MeshBatch meshBatch;
-        materialBatch.MeshBatches.TryGetValue(aMeshEntry, out meshBatch);
-        if (null == meshBatch)
-        {
-            meshBatch = new MeshBatch(aMeshEntry, AnimBatching);
-            materialBatch.MeshBatches[aMeshEntry] = meshBatch;
-            _frameStats.NMeshes++;
-        }
+        
+        var meshBatch = materialBatch.Add(aMeshEntry, AnimBatching, _frameStats);
 
         uint frameno = 0;
         if (null == aAnimationsEntry)
