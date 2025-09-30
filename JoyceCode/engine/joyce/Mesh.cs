@@ -21,9 +21,19 @@ public class MergeMeshEntry
 
 public class Mesh : IComparable<Mesh>
 {
-    private IdHolder _idHolder = new();
-    public int CompareTo(Mesh other) => _idHolder.CompareTo(other._idHolder);    
-    
+    private readonly IdHolder _idHolder = new();
+    public int CompareTo(Mesh other) => _idHolder.CompareTo(other._idHolder);
+
+    public override int GetHashCode()
+    {
+        return (int) _idHolder.Id;
+    }
+
+    public override bool Equals(object o)
+    {
+        return o is Mesh m && m._idHolder.Id == _idHolder.Id;
+    }
+
     private AABB _aabb;
 
     private bool _haveAABB = false;
