@@ -215,16 +215,17 @@ public class CharacterCreator
                             | InstantiateModelParams.CENTER_X
                             // | InstantiateModelParams.ROTATE_X180
                             | InstantiateModelParams.ROTATE_Z180
-                            //| InstantiateModelParams.BUILD_PHYSICS
-                            //| InstantiateModelParams.PHYSICS_TANGIBLE
-                            //| InstantiateModelParams.PHYSICS_DETECTABLE
+                            | InstantiateModelParams.BUILD_PHYSICS
+                            | InstantiateModelParams.PHYSICS_TANGIBLE
+                            | InstantiateModelParams.PHYSICS_DETECTABLE
+                            | InstantiateModelParams.PHYSICS_CALLBACKS
                 ,
                 MaxVisibilityDistance = propMaxDistance,
                 MaxBehaviorDistance = propMaxDistance,
                 MaxAudioDistance = propMaxDistance,
-                MaxPhysicsDistance = 4f 
+                MaxPhysicsDistance = 4f,
                 
-                // CollisionLayers = 0x0002,
+                CollisionLayers = 0x0002,
             }
         };
         
@@ -279,6 +280,20 @@ public class CharacterCreator
         eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
             Matrix4x4.CreateTranslation(worldFragment.Position)));
 
+        DefaultEcs.Entity eAnimations;
+        
+        
+        #if true
+        {
+            builtin.tools.ModelBuilder modelBuilder = new(I.Get<Engine>(), model, mcp.Params);
+            modelBuilder.BuildEntity(eTarget);
+            I.Get<ModelCache>().BuildPerInstancePhysics(eTarget, modelBuilder, model, mcp);
+            eAnimations = modelBuilder.GetAnimationsEntity();
+        }
+        #else
+        I.Get<ModelCache>().BuildPerInstance(eTarget, model, mcp);
+        #endif
+
         /*
          * If we created physics for this one, take care to minimize
          * the distance for physics support.
@@ -292,15 +307,6 @@ public class CharacterCreator
             }
         }
         
-        DefaultEcs.Entity eAnimations;
-        
-        {
-            builtin.tools.ModelBuilder modelBuilder = new(I.Get<Engine>(), model, mcp.Params);
-            modelBuilder.BuildEntity(eTarget);
-            // I.Get<ModelCache>().BuildPerInstancePhysics(eTarget, modelBuilder, model, mcp);
-            eAnimations = modelBuilder.GetAnimationsEntity();
-        }
-
         if (strAnimation != null && default != eAnimations)
         {
             var mapAnimations = model.MapAnimations;

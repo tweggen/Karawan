@@ -18,6 +18,7 @@ public class HoverBehavior : ABehavior
     public static string PLAYER_COLLISION_ANONYMOUS = "nogame.playerhover.collision.anonymous";
     public static string PLAYER_COLLISION_CUBE = "nogame.playerhover.collision.cube";
     public static string PLAYER_COLLISION_CAR3 = "nogame.playerhover.collision.car3";
+    public static string PLAYER_COLLISION_CITIZEN = "nogame.playerhover.collision.citizen";
     public static string PLAYER_COLLISION_POLYTOPE = "nogame.playerhover.collision.polytope";
     
     private HoverController _controllerHoverController = null;
@@ -59,6 +60,11 @@ public class HoverBehavior : ABehavior
         else if (other.Name == "nogame.characters.car3")
         {
             cev.Type = PLAYER_COLLISION_CAR3;
+            I.Get<EventQueue>().Push(cev);
+        } 
+        else if (other.Name == "nogame.characters.citizen")
+        {
+            cev.Type = PLAYER_COLLISION_CITIZEN;
             I.Get<EventQueue>().Push(cev);
         }
     }

@@ -152,6 +152,20 @@ public class DriveCarCollisionsController : AController
     }
     
     
+    private void _onCitizenCollision(engine.news.Event ev)
+    {
+        var cev = ev as ContactEvent;
+        // _createCollisionParticles(cev);
+
+        var other = cev.ContactInfo.PropertiesB;
+
+        _playCollisionSound();
+        
+        // TXWTODO: This shall be dependent on the person you are in the moment.
+        _decreaseHealth(2);
+    }
+    
+    
     private void _onPlayerEntityChanged(DefaultEcs.Entity entity)
     {
         bool isChanged = false;
@@ -199,6 +213,8 @@ public class DriveCarCollisionsController : AController
         I.Get<SubscriptionManager>().Unsubscribe(
             HoverBehavior.PLAYER_COLLISION_CAR3, _onCarCollision);
         I.Get<SubscriptionManager>().Unsubscribe(
+            HoverBehavior.PLAYER_COLLISION_CITIZEN, _onCitizenCollision);
+        I.Get<SubscriptionManager>().Unsubscribe(
             HoverBehavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
     }
 
@@ -226,6 +242,8 @@ public class DriveCarCollisionsController : AController
             HoverBehavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
         I.Get<SubscriptionManager>().Subscribe(
             HoverBehavior.PLAYER_COLLISION_CAR3, _onCarCollision);
+        I.Get<SubscriptionManager>().Subscribe(
+            HoverBehavior.PLAYER_COLLISION_CITIZEN, _onCitizenCollision);
         I.Get<SubscriptionManager>().Subscribe(
             HoverBehavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
         

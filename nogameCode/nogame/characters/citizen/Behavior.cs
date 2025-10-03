@@ -10,6 +10,8 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
     public override void OnCollision(ContactEvent cev)
     {
         base.OnCollision(cev);
+        var me = cev.ContactInfo.PropertiesA;
+        _engine.AddDoomedEntity(me.Entity);
     }
 
     

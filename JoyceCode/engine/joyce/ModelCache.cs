@@ -468,11 +468,17 @@ public class ModelCache
     public void BuildPerInstancePhysics(in DefaultEcs.Entity eRoot,
         ModelBuilder modelBuilder, Model model, ModelCacheParams mcp)
     {
-        if (model.ModelNodeTree == null || model.ModelNodeTree.RootNode == null || model.ModelNodeTree.RootNode.InstanceDesc == null)
+        /*
+         * We do need to have a model node tree to build a physics.
+         */
+        InstanceDesc id = model.FirstInstanceDescNode?.InstanceDesc ?? null;
+        if (null == id)
         {
             return;
         }
 
+        Matrix4x4 m4Id = model.FirstInstanceDescTransformWithInstance;
+        
         if ((mcp.Params.GeomFlags & InstantiateModelParams.BUILD_PHYSICS) != 0)
         {
             /*
@@ -503,7 +509,8 @@ public class ModelCache
                  * If we have aabbs, we can create a cuboid.
                  */
                 modelShape = ModelShape.Cuboid;
-                aabb = model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed;
+                aabb = id.AABBTransformed;
+                // aabb.Transform(m4Id);
                 Vector3 v3Size = aabb.BB - aabb.AA;
 
                 float rMin = Single.Min(v3Size.X, Single.Min(v3Size.Y, v3Size.Z));
