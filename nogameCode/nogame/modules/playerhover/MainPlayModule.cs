@@ -101,6 +101,7 @@ public class MainPlayModule : engine.AModule, IInputPart
                     if (ev.Code == "<change>")
                     {
                         I.Get<EventQueue>().Push(new Event(EventCodeGetIntoHover, ""));
+                        ev.IsHandled = true;
                     }
 
                     break;

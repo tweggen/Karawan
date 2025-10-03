@@ -65,6 +65,10 @@ public class ClickModule : AModule, engine.IInputPart
     {
         if (engine.GlobalSettings.Get("splash.touchControls") == "false")
         {
+            /*
+             * There is no click on non-touch inputs.
+             */
+            #if false
             if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED))
             {
                 _handleClickEvent(ev);
@@ -74,6 +78,7 @@ public class ClickModule : AModule, engine.IInputPart
             {
                 _handleReleaseEvent(ev);
             }
+            #endif
         }
         else
         {

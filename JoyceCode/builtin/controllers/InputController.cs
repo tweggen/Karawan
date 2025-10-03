@@ -718,10 +718,14 @@ public class InputController : engine.AController, engine.IInputPart
     {
         if (engine.GlobalSettings.Get("splash.touchControls") == "false")
         {
+            /*
+             * When there is no touch controls, we do not track any click events
+             * as virtual sticks or alike. 
+             */
             if (true)
             {
-                if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
-                if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
+                //if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
+                //if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
                 if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
             }
             else
