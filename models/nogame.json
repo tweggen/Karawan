@@ -69,6 +69,8 @@
           "input.gamepad.button.released:A": "input.button.released:<jump>",
           "input.key.pressed:(shiftleft)": "input.button.pressed:<run>",
           "input.key.released:(shiftleft)": "input.button.released:<run>",
+          "input.mouse.pressed:0": "input.button.pressed:<fire>",
+          "input.mouse.released:0": "input.button.released:<fire>",
           "input.gamepad.button.pressed:LeftShoulder": "input.button.pressed:<run>",
           "input.gamepad.button.released:LeftShoulder": "input.button.released:<run>",
           "input.gamepad.button.pressed:DPadUp": "input.button.pressed:<cursorup>",

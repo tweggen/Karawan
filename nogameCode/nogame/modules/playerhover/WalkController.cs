@@ -59,7 +59,9 @@ public class WalkController : AController, IInputPart
         Idle,
         Walking,
         Running,
-        Jumping
+        Jumping,
+        PunchingRight,
+        PunchingLeft
     }
     
     
@@ -77,6 +79,24 @@ public class WalkController : AController, IInputPart
     }
 
     private JumpState _jumpState = JumpState.Grounded;
+
+
+    enum AttackState
+    {
+        Peaceful,
+        Attacking,
+    }
+
+    enum AttackHand
+    {
+        RightHand,
+        LeftHand
+    }
+    
+    
+    private AttackState _attackState = AttackState.Peaceful;
+    private uint _lastAttackFrame = 0;
+    private AttackHand _lastAttackHand = AttackHand.RightHand;
     
     
     private CharacterAnimState _characterAnimState = CharacterAnimState.Idle;
@@ -98,8 +118,9 @@ public class WalkController : AController, IInputPart
 
     private bool _jumpTriggered = false;
     private bool _isRunPressed = false;
-    
-    
+    private bool _isFireTriggered = false;
+
+
     protected override void OnLogicalFrame(object sender, float dt)
     {
         if (_engine.State != Engine.EngineState.Running) return;
@@ -224,11 +245,27 @@ public class WalkController : AController, IInputPart
         }
 
         Quaternion qWalkFront; 
+        
+        
+        /*
+         * Look, if the attack is supposed to be finished, and we should render standard
+         * walking again,
+         */
+        if (_attackState == AttackState.Attacking)
+        {
+            uint currentFrame = _engine.FrameNumber;
+            if ((currentFrame - _lastAttackFrame) > 23)
+            {
+                _attackState = AttackState.Peaceful;
+            }
+        }
 
+
+        CharacterAnimState walkAnimState;
         if (haveVelocity)
         {
             vuWalkDirection = Vector3.Normalize(vuWalkDirection);
-            
+
             /*
              * Walking speed in km/h
              */
@@ -241,24 +278,30 @@ public class WalkController : AController, IInputPart
             {
                 speed = 8f;
             }
+
             vNewTargetVelocity += (-vuWalkDirection.Z * vuFront + vuWalkDirection.X * vuRight) * (speed / 3.6f);
             Vector3 vuWalkFront = Vector3.Normalize(vNewTargetVelocity);
             qWalkFront = engine.geom.Camera.CreateQuaternionFromPlaneFront(vuWalkFront);
 
             if (_isRunPressed)
             {
-                newAnimState = CharacterAnimState.Running;
+                walkAnimState = CharacterAnimState.Running;
             }
             else
             {
-                newAnimState = CharacterAnimState.Walking;
+                walkAnimState = CharacterAnimState.Walking;
             }
         }
         else
         {
             vNewTargetVelocity += Vector3.Zero;
             qWalkFront = qOrgTargetOrientation;
-            newAnimState = CharacterAnimState.Idle;
+            walkAnimState = CharacterAnimState.Idle;
+        }
+
+        if (_attackState == AttackState.Peaceful)
+        {
+            newAnimState = walkAnimState;
         }
 
         vNewTargetPos = vOrgTargetPos + vNewTargetVelocity * 1f / 60f;
@@ -289,7 +332,35 @@ public class WalkController : AController, IInputPart
                 forceFrameZero = true;
                 break;
         }
-        
+
+
+        if (_isFireTriggered)
+        {
+            uint currentFrame = _engine.FrameNumber;
+            bool isShort = (currentFrame - _lastAttackFrame) < 40;
+            AttackHand attackHand;
+            if (!isShort)
+            {
+                attackHand = AttackHand.RightHand;
+            }
+            else
+            {
+                if (_lastAttackHand == AttackHand.RightHand)
+                {
+                    attackHand = AttackHand.LeftHand;
+                }
+                else
+                {
+                    attackHand = AttackHand.RightHand;
+                }
+            }
+
+            newAnimState = attackHand == AttackHand.RightHand?CharacterAnimState.PunchingRight:CharacterAnimState.PunchingLeft;
+            forceFrameZero = true;
+            _lastAttackFrame = currentFrame;
+            _attackState = AttackState.Attacking;
+        }
+
         if (forceFrameZero || newAnimState != _characterAnimState)
         {
             if (CharacterModelDescription != null && CharacterModelDescription.Model != null &&
@@ -312,6 +383,12 @@ public class WalkController : AController, IInputPart
                         break;
                     case CharacterAnimState.Jumping:
                         strAnimation = CharacterModelDescription.JumpAnimName;
+                        break;
+                    case CharacterAnimState.PunchingLeft:
+                        strAnimation = CharacterModelDescription.PunchLeftAnim;
+                        break;
+                    case CharacterAnimState.PunchingRight:
+                        strAnimation = CharacterModelDescription.PunchRightAnim;
                         break;
                 }
 
@@ -613,6 +690,10 @@ public class WalkController : AController, IInputPart
                         _isRunPressed = true;
                         ev.IsHandled = true;
                         break;
+                    case "<fire>":
+                        _isFireTriggered = true;
+                        ev.IsHandled = true;
+                        break;
                 }
 
                 break;
@@ -623,9 +704,13 @@ public class WalkController : AController, IInputPart
                         _isRunPressed = false;
                         ev.IsHandled = true;
                         break;
+                    case "<fire>":
+                        _isFireTriggered = false;
+                        ev.IsHandled = true;
+                        break;
                 }
                 break;
-        }
+       }
     }
 
     

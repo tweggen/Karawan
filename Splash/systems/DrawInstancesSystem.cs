@@ -89,6 +89,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 {
                     cAnimationState.ModelAnimation = null;
                     cAnimationState.ModelAnimationFrame = 0;
+                    cAnimationState.Flags = 0;
                 }
                 
                 _nInstancesAppended++;

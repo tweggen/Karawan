@@ -316,9 +316,9 @@ public class CharacterCreator
                 eAnimations.Set(new AnimationState
                 {
                     ModelAnimation = animation,
-                    ModelAnimationFrame = (NDrawCallsPerCharacterBatch>0)?
+                    ModelAnimationFrame = (ushort)((NDrawCallsPerCharacterBatch>0)?
                         (I.Get<Engine>().FrameNumber % (animation.NFrames/NDrawCallsPerCharacterBatch))
-                        :0
+                        :0)
                 });
                 // Trace($"Setting up animation {animation.Name}");
             }

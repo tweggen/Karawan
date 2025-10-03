@@ -18,7 +18,7 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
         Span<Entity> copiedEntities = stackalloc Entity[entities.Length];
         entities.CopyTo(copiedEntities);
 
-        uint advanceNow = (uint)((dt+_error) * 60f);
+        ushort advanceNow = (ushort)((dt+_error) * 60f);
         _error += dt - (advanceNow / 60f);
         
         foreach (var entity in copiedEntities)
@@ -33,16 +33,30 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
             ref var modelAnimation = ref cAnimationState.ModelAnimation;
             if (null != modelAnimation)
             {
-                uint frameno = cAnimationState.ModelAnimationFrame;
-                frameno += advanceNow;
-                uint nframes = modelAnimation.NFrames;
-                while (frameno >= nframes)
+                ushort frameno = cAnimationState.ModelAnimationFrame;
+                ushort nframes = (ushort) modelAnimation.NFrames;
+                if ((cAnimationState.Flags & AnimationState.IsOneShot) == 0)
                 {
-                    frameno -= nframes;
-                }
+                    frameno += advanceNow;
+                    while (frameno >= nframes)
+                    {
+                        frameno -= nframes;
+                    }
 
-                cAnimationState.ModelAnimationFrame = frameno;
-                entity.Set(cAnimationState);
+                    cAnimationState.ModelAnimationFrame = frameno;
+                    entity.Set(cAnimationState);
+                }
+                else
+                {
+                    ushort newframeno = (ushort)(frameno + advanceNow);
+                    newframeno = UInt16.Max((ushort)(nframes-1), newframeno);
+                    
+                    if (newframeno != frameno)
+                    {
+                        cAnimationState.ModelAnimationFrame = frameno;
+                        entity.Set(cAnimationState);
+                    }
+                }
             }
         }
 
