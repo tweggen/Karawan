@@ -322,14 +322,14 @@ public class WalkController : AController, IInputPart
             _jumpTriggered = false;
         }
 
-        bool forceFrameZero = false;
+        int forceFrameZero = -1;
         switch (_jumpState)
         {
             case JumpState.Grounded:
                 break;
             default:
                 newAnimState = CharacterAnimState.Jumping;
-                forceFrameZero = true;
+                forceFrameZero = 0;
                 break;
         }
 
@@ -339,6 +339,7 @@ public class WalkController : AController, IInputPart
             uint currentFrame = _engine.FrameNumber;
             bool isShort = (currentFrame - _lastAttackFrame) < 40;
             AttackHand attackHand;
+            _isFireTriggered = false;
             if (!isShort)
             {
                 attackHand = AttackHand.RightHand;
@@ -356,12 +357,12 @@ public class WalkController : AController, IInputPart
             }
 
             newAnimState = attackHand == AttackHand.RightHand?CharacterAnimState.PunchingRight:CharacterAnimState.PunchingLeft;
-            forceFrameZero = true;
+            forceFrameZero = 15 ;
             _lastAttackFrame = currentFrame;
             _attackState = AttackState.Attacking;
         }
 
-        if (forceFrameZero || newAnimState != _characterAnimState)
+        if (forceFrameZero>=0 || newAnimState != _characterAnimState)
         {
             if (CharacterModelDescription != null && CharacterModelDescription.Model != null &&
                 CharacterModelDescription.EntityAnimations.IsAlive)
@@ -398,11 +399,11 @@ public class WalkController : AController, IInputPart
                     if (mapAnimations.TryGetValue(
                             strAnimation, out var animation))
                     {
-
+                        // TXWTODO: This is not entirely true with respect to the frame.
                         CharacterModelDescription.EntityAnimations.Set(new AnimationState
                         {
                             ModelAnimation = animation,
-                            ModelAnimationFrame = 0
+                            ModelAnimationFrame = (ushort) forceFrameZero,
                         });
                         // Trace($"Setting up animation {animation.Name}");
                     }

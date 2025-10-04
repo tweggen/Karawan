@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using engine;
 using engine.news;
+using static engine.Logger;
 
 namespace builtin.controllers;
 
@@ -70,10 +72,12 @@ public class InputMapper : AModule
                 int seperatorPos = codeLogical.IndexOf(':');
                 if (-1 != seperatorPos)
                 {
-                    return new Event(
-                        codeLogical.Substring(0,seperatorPos), 
-                        codeLogical.Substring(seperatorPos+1, codeLogical.Length-seperatorPos-1)
-                        );
+                    var newEvent = new Event(
+                        codeLogical.Substring(0, seperatorPos),
+                        codeLogical.Substring(seperatorPos + 1, codeLogical.Length - seperatorPos - 1)
+                    );
+                    Trace($"Event {ev} mapped to logical event {newEvent}");
+                    return newEvent;
                 }
             }
         }

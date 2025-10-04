@@ -333,14 +333,20 @@ public class InputController : engine.AController, engine.IInputPart
         {
             return;
         }
-
+        
+        string? strButton = _codeToMouseButton(ev.Code);
+        
         lock (_lo)
         {
             _currentMousePosition = ev.PhysicalPosition;
             _isMouseButtonClicked = false;
+            if (strButton != null)
+            {
+                Trace($"Sending {strButton} released event");
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_BUTTON_RELEASED, strButton));
+                ev.IsHandled = true;
+            }
         }
-
-
     }
 
 
@@ -413,6 +419,29 @@ public class InputController : engine.AController, engine.IInputPart
             I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, "(escape)"));
         }
     }
+
+
+    private string? _codeToMouseButton(string code)
+    {
+        string? strButton;
+        switch (code)
+        {
+            case "0":
+                strButton = "<fire>";
+                break;
+            case "1":
+                strButton = "rmb";
+                break;
+            case "2":
+                strButton = "mmb";
+                break;
+            default:
+                strButton = null;
+                break;
+        }
+
+        return strButton;
+    }
     
 
     private void _handleMousePressed(Event ev)
@@ -422,6 +451,8 @@ public class InputController : engine.AController, engine.IInputPart
             return;
         }
 
+        string? strButton = _codeToMouseButton(ev.Code);
+        
         lock (_lo)
         {
             _mousePressPosition = ev.PhysicalPosition;
@@ -430,6 +461,12 @@ public class InputController : engine.AController, engine.IInputPart
 
             _lastMousePosition = ev.PhysicalPosition;
             _lastTouchPosition = ev.PhysicalPosition;
+            if (strButton != null)
+            {
+                Trace($"Sending {strButton} pressed event");
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_BUTTON_PRESSED, strButton));
+                ev.IsHandled = true;
+            }
         }
 
     }
@@ -724,8 +761,8 @@ public class InputController : engine.AController, engine.IInputPart
              */
             if (true)
             {
-                //if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
-                //if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
+                if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
+                if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
                 if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
             }
             else

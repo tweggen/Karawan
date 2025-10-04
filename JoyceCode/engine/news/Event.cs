@@ -18,6 +18,8 @@ public class Event
     public const string INPUT_MOUSE_RELEASED = "input.mouse.released";
     public const string INPUT_MOUSE_MOVED = "input.mouse.moved";
     public const string INPUT_MOUSE_WHEEL = "input.mouse.wheel";
+    public const string INPUT_MOUSE_BUTTON_PRESSED = "input.mouse.button.pressed";
+    public const string INPUT_MOUSE_BUTTON_RELEASED = "input.mouse.button.released";    
     public const string INPUT_GAMEPAD_TRIGGER_MOVED = "input.gamepad.trigger.moved";
     public const string INPUT_GAMEPAD_STICK_MOVED = "input.gamepad.stick.moved";
     public const string INPUT_GAMEPAD_BUTTON_PRESSED = "input.gamepad.button.pressed";
