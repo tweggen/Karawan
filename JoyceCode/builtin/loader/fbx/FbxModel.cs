@@ -284,7 +284,7 @@ public class FbxModel : IDisposable
                     path, null, out jTexture)
                 &&
                 !I.Get<TextureCatalogue>().TryGetTexture(
-                    diffuseMaps[0].Path, null, out jTexture))
+                    Path.GetFileName(path),null, out jTexture))
             {
                 jTexture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888);
             }

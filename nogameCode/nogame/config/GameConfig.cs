@@ -17,8 +17,16 @@ public class GameConfig
 
 
     public string WebToken { get; set; } = "";
-    
 
+
+    public enum Mode 
+    {
+        LoginGlobally,
+        LoginLocally
+    }
+
+    public Mode LoginMode { get; set; } = Mode.LoginGlobally;
+    
     public bool IsValid()
     {
         return

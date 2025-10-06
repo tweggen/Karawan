@@ -57,14 +57,10 @@ public class AutoSave : engine.AModule
     }
 
 
-#if true
     public string GameServer { get; set; } = "https://silicondesert.io";
     public int SaveInterval { get; set; } = 60;
-#else
-    public string GameServer { get; set; } = "http://localhost:4100";
-    public int SaveInterval { get; set; } = 10;
-#endif
 
+    
 
     private GameState _gameState = null;
     
