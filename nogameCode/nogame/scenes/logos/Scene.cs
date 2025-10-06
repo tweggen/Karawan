@@ -12,6 +12,7 @@ using engine.news;
 using engine.streets;
 using engine.world;
 using nogame.cities;
+using nogame.config;
 using nogame.modules;
 using static engine.Logger;
 
@@ -43,6 +44,7 @@ public class Scene : AModule, IScene
          */
         new SharedModule<nogame.modules.Gameplay>() { ShallActivate = false },
         new SharedModule<nogame.modules.GameSetup>() { ShallActivate = false },
+        new SharedModule<nogame.config.Module>() ,
         new SharedModule<nogame.modules.AutoSave>(),
         new SharedModule<builtin.jt.Factory>(),
         new SharedModule<nogame.modules.story.Narration>(),
@@ -148,6 +150,19 @@ public class Scene : AModule, IScene
 
     private void _onAutoSaveSetup(GameState gs)
     {
+        /*
+         * Remember how we logged in for next time.
+         */
+        if (M<AutoSave>().SyncOnline)
+        {
+            M<nogame.config.Module>().GameConfig.LoginMode = (int) GameConfig.Mode.LoginGlobally;
+        }
+        else
+        {
+            M<nogame.config.Module>().GameConfig.LoginMode = (int) GameConfig.Mode.LoginLocally;
+        }
+        M<nogame.config.Module>().Save();
+        
         /*
          * After we have a game state, start the gameplay.
          */

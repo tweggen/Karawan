@@ -21,11 +21,11 @@ public class GameConfig
 
     public enum Mode 
     {
-        LoginGlobally,
-        LoginLocally
+        LoginGlobally = 0,
+        LoginLocally = 1
     }
 
-    public Mode LoginMode { get; set; } = Mode.LoginGlobally;
+    public int LoginMode { get; set; } = (int) Mode.LoginGlobally;
     
     public bool IsValid()
     {

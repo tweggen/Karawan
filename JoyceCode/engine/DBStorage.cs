@@ -21,7 +21,7 @@ public class DBStorage : engine.AModule
 
     private const string DbFileSuffix = ".db";
     private const string DbGameState = "gamestate";
-    private const int DbVersion = 1;
+    private const int DbVersion = 3;
     
     
     private BsonMapper _createMappers()

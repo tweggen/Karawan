@@ -6,12 +6,17 @@
             <option
                     height="20"
                     color='#999999'
-                    isDefaultFocus='return nogame:getConfig().WebToken ~= ""'
+                    isDefaultFocus='return (nogame:getConfig().LoginMode == 0)'
                     onClick='joyce:ev("nogame.login.loginGlobally")'
             >
                 global machine (online)
             </option>
-            <option height='20' color='#999999' onClick='joyce:ev("nogame.login.loginLocally")'>local machine (offline)</option>
+            <option 
+                    height='20' 
+                    color='#999999'
+                    isDefaultFocus='return (nogame:getConfig().LoginMode == 1)'
+                    onClick='joyce:ev("nogame.login.loginLocally")'
+            >local machine (offline)</option>
             <text color='#666666' height='40' vAlign='center'>use these credentials to connect to...</text>
             <hbox height="20">
                 <text color='#999999' width="120" focusFor="ui.username">
