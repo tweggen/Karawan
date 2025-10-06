@@ -323,13 +323,17 @@ public class WalkController : AController, IInputPart
         }
 
         int forceFrameZero = -1;
+        bool isOneShot = false;
         switch (_jumpState)
         {
             case JumpState.Grounded:
                 break;
-            default:
+            case JumpState.Starting:
                 newAnimState = CharacterAnimState.Jumping;
+                isOneShot = true;
                 forceFrameZero = 0;
+                break;
+            default:
                 break;
         }
 
@@ -357,7 +361,8 @@ public class WalkController : AController, IInputPart
             }
 
             newAnimState = attackHand == AttackHand.RightHand?CharacterAnimState.PunchingRight:CharacterAnimState.PunchingLeft;
-            forceFrameZero = 15 ;
+            isOneShot = true;
+            forceFrameZero = 15;
             _lastAttackFrame = currentFrame;
             _attackState = AttackState.Attacking;
         }
@@ -400,12 +405,30 @@ public class WalkController : AController, IInputPart
                             strAnimation, out var animation))
                     {
                         // TXWTODO: This is not entirely true with respect to the frame.
-                        CharacterModelDescription.EntityAnimations.Set(new AnimationState
+                        AnimationState cAnimationState;
+                        if (CharacterModelDescription.EntityAnimations.Has<AnimationState>())
                         {
-                            ModelAnimation = animation,
-                            ModelAnimationFrame = (ushort) forceFrameZero,
-                        });
-                        // Trace($"Setting up animation {animation.Name}");
+                            cAnimationState = CharacterModelDescription.EntityAnimations.Get<AnimationState>();
+                        }
+                        else
+                        {
+                            cAnimationState = new AnimationState();
+                        }
+                        cAnimationState.ModelAnimation = animation;
+                        if (forceFrameZero >= 0)
+                        {
+                            cAnimationState.ModelAnimationFrame = (ushort) forceFrameZero;
+                        }
+
+                        if (isOneShot)
+                        {
+                            cAnimationState.Flags |= AnimationState.IsOneShot;
+                        }
+                        else
+                        {
+                            cAnimationState.Flags &= unchecked((ushort)~AnimationState.IsOneShot);
+                        }
+                        CharacterModelDescription.EntityAnimations.Set(cAnimationState);
                     }
                     else
                     {

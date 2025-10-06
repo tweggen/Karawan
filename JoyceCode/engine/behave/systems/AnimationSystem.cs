@@ -49,11 +49,11 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
                 else
                 {
                     ushort newframeno = (ushort)(frameno + advanceNow);
-                    newframeno = UInt16.Max((ushort)(nframes-1), newframeno);
+                    newframeno = UInt16.Min((ushort)(nframes-1), newframeno);
                     
                     if (newframeno != frameno)
                     {
-                        cAnimationState.ModelAnimationFrame = frameno;
+                        cAnimationState.ModelAnimationFrame = newframeno;
                         entity.Set(cAnimationState);
                     }
                 }
