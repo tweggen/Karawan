@@ -31,6 +31,10 @@ public class WalkTouchButton : AModule
             _buttons.Add(TouchButtons.CreateButton("but_getinout.png", TouchButtons.ButtonsPerRow - 2, TouchButtons.ButtonsPerColumn - 4,
                 (entity, ev, pos) => new Event(ev.IsPressed ? Event.INPUT_BUTTON_PRESSED : Event.INPUT_BUTTON_RELEASED,
                     "<change>")));
+            _buttons.Add(TouchButtons.CreateButton("but_accel.png", TouchButtons.ButtonsPerRow - 2, TouchButtons.ButtonsPerColumn - 2,
+                (entity, ev, pos) =>
+                    new Event(ev.IsPressed ? Event.INPUT_BUTTON_PRESSED : Event.INPUT_BUTTON_RELEASED, "<fire>")));
+
         }
     }
 }
