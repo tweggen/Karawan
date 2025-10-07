@@ -16,7 +16,14 @@ public class WalkTouchButton : AModule
     
     protected override void OnModuleDeactivate()
     {
-        I.Get<Engine>().AddDoomedEntities(_buttons);
+        I.Get<Engine>().QueueMainThreadAction(() =>
+        {
+            foreach (var iterEntity in _buttons)
+            {
+                DefaultEcs.Entity entity = iterEntity;
+                I.Get<HierarchyApi>().Delete(ref entity);
+            }
+        });
         _buttons = null;
     }
 
