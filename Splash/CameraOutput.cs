@@ -223,9 +223,10 @@ public class CameraOutput
                             && animationItem.AnimationState.ModelAnimation.BakedFrames != null)
                         {
                             uint frameno = animationItem.AnimationState.ModelAnimationFrame;
-                            if (frameno >= (uint)(animationItem.AnimationState.ModelAnimation.BakedFrames.Count()))
+                            uint availframes = (uint)animationItem.AnimationState.ModelAnimation.BakedFrames.Count();
+                            if (frameno >= availframes)
                             {
-                                Error($"Frame number out of bounds.");
+                                Error($"Frame number out of bounds: {frameno} > {availframes}");
                                 frameno = 0;
                             }
                             modelBakedFrame =
