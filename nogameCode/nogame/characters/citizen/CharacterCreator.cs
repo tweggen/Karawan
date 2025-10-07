@@ -7,6 +7,7 @@ using BepuPhysics;
 using builtin.loader;
 using builtin.tools;
 using engine;
+using engine.geom;
 using engine.joyce;
 using engine.joyce.components;
 using engine.physics;
@@ -225,6 +226,7 @@ public class CharacterCreator
                 MaxAudioDistance = propMaxDistance,
                 MaxPhysicsDistance = 4f,
                 
+                PhysicsAABB = new AABB(new Vector3(-0.30f, 0f, -0.15f), new Vector3(0.3f, 1.85f, 0.15f)),
                 CollisionLayers = 0x0002,
             }
         };

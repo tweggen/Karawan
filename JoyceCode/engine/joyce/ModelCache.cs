@@ -502,16 +502,24 @@ public class ModelCache
             ModelShape modelShape = ModelShape.Sphere;
             float radius = 1f;
             float height = 1f;
-            AABB aabb = new();
+            AABB aabbPhysics;
 
             {
                 /*
                  * If we have aabbs, we can create a cuboid.
                  */
                 modelShape = ModelShape.Cuboid;
-                aabb = id.AABBTransformed;
+                if (mcp.Params.PhysicsAABB != null)
+                {
+                    //Trace($"id.AABBTransformed would have been {id.AABBTransformed}");
+                    aabbPhysics = mcp.Params.PhysicsAABB.Value;
+                }
+                else
+                {
+                    aabbPhysics = id.AABBTransformed;
+                }
                 // aabb.Transform(m4Id);
-                Vector3 v3Size = aabb.BB - aabb.AA;
+                Vector3 v3Size = aabbPhysics.BB - aabbPhysics.AA;
 
                 float rMin = Single.Min(v3Size.X, Single.Min(v3Size.Y, v3Size.Z));
                 float rMax = Single.Max(v3Size.X, Single.Max(v3Size.Y, v3Size.Z));
@@ -521,7 +529,7 @@ public class ModelCache
                     float ratio = rMin / rMax;
                     if (0.8f < ratio && 1.2f > ratio)
                     {
-                        radius = aabb.Radius;
+                        radius = aabbPhysics.Radius;
                         modelShape = ModelShape.Sphere;
                     }
                 }
@@ -530,7 +538,7 @@ public class ModelCache
                 {
                     float topviewratio = v3Size.Z / v3Size.X;
 
-                    if (0.5f < topviewratio && 1.85f > topviewratio)
+                    if (0.5f <= topviewratio && 1.85f > topviewratio)
                     {
                         radius = (v3Size.X+v3Size.Z)/2.0f;
                         height = v3Size.Y;
@@ -583,7 +591,7 @@ public class ModelCache
                             /*
                              * TXWTODO: Create cuboids.
                              */
-                            shape = shapeFactory.GetSphereShape(aabb.Radius);
+                            shape = shapeFactory.GetSphereShape(aabbPhysics.Radius);
                             break;
                         case ModelShape.Sphere:
                             shape = shapeFactory.GetSphereShape(radius);
@@ -629,6 +637,7 @@ public class ModelCache
 
                     BodyReference prefSphere;
                     TypedIndex shape;
+                    Trace($"Creating {modelShape}");
                     switch (modelShape)
                     {
                         default:
@@ -636,7 +645,7 @@ public class ModelCache
                             /*
                              * TXWTODO: Create cuboids.
                              */
-                            shape = shapeFactory.GetSphereShape(aabb.Radius);
+                            shape = shapeFactory.GetSphereShape(aabbPhysics.Radius);
                             break;
                         case ModelShape.Sphere:
                             shape = shapeFactory.GetSphereShape(radius);

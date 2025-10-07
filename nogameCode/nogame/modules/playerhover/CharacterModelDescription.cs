@@ -1,3 +1,5 @@
+using System.Numerics;
+using engine.geom;
 using engine.joyce;
 
 namespace nogame.modules.playerhover;
@@ -75,6 +77,10 @@ public class CharacterModelDescription
                                               // | InstantiateModelParams.ROTATE_X180
                                               //| InstantiateModelParams.ROTATE_Y180
         ;
+
+    /*
+     * Note that we do not specify any physics here, it currently is hard-coded in WalkModule.cs .
+     */
 #endif
 
     
