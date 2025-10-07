@@ -128,8 +128,6 @@ public class SpawnOperator : ISpawnOperator
 
         _engine.Run(async () =>
         {
-            DefaultEcs.Entity eCharacter = default;
-
             /*
              * Catch exception to keep the inCreation counter up to date.
              */
@@ -152,10 +150,11 @@ public class SpawnOperator : ISpawnOperator
 
                         if (quarter != null)
                         {
-                            eCharacter = await CharacterCreator.GenerateRandomCharacter(
+                            var actCreateEntity = await CharacterCreator.GenerateRandomCharacter(
                                 _rnd, cd, worldFragment,
                                 quarter, delim, relativePos,
                                 _seed);
+                            _engine.QueueEntitySetupAction(CharacterCreator.EntityName, actCreateEntity);
                             ++_seed;
                         }
                         else
@@ -171,8 +170,6 @@ public class SpawnOperator : ISpawnOperator
             }
 
             spawnStatus.InCreation--;
-
-            return eCharacter;
         });
     }
 

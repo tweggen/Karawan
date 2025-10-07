@@ -1,0 +1,65 @@
+{
+  "atlasses": {
+    "atlas-emissive-half-trans000.png": {
+      "uri": "../nogame/generated/atlas-emissive-half-trans000.png",
+      "tag": "atlas-emissive-half-trans000.png",
+      "width": 1024,
+      "height": 1024,
+      "isMipmap": true,
+      "textures": {
+        "sprouce-cn.png": {
+          "uri": "../models/brands/sprouce-cn.png",
+          "tag": "sprouce-cn.png",
+          "atlasTag": "atlas-emissive-half-trans000.png",
+          "u": 0,
+          "v": 0,
+          "uScale": 0.8251953,
+          "vScale": 0.375,
+          "uScaleCell": 1,
+          "vScaleCell": 0.5,
+          "width": 845,
+          "height": 384,
+          "cellWidth": 1024,
+          "cellHeight": 512,
+          "pixelX": 0,
+          "pixelY": 0
+        },
+        "lorem.png": {
+          "uri": "../models/buildings/lorem.png",
+          "tag": "lorem.png",
+          "atlasTag": "atlas-emissive-half-trans000.png",
+          "u": 0,
+          "v": 0.5,
+          "uScale": 1,
+          "vScale": 0.25,
+          "uScaleCell": 1,
+          "vScaleCell": 0.25,
+          "width": 1024,
+          "height": 256,
+          "cellWidth": 1024,
+          "cellHeight": 256,
+          "pixelX": 0,
+          "pixelY": 512
+        },
+        "plentomatic.png": {
+          "uri": "../models/brands/plentomatic.png",
+          "tag": "plentomatic.png",
+          "atlasTag": "atlas-emissive-half-trans000.png",
+          "u": 0,
+          "v": 0.75,
+          "uScale": 0.78515625,
+          "vScale": 0.25,
+          "uScaleCell": 1,
+          "vScaleCell": 0.25,
+          "width": 804,
+          "height": 256,
+          "cellWidth": 1024,
+          "cellHeight": 256,
+          "pixelX": 0,
+          "pixelY": 768
+        }
+      }
+    }
+  },
+  "atlasFiles": null
+}

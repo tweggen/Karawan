@@ -11,6 +11,7 @@ using builtin.loader;
 using DefaultEcs;
 using engine;
 using engine.joyce;
+using engine.joyce.components;
 using engine.physics;
 using engine.world;
 using engine.streets;
@@ -103,7 +104,7 @@ class CharacterCreator
     }
 
 
-    public static async Task<DefaultEcs.Entity> GenerateRandomCharacter(
+    public static async Task<Action<DefaultEcs.Entity>> GenerateRandomCharacter(
         builtin.tools.RandomSource rnd,
         ClusterDesc clusterDesc,
         Fragment worldFragment,
@@ -174,6 +175,13 @@ class CharacterCreator
         var wf = worldFragment;
         int fragmentId = worldFragment.NumericalId;
 
+        string name = mcp.Params?.Name;
+        if (String.IsNullOrWhiteSpace(name))
+        {
+            name = EntityName;
+        }
+        eTarget.Set<engine.joyce.components.EntityName>(new EntityName(name));
+
         eTarget.Set(new engine.world.components.Owner(fragmentId));
 
         /*
@@ -208,7 +216,7 @@ class CharacterCreator
     }
     
     
-    public static DefaultEcs.Entity GenerateCharacter(
+    public static Action<DefaultEcs.Entity> GenerateCharacter(
         ClusterDesc clusterDesc,
         Fragment worldFragment,
         StreetPoint chosenStreetPoint,
@@ -217,28 +225,11 @@ class CharacterCreator
         engine.behave.IBehavior? iBehavior,
         engine.audio.Sound? sound)
     {
-        TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
-        Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;
-
-        var wf = worldFragment;
-
-        int fragmentId = worldFragment.NumericalId;
-
-        string name = mcp.Params?.Name;
-        if (String.IsNullOrWhiteSpace(name))
-        {
-            name = EntityName;
-        }
-
-        wf.Engine.QueueEntitySetupAction(name, eTarget =>
-        {
+        return eTarget => {
             SetupCharacterMT(eTarget,
                 clusterDesc, worldFragment, chosenStreetPoint,
                 model, mcp, iBehavior, sound);
-            taskCompletionSource.SetResult(eTarget);
-        });
-        
-        return taskResult.Result;
+        };
     }
 
 }

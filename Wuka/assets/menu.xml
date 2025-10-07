@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='utf-8'?>
+<jt>
+    <view layer='pausemenu' id='menuLogin'>
+        <vmenu width='250' x='200' y='80'>
+            <text height='40' color='#666666' vAlign='center'>Choose system to connect to...</text>
+            <option
+                    height="20"
+                    color='#999999'
+                    isDefaultFocus='return nogame:getConfig().WebToken ~= ""'
+                    onClick='joyce:ev("nogame.login.loginGlobally")'
+            >
+                global machine (online)
+            </option>
+            <option height='20' color='#999999' onClick='joyce:ev("nogame.login.loginLocally")'>local machine (offline)</option>
+            <text color='#666666' height='40' vAlign='center'>use these credentials to connect to...</text>
+            <hbox height="20">
+                <text color='#999999' width="120" focusFor="ui.username">
+                    eMail
+                </text>
+                <input
+                        id="ui.username"
+                        width="120"
+                        color='#448822'
+                        onInit='widget["text"]=nogame:getConfig().Username'
+                        onChange='nogame:getConfig().WebToken = ""; nogame:getConfig().Username = widget["text"]; joyce:ev("nogame.config.save")'/>
+            </hbox>
+            <hbox height="20">
+                <text color='#999999' width="120" focusFor="ui.password">
+                    Password
+                </text>
+                <input id="ui.password"
+                       width="120"
+                       color='#448822'
+                       type="password"
+                       onInit='widget["text"]=nogame:getConfig().Password'
+                       onChange='nogame:getConfig().WebToken = ""; nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
+            </hbox>
+            <text> </text>
+            <hmenu height="20" id='ui.newGlobally'>
+                <text color='#999999' width="120" focusFor='ui.newGlobally'>
+                    new (globally)
+                </text>
+                <option color='#999999' width="40">
+                    no
+                </option>
+                <option color='#999999' width="140" onClick='joyce:ev("nogame.login.newGlobally")'>
+                    yes, destroy old
+                </option>
+                <option color='#999999' width="40">
+                    nay
+                </option>
+            </hmenu>
+            <!-- text height="20" vAlign="center" id='menuLoginStatusText' color='#448822' width="120"></text --> 
+            <option height="40" color='#999999'  vAlign='center' onClick='os.exit()'>
+                Exit...
+            </option>
+        </vmenu>
+    </view>
+    <view layer='pausemenu' id='menuOptions'>
+        <vbox width='250' x='200' y='200'>
+            <text color='#666666' height='40'>Options</text>
+            <option color="#999999" onClick='jt:replaceAll("pausemenu", "menuInventory")'>Inventory...</option>
+            <option color='#999999' onClick='joyce:ev("nogame.modules.menu.toggleMenu")'>Continue</option>
+            <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuHelp")'>Help...</option>
+            <option color='#999999' onClick='os.exit()'>Exit to desktop...</option>
+            <option color='#999999' onClick='joyce:ev("nogame.modules.menu.save")'>Quicksave</option>
+        </vbox>
+    </view>
+    <view layer='pausemenu' id='menuInventory'>
+        <vmenu width='250' x='200' y='100'>
+            <text color='#666666' height='40'>Inventory</text>
+            <for items='{return inv:getItemTextList()}'>
+                <hmenu height="20">
+                    <option color='#999999' width='120' onClick='joyce:ev("nogame.modules.menuInventory.showDetail", id)' text="{return text}"/>
+                    <option color='#999999' width='40' onClick='joyce:ev("nogame.modules.menuInventory.useItem", id)'>Use</option>
+                    <option color='#999999' width='40' onClick='joyce:ev("nogame.modules.menuInventory.dropItem", id)'>Drop</option>
+                </hmenu>
+            </for>
+            <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>
+        </vmenu>
+    </view>
+    <view layer='pausemenu' id='menuHelp'>
+        <vbox width='250' x='200' y='100'>
+            <text color='#666666' height='40'>Help</text>
+            <text color='#999999'>WASD - navigate</text>
+            <text color='#999999'>Q/Y - up/down</text>
+            <text color='#999999'>ESC - pause menu</text>
+            <text color='#999999'>F8 - debug</text>
+            <text color='#999999'>F10 - demo ride</text>
+            <text color='#999999'>F11 - full screen</text>
+            <text color='#999999'>F12 - joyce ui</text>
+            <text color='#999999'>tab - map</text>
+            <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>
+        </vbox>
+    </view>
+</jt>

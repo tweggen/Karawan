@@ -130,8 +130,6 @@ public class SpawnOperator : ISpawnOperator
 
         _engine.Run(async () =>
         {
-            DefaultEcs.Entity eCharacter = default;
-
             /*
              * Catch exception to keep the inCreation counter up to date.
              */
@@ -152,8 +150,9 @@ public class SpawnOperator : ISpawnOperator
                         StreetPoint? chosenStreetPoint = CharacterCreator.ChooseStreetPoint(_rnd,  worldFragment, cd);
                         if (chosenStreetPoint != null)
                         {
-                            eCharacter = await CharacterCreator.GenerateRandomCharacter(
+                            var actCreateEntity = await CharacterCreator.GenerateRandomCharacter(
                                 _rnd, cd, worldFragment, chosenStreetPoint, _seed);
+                            _engine.QueueEntitySetupAction(CharacterCreator.EntityName, actCreateEntity);
                             ++_seed;
                         }
                         else
@@ -169,8 +168,6 @@ public class SpawnOperator : ISpawnOperator
             }
 
             spawnStatus.InCreation--;
-
-            return eCharacter;
         });
     }
 

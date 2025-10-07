@@ -415,7 +415,10 @@ public class WalkController : AController, IInputPart
                             cAnimationState = new AnimationState();
                         }
                         cAnimationState.ModelAnimation = animation;
-                        if (forceFrameZero >= 0)
+                        /*
+                         * This is just a nice way of saying, dont be negative, after force casting this from int to ushort..
+                         */
+                        if ((forceFrameZero & 0x8000)==0)
                         {
                             cAnimationState.ModelAnimationFrame = (ushort) forceFrameZero;
                         }

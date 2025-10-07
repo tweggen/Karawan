@@ -151,7 +151,7 @@ public class CharacterCreator
     }
     
 
-    public static async Task<DefaultEcs.Entity> GenerateRandomCharacter(
+    public static async Task<Action<DefaultEcs.Entity>> GenerateRandomCharacter(
         builtin.tools.RandomSource rnd,
         ClusterDesc clusterDesc,
         Fragment worldFragment,
@@ -328,37 +328,21 @@ public class CharacterCreator
     }
     
     
-    private static DefaultEcs.Entity _generateCharacter(
+    private static Action<DefaultEcs.Entity> _generateCharacter(
         ClusterDesc clusterDesc,
         Fragment worldFragment,
         Model model,
         ModelCacheParams mcp,
         string? strAnimation,
         engine.behave.IBehavior? iBehavior,
-        engine.audio.Sound? sound)
+        engine.audio.Sound? sound) 
     {
-        TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
-        Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;
-
-        var wf = worldFragment;
-
-        int fragmentId = worldFragment.NumericalId;
-
-        string name = mcp.Params?.Name;
-        if (String.IsNullOrWhiteSpace(name))
-        {
-            name = EntityName;
-        }
-
-        wf.Engine.QueueEntitySetupAction(name, eTarget =>
+        return eTarget =>
         {
             _setupCharacterMT(eTarget,
                 clusterDesc, worldFragment, 
                 model, mcp, strAnimation, iBehavior, sound);
-            taskCompletionSource.SetResult(eTarget);
-        });
-        
-        return taskResult.Result;
+        };
     }
 
 
