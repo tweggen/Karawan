@@ -273,6 +273,16 @@ public class FbxModel : IDisposable
             engine.joyce.Texture? jTexture = null;
             
             /*
+             * We may have windows relative pathes, which would not work on a unix system,
+             * so do a last resort conversion here. This forbids file names with backslashes
+             * on unix machines. But, come on, man.
+             */
+            if (Path.DirectorySeparatorChar == '/')
+            {
+                path = path.Replace('\\', '/');
+            }
+            
+            /*
              * First try to find the texture in the atlas, with and without extension
              * ... only then load it without atlas.
              */
