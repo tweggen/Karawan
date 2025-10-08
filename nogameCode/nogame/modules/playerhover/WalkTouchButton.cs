@@ -16,15 +16,20 @@ public class WalkTouchButton : AModule
     
     protected override void OnModuleDeactivate()
     {
-        I.Get<Engine>().QueueMainThreadAction(() =>
+        IList<DefaultEcs.Entity> buttons;
+        lock (_lo)
         {
-            foreach (var iterEntity in _buttons)
+            buttons = _buttons;
+            _buttons = null;       
+        }
+        _engine.QueueMainThreadAction(() =>
+        {
+            foreach (var iterEntity in buttons)
             {
                 DefaultEcs.Entity entity = iterEntity;
                 I.Get<HierarchyApi>().Delete(ref entity);
             }
         });
-        _buttons = null;
     }
 
     
@@ -35,13 +40,19 @@ public class WalkTouchButton : AModule
         if (GlobalSettings.Get("debug.option.forceTouchInterface") == "true"
             || GlobalSettings.Get("splash.touchControls") == "true")
         {
-            _buttons.Add(TouchButtons.CreateButton("but_getinout.png", TouchButtons.ButtonsPerRow - 6, TouchButtons.ButtonsPerColumn - 4,
-                (entity, ev, pos) => new Event(ev.IsPressed ? Event.INPUT_BUTTON_PRESSED : Event.INPUT_BUTTON_RELEASED,
-                    "<change>")));
-            _buttons.Add(TouchButtons.CreateButton("but_accel.png", TouchButtons.ButtonsPerRow - 2, TouchButtons.ButtonsPerColumn - 4,
-                (entity, ev, pos) =>
-                    new Event(ev.IsPressed ? Event.INPUT_BUTTON_PRESSED : Event.INPUT_BUTTON_RELEASED, "<fire>")));
-
+            _engine.QueueMainThreadAction(() =>
+            {
+                ;
+                _buttons.Add(TouchButtons.CreateButton("but_getinout.png", TouchButtons.ButtonsPerRow - 6,
+                    TouchButtons.ButtonsPerColumn - 4,
+                    (entity, ev, pos) => new Event(
+                        ev.IsPressed ? Event.INPUT_BUTTON_PRESSED : Event.INPUT_BUTTON_RELEASED,
+                        "<change>")));
+                _buttons.Add(TouchButtons.CreateButton("but_accel.png", TouchButtons.ButtonsPerRow - 2,
+                    TouchButtons.ButtonsPerColumn - 4,
+                    (entity, ev, pos) =>
+                        new Event(ev.IsPressed ? Event.INPUT_BUTTON_PRESSED : Event.INPUT_BUTTON_RELEASED, "<fire>")));
+            });
         }
     }
 }

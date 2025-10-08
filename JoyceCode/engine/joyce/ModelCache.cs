@@ -637,7 +637,7 @@ public class ModelCache
 
                     BodyReference prefSphere;
                     TypedIndex shape;
-                    Trace($"Creating {modelShape}");
+                    // Trace($"Creating {modelShape}");
                     switch (modelShape)
                     {
                         default:

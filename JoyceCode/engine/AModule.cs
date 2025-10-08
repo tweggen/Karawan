@@ -63,6 +63,12 @@ public class ModuleTracker : IDisposable
     }
 
     
+    /**
+     * Deactivate this module.
+     *
+     * This deactivates the modules itself, plus all modules it activated
+     * as stored in its member _activatedModules.
+     */
     public virtual void ModuleDeactivate()
     {
         List<IModule> activatedModules;
@@ -94,6 +100,13 @@ public class ModuleTracker : IDisposable
     }
 
 
+    /**
+     * Activate this module.
+     *
+     * This will obtain of all modules this module depends upon.
+     * Modules that have not been activated yet will be activated.
+     * A list of activated modules is stored in _activatedModules.
+     */
     public virtual void ModuleActivate()
     {
         lock (_lo)
