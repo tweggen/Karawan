@@ -157,6 +157,7 @@ public class MainPlayModule : engine.AModule, IInputPart
             _playerState = PlayerState.Outside;
         }
         I.Get<EventQueue>().Push(new Event(FollowCameraController.EventTypeRequestMode, "MouseControlsCamera"));
+        I.Get<EventQueue>().Push(new Event(FollowCameraController.EventTypeRecommendDistance, "0.25"));
     }
 
 
@@ -205,6 +206,7 @@ public class MainPlayModule : engine.AModule, IInputPart
         }
 
         I.Get<EventQueue>().Push(new Event(FollowCameraController.EventTypeRequestMode, "MouseOffsetsCamera"));
+        I.Get<EventQueue>().Push(new Event(FollowCameraController.EventTypeRecommendDistance, "1.0"));
     }
 
 

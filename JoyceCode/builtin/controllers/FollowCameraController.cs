@@ -43,8 +43,11 @@ public class FollowCameraController : AController, IInputPart
     private bool _mouseOffsetsCamera = false;
 
     private float _previousZoomDistance = 33f;
+
+    private float _scaleFactor = 1.0f;
     
     public static string EventTypeRequestMode = "builtin.controllers.followCameraController.RequestMode";
+    public static string EventTypeRecommendDistance = "builtin.controllers.followCameraController.RecommendDistance";
 
     public float MY_Z_ORDER { get; set; } = 21f;
     
@@ -843,6 +846,12 @@ public class FollowCameraController : AController, IInputPart
         }
         Trace($"Control mode switched to {_mouseOffsetsCamera}");
     }
+
+
+    private void _onRecommendDistance(Event ev)
+    {
+        _scaleFactor = (float) Convert.ToDouble(ev.Code);
+    }
     
     
     protected override void OnModuleDeactivate()
@@ -884,5 +893,6 @@ public class FollowCameraController : AController, IInputPart
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         
         I.Get<SubscriptionManager>().Subscribe(EventTypeRequestMode, _onRequestMode);
+        I.Get<SubscriptionManager>().Subscribe(EventTypeRecommendDistance, _onRecommendDistance);
     }
 }
