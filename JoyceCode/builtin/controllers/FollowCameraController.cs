@@ -359,6 +359,13 @@ public class FollowCameraController : AController, IInputPart
     }
 
 
+    /**
+     * Mouse controls camera while e.g. walking.
+     * This is controlled by
+     * - mouse horizontal movement
+     * - right stick horizontal (?)
+     * - right touch horizontal (?)
+     */
     private void _computePerfectCameraOrientationMouseControls(
         float dt,
         in Matrix4x4 cToParentMatrix,
@@ -366,14 +373,26 @@ public class FollowCameraController : AController, IInputPart
     {
         _cameraAngle = CameraAngle.Orientation;
         Quaternion qNewFront = _qPreviousCameraFront;
+
+        float totalAngleOrientation = 0f;
+        
+        /*
+         * The controlling angle camera as used for walking is controlled
+         * by
+         * - a mouseMoveX offset
+         * - a soft camera movement that
+         *   - can be excited by analog stick or touch stick
+         *   - slowly goes back to the direction of walking.
+         */
         if (_vMouseMove.Y != 0)
         {
             float mouseAngleOrientation = -(_vMouseMove.X) * (float)Math.PI / 180f;
             //Trace($"_vMouseMove.Y = {_vMouseMove.X}");
-
-            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), mouseAngleOrientation);
-            qNewFront = Quaternion.Concatenate(qNewFront, rotRight);
+            totalAngleOrientation += mouseAngleOrientation;
         }
+
+        var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), totalAngleOrientation);
+        qNewFront = Quaternion.Concatenate(qNewFront, rotRight);
 
         qPerfectCameraOrientation = qNewFront;
     }
@@ -444,6 +463,7 @@ public class FollowCameraController : AController, IInputPart
         /*
          * Set up the vertical camera angle.
          * Our default is dx = 1 , dy = 0.25, which is about 15 degree (from the horizontal).
+         * vMouseAnglesOffseting.X contains the angle to rotate around X, i.e. vertically
          */
         float vertAngle = Single.Clamp(_vMouseAnglesOffseting.X,
             -85f * Single.Pi / 180f, 85f * Single.Pi / 180f);
