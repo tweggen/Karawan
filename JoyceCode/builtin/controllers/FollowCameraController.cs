@@ -30,7 +30,7 @@ public class FollowCameraController : AController, IInputPart
         get => _eCarrot;
         set => _eCarrot = value;
     }   
-
+    
     private Vector3 _vPreviousCameraPosition;
     private Vector3 _vPreviousCameraOffset;
     private Quaternion _qLastPerfectCameraRotation = Quaternion.Identity;
