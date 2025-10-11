@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Security.AccessControl;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using engine;
@@ -30,6 +31,9 @@ public class FollowCameraController : AController, IInputPart
         get => _eCarrot;
         set => _eCarrot = value;
     }   
+
+    private Quaternion _qStickOffset = Quaternion.Identity;
+    private Quaternion _qPreviousStickDrive = Quaternion.Identity;
     
     private Vector3 _vPreviousCameraPosition;
     private Vector3 _vPreviousCameraOffset;
@@ -692,6 +696,15 @@ public class FollowCameraController : AController, IInputPart
     }
 
 
+    private void _computeStickDrive()
+    {
+        Quaternion qStickDrive = Quaternion.Identity;
+        qStickDrive = Quaternion.Concatenate(qStickDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -_vStickOffset.X / 50f));
+        _qPreviousStickDrive = Quaternion.Slerp(_qPreviousStickDrive, qStickDrive, 0.15f);
+        _qStickOffset = Quaternion.Concatenate(_qStickOffset, _qPreviousStickDrive);
+    }
+    
+
     protected override void OnLogicalFrame(object sender, float dt)
     {
         if (!_eCarrot.Has<engine.joyce.components.Transform3ToWorld>()
@@ -707,14 +720,15 @@ public class FollowCameraController : AController, IInputPart
         {
             engine.I.Get<builtin.controllers.InputController>().GetMouseMove(out _vMouseMove);
             engine.I.Get<builtin.controllers.InputController>().GetStickOffset(out _vStickOffset);
+            _computeStickDrive();
         }
         else
         {
             _vMouseMove = Vector2.Zero;
         }
 
-        _vMouseAnglesOffseting.X = (_vStickOffset.Y*STICK_VERTICAL_SENSITIVITY + _vMouseOffseting.Y + YAngleDefault) * (float)Math.PI / 180f;
-        _vMouseAnglesOffseting.Y = -(_vStickOffset.X*STICK_HORIZONTAL_SENSITIVITY + _vMouseOffseting.X) * (float)Math.PI / 180f;
+        _vMouseAnglesOffseting.X = (/* _vStickOffset.Y*STICK_VERTICAL_SENSITIVITY */ + _vMouseOffseting.Y + YAngleDefault) * (float)Math.PI / 180f;
+        _vMouseAnglesOffseting.Y = -(/* _vStickOffset.X*STICK_HORIZONTAL_SENSITIVITY  */ + _vMouseOffseting.X) * (float)Math.PI / 180f;
 
 
         var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
@@ -793,7 +807,7 @@ public class FollowCameraController : AController, IInputPart
         /*
          * Apply relative mouse movement
          */
-        var qUserCameraOrientation = qRealCameraOrientation;
+        var qUserCameraOrientation = qRealCameraOrientation; 
     
         /*
          * Now we have computed the position we want to target the camera object to.
