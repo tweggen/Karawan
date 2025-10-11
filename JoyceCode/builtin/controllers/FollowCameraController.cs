@@ -32,8 +32,10 @@ public class FollowCameraController : AController, IInputPart
         set => _eCarrot = value;
     }   
 
-    private Quaternion _qStickOffset = Quaternion.Identity;
-    private Quaternion _qPreviousStickDrive = Quaternion.Identity;
+    private Quaternion _qStickYAxisOffset = Quaternion.Identity;
+    private Quaternion _qPreviousStickYAxisDrive = Quaternion.Identity;
+    private Quaternion _qStickXAxisOffset = Quaternion.Identity;
+    private Quaternion _qPreviousStickXAxisDrive = Quaternion.Identity;
     
     private Vector3 _vPreviousCameraPosition;
     private Vector3 _vPreviousCameraOffset;
@@ -698,10 +700,22 @@ public class FollowCameraController : AController, IInputPart
 
     private void _computeStickDrive()
     {
-        Quaternion qStickDrive = Quaternion.Identity;
-        qStickDrive = Quaternion.Concatenate(qStickDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -_vStickOffset.X / 50f));
-        _qPreviousStickDrive = Quaternion.Slerp(_qPreviousStickDrive, qStickDrive, 0.15f);
-        _qStickOffset = Quaternion.Concatenate(_qStickOffset, _qPreviousStickDrive);
+        Quaternion qStickYAxisDrive = Quaternion.Identity;
+        qStickYAxisDrive = Quaternion.Concatenate(qStickYAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -_vStickOffset.X / 50f));
+        _qPreviousStickYAxisDrive = Quaternion.Slerp(_qPreviousStickYAxisDrive, qStickYAxisDrive, 0.15f);
+        
+        _qStickYAxisOffset = Quaternion.Concatenate(_qStickYAxisOffset, _qPreviousStickYAxisDrive);
+        
+        Trace($"qStickYAxisOffset = {_qStickYAxisOffset}, _qPreviousStickYAxisDrive = {_qPreviousStickYAxisDrive}, qStickYAxisDrive = {qStickYAxisDrive}");
+        
+        #if false
+        Quaternion qStickXAxisDrive = Quaternion.Identity;
+        qStickXAxisDrive = Quaternion.Concatenate(qStickXAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitX, -_vStickOffset.Y / 50f));
+
+        _qPreviousStickXAxisDrive = Quaternion.Slerp(_qPreviousStickXAxisDrive, qStickXAxisDrive, 0.15f);
+        _qStickXAxisOffset = Quaternion.Concatenate(_qStickXAxisOffset, _qPreviousStickXAxisDrive);
+        #endif
+
     }
     
 
