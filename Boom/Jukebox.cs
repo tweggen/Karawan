@@ -29,6 +29,9 @@ public class Jukebox
 
             _uriCurrentSong = uri;
         }
+        
+        Trace($"Requested to play new song {uri}");
+        
         _aSound.LoadSound(uri).ContinueWith((Task<ISound> loadTask) =>
         {
             ISound sound = loadTask.Result;

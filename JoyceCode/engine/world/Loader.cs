@@ -21,6 +21,7 @@ namespace engine.world
         private Engine _engine;
 
         private int _lastLoadedIteration = 0;
+        private bool _traceLoad = false;
 
         /**
          * Keep all fragments we created by their PosKey.
@@ -296,7 +297,7 @@ namespace engine.world
                          */
                         if (frag.LastIteration < _lastLoadedIteration)
                         {
-                            Trace($"Purging fragment {frag.Visibility}");
+                            if (_traceLoad) Trace($"Purging fragment {frag.Visibility}");
                             eraseList.Add(kvp.Key);
                         }
                     }
