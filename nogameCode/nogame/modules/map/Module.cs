@@ -520,10 +520,22 @@ public class Module : AModule, IInputPart
         I.Get<InputController>().GetControllerState(out var controllerState);
 
         Vector2 vDelta = Vector2.Zero;
-        vDelta.X += (float)controllerState.TurnRight / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
-        vDelta.X -= (float)controllerState.TurnLeft / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
-        vDelta.Y -= (float)controllerState.WalkForward / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
-        vDelta.Y += (float)controllerState.WalkBackward / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
+        /*
+         * Map motion is derived from
+         * - wasd
+         * - left stick (touch or analog)
+         */
+        
+        vDelta.X += (float)(0
+                            + controllerState.AnalogLeftStickHoriz
+                            + controllerState.TouchLeftHoriz
+                            + controllerState.WASDHoriz
+                            ) / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
+        vDelta.Y -= (float)(0
+                            + controllerState.AnalogLeftStickVert
+                            + controllerState.TouchLeftVert
+                            + controllerState.WASDVert
+                            ) / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
 
         _applyDeltaMove(vDelta);
     }

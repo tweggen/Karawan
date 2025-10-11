@@ -212,10 +212,32 @@ public class WalkController : AController, IInputPart
 
         I.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
 
-        var frontMotion = controllerState.FrontMotion;
-        var upMotion = controllerState.UpMotion;
-        var rightMotion = controllerState.RightMotion;
+        /*
+         * front back motion is
+         * - analog left stick vertically
+         * - touch left stick vertically
+         * - keyboard s/w.
+         */
+        var frontMotion = 0
+                          - controllerState.AnalogLeftStickVert
+                          - controllerState.TouchLeftVert
+                          + controllerState.WASDVert;
+        
+        /*
+         * left / right motion (strafe) is
+         * - analog left stick horizontally
+         * - touch left stick horiz
+         * - keyboard a/d 
+         */
+        var rightMotion = 0 
+                          + controllerState.AnalogLeftStickHoriz
+                          + controllerState.TouchLeftHoriz
+                          + controllerState.WASDHoriz;
 
+        /*
+         * Orientation is derived from camera.
+         */
+        
         bool haveVelocity = false;
 
         Vector3 vuWalkDirection = Vector3.Zero;

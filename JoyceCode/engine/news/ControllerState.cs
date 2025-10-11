@@ -7,24 +7,24 @@ namespace engine.news
     public class ControllerState
     {
         public DateTime LastInput;
-        public int FrontMotion { 
+        public int BumpersMotion { 
             get {
-                int frontMotion = WalkForward - WalkBackward;
-                if (frontMotion > 0)
+                int bumpersMotion = AnalogRight2 - AnalogLeft2;
+                if (bumpersMotion > 0)
                 {
-                    frontMotion = 255;
-                } else if(frontMotion<0)
+                    bumpersMotion = 255;
+                } else if(bumpersMotion<0)
                 {
-                    frontMotion = -255;
+                    bumpersMotion = -255;
                 }
 
-                return frontMotion;
+                return bumpersMotion;
             }
         }
 
-        public int RightMotion { 
+        public int AnalogLeftStickHoriz { 
             get {
-                int rightMotion = TurnRight - TurnLeft;
+                int rightMotion = AnalogLeftStickRight - AnalogLeftStickLeft;
                 if (rightMotion > 0)
                 {
                     rightMotion = 255;
@@ -37,9 +37,9 @@ namespace engine.news
             }
         }
 
-        public int UpMotion { 
+        public int AnalogLeftStickVert { 
             get {
-                int upMotion = FlyUp - FlyDown;
+                int upMotion = AnalogLeftStickUp - AnalogLeftStickDown;
                 if (upMotion > 0)
                 {
                     upMotion = 255;
@@ -51,47 +51,103 @@ namespace engine.news
             }
         }
 
-        public int AnalogForward;
-        public int WalkForward;
-        public int AnalogBackward;
-        public int WalkBackward;
+        public int WASDHoriz
+        {
+            get {
+                int rightMotion = WASDRight - WASDLeft;
+                if (rightMotion > 0)
+                {
+                    rightMotion = 255;
+                } else if(rightMotion<0)
+                {
+                    rightMotion = -255;
+                }
+
+                return rightMotion;
+            }
+        }
+        
+        public int WASDVert
+        {
+            get {
+                int upMotion = WASDUp - WASDDown;
+                if (upMotion > 0)
+                {
+                    upMotion = 255;
+                } else if(upMotion<0)
+                {
+                    upMotion = -255;
+                }
+                return upMotion; 
+            }
+        }
 
 
-        public int AnalogUp;
-        public int FlyUp;
-        public int AnalogDown;
-        public int FlyDown;
-        public int AnalogLeft;
-        public int TurnLeft;
-        public int AnalogRight;
-        public int TurnRight;
+        public int TouchLeftHoriz
+        {
+            get {
+                int rightMotion = TouchLeftStickRight - TouchLeftStickLeft;
+                if (rightMotion > 0)
+                {
+                    rightMotion = 255;
+                } else if(rightMotion<0)
+                {
+                    rightMotion = -255;
+                }
 
+                return rightMotion;
+            }
+        }
+
+        
+        public int TouchLeftVert
+        {
+            get {
+                int upMotion = TouchLeftStickUp - TouchLeftStickDown;
+                if (upMotion > 0)
+                {
+                    upMotion = 255;
+                } else if(upMotion<0)
+                {
+                    upMotion = -255;
+                }
+                return upMotion; 
+            }
+        }
+        
+        
+        public int AnalogRight2;
+        public int AnalogLeft2;
+        public int AnalogLeftStickUp;
+        public int AnalogLeftStickDown;
+        public int AnalogLeftStickLeft;
+        public int AnalogLeftStickRight;
+        public int WASDUp;
+        public int WASDDown;
+        public int WASDLeft;
+        public int WASDRight;
+        public int TouchLeftStickUp;
+        public int TouchLeftStickDown;
+        public int TouchLeftStickLeft;
+        public int TouchLeftStickRight;
         
         public void AnalogToWalkControllerNoLock()
         {
-            WalkForward = AnalogForward;
-            WalkBackward = AnalogBackward;
-            TurnLeft = AnalogLeft;
-            TurnRight = AnalogRight;
-            FlyUp = AnalogUp;
-            FlyDown = AnalogDown;
         }
 
 
         public void Reset()
         {
-            WalkForward = 0;
-            WalkBackward = 0;
-            TurnLeft = 0;
-            TurnRight = 0;
-            FlyUp = 0;
-            FlyDown = 0;
-            AnalogForward = 0;
-            AnalogBackward = 0;
-            AnalogRight = 0;
-            AnalogLeft = 0;
-            AnalogUp = 0;
-            AnalogDown = 0;
+            AnalogRight2 = 0;
+            AnalogLeft2 = 0;
+            AnalogLeftStickRight = 0;
+            AnalogLeftStickLeft = 0;
+            AnalogLeftStickUp = 0;
+            AnalogLeftStickDown = 0;
+            WASDUp = 0;
+            WASDDown = 0;
+            WASDLeft = 0;
+            WASDRight = 0;
         }
 
         public ControllerState()

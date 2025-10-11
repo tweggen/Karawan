@@ -77,28 +77,24 @@ public class InputController : engine.AController, engine.IInputPart
         {
             _controllerState.LastInput = DateTime.UtcNow;
 
+            // TXWTODO: This is for driving mode only. Walking mode would have a different assignment.
+            
             switch (ev.Code)
             {
                 case "(shiftleft)":
                     _isKeyboardFast = true;
                     break;
-                case "q":
-                    _controllerState.AnalogUp = KeyboardAnalogMax; 
-                    break;
-                case "z":
-                    _controllerState.AnalogDown = KeyboardAnalogMax;
-                    break;
                 case "w":
-                    _controllerState.AnalogForward = _isKeyboardFast?KeyboardAnalogMax:KeyboardAnalogWalk;
+                    _controllerState.WASDUp = _isKeyboardFast?KeyboardAnalogMax:KeyboardAnalogWalk;
                     break;
                 case "s":
-                    _controllerState.AnalogBackward = _isKeyboardFast?KeyboardAnalogMax:KeyboardAnalogWalk;
+                    _controllerState.WASDDown = _isKeyboardFast?KeyboardAnalogMax:KeyboardAnalogWalk;
                     break;
                 case "a":
-                    _controllerState.AnalogLeft = KeyboardAnalogMax;
+                    _controllerState.WASDLeft = KeyboardAnalogMax;
                     break;
                 case "d":
-                    _controllerState.AnalogRight = KeyboardAnalogMax;
+                    _controllerState.WASDRight = KeyboardAnalogMax;
                     break;
                 case "e":
                     
@@ -122,23 +118,17 @@ public class InputController : engine.AController, engine.IInputPart
                 case "(shiftleft)":
                     _isKeyboardFast = false;
                     break;
-                case "q":
-                    _controllerState.AnalogUp = 0;
-                    break;
-                case "z":
-                    _controllerState.AnalogDown = 0;
-                    break;
                 case "w":
-                    _controllerState.AnalogForward = 0;
+                    _controllerState.WASDUp = 0;
                     break;
                 case "s":
-                    _controllerState.AnalogBackward = 0;
+                    _controllerState.WASDDown = 0;
                     break;
                 case "a":
-                    _controllerState.AnalogLeft = 0;
+                    _controllerState.WASDLeft = 0;
                     break;
                 case "d":
-                    _controllerState.AnalogRight = 0;
+                    _controllerState.WASDRight = 0;
                     break;
                 default:
                     break;
@@ -169,31 +159,31 @@ public class InputController : engine.AController, engine.IInputPart
                     /*
                      * The user dragged up compare to the press position
                      */
-                    _controllerState.AnalogForward = (int)(Single.Min(ControllerYMax, -vRel.Y-ControllerYTolerance)
+                    _controllerState.TouchLeftStickUp = (int)(Single.Min(ControllerYMax, -vRel.Y-ControllerYTolerance)
                         / ControllerYMax * TouchAnalogMax);
-                    _controllerState.AnalogBackward = 0;
+                    _controllerState.TouchLeftStickDown = 0;
                 }
                 else if (vRel.Y > ControllerYTolerance)
                 {
                     /*
                      * The user dragged down compared to the press position.
                      */
-                    _controllerState.AnalogBackward = (int)(Single.Min(ControllerYMax, vRel.Y-ControllerYTolerance) 
+                    _controllerState.TouchLeftStickDown = (int)(Single.Min(ControllerYMax, vRel.Y-ControllerYTolerance) 
                         / ControllerYMax * TouchAnalogMax);
-                    _controllerState.AnalogForward = 0;
+                    _controllerState.TouchLeftStickUp = 0;
                 }
 
                 if (vRel.X < -ControllerXTolerance)
                 {
-                    _controllerState.AnalogLeft = (int)(Single.Min(ControllerXMax, -vRel.X-ControllerXTolerance) 
+                    _controllerState.TouchLeftStickLeft = (int)(Single.Min(ControllerXMax, -vRel.X-ControllerXTolerance) 
                         / ControllerXMax * TouchAnalogMax);
-                    _controllerState.AnalogRight = 0;
+                    _controllerState.TouchLeftStickRight = 0;
                 }
                 else if (vRel.X > ControllerXTolerance)
                 {
-                    _controllerState.AnalogRight = (int)(Single.Min(ControllerXMax, vRel.X-ControllerXTolerance) 
+                    _controllerState.TouchLeftStickRight = (int)(Single.Min(ControllerXMax, vRel.X-ControllerXTolerance) 
                         / ControllerXMax * TouchAnalogMax);
-                    _controllerState.AnalogLeft = 0;
+                    _controllerState.TouchLeftStickLeft = 0;
                 }
                 
                 _controllerState.AnalogToWalkControllerNoLock();
@@ -291,12 +281,10 @@ public class InputController : engine.AController, engine.IInputPart
                 /*
                  * on any release, reset all controller movements.
                  */
-                _controllerState.AnalogForward = 0;
-                _controllerState.AnalogBackward = 0;
-                _controllerState.AnalogRight = 0;
-                _controllerState.AnalogLeft = 0;
-                _controllerState.AnalogUp = 0;
-                _controllerState.AnalogDown = 0;
+                _controllerState.TouchLeftStickUp = 0;
+                _controllerState.TouchLeftStickDown = 0;
+                _controllerState.TouchLeftStickRight = 0;
+                _controllerState.TouchLeftStickLeft = 0;
                 
                 _controllerState.AnalogToWalkControllerNoLock();
 
@@ -587,19 +575,30 @@ public class InputController : engine.AController, engine.IInputPart
         {
             case 0:
                 /*
-                 * This is left-right for driving.
+                 * Left stick
                  */
                 lock (_lo)
                 {
                     if (ev.PhysicalPosition.X > 0)
                     {
-                        _controllerState.AnalogRight = (int)(pos.X * 255f);
-                        _controllerState.AnalogLeft = 0;
+                        _controllerState.AnalogLeftStickRight = (int)(pos.X * 255f);
+                        _controllerState.AnalogLeftStickLeft = 0;
                     }
                     else
                     {
-                        _controllerState.AnalogRight = 0;
-                        _controllerState.AnalogLeft = -(int)(pos.X * 255f);
+                        _controllerState.AnalogLeftStickRight = 0;
+                        _controllerState.AnalogLeftStickLeft = -(int)(pos.X * 255f);
+                    }
+
+                    if (ev.PhysicalPosition.Y > 0)
+                    {
+                        _controllerState.AnalogLeftStickUp = (int)(pos.Y * 255f);
+                        _controllerState.AnalogLeftStickDown = 0;
+                    }
+                    else
+                    {
+                        _controllerState.AnalogLeftStickUp = 0;
+                        _controllerState.AnalogLeftStickDown = -(int)(pos.Y * 255f);
                     }
 
                     _controllerState.AnalogToWalkControllerNoLock();
@@ -728,7 +727,7 @@ public class InputController : engine.AController, engine.IInputPart
                  */
                 lock (_lo)
                 {
-                    _controllerState.AnalogBackward = (int)(255f * (ev.PhysicalPosition.X+1f)/2f);
+                    _controllerState.AnalogLeft2 = (int)(255f * (ev.PhysicalPosition.X+1f)/2f);
                     _controllerState.AnalogToWalkControllerNoLock();
                 }
 
@@ -740,7 +739,7 @@ public class InputController : engine.AController, engine.IInputPart
                  */
                 lock (_lo)
                 {
-                    _controllerState.AnalogForward = (int)(255f * (ev.PhysicalPosition.X+1f)/2f);
+                    _controllerState.AnalogRight2 = (int)(255f * (ev.PhysicalPosition.X+1f)/2f);
                     _controllerState.AnalogToWalkControllerNoLock();
                 }
 

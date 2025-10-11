@@ -139,11 +139,30 @@ internal class HoverController : AController
         {
             I.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
 
-            var frontMotion = controllerState.FrontMotion;
-            var upMotion = controllerState.UpMotion;
+            /*
+             * The front motion of the hover is the controller's bumps
+             * plus wasd vertical plus touch device vertical.
+             */
+            var frontMotion = 0
+                + controllerState.BumpersMotion
+                + controllerState.WASDVert
+                + controllerState.TouchLeftVert;
+
+            /*
+             * The up motion is not supported today.
+             */
+            var upMotion = 0;
+                // controllerState.AnalogLeftStickVert;
             float turnMotion;
             {
-                float inputTurnMotion = controllerState.TurnRight - controllerState.TurnLeft;
+                /*
+                 * The left/right turn motion is
+                 * left stick left right (touch or physical) + a/d keyboard.
+                 */
+                float inputTurnMotion = 0f
+                    + controllerState.AnalogLeftStickHoriz
+                    + controllerState.WASDHoriz
+                    + controllerState.TouchLeftHoriz;
                  
                 float maxThreshold;
                 if (_lastTurnMotion == 0)
