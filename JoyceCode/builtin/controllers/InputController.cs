@@ -180,9 +180,12 @@ public class InputController : engine.AController, engine.IInputPart
     }
 
 
+    
     /**
      * Respond to a move, press position is relative view size (anamorphic),
      * vRel is movement (relative to viewY resolution)
+     *
+     * NOT ON MOBILE!!!!
      */
     private void _handleTouchMove(Vector2 vPress, Vector2 vRel)
     {
