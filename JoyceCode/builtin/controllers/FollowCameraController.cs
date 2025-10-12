@@ -369,11 +369,15 @@ public class FollowCameraController : AController, IInputPart
         /*
          * Rotate the front vector by the mouse orientation.
          */
+        #if false
+        //var rotRight = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _vMouseAnglesOffseting.Y);
+        //rotRight = Quaternion.Concatenate(rotRight, -_qStickYAxisOffset);
         var rotRight = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _vMouseAnglesOffseting.Y);
         rotRight = Quaternion.Concatenate(rotRight, -_qStickYAxisOffset);
         
         qFront = Quaternion.Concatenate(qFront, rotRight);
-
+        #endif
+        
         qPerfectCameraOrientation = qFront;
     }
 
@@ -455,14 +459,14 @@ public class FollowCameraController : AController, IInputPart
         Vector3 vFront = Vector3.Transform(new Vector3(0f, 0f, -1f), qFront);
 
 
-        #if false
+        #if true
         if (_mouseOffsetsCamera)
         {
             /*
              * Rotate the front vector by the mouse orientation.
              */
-            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _vMouseAnglesOffseting.Y);
-            rotRight = Quaternion.Concatenate(rotRight, _qStickYAxisOffset);
+            var rotRight = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _vMouseAnglesOffseting.Y);
+            rotRight = Quaternion.Concatenate(rotRight, -_qStickYAxisOffset);
             vFront = Vector3.Transform(vFront, rotRight);
         }
         #endif
