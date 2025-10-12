@@ -12,8 +12,8 @@ namespace nogame.modules.osd;
 public class TouchButtons
 {
     public static float ButtonSize = 15f;
-    public static int ButtonsPerRow = 12;
-    public static int ButtonsPerColumn = (int) Single.Round(12f * 9f / 16f);
+    public static int ButtonsPerRow = 10;
+    public static int ButtonsPerColumn = (int) Single.Round(10f * 9f / 16f);
     public static float ButtonOffsetX = 0.5f;
     public static float ButtonOffsetY = 0.5f;
 

@@ -30,10 +30,13 @@ public class InputController : engine.AController, engine.IInputPart
     public float MouseLookMoveSensitivity  { get; set; }= 1f;
 
 
+    /*
+     * These are scaled from y = [0...1] and x = [0...16/9] (1.777)
+     */
     public float ControllerYMax { get; set; } = 0.2f;
-    public float ControllerYTolerance { get; set; } = 0.008f;
+    public float ControllerYTolerance { get; set; } = 0.01f;
     public float ControllerXMax { get; set; } = 0.2f;
-    public float ControllerXTolerance { get; set; } = 0.0020f;
+    public float ControllerXTolerance { get; set; } = 0.01f;
 
 
     public int KeyboardAnalogWalk { get; set; } = 180;
@@ -41,11 +44,52 @@ public class InputController : engine.AController, engine.IInputPart
     public int TouchAnalogMax { get; set; } = 255;
     
     
-    private Vector2 _vViewSize = Vector2.Zero;
-    public Vector2 VMouseMove = Vector2.Zero;
-    private Vector2 _vStickOffset = Vector2.Zero;
-    private Vector2 _mousePressPosition = Vector2.Zero;
-    private Vector2 _currentMousePosition = Vector2.Zero;
+    private Vector2 _v2ViewSize = Vector2.Zero;
+    private Vector2 _v2MouseMove = Vector2.Zero;
+
+    public Vector2 V2MouseMove
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _v2MouseMove;
+            }
+        }
+        
+        set
+        {
+            lock (_lo)
+            {
+                _v2MouseMove = value;
+            }
+        }
+    }
+    
+    private Vector2 _v2RightTouchMove = Vector2.Zero;
+
+    public Vector2 V2RightTouchMove
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _v2RightTouchMove;
+            }
+        }
+
+        set
+        {
+            lock (_lo)
+            {
+                _v2RightTouchMove = value;
+            }
+        }
+    }
+        
+    private Vector2 _v2StickOffset = Vector2.Zero;
+    private Vector2 _v2MousePressPosition = Vector2.Zero;
+    private Vector2 _v2CurrentMousePosition = Vector2.Zero;
     private bool _isMouseButtonClicked = false;
     private Vector2 _lastMousePosition;
     private bool _isKeyboardFast = false;
@@ -191,13 +235,13 @@ public class InputController : engine.AController, engine.IInputPart
             }
             else
             {
-                var viewSize = _vViewSize;
+                var viewSize = _v2ViewSize;
                 if (_lastTouchPosition == default)
                 {
-                    _lastTouchPosition = _currentMousePosition;
+                    _lastTouchPosition = _v2CurrentMousePosition;
                 }
 
-                VMouseMove += ((_currentMousePosition - _lastTouchPosition) / viewSize.Y) * 900f *
+                V2MouseMove += ((_v2CurrentMousePosition - _lastTouchPosition) / viewSize.Y) * 900f *
                                TouchMoveSensitivity;
             }
         }
@@ -236,8 +280,8 @@ public class InputController : engine.AController, engine.IInputPart
         {
             if (_isMouseButtonClicked)
             {
-                Vector2 currDist = _currentMousePosition - _mousePressPosition;
-                var viewSize = _vViewSize;
+                Vector2 currDist = _v2CurrentMousePosition - _v2MousePressPosition;
+                var viewSize = _v2ViewSize;
 
                 /*
                  * Compute movement relative to view height, 
@@ -245,7 +289,7 @@ public class InputController : engine.AController, engine.IInputPart
                 float relY = (float)currDist.Y / (float)viewSize.Y;
                 float relX = (float)currDist.X / (float)viewSize.Y;
                 
-                if (_mousePressPosition.X >= (viewSize.X - viewSize.X/25f))
+                if (_v2MousePressPosition.X >= (viewSize.X - viewSize.X/25f))
                 {
 #if false
                     float zoomWay = relY / ControllerTouchZoomFull * (8);
@@ -255,7 +299,7 @@ public class InputController : engine.AController, engine.IInputPart
                         Position = new Vector2(0f, zoomWay)
                     });
 #else
-                    var v2Moved = (_currentMousePosition - _lastTouchPosition) / (float)viewSize.Y;
+                    var v2Moved = (_v2CurrentMousePosition - _lastTouchPosition) / (float)viewSize.Y;
                     float virtualWheelY = v2Moved.Y * 20f;
 
                     I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_MOUSE_WHEEL, "(zoom)")
@@ -268,12 +312,12 @@ public class InputController : engine.AController, engine.IInputPart
                 {
                     _handleTouchMove(
                         new Vector2(
-                            _mousePressPosition.X / viewSize.X, 
-                            _mousePressPosition.Y / viewSize.Y),
+                            _v2MousePressPosition.X / viewSize.X, 
+                            _v2MousePressPosition.Y / viewSize.Y),
                         new Vector2(relX, relY));
 
                 }
-                _lastTouchPosition = _currentMousePosition;
+                _lastTouchPosition = _v2CurrentMousePosition;
                 
             }
             else
@@ -305,11 +349,11 @@ public class InputController : engine.AController, engine.IInputPart
                 }
                 else
                 {
-                    var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * MouseLookMoveSensitivity;
-                    var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * MouseLookMoveSensitivity;
-                    VMouseMove += new Vector2(xOffset, yOffset);
+                    var xOffset = (_v2CurrentMousePosition.X - _lastMousePosition.X) * MouseLookMoveSensitivity;
+                    var yOffset = (_v2CurrentMousePosition.Y - _lastMousePosition.Y) * MouseLookMoveSensitivity;
+                    V2MouseMove += new Vector2(xOffset, yOffset);
                 }
-                _lastMousePosition = _currentMousePosition;
+                _lastMousePosition = _v2CurrentMousePosition;
             }
         }
     }
@@ -326,7 +370,7 @@ public class InputController : engine.AController, engine.IInputPart
         
         lock (_lo)
         {
-            _currentMousePosition = ev.PhysicalPosition;
+            _v2CurrentMousePosition = ev.PhysicalPosition;
             _isMouseButtonClicked = false;
             if (strButton != null)
             {
@@ -348,7 +392,7 @@ public class InputController : engine.AController, engine.IInputPart
             var sinceFirst = _enableDebugStartTime - now;
             bool doResetDebug = false;
 
-            if (ev.PhysicalPosition.Y / _vViewSize.Y < _enableDebugYAbove)
+            if (ev.PhysicalPosition.Y / _v2ViewSize.Y < _enableDebugYAbove)
             {
                 doResetDebug = true;
             }
@@ -359,7 +403,7 @@ public class InputController : engine.AController, engine.IInputPart
                  */
                 if (sinceFirst > TimeSpan.FromMilliseconds(2000))
                 {
-                    if (ev.PhysicalPosition.X > _vViewSize.X / 2f)
+                    if (ev.PhysicalPosition.X > _v2ViewSize.X / 2f)
                     {
                         _enableDebugStartTime = now;
                         _enableDebugCounter = 1;
@@ -371,8 +415,8 @@ public class InputController : engine.AController, engine.IInputPart
                      * So this could be a continued click?
                      */
                     bool expectOnLeft = (_enableDebugCounter & 1) != 0;
-                    if (expectOnLeft && ev.PhysicalPosition.X <= _vViewSize.X / 2f
-                        || !expectOnLeft && ev.PhysicalPosition.X >= _vViewSize.X / 2f)
+                    if (expectOnLeft && ev.PhysicalPosition.X <= _v2ViewSize.X / 2f
+                        || !expectOnLeft && ev.PhysicalPosition.X >= _v2ViewSize.X / 2f)
                     {
                         /*
                          * This is inside the correct side of the screen.
@@ -443,8 +487,8 @@ public class InputController : engine.AController, engine.IInputPart
         
         lock (_lo)
         {
-            _mousePressPosition = ev.PhysicalPosition;
-            _currentMousePosition = ev.PhysicalPosition;
+            _v2MousePressPosition = ev.PhysicalPosition;
+            _v2CurrentMousePosition = ev.PhysicalPosition;
             _isMouseButtonClicked = true;
 
             _lastMousePosition = ev.PhysicalPosition;
@@ -464,7 +508,7 @@ public class InputController : engine.AController, engine.IInputPart
     {
         lock (_lo)
         {
-            _currentMousePosition = ev.PhysicalPosition;
+            _v2CurrentMousePosition = ev.PhysicalPosition;
         }
     }
 
@@ -475,7 +519,7 @@ public class InputController : engine.AController, engine.IInputPart
 
         lock (_lo)
         {
-            _vViewSize = engine.GlobalSettings.ParseSize(viewSize);
+            _v2ViewSize = engine.GlobalSettings.ParseSize(viewSize);
         }
     }
     
@@ -541,7 +585,7 @@ public class InputController : engine.AController, engine.IInputPart
     {
         lock (_lo)
         {
-            vStickOffset = _vStickOffset;
+            vStickOffset = _v2StickOffset;
         }
     }
     
@@ -550,8 +594,18 @@ public class InputController : engine.AController, engine.IInputPart
     {            
         lock (_lo)
         {
-            vMouseMove = VMouseMove;
-            VMouseMove = new Vector2(0f, 0f);
+            vMouseMove = V2MouseMove;
+            V2MouseMove = new Vector2(0f, 0f);
+        }
+    }
+
+
+    public void GetRightTouchMove(out Vector2 vRightTouchMove)
+    {
+        lock (_lo)
+        {
+            vRightTouchMove = V2RightTouchMove;
+            V2RightTouchMove = new Vector2(0f, 0f);
         }
     }
 
@@ -625,7 +679,7 @@ public class InputController : engine.AController, engine.IInputPart
                         /*
                          * Viewing.
                          */
-                        _vStickOffset = pos;
+                        _v2StickOffset = pos;
                     }
 
                 }

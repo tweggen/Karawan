@@ -42,22 +42,29 @@ public class HoverTouchButton : AModule
         {
             _engine.QueueMainThreadAction(() =>
             {
-                _buttons.Add(TouchButtons.CreateButton("but_left.png", 0, TouchButtons.ButtonsPerColumn - 2,
+                _buttons.Add(TouchButtons.CreateButton("but_left.png", 
+                    0, 
+                    TouchButtons.ButtonsPerColumn - 2,
                     (entity, ev, pos) =>
                         new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "a")));
-                _buttons.Add(TouchButtons.CreateButton("but_right.png", 1, TouchButtons.ButtonsPerColumn - 2,
+                _buttons.Add(TouchButtons.CreateButton("but_right.png", 
+                    1, 
+                    TouchButtons.ButtonsPerColumn - 2,
                     (entity, ev, pos) =>
                         new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "d")));
-                _buttons.Add(TouchButtons.CreateButton("but_getinout.png", TouchButtons.ButtonsPerRow - 2,
-                    TouchButtons.ButtonsPerColumn - 4,
+                _buttons.Add(TouchButtons.CreateButton("but_getinout.png", 
+                    TouchButtons.ButtonsPerRow - 2, 
+                    TouchButtons.ButtonsPerColumn - 3,
                     (entity, ev, pos) => new Event(
                         ev.IsPressed ? Event.INPUT_BUTTON_PRESSED : Event.INPUT_BUTTON_RELEASED,
                         "<change>")));
-                _buttons.Add(TouchButtons.CreateButton("but_accel.png", TouchButtons.ButtonsPerRow - 2,
+                _buttons.Add(TouchButtons.CreateButton("but_accel.png", 
+                    TouchButtons.ButtonsPerRow - 2,
                     TouchButtons.ButtonsPerColumn - 2,
                     (entity, ev, pos) =>
                         new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "w")));
-                _buttons.Add(TouchButtons.CreateButton("but_brake.png", TouchButtons.ButtonsPerRow - 3,
+                _buttons.Add(TouchButtons.CreateButton("but_brake.png", 
+                    TouchButtons.ButtonsPerRow - 3,
                     TouchButtons.ButtonsPerColumn - 2,
                     (entity, ev, pos) =>
                         new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "s")));

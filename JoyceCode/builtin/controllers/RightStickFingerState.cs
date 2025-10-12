@@ -9,14 +9,16 @@ class RightStickFingerState : AInputControllerFingerState
     public override void HandleMotion(Event ev)
     {
         base.HandleMotion(ev);
-        Vector2 vRel = ev.PhysicalPosition - LastPosition;
-        vRel.X *= 16f/9f;
-        vRel *= _ic.TouchLookSensitivity;
-        vRel = _ic.TouchViewTransfer(vRel) * 4f;
-        
+        Vector2 v2Now = ev.PhysicalPosition - LastPosition;
         LastPosition = ev.PhysicalPosition;
 
-        _ic.VMouseMove += vRel * 900f;    
+        v2Now.X *= 16f/9f;
+        _ic.V2RightTouchMove += v2Now;
+
+        v2Now *= _ic.TouchLookSensitivity;
+        v2Now = _ic.TouchViewTransfer(v2Now) * 4f;
+        
+        //_ic.V2MouseMove += v2Now * 100f;    
     }
 
     

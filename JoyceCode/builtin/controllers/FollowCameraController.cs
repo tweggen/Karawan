@@ -40,9 +40,10 @@ public class FollowCameraController : AController, IInputPart
     private Vector3 _vPreviousCameraPosition;
     private Vector3 _vPreviousCameraOffset;
     private Quaternion _qLastPerfectCameraRotation = Quaternion.Identity;
-    private Vector2 _vMouseOffseting;
-    private Vector2 _vStickOffset;
-    private Vector2 _vMouseMove;
+    private Vector2 _v2MouseOffseting;
+    private Vector2 _v2StickOffset;
+    private Vector2 _v2MouseMove;
+    private Vector2 _v2RightTouchMove;
     float _lastMouseMove = 0f;
     private float _lastLeftStickYAxisMove = 0f;
     private bool _firstFrame = true;
@@ -66,6 +67,7 @@ public class FollowCameraController : AController, IInputPart
     public float ZOOM_MAX_DISTANCE { get; set; } = 133f;
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
     public float MOUSE_RELATIVE_AMOUNT { get; set; } = 0.03f;
+    public float RIGHT_TOUCH_RELATIVE_AMOUNT { get; set; } = 0.03f;
     public float MOUSE_RETURN_SLERP { get; set; } = 0.98f;
     public float STICK_Y_RETURN_SLERP { get; set; } = 0.98f;
     public float MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT { get; set; } = 1.6f;
@@ -367,7 +369,7 @@ public class FollowCameraController : AController, IInputPart
         /*
          * Rotate the front vector by the mouse orientation.
          */
-        var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _vMouseAnglesOffseting.Y);
+        var rotRight = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _vMouseAnglesOffseting.Y);
         rotRight = Quaternion.Concatenate(rotRight, -_qStickYAxisOffset);
         
         qFront = Quaternion.Concatenate(qFront, rotRight);
@@ -401,10 +403,9 @@ public class FollowCameraController : AController, IInputPart
          *   - can be excited by analog stick or touch stick
          *   - slowly goes back to the direction of walking.
          */
-        if (_vMouseMove.Y != 0)
+        if (_v2MouseMove.Y != 0)
         {
-            float mouseAngleOrientation = -(_vMouseMove.X) * (float)Math.PI / 180f;
-            //Trace($"_vMouseMove.Y = {_vMouseMove.X}");
+            float mouseAngleOrientation = -(_v2MouseMove.X) * (float)Math.PI / 180f;
             totalAngleOrientation += mouseAngleOrientation;
         }
 
@@ -720,13 +721,13 @@ public class FollowCameraController : AController, IInputPart
     private void _computeStickDrive()
     {
         Quaternion qStickYAxisDrive = Quaternion.Identity;
-        qStickYAxisDrive = Quaternion.Concatenate(qStickYAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -_vStickOffset.X / 20f));
+        qStickYAxisDrive = Quaternion.Concatenate(qStickYAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -_v2StickOffset.X / 20f));
         _qPreviousStickYAxisDrive = Quaternion.Slerp(_qPreviousStickYAxisDrive, qStickYAxisDrive, 0.3f);
         
         _qStickYAxisOffset = Quaternion.Concatenate(_qStickYAxisOffset, _qPreviousStickYAxisDrive);
         
         Quaternion qStickXAxisDrive = Quaternion.Identity;
-        qStickXAxisDrive = Quaternion.Concatenate(qStickXAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitX, -_vStickOffset.Y / 20f));
+        qStickXAxisDrive = Quaternion.Concatenate(qStickXAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitX, -_v2StickOffset.Y / 20f));
 
         _qPreviousStickXAxisDrive = Quaternion.Slerp(_qPreviousStickXAxisDrive, qStickXAxisDrive, 0.2f);
         _qStickXAxisOffset = Quaternion.Concatenate(_qStickXAxisOffset, _qPreviousStickXAxisDrive);
@@ -747,17 +748,20 @@ public class FollowCameraController : AController, IInputPart
          */
         if (_isInputEnabled)
         {
-            engine.I.Get<builtin.controllers.InputController>().GetMouseMove(out _vMouseMove);
-            engine.I.Get<builtin.controllers.InputController>().GetStickOffset(out _vStickOffset);
+            engine.I.Get<builtin.controllers.InputController>().GetMouseMove(out _v2MouseMove);
+            engine.I.Get<builtin.controllers.InputController>().GetRightTouchMove(out _v2RightTouchMove);
+            engine.I.Get<builtin.controllers.InputController>().GetStickOffset(out _v2StickOffset);
+            // Trace($"_vStickOffset = {_v2StickOffset}, _vMouseMove = {_v2MouseMove}");
             _computeStickDrive();
         }
         else
         {
-            _vMouseMove = Vector2.Zero;
+            _v2MouseMove = Vector2.Zero;
+            _v2RightTouchMove = Vector2.Zero;
         }
 
-        _vMouseAnglesOffseting.X = (/* _vStickOffset.Y*STICK_VERTICAL_SENSITIVITY */ + _vMouseOffseting.Y + YAngleDefault) * (float)Math.PI / 180f;
-        _vMouseAnglesOffseting.Y = -(/* _vStickOffset.X*STICK_HORIZONTAL_SENSITIVITY  */ + _vMouseOffseting.X) * (float)Math.PI / 180f;
+        _vMouseAnglesOffseting.X = (/*_vStickOffset.Y*STICK_VERTICAL_SENSITIVITY */ + _v2MouseOffseting.Y + YAngleDefault) * (float)Math.PI / 180f;
+        _vMouseAnglesOffseting.Y = -(/*_vStickOffset.X*STICK_HORIZONTAL_SENSITIVITY  */ + _v2MouseOffseting.X) * (float)Math.PI / 180f;
 
 
         var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
@@ -812,8 +816,12 @@ public class FollowCameraController : AController, IInputPart
         /*
          * Some up the relative mouse movement.
          */
-        _vMouseOffseting += _vMouseMove * MOUSE_RELATIVE_AMOUNT;
-        if (_vMouseMove.X == 0f && _vMouseMove.Y == 0f)
+        _v2MouseOffseting += _v2MouseMove * MOUSE_RELATIVE_AMOUNT;
+        _v2MouseOffseting += _v2RightTouchMove * RIGHT_TOUCH_RELATIVE_AMOUNT;
+        if (Single.Abs(_v2MouseMove.X) < 0.002f 
+            && Single.Abs(_v2MouseMove.Y) < 0.002f 
+            && Single.Abs(_v2RightTouchMove.X) < 0.002f
+            && Single.Abs(_v2RightTouchMove.Y) < 0.002f)
         {
             _lastMouseMove += dt;
         }
@@ -822,7 +830,7 @@ public class FollowCameraController : AController, IInputPart
             _lastMouseMove = 0f;
         }
 
-        if (_vStickOffset.X <= 0.002 && _vStickOffset.X >= -0.002)
+        if (Single.Abs(_v2StickOffset.X) < 0.002)
         {
             _lastLeftStickYAxisMove += dt;
         }
@@ -864,7 +872,7 @@ public class FollowCameraController : AController, IInputPart
              */
             if (_lastMouseMove > MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT)
             {
-                _vMouseOffseting *= MOUSE_RETURN_SLERP;
+                _v2MouseOffseting *= MOUSE_RETURN_SLERP;
             }
         }
         else
