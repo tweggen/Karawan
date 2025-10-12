@@ -398,6 +398,7 @@ public class FollowCameraController : AController, IInputPart
         }
 
         var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), totalAngleOrientation);
+        rotRight = Quaternion.Concatenate(rotRight, _qPreviousStickYAxisDrive);
         qNewFront = Quaternion.Concatenate(qNewFront, rotRight);
 
         qPerfectCameraOrientation = qNewFront;
@@ -701,12 +702,12 @@ public class FollowCameraController : AController, IInputPart
     private void _computeStickDrive()
     {
         Quaternion qStickYAxisDrive = Quaternion.Identity;
-        qStickYAxisDrive = Quaternion.Concatenate(qStickYAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -_vStickOffset.X / 50f));
+        qStickYAxisDrive = Quaternion.Concatenate(qStickYAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -_vStickOffset.X / 5f));
         _qPreviousStickYAxisDrive = Quaternion.Slerp(_qPreviousStickYAxisDrive, qStickYAxisDrive, 0.15f);
         
         _qStickYAxisOffset = Quaternion.Concatenate(_qStickYAxisOffset, _qPreviousStickYAxisDrive);
         
-        Trace($"qStickYAxisOffset = {_qStickYAxisOffset}, _qPreviousStickYAxisDrive = {_qPreviousStickYAxisDrive}, qStickYAxisDrive = {qStickYAxisDrive}");
+        //Trace($"qStickYAxisOffset = {_qStickYAxisOffset}, _qPreviousStickYAxisDrive = {_qPreviousStickYAxisDrive}, qStickYAxisDrive = {qStickYAxisDrive}");
         
         #if false
         Quaternion qStickXAxisDrive = Quaternion.Identity;
