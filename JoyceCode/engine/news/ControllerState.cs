@@ -10,10 +10,11 @@ namespace engine.news
         public int BumpersMotion { 
             get {
                 int bumpersMotion = AnalogRight2 - AnalogLeft2;
-                if (bumpersMotion > 0)
+                if (bumpersMotion > 255)
                 {
                     bumpersMotion = 255;
-                } else if(bumpersMotion<0)
+                } 
+                else if(bumpersMotion<-255)
                 {
                     bumpersMotion = -255;
                 }
@@ -25,10 +26,11 @@ namespace engine.news
         public int AnalogLeftStickHoriz { 
             get {
                 int rightMotion = AnalogLeftStickRight - AnalogLeftStickLeft;
-                if (rightMotion > 0)
+                if (rightMotion > 255)
                 {
                     rightMotion = 255;
-                } else if(rightMotion<0)
+                } 
+                else if(rightMotion<-255)
                 {
                     rightMotion = -255;
                 }
@@ -40,10 +42,11 @@ namespace engine.news
         public int AnalogLeftStickVert { 
             get {
                 int upMotion = AnalogLeftStickUp - AnalogLeftStickDown;
-                if (upMotion > 0)
+                if (upMotion > 255)
                 {
                     upMotion = 255;
-                } else if(upMotion<0)
+                } 
+                else if(upMotion< -255)
                 {
                     upMotion = -255;
                 }
@@ -55,10 +58,11 @@ namespace engine.news
         {
             get {
                 int rightMotion = WASDRight - WASDLeft;
-                if (rightMotion > 0)
+                if (rightMotion > 255)
                 {
                     rightMotion = 255;
-                } else if(rightMotion<0)
+                } 
+                else if(rightMotion<-255)
                 {
                     rightMotion = -255;
                 }
@@ -71,10 +75,11 @@ namespace engine.news
         {
             get {
                 int upMotion = WASDUp - WASDDown;
-                if (upMotion > 0)
+                if (upMotion > 255)
                 {
                     upMotion = 255;
-                } else if(upMotion<0)
+                } 
+                else if(upMotion<-255)
                 {
                     upMotion = -255;
                 }
@@ -87,10 +92,11 @@ namespace engine.news
         {
             get {
                 int rightMotion = TouchLeftStickRight - TouchLeftStickLeft;
-                if (rightMotion > 0)
+                if (rightMotion > 255)
                 {
                     rightMotion = 255;
-                } else if(rightMotion<0)
+                } 
+                else if(rightMotion<-255)
                 {
                     rightMotion = -255;
                 }
@@ -104,10 +110,11 @@ namespace engine.news
         {
             get {
                 int upMotion = TouchLeftStickUp - TouchLeftStickDown;
-                if (upMotion > 0)
+                if (upMotion > 255)
                 {
                     upMotion = 255;
-                } else if(upMotion<0)
+                } 
+                else if(upMotion<-255)
                 {
                     upMotion = -255;
                 }

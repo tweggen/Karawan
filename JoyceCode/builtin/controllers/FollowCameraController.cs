@@ -407,13 +407,19 @@ public class FollowCameraController : AController, IInputPart
          *   - can be excited by analog stick or touch stick
          *   - slowly goes back to the direction of walking.
          */
-        if (_v2MouseMove.Y != 0)
+        if (_v2MouseMove.X != 0)
         {
             float mouseAngleOrientation = -(_v2MouseMove.X) * (float)Math.PI / 180f;
             totalAngleOrientation += mouseAngleOrientation;
         }
 
-        var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), totalAngleOrientation);
+        if (_v2RightTouchMove.X != 0)
+        {
+            float touchAngleOrientation = -(_v2RightTouchMove.X) * (float)Math.PI / 180f;
+            totalAngleOrientation += touchAngleOrientation;
+        }
+
+        var rotRight = Quaternion.CreateFromAxisAngle(Vector3.UnitY, totalAngleOrientation);
         rotRight = Quaternion.Concatenate(rotRight, Quaternion.Slerp(Quaternion.Identity,_qPreviousStickYAxisDrive,10.0f));
         qNewFront = Quaternion.Concatenate(qNewFront, rotRight);
 

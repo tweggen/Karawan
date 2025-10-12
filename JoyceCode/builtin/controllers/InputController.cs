@@ -25,8 +25,8 @@ public class InputController : engine.AController, engine.IInputPart
 
     public float MY_Z_ORDER { get; set; } = 0f;
     public float TouchLookSensitivity { get; set; } = 12f;
-    public float TouchMoveSensitivity { get; set; } = 1.4f;
-    public float TouchPeakMoveSensitivity { get; set; } = 4f * 8f;
+    public float TouchMoveSensitivity { get; set; } = 4.0f;
+    public float TouchPeakMoveSensitivity { get; set; } = 64f;
     public float MouseLookMoveSensitivity  { get; set; }= 1f;
 
 
