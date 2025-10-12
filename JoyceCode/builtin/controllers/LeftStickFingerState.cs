@@ -74,7 +74,6 @@ class LeftStickFingerState : AInputControllerFingerState
             cs.AnalogLeft = 0;
         }
 #endif
-        cs.AnalogToWalkControllerNoLock();
     }
 
 
@@ -90,7 +89,6 @@ class LeftStickFingerState : AInputControllerFingerState
         cs.AnalogLeftStickUp = 0;
         cs.AnalogLeftStickDown = 0;
         _accuX = 0f;
-        cs.AnalogToWalkControllerNoLock();
 
         LastPosition = default;
     }

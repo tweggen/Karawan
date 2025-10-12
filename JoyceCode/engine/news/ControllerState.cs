@@ -131,11 +131,6 @@ namespace engine.news
         public int TouchLeftStickLeft;
         public int TouchLeftStickRight;
         
-        public void AnalogToWalkControllerNoLock()
-        {
-        }
-
-
         public void Reset()
         {
             AnalogRight2 = 0;

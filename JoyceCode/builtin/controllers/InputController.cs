@@ -146,7 +146,6 @@ public class InputController : engine.AController, engine.IInputPart
                 default:
                     break;
             }
-            _controllerState.AnalogToWalkControllerNoLock();
         }
     }
     
@@ -177,8 +176,6 @@ public class InputController : engine.AController, engine.IInputPart
                 default:
                     break;
             }
-
-            _controllerState.AnalogToWalkControllerNoLock();
         }
     }
 
@@ -229,10 +226,7 @@ public class InputController : engine.AController, engine.IInputPart
                         / ControllerXMax * TouchAnalogMax);
                     _controllerState.TouchLeftStickLeft = 0;
                 }
-                
-                _controllerState.AnalogToWalkControllerNoLock();
-
-            }
+           }
             else
             {
                 var viewSize = _v2ViewSize;
@@ -329,8 +323,6 @@ public class InputController : engine.AController, engine.IInputPart
                 _controllerState.TouchLeftStickDown = 0;
                 _controllerState.TouchLeftStickRight = 0;
                 _controllerState.TouchLeftStickLeft = 0;
-                
-                _controllerState.AnalogToWalkControllerNoLock();
 
                 _lastTouchPosition = default;
             }
@@ -654,8 +646,6 @@ public class InputController : engine.AController, engine.IInputPart
                         _controllerState.AnalogLeftStickUp = 0;
                         _controllerState.AnalogLeftStickDown = -(int)(pos.Y * 255f);
                     }
-
-                    _controllerState.AnalogToWalkControllerNoLock();
                 }
 
                 break;
@@ -782,7 +772,6 @@ public class InputController : engine.AController, engine.IInputPart
                 lock (_lo)
                 {
                     _controllerState.AnalogLeft2 = (int)(255f * (ev.PhysicalPosition.X+1f)/2f);
-                    _controllerState.AnalogToWalkControllerNoLock();
                 }
 
                 break;
@@ -794,7 +783,6 @@ public class InputController : engine.AController, engine.IInputPart
                 lock (_lo)
                 {
                     _controllerState.AnalogRight2 = (int)(255f * (ev.PhysicalPosition.X+1f)/2f);
-                    _controllerState.AnalogToWalkControllerNoLock();
                 }
 
                 break;
