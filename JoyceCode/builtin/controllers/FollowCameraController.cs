@@ -44,6 +44,7 @@ public class FollowCameraController : AController, IInputPart
     private Vector2 _vStickOffset;
     private Vector2 _vMouseMove;
     float _lastMouseMove = 0f;
+    private float _lastLeftStickYAxisMove = 0f;
     private bool _firstFrame = true;
     private bool _isInputEnabled = true;
     private bool _mouseOffsetsCamera = false;
@@ -66,7 +67,9 @@ public class FollowCameraController : AController, IInputPart
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
     public float MOUSE_RELATIVE_AMOUNT { get; set; } = 0.03f;
     public float MOUSE_RETURN_SLERP { get; set; } = 0.98f;
+    public float STICK_Y_RETURN_SLERP { get; set; } = 0.98f;
     public float MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT { get; set; } = 1.6f;
+    public float STICK_INACTIVE_BEFORE_RETURN_TIMEOUT { get; set; } = 1.6f;
     public float FOLLOW_AFTER_MOVING_FOR { get; set; } = 0.4f;
     public float ADJUST_AFTER_STOPPING_FOR { get; set; } = 0.5f;
     public float CONSIDER_ORIENTATION_WHILE_DRIVING { get; set; } = 0.9f;
@@ -360,6 +363,14 @@ public class FollowCameraController : AController, IInputPart
                 qFront = qOrientationFront;
             }
         }
+        
+        /*
+         * Rotate the front vector by the mouse orientation.
+         */
+        var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _vMouseAnglesOffseting.Y);
+        rotRight = Quaternion.Concatenate(rotRight, -_qStickYAxisOffset);
+        
+        qFront = Quaternion.Concatenate(qFront, rotRight);
 
         qPerfectCameraOrientation = qFront;
     }
@@ -398,7 +409,7 @@ public class FollowCameraController : AController, IInputPart
         }
 
         var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), totalAngleOrientation);
-        rotRight = Quaternion.Concatenate(rotRight, _qPreviousStickYAxisDrive);
+        rotRight = Quaternion.Concatenate(rotRight, Quaternion.Slerp(Quaternion.Identity,_qPreviousStickYAxisDrive,10.0f));
         qNewFront = Quaternion.Concatenate(qNewFront, rotRight);
 
         qPerfectCameraOrientation = qNewFront;
@@ -443,21 +454,24 @@ public class FollowCameraController : AController, IInputPart
         Vector3 vFront = Vector3.Transform(new Vector3(0f, 0f, -1f), qFront);
 
 
+        #if false
         if (_mouseOffsetsCamera)
         {
             /*
              * Rotate the front vector by the mouse orientation.
              */
             var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _vMouseAnglesOffseting.Y);
+            rotRight = Quaternion.Concatenate(rotRight, _qStickYAxisOffset);
             vFront = Vector3.Transform(vFront, rotRight);
         }
+        #endif
 
         /*
          * Derive right from front and the Y vector, up is straight up,
          * real front then again from -(richt x up)
          */
         engine.geom.Camera.CreateVectorsFromPlaneFront(vFront,
-            out var vPerfectCameraFront, out var vPerfectCameraRight);
+            out var vuPerfectCameraFront, out var vuPerfectCameraRight);
 
         /*
          * Now we have a camera corrdinate system.
@@ -474,9 +488,13 @@ public class FollowCameraController : AController, IInputPart
          */
         float vertAngle = Single.Clamp(_vMouseAnglesOffseting.X,
             -85f * Single.Pi / 180f, 85f * Single.Pi / 180f);
-        float dy = Single.Sin(vertAngle);
-        float dz = Single.Cos(vertAngle);
-        vPerfectCameraOffset = zoomDistance * vPerfectCameraFront * dz - zoomDistance  * _vuUp * dy;
+        
+        Quaternion qRot = Quaternion.CreateFromAxisAngle(Vector3.UnitX, -vertAngle);
+        qRot = Quaternion.Concatenate(qRot, _qStickXAxisOffset);
+        
+        var vuDirection = Vector3.Transform(Vector3.UnitZ, qRot);
+        
+        vPerfectCameraOffset = zoomDistance * vuPerfectCameraFront * vuDirection.Z - zoomDistance  * _vuUp * vuDirection.Y;
 
         vPerfectCameraPos = vCarrotPos - vPerfectCameraOffset;
 
@@ -702,20 +720,16 @@ public class FollowCameraController : AController, IInputPart
     private void _computeStickDrive()
     {
         Quaternion qStickYAxisDrive = Quaternion.Identity;
-        qStickYAxisDrive = Quaternion.Concatenate(qStickYAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -_vStickOffset.X / 5f));
-        _qPreviousStickYAxisDrive = Quaternion.Slerp(_qPreviousStickYAxisDrive, qStickYAxisDrive, 0.15f);
+        qStickYAxisDrive = Quaternion.Concatenate(qStickYAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -_vStickOffset.X / 20f));
+        _qPreviousStickYAxisDrive = Quaternion.Slerp(_qPreviousStickYAxisDrive, qStickYAxisDrive, 0.3f);
         
         _qStickYAxisOffset = Quaternion.Concatenate(_qStickYAxisOffset, _qPreviousStickYAxisDrive);
         
-        //Trace($"qStickYAxisOffset = {_qStickYAxisOffset}, _qPreviousStickYAxisDrive = {_qPreviousStickYAxisDrive}, qStickYAxisDrive = {qStickYAxisDrive}");
-        
-        #if false
         Quaternion qStickXAxisDrive = Quaternion.Identity;
-        qStickXAxisDrive = Quaternion.Concatenate(qStickXAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitX, -_vStickOffset.Y / 50f));
+        qStickXAxisDrive = Quaternion.Concatenate(qStickXAxisDrive, Quaternion.CreateFromAxisAngle(Vector3.UnitX, -_vStickOffset.Y / 20f));
 
-        _qPreviousStickXAxisDrive = Quaternion.Slerp(_qPreviousStickXAxisDrive, qStickXAxisDrive, 0.15f);
+        _qPreviousStickXAxisDrive = Quaternion.Slerp(_qPreviousStickXAxisDrive, qStickXAxisDrive, 0.2f);
         _qStickXAxisOffset = Quaternion.Concatenate(_qStickXAxisOffset, _qPreviousStickXAxisDrive);
-        #endif
 
     }
     
@@ -808,6 +822,15 @@ public class FollowCameraController : AController, IInputPart
             _lastMouseMove = 0f;
         }
 
+        if (_vStickOffset.X <= 0.002 && _vStickOffset.X >= -0.002)
+        {
+            _lastLeftStickYAxisMove += dt;
+        }
+        else
+        {
+            _lastLeftStickYAxisMove = 0f;
+        }
+
 
         //var vUserCameraFront = 
         //    vRealCameraFront * (float)Math.Cos(-angleY)
@@ -846,6 +869,12 @@ public class FollowCameraController : AController, IInputPart
         }
         else
         {
+        }
+
+        if (_lastLeftStickYAxisMove > STICK_INACTIVE_BEFORE_RETURN_TIMEOUT)
+        {
+            _qStickYAxisOffset =
+                Quaternion.Slerp(_qStickYAxisOffset, Quaternion.Identity, STICK_Y_RETURN_SLERP);
         }
 
         _firstFrame = false;
