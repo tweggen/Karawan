@@ -55,15 +55,15 @@ class LeftStickFingerState : AInputControllerFingerState
             float curvedY = _ic.TouchSteerTransferY(_v2Accu.Y) / 1.8f;
             if (curvedY < -_ic.ControllerYTolerance)
             {
-                cs.TouchLeftStickUp = (int)(Single.Min(_ic.ControllerYMax, -curvedY - _ic.ControllerYTolerance)
+                cs.TouchLeftPushUp = (int)(Single.Min(_ic.ControllerYMax, -curvedY - _ic.ControllerYTolerance)
                     / _ic.ControllerYMax * _ic.TouchAnalogMax);
-                cs.TouchLeftStickDown = 0;
+                cs.TouchLeftPushDown = 0;
             }
             else if (curvedY > _ic.ControllerYTolerance)
             {
-                cs.TouchLeftStickDown = (int)(Single.Min(_ic.ControllerYMax, curvedY - _ic.ControllerYTolerance)
+                cs.TouchLeftPushDown = (int)(Single.Min(_ic.ControllerYMax, curvedY - _ic.ControllerYTolerance)
                     / _ic.ControllerYMax * _ic.TouchAnalogMax);
-                cs.TouchLeftStickUp = 0;
+                cs.TouchLeftPushUp = 0;
             }
             _v2Accu.Y *= 0.94f;
         }
@@ -101,15 +101,15 @@ class LeftStickFingerState : AInputControllerFingerState
             float curvedX = _ic.TouchSteerTransferX(_v2Accu.X) / 1.8f;
             if (curvedX < -_ic.ControllerXTolerance)
             {
-                cs.TouchLeftStickLeft = (int)(Single.Min(_ic.ControllerXMax, -curvedX - _ic.ControllerXTolerance)
+                cs.TouchLeftPushLeft = (int)(Single.Min(_ic.ControllerXMax, -curvedX - _ic.ControllerXTolerance)
                     / _ic.ControllerXMax * _ic.TouchAnalogMax);
-                cs.TouchLeftStickRight = 0;
+                cs.TouchLeftPushRight = 0;
             }
             else if (curvedX > _ic.ControllerXTolerance)
             {
-                cs.TouchLeftStickRight = (int)(Single.Min(_ic.ControllerXMax, curvedX - _ic.ControllerXTolerance)
+                cs.TouchLeftPushRight = (int)(Single.Min(_ic.ControllerXMax, curvedX - _ic.ControllerXTolerance)
                     / _ic.ControllerXMax * _ic.TouchAnalogMax);
-                cs.TouchLeftStickLeft = 0;
+                cs.TouchLeftPushLeft = 0;
             }
             _v2Accu.X *= 0.94f;
         }
