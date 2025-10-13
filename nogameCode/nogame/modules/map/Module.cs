@@ -528,12 +528,12 @@ public class Module : AModule, IInputPart
         
         vDelta.X += (float)(0
                             + controllerState.AnalogLeftStickHoriz
-                            + controllerState.TouchLeftHoriz
+                            + controllerState.TouchLeftStickHoriz
                             + controllerState.WASDHoriz
                             ) / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
         vDelta.Y -= (float)(0
                             + controllerState.AnalogLeftStickVert
-                            + controllerState.TouchLeftVert
+                            + controllerState.TouchLeftStickVert
                             + controllerState.WASDVert
                             ) / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
 

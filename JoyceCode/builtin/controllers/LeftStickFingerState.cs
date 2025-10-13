@@ -6,7 +6,7 @@ namespace builtin.controllers;
 
 class LeftStickFingerState : AInputControllerFingerState
 {
-    float _accuX = 0f;
+    Vector2 _v2Accu = Vector2.Zero;
 
     public override void HandleMotion(Event ev)
     {
@@ -22,30 +22,83 @@ class LeftStickFingerState : AInputControllerFingerState
         v2Now *= _ic.TouchPeakMoveSensitivity;
         v2Total = _ic.TouchSteerTransfer(v2Total);
 
-        if (v2Total.Y < -_ic.ControllerYTolerance)
+        /*
+         * Straight value Y
+         */
         {
-            /*
-             * The user dragged up compare to the press position
-             */
-            cs.TouchLeftStickUp = (int)(Single.Min(_ic.ControllerYMax, -v2Total.Y-_ic.ControllerYTolerance)
-                / _ic.ControllerYMax * _ic.TouchAnalogMax);
-            cs.TouchLeftStickDown = 0;
+            if (v2Total.Y < -_ic.ControllerYTolerance)
+            {
+                /*
+                 * The user dragged up compare to the press position
+                 */
+                cs.TouchLeftStickUp = (int)(Single.Min(_ic.ControllerYMax, -v2Total.Y - _ic.ControllerYTolerance)
+                    / _ic.ControllerYMax * _ic.TouchAnalogMax);
+                cs.TouchLeftStickDown = 0;
+            }
+            else if (v2Total.Y > _ic.ControllerYTolerance)
+            {
+                /*
+                 * The user dragged down compared to the press position.
+                 */
+                cs.TouchLeftStickDown = (int)(Single.Min(_ic.ControllerYMax, v2Total.Y - _ic.ControllerYTolerance)
+                    / _ic.ControllerYMax * _ic.TouchAnalogMax);
+                cs.TouchLeftStickUp = 0;
+            }
         }
-        else if (v2Total.Y > _ic.ControllerYTolerance)
+        
+        /*
+         * Push Value Y
+         */
         {
-            /*
-             * The user dragged down compared to the press position.
-             */
-            cs.TouchLeftStickDown = (int)(Single.Min(_ic.ControllerYMax, v2Total.Y-_ic.ControllerYTolerance) 
-                / _ic.ControllerYMax * _ic.TouchAnalogMax);
-            cs.TouchLeftStickUp = 0;
+            float moveY = v2Now.Y;
+            _v2Accu.Y += moveY;
+            float curvedY = _ic.TouchSteerTransferY(_v2Accu.Y) / 1.8f;
+            if (curvedY < -_ic.ControllerYTolerance)
+            {
+                cs.TouchLeftStickUp = (int)(Single.Min(_ic.ControllerYMax, -curvedY - _ic.ControllerYTolerance)
+                    / _ic.ControllerYMax * _ic.TouchAnalogMax);
+                cs.TouchLeftStickDown = 0;
+            }
+            else if (curvedY > _ic.ControllerYTolerance)
+            {
+                cs.TouchLeftStickDown = (int)(Single.Min(_ic.ControllerYMax, curvedY - _ic.ControllerYTolerance)
+                    / _ic.ControllerYMax * _ic.TouchAnalogMax);
+                cs.TouchLeftStickUp = 0;
+            }
+            _v2Accu.Y *= 0.94f;
         }
-#if true
+        
+        /*
+         * Straight value X
+         */
         {
+            if (v2Total.X < -_ic.ControllerXTolerance)
+            {
+                /*
+                 * The user dragged left compare to the press position
+                 */
+                cs.TouchLeftStickLeft = (int)(Single.Min(_ic.ControllerXMax, -v2Total.X - _ic.ControllerXTolerance)
+                    / _ic.ControllerXMax * _ic.TouchAnalogMax);
+                cs.TouchLeftStickRight = 0;
+            }
+            else if (v2Total.X > _ic.ControllerXTolerance)
+            {
+                /*
+                 * The user dragged right compared to the press position.
+                 */
+                cs.TouchLeftStickRight = (int)(Single.Min(_ic.ControllerXMax, v2Total.X - _ic.ControllerXTolerance)
+                    / _ic.ControllerXMax * _ic.TouchAnalogMax);
+                cs.TouchLeftStickLeft = 0;
+            }
+        }
 
+        /*
+         * Push value X.
+         */
+        {
             float moveX = v2Now.X;
-            _accuX += moveX;
-            float curvedX = _ic.TouchSteerTransferX(_accuX) / 1.8f;
+            _v2Accu.X += moveX;
+            float curvedX = _ic.TouchSteerTransferX(_v2Accu.X) / 1.8f;
             if (curvedX < -_ic.ControllerXTolerance)
             {
                 cs.TouchLeftStickLeft = (int)(Single.Min(_ic.ControllerXMax, -curvedX - _ic.ControllerXTolerance)
@@ -58,22 +111,8 @@ class LeftStickFingerState : AInputControllerFingerState
                     / _ic.ControllerXMax * _ic.TouchAnalogMax);
                 cs.TouchLeftStickLeft = 0;
             }
-            _accuX *= 0.94f;
+            _v2Accu.X *= 0.94f;
         }
-#else
-        if (vRel.X < -_ic.ControllerXTolerance)
-        {
-            cs.AnalogLeft = (int)(Single.Min(_ic.ControllerXMax, -vRel.X-_ic.ControllerXTolerance) 
-                / _ic.ControllerXMax * _ic.TouchAnalogMax);
-            cs.AnalogRight = 0;
-        }
-        else if (vRel.X > _ic.ControllerXTolerance)
-        {
-            cs.AnalogRight = (int)(Single.Min(_ic.ControllerXMax, vRel.X-_ic.ControllerXTolerance) 
-                / _ic.ControllerXMax * _ic.TouchAnalogMax);
-            cs.AnalogLeft = 0;
-        }
-#endif
     }
 
 
@@ -82,12 +121,10 @@ class LeftStickFingerState : AInputControllerFingerState
         base.HandleReleased(ev);
         var cs = _ic.ControllerState;
 
-        cs.AnalogRight2 = 0;
-        cs.AnalogLeft2 = 0;
-        cs.AnalogLeftStickRight = 0;
-        cs.AnalogLeftStickLeft = 0;
-        cs.AnalogLeftStickUp = 0;
-        cs.AnalogLeftStickDown = 0;
+        cs.TouchLeftStickRight = 0;
+        cs.TouchLeftStickLeft = 0;
+        cs.TouchLeftStickUp = 0;
+        cs.TouchLeftStickDown = 0;
         _accuX = 0f;
 
         LastPosition = default;

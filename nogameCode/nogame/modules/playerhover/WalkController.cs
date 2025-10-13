@@ -220,9 +220,14 @@ public class WalkController : AController, IInputPart
          */
         var frontMotion = 0
                           - controllerState.AnalogLeftStickVert
-                          - controllerState.TouchLeftVert
+                          + controllerState.TouchLeftStickVert
                           + controllerState.WASDVert;
-        
+        if ((_engine.FrameNumber & 0x7) == 0)
+        {
+            Trace(
+                $"AnalogLeftStickVert = {controllerState.AnalogLeftStickVert}, TouchLeftVert = {controllerState.TouchLeftStickVert}");
+        }
+
         /*
          * left / right motion (strafe) is
          * - analog left stick horizontally
@@ -231,7 +236,7 @@ public class WalkController : AController, IInputPart
          */
         var rightMotion = 0 
                           + controllerState.AnalogLeftStickHoriz
-                          + controllerState.TouchLeftHoriz
+                          + controllerState.TouchLeftStickHoriz
                           + controllerState.WASDHoriz;
 
         /*

@@ -146,7 +146,12 @@ internal class HoverController : AController
             var frontMotion = 0
                 + controllerState.BumpersMotion
                 + controllerState.WASDVert
-                + controllerState.TouchLeftVert;
+                + controllerState.TouchLeftStickVert;
+            if ((_engine.FrameNumber & 0x7) == 0)
+            {
+                Trace(
+                    $"BumpersMotion = {controllerState.BumpersMotion}, TouchLeftVert = {controllerState.TouchLeftStickVert}");
+            }
 
             /*
              * The up motion is not supported today.
@@ -162,7 +167,7 @@ internal class HoverController : AController
                 float inputTurnMotion = 0f
                     + controllerState.AnalogLeftStickHoriz
                     + controllerState.WASDHoriz
-                    + controllerState.TouchLeftHoriz;
+                    + controllerState.TouchLeftPushHoriz;
                  
                 float maxThreshold;
                 if (_lastTurnMotion == 0)

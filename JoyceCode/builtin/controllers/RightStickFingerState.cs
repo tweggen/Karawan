@@ -21,7 +21,7 @@ class RightStickFingerState : AInputControllerFingerState
         //_ic.V2MouseMove += v2Now * 100f;    
     }
 
-    
+
     public RightStickFingerState(
         in Vector2 pos,
         InputController ic) : base(pos, ic)

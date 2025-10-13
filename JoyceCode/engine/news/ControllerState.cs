@@ -88,7 +88,7 @@ namespace engine.news
         }
 
 
-        public int TouchLeftHoriz
+        public int TouchLeftStickHoriz
         {
             get {
                 int rightMotion = TouchLeftStickRight - TouchLeftStickLeft;
@@ -106,10 +106,45 @@ namespace engine.news
         }
 
         
-        public int TouchLeftVert
+        public int TouchLeftStickVert
         {
             get {
                 int upMotion = TouchLeftStickUp - TouchLeftStickDown;
+                if (upMotion > 255)
+                {
+                    upMotion = 255;
+                } 
+                else if(upMotion<-255)
+                {
+                    upMotion = -255;
+                }
+                return upMotion; 
+            }
+        }
+        
+        
+        public int TouchLeftPushHoriz
+        {
+            get {
+                int rightMotion = TouchLeftPushRight - TouchLeftPushLeft;
+                if (rightMotion > 255)
+                {
+                    rightMotion = 255;
+                } 
+                else if(rightMotion<-255)
+                {
+                    rightMotion = -255;
+                }
+
+                return rightMotion;
+            }
+        }
+
+        
+        public int TouchLeftPushVert
+        {
+            get {
+                int upMotion = TouchLeftPushUp - TouchLeftPushDown;
                 if (upMotion > 255)
                 {
                     upMotion = 255;
@@ -135,8 +170,12 @@ namespace engine.news
         public int WASDRight;
         public int TouchLeftStickUp;
         public int TouchLeftStickDown;
+        public int TouchLeftPushUp;
+        public int TouchLeftPushDown;
         public int TouchLeftStickLeft;
         public int TouchLeftStickRight;
+        public int TouchLeftPushLeft;
+        public int TouchLeftPushRight;
         
         public void Reset()
         {
