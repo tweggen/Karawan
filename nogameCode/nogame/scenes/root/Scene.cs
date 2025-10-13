@@ -315,8 +315,8 @@ public class Scene : AModule, IScene, IInputPart
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         
         // TXWTODO: Generalize this.
-        //M<SpawnController>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
-        //M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
+        M<SpawnController>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
+        M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
         
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.save", _triggerSave);
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
