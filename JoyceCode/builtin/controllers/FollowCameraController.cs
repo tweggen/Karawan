@@ -67,7 +67,7 @@ public class FollowCameraController : AController, IInputPart
     public float ZOOM_MAX_DISTANCE { get; set; } = 133f;
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
     public float MOUSE_RELATIVE_AMOUNT { get; set; } = 0.03f;
-    public float RIGHT_TOUCH_RELATIVE_AMOUNT { get; set; } = 0.03f;
+    public float RIGHT_TOUCH_RELATIVE_AMOUNT { get; set; } = 180f;
     public float MOUSE_RETURN_SLERP { get; set; } = 0.98f;
     public float STICK_Y_RETURN_SLERP { get; set; } = 0.98f;
     public float MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT { get; set; } = 1.6f;
@@ -415,7 +415,7 @@ public class FollowCameraController : AController, IInputPart
 
         if (_v2RightTouchMove.X != 0)
         {
-            float touchAngleOrientation = -(_v2RightTouchMove.X) * (float)Math.PI / 180f;
+            float touchAngleOrientation = -(100f*_v2RightTouchMove.X) * (float)Math.PI / 180f;
             totalAngleOrientation += touchAngleOrientation;
         }
 
@@ -474,6 +474,11 @@ public class FollowCameraController : AController, IInputPart
             var rotRight = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _vMouseAnglesOffseting.Y);
             rotRight = Quaternion.Concatenate(rotRight, -_qStickYAxisOffset);
             vFront = Vector3.Transform(vFront, rotRight);
+            if ((_engine.FrameNumber & 7) == 0)
+            {
+                Trace($"_vMouseAnglesOffseting = {_vMouseAnglesOffseting}");
+            }
+
         }
         #endif
 
@@ -838,6 +843,12 @@ public class FollowCameraController : AController, IInputPart
         else
         {
             _lastMouseMove = 0f;
+        }
+
+        if ((_engine.FrameNumber & 7) == 0)
+        {
+            Trace(
+                $"_v2RightTouchMove = {_v2RightTouchMove}, _v2MouseMove = {_v2MouseMove}, _v2MouseOffseting = {_v2MouseOffseting}");
         }
 
         if (Single.Abs(_v2StickOffset.X) < 0.002)
