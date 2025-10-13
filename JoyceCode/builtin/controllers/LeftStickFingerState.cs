@@ -125,7 +125,11 @@ class LeftStickFingerState : AInputControllerFingerState
         cs.TouchLeftStickLeft = 0;
         cs.TouchLeftStickUp = 0;
         cs.TouchLeftStickDown = 0;
-        _accuX = 0f;
+        cs.TouchLeftPushDown = 0;
+        cs.TouchLeftPushUp = 0;
+        cs.TouchLeftPushLeft = 0;
+        cs.TouchLeftPushRight = 0;
+        _v2Accu = Vector2.Zero;
 
         LastPosition = default;
     }
@@ -134,7 +138,7 @@ class LeftStickFingerState : AInputControllerFingerState
     public override void HandlePressed(Event ev)
     {
         base.HandlePressed(ev);
-        _accuX = 0;
+        _v2Accu = Vector2.Zero;
     }
 
     public LeftStickFingerState(
