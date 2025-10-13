@@ -212,6 +212,29 @@ public class WalkController : AController, IInputPart
 
         I.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
 
+        #if true
+        Vector3 vWalkDirection =
+            Vector3.UnitX * Single.Clamp(
+                controllerState.TouchLeftStickHoriz + controllerState.AnalogLeftStickHoriz + controllerState.WASDHoriz,
+                -255f, 255f) / 255f
+                +
+                -Vector3.UnitZ * Single.Clamp(
+                    controllerState.TouchLeftStickVert - controllerState.AnalogLeftStickVert + controllerState.WASDVert,
+                    -255f, 255f) / 255f
+            ;
+        float lWalkDirection = vWalkDirection.Length();
+        bool haveVelocity = false;
+        if (Single.Abs(lWalkDirection) > 0.1f)
+        {
+            haveVelocity = true; 
+        }
+        else
+        {
+            haveVelocity = false;
+            vWalkDirection = Vector3.Zero;
+            lWalkDirection = 0f;
+        }
+        #else
         /*
          * front back motion is
          * - analog left stick vertically
@@ -270,6 +293,7 @@ public class WalkController : AController, IInputPart
             vuWalkDirection += -Vector3.UnitX;
             haveVelocity = true;
         }
+        #endif
 
         Quaternion qWalkFront; 
         
@@ -291,8 +315,6 @@ public class WalkController : AController, IInputPart
         CharacterAnimState walkAnimState;
         if (haveVelocity)
         {
-            vuWalkDirection = Vector3.Normalize(vuWalkDirection);
-
             /*
              * Walking speed in km/h
              */
@@ -306,7 +328,7 @@ public class WalkController : AController, IInputPart
                 speed = 8f;
             }
 
-            vNewTargetVelocity += (-vuWalkDirection.Z * vuFront + vuWalkDirection.X * vuRight) * (speed / 3.6f);
+            vNewTargetVelocity += (-vWalkDirection.Z * vuFront + vWalkDirection.X * vuRight) * (speed / 3.6f);
             Vector3 vuWalkFront = Vector3.Normalize(vNewTargetVelocity);
             qWalkFront = engine.geom.Camera.CreateQuaternionFromPlaneFront(vuWalkFront);
 
