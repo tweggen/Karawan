@@ -149,6 +149,7 @@ public class FollowCameraController : AController, IInputPart
     private float _zoomState = 0.15f;
 
     private Vector3 _vCarrotVelocity;
+    private bool _traceControllers;
 
     private float _zoomDistance()
     {
@@ -474,7 +475,7 @@ public class FollowCameraController : AController, IInputPart
             var rotRight = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _vMouseAnglesOffseting.Y);
             rotRight = Quaternion.Concatenate(rotRight, -_qStickYAxisOffset);
             vFront = Vector3.Transform(vFront, rotRight);
-            if ((_engine.FrameNumber & 7) == 0)
+            if (_traceControllers && (_engine.FrameNumber & 7) == 0)
             {
                 Trace($"_vMouseAnglesOffseting = {_vMouseAnglesOffseting}");
             }
@@ -845,7 +846,7 @@ public class FollowCameraController : AController, IInputPart
             _lastMouseMove = 0f;
         }
 
-        if ((_engine.FrameNumber & 7) == 0)
+        if (_traceControllers && (_engine.FrameNumber & 7) == 0)
         {
             Trace(
                 $"_v2RightTouchMove = {_v2RightTouchMove}, _v2MouseMove = {_v2MouseMove}, _v2MouseOffseting = {_v2MouseOffseting}");
@@ -951,7 +952,7 @@ public class FollowCameraController : AController, IInputPart
                 _mouseOffsetsCamera = false;
                 break;
         }
-        Trace($"Control mode switched to {_mouseOffsetsCamera}");
+        if (_traceControllers) Trace($"Control mode switched to {_mouseOffsetsCamera}");
     }
 
 

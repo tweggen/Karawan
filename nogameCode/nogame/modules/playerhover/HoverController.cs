@@ -48,6 +48,7 @@ internal class HoverController : AController
 
 
     private float _lastTurnMotion = 0f;
+    private bool _traceControllers;
 
 
     protected override void OnLogicalFrame(object sender, float dt)
@@ -147,7 +148,7 @@ internal class HoverController : AController
                 + controllerState.BumpersMotion
                 + controllerState.WASDVert
                 + controllerState.TouchLeftStickVert;
-            if ((_engine.FrameNumber & 0x7) == 0)
+            if (_traceControllers && (_engine.FrameNumber & 0x7) == 0)
             {
                 Trace(
                     $"BumpersMotion = {controllerState.BumpersMotion}, TouchLeftVert = {controllerState.TouchLeftStickVert}");
