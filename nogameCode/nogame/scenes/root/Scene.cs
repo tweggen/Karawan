@@ -278,6 +278,12 @@ public class Scene : AModule, IScene, IInputPart
 
         }
     }
+
+
+    private void _onStartButton(Event ev)
+    {
+        
+    }
     
     
     public void SceneKickoff()

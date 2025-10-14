@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using engine.news;
 using static engine.Logger;
 
 namespace engine;
@@ -184,6 +185,57 @@ public abstract class AModule : IModule
     protected void DeactivateMyModule<T>() where T : class, IModule => _moduleTracker.DeactivateMyModule<T>();
     protected bool IsMyModuleActive<T>() where T : class, IModule => _moduleTracker.IsMyModuleActive<T>();
 
+
+    protected SortedSet<(string, Action<Event>)> _setSubscriptions = new();
+
+
+    protected void UnsubscribeAll()
+    {
+        SortedSet<(string, Action<Event>)> setSubscriptions;
+        lock (_lo)
+        {
+            setSubscriptions = _setSubscriptions;
+            _setSubscriptions = new();
+        }
+
+        foreach (var sub in setSubscriptions)
+        {
+            I.Get<SubscriptionManager>().Unsubscribe(sub.Item1, sub.Item2);
+        }
+    }
+    
+    
+    protected void Unsubscribe(string path, Action<Event> handler)
+    {
+        lock (_lo)
+        {
+            if (_setSubscriptions.Contains((path, handler)))
+            {
+                _setSubscriptions.Remove((path, handler));
+            }
+            else
+            {
+                return;
+            }
+        }
+        I.Get<SubscriptionManager>().Unsubscribe(path, handler);
+    }
+    
+
+    protected void Subscribe(string path, Action<Event> handler, Func<Event, EmissionContext, float> distanceFunc = null)
+    {
+        lock (_lo)
+        {
+            if (_setSubscriptions.Contains((path, handler)))
+            {
+                return;
+            }
+
+            _setSubscriptions.Add((path, handler));
+        }
+        I.Get<SubscriptionManager>().Subscribe(path, handler, distanceFunc);
+    }
+    
     
     protected virtual void OnModuleDeactivate()
     {
@@ -213,6 +265,7 @@ public abstract class AModule : IModule
             Warning($"Exception while executing Deactivate call for module: {e}.");
         }
         _internalOnModuleDeactivate();
+        UnsubscribeAll();
 
         _engine.RemoveModule(this);
         _moduleTracker.ModuleDeactivate();   

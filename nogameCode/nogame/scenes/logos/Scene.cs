@@ -245,6 +245,18 @@ public class Scene : AModule, IScene
         
         _startGame(false);
     }
+
+
+    private void _onStartButton(Event ev)
+    {
+        lock (_lo)
+        {
+            if (_isStartingGame) return;
+            _isStartingGame = true;
+        }
+        
+        // TXWTOOD: Start the game.
+    }
     
 
     private void _onNewGlobally(Event ev)
@@ -270,9 +282,10 @@ public class Scene : AModule, IScene
 
     private void _showLoginMenu()
     {
-        I.Get<SubscriptionManager>().Subscribe("nogame.login.loginLocally", _onLoginLocally);
-        I.Get<SubscriptionManager>().Subscribe("nogame.login.loginGlobally", _onLoginGlobally);
-        I.Get<SubscriptionManager>().Subscribe("nogame.login.newGlobally", _onNewGlobally);
+        Subscribe("nogame.login.loginLocally", _onLoginLocally);
+        Subscribe("nogame.login.loginGlobally", _onLoginGlobally);
+        Subscribe("nogame.login.newGlobally", _onNewGlobally);
+        Subscribe("nogame.login.Start", _onStartButton);
 
         ActivateMyModule<nogame.modules.menu.LoginMenuModule>();
         
@@ -311,10 +324,8 @@ public class Scene : AModule, IScene
          * Null out everything we don't need when the scene is unloaded.
          */
         I.Get<SceneSequencer>().RemoveScene(this);
-        
-        I.Get<SubscriptionManager>().Unsubscribe("nogame.login.loginLocally", _onLoginLocally);
-        I.Get<SubscriptionManager>().Unsubscribe("nogame.login.loginGlobally", _onLoginGlobally);
-        I.Get<SubscriptionManager>().Unsubscribe("nogame.login.newGlobally", _onNewGlobally);
+
+        UnsubscribeAll();
     }
 
     
