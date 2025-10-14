@@ -160,6 +160,7 @@ internal class HoverController : AController
                 // controllerState.AnalogLeftStickVert;
             float turnMotion;
             {
+                // TXWTODO: Define constants for each of the sensitivities
                 /*
                  * The left/right turn motion is
                  * left stick left right (touch or physical) + a/d keyboard.
@@ -167,7 +168,7 @@ internal class HoverController : AController
                 float inputTurnMotion = 0f
                     + controllerState.AnalogLeftStickHoriz
                     + controllerState.WASDHoriz
-                    + controllerState.TouchLeftPushHoriz;
+                    + controllerState.TouchLeftPushHoriz * 0.5f;
                  
                 float maxThreshold;
                 if (_lastTurnMotion == 0)
