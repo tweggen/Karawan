@@ -93,9 +93,6 @@ public class Stats : engine.AController
         _engine.Player.RemoveOnChange(_onPlayerEntityChanged);
 
         
-        I.Get<SubscriptionManager>().Unsubscribe(
-            Event.RENDER_STATS, _onRenderStats);
-
         _ePhysDisplay.Dispose();
     }
 
@@ -104,8 +101,7 @@ public class Stats : engine.AController
     {
         _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
 
-        I.Get<SubscriptionManager>().Subscribe(
-            Event.RENDER_STATS, _onRenderStats);
+        Subscribe(Event.RENDER_STATS, _onRenderStats);
 
         _engine.Player.AddNowOnChange(_onPlayerEntityChanged);
     }

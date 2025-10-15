@@ -70,12 +70,11 @@ public class InputEventPipeline : engine.AModule
     
     protected override void OnModuleDeactivate()
     {
-        I.Get<SubscriptionManager>().Unsubscribe("input.", _onInputEvent);
     }
 
     
     protected override void OnModuleActivate()
     {
-        I.Get<SubscriptionManager>().Subscribe("input.", _onInputEvent);
+        Subscribe("input.", _onInputEvent);
     }
 }

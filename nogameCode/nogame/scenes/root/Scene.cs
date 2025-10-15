@@ -298,8 +298,6 @@ public class Scene : AModule, IScene, IInputPart
     {
         M<InputEventPipeline>().RemoveInputPart(this);
 
-        I.Get<SubscriptionManager>().Unsubscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
-
         /*
          * Null out everything we don't need when the scene is unloaded.
          */
@@ -324,9 +322,9 @@ public class Scene : AModule, IScene, IInputPart
         M<SpawnController>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
         
-        I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.save", _triggerSave);
-        I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
-        I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.setAmbientLight", _onSetAmbientLight);
+        Subscribe("nogame.modules.menu.save", _triggerSave);
+        Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
+        Subscribe("nogame.scenes.root.setAmbientLight", _onSetAmbientLight);
         
         ActivateMyModule<modules.map.Module>();
 

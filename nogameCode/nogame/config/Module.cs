@@ -78,7 +78,6 @@ public class Module : AModule
     
     protected override void OnModuleDeactivate()
     {
-        I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.config.save", _onSave);
     }
 
 
@@ -89,7 +88,7 @@ public class Module : AModule
             _gameConfig = gameConfig;
         }
      
-        I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.config.save", _onSave);
+        Subscribe("nogame.config.save", _onSave);
     }
 
 }

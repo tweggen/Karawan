@@ -35,8 +35,6 @@ public class Module : AModule
     {
         Props.Set("engine.editor.isOpen", false);
 
-        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onMousePressed);
-        
         _engine.OnImGuiRender -= _onImGuiRender;
         _engine.DisableEntityIds();
     }
@@ -47,7 +45,7 @@ public class Module : AModule
         _engine.OnImGuiRender += _onImGuiRender;
         _engine.EnableEntityIds();
         
-        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onMousePressed);
+        Subscribe(Event.INPUT_TOUCH_PRESSED, _onMousePressed);
         
         Props.Set("engine.editor.isOpen", true);
     }

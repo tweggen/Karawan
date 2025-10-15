@@ -214,13 +214,6 @@ public class MainPlayModule : engine.AModule, IInputPart
     {
         M<InputEventPipeline>().RemoveInputPart(this);
         I.Get<MetaGen>().Loader.RemoveViewer(_playerViewer);
-        
-        I.Get<SubscriptionManager>().Unsubscribe(EventCodeGetIntoHover, _onGetIntoHover);
-        I.Get<SubscriptionManager>().Unsubscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
-        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsHoverDeactivated, _onIsHoverDeactivated);
-        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsPersonDeactivated, _onIsPersonDeactivated);
-        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsHoverActivated, _onIsHoverActivated);
-        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsPersonActivated, _onIsPersonActivated);
     }
 
 
@@ -270,12 +263,12 @@ public class MainPlayModule : engine.AModule, IInputPart
 
     protected override void OnModuleActivate()
     {
-        I.Get<SubscriptionManager>().Subscribe(EventCodeGetIntoHover, _onGetIntoHover);
-        I.Get<SubscriptionManager>().Subscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
-        I.Get<SubscriptionManager>().Subscribe(EventCodeIsHoverDeactivated, _onIsHoverDeactivated);
-        I.Get<SubscriptionManager>().Subscribe(EventCodeIsPersonDeactivated, _onIsPersonDeactivated);
-        I.Get<SubscriptionManager>().Subscribe(EventCodeIsHoverActivated, _onIsHoverActivated);
-        I.Get<SubscriptionManager>().Subscribe(EventCodeIsPersonActivated, _onIsPersonActivated);
+        Subscribe(EventCodeGetIntoHover, _onGetIntoHover);
+        Subscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
+        Subscribe(EventCodeIsHoverDeactivated, _onIsHoverDeactivated);
+        Subscribe(EventCodeIsPersonDeactivated, _onIsPersonDeactivated);
+        Subscribe(EventCodeIsHoverActivated, _onIsHoverActivated);
+        Subscribe(EventCodeIsPersonActivated, _onIsPersonActivated);
         
         _engine.Run(_setupPlayer);
     }

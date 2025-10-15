@@ -964,8 +964,6 @@ public class FollowCameraController : AController, IInputPart
     
     protected override void OnModuleDeactivate()
     {
-        I.Get<SubscriptionManager>().Subscribe(EventTypeRequestMode, _onRequestMode);
-
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         _destroyPhysics();
     }
@@ -1000,7 +998,7 @@ public class FollowCameraController : AController, IInputPart
         _buildPhysics();
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         
-        I.Get<SubscriptionManager>().Subscribe(EventTypeRequestMode, _onRequestMode);
-        I.Get<SubscriptionManager>().Subscribe(EventTypeRecommendDistance, _onRecommendDistance);
+        Subscribe(EventTypeRequestMode, _onRequestMode);
+        Subscribe(EventTypeRecommendDistance, _onRecommendDistance);
     }
 }

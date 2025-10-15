@@ -837,7 +837,6 @@ public class InputController : engine.AController, engine.IInputPart
     protected override void OnModuleDeactivate()
     {
         M<InputEventPipeline>().RemoveInputPart(this);
-        I.Get<SubscriptionManager>().Unsubscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         _fingerStateHandler = null;
     }
 
@@ -860,7 +859,7 @@ public class InputController : engine.AController, engine.IInputPart
                 }
             }
         );
-        I.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
+        Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _refreshViewSize();
     }

@@ -742,13 +742,12 @@ public class Module : AModule, IInputPart
     
     protected override void OnModuleDeactivate()
     {
-        I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.modules.map.toggleMap", _onClickMap);
     }
 
     
     protected override void OnModuleActivate()
     {
-        I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.map.toggleMap", _onClickMap);
+        Subscribe("nogame.modules.map.toggleMap", _onClickMap);
 
         _viewSize = engine.GlobalSettings.ParseSize(engine.GlobalSettings.Get("view.size"));
         

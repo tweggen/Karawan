@@ -328,7 +328,6 @@ public class Gameplay : AModule, IInputPart
         _engine.Camera.RemoveOnChange(_onNewCamera);
         _engine.Player.RemoveOnChange(_onNewPlayer);
         
-        I.Get<SubscriptionManager>().Unsubscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
         M<engine.news.InputEventPipeline>().RemoveInputPart(this);
         _killOldCameraController();
     }
@@ -336,6 +335,6 @@ public class Gameplay : AModule, IInputPart
     
     protected override void OnModuleActivate()
     {
-        I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
+        Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
     }
 }

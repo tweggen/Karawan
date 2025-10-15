@@ -540,7 +540,6 @@ public class Narration : AModule, IInputPart
 
     protected override void OnModuleDeactivate()
     {
-        I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
         M<InputEventPipeline>().RemoveInputPart(this);
     }
 
@@ -557,6 +556,6 @@ public class Narration : AModule, IInputPart
         M<Saver>().OnBeforeSaveGame += _onBeforeSaveGame;
         M<Saver>().OnAfterLoadGame += _onAfterLoadGame;
         
-        I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
+        Subscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
     }
 }

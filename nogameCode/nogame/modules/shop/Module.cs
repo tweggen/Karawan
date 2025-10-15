@@ -96,8 +96,6 @@ public class Module : AModule, IInputPart
 
     protected override void OnModuleDeactivate()
     {
-        I.Get<SubscriptionManager>().Unsubscribe("nogame.modules.shop.close", _closeShop);
-
         M<InputEventPipeline>().RemoveInputPart(this);
 
         M<Factory>().CloseOSD(_layerDefinition.Name, "shopFront");
@@ -109,8 +107,8 @@ public class Module : AModule, IInputPart
     {
         _engine.GamePlayState = GamePlayStates.Paused;
 
-        I.Get<SubscriptionManager>().Subscribe("nogame.modules.shop.close", _closeShop);
-        I.Get<SubscriptionManager>().Subscribe("nogame.modules.shop.buy", _buy);
+        Subscribe("nogame.modules.shop.close", _closeShop);
+        Subscribe("nogame.modules.shop.buy", _buy);
 
         try
         {
