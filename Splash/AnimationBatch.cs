@@ -14,7 +14,7 @@ public class AnimationBatch
      * We might want to this fore timed LOD or due to constraints of the
      * underlying rendering layer.
      */
-    public AnimationState AnimationState;
+    public GPUAnimationState GpuAnimationState;
 
     /**
      * The animation frame numbers of the models to render.

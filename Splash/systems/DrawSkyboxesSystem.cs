@@ -31,7 +31,7 @@ namespace Splash.systems
                 var matrixSkybox = Matrix4x4.CreateTranslation(vCameraPosition);
 
                 // TXWTODO: Somehow improve this for use with the AppendInstance API.
-                cameraOutput.AppendInstance(pfInstance, matrixSkybox, new engine.joyce.components.AnimationState());
+                cameraOutput.AppendInstance(pfInstance, matrixSkybox, new engine.joyce.components.GPUAnimationState());
 
             }
         }

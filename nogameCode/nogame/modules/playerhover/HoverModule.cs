@@ -222,7 +222,7 @@ public class HoverModule : AModule, IInputPart
                     if (mapAnimations.TryGetValue(AnimName, out var animation))
                     {
 
-                        _eAnimations.Set(new AnimationState
+                        _eAnimations.Set(new GPUAnimationState
                         {
                             ModelAnimation = animation,
                             ModelAnimationFrame = 0

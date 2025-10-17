@@ -1,6 +1,6 @@
 namespace engine.joyce.components;
 
-public struct AnimationState
+public struct GPUAnimationState
 {
     public ModelAnimation? ModelAnimation;
     public ushort ModelAnimationFrame;

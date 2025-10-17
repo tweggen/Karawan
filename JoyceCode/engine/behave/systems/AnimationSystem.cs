@@ -5,7 +5,7 @@ using static engine.Logger;
 
 namespace engine.behave.systems;
 
-[DefaultEcs.System.With(typeof(AnimationState))]
+[DefaultEcs.System.With(typeof(GPUAnimationState))]
 public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
 {
     private engine.Engine _engine;
@@ -29,13 +29,13 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
                 continue;
             }
 
-            ref AnimationState cAnimationState = ref entity.Get<AnimationState>();
-            ref var modelAnimation = ref cAnimationState.ModelAnimation;
+            ref GPUAnimationState cGpuAnimationState = ref entity.Get<GPUAnimationState>();
+            ref var modelAnimation = ref cGpuAnimationState.ModelAnimation;
             if (null != modelAnimation)
             {
-                ushort frameno = cAnimationState.ModelAnimationFrame;
+                ushort frameno = cGpuAnimationState.ModelAnimationFrame;
                 ushort nframes = (ushort) modelAnimation.NFrames;
-                if ((cAnimationState.Flags & AnimationState.IsOneShot) == 0)
+                if ((cGpuAnimationState.Flags & GPUAnimationState.IsOneShot) == 0)
                 {
                     frameno += advanceNow;
                     while (frameno >= nframes)
@@ -43,8 +43,8 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
                         frameno -= nframes;
                     }
 
-                    cAnimationState.ModelAnimationFrame = frameno;
-                    entity.Set(cAnimationState);
+                    cGpuAnimationState.ModelAnimationFrame = frameno;
+                    entity.Set(cGpuAnimationState);
                 }
                 else
                 {
@@ -53,8 +53,8 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
                     
                     if (newframeno != frameno)
                     {
-                        cAnimationState.ModelAnimationFrame = newframeno;
-                        entity.Set(cAnimationState);
+                        cGpuAnimationState.ModelAnimationFrame = newframeno;
+                        entity.Set(cGpuAnimationState);
                     }
                 }
             }

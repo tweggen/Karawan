@@ -157,7 +157,7 @@ public class WalkModule : AModule, IInputPart
                                 CharacterModelDescription.IdleAnimName, out var animation))
                         {
 
-                            _eAnimations.Set(new AnimationState
+                            _eAnimations.Set(new GPUAnimationState
                             {
                                 ModelAnimation = animation,
                                 ModelAnimationFrame = 0

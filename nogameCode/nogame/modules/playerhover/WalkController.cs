@@ -454,33 +454,33 @@ public class WalkController : AController, IInputPart
                             strAnimation, out var animation))
                     {
                         // TXWTODO: This is not entirely true with respect to the frame.
-                        AnimationState cAnimationState;
-                        if (CharacterModelDescription.EntityAnimations.Has<AnimationState>())
+                        GPUAnimationState cGpuAnimationState;
+                        if (CharacterModelDescription.EntityAnimations.Has<GPUAnimationState>())
                         {
-                            cAnimationState = CharacterModelDescription.EntityAnimations.Get<AnimationState>();
+                            cGpuAnimationState = CharacterModelDescription.EntityAnimations.Get<GPUAnimationState>();
                         }
                         else
                         {
-                            cAnimationState = new AnimationState();
+                            cGpuAnimationState = new GPUAnimationState();
                         }
-                        cAnimationState.ModelAnimation = animation;
+                        cGpuAnimationState.ModelAnimation = animation;
                         /*
                          * This is just a nice way of saying, dont be negative, after force casting this from int to ushort..
                          */
                         if ((forceFrameZero & 0x8000)==0)
                         {
-                            cAnimationState.ModelAnimationFrame = (ushort) forceFrameZero;
+                            cGpuAnimationState.ModelAnimationFrame = (ushort) forceFrameZero;
                         }
 
                         if (isOneShot)
                         {
-                            cAnimationState.Flags |= AnimationState.IsOneShot;
+                            cGpuAnimationState.Flags |= GPUAnimationState.IsOneShot;
                         }
                         else
                         {
-                            cAnimationState.Flags &= unchecked((ushort)~AnimationState.IsOneShot);
+                            cGpuAnimationState.Flags &= unchecked((ushort)~GPUAnimationState.IsOneShot);
                         }
-                        CharacterModelDescription.EntityAnimations.Set(cAnimationState);
+                        CharacterModelDescription.EntityAnimations.Set(cGpuAnimationState);
                     }
                     else
                     {

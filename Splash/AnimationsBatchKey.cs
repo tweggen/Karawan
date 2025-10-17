@@ -12,13 +12,13 @@ namespace Splash;
 public struct AnimationsBatchKey : IEquatable<AnimationsBatchKey>
 {
     public AAnimationsEntry AAnimationsEntry;
-    public AnimationState CAnimationState;
+    public GPUAnimationState CGpuAnimationState;
     
     public bool Equals(AnimationsBatchKey other)
     {
         return AAnimationsEntry.Model == other.AAnimationsEntry.Model
-               && CAnimationState.ModelAnimation == other.CAnimationState.ModelAnimation
-               && CAnimationState.ModelAnimationFrame == other.CAnimationState.ModelAnimationFrame
+               && CGpuAnimationState.ModelAnimation == other.CGpuAnimationState.ModelAnimation
+               && CGpuAnimationState.ModelAnimationFrame == other.CGpuAnimationState.ModelAnimationFrame
             ;
     }
 
@@ -29,12 +29,12 @@ public struct AnimationsBatchKey : IEquatable<AnimationsBatchKey>
 
     public override int GetHashCode()
     {
-        return (AAnimationsEntry != null ? (AAnimationsEntry.GetHashCode() * CAnimationState.GetHashCode()) : 0);
+        return (AAnimationsEntry != null ? (AAnimationsEntry.GetHashCode() * CGpuAnimationState.GetHashCode()) : 0);
     }
 
-    public AnimationsBatchKey(AAnimationsEntry aAnimationsEntry, in AnimationState cAnimationState)
+    public AnimationsBatchKey(AAnimationsEntry aAnimationsEntry, in GPUAnimationState cGpuAnimationState)
     {
         AAnimationsEntry = aAnimationsEntry;
-        CAnimationState = cAnimationState;
+        CGpuAnimationState = cGpuAnimationState;
     }
 } 

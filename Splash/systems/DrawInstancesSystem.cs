@@ -80,20 +80,20 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                     if (aabb.SignedDistance(_bottomFrustum) < 0) continue;
                 }
 
-                engine.joyce.components.AnimationState cAnimationState;
-                if (entity.Has<engine.joyce.components.AnimationState>())
+                engine.joyce.components.GPUAnimationState cGpuAnimationState;
+                if (entity.Has<engine.joyce.components.GPUAnimationState>())
                 {
-                    cAnimationState = entity.Get<engine.joyce.components.AnimationState>();
+                    cGpuAnimationState = entity.Get<engine.joyce.components.GPUAnimationState>();
                 }
                 else
                 {
-                    cAnimationState.ModelAnimation = null;
-                    cAnimationState.ModelAnimationFrame = 0;
-                    cAnimationState.Flags = 0;
+                    cGpuAnimationState.ModelAnimation = null;
+                    cGpuAnimationState.ModelAnimationFrame = 0;
+                    cGpuAnimationState.Flags = 0;
                 }
                 
                 _nInstancesAppended++;
-                cameraOutput.AppendInstance(pfInstance, transform3ToWorld.Matrix, cAnimationState);
+                cameraOutput.AppendInstance(pfInstance, transform3ToWorld.Matrix, cGpuAnimationState);
             }
         }
     }

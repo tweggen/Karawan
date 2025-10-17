@@ -219,18 +219,18 @@ public class CameraOutput
                         Span<uint> spanFramenos = meshItem.Value.Framenos.ToArray();
 #endif
                         ModelBakedFrame? modelBakedFrame;
-                        if (animationItem.AnimationState.ModelAnimation != null
-                            && animationItem.AnimationState.ModelAnimation.BakedFrames != null)
+                        if (animationItem.GpuAnimationState.ModelAnimation != null
+                            && animationItem.GpuAnimationState.ModelAnimation.BakedFrames != null)
                         {
-                            uint frameno = animationItem.AnimationState.ModelAnimationFrame;
-                            uint availframes = (uint)animationItem.AnimationState.ModelAnimation.BakedFrames.Count();
+                            uint frameno = animationItem.GpuAnimationState.ModelAnimationFrame;
+                            uint availframes = (uint)animationItem.GpuAnimationState.ModelAnimation.BakedFrames.Count();
                             if (frameno >= availframes)
                             {
                                 Error($"Frame number out of bounds: {frameno} > {availframes}");
                                 frameno = 0;
                             }
                             modelBakedFrame =
-                                animationItem.AnimationState.ModelAnimation.BakedFrames[frameno];
+                                animationItem.GpuAnimationState.ModelAnimation.BakedFrames[frameno];
                         }
                         else
                         {
@@ -255,7 +255,7 @@ public class CameraOutput
         in AMaterialEntry aMaterialEntry,
         AAnimationsEntry? aAnimationsEntry,
         in Matrix4x4 matrix,
-        in engine.joyce.components.AnimationState cAnimationState)
+        in engine.joyce.components.GPUAnimationState cGpuAnimationState)
     {
         _frameStats.NEntities++;
         bool trackPositions;
@@ -290,7 +290,7 @@ public class CameraOutput
         uint frameno = 0;
         if (null == aAnimationsEntry)
         {
-            if (cAnimationState.ModelAnimation != null && cAnimationState.ModelAnimationFrame != 0)
+            if (cGpuAnimationState.ModelAnimation != null && cGpuAnimationState.ModelAnimationFrame != 0)
             {
                 int a = 1;
             }
@@ -298,14 +298,14 @@ public class CameraOutput
         }
         else
         {
-            ModelAnimation? ma = cAnimationState.ModelAnimation;
+            ModelAnimation? ma = cGpuAnimationState.ModelAnimation;
             if (ma != null)
             {
-                frameno = ma.FirstFrame + cAnimationState.ModelAnimationFrame;
+                frameno = ma.FirstFrame + cGpuAnimationState.ModelAnimationFrame;
             }
         }
         
-        meshBatch.Add(aAnimationsEntry, cAnimationState, matrix, frameno, _frameStats);
+        meshBatch.Add(aAnimationsEntry, cGpuAnimationState, matrix, frameno, _frameStats);
 
         /*
          * In particular when rendering transparency, we need to have average
@@ -380,7 +380,7 @@ public class CameraOutput
     public void AppendInstance(
         in Splash.components.PfInstance pfInstance, 
         in Matrix4x4 transform3ToWorld,
-        in engine.joyce.components.AnimationState cAnimationState)
+        in engine.joyce.components.GPUAnimationState cGpuAnimationState)
     {
         lock (_lo)
         {
@@ -456,21 +456,21 @@ public class CameraOutput
                         _appendInstanceNoLock(
                             aMeshEntry, aMaterialEntry, aAnimationsEntry,
                             id.ModelTransform * transform3ToWorld,
-                            cAnimationState);
+                            cGpuAnimationState);
                     }
                     else
                     {
                         _appendInstanceNoLock(
                             aMeshEntry, aMaterialEntry, aAnimationsEntry,
                             _mUnscale * id.ModelTransform * transform3ToWorld,
-                            cAnimationState
+                            cGpuAnimationState
                             );
                     }
                 }
                 else
                 {
                     _computeInverseBillboardMatrix(aMaterialEntry, aMeshEntry, transform3ToWorld, id, out var m);
-                    _appendInstanceNoLock(aMeshEntry, aMaterialEntry, aAnimationsEntry, m, cAnimationState);
+                    _appendInstanceNoLock(aMeshEntry, aMaterialEntry, aAnimationsEntry, m, cGpuAnimationState);
                 }
             }
         }

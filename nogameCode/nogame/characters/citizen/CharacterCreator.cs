@@ -315,7 +315,7 @@ public class CharacterCreator
             if (mapAnimations != null && mapAnimations.Count > 0)
             {
                 var animation = mapAnimations[strAnimation];
-                eAnimations.Set(new AnimationState
+                eAnimations.Set(new GPUAnimationState
                 {
                     ModelAnimation = animation,
                     ModelAnimationFrame = (ushort)((NDrawCallsPerCharacterBatch>0)?
