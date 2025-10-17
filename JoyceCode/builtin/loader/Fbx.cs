@@ -28,12 +28,18 @@ public class Fbx
 
         float scale = 1f;
         List<string>? additionalUrls = null;
+        List<string> cpuNodes = null;
+        if (modelProperties.Properties.ContainsKey("CPUNodes"))
+        {
+            cpuNodes = modelProperties.Properties["CPUNodes"].Split(';',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).ToList();
+        }
+        
         AxisInterpreter? axisInterpreter = null;
         AxisInterpreter? animAxisInterpreter = null;
         
-        if (modelProperties.Properties.ContainsKey("AdditionalUrls"))
+        if (modelProperties.Properties.ContainsKey("AnimationUrls"))
         {
-            additionalUrls = modelProperties.Properties["AdditionalUrls"].Split(';',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).ToList();
+            additionalUrls = modelProperties.Properties["AnimationUrls"].Split(';',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).ToList();
         }
 
         if (modelProperties.Properties.ContainsKey("Scale"))
@@ -53,7 +59,7 @@ public class Fbx
         
         using (var fbxModel = new fbx.FbxModel())
         {
-            fbxModel.Load(url, additionalUrls, scale,
+            fbxModel.Load(url, additionalUrls, cpuNodes,scale,
                 axisInterpreter, 
                 animAxisInterpreter,
                 out model);

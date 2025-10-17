@@ -61,7 +61,8 @@ public class Model
         {
             Index = _nextAnimIndex++,
             FirstFrame = _nextAnimFrame,
-            RestPose = mnRestPose
+            RestPose = mnRestPose,
+            CpuFrames = new()
         };
     }
 
@@ -221,6 +222,11 @@ public class Model
             m4MyBoneSpaceToRestPose = mnRestPose.Transform.Matrix * m4BoneSpaceToRestPose;
         }
 
+        // TXWTODO: Write this.
+        /*
+         * Look, if we are supposed to store this node's anim frame model pose to bone pose to the
+         * model animation.
+         */
         
         /*
          * Store resulting matrix if we have a bone that carries it and thus might influence
@@ -249,38 +255,38 @@ public class Model
              * - apply the inverse to get back to the model
              */
             Matrix4x4 m4Baked =
-                    /*
-                     * First transform the mesh to global as intended                    
-                     */
-                    /*
-                     * First from model coordinate space to bone local coordinate space.
-                     * The vertex shader is called with the coordinates as stored in the mesh.
-                     *
-                     * This contains the scaling or matrix correction we apply because
-                     * of the fbx local system, typically 0.01 
-                     */
-                    FirstInstanceDescTransformWithInstance *
-                    
-                    /*
-                     * TXWTODO: TODO
-                     * FirstInstanceDesc contains the root scaling, modelposetobonepose
-                     */
-                    
-                    /*
-                     * Now transform this back to bone coordinate system.
-                     * TXWTODO: Check, if this contains modified root scaling.
-                     * answer: Yes, it does, from _m4Inverse...
-                     */
-                    m4MyModelPoseToBonePose *
-                    
-                    /*
-                     * Now transform bone space back to original coord system.
-                     * TXWTODO: Check, if this contains modified root scaling.
-                     * answer: I belive it also does 
-                     */
-                    m4MyBoneSpaceToRestPose *
-                    _m4InverseFirstInstanceDescTransformWithInstance
-                    ;
+                /*
+                 * First transform the mesh to global as intended                    
+                 */
+                /*
+                 * First from model coordinate space to bone local coordinate space.
+                 * The vertex shader is called with the coordinates as stored in the mesh.
+                 *
+                 * This contains the scaling or matrix correction we apply because
+                 * of the fbx local system, typically 0.01 
+                 */
+                FirstInstanceDescTransformWithInstance *
+                
+                /*
+                 * TXWTODO: TODO
+                 * FirstInstanceDesc contains the root scaling, modelposetobonepose
+                 */
+                
+                /*
+                 * Now transform this back to bone coordinate system.
+                 * TXWTODO: Check, if this contains modified root scaling.
+                 * answer: Yes, it does, from _m4Inverse...
+                 */
+                m4MyModelPoseToBonePose *
+                
+                /*
+                 * Now transform bone space back to original coord system.
+                 * TXWTODO: Check, if this contains modified root scaling.
+                 * answer: I belive it also does 
+                 */
+                m4MyBoneSpaceToRestPose *
+                _m4InverseFirstInstanceDescTransformWithInstance
+                ;
 
             /*
              * For some strange reason, transferring matrices via ssbo does transpose the
@@ -319,6 +325,15 @@ public class Model
             }
         }
 
+        /*
+         * If we are supposed to store to bone transformations for this bone, store it.
+         * This may be used to later track combat system collision points.
+         */
+        if (ma.CpuFrames.TryGetValue(mnRestPose.Name, out var cpuBakedFrames))
+        {
+            cpuBakedFrames[frameno] = m4MyModelPoseToBonePose;
+        }
+
         if (mnRestPose.Children != null)
         {
             /*
@@ -345,7 +360,7 @@ public class Model
     /**
      * Compute frame accurate interpolations for all bones for all animations.
      */
-    public void BakeAnimations()
+    public void BakeAnimations(List<string>? cpuNodes)
     {
         if (null == MapAnimations || null == Skeleton || MapAnimations.Count == 0)
         {
@@ -380,6 +395,12 @@ public class Model
         
         AllBakedMatrices = new Matrix4x4[_nextAnimFrame * skeleton.NBones];
         for (int i = 0; i < AllBakedMatrices.Length; ++i) AllBakedMatrices[i] = Matrix4x4.Identity;
+
+        HashSet<string> setCPUNodes = new();
+        foreach (var cpuNode in cpuNodes ?? new List<string>())
+        {
+            setCPUNodes.Add(cpuNode);
+        }
         
         /*
          * First, for all animations, create the arrays of matrices for
@@ -389,6 +410,13 @@ public class Model
         {
             ModelAnimation ma = kvp.Value;
             Trace($"Loading animation {kvp.Key}");
+            if (cpuNodes != null)
+            {
+                foreach (var cpuNode in cpuNodes)
+                {
+                    ma.CpuFrames.Add(cpuNode, new Matrix4x4[ma.NFrames]);
+                }
+            }
 
             /*
              * How many real frames does this animation have?

@@ -35,7 +35,17 @@ public class ModelAnimation
      */
     public ModelNode? RestPose;
     public Dictionary<ModelNode, ModelAnimChannel> MapChannels;
+    
+    /**
+     * Contains all the frames for skin transformation on GPU. Note: This data
+     * structure is not used, we use allBakedFrames from the model.
+     */
     public ModelBakedFrame[] BakedFrames;
+    
+    /**
+     * Contains the baked frames for nodes that should reside on CPU.
+     */
+    public SortedDictionary<string, Matrix4x4[]> CpuFrames;
 
     public ModelAnimChannel CreateChannel(
         ModelNode mnChannel,
@@ -50,7 +60,7 @@ public class ModelAnimation
             Target = mnChannel,
             Positions = positions,
             Rotations = rotations,
-            Scalings = scalings
+            Scalings = scalings,
         };
     }
 }
