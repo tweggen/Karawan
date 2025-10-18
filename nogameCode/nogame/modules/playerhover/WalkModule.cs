@@ -233,6 +233,7 @@ public class WalkModule : AModule, IInputPart
                             engine.joyce.mesh.Tools.CreateCubeMesh("RootScene.playerperson.righthand", 0.2f)
                         ), 50f
                     );
+                    _eRightHand.Set(new CpuAnimated() { AnimationState = _animStatePerson, ModelNodeName = "MiddleFinger2_R"});
                     _eRightHand.Set(new Instance3(idRightHandCube));
                 }
 
