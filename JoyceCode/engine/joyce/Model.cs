@@ -336,7 +336,7 @@ public class Model
              */
             // This could be kind of correct. But from the debugger, the one below looks better.
             // cpuBakedFrames[frameno] = m4MyModelPoseToBonePose;
-            cpuBakedFrames[frameno] = _m4InverseFirstInstanceDescTransformWoInstance * m4MyModelPoseToBonePose;
+            cpuBakedFrames[frameno] = FirstInstanceDescTransformWoInstance * m4MyModelPoseToBonePose;
             int a = 1;
         }
 

@@ -230,7 +230,7 @@ public class WalkModule : AModule, IInputPart
                     var idRightHandCube = InstanceDesc.CreateFromMatMesh(
                         new MatMesh(
                             I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),
-                            engine.joyce.mesh.Tools.CreateCubeMesh("RootScene.playerperson.righthand", 2f)
+                            engine.joyce.mesh.Tools.CreateCubeMesh("RootScene.playerperson.righthand", 0.5f)
                         ), 1000f
                     );
                     _eRightHand.Set(new CpuAnimated() { AnimationState = _animStatePerson, ModelNodeName = "MiddleFinger2_R"});

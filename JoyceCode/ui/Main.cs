@@ -411,28 +411,36 @@ public class Main
 
             if (_currentEntity != _previousEntity)
             {
-                if (_previousEntity != default)
+                var currentEntity = _currentEntity;
+                var previousEntity = _previousEntity;
+                if (currentEntity != default)
                 {
-                    if (_previousEntity.Has<engine.editor.components.Highlight>())
-                    {
-                        _previousEntity.Remove<engine.editor.components.Highlight>();
-                    }
-                }
-
-                if (_currentEntity != default)
-                {
-                    _engine.QueueMainThreadAction(() =>
-                    {
-                        _currentEntity.Set(new engine.editor.components.Highlight()
-                        {
-                            Flags = (byte)Highlight.StateFlags.IsSelected,
-                            Color = 0xff33ffcc
-                        });
-                    });
-
                     _inspectorHeaderFlags |= ImGuiTreeNodeFlags.DefaultOpen;
                 }
                 _previousEntity = _currentEntity;
+
+                _engine.QueueMainThreadAction(() =>
+                {
+                    if (previousEntity != default)
+                    {
+                        if (previousEntity.Has<engine.editor.components.Highlight>())
+                        {
+                            previousEntity.Remove<engine.editor.components.Highlight>();
+                        }
+                    }
+
+                    if (currentEntity != default)
+                    {
+                        _engine.QueueMainThreadAction(() =>
+                        {
+                            currentEntity.Set(new engine.editor.components.Highlight()
+                            {
+                                Flags = (byte)Highlight.StateFlags.IsSelected,
+                                Color = 0xff33ffcc
+                            });
+                        });
+                    }
+                });
             }
             
             if (ImGui.CollapsingHeader("Inspector", _inspectorHeaderFlags))
