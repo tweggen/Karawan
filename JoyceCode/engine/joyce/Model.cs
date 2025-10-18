@@ -331,7 +331,13 @@ public class Model
          */
         if (ma.CpuFrames.TryGetValue(mnRestPose.Name, out var cpuBakedFrames))
         {
-            cpuBakedFrames[frameno] = m4MyModelPoseToBonePose;
+            /*
+             * This is for creating children which are attached to a particular bone.
+             */
+            // This could be kind of correct. But from the debugger, the one below looks better.
+            // cpuBakedFrames[frameno] = m4MyModelPoseToBonePose;
+            cpuBakedFrames[frameno] = _m4InverseFirstInstanceDescTransformWoInstance * m4MyModelPoseToBonePose;
+            int a = 1;
         }
 
         if (mnRestPose.Children != null)
