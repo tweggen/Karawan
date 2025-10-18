@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Numerics;
+using engine.joyce;
 using engine.joyce.components;
 
 namespace Splash;
@@ -14,7 +15,7 @@ public class AnimationBatch
      * We might want to this fore timed LOD or due to constraints of the
      * underlying rendering layer.
      */
-    public GPUAnimationState GpuAnimationState;
+    public AnimationState? AnimationState;
 
     /**
      * The animation frame numbers of the models to render.

@@ -224,8 +224,11 @@ public class HoverModule : AModule, IInputPart
 
                         _eAnimations.Set(new GPUAnimationState
                         {
-                            ModelAnimation = animation,
-                            ModelAnimationFrame = 0
+                            AnimationState = new()
+                            {
+                                ModelAnimation = animation,
+                                ModelAnimationFrame = 0
+                            }
                         });
                         // Trace($"Setting up animation {animation.Name}");
                     }

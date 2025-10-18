@@ -22,7 +22,7 @@ namespace nogame.systems
         }
 
         public CubeSpinnerSystem()
-            : base(I.Get<Engine>().GetEcsWorldNoAssert())
+            : base(I.Get<Engine>().GetEcsWorldAnyThread())
         {
             _aTransform = engine.I.Get<engine.joyce.TransformApi>();
         }

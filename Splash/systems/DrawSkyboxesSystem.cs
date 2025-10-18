@@ -50,7 +50,7 @@ namespace Splash.systems
         }
 
         public DrawSkyboxesSystem()
-            : base(I.Get<Engine>().GetEcsWorldNoAssert())
+            : base(I.Get<Engine>().GetEcsWorldAnyThread())
         {
             _engine = I.Get<Engine>();
         }

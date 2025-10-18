@@ -463,22 +463,25 @@ public class WalkController : AController, IInputPart
                         {
                             cGpuAnimationState = new GPUAnimationState();
                         }
-                        cGpuAnimationState.ModelAnimation = animation;
+
+                        AnimationState animState = CharacterModelDescription.AnimationState;
+                        animState.ModelAnimation = animation;
+                        cGpuAnimationState.AnimationState = animState;
                         /*
                          * This is just a nice way of saying, dont be negative, after force casting this from int to ushort..
                          */
                         if ((forceFrameZero & 0x8000)==0)
                         {
-                            cGpuAnimationState.ModelAnimationFrame = (ushort) forceFrameZero;
+                            animState.ModelAnimationFrame = (ushort) forceFrameZero;
                         }
 
                         if (isOneShot)
                         {
-                            cGpuAnimationState.Flags |= GPUAnimationState.IsOneShot;
+                            animState.Flags |= AnimationState.IsOneShot;
                         }
                         else
                         {
-                            cGpuAnimationState.Flags &= unchecked((ushort)~GPUAnimationState.IsOneShot);
+                            animState.Flags &= unchecked((ushort)~AnimationState.IsOneShot);
                         }
                         CharacterModelDescription.EntityAnimations.Set(cGpuAnimationState);
                     }

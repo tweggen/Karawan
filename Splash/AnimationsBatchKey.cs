@@ -1,4 +1,5 @@
 using System;
+using engine.joyce;
 using engine.joyce.components;
 
 namespace Splash;
@@ -12,13 +13,14 @@ namespace Splash;
 public struct AnimationsBatchKey : IEquatable<AnimationsBatchKey>
 {
     public AAnimationsEntry AAnimationsEntry;
-    public GPUAnimationState CGpuAnimationState;
+    public ModelAnimation? ModelAnimation;
+    public uint FrameNumber;
     
     public bool Equals(AnimationsBatchKey other)
     {
         return AAnimationsEntry.Model == other.AAnimationsEntry.Model
-               && CGpuAnimationState.ModelAnimation == other.CGpuAnimationState.ModelAnimation
-               && CGpuAnimationState.ModelAnimationFrame == other.CGpuAnimationState.ModelAnimationFrame
+               && ModelAnimation == other.ModelAnimation
+               && FrameNumber == other.FrameNumber
             ;
     }
 
@@ -29,12 +31,19 @@ public struct AnimationsBatchKey : IEquatable<AnimationsBatchKey>
 
     public override int GetHashCode()
     {
-        return (AAnimationsEntry != null ? (AAnimationsEntry.GetHashCode() * CGpuAnimationState.GetHashCode()) : 0);
+        return 
+            ((AAnimationsEntry != null) ? (AAnimationsEntry.GetHashCode()) : 0)
+            + (int)FrameNumber 
+            + ((ModelAnimation!=null)?ModelAnimation.GetHashCode():1);
     }
 
-    public AnimationsBatchKey(AAnimationsEntry aAnimationsEntry, in GPUAnimationState cGpuAnimationState)
+    public AnimationsBatchKey(
+        AAnimationsEntry aAnimationsEntry, 
+        in ModelAnimation modelAnimation, 
+        uint frameno)
     {
         AAnimationsEntry = aAnimationsEntry;
-        CGpuAnimationState = cGpuAnimationState;
+        ModelAnimation = modelAnimation;
+        FrameNumber = frameno;
     }
 } 

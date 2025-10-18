@@ -92,7 +92,7 @@ namespace engine.joyce.systems
 
 
         public NewParentSystem()
-            : base( I.Get<Engine>().GetEcsWorldNoAssert() )
+            : base( I.Get<Engine>().GetEcsWorldAnyThread() )
         {
             _engine = I.Get<Engine>();
         }

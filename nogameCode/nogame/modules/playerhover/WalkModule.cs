@@ -32,8 +32,11 @@ public class WalkModule : AModule, IInputPart
 
     private DefaultEcs.Entity _ePerson;
     private DefaultEcs.Entity _eAnimations;
+    private DefaultEcs.Entity _eRightHand;
+    private DefaultEcs.Entity _eLeftHand;
     private BepuPhysics.BodyReference _prefPerson;
     private Entity _eMapPerson;
+    private AnimationState _animStatePerson = new();
 
     private TransformApi _aTransform;
     
@@ -149,6 +152,7 @@ public class WalkModule : AModule, IInputPart
                 {
                     CharacterModelDescription.EntityAnimations = _eAnimations;
                     CharacterModelDescription.Model = _model;
+                    CharacterModelDescription.AnimationState = _animStatePerson;
 
                     var mapAnimations = _model.MapAnimations;
                     if (mapAnimations != null && mapAnimations.Count > 0)
@@ -156,13 +160,13 @@ public class WalkModule : AModule, IInputPart
                         if (mapAnimations.TryGetValue(
                                 CharacterModelDescription.IdleAnimName, out var animation))
                         {
+                            _animStatePerson.ModelAnimation = animation;
+                            _animStatePerson.ModelAnimationFrame = 0;
 
                             _eAnimations.Set(new GPUAnimationState
                             {
-                                ModelAnimation = animation,
-                                ModelAnimationFrame = 0
+                                AnimationState = _animStatePerson
                             });
-                            // Trace($"Setting up animation {animation.Name}");
                         }
                         else
                         {
@@ -215,13 +219,31 @@ public class WalkModule : AModule, IInputPart
                 }));
 
                 /*
+                 * Create a right hand entity attached to animation
+                 */
+                {
+                    _eRightHand = _engine.CreateEntity("RootScene.playerperson.righthand");
+                    I.Get<HierarchyApi>().SetParent(_eRightHand, _ePerson);
+                    I.Get<TransformApi>().SetTransforms(_eRightHand, true,
+                        0x0000ffff,
+                        Quaternion.Identity, Vector3.Zero);
+                    var idRightHandCube = InstanceDesc.CreateFromMatMesh(
+                        new MatMesh(
+                            I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),
+                            engine.joyce.mesh.Tools.CreateCubeMesh("RootScene.playerperson.righthand", 0.2f)
+                        ), 50f
+                    );
+                    _eRightHand.Set(new Instance3(idRightHandCube));
+                }
+
+                /*
                  * Now add an entity as a child that will display in the map
                  */
                 _eMapPerson = _engine.CreateEntity("RootScene.playership.map");
                 I.Get<HierarchyApi>().SetParent(_eMapPerson, _ePerson);
                 I.Get<TransformApi>().SetTransforms(_eMapPerson, true,
                     nogame.modules.map.Module.MapCameraMask,
-                    Quaternion.Identity, new Vector3(0f, 0f, 0f));
+                    Quaternion.Identity, Vector3.Zero);
                 _eMapPerson.Set(new engine.world.components.MapIcon()
                     { Code = engine.world.components.MapIcon.IconCode.Player0 });
 

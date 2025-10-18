@@ -219,18 +219,19 @@ public class CameraOutput
                         Span<uint> spanFramenos = meshItem.Value.Framenos.ToArray();
 #endif
                         ModelBakedFrame? modelBakedFrame;
-                        if (animationItem.GpuAnimationState.ModelAnimation != null
-                            && animationItem.GpuAnimationState.ModelAnimation.BakedFrames != null)
+                        AnimationState? animState = animationItem.AnimationState;
+                        if (animState != null && animState.ModelAnimation != null
+                            && animState.ModelAnimation.BakedFrames != null)
                         {
-                            uint frameno = animationItem.GpuAnimationState.ModelAnimationFrame;
-                            uint availframes = (uint)animationItem.GpuAnimationState.ModelAnimation.BakedFrames.Count();
+                            uint frameno = animState.ModelAnimationFrame;
+                            uint availframes = (uint)animState.ModelAnimation.BakedFrames.Count();
                             if (frameno >= availframes)
                             {
                                 Error($"Frame number out of bounds: {frameno} > {availframes}");
                                 frameno = 0;
                             }
                             modelBakedFrame =
-                                animationItem.GpuAnimationState.ModelAnimation.BakedFrames[frameno];
+                                animState.ModelAnimation.BakedFrames[frameno];
                         }
                         else
                         {
@@ -287,25 +288,22 @@ public class CameraOutput
         
         var meshBatch = materialBatch.Add(aMeshEntry, AnimBatching, _frameStats);
 
-        uint frameno = 0;
+        uint globalFrameno = 0;
+        AnimationState? animState = cGpuAnimationState.AnimationState;
         if (null == aAnimationsEntry)
         {
-            if (cGpuAnimationState.ModelAnimation != null && cGpuAnimationState.ModelAnimationFrame != 0)
-            {
-                int a = 1;
-            }
             aAnimationsEntry = NullAnimationsEntry.Instance();
         }
         else
         {
-            ModelAnimation? ma = cGpuAnimationState.ModelAnimation;
+            ModelAnimation? ma = animState.ModelAnimation;
             if (ma != null)
             {
-                frameno = ma.FirstFrame + cGpuAnimationState.ModelAnimationFrame;
+                globalFrameno = ma.FirstFrame + cGpuAnimationState.AnimationState.ModelAnimationFrame;
             }
         }
         
-        meshBatch.Add(aAnimationsEntry, cGpuAnimationState, matrix, frameno, _frameStats);
+        meshBatch.Add(aAnimationsEntry, animState, globalFrameno, matrix, _frameStats);
 
         /*
          * In particular when rendering transparency, we need to have average

@@ -317,10 +317,13 @@ public class CharacterCreator
                 var animation = mapAnimations[strAnimation];
                 eAnimations.Set(new GPUAnimationState
                 {
-                    ModelAnimation = animation,
-                    ModelAnimationFrame = (ushort)((NDrawCallsPerCharacterBatch>0)?
-                        (I.Get<Engine>().FrameNumber % (animation.NFrames/NDrawCallsPerCharacterBatch))
-                        :0)
+                    AnimationState = new()
+                    {
+                        ModelAnimation = animation,
+                        ModelAnimationFrame = (ushort)((NDrawCallsPerCharacterBatch>0)?
+                            (I.Get<Engine>().FrameNumber % (animation.NFrames/NDrawCallsPerCharacterBatch))
+                            :0)
+                    }
                 });
                 // Trace($"Setting up animation {animation.Name}");
             }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Numerics;
+using engine.joyce;
 using engine.joyce.components;
 
 namespace Splash;
@@ -80,28 +81,44 @@ public class MeshBatch
 
 
     public void Add(
-        in AAnimationsEntry? aAnimationsEntry, GPUAnimationState cGpuAnimationState, 
-        in Matrix4x4 matrix, uint frameno,
+        in AAnimationsEntry? aAnimationsEntry, 
+        AnimationState? animState, 
+        uint globalFrameno,
+        in Matrix4x4 matrix,
         in FrameStats frameStats)
     {
+        // TXWTODO: There is a misalignment of frame number here.
         AnimationBatch animationBatch;
-        if ((_animBatching & Flags.AnimBatching.ByAnimation) == 0)
+        ModelAnimation? ma;
+        ushort localFrameno;
+        if (animState != null)
         {
-            cGpuAnimationState.ModelAnimation = null;
-        }
+            ma = animState.ModelAnimation;
+            localFrameno = animState.ModelAnimationFrame;
+            
+            if ((_animBatching & Flags.AnimBatching.ByAnimation) == 0)
+            {
+                ma = null;
+            }
 
-        if ((_animBatching & Flags.AnimBatching.ByFrameno) == 0)
+            if ((_animBatching & Flags.AnimBatching.ByFrameno) == 0)
+            {
+                localFrameno = 0;
+            }
+        }
+        else
         {
-            cGpuAnimationState.ModelAnimationFrame = 0;
+            ma = null;
+            localFrameno = 0;
         }
         
-        AnimationsBatchKey key = new(aAnimationsEntry, cGpuAnimationState);
+        AnimationsBatchKey key = new(aAnimationsEntry, ma, localFrameno);
         AnimationBatches.TryGetValue(key, out animationBatch);
         if (null == animationBatch)
         {
             animationBatch = new AnimationBatch(aAnimationsEntry)
             {
-                GpuAnimationState = cGpuAnimationState
+                AnimationState = animState 
             };
             AnimationBatches.Add(key, animationBatch);
             frameStats.NAnimations++;
@@ -111,7 +128,7 @@ public class MeshBatch
          * Now we can add our matrix to the list of matrices.
          */
         animationBatch.Matrices.Add(matrix);
-        animationBatch.FrameNos.Add(frameno);
+        animationBatch.FrameNos.Add(globalFrameno);
     }
     
     

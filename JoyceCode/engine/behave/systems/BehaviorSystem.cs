@@ -160,7 +160,7 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
     }
 
     public BehaviorSystem()
-        : base(I.Get<Engine>().GetEcsWorldNoAssert())
+        : base(I.Get<Engine>().GetEcsWorldAnyThread())
     {
         _engine = I.Get<Engine>();
     }

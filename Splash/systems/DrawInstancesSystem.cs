@@ -87,9 +87,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 }
                 else
                 {
-                    cGpuAnimationState.ModelAnimation = null;
-                    cGpuAnimationState.ModelAnimationFrame = 0;
-                    cGpuAnimationState.Flags = 0;
+                    cGpuAnimationState.AnimationState = null;
                 }
                 
                 _nInstancesAppended++;
@@ -149,7 +147,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
 
 
     public DrawInstancesSystem()
-        : base(I.Get<Engine>().GetEcsWorldNoAssert())
+        : base(I.Get<Engine>().GetEcsWorldAnyThread())
     {
         _engine = I.Get<Engine>();
         _threeD = I.Get<IThreeD>();

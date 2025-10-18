@@ -88,4 +88,5 @@ public class CharacterModelDescription
     
     public DefaultEcs.Entity EntityAnimations { get; set; } = default;
     public Model Model { get; set; } = null;
+    public AnimationState AnimationState { get; set; } = null;
 }

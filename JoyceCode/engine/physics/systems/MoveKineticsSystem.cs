@@ -185,7 +185,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
 
     
     public MoveKineticsSystem()
-        : base(I.Get<Engine>().GetEcsWorldNoAssert())
+        : base(I.Get<Engine>().GetEcsWorldAnyThread())
     {
         _engine = I.Get<Engine>();
     }

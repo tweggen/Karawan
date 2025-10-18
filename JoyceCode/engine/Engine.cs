@@ -77,7 +77,8 @@ public class Engine
     private physics.systems.ApplyPosesSystem _systemApplyPoses;
     private physics.systems.MoveKineticsSystem _systemMoveKinetics;
     private audio.systems.MovingSoundsSystem _systemMovingSounds;
-    private behave.systems.AnimationSystem _systemAnimation;
+    private joyce.systems.AnimationSystem _systemAnimation;
+    private joyce.systems.CpuBoneSystem _cpuBoneSystem;
 
     private IReadOnlyCollection<IModule> _roListModules = null;
     private List<IModule> _listModules = new();
@@ -320,7 +321,7 @@ public class Engine
     /**
      * Read the ecs world from a non-logical thread. This is valid, if the world is not about to be used.
      */
-    public DefaultEcs.World GetEcsWorldNoAssert()
+    public DefaultEcs.World GetEcsWorldAnyThread()
     {
         return _ecsWorld;
     }
@@ -878,6 +879,7 @@ public class Engine
          * After all other things, take care to load the next animation frame.
          */
         _systemAnimation.Update(dt);
+        _cpuBoneSystem.Update(dt);
     }
 
 
@@ -1030,6 +1032,7 @@ public class Engine
         _systemMoveKinetics = new();
         _systemMovingSounds = new();
         _systemAnimation = new();
+        _cpuBoneSystem = new();
         _managerPhysics = new physics.Manager();
         _managerPhysics.Manage(this);
         _managerBehavior = new behave.Manager();

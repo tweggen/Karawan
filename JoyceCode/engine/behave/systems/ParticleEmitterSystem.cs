@@ -120,7 +120,7 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
     }
     
     public ParticleEmitterSystem()
-        : base(I.Get<Engine>().GetEcsWorldNoAssert())
+        : base(I.Get<Engine>().GetEcsWorldAnyThread())
     {
         _engine = I.Get<Engine>();
         _rnd = new builtin.tools.RandomSource("particleemitter");
