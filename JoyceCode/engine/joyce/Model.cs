@@ -346,8 +346,8 @@ public class Model
             if(Matrix4x4.Invert(m4MyBoneSpaceToRestPose, out var m4MyRestPoseToBoneSpace))
             {
                 
-                // TXWTODO: We need to take both matrices from the same bone tree.
-                cpuBakedFrames[frameno] = BaseBoneTransformWithInstance * m4MyRestPoseToBoneSpace;
+                // TXWTODO: We need to take both matrices from the same bone trepe.
+                cpuBakedFrames[frameno] = BaseBoneTransformWithInstance * m4MyRestPoseToBoneSpace * Matrix4x4.CreateScale(Scale);
             }
             else
             {
