@@ -232,7 +232,7 @@ public class Obj
         mnRoot.SetModel(model);
         model.ModelNodeTree.RootNode = mnRoot;
             
-        model.Polish();
+        model.Polish(null);
         // TXWTODO: read the maximal distance from some properties
     }
 

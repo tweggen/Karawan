@@ -45,6 +45,7 @@ public class Model
     public bool IsHierarchical { get; private set; } = false;
 
     public ModelNode? FirstInstanceDescNode { get; private set; } = null;
+    public ModelNode? BaseBone { get; private set; } = null;
     
     public Matrix4x4 FirstInstanceDescTransformWithInstance { get; private set; } = Matrix4x4.Identity;
     private Matrix4x4 _m4InverseFirstInstanceDescTransformWithInstance = Matrix4x4.Identity;
@@ -52,6 +53,13 @@ public class Model
     public Matrix4x4 FirstInstanceDescTransformWoInstance { get; private set; } = Matrix4x4.Identity;
     private Matrix4x4 _m4InverseFirstInstanceDescTransformWoInstance = Matrix4x4.Identity;
 
+    public Matrix4x4 BaseBoneTransformWithInstance { get; private set; } = Matrix4x4.Identity;
+    private Matrix4x4 _m4InverseBaseBoneTransformWithInstance = Matrix4x4.Identity;
+    private Matrix4x4 _m4BaseBoneBone2Model = Matrix4x4.Identity;
+    
+    public Matrix4x4 BaseBoneTransformWoInstance { get; private set; } = Matrix4x4.Identity;
+    private Matrix4x4 _m4InverseBaseBoneTransformWoInstance = Matrix4x4.Identity;
+    
     
     public ModelNodeTree ModelNodeTree { get; private set; } 
 
@@ -123,7 +131,7 @@ public class Model
         ModelAnimation ma, uint frameno)
     {
         var skeleton = Skeleton!;
-        
+
         /*
          * Is the current node referenced as a bone that can influence vertices?
          * Some nodes might be animated without directly influencing any vertices,
@@ -334,9 +342,17 @@ public class Model
             /*
              * This is for creating children which are attached to a particular bone.
              */
-            // This could be kind of correct. But from the debugger, the one below looks better.
-            var m4CpuFrame = _m4InverseFirstInstanceDescTransformWithInstance * bone.Model2Bone;
-            cpuBakedFrames[frameno] = m4CpuFrame;
+            
+            if(Matrix4x4.Invert(m4MyBoneSpaceToRestPose, out var m4MyRestPoseToBoneSpace))
+            {
+                cpuBakedFrames[frameno] = _m4InverseBaseBoneTransformWithInstance * m4MyRestPoseToBoneSpace;
+            }
+            else
+            {
+                Warning($"Matrix for cpu for bone {mnRestPose.Name} could not be ingerted");
+                cpuBakedFrames[frameno] = Matrix4x4.Identity;
+            }
+            
             /*
              * Model2Bone is { {M11:-0,8913993 M12:-0,013022288 M13:0,4530315 M14:0} {M21:-0,45304492 M22:-0,0020718572 M23:-0,8914853 M24:0} {M31:0,012547806 M32:-0,9999131 M33:-0,0040528774 M34:0} {M41:-15,525688 M42:-0,006530285 M43:164,30531 M44:1} }
              */
@@ -368,7 +384,7 @@ public class Model
     /**
      * Compute frame accurate interpolations for all bones for all animations.
      */
-    public void BakeAnimations(List<string>? cpuNodes)
+    public void BakeAnimations(string? strModelBaseBone, List<string>? cpuNodes)
     {
         if (null == MapAnimations || null == Skeleton || MapAnimations.Count == 0)
         {
@@ -404,6 +420,10 @@ public class Model
         AllBakedMatrices = new Matrix4x4[_nextAnimFrame * skeleton.NBones];
         for (int i = 0; i < AllBakedMatrices.Length; ++i) AllBakedMatrices[i] = Matrix4x4.Identity;
 
+        
+        /*
+         * setup cpu nodes
+         */
         HashSet<string> setCPUNodes = new();
         foreach (var cpuNode in cpuNodes ?? new List<string>())
         {
@@ -531,9 +551,36 @@ public class Model
     /**
      * Finish the model for use.
      */
-    public void Polish()
+    public void Polish(string ?strModelBaseBone)
     {
         _polishChildrenRecursively(ModelNodeTree.RootNode);
+        
+        /*
+         * Setup Base bone
+         */
+        if (strModelBaseBone != null)
+        {
+            if (ModelNodeTree.MapNodes.TryGetValue(strModelBaseBone, out var mnBaseBone))
+            {
+                BaseBone = mnBaseBone;
+                BaseBoneTransformWithInstance = BaseBone!.ComputeGlobalTransform();
+                _m4BaseBoneBone2Model = Skeleton!.MapBones[strModelBaseBone].Bone2Model;
+                Matrix4x4.Invert(BaseBoneTransformWithInstance,
+                    out _m4InverseBaseBoneTransformWithInstance);
+                if (BaseBone.Parent != null)
+                {
+                    BaseBoneTransformWoInstance = BaseBone.Parent.ComputeGlobalTransform();
+                    Matrix4x4.Invert(BaseBoneTransformWoInstance, out _m4InverseBaseBoneTransformWoInstance);
+                }
+   
+            }
+            else
+            {
+                ErrorThrow<ArgumentException>($"Base bone {strModelBaseBone} not found.");
+            }
+        }
+
+
         if (FirstInstanceDescNode != null)
         {
             FirstInstanceDescTransformWithInstance = FirstInstanceDescNode.ComputeGlobalTransform();

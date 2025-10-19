@@ -118,7 +118,8 @@ public class WalkModule : AModule, IInputPart
                     {
                         { "AnimationUrls", CharacterModelDescription.AnimationUrls },
                         { "CPUNodes", CharacterModelDescription.CPUNodes },
-                        { "Scale", CharacterModelDescription.Scale }
+                        { "Scale", CharacterModelDescription.Scale },
+                        { "ModelBaseBone", CharacterModelDescription.ModelBaseBone }
                     }}
                 });
 

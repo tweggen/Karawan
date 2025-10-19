@@ -69,7 +69,9 @@ public class CharacterModelDescription
         // "Idle_Generic.fbx;Idle_HardDay.fbx;Idle_Texting.fbx;Idle_Waving.fbx;Kick_LeftFoot.fbx;Punch_LeftHand.fbx;Punch_RightHand.fbx;Run_InPlace.fbx;Running_Jump.fbx;Standing_Jump.fbx;Walk_InPlace_Female.fbx;Walk_Left.fbx;Walk_Male.fbx"; 
 
     public string CPUNodes { get; set; } = "MiddleFinger2_R;MiddleFinger2_L";
-        
+
+    public string ModelBaseBone { get; set; } = "Root_M";
+    
     public string ModelUrl { get; set;  } = "man_casual_Rig.fbx";
 
     public string Scale { get; set; } = "1";

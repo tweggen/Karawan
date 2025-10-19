@@ -969,8 +969,8 @@ public class GlTF
             _readMaterials();
             _readScene(_gltfModel.Scenes[_gltfModel.Scene.Value], out var jModel);
             _loadAnimations(jModel);
-            jModel.BakeAnimations(null);
-            jModel.Polish();
+            jModel.BakeAnimations(null, null);
+            jModel.Polish(null);
             return jModel;
         }
 

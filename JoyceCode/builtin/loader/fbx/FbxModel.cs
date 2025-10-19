@@ -848,8 +848,9 @@ public class FbxModel : IDisposable
      * Load a given fbx file into this model.
      * You can also pass additional files to add e.g. animation data.
      */
-    public unsafe void Load(string path, 
+    public unsafe void Load(string path,
         List<string>? additionalUrls,
+        string? strModelBaseBone,
         List<string>? cpuNodes,
         float scale, 
         AxisInterpreter? axisInterpreter,
@@ -1054,14 +1055,14 @@ public class FbxModel : IDisposable
         /*
          * Set model flags, find first instnace desc 
          */
-        model.Polish();
+        model.Polish(strModelBaseBone);
 
         try
         {
             /*
              * Baking animations must include the root matrix corrections.
              */
-            model.BakeAnimations(cpuNodes);
+            model.BakeAnimations(strModelBaseBone, cpuNodes);
         }
         catch (Exception e)
         {
