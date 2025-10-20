@@ -206,7 +206,7 @@ public class Model
             /*
              * TXWTODO: The inverse has a magnitude of 1, model2bone 0,1. Root node is 0.01 setup by me, first instancedesc node is 100 setup by assimp.
              * This does not match for this model, assimp root is considered twice.
-             * 
+             * TXWTODO: Sure this still is true?
              */
             m4MyModelPoseToBonePose = _m4InverseFirstInstanceDescTransformWoInstance * bone.Model2Bone;
         }
@@ -388,20 +388,16 @@ public class Model
             
             if(Matrix4x4.Invert(m4MyBoneSpaceToRestPose, out var m4MyRestPoseToBoneSpace))
             {
-                
                 /*
-                 * This is just from base bone to cpu node bone.
-                 * This doesn't cover from model pose space to bone space.
-                 * In my example, this includes conversion of the axis and a factor 100 scale.
+                 * TXWTODO: I only need the position and orientation of the hand, not the scale.
                  */
-                var m4BaseToBone = m4BaseToRestPose * m4MyRestPoseToBoneSpace;
-                var m4BaseToAnim =
-                        _m4InverseFirstInstanceDescTransformWithInstance
-                        * m4BaseToBone
-                        * bone.Bone2Model
-                        * FirstInstanceDescTransformWithInstance
-                    ;
-                cpuBakedFrames[frameno] = m4BaseToAnim; 
+                Matrix4x4.Decompose(m4BoneSpaceToRestPose, out _, 
+                    out var qBoneOrientation, out var v3BonePosition);
+                
+                Matrix4x4 m4BoneCpu =
+                    Matrix4x4.CreateFromQuaternion(qBoneOrientation)
+                    * Matrix4x4.CreateTranslation(v3BonePosition);
+                cpuBakedFrames[frameno] = m4BoneCpu;
             }
             else
             {

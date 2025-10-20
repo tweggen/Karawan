@@ -278,7 +278,7 @@ public class API
             DefaultRayHitHandler drh = new(this, action);
             try
             {
-                Simulation.RayCast(origin, target, length, ref drh, drh.GetRayHitId());
+                Simulation.RayCast(origin, target, length, BufferPool, ref drh, drh.GetRayHitId());
             }
             catch (Exception e)
             {
