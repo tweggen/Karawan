@@ -111,15 +111,51 @@ public class Model
     
     
     private int _bakeRecCount;
-    
-    
+
+
+    private static void _loadAnimBoneBase(
+        string? strModelBaseBone, 
+        ModelNodeTree mntRestPose, 
+        out Matrix4x4 m4BaseToWorld,
+        out Matrix4x4 m4WorldToBase)
+    {
+        if (strModelBaseBone != null)
+        {
+            if (mntRestPose.MapNodes.TryGetValue(strModelBaseBone, out var mnBaseBone))
+            {
+                //var mnBaseBone = mnBaseBone;
+                m4BaseToWorld = mnBaseBone!.ComputeGlobalTransform();
+                Matrix4x4.Invert(m4BaseToWorld,
+                    out m4WorldToBase);
+                if (mnBaseBone.Parent != null)
+                {
+                    //BaseBoneTransformWoInstance = mnBaseBone.Parent.ComputeGlobalTransform();
+                    //Matrix4x4.Invert(BaseBoneTransformWoInstance, out _m4InverseBaseBoneTransformWoInstance);
+                }
+
+            }
+            else
+            {
+                m4BaseToWorld = Matrix4x4.Identity;
+                m4WorldToBase = Matrix4x4.Identity;
+                ErrorThrow<ArgumentException>($"Base bone {strModelBaseBone} not found.");
+            }
+        }
+        else
+        {
+            m4BaseToWorld = Matrix4x4.Identity;
+            m4WorldToBase = Matrix4x4.Identity;
+        }
+    }
+
+
     /**
      * Bake all animations for the given node.
      *
      * @param m4GlobalTransform
      *     How do I transform from root to the mesh.
      * @param m4ModelSpaceToBoneSpace
-     *     How do I transform from the model to the individual bone 
+     *     How do I transform from the model to the individual bone
      * @param m4BoneSpaceToModelSpace
      *     How do I transform from the individual bone to the model.
      */
@@ -127,6 +163,7 @@ public class Model
         ModelNode mnRestPose,
         ModelNodeTree mntModelPose,
         BakeMode bakeMode,
+        string? strModelBaseBone,
         Matrix4x4 m4BoneSpaceToRestPose,
         ModelAnimation ma, uint frameno)
     {
@@ -342,12 +379,29 @@ public class Model
             /*
              * This is for creating children which are attached to a particular bone.
              */
+
+            /*
+             * We need to setup the transformation relative to the base bone,
+             */
+            _loadAnimBoneBase(strModelBaseBone, mnRestPose.ModelNodeTree,
+                out var m4BaseToRestPose, out var m4RestPoseToBase);
             
             if(Matrix4x4.Invert(m4MyBoneSpaceToRestPose, out var m4MyRestPoseToBoneSpace))
             {
                 
-                // TXWTODO: We need to take both matrices from the same bone trepe.
-                cpuBakedFrames[frameno] = BaseBoneTransformWithInstance * m4MyRestPoseToBoneSpace * Matrix4x4.CreateScale(Scale);
+                /*
+                 * This is just from base bone to cpu node bone.
+                 * This doesn't cover from model pose space to bone space.
+                 * In my example, this includes conversion of the axis and a factor 100 scale.
+                 */
+                var m4BaseToBone = m4BaseToRestPose * m4MyRestPoseToBoneSpace;
+                var m4BaseToAnim =
+                        _m4InverseFirstInstanceDescTransformWithInstance
+                        * m4BaseToBone
+                        * bone.Bone2Model
+                        * FirstInstanceDescTransformWithInstance
+                    ;
+                cpuBakedFrames[frameno] = m4BaseToAnim; 
             }
             else
             {
@@ -375,6 +429,7 @@ public class Model
                 _bakeRecursiveNew(child,
                     mntModelPose,
                     bakeMode,
+                    strModelBaseBone,
                     m4MyBoneSpaceToRestPose,
                     //mnRestPose.Transform.Matrix * m4BoneSpaceToRestPose,
                     ma, frameno);
@@ -477,6 +532,7 @@ public class Model
                     ma.RestPose,
                     ModelNodeTree,
                     BakeMode.Relative,
+                    strModelBaseBone,
                     Matrix4x4.Identity,
                     //m4InverseGlobalTransform,
                     //_m4Correction,
@@ -553,35 +609,17 @@ public class Model
     /**
      * Finish the model for use.
      */
-    public void Polish(string ?strModelBaseBone)
+    public void Polish(string? strModelBaseBone)
     {
         _polishChildrenRecursively(ModelNodeTree.RootNode);
         
         /*
          * Setup Base bone
          */
-        if (strModelBaseBone != null)
-        {
-            if (ModelNodeTree.MapNodes.TryGetValue(strModelBaseBone, out var mnBaseBone))
-            {
-                BaseBone = mnBaseBone;
-                BaseBoneTransformWithInstance = BaseBone!.ComputeGlobalTransform();
-                _m4BaseBoneBone2Model = Skeleton!.MapBones[strModelBaseBone].Bone2Model;
-                Matrix4x4.Invert(BaseBoneTransformWithInstance,
-                    out _m4InverseBaseBoneTransformWithInstance);
-                if (BaseBone.Parent != null)
-                {
-                    BaseBoneTransformWoInstance = BaseBone.Parent.ComputeGlobalTransform();
-                    Matrix4x4.Invert(BaseBoneTransformWoInstance, out _m4InverseBaseBoneTransformWoInstance);
-                }
-   
-            }
-            else
-            {
-                ErrorThrow<ArgumentException>($"Base bone {strModelBaseBone} not found.");
-            }
-        }
-
+        _loadAnimBoneBase(strModelBaseBone, ModelNodeTree,
+            out var m4BaseBoneTransformWithInstance,
+            out _m4InverseBaseBoneTransformWithInstance);
+        BaseBoneTransformWithInstance = m4BaseBoneTransformWithInstance;
 
         if (FirstInstanceDescNode != null)
         {
