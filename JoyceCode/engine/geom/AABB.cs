@@ -55,6 +55,35 @@ public struct AABB
 
     public void Transform(in Matrix4x4 m)
     {
+        #if true
+        if (!m.IsIdentity)
+        {
+            Span<Vector3> corners = stackalloc Vector3[8]
+            {
+                new(AA.X, AA.Y, AA.Z),
+                new(BB.X, AA.Y, AA.Z),
+                new(AA.X, BB.Y, AA.Z),
+                new(BB.X, BB.Y, AA.Z),
+                new(AA.X, AA.Y, BB.Z),
+                new(BB.X, AA.Y, BB.Z),
+                new(AA.X, BB.Y, BB.Z),
+                new(BB.X, BB.Y, BB.Z)
+            };
+
+            Vector3 min = new(float.PositiveInfinity);
+            Vector3 max = new(float.NegativeInfinity);
+
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 transformed = Vector3.Transform(corners[i], m);
+                min = Vector3.Min(min, transformed);
+                max = Vector3.Max(max, transformed);
+            }
+
+            AA = min;
+            BB = max;
+        }
+        #else
         if (!m.IsIdentity)
         {
             // bool ok = Matrix4x4.Decompose(m, out var scale, out var rot, out var pos);
@@ -76,6 +105,7 @@ public struct AABB
             AA = newAA;
             BB = newBB;
         }
+        #endif
     }
     
 
