@@ -71,6 +71,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\TouchButtons.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\CharacterModelDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\ClusterMusicModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HandBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\DriveCarCollisionsController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverTouchButton.cs" />

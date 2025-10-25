@@ -35,6 +35,7 @@ public class WalkModule : AModule, IInputPart
     private DefaultEcs.Entity _eRightHand;
     private DefaultEcs.Entity _eLeftHand;
     private BepuPhysics.BodyReference _prefPerson;
+    private BepuPhysics.BodyReference _prefRightHand;   
     private Entity _eMapPerson;
     private AnimationState _animStatePerson = new();
 
@@ -176,43 +177,38 @@ public class WalkModule : AModule, IInputPart
                     }
                 }
 
-                /*
-                 * I have absolutely no clue why, but with the real radius of the model (1.039f) the
-                 * thing bounces away to nirvana very soon.
-                 * Therefore we set the previously hard coded 1.4 as a lower limit.
-                 */
-                float bodyRadius = _model.ModelNodeTree.RootNode.InstanceDesc != null
-                    ? _model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.Radius
-                    : 1.4f;
 
-                engine.physics.CollisionProperties collisionProperties =
-                    new engine.physics.CollisionProperties
-                    {
-                        Entity = _ePerson,
-                        Flags =
-                            CollisionProperties.CollisionFlags.IsTangible
-                            | CollisionProperties.CollisionFlags.IsDetectable
-                            | CollisionProperties.CollisionFlags.TriggersCallbacks,
-                        Name = PhysicsName,
-                        LayerMask = 0x00ff,
-                    };
-                engine.physics.Object po;
-                lock (_engine.Simulation)
                 {
-                    float personHeight = 1.8f;
-                    uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
-                        _engine.PLog, _engine.Simulation,
-                        0.3f, 1.8f,
-                        out var pbody);
-                    po = new engine.physics.Object(_engine, _ePerson, new TypedIndex() { Packed = uintShape },
-                        v3Person, qPerson, new(0f, personHeight / 2f, 0f))
+                    engine.physics.CollisionProperties personCollisionProperties =
+                        new engine.physics.CollisionProperties
+                        {
+                            Entity = _ePerson,
+                            Flags =
+                                CollisionProperties.CollisionFlags.IsTangible
+                                | CollisionProperties.CollisionFlags.IsDetectable
+                                | CollisionProperties.CollisionFlags.TriggersCallbacks,
+                            Name = PhysicsName,
+                            LayerMask = 0x00ff,
+                        };
+                    engine.physics.Object po;
+                    lock (_engine.Simulation)
                     {
-                        CollisionProperties = collisionProperties
-                    }.AddContactListener();
-                    _prefPerson = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-                }
+                        float personHeight = 1.8f;
+                        uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
+                            _engine.PLog, _engine.Simulation,
+                            0.3f, 1.8f,
+                            out var pbody);
+                        po = new engine.physics.Object(_engine, _ePerson, new TypedIndex() { Packed = uintShape },
+                            v3Person, qPerson, new(0f, personHeight / 2f, 0f))
+                        {
+                            CollisionProperties = personCollisionProperties
+                        }.AddContactListener();
+                        _prefPerson = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                    }
 
-                _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
+                    _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
+                }
+                
                 _ePerson.Set(new engine.behave.components.Behavior(new WalkBehavior()
                 {
                     MassTarget = MassPerson,
@@ -236,6 +232,39 @@ public class WalkModule : AModule, IInputPart
                     );
                     _eRightHand.Set(new CpuAnimated() { AnimationState = _animStatePerson, ModelNodeName = "MiddleFinger2_R"});
                     _eRightHand.Set(new Instance3(idRightHandCube));
+                    
+                    {
+                        engine.physics.CollisionProperties rightHandCollisionProperties =
+                            new engine.physics.CollisionProperties
+                            {
+                                Entity = _eRightHand,
+                                Flags =
+                                    CollisionProperties.CollisionFlags.IsTangible
+                                    | CollisionProperties.CollisionFlags.IsDetectable
+                                    | CollisionProperties.CollisionFlags.TriggersCallbacks,
+                                Name = $"{PhysicsName}.RightHand",
+                                LayerMask = 0x00ff,
+                            };
+                        engine.physics.Object po;
+                        lock (_engine.Simulation)
+                        {
+                            uint uintShape = (uint)engine.physics.actions.CreateSphereShape.Execute(
+                                _engine.PLog, _engine.Simulation,
+                                0.1f, 
+                                out var pbody);
+                            po = new engine.physics.Object(_engine, _eRightHand, new TypedIndex() { Packed = uintShape },
+                                v3Person, qPerson)
+                            {
+                                CollisionProperties = rightHandCollisionProperties
+                            }.AddContactListener();
+                            _prefRightHand = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                        }
+
+                        _eRightHand.Set(new engine.physics.components.Body(po, _prefRightHand));
+                        _eRightHand.Set(new engine.behave.components.Behavior(new HandBehavior()
+                        {
+                        }));
+                    }
                 }
 
                 /*
