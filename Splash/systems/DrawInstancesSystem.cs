@@ -48,10 +48,12 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 Matrix4x4 mModelTotalTransform = id.ModelTransform * transform3ToWorld.Matrix; 
                 Vector3 vPos = mModelTotalTransform.Translation;
                 
+
+                AABB aabb = id.AABBMerged;
                 /*
                  * Per instance lod test
                  */
-                if (Vector3.Distance(_vCameraPos, vPos) > id.MaxDistance)
+                if (Vector3.Distance(_vCameraPos, vPos) > (id.MaxDistance + aabb.Radius))
                 {
                     /*
                      * Too for away to render instance.
@@ -70,7 +72,6 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                      *
                      * The AABB is in instance local coordinates.
                      */
-                    AABB aabb = id.AABBMerged;
                     aabb.Transform(mModelTotalTransform);
                     if (aabb.SignedDistance(_nearFrustum) < 0) continue;
                     if (aabb.SignedDistance(_farFrustum) < 0) continue;

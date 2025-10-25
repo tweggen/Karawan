@@ -27,11 +27,14 @@ public struct AABB
     {
         get => (AA + BB) / 2f;
     }
-    
 
-    public float Radius
+
+    public float Radius { get; private set; } = 0.01f;
+    
+    
+    private void _updateRadius()
     {
-        get => (BB - AA).Length() / 2f;
+        Radius = (BB - AA).Length() / 2f;
     }
     
     
@@ -39,6 +42,7 @@ public struct AABB
     {
         AA += off;
         BB += off;
+        // Radius untouched
     }
     
 
@@ -51,6 +55,7 @@ public struct AABB
         Vector3 newBB = new(-AA.X, BB.Y, -AA.Z);
         AA = newAA;
         BB = newBB;
+        // Radius untouched
     }
 
     public void Transform(in Matrix4x4 m)
@@ -106,6 +111,7 @@ public struct AABB
             BB = newBB;
         }
         #endif
+        // Radius untouched
     }
     
 
@@ -142,6 +148,7 @@ public struct AABB
         Vector3 fMore = new(f, f, f);
         AA -= fMore;
         BB += fMore;
+        Radius += Single.Abs(f);
     }
 
 
@@ -153,6 +160,7 @@ public struct AABB
         BB.X = Single.Max(BB.X, v.X);
         BB.Y = Single.Max(BB.Y, v.Y);
         BB.Z = Single.Max(BB.Z, v.Z);
+        _updateRadius();
     }
 
 
@@ -164,6 +172,7 @@ public struct AABB
         BB.X = Single.Max(BB.X, o.BB.X);
         BB.Y = Single.Max(BB.Y, o.BB.Y);
         BB.Z = Single.Max(BB.Z, o.BB.Z);
+        _updateRadius();
     }
 
 
@@ -242,6 +251,7 @@ public struct AABB
     { 
         AA = new Vector3(Single.MaxValue, Single.MaxValue, Single.MaxValue);
         BB = new Vector3(Single.MinValue, Single.MinValue, Single.MinValue);
+        Radius = 0.01f;
     }
 
 
@@ -250,6 +260,7 @@ public struct AABB
         Reset();
         Add(new Vector3(rect2.A.X, 0f, rect2.A.Y));
         Add(new Vector3(rect2.B.X, 0f, rect2.B.Y));
+        _updateRadius();
     }
     
     
@@ -257,6 +268,7 @@ public struct AABB
     {
         AA = aa;
         BB = bb;
+        _updateRadius();
     }
 
     
@@ -265,6 +277,7 @@ public struct AABB
         Vector3 vS2 = new(size / 2f, size / 2f, size / 2f);
         AA = pos - vS2;
         BB = pos + vS2;
+        _updateRadius();
     }
 
     public AABB()
