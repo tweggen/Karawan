@@ -15,6 +15,7 @@ using engine.joyce.components;
 using engine.news;
 using engine.physics;
 using engine.world;
+using nogame.characters;
 using static engine.Logger;
 
 namespace nogame.modules.playerhover;
@@ -78,8 +79,9 @@ public class MainPlayModule : engine.AModule, IInputPart
         Activated,
         Deactivating
     }
-    
-    public CharacterModelDescription _characterModelDescription = new();
+
+    public CharacterModelDescription _characterModelDescription =
+        CharacterModelDescriptionFactory.CreatePolyperfectWalkPlayer();
 
     
     private FigureState _hoverState = FigureState.Deactivated;

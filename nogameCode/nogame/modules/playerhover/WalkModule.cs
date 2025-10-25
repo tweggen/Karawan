@@ -43,7 +43,7 @@ public class WalkModule : AModule, IInputPart
     
     private Model _model;
 
-    public CharacterModelDescription CharacterModelDescription{
+    public nogame.characters.CharacterModelDescription CharacterModelDescription{
         get;
         set;
     }

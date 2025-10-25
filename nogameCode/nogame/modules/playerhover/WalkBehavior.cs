@@ -3,6 +3,7 @@ using engine;
 using engine.behave;
 using engine.news;
 using engine.physics;
+using nogame.characters;
 
 namespace nogame.modules.playerhover;
 

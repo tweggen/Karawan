@@ -3,6 +3,8 @@ using System.Numerics;
 using DefaultEcs;
 using engine;
 using engine.behave;
+using engine.joyce;
+using engine.joyce.components;
 using engine.physics;
 using static engine.Logger;
 
@@ -17,6 +19,7 @@ public class AfterCrashBehavior : ABehavior
 
     static private float LIFETIME = 10f;
     private float t = 0;
+    private bool _deathAnimationTriggered = false;
     
 
     public override void OnCollision(ContactEvent cev)
@@ -37,6 +40,29 @@ public class AfterCrashBehavior : ABehavior
     
     public override void Behave(in Entity entity, float dt)
     {
+        if (!_deathAnimationTriggered)
+        {
+            #if false
+            if (entity.Has<GPUAnimationState>() && entity.Has<engine.joyce.components.FromModel>())
+            {
+                ref var cGpuAnimationState = ref entity.Get<GPUAnimationState>();
+                ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
+
+                ModelAnimation? ma = null;
+
+                if (null != cFromModel.Model)
+                {
+                    if (cFromModel.Model.MapAnimations.TryGetValue())   
+                }
+                
+                cGpuAnimationState.AnimationState = new AnimationState()
+                {
+                    Flags = AnimationState.IsOneShot,
+                    
+                }
+            }
+            #endif
+        }
         if (t < LIFETIME)
         {
             t += dt;
@@ -104,22 +130,18 @@ public class AfterCrashBehavior : ABehavior
         else
         {
             /*
-             * Switch back to previous behavior, making the car kinematic.
+             * Remove new behavior, doom entity.
              */
-            if (null != _oldBehavior)
+            ref engine.physics.components.Body cCitizenBody = ref entity.Get<engine.physics.components.Body>();
+            cCitizenBody.PhysicsObject.RemoveContactListener();
+            lock (_engine.Simulation)
             {
-                ref engine.physics.components.Body cCarBody = ref entity.Get<engine.physics.components.Body>();
-                cCarBody.PhysicsObject.RemoveContactListener();
-                lock (_engine.Simulation)
-                {
-                    var prefTarget = cCarBody.Reference;
-                    prefTarget.Awake = false;
-                    prefTarget.BecomeKinematic();
-                }
-                // TXWTODO: Test old behavior for being non-NULL.
-                entity.Get<engine.behave.components.Behavior>().Provider = _oldBehavior;
-                _oldBehavior.Sync(entity);
+                var prefTarget = cCitizenBody.Reference;
+                prefTarget.Awake = false;
+                prefTarget.BecomeKinematic();
             }
+            entity.Remove<engine.behave.components.Behavior>();
+            _engine.AddDoomedEntity(entity);
         }
     }
 
