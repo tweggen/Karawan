@@ -164,17 +164,59 @@ public class CharacterCreator
         var modelProperties = new ModelProperties()
         {
         };
+        #if false
         string[] strModels =
         {
             "Studio Ochi Spring Boy_ANIM.fbx",
             "Studio Ochi Spring Man B_ANIM.fbx",
             "Studio Ochi Spring Woman C_ANIM.fbx"
         };
+        #else
+        string[] strModels =
+        {
+            "man_business_Rig.fbx",
+            "man_casual_Rig.fbx",
+            "man_coat_winter_Rig.fbx",
+            "man_police_Rig.fbx",
+            "man_scientist_Rig.fbx",
+            "woman_actionhero_Rig.fbx",
+            "woman_carpenter_Rig.fbx",
+            "woman_doctor_Rig.fbx",
+            "woman_large_Rig.fbx",
+            "woman_mechanic_Rig.fbx",
+            "woman_police_Rig.fbx",
+            "woman_race_car_driver_Rig.fbx"
+        };
+        #endif
 
         string strModel;
         string strAnimation = null;
-        float which = rnd.GetFloat();
         float speed;
+        
+        #if true
+ 
+        speed = (5f + rnd.GetFloat() * 4f) / 3.6f;
+        int idxModel = (int)(rnd.GetFloat() * strModels.Length);
+        strModel = strModels[idxModel];
+        bool isMale = strModel.StartsWith("man");
+        
+        if (speed > (7f / 3.6f))
+        {
+            strAnimation = "Run_InPlace";
+        }
+        else
+        {
+            if (isMale)
+            {
+                strAnimation = "Walk_Male";
+            } else 
+            {
+                strAnimation = "Walk_InPlace_Female";
+            }
+        }
+        #endif
+        #if false
+        float which = rnd.GetFloat();
         if (which < 0.2f)
         {
             strModel = strModels[0];
@@ -193,6 +235,7 @@ public class CharacterCreator
             speed = (6f + rnd.GetFloat() * 2f) / 3.6f;
             strAnimation = "Metarig Woman C|Run Mid";
         }
+        #endif
 
         float propMaxDistance = (float)engine.Props.Get("nogame.characters.citizen.maxDistance", 100f);
 
@@ -208,14 +251,20 @@ public class CharacterCreator
                     //{"Axis", "XzY"}
                     { "Axis", "XYZ" },
                     //{ "AnimAxis", "XZy" }
+                    { "AnimationUrls", "Run_InPlace.fbx;Walk_Male.fbx;Walk_InPlace_Female.fbx" }
                 } 
             },
             Params = new()
             {
                 GeomFlags = 0
+                            #if false
                             | InstantiateModelParams.CENTER_X
                             // | InstantiateModelParams.ROTATE_X180
                             | InstantiateModelParams.ROTATE_Z180
+                            #endif
+                            #if true
+                            | InstantiateModelParams.ROTATE_Y180
+                            #endif
                             | InstantiateModelParams.BUILD_PHYSICS
                             | InstantiateModelParams.PHYSICS_TANGIBLE
                             | InstantiateModelParams.PHYSICS_DETECTABLE
@@ -314,6 +363,10 @@ public class CharacterCreator
             var mapAnimations = model.MapAnimations;
             if (mapAnimations != null && mapAnimations.Count > 0)
             {
+                if (!mapAnimations.ContainsKey(strAnimation))
+                {
+                    int a = 1;
+                }
                 var animation = mapAnimations[strAnimation];
                 eAnimations.Set(new GPUAnimationState
                 {
