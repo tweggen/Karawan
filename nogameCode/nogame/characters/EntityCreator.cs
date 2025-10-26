@@ -18,11 +18,20 @@ namespace nogame.characters;
 public class EntityCreator
 {
     public required CharacterModelDescription CharacterModelDescription;
-    public Vector3 Position;
-    public Quaternion Orientation;
+    public Vector3 Position = Vector3.Zero;
+    public Quaternion Orientation = Quaternion.Identity;
     public required string PhysicsName;
-    public required float MaxDistance;
+
+    
+    /**
+     * The maximal distance if we have no instantiate model params.
+     */
+    public float MaxDistance;
+    
+    
     public Func<Entity, IBehavior>? BehaviorFactory = null;
+    public Func<Entity, CollisionProperties>? CollisionPropertiesFactory = null;
+    
     public bool CreateRightHand = false;
 
     private TransformApi _aTransform;
@@ -31,16 +40,24 @@ public class EntityCreator
 
     private Entity _ePerson;
     private Entity _eRightHand;
-    private Entity _eAnimations;
     private AnimationState _animStatePerson = new();
     private BodyReference _prefPerson;
     private BodyReference _prefRightHand;
 
-    private InstantiateModelParams _instantiateModelParams;
-    
-    public Entity CreateLogical()
+    /**
+     * Output member valid after CreateAsync.
+     */
+    public InstantiateModelParams? InstantiateModelParams = null;
+    public ModelCacheParams ModelCacheParams { get; private set; } = null;
+
+    /**
+     * Output member valid after CreateLogical.
+     */
+    public Entity EntityAnimations;
+
+
+    private Entity _createLogical()
     {
-        
         /*
          * Read the current position.
          * Note, that we need to apply the player's position to the entity for
@@ -50,7 +67,6 @@ public class EntityCreator
         ref var v3PlayerPerson = ref Position;
         ref var qPlayerPerson = ref Orientation;
 
-        _ePerson = _engine.CreateEntity("RootScene.playerperson");
 
         _aTransform.SetPosition(_ePerson, v3PlayerPerson);
         _aTransform.SetRotation(_ePerson, qPlayerPerson);
@@ -58,51 +74,21 @@ public class EntityCreator
         _aTransform.SetCameraMask(_ePerson, 0x0000ffff);
 
         {
-            builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, _instantiateModelParams);
+            builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, InstantiateModelParams);
             modelBuilder.BuildEntity(_ePerson);
-            _eAnimations = modelBuilder.GetAnimationsEntity();
+            EntityAnimations = modelBuilder.GetAnimationsEntity();
         }
 
-        if (default != _eAnimations)
+        if (default != EntityAnimations)
         {
-            CharacterModelDescription.EntityAnimations = _eAnimations;
+            CharacterModelDescription.EntityAnimations = EntityAnimations;
             CharacterModelDescription.Model = _model;
             CharacterModelDescription.AnimationState = _animStatePerson;
-
-            var mapAnimations = _model.MapAnimations;
-            if (mapAnimations != null && mapAnimations.Count > 0)
-            {
-                if (mapAnimations.TryGetValue(
-                        CharacterModelDescription.IdleAnimName, out var animation))
-                {
-                    _animStatePerson.ModelAnimation = animation;
-                    _animStatePerson.ModelAnimationFrame = 0;
-
-                    _eAnimations.Set(new GPUAnimationState
-                    {
-                        AnimationState = _animStatePerson
-                    });
-                }
-                else
-                {
-                    Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
-                }
-            }
         }
-
-
-        {
-            engine.physics.CollisionProperties personCollisionProperties =
-                new engine.physics.CollisionProperties
-                {
-                    Entity = _ePerson,
-                    Flags =
-                        CollisionProperties.CollisionFlags.IsTangible
-                        | CollisionProperties.CollisionFlags.IsDetectable
-                        | CollisionProperties.CollisionFlags.TriggersCallbacks,
-                    Name = PhysicsName,
-                    LayerMask = 0x00ff,
-                };
+        
+        if (CollisionPropertiesFactory != null){
+            
+            engine.physics.CollisionProperties personCollisionProperties = CollisionPropertiesFactory(_ePerson);
             engine.physics.Object po;
             lock (_engine.Simulation)
             {
@@ -186,41 +172,77 @@ public class EntityCreator
     }
 
 
-    public async Task<Entity> CreateAsync()
+    public Entity CreateLogical(DefaultEcs.Entity eTarget)
+    {
+        _ePerson = eTarget;
+        return _createLogical();
+    }
+
+    public Entity CreateLogical()
+    {
+        _ePerson = _engine.CreateEntity("RootScene.playerperson");
+        return _createLogical();
+    }
+
+    public async Task<Model> CreateAsync()
     {
         try
         {
             _aTransform = I.Get<engine.joyce.TransformApi>();
 
-            _instantiateModelParams = new()
+            if (null == CharacterModelDescription.InstantiateModelParams)
             {
-                GeomFlags = CharacterModelDescription.ModelGeomFlags,
-                MaxDistance = MaxDistance
-            };
-
-            _model = await I.Get<ModelCache>().LoadModel(
-                new ModelCacheParams()
+                if (0 == MaxDistance)
                 {
-                    Url = CharacterModelDescription.ModelUrl,
-                    Params = _instantiateModelParams,
+                    ErrorThrow<ArgumentException>(
+                        $"Maximal distance of 0f is not allowed when no InstantiateModelParams are given.");
+                }
+                InstantiateModelParams = new()
+                {
+                    GeomFlags = CharacterModelDescription.ModelGeomFlags,
+                    MaxDistance = MaxDistance
+                };
+            }
+            else
+            {
+                InstantiateModelParams = CharacterModelDescription.InstantiateModelParams;
+            }
+
+            ModelCacheParams = new ModelCacheParams()
+            {
+                Url = CharacterModelDescription.ModelUrl,
+                Params = InstantiateModelParams,
+                Properties = new()
+                {
                     Properties = new()
                     {
-                        Properties = new()
-                        {
-                            { "AnimationUrls", CharacterModelDescription.AnimationUrls },
-                            { "CPUNodes", CharacterModelDescription.CPUNodes },
-                            { "Scale", CharacterModelDescription.Scale },
-                            { "ModelBaseBone", CharacterModelDescription.ModelBaseBone }
-                        }
+                        { "Scale", CharacterModelDescription.Scale },
                     }
-                });
+                }
+            };
+            if (CharacterModelDescription.CPUNodes != null)
+            {
+                ModelCacheParams.Properties.Properties.Add("CPUNodes", CharacterModelDescription.CPUNodes);    
+            }
+
+            if (CharacterModelDescription.AnimationUrls != null)
+            {
+                ModelCacheParams.Properties.Properties.Add("AnimationUrls", CharacterModelDescription.AnimationUrls);    
+            }
+
+            if (CharacterModelDescription.ModelBaseBone != null)
+            {
+                ModelCacheParams.Properties.Properties.Add("ModelBaseBone", CharacterModelDescription.ModelBaseBone);   
+            }
+            
+            _model = await I.Get<ModelCache>().LoadModel(ModelCacheParams);
         }
         catch (Exception e)
         {
             Warning($"Exception in _setupPlayer main code: {e}");
         }
         
-        return _ePerson;
+        return _model;
     }
 
 }

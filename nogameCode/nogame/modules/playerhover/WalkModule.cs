@@ -115,10 +115,22 @@ public class WalkModule : AModule, IInputPart
                 {
                     MassTarget = 200f,
                     CharacterModelDescription = CharacterModelDescription
+                },
+                CollisionPropertiesFactory = entity => new engine.physics.CollisionProperties
+                {
+                    Entity = entity,
+                    Flags =
+                        CollisionProperties.CollisionFlags.IsTangible
+                        | CollisionProperties.CollisionFlags.IsDetectable
+                        | CollisionProperties.CollisionFlags.TriggersCallbacks,
+                    Name = PhysicsName,
+                    LayerMask = 0x00ff,
                 }
+
             };
             
-            await creator.CreateAsync(); 
+            _model = await creator.CreateAsync();
+    
             
             _engine.QueueMainThreadAction(() =>
             {
@@ -135,6 +147,29 @@ public class WalkModule : AModule, IInputPart
                 _eMapPerson.Set(new engine.world.components.MapIcon()
                     { Code = engine.world.components.MapIcon.IconCode.Player0 });
 
+                if (default != creator.EntityAnimations && _model.MapAnimations != null)
+                {
+                    var mapAnimations = _model.MapAnimations;
+                    if (mapAnimations != null && mapAnimations.Count > 0)
+                    {
+                        if (mapAnimations.TryGetValue(
+                                CharacterModelDescription.IdleAnimName, out var animation))
+                        {
+                            _animStatePerson.ModelAnimation = animation;
+                            _animStatePerson.ModelAnimationFrame = 0;
+
+                            CharacterModelDescription.EntityAnimations.Set(new GPUAnimationState
+                            {
+                                AnimationState = _animStatePerson
+                            });
+                        }
+                        else
+                        {
+                            Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
+                        }
+                    }
+                }
+                
                 _engine.Player.Value = _ePerson;
 
                 M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
