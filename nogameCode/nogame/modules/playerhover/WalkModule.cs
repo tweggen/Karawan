@@ -11,6 +11,7 @@ using engine.joyce;
 using engine.joyce.components;
 using engine.news;
 using engine.physics;
+using nogame.characters;
 using static engine.Logger;
 
 namespace nogame.modules.playerhover;
@@ -53,8 +54,6 @@ public class WalkModule : AModule, IInputPart
     /**
       * Sound API
       */
-    private Boom.ISoundAPI _aSound;
-    
     public void InputPartOnInputEvent(Event ev)
     {
         if (ev.Type != Event.INPUT_BUTTON_PRESSED)
@@ -73,11 +72,6 @@ public class WalkModule : AModule, IInputPart
     }
 
     
-    private void _onLogicalFrame(object? sender, float dt)
-    {
-    }
-
-
     private void _cleanupPlayer()
     {
         _engine.Player.Value = default;
@@ -90,7 +84,6 @@ public class WalkModule : AModule, IInputPart
     protected override void OnModuleDeactivate()
     {
         M<InputEventPipeline>().RemoveInputPart(this);
-        _engine.OnLogicalFrame -= _onLogicalFrame;
 
         _engine.QueueMainThreadAction(_cleanupPlayer);
     }
@@ -102,28 +95,6 @@ public class WalkModule : AModule, IInputPart
         {
             _aTransform = I.Get<engine.joyce.TransformApi>();
 
-            _aSound = I.Get<Boom.ISoundAPI>();
-
-            InstantiateModelParams instantiateModelParams = new()
-            {
-                GeomFlags = CharacterModelDescription.ModelGeomFlags,
-                MaxDistance = 200f
-            };
-
-            _model = await I.Get<ModelCache>().LoadModel(
-                new ModelCacheParams()
-                {
-                    Url = CharacterModelDescription.ModelUrl,
-                    Params = instantiateModelParams,
-                    Properties = new() {Properties = new()
-                    {
-                        { "AnimationUrls", CharacterModelDescription.AnimationUrls },
-                        { "CPUNodes", CharacterModelDescription.CPUNodes },
-                        { "Scale", CharacterModelDescription.Scale },
-                        { "ModelBaseBone", CharacterModelDescription.ModelBaseBone }
-                    }}
-                });
-
             /*
              * Read the current position.
              * Note, that we need to apply the player's position to the entity for
@@ -132,141 +103,27 @@ public class WalkModule : AModule, IInputPart
              */
             M<PlayerPosition>().GetPlayerPosition(out var v3Person, out var qPerson);
 
-            /*
-             * Create the ship entities. This needs to run in logical thread.
-             */
+            EntityCreator creator = new()
+            {
+                CharacterModelDescription = CharacterModelDescription,
+                Position = v3Person,
+                Orientation = qPerson,
+                PhysicsName = PhysicsName,
+                MaxDistance = 200f,
+                CreateRightHand = true,
+                BehaviorFactory = entity => new WalkBehavior()
+                {
+                    MassTarget = 200f,
+                    CharacterModelDescription = CharacterModelDescription
+                }
+            };
+            
+            await creator.CreateAsync(); 
+            
             _engine.QueueMainThreadAction(() =>
             {
-                _ePerson = _engine.CreateEntity("RootScene.playerperson");
-
-                _aTransform.SetPosition(_ePerson, v3Person);
-                _aTransform.SetRotation(_ePerson, qPerson);
-                _aTransform.SetVisible(_ePerson, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
-                _aTransform.SetCameraMask(_ePerson, 0x0000ffff);
-
-                {
-                    builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, instantiateModelParams);
-                    modelBuilder.BuildEntity(_ePerson);
-                    _eAnimations = modelBuilder.GetAnimationsEntity();
-                }
-
-                if (default != _eAnimations)
-                {
-                    CharacterModelDescription.EntityAnimations = _eAnimations;
-                    CharacterModelDescription.Model = _model;
-                    CharacterModelDescription.AnimationState = _animStatePerson;
-
-                    var mapAnimations = _model.MapAnimations;
-                    if (mapAnimations != null && mapAnimations.Count > 0)
-                    {
-                        if (mapAnimations.TryGetValue(
-                                CharacterModelDescription.IdleAnimName, out var animation))
-                        {
-                            _animStatePerson.ModelAnimation = animation;
-                            _animStatePerson.ModelAnimationFrame = 0;
-
-                            _eAnimations.Set(new GPUAnimationState
-                            {
-                                AnimationState = _animStatePerson
-                            });
-                        }
-                        else
-                        {
-                            Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
-                        }
-                    }
-                }
-
-
-                {
-                    engine.physics.CollisionProperties personCollisionProperties =
-                        new engine.physics.CollisionProperties
-                        {
-                            Entity = _ePerson,
-                            Flags =
-                                CollisionProperties.CollisionFlags.IsTangible
-                                | CollisionProperties.CollisionFlags.IsDetectable
-                                | CollisionProperties.CollisionFlags.TriggersCallbacks,
-                            Name = PhysicsName,
-                            LayerMask = 0x00ff,
-                        };
-                    engine.physics.Object po;
-                    lock (_engine.Simulation)
-                    {
-                        float personHeight = 1.8f;
-                        uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
-                            _engine.PLog, _engine.Simulation,
-                            0.3f, 1.8f,
-                            out var pbody);
-                        po = new engine.physics.Object(_engine, _ePerson, new TypedIndex() { Packed = uintShape },
-                            v3Person, qPerson, new(0f, personHeight / 2f, 0f))
-                        {
-                            CollisionProperties = personCollisionProperties
-                        }.AddContactListener();
-                        _prefPerson = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-                    }
-
-                    _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
-                }
+                _ePerson = creator.CreateLogical();
                 
-                _ePerson.Set(new engine.behave.components.Behavior(new WalkBehavior()
-                {
-                    MassTarget = MassPerson,
-                    CharacterModelDescription = CharacterModelDescription
-                }));
-
-                /*
-                 * Create a right hand entity attached to animation
-                 */
-                {
-                    _eRightHand = _engine.CreateEntity("RootScene.playerperson.righthand");
-                    I.Get<HierarchyApi>().SetParent(_eRightHand, _ePerson);
-                    I.Get<TransformApi>().SetTransforms(_eRightHand, true,
-                        0x0000ffff,
-                        Quaternion.Identity, Vector3.Zero);
-                    var idRightHandCube = InstanceDesc.CreateFromMatMesh(
-                        new MatMesh(
-                            I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),
-                            engine.joyce.mesh.Tools.CreateCubeMesh("RootScene.playerperson.righthand", 0.2f)
-                        ), 1000f
-                    );
-                    _eRightHand.Set(new CpuAnimated() { AnimationState = _animStatePerson, ModelNodeName = "MiddleFinger2_R"});
-                    _eRightHand.Set(new Instance3(idRightHandCube));
-                    
-                    {
-                        engine.physics.CollisionProperties rightHandCollisionProperties =
-                            new engine.physics.CollisionProperties
-                            {
-                                Entity = _eRightHand,
-                                Flags =
-                                    CollisionProperties.CollisionFlags.IsTangible
-                                    | CollisionProperties.CollisionFlags.IsDetectable
-                                    | CollisionProperties.CollisionFlags.TriggersCallbacks,
-                                Name = $"{PhysicsName}.RightHand",
-                                LayerMask = 0x00ff,
-                            };
-                        engine.physics.Object po;
-                        lock (_engine.Simulation)
-                        {
-                            uint uintShape = (uint)engine.physics.actions.CreateSphereShape.Execute(
-                                _engine.PLog, _engine.Simulation,
-                                0.1f, 
-                                out var pbody);
-                            po = new engine.physics.Object(_engine, _eRightHand, new TypedIndex() { Packed = uintShape },
-                                v3Person, qPerson)
-                            {
-                                CollisionProperties = rightHandCollisionProperties
-                            }.AddContactListener();
-                            _prefRightHand = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-                        }
-
-                        _eRightHand.Set(new engine.physics.components.Body(po, _prefRightHand));
-                        _eRightHand.Set(new engine.behave.components.Behavior(new HandBehavior()
-                        {
-                        }));
-                    }
-                }
-
                 /*
                  * Now add an entity as a child that will display in the map
                  */
@@ -277,8 +134,6 @@ public class WalkModule : AModule, IInputPart
                     Quaternion.Identity, Vector3.Zero);
                 _eMapPerson.Set(new engine.world.components.MapIcon()
                     { Code = engine.world.components.MapIcon.IconCode.Player0 });
-
-                _engine.OnLogicalFrame += _onLogicalFrame;
 
                 _engine.Player.Value = _ePerson;
 
