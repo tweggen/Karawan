@@ -45,7 +45,11 @@ public static class CharacterModelDescriptionFactory
             {               
                 GeomFlags = 0
                             | InstantiateModelParams.BUILD_PHYSICS
-                            | InstantiateModelParams.PHYSICS_TANGIBLE
+                            /*
+                             * We better have the cititen non-tangible to not stop the
+                             * car or anybody running through them. They may, however, react.
+                             */ 
+                            // | InstantiateModelParams.PHYSICS_TANGIBLE
                             | InstantiateModelParams.PHYSICS_DETECTABLE
                             | InstantiateModelParams.PHYSICS_CALLBACKS
                 ,

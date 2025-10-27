@@ -3,6 +3,7 @@ using System.Numerics;
 using builtin.tools;
 using DefaultEcs;
 using engine;
+using engine.joyce;
 using engine.joyce.components;
 using engine.physics;
 using nogame.cities;
@@ -65,6 +66,7 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
                 var animState = cGpuAnimationState.AnimationState;
                 if (animState != null)
                 {
+                    animState.Flags = (ushort)((uint)animState.Flags & ~(uint)AnimationState.IsOneShot);
                     animState.ModelAnimation = animation;
                     animState.ModelAnimationFrame = 0;
                 } 
@@ -79,7 +81,6 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
         var me = cev.ContactInfo.PropertiesA;
         // _engine.AddDoomedEntity(me.Entity);
         
-        #if true
         ref engine.physics.components.Body cCitizenBody = ref me.Entity.Get<engine.physics.components.Body>();
 
         /*
@@ -109,7 +110,6 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
             {
                 CharacterModelDescription = CharacterModelDescription
             };
-    #endif
     }
 
 

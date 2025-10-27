@@ -31,7 +31,7 @@ public class AfterCrashBehavior : ABehavior
         /*
          * I collided again with something, so increase my timer. 
          */
-        t = LIFETIME - (builtin.tools.RandomSource.Instance.GetFloat() + 0.5f);
+        t = builtin.tools.RandomSource.Instance.GetFloat()*2.0f + 0.5f;
     }
     
 
@@ -44,6 +44,7 @@ public class AfterCrashBehavior : ABehavior
     {
         if (!_deathAnimationTriggered)
         {
+            _deathAnimationTriggered = true;
             if (entity.Has<GPUAnimationState>() && entity.Has<engine.joyce.components.FromModel>())
             {
                 ref var cGpuAnimationState = ref entity.Get<GPUAnimationState>();
@@ -65,6 +66,7 @@ public class AfterCrashBehavior : ABehavior
                     {
                         animState.ModelAnimation = animation;
                         animState.ModelAnimationFrame = 0;
+                        animState.Flags = (ushort)((uint)animState.Flags | (uint)AnimationState.IsOneShot);
                     } 
                 }            
             }
@@ -77,7 +79,7 @@ public class AfterCrashBehavior : ABehavior
              * Lift it up to the ground.
              * Warning: Shared with WASDPhysics
              */
-            Vector3 vTotalImpulse = new Vector3(0f, 9.81f, 0f);
+            Vector3 vTotalImpulse = new Vector3(0f, -9.81f, 0f);
 
             float LevelUpThrust = 16f;
             float LevelDownThrust = 16f;
@@ -85,10 +87,11 @@ public class AfterCrashBehavior : ABehavior
             lock (_engine.Simulation)
             {
                 var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
-
+                
                 Vector3 vTargetPos = prefTarget.Pose.Position;
-                Vector3 vTargetVelocity = prefTarget.Velocity.Linear;
                 float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
+                #if false
+                Vector3 vTargetVelocity = prefTarget.Velocity.Linear;
                 {
                     var properDeltaY = 0;
                     var deltaY = vTargetPos.Y - (heightAtTarget + properDeltaY);
@@ -110,6 +113,7 @@ public class AfterCrashBehavior : ABehavior
                     impulse = new Vector3(0f, fireRate, 0f);
                     vTotalImpulse += impulse;
                 }
+                #endif
 
 
                 /*
@@ -119,17 +123,14 @@ public class AfterCrashBehavior : ABehavior
                 {
                     vTargetPos.Y = heightAtTarget;
                     prefTarget.Pose.Position = vTargetPos;
-                    vTotalImpulse += new Vector3(0f, 10f, 0f);
                 }
 
-                /*
-                 * This is the same as the physics creation in playerhover.
-                 * TXWTODO: Deduplicate and consolidate.
-                 */
-                float massShip = 500f;
+                #if false
+                float massPerson = CharacterCreator.PhysicsMass;
                 entity.Set(new engine.joyce.components.Motion(prefTarget.Velocity.Linear));
 
-                prefTarget.ApplyImpulse(vTotalImpulse * dt * massShip, new Vector3(0f, 0f, 0f));
+                prefTarget.ApplyImpulse(vTotalImpulse * dt * massPerson, new Vector3(0f, 0f, 0f));
+                #endif
                 prefTarget.Awake = true;
             }
         }
