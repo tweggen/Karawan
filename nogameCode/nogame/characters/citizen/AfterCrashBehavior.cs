@@ -21,6 +21,8 @@ public class AfterCrashBehavior : ABehavior
     private float t = 0;
     private bool _deathAnimationTriggered = false;
     
+    public required CharacterModelDescription CharacterModelDescription;
+    
 
     public override void OnCollision(ContactEvent cev)
     {
@@ -42,26 +44,30 @@ public class AfterCrashBehavior : ABehavior
     {
         if (!_deathAnimationTriggered)
         {
-            #if false
             if (entity.Has<GPUAnimationState>() && entity.Has<engine.joyce.components.FromModel>())
             {
                 ref var cGpuAnimationState = ref entity.Get<GPUAnimationState>();
                 ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
+                ref var model = ref cFromModel.Model;
 
-                ModelAnimation? ma = null;
-
-                if (null != cFromModel.Model)
+                var mapAnimations = model.MapAnimations;
+                if (mapAnimations != null && mapAnimations.Count > 0)
                 {
-                    if (cFromModel.Model.MapAnimations.TryGetValue())   
-                }
+                    string strAnimation = CharacterModelDescription.DeathAnimName;
+                    if (!mapAnimations.ContainsKey(strAnimation))
+                    {
+                        int a = 1;
+                    }
                 
-                cGpuAnimationState.AnimationState = new AnimationState()
-                {
-                    Flags = AnimationState.IsOneShot,
-                    
-                }
+                    var animation = mapAnimations[strAnimation];
+                    var animState = cGpuAnimationState.AnimationState;
+                    if (animState != null)
+                    {
+                        animState.ModelAnimation = animation;
+                        animState.ModelAnimationFrame = 0;
+                    } 
+                }            
             }
-            #endif
         }
         if (t < LIFETIME)
         {

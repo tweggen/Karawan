@@ -77,9 +77,9 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
     {
         base.OnCollision(cev);
         var me = cev.ContactInfo.PropertiesA;
-        _engine.AddDoomedEntity(me.Entity);
+        // _engine.AddDoomedEntity(me.Entity);
         
-        #if false
+        #if true
         ref engine.physics.components.Body cCitizenBody = ref me.Entity.Get<engine.physics.components.Body>();
 
         /*
@@ -105,7 +105,10 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
          * Replace the previous behavior with the after crash behavior.
          */
         me.Entity.Get<engine.behave.components.Behavior>().Provider =
-            new nogame.characters.citizen.AfterCrashBehavior(_engine, me.Entity);
+            new nogame.characters.citizen.AfterCrashBehavior(_engine, me.Entity)
+            {
+                CharacterModelDescription = CharacterModelDescription
+            };
     #endif
     }
 

@@ -69,6 +69,7 @@ public class EntityCreator
         {
             builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, InstantiateModelParams);
             modelBuilder.BuildEntity(_ePerson);
+            I.Get<ModelCache>().BuildPerInstancePhysics(_ePerson, modelBuilder, _model, ModelCacheParams);
             EntityAnimations = modelBuilder.GetAnimationsEntity();
         }
 

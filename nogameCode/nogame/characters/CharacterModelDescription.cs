@@ -8,6 +8,8 @@ public class CharacterModelDescription
     public string RunAnimName { get; set; } //= "Run_InPlace";
     public string IdleAnimName { get; set; } // "Idle_Generic";
     public string JumpAnimName { get; set; } //= "Standing_Jump";
+    
+    public string DeathAnimName { get; set; } //= "Death_FallForwards";
 
     public string PunchRightAnim { get; set; } //= "Punch_RightHand";
     public string PunchLeftAnim { get; set; } //= "Punch_LeftHand";

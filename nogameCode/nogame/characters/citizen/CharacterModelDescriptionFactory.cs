@@ -36,16 +36,18 @@ public static class CharacterModelDescriptionFactory
         {
             WalkAnimName = isMale?"Walk_Male":"Walk_InPlace_Female",
             RunAnimName = "Run_InPlace",
+            DeathAnimName = "Death_FallForwards",
             AnimationUrls = $"Run_InPlace.fbx;{(isMale?"Walk_Male.fbx":"Walk_InPlace_Female.fbx")};Death_FallForwards.fbx",
             ModelBaseBone = "Root_M",
             ModelUrl = strModel,
             Scale = "1",
             InstantiateModelParams = new()
-            {                GeomFlags = 0
-                                         | InstantiateModelParams.BUILD_PHYSICS
-                                         | InstantiateModelParams.PHYSICS_TANGIBLE
-                                         | InstantiateModelParams.PHYSICS_DETECTABLE
-                                         | InstantiateModelParams.PHYSICS_CALLBACKS
+            {               
+                GeomFlags = 0
+                            | InstantiateModelParams.BUILD_PHYSICS
+                            | InstantiateModelParams.PHYSICS_TANGIBLE
+                            | InstantiateModelParams.PHYSICS_DETECTABLE
+                            | InstantiateModelParams.PHYSICS_CALLBACKS
                 ,
                 MaxVisibilityDistance = propMaxDistance,
                 MaxBehaviorDistance = propMaxDistance,
