@@ -22,12 +22,6 @@ public class CharacterModelDescription
 
     public string Scale { get; set; } = "1";
 
-    public int ModelGeomFlags { get; set; } = 0
-                                              // | InstantiateModelParams.ROTATE_X90
-                                              // | InstantiateModelParams.ROTATE_X180
-                                              //| InstantiateModelParams.ROTATE_Y180
-        ;
-    
     public DefaultEcs.Entity EntityAnimations { get; set; } = default;
     public Model Model { get; set; } = null;
     public AnimationState AnimationState { get; set; } = null;

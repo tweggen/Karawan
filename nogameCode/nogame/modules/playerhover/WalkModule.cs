@@ -109,7 +109,6 @@ public class WalkModule : AModule, IInputPart
                 Position = v3Person,
                 Orientation = qPerson,
                 PhysicsName = PhysicsName,
-                MaxDistance = 200f,
                 CreateRightHand = true,
                 BehaviorFactory = entity => new WalkBehavior()
                 {
@@ -125,8 +124,11 @@ public class WalkModule : AModule, IInputPart
                         | CollisionProperties.CollisionFlags.TriggersCallbacks,
                     Name = PhysicsName,
                     LayerMask = 0x00ff,
+                },
+                InstantiateModelParams = new()
+                {
+                    MaxDistance = 200f
                 }
-
             };
             
             _model = await creator.CreateAsync();

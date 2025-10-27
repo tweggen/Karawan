@@ -18,12 +18,7 @@ public static class CharacterModelDescriptionFactory
             CPUNodes = "MiddleFinger2_R;MiddleFinger2_L",
             ModelBaseBone = "Root_M",
             ModelUrl = "man_casual_Rig.fbx",
-            Scale = "1",
-            ModelGeomFlags = 0
-            // | InstantiateModelParams.ROTATE_X90
-            // | InstantiateModelParams.ROTATE_X180
-            //| InstantiateModelParams.ROTATE_Y180
-            ,
+            Scale = "1"
         };
     }
 

@@ -1,12 +1,78 @@
 using System;
 using System.Numerics;
+using builtin.tools;
+using DefaultEcs;
+using engine;
+using engine.joyce.components;
 using engine.physics;
+using nogame.cities;
 using static engine.Logger;
 
 namespace nogame.characters.citizen;
 
 public class Behavior : builtin.tools.SimpleNavigationBehavior
 {
+    /**
+     * This is the entity that shall be updated to have the proper animation running.
+     */
+    public DefaultEcs.Entity EntityAnimation;
+
+    public required CharacterModelDescription CharacterModelDescription;
+    
+    public static uint NDrawCallsPerCharacterBatch { get; set; } = 2;
+
+    public float _previousSpeed = Single.MinValue;
+    
+    /**
+     * Verify that the animation of the character matches the behavior.
+     */
+    private void _updateAnimation(DefaultEcs.Entity entity)
+    {
+        if (!entity.IsAlive) return;
+        float speed = (Navigator as SegmentNavigator)!.Speed;
+        if (speed == _previousSpeed) return;
+
+        if (entity.Has<engine.joyce.components.GPUAnimationState>())
+        {
+            ref var cGpuAnimationState = ref entity.Get<engine.joyce.components.GPUAnimationState>();
+            ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
+            ref var model = ref cFromModel.Model;
+            string strAnimation;
+
+            if (speed > 7f / 3.6f)
+            {
+                strAnimation = CharacterModelDescription.RunAnimName;
+            }
+            else if (speed > 0f)
+            {
+                strAnimation = CharacterModelDescription.WalkAnimName;
+            }
+            else
+            {
+                strAnimation = CharacterModelDescription.IdleAnimName;
+            }
+
+            var mapAnimations = model.MapAnimations;
+            if (mapAnimations != null && mapAnimations.Count > 0)
+            {
+                if (!mapAnimations.ContainsKey(strAnimation))
+                {
+                    int a = 1;
+                }
+                
+                _previousSpeed = speed;
+                var animation = mapAnimations[strAnimation];
+                var animState = cGpuAnimationState.AnimationState;
+                if (animState != null)
+                {
+                    animState.ModelAnimation = animation;
+                    animState.ModelAnimationFrame = 0;
+                } 
+            }
+        }
+    }
+
+    
     public override void OnCollision(ContactEvent cev)
     {
         base.OnCollision(cev);
@@ -43,7 +109,14 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
     #endif
     }
 
-    
+
+    public override void Behave(in Entity entity, float dt)
+    {
+        base.Behave(in entity, dt);
+        _updateAnimation(entity);
+    }
+
+
     public override void Sync(in DefaultEcs.Entity entity)
     {
         base.Sync(entity);

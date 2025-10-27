@@ -32,7 +32,6 @@ public static class CharacterModelDescriptionFactory
         bool isMale = strModel.StartsWith("man");
         float propMaxDistance = (float)engine.Props.Get("nogame.characters.citizen.maxDistance", 100f);
         
-
         return new()
         {
             WalkAnimName = isMale?"Walk_Male":"Walk_InPlace_Female",
@@ -43,7 +42,6 @@ public static class CharacterModelDescriptionFactory
             Scale = "1",
             InstantiateModelParams = new()
             {                GeomFlags = 0
-                                         | InstantiateModelParams.ROTATE_Y180
                                          | InstantiateModelParams.BUILD_PHYSICS
                                          | InstantiateModelParams.PHYSICS_TANGIBLE
                                          | InstantiateModelParams.PHYSICS_DETECTABLE

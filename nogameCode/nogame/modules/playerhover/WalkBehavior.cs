@@ -27,6 +27,7 @@ public class WalkBehavior : ABehavior
     public required float MassTarget { get; init; }
     public CharacterModelDescription CharacterModelDescription { get; init; }
     
+    
     public override void OnCollision(ContactEvent cev)
     {
         if (_cutCollisions) return;

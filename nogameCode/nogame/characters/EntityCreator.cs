@@ -21,13 +21,6 @@ public class EntityCreator
     public Vector3 Position = Vector3.Zero;
     public Quaternion Orientation = Quaternion.Identity;
     public required string PhysicsName;
-
-    
-    /**
-     * The maximal distance if we have no instantiate model params.
-     */
-    public float MaxDistance;
-    
     
     public Func<Entity, IBehavior>? BehaviorFactory = null;
     public Func<Entity, CollisionProperties>? CollisionPropertiesFactory = null;
@@ -86,7 +79,7 @@ public class EntityCreator
             CharacterModelDescription.AnimationState = _animStatePerson;
         }
         
-        if (CollisionPropertiesFactory != null){
+        if (CollisionPropertiesFactory != null) {
             
             engine.physics.CollisionProperties personCollisionProperties = CollisionPropertiesFactory(_ePerson);
             engine.physics.Object po;
@@ -192,16 +185,7 @@ public class EntityCreator
 
             if (null == CharacterModelDescription.InstantiateModelParams)
             {
-                if (0 == MaxDistance)
-                {
-                    ErrorThrow<ArgumentException>(
-                        $"Maximal distance of 0f is not allowed when no InstantiateModelParams are given.");
-                }
-                InstantiateModelParams = new()
-                {
-                    GeomFlags = CharacterModelDescription.ModelGeomFlags,
-                    MaxDistance = MaxDistance
-                };
+                InstantiateModelParams = new();
             }
             else
             {

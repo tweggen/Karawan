@@ -25,8 +25,6 @@ public class CharacterCreator
      * Setting this to two limits this to two different animation phases. That way on mobile platforms
      * that do not upload animation tables to gpu but require distinct draw calls, draw calls are saved.
      */
-    public static uint NDrawCallsPerCharacterBatch { get; set; } = 2;
-    
     private class Context
     {
         public builtin.tools.RandomSource Rnd;
@@ -96,10 +94,11 @@ public class CharacterCreator
     }
 
 
-    private static engine.behave.IBehavior _createDefaultBehavior(
+    private static Behavior _createDefaultBehavior(
         RandomSource rnd,
         ClusterDesc clusterDesc, 
-        Quarter quarter, QuarterDelim delim, float relativePosition)
+        Quarter quarter, QuarterDelim delim, float relativePosition, float speed,
+        CharacterModelDescription cmd)
     {
         List<builtin.tools.SegmentEnd> listSegments = new();
 
@@ -142,12 +141,13 @@ public class CharacterCreator
             StartIndex = startIndex,
             StartRelative = rnd.GetFloat(),
             LoopSegments = true,
-            Speed = 4f
+            Speed = speed
         };
 
         return new nogame.characters.citizen.Behavior()
         {
-            Navigator = segnav
+            Navigator = segnav,
+            CharacterModelDescription = cmd
         };
     }
     
@@ -161,14 +161,16 @@ public class CharacterCreator
         float relativePos,
         int seed = 0)
     {
-        // TXWTODO: Still need to bring speed to the character model description, let behavior read it and select animation.
         float speed;
         speed = (4f + rnd.GetFloat() * 3f) / 3.6f;
+
+        var cmd = CharacterModelDescriptionFactory.CreateCitizen(rnd);
+        var behavior = _createDefaultBehavior(rnd, clusterDesc, quarter, delim, relativePos, speed, cmd);
         
         EntityCreator creator = new()
         {
-            BehaviorFactory = entity => _createDefaultBehavior(rnd, clusterDesc, quarter, delim, relativePos),
-            CharacterModelDescription = CharacterModelDescriptionFactory.CreateCitizen(rnd),
+            BehaviorFactory = entity => behavior,
+            CharacterModelDescription = cmd,
             PhysicsName = EntityName,
         };
         var model = await creator.CreateAsync();
@@ -209,30 +211,21 @@ public class CharacterCreator
                 }
             }
             
-            // TXWTODO: Shouldn't setting the actual animation be part of the behavior?
+
+            /*
+             * Signal the standard behavior it may use animations.
+             */
             if (default != eAnimations)
             {
-                var mapAnimations = model.MapAnimations;
-                if (mapAnimations != null && mapAnimations.Count > 0)
+                behavior.EntityAnimation = eAnimations;
+                eAnimations.Set(new GPUAnimationState
                 {
-                    string strAnimation = creator.CharacterModelDescription.WalkAnimName;
-                    if (!mapAnimations.ContainsKey(strAnimation))
+                    AnimationState = new()
                     {
-                        int a = 1;
+                        ModelAnimation = null,
+                        ModelAnimationFrame = 0
                     }
-                    var animation = mapAnimations[strAnimation];
-                    eAnimations.Set(new GPUAnimationState
-                    {
-                        AnimationState = new()
-                        {
-                            ModelAnimation = animation,
-                            ModelAnimationFrame = (ushort)((NDrawCallsPerCharacterBatch>0)?
-                                (I.Get<Engine>().FrameNumber % (animation.NFrames/NDrawCallsPerCharacterBatch))
-                                :0)
-                        }
-                    });
-                    // Trace($"Setting up animation {animation.Name}");
-                }
+                });
             }
         };
     }

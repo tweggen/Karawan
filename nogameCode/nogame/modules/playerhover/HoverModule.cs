@@ -43,8 +43,7 @@ public class HoverModule : AModule, IInputPart
     
     public float MassShip { get; set; } = 500f;
 
-    
-#if true
+
     public string AnimName { get; set; } = "";
     public string ModelUrl { get; set; } = "car6.obj";
     public int ModelGeomFlags { get; set; } = 0
@@ -53,12 +52,6 @@ public class HoverModule : AModule, IInputPart
                                               | InstantiateModelParams.ROTATE_Y180
                                               | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
                                               ;
-#else
-    public string AnimName { get; set; } = "Walk_Loop";
-    public string ModelUrl { get; set; } = "player.glb";
-    public int ModelGeomFlags { get; set; } = 0
-        ;
-#endif
     
     /**
       * Sound API
