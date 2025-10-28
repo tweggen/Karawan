@@ -1,4 +1,7 @@
-﻿using engine;
+﻿using System.Diagnostics;
+using engine;
+using engine.joyce;
+using static engine.Logger;
 
 namespace Chushi;
 
@@ -74,6 +77,8 @@ public class ConsoleMain
 
 
         I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
+        I.Register<engine.joyce.ModelCache>(() => new engine.joyce.ModelCache());
+
 
         /*
          * Bootstrap game by directly reading game config, setting up
@@ -103,9 +108,18 @@ public class ConsoleMain
 
         cassetteLoader.InterpretConfig();
 
-        // Add Call to remove an implementations.
-
+        Trace($"Running compilation tasks...");
         var mazuAnimationCompiler = new Mazu.AnimationCompiler();
+        Task[] tasks = new Task[]
+        {
+            Task.Run(async () =>
+            {
+                await mazuAnimationCompiler.Compile();
+            })
+        };
+        Task.WaitAll(tasks);
+        Trace($"Done running compilation tasks.");
+        
         mazuAnimationCompiler.Dispose();
         
         System.Environment.Exit(0);

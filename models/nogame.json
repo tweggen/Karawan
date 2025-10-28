@@ -370,15 +370,6 @@
       "but_settings": { "emissive-trans": { "uri": "../models/osd/but_settings.png" } },
       "but_getinout": { "emissive-trans": { "uri": "../models/osd/but_getinout.png" } },
       
-      "StudioOchi_SpringPeople.001": { "albedo": { 
-        "uri":  "../models/models/people/StudioOchi_SpringPeople.001.16.png",
-        "tag":  "StudioOchi_SpringPeople.001.png"  } },
-      "StudioOchi_SpringPeople.002": { "albedo": { 
-        "uri":  "../models/models/people/StudioOchi_SpringPeople.002.16.png",
-        "tag":  "StudioOchi_SpringPeople.002.png"  } },
-      "StudioOchi_SpringPeople.003": { "albedo": {
-        "uri":  "../models/models/people/StudioOchi_SpringPeople.003.16.png",
-        "tag":  "StudioOchi_SpringPeople.003.png" } },
       "color-atlas-gradient": { "albedo":  {
         "uri":  "../models/models/people/polyperfect/color-atlas-gradient.png",
         "tag":  "color-atlas-gradient.png" } }
@@ -452,9 +443,6 @@
       { "uri": "../models/menu/menu.xml" },
       { "uri": "../models/menu/shop.xml" },
       { "uri": "../models/nogame.json" },
-      { "uri": "../models/models/people/Studio Ochi Spring Boy_ANIM.fbx" },
-      { "uri": "../models/models/people/Studio Ochi Spring Man B_ANIM.fbx" },
-      { "uri": "../models/models/people/Studio Ochi Spring Woman C_ANIM.fbx" },
 
       { "uri": "../models/models/people/polyperfect/man_business_Rig.fbx" },
       { "uri": "../models/models/people/polyperfect/man_casual_Rig.fbx" },

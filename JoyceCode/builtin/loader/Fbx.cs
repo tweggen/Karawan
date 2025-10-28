@@ -16,7 +16,7 @@ public class Fbx
     static private Assimp _assimp;
     
     static public void LoadModelInstanceSync(string url,
-        ModelProperties modelProperties,
+        ModelProperties? modelProperties,
         out Model model)
     {
         engine.joyce.InstanceDesc instanceDesc = new(
@@ -31,39 +31,44 @@ public class Fbx
         List<string> cpuNodes = null;
         string? strModelBaseBone = null;
         
-        if (modelProperties.Properties.ContainsKey("CPUNodes"))
-        {
-            cpuNodes = modelProperties.Properties["CPUNodes"].Split(';',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).ToList();
-        }
-
-        if (modelProperties.Properties.ContainsKey("ModelBaseBone"))
-        {
-            strModelBaseBone = modelProperties.Properties["ModelBaseBone"];
-        }
-        
         AxisInterpreter? axisInterpreter = null;
         AxisInterpreter? animAxisInterpreter = null;
-        
-        if (modelProperties.Properties.ContainsKey("AnimationUrls"))
+
+        if (modelProperties != null)
         {
-            additionalUrls = modelProperties.Properties["AnimationUrls"].Split(';',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).ToList();
+            if (modelProperties.Properties.ContainsKey("CPUNodes"))
+            {
+                cpuNodes = modelProperties.Properties["CPUNodes"]
+                    .Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+
+            if (modelProperties.Properties.ContainsKey("ModelBaseBone"))
+            {
+                strModelBaseBone = modelProperties.Properties["ModelBaseBone"];
+            }
+
+            if (modelProperties.Properties.ContainsKey("AnimationUrls"))
+            {
+                additionalUrls = modelProperties.Properties["AnimationUrls"].Split(';',
+                    StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+
+            if (modelProperties.Properties.ContainsKey("Scale"))
+            {
+                scale = float.Parse(modelProperties.Properties["Scale"]);
+            }
+
+            if (modelProperties.Properties.ContainsKey("Axis"))
+            {
+                axisInterpreter = AxisInterpreter.CreateFromString(modelProperties.Properties["Axis"]);
+            }
+
+            if (modelProperties.Properties.ContainsKey("AnimAxis"))
+            {
+                animAxisInterpreter = AxisInterpreter.CreateFromString(modelProperties.Properties["AnimAxis"]);
+            }
         }
 
-        if (modelProperties.Properties.ContainsKey("Scale"))
-        {
-            scale = float.Parse(modelProperties.Properties["Scale"]);
-        }
-
-        if (modelProperties.Properties.ContainsKey("Axis"))
-        {
-            axisInterpreter = AxisInterpreter.CreateFromString(modelProperties.Properties["Axis"]);
-        }
-        
-        if (modelProperties.Properties.ContainsKey("AnimAxis"))
-        {
-            animAxisInterpreter = AxisInterpreter.CreateFromString(modelProperties.Properties["AnimAxis"]);
-        }
-        
         using (var fbxModel = new fbx.FbxModel())
         {
             fbxModel.Load(url, additionalUrls, strModelBaseBone, cpuNodes,scale,

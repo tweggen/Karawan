@@ -68,7 +68,7 @@ public class ModelCache
     private Task<Model> _instantiateModelParams(
         Model model,
         ModelProperties modelProperties,
-        InstantiateModelParams p)
+        InstantiateModelParams? p)
     {
         return _engine.Run(() =>
         {
@@ -97,7 +97,7 @@ public class ModelCache
                 id.ComputeAdjustMatrix(p, ref m);
                 id.ModelTransform *= m;
                 id.ModelTransform *= model.FirstInstanceDescTransformWithInstance;
-                id.MaxDistance = p.MaxVisibilityDistance;
+                id.MaxDistance = p!=null?p.MaxVisibilityDistance:200f;
             }
             return model;
         });
