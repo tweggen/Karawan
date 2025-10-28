@@ -819,7 +819,7 @@ public class Loader
                 }
                 
 
-                string? uriAnimations = jeRes.GetProperty("animationsUrl").GetString();
+                string? uriAnimations = jeRes.GetProperty("animationUrls").GetString();
                 if (null == uriAnimations)
                 {
                     throw new InvalidDataException("no animationsUrl specified in resource.");
@@ -963,7 +963,7 @@ public class Loader
         
         if (_jeRoot.TryGetProperty("animations", out var jeAnimations))
         {
-            if (jeResources.TryGetProperty("list", out var jeList))
+            if (jeAnimations.TryGetProperty("list", out var jeList))
             {
                 LoadAnimationsTo(jeList);
             }
