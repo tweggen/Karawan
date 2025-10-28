@@ -37,13 +37,13 @@ public class ConsoleMain
                 engine.GlobalSettings.Set("Engine.ResourcePath", "./nogame/");
                 jsonPath = "../models/";
             }
-            else if (Path.Exists("../../../../../nogame/"))
+            else if (Path.Exists("../../../../nogame/"))
             {
                 /*
                  * This is when we start from the debugger on windows in Karawan
                  */
                 jsonPath = "../models/";
-                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
+                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../nogame/");
             } else if (Path.Exists("../../../../../nogame/"))
             {
                 /*
@@ -117,21 +117,25 @@ public class ConsoleMain
         Trace($"Starting engine...");
         e.Execute();
         Trace($"Running compilation tasks...");
-        var mazuAnimationCompiler = new Mazu.AnimationCompiler();
+        List<Task> listTasks = new();
+        
+        
+        
+        // var mazuAnimationCompiler = new Mazu.AnimationCompiler();
         Task[] tasks = new Task[]
         {
             Task.Run(async () =>
             {
-                await mazuAnimationCompiler.Compile();
+                //await mazuAnimationCompiler.Compile();
             })
         };
-        Task.WaitAll(tasks);
+        Task.WaitAll(listTasks);
         Trace($"Done running compilation tasks.");
         Trace($"Stopping engine...");
         e.Exit();
         Trace($"Engine stopped.");
         
-        mazuAnimationCompiler.Dispose();
+        //mazuAnimationCompiler.Dispose();
         
         System.Environment.Exit(0);
     }

@@ -376,6 +376,15 @@
       
     }
   },
+  "animations":
+  {
+    "list": [
+      { 
+        "modelUrl": "man_casual_Rig.fbx", 
+        "animationUrls": "Idle_Generic.fbx;Run_InPlace.fbx;Walk_Male.fbx;Running_Jump.fbx;Standing_Jump.fbx;Punch_LeftHand.fbx;Punch_RightHand.fbx;Death_FallForwards.fbx" }
+      }
+    ]
+  },
   "resources":
   {
     "list": [
