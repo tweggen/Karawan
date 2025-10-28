@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>exe</OutputType>
-        <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
+        <TargetFrameworks>net9.0;netstandard2.0</TargetFrameworks>
         <SelfContained>True</SelfContained>
         <PublishSingleFile>true</PublishSingleFile>
     </PropertyGroup>
@@ -15,10 +15,10 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.Build.Framework" Version="17.9.5" />
       <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.9.5" />
-      <PackageReference Include="SkiaSharp" Version="2.88.8" />
-      <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.8" />
-      <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.8" />
-      <PackageReference Include="System.Text.Json" Version="8.0.3" />
+      <PackageReference Include="SkiaSharp" Version="3.119.1" />
+      <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
+      <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
+      <PackageReference Include="System.Text.Json" Version="9.0.10" />
 		<!-- PackageReference Include="UkooLabs.FbxSharpie" Version="1.0.99" /-->
     </ItemGroup>
 

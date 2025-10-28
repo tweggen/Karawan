@@ -112,6 +112,12 @@ namespace CmdLine
         }
 
         
+        /**
+         * - args[0]: My own name
+         * - args[1]: game config path
+         * - args[2]: Destination name
+         * - args[3]: Current Path (by framework)
+         */
         public PackTextures(string[] args)
         {
             if (args.Length < 3)

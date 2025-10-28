@@ -11,6 +11,7 @@ public class ConsoleMain
     {
         // System.Environment.SetEnvironmentVariable("ALSOFT_LOGLEVEL", "3");
 
+        var cwd = System.IO.Directory.GetCurrentDirectory();
         string jsonPath;
         /*
          * Setup globals and statics
@@ -43,17 +44,24 @@ public class ConsoleMain
                  */
                 jsonPath = "../models/";
                 engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
-            } else if (Path.Exists("../../../../nogame/"))
+            } else if (Path.Exists("../../../../../nogame/"))
             {
                 /*
                  * This is in Chushi on windows.
                  */
                 jsonPath = "../models/";
-                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../nogame/");
+                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
+            } else if (Path.Exists("../../../../../../nogame/"))
+            {
+                /*
+                 * This is in Chushi on windows.
+                 */
+                jsonPath = "../models/";
+                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../../nogame/");
             }
             else
             {
-                Console.Error.WriteLine($"Running in unknown environment.");
+                Console.Error.WriteLine($"Running in unknown environment, cwd=={cwd}");
                 System.Environment.Exit(-1);
                 return;
             }
@@ -86,7 +94,6 @@ public class ConsoleMain
          */
         var iassetDesktop = new Chushi.AssetImplementation();
         engine.casette.Loader cassetteLoader;
-        var cwd = System.IO.Directory.GetCurrentDirectory();
         Console.WriteLine($"CWD is {cwd}");
         using (var streamJson =
                File.OpenRead(

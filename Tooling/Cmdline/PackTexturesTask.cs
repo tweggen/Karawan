@@ -107,7 +107,6 @@ namespace CmdLine
                 Console.WriteLine($"exit {exited}");
             }
             
-            //int result = new CmdLine.PackTextures(args) { Trace = msg => Log.LogMessage(MessageImportance.High, msg) }.Execute();
             return true;
         }
     }

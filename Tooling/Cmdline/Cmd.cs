@@ -27,6 +27,9 @@ class Cmd
                 case "packtextures":
                     result = new CmdLine.PackTextures(args) { Trace = m => Console.Error.WriteLine(m) }.Execute();
                     break;
+                case "compileassets":
+                    result = new CmdLine.CompileAssets(args) { Trace = m => Console.Error.WriteLine(m) }.Execute();
+                    break;
                 case "res2target":
                     result = new CmdLine.Res2Target(args) { Trace = m => Console.Error.WriteLine(m) }.Execute();
                     break;

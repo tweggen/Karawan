@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <UsingTask Condition=" '$(OS)' == 'Windows_NT' " TaskName="CmdLine.CompileAssetsTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\win-x64\joycecmd.dll" />
   <UsingTask Condition=" '$(OS)' == 'Windows_NT' " TaskName="CmdLine.PackTexturesTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\win-x64\joycecmd.dll" />
   <UsingTask Condition=" '$(OS)' == 'Windows_NT' " TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\win-x64\joycecmd.dll" />
   <UsingTask Condition=" '$(OS)' != 'Windows_NT' " TaskName="CmdLine.PackTexturesTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\linux-x64\joycecmd.dll" />
@@ -35,17 +36,22 @@
 
   <Import Project="..\nogameCode\nogameCode.projitems" Label="Shared" />
 
+  <Target Condition=" '$(OS)' == 'Windows_NT' " Name="CompileAssetsWindowsHost" BeforeTargets="GatherResources">
+    <Message Text="compiling assets" />
+    <CompileAssetsTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Chushi\bin\Debug\net9.0\win-x64\publish\Chushi.exe" />
+  </Target>
+
   <Target Condition=" '$(OS)' == 'Windows_NT' " Name="GatherTexturesWindowsHost" BeforeTargets="GatherResources">
     <Message Text="gathering textures" />
-    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\win-x64\publish\joycecmd.exe" />
+    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net9.0\win-x64\publish\joycecmd.exe" />
   </Target>
   <Target Condition=" '$(OS)' != 'Windows_NT' " Name="GatherTexturesLinuxHost" BeforeTargets="GatherResources">
     <Message Text="gathering textures" />
-    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\linux-x64\publish\joycecmd" />
+    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net9.0\linux-x64\publish\joycecmd" />
   </Target>
   <Target Name="GatherResources" BeforeTargets="Compile">
     <Message Text="compiling resources" />
     <Res2TargetTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" />
   </Target>
-
+    
 </Project>
