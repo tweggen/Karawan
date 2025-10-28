@@ -139,6 +139,11 @@ public class Loader
 
     public void LoadImplementations(JsonElement jeImplementations)
     {
+        if (engine.GlobalSettings.Get("joyce.CompileMode") == "true")
+        {
+            ErrorThrow<InvalidOperationException>("I should not have been called.");
+            return;
+        }
         try
         {
             foreach (var pair in jeImplementations.EnumerateObject())
@@ -762,34 +767,41 @@ public class Loader
             LoadProperties(jeProperties);
         }
 
-        if (je.TryGetProperty("implementations", out var jeImplementations))
+        /*
+         * If I'm running in compile mode I am not supposed to load
+         * all the implementations that follow.
+         */
+        if (engine.GlobalSettings.Get("joyce.CompileMode") != "true")
         {
-            LoadImplementations(jeImplementations);
-        }
+            if (je.TryGetProperty("implementations", out var jeImplementations))
+            {
+                LoadImplementations(jeImplementations);
+            }
 
-        if (je.TryGetProperty("mapProviders", out var jeMapProviders))
-        {
-            LoadMapProviders(jeMapProviders);
-        }
+            if (je.TryGetProperty("mapProviders", out var jeMapProviders))
+            {
+                LoadMapProviders(jeMapProviders);
+            }
 
-        if (je.TryGetProperty("metaGen", out var jeMetaGen))
-        {
-            LoadMetaGen(jeMetaGen);
-        }
+            if (je.TryGetProperty("metaGen", out var jeMetaGen))
+            {
+                LoadMetaGen(jeMetaGen);
+            }
 
-        if (je.TryGetProperty("scenes", out var jeScenes))
-        {
-            LoadScenes(jeScenes);
-        }
+            if (je.TryGetProperty("scenes", out var jeScenes))
+            {
+                LoadScenes(jeScenes);
+            }
 
-        if (je.TryGetProperty("quests", out var jeQuests))
-        {
-            LoadQuests(jeQuests);
-        }
+            if (je.TryGetProperty("quests", out var jeQuests))
+            {
+                LoadQuests(jeQuests);
+            }
 
-        if (je.TryGetProperty("layers", out var jeLayers))
-        {
-            I.Get<LayerCatalogue>().LoadConfig(jeLayers);
+            if (je.TryGetProperty("layers", out var jeLayers))
+            {
+                I.Get<LayerCatalogue>().LoadConfig(jeLayers);
+            }
         }
     }
 

@@ -190,5 +190,6 @@ public class DesktopMain
         e.Execute();
 
         // Add Call to remove an implementations.
+        System.Environment.Exit(0);
     }
 }
