@@ -107,7 +107,8 @@ public class ConsoleMain
         e.PlatformSetupDone();
 
         cassetteLoader.InterpretConfig();
-
+        Trace($"Starting engine...");
+        e.Execute();
         Trace($"Running compilation tasks...");
         var mazuAnimationCompiler = new Mazu.AnimationCompiler();
         Task[] tasks = new Task[]
@@ -119,6 +120,9 @@ public class ConsoleMain
         };
         Task.WaitAll(tasks);
         Trace($"Done running compilation tasks.");
+        Trace($"Stopping engine...");
+        e.Exit();
+        Trace($"Engine stopped.");
         
         mazuAnimationCompiler.Dispose();
         

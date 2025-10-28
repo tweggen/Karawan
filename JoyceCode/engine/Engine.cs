@@ -39,7 +39,8 @@ public class Engine
     public physics.actions.Log PLog;
     
     private int _nextId = 0;
-
+    private bool _isCompiling = false;
+    
     private DefaultEcs.World _ecsWorld;
 
     private engine.physics.API _aPhysics;
@@ -666,34 +667,37 @@ public class Engine
         {
             _firstTime = false;
 
-            /*
-             * Apply poses needs input from simulation
-             */
-            _systemApplyPoses.Update(dt);
+            if (!_isCompiling)
+            {
+                /*
+                 * Apply poses needs input from simulation
+                 */
+                _systemApplyPoses.Update(dt);
 
-            /*
-             * hierarchy needs
-             * - input from user handlers
-             */
-            _aHierarchy.Update();
+                /*
+                 * hierarchy needs
+                 * - input from user handlers
+                 */
+                _aHierarchy.Update();
 
-            /*
-             * transform system needs
-             * - updated hierarchy system
-             * - input from user handlers
-             * - input from physics
-             */
-            _aTransform.Update();
+                /*
+                 * transform system needs
+                 * - updated hierarchy system
+                 * - input from user handlers
+                 * - input from physics
+                 */
+                _aTransform.Update();
 
-            /*
-             * Move kinetics re quires
-             * - input from user, already processed by Transform System
-             */
-            _systemMoveKinetics.Update(dt);
-            
-            /*
-             * We don't call animation before the first frame, only after it.
-             */
+                /*
+                 * Move kinetics re quires
+                 * - input from user, already processed by Transform System
+                 */
+                _systemMoveKinetics.Update(dt);
+
+                /*
+                 * We don't call animation before the first frame, only after it.
+                 */
+            }
         }
 
         /*
@@ -714,118 +718,125 @@ public class Engine
             }
         }
 
-        /*
-         * Call the various ways of user behavior and/or controllers.
-         * They will read world position and modify physics and or positions
-         *
-         * Require: Previously computed world transforms.
-         */
-        if (gamePlayState == GamePlayStates.Running)
+        if (!_isCompiling)
         {
-            _systemBehave.Update(dt);
-            _systemParticleEmitter.Update(dt);
-            _systemParticle.Update(dt);
-        }
-
-        OnLogicalFrame?.Invoke(this, dt);
-
-        /*
-         * Create the new camera info.
-         */
-        lock (_lo)
-        {
-            _cameraInfo = new CameraInfo(Camera.Value);
-        }
-        
-        /*
-         * After everything has behaved, read the camera(s) to get
-         * the camera positions for further processing.
-         */
-        var vCameraPosition = new Vector3(0f, 0f, 0f);
-        var vCameraRight = new Vector3(1f, 1f, 0f);
-        var listCameras = GetEcsWorld().GetEntities()
-            .With<engine.joyce.components.Camera3>()
-            .With<engine.joyce.components.Transform3ToWorld>()
-            .AsEnumerable();
-        foreach (var eCamera in listCameras)
-        {
-            var cCamera3 = eCamera.Get<engine.joyce.components.Camera3>();
-            var cTransform3ToWorld = eCamera.Get<engine.joyce.components.Transform3ToWorld>();
-            var mToWorld = cTransform3ToWorld.Matrix;
-
-            vCameraPosition = cTransform3ToWorld.Matrix.Translation;
-            vCameraRight = new Vector3(mToWorld.M11, mToWorld.M12, mToWorld.M13);
-
-            _systemMovingSounds.SetListenerPosRight(vCameraPosition, vCameraRight);
-
-            break;
-        }
-
-        /*
-         * We can update moving sounds only after the behaviour has defined
-         * the velocities.
-         */
-        _systemMovingSounds.Update(dt);
-
-
-        if (gamePlayState == GamePlayStates.Running) {
             /*
-             * Advance physics, based on new user input and/or gravitation.
+             * Call the various ways of user behavior and/or controllers.
+             * They will read world position and modify physics and or positions
+             *
+             * Require: Previously computed world transforms.
              */
-            _aPhysics.Update(dt);
+            if (gamePlayState == GamePlayStates.Running)
+            {
+                _systemBehave.Update(dt);
+                _systemParticleEmitter.Update(dt);
+                _systemParticle.Update(dt);
+            }
+
+            OnLogicalFrame?.Invoke(this, dt);
         }
 
-        /*
-         * Apply poses needs input from simulation
-         */
-        _systemApplyPoses.Update(dt);
+        if (!_isCompiling)
+        {
+            /*
+             * Create the new camera info.
+             */
+            lock (_lo)
+            {
+                _cameraInfo = new CameraInfo(Camera.Value);
+            }
 
-        OnAfterPhysics?.Invoke(this, dt);
+            /*
+             * After everything has behaved, read the camera(s) to get
+             * the camera positions for further processing.
+             */
+            var vCameraPosition = new Vector3(0f, 0f, 0f);
+            var vCameraRight = new Vector3(1f, 1f, 0f);
+            var listCameras = GetEcsWorld().GetEntities()
+                .With<engine.joyce.components.Camera3>()
+                .With<engine.joyce.components.Transform3ToWorld>()
+                .AsEnumerable();
+            foreach (var eCamera in listCameras)
+            {
+                var cCamera3 = eCamera.Get<engine.joyce.components.Camera3>();
+                var cTransform3ToWorld = eCamera.Get<engine.joyce.components.Transform3ToWorld>();
+                var mToWorld = cTransform3ToWorld.Matrix;
 
-        /*
-         * hierarchy needs
-         * - input from user handlers
-         */
-        _aHierarchy.Update();
+                vCameraPosition = cTransform3ToWorld.Matrix.Translation;
+                vCameraRight = new Vector3(mToWorld.M11, mToWorld.M12, mToWorld.M13);
 
-        /*
-         * transform system needs
-         * - updated hierarchy system
-         * - input from user handlers
-         * - input from physics
-         */
-        _aTransform.Update();
+                _systemMovingSounds.SetListenerPosRight(vCameraPosition, vCameraRight);
 
-        /*
-         * Move kinetics requires
-         * - input from user, already processed by Transform System
-         */
-        _systemMoveKinetics.Update(dt);
+                break;
+            }
 
-        #if false
+            /*
+             * We can update moving sounds only after the behaviour has defined
+             * the velocities.
+             */
+            _systemMovingSounds.Update(dt);
+
+
+            if (gamePlayState == GamePlayStates.Running)
+            {
+                /*
+                 * Advance physics, based on new user input and/or gravitation.
+                 */
+                _aPhysics.Update(dt);
+            }
+
+            /*
+             * Apply poses needs input from simulation
+             */
+            _systemApplyPoses.Update(dt);
+
+            OnAfterPhysics?.Invoke(this, dt);
+
+            /*
+             * hierarchy needs
+             * - input from user handlers
+             */
+            _aHierarchy.Update();
+
+            /*
+             * transform system needs
+             * - updated hierarchy system
+             * - input from user handlers
+             * - input from physics
+             */
+            _aTransform.Update();
+
+            /*
+             * Move kinetics requires
+             * - input from user, already processed by Transform System
+             */
+            _systemMoveKinetics.Update(dt);
+
+#if false
         /*
          * Write back all entity modifications to the objects.
          */
         _commitWorldRecord();
-        #endif
+#endif
 
-        /*
-         * If no new frame has been created, read all geom entities for rendering
-         * into data structures.
-         */
-        if (null != _sceneSequencer.MainScene)
-        {
-            _platform.CollectRenderData(_sceneSequencer.MainScene);
-        }
-        else
-        {
-            // ErrorThrow("Null scene", (m) => new InvalidOperationException(m));
+            /*
+             * If no new frame has been created, read all geom entities for rendering
+             * into data structures.
+             */
+            if (null != _sceneSequencer.MainScene)
+            {
+                _platform.CollectRenderData(_sceneSequencer.MainScene);
+            }
+            else
+            {
+                // ErrorThrow("Null scene", (m) => new InvalidOperationException(m));
+            }
         }
 
         /*
          * A bit of homework. In 7 of 8 cases, execute queues. In number eight, check the current fragment.
          */
-        if ((_frameNumber & 7) != 0)
+        if (_isCompiling || (_frameNumber & 7) != 0)
         {
             /*
              * Now work on the main thread queues.
@@ -868,18 +879,24 @@ public class Engine
         }
         else // if ((_frameNumber & 7) != 0)
         {
-            /*
-             * Finally make sure the world is loaded for all viewers. We
-             * are a little bit lazy on that.
-             */
-            I.Get<world.MetaGen>().Loader?.WorldLoaderProvideFragments();
+            if (!_isCompiling)
+            {
+                /*
+                 * Finally make sure the world is loaded for all viewers. We
+                 * are a little bit lazy on that.
+                 */
+                I.Get<world.MetaGen>().Loader?.WorldLoaderProvideFragments();
+            }
         }
 
-        /*
-         * After all other things, take care to load the next animation frame.
-         */
-        _systemAnimation.Update(dt);
-        _cpuBoneSystem.Update(dt);
+        if (!_isCompiling)
+        {
+            /*
+             * After all other things, take care to load the next animation frame.
+             */
+            _systemAnimation.Update(dt);
+            _cpuBoneSystem.Update(dt);
+        }
     }
 
 
@@ -961,7 +978,13 @@ public class Engine
          */
         _logicalThread.Start();
 
-        _platform.Execute();
+        /*
+         * Run the platform only if we do not compile.
+         */
+        if (engine.GlobalSettings.Get("joyce.CompileMode") != "true")
+        {
+            _platform.Execute();
+        }
     }
 
 
@@ -1062,7 +1085,7 @@ public class Engine
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
 
-        while (_platform.IsRunning())
+        while (_isRunning && (_platform == null || _platform.IsRunning()))
         {
             EngineState engineState;
 
@@ -1113,7 +1136,7 @@ public class Engine
                 float timeLeft = Single.Max(invFps * 2f - accumulator, 0f); 
                 // Trace($"accu {accumulator} timeLeft {timeLeft}");
                 
-                if (_platformIsAvailable)
+                if (_isCompiling || _platformIsAvailable)
                 {
                     _onLogicalFrame(invFps, timeLeft);
                     ++nLogical;
@@ -1159,7 +1182,14 @@ public class Engine
      */
     public void SetupDone()
     {
-        _aPhysics = I.Get<engine.physics.API>();
+        /*
+         * Do not run physics in compilation mode.
+         */
+        if (engine.GlobalSettings.Get("joyce.CompileMode") != "true")
+        {
+            _aPhysics = I.Get<engine.physics.API>();
+        }
+
         _aTransform = I.Get<engine.joyce.TransformApi>();
         _aHierarchy = I.Get<engine.joyce.HierarchyApi>();
 
@@ -1343,5 +1373,7 @@ public class Engine
         u.RunEngineTest(this);
         
         _loadDefaultResources();
+        
+        _isCompiling = GlobalSettings.Get("joyce.CompileMode") == "true";
     }
 }
