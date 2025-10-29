@@ -65,6 +65,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\InstantiateModelParams.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Int4.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelAnimation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelAnimationCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelAnimChannel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelCacheParams.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelNodeTree.cs" />

@@ -1347,6 +1347,7 @@ public class Engine
         I.Register<engine.physics.API>(() => new physics.API(this));
         I.Register<engine.ObjectRegistry<joyce.Material>>(() => new ObjectRegistry<joyce.Material>());
         I.Register<engine.ObjectRegistry<joyce.Renderbuffer>>(() => new ObjectRegistry<joyce.Renderbuffer>());
+        
         I.Register<engine.Resources>(() => new Resources());
         I.Register<engine.SceneSequencer>(() => new SceneSequencer(this));
         I.Register<engine.physics.ObjectCatalogue>(() => new engine.physics.ObjectCatalogue());
