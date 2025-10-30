@@ -33,7 +33,7 @@ public class SkAnimationsEntry : AAnimationsEntry
             case Flags.GLAnimBuffers.AnimSSBO:
                 if (Model != null)
                 {
-                    Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(Model.AllBakedMatrices);
+                    Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(Model.AnimationCollection.AllBakedMatrices);
                     //_gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length, false,
 
                     SSBOAnimations = new BufferObject<float>(_gl, span, BufferTargetARB.ShaderStorageBuffer);

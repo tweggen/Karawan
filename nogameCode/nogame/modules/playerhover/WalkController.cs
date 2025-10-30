@@ -448,7 +448,7 @@ public class WalkController : AController, IInputPart
                         break;
                 }
 
-                var mapAnimations = jModel.MapAnimations;
+                var mapAnimations = jModel.AnimationCollection.MapAnimations;
                 if (mapAnimations != null && mapAnimations.Count > 0)
                 {
                     if (mapAnimations.TryGetValue(

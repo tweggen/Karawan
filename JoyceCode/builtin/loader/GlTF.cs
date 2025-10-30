@@ -757,11 +757,11 @@ public class GlTF
             return;
         }
 
-        jModel.MapAnimations = new();
+        jModel.AnimationCollection.MapAnimations = new();
 
         foreach (var glAnimation in glAnimations)
         {
-            ModelAnimation ma = jModel.CreateAnimation(null);
+            ModelAnimation ma = jModel.AnimationCollection.CreateAnimation(null);
             ma.Name = glAnimation.Name;
             
             /*
@@ -884,8 +884,8 @@ public class GlTF
             ma.TicksPerSecond = 60;
             ma.NTicks = (uint)(tMax * 60f);
             ma.NFrames = (uint)(tMax * 60f + 0.5f); 
-            jModel.PushAnimFrames(ma.NFrames);
-            jModel.MapAnimations[ma.Name] = ma;
+            jModel.AnimationCollection.PushAnimFrames(ma.NFrames);
+            jModel.AnimationCollection.MapAnimations[ma.Name] = ma;
         }
     }
     
@@ -969,7 +969,7 @@ public class GlTF
             _readMaterials();
             _readScene(_gltfModel.Scenes[_gltfModel.Scene.Value], out var jModel);
             _loadAnimations(jModel);
-            jModel.BakeAnimations(null, null);
+            jModel.AnimationCollection.BakeAnimations(null, null);
             jModel.Polish(null);
             return jModel;
         }

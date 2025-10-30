@@ -134,7 +134,7 @@ public class FbxModel : IDisposable
 
             uint nChannels = aiAnim->MNumChannels;
 
-            ModelAnimation ma = _model.CreateAnimation(mnRestPose);
+            ModelAnimation ma = _model.AnimationCollection.CreateAnimation(mnRestPose);
             ma.Name = String.IsNullOrWhiteSpace(strFallbackName)?aiAnim->MName.ToString():strFallbackName;
             Trace($"Found Animation \"{ma.Name}\" with {nChannels} channels.");
             ma.Duration = (float)aiAnim->MDuration / (float)aiAnim->MTicksPerSecond;
@@ -143,7 +143,7 @@ public class FbxModel : IDisposable
             ma.MapChannels = new();
             uint nFrames = UInt32.Max((uint)(ma.Duration * 60f), 1);
             ma.NFrames = nFrames;
-            _model.PushAnimFrames(nFrames);
+            _model.AnimationCollection.PushAnimFrames(nFrames);
 
             for (int j = 0; j < nChannels; ++j)
             {
@@ -222,7 +222,7 @@ public class FbxModel : IDisposable
                 mac.Target = channelNode;
             }
 
-            _model.MapAnimations[ma.Name] = ma;
+            _model.AnimationCollection.MapAnimations[ma.Name] = ma;
         } 
     }
 
@@ -879,7 +879,7 @@ public class FbxModel : IDisposable
          */
         _model = model = new engine.joyce.Model();
         _model.Name = path;
-        _model.MapAnimations = new();
+        _model.AnimationCollection.MapAnimations = new();
 
         /*
          * Load the actual file.
@@ -1062,7 +1062,7 @@ public class FbxModel : IDisposable
             /*
              * Baking animations must include the root matrix corrections.
              */
-            model.BakeAnimations(strModelBaseBone, cpuNodes);
+            model.AnimationCollection.BakeAnimations(strModelBaseBone, cpuNodes);
         }
         catch (Exception e)
         {

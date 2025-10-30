@@ -51,7 +51,7 @@ public class AfterCrashBehavior : ABehavior
                 ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
                 ref var model = ref cFromModel.Model;
 
-                var mapAnimations = model.MapAnimations;
+                var mapAnimations = model.AnimationCollection.MapAnimations;
                 if (mapAnimations != null && mapAnimations.Count > 0)
                 {
                     string strAnimation = CharacterModelDescription.DeathAnimName;

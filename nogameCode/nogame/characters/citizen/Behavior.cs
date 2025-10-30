@@ -53,7 +53,7 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
                 strAnimation = CharacterModelDescription.IdleAnimName;
             }
 
-            var mapAnimations = model.MapAnimations;
+            var mapAnimations = model.AnimationCollection.MapAnimations;
             if (mapAnimations != null && mapAnimations.Count > 0)
             {
                 if (!mapAnimations.ContainsKey(strAnimation))

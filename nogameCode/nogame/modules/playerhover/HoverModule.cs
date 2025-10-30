@@ -209,7 +209,7 @@ public class HoverModule : AModule, IInputPart
 
             if (default != _eAnimations)
             {
-                var mapAnimations = _model.MapAnimations;
+                var mapAnimations = _model.AnimationCollection.MapAnimations;
                 if (mapAnimations != null && mapAnimations.Count > 0)
                 {
                     if (mapAnimations.TryGetValue(AnimName, out var animation))

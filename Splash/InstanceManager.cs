@@ -195,7 +195,7 @@ public class InstanceManager : IDisposable
 
 
                 bool haveEntry = false;
-                if (jModelNode != null && jModelNode.Model.AllBakedMatrices != null)
+                if (jModelNode != null && jModelNode.Model.AnimationCollection.AllBakedMatrices != null)
                 {
                     var jModel = jModelNode.Model;
                     Resource<AAnimationsEntry> animResource;
@@ -322,7 +322,7 @@ public class InstanceManager : IDisposable
                 if (mn != null)
                 {
                     var jModel = mn.Model;
-                    if (jModel.AllBakedMatrices != null)
+                    if (jModel.AnimationCollection.AllBakedMatrices != null)
                     {
                         Resource<AAnimationsEntry> animResource;
                         if (!_animationsResources.TryGetValue(jModel, out animResource))

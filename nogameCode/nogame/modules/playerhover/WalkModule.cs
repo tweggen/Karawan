@@ -149,9 +149,9 @@ public class WalkModule : AModule, IInputPart
                 _eMapPerson.Set(new engine.world.components.MapIcon()
                     { Code = engine.world.components.MapIcon.IconCode.Player0 });
 
-                if (default != creator.EntityAnimations && _model.MapAnimations != null)
+                if (default != creator.EntityAnimations && _model.AnimationCollection.MapAnimations != null)
                 {
-                    var mapAnimations = _model.MapAnimations;
+                    var mapAnimations = _model.AnimationCollection.MapAnimations;
                     if (mapAnimations != null && mapAnimations.Count > 0)
                     {
                         if (mapAnimations.TryGetValue(

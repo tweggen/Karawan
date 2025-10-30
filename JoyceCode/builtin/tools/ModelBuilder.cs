@@ -82,7 +82,7 @@ public class ModelBuilder
             /*
              * This is the first entity to contain animations remember it.  
              */
-            if (mn.Model.MapAnimations != null && _eAnimations == default)
+            if (mn.Model.AnimationCollection != null && mn.Model.AnimationCollection.MapAnimations != null && _eAnimations == default)
             {
                 _eAnimations = eNode;
             }
