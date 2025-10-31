@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using builtin.baking;
 using builtin.loader;
 using engine;
@@ -10,6 +12,7 @@ public class AnimationCompiler : IDisposable
 {
     public required string ModelUrl;
     public required string AnimationUrls;
+    public required string OutputDirectory;
     public void Dispose()
     {
         Trace($"Disposing {nameof(AnimationCompiler)}");
@@ -32,9 +35,15 @@ public class AnimationCompiler : IDisposable
             }
         });
         Trace($"Animation {model.Name} loaded.");
-        using (var stream = new MemoryStream())
+        string strModelAnims = $"{ModelUrl};{AnimationUrls}";
+        string strHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(strModelAnims)));
+        string strFileName = $"ac-{strHash}";
+        using (var ostream = new FileStream(
+                   Path.Combine(OutputDirectory, strFileName),
+                   FileMode.Create, FileAccess.Write))
         {
-            ModelAnimationCollectionWriter.Write(stream, model.AnimationCollection);
+            ModelAnimationCollectionWriter.Write(ostream, model.AnimationCollection);
+
         }
         Trace($"Animation {model.Name} serialized.");
     }

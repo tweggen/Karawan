@@ -10,6 +10,7 @@ public class ConsoleMain
 {
     public static void Main(string[] args)
     {
+        Trace($"Called with args: { string.Join(",", args) }");
         // System.Environment.SetEnvironmentVariable("ALSOFT_LOGLEVEL", "3");
 
         var cwd = System.IO.Directory.GetCurrentDirectory();
@@ -20,12 +21,13 @@ public class ConsoleMain
         engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
         engine.GlobalSettings.Set("platform.threeD.API.version", "430");
         engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
+        string strResourcePath;
         if (Directory.Exists("assets"))
         {
             /*
              * This is when we start installed on windows.
              */
-            engine.GlobalSettings.Set("Engine.ResourcePath", "./assets/");
+            strResourcePath = "./assets/";
             jsonPath = "./";
         }
         else
@@ -33,9 +35,9 @@ public class ConsoleMain
             if (Path.Exists("./models/nogame.json"))
             {
                 /*
-                 * I don't know this case.
-                 */
-                engine.GlobalSettings.Set("Engine.ResourcePath", "./nogame/");
+                * I don't know this case.
+                */
+                strResourcePath = "./nogame/";
                 jsonPath = "../models/";
             }
             else if (Path.Exists("../../../../nogame/"))
@@ -44,21 +46,21 @@ public class ConsoleMain
                  * This is when we start from the debugger on windows in Karawan
                  */
                 jsonPath = "../models/";
-                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../nogame/");
+                strResourcePath = "../../../../nogame/";
             } else if (Path.Exists("../../../../../nogame/"))
             {
                 /*
-                 * This is in Chushi on windows.
-                 */
+                * This is in Chushi on windows when called from jetbrains compiler.
+                */
                 jsonPath = "../models/";
-                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
+                strResourcePath = "../../../../../nogame/";
             } else if (Path.Exists("../../../../../../nogame/"))
             {
                 /*
-                 * This is in Chushi on windows.
-                 */
+                * This is in Chushi on windows.
+                */
                 jsonPath = "../models/";
-                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../../nogame/");
+                strResourcePath = "../../../../../../nogame/";
             }
             else
             {
@@ -67,6 +69,8 @@ public class ConsoleMain
                 return;
             }
         }
+        engine.GlobalSettings.Set("Engine.ResourcePath", strResourcePath);
+        Trace($"Using resource path {strResourcePath}, json path {jsonPath}");
 
         {
             string userRWPath = System.Environment.GetFolderPath(
@@ -137,10 +141,19 @@ public class ConsoleMain
                 uriAnimations = "";
             }
 
+            string outputDirectory = Path.Combine(
+                cwd,
+                GlobalSettings.Get("Engine.ResourcePath"),
+                "generated");
+            if (args.Length >= 4)
+            {
+                outputDirectory = Path.Combine(args[3],args[2]);
+            }
             AnimationCompiler comp = new()
             {
                 ModelUrl = uriModel,
-                AnimationUrls = uriAnimations
+                AnimationUrls = uriAnimations,
+                OutputDirectory = outputDirectory
             };
 
             listTasks.Add(Task.Run(() => comp.Compile()));

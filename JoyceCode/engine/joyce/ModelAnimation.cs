@@ -25,7 +25,7 @@ public class ModelAnimation
 {
     [Key(0)]
     public int Index;
-    [Key(1)]
+    [ Key(1)]
     public string Name;
     [Key(2)]
     public float Duration;
