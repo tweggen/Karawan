@@ -65,6 +65,7 @@ public class Model
          */
         Name = other.Name;
         ModelNodeTree = other.ModelNodeTree;
+        AnimationCollection = other.AnimationCollection; 
         Skeleton = other.Skeleton;
         Scale = other.Scale;
         FirstInstanceDescNode = other.FirstInstanceDescNode;
