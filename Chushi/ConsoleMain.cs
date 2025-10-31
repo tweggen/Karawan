@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using engine;
 using engine.joyce;
+using Mazu;
 using static engine.Logger;
 
 namespace Chushi;
@@ -118,24 +119,38 @@ public class ConsoleMain
         e.Execute();
         Trace($"Running compilation tasks...");
         List<Task> listTasks = new();
-        
-        
-        
-        // var mazuAnimationCompiler = new Mazu.AnimationCompiler();
-        Task[] tasks = new Task[]
+
+        var availableAnims = cassetteLoader.AvailableAnimations;
+        foreach (var strAnimKey in availableAnims)
         {
-            Task.Run(async () =>
+            string uriModel;
+            string uriAnimations;
+            int idxSemi = strAnimKey.IndexOf(';');
+            if (idxSemi >= 0)
             {
-                //await mazuAnimationCompiler.Compile();
-            })
-        };
+                uriModel = strAnimKey.Substring(0, idxSemi);
+                uriAnimations = strAnimKey.Substring(idxSemi + 1);
+            }
+            else
+            {
+                uriModel = strAnimKey;
+                uriAnimations = "";
+            }
+
+            AnimationCompiler comp = new()
+            {
+                ModelUrl = uriModel,
+                AnimationUrls = uriAnimations
+            };
+
+            listTasks.Add(Task.Run(() => comp.Compile()));
+        }
+        
         Task.WaitAll(listTasks);
         Trace($"Done running compilation tasks.");
         Trace($"Stopping engine...");
         e.Exit();
         Trace($"Engine stopped.");
-        
-        //mazuAnimationCompiler.Dispose();
         
         System.Environment.Exit(0);
     }

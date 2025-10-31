@@ -58,6 +58,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityObserver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\CompiledCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AnimationState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\BakedAnimationCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Bone.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Byte4.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\GPUAnimationState.cs" />

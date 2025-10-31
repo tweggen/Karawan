@@ -45,8 +45,30 @@ public class ObjectFactory<K, T> : IDisposable where K : IComparable
                 _mapObjects.Remove(key);
             }
         }
-
     }
+
+
+    public void Add(K key, T obj)
+    {
+        lock (_lo)
+        {
+            if (_mapObjects.ContainsKey(key))
+            {
+                ErrorThrow<InvalidOperationException>($"Already contained object {key}");
+                return;
+            }
+            ObjectEntry<K, T> instanceEntry = new()
+            {
+                Lock = new(),
+                Name = key, //referenceObject.Name,
+                FactoryFunction = null,
+                Instance = obj,
+                HasInstance = true
+            };
+            _mapObjects[key] = instanceEntry;
+        }
+    }
+    
     
     public T FindAdd(K key, T referenceObject)
     {

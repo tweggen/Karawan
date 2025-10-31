@@ -21,10 +21,10 @@ public class Loader
     private string strDefaultLoaderAssembly = "";
     private bool _traceResources = false;
     private IAssetImplementation _iAssetImpl;
-
-
-    private SortedDictionary<string, ISerializable> _mapLoaders = new();
     
+    private SortedDictionary<string, ISerializable> _mapLoaders = new();
+
+    public SortedSet<string> AvailableAnimations = new();
     
     static public void SetJsonElement(in JsonElement je, Action<object> action)
     {
@@ -818,13 +818,11 @@ public class Loader
                     throw new InvalidDataException("no modelUrl specified in resource.");
                 }
                 
-
                 string? uriAnimations = jeRes.GetProperty("animationUrls").GetString();
                 if (null == uriAnimations)
                 {
                     throw new InvalidDataException("no animationsUrl specified in resource.");
                 }
-                
 
                 if (_traceResources) Trace($"LoadAnimationsTo: Added Animation \"{uriModel}\" from {uriModel}.");
                 string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel); 
@@ -832,8 +830,8 @@ public class Loader
                 {
                     Trace($"Warning: animation file for {pathProbe} does not exist.");
                 }
-                
-                // TXWTODO: Add animation to some dictionary to later read it.
+
+                AvailableAnimations.Add($"{uriModel};{uriAnimations}");
             }
         }
         catch (Exception e)
@@ -1034,3 +1032,4 @@ public class Loader
         loader.InterpretConfig();
     }
 }
+

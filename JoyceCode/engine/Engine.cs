@@ -1353,6 +1353,8 @@ public class Engine
         I.Register<engine.physics.ObjectCatalogue>(() => new engine.physics.ObjectCatalogue());
         I.Register<System.Net.Http.HttpClient>(() => new System.Net.Http.HttpClient());
 
+        I.Register<BakedAnimationCatalogue>(() => new BakedAnimationCatalogue());
+
         _mouseEnabler = new(_mouseEnableFunc);
         _keyboardEnabler = new(_keyboardEnableFunc);
         _pauseEnabler = new(_pauseEnablerFunc);
