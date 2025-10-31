@@ -195,7 +195,7 @@ public class InstanceManager : IDisposable
 
 
                 bool haveEntry = false;
-                if (jModelNode != null && jModelNode.Model.AnimationCollection.AllBakedMatrices != null)
+                if (jModelNode != null && jModelNode.Model.AnimationCollection != null && jModelNode.Model.AnimationCollection.AllBakedMatrices != null)
                 {
                     var jModel = jModelNode.Model;
                     Resource<AAnimationsEntry> animResource;

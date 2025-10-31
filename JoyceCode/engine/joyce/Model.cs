@@ -150,6 +150,7 @@ public class Model
     public Model()
     {
         ModelNodeTree = new();
+        AnimationCollection = new(this);
     }
     
     
