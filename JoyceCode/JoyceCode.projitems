@@ -13,6 +13,8 @@
     <Folder Include="$(MSBuildThisFileDirectory)engine\world\systems\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelAnimationCollectionReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelAnimationCollectionWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AInputControllerFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\ClickableFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FingerStateHandler.cs" />

@@ -11,6 +11,7 @@
     <PackageReference Include="ImGui.NET" Version="1.88.0" />
     <PackageReference Include="LibTessDotNet" Version="1.1.15" />
     <PackageReference Include="LiteDB" Version="5.0.15" />
+    <PackageReference Include="MessagePack" Version="3.1.4" />
     <PackageReference Include="NetOctree" Version="2.1.0" />
     <PackageReference Include="NLua" Version="1.6.3" />
     <PackageReference Include="Silk.NET.Assimp" Version="2.22.0" />

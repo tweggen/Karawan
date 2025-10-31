@@ -1,3 +1,4 @@
+using MessagePack;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -12,14 +13,20 @@ namespace engine.joyce;
  * The matrix data of a model animation collection may be
  * precomputed and restored from an asset.
  */
-public class ModelAnimationCollection
+[MessagePackObject(AllowPrivate = true)]
+public partial class ModelAnimationCollection
 {
+    [IgnoreMember]
     private Model _model;
+    [Key(2)]
     private int _nextAnimIndex = 1;
+    [Key(3)]
     private uint _nextAnimFrame = 0;
     
+    [Key(0)]
     public SortedDictionary<string, ModelAnimation> MapAnimations;
     
+    [Key(1)]
     public Matrix4x4[]? AllBakedMatrices = null; 
     
 
@@ -76,7 +83,7 @@ public class ModelAnimationCollection
         }
     }
 
-
+    [IgnoreMember]
     private bool _traceAnim = false;
 
     
@@ -505,5 +512,11 @@ public class ModelAnimationCollection
     public ModelAnimationCollection(Model model)
     {
         _model = model;
+    }
+
+
+    public ModelAnimationCollection()
+    {
+        _model = null;
     }
 }

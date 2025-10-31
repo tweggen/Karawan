@@ -1,3 +1,4 @@
+using builtin.baking;
 using builtin.loader;
 using engine;
 using engine.joyce;
@@ -30,7 +31,12 @@ public class AnimationCompiler : IDisposable
                 }
             }
         });
-        Trace($"Animation {model.Name} compiled.");
+        Trace($"Animation {model.Name} loaded.");
+        using (var stream = new MemoryStream())
+        {
+            ModelAnimationCollectionWriter.Write(stream, model.AnimationCollection);
+        }
+        Trace($"Animation {model.Name} serialized.");
     }
 
     public AnimationCompiler()
