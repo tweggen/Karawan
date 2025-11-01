@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using engine.joyce;
+using static engine.Logger;
 using MessagePack;
 using MessagePack.Resolvers;
 
@@ -10,6 +11,7 @@ namespace builtin.baking;
 
 public class ModelAnimationCollectionReader
 {
+    private static SHA256 _sha256 = SHA256.Create();
     public static string ModelAnimationCollectionFileName(string urlModel, string? urlAnimations)
     {
         string strModelAnims;
@@ -23,7 +25,8 @@ public class ModelAnimationCollectionReader
         }
         
         string strHash = 
-            Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(strModelAnims)));
+            Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(strModelAnims)));
+        Trace($"Returning hash {strHash} for {strModelAnims}");
         return  $"ac-{strHash}";;
     }
 

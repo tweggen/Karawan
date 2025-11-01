@@ -35,7 +35,8 @@ public class AnimationCompiler : IDisposable
             }
         });
         Trace($"Animation {model.Name} loaded.");
-        string strFileName = ModelAnimationCollectionReader.ModelAnimationCollectionFileName(ModelUrl, AnimationUrls);
+        string strModelFileOnly = Path.GetFileName(ModelUrl);
+        string strFileName = ModelAnimationCollectionReader.ModelAnimationCollectionFileName(strModelFileOnly, AnimationUrls);
         using (var ostream = new FileStream(
                    Path.Combine(OutputDirectory, strFileName),
                    FileMode.Create, FileAccess.Write))

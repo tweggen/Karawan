@@ -12,6 +12,7 @@ namespace CmdLine
     public class GameConfig
     {
         public string CurrentPath;
+        public string DestinationPath;
         private JsonElement _jeRoot;
         private string _jsonPath;
 
@@ -24,20 +25,22 @@ namespace CmdLine
 
         private static SHA256 _sha256 = SHA256.Create();
         
-        public static string ModelAnimationCollectionFileName(string urlModel, string urlAnimations)
+        public static string ModelAnimationCollectionFileName(string localUrlModel, string urlAnimations)
         {
             string strModelAnims;
             if (!String.IsNullOrWhiteSpace(urlAnimations))
             {
-                strModelAnims = $"{urlModel};{urlAnimations}";
+                strModelAnims = $"{localUrlModel};{urlAnimations}";
             }
             else
             {
-                strModelAnims = $"{urlModel}";
+                strModelAnims = $"{localUrlModel}";
             }
         
             string strHash = 
                 Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(strModelAnims)));
+            Console.Error.WriteLine($"Returning hash {strHash} for {strModelAnims}");
+
             return  $"ac-{strHash}";;
         }
 
@@ -122,8 +125,8 @@ namespace CmdLine
                 Trace($"Warning: resource file for {modelUrl} does not exist.");
             }
             
-            string strFilename = ModelAnimationCollectionFileName(modelUrl, animationUrls);
-            return new Resource() { Type = "bakedAnimationCollection", Uri = strFilename, Tag = tag };
+            string strFilename = ModelAnimationCollectionFileName(tag, animationUrls);
+            return new Resource() { Type = "bakedAnimationCollection", Uri = Path.Combine(DestinationPath,strFilename), Tag = strFilename };
         }
         
         

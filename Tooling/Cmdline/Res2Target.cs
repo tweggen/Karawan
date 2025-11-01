@@ -22,7 +22,7 @@ namespace CmdLine
             Trace("res2target: Working...");
             try
             {
-                GameConfig gc = new GameConfig(Path.Combine(CurrentPath, _args[1])) { CurrentPath = CurrentPath, Trace = Trace };
+                GameConfig gc = new GameConfig(Path.Combine(CurrentPath, _args[1])) { CurrentPath = CurrentPath, Trace = Trace, DestinationPath = _args[2] };
                 gc.Load();
                 gc.LoadIndirectResources();
 
