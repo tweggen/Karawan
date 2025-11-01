@@ -25,7 +25,11 @@ public class ModelAnimationCollectionReader
         }
         
         string strHash = 
-            Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(strModelAnims)));
+            Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(strModelAnims)))
+                .Replace('+', '-')
+                .Replace('/', '_')
+                .Replace('=', '~');
+                ;
         Trace($"Returning hash {strHash} for {strModelAnims}");
         return  $"ac-{strHash}";;
     }

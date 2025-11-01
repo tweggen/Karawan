@@ -38,7 +38,10 @@ namespace CmdLine
             }
         
             string strHash = 
-                Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(strModelAnims)));
+                Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(strModelAnims)))
+                    .Replace('+', '-')
+                    .Replace('/', '_')
+                    .Replace('=', '~');
             Console.Error.WriteLine($"Returning hash {strHash} for {strModelAnims}");
 
             return  $"ac-{strHash}";;
@@ -126,7 +129,7 @@ namespace CmdLine
             }
             
             string strFilename = ModelAnimationCollectionFileName(tag, animationUrls);
-            return new Resource() { Type = "bakedAnimationCollection", Uri = Path.Combine(DestinationPath,strFilename), Tag = strFilename };
+            return new Resource() { Type = "bakedAnimationCollection", Uri = Path.Combine(DestinationPath+"/",strFilename), Tag = strFilename };
         }
         
         
