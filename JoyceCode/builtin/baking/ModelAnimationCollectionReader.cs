@@ -32,7 +32,8 @@ public class ModelAnimationCollectionReader
 
     public static ModelAnimationCollection? Read(Stream stream)
     {
-        var animcoll = MessagePackSerializer.Deserialize<ModelAnimationCollection>(stream);
+        var options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
+        var animcoll = MessagePackSerializer.Deserialize<ModelAnimationCollection>(stream, options);
         return animcoll;
     }
 }
