@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using MessagePack;
+using static engine.Logger;
 
 namespace engine.joyce;
 
@@ -60,6 +62,17 @@ public class ModelAnimation
     [Key(7)]
     public SortedDictionary<string, Matrix4x4[]> CpuFrames;
 
+
+    public void UseBakedAnimationsFrom(ModelAnimation o)
+    {
+        if (Index != o.Index || Duration != o.Duration || TicksPerSecond != o.TicksPerSecond ||
+            FirstFrame != o.FirstFrame || NTicks != o.NTicks || NFrames != o.NFrames)
+        {
+            ErrorThrow<ArgumentException>("Trying to assign from incomatible animation.");
+        }
+        CpuFrames = o.CpuFrames; 
+    }
+        
     public ModelAnimChannel CreateChannel(
         ModelNode mnChannel,
         KeyFrame<Vector3>[]? positions,

@@ -35,9 +35,7 @@ public class AnimationCompiler : IDisposable
             }
         });
         Trace($"Animation {model.Name} loaded.");
-        string strModelAnims = $"{ModelUrl};{AnimationUrls}";
-        string strHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(strModelAnims)));
-        string strFileName = $"ac-{strHash}";
+        string strFileName = ModelAnimationCollectionReader.ModelAnimationCollectionFileName(ModelUrl, AnimationUrls);
         using (var ostream = new FileStream(
                    Path.Combine(OutputDirectory, strFileName),
                    FileMode.Create, FileAccess.Write))

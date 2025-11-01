@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using BepuUtilities;
+using builtin.baking;
 using builtin.extensions;
 using builtin.loader;
 using engine.joyce.components;
@@ -24,6 +25,9 @@ namespace engine.joyce;
 public class Model
 {
     public string Name = "";
+    public string ModelUrl = "";
+    public string? AnimationUrls = null;
+    
     public int MAX_BONES = 120;
     
     public Skeleton? Skeleton = null;
@@ -64,6 +68,8 @@ public class Model
          * as we already gave out our instanceDesc to clients.
          */
         Name = other.Name;
+        ModelUrl = other.ModelUrl;
+        AnimationUrls = other.AnimationUrls;
         ModelNodeTree = other.ModelNodeTree;
         AnimationCollection = other.AnimationCollection; 
         Skeleton = other.Skeleton;
@@ -141,6 +147,46 @@ public class Model
         }
     }
 
+
+    /**
+     * Bake the animation data as required by the vertex shader.
+     * This one either loads it from the animation data cache / baked assets
+     * or computes it..
+     */
+    public void BakeAnimations(string strModelBaseBone, List<string> cpuNodes)
+    {
+        bool haveBaked = false;
+        try
+        {
+            string strFileName =
+                ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
+                    ModelUrl, AnimationUrls);
+            using (var acStream = engine.Assets.Open(strFileName))
+            {
+                ModelAnimationCollection? animcoll =
+                    ModelAnimationCollectionReader.Read(acStream);
+                if (animcoll != null)
+                {
+                    AnimationCollection.UseBakedAnimationsFrom(animcoll);
+                    haveBaked = true;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Exception while reading pre-baked data: {e}");
+        }
+
+        if (!haveBaked)
+        {
+            AnimationCollection.BakeAnimations(strModelBaseBone, cpuNodes);
+            Trace($"Manually baked animations for {ModelUrl} {AnimationUrls}");
+        }
+        else
+        {
+            Trace($"Loaded baked animations for {ModelUrl} {AnimationUrls}");
+        }
+    }
 
     public void DumpNodes()
     {

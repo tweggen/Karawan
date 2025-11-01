@@ -877,7 +877,11 @@ public class FbxModel : IDisposable
         /*
          * Prepare data structures.
          */
-        _model = model = new engine.joyce.Model();
+        _model = model = new engine.joyce.Model()
+        {
+            ModelUrl = path,
+            AnimationUrls = additionalUrls != null ? string.Join(";", additionalUrls) : null
+        };
         _model.Name = path;
         _model.AnimationCollection.MapAnimations = new();
 
@@ -1062,7 +1066,7 @@ public class FbxModel : IDisposable
             /*
              * Baking animations must include the root matrix corrections.
              */
-            model.AnimationCollection.BakeAnimations(strModelBaseBone, cpuNodes);
+            model.BakeAnimations(strModelBaseBone, cpuNodes);
         }
         catch (Exception e)
         {

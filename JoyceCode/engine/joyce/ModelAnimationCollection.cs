@@ -395,6 +395,30 @@ public partial class ModelAnimationCollection
         }
     }
 
+
+    /**
+     * Given a deserialized animation collection, use the pre-baked data
+     * found.
+     */
+    public void UseBakedAnimationsFrom(ModelAnimationCollection o)
+    {
+        if (o._nextAnimIndex != _nextAnimIndex
+            || o._nextAnimFrame != _nextAnimFrame
+            || o.MapAnimations.Count != MapAnimations.Count)
+        {
+            ErrorThrow<ArgumentException>($"Incompatible model animation collections found.");
+            return;
+        }
+
+        AllBakedMatrices = o.AllBakedMatrices;
+        foreach (var key in MapAnimations.Keys)
+        {
+            var ma = MapAnimations[key];
+            var oma = o.MapAnimations[key];
+            ma.UseBakedAnimationsFrom(oma);
+        }
+    }
+
     
     /**
      * Compute frame accurate interpolations for all bones for all animations.
