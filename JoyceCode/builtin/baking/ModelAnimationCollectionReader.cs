@@ -13,7 +13,7 @@ public class ModelAnimationCollectionReader
     public static string ModelAnimationCollectionFileName(string urlModel, string? urlAnimations)
     {
         string strModelAnims;
-        if (urlAnimations != null)
+        if (!String.IsNullOrWhiteSpace(urlAnimations))
         {
             strModelAnims = $"{urlModel};{urlAnimations}";
         }

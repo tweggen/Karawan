@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace CmdLine
@@ -18,6 +20,26 @@ namespace CmdLine
         public SortedDictionary<string, Resource> MapResources = new SortedDictionary<string, Resource>();
         public SortedDictionary<string, AtlasSpec> MapAtlasSpecs = new SortedDictionary<string, AtlasSpec>();
         public TextureSection TextureSection;
+
+
+        private static SHA256 _sha256 = SHA256.Create();
+        
+        public static string ModelAnimationCollectionFileName(string urlModel, string urlAnimations)
+        {
+            string strModelAnims;
+            if (!String.IsNullOrWhiteSpace(urlAnimations))
+            {
+                strModelAnims = $"{urlModel};{urlAnimations}";
+            }
+            else
+            {
+                strModelAnims = $"{urlModel}";
+            }
+        
+            string strHash = 
+                Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(strModelAnims)));
+            return  $"ac-{strHash}";;
+        }
 
 
         public Resource LoadResource(JsonElement jeRes)
@@ -63,6 +85,46 @@ namespace CmdLine
             }
             return new Resource() { Type = type, Uri = uri, Tag = tag };
         }
+
+
+        public Resource LoadAnimation(JsonElement jeRes)
+        {
+            string modelUrl = jeRes.GetProperty("modelUrl").GetString();
+            if (null == modelUrl)
+            {
+                throw new InvalidDataException("no uri specified in resource.");
+            }
+
+            string animationUrls = jeRes.GetProperty("animationUrls").GetString();
+            // null animationUrls are perfectly ok.
+
+            string tag = null;
+            if (jeRes.TryGetProperty("tag", out var jpTag))
+            {
+                tag = jpTag.GetString();
+            }
+            if (null == tag)
+            {
+                int idx = modelUrl.LastIndexOf('/');
+                if (idx != -1 && idx != modelUrl.Length - 1)
+                {
+                    tag = modelUrl.Substring(idx + 1);
+                }
+                else
+                {
+                    tag = modelUrl;
+                }
+            }
+
+            Trace($"GameConfig: Generating Animation Resource \"{tag}\" from {modelUrl} animations \"{animationUrls}\".");
+            if (!File.Exists(Path.Combine(CurrentPath,modelUrl)))
+            {
+                Trace($"Warning: resource file for {modelUrl} does not exist.");
+            }
+            
+            string strFilename = ModelAnimationCollectionFileName(modelUrl, animationUrls);
+            return new Resource() { Type = "bakedAnimationCollection", Uri = strFilename, Tag = tag };
+        }
         
         
         public void LoadResourceList(JsonElement je)
@@ -102,6 +164,47 @@ namespace CmdLine
             catch (Exception e)
             {
                 Trace($"GameConfig: Unable to load resource list: {e}");
+            }
+        }
+
+
+        public void LoadAnimationList(JsonElement je)
+        {
+            Trace($"LoadAnimationList()");
+            try
+            {
+                foreach (var jeRes in je.EnumerateArray())
+                {
+                    Resource resource = LoadAnimation(jeRes);
+                    string tag = resource.Tag;
+                    MapResources[tag] = resource;
+                    Trace($"GameConfig: Added Resource \"{tag}\".");
+                }
+            }
+            catch (Exception e)
+            {
+                Trace($"Error loading resource: {e}");
+            }
+        }
+        
+
+        public void LoadAnimations(JsonElement je)
+        {
+            Trace($"LoadAnimations();");
+            try
+            {
+                if (je.TryGetProperty("list", out var jeAnimationList))
+                {
+                    LoadAnimationList(jeAnimationList);
+                }
+                else
+                {
+                    Trace($"GameConfig: Unable to find \"list\" in game config json.");
+                }
+            }
+            catch (Exception e)
+            {
+                Trace($"GameConfig: Unable to load animations list: {e}");
             }
         }
 
@@ -253,6 +356,14 @@ namespace CmdLine
             if (je.TryGetProperty("resources", out var jeResources))
             {
                 LoadResources(jeResources);
+            }
+            else
+            {
+                Trace($"GameConfig: Unable to find \"resources\" in game config json.");
+            }
+            if (je.TryGetProperty("animations", out var jeAnimations))
+            {
+                LoadAnimations(jeAnimations);
             }
             else
             {
