@@ -11,27 +11,32 @@ namespace builtin.baking;
 
 public class ModelAnimationCollectionReader
 {
+    private static object _clo = new();
     private static SHA256 _sha256 = SHA256.Create();
     public static string ModelAnimationCollectionFileName(string urlModel, string? urlAnimations)
     {
-        string strModelAnims;
-        if (!String.IsNullOrWhiteSpace(urlAnimations))
+        lock (_clo)
         {
-            strModelAnims = $"{urlModel};{urlAnimations}";
+            string strModelAnims;
+            if (!String.IsNullOrWhiteSpace(urlAnimations))
+            {
+                strModelAnims = $"{urlModel};{urlAnimations}";
+            }
+            else
+            {
+                strModelAnims = $"{urlModel}";
+            }
+
+            string strHash =
+                Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(strModelAnims)))
+                    .Replace('+', '-')
+                    .Replace('/', '_')
+                    .Replace('=', '~');
+            ;
+            Trace($"Returning hash {strHash} for {strModelAnims}");
+            return $"ac-{strHash}";
+            ;
         }
-        else
-        {
-            strModelAnims = $"{urlModel}";
-        }
-        
-        string strHash = 
-            Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(strModelAnims)))
-                .Replace('+', '-')
-                .Replace('/', '_')
-                .Replace('=', '~');
-                ;
-        Trace($"Returning hash {strHash} for {strModelAnims}");
-        return  $"ac-{strHash}";;
     }
 
     public static ModelAnimationCollection? Read(Stream stream)
