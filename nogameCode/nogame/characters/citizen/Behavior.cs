@@ -69,7 +69,21 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
                     animState.Flags = (ushort)((uint)animState.Flags & ~(uint)AnimationState.IsOneShot);
                     animState.ModelAnimation = animation;
                     animState.ModelAnimationFrame = 0;
-                } 
+                }
+                else
+                {
+                    int a = 1;
+                    /*
+                     * We really should have an animation state at this point.
+                     */
+                }
+            }
+            else
+            {
+                /*
+                 * We really should have an animation here.
+                 */
+                int a = 1;
             }
         }
     }

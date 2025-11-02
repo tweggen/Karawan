@@ -12,12 +12,16 @@ public class AssetImplementation : engine.IAssetImplementation
     public System.IO.Stream Open(in string filename)
     {
         string realName = /*"Platforms/Android/" + */ filename;
-        var orgStream = _assetManager.Open(realName);
-        var streamReader = new StreamReader(orgStream);
-        var memoryStream = new MemoryStream();
-        streamReader.BaseStream.CopyTo(memoryStream);
-        memoryStream.Position = 0;
-        return memoryStream;
+        using (var orgStream = _assetManager.Open(realName))
+        {
+            using (var streamReader = new StreamReader(orgStream))
+            {
+                var memoryStream = new MemoryStream();
+                streamReader.BaseStream.CopyTo(memoryStream);
+                memoryStream.Position = 0;
+                return memoryStream;
+            }
+        }
     }
 
     public void AddAssociation(string tag, string uri)

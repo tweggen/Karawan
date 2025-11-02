@@ -227,6 +227,14 @@ public class CharacterCreator
                     }
                 });
             }
+            else
+            {
+                /*
+                 * Why whould there be no animations available at this point (with
+                 * the current set of characters)?
+                 */
+                int a = 1;
+            }
         };
     }
 }

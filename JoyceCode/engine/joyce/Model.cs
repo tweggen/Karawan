@@ -37,7 +37,6 @@ public class Model
     public bool IsHierarchical { get; private set; } = false;
 
     public ModelNode? FirstInstanceDescNode { get; private set; } = null;
-    public ModelNode? BaseBone { get; private set; } = null;
     
     public Matrix4x4 FirstInstanceDescTransformWithInstance { get; private set; } = Matrix4x4.Identity;
     public Matrix4x4 InverseFirstInstanceDescTransformWithInstance = Matrix4x4.Identity;
@@ -47,10 +46,10 @@ public class Model
 
     public Matrix4x4 BaseBoneTransformWithInstance { get; private set; } = Matrix4x4.Identity;
     public Matrix4x4 InverseBaseBoneTransformWithInstance = Matrix4x4.Identity;
-    public Matrix4x4 BaseBoneBone2Model = Matrix4x4.Identity;
+    //public Matrix4x4 BaseBoneBone2Model = Matrix4x4.Identity;
     
-    public Matrix4x4 BaseBoneTransformWoInstance { get; private set; } = Matrix4x4.Identity;
-    public Matrix4x4 InverseBaseBoneTransformWoInstance = Matrix4x4.Identity;
+    //public Matrix4x4 BaseBoneTransformWoInstance { get; private set; } = Matrix4x4.Identity;
+    //public Matrix4x4 InverseBaseBoneTransformWoInstance = Matrix4x4.Identity;
     
     public ModelAnimationCollection AnimationCollection; 
     
@@ -70,15 +69,19 @@ public class Model
         Name = other.Name;
         ModelUrl = other.ModelUrl;
         AnimationUrls = other.AnimationUrls;
-        ModelNodeTree = other.ModelNodeTree;
-        AnimationCollection = other.AnimationCollection; 
         Skeleton = other.Skeleton;
         Scale = other.Scale;
+        IsHierarchical = other.IsHierarchical;  
         FirstInstanceDescNode = other.FirstInstanceDescNode;
         FirstInstanceDescTransformWithInstance = other.FirstInstanceDescTransformWithInstance;
+        InverseFirstInstanceDescTransformWithInstance = other.InverseFirstInstanceDescTransformWithInstance;
         FirstInstanceDescTransformWoInstance = other.FirstInstanceDescTransformWoInstance;
-        IsHierarchical = other.IsHierarchical;  
-    }
+        InverseFirstInstanceDescTransformWoInstance = other.InverseFirstInstanceDescTransformWoInstance;
+        BaseBoneTransformWithInstance = other.BaseBoneTransformWithInstance;
+        InverseBaseBoneTransformWithInstance = other.InverseBaseBoneTransformWithInstance;
+        AnimationCollection = other.AnimationCollection; 
+        ModelNodeTree = other.ModelNodeTree;
+        }
 
 
     public Skeleton FindSkeleton()
