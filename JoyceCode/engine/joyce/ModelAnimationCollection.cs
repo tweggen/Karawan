@@ -402,22 +402,48 @@ public partial class ModelAnimationCollection
      */
     public void UseBakedAnimationsFrom(ModelAnimationCollection o)
     {
+        if (!TestBakedAnimationsFrom(o))
+        {
+            ErrorThrow<InvalidOperationException>($"Incompatible model animation collections found.");
+        }
+        AllBakedMatrices = o.AllBakedMatrices;
+        foreach (var key in o.MapAnimations.Keys)
+        {
+            ModelAnimation ma;
+            var oma = o.MapAnimations[key];
+            if (!MapAnimations.ContainsKey(key))
+            {
+                MapAnimations.Add(key, oma);
+                ma = oma;
+            }
+            else
+            {
+                ma = MapAnimations[key];
+                ma.UseBakedAnimationsFrom(oma);
+            }
+        }
+    }
+    
+    
+    public bool TestBakedAnimationsFrom(ModelAnimationCollection o)
+    {
+        if (null == MapAnimations || 0 == MapAnimations.Count)
+        {
+            return true;
+        }
         if (o._nextAnimIndex != _nextAnimIndex
             || o._nextAnimFrame != _nextAnimFrame
             || o.MapAnimations.Count != MapAnimations.Count)
         {
-            ErrorThrow<ArgumentException>($"Incompatible model animation collections found.");
-            return;
+            Warning($"Incompatible model animation collections found.");
+            return false;
         }
-
-        AllBakedMatrices = o.AllBakedMatrices;
-        foreach (var key in MapAnimations.Keys)
+        else
         {
-            var ma = MapAnimations[key];
-            var oma = o.MapAnimations[key];
-            ma.UseBakedAnimationsFrom(oma);
+            return true;
         }
-    }
+    }   
+    
 
     
     /**
