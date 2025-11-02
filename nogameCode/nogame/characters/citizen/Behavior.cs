@@ -33,63 +33,58 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
         float speed = (Navigator as SegmentNavigator)!.Speed;
         if (speed == _previousSpeed) return;
 
-        if (entity.Has<engine.joyce.components.GPUAnimationState>())
+        if (!entity.Has<engine.joyce.components.GPUAnimationState>())
         {
-            ref var cGpuAnimationState = ref entity.Get<engine.joyce.components.GPUAnimationState>();
-            ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
-            ref var model = ref cFromModel.Model;
-            string strAnimation;
+            entity.Set(new engine.joyce.components.GPUAnimationState());
+        }
 
-            if (speed > 7f / 3.6f)
-            {
-                strAnimation = CharacterModelDescription.RunAnimName;
-            }
-            else if (speed > 0f)
-            {
-                strAnimation = CharacterModelDescription.WalkAnimName;
-            }
-            else
-            {
-                strAnimation = CharacterModelDescription.IdleAnimName;
-            }
+        ref var cGpuAnimationState = ref entity.Get<engine.joyce.components.GPUAnimationState>();
+        ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
+        ref var model = ref cFromModel.Model;
+        string strAnimation;
 
-            var mapAnimations = model.AnimationCollection.MapAnimations;
-            if (mapAnimations != null && mapAnimations.Count > 0)
+        if (speed > 7f / 3.6f)
+        {
+            strAnimation = CharacterModelDescription.RunAnimName;
+        }
+        else if (speed > 0f)
+        {
+            strAnimation = CharacterModelDescription.WalkAnimName;
+        }
+        else
+        {
+            strAnimation = CharacterModelDescription.IdleAnimName;
+        }
+
+        var mapAnimations = model.AnimationCollection.MapAnimations;
+        if (mapAnimations != null && mapAnimations.Count > 0)
+        {
+            if (!mapAnimations.ContainsKey(strAnimation))
             {
-                if (!mapAnimations.ContainsKey(strAnimation))
-                {
-                    int a = 1;
-                }
-                
-                _previousSpeed = speed;
-                var animation = mapAnimations[strAnimation];
-                var animState = cGpuAnimationState.AnimationState;
-                if (animState != null)
-                {
-                    animState.Flags = (ushort)((uint)animState.Flags & ~(uint)AnimationState.IsOneShot);
-                    animState.ModelAnimation = animation;
-                    animState.ModelAnimationFrame = 0;
-                }
-                else
-                {
-                    int a = 1;
-                    /*
-                     * We really should have an animation state at this point.
-                     */
-                }
-            }
-            else
-            {
-                /*
-                 * We really should have an animation here.
-                 */
                 int a = 1;
+            }
+            
+            _previousSpeed = speed;
+            var animation = mapAnimations[strAnimation];
+            var animState = cGpuAnimationState.AnimationState;
+            if (animState != null)
+            {
+                animState.Flags = (ushort)((uint)animState.Flags & ~(uint)AnimationState.IsOneShot);
+                animState.ModelAnimation = animation;
+                animState.ModelAnimationFrame = 0;
+            }
+            else
+            {
+                int a = 1;
+                /*
+                 * We really should have an animation state at this point.
+                 */
             }
         }
         else
         {
             /*
-             * We really should have an animation state.
+             * We really should have an animation here.
              */
             int a = 1;
         }
