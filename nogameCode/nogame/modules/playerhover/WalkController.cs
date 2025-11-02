@@ -455,19 +455,18 @@ public class WalkController : AController, IInputPart
                             strAnimation, out var animation))
                     {
                         // TXWTODO: This is not entirely true with respect to the frame.
-                        GPUAnimationState cGpuAnimationState;
-                        if (CharacterModelDescription.EntityAnimations.Has<GPUAnimationState>())
+                        if (!CharacterModelDescription.EntityAnimations.Has<GPUAnimationState>())
                         {
-                            cGpuAnimationState = CharacterModelDescription.EntityAnimations.Get<GPUAnimationState>();
+                            CharacterModelDescription.EntityAnimations.Set(new GPUAnimationState()
+                            {
+                                AnimationState = CharacterModelDescription.AnimationState
+                            });
                         }
-                        else
-                        {
-                            cGpuAnimationState = new GPUAnimationState();
-                        }
+                        ref GPUAnimationState cGpuAnimationState = ref CharacterModelDescription.EntityAnimations.Get<GPUAnimationState>();
 
                         AnimationState animState = CharacterModelDescription.AnimationState;
                         animState.ModelAnimation = animation;
-                        cGpuAnimationState.AnimationState = animState;
+
                         /*
                          * This is just a nice way of saying, dont be negative, after force casting this from int to ushort..
                          */
@@ -484,7 +483,6 @@ public class WalkController : AController, IInputPart
                         {
                             animState.Flags &= unchecked((ushort)~AnimationState.IsOneShot);
                         }
-                        CharacterModelDescription.EntityAnimations.Set(cGpuAnimationState);
                     }
                     else
                     {
