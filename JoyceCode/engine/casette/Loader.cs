@@ -4,6 +4,7 @@ using System.IO;
 using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
+using builtin.baking;
 using builtin.map;
 using engine.joyce;
 using engine.meta;
@@ -808,6 +809,7 @@ public class Loader
 
     public void LoadAnimationsTo(JsonElement je)
     {
+        string pathProbe;
         try
         {
             foreach (var jeRes in je.EnumerateArray())
@@ -825,13 +827,26 @@ public class Loader
                 }
 
                 if (_traceResources) Trace($"LoadAnimationsTo: Added Animation \"{uriModel}\" from {uriModel}.");
-                string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel); 
+                pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel); 
                 if (!File.Exists(pathProbe))
                 {
                     Trace($"Warning: animation file for {pathProbe} does not exist.");
                 }
 
                 AvailableAnimations.Add($"{uriModel};{uriAnimations}");
+                
+                var strFileName =
+                    ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
+                        Path.GetFileName(uriModel),
+                        uriAnimations);
+                if (_traceResources) Trace($"LoadAnimationsTo: Added Animation {uriModel} with {uriAnimations} at {strFileName}.");
+                pathProbe = Path.Combine("generated", strFileName); 
+                if (!File.Exists(pathProbe))
+                {
+                    Trace($"Warning: resource file for {pathProbe} does not exist.");
+                }
+                _iAssetImpl.AddAssociation(strFileName, pathProbe);
+                
             }
         }
         catch (Exception e)

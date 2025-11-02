@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -444,7 +445,7 @@ public class ModelCache
                 {
                     default:
                     case ModelCacheEntry.EntryState.Error:
-                        ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
+                        ErrorThrow<InvalidOperationException>($"Unable to load model {mcp.Params?.Name}.");
                         // TXWTODO: We would need to invalidate the model that already had been returned.
                         break;
 
