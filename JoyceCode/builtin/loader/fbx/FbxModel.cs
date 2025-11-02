@@ -965,83 +965,111 @@ public class FbxModel : IDisposable
             _loadAnimations("", _scene, null);
         }
 
+        bool haveLoadedBakedAnimations = false;
+
         /*
          * Now go through the extra fbx files and load the animations from
          * them to this model.
          */
         if (additionalUrls != null)
         {
-            foreach (var url in additionalUrls)
+            /*
+             * Before loading the additional urls, check, if we have a baked animation file
+             * for all of them.
+             */
+            try
             {
-                try
+                haveLoadedBakedAnimations = model.TryLoadModelAnimationCollection(out var animcoll);
+                if (haveLoadedBakedAnimations && animcoll != null)
                 {
-                    Trace($"Import additional animation data from {url}...");
-                    var additionalScene = _assimp.ImportFileExWithProperties(
-                        url,
-                        (uint)PostProcessSteps.Triangulate,
-                        pFileIO,
-                        properties
-                    );
-                    if (additionalScene == null  || additionalScene->MRootNode == null)
+                    if (model.AnimationCollection.TestBakedAnimationsFrom(animcoll))
                     {
-                        continue;
+                        model.AnimationCollection.UseBakedAnimationsFrom(animcoll);
                     }
-
-                    Metadata additionalMetadata = new(additionalScene->MMetaData);
-                    if (_traceFbxMetadata)
-                    {
-                        additionalMetadata.Dump();
-                    }
-
-                    _compareBoneHierarchies(additionalScene, _scene);
-                    
-                    /*
-                     * We parse the additional files' children to make sure they match.
-                     */
-                    MergePolicy mp = new()
-                    { 
-                        LoadMeshes = false,
-                        LoadMainNodes = true
-                    };
-                    ModelNode? mnNewRoot = _processNode(
-                        null, additionalScene->MRootNode,
-                        mp, out var _);
-
-                    if (null == mnNewRoot) continue;
-                    
-                    /*
-                     * Remove transformations of pivots in case assimp did not merge it.
-                     */
-                    _mergeAssimpPivotsRecursively(mnNewRoot);
-
-                    _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
-                    if (_traceFbxTree)
-                    {
-                        Trace($"Anim {url} model:");
-                        Trace($"Model has {additionalScene->MAnimations[0]->MNumChannels} channels.");
-                        Trace(mnNewRoot.DumpNode());
-                    }
-                    
-                    string strFallbackName = url;
-                    int idx = strFallbackName.LastIndexOf('/');
-                    if (-1 != idx)
-                    {
-                        if (idx + 1 < strFallbackName.Length)
-                        {
-                            strFallbackName = strFallbackName.Substring(idx + 1);
-                        }
-                    }
-                    idx = strFallbackName.LastIndexOf('.');
-                    if (0 < idx)
-                    {
-                        strFallbackName = strFallbackName.Substring(0, idx);
-                    }
-                    _loadAnimations(strFallbackName, additionalScene, mnNewRoot);
-                    Trace($"Done importing additional animation data from {url}.");
                 }
-                catch (Exception e)
+            }
+            catch (Exception e)
+            {
+                Warning($"Unable to import baked animations: {e}");
+                haveLoadedBakedAnimations = false;
+            }
+
+            if (!haveLoadedBakedAnimations)
+            {
+                foreach (var url in additionalUrls)
                 {
-                    Error($"Exception while loading additional animation data: {e}");
+                    try
+                    {
+                        Trace($"Import additional animation data from {url}...");
+                        var additionalScene = _assimp.ImportFileExWithProperties(
+                            url,
+                            (uint)PostProcessSteps.Triangulate,
+                            pFileIO,
+                            properties
+                        );
+                        if (additionalScene == null || additionalScene->MRootNode == null)
+                        {
+                            continue;
+                        }
+
+                        Metadata additionalMetadata = new(additionalScene->MMetaData);
+                        if (_traceFbxMetadata)
+                        {
+                            additionalMetadata.Dump();
+                        }
+
+                        _compareBoneHierarchies(additionalScene, _scene);
+
+                        /*
+                         * We parse the additional files' children to make sure they match.
+                         */
+                        MergePolicy mp = new()
+                        {
+                            LoadMeshes = false,
+                            LoadMainNodes = true
+                        };
+                        ModelNode? mnNewRoot = _processNode(
+                            null, additionalScene->MRootNode,
+                            mp, out var _);
+
+                        if (null == mnNewRoot) continue;
+
+                        /*
+                         * Remove transformations of pivots in case assimp did not merge it.
+                         */
+                        _mergeAssimpPivotsRecursively(mnNewRoot);
+
+                        _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
+                        if (_traceFbxTree)
+                        {
+                            Trace($"Anim {url} model:");
+                            Trace($"Model has {additionalScene->MAnimations[0]->MNumChannels} channels.");
+                            Trace(mnNewRoot.DumpNode());
+                        }
+
+                        string strFallbackName = url;
+                        int idx = strFallbackName.LastIndexOf('/');
+                        if (-1 != idx)
+                        {
+                            if (idx + 1 < strFallbackName.Length)
+                            {
+                                strFallbackName = strFallbackName.Substring(idx + 1);
+                            }
+                        }
+
+                        idx = strFallbackName.LastIndexOf('.');
+                        if (0 < idx)
+                        {
+                            strFallbackName = strFallbackName.Substring(0, idx);
+                        }
+
+                        _loadAnimations(strFallbackName, additionalScene, mnNewRoot);
+                        Trace($"Done importing additional animation data from {url}.");
+                    }
+                    catch (Exception e)
+                    {
+                        Error($"Exception while loading additional animation data: {e}");
+                    }
                 }
             }
         }
@@ -1061,16 +1089,19 @@ public class FbxModel : IDisposable
          */
         model.Polish(strModelBaseBone);
 
-        try
+        if (!haveLoadedBakedAnimations)
         {
-            /*
-             * Baking animations must include the root matrix corrections.
-             */
-            model.BakeAnimations(strModelBaseBone, cpuNodes);
-        }
-        catch (Exception e)
-        {
-            Trace($"Caught exception: {e}");
+            try
+            {
+                /*
+                 * Baking animations must include the root matrix corrections.
+                 */
+                model.BakeAnimations(strModelBaseBone, cpuNodes);
+            }
+            catch (Exception e)
+            {
+                Trace($"Caught exception: {e}");
+            }
         }
     }
         

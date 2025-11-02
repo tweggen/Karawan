@@ -148,6 +148,41 @@ public class Model
     }
 
 
+    public bool TryLoadModelAnimationCollection(out ModelAnimationCollection? animcoll)
+    {
+        animcoll = null;
+        try
+        {
+            string strFileName =
+                ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
+                    ModelUrl, AnimationUrls);
+            using (var acStream = engine.Assets.Open(strFileName))
+            {
+                animcoll = ModelAnimationCollectionReader.Read(acStream);
+                if (animcoll != null)
+                {
+                    AnimationCollection.TestBakedAnimationsFrom(animcoll); 
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Exception while reading pre-baked data: {e}");
+        }
+
+        if (null == animcoll)
+        {
+            Trace($"Cannot use baked for {ModelUrl} {AnimationUrls}");
+            return false;
+        }
+        else
+        {
+            Trace($"Loaded baked animations for {ModelUrl} {AnimationUrls}");
+            return true;
+        }
+    }
+
+
     /**
      * Bake the animation data as required by the vertex shader.
      * This one either loads it from the animation data cache / baked assets
@@ -158,13 +193,9 @@ public class Model
         bool haveBaked = false;
         try
         {
-            string strFileName =
-                ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
-                    ModelUrl, AnimationUrls);
-            using (var acStream = engine.Assets.Open(strFileName))
+
+            if (TryLoadModelAnimationCollection(out var animcoll))
             {
-                ModelAnimationCollection? animcoll =
-                    ModelAnimationCollectionReader.Read(acStream);
                 if (animcoll != null)
                 {
                     AnimationCollection.UseBakedAnimationsFrom(animcoll);
@@ -184,7 +215,7 @@ public class Model
         }
         else
         {
-            Trace($"Loaded baked animations for {ModelUrl} {AnimationUrls}");
+            Trace($"Used baked animations for {ModelUrl} {AnimationUrls}");
         }
     }
 
