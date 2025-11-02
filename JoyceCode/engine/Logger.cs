@@ -97,7 +97,7 @@ namespace engine
             }
             else
             {
-                Console.WriteLine(logEntry);
+                Console.Error.WriteLine(logEntry);
             }
         }
         
