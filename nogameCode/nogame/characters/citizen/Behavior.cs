@@ -33,11 +33,18 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
         float speed = (Navigator as SegmentNavigator)!.Speed;
         if (speed == _previousSpeed) return;
 
+        /*
+         * Ensure we have a gpu navigation state component, including the animation
+         * state.
+         */
         if (!entity.Has<engine.joyce.components.GPUAnimationState>())
         {
-            entity.Set(new engine.joyce.components.GPUAnimationState());
+            entity.Set(new engine.joyce.components.GPUAnimationState()
+            {
+                AnimationState = CharacterModelDescription.AnimationState 
+            });
         }
-
+        
         ref var cGpuAnimationState = ref entity.Get<engine.joyce.components.GPUAnimationState>();
         ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
         ref var model = ref cFromModel.Model;
@@ -55,6 +62,7 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
         {
             strAnimation = CharacterModelDescription.IdleAnimName;
         }
+        
 
         var mapAnimations = model.AnimationCollection.MapAnimations;
         if (mapAnimations != null && mapAnimations.Count > 0)
