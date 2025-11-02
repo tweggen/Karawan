@@ -86,6 +86,13 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
                 int a = 1;
             }
         }
+        else
+        {
+            /*
+             * We really should have an animation state.
+             */
+            int a = 1;
+        }
     }
 
     

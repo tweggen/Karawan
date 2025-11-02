@@ -290,17 +290,14 @@ public class CameraOutput
 
         uint globalFrameno = 0;
         AnimationState? animState = cGpuAnimationState.AnimationState;
-        if (null == aAnimationsEntry)
+        if (null == aAnimationsEntry || null == animState || null == animState.ModelAnimation)
         {
             aAnimationsEntry = NullAnimationsEntry.Instance();
         }
         else
         {
-            ModelAnimation? ma = animState.ModelAnimation;
-            if (ma != null)
-            {
-                globalFrameno = ma.FirstFrame + cGpuAnimationState.AnimationState.ModelAnimationFrame;
-            }
+            ModelAnimation ma = animState.ModelAnimation;
+            globalFrameno = ma.FirstFrame + cGpuAnimationState.AnimationState.ModelAnimationFrame;
         }
         
         meshBatch.Add(aAnimationsEntry, animState, globalFrameno, matrix, _frameStats);

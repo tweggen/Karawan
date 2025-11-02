@@ -149,29 +149,6 @@ public class WalkModule : AModule, IInputPart
                 _eMapPerson.Set(new engine.world.components.MapIcon()
                     { Code = engine.world.components.MapIcon.IconCode.Player0 });
 
-                if (default != creator.EntityAnimations && _model.AnimationCollection.MapAnimations != null)
-                {
-                    var mapAnimations = _model.AnimationCollection.MapAnimations;
-                    if (mapAnimations != null && mapAnimations.Count > 0)
-                    {
-                        if (mapAnimations.TryGetValue(
-                                CharacterModelDescription.IdleAnimName, out var animation))
-                        {
-                            _animStatePerson.ModelAnimation = animation;
-                            _animStatePerson.ModelAnimationFrame = 0;
-
-                            CharacterModelDescription.EntityAnimations.Set(new GPUAnimationState
-                            {
-                                AnimationState = _animStatePerson
-                            });
-                        }
-                        else
-                        {
-                            Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
-                        }
-                    }
-                }
-                
                 _engine.Player.Value = _ePerson;
 
                 M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);

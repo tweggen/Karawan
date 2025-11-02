@@ -88,6 +88,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 }
                 else
                 {
+                    cGpuAnimationState = new engine.joyce.components.GPUAnimationState();
                     cGpuAnimationState.AnimationState = null;
                 }
                 

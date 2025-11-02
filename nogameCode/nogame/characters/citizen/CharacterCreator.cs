@@ -210,31 +210,6 @@ public class CharacterCreator
                     cBody.PhysicsObject.MaxDistance = 10f;
                 }
             }
-            
-
-            /*
-             * Signal the standard behavior it may use animations.
-             */
-            if (default != eAnimations)
-            {
-                behavior.EntityAnimation = eAnimations;
-                eAnimations.Set(new GPUAnimationState
-                {
-                    AnimationState = new()
-                    {
-                        ModelAnimation = null,
-                        ModelAnimationFrame = 0
-                    }
-                });
-            }
-            else
-            {
-                /*
-                 * Why whould there be no animations available at this point (with
-                 * the current set of characters)?
-                 */
-                int a = 1;
-            }
         };
     }
 }
