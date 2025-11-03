@@ -980,8 +980,7 @@ public class SilkThreeD : IThreeD
         string api = engine.GlobalSettings.Get("platform.threeD.API");
         if (api == "OpenGL")
         {
-            //AnimStrategy = Flags.GLAnimBuffers.AnimSSBO;
-            AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
+            AnimStrategy = Flags.GLAnimBuffers.AnimSSBO;
         }
         else if (api == "OpenGLES")
         {
