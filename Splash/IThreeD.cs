@@ -61,7 +61,8 @@ public interface IThreeD
         in Span<Matrix4x4> spanMatrices,
         in Span<uint> spanFramenos,
         in int nMatrices,
-        ModelBakedFrame? modelBakedFrame);
+        ModelAnimation? modelAnimation,
+        uint frameno);
 
     public void FinishUploadOnly(in AMeshEntry aMeshEntry);
 

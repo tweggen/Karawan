@@ -196,8 +196,6 @@ public class CharacterCreator
             eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
                 Matrix4x4.CreateTranslation(worldFragment.Position)));
             
-            DefaultEcs.Entity eAnimations = creator.EntityAnimations;
-            
             /*
              * If we created physics for this one, take care to minimize
              * the distance for physics support.

@@ -18,7 +18,8 @@ public class SilkRenderState
     public BufferObject<float>? BoneMatrices;
 
     private bool _isBoundModelBakedFrame = false;
-    private ModelBakedFrame _modelBakedFrame;
+    private ModelAnimation _modelAnimation = null;
+    private uint _frameno = 0;
     private BufferObject<Matrix4x4>? _bufferBakedFrame;
 
     private int _silkAnimMethod = -1;
@@ -40,12 +41,14 @@ public class SilkRenderState
     }
 
 
-    public void UseBoneMatricesFrameUBO(engine.joyce.ModelBakedFrame modelBakedFrame)
+    public void UseBoneMatricesFrameUBO(Model model, ModelAnimation? modelAnimation, uint frameno)
     {
+        int nBones = model.Skeleton!.NBones;
+
         /*
          * Create appropriate buffer object if not done yet.
          */
-        if (_modelBakedFrame != modelBakedFrame)
+        if (_modelAnimation != modelAnimation || _frameno != frameno)
         {
             if (_bufferBakedFrame != null)
             {
@@ -55,11 +58,18 @@ public class SilkRenderState
                 _isBoundModelBakedFrame = false;
             }
             
-            if (modelBakedFrame != null)
+            if (modelAnimation != null)
             {
+                Span<Matrix4x4> span =
+                    model.AnimationCollection.AllBakedMatrices.AsSpan()
+                    .Slice(
+                        (int)(modelAnimation.FirstFrame + frameno) * nBones,
+                        nBones);
+
                 // Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
-                _bufferBakedFrame = new BufferObject<Matrix4x4>(_gl, modelBakedFrame.BoneTransformations, BufferTargetARB.UniformBuffer);
-                _modelBakedFrame = modelBakedFrame;
+                _bufferBakedFrame = new BufferObject<Matrix4x4>(_gl, span, BufferTargetARB.UniformBuffer);
+                _modelAnimation = modelAnimation;
+                _frameno = frameno;
                 _isBoundModelBakedFrame = false;
             }
         }

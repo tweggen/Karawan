@@ -312,7 +312,8 @@ public class SilkThreeD : IThreeD
         in Span<Matrix4x4> spanMatrices,
         in Span<uint> spanFramenos,
         in int nMatrices,
-        ModelBakedFrame? modelBakedFrame)
+        ModelAnimation? modelAnimation,
+        uint frameno)
     {
         var gl = _getGL();
         
@@ -389,7 +390,8 @@ public class SilkThreeD : IThreeD
                         break;
                     case Flags.GLAnimBuffers.AnimUniform:
                     {
-                        if (modelBakedFrame != null)
+                        var model = skAnimationsEntry.Model;
+                        if (model != null && modelAnimation != null)
                         {
                             /*
                              * We upload the per frame data.
@@ -399,21 +401,34 @@ public class SilkThreeD : IThreeD
                             /*
                              * If we are supposed to load bone animations, let's do that.
                              */
+                            int nBones = model.Skeleton!.NBones;
+#if false
                             Span<float> span =
                                 MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
+#else
+                            Span<float> span =
+                                MemoryMarshal.Cast<Matrix4x4, float>(
+                                    model.AnimationCollection.AllBakedMatrices
+                                ).Slice(
+                                    16 * (int)(modelAnimation.FirstFrame + frameno) * nBones,
+                                    16 * nBones);
+#endif
                             _gl.UniformMatrix4((int)_locBoneMatrices,
-                                (uint)modelBakedFrame.BoneTransformations.Length,
+                                (uint)nBones,
                                 false, span);
                         }
                     }
                         break;
                     case Flags.GLAnimBuffers.AnimUBO:
-                        if (modelBakedFrame != null)
+                    {
+
+                        var model = skAnimationsEntry.Model;
+                        if (model != null && modelAnimation != null)
                         {
                             vertexFlags = 1;
-                            _silkRenderState.UseBoneMatricesFrameUBO(modelBakedFrame);
+                            _silkRenderState.UseBoneMatricesFrameUBO(model, modelAnimation, frameno);
                         }
-
+                    }
                         break;
                     default:
                         vertexFlags = 4;
@@ -965,7 +980,8 @@ public class SilkThreeD : IThreeD
         string api = engine.GlobalSettings.Get("platform.threeD.API");
         if (api == "OpenGL")
         {
-            AnimStrategy = Flags.GLAnimBuffers.AnimSSBO;
+            //AnimStrategy = Flags.GLAnimBuffers.AnimSSBO;
+            AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
         }
         else if (api == "OpenGLES")
         {

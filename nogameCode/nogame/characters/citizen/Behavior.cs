@@ -23,6 +23,11 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
     public static uint NDrawCallsPerCharacterBatch { get; set; } = 2;
 
     public float _previousSpeed = Single.MinValue;
+
+    /**
+     * How long should this behavior not set up any animation
+     */
+    private int _debugNoAnimation = 60;
     
     /**
      * Verify that the animation of the character matches the behavior.
@@ -32,7 +37,6 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
         if (!entity.IsAlive) return;
         float speed = (Navigator as SegmentNavigator)!.Speed;
         if (speed == _previousSpeed) return;
-
         /*
          * Ensure we have a gpu navigation state component, including the animation
          * state.
@@ -62,39 +66,48 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
         {
             strAnimation = CharacterModelDescription.IdleAnimName;
         }
-        
 
-        var mapAnimations = model.AnimationCollection.MapAnimations;
-        if (mapAnimations != null && mapAnimations.Count > 0)
+#if false
+        if (_debugNoAnimation > 0)
         {
-            if (!mapAnimations.ContainsKey(strAnimation))
+            --_debugNoAnimation;
+            return;
+        }
+#endif
+
+        {
+            var mapAnimations = model.AnimationCollection.MapAnimations;
+            if (mapAnimations != null && mapAnimations.Count > 0)
             {
-                int a = 1;
-            }
-            
-            _previousSpeed = speed;
-            var animation = mapAnimations[strAnimation];
-            var animState = cGpuAnimationState.AnimationState;
-            if (animState != null)
-            {
-                animState.Flags = (ushort)((uint)animState.Flags & ~(uint)AnimationState.IsOneShot);
-                animState.ModelAnimation = animation;
-                animState.ModelAnimationFrame = 0;
+                if (!mapAnimations.ContainsKey(strAnimation))
+                {
+                    int a = 1;
+                }
+
+                _previousSpeed = speed;
+                var animation = mapAnimations[strAnimation];
+                var animState = cGpuAnimationState.AnimationState;
+                if (animState != null)
+                {
+                    animState.Flags = (ushort)((uint)animState.Flags & ~(uint)AnimationState.IsOneShot);
+                    animState.ModelAnimation = animation;
+                    animState.ModelAnimationFrame = 0;
+                }
+                else
+                {
+                    int a = 1;
+                    /*
+                     * We really should have an animation state at this point.
+                     */
+                }
             }
             else
             {
-                int a = 1;
                 /*
-                 * We really should have an animation state at this point.
+                 * We really should have an animation here.
                  */
+                int a = 1;
             }
-        }
-        else
-        {
-            /*
-             * We really should have an animation here.
-             */
-            int a = 1;
         }
     }
 

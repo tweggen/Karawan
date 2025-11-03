@@ -218,27 +218,30 @@ public class CameraOutput
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
                         Span<uint> spanFramenos = meshItem.Value.Framenos.ToArray();
 #endif
-                        ModelBakedFrame? modelBakedFrame;
                         AnimationState? animState = animationItem.AnimationState;
-                        if (animState != null && animState.ModelAnimation != null
-                            && animState.ModelAnimation.BakedFrames != null)
+                        uint frameno;
+                        ModelAnimation? modelAnimation;
+                        if (animState != null && animState.ModelAnimation != null)
                         {
-                            uint frameno = animState.ModelAnimationFrame;
+                            frameno = animState.ModelAnimationFrame;
+                            modelAnimation = animState.ModelAnimation;
+                            // TXWTODO: Add bounds check for AllBakedFrames
+                            #if false
                             uint availframes = (uint)animState.ModelAnimation.BakedFrames.Count();
                             if (frameno >= availframes)
                             {
                                 Error($"Frame number out of bounds: {frameno} > {availframes}");
                                 frameno = 0;
                             }
-                            modelBakedFrame =
-                                animState.ModelAnimation.BakedFrames[frameno];
+                            #endif
                         }
                         else
                         {
-                            modelBakedFrame = null;
+                            frameno = 0;
+                            modelAnimation = null;
                         }
                         threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, animationItem.AAnimationsEntry, 
-                            spanMatrices, spanFramenos, nMatrices, modelBakedFrame);
+                            spanMatrices, spanFramenos, nMatrices, modelAnimation, frameno);
                         _frameStats.NTriangles += nMatrices * jMesh.Indices.Count / 3;
                     }
                 }
@@ -556,7 +559,7 @@ public class CameraOutput
             {
                 _transparentMaterialList = null;
             }
-        }
+        } 
     }
 
     
