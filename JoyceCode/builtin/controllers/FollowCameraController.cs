@@ -32,9 +32,26 @@ public class FollowCameraController : AController, IInputPart
         set => _eCarrot = value;
     }   
 
+    /**
+     * Aggregated rotation around Y axis.
+     */
     private Quaternion _qStickYAxisOffset = Quaternion.Identity;
+    
+    /**
+     * Low pass filtered current x position of virtual analog controller stick represented as
+     * rotation around Y axis.
+     */
     private Quaternion _qPreviousStickYAxisDrive = Quaternion.Identity;
+    
+    /**
+     * Aggregated rotation around X axis.
+     */
     private Quaternion _qStickXAxisOffset = Quaternion.Identity;
+
+    /**
+     * Low pass filtered current y position of virtual analog controller stick represented as
+     * rotation around X axis.
+     */
     private Quaternion _qPreviousStickXAxisDrive = Quaternion.Identity;
     
     private Vector3 _vPreviousCameraPosition;
@@ -208,6 +225,9 @@ public class FollowCameraController : AController, IInputPart
     }
 
 
+    /**
+     * Compute the desired front orientation of the camera.
+     */
     private void _computePerfectCameraOrientationMouseOffsets(
         float dt,
         in Matrix4x4 cToParentMatrix,
@@ -387,8 +407,8 @@ public class FollowCameraController : AController, IInputPart
      * Mouse controls camera while e.g. walking.
      * This is controlled by
      * - mouse horizontal movement
-     * - right stick horizontal (?)
-     * - right touch horizontal (?)
+     * - right stick horizontal
+     * - right touch horizontal
      */
     private void _computePerfectCameraOrientationMouseControls(
         float dt,
@@ -416,11 +436,18 @@ public class FollowCameraController : AController, IInputPart
 
         if (_v2RightTouchMove.X != 0)
         {
-            float touchAngleOrientation = -(100f*_v2RightTouchMove.X) * (float)Math.PI / 180f;
+            float touchAngleOrientation = -(2000f*_v2RightTouchMove.X) * (float)Math.PI / 180f;
             totalAngleOrientation += touchAngleOrientation;
         }
 
+        /*
+        * The total resulting rotation around the Y axis consists of
+         * - horizontal mouse movement (on desktop)
+         * - movement of the right virtual stick on touch
+        */
         var rotRight = Quaternion.CreateFromAxisAngle(Vector3.UnitY, totalAngleOrientation);
+        
+        // TXWTODO: WHy also add the filtered X position when we already added the more immediate touch movement?
         rotRight = Quaternion.Concatenate(rotRight, Quaternion.Slerp(Quaternion.Identity,_qPreviousStickYAxisDrive,10.0f));
         qNewFront = Quaternion.Concatenate(qNewFront, rotRight);
 
@@ -428,6 +455,9 @@ public class FollowCameraController : AController, IInputPart
     }
     
     
+    /**
+     * Compute the desired front orientation of the camera.
+     */
     private void _computePerfectCameraOrientation(
         float dt,
         in Matrix4x4 cToParentMatrix,
@@ -734,6 +764,11 @@ public class FollowCameraController : AController, IInputPart
     }
 
 
+    /**
+     * Read the current position of the (right) controller stick.
+     *
+     * Store the current sate in qPreviousStick[XY]AxisDrive and _qStick[XY]AxisOffset .
+     */
     private void _computeStickDrive()
     {
         Quaternion qStickYAxisDrive = Quaternion.Identity;
