@@ -55,6 +55,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector2JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector4JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\StateBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityObserver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\CompiledCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AnimationState.cs" />

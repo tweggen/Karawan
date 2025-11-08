@@ -324,7 +324,16 @@ Owner: Static Scene Setup
 Any implementation part that wants to be part of a load/save process can register
 itself with the Saver module, using its OnBeforeSaveGame and OnAfterLoadGame hooks.
 
+## Defining an NPC
 
+An NPC requires:
+- a model, including possible additional animation urls
+- a start position (absolute, cluster rel, cluster streetpoint, random proc)
+- a navigation behavior, controlling animation as well
+- interaction behavior, possibly chaning animation
+
+- requires a behavior state machine
+ 
 ## About Narration
 
 The narration is based on inky. It hooks into the savegame system to be able to 
