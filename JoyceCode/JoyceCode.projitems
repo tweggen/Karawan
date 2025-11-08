@@ -241,6 +241,15 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\PlayerViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\Tags.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\APart.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\Clusters.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\Config.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\Entities.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\EntityInspector.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\EntityState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\Monitor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\Scenes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\Software.cs" />
     <Folder Include="$(MSBuildThisFileDirectory)builtin\tools\components\" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\FPSMonitor.cs" />

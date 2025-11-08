@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Numerics;
-using System.Reflection;
-using System.Security.Cryptography;
 using System.Text;
+using builtin.jt;
 using engine;
 using engine.editor.components;
 using engine.gongzuo;
@@ -20,14 +17,14 @@ public class Main
     private object _lo = new();
     private Engine _engine;
 
-    private int _currentEntityId = -1;
-    private DefaultEcs.Entity _currentEntity = default;
-    private ImGuiTreeNodeFlags _inspectorHeaderFlags = 0;
-    private DefaultEcs.Entity _previousEntity = default;
-    private string _currentClusterId = "";
-    private byte[] _currentEntityFilterBytes = new byte[128];
-    
-    
+    private Config _uiConfig;
+    private Software _uiSoftware;
+    private Clusters _uiClusters;
+    private Scenes _uiScenes;
+    private EntityState _sharedEntityState;
+    private Entities _uiEntities;
+    private EntityInspector _uiEntityInspector;
+    private Monitor _uiMonitor;
 
 
     private void _setColorScheme()
@@ -115,7 +112,7 @@ public class Main
     }
 
 
-    public void _propEdit(string key, object currValue, Action<string, object> setFunction)
+    public static void PropEdit(string key, object currValue, Action<string, object> setFunction)
     {
         if (currValue is bool)
         {
@@ -220,351 +217,42 @@ public class Main
                     I.Get<MetaGen>().Loader.WorldLoaderReleaseFragments();
                 }
             }
-
+            
             if (ImGui.CollapsingHeader("Config"))
             {
-                if (ImGui.TreeNode("Global"))
-                {
-                    var dict = engine.GlobalSettings.Instance().Dictionary;
-                    foreach (var kvp in dict)
-                    {
-                        ImGui.Text(kvp.Key);
-                        ImGui.SameLine();
-                        ImGui.Text(kvp.Value);
-                    }
-
-                    ImGui.TreePop();
-                }
-
-                if (ImGui.TreeNode("Props"))
-                {
-                    var dict = engine.Props.Instance().Dictionary;
-                    foreach (var kvp in dict)
-                    {
-                        _propEdit(kvp.Key,kvp.Value, (key, newValue) => Props.Set(key, newValue) );
-                    }
-
-                    ImGui.TreePop();
-                }
+                _uiConfig.Render(dt);
             }
 
             if (ImGui.CollapsingHeader("Scenes"))
             {
-                var sceneKeys = I.Get<SceneSequencer>().GetAvailableScenes();
-                foreach (var sceneKey in sceneKeys)
-                {
-                    ImGui.Text(sceneKey);
-                }
+                _uiScenes.Render(dt);
             }
 
             if (ImGui.CollapsingHeader("Clusters"))
             {
-                if (ImGui.BeginListBox("Clusters"))
-                {
-                    var clusterList = new List<ClusterDesc>(I.Get<ClusterList>().GetClusterList());
-                    clusterList.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
-                    foreach (var clusterDesc in clusterList)
-                    {
-                        var id = clusterDesc.IdString;
-                        ImGui.PushID(id);
-
-                        bool isSelected = _currentClusterId == id;
-                        string clusterString = clusterDesc.Name;
-
-                        if (ImGui.Selectable(clusterString, isSelected))
-                        {
-                            _currentClusterId = id;
-                        }
-                        
-                        if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(0))
-                        {
-                            _engine.QueueMainThreadAction(() =>
-                            {
-                                clusterDesc.FindStartPosition(out var v3Start, out var qStart);
-                                _engine.BeamTo(v3Start + clusterDesc.Pos, qStart);
-                            });
-                        }
-
-                        if (isSelected)
-                        {
-                            ImGui.SetItemDefaultFocus();
-                        }
-
-                        ImGui.PopID();
-                    }
-                }
-                ImGui.EndListBox();
+                _uiClusters.Render(dt);
             }
 
             if (ImGui.CollapsingHeader("Software"))
             {
-                if (ImGui.TreeNode("Modules"))
-                {
-                    var modules = _engine.GetModules();
-                    foreach (var module in modules)
-                    {
-                        if (ImGui.TreeNode(module.GetType().ToString()))
-                        {
-                            foreach (PropertyInfo property in module.GetType().GetProperties())
-                            {
-                                string propName = property.Name;
-                                object propValue = property.GetValue(module);
-                                if (propValue != null)
-                                {
-                                    _propEdit(propName, propValue, 
-                                        (key, newValue) => property.SetValue(module, newValue) );
-                                }
-                                else
-                                {
-                                    ImGui.Text($"{propName}: null");
-                                }
-                            }
-
-                            ImGui.TreePop();
-                        }
-                    }
-
-                    ImGui.TreePop();
-                }
-
-                if (ImGui.TreeNode("Implementations"))
-                {
-                    var types = I.Instance.GetTypes();
-                    foreach (var type in types)
-                    {
-                        ImGui.Text(type.ToString());
-                    }
-
-                    ImGui.TreePop();
-                }
+                _uiSoftware.Render(dt);
             }
 
             if (ImGui.CollapsingHeader("Entities"))
             {
-                var entities = _engine.Entities;
-                ImGui.Text($"Total {entities.Length} entities.");
-                lock (_engine.Simulation)
-                {
-                    ImGui.Text(
-                        $"{_engine.Simulation.Statics.Count} statics, {_engine.Simulation.Bodies.ActiveSet.Count} active bodies.");
-                }
-
-                ImGui.InputText("Filter", _currentEntityFilterBytes, (uint) _currentEntityFilterBytes.Length);
-                string utf8FilterText = Encoding.UTF8.GetString(_currentEntityFilterBytes, 0, _currentEntityFilterBytes.Length).TrimEnd((Char)0);
-                
-                if (ImGui.BeginListBox("Entities"))
-                {
-                    foreach (var entity in entities)
-                    {
-                        if (!entity.IsAlive) continue;
-                        var id = entity.GetId();
-                        
-                        bool isSelected = _currentEntityId == id;
-                        string entityString;
-                        string entityName = "";
-                        if (entity.Has<engine.joyce.components.EntityName>())
-                        {
-                            entityName = entity.Get<engine.joyce.components.EntityName>().Name;
-                            string displayName;
-                            int lastDot = entityName.LastIndexOf('.'); 
-                            if (lastDot != -1)
-                            {
-                                displayName = entityName.Substring(lastDot+1);
-                            }
-                            else
-                            {
-                                displayName = entityName;
-                            }
-                            entityString = $"#{id} {displayName}";
-                        }
-                        else
-                        {
-                            entityString = entity.ToString();
-                        }
-
-
-                        if (_currentEntityFilterBytes[0] != 0 && !entityName.ToUpper().Contains(utf8FilterText.ToUpper()))
-                        {
-                            continue;
-                        }
-                        
-                        ImGui.PushID(id);
-
-                        
-                        
-                        if (ImGui.Selectable(entityString, isSelected))
-                        {
-                            _currentEntity = entity;
-                            _currentEntityId = entity.GetId();
-                        }
-
-                        if (isSelected)
-                        {
-                            ImGui.SetItemDefaultFocus();
-                        }
-
-                        ImGui.PopID();
-                    }
-                }
-                ImGui.EndListBox();
+                _uiEntities.Render(dt);
             }
 
-            if (_currentEntity != _previousEntity)
+            _sharedEntityState.OnUpdate(dt);
+
+            if (ImGui.CollapsingHeader("Inspector", _sharedEntityState.InspectorHeaderFlags))
             {
-                var currentEntity = _currentEntity;
-                var previousEntity = _previousEntity;
-                if (currentEntity != default)
-                {
-                    _inspectorHeaderFlags |= ImGuiTreeNodeFlags.DefaultOpen;
-                }
-                _previousEntity = _currentEntity;
-
-                _engine.QueueMainThreadAction(() =>
-                {
-                    if (previousEntity != default)
-                    {
-                        if (previousEntity.Has<engine.editor.components.Highlight>())
-                        {
-                            previousEntity.Remove<engine.editor.components.Highlight>();
-                        }
-                    }
-
-                    if (currentEntity != default)
-                    {
-                        _engine.QueueMainThreadAction(() =>
-                        {
-                            currentEntity.Set(new engine.editor.components.Highlight()
-                            {
-                                Flags = (byte)Highlight.StateFlags.IsSelected,
-                                Color = 0xff33ffcc
-                            });
-                        });
-                    }
-                });
-            }
-            
-            if (ImGui.CollapsingHeader("Inspector", _inspectorHeaderFlags))
-            {
-                if (-1 == _currentEntityId)
-                {
-                    ImGui.Text("(nothing selected)");
-                }
-                else
-                {
-                    DefaultEcs.Entity entity = _engine.GetEcsWorldDangerous().FindEntity(_currentEntityId);
-                    if (!entity.IsAlive)
-                    {
-                        ImGui.Text("(entity has ceased)");
-                    }
-                    else
-                    {
-                        engine.EntityComponentTypeReader reader = new(entity);
-                        _engine.GetEcsWorldDangerous().ReadAllComponentTypes(reader);
-                        
-                        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(2f, 2f));
-                        if (ImGui.BeginTable("split", 2, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.Resizable))
-                        {
-                            int componentIndex = 0;
-                            foreach (var (strType, componentInfo) in reader.DictComponentTypes)
-                            {
-
-                                ImGui.PushID(10 + componentIndex);
-                                ImGui.TableNextRow();
-                                ImGui.TableSetColumnIndex(0);
-                                ImGui.AlignTextToFramePadding();
-                                
-
-                                string displayType;
-                                string typeString = componentInfo.Type.ToString();
-                                int lastTypeDotIndex = typeString.LastIndexOf('.');
-                                if (lastTypeDotIndex != -1)
-                                {
-                                    displayType = typeString.Substring(lastTypeDotIndex + 1);
-                                }
-                                else
-                                {
-                                    displayType = typeString;
-                                }
-
-                                bool treeNodeResult = ImGui.TreeNodeEx("field", 0,displayType);
-
-                                ImGui.TableSetColumnIndex(1);
-                                // ImGui.SetNextItemWidth(Single.MinValue);
-                                ImGui.Text(componentInfo.ValueAsString);
-                                ImGui.NextColumn();
-                                
-                                ImGui.PopID();
-
-                                if (treeNodeResult)
-                                {
-                                    System.Reflection.FieldInfo[] fields = componentInfo.Type.GetFields();
-
-                                    foreach (var fieldInfo in fields)
-                                    {
-                                        Type typeAttr = fieldInfo.FieldType;
-                                        string strValue = "(not available)";
-                                        try
-                                        {
-                                            if (typeAttr == typeof(engine.gongzuo.LuaScriptEntry))
-                                            {
-                                                strValue = (fieldInfo.GetValue(componentInfo.Value) as LuaScriptEntry)
-                                                    .LuaScript;
-                                            }
-                                            else if (typeAttr == typeof(Matrix4x4))
-                                            {
-                                                Matrix4x4 m = (Matrix4x4) (fieldInfo.GetValue(componentInfo.Value));
-                                                strValue = $"{m.M11} {m.M12} {m.M13} {m.M14}\n{m.M21} {m.M22} {m.M23} {m.M24}\n{m.M31} {m.M32} {m.M33} {m.M34}\n{m.M41} {m.M42} {m.M43} {m.M44}\n";
-                                            } else
-                                            {
-                                                strValue = fieldInfo.GetValue(componentInfo.Value).ToString();
-                                            }
-                                        }
-                                        catch (Exception e)
-                                        {
-
-                                        }
-                                        ImGuiTreeNodeFlags treeNodeFlags =
-                                            ImGuiTreeNodeFlags.Leaf
-                                            | ImGuiTreeNodeFlags.NoTreePushOnOpen;
-
-                                        ImGui.TableNextRow();
-                                        ImGui.TableSetColumnIndex(0);
-                                        ImGui.AlignTextToFramePadding();
-
-                                        ImGui.TreeNodeEx("value", treeNodeFlags, fieldInfo.Name);
-
-                                        ImGui.TableSetColumnIndex(1);
-                                        // ImGui.SetNextItemWidth(Single.MinValue);
-                                        ImGui.Text(strValue);
-                                        ImGui.NextColumn();
-
-                                    }
-
-                                    ImGui.TreePop();
-                                }
-
-                                ++componentIndex;
-                            }
-
-                            ImGui.EndTable();
-                        }
-                    }
-
-                    ImGui.PopStyleVar();
-                }
+                _uiEntityInspector.Render(dt);
             }
 
             if (ImGui.CollapsingHeader("Monitor"))
             {
-                var frameTimings = _engine.FrameDurations;
-
-                int count = frameTimings.Length;
-
-                fixed (float* pTiming = &frameTimings[0])
-                {
-                    ImGui.PlotLines("Time per frame", ref *pTiming, count);
-                }
-
+                _uiMonitor.Render(dt);
             }
 
             ImGui.EndChild();
@@ -576,20 +264,14 @@ public class Main
     public Main()
     {
         _engine = I.Get<engine.Engine>();
+        _uiConfig = new(this);
+        _uiSoftware = new Software(this);
+        _uiClusters = new Clusters(this);
+        _uiScenes = new Scenes(this);
+        _uiMonitor = new Monitor(this);
 
-#if false
-        var io = ImGui.GetIO();
-        int hadFonts = io.Fonts.Fonts.Size;
-        
-        io.Fonts.AddFontFromFileTTF(engine.GlobalSettings.Get("Engine.ResourcePath") + "Prototype.ttf", 12f);
-        var font = io.Fonts.Fonts[hadFonts];
-        io 
-
-        // auto& io = ImGui::GetIO();
-        // io.Fonts->AddFontFromFileTTF(R"(E:\_asset\font\DroidSansFallback.ttf)", 24.0f);
-        // io.FontDefault = io.Fonts->Fonts[1];
-        // m_pImGui->UpdateFontsTexture();
-#endif
-
+        _sharedEntityState = new EntityState(this);
+        _uiEntities = new Entities(this, _sharedEntityState);
+        _uiEntityInspector = new EntityInspector(this, _sharedEntityState);
     }
 }
