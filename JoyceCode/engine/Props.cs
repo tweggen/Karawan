@@ -11,15 +11,17 @@ public class Props
     static private Props _instance = null;
 
     private object _lo = new();
-    private Dictionary<string, object> _dictConfigParams = new();
-
+    private Dictionary<string, object> _dictConfigParams;
     private ReadOnlyDictionary<string, object> _rodictConfigParams;
     
     public ReadOnlyDictionary<string, object> Dictionary
     {
-        get => _rodictConfigParams;
+        get
+        {
+            return _rodictConfigParams;
+        }
     }
-    
+
     static public object Get(in string key, object defaultValue)
     {
         return Props.Instance()._get(key, defaultValue);
@@ -35,8 +37,13 @@ public class Props
     private void _set(in string key, object value)
     {
         bool doEmitEvent = false;
+
+        Dictionary<string, object> oldConfigParams, newConfigParams;
         lock (_lo)
         {
+            /*
+             * Shall we set a new value or is there no modification at all?
+             */
             bool doSet = false;
             if (_dictConfigParams.TryGetValue(key, out var oldValue))
             {
@@ -50,9 +57,15 @@ public class Props
                 doSet = true;
             }
 
+
             if (doSet)
             {
-                _dictConfigParams[key] = value;
+                oldConfigParams = _dictConfigParams;
+                newConfigParams = new(oldConfigParams);
+                newConfigParams[key] = value;
+                _dictConfigParams = newConfigParams;
+                _rodictConfigParams = newConfigParams.AsReadOnly();
+            
                 doEmitEvent = true;
             }
         }
@@ -101,6 +114,7 @@ public class Props
     
     private Props()
     {
+        _dictConfigParams = new Dictionary<string, object>();
         _rodictConfigParams = new ReadOnlyDictionary<string, object>(_dictConfigParams);
     }
     
