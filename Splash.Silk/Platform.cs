@@ -50,6 +50,9 @@ public class Platform : engine.IPlatform
 
     private ImGuiController _imGuiController = null;
     
+    /**
+     * If mouse is enabled, we intercept mouse events when the pointer is outside the viewport area.
+     */
     private bool _mouseEnabled = false;
 
     public bool MouseEnabled
@@ -286,6 +289,8 @@ public class Platform : engine.IPlatform
      */
     private void _onMouseMove(IMouse mouse, Vector2 position)
     {
+        if (_shallReturnBecauseUI(mouse.Position)) return;
+
         I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_MOVED, "")
         {
             PhysicalPosition = position
@@ -295,6 +300,8 @@ public class Platform : engine.IPlatform
 
     private void _onMouseWheel(IMouse mouse, ScrollWheel scrollWheel)
     {
+        if (_shallReturnBecauseUI(mouse.Position)) return;
+
         I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_WHEEL, "")
         {
             PhysicalPosition = new(scrollWheel.X, scrollWheel.Y)
@@ -319,8 +326,22 @@ public class Platform : engine.IPlatform
     }
 
 
+    private bool _shallReturnBecauseUI(in Vector2 v2MousePos)
+    {
+        if (false == _mouseEnabled) return false;
+        _getActualViewRectangle(out var ul, out var lr);
+        if (v2MousePos.X < ul.X || v2MousePos.X > lr.X || v2MousePos.Y < ul.Y || v2MousePos.Y > lr.Y)
+        {
+            return true;
+        }
+        return false;
+    }
+    
+
     private void _onMouseDown(IMouse mouse, MouseButton mouseButton)
     {
+        if (_shallReturnBecauseUI(mouse.Position)) return;
+        
         _fullToViewPosition(mouse.Position, out var pos, out var size, out var v2LogicalPosition);
         
         // Trace($"Position is {mouse.Position}");
@@ -345,6 +366,8 @@ public class Platform : engine.IPlatform
 
     private void _onMouseUp(IMouse mouse, MouseButton mouseButton)
     {
+        if (_shallReturnBecauseUI(mouse.Position)) return;
+
         _fullToViewPosition(mouse.Position, out var pos, out var size, out var v2LogicalPosition);
 
         I.Get<EventQueue>().Push(

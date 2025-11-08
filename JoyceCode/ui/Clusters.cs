@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Numerics;
 using System.Reflection;
 using engine;
 using engine.world;
@@ -13,7 +14,7 @@ public class Clusters : APart
 
     public override void Render(float dt)
     {
-        if (ImGui.BeginListBox("Clusters"))
+        if (ImGui.BeginListBox("", new Vector2(450f, 700f)))
         {
             var clusterList = new List<ClusterDesc>(I.Get<ClusterList>().GetClusterList());
             clusterList.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));

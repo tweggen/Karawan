@@ -15,6 +15,7 @@ public class DebuggerToggle : AModule, IInputPart
         new SharedModule<InputEventPipeline>()
     };
 
+    public Vector2 TopLeft { get; set; } = new(500f, 20f);
     
     private bool _isUIShown = false;
 
@@ -36,7 +37,7 @@ public class DebuggerToggle : AModule, IInputPart
         }
         else
         {
-            _engine.SetViewRectangle(new Vector2(500f, 20f), Vector2.Zero );
+            _engine.SetViewRectangle(TopLeft, Vector2.Zero );
             _engine.EnableMouse();
             ActivateMyModule<modules.debugger.Module>();
         }
