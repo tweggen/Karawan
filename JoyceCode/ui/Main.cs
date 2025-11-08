@@ -31,6 +31,9 @@ public class Main
     private Assets _uiAssets;
 
 
+    private bool _isEnginePaused = false;
+    
+
     public static void PropEdit(string key, object currValue, Action<string, object> setFunction)
     {
         if (currValue is bool)
@@ -224,34 +227,42 @@ public class Main
                 ))
         {
             _uiMenuBar.Render(dt);
+            
             {
-#if false
                 var state = _engine.State;
+                ImGui.Text($"EngineState: {state.ToString()}");
+
                 switch (state)
                 {
                     case Engine.EngineState.Initialized:
                     case Engine.EngineState.Starting:
                     case Engine.EngineState.Stopping:
-                        ImGui.Text(state.ToString());
+                    case Engine.EngineState.Stopped:
                         break;
                     case Engine.EngineState.Running:
-                        if (ImGui.Button("Pause"))
+                        ImGui.Text(state.ToString());
+                        if (_isEnginePaused)
                         {
-                            _engine.SetEngineState(Engine.EngineState.Stopped);
+                            if (ImGui.Button("Continue"))
+                            {
+                                _isEnginePaused = false;
+                                _engine.DisablePause();
+                            } 
                         }
-                        break;
-                    case Engine.EngineState.Stopped:
-                        if (ImGui.Button("Continue"))
+                        else
                         {
-                            _engine.SetEngineState(Engine.EngineState.Running);
+                            if (ImGui.Button("Pause"))
+                            {
+                                _isEnginePaused = true;
+                                _engine.EnablePause();
+                            }
                         }
                         break;
                 }
 
                 ImGui.SameLine();
-#endif
 
-                if (ImGui.Button("Regenerate"))
+                if (ImGui.Button("Flush"))
                 {
                     I.Get<MetaGen>().Loader.WorldLoaderReleaseFragments();
                 }
