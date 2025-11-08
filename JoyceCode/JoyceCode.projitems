@@ -249,10 +249,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)ui\EntityInspector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\EntityState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Implementations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\MenuBar.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Modules.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Monitor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Scenes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Software.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\Style.cs" />
     <Folder Include="$(MSBuildThisFileDirectory)builtin\tools\components\" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\FPSMonitor.cs" />

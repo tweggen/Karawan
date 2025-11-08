@@ -9,8 +9,6 @@ public class Modules : APart
 {
     public override void Render(float dt)
     {
-        if (ImGui.TreeNode("Modules"))
-        {
             var modules = _engine.GetModules();
             foreach (var module in modules)
             {
@@ -34,7 +32,6 @@ public class Modules : APart
                     ImGui.TreePop();
                 }
             }
-        }
     }
 
     public Modules(Main uiMain) : base(uiMain)
