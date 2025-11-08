@@ -51,7 +51,7 @@ public class Software : APart
         }
     }
 
-    public Software(Main uiMain) : base(uiMain
+    public Software(Main uiMain) : base(uiMain)
     {
     }
 }

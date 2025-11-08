@@ -8,6 +8,7 @@ public class AssetImplementation : IAssetImplementation
 {
     private object _lo = new();
     private SortedDictionary<string, string> _mapAssociations = new();
+    private IReadOnlyDictionary<string, string>? _mapRoAssociations = null;
 
     public void AddAssociation(string tag, string uri)
     {
@@ -17,7 +18,19 @@ public class AssetImplementation : IAssetImplementation
         }
     }
 
-    
+    public IReadOnlyDictionary<string, string> GetAssets()
+    {
+        if (null == _mapRoAssociations)
+        {
+            lock (_lo)
+            {
+                _mapRoAssociations = _mapAssociations.AsReadOnly();
+            }
+        }
+        return _mapRoAssociations;
+    }
+
+
     /**
      * Open the resource with the given filename or tag.
      *

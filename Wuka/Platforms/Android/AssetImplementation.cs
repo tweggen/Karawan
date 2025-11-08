@@ -31,6 +31,11 @@ public class AssetImplementation : engine.IAssetImplementation
          */
     }
 
+    public IReadOnlyDictionary<string, string> GetAssets()
+    {
+        throw new NotImplementedException();
+    }
+
     public AssetImplementation(in AssetManager assetManager)
     {
         _assetManager = assetManager;

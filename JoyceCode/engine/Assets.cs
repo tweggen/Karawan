@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using static engine.Logger;
 
 namespace engine;
@@ -29,6 +30,15 @@ public sealed class Assets
         lock (_staticlock)
         {
             _implementation = impl;
+        }
+    }
+
+
+    public static IReadOnlyDictionary<string, string> GetAssets()
+    {
+        lock (_staticlock)
+        {
+            return _implementation.GetAssets();           
         }
     }
 }

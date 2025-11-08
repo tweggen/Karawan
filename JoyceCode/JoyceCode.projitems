@@ -242,6 +242,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\PlayerViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\Tags.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\APart.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\Assets.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Clusters.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Config.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Entities.cs" />

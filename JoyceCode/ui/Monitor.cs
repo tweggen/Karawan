@@ -1,3 +1,5 @@
+using ImGuiNET;
+
 namespace joyce.ui;
 
 public class Monitor : APart
@@ -8,9 +10,12 @@ public class Monitor : APart
 
         int count = frameTimings.Length;
 
-        fixed (float* pTiming = &frameTimings[0])
+        unsafe
         {
-            ImGui.PlotLines("Time per frame", ref *pTiming, count);
+            fixed (float* pTiming = &frameTimings[0])
+            {
+                ImGui.PlotLines("Time per frame", ref *pTiming, count);
+            }
         }
 
     }

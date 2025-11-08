@@ -25,6 +25,7 @@ public class Main
     private Entities _uiEntities;
     private EntityInspector _uiEntityInspector;
     private Monitor _uiMonitor;
+    private Assets _uiAssets;
 
 
     private void _setColorScheme()
@@ -223,6 +224,11 @@ public class Main
                 _uiConfig.Render(dt);
             }
 
+            if (ImGui.CollapsingHeader("Assets"))
+            {
+                _uiAssets.Render(dt);
+            }
+
             if (ImGui.CollapsingHeader("Scenes"))
             {
                 _uiScenes.Render(dt);
@@ -269,6 +275,7 @@ public class Main
         _uiClusters = new Clusters(this);
         _uiScenes = new Scenes(this);
         _uiMonitor = new Monitor(this);
+        _uiAssets = new Assets(this);
 
         _sharedEntityState = new EntityState(this);
         _uiEntities = new Entities(this, _sharedEntityState);
