@@ -17,7 +17,12 @@ public class AssetImplementation : IAssetImplementation
         }
     }
 
-    
+    public IReadOnlyDictionary<string, string> GetAssets()
+    {
+        throw new NotImplementedException();
+    }
+
+
     /**
      * Open the resource with the given filename or tag.
      *
