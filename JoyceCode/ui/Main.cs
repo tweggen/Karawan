@@ -151,8 +151,7 @@ public class Main
         }
     }
 
-//ImGui.Text(kvp.Value);
-
+    
     public unsafe void Render(float dt)
     {
         _setStyle();
@@ -189,6 +188,7 @@ public class Main
             }
 
             {
+#if false
                 var state = _engine.State;
                 switch (state)
                 {
@@ -212,6 +212,7 @@ public class Main
                 }
 
                 ImGui.SameLine();
+#endif
 
                 if (ImGui.Button("Regenerate"))
                 {
