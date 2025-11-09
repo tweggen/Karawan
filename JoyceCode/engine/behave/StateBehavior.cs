@@ -14,6 +14,29 @@ public class StateBehavior : IBehavior
     private SortedDictionary<string, IBehavior> _mapBehaviors = new();
     private string? _strCurrentBehavior = null;
     private IBehavior? _currentBehavior = null;
+
+    public SortedDictionary<string, IBehavior> DictBehaviors { get; set; } = new();
+
+    public void RequestBehaviorState(string strNewBehavior)
+    {
+        lock (_lo)
+        {
+            if (null == DictBehaviors) return;
+            if (_strCurrentBehavior == strNewBehavior) return;
+            if (false == DictBehaviors.TryGetValue(strNewBehavior, out var newBehavior))
+            {
+                return;
+            }
+
+            if (newBehavior == _currentBehavior)
+            {
+                return;
+            }
+
+            _currentBehavior = newBehavior;
+            _strCurrentBehavior = strNewBehavior;
+        }
+    }
     
     public void OnCollision(ContactEvent cev)
     {
@@ -85,5 +108,4 @@ public class StateBehavior : IBehavior
         behavior?.OutOfRange(engine0, entity);
     }
     
-    // TXWTODO: How to add behavior
 }
