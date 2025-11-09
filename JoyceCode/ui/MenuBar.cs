@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using ImGuiNET;
 
 namespace joyce.ui;
@@ -19,7 +21,11 @@ public class MenuBar : APart
                 ImGui.MenuItem("New", false);
                 ImGui.MenuItem("Open...", false);
                 ImGui.MenuItem("Save", false);
-                ImGui.MenuItem("Save as...", false);
+                if (ImGui.MenuItem("Save as...", true))
+                {
+                    ImGui.OpenPopup("save-file");
+                    
+                }
                     
                 ImGui.EndMenu();
             }

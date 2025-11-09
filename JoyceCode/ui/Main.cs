@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Numerics;
 using engine;
 using engine.world;
@@ -43,6 +45,30 @@ public class Main
                 ))
         {
             _uiMenuBar.Render(dt);
+            /*
+             * Render a possible file modal dialog.
+             */
+            var isOpen = true;
+            if (ImGui.BeginPopupModal("save-file", ref isOpen, ImGuiWindowFlags.NoTitleBar))
+            {
+                var picker = FileDialog.GetFolderDialog(this, Path.Combine(Environment.CurrentDirectory));
+                bool doClose = false;
+                bool wasSelected = picker.Draw();
+
+                if (wasSelected)
+                {
+                    Trace($"selected file {picker.SelectedFile}");
+                    doClose = true;
+                }
+                if (doClose)
+                {
+                    FileDialog.RemoveFileDialog(this);
+                    ImGui.CloseCurrentPopup();
+                }
+                ImGui.EndPopup();
+            }
+
+
             
             {
                 var state = _engine.State;
