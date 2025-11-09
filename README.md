@@ -19,6 +19,113 @@ It references the other projects.
 Current builds actively supported are Windows 11 x64; Linux x86 and ARM64 Android 13 . Windows 10
 and other Android versions also work.
 
+## Configuration
+
+### Historic: nogame.json
+
+The project started out using one single json file containing all of the required configuration 
+entires, including assets, engine options and debug options. As this both becomes unmaintable and
+is unsuitable for composing the entire project from several files, it was later extended by a
+configuration approach that combines several files and blends with the serialization approach.
+
+### Defined configuration hierarchy entry points
+
+#### /defaults/loader/assembly
+
+a string, specifies the root dll of the game to load.
+
+#### /globalSettings
+
+A dictionary of one-time settings required for startup of engine and game.
+
+#### /implementations
+
+A dictionary of implementation records specifying implementations to have available
+in the factory.
+
+**implementation record**
+- `properties` *(dictionary)* The properties of the implementation object to set after 
+  initialization.
+- `className` *(string)* The fully qualified class name of the object to instantiate. 
+  If not given, the dictionary key is used as a class name. However, in some cases you
+  will want to use an interface name as a key, requiring you to specify a specific 
+  implementation class here.
+- `config` *(any)* When using a custom factory for this type, this contains the input
+  data for the deserializer (or the output from the serializer) (see engine.ISerializable
+  interface).
+
+#### /mapProviders
+
+A dictionary specifying all map providers for the game. The keys of the dictionary
+will be used in alphabetic order by the runtime.
+
+**map provider record**
+- `className` *(string)* the class name of the map provider to instantiate.
+
+#### /metaGen
+
+#### /metaGen/fragmentOperators
+
+#### /metaGen/buildingOperators
+
+#### /metaGen/populatingOperators
+
+#### /metaGen/clusterOperators
+
+#### /modules/root/className
+
+A string specifying the class name of the main modules of the game, assumed to be
+inside the main dll.
+
+#### /properties
+
+A set of defaults for run-time configuration. These values are modifyable at run
+time and monitored for changes. Implementation can subscribe for events specificially
+for each of the values.
+
+#### /quests
+
+A dictionary of class descriptors used to load quest definitions.
+
+The key is supposed to be the quests identifier. The value is an instantiation 
+rectod
+
+**instantiation record**
+
+either 
+
+- `implementation` *(string)* The fully qualified name of a (static) method to
+  instantiate the given object. The method does not take any parameter and is 
+  expected to return an object of the appropriate interface 
+
+or
+
+- `className` *(string)* THe fully qualified name of a class to instantiate.
+
+#### /layers
+
+A dictionary of layers for the screen composer with their respective properties.
+The key names can be selected without any specific semantics.
+
+**layer record**
+- `zOrder` *(number)* A number specifying the zOrder of the layer when composed 
+   on screen. Larger numbers or closer to the viewer.
+
+#### /scenes
+
+#### /scenes/catalogue
+
+A dictionary of scenes of the game engine that can be loaded/unloaded. The keys
+an be chosen arbitrarily.
+
+**scene record**
+- `className` *(string)* the fully qualified class name of the scene
+  implementation.
+
+#### /scenes/startup
+
+A string specifying the key of the scene to be displayed on startup.
+
 ## Operators
 
 The basic idea of joyce is that everything is (re-)creatable on demand.
