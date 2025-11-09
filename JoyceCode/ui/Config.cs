@@ -26,7 +26,7 @@ public class Config : APart
             var dict = engine.Props.Instance().Dictionary;
             foreach (var kvp in dict)
             {
-                Main.PropEdit(kvp.Key,kvp.Value, (key, newValue) => Props.Set(key, newValue) );
+                Property.Edit(kvp.Key,kvp.Value, (key, newValue) => Props.Set(key, newValue) );
             }
 
             ImGui.TreePop();

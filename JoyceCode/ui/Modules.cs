@@ -20,7 +20,7 @@ public class Modules : APart
                         object propValue = property.GetValue(module);
                         if (propValue != null)
                         {
-                            Main.PropEdit(propName, propValue,
+                            Property.Edit(propName, propValue,
                                 (key, newValue) => property.SetValue(module, newValue));
                         }
                         else

@@ -39,18 +39,7 @@ public class EntityInspector : APart
                         ImGui.AlignTextToFramePadding();
 
 
-                        string displayType;
-                        string typeString = componentInfo.Type.ToString();
-                        int lastTypeDotIndex = typeString.LastIndexOf('.');
-                        if (lastTypeDotIndex != -1)
-                        {
-                            displayType = typeString.Substring(lastTypeDotIndex + 1);
-                        }
-                        else
-                        {
-                            displayType = typeString;
-                        }
-
+                        string displayType = Property.DisplayType(componentInfo.Type);
                         bool treeNodeResult = ImGui.TreeNodeEx("field", 0, displayType);
 
                         ImGui.TableSetColumnIndex(1);
@@ -66,31 +55,8 @@ public class EntityInspector : APart
 
                             foreach (var fieldInfo in fields)
                             {
-                                Type typeAttr = fieldInfo.FieldType;
-                                string strValue = "(not available)";
-                                try
-                                {
-                                    if (typeAttr == typeof(engine.gongzuo.LuaScriptEntry))
-                                    {
-                                        strValue = (fieldInfo.GetValue(componentInfo.Value) as LuaScriptEntry)
-                                            .LuaScript;
-                                    }
-                                    else if (typeAttr == typeof(Matrix4x4))
-                                    {
-                                        Matrix4x4 m = (Matrix4x4)(fieldInfo.GetValue(componentInfo.Value));
-                                        strValue =
-                                            $"{m.M11} {m.M12} {m.M13} {m.M14}\n{m.M21} {m.M22} {m.M23} {m.M24}\n{m.M31} {m.M32} {m.M33} {m.M34}\n{m.M41} {m.M42} {m.M43} {m.M44}\n";
-                                    }
-                                    else
-                                    {
-                                        strValue = fieldInfo.GetValue(componentInfo.Value).ToString();
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-
-                                }
-
+                                string strValue = Property.FieldAsString(componentInfo, fieldInfo);
+                                
                                 ImGuiTreeNodeFlags treeNodeFlags =
                                     ImGuiTreeNodeFlags.Leaf
                                     | ImGuiTreeNodeFlags.NoTreePushOnOpen;
