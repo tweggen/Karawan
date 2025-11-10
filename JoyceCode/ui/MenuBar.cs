@@ -23,7 +23,7 @@ public class MenuBar : APart
                 ImGui.MenuItem("Save", false);
                 if (ImGui.MenuItem("Save as...", true))
                 {
-                    ImGui.OpenPopup("save-file");
+                    _uiMain.RequestModal("save-file");
                     
                 }
                     

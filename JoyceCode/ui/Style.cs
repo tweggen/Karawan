@@ -43,9 +43,9 @@ public class Style : APart
         colors[(int)ImGuiCol.ResizeGripActive]       = new Vector4(0.13f, 0.75f, 1.00f, 0.80f);
         colors[(int)ImGuiCol.Tab]                    = new Vector4(0.13f, 0.75f, 0.55f, 0.80f);
         colors[(int)ImGuiCol.TabHovered]             = new Vector4(0.13f, 0.75f, 0.75f, 0.80f);
-        colors[(int)ImGuiCol.TabActive]              = new Vector4(0.13f, 0.75f, 1.00f, 0.80f);
-        colors[(int)ImGuiCol.TabUnfocused]           = new Vector4(0.18f, 0.18f, 0.18f, 1.00f);
-        colors[(int)ImGuiCol.TabUnfocusedActive]     = new Vector4(0.36f, 0.36f, 0.36f, 0.54f);
+        //colors[(int)ImGuiCol.TabActive]              = new Vector4(0.13f, 0.75f, 1.00f, 0.80f);
+        //colors[(int)ImGuiCol.TabUnfocused]           = new Vector4(0.18f, 0.18f, 0.18f, 1.00f);
+        //colors[(int)ImGuiCol.TabUnfocusedActive]     = new Vector4(0.36f, 0.36f, 0.36f, 0.54f);
         colors[(int)ImGuiCol.DockingPreview]         = new Vector4(0.13f, 0.75f, 0.55f, 0.80f);
         colors[(int)ImGuiCol.DockingEmptyBg]         = new Vector4(0.13f, 0.13f, 0.13f, 0.80f);
         colors[(int)ImGuiCol.PlotLines]              = new Vector4(0.61f, 0.61f, 0.61f, 1.00f);
@@ -59,7 +59,7 @@ public class Style : APart
         colors[(int)ImGuiCol.TableRowBgAlt]          = new Vector4(1.00f, 1.00f, 1.00f, 0.07f);
         colors[(int)ImGuiCol.TextSelectedBg]         = new Vector4(0.26f, 0.59f, 0.98f, 0.35f);
         colors[(int)ImGuiCol.DragDropTarget]         = new Vector4(1.00f, 1.00f, 0.00f, 0.90f);
-        colors[(int)ImGuiCol.NavHighlight]           = new Vector4(0.26f, 0.59f, 0.98f, 1.00f);
+        //colors[(int)ImGuiCol.NavHighlight]           = new Vector4(0.26f, 0.59f, 0.98f, 1.00f);
         colors[(int)ImGuiCol.NavWindowingHighlight]  = new Vector4(1.00f, 1.00f, 1.00f, 0.70f);
         colors[(int)ImGuiCol.NavWindowingDimBg]      = new Vector4(0.80f, 0.80f, 0.80f, 0.20f);
         colors[(int)ImGuiCol.ModalWindowDimBg]       = new Vector4(0.80f, 0.80f, 0.80f, 0.35f);        

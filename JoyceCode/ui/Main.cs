@@ -28,7 +28,14 @@ public class Main
 
 
     private bool _isEnginePaused = false;
-    
+
+
+    private string? _strRequestedModal = null;
+
+    public void RequestModal(string strRequestedModal)
+    {
+        _strRequestedModal = strRequestedModal;
+    }
 
     public unsafe void Render(float dt)
     {
@@ -45,6 +52,12 @@ public class Main
                 ))
         {
             _uiMenuBar.Render(dt);
+
+            if (_strRequestedModal != null)
+            {
+                ImGui.OpenPopup(_strRequestedModal);
+                _strRequestedModal = null;
+            }
             /*
              * Render a possible file modal dialog.
              */

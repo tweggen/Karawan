@@ -64,7 +64,7 @@ public class FileDialog
 		ImGui.Text("Current Folder: " + Path.GetFileName(RootFolder) + CurrentFolder.Replace(RootFolder, ""));
 		bool result = false;
 
-		if (ImGui.BeginChildFrame(1, new Vector2(400, 400)))
+		if (ImGui.BeginChild(1, new Vector2(400, 400), ImGuiChildFlags.FrameStyle))
 		{
 			var di = new DirectoryInfo(CurrentFolder);
 			if (di.Exists)
@@ -72,7 +72,7 @@ public class FileDialog
 				if (di.Parent != null && CurrentFolder != RootFolder)
 				{
 					ImGui.PushStyleColor(ImGuiCol.Text, _colYellow);
-					if (ImGui.Selectable("../", false, ImGuiSelectableFlags.DontClosePopups))
+					if (ImGui.Selectable("../", false, ImGuiSelectableFlags.NoAutoClosePopups))
 						CurrentFolder = di.Parent.FullName;
 					
 					ImGui.PopStyleColor();
@@ -85,7 +85,7 @@ public class FileDialog
 					{
 						var name = Path.GetFileName(fse);
 						ImGui.PushStyleColor(ImGuiCol.Text, _colYellow);
-						if (ImGui.Selectable(name + "/", false, ImGuiSelectableFlags.DontClosePopups))
+						if (ImGui.Selectable(name + "/", false, ImGuiSelectableFlags.NoAutoClosePopups))
 							CurrentFolder = fse;
 						ImGui.PopStyleColor();
 					}
@@ -93,7 +93,7 @@ public class FileDialog
 					{
 						var name = Path.GetFileName(fse);
 						bool isSelected = SelectedFile == fse;
-						if (ImGui.Selectable(name, isSelected, ImGuiSelectableFlags.DontClosePopups))
+						if (ImGui.Selectable(name, isSelected, ImGuiSelectableFlags.NoAutoClosePopups))
 							SelectedFile = fse;
 
 						if (ImGui.IsMouseDoubleClicked(0))
@@ -105,7 +105,7 @@ public class FileDialog
 				}
 			}
 		}
-		ImGui.EndChildFrame();
+		ImGui.EndChild();
 
 
 		if (ImGui.Button("Cancel"))
