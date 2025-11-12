@@ -82,8 +82,8 @@ public class Entities : APart
 
                 ImGui.PopID();
             }
+            ImGui.EndListBox();
         }
-        ImGui.EndListBox();
     }
 
    

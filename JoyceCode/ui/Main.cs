@@ -49,6 +49,8 @@ public class Main
                 |ImGuiWindowFlags.NoCollapse
                 |ImGuiWindowFlags.NoMove
                 |ImGuiWindowFlags.NoResize
+                |ImGuiWindowFlags.ChildWindow
+                |ImGuiWindowFlags.NoTitleBar
                 ))
         {
             _uiMenuBar.Render(dt);
@@ -59,8 +61,8 @@ public class Main
                 _strRequestedModal = null;
             }
             /*
-             * Render a possible file modal dialog.
-             */
+            * Render a possible file modal dialog.
+            */
             var isOpen = true;
             if (ImGui.BeginPopupModal("save-file", ref isOpen, ImGuiWindowFlags.NoTitleBar))
             {

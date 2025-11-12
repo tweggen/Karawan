@@ -47,8 +47,8 @@ public class Clusters : APart
 
                 ImGui.PopID();
             }
+            ImGui.EndListBox();
         }
-        ImGui.EndListBox();
     }
 
     public Clusters(Main uiMain) : base(uiMain)
