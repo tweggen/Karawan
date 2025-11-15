@@ -3,7 +3,10 @@
     "Karawan": {
       "commandName": "Project",
       "workingDirectory": "$(SolutionDir)",
-      "hotReloadEnabled": false
+      "hotReloadEnabled": false,
+      "environmentVariables": {
+        "DOTNET_EnableWriteXorExecute": "0"
+      }
     }
   }
 }
