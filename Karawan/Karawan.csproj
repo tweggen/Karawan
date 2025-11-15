@@ -2,8 +2,8 @@
 
   <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
     <TargetFramework>net9.0</TargetFramework>
-
   </PropertyGroup>
+  
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <!-- TargetFramework>net9.0-windows10.0.22000.0</TargetFramework -->
     <TargetFramework>net9.0-windows10.0.22000.0</TargetFramework>
@@ -32,7 +32,6 @@
   <PropertyGroup>
     <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss:fffZ"))</SourceRevisionId>
     <PublishAot>False</PublishAot>
-    <TargetFramework>net9.0-windows10.0.22000.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
