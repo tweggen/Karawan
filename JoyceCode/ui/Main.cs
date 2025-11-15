@@ -43,14 +43,13 @@ public class Main
         
         ImGui.SetNextWindowPos(new Vector2(0, 20));
         var mainViewportSize = ImGui.GetMainViewport().Size;
-        ImGui.SetNextWindowSize(
-            mainViewportSize with {X = 500} - new Vector2(0, 20));
+        ImGui.SetNextWindowSize(new Vector2(500, mainViewportSize.Y - 20));
         if (ImGui.Begin("selector", 0
                 |ImGuiWindowFlags.NoCollapse
                 |ImGuiWindowFlags.NoMove
                 |ImGuiWindowFlags.NoResize
-                |ImGuiWindowFlags.ChildWindow
-                |ImGuiWindowFlags.NoTitleBar
+                //|ImGuiWindowFlags.ChildWindow
+                //|ImGuiWindowFlags.NoTitleBar
                 ))
         {
             _uiMenuBar.Render(dt);
@@ -166,8 +165,7 @@ public class Main
             {
                 _uiMonitor.Render(dt);
             }
-
-            ImGui.EndChild();
+            
         }
 
         ImGui.End();
