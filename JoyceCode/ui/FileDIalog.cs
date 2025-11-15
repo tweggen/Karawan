@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using ImGuiNET;
+using static engine.Logger;
 
 namespace joyce.ui;
 
@@ -15,6 +16,7 @@ public class FileDialog
 	public string SelectedFile;
 	public List<string> AllowedExtensions;
 	public bool OnlyAllowFolders;
+	public string EnteredFile = "";
 
 	public static FileDialog GetFolderDialog(object o, string startingPath)
 		=> GetFileDialog(o, startingPath, null, true);
@@ -64,7 +66,8 @@ public class FileDialog
 		ImGui.Text("Current Folder: " + Path.GetFileName(RootFolder) + CurrentFolder.Replace(RootFolder, ""));
 		bool result = false;
 
-		if (ImGui.BeginChild(1, new Vector2(400, 400), ImGuiChildFlags.FrameStyle))
+		var avail = ImGui.GetContentRegionAvail() - new Vector2(0, 40);
+		if (ImGui.BeginChild(1, avail, ImGuiChildFlags.FrameStyle))
 		{
 			var di = new DirectoryInfo(CurrentFolder);
 			if (di.Exists)
@@ -86,7 +89,10 @@ public class FileDialog
 						var name = Path.GetFileName(fse);
 						ImGui.PushStyleColor(ImGuiCol.Text, _colYellow);
 						if (ImGui.Selectable(name + "/", false, ImGuiSelectableFlags.NoAutoClosePopups))
+						{
 							CurrentFolder = fse;
+						}
+
 						ImGui.PopStyleColor();
 					}
 					else
@@ -94,7 +100,10 @@ public class FileDialog
 						var name = Path.GetFileName(fse);
 						bool isSelected = SelectedFile == fse;
 						if (ImGui.Selectable(name, isSelected, ImGuiSelectableFlags.NoAutoClosePopups))
+						{
 							SelectedFile = fse;
+							EnteredFile = name;
+						}
 
 						if (ImGui.IsMouseDoubleClicked(0))
 						{
@@ -107,6 +116,15 @@ public class FileDialog
 		}
 		ImGui.EndChild();
 
+
+		if (!OnlyAllowFolders)
+		{
+			if (ImGui.InputText("filename", ref EnteredFile, 1024))
+			{
+				Trace($"new Value {EnteredFile}");
+			}
+		}
+		
 
 		if (ImGui.Button("Cancel"))
 		{
@@ -124,7 +142,7 @@ public class FileDialog
 				ImGui.CloseCurrentPopup();
 			}
 		}
-		else if (SelectedFile != null)
+		else if (SelectedFile != null || EnteredFile != "")
 		{
 			ImGui.SameLine();
 			if (ImGui.Button("Open"))

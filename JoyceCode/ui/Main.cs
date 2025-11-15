@@ -65,7 +65,7 @@ public class Main
             var isOpen = true;
             if (ImGui.BeginPopupModal("save-file", ref isOpen, ImGuiWindowFlags.NoTitleBar))
             {
-                var picker = FileDialog.GetFolderDialog(this, Path.Combine(Environment.CurrentDirectory));
+                var picker = FileDialog.GetFileDialog(this, Path.Combine(Environment.CurrentDirectory));
                 bool doClose = false;
                 bool wasSelected = picker.Draw();
 
