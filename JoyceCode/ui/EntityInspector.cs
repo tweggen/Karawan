@@ -47,8 +47,6 @@ public class EntityInspector : APart
                         ImGui.Text(componentInfo.ValueAsString);
                         ImGui.NextColumn();
 
-                        ImGui.PopID();
-
                         if (treeNodeResult)
                         {
                             System.Reflection.FieldInfo[] fields = componentInfo.Type.GetFields();
@@ -65,17 +63,22 @@ public class EntityInspector : APart
                                 ImGui.TableSetColumnIndex(0);
                                 ImGui.AlignTextToFramePadding();
 
-                                ImGui.TreeNodeEx("value", treeNodeFlags, fieldInfo.Name);
-
                                 ImGui.TableSetColumnIndex(1);
-                                // ImGui.SetNextItemWidth(Single.MinValue);
+                                ImGui.PushID(fieldInfo.Name);
+                                ImGui.TreeNodeEx("value", treeNodeFlags, fieldInfo.Name);
+                                ImGui.PopID();
+                                ImGui.SameLine();
                                 ImGui.Text(strValue);
+                                
+                                // ImGui.SetNextItemWidth(Single.MinValue);
                                 ImGui.NextColumn();
 
                             }
 
                             ImGui.TreePop();
                         }
+
+                        ImGui.PopID();
 
                         ++componentIndex;
                     }

@@ -29,7 +29,7 @@ public class Entities : APart
         ImGui.InputText("Filter", _currentEntityFilterBytes, (uint) _currentEntityFilterBytes.Length);
         string utf8FilterText = Encoding.UTF8.GetString(_currentEntityFilterBytes, 0, _currentEntityFilterBytes.Length).TrimEnd((Char)0);
         
-        if (ImGui.BeginListBox("", new Vector2(450f, 500f)))
+        if (ImGui.BeginListBox("##Entities", new Vector2(450f, 500f)))
         {
             foreach (var entity in entities)
             {
