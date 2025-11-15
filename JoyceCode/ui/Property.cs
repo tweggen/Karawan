@@ -104,8 +104,7 @@ public class Property
                 
             if (ImGui.InputFloat(key, ref currentInput,
                     10f, 100f,
-                    "%.2f",
-                    ImGuiInputTextFlags.EnterReturnsTrue))
+                    "%.2f", 0))
             {
                 if (currentInput != (float)currValue)
                 {
@@ -119,8 +118,7 @@ public class Property
             var currentInput = (int)currValue;
                 
             if (ImGui.InputInt(key, ref currentInput,
-                    10, 100,
-                    ImGuiInputTextFlags.EnterReturnsTrue))
+                    10, 100, 0))
             {
                 if (currentInput != (int)currValue)
                 {
@@ -134,8 +132,7 @@ public class Property
             int currentInput = (int)(uint)currValue;
                 
             if (ImGui.InputInt(key, ref currentInput,
-                    10, 100,
-                    ImGuiInputTextFlags.EnterReturnsTrue))
+                    10, 100, 0))
             {
                 if (currentInput != (int)(uint)currValue)
                 {
@@ -235,13 +232,13 @@ public class Property
                 for (int row = 0; row < 4; row++)
                 {
                     ImGui.TableNextRow();
-                    for (int column = 0; column < 3; column++)
+                    for (int column = 0; column < 4; column++)
                     {
                         float value = newValue[row,column];
+                        ImGui.PushID(row * 4 + column);
                         if (ImGui.InputFloat(key, ref value,
                                 10f, 100f,
-                                "%.2f",
-                                ImGuiInputTextFlags.EnterReturnsTrue))
+                                "%.2f", 0))
                         {
                             if (value != currentInput[row,column])
                             {
@@ -249,6 +246,7 @@ public class Property
                                 setFunction(key, currentInput);
                             }
                         }
+                        ImGui.PopID();
                     }
                 }
                 ImGui.EndTable();
