@@ -197,30 +197,6 @@ public class Property
                     setFunction(key, newQuat);
                 }
             }
-#if false
-            if (ImGui.BeginTable("table_padding", 3, ImGuiTableFlags.BordersOuterV | ImGuiTableFlags.BordersInnerV))
-            {
-                ImGui.TableNextRow();
-                for (int column = 0; column < 3; column++)
-                {
-                    ImGui.TableSetColumnIndex(column);
-
-                    float value = newValue[column];
-                    if (ImGui.InputFloat(key, ref value,
-                            10f, 100f,
-                            "%.2f",
-                            ImGuiInputTextFlags.EnterReturnsTrue))
-                    {
-                        if (value != currentInput[column])
-                        {
-                            Trace($"new Value {value}");
-                            setFunction(key, currentInput);
-                        }
-                    }
-                }
-                ImGui.EndTable();
-            }
-#endif
         }
         else if (currValue is Matrix4x4)
         {
