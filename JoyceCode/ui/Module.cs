@@ -22,15 +22,6 @@ public class Module : AModule
     }
 
 
-    private void _onMousePressed(engine.news.Event ev)
-    {
-        /*
-         * Find out what the user clicked on.
-         * Iterate through it from the top camera to the bottom.
-         */
-    }
-    
-
     protected override void OnModuleDeactivate()
     {
         Props.Set("engine.editor.isOpen", false);
@@ -44,8 +35,6 @@ public class Module : AModule
     {
         _engine.OnImGuiRender += _onImGuiRender;
         _engine.EnableEntityIds();
-        
-        Subscribe(Event.INPUT_TOUCH_PRESSED, _onMousePressed);
         
         Props.Set("engine.editor.isOpen", true);
     }

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
+using engine;
+using engine.news;
 using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Input.Extensions;
@@ -53,64 +55,16 @@ public class Controller : IDisposable
 
     public IntPtr Context;
 
-    /// <summary>
-    /// Constructs a new ImGuiController.
-    /// </summary>
-    public Controller(GL gl, IView view, IInputContext input) : this(gl, view, input, null, null)
-    {
-    }
-
-    /// <summary>
-    /// Constructs a new ImGuiController with font configuration.
-    /// </summary>
-    public Controller(GL gl, IView view, IInputContext input, ImGuiFontConfig imGuiFontConfig) : this(gl, view,
-        input, imGuiFontConfig, null)
-    {
-    }
-
-    /// <summary>
-    /// Constructs a new ImGuiController with an onConfigureIO Action.
-    /// </summary>
-    public Controller(GL gl, IView view, IInputContext input, Action onConfigureIO) : this(gl, view, input, null,
-        onConfigureIO)
-    {
-    }
-
-    /// <summary>
-    /// Constructs a new ImGuiController with font configuration and onConfigure Action.
-    /// </summary>
-    public Controller(GL gl, IView view, IInputContext input, ImGuiFontConfig? imGuiFontConfig = null,
-        Action onConfigureIO = null)
-    {
-        Init(gl, view, input);
-
-        var io = ImGuiNET.ImGui.GetIO();
-        if (imGuiFontConfig is not null)
-        {
-            var glyphRange = imGuiFontConfig.Value.GetGlyphRange?.Invoke(io) ?? default;
-
-            io.Fonts.AddFontFromFileTTF(imGuiFontConfig.Value.FontPath, imGuiFontConfig.Value.FontSize, null,
-                glyphRange);
-        }
-
-        onConfigureIO?.Invoke();
-
-        io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
-
-        CreateDeviceResources();
-
-        SetPerFrameImGuiData(1f / 60f);
-
-        BeginFrame();
-    }
-    
     [Conditional("DEBUG")]
     public static void CheckGlError(GL gl, string title)
     {
         var error = gl.GetError();
-        if (error != GLEnum.NoError)
+        if (!string.IsNullOrWhiteSpace(title))
         {
-            Warning($"{title}: {error}");
+            if (error != GLEnum.NoError)
+            {
+                Warning($"{title}: {error}");
+            }
         }
     }
 
@@ -499,7 +453,9 @@ public class Controller : IDisposable
         };
 
         UseShader();
+        CheckGlError(_gl, "");
         _gl.Uniform1(_attribLocationTex, 0);
+        CheckGlError(_gl, "");
         _gl.UniformMatrix4(_attribLocationProjMtx, 1, false, orthoProjection);
         CheckGlError(_gl, "Projection");
 
@@ -874,6 +830,8 @@ public class Controller : IDisposable
             (ShaderType.VertexShader, vertexSource),
             (ShaderType.FragmentShader, fragmentSource),
         };
+        Program = CreateProgram(files);
+        
         _attribLocationTex = GetUniformLocation("Texture");
         _attribLocationProjMtx = GetUniformLocation("ProjMtx");
         _attribLocationVtxPos = GetAttribLocation("Position");
@@ -918,6 +876,7 @@ public class Controller : IDisposable
         // Restore state
         _gl.BindTexture(GLEnum.Texture2D, (uint)lastTexture);
     }
+    
 
     /// <summary>
     /// Frees all graphics resources used by the renderer.
@@ -934,5 +893,66 @@ public class Controller : IDisposable
         _fontTexture.Dispose();
 
         ImGuiNET.ImGui.DestroyContext(Context);
+    }
+    
+
+    public void InputPartOnInputEvent(Event ev)
+    {
+        throw new NotImplementedException();
+    }
+    
+    
+    /// <summary>
+    /// Constructs a new ImGuiController.
+    /// </summary>
+    public Controller(GL gl, IView view, IInputContext input) : this(gl, view, input, null, null)
+    {
+    }
+    
+
+    /// <summary>
+    /// Constructs a new ImGuiController with font configuration.
+    /// </summary>
+    public Controller(GL gl, IView view, IInputContext input, ImGuiFontConfig imGuiFontConfig) : this(gl, view,
+        input, imGuiFontConfig, null)
+    {
+    }
+    
+
+    /// <summary>
+    /// Constructs a new ImGuiController with an onConfigureIO Action.
+    /// </summary>
+    public Controller(GL gl, IView view, IInputContext input, Action onConfigureIO) : this(gl, view, input, null,
+        onConfigureIO)
+    {
+    }
+    
+
+    /// <summary>
+    /// Constructs a new ImGuiController with font configuration and onConfigure Action.
+    /// </summary>
+    public Controller(GL gl, IView view, IInputContext input, ImGuiFontConfig? imGuiFontConfig = null,
+        Action onConfigureIO = null)
+    {
+        Init(gl, view, input);
+
+        var io = ImGuiNET.ImGui.GetIO();
+        if (imGuiFontConfig is not null)
+        {
+            var glyphRange = imGuiFontConfig.Value.GetGlyphRange?.Invoke(io) ?? default;
+
+            io.Fonts.AddFontFromFileTTF(imGuiFontConfig.Value.FontPath, imGuiFontConfig.Value.FontSize, null,
+                glyphRange);
+        }
+
+        onConfigureIO?.Invoke();
+
+        io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
+
+        CreateDeviceResources();
+
+        SetPerFrameImGuiData(1f / 60f);
+
+        BeginFrame();
     }
 }
