@@ -4,7 +4,7 @@ using engine.joyce;
 using engine.news;
 using static engine.Logger;
 
-namespace nogame.modules.debugger;
+namespace joyce.ui;
 
 
 /**

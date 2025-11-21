@@ -11,7 +11,7 @@ public class DebuggerToggle : AModule, IInputPart
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new MyModule<modules.debugger.Module>("nogame.CreateUI") { ShallActivate = false },
+        new MyModule<joyce.ui.Module>("nogame.CreateUI") { ShallActivate = false },
         new SharedModule<InputEventPipeline>()
     };
 
@@ -32,14 +32,14 @@ public class DebuggerToggle : AModule, IInputPart
         if (isUIShown)
         {
             _engine.SetViewRectangle(Vector2.Zero, Vector2.Zero );
-            DeactivateMyModule<modules.debugger.Module>();
+            DeactivateMyModule<joyce.ui.Module>();
             _engine.DisableMouse();
         }
         else
         {
             _engine.SetViewRectangle(TopLeft, Vector2.Zero );
             _engine.EnableMouse();
-            ActivateMyModule<modules.debugger.Module>();
+            ActivateMyModule<joyce.ui.Module>();
         }
     }
     

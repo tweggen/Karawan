@@ -63,7 +63,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\Gameplay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\GameSetup.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\map\Module.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\debugger\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\menu\LoginMenuModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\menu\PauseMenuModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\ButtonFingerState.cs" />

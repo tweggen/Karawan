@@ -252,6 +252,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)ui\FileDIalog.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Implementations.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\MenuBar.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Modules.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Monitor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Property.cs" />

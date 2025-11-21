@@ -41,6 +41,7 @@ public class Platform : engine.IPlatform
     private readonly Stopwatch _renderSingleFrameStopwatch = new();
     private TimeSpan _prevFrame;
 
+    private Splash.Silk.ImGui.Controller _imGuiController = null;
 
     private IView _iView;
     private IInputContext _iInputContext;
@@ -48,8 +49,6 @@ public class Platform : engine.IPlatform
     
     private engine.WorkerQueue _platformThreadActions = new("platformThread");
 
-    private ImGuiController _imGuiController = null;
-    
     /**
      * If mouse is enabled, we intercept mouse events when the pointer is outside the viewport area.
      */
@@ -564,7 +563,7 @@ public class Platform : engine.IPlatform
 
         if (engine.GlobalSettings.Get("nogame.CreateUI") != "false")
         {
-            _imGuiController = new ImGuiController(_gl, _iView, _iInputContext);
+            _imGuiController = new (_gl, _iView, _iInputContext);
         }
 
         _hadFocus = true;
