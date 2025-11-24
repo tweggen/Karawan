@@ -780,7 +780,9 @@ public class Platform : engine.IPlatform
 
             try
             {
+                iView.IsEventDriven = true;
                 iView.DoEvents();
+                iView.IsEventDriven = false;
             }
             catch (Exception e)
             {
