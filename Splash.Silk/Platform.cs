@@ -780,15 +780,13 @@ public class Platform : engine.IPlatform
 
             try
             {
-                iView.IsEventDriven = true;
                 iView.DoEvents();
-                iView.IsEventDriven = false;
             }
             catch (Exception e)
             {
                 /*
-                 * Catching exception that might come from unknown keys in ImLib
-                 */
+                * Catching exception that might come from unknown keys in ImLib
+                */
             }
 
             if (!iView.IsClosing)
