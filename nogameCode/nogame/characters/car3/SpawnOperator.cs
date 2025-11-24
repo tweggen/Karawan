@@ -152,11 +152,17 @@ public class SpawnOperator : ISpawnOperator
                         {
                             var actCreateEntity = await CharacterCreator.GenerateRandomCharacter(
                                 _rnd, cd, worldFragment, chosenStreetPoint, _seed);
-                            _engine.QueueEntitySetupAction(CharacterCreator.EntityName, actCreateEntity);
+                            _engine.QueueEntitySetupAction(CharacterCreator.EntityName,
+                                e =>
+                                {
+                                    actCreateEntity(e);
+                                    spawnStatus.InCreation--;
+                                });
                             ++_seed;
                         }
                         else
                         {
+                            // TXWTODO: Shouldn't that also be InCreation--
                             spawnStatus.Dead++;
                         }
                     }

@@ -169,9 +169,9 @@ public class SpawnController : AController
                     for (int i = 0; i < needCharacters; ++i)
                     {
                         /*
-                         * Note that we are calling an async method synchronously, thereby
-                         * having several of them run in the background.
-                         */
+                       * Note that we are calling an async method synchronously, thereby
+                       * having several of them run in the background.
+                       */
                         try
                         {
                             op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);

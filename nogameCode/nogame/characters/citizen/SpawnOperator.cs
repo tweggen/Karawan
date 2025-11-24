@@ -154,11 +154,17 @@ public class SpawnOperator : ISpawnOperator
                                 _rnd, cd, worldFragment,
                                 quarter, delim, relativePos,
                                 _seed);
-                            _engine.QueueEntitySetupAction(CharacterCreator.EntityName, actCreateEntity);
+                            _engine.QueueEntitySetupAction(CharacterCreator.EntityName, 
+                                e =>
+                                {
+                                    actCreateEntity(e);
+                                    spawnStatus.InCreation--;
+                                });
                             ++_seed;
                         }
                         else
                         {
+                            // TXWTODO: Shouldn't that also be InCreation--
                             spawnStatus.Dead++;
                         }
                     }
