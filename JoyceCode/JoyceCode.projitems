@@ -77,6 +77,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\systems\AnimationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\systems\CpuBoneSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\CreateBoxShape.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\PlacementContext.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\PlacementDescription.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\Placer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\PositionDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\components\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetPointConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GenericIdRegistry.cs" />

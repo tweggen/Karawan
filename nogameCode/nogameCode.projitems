@@ -92,6 +92,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\skybox\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\Narration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\World.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\NiceDay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\HelloFishmonger\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\VisitAgentTwelve\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\loading\LoadingSpinBehavior.cs" />

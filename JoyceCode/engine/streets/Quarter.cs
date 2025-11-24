@@ -14,12 +14,17 @@ public class Quarter
     private List<QuarterDelim> _delims = new();
     private bool _isInvalid = false;
     private bool _hasDeadEnd = false;
-    private Vector2 _centerPoint;
 
     private List<Estate> _estates = new();
     private Dictionary<string, string> _debugMap = new();
     private AABB _aabb = new();
 
+    public enum LocationAttributes
+    {
+        Forest = 0x00000002,
+        Building = 0x00000004
+    }
+    
     public AABB AABB {
         get => _aabb;
         
@@ -51,12 +56,11 @@ public class Quarter
     public Vector2 GetCenterPoint()
     {
         return new Vector2(AABB.Center.X, AABB.Center.Z);
-        #if false
-        lock (_lo)
-        {
-            return _centerPoint;
-        }
-        #endif
+    }
+
+    public Vector3 GetCenterPoint3()
+    {
+        return new Vector3(AABB.Center.X, 0f, AABB.Center.Z);
     }
 
     public void SetInvalid(bool i)
@@ -107,65 +111,12 @@ public class Quarter
         }
     }
 
-    #if false
-    public void ForDelims(Action<QuarterDelim, StreetPoint, StreetPoint> action)
-    {
-        #if false
-        List<QuarterDelim> listDelims;
-
-        lock (_lo)
-        {
-            listDelims = new(_delims);
-        }
-        #endif
-        QuarterDelim? lastDelim = null;
-        foreach (var delim in _delims)
-        {
-            if (lastDelim != null)
-            {
-                action(lastDelim, lastDelim.StreetPoint, delim.StreetPoint);
-                lastDelim = delim;
-            }
-        }
-
-        if (lastDelim != null)
-        {
-            var delim = _delims[0];
-            action(lastDelim, lastDelim.StreetPoint, delim.StreetPoint);
-        }
-    }
-    #endif
 
     /**
      * Compute things like the quarter center.
      */
     public void Polish()
     {
-        #if false
-        lock (_lo)
-        {
-            int nPoints = 0;
-            float cx = 0.0f;
-            float cy = 0.0f;
-            foreach (var delim in _delims)
-            {
-                if (null != delim.StartPoint)
-                {
-                    ++nPoints;
-                    cx += delim.StartPoint.X;
-                    cy += delim.StartPoint.Y;
-                }
-            }
-
-            if (nPoints > 0)
-            {
-                cx /= nPoints;
-                cy /= nPoints;
-                _centerPoint = new Vector2(cx, cy);
-            }
-            // else leave zero.
-        }
-        #endif
     }
 
     public void AddDebugTag(string key, string value)

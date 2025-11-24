@@ -8,7 +8,6 @@ namespace engine.world
     public class ClusterList
     {
         static private object _lockObject = new();
-        static private ClusterList _instance;
 
         private object _lo = new();
         
