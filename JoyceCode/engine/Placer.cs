@@ -10,7 +10,7 @@ namespace engine;
 public class Placer
 {
     private Lazy<ClusterList> _clusterList = new(I.Get<ClusterList>());
-    private Lazy<engine.world.Loader> _worldLoader = new(I.Get<engine.world.MetaGen>().Loader)
+    private Lazy<engine.world.Loader> _worldLoader = new(I.Get<engine.world.MetaGen>().Loader);
 
 
     /**
@@ -36,13 +36,15 @@ public class Placer
         {
             case PlacementDescription.Reference.StreetPoint:
                 lookupStreetPoint = true;
-                goto case PlacementDescription.Reference.Quarter; 
+                lookupCluster = true;
+                break; 
             case PlacementDescription.Reference.Quarter:
                 lookupQuarter = true;
-                goto case PlacementDescription.Reference.Cluster; 
+                lookupCluster = true;
+                break;
             case PlacementDescription.Reference.Cluster:
                 lookupCluster = true;
-                goto case PlacementDescription.Reference.World; 
+                break; 
             default:
             case PlacementDescription.Reference.World:
                 /*
@@ -55,6 +57,7 @@ public class Placer
         Vector3 v3ReferenceAccu = Vector3.Zero;
         ClusterDesc? cd = null;
         Quarter? q = null;
+        StreetPoint? sp = null;
         
         /*
          * now lookup in inverse order.
@@ -79,7 +82,7 @@ public class Placer
                     cd = pc.CurrentCluster;
                     break;
                 case PlacementDescription.ClusterSelection.ConnectedCluster:
-                    ErrorThrow<NotImplementedException>("Selecting a connected cluster is not implemented yet.")
+                    ErrorThrow<NotImplementedException>("Selecting a connected cluster is not implemented yet.");
                     break;
                 default:
                     return false;
@@ -93,8 +96,8 @@ public class Placer
         if (lookupQuarter)
         {
             /*
-             * Of course, a quarter always requires a previously selected cluster. 
-             */
+            * Of course, a quarter always requires a previously selected cluster. 
+            */
             if (cd == null)
             {
                 return false;
@@ -116,13 +119,43 @@ public class Placer
                     q = pc.CurrentQuarter;
                     break;
                 case PlacementDescription.QuarterSelection.NearbyQuarter:
-                    ErrorThrow<NotImplementedException>("Selecting a nearby quarter is not implemented yet.")
+                    ErrorThrow<NotImplementedException>("Selecting a nearby quarter is not implemented yet.");
                     break;
                 default:
                     return false;
             }
 
             v3ReferenceAccu += q.GetCenterPoint3();
+            pod.QuarterName = q.GetDebugString();
         }
+
+        if (lookupStreetPoint)
+        {
+            /*
+             * Also a streetpoint refers to a cluster.
+             */
+            if (cd == null)
+            {
+                return false;
+            }
+
+            /*
+             * Today we support random streetpoint with requested
+             * attribute only.
+             */
+            {
+                var listStreetPoints = cd.StrokeStore().GetStreetPoints();
+                int l = listStreetPoints.Count;
+                if (0 == l) return false;
+                sp = listStreetPoints[_rnd.GetInt(l)];
+            }
+
+            v3ReferenceAccu += sp.Pos3;
+            pod.StreetPointId = sp.Id;
+        }
+        
+        pod.Position = v3ReferenceAccu;
+
+        return true;
     }
 }
