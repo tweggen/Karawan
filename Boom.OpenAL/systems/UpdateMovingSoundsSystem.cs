@@ -38,7 +38,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 {
     private object _lo = new();
     private engine.Engine _engine;
-    private engine.WorkerQueue _audioWorkerQueue = new("UpdateMovingSoundSystem.Audio");
+    private engine.scheduler.WorkerQueue _audioWorkerQueue = new("UpdateMovingSoundSystem.Audio");
     private Boom.OpenAL.API _api;
     private int _nMovingSounds = 0;
     private DefaultEcs.Entity _cameraEntity;

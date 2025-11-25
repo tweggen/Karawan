@@ -44,7 +44,7 @@ public class SilkThreeD : IThreeD
     
     private LightCollector _currentLightCollector = null;
     
-    private readonly engine.WorkerQueue _graphicsThreadActions = new("Splash.silk.graphicsThreadActions");
+    private readonly engine.scheduler.WorkerQueue _graphicsThreadActions = new("Splash.silk.graphicsThreadActions");
 
     private bool _checkGLErrors = false;
 
