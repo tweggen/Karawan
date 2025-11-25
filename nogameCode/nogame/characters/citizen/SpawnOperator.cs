@@ -75,7 +75,7 @@ public class SpawnOperator : ISpawnOperator
             var ilistSPs = cd.GetStreetPointsInFragment(idxFragment);
 
             // TXWTODO: Filter, so that we have meaningful spawning points.
-            float nMaxSpawns = 3f * ilistSPs.Count * density;
+            float nMaxSpawns = 6f * ilistSPs.Count * density;
 
             /*_
              * Note that it is technically wrong to return the number of characters in creation
@@ -158,6 +158,10 @@ public class SpawnOperator : ISpawnOperator
                                 e =>
                                 {
                                     actCreateEntity(e);
+                                    if (spawnStatus.InCreation == 0)
+                                    {
+                                        int a = 1;
+                                    }
                                     spawnStatus.InCreation--;
                                 });
                             ++_seed;
@@ -172,10 +176,9 @@ public class SpawnOperator : ISpawnOperator
             }
             catch (Exception e)
             {
+                spawnStatus.InCreation--;
                 Error($"Exception spawning character: {e}");
             }
-
-            spawnStatus.InCreation--;
         };
     }
 
