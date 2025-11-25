@@ -56,7 +56,7 @@ public interface ISpawnOperator
      * @param perFragmentStats
      *    The result of counting the characters.
      */
-    public void SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats);
+    public Action SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats);
 
     public void TerminateCharacter(Index3 idxFragment, DefaultEcs.Entity entity);
 }

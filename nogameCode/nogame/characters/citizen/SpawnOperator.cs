@@ -121,12 +121,12 @@ public class SpawnOperator : ISpawnOperator
     private int _seed = 0;
     
 
-    public void SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats)
+    public Action SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats)
     {
         _findSpawnStatus(idxFragment, out var spawnStatus);
         spawnStatus.InCreation++;
 
-        _engine.Run(async () =>
+        return async () =>
         {
             /*
              * Catch exception to keep the inCreation counter up to date.
@@ -176,7 +176,7 @@ public class SpawnOperator : ISpawnOperator
             }
 
             spawnStatus.InCreation--;
-        });
+        };
     }
 
 

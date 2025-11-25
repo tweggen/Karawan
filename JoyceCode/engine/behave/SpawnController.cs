@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Threading.Tasks;
 using engine.behave.components;
 using engine.behave.systems;
 using engine.geom;
@@ -174,7 +175,8 @@ public class SpawnController : AController
                        */
                         try
                         {
-                            op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);
+                            Action spawnAction = op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);
+                            _engine.Run(spawnAction);
                         }
                         catch (Exception e)
                         {
