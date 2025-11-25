@@ -82,6 +82,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\Placer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\PositionDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\components\Quest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\scheduler\Scheduler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\scheduler\WorkerQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetPointConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GenericIdRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AFingerState.cs" />
@@ -427,7 +429,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\Timeline.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Skybox.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Unit.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\WorkerQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterDesc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterList.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\components\Owner.cs" />

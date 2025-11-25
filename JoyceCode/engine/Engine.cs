@@ -10,6 +10,7 @@ using DefaultEcs;
 using engine.joyce;
 using engine.news;
 using engine.Resource;
+using engine.scheduler;
 using engine.rom;
 using static engine.Logger;
 
@@ -34,6 +35,10 @@ public class Engine
 {
     private object _lo = new();
 
+    public const int PrioSetupEntity = 5;
+    public const int PrioDefaultMainThread = 8;
+    public const int PrioCleanup = Scheduler.PrioLowest;
+    
     public object ShortSleep = new();
 
     public physics.actions.Log PLog;
@@ -89,9 +94,9 @@ public class Engine
     private Thread _logicalThread = null;
     private readonly Stopwatch _queueStopwatch = new();
 
-    private readonly WorkerQueue _workerCleanupActions = new("engine.Engine.Cleanup");
-    private readonly WorkerQueue _workerMainThreadActions = new("engine.Engine.MainThread");
-
+    private readonly Scheduler _logicalThreadScheduler = new("logicalThreadScheduler");
+    private readonly Scheduler _otherThreadScheduler = new("otherThreadScheduler");
+    
     private bool _isFullscreen = false;
 
     private physics.Manager _managerPhysics;
@@ -455,95 +460,19 @@ public class Engine
     #endif
 
 
-    private void _executeEntitySetupActions(float matTime)
-    {
-        _queueStopwatch.Reset();
-        _queueStopwatch.Start();
-        float totalMillies = (float) _queueStopwatch.Elapsed.TotalMilliseconds;
-        while (totalMillies < matTime * 1000f)
-        {
-            EntitySetupAction entitySetupAction;
-            lock (_lo)
-            {
-                int count = _queueEntitySetupActions.Count;
-                if (count == 0)
-                {
-                    break;
-                }
-                else
-                {
-                    if (count > 1000)
-                    {
-                        if (matTime < 2000f)
-                        {
-                            /*
-                             * Emergency: If there is too much in the queue, increase the processing time
-                             * to 2s.
-                             */
-                            matTime = 2000f;
-                            Warning($"Action queue high threshold, blocking.");
-                        }
-                    }
-                }
- 
-                entitySetupAction = _queueEntitySetupActions.Dequeue();
-            }
-
-            DefaultEcs.Entity entity = CreateEntity(entitySetupAction.EntityName);
-            try
-            {
-                entitySetupAction.SetupAction(entity);
-            }
-            catch (Exception e)
-            {
-                Warning($"Error executing entity setup action: {e}.");
-                entity.Dispose();
-            }
-
-            float lastMillies = totalMillies;
-            totalMillies = (float)_queueStopwatch.Elapsed.TotalMilliseconds;
-            float actionMillies = totalMillies - lastMillies;
-            if (actionMillies > 1000f * matTime)
-            {
-                Trace($"Warning, action took {actionMillies}ms.");
-            }
-        }
-
-        _queueStopwatch.Stop();
-
-        int queueLeft;
-        lock (_lo)
-        {
-            queueLeft = _queueEntitySetupActions.Count;
-        }
-
-        if (30 < queueLeft)
-        {
-            Trace($"Left {queueLeft} items in setup actions queue.");
-        }
-
-    }
-
-
     public void QueueEntitySetupAction(
         string entityName, Action<DefaultEcs.Entity> setupAction)
     {
-        lock (_lo)
+        _logicalThreadScheduler.Enqueue(() =>
         {
-            _queueEntitySetupActions.Enqueue(
-                new EntitySetupAction
-                {
-                    EntityName = entityName,
-                    SetupAction = setupAction
-                }
-            );
-        }
+            setupAction(CreateEntity(entityName));
+        }, PrioSetupEntity);
     }
 
 
     public void QueueCleanupAction(Action action)
     {
-        _workerCleanupActions.Enqueue(action);
+        _logicalThreadScheduler.Enqueue(action, Scheduler.PrioLowest);
     }
     
     
@@ -557,11 +486,12 @@ public class Engine
         else
         {
             TaskCompletionSource<int> tcsAction = new();
-            QueueMainThreadAction(() =>
+            _logicalThreadScheduler.Enqueue(() =>
             {
                 action();
                 tcsAction.SetResult(0);
-            });
+            }, PrioDefaultMainThread);
+
             return tcsAction.Task;
         }
     }
@@ -579,14 +509,14 @@ public class Engine
         }
         else
         {
-            QueueMainThreadAction(action);
+            _logicalThreadScheduler.Enqueue(action, PrioDefaultMainThread);
         }
     }
     
 
     public void QueueMainThreadAction(Action action)
     {
-        _workerMainThreadActions.Enqueue(action);
+        _logicalThreadScheduler.Enqueue(action, PrioDefaultMainThread);
     }
 
 
@@ -842,39 +772,20 @@ public class Engine
              * Now work on the main thread queues.
              */
 
-            bool executeCleanups = timeLeft > 0.005;
-            bool executeActions = timeLeft > 0.002;
-
-            /*
-             * Async delete any entities that shall be deleted
-             */
-            if (executeCleanups)
-            {
-                _executeDoomedEntities();
-            }
+            bool executeActions = timeLeft > 0.005;
 
             /*
              * Async create / setup new entities.
              */
             if (executeActions)
             {
-                _executeEntitySetupActions(
+                _executeDoomedEntities();
+                _logicalThreadScheduler.RunPart(
                     (_isLoading > 0)
-                        ? 0.024f
-                        : 0.001f
-                );
-
-                _workerMainThreadActions.RunPart(
-                    (_isLoading > 0)
-                        ? 0.004f
-                        : 0.001f
-                );
+                    ? 0.024f
+                    : 0.002f);
             }
 
-            if (executeCleanups)
-            {
-                _workerCleanupActions.RunPart(0.001f);
-            }
 
         }
         else // if ((_frameNumber & 7) != 0)

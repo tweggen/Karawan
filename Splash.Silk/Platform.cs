@@ -47,7 +47,7 @@ public class Platform : engine.IPlatform
     private IInputContext _iInputContext;
     private GL _gl;
     
-    private engine.WorkerQueue _platformThreadActions = new("platformThread");
+    private engine.scheduler.WorkerQueue _platformThreadActions = new("platformThread");
 
     /**
      * If mouse is enabled, we intercept mouse events when the pointer is outside the viewport area.
