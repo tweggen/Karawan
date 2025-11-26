@@ -258,8 +258,10 @@ public class SpawnController : AController
                          * just kill anything.
                          */
                         int killNow = Int32.Min(perFragmentStats.ToKill, perFragmentStats.PossibleVictims.Count);
+                        List<(Index3, DefaultEcs.Entity)>? listKills = null;
                         if (killNow > 0)
                         {
+                            listKills = new(killNow);
                             if (_trace) Trace($"@{kvpFrag.Key}: Adding {killNow} doomed entities.");
                             perFragmentStats.ToKill -= killNow;
                             for (int i = 0; i < killNow; ++i)
@@ -269,14 +271,7 @@ public class SpawnController : AController
                                 if (cBehavior.MayBePurged())
                                 {
                                     cBehavior.MaxDistance = -1;
-                                    try
-                                    {
-                                        op.TerminateCharacter(kvpFrag.Key, si.Entity);
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        Warning($"Exception while TerminateCharacter on SpawnOperator: {e}");
-                                    }
+                                    listKills.Add((kvpFrag.Key, si.Entity));
                                 }
                                 else
                                 {
@@ -284,6 +279,15 @@ public class SpawnController : AController
                                     perFragmentStats.ToKill++;
                                 }
                             }
+                            try
+                            {
+                                op.TerminateCharacters(listKills);
+                            }
+                            catch (Exception e)
+                            {
+                                Warning($"Exception while TerminateCharacter on SpawnOperator: {e}");
+                            }
+
                         }
                     }
 

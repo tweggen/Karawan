@@ -179,8 +179,7 @@ public class SpawnOperator : ISpawnOperator
                         }
                         else
                         {
-                            // TXWTODO: Shouldn't that also be InCreation--
-                            spawnStatus.Dead++;
+                            spawnStatus.InCreation--;
                         }
                     }
                 }
@@ -194,16 +193,30 @@ public class SpawnOperator : ISpawnOperator
     }
 
 
-    public void TerminateCharacter(Index3 idxFragment, DefaultEcs.Entity entity)
+    public void TerminateCharacters(List<(Index3, DefaultEcs.Entity)> listKills)
     {
-        _findSpawnStatus(idxFragment, out var spawnStatus);
-        spawnStatus.IsDying++;
+        List<SpawnStatus> listSpawnStatus = new(listKills.Count);
+        
+        foreach (var kill in listKills)
+        {
+            _findSpawnStatus(kill.Item1, out var spawnStatus);
+            listSpawnStatus.Add(spawnStatus);
+            spawnStatus.IsDying++;
+        }
 
         _engine.QueueCleanupAction(() =>
         {
-            entity.Disable();
-            spawnStatus.IsDying--;
-            I.Get<HierarchyApi>().Delete(ref entity);
+            foreach (var kill in listKills)
+            {
+                var entity = kill.Item2;
+                entity.Disable();
+                I.Get<HierarchyApi>().Delete(ref entity);
+            }
+
+            foreach (var spawnStatus in listSpawnStatus)
+            {
+                spawnStatus.IsDying--;
+            }
         });
     }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine.behave.components;
@@ -58,5 +59,5 @@ public interface ISpawnOperator
      */
     public Action SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats);
 
-    public void TerminateCharacter(Index3 idxFragment, DefaultEcs.Entity entity);
+    public void TerminateCharacters(List<(Index3,DefaultEcs.Entity)> listKills);
 }
