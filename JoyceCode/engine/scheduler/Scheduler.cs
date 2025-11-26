@@ -7,6 +7,8 @@ public class Scheduler
 {
     public const int PrioHighest = 0;
     public const int PrioLowest = 20;
+    public const int MaxActionsHighest = 100;
+    public const int MaxActionsLowest = 1000;
 
     public const int NPrios = PrioLowest - PrioHighest + 1;
 

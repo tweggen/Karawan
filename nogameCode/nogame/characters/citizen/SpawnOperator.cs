@@ -4,7 +4,7 @@ using System.Numerics;
 using engine;
 using engine.behave;
 using engine.joyce;
-using engine.streets;
+using engine.news;
 using engine.world;
 using static engine.Logger;
 
@@ -21,6 +21,12 @@ public class SpawnOperator : ISpawnOperator
     private engine.world.Loader _loader = I.Get<engine.world.MetaGen>().Loader;
     private engine.Engine _engine = I.Get<engine.Engine>();
     private builtin.tools.RandomSource _rnd = new("citizen");
+
+    private const string _spawnCitizenProperties = "nogame.characters.citizen";
+    private float _citizenPerStreetPoint = 6f;
+    private float _minCitizenFactor = 1f;
+    private float _maxCitizenFactor = 2f;
+    private bool _areParametersDirty = true;
     
     public engine.geom.AABB AABB
     {
@@ -42,54 +48,59 @@ public class SpawnOperator : ISpawnOperator
 
     private Dictionary<Index3, SpawnStatus> _mapFragmentStatus = new();
 
+    
     private void _findSpawnStatus_nl(in Index3 idxFragment, out SpawnStatus spawnStatus)
     {
-        if (_mapFragmentStatus.TryGetValue(idxFragment, out spawnStatus))
+        bool recomputeStats = false;
+
+        if (!_mapFragmentStatus.TryGetValue(idxFragment, out spawnStatus))
         {
-            return;
+            recomputeStats = true;
+            spawnStatus = new() { InCreation = 0 };
+            _mapFragmentStatus[idxFragment] = spawnStatus;
         }
-        
-        /*
-         * Read the probability for this fragment from the cluster heat map,
-         * return an appropriate spawnStatus.
-         */
-        
-        var cd = _clusterHeatMap.GetClusterDesc(idxFragment);
-        if (null == cd)
+
+        if (_areParametersDirty)
         {
-            spawnStatus = new()
-            {
-                MinCharacters = 0,
-                MaxCharacters = 0,
-                InCreation = 0
-            };
+            recomputeStats = true;
+            _areParametersDirty = false;
         }
-        else
+
+        if (recomputeStats)
         {
-            var density = cd.GetAttributeIntensity(idxFragment.AsVector3(), ClusterDesc.LocationAttributes.Downtown);
-            
             /*
-             * Now, before being able to estimate the number of cars, let's see
-             * how many different possible spawning points we have.
+             * Read the probability for this fragment from the cluster heat map,
+             * return an appropriate spawnStatus.
              */
-            var ilistSPs = cd.GetStreetPointsInFragment(idxFragment);
-
-            // TXWTODO: Filter, so that we have meaningful spawning points.
-            float nMaxSpawns = 6f * ilistSPs.Count * density;
-
-            /*_
-             * Note that it is technically wrong to return the number of characters in creation
-             * in total. However, this only would prevent more characters compared to the offset.
-             */
-            spawnStatus = new()
+            var cd = _clusterHeatMap.GetClusterDesc(idxFragment);
+            if (null == cd)
             {
-                MinCharacters = (ushort)(1f * nMaxSpawns),
-                MaxCharacters = (ushort)(2f * nMaxSpawns),
-                InCreation = (ushort)0
-            };
-        }
+                spawnStatus.MinCharacters = 0;
+                spawnStatus.MaxCharacters = 0;
+            }
+            else
+            {
+                
+                var density =
+                    cd.GetAttributeIntensity(idxFragment.AsVector3(), ClusterDesc.LocationAttributes.Downtown);
 
-        _mapFragmentStatus[idxFragment] = spawnStatus;
+                /*
+                 * Now, before being able to estimate the number of cars, let's see
+                 * how many different possible spawning points we have.
+                 */
+                var ilistSPs = cd.GetStreetPointsInFragment(idxFragment);
+
+                // TXWTODO: Filter, so that we have meaningful spawning points.
+                float nMaxSpawns = _citizenPerStreetPoint * ilistSPs.Count * density;
+
+                /*_
+                 * Note that it is technically wrong to return the number of characters in creation
+                 * in total. However, this only would prevent more characters compared to the offset.
+                 */
+                spawnStatus.MinCharacters = (ushort)(_minCitizenFactor * nMaxSpawns);
+                spawnStatus.MaxCharacters = (ushort)(_maxCitizenFactor * nMaxSpawns);
+            }
+        }
     }
 
 
@@ -194,5 +205,26 @@ public class SpawnOperator : ISpawnOperator
             spawnStatus.IsDying--;
             I.Get<HierarchyApi>().Delete(ref entity);
         });
+    }
+
+
+    private void _onCitizenPropertiesChanged(engine.news.Event ev)
+    {
+        _citizenPerStreetPoint = (float) engine.Props.Get($"{_spawnCitizenProperties}.citizenPerStreetPoint", 6f);
+        _minCitizenFactor = (float) engine.Props.Get($"{_spawnCitizenProperties}.minCitizenFactor", 1f);
+        _maxCitizenFactor = (float) engine.Props.Get($"{_spawnCitizenProperties}.maxCitizenFactor", 2f);
+        _areParametersDirty = true;
+    }
+    
+
+    public SpawnOperator()
+    {
+        _citizenPerStreetPoint = (float) engine.Props.Find($"{_spawnCitizenProperties}.citizenPerStreetPoint", 6f);
+        _minCitizenFactor = (float) engine.Props.Find($"{_spawnCitizenProperties}.minCitizenFactor", 1f);
+        _maxCitizenFactor = (float) engine.Props.Find($"{_spawnCitizenProperties}.maxCitizenFactor", 2f);
+        _onCitizenPropertiesChanged(new Event("",""));
+        I.Get<SubscriptionManager>().Subscribe(
+            $"{PropertyEvent.PROPERTY_CHANGED}.{_spawnCitizenProperties}",
+            _onCitizenPropertiesChanged);
     }
 }

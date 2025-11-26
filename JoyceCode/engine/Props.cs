@@ -27,6 +27,11 @@ public class Props
         return Props.Instance()._get(key, defaultValue);
     }
     
+    static public object Find(in string key, object defaultValue)
+    {
+        return Props.Instance()._find(key, defaultValue);
+    }
+    
 
     static public void Set(in string key, object value)
     {
@@ -106,6 +111,30 @@ public class Props
             }
             else
             {
+                return defaultValue;
+            }
+        }
+    }
+    
+    
+    private object _find(in string key, object defaultValue)
+    {
+        lock(_lo)
+        {
+            if (_dictConfigParams.TryGetValue(key, out var value))
+            {
+                return value;
+            }
+            else
+            {
+                Dictionary<string, object> oldConfigParams, newConfigParams;
+                
+                oldConfigParams = _dictConfigParams;
+                newConfigParams = new(oldConfigParams);
+                newConfigParams[key] = defaultValue;
+                _dictConfigParams = newConfigParams;
+                _rodictConfigParams = newConfigParams.AsReadOnly();
+                
                 return defaultValue;
             }
         }

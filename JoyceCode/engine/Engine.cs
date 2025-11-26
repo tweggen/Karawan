@@ -472,7 +472,7 @@ public class Engine
 
     public void QueueCleanupAction(Action action)
     {
-        _logicalThreadScheduler.Enqueue(action, Scheduler.PrioLowest);
+        _logicalThreadScheduler.Enqueue(action, PrioCleanup);
     }
     
     
