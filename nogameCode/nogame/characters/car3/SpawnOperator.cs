@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using engine;
 using engine.behave;
 using engine.joyce;
+using engine.news;
 using engine.streets;
 using engine.world;
 using static engine.Logger;
@@ -23,6 +24,12 @@ public class SpawnOperator : ISpawnOperator
     private engine.world.Loader _loader = I.Get<engine.world.MetaGen>().Loader;
     private engine.Engine _engine = I.Get<engine.Engine>();
     private builtin.tools.RandomSource _rnd = new("car3");
+    
+    private const string _spawnCarsProperties = "nogame.characters.car3";
+    private float _carsPerStreetPoint = 1f;
+    private float _minCarsFactor = 1f;
+    private float _maxCarsFactor = 2f;
+    private bool _areParametersDirty = true;
     
     public engine.geom.AABB AABB
     {
@@ -77,7 +84,7 @@ public class SpawnOperator : ISpawnOperator
             var ilistSPs = cd.GetStreetPointsInFragment(idxFragment);
 
             // TXWTODO: Filter, so that we have meaningful spawning points.
-            float nMaxSpawns = ilistSPs.Count;
+            float nMaxSpawns = ilistSPs.Count * _carsPerStreetPoint;
 
             /*_
              * Note that it is technically wrong to return the number of characters in creation
@@ -85,8 +92,8 @@ public class SpawnOperator : ISpawnOperator
              */
             spawnStatus = new()
             {
-                MinCharacters = (ushort)(1f * nMaxSpawns),
-                MaxCharacters = (ushort)(2f * nMaxSpawns),
+                MinCharacters = (ushort)(_minCarsFactor * nMaxSpawns),
+                MaxCharacters = (ushort)(_maxCarsFactor * nMaxSpawns),
                 InCreation = (ushort)0
             };
         }
@@ -180,6 +187,15 @@ public class SpawnOperator : ISpawnOperator
     }
 
 
+    private void _onCarsPropertiesChanged(engine.news.Event ev)
+    {
+        _carsPerStreetPoint = (float) engine.Props.Get($"{_spawnCarsProperties}.carsPerStreetPoint", 6f);
+        _minCarsFactor = (float) engine.Props.Get($"{_spawnCarsProperties}.minCarsFactor", 1f);
+        _maxCarsFactor = (float) engine.Props.Get($"{_spawnCarsProperties}.maxCarsFactor", 2f);
+        _areParametersDirty = true;
+    }
+    
+
     public void TerminateCharacters(List<(Index3, DefaultEcs.Entity)> listKills)
     {
         List<SpawnStatus> listSpawnStatus = new(listKills.Count);
@@ -205,5 +221,17 @@ public class SpawnOperator : ISpawnOperator
                 spawnStatus.IsDying--;
             }
         });
+    }
+
+
+    public SpawnOperator()
+    {
+        _carsPerStreetPoint = (float) engine.Props.Find($"{_spawnCarsProperties}.carsPerStreetPoint", 1f);
+        _minCarsFactor = (float) engine.Props.Find($"{_spawnCarsProperties}.minCarsFactor", 1f);
+        _maxCarsFactor = (float) engine.Props.Find($"{_spawnCarsProperties}.maxCarsFactor", 2f);
+        _onCarsPropertiesChanged(new engine.news.Event("",""));
+        I.Get<SubscriptionManager>().Subscribe(
+            $"{PropertyEvent.PROPERTY_CHANGED}.{_spawnCarsProperties}",
+            _onCarsPropertiesChanged);
     }
 }
