@@ -25,6 +25,23 @@ public sealed class Assets
         return impl.Open(filename);
     }
 
+
+    public static bool Exists(in string filename)
+    {
+        IAssetImplementation impl = null;
+        lock (_staticlock)
+        {
+            impl = _implementation;
+        }
+
+        if (null == impl)
+        {
+            ErrorThrow("Platform Asset Implementation not setup.", m=>new InvalidOperationException(m));           
+        }
+
+        return impl.Exists(filename);
+    }
+    
     public static void SetAssetImplementation(in IAssetImplementation impl)
     {
         lock (_staticlock)

@@ -24,6 +24,23 @@ public class AssetImplementation : engine.IAssetImplementation
         }
     }
 
+    
+    public bool Exists(in string filename)
+    {
+        try
+        {
+            using (var orgStream = _assetManager.Open(realName))
+            {
+                return true;
+            }
+        }
+        catch (Exception e)
+        {
+        }
+        return false;
+    }
+
+
     public void AddAssociation(string tag, string uri)
     {
         /*

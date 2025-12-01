@@ -13,6 +13,10 @@ using static engine.Logger;
 
 namespace engine.casette;
 
+/**
+ * Load the heritage big nogame.json, interpreting domain specific
+ * results.
+ */
 public class Loader
 {
     private object _lo = new();
@@ -23,11 +27,11 @@ public class Loader
     private bool _traceResources = false;
     private IAssetImplementation _iAssetImpl;
     
-    private SortedDictionary<string, ISerializable> _mapLoaders = new();
+    //  private SortedDictionary<string, ISerializable> _mapLoaders = new();
 
     public SortedSet<string> AvailableAnimations = new();
     
-    static public void SetJsonElement(in JsonElement je, Action<object> action)
+    static private void _setJsonElement(in JsonElement je, Action<object> action)
     {
         switch (je.ValueKind)
         {
@@ -52,7 +56,7 @@ public class Loader
     }
     
 
-    public void LoadMapProviders(JsonElement jeMapProviders)
+    private void _loadMapProviders(JsonElement jeMapProviders)
     {
         var mapProvider = I.Get<IMapProvider>();
         try
@@ -138,7 +142,7 @@ public class Loader
     }
 
 
-    public void LoadImplementations(JsonElement jeImplementations)
+    private void _loadImplementations(JsonElement jeImplementations)
     {
         if (engine.GlobalSettings.Get("joyce.CompileMode") == "true")
         {
@@ -355,7 +359,7 @@ public class Loader
     }
     
 
-    public ExecDesc LoadFragmentOperators(JsonElement je)
+    private ExecDesc _loadFragmentOperators(JsonElement je)
     {
         try
         {
@@ -371,7 +375,7 @@ public class Loader
     }
 
 
-    public void LoadBuildingOperators(JsonElement je)
+    private void _loadBuildingOperators(JsonElement je)
     {
         try
         {
@@ -396,7 +400,7 @@ public class Loader
     }
 
 
-    public void LoadClusterOperators(JsonElement je)
+    private void _loadClusterOperators(JsonElement je)
     {
         try
         {
@@ -421,7 +425,7 @@ public class Loader
     }
 
 
-    public void LoadPopulatingOperators(JsonElement je)
+    private void _loadPopulatingOperators(JsonElement je)
     {
         try
         {
@@ -446,7 +450,7 @@ public class Loader
     }
 
 
-    public void LoadTextureAtlas(JsonElement jeAtlas)
+    private void _loadTextureAtlas(JsonElement jeAtlas)
     {
         var tc = I.Get<TextureCatalogue>();
         string atlasTag = jeAtlas.GetProperty("tag").GetString();
@@ -487,7 +491,7 @@ public class Loader
      * tag for a json file containing the texture atlas. We shall try
      * to open that one.
      */
-    public void LoadTextures(JsonElement jeTextures)
+    private void _loadTextures(JsonElement jeTextures)
     {
         try
         {
@@ -510,7 +514,7 @@ public class Loader
                         JsonElement jeAtlasList = jeAtlas.GetProperty("atlasses");
                         foreach (var pairAtlas in jeAtlasList.EnumerateObject())
                         {
-                            LoadTextureAtlas(pairAtlas.Value);
+                            _loadTextureAtlas(pairAtlas.Value);
                         }
                     }
                     catch (Exception e)
@@ -527,28 +531,28 @@ public class Loader
     }
     
 
-    public void LoadMetaGen(JsonElement je)
+    private void _loadMetaGen(JsonElement je)
     {
         try
         {
             if (je.TryGetProperty("buildingOperators", out var jeBuildingOperators))
             {
-                LoadBuildingOperators(jeBuildingOperators);
+                _loadBuildingOperators(jeBuildingOperators);
             }
 
             if (je.TryGetProperty("clusterOperators", out var jeClusterOperators))
             {
-                LoadClusterOperators(jeClusterOperators);
+                _loadClusterOperators(jeClusterOperators);
             }
 
             if (je.TryGetProperty("populatingOperators", out var jePopulatingOperators))
             {
-                LoadPopulatingOperators(jePopulatingOperators);
+                _loadPopulatingOperators(jePopulatingOperators);
             }
             
             if (je.TryGetProperty("fragmentOperators", out var jeFragmentOperators))
             {
-                LoadFragmentOperators(jeFragmentOperators);
+                _loadFragmentOperators(jeFragmentOperators);
             }
         }
         catch (Exception e)
@@ -558,7 +562,7 @@ public class Loader
     }
 
    
-    private void LoadGlobalSettings(JsonElement jeGlobalSettings)
+    private void _loadGlobalSettings(JsonElement jeGlobalSettings)
     {
         try
         {
@@ -581,7 +585,7 @@ public class Loader
     }
 
 
-    private void LoadProperties(JsonElement jeProperties)
+    private void _loadProperties(JsonElement jeProperties)
     {
         try
         {
@@ -589,7 +593,7 @@ public class Loader
             {
                 try
                 {
-                    SetJsonElement(pair.Value, o => engine.Props.Set(pair.Name, o));
+                    _setJsonElement(pair.Value, o => engine.Props.Set(pair.Name, o));
                 }
                 catch (Exception e)
                 {
@@ -721,7 +725,7 @@ public class Loader
     }
 
 
-    public void LoadQuests(JsonElement jeQuests)
+    private void _loadQuests(JsonElement jeQuests)
     {
         try
         {
@@ -745,7 +749,7 @@ public class Loader
     }
     
     
-    public void LoadScenes(JsonElement je)
+    private void _loadScenes(JsonElement je)
     {
         var sceneSequencer = I.Get<SceneSequencer>();
         if (je.TryGetProperty("catalogue", out var jeCatalogue))
@@ -756,16 +760,16 @@ public class Loader
     }
 
 
-    public void LoadGameConfig(JsonElement je)
+    private void _loadGameConfig(JsonElement je)
     {
         if (je.TryGetProperty("globalSettings", out var jeGlobalSettings))
         {
-            LoadGlobalSettings(jeGlobalSettings);
+            _loadGlobalSettings(jeGlobalSettings);
         }
 
         if (je.TryGetProperty("properties", out var jeProperties))
         {
-            LoadProperties(jeProperties);
+            _loadProperties(jeProperties);
         }
 
         /*
@@ -776,27 +780,27 @@ public class Loader
         {
             if (je.TryGetProperty("implementations", out var jeImplementations))
             {
-                LoadImplementations(jeImplementations);
+                _loadImplementations(jeImplementations);
             }
 
             if (je.TryGetProperty("mapProviders", out var jeMapProviders))
             {
-                LoadMapProviders(jeMapProviders);
+                _loadMapProviders(jeMapProviders);
             }
 
             if (je.TryGetProperty("metaGen", out var jeMetaGen))
             {
-                LoadMetaGen(jeMetaGen);
+                _loadMetaGen(jeMetaGen);
             }
 
             if (je.TryGetProperty("scenes", out var jeScenes))
             {
-                LoadScenes(jeScenes);
+                _loadScenes(jeScenes);
             }
 
             if (je.TryGetProperty("quests", out var jeQuests))
             {
-                LoadQuests(jeQuests);
+                _loadQuests(jeQuests);
             }
 
             if (je.TryGetProperty("layers", out var jeLayers))
@@ -807,7 +811,7 @@ public class Loader
     }
 
 
-    public void LoadAnimationsTo(JsonElement je)
+    private void _loadAnimationsTo(JsonElement je)
     {
         string pathProbe;
         try
@@ -857,7 +861,7 @@ public class Loader
     }
 
     
-    public void LoadResourcesTo(JsonElement je)
+    private void _loadResourcesTo(JsonElement je)
     {
         try
         {
@@ -905,7 +909,7 @@ public class Loader
     }
 
     
-    public IModule LoadRootModule()
+    private IModule _loadRootModule()
     {
         try
         {
@@ -962,7 +966,7 @@ public class Loader
         {
             if (jeResources.TryGetProperty("list", out var jeList))
             {
-                LoadResourcesTo(jeList);
+                _loadResourcesTo(jeList);
             }
             else
             {
@@ -978,7 +982,7 @@ public class Loader
         {
             if (jeAnimations.TryGetProperty("list", out var jeList))
             {
-                LoadAnimationsTo(jeList);
+                _loadAnimationsTo(jeList);
             }
             else
             {
@@ -992,7 +996,7 @@ public class Loader
         
         if (_jeRoot.TryGetProperty("textures", out var jeTextures))
         {
-            LoadTextures(jeTextures);
+            _loadTextures(jeTextures);
         }
         else
         {
@@ -1008,13 +1012,13 @@ public class Loader
         {
             _loadDefaults(jeDefaults);
         }
-        LoadGameConfig(_jeRoot);
+        _loadGameConfig(_jeRoot);
     }
 
 
     public void StartGame()
     {
-        IModule mRoot = LoadRootModule();
+        IModule mRoot = _loadRootModule();
         _engine = I.Get<Engine>();
         
         /*
@@ -1022,15 +1026,7 @@ public class Loader
          */
         _engine.QueueMainThreadAction(() => { mRoot.ModuleActivate();});
     }
-
-
-    public void AddLoader(string path, ISerializable loader)
-    {
-        lock (_lo)
-        {
-            _mapLoaders.Add(path, loader);
-        }
-    }
+    
 
     public Loader(System.IO.Stream stream)
     {

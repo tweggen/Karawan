@@ -23,6 +23,14 @@ public class AssetImplementation : IAssetImplementation
     }
 
 
+    public bool Exists(in string filename)
+    {
+        lock (_lo)
+        {
+            return _mapAssociations.ContainsKey(filename);
+        }
+    }
+
     /**
      * Open the resource with the given filename or tag.
      *
