@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Nodes;
 using DefaultEcs;
 using engine;
 using engine.draw;
@@ -102,5 +103,61 @@ public class DefaultMapProvider : IMapProvider
         /*
          * Do not create any specific entities.
          */
+    }
+
+
+    public void _processConfig(JsonNode? node)
+    {
+        if (null == node)
+        {
+            return;
+        }
+
+        var mapProvider = I.Get<IMapProvider>();
+        try
+        {
+            // Iterate through properties of the JsonNode (assuming it's an Object node)
+            foreach (var pair in node.AsObject())
+            {
+                try
+                {
+                    // Access "className" property safely
+                    var className = pair.Value?["className"]?.GetValue<string>();
+                    if (string.IsNullOrWhiteSpace(className))
+                    {
+                        Warning($"Encountered null classname for {pair.Key}.");
+                    }
+                    else
+                    {
+                        try
+                        {
+                            IWorldMapProvider wmp =
+                                engine.rom.Loader.LoadClass(className) as
+                                    IWorldMapProvider;
+                            mapProvider.AddWorldMapLayer(pair.Key, wmp);
+                        }
+                        catch (Exception e)
+                        {
+                            Warning($"Unable to load world map layer {pair.Key}: {e}");
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Warning($"Error setting map provider {pair.Key}: {e}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading map provider: {e}");
+        }
+    }
+
+
+    public DefaultMapProvider()
+    {
+        var mix = I.Get<engine.casette.Mix>();
+        mix.GetTree("mapProviders", _processConfig);
     }
 }

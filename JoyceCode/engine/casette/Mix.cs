@@ -11,12 +11,18 @@ namespace engine.casette;
  * Setup code can add or remove layers of configuration, clients can subscribe
  * to a certain subtree.
  */
-public class Drive
+public class Mix
 {
     private View _view = new();
 
+
+    public void GetTree(string path, Action<JsonNode?> actParse)
+    {
+        actParse(_view.GetMergedSubtree(path));
+    }
     
-    public JsonNode? GetMergedSubtree(string path)
+    
+    public JsonNode? GetTree(string path)
     {
         return _view.GetMergedSubtree(path);
     }
@@ -104,7 +110,7 @@ public class Drive
     }
 
 
-    public Drive()
+    public Mix()
     {
     }
 }

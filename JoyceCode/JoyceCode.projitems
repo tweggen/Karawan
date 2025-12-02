@@ -56,7 +56,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector4JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\StateBehavior.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Drive.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Mix.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\View.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityObserver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\CompiledCache.cs" />

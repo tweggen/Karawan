@@ -13,6 +13,13 @@ public class Loader
     static private SortedDictionary<string, Assembly> _mapAlreadyLoaded = new SortedDictionary<string, Assembly>();
     static private SortedSet<string> _setLoadFailed = new SortedSet<string>();
 
+    private static string _strDefaultLoaderAssembly;
+
+    public static void SetDefaultLoaderAssembly(string path)
+    {
+        _strDefaultLoaderAssembly = path;
+    }
+
     static private bool _traceLoad = false;
     public static Assembly TryLoadDll(string dllPath)
     {
@@ -282,5 +289,11 @@ public class Loader
         }
 
         return null;
+    }
+
+
+    public static object? LoadClass(string fullClassName)
+    {
+        return LoadClass(_strDefaultLoaderAssembly, fullClassName);
     }
 }

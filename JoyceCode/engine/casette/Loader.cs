@@ -56,43 +56,6 @@ public class Loader
     }
     
 
-    private void _loadMapProviders(JsonElement jeMapProviders)
-    {
-        var mapProvider = I.Get<IMapProvider>();
-        try
-        {
-            foreach (var pair in jeMapProviders.EnumerateObject())
-            {
-                try
-                {
-                    var className = pair.Value.GetProperty("className").GetString();
-                    if (String.IsNullOrWhiteSpace(className))
-                    {
-                        Warning($"Encountered null classname for {pair}.");
-                    }
-                    try
-                    {
-                        IWorldMapProvider wmp = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IWorldMapProvider;
-                        mapProvider.AddWorldMapLayer(pair.Name, wmp);
-                    }
-                    catch (Exception e)
-                    {
-                        Warning($"Unable to load world map layer {pair.Name}: {e}");
-                    }
-                }
-                catch (Exception e)
-                {
-                    Warning($"Error setting map provider {pair.Name}: {e}");
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Warning($"Error reading map provider: {e}");
-        }
-    }
-
-
     private void _loadToSerializable(JsonElement jeCurr, object target)
     {
         _engine = I.Get<Engine>();
@@ -783,11 +746,6 @@ public class Loader
                 _loadImplementations(jeImplementations);
             }
 
-            if (je.TryGetProperty("mapProviders", out var jeMapProviders))
-            {
-                _loadMapProviders(jeMapProviders);
-            }
-
             if (je.TryGetProperty("metaGen", out var jeMetaGen))
             {
                 _loadMetaGen(jeMetaGen);
@@ -940,6 +898,7 @@ public class Loader
         {
             strDefaultLoaderAssembly = jeDefaults.GetProperty("loader").GetProperty("assembly")
                 .GetString();
+            engine.rom.Loader.SetDefaultLoaderAssembly(strDefaultLoaderAssembly);
         }
         catch (Exception e)
         {
@@ -1039,6 +998,7 @@ public class Loader
         /*
          * Load the game config
          */
+        I.Register<engine.casette.Mix>(() => new engine.casette.Mix());
         var loader = new engine.casette.Loader(engine.Assets.Open("nogame.json"));
         loader.InterpretConfig();
     }
