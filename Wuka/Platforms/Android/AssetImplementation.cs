@@ -29,7 +29,7 @@ public class AssetImplementation : engine.IAssetImplementation
     {
         try
         {
-            using (var orgStream = _assetManager.Open(realName))
+            using (var orgStream = _assetManager.Open(filename))
             {
                 return true;
             }

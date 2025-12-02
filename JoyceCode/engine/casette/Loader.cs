@@ -121,103 +121,23 @@ public class Loader
         }
         try
         {
+            /*
+             * Register the listed class factories, possibly using the key as interface name. 
+             */
             foreach (var pair in jeImplementations.EnumerateObject())
             {
-                string interfaceName = pair.Name;
-                string implementationName = null;
-                Action<object> setupProperties = null;
-                string cassettePath = null;
-                JsonElement jeConfig = default;
-                bool haveConfig = false;
+                var factoryMethod = _createFactoryMethod(pair.Name, pair.Value);
                 
-                if (pair.Value.ValueKind == JsonValueKind.Object)
-                {
-                    if (pair.Value.TryGetProperty("config", out jeConfig)
-                        && jeConfig.ValueKind == JsonValueKind.Object)
-                    {
-                        haveConfig = true;
-                    }
-                    
-                    if (pair.Value.TryGetProperty("className", out var jeClassName)
-                        && jeClassName.ValueKind == JsonValueKind.String)
-                    {
-                        implementationName = pair.Value.GetProperty("className").GetString();
-                    }
-
-                    if (pair.Value.TryGetProperty("cassettePath", out var jeCassettePath)
-                        && jeCassettePath.ValueKind == JsonValueKind.String)
-                    {
-                        cassettePath = pair.Value.GetProperty("cassettePath").GetString();
-                    }
-
-                    if (pair.Value.TryGetProperty("properties", out var jeProperties) 
-                        && jeProperties.ValueKind == JsonValueKind.Object)
-                    {
-                        setupProperties = (object obj) =>
-                        {
-                            foreach (var pair in jeProperties.EnumerateObject())
-                            {
-                                PropertyInfo prop = obj.GetType().GetProperty(
-                                    pair.Name, BindingFlags.Public | BindingFlags.Instance);
-                                if(null != prop && prop.CanWrite)
-                                {
-                                    switch (pair.Value.ValueKind)
-                                    {
-                                        case JsonValueKind.String:
-                                            prop.SetValue(obj, pair.Value.GetString(), null);
-                                            break;
-                                        case JsonValueKind.Number:
-                                            prop.SetValue(obj, (float) pair.Value.GetDouble(), null);
-                                            break;
-                                        case JsonValueKind.Object:
-                                        {
-                                            SortedDictionary<string, string> dict = new();
-                                            foreach (var kvpDict in pair.Value.EnumerateObject())
-                                            {
-                                                
-                                                dict[kvpDict.Name] = kvpDict.Value.GetString();
-                                            }
-                                            prop.SetValue(obj, dict, null);
-                                        }
-                                            break;
-                                    }
-                                }
-                            }
-                        };
-                    }
-                }
-                if (String.IsNullOrWhiteSpace(implementationName))
-                {
-                    /*
-                     * Use the key as the className
-                     */
-                    implementationName = interfaceName;
-                }
-
+                /*
+                 * We are loading the implementations. The key name definitely is the
+                 * name we register the implementation for.
+                 */
+                string interfaceName = pair.Name;
+                
                 try
                 {
                     Type type = engine.rom.Loader.LoadType(strDefaultLoaderAssembly, interfaceName);
-                    if (interfaceName == implementationName)
-                    {
-                        I.Instance.RegisterFactory(type, () => {
-                            var i = Activator.CreateInstance(type);
-                            if (null != setupProperties) setupProperties(i);
-                            if (haveConfig) _loadToSerializable(jeConfig, i);
-                            if (null != cassettePath) _loadToSerializable(cassettePath, i);
-                            return i;
-                        });
-                    }
-                    else
-                    {
-                        I.Instance.RegisterFactory(type, () =>
-                        {
-                            var i = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, implementationName);
-                            if (null != setupProperties) setupProperties(i);
-                            if (haveConfig) _loadToSerializable(jeConfig, i);
-                            if (null != cassettePath) _loadToSerializable(cassettePath, i);
-                            return i;
-                        });
-                    }
+                    I.Instance.RegisterFactory(type, _createFactoryMethod(pair.Name, pair.Value));
                 }
                 catch (Exception e)
                 {
@@ -593,9 +513,19 @@ public class Loader
         string strClassName = default;
         string strMethodName = default;
         CreationType creationType = CreationType.Undefined;
+        Action<object>? setupProperties = null;
+        bool haveConfig = false;
+        JsonElement jeConfig = default;
+        string cassettePath = null;
         
         if (jeValue.ValueKind == JsonValueKind.Object)
         {
+            if (jeValue.TryGetProperty("config", out jeConfig)
+                && jeConfig.ValueKind == JsonValueKind.Object)
+            {
+                haveConfig = true;
+            }
+            
             if(jeValue.TryGetProperty("implementation", out var jeImplementation))
             {
                 string? strImplementation = jeImplementation.GetString();
@@ -611,9 +541,50 @@ public class Loader
                 string? strClassNameCand = jeClassName.GetString();
                 if (!String.IsNullOrWhiteSpace(strClassNameCand))
                 {
-                    strMethodName = strClassNameCand;
+                    strClassName = strClassNameCand;
                     creationType = CreationType.Constructor;
                 }
+            }
+            
+            if (jeValue.TryGetProperty("cassettePath", out var jeCassettePath)
+                && jeCassettePath.ValueKind == JsonValueKind.String)
+            {
+                cassettePath = jeValue.GetProperty("cassettePath").GetString();
+            }
+            
+            if (jeValue.TryGetProperty("properties", out var jeProperties) 
+                && jeProperties.ValueKind == JsonValueKind.Object)
+            {
+                setupProperties = (object obj) =>
+                {
+                    foreach (var pair in jeProperties.EnumerateObject())
+                    {
+                        PropertyInfo prop = obj.GetType().GetProperty(
+                            pair.Name, BindingFlags.Public | BindingFlags.Instance);
+                        if(null != prop && prop.CanWrite)
+                        {
+                            switch (pair.Value.ValueKind)
+                            {
+                                case JsonValueKind.String:
+                                    prop.SetValue(obj, pair.Value.GetString(), null);
+                                    break;
+                                case JsonValueKind.Number:
+                                    prop.SetValue(obj, (float) pair.Value.GetDouble(), null);
+                                    break;
+                                case JsonValueKind.Object:
+                                {
+                                    SortedDictionary<string, string> dict = new();
+                                    foreach (var kvpDict in pair.Value.EnumerateObject())
+                                    {
+                                                
+                                        dict[kvpDict.Name] = kvpDict.Value.GetString();
+                                    }
+                                    prop.SetValue(obj, dict, null);
+                                } break;
+                            }
+                        }
+                    }
+                };
             }
         }
         
@@ -632,8 +603,14 @@ public class Loader
                     null;
             
             case CreationType.Constructor:
-                return () => engine.rom.Loader.LoadClass(
-                    strDefaultLoaderAssembly, strClassName);
+                return () =>
+                {
+                    var instance = engine.rom.Loader.LoadClass(
+                        strDefaultLoaderAssembly, strClassName);
+                    if (null != setupProperties) setupProperties(instance);
+                    if (haveConfig) _loadToSerializable(jeConfig, instance);
+                    return instance;
+                };
             
             case CreationType.FactoryMethod:
                 return () =>
@@ -689,7 +666,11 @@ public class Loader
                     /*
                      * Finally, create the instance of the object we shall call.
                      */
-                    return methodInfo.Invoke(null, new object[] {});
+                    var instance = methodInfo.Invoke(null, new object[] {});
+                    if (null != setupProperties) setupProperties(instance);
+                    if (haveConfig) _loadToSerializable(jeConfig, instance);
+                    if (null != cassettePath) _loadToSerializable(cassettePath, instance);
+                    return instance;
                 };
         }
     }
