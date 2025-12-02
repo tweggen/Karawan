@@ -303,6 +303,8 @@ public sealed class View
     {
         if (ancestor == descendant) return true;
         if (descendant.Length < ancestor.Length) return false;
+        if (ancestor == "/")
+            return descendant.Length > 1 && descendant[0] == '/';
         if (!descendant.StartsWith(ancestor, StringComparison.Ordinal)) return false;
         // Ensure boundary on segment ("/a" is not ancestor of "/ab")
         if (descendant.Length == ancestor.Length) return true;
@@ -318,49 +320,93 @@ public sealed class View
         _mergeCache[path] = new CacheEntry { AggregateVersion = aggVersion, Node = node };
         return node;
     }
+    
+    private static JsonNode? ExtractSubtree(JsonNode? ancestorNode, string path)
+    {
+        if (ancestorNode is null) return null;
+
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        JsonNode? current = ancestorNode;
+
+        foreach (var seg in segments)
+        {
+            if (current is JsonObject obj)
+            {
+                current = obj[seg];
+            }
+            else if (current is JsonArray arr && int.TryParse(seg, out int idx))
+            {
+                if (idx < 0 || idx >= arr.Count) return null;
+                current = arr[idx];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        return current?.DeepClone();
+    }
 
     private JsonNode? ComputeMergedSubtree(string path, out long aggregateVersion)
     {
         aggregateVersion = 0;
 
-        // Collect all partials that are equal to target path or descend into it.
-        // Strategy:
-        // - Partials at exactly 'path': overlay their payload directly.
-        // - Partials under 'path/…': insert payload at their relative subpath below 'path'.
-        // Overlay order: priority asc, then version asc; later writes override earlier.
-        var affecting = new List<PartialTree>();
+        // Collect all partials that are relevant: ancestors, exact, descendants
+        var ancestors = new List<PartialTree>();
+        var exact = new List<PartialTree>();
+        var descendants = new List<PartialTree>();
 
         foreach (var kvp in _partialsByPath)
         {
             var p = kvp.Key;
-            if (p == path || IsAncestorOrEqual(path, p))
-                affecting.AddRange(kvp.Value);
+
+            if (p == path)
+            {
+                exact.AddRange(kvp.Value);
+            }
+            else if (IsAncestorOrEqual(p, path)) // partial is ancestor of requested path
+            {
+                ancestors.AddRange(kvp.Value);
+            }
+            else if (IsAncestorOrEqual(path, p)) // partial is descendant of requested path
+            {
+                descendants.AddRange(kvp.Value);
+            }
         }
 
-        if (affecting.Count == 0)
+        if (ancestors.Count == 0 && exact.Count == 0 && descendants.Count == 0)
+        {
             return null;
+        }
 
-        // Build target node incrementally
         JsonNode? root = null;
 
-        foreach (var pt in affecting.OrderBy(x => x, PartialComparer))
+        // Overlay order: ancestors → exact → descendants
+        foreach (var pt in ancestors.OrderBy(x => x, PartialComparer))
         {
             aggregateVersion = unchecked(aggregateVersion + pt.Version * 17 + pt.Priority * 131);
-
             var payloadNode = JsonNode.Parse(pt.Payload.RootElement.GetRawText());
-            if (pt.Path == path)
-            {
-                // Overlay whole payload onto root
-                root = MergeOverlay(root, payloadNode);
-            }
-            else
-            {
-                // Insert payload at relative path segment under root
-                var relSegments = GetRelativeSegments(path, pt.Path);
-                root ??= new JsonObject();
-                EnsurePath(root, relSegments) // returns the parent node where payload should be merged
-                    .AssignOverlay(payloadNode);
-            }
+            var subtree = ExtractSubtree(payloadNode, path);
+            root = MergeOverlay(root, subtree);
+        }
+
+        foreach (var pt in exact.OrderBy(x => x, PartialComparer))
+        {
+            aggregateVersion = unchecked(aggregateVersion + pt.Version * 17 + pt.Priority * 131);
+            var payloadNode = JsonNode.Parse(pt.Payload.RootElement.GetRawText());
+            var subtree = ExtractSubtree(payloadNode, path);
+            root = MergeOverlay(root, subtree);
+        }
+
+        foreach (var pt in descendants.OrderBy(x => x, PartialComparer))
+        {
+            aggregateVersion = unchecked(aggregateVersion + pt.Version * 17 + pt.Priority * 131);
+            var payloadNode = JsonNode.Parse(pt.Payload.RootElement.GetRawText());
+
+            var relSegments = GetRelativeSegments(path, pt.Path);
+            root ??= new JsonObject();
+            EnsurePath(root, relSegments).AssignOverlay(payloadNode);
         }
 
         return root;

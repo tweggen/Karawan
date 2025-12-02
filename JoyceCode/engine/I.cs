@@ -11,6 +11,7 @@ internal class InstanceEntry
     public Type InterfaceType;
     public Func<Object> FactoryFunction;
     public Object Instance;
+    public bool InCreation;
 }
 
 

@@ -106,14 +106,14 @@ public class DefaultMapProvider : IMapProvider
     }
 
 
-    public void _processConfig(JsonNode? node)
+    public void _whenLoaded(string path, JsonNode? node)
     {
         if (null == node)
         {
             return;
         }
 
-        var mapProvider = I.Get<IMapProvider>();
+        var mapProvider = this;
         try
         {
             // Iterate through properties of the JsonNode (assuming it's an Object node)
@@ -157,7 +157,6 @@ public class DefaultMapProvider : IMapProvider
 
     public DefaultMapProvider()
     {
-        var mix = I.Get<engine.casette.Mix>();
-        mix.GetTree("mapProviders", _processConfig);
+        I.Get<engine.casette.Loader>().WhenLoaded("/mapProviders", _whenLoaded);
     }
 }

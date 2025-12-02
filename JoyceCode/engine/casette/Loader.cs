@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using builtin.baking;
 using builtin.map;
 using engine.joyce;
@@ -12,6 +14,7 @@ using engine.world;
 using static engine.Logger;
 
 namespace engine.casette;
+
 
 /**
  * Load the heritage big nogame.json, interpreting domain specific
@@ -26,10 +29,14 @@ public class Loader
     private string strDefaultLoaderAssembly = "";
     private bool _traceResources = false;
     private IAssetImplementation _iAssetImpl;
+    private Mix _mix;
+    private bool _isLoaded = false;
     
     //  private SortedDictionary<string, ISerializable> _mapLoaders = new();
 
     public SortedSet<string> AvailableAnimations = new();
+
+    private List<LoaderSubscription> _whenLoadedList = new();
     
     static private void _setJsonElement(in JsonElement je, Action<object> action)
     {
@@ -913,6 +920,7 @@ public class Loader
         {
             AllowTrailingCommas = true
         });
+        I.Get<Mix>().UpsertFragment("/", jdocGame.RootElement);
         _jeRoot = jdocGame.RootElement;
     }
 
@@ -965,6 +973,7 @@ public class Loader
 
     }
 
+
     public void InterpretConfig()
     {
         if (_jeRoot.TryGetProperty("defaults", out var jeDefaults))
@@ -972,6 +981,11 @@ public class Loader
             _loadDefaults(jeDefaults);
         }
         _loadGameConfig(_jeRoot);
+        lock (_lo)
+        {
+            _isLoaded = true;
+        }
+        _callWhenLoaded();
     }
 
 
@@ -985,14 +999,73 @@ public class Loader
          */
         _engine.QueueMainThreadAction(() => { mRoot.ModuleActivate();});
     }
+
+
+    private void _callSingleWhenLoaded(string path, Action<string, JsonNode?> actWhenLoaded)
+    {
+        try
+        {
+            var subTree = _mix.GetTree(path);
+            actWhenLoaded(path, subTree);
+        }
+        catch (Exception e)
+        {
+            Warning($"Exception partsing configuration subtree {path}: {e}");
+        }
+    }
+    
+    
+    private void _callWhenLoaded()
+    {
+        ImmutableList<LoaderSubscription> whenLoadedList;
+        lock (_lo)
+        {
+            whenLoadedList = _whenLoadedList.ToImmutableList();
+            _whenLoadedList = null;
+        }
+
+        foreach (var subscriber in whenLoadedList)
+        {
+            _callSingleWhenLoaded(subscriber.Path, subscriber.OnTreeData);
+        }
+    }
+    
+
+    public void WhenLoaded(string path, Action<string, JsonNode?> whenLoaded)
+    {
+        bool callNow = false;
+        lock (_lo)
+        {
+            if (_isLoaded)
+            {
+                callNow = true;
+            }
+            else
+            {
+                _whenLoadedList.Add(new LoaderSubscription() { Path = path, OnTreeData = whenLoaded });
+
+            }
+        }
+
+        if (callNow)
+        {
+            _callSingleWhenLoaded(path, whenLoaded);
+        }
+    }
     
 
     public Loader(System.IO.Stream stream)
     {
+        /*
+         * This is a special case to register the Mix instance here.
+         */
+        I.Register<engine.casette.Mix>(() => new engine.casette.Mix());
+        _mix = I.Get<Mix>();
         _loadGameConfigFile(stream);
     }
     
 
+    #if false
     static public void LoadStartGame(string jsonPath)
     {
         /*
@@ -1002,5 +1075,6 @@ public class Loader
         var loader = new engine.casette.Loader(engine.Assets.Open("nogame.json"));
         loader.InterpretConfig();
     }
+    #endif
 }
 
