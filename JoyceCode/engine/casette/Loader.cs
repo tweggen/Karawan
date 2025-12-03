@@ -274,7 +274,7 @@ public class Loader
                 string className = jeOp.GetProperty("className").GetString();
                 try
                 {
-                    IWorldOperator wop = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
+                    IWorldOperator wop = _createFactoryMethod(null, jeOp)() as IWorldOperator;
                     I.Get<MetaGen>().WorldBuildingOperators.Add(wop);
                 }
                 catch (Exception e)
@@ -299,7 +299,7 @@ public class Loader
                 string className = jeOp.GetProperty("className").GetString();
                 try
                 {
-                    IClusterOperator cop = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IClusterOperator;
+                    IClusterOperator cop = _createFactoryMethod(null, jeOp)() as IClusterOperator;
                     I.Get<MetaGen>().ClusterOperators.Add(cop);
                 }
                 catch (Exception e)
@@ -324,7 +324,7 @@ public class Loader
                 string className = jeOp.GetProperty("className").GetString();
                 try
                 {
-                    IWorldOperator wop = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
+                    IWorldOperator wop = _createFactoryMethod(null, jeOp)() as IWorldOperator;
                     I.Get<MetaGen>().WorldPopulatingOperators.Add(wop);
                 }
                 catch (Exception e)
@@ -508,7 +508,7 @@ public class Loader
     /**
      * Return a factory method according to the description in the element.
      */
-    private Func<object> _createFactoryMethod(string key, JsonElement jeValue)
+    private Func<object> _createFactoryMethod(string? key, JsonElement jeValue)
     {
         string strClassName = default;
         string strMethodName = default;
@@ -590,8 +590,11 @@ public class Loader
         
         if (creationType == CreationType.Undefined)
         {
-            strClassName = key;
-            creationType = CreationType.Constructor;
+            if (key != null)
+            {
+                strClassName = key;
+                creationType = CreationType.Constructor;
+            }
         }
 
         switch (creationType)
@@ -863,18 +866,24 @@ public class Loader
             {
                 if (jeModules.TryGetProperty("root", out var jeRootModule))
                 {
-                    if (jeRootModule.TryGetProperty("className", out var jeClassName))
+                    try
                     {
-                        IModule mRoot = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, jeClassName.GetString()) as IModule;
+                        var factory = _createFactoryMethod(null, jeRootModule);
+                        IModule mRoot = factory() as IModule;
                         return mRoot;
+                    }
+                    catch (Exception e)
+                    {
+                        ErrorThrow<ArgumentException>($"Exception while instantiating root module: {e}");
                     }
                 }
             }
         }
         catch (Exception e)
         {
-            ErrorThrow<ArgumentException>($"Unable to find root module at modules/root in config.");
+            ErrorThrow<ArgumentException>($"Unable to find root module definition.");
         }
+        
 
         return null;
     }
@@ -1044,18 +1053,5 @@ public class Loader
         _mix = I.Get<Mix>();
         _loadGameConfigFile(stream);
     }
-    
-
-    #if false
-    static public void LoadStartGame(string jsonPath)
-    {
-        /*
-         * Load the game config
-         */
-        I.Register<engine.casette.Mix>(() => new engine.casette.Mix());
-        var loader = new engine.casette.Loader(engine.Assets.Open("nogame.json"));
-        loader.InterpretConfig();
-    }
-    #endif
 }
 
