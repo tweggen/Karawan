@@ -254,6 +254,12 @@ public class SceneSequencer : IDisposable
     }
 
 
+    private void _whenLoaded(string path, JsonNode? jn)
+    {
+        
+    }
+
+
     /**
      * Start the scene sequencer's execution.
      */
@@ -286,5 +292,6 @@ public class SceneSequencer : IDisposable
     {
         _engine = engine;
         _engine.OnLogicalFrame += _onLogicalFrame;
+        I.Get<engine.casette.Loader>().WhenLoaded("scenes", _whenLoaded);
     }
 }

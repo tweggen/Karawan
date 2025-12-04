@@ -241,7 +241,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
 
         return;
     });
-
+    
 
     /**
      * We register this manager as the creator of quests. We use this to
@@ -255,10 +255,51 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
     }
 
 
+    private void _loadQuests(JsonNode jnQuests)
+    {
+        try
+        {
+            if (jnQuests is JsonObject obj)
+            {
+                foreach (var pair in obj)
+                {
+                    try
+                    {
+                        string questName = pair.Key;
+                        I.Get<engine.quest.Manager>().RegisterFactory(
+                            questName,
+                            _ => I.Get<engine.casette.Loader>().CreateFactoryMethod(pair.Key, pair.Value)()
+                                as engine.quest.IQuest
+                        );
+                    }
+                    catch (Exception e)
+                    {
+                        Warning($"Error setting global setting {pair.Key}: {e}");
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading global settings: {e}");
+        }
+    }
+
+    
+    private void _whenLoaded(string path, JsonNode? jn)
+    {
+        if (jn != null)
+        {
+            _loadQuests(jn);
+        }
+    }
+
+
     public Manager()
     {
         _engine = I.Get<Engine>();
         I.Get<CreatorRegistry>().RegisterCreator(this);
+        I.Get<engine.casette.Loader>().WhenLoaded("quests", _whenLoaded);
     }
 }
 

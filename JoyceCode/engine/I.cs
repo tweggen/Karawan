@@ -131,9 +131,9 @@ public sealed class I
         return Instance.GetInstance<T>();
     }
 
-    
+
     private I()
-    {}
+    { }
 
 
     public static I Instance
