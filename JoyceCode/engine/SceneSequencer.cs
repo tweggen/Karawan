@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Net;
 using System.Text.Json;
-
+using System.Text.Json.Nodes;
 using static engine.Logger;
 
 namespace engine;
@@ -218,45 +218,75 @@ public class SceneSequencer : IDisposable
     }
 
 
-    public void AddFrom(JsonElement jeScenes)
+    public void AddFrom(JsonNode? nodeScenes)
     {
         try
         {
-            foreach (var pair in jeScenes.EnumerateObject())
+            if (nodeScenes is JsonObject objScenes)
             {
-                var jeClassDesc = pair.Value;
-                AddSceneFactory(pair.Name, () =>
+                foreach (var kvp in objScenes)
                 {
-                    var className = jeClassDesc.GetProperty("className").GetString();
-                    if (String.IsNullOrWhiteSpace(className))
-                    {
-                        Warning($"Encountered null classname for {pair}.");
-                    }
-                    try
-                    {
-                        IScene scene = engine.rom.Loader.LoadClass("nogame.dll", className) as IScene;
-                        return scene;
-                    }
-                    catch (Exception e)
-                    {
-                        Warning($"Unable to load scene {pair.Name}: {e}");
-                    }
+                    var sceneName = kvp.Key;
+                    var classDescNode = kvp.Value;
 
-                    return null;
-                });
+                    AddSceneFactory(sceneName, () =>
+                    {
+                        var className = classDescNode?["className"]?.GetValue<string>();
+                        if (string.IsNullOrWhiteSpace(className))
+                        {
+                            Warning($"Encountered null classname for {sceneName}.");
+                        }
+
+                        try
+                        {
+                            IScene scene = engine.rom.Loader.LoadClass("nogame.dll", className) as IScene;
+                            return scene;
+                        }
+                        catch (Exception e)
+                        {
+                            Warning($"Unable to load scene {sceneName}: {e}");
+                        }
+
+                        return null;
+                    });
+                }
+
+                // TXWTODO: Also get start scene here.
             }
-            // TXWTODO: Also get start scene here.
         }
         catch (Exception e)
         {
-            Warning($"No scenes found to add or error in declaration.");
+            Warning($"No scenes found to add or error in declaration: {e}");
         }
     }
+    
+    
+    private void _loadScenes(JsonNode node)
+    {
+        var sceneSequencer = I.Get<SceneSequencer>();
 
+        // Access "catalogue" safely
+        var catalogueNode = node?["catalogue"];
+        if (catalogueNode is not null)
+        {
+            sceneSequencer.AddFrom(catalogueNode);
+        }
 
+        // Access "startup" as string
+        var startup = node?["startup"]?.GetValue<string>();
+        if (startup is not null)
+        {
+            sceneSequencer.SetMainScene(startup);
+        }
+    }
+    
+    
     private void _whenLoaded(string path, JsonNode? jn)
     {
-        
+        if (null != jn)
+        {
+            _loadScenes(jn);
+        }
     }
 
 

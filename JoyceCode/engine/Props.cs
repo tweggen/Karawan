@@ -1,7 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using engine.news;
+using static engine.Logger;
 
 namespace engine;
 
@@ -141,10 +145,84 @@ public class Props
     }
     
     
+    static private void _setJsonNode(JsonNode? node, Action<object> action)
+    {
+        if (node is null)
+            return;
+
+        if (node is JsonValue value)
+        {
+            // Try to unwrap the underlying CLR type
+            switch (value.GetValueKind())
+            {
+                case JsonValueKind.False:
+                    action(false);
+                    break;
+                case JsonValueKind.True:
+                    action(true);
+                    break;
+                case JsonValueKind.String:
+                    action(value.GetValue<string>());
+                    break;
+                case JsonValueKind.Number:
+                    // You can choose float/double/decimal depending on your needs
+                    action(value.GetValue<float>());
+                    break;
+                case JsonValueKind.Null:
+                case JsonValueKind.Undefined:
+                    break;
+            }
+        }
+        else if (node is JsonObject)
+        {
+            // Object case – do nothing here
+        }
+        else if (node is JsonArray)
+        {
+            // Array case – do nothing here
+        }
+    }
+    
+    
+    private void _loadProperties(JsonNode nodeProperties)
+    {
+        try
+        {
+            if (nodeProperties is JsonObject objProperties)
+            {
+                foreach (var kvp in objProperties)
+                {
+                    try
+                    {
+                        _setJsonNode(kvp.Value, o => engine.Props.Set(kvp.Key, o));
+                    }
+                    catch (Exception e)
+                    {
+                        Warning($"Error setting global setting {kvp.Key}: {e}");
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading global settings: {e}");
+        }
+    }
+
+
+    private void _whenLoaded(string path, JsonNode? jn)
+    {
+        if (null != jn)
+        {
+            _loadProperties(jn);
+        }
+    }
+    
     private Props()
     {
         _dictConfigParams = new Dictionary<string, object>();
         _rodictConfigParams = new ReadOnlyDictionary<string, object>(_dictConfigParams);
+        I.Get<engine.casette.Loader>().WhenLoaded("properties", _whenLoaded);
     }
     
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using static engine.Logger;
 
 namespace engine;
@@ -33,36 +34,40 @@ public class LayerCatalogue : AModule
             return _layerDefinitions[layername];
         }
     }
-    
-    
-    public void LoadConfig(JsonElement jeConfigLayers)
+
+
+    private void _loadConfig(JsonNode nodeConfigLayers)
     {
         try
         {
-            foreach (var pair in jeConfigLayers.EnumerateObject())
+            if (nodeConfigLayers is JsonObject objConfigLayers)
             {
-                var layerName = pair.Name;
-                double zOrder = 0f;
-
-                try
+                foreach (var kvp in objConfigLayers)
                 {
+                    var layerName = kvp.Key;
+                    double zOrder = 0f;
 
-                    if (pair.Value.TryGetProperty("zOrder", out var jeZOrder) && jeZOrder.TryGetDouble(out zOrder))
+                    try
                     {
-                        //
+                        var zOrderNode = kvp.Value?["zOrder"];
+                        if (zOrderNode is not null)
+                        {
+                            // Safely extract as double
+                            zOrder = zOrderNode.GetValue<double>();
+                        }
+
+                        LayerDefinition ld = new()
+                        {
+                            Name = layerName,
+                            ZOrder = (float)zOrder
+                        };
+
+                        Add(ld);
                     }
-
-
-                    LayerDefinition ld = new()
+                    catch (Exception e)
                     {
-                        Name = layerName, ZOrder = (float)zOrder
-                    };
-
-                    Add(ld);
-                }
-                catch (Exception e)
-                {
-                    Warning($"Error setting map provider {pair.Name}: {e}");
+                        Warning($"Error setting map provider {layerName}: {e}");
+                    }
                 }
             }
         }
@@ -70,5 +75,19 @@ public class LayerCatalogue : AModule
         {
             Warning($"Error reading map provider: {e}");
         }
+    }
+
+
+    private void _whenLoaded(string path, JsonNode? jn)
+    {
+        if (null != jn)
+        {
+            _loadConfig(jn);
+        }
+    }
+
+    public LayerCatalogue()
+    {
+        I.Get<engine.casette.Loader>().WhenLoaded("layers", _whenLoaded);
     }
 }

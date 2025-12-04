@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Dynamic;
 using System.Numerics;
+using System.Text.Json.Nodes;
 using engine.joyce.components;
 using engine.news;
 using ObjLoader.Loader.Common;
+using static engine.Logger;
 
 namespace engine;
 
@@ -82,8 +84,49 @@ public class GlobalSettings
     {
         _rodictConfigParams = new ReadOnlyDictionary<string, string>(_dictConfigParams);
     }
+
+    
+    private void _loadGlobalSettings(JsonNode? nodeGlobalSettings)
+    {
+        try
+        {
+            if (nodeGlobalSettings is JsonObject objGlobalSettings)
+            {
+                foreach (var kvp in objGlobalSettings)
+                {
+                    try
+                    {
+                        engine.GlobalSettings.Set(kvp.Key, kvp.Value?.ToString());
+                    }
+                    catch (Exception e)
+                    {
+                        Warning($"Error setting properties {kvp.Key}: {e}");
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading properties: {e}");
+        }
+    }
+
+    
+    private void _whenLoaded(string path, JsonNode? jn)
+    {
+        if (jn != null)
+        {
+            _loadGlobalSettings(jn);
+        }
+    }
     
 
+    public void StartLoading()
+    {
+        I.Get<engine.casette.Loader>().WhenLoaded("globalSettings", _whenLoaded);
+    }
+    
+    
     static public GlobalSettings Instance()
     {
         lock (_staticLo)

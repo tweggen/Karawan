@@ -38,31 +38,6 @@ public class Loader
 
     private List<LoaderSubscription> _whenLoadedList = new();
     
-    static private void _setJsonElement(in JsonElement je, Action<object> action)
-    {
-        switch (je.ValueKind)
-        {
-            case JsonValueKind.False:
-                action(false);
-                break;
-            case JsonValueKind.String:
-                action(je.GetString());
-                break;
-            case JsonValueKind.True:
-                action(true);
-                break;
-            case JsonValueKind.Number:
-                action(je.GetSingle());
-                break;
-            case JsonValueKind.Undefined:
-            case JsonValueKind.Object:
-            case JsonValueKind.Null:
-            case JsonValueKind.Array:
-                break;
-        }
-    }
-    
-
     private void _loadToSerializable(JsonNode jnCurr, object target)
     {
         _engine = I.Get<Engine>();
@@ -115,10 +90,7 @@ public class Loader
         _loadToSerializable(jnCurr, target);
     }
 
-
-
-
-
+    
     private void _loadTextureAtlas(JsonElement jeAtlas)
     {
         var tc = I.Get<TextureCatalogue>();
@@ -199,52 +171,6 @@ public class Loader
         }
     }
     
-
-       private void _loadGlobalSettings(JsonElement jeGlobalSettings)
-    {
-        try
-        {
-            foreach (var pair in jeGlobalSettings.EnumerateObject())
-            {
-                try
-                {
-                    engine.GlobalSettings.Set(pair.Name, pair.Value.ToString());
-                }
-                catch (Exception e)
-                {
-                    Warning($"Error setting properties {pair.Name}: {e}");
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Warning($"Error reading properties: {e}");
-        }
-    }
-
-
-    private void _loadProperties(JsonElement jeProperties)
-    {
-        try
-        {
-            foreach (var pair in jeProperties.EnumerateObject())
-            {
-                try
-                {
-                    _setJsonElement(pair.Value, o => engine.Props.Set(pair.Name, o));
-                }
-                catch (Exception e)
-                {
-                    Warning($"Error setting global setting {pair.Name}: {e}");
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Warning($"Error reading global settings: {e}");
-        }
-    }
-
 
     enum CreationType
     {
@@ -419,16 +345,6 @@ public class Loader
         }
     }
 
-    private void _loadScenes(JsonElement je)
-    {
-        var sceneSequencer = I.Get<SceneSequencer>();
-        if (je.TryGetProperty("catalogue", out var jeCatalogue))
-        {
-            sceneSequencer.AddFrom(jeCatalogue);
-        }
-        sceneSequencer.SetMainScene(je.GetProperty("startup").GetString());
-    }
-
     private void _loadImplementations(JsonNode jnImplementations)
     {
         if (engine.GlobalSettings.Get("joyce.CompileMode") == "true")
@@ -474,16 +390,6 @@ public class Loader
 
     private void _loadGameConfig(JsonElement je)
     {
-        if (je.TryGetProperty("globalSettings", out var jeGlobalSettings))
-        {
-            _loadGlobalSettings(jeGlobalSettings);
-        }
-
-        if (je.TryGetProperty("properties", out var jeProperties))
-        {
-            _loadProperties(jeProperties);
-        }
-
         /*
          * If I'm running in compile mode I am not supposed to load
          * all the implementations that follow.
@@ -493,21 +399,6 @@ public class Loader
             if (je.TryGetProperty("implementations", out var jeImplementations))
             {
                 _loadImplementations(jeImplementations);
-            }
-            
-            if (je.TryGetProperty("scenes", out var jeScenes))
-            {
-                _loadScenes(jeScenes);
-            }
-
-            if (je.TryGetProperty("quests", out var jeQuests))
-            {
-                _loadQuests(jeQuests);
-            }
-
-            if (je.TryGetProperty("layers", out var jeLayers))
-            {
-                I.Get<LayerCatalogue>().LoadConfig(jeLayers);
             }
         }
     }
