@@ -63,12 +63,12 @@ public class Loader
     }
     
 
-    private void _loadToSerializable(JsonElement jeCurr, object target)
+    private void _loadToSerializable(JsonNode jnCurr, object target)
     {
         _engine = I.Get<Engine>();
 
         var iSerializable = target as ISerializable;
-        if (null == iSerializable)
+        if (iSerializable == null)
         {
             Error(
                 $"Trying to load config to object of type {target.GetType().Name} failed, not ISerializable.");
@@ -77,7 +77,8 @@ public class Loader
 
         try
         {
-            _engine.Run(iSerializable.SetupFrom(jeCurr));
+            // Assuming ISerializable.SetupFrom has been adapted to accept JsonNode
+            _engine.Run(iSerializable.SetupFrom(jnCurr));
         }
         catch (Exception e)
         {
@@ -88,19 +89,22 @@ public class Loader
 
     private void _loadToSerializable(string cassettePath, object target)
     {
-        String[] pathParts = cassettePath.Split('.');
-        var jeCurr = _jeRoot;
+        string[] pathParts = cassettePath.Split('.');
+        JsonNode jnCurr = _jnRoot;
         bool isInvalid = false;
+
         foreach (var part in pathParts)
         {
-            if (!jeCurr.TryGetProperty(part, out var jeNextPart))
+            if (jnCurr is JsonObject obj && obj.TryGetPropertyValue(part, out var jnNextPart))
+            {
+                jnCurr = jnNextPart;
+            }
+            else
             {
                 isInvalid = true;
                 Error($"Unable to resolve config path {cassettePath}: unable to find {part}.");
                 break;
             }
-
-            jeCurr = jeNextPart;
         }
 
         if (isInvalid)
@@ -108,7 +112,7 @@ public class Loader
             return;
         }
 
-        _loadToSerializable(jeCurr, target);
+        _loadToSerializable(jnCurr, target);
     }
 
 
@@ -126,7 +130,7 @@ public class Loader
              */
             foreach (var pair in jeImplementations.EnumerateObject())
             {
-                var factoryMethod = _createFactoryMethod(pair.Name, pair.Value);
+                var factoryMethod = CreateFactoryMethod(pair.Name, pair.Value);
                 
                 /*
                  * We are loading the implementations. The key name definitely is the
@@ -137,199 +141,11 @@ public class Loader
                 try
                 {
                     Type type = engine.rom.Loader.LoadType(strDefaultLoaderAssembly, interfaceName);
-                    I.Instance.RegisterFactory(type, _createFactoryMethod(pair.Name, pair.Value));
+                    I.Instance.RegisterFactory(type, CreateFactoryMethod(pair.Name, pair.Value));
                 }
                 catch (Exception e)
                 {
                     Warning($"Unable to load implementation type {pair.Name}: {e}");
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Warning($"Error reading implementations: {e}");
-        }
-    }
-
-
-    private ExecDesc _loadExecDesc(JsonElement je)
-    {
-        engine.meta.ExecDesc.ExecMode execMode = ExecDesc.ExecMode.Task;
-        if (je.TryGetProperty("mode", out var jeMode))
-        {
-            switch (jeMode.ValueKind)
-            {
-                case JsonValueKind.String:
-                    var str = jeMode.GetString();
-                    if (str != null)
-                    {
-                        switch (str)
-                        {
-                            case "constant":
-                                execMode = ExecDesc.ExecMode.Constant;
-                                break;
-                            default:
-                            case "task":
-                                execMode = ExecDesc.ExecMode.Task;
-                                break;
-                            case "parallel":
-                                execMode = ExecDesc.ExecMode.Parallel;
-                                break;
-                            case "applyParallel":
-                                execMode = ExecDesc.ExecMode.ApplyParallel;
-                                break;
-                            case "sequence":
-                                execMode = ExecDesc.ExecMode.Sequence;
-                                break;
-                        }
-                    }
-                    break;
-                case JsonValueKind.Number:
-                    execMode = (ExecDesc.ExecMode) jeMode.GetInt32();
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        string comment = null;
-        if (je.TryGetProperty("comment", out var jeComment))
-        {
-            comment = jeComment.GetString();
-        }
-
-        string configCondition = null;
-        if (je.TryGetProperty("configCondition", out var jeConfigCondition))
-        {
-            configCondition = jeConfigCondition.GetString();
-        }
-
-        string selector = null;
-        if (je.TryGetProperty("selector", out var jeSelector))
-        {
-            selector = jeSelector.GetString();
-        }
-
-        string target = null;
-        if (je.TryGetProperty("target", out var jeTarget))
-        {
-            target = jeTarget.GetString();
-        }
-
-        string implementation = null;
-        if (je.TryGetProperty("implementation", out var jeImplementation))
-        {
-            implementation = jeImplementation.GetString();
-        }
-
-        List<ExecDesc> children = new List<ExecDesc>();
-        if (je.TryGetProperty("children", out var jeChildren))
-        {
-            foreach (var jeChild in jeChildren.EnumerateArray())
-            {
-                children.Add(_loadExecDesc(jeChild));
-            }
-        }
-
-        if (children.Count == 0)
-        {
-            children = null;
-        }
-        
-        return new ExecDesc()
-        {
-            Mode = execMode,
-            Comment = comment,
-            ConfigCondition = configCondition,
-            Selector = selector,
-            Target = target,
-            Children = children,
-            Implementation = implementation
-        };
-    }
-    
-
-    private ExecDesc _loadFragmentOperators(JsonElement je)
-    {
-        try
-        {
-            var edRoot = _loadExecDesc(je);
-            I.Get<MetaGen>().EdRoot = edRoot;
-        }
-        catch (Exception e)
-        {
-            Warning($"Error reading fragment operators: {e}.");
-        }
-
-        return new ExecDesc();
-    }
-
-
-    private void _loadBuildingOperators(JsonElement je)
-    {
-        try
-        {
-            foreach (var jeOp in je.EnumerateArray())
-            {
-                string className = jeOp.GetProperty("className").GetString();
-                try
-                {
-                    IWorldOperator wop = _createFactoryMethod(null, jeOp)() as IWorldOperator;
-                    I.Get<MetaGen>().WorldBuildingOperators.Add(wop);
-                }
-                catch (Exception e)
-                {
-                    Warning($"Unable to instantiate world building operator {className}: {e}");
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Warning($"Error reading implementations: {e}");
-        }
-    }
-
-
-    private void _loadClusterOperators(JsonElement je)
-    {
-        try
-        {
-            foreach (var jeOp in je.EnumerateArray())
-            {
-                string className = jeOp.GetProperty("className").GetString();
-                try
-                {
-                    IClusterOperator cop = _createFactoryMethod(null, jeOp)() as IClusterOperator;
-                    I.Get<MetaGen>().ClusterOperators.Add(cop);
-                }
-                catch (Exception e)
-                {
-                    Warning($"Unable to instantiate world building operator {className}: {e}");
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Warning($"Error reading implementations: {e}");
-        }
-    }
-
-
-    private void _loadPopulatingOperators(JsonElement je)
-    {
-        try
-        {
-            foreach (var jeOp in je.EnumerateArray())
-            {
-                string className = jeOp.GetProperty("className").GetString();
-                try
-                {
-                    IWorldOperator wop = _createFactoryMethod(null, jeOp)() as IWorldOperator;
-                    I.Get<MetaGen>().WorldPopulatingOperators.Add(wop);
-                }
-                catch (Exception e)
-                {
-                    Warning($"Unable to instantiate world populating operator {className}: {e}");
                 }
             }
         }
@@ -421,38 +237,7 @@ public class Loader
     }
     
 
-    private void _loadMetaGen(JsonElement je)
-    {
-        try
-        {
-            if (je.TryGetProperty("buildingOperators", out var jeBuildingOperators))
-            {
-                _loadBuildingOperators(jeBuildingOperators);
-            }
-
-            if (je.TryGetProperty("clusterOperators", out var jeClusterOperators))
-            {
-                _loadClusterOperators(jeClusterOperators);
-            }
-
-            if (je.TryGetProperty("populatingOperators", out var jePopulatingOperators))
-            {
-                _loadPopulatingOperators(jePopulatingOperators);
-            }
-            
-            if (je.TryGetProperty("fragmentOperators", out var jeFragmentOperators))
-            {
-                _loadFragmentOperators(jeFragmentOperators);
-            }
-        }
-        catch (Exception e)
-        {
-            Warning($"Unable to setup metagen: {e}");
-        }
-    }
-
-   
-    private void _loadGlobalSettings(JsonElement jeGlobalSettings)
+       private void _loadGlobalSettings(JsonElement jeGlobalSettings)
     {
         try
         {
@@ -508,175 +293,166 @@ public class Loader
     /**
      * Return a factory method according to the description in the element.
      */
-    private Func<object> _createFactoryMethod(string? key, JsonElement jeValue)
+   public Func<object> CreateFactoryMethod(string? key, JsonNode jnValue)
+{
+    string strClassName = default;
+    string strMethodName = default;
+    CreationType creationType = CreationType.Undefined;
+    Action<object>? setupProperties = null;
+    bool haveConfig = false;
+    JsonNode jnConfig = null;
+    string cassettePath = null;
+
+    if (jnValue is JsonObject obj)
     {
-        string strClassName = default;
-        string strMethodName = default;
-        CreationType creationType = CreationType.Undefined;
-        Action<object>? setupProperties = null;
-        bool haveConfig = false;
-        JsonElement jeConfig = default;
-        string cassettePath = null;
-        
-        if (jeValue.ValueKind == JsonValueKind.Object)
+        if (obj.TryGetPropertyValue("config", out var configNode) && configNode is JsonObject)
         {
-            if (jeValue.TryGetProperty("config", out jeConfig)
-                && jeConfig.ValueKind == JsonValueKind.Object)
+            jnConfig = configNode;
+            haveConfig = true;
+        }
+
+        if (obj.TryGetPropertyValue("implementation", out var implNode))
+        {
+            string? strImplementation = implNode?.GetValue<string>();
+            if (!string.IsNullOrWhiteSpace(strImplementation))
             {
-                haveConfig = true;
-            }
-            
-            if(jeValue.TryGetProperty("implementation", out var jeImplementation))
-            {
-                string? strImplementation = jeImplementation.GetString();
-                if (!String.IsNullOrWhiteSpace(strImplementation))
-                {
-                    strMethodName = strImplementation;
-                    creationType = CreationType.FactoryMethod;
-                }
-            }
-            
-            if(jeValue.TryGetProperty("className", out var jeClassName))
-            {
-                string? strClassNameCand = jeClassName.GetString();
-                if (!String.IsNullOrWhiteSpace(strClassNameCand))
-                {
-                    strClassName = strClassNameCand;
-                    creationType = CreationType.Constructor;
-                }
-            }
-            
-            if (jeValue.TryGetProperty("cassettePath", out var jeCassettePath)
-                && jeCassettePath.ValueKind == JsonValueKind.String)
-            {
-                cassettePath = jeValue.GetProperty("cassettePath").GetString();
-            }
-            
-            if (jeValue.TryGetProperty("properties", out var jeProperties) 
-                && jeProperties.ValueKind == JsonValueKind.Object)
-            {
-                setupProperties = (object obj) =>
-                {
-                    foreach (var pair in jeProperties.EnumerateObject())
-                    {
-                        PropertyInfo prop = obj.GetType().GetProperty(
-                            pair.Name, BindingFlags.Public | BindingFlags.Instance);
-                        if(null != prop && prop.CanWrite)
-                        {
-                            switch (pair.Value.ValueKind)
-                            {
-                                case JsonValueKind.String:
-                                    prop.SetValue(obj, pair.Value.GetString(), null);
-                                    break;
-                                case JsonValueKind.Number:
-                                    prop.SetValue(obj, (float) pair.Value.GetDouble(), null);
-                                    break;
-                                case JsonValueKind.Object:
-                                {
-                                    SortedDictionary<string, string> dict = new();
-                                    foreach (var kvpDict in pair.Value.EnumerateObject())
-                                    {
-                                                
-                                        dict[kvpDict.Name] = kvpDict.Value.GetString();
-                                    }
-                                    prop.SetValue(obj, dict, null);
-                                } break;
-                            }
-                        }
-                    }
-                };
+                strMethodName = strImplementation;
+                creationType = CreationType.FactoryMethod;
             }
         }
-        
-        if (creationType == CreationType.Undefined)
+
+        if (obj.TryGetPropertyValue("className", out var classNode))
         {
-            if (key != null)
+            string? strClassNameCand = classNode?.GetValue<string>();
+            if (!string.IsNullOrWhiteSpace(strClassNameCand))
             {
-                strClassName = key;
+                strClassName = strClassNameCand;
                 creationType = CreationType.Constructor;
             }
         }
 
-        switch (creationType)
+        if (obj.TryGetPropertyValue("cassettePath", out var cassetteNode))
         {
-            default:
-            case CreationType.Undefined:
-                ErrorThrow<ArgumentException>($"Invalid factory definition for {jeValue.ToString()}");
-                return () => 
-                    null;
-            
-            case CreationType.Constructor:
-                return () =>
+            cassettePath = cassetteNode?.GetValue<string>();
+        }
+
+        if (obj.TryGetPropertyValue("properties", out var propsNode) && propsNode is JsonObject jnProperties)
+        {
+            setupProperties = (object instance) =>
+            {
+                foreach (var pair in jnProperties)
                 {
-                    var instance = engine.rom.Loader.LoadClass(
-                        strDefaultLoaderAssembly, strClassName);
-                    if (null != setupProperties) setupProperties(instance);
-                    if (haveConfig) _loadToSerializable(jeConfig, instance);
-                    return instance;
-                };
-            
-            case CreationType.FactoryMethod:
-                return () =>
-                {
-                    int lastDot = strMethodName.LastIndexOf('.');
-                    if (-1 == lastDot)
+                    PropertyInfo prop = instance.GetType().GetProperty(
+                        pair.Key, BindingFlags.Public | BindingFlags.Instance);
+                    if (prop != null && prop.CanWrite)
                     {
-                        ErrorThrow(
-                            $"Invalid implementation name string \"{strMethodName}\": Does not contain a last dot to mark the method.",
-                            m => new ArgumentException(m));
-                    }
+                        JsonNode val = pair.Value;
+                        if (val == null) continue;
 
-                    string className = strMethodName.Substring(0, lastDot);
-                    if (className.Length == 0)
-                    {
-                        ErrorThrow($"Invalid empty class name \"{strMethodName}\".",
-                            m => new ArgumentException(m));
-                    }
-
-                    string methodName = strMethodName.Substring(lastDot + 1);
-                    if (methodName.Length == 0)
-                    {
-                        ErrorThrow($"Invalid empty method name \"{strMethodName}\".",
-                            m => new ArgumentException(m));
-                    }
-
-                    Type t = Type.GetType(className);
-                    if (t == null)
-                    {
-                        foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+                        if (val is JsonValue jv)
                         {
-                            t = a.GetType(className);
-                            if (t != null)
+                            if (jv.TryGetValue<string>(out var s))
+                                prop.SetValue(instance, s, null);
+                            else if (jv.TryGetValue<double>(out var d))
+                                prop.SetValue(instance, (float)d, null);
+                        }
+                        else if (val is JsonObject nestedObj)
+                        {
+                            var dict = new SortedDictionary<string, string>();
+                            foreach (var kvpDict in nestedObj)
                             {
-                                break;
+                                dict[kvpDict.Key] = kvpDict.Value?.GetValue<string>();
                             }
+                            prop.SetValue(instance, dict, null);
                         }
                     }
-                    if (null == t)
-                    {
-                        ErrorThrow($"Class \"{className}\" not found.",
-                            m => new ArgumentException(m));
-                    }
-
-                    var methodInfo = t.GetMethod(methodName);
-                    if (null == methodInfo)
-                    {
-                        ErrorThrow(
-                            $"Method \"{methodName}\"(IDictionary<string, object>) not found in class \"{className}\".",
-                            m => new ArgumentException(m));
-                    }
-        
-                    /*
-                     * Finally, create the instance of the object we shall call.
-                     */
-                    var instance = methodInfo.Invoke(null, new object[] {});
-                    if (null != setupProperties) setupProperties(instance);
-                    if (haveConfig) _loadToSerializable(jeConfig, instance);
-                    if (null != cassettePath) _loadToSerializable(cassettePath, instance);
-                    return instance;
-                };
+                }
+            };
         }
     }
+
+    if (creationType == CreationType.Undefined)
+    {
+        if (key != null)
+        {
+            strClassName = key;
+            creationType = CreationType.Constructor;
+        }
+    }
+
+    switch (creationType)
+    {
+        default:
+        case CreationType.Undefined:
+            ErrorThrow<ArgumentException>($"Invalid factory definition for {jnValue.ToJsonString()}");
+            return () => null;
+
+        case CreationType.Constructor:
+            return () =>
+            {
+                var instance = engine.rom.Loader.LoadClass(
+                    strDefaultLoaderAssembly, strClassName);
+                setupProperties?.Invoke(instance);
+                if (haveConfig) _loadToSerializable(jnConfig, instance);
+                return instance;
+            };
+
+        case CreationType.FactoryMethod:
+            return () =>
+            {
+                int lastDot = strMethodName.LastIndexOf('.');
+                if (lastDot == -1)
+                {
+                    ErrorThrow(
+                        $"Invalid implementation name string \"{strMethodName}\": Does not contain a last dot to mark the method.",
+                        m => new ArgumentException(m));
+                }
+
+                string className = strMethodName.Substring(0, lastDot);
+                if (className.Length == 0)
+                {
+                    ErrorThrow($"Invalid empty class name \"{strMethodName}\".",
+                        m => new ArgumentException(m));
+                }
+
+                string methodName = strMethodName.Substring(lastDot + 1);
+                if (methodName.Length == 0)
+                {
+                    ErrorThrow($"Invalid empty method name \"{strMethodName}\".",
+                        m => new ArgumentException(m));
+                }
+
+                Type t = Type.GetType(className);
+                if (t == null)
+                {
+                    foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        t = a.GetType(className);
+                        if (t != null) break;
+                    }
+                }
+                if (t == null)
+                {
+                    ErrorThrow($"Class \"{className}\" not found.",
+                        m => new ArgumentException(m));
+                }
+
+                var methodInfo = t.GetMethod(methodName);
+                if (methodInfo == null)
+                {
+                    ErrorThrow(
+                        $"Method \"{methodName}\" not found in class \"{className}\".",
+                        m => new ArgumentException(m));
+                }
+
+                var instance = methodInfo.Invoke(null, Array.Empty<object>());
+                setupProperties?.Invoke(instance);
+                if (haveConfig) _loadToSerializable(jnConfig, instance);
+                if (cassettePath != null) _loadToSerializable(cassettePath, instance);
+                return instance;
+            };
+    }
+}
 
 
     private void _loadQuests(JsonElement jeQuests)
@@ -688,7 +464,7 @@ public class Loader
                 try
                 {
                     string questName = pair.Name;
-                    I.Get<engine.quest.Manager>().RegisterFactory(questName, _ => _createFactoryMethod(pair.Name, pair.Value)() as engine.quest.IQuest);
+                    I.Get<engine.quest.Manager>().RegisterFactory(questName, _ => CreateFactoryMethod(pair.Name, pair.Value)() as engine.quest.IQuest);
                 }
                 catch (Exception e)
                 {
@@ -868,7 +644,7 @@ public class Loader
                 {
                     try
                     {
-                        var factory = _createFactoryMethod(null, jeRootModule);
+                        var factory = CreateFactoryMethod(null, jeRootModule);
                         IModule mRoot = factory() as IModule;
                         return mRoot;
                     }

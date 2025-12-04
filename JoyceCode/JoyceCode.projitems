@@ -88,6 +88,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\scheduler\Scheduler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\scheduler\WorkerQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetPointConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\MetaGenLoader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GenericIdRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
