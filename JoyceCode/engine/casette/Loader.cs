@@ -34,8 +34,6 @@ public class Loader
     
     //  private SortedDictionary<string, ISerializable> _mapLoaders = new();
 
-    public SortedSet<string> AvailableAnimations = new();
-
     private List<LoaderSubscription> _whenLoadedList = new();
     
     private void _loadToSerializable(JsonNode jnCurr, object target)
@@ -91,87 +89,6 @@ public class Loader
     }
 
     
-    private void _loadTextureAtlas(JsonElement jeAtlas)
-    {
-        var tc = I.Get<TextureCatalogue>();
-        string atlasTag = jeAtlas.GetProperty("tag").GetString();
-        string atlasUri = jeAtlas.GetProperty("uri").GetString();
-
-        if (_traceResources) Trace($"LoadTextureAtlas: Added Resource \"{atlasTag}\" from {atlasUri}.");
-        string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), atlasUri); 
-        if (!File.Exists(pathProbe))
-        {
-            Trace($"Warning: resource file for {pathProbe} does not exist.");
-        }
-        _iAssetImpl.AddAssociation(atlasTag, atlasUri);
-
-        
-        var jeTextures = jeAtlas.GetProperty("textures");
-        foreach (var pairTexture in jeTextures.EnumerateObject())
-        {
-            JsonElement jet = pairTexture.Value;
-            string textureTag = pairTexture.Name;
-            float u = jet.GetProperty("u").GetSingle();
-            float v = jet.GetProperty("v").GetSingle();
-            float uScale = jet.GetProperty("uScale").GetSingle();
-            float vScale = jet.GetProperty("vScale").GetSingle();
-            tc.AddAtlasEntry(
-                textureTag, atlasTag, 
-                new Vector2(u,v), 
-                new Vector2(uScale, vScale),
-                jet.GetProperty("width").GetInt32(),
-                jet.GetProperty("height").GetInt32(),
-                jeAtlas.GetProperty("isMipmap").GetBoolean()
-                );
-        }
-    }
-
-    
-    /**
-     * Read the textures: each of the object keys contains the resource
-     * tag for a json file containing the texture atlas. We shall try
-     * to open that one.
-     */
-    private void _loadTextures(JsonElement jeTextures)
-    {
-        try
-        {
-            if (jeTextures.TryGetProperty("channels", out var jpChannels))
-            {
-
-                foreach (var kvpChannels in jpChannels.EnumerateObject())
-                {
-                    JsonElement jeChannelDesc = kvpChannels.Value;
-                    string file = jeChannelDesc.GetProperty("file").GetString();
-                    try
-                    {
-                        JsonDocument jdocAtlas = JsonDocument.Parse(
-                            engine.Assets.Open(file), new()
-                            {
-                                AllowTrailingCommas = true
-                            });
-                        var jeAtlas = jdocAtlas.RootElement;
-
-                        JsonElement jeAtlasList = jeAtlas.GetProperty("atlasses");
-                        foreach (var pairAtlas in jeAtlasList.EnumerateObject())
-                        {
-                            _loadTextureAtlas(pairAtlas.Value);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Warning($"Unable to parse resource object for texture: {e}");
-                    }
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Warning($"Unable to load textures: {e}");
-        }
-    }
-    
-
     enum CreationType
     {
         Undefined = 0,
@@ -404,104 +321,6 @@ public class Loader
     }
 
 
-    private void _loadAnimationsTo(JsonElement je)
-    {
-        string pathProbe;
-        try
-        {
-            foreach (var jeRes in je.EnumerateArray())
-            {
-                string? uriModel = jeRes.GetProperty("modelUrl").GetString();
-                if (null == uriModel)
-                {
-                    throw new InvalidDataException("no modelUrl specified in resource.");
-                }
-                
-                string? uriAnimations = jeRes.GetProperty("animationUrls").GetString();
-                if (null == uriAnimations)
-                {
-                    throw new InvalidDataException("no animationsUrl specified in resource.");
-                }
-
-                if (_traceResources) Trace($"LoadAnimationsTo: Added Animation \"{uriModel}\" from {uriModel}.");
-                pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel); 
-                if (!File.Exists(pathProbe))
-                {
-                    Trace($"Warning: animation file for {pathProbe} does not exist.");
-                }
-
-                AvailableAnimations.Add($"{uriModel};{uriAnimations}");
-                
-                var strFileName =
-                    ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
-                        Path.GetFileName(uriModel),
-                        uriAnimations);
-                if (_traceResources) Trace($"LoadAnimationsTo: Added Animation {uriModel} with {uriAnimations} at {strFileName}.");
-                pathProbe = Path.Combine("generated", strFileName); 
-                if (!File.Exists(pathProbe))
-                {
-                    Trace($"Warning: resource file for {pathProbe} does not exist.");
-                }
-                _iAssetImpl.AddAssociation(strFileName, pathProbe);
-                
-            }
-        }
-        catch (Exception e)
-        {
-            Trace($"Error loading resource: {e}");
-        }
-
-    }
-
-    
-    private void _loadResourcesTo(JsonElement je)
-    {
-        try
-        {
-            foreach (var jeRes in je.EnumerateArray())
-            {
-                string? uri = jeRes.GetProperty("uri").GetString();
-                if (null == uri)
-                {
-                    throw new InvalidDataException("no uri specified in resource.");
-                }
-                
-
-                string? tag = null;
-                if (jeRes.TryGetProperty("tag", out var jpTag))
-                {
-                    tag = jpTag.GetString();
-                }
-                if (null == tag)
-                {
-                    int idx = uri.LastIndexOf('/');
-                    if (idx != -1 && idx != uri.Length - 1)
-                    {
-                        tag = uri[(idx + 1)..];
-                    }
-                    else
-                    {
-                        tag = uri;
-                    }
-                }
-
-                if (_traceResources) Trace($"LoadResourcesTo: Added Resource \"{tag}\" from {uri}.");
-                string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uri); 
-                if (!File.Exists(pathProbe))
-                {
-                    Trace($"Warning: resource file for {pathProbe} does not exist.");
-                }
-                _iAssetImpl.AddAssociation(tag, uri);
-            }
-        }
-        catch (Exception e)
-        {
-            Trace($"Error loading resource: {e}");
-        }
-
-    }
-
-    
     private IModule _loadRootModule()
     {
         try
@@ -559,62 +378,14 @@ public class Loader
     }
 
     
-    public void SetAssetLoaderAssociations(IAssetImplementation iasset)
-    {
-        _iAssetImpl = iasset;
-        
-        if (_jeRoot.TryGetProperty("resources", out var jeResources))
-        {
-            if (jeResources.TryGetProperty("list", out var jeList))
-            {
-                _loadResourcesTo(jeList);
-            }
-            else
-            {
-                Error("Warning: No resources/list section found in game.");
-            }
-        }
-        else
-        {
-            Error("Warning: No resources section found in game.");
-        }
-        
-        if (_jeRoot.TryGetProperty("animations", out var jeAnimations))
-        {
-            if (jeAnimations.TryGetProperty("list", out var jeList))
-            {
-                _loadAnimationsTo(jeList);
-            }
-            else
-            {
-                Error("Warning: No resources/list section found in game.");
-            }
-        }
-        else
-        {
-            Error("Warning: No resources section found in game.");
-        }
-        
-        if (_jeRoot.TryGetProperty("textures", out var jeTextures))
-        {
-            _loadTextures(jeTextures);
-        }
-        else
-        {
-            Error("Warning: No textures section found in game.");
-        }
-
-
-    }
-
-
     public void InterpretConfig()
     {
         if (_jeRoot.TryGetProperty("defaults", out var jeDefaults))
         {
             _loadDefaults(jeDefaults);
         }
-        _loadGameConfig(_jeRoot);
+        engine.GlobalSettings.Instance().StartLoading();
+
         lock (_lo)
         {
             _isLoaded = true;

@@ -118,8 +118,8 @@ public class DesktopMain
             cassetteLoader = new engine.casette.Loader(streamJson);
             I.Register<engine.casette.Loader>(() => cassetteLoader);
         }
+        
         engine.Assets.SetAssetImplementation(iassetDesktop);
-        cassetteLoader.SetAssetLoaderAssociations(iassetDesktop);
 
         
         IWindow iWindow = null;

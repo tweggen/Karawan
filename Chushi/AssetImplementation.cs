@@ -4,12 +4,12 @@ using static engine.Logger;
 
 namespace Chushi;
 
-public class AssetImplementation : IAssetImplementation
+public class AssetImplementation : AAssetImplementation
 {
     private object _lo = new();
     private SortedDictionary<string, string> _mapAssociations = new();
 
-    public void AddAssociation(string tag, string uri)
+    public override void AddAssociation(string tag, string uri)
     {
         lock (_lo)
         {
@@ -17,13 +17,13 @@ public class AssetImplementation : IAssetImplementation
         }
     }
 
-    public IReadOnlyDictionary<string, string> GetAssets()
+    public override IReadOnlyDictionary<string, string> GetAssets()
     {
         throw new NotImplementedException();
     }
 
 
-    public bool Exists(in string filename)
+    public override bool Exists(in string filename)
     {
         lock (_lo)
         {
@@ -40,7 +40,7 @@ public class AssetImplementation : IAssetImplementation
      * - then, we try to access the uri in the resource path.
      *   (this would be used while debugging).
      */
-    public System.IO.Stream Open(in string tag)
+    public override System.IO.Stream Open(in string tag)
     {
         string? uri;
         lock (_lo)

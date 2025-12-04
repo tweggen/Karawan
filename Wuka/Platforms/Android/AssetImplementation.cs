@@ -5,11 +5,11 @@ using Android.Content.Res;
 namespace Wuka;
 
 
-public class AssetImplementation : engine.IAssetImplementation
+public class AssetImplementation : engine.AAssetImplementation
 {
     private AssetManager _assetManager;
 
-    public System.IO.Stream Open(in string filename)
+    public override System.IO.Stream Open(in string filename)
     {
         string realName = /*"Platforms/Android/" + */ filename;
         using (var orgStream = _assetManager.Open(realName))
@@ -25,7 +25,7 @@ public class AssetImplementation : engine.IAssetImplementation
     }
 
     
-    public bool Exists(in string filename)
+    public override bool Exists(in string filename)
     {
         try
         {
@@ -41,14 +41,14 @@ public class AssetImplementation : engine.IAssetImplementation
     }
 
 
-    public void AddAssociation(string tag, string uri)
+    public override void AddAssociation(string tag, string uri)
     {
         /*
          * We don't need that on android 
          */
     }
 
-    public IReadOnlyDictionary<string, string> GetAssets()
+    public override IReadOnlyDictionary<string, string> GetAssets()
     {
         throw new NotImplementedException();
     }
