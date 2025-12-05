@@ -222,7 +222,7 @@ public class Props
     {
         _dictConfigParams = new Dictionary<string, object>();
         _rodictConfigParams = new ReadOnlyDictionary<string, object>(_dictConfigParams);
-        I.Get<engine.casette.Loader>().WhenLoaded("properties", _whenLoaded);
+        I.Get<engine.casette.Loader>().WhenLoaded("/properties", _whenLoaded);
     }
     
 

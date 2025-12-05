@@ -124,7 +124,7 @@ public class GlobalSettings
 
     public void StartLoading()
     {
-        I.Get<engine.casette.Loader>().WhenLoaded("globalSettings", _whenLoaded);
+        I.Get<engine.casette.Loader>().WhenLoaded("/globalSettings", _whenLoaded);
     }
     
     

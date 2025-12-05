@@ -299,7 +299,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
     {
         _engine = I.Get<Engine>();
         I.Get<CreatorRegistry>().RegisterCreator(this);
-        I.Get<engine.casette.Loader>().WhenLoaded("quests", _whenLoaded);
+        I.Get<engine.casette.Loader>().WhenLoaded("/quests", _whenLoaded);
     }
 }
 

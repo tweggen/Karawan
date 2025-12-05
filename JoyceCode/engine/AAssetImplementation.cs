@@ -239,9 +239,9 @@ public abstract class AAssetImplementation : IAssetImplementation
     
     public AAssetImplementation()
     {
-        I.Get<engine.casette.Loader>().WhenLoaded("resources/list", _whenLoadedResources);
-        I.Get<engine.casette.Loader>().WhenLoaded("animations", _whenLoadedAnimations);
-        I.Get<engine.casette.Loader>().WhenLoaded("textures", _whenLoadedTextures);
+        I.Get<engine.casette.Loader>().WhenLoaded("/resources/list", _whenLoadedResources);
+        I.Get<engine.casette.Loader>().WhenLoaded("/animations", _whenLoadedAnimations);
+        I.Get<engine.casette.Loader>().WhenLoaded("/textures", _whenLoadedTextures);
     }
     
 

@@ -1165,7 +1165,7 @@ public class Engine
 
     /**
      * Load default resources into the resource cache.
-     * These might be required ot be availabel even if the
+     * These might be required to be available even if the
      * platform still is loading.
      */
     private void _loadDefaultResources()

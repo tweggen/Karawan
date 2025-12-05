@@ -120,6 +120,7 @@ public class DesktopMain
         
         var iassetDesktop = new Karawan.AssetImplementation();
         engine.Assets.SetAssetImplementation(iassetDesktop);
+        cassetteLoader.InterpretConfig();
 
         
         IWindow iWindow = null;
@@ -128,7 +129,7 @@ public class DesktopMain
 #if DEBUG
         startFullscreen = false;
 #else
-            startFullscreen = true;
+        startFullscreen = true;
 #endif
 
         {
@@ -185,7 +186,6 @@ public class DesktopMain
             return api;
         });
 
-        cassetteLoader.InterpretConfig();
         cassetteLoader.StartGame();
         
         e.Execute();
