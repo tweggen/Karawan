@@ -110,7 +110,6 @@ public class ConsoleMain
         }
 
         engine.Assets.SetAssetImplementation(iassetDesktop);
-        cassetteLoader.SetAssetLoaderAssociations(iassetDesktop);
 
 
         I.Register<engine.Engine>(() => new engine.Engine(null));
@@ -124,7 +123,7 @@ public class ConsoleMain
         Trace($"Running compilation tasks...");
         List<Task> listTasks = new();
 
-        var availableAnims = cassetteLoader.AvailableAnimations;
+        var availableAnims = iassetDesktop.AvailableAnimations;
         foreach (var strAnimKey in availableAnims)
         {
             string uriModel;
