@@ -263,7 +263,7 @@ public class SceneSequencer : IDisposable
     
     private void _loadScenes(JsonNode node)
     {
-        var sceneSequencer = I.Get<SceneSequencer>();
+        var sceneSequencer = this;
 
         // Access "catalogue" safely
         var catalogueNode = node?["catalogue"];

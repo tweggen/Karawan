@@ -194,7 +194,7 @@ public class Props
                 {
                     try
                     {
-                        _setJsonNode(kvp.Value, o => engine.Props.Set(kvp.Key, o));
+                        _setJsonNode(kvp.Value, o => _set(kvp.Key, o));
                     }
                     catch (Exception e)
                     {
