@@ -358,6 +358,8 @@ public class MetaGen
         MinPos = new Vector3(-MaxWidth / 2f + 1f, 0f, -MaxWidth / 2f + 1f);
 
         WorldBuildingOperators.Add(new engine.world.GenerateClustersOperator(_myKey));
+
+        MetaGenLoader metaGenLoader = new(this);
     }
 
 

@@ -82,7 +82,7 @@ public class MetaGenLoader
         try
         {
             var edRoot = _loadExecDesc(node);
-            I.Get<MetaGen>().EdRoot = edRoot;
+            _metaGen.EdRoot = edRoot;
         }
         catch (Exception e)
         {
@@ -106,7 +106,7 @@ public class MetaGenLoader
                     {
                         IWorldOperator wop = I.Get<engine.casette.Loader>()
                             .CreateFactoryMethod(null, opNode)() as IWorldOperator;
-                        I.Get<MetaGen>().WorldBuildingOperators.Add(wop);
+                        _metaGen.WorldBuildingOperators.Add(wop);
                     }
                     catch (Exception e)
                     {
@@ -135,7 +135,7 @@ public class MetaGenLoader
                     {
                         IClusterOperator cop = I.Get<engine.casette.Loader>()
                             .CreateFactoryMethod(null, opNode)() as IClusterOperator;
-                        I.Get<MetaGen>().ClusterOperators.Add(cop);
+                        _metaGen.ClusterOperators.Add(cop);
                     }
                     catch (Exception e)
                     {
@@ -164,7 +164,7 @@ public class MetaGenLoader
                     {
                         IWorldOperator wop = I.Get<engine.casette.Loader>()
                             .CreateFactoryMethod(null, opNode)() as IWorldOperator;
-                        I.Get<MetaGen>().WorldPopulatingOperators.Add(wop);
+                        _metaGen.WorldPopulatingOperators.Add(wop);
                     }
                     catch (Exception e)
                     {
