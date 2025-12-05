@@ -271,6 +271,12 @@ public class Loader
         return null;
     }
     
+    
+    public static Type LoadType(string fullClassName)
+    {
+        return LoadType(_strDefaultLoaderAssembly, fullClassName);
+    }
+    
 
     public static object? LoadClass(string dllPath, string fullClassName)
     {

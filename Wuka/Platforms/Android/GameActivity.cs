@@ -165,12 +165,6 @@ namespace Wuka
                 _triggeredGame = true;
             }
 
-            /*
-             * Setup singletons and statics
-             */
-            var assetManagerImplementation = new Wuka.AssetImplementation(Assets);
-            engine.Assets.SetAssetImplementation(assetManagerImplementation);
-
             var options = ViewOptions.Default;
             options.API = new GraphicsAPI(ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(3, 0));
             options.FramesPerSecond = 60;
@@ -210,7 +204,13 @@ namespace Wuka
                 System.Console.WriteLine("DOTNET silicon desert "+rootDepends);
             }
             engine.casette.Loader cassetteLoader = new(engine.Assets.Open("nogame.json"));
-            cassetteLoader.SetAssetLoaderAssociations(assetManagerImplementation);
+
+            /*
+             * Setup singletons and statics
+             */
+            var assetManagerImplementation = new Wuka.AssetImplementation(Assets);
+            engine.Assets.SetAssetImplementation(assetManagerImplementation);
+            
             cassetteLoader.InterpretConfig();
             cassetteLoader.StartGame();
             

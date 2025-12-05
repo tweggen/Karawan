@@ -7,5 +7,5 @@ namespace engine;
 public interface ISerializable
 {
     public void SaveTo(JsonObject jo);
-    public System.Func<Task> SetupFrom(JsonElement je);
+    public System.Func<Task> SetupFrom(JsonNode? je);
 }

@@ -105,7 +105,6 @@ public class DesktopMain
          * Bootstrap game by directly reading game config, setting up
          * asset implementation with the pathes.
          */
-        var iassetDesktop = new Karawan.AssetImplementation();
         engine.casette.Loader cassetteLoader;
         var cwd = System.IO.Directory.GetCurrentDirectory();
         Console.WriteLine($"CWD is {cwd}");
@@ -119,6 +118,7 @@ public class DesktopMain
             I.Register<engine.casette.Loader>(() => cassetteLoader);
         }
         
+        var iassetDesktop = new Karawan.AssetImplementation();
         engine.Assets.SetAssetImplementation(iassetDesktop);
 
         

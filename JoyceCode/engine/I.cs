@@ -24,7 +24,9 @@ public sealed class I
     
     private object _lo = new();
     private Dictionary<Type, InstanceEntry> _mapInstances = new();
-
+    private bool _haveImplementationLoader = false;
+    private ImplementationLoader _implementationLoader = null;
+    
 
     public IEnumerable<Type> GetTypes()
     {
@@ -132,6 +134,23 @@ public sealed class I
     }
 
 
+    public void StartLoading()
+    {
+        bool doLoad = false;
+        lock (_lo)
+        {
+            if (!_haveImplementationLoader)
+            {
+                doLoad = true;
+            }
+        }
+        if (doLoad)
+        {
+            _implementationLoader = new ImplementationLoader();
+        }
+    }
+    
+    
     private I()
     { }
 

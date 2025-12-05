@@ -18,27 +18,32 @@ public class PickableDirectory : ObjectFactory<string, PickableDescription>, eng
         throw new System.NotImplementedException();
     }
 
-    public Func<Task> SetupFrom(JsonElement je) 
+    public Func<Task> SetupFrom(JsonNode jn)
     {
-        foreach (var jp in je.EnumerateObject())
+        if (jn is JsonObject obj)
         {
-            var path = jp.Name;
-            var jeV = jp.Value;
-            
-            
-            PickableDescription pd = new()
+            foreach (var kvp in obj)
             {
-                Path = path,
-                Name = jeV.GetProperty("name").GetString(),
-                Description = jeV.TryGetProperty("description", out var jeDescription) ? jeDescription.GetString() : null,
-                UseAction = jeV.TryGetProperty("useAction", out var jeUseAction) ? new GameAction(jeUseAction.GetString()) : null,
-                Weight = jeV.TryGetProperty("weight", out var jeWeight) ? jeWeight.GetSingle() : 0f,
-                Volume = jeV.TryGetProperty("volume", out var jeVolume) ? jeVolume.GetSingle() : 0f,
-            };
+                var path = kvp.Key;
+                var node = kvp.Value;
 
-            FindAdd(path, pd);
+                PickableDescription pd = new()
+                {
+                    Path = path,
+                    Name = node?["name"]?.GetValue<string>(),
+                    Description = node?["description"]?.GetValue<string>(),
+                    UseAction = node?["useAction"] is JsonNode useActionNode 
+                        ? new GameAction(useActionNode.GetValue<string>()) 
+                        : null,
+                    Weight = node?["weight"]?.GetValue<float>() ?? 0f,
+                    Volume = node?["volume"]?.GetValue<float>() ?? 0f,
+                };
+
+                FindAdd(path, pd);
+            }
         }
 
         return () => Task.CompletedTask;
     }
+
 }

@@ -63,24 +63,9 @@ public class Loader
     private void _loadToSerializable(string cassettePath, object target)
     {
         string[] pathParts = cassettePath.Split('.');
-        JsonNode jnCurr = _jnRoot;
-        bool isInvalid = false;
+        JsonNode? jnCurr = _mix.GetTree(cassettePath);
 
-        foreach (var part in pathParts)
-        {
-            if (jnCurr is JsonObject obj && obj.TryGetPropertyValue(part, out var jnNextPart))
-            {
-                jnCurr = jnNextPart;
-            }
-            else
-            {
-                isInvalid = true;
-                Error($"Unable to resolve config path {cassettePath}: unable to find {part}.");
-                break;
-            }
-        }
-
-        if (isInvalid)
+        if (jnCurr == null)
         {
             return;
         }
@@ -305,48 +290,29 @@ public class Loader
         }
     }
 
-    private void _loadGameConfig(JsonElement je)
-    {
-        /*
-         * If I'm running in compile mode I am not supposed to load
-         * all the implementations that follow.
-         */
-        if (engine.GlobalSettings.Get("joyce.CompileMode") != "true")
-        {
-            if (je.TryGetProperty("implementations", out var jeImplementations))
-            {
-                _loadImplementations(jeImplementations);
-            }
-        }
-    }
-
-
     private IModule _loadRootModule()
     {
+        JsonNode? jnRootModule;
         try
         {
-            if (_jeRoot.TryGetProperty("modules", out var jeModules))
-            {
-                if (jeModules.TryGetProperty("root", out var jeRootModule))
-                {
-                    try
-                    {
-                        var factory = CreateFactoryMethod(null, jeRootModule);
-                        IModule mRoot = factory() as IModule;
-                        return mRoot;
-                    }
-                    catch (Exception e)
-                    {
-                        ErrorThrow<ArgumentException>($"Exception while instantiating root module: {e}");
-                    }
-                }
-            }
+             jnRootModule = _mix.GetTree("/modules/root");
         }
         catch (Exception e)
         {
             ErrorThrow<ArgumentException>($"Unable to find root module definition.");
+            return null;
         }
-        
+            
+        try
+        {
+            var factory = CreateFactoryMethod(null, jnRootModule);
+            IModule mRoot = factory() as IModule;
+            return mRoot;
+        }
+        catch (Exception e)
+        {
+            ErrorThrow<ArgumentException>($"Exception while instantiating root module: {e}");
+        }
 
         return null;
     }
@@ -384,8 +350,17 @@ public class Loader
         {
             _loadDefaults(jeDefaults);
         }
+        
+        /*
+         * Now that the main game object has been identified, load the global settings.
+         */
         engine.GlobalSettings.Instance().StartLoading();
-
+        
+        /*
+         * With the global settings in place we can trigger loading the actual instances.
+         */
+        I.Instance.StartLoading();
+        
         lock (_lo)
         {
             _isLoaded = true;
