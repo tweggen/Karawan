@@ -194,21 +194,24 @@ public class Model
     public void BakeAnimations(string strModelBaseBone, List<string> cpuNodes)
     {
         bool haveBaked = false;
-        try
+        if (GlobalSettings.Get("joyce.CompileMode") != "true")
         {
-
-            if (TryLoadModelAnimationCollection(out var animcoll))
+            try
             {
-                if (animcoll != null)
+
+                if (TryLoadModelAnimationCollection(out var animcoll))
                 {
-                    AnimationCollection.UseBakedAnimationsFrom(animcoll);
-                    haveBaked = true;
+                    if (animcoll != null)
+                    {
+                        AnimationCollection.UseBakedAnimationsFrom(animcoll);
+                        haveBaked = true;
+                    }
                 }
             }
-        }
-        catch (Exception e)
-        {
-            Warning($"Exception while reading pre-baked data: {e}");
+            catch (Exception e)
+            {
+                Warning($"Exception while reading pre-baked data: {e}");
+            }
         }
 
         if (!haveBaked)

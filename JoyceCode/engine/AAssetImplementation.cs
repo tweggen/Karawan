@@ -110,10 +110,15 @@ public abstract class AAssetImplementation : IAssetImplementation
                     if (_traceResources)
                         Trace($"LoadAnimationsTo: Added Animation {uriModel} with {uriAnimations} at {strFileName}.");
 
-                    pathProbe = Path.Combine("generated", strFileName);
-                    if (!File.Exists(pathProbe))
-                    {
-                        Trace($"Warning: resource file for {pathProbe} does not exist.");
+                    /*
+                     * If we are not compiling, probe for the baked animation file.
+                     */
+                    if (GlobalSettings.Get("joyce.CompileMode") != "true") {
+                        pathProbe = Path.Combine("generated", strFileName);
+                        if (!File.Exists(pathProbe))
+                        {
+                            Trace($"Warning: resource file for {pathProbe} does not exist.");
+                        }
                     }
 
                     this.AddAssociation(strFileName, pathProbe);

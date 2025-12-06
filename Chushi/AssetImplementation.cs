@@ -42,12 +42,14 @@ public class AssetImplementation : AAssetImplementation
      */
     public override System.IO.Stream Open(in string tag)
     {
+        string strErrors = "";
+        
         string? uri;
         lock (_lo)
         {
             if (!_mapAssociations.TryGetValue(tag, out uri))
             {
-                Warning($"Attempt to open unknown resource \"{tag}\".");
+                strErrors += $"Attempt to open unknown resource \"{tag}\".";
             }
         }
         string resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
@@ -60,7 +62,7 @@ public class AssetImplementation : AAssetImplementation
         }
         catch (System.Exception e)
         {
-            Error($"Unable to open file \"{resourcePath + tag}\" for reading: {e}");
+            strErrors += $"Unable to open file \"{resourcePath + tag}\" for reading: {e}";
         }
 
         if (uri != null)
@@ -70,11 +72,11 @@ public class AssetImplementation : AAssetImplementation
                 return stream;
             } catch (System.Exception e)
             {
-            Error($"Unable to open file \"{resourcePath + uri}\" for reading: {e}");
-
+                strErrors += $"Unable to open file \"{resourcePath + uri}\" for reading: {e}";
             }
         }
 
-        return stream;
+        Error($"Error while opening tag {tag}: {strErrors}.");
+        return null;
     }
 }
