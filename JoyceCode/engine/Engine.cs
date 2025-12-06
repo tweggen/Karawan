@@ -1286,8 +1286,11 @@ public class Engine
 
         u.RunEngineTest(this);
         
-        _loadDefaultResources();
-        
         _isCompiling = GlobalSettings.Get("joyce.CompileMode") == "true";
+
+        if (!_isCompiling)
+        {
+            _loadDefaultResources();
+        }
     }
 }
