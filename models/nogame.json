@@ -4,8 +4,133 @@
       "assembly": "nogame.dll"
     }
   },
-  "globalSettings":  { "__include__":  "json/globalSettings.json" },
-  "implementations": { "__include__":  "json/implementations.json" },
+  "globalSettings":  {
+  "nogame.CreateOSD": true,
+  "alt.nogame.framebuffer.resolution": "1600x900",
+  "nogame.framebuffer.resolution": "368x207",
+  "nogame.CreateMap": true,
+  "nogame.CreateMiniMap": true,
+  "nogame.LogosScene.PlayTitleMusic": "true",
+  "engine.physics.TraceCalls": false,
+  "debug.option.forceTouchInterface": "false",
+  "debug.option.mouseEnabled": "false",
+  "debug.option.autoLogin": "none"
+},
+  "implementations": {
+  "builtin.modules.ScreenComposer": null,
+  "engine.news.InputEventPipeline": null,
+  "engine.world.CreatorRegistry": null,
+  "builtin.entitySaver.ConverterRegistry": null,
+  "engine.Saver": null,
+  "engine.DBStorage": null,
+  "engine.physics.ShapeFactory": null,
+  "engine.LayerCatalogue": null,
+  "engine.gongzuo.API": null,
+  "builtin.modules.satnav.desc.NavMap": null,
+  "engine.world.MetaGen": null,
+  "engine.behave.SpawnController": null,
+  "nogame.config.Module": null,
+  "nogame.modules.AutoSave": null,
+  "builtin.tools.CameraWatcher": null,
+  "nogame.modules.shop.Module": null,
+  "nogame.modules.osd.Display": null,
+  "nogame.modules.osd.Camera": null,
+  "builtin.controllers.InputMapper": {
+    "properties": {
+      "MapLogicalToDescription":{
+        "<interact>": "Interact with your environment.",
+        "<change>": "Change something about you",
+        "<map>": "Toggle map",
+        "<menu>": "Toggle menu",
+        "<developer>": "Toggle developer view"
+      },
+      "MapButtonToLogical": {
+        "input.key.pressed:e": "input.button.pressed:<interact>",
+        "input.key.released:e": "input.button.released:<interact>",
+        "input.gamepad.button.pressed:Y": "input.button.pressed:<interact>",
+        "input.gamepad.button.released:Y": "input.button.released:<interact>",
+        "input.key.pressed:f": "input.button.pressed:<change>",
+        "input.key.released:f": "input.button.released:<change>",
+        "input.gamepad.button.pressed:X": "input.button.pressed:<change>",
+        "input.gamepad.button.released:X": "input.button.released:<change>",
+        "input.key.pressed:(escape)": "input.button.pressed:<menu>",
+        "input.key.released:(escape)": "input.button.released:<menu>",
+        "input.gamepad.button.pressed:Start": "input.button.pressed:<menu>",
+        "input.gamepad.button.released:Start": "input.button.released:<menu>",
+        "input.key.pressed:(tab)": "input.button.pressed:<map>",
+        "input.key.released:(tab)": "input.button.released:<map>",
+        "input.gamepad.button.pressed:Back": "input.button.pressed:<map>",
+        "input.gamepad.button.released:Back": "input.button.released:<map>",
+        "input.key.pressed: ": "input.button.pressed:<jump>",
+        "input.key.released: ": "input.button.released:<jump>",
+        "input.gamepad.button.pressed:A": "input.button.pressed:<jump>",
+        "input.gamepad.button.released:A": "input.button.released:<jump>",
+        "input.key.pressed:(shiftleft)": "input.button.pressed:<run>",
+        "input.key.released:(shiftleft)": "input.button.released:<run>",
+        "input.gamepad.button.pressed:LeftShoulder": "input.button.pressed:<run>",
+        "input.gamepad.button.released:LeftShoulder": "input.button.released:<run>",
+        "input.gamepad.button.pressed:DPadUp": "input.button.pressed:<cursorup>",
+        "input.gamepad.button.released:DPadUp": "input.button.released:<cursorup>",
+        "input.gamepad.button.pressed:DPadDown": "input.button.pressed:<cursordown>",
+        "input.gamepad.button.released:DPadDown": "input.button.released:<cursordown>",
+        "input.gamepad.button.pressed:DPadLeft": "input.button.pressed:<cursorleft>",
+        "input.gamepad.button.released:DPadLeft": "input.button.released:<cursorleft>",
+        "input.gamepad.button.pressed:DPadRight": "input.button.pressed:<cursorright>",
+        "input.gamepad.button.released:DPadRight": "input.button.released:<cursorright>"
+      }
+    }
+  },
+  "engine.streets.ClusterStorage": null,
+  "builtin.map.IMapProvider":
+  {
+    "className": "builtin.map.DefaultMapProvider"
+  },
+  "nogame.map.MapFramebuffer": null,
+  "Boom.Jukebox": null,
+  "joyce.ui.Main": null,
+  "builtin.controllers.InputController": null,
+  "builtin.jt.ImplementationFactory": null,
+  "builtin.jt.Factory": null,
+  "nogame.SetupMetaGen": null,
+  "nogame.intercity.Network": null,
+  "engine.quest.Manager": null,
+  "nogame.modules.story.Narration": null,
+  "engine.news.ClickModule": null,
+  "nogame.modules.World": null,
+  "nogame.modules.daynite.Controller": null,
+  "nogame.modules.playerhover.PlayerPosition": null,
+  "engine.behave.ClusterHeatMap": null,
+  "builtin.loader.Obj": null,
+  "engine.joyce.ModelCache": null,
+  "builtin.modules.satnav.Module": null,
+  "builtin.modules.inventory.PickableDirectory": {
+    "config": {
+      "sunglasses": {
+        "name": "BB Sunglasses",
+        "description": "This is the infamous sunglasses from the X2 fame.",
+        "weight": 0.01,
+        "volume": 0.2
+      },
+      "fakesilverwatch": {
+        "name": "Silver Looking Watching",
+        "description": "This watch might have had better days, but it appears to reflect the neon lights and feels cold at your wrist.",
+        "weight": 0.02,
+        "volume": 0.1
+      },
+      "necklace": {
+        "name": "Comic necklace",
+        "description": "This necklace comes with a thing attached that looks like an otherworldly comic franchise.",
+        "weight": 0.01,
+        "volume": 0.05
+      }
+    }
+  },
+  "nogame.characters.car3.CharacterCreator": null,
+  "nogame.modules.Gameplay": null,
+  "nogame.modules.GameSetup": null,
+  "nogame.inv.coin.Factory": null,
+  "nogame.world.DropCoinModule": null
+},
   "mapProviders":
   {
     "0100/terrain":

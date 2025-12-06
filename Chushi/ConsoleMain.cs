@@ -97,19 +97,20 @@ public class ConsoleMain
          * Bootstrap game by directly reading game config, setting up
          * asset implementation with the pathes.
          */
-        engine.casette.Loader cassetteLoader;
         Console.WriteLine($"CWD is {cwd}");
-        using (var streamJson =
-               File.OpenRead(
-                   Path.Combine(
-                       engine.GlobalSettings.Get("Engine.ResourcePath"),
-                       jsonPath + "nogame.json")))
-        {
-            cassetteLoader = new engine.casette.Loader(streamJson);
-        }
-        I.Register<engine.casette.Loader>(() => cassetteLoader);
+
+        I.Register<engine.casette.Loader>(() => {
+            using (var streamJson =
+                   File.OpenRead(
+                       Path.Combine(
+                           engine.GlobalSettings.Get("Engine.ResourcePath"),
+                           jsonPath + "nogame.json")))
+            {
+                return new engine.casette.Loader(streamJson);
+            }
+        });
         var iassetDesktop = new Chushi.AssetImplementation();
-        engine.Assets.SetAssetImplementation(iassetDesktop);
+        iassetDesktop.WithLoader();
 
 
         I.Register<engine.Engine>(() => new engine.Engine(null));
@@ -117,7 +118,7 @@ public class ConsoleMain
         e.SetupDone();
         e.PlatformSetupDone();
 
-        cassetteLoader.InterpretConfig();
+        I.Get<engine.casette.Loader>().InterpretConfig();
         Trace($"Starting engine...");
         e.Execute();
         Trace($"Running compilation tasks...");

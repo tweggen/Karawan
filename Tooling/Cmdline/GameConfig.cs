@@ -403,6 +403,30 @@ namespace CmdLine
                 _mix.UpsertFragment("/", stream);
             }
 
+            /*
+             * There are resources included from the upsert. Add them.
+             */
+            foreach (string file in _mix.AdditionalFiles)
+            {
+                string tag = null;
+                string uri = file;
+                if (tag is null)
+                {
+                    int idx = uri.LastIndexOf('/');
+                    if (idx != -1 && idx != uri.Length - 1)
+                    {
+                        tag = uri.Substring(idx + 1);
+                    }
+                    else
+                    {
+                        tag = uri;
+                    }
+                }
+
+                MapResources.Add(file, new Resource { Type = "file", Uri = uri, Tag = file });
+            }
+
+
             LoadGameConfig();
         }
 

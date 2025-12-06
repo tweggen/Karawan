@@ -17,6 +17,8 @@ namespace CmdLine
     {
         private View _view = new View();
 
+        public HashSet<string> AdditionalFiles = new HashSet<string>();
+
 
         public void GetTree(string path, Action<JsonNode> actParse)
         {
@@ -59,6 +61,7 @@ namespace CmdLine
                             try
                             {
                                 fs = File.OpenRead(includePath);
+                                AdditionalFiles.Add(includePath);
                                 doc = JsonDocument.Parse(fs);
                                 // Upsert the loaded fragment over the current path
                                 _view.Upsert(currentPath, doc.RootElement, priority);
