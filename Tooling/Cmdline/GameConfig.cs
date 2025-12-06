@@ -6,6 +6,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace CmdLine
 {
@@ -13,7 +14,6 @@ namespace CmdLine
     {
         public string CurrentPath;
         public string DestinationPath;
-        private JsonElement _jeRoot;
         private string _jsonPath;
 
         public Action<string> Trace; // = (msg) => Debug.WriteLine(msg);
@@ -21,6 +21,8 @@ namespace CmdLine
         public SortedDictionary<string, Resource> MapResources = new SortedDictionary<string, Resource>();
         public SortedDictionary<string, AtlasSpec> MapAtlasSpecs = new SortedDictionary<string, AtlasSpec>();
         public TextureSection TextureSection;
+
+        private Mix _mix;
 
 
         private static SHA256 _sha256 = SHA256.Create();
@@ -48,30 +50,26 @@ namespace CmdLine
         }
 
 
-        public Resource LoadResource(JsonElement jeRes)
+        public Resource LoadResource(JsonNode nodeRes)
         {
-            string uri = jeRes.GetProperty("uri").GetString();
-            if (null == uri)
+            if (nodeRes == null)
+            {
+                throw new ArgumentNullException(nameof(nodeRes));
+            }
+
+            // Zugriff auf Properties über JsonObject
+            var obj = nodeRes.AsObject();
+
+            string uri = obj["uri"]?.GetValue<string>();
+            if (uri is null)
             {
                 throw new InvalidDataException("no uri specified in resource.");
             }
 
-            string type = null;
-            if (jeRes.TryGetProperty("type", out var jpType))
-            {
-                type = jpType.GetString();
-            }
-            else
-            {
-                type = "file";
-            }
+            string type = obj["type"]?.GetValue<string>() ?? "file";
 
-            string tag = null;
-            if (jeRes.TryGetProperty("tag", out var jpTag))
-            {
-                tag = jpTag.GetString();
-            }
-            if (null == tag)
+            string tag = obj["tag"]?.GetValue<string>();
+            if (tag is null)
             {
                 int idx = uri.LastIndexOf('/');
                 if (idx != -1 && idx != uri.Length - 1)
@@ -85,31 +83,35 @@ namespace CmdLine
             }
 
             Trace($"GameConfig: Loaded Resource \"{tag}\" from {uri} type \"{type}\".");
-            if (!File.Exists(Path.Combine(CurrentPath,uri)))
+            if (!File.Exists(Path.Combine(CurrentPath, uri)))
             {
                 Trace($"Warning: resource file for {uri} does not exist.");
             }
-            return new Resource() { Type = type, Uri = uri, Tag = tag };
+
+            return new Resource { Type = type, Uri = uri, Tag = tag };
         }
-
-
-        public Resource LoadAnimation(JsonElement jeRes)
+        
+        
+        public Resource LoadAnimation(JsonNode nodeRes)
         {
-            string modelUrl = jeRes.GetProperty("modelUrl").GetString();
-            if (null == modelUrl)
+            if (nodeRes is null)
+            {
+                throw new ArgumentNullException(nameof(nodeRes));
+            }
+
+            var obj = nodeRes.AsObject();
+
+            string modelUrl = obj["modelUrl"]?.GetValue<string>();
+            if (modelUrl is null)
             {
                 throw new InvalidDataException("no uri specified in resource.");
             }
 
-            string animationUrls = jeRes.GetProperty("animationUrls").GetString();
-            // null animationUrls are perfectly ok.
+            // null animationUrls are perfectly ok
+            string animationUrls = obj["animationUrls"]?.GetValue<string>();
 
-            string tag = null;
-            if (jeRes.TryGetProperty("tag", out var jpTag))
-            {
-                tag = jpTag.GetString();
-            }
-            if (null == tag)
+            string tag = obj["tag"]?.GetValue<string>();
+            if (tag is null)
             {
                 int idx = modelUrl.LastIndexOf('/');
                 if (idx != -1 && idx != modelUrl.Length - 1)
@@ -123,24 +125,36 @@ namespace CmdLine
             }
 
             Trace($"GameConfig: Generating Animation Resource \"{tag}\" from {modelUrl} animations \"{animationUrls}\".");
-            if (!File.Exists(Path.Combine(CurrentPath,modelUrl)))
+            if (!File.Exists(Path.Combine(CurrentPath, modelUrl)))
             {
                 Trace($"Warning: resource file for {modelUrl} does not exist.");
             }
-            
+
             string strFilename = ModelAnimationCollectionFileName(tag, animationUrls);
-            return new Resource() { Type = "bakedAnimationCollection", Uri = Path.Combine(DestinationPath+"/",strFilename), Tag = strFilename };
+            return new Resource
+            {
+                Type = "bakedAnimationCollection",
+                Uri = Path.Combine(DestinationPath + "/", strFilename),
+                Tag = strFilename
+            };
         }
+
         
-        
-        public void LoadResourceList(JsonElement je)
+        public void LoadResourceList(JsonNode node)
         {
             Trace($"LoadResourceList();");
             try
             {
-                foreach (var jeRes in je.EnumerateArray())
+                if (node is null)
                 {
-                    Resource resource = LoadResource(jeRes);
+                    throw new ArgumentNullException(nameof(node));
+                }
+
+                var arr = node.AsArray();
+
+                foreach (var nodeRes in arr)
+                {
+                    Resource resource = LoadResource(nodeRes);
                     string tag = resource.Tag;
                     MapResources[tag] = resource;
                     Trace($"GameConfig: Added Resource \"{tag}\".");
@@ -152,36 +166,23 @@ namespace CmdLine
             }
         }
 
-
-        public void LoadResources(JsonElement je)
-        {
-            Trace($"LoadGameResources();");
-            try
-            {
-                if (je.TryGetProperty("list", out var jeResourceList))
-                {
-                    LoadResourceList(jeResourceList);
-                }
-                else
-                {
-                    Trace($"GameConfig: Unable to find \"list\" in game config json.");
-                }
-            }
-            catch (Exception e)
-            {
-                Trace($"GameConfig: Unable to load resource list: {e}");
-            }
-        }
-
-
-        public void LoadAnimationList(JsonElement je)
+        
+        public void LoadAnimationList(JsonNode node)
         {
             Trace($"LoadAnimationList()");
             try
             {
-                foreach (var jeRes in je.EnumerateArray())
+                if (node is null)
                 {
-                    Resource resource = LoadAnimation(jeRes);
+                    throw new ArgumentNullException(nameof(node));
+                }
+
+                var arr = node.AsArray();
+
+                foreach (var nodeRes in arr)
+                {
+                    // assumes you already adapted LoadAnimation(JsonNode?) similarly
+                    Resource resource = LoadAnimation(nodeRes);
                     string tag = resource.Tag;
                     MapResources[tag] = resource;
                     Trace($"GameConfig: Added Resource \"{tag}\".");
@@ -192,44 +193,30 @@ namespace CmdLine
                 Trace($"Error loading resource: {e}");
             }
         }
+
         
-
-        public void LoadAnimations(JsonElement je)
+        public Texture LoadTexture(JsonNode nodeTexture, string name)
         {
-            Trace($"LoadAnimations();");
-            try
+            if (nodeTexture is null)
             {
-                if (je.TryGetProperty("list", out var jeAnimationList))
-                {
-                    LoadAnimationList(jeAnimationList);
-                }
-                else
-                {
-                    Trace($"GameConfig: Unable to find \"list\" in game config json.");
-                }
+                throw new ArgumentNullException(nameof(nodeTexture));
             }
-            catch (Exception e)
-            {
-                Trace($"GameConfig: Unable to load animations list: {e}");
-            }
-        }
 
+            var texture = new Texture { Name = name };
 
-        public Texture LoadTexture(JsonElement jeTexture, string name)
-        {
-            var texture = new Texture() { Name = name };
-            
             /*
-            * Now load the channels within.
-            */
+             * Now load the channels within.
+             */
             try
             {
-                foreach (var jpChannel in jeTexture.EnumerateObject())
+                var obj = nodeTexture.AsObject();
+
+                foreach (var kvp in obj)
                 {
                     try
                     {
-                        string strChannel = jpChannel.Name;
-                        Resource resource = LoadResource(jpChannel.Value);
+                        string strChannel = kvp.Key;
+                        Resource resource = LoadResource(kvp.Value);
                         texture.Channels[strChannel] = resource;
                     }
                     catch (Exception e)
@@ -242,22 +229,29 @@ namespace CmdLine
             {
                 Trace($"LoadTextures(): Exception while loading textures: {e}.");
             }
-            
+
             return texture;
         }
 
-
-        public void LoadTextures(TextureSection ts, JsonElement jeTextures)
+        
+        public void LoadTextures(TextureSection ts, JsonNode nodeTextures)
         {
-            Trace($"LoadTextures(): Loading teture definitions.");
+            Trace($"LoadTextures(): Loading texture definitions.");
             try
             {
-                foreach (var jpTexture in jeTextures.EnumerateObject())
+                if (nodeTextures is null)
+                {
+                    throw new ArgumentNullException(nameof(nodeTextures));
+                }
+
+                var obj = nodeTextures.AsObject();
+
+                foreach (var kvp in obj)
                 {
                     try
                     {
-                        Texture texture = LoadTexture(jpTexture.Value, jpTexture.Name);
-                        ts.Textures[jpTexture.Name] = texture;
+                        Texture texture = LoadTexture(kvp.Value, kvp.Key);
+                        ts.Textures[kvp.Key] = texture;
                     }
                     catch (Exception e)
                     {
@@ -271,25 +265,44 @@ namespace CmdLine
             }
         }
 
-
-        public Channel LoadChannel(JsonElement jeChannel)
+        
+        public Channel LoadChannel(JsonNode nodeChannel)
         {
-            string strFile = jeChannel.GetProperty("file").GetString();
-            return new Channel() { File = strFile };
+            if (nodeChannel is null)
+            {
+                throw new ArgumentNullException(nameof(nodeChannel));
+            }
+
+            var obj = nodeChannel.AsObject();
+            string strFile = obj["file"]?.GetValue<string>();
+
+            if (strFile is null)
+            {
+                throw new InvalidDataException("Channel missing required 'file' property.");
+            }
+
+            return new Channel { File = strFile };
         }
+        
 
-
-        public void LoadChannels(TextureSection ts, JsonElement jeChannels)
+        public void LoadChannels(TextureSection ts, JsonNode nodeChannels)
         {
             Trace($"LoadChannels(): Loading channel definitions.");
             try
             {
-                foreach (var jpChannel in jeChannels.EnumerateObject())
+                if (nodeChannels is null)
+                {
+                    throw new ArgumentNullException(nameof(nodeChannels));
+                }
+
+                var obj = nodeChannels.AsObject();
+
+                foreach (var kvp in obj)
                 {
                     try
                     {
-                        Channel channel = LoadChannel(jpChannel.Value);
-                        ts.Channels[jpChannel.Name] = channel;
+                        Channel channel = LoadChannel(kvp.Value);
+                        ts.Channels[kvp.Key] = channel;
                     }
                     catch (Exception e)
                     {
@@ -303,18 +316,27 @@ namespace CmdLine
             }
         }
 
-
-        public void LoadAtlas(string path, JsonElement je)
+        
+        public void LoadAtlas(string path, JsonNode node)
         {
             Trace($"LoadAtlas(): Loading atlas {path}.");
-            AtlasSpec atlasSpec = new AtlasSpec() { Path = path};
+            AtlasSpec atlasSpec = new AtlasSpec { Path = path };
             try
             {
-                foreach (var jeRes in je.EnumerateArray())
+                if (node is null)
                 {
-                    Resource resource = LoadResource(jeRes);
+                    throw new ArgumentNullException(nameof(node));
+                }
+
+                var arr = node.AsArray();
+
+                foreach (var nodeRes in arr)
+                {
+                    // assumes LoadResource(JsonNode?) is already adapted
+                    Resource resource = LoadResource(nodeRes);
                     atlasSpec.TextureResources.Add(resource);
                 }
+
                 MapAtlasSpecs[path] = atlasSpec;
             }
             catch (Exception e)
@@ -322,27 +344,34 @@ namespace CmdLine
                 Trace($"GameConfig: Unable to load texture atlas: {e}");
             }
         }
+
         
-        
-        public void LoadTextureSection(JsonElement je)
+        public void LoadTextureSection(JsonNode node)
         {
             Trace($"LoadTextures():");
             TextureSection ts = new TextureSection();
             try
             {
-                foreach (var jpAtlas in je.EnumerateObject())
+                if (node is null)
                 {
-                    if (jpAtlas.Name == "textures")
+                    throw new ArgumentNullException(nameof(node));
+                }
+
+                var obj = node.AsObject();
+
+                foreach (var kvp in obj)
+                {
+                    if (kvp.Key == "textures")
                     {
-                        LoadTextures(ts, jpAtlas.Value);
+                        LoadTextures(ts, kvp.Value);
                     }
-                    else if (jpAtlas.Name == "channels")
+                    else if (kvp.Key == "channels")
                     {
-                        LoadChannels(ts, jpAtlas.Value);
+                        LoadChannels(ts, kvp.Value);
                     }
                     else
                     {
-                        LoadAtlas(jpAtlas.Name, jpAtlas.Value);
+                        LoadAtlas(kvp.Key, kvp.Value);
                     }
                 }
 
@@ -356,33 +385,12 @@ namespace CmdLine
         }
 
         
-        public void LoadGameConfig(JsonElement je)
+        public void LoadGameConfig()
         {
             Trace($"LoadGameConfig();");
-            if (je.TryGetProperty("resources", out var jeResources))
-            {
-                LoadResources(jeResources);
-            }
-            else
-            {
-                Trace($"GameConfig: Unable to find \"resources\" in game config json.");
-            }
-            if (je.TryGetProperty("animations", out var jeAnimations))
-            {
-                LoadAnimations(jeAnimations);
-            }
-            else
-            {
-                Trace($"GameConfig: Unable to find \"resources\" in game config json.");
-            }
-            if (je.TryGetProperty("textures", out var jeTextures))
-            {
-                LoadTextureSection(jeTextures);
-            }
-            else
-            {
-                Trace($"GameConfig: Unable to find \"textures\" in game config json.");
-            }
+            _mix.GetTree("/resources/list", LoadResourceList);
+            _mix.GetTree("/animations/list", LoadAnimationList);
+            _mix.GetTree("/textures", LoadTextureSection);
         }
 
 
@@ -391,15 +399,11 @@ namespace CmdLine
             Trace($"_loadGameConfigFile(\"{jsonPath}\");");
             using (var stream = new FileStream(Path.Combine(CurrentPath,jsonPath), FileMode.Open))
             {
-                Trace($"_loadGameConfigFile(is absolute \"{jsonPath}\");");
-                JsonDocument jdocGame = JsonDocument.Parse(stream, new JsonDocumentOptions()
-                {
-                    AllowTrailingCommas = true
-                });
-                _jeRoot = jdocGame.RootElement;
+                _mix = new Mix();
+                _mix.UpsertFragment("/", stream);
             }
 
-            LoadGameConfig(_jeRoot);
+            LoadGameConfig();
         }
 
 
