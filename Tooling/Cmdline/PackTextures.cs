@@ -74,7 +74,12 @@ namespace CmdLine
                     foreach (var kvpTexChannel in texture.Channels)
                     {
                         Trace($"Adding texture \"{kvpTexChannel.Value.Uri}\" for channel \"{kvpTexChannel.Key}\".");
-                        dictPackers[kvpTexChannel.Key].AddTexture(CurrentPath, kvpTexChannel.Value, 0);
+                        try {
+                            dictPackers[kvpTexChannel.Key].AddTexture(CurrentPath, kvpTexChannel.Value, 0);
+                        } catch (Exception e)
+                        {
+                            Trace($"Textures \"{kvpTexChannel.Key}\" caused exception: {e}");
+                        }
                     }
                 }
                 

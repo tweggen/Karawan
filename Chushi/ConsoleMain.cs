@@ -97,7 +97,6 @@ public class ConsoleMain
          * Bootstrap game by directly reading game config, setting up
          * asset implementation with the pathes.
          */
-        var iassetDesktop = new Chushi.AssetImplementation();
         engine.casette.Loader cassetteLoader;
         Console.WriteLine($"CWD is {cwd}");
         using (var streamJson =
@@ -108,7 +107,8 @@ public class ConsoleMain
         {
             cassetteLoader = new engine.casette.Loader(streamJson);
         }
-
+        I.Register<engine.casette.Loader>(() => cassetteLoader);
+        var iassetDesktop = new Chushi.AssetImplementation();
         engine.Assets.SetAssetImplementation(iassetDesktop);
 
 
