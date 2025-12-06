@@ -60,12 +60,19 @@ public class AssetImplementation : AAssetImplementation
         }
         catch (System.Exception e)
         {
-            // Error($"Unable to open file \"{resourcePath + tag}\" for reading: {e}");
+            Error($"Unable to open file \"{resourcePath + tag}\" for reading: {e}");
         }
 
         if (uri != null)
         {
-            stream = System.IO.File.OpenRead(resourcePath + uri);
+            try {
+                stream = System.IO.File.OpenRead(resourcePath + uri);
+                return stream;
+            } catch (System.Exception e)
+            {
+            Error($"Unable to open file \"{resourcePath + uri}\" for reading: {e}");
+
+            }
         }
 
         return stream;

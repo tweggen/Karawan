@@ -119,7 +119,7 @@ public class DesktopMain
         }
         
         var iassetDesktop = new Karawan.AssetImplementation();
-        engine.Assets.SetAssetImplementation(iassetDesktop);
+        iassetDesktop.WithLoader();
         cassetteLoader.InterpretConfig();
 
         

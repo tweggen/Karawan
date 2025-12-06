@@ -111,6 +111,7 @@ public class ConsoleMain
         });
         var iassetDesktop = new Chushi.AssetImplementation();
         iassetDesktop.WithLoader();
+        I.Get<engine.casette.Loader>().InterpretConfig();
 
 
         I.Register<engine.Engine>(() => new engine.Engine(null));
@@ -118,7 +119,6 @@ public class ConsoleMain
         e.SetupDone();
         e.PlatformSetupDone();
 
-        I.Get<engine.casette.Loader>().InterpretConfig();
         Trace($"Starting engine...");
         e.Execute();
         Trace($"Running compilation tasks...");

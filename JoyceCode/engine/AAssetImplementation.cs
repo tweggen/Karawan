@@ -12,7 +12,7 @@ namespace engine;
 
 public abstract class AAssetImplementation : IAssetImplementation
 {
-    private bool _traceResources = false;
+    private bool _traceResources = true;
     
     
     public SortedSet<string> AvailableAnimations = new();
@@ -20,6 +20,7 @@ public abstract class AAssetImplementation : IAssetImplementation
     
     private void _whenLoadedResources(string path, JsonNode? node)
     {
+        Trace("Loading resources...");
         if (null == node) return;
         try
         {
@@ -55,7 +56,6 @@ public abstract class AAssetImplementation : IAssetImplementation
                     {
                         Trace($"Warning: resource file for {pathProbe} does not exist.");
                     }
-
                     this.AddAssociation(tag!, uri);
                 }
             }
@@ -69,6 +69,7 @@ public abstract class AAssetImplementation : IAssetImplementation
     
     private void _whenLoadedAnimations(string path, JsonNode? node)
     {
+        Trace("Loading animations...");
         if (null == node) return;
         
         string pathProbe;
@@ -128,6 +129,7 @@ public abstract class AAssetImplementation : IAssetImplementation
     
     private void _loadTextureAtlas(JsonNode? nodeAtlas)
     {
+        Trace("Loading texture atlas...");
         var tc = I.Get<TextureCatalogue>();
 
         string? atlasTag = nodeAtlas?["tag"]?.GetValue<string>();
@@ -187,6 +189,7 @@ public abstract class AAssetImplementation : IAssetImplementation
      */
     private void _whenLoadedTextures(string path, JsonNode? nodeTextures)
     {
+        Trace("Loading textures...");
         if (null == nodeTextures) return;
         
         try
