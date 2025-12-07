@@ -154,6 +154,11 @@ public class Model
     public bool TryLoadModelAnimationCollection(out ModelAnimationCollection? animcoll)
     {
         animcoll = null;
+        if (engine.GlobalSettings.Get("joyce.CompileMode") == "true")
+        {
+            return false;
+        }
+
         try
         {
             string strFileName =
@@ -194,24 +199,22 @@ public class Model
     public void BakeAnimations(string strModelBaseBone, List<string> cpuNodes)
     {
         bool haveBaked = false;
-        if (GlobalSettings.Get("joyce.CompileMode") != "true")
-        {
-            try
-            {
 
-                if (TryLoadModelAnimationCollection(out var animcoll))
+        try
+        {
+
+            if (TryLoadModelAnimationCollection(out var animcoll))
+            {
+                if (animcoll != null)
                 {
-                    if (animcoll != null)
-                    {
-                        AnimationCollection.UseBakedAnimationsFrom(animcoll);
-                        haveBaked = true;
-                    }
+                    AnimationCollection.UseBakedAnimationsFrom(animcoll);
+                    haveBaked = true;
                 }
             }
-            catch (Exception e)
-            {
-                Warning($"Exception while reading pre-baked data: {e}");
-            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Exception while reading pre-baked data: {e}");
         }
 
         if (!haveBaked)

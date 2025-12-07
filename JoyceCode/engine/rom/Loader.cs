@@ -87,6 +87,7 @@ public class Loader
         catch (Exception e)
         {
             Trace($"Unable to load dll {dllPath}: {e}");
+            ErrorThrow<InvalidOperationException>($"Unable to load dll {dllPath}: {e}");
         }
 
         return null;

@@ -247,49 +247,7 @@ public class Loader
         }
     }
 
-    private void _loadImplementations(JsonNode jnImplementations)
-    {
-        if (engine.GlobalSettings.Get("joyce.CompileMode") == "true")
-        {
-            ErrorThrow<InvalidOperationException>("I should not have been called.");
-            return;
-        }
-
-        try
-        {
-            /*
-             * Register the listed class factories, possibly using the key as interface name.
-             */
-            if (jnImplementations is JsonObject obj)
-            {
-                foreach (var pair in obj)
-                {
-                    var factoryMethod = I.Get<engine.casette.Loader>().CreateFactoryMethod(pair.Key, pair.Value);
-
-                    /*
-                     * We are loading the implementations. The key name definitely is the
-                     * name we register the implementation for.
-                     */
-                    string interfaceName = pair.Key;
-
-                    try
-                    {
-                        Type type = engine.rom.Loader.LoadType(strDefaultLoaderAssembly, interfaceName);
-                        I.Instance.RegisterFactory(type, factoryMethod);
-                    }
-                    catch (Exception e)
-                    {
-                        Warning($"Unable to load implementation type {pair.Key}: {e}");
-                    }
-                }
-            }
-        }
-        catch (Exception e)
-        {
-
-        }
-    }
-
+    
     private IModule _loadRootModule()
     {
         JsonNode? jnRootModule;
@@ -320,15 +278,18 @@ public class Loader
 
     private void _loadDefaults(JsonElement jeDefaults)
     {
-        try
+        if (true || engine.GlobalSettings.Get("joyce.CompileMode") != "true")
         {
-            strDefaultLoaderAssembly = jeDefaults.GetProperty("loader").GetProperty("assembly")
-                .GetString();
-            engine.rom.Loader.SetDefaultLoaderAssembly(strDefaultLoaderAssembly);
-        }
-        catch (Exception e)
-        {
-            //
+            try
+            {
+                strDefaultLoaderAssembly = jeDefaults.GetProperty("loader").GetProperty("assembly")
+                    .GetString();
+                engine.rom.Loader.SetDefaultLoaderAssembly(strDefaultLoaderAssembly);
+            }
+            catch (Exception e)
+            {
+                //
+            }
         }
     }
     

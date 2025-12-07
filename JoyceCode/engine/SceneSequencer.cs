@@ -316,12 +316,16 @@ public class SceneSequencer : IDisposable
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
     }
-    
-    
-    public SceneSequencer(Engine engine)
+
+
+    public SceneSequencer(Engine engine0)
     {
-        _engine = engine;
-        _engine.OnLogicalFrame += _onLogicalFrame;
-        I.Get<engine.casette.Loader>().WhenLoaded("/scenes", _whenLoaded);
+        _engine = engine0;
+        if (engine.GlobalSettings.Get("joyce.CompileMode") != "true")
+        {
+            _engine.OnLogicalFrame += _onLogicalFrame;
+
+            I.Get<engine.casette.Loader>().WhenLoaded("/scenes", _whenLoaded);
+        }
     }
 }
