@@ -278,18 +278,15 @@ public class Loader
 
     private void _loadDefaults(JsonElement jeDefaults)
     {
-        if (true || engine.GlobalSettings.Get("joyce.CompileMode") != "true")
+        try
         {
-            try
-            {
-                strDefaultLoaderAssembly = jeDefaults.GetProperty("loader").GetProperty("assembly")
-                    .GetString();
-                engine.rom.Loader.SetDefaultLoaderAssembly(strDefaultLoaderAssembly);
-            }
-            catch (Exception e)
-            {
-                //
-            }
+            strDefaultLoaderAssembly = jeDefaults.GetProperty("loader").GetProperty("assembly")
+                .GetString();
+            engine.rom.Loader.SetDefaultLoaderAssembly(strDefaultLoaderAssembly);
+        }
+        catch (Exception e)
+        {
+            //
         }
     }
     

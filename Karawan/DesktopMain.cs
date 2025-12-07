@@ -48,7 +48,8 @@ public class DesktopMain
     public static void Main(string[] args)
     {
         // System.Environment.SetEnvironmentVariable("ALSOFT_LOGLEVEL", "3");
-
+        
+        var cwd = System.IO.Directory.GetCurrentDirectory();
         string jsonPath;
         /*
          * Setup globals and statics
@@ -106,21 +107,23 @@ public class DesktopMain
          * asset implementation with the pathes.
          */
         engine.casette.Loader cassetteLoader;
-        var cwd = System.IO.Directory.GetCurrentDirectory();
+
         Console.WriteLine($"CWD is {cwd}");
-        using (var streamJson =
-               File.OpenRead(
-                   Path.Combine(
-                       engine.GlobalSettings.Get("Engine.ResourcePath"),
-                       jsonPath+"nogame.json"))) 
-        {
-            cassetteLoader = new engine.casette.Loader(streamJson);
-            I.Register<engine.casette.Loader>(() => cassetteLoader);
-        }
+        
+        I.Register<engine.casette.Loader>(() => {
+            using (var streamJson =
+                   File.OpenRead(
+                       Path.Combine(
+                           engine.GlobalSettings.Get("Engine.ResourcePath"),
+                           jsonPath + "nogame.json")))
+            {
+                return new engine.casette.Loader(streamJson);
+            }
+        });
         
         var iassetDesktop = new Karawan.AssetImplementation();
         iassetDesktop.WithLoader();
-        cassetteLoader.InterpretConfig();
+        I.Get<engine.casette.Loader>().InterpretConfig();
 
         
         IWindow iWindow = null;
@@ -186,7 +189,7 @@ public class DesktopMain
             return api;
         });
 
-        cassetteLoader.StartGame();
+        I.Get<engine.casette.Loader>().StartGame();
         
         e.Execute();
 

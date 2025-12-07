@@ -51,7 +51,7 @@ namespace CmdLine
             while (queue.Count > 0)
             {
                 var (currentPath, currentElement) = queue.Dequeue();
-                Trace("Analysing path "+currentPath);
+                // Trace("Analysing path "+currentPath);
 
                 if (currentElement.ValueKind == JsonValueKind.Object)
                 {
@@ -87,10 +87,10 @@ namespace CmdLine
                                     doc?.Dispose();
                                 }
                             } else {
-                                Trace("path does not exist "+jsonCompletePath);     
+                                Trace("include path does not exist "+jsonCompletePath);     
                             }                       
                         } else {
-                            Trace("property null.");                            
+                            Trace("include property null.");                            
                         }
                     }
 
