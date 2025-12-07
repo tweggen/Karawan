@@ -17,8 +17,10 @@ namespace CmdLine
     {
         private View _view = new View();
 
-        public HashSet<string> AdditionalFiles = new HashSet<string>();
+        public Action<string> Trace; // = (msg) => Debug.WriteLine(msg);
+        public string Directory = "";
 
+        public HashSet<string> AdditionalFiles = new HashSet<string>();
 
         public void GetTree(string path, Action<JsonNode> actParse)
         {
@@ -46,6 +48,7 @@ namespace CmdLine
             while (queue.Count > 0)
             {
                 var (currentPath, currentElement) = queue.Dequeue();
+                Trace("Analysing path "+currentPath);
 
                 if (currentElement.ValueKind == JsonValueKind.Object)
                 {
@@ -53,28 +56,38 @@ namespace CmdLine
                     if (currentElement.TryGetProperty("__include__", out var includeProp) &&
                         includeProp.ValueKind == JsonValueKind.String)
                     {
+                        Trace("have include property");
                         var includePath = includeProp.GetString();
-                        if (!string.IsNullOrEmpty(includePath) && File.Exists(includePath))
+                        if (!string.IsNullOrEmpty(includePath))
                         {
-                            FileStream fs = default;
-                            JsonDocument doc = default;
-                            try
+                            string jsonCompletePath = Path.Combine(Directory, includePath);
+                            if (File.Exists(jsonCompletePath))
                             {
-                                fs = File.OpenRead(includePath);
-                                AdditionalFiles.Add(includePath);
-                                doc = JsonDocument.Parse(fs);
-                                // Upsert the loaded fragment over the current path
-                                _view.Upsert(currentPath, doc.RootElement, priority);
-                            }
-                            catch (Exception _)
-                            {
-
-                            }
-                            finally
-                            {
-                                fs?.Dispose();
-                                doc?.Dispose();
-                            }
+                                FileStream fs = default;
+                                JsonDocument doc = default;
+                                try
+                                {
+                                    fs = File.OpenRead(jsonCompletePath);
+                                    AdditionalFiles.Add(jsonCompletePath);
+                                    doc = JsonDocument.Parse(fs);
+                                    Trace("Adding include file "+includePath+ "at "+ jsonCompletePath);
+                                    // Upsert the loaded fragment over the current path
+                                    _view.Upsert(currentPath, doc.RootElement, priority);
+                                }
+                                catch (Exception _)
+                                {
+                                    Trace("Unable to open include file "+includePath+" at "+jsonCompletePath);
+                                }
+                                finally
+                                {
+                                    fs?.Dispose();
+                                    doc?.Dispose();
+                                }
+                            } else {
+                                Trace("path does not exist "+jsonCompletePath);     
+                            }                       
+                        } else {
+                            Trace("property null.");                            
                         }
                     }
 

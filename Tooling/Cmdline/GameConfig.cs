@@ -394,12 +394,17 @@ namespace CmdLine
         }
 
 
+        /**
+         * Start resolving the configuration file tree.
+         */
         private void _loadGameConfigFile(string jsonPath)
         {
             Trace($"_loadGameConfigFile(\"{jsonPath}\");");
-            using (var stream = new FileStream(Path.Combine(CurrentPath,jsonPath), FileMode.Open))
+            string pathGameJson = Path.Combine(CurrentPath,jsonPath);
+            string directoryGameJson = Path.GetDirectoryName(pathGameJson);
+            using (var stream = new FileStream(pathGameJson, FileMode.Open))
             {
-                _mix = new Mix();
+                _mix = new Mix() { Trace = this.Trace, Directory = directoryGameJson };
                 _mix.UpsertFragment("/", stream);
             }
 
