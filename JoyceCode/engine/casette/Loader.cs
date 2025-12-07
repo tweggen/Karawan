@@ -291,7 +291,7 @@ public class Loader
     }
     
     
-    private void _loadGameConfigFile(System.IO.Stream stream)
+    private void  _loadGameConfigFile(System.IO.Stream stream)
     {
         JsonDocument jdocGame = JsonDocument.Parse(stream, new()
         {

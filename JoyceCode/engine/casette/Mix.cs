@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using static engine.Logger;
 
 namespace engine.casette;
 
@@ -15,6 +17,9 @@ public class Mix
 {
     private View _view = new();
 
+    public string Directory = "";
+
+    public HashSet<string> AdditionalFiles = new HashSet<string>();
 
     public void GetTree(string path, Action<JsonNode?> actParse)
     {
@@ -42,6 +47,7 @@ public class Mix
         while (queue.Count > 0)
         {
             var (currentPath, currentElement) = queue.Dequeue();
+            Trace("Analysing path "+currentPath);
 
             if (currentElement.ValueKind == JsonValueKind.Object)
             {
@@ -49,13 +55,58 @@ public class Mix
                 if (currentElement.TryGetProperty("__include__", out var includeProp) &&
                     includeProp.ValueKind == JsonValueKind.String)
                 {
+                    Trace("have include property");
                     var includePath = includeProp.GetString();
-                    if (!string.IsNullOrEmpty(includePath) && engine.Assets.Exists(includePath))
+                    if (!string.IsNullOrEmpty(includePath))
                     {
-                        using var fs = engine.Assets.Open(includePath);
-                        using var doc = JsonDocument.Parse(fs);
-                        // Upsert the loaded fragment over the current path
-                        _view.Upsert(currentPath, doc.RootElement, priority);
+                        string tag = null;
+                        if (string.IsNullOrEmpty(tag))
+                        {
+                            int idx = includePath.LastIndexOf('/');
+                            if (idx != -1 && idx != includePath.Length - 1)
+                            {
+                                tag = includePath[(idx + 1)..];
+                            }
+                            else
+                            {
+                                tag = includePath;
+                            }
+                        }
+                        string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), includePath);
+                        if (!File.Exists(pathProbe))
+                        {
+                            Trace($"Warning: include file for {pathProbe} does not exist.");
+                        }
+                        engine.Assets.AddAssociation(tag!, includePath);
+                        
+                        string jsonCompletePath = Path.Combine(Directory, includePath);
+                        if (engine.Assets.Exists(jsonCompletePath))
+                        {
+                            Stream fs = default;
+                            JsonDocument doc = default;
+                            try
+                            {
+                                fs = engine.Assets.Open(jsonCompletePath);
+                                AdditionalFiles.Add(jsonCompletePath);
+                                doc = JsonDocument.Parse(fs);
+                                Trace("Adding include file "+includePath+ " at "+ jsonCompletePath);
+                                // Upsert the loaded fragment over the current path
+                                _view.Upsert(currentPath, doc.RootElement, priority);
+                            }
+                            catch (Exception _)
+                            {
+                                Trace("Unable to open include file "+includePath+" at "+jsonCompletePath);
+                            }
+                            finally
+                            {
+                                fs?.Dispose();
+                                doc?.Dispose();
+                            }
+                        } else {
+                            Trace("include path does not exist "+jsonCompletePath);     
+                        }                       
+                    } else {
+                        Trace("include property null.");                            
                     }
                 }
 

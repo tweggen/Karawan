@@ -321,14 +321,17 @@ public sealed class View
         return node;
     }
     
-    private static JsonNode? ExtractSubtree(JsonNode? ancestorNode, string path)
+    private static JsonNode? ExtractSubtree(JsonNode? ancestorNode, string ancestorPath, string requestedPath)
     {
         if (ancestorNode is null) return null;
 
-        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        JsonNode? current = ancestorNode;
+        var ancestorParts  = ancestorPath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+        var requestedParts = requestedPath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
 
-        foreach (var seg in segments)
+        // Relative segments = requestedParts minus ancestorParts
+        var relSegments = requestedParts.Skip(ancestorParts.Length);
+
+        JsonNode current = ancestorNode;foreach (var seg in relSegments)
         {
             if (current is JsonObject obj)
             {
@@ -348,69 +351,69 @@ public sealed class View
         return current?.DeepClone();
     }
 
-    private JsonNode? ComputeMergedSubtree(string path, out long aggregateVersion)
+    private JsonNode? ComputeMergedSubtree(string requestedPath, out long aggregateVersion)
     {
         aggregateVersion = 0;
 
-        // Collect all partials that are relevant: ancestors, exact, descendants
-        var ancestors = new List<PartialTree>();
-        var exact = new List<PartialTree>();
-        var descendants = new List<PartialTree>();
+            var relevant = new List<(PartialTree pt, Relation rel)>();
 
-        foreach (var kvp in _partialsByPath)
-        {
-            var p = kvp.Key;
-
-            if (p == path)
+            foreach (var kvp in _partialsByPath)
             {
-                exact.AddRange(kvp.Value);
+                var partialPath = kvp.Key;
+
+                if (partialPath == requestedPath)
+                {
+                    relevant.AddRange(kvp.Value.Select(pt => (pt, Relation.Exact)));
+                }
+                else if (IsAncestorOrEqual(partialPath, requestedPath))
+                {
+                    relevant.AddRange(kvp.Value.Select(pt => (pt, Relation.Ancestor)));
+                }
+                else if (IsAncestorOrEqual(requestedPath, partialPath))
+                {
+                    relevant.AddRange(kvp.Value.Select(pt => (pt, Relation.Descendant)));
+                }
             }
-            else if (IsAncestorOrEqual(p, path)) // partial is ancestor of requested path
+
+            if (relevant.Count == 0)
+                return null;
+
+            JsonNode root = null;
+
+            foreach (var (pt, rel) in relevant.OrderBy(x => x.pt, PartialComparer))
             {
-                ancestors.AddRange(kvp.Value);
+                aggregateVersion = unchecked(aggregateVersion + pt.Version * 17 + pt.Priority * 131);
+                var payloadNode = JsonNode.Parse(pt.Payload.RootElement.GetRawText());
+
+                switch (rel)
+                {
+                    case Relation.Ancestor:
+                        // Extract subtree relative to ancestor path
+                        var subtreeA = ExtractSubtree(payloadNode, pt.Path, requestedPath);
+                        if (subtreeA != null)
+                            root = MergeOverlay(root, subtreeA);
+                        break;
+
+                    case Relation.Exact:
+                        // Exact match: overlay whole payload
+                        var subtreeE = ExtractSubtree(payloadNode, pt.Path, requestedPath);
+                        if (subtreeE != null)
+                            root = MergeOverlay(root, subtreeE);
+                        break;
+
+                    case Relation.Descendant:
+                        // Insert payload at relative segments
+                        var relSegments = GetRelativeSegments(requestedPath, pt.Path);
+                        if (null==root) root = new JsonObject();
+                        EnsurePath(root, relSegments).AssignOverlay(payloadNode);
+                        break;
+                }
             }
-            else if (IsAncestorOrEqual(path, p)) // partial is descendant of requested path
-            {
-                descendants.AddRange(kvp.Value);
-            }
-        }
 
-        if (ancestors.Count == 0 && exact.Count == 0 && descendants.Count == 0)
-        {
-            return null;
-        }
-
-        JsonNode? root = null;
-
-        // Overlay order: ancestors → exact → descendants
-        foreach (var pt in ancestors.OrderBy(x => x, PartialComparer))
-        {
-            aggregateVersion = unchecked(aggregateVersion + pt.Version * 17 + pt.Priority * 131);
-            var payloadNode = JsonNode.Parse(pt.Payload.RootElement.GetRawText());
-            var subtree = ExtractSubtree(payloadNode, path);
-            root = MergeOverlay(root, subtree);
-        }
-
-        foreach (var pt in exact.OrderBy(x => x, PartialComparer))
-        {
-            aggregateVersion = unchecked(aggregateVersion + pt.Version * 17 + pt.Priority * 131);
-            var payloadNode = JsonNode.Parse(pt.Payload.RootElement.GetRawText());
-            var subtree = ExtractSubtree(payloadNode, path);
-            root = MergeOverlay(root, subtree);
-        }
-
-        foreach (var pt in descendants.OrderBy(x => x, PartialComparer))
-        {
-            aggregateVersion = unchecked(aggregateVersion + pt.Version * 17 + pt.Priority * 131);
-            var payloadNode = JsonNode.Parse(pt.Payload.RootElement.GetRawText());
-
-            var relSegments = GetRelativeSegments(path, pt.Path);
-            root ??= new JsonObject();
-            EnsurePath(root, relSegments).AssignOverlay(payloadNode);
-        }
-
-        return root;
+            return root;
     }
+
+    private enum Relation { Ancestor, Exact, Descendant }
 
     private static IEnumerable<string> GetRelativeSegments(string basePath, string targetPath)
     {

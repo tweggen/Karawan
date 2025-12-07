@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using static engine.Logger;
 
 namespace engine;
@@ -9,6 +10,23 @@ public sealed class Assets
     private static object _staticlock = new();
     private static IAssetImplementation _implementation;
 
+
+    public static void AddAssociation(string tag, string uri)
+    {
+        IAssetImplementation impl = null;
+        lock (_staticlock)
+        {
+            impl = _implementation;
+        }
+
+        if (null == impl)
+        {
+            ErrorThrow("Platform Asset Implementation not setup.", m=>new InvalidOperationException(m));           
+        }
+
+        impl.AddAssociation(tag, uri);
+    }
+    
     public static System.IO.Stream Open(in string filename)
     {
         IAssetImplementation impl = null;
