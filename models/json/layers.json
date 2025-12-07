@@ -1,0 +1,8 @@
+  {
+    "pausemenu": {
+      "zOrder": 1000
+    },
+    "shop": {
+      "zOrder": 900
+    }
+  }

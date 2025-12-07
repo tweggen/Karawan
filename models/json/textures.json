@@ -1,0 +1,67 @@
+  {
+    "channels": {
+      "emissive-trans": {
+        "file": "atlas-emissive-trans.json"
+      },
+      "emissive-half-trans": {
+        "file": "atlas-emissive-half-trans.json"
+      },
+      "albedo-trans": {
+        "file": "atlas-albedo-trans.json"
+      },
+      "emissive": {
+        "file": "atlas-emissive.json"
+      },
+      "albedo":  {
+        "file": "atlas-albedo.json"
+      }
+    },
+    "textures": {
+      "drink-window": {
+        "emissive": { "uri": "../models/brands/drink-window-emissive.png" },
+        "albedo": { "uri": "../models/brands/drink-window-albedo.png" }
+      },
+      "eat-window": {
+        "emissive": { "uri": "../models/brands/eat-window-emissive.png" },
+        "albedo": { "uri": "../models/brands/eat-window-albedo.png" }
+      },
+      "fishmongers-window": {
+        "emissive": { "uri": "../models/brands/fishmongers-window-emissive.png" },
+        "albedo": { "uri": "../models/brands/fishmongers-window-albedo.png" }
+      },
+      "empty-window": {
+        "emissive": { "uri": "../models/brands/empty-window-emissive.png" },
+        "albedo": { "uri": "../models/brands/empty-window-albedo.png" }
+      },
+      "rgba": {
+        "albedo": { "uri": "rgba" }
+      },
+      
+      "plentomatic": { "emissive-half-trans": { "uri": "../models/brands/plentomatic.png" } },
+      "sprouce-cn": { "emissive-half-trans": { "uri": "../models/brands/sprouce-cn.png" } },
+      
+      "lorem": { "emissive-half-trans": { "uri": "../models/buildings/lorem.png" } },
+      "standardlight": { "emissive-trans": { "uri": "../models/lightfx/standardlight/standardlight.png" } },
+      "mapicons": { "emissive-trans": { "uri": "../models/mapicons/mapicons.png" } },
+
+      "streets1to4": { "albedo": { "uri": "../models/streets/streets1to4.png" } },
+      "gridlines1": { "albedo": { "uri": "../models/void/gridlines1.png" } },
+      "buildingalphadiffuse": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse.png" } },
+      "buildingalphadiffuse2": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse2.png" } },
+      "buildingalphadiffuse3": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse3.png" } },
+      
+      "but_accel": { "emissive-trans": { "uri": "../models/osd/but_accel.png" } },
+      "but_brake": { "emissive-trans": { "uri": "../models/osd/but_brake.png" } },
+      "but_left": { "emissive-trans": { "uri": "../models/osd/but_left.png" } },
+      "but_map": { "emissive-trans": { "uri": "../models/osd/but_map.png" } },
+      "but_pause": { "emissive-trans": { "uri": "../models/osd/but_pause.png" } },
+      "but_right": { "emissive-trans": { "uri": "../models/osd/but_right.png" } },
+      "but_settings": { "emissive-trans": { "uri": "../models/osd/but_settings.png" } },
+      "but_getinout": { "emissive-trans": { "uri": "../models/osd/but_getinout.png" } },
+      
+      "color-atlas-gradient": { "albedo":  {
+        "uri":  "../models/models/people/polyperfect/color-atlas-gradient.png",
+        "tag":  "color-atlas-gradient.png" } }
+      
+    }
+  }

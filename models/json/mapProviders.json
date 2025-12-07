@@ -1,0 +1,14 @@
+  {
+    "0100/terrain":
+    {
+      "className": "nogame.map.WorldMapTerrainProvider"
+    },
+    "0110/transport":
+    {
+      "className": "nogame.map.WorldMapIntercityProvider"
+    },
+    "0120/cluster": 
+    {
+      "className": "nogame.map.WorldMapClusterProvider"
+    }
+  }

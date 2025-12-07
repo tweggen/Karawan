@@ -1,0 +1,57 @@
+
+  {
+    "list": [
+      { 
+        "modelUrl": "../models/models/people/polyperfect/man_casual_Rig.fbx", 
+        "animationUrls": "Idle_Generic.fbx;Run_InPlace.fbx;Walk_Male.fbx;Running_Jump.fbx;Standing_Jump.fbx;Punch_LeftHand.fbx;Punch_RightHand.fbx;Death_FallForwards.fbx" 
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/man_business_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_Male.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/man_casual_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_Male.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/man_coat_winter_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_Male.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/man_police_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_Male.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/man_scientist_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_Male.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/woman_actionhero_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_InPlace_Female.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/woman_carpenter_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_InPlace_Female.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/woman_doctor_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_InPlace_Female.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/woman_large_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_InPlace_Female.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/woman_mechanic_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_InPlace_Female.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/woman_police_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_InPlace_Female.fbx;Death_FallForwards.fbx"
+      },
+      {
+        "modelUrl": "../models/models/people/polyperfect/woman_race_car_driver_Rig.fbx",
+        "animationUrls": "Run_InPlace.fbx;Walk_InPlace_Female.fbx;Death_FallForwards.fbx"
+      }
+    ]
+  }

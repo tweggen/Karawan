@@ -1,0 +1,8 @@
+  {
+    "nogame.quests.VisitAgentTwelve.Quest": {
+      "implementation": "nogame.quests.VisitAgentTwelve.Quest.Instantiate"
+    },
+    "nogame.quests.HelloFishmonger.Quest": {
+      "implementation": "nogame.quests.HelloFishmonger.Quest.Instantiate"
+    }
+  }
