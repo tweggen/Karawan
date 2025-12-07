@@ -17,19 +17,22 @@ namespace CmdLine
     {
         private View _view = new View();
 
-        public Action<string> Trace; // = (msg) => Debug.WriteLine(msg);
+        public Action<string> Trace;
+
         public string Directory = "";
 
         public HashSet<string> AdditionalFiles = new HashSet<string>();
 
         public void GetTree(string path, Action<JsonNode> actParse)
         {
+            _view.Trace = Trace;
             actParse(_view.GetMergedSubtree(path));
         }
 
 
         public JsonNode GetTree(string path)
         {
+            _view.Trace = Trace;
             return _view.GetMergedSubtree(path);
         }
 
@@ -70,7 +73,7 @@ namespace CmdLine
                                     fs = File.OpenRead(jsonCompletePath);
                                     AdditionalFiles.Add(jsonCompletePath);
                                     doc = JsonDocument.Parse(fs);
-                                    Trace("Adding include file "+includePath+ "at "+ jsonCompletePath);
+                                    Trace("Adding include file "+includePath+ " at "+ jsonCompletePath);
                                     // Upsert the loaded fragment over the current path
                                     _view.Upsert(currentPath, doc.RootElement, priority);
                                 }
@@ -120,6 +123,7 @@ namespace CmdLine
          */
         private void _preprocessUpsert(string rootPath, JsonElement je, int priority = 0)
         {
+            _view.Trace = Trace;
             _view.Upsert(rootPath, je, priority);
 
             _upsertIncludes(rootPath, je, priority);

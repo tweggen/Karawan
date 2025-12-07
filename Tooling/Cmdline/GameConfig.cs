@@ -143,6 +143,7 @@ namespace CmdLine
         public void LoadResourceList(JsonNode node)
         {
             Trace($"LoadResourceList();");
+
             try
             {
                 if (node is null)
