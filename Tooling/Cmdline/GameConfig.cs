@@ -401,7 +401,9 @@ namespace CmdLine
         private void _loadGameConfigFile(string jsonPath)
         {
             Trace($"_loadGameConfigFile(\"{jsonPath}\");");
+            Trace($"CurrentPath = \"{CurrentPath}\"");
             string pathGameJson = Path.Combine(CurrentPath,jsonPath);
+            Trace($"pathGameJson = \"{pathGameJson}\"");
             string directoryGameJson = Path.GetDirectoryName(pathGameJson);
             using (var stream = new FileStream(pathGameJson, FileMode.Open))
             {

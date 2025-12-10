@@ -119,6 +119,12 @@ public class DefaultMapProvider : IMapProvider
             // Iterate through properties of the JsonNode (assuming it's an Object node)
             foreach (var pair in node.AsObject())
             {
+                /*
+                 * Skip internal primitives.
+                 * TXWTODO:  How to handle this on mix level?
+                 */
+                if (pair.Key.StartsWith("__")) continue;
+                    
                 try
                 {
                     // Access "className" property safely

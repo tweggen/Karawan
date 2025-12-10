@@ -48,6 +48,7 @@ public class Mix
         {
             var (currentPath, currentElement) = queue.Dequeue();
             Trace("Analysing path "+currentPath);
+            var cwd = Environment.CurrentDirectory;
 
             if (currentElement.ValueKind == JsonValueKind.Object)
             {
@@ -59,34 +60,39 @@ public class Mix
                     var includePath = includeProp.GetString();
                     if (!string.IsNullOrEmpty(includePath))
                     {
-                        string tag = null;
-                        if (string.IsNullOrEmpty(tag))
-                        {
-                            int idx = includePath.LastIndexOf('/');
-                            if (idx != -1 && idx != includePath.Length - 1)
-                            {
-                                tag = includePath[(idx + 1)..];
-                            }
-                            else
-                            {
-                                tag = includePath;
-                            }
-                        }
-                        string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), includePath);
+                        /*
+                         * This is the complete path relative to the mix module
+                         */
+                        string jsonCompletePath = Path.Combine(Directory, includePath);
+
+                        /*
+                         * We use includePath as tag. It may be extended by "Directory" to actually
+                         * form a proper path (but is not now in the game).
+                         */
+                        string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), jsonCompletePath);
+                        
+                        /*
+                         * Sneak if the resource exists?
+                         */
                         if (!File.Exists(pathProbe))
                         {
                             Trace($"Warning: include file for {pathProbe} does not exist.");
                         }
-                        engine.Assets.AddAssociation(tag!, includePath);
                         
-                        string jsonCompletePath = Path.Combine(Directory, includePath);
-                        if (engine.Assets.Exists(jsonCompletePath))
+                        /*
+                         * Just by referencing it, we add it to the list of associations (hack...)-
+                         * TXWTODO: We need this on platforms that do not read a pre-compiled list of
+                         * assets.
+                         */
+                        engine.Assets.AddAssociation(includePath, includePath);
+                        
+                        if (engine.Assets.Exists(includePath))
                         {
                             Stream fs = default;
                             JsonDocument doc = default;
                             try
                             {
-                                fs = engine.Assets.Open(jsonCompletePath);
+                                fs = engine.Assets.Open(includePath);
                                 AdditionalFiles.Add(jsonCompletePath);
                                 doc = JsonDocument.Parse(fs);
                                 Trace("Adding include file "+includePath+ " at "+ jsonCompletePath);

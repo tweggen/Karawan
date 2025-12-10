@@ -44,6 +44,13 @@ public class LayerCatalogue : AModule
             {
                 foreach (var kvp in objConfigLayers)
                 {
+                    /*
+                     * Skip internal primitives.
+                     * TXWTODO:  How to handle this on mix level?
+                     */
+                    if (kvp.Key.StartsWith("__")) continue;
+
+
                     var layerName = kvp.Key;
                     double zOrder = 0f;
 

@@ -28,6 +28,12 @@ public class ImplementationLoader
             {
                 foreach (var pair in obj)
                 {
+                    /*
+                     * Skip internal primitives.
+                     * TXWTODO:  How to handle this on mix level?
+                     */
+                    if (pair.Key.StartsWith("__")) continue;
+                    
                     // pair.Value is already a JsonNode, so we can pass it directly
                     var factoryMethod = I.Get<engine.casette.Loader>()
                         .CreateFactoryMethod(pair.Key, pair.Value);

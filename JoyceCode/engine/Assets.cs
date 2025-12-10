@@ -13,6 +13,8 @@ public sealed class Assets
 
     public static void AddAssociation(string tag, string uri)
     {
+        Trace($"Added tag \"{tag}\" for \"{uri}\"");
+
         IAssetImplementation impl = null;
         lock (_staticlock)
         {
@@ -29,6 +31,8 @@ public sealed class Assets
     
     public static System.IO.Stream Open(in string filename)
     {
+        Trace($"Asked to open \"{filename}\"");
+        
         IAssetImplementation impl = null;
         lock (_staticlock)
         {
@@ -46,6 +50,8 @@ public sealed class Assets
 
     public static bool Exists(in string filename)
     {
+        Trace($"Checked for \"{filename}\"");
+
         IAssetImplementation impl = null;
         lock (_staticlock)
         {
