@@ -266,7 +266,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
                     try
                     {
                         string questName = pair.Key;
-                        I.Get<engine.quest.Manager>().RegisterFactory(
+                        this.RegisterFactory(
                             questName,
                             _ => I.Get<engine.casette.Loader>().CreateFactoryMethod(pair.Key, pair.Value)()
                                 as engine.quest.IQuest
