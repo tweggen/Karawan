@@ -103,6 +103,7 @@ public class SkProgramEntry : IDisposable
         }
     }
 
+    
     public int GetUniform(string name)
     {
         int location = _gl.GetUniformLocation(Handle, name);
@@ -116,6 +117,19 @@ public class SkProgramEntry : IDisposable
     }
 
 
+    public int GetUniformBlock(string name)
+    {
+        uint location = _gl.GetUniformBlockIndex(Handle, name);
+        if (location == 0xffffffff)
+        {
+            if (_traceShader) Error($"{name} uniform block not found on shader.");
+            return -1;
+        }
+
+        return (int) location;
+    }
+    
+
     public int GetAttrib(string name)
     {
         int location = _gl.GetAttribLocation(Handle, name);
@@ -127,6 +141,7 @@ public class SkProgramEntry : IDisposable
 
         return (int) location;
     }
+    
     
     public void SetUniform(string name, in Vector4 v)
     {

@@ -58,7 +58,7 @@ layout(std430, binding = 0) buffer BoneMatrices {
 /*
  * UBO per frame.
  */
-layout(std140, column_major, binding = 0) uniform BoneMatrices {
+layout(std140, column_major) uniform BoneMatrices {
     highp mat4 m4BoneMatrices[MAX_BONES]; // An array of 4x4 matrices
 };
 

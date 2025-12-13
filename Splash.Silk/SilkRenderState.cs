@@ -22,6 +22,8 @@ public class SilkRenderState
     private uint _frameno = 0;
     private BufferObject<Matrix4x4>? _bufferBakedFrame;
 
+    private int _uboAnimIndex = -1;
+    
     private int _silkAnimMethod = -1;
     
     private void _unloadProgramEntry()
@@ -79,6 +81,11 @@ public class SilkRenderState
          */
         if (!_isBoundModelBakedFrame)
         {
+            if (-1 == _uboAnimIndex)
+            {
+                _uboAnimIndex = _lastProgramEntry.GetUniformBlock("m4BoneMatrices");
+            }
+
             _bufferBakedFrame.BindBufferBase(0);
         }
     }
