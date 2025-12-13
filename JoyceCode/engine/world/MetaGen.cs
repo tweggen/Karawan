@@ -96,7 +96,6 @@ public class MetaGen
 
     public MList<engine.world.IWorldOperator> WorldBuildingOperators { get; }
     public MList<engine.world.IWorldOperator> WorldPopulatingOperators { get; }
-    private readonly List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList = new();
     public MList<world.IClusterOperator> ClusterOperators;
     
     private meta.ExecDesc _edRoot;
@@ -188,29 +187,7 @@ public class MetaGen
         };
     }
 
-    #if false
-    public void GenerateFragmentOperatorsForCluster(string key, ClusterDesc cluster)
-    {
-        lock (_lo)
-        {
-            foreach (var clusterFragmentOperatorFactory in _clusterFragmentOperatorFactoryList)
-            {
-                IFragmentOperator op;
-                try
-                {
-                    op = clusterFragmentOperatorFactory(key, cluster);
-                }
-                catch (Exception e)
-                {
-                    Error($"Exception while instantiating and adding cluster fragment operator: {e}.");
-                }
-            }
-        }
-    }
-    #endif
-
-
-    public void ApplyClusterOperators(ClusterDesc clusterDesc)
+   public void ApplyClusterOperators(ClusterDesc clusterDesc)
     {
         if (null == clusterDesc)
         {

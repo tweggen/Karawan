@@ -68,6 +68,10 @@
                       "mode": 1,
                       "configCondition": "world.CreateTramCharacters",
                       "implementation": "nogame.characters.tram.GenerateCharacterOperator.InstantiateFragmentOperator"
+                    },
+                    {
+                      "mode": 1,
+                      "implementation": "nogame.npcs.niceday.FragmentOperator.InstantiateFragmentOperator"
                     }
                   ]
                 }
