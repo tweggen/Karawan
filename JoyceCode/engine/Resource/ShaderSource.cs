@@ -28,23 +28,31 @@ public class ShaderSource : IDisposable
         string strShader = sr.ReadToEnd();
 
         string api = engine.GlobalSettings.Get("platform.threeD.API");
+        string version = engine.GlobalSettings.Get("platform.threeD.API.version");
+        string esString = "";
+        
+        bool haveSSBO = false;
+        bool haveUniform = false;
+        bool haveUBO = false;
+        
         if (api == "OpenGL")
         {
-            _shaderCode = "#version 430\n"+
-                          "#define USE_ANIM_SSBO 1\n"+
-                          "#define USE_ANIM_UNIFORM 0\n"+
-                          "#define USE_ANIM_UBO 0\n"+
-                          "\n"+
-                          strShader;
+            if (String.Compare(version, "430") < 0)
+            {
+                haveSSBO = false;
+                haveUBO = true;
+            }
+            else
+            {
+                haveSSBO = true;
+                haveUBO = false;
+            }
         }
         else if (api == "OpenGLES")
         {
-            _shaderCode = "#version 310 es\n\n"+
-                          "#define USE_ANIM_SSBO 0\n"+
-                          "#define USE_ANIM_UNIFORM 0\n"+
-                          "#define USE_ANIM_UBO 1\n"+
-                          "\n"+
-                          strShader;
+            esString = " es";
+            haveUBO = true;
+            
         }
         else
         {
@@ -52,5 +60,11 @@ public class ShaderSource : IDisposable
                 m => new InvalidOperationException(m));
             return;
         }
+        _shaderCode = $"#version {version}{esString}\n\n"+
+                      $"#define USE_ANIM_SSBO {(haveSSBO?"1":"0")}\n"+
+                      $"#define USE_ANIM_UNIFORM {(haveUniform?"1":"0")}\n"+
+                      $"#define USE_ANIM_UBO {(haveUBO?"1":"0")}\n"+
+                      "\n"+
+                      strShader;
     }
 }

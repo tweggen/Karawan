@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Mime;
 using System.Threading;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using engine;
 using Silk.NET.Core;
 using Silk.NET.Windowing;
@@ -51,12 +52,35 @@ public class DesktopMain
         
         var cwd = System.IO.Directory.GetCurrentDirectory();
         string jsonPath;
+        
         /*
          * Setup globals and statics
          */
-        engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
-        engine.GlobalSettings.Set("platform.threeD.API.version", "430");
-        engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
+            engine.GlobalSettings.Set("platform.threeD.API.version", "410");
+            engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
+            engine.GlobalSettings.Set("platform.threeD.API.version", "430");
+            engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
+            engine.GlobalSettings.Set("platform.threeD.API.version", "430");
+            engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
+        }
+        else
+        {
+            engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
+            engine.GlobalSettings.Set("platform.threeD.API.version", "430");
+            engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
+        }
+
         if (Directory.Exists("assets"))
         {
             /*

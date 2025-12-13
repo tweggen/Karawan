@@ -978,9 +978,17 @@ public class SilkThreeD : IThreeD
         _engine = I.Get<Engine>();
         _listShaderUseCases.Add(new LightShaderUseCase());
         string api = engine.GlobalSettings.Get("platform.threeD.API");
+        string version = engine.GlobalSettings.Get("platform.threeD.API.version");
         if (api == "OpenGL")
         {
-            AnimStrategy = Flags.GLAnimBuffers.AnimSSBO;
+            if (String.Compare(version, "430") < 0)
+            {
+                AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
+            }
+            else
+            {
+                AnimStrategy = Flags.GLAnimBuffers.AnimSSBO;
+            }
         }
         else if (api == "OpenGLES")
         {
