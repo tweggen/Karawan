@@ -16,7 +16,7 @@
     <StartupObject>Karawan.DesktopMain</StartupObject>
     <Nullable>disable</Nullable>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <PlatformTarget>x64</PlatformTarget>
+    <!-- PlatformTarget>x64</PlatformTarget -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SelfContained>True</SelfContained>
   </PropertyGroup>

@@ -1,10 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Default to Windows -->
+    <OSPlatform Condition=" '$(OS)' == 'Windows_NT' ">Windows</OSPlatform>
+    <!-- Distinguish Linux vs macOS -->
+    <OSPlatform Condition=" '$(OS)' == 'Unix' And Exists('/System/Library/CoreServices/SystemVersion.plist') ">OSX</OSPlatform>
+    <OSPlatform Condition=" '$(OS)' == 'Unix' And '$(OSPlatform)' == '' ">Linux</OSPlatform>
+  </PropertyGroup>
+  
+  <!-- Normalize host RID -->
+  <PropertyGroup>
+    <HostRid Condition=" '$(OS)' == 'Windows_NT' ">win-x64</HostRid>
+    <HostRid Condition=" '$(OSPlatform)' == 'Linux' ">linux-x64</HostRid>
+    <HostRid Condition=" '$(OSPlatform)' == 'OSX' ">osx-arm64</HostRid>
+  </PropertyGroup>
 
-  <UsingTask Condition=" '$(OS)' == 'Windows_NT' " TaskName="CmdLine.CompileAssetsTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\win-x64\joycecmd.dll" />
-  <UsingTask Condition=" '$(OS)' == 'Windows_NT' " TaskName="CmdLine.PackTexturesTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\win-x64\joycecmd.dll" />
-  <UsingTask Condition=" '$(OS)' == 'Windows_NT' " TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\win-x64\joycecmd.dll" />
-  <UsingTask Condition=" '$(OS)' != 'Windows_NT' " TaskName="CmdLine.PackTexturesTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\linux-x64\joycecmd.dll" />
-  <UsingTask Condition=" '$(OS)' != 'Windows_NT' " TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\linux-x64\joycecmd.dll" />
+  <!-- Register tasks once, using HostRid -->
+  <UsingTask TaskName="CmdLine.CompileAssetsTask"
+             AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\$(HostRid)\joycecmd.dll" />
+  <UsingTask TaskName="CmdLine.PackTexturesTask"
+             AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\$(HostRid)\joycecmd.dll" />
+  <UsingTask TaskName="CmdLine.Res2TargetTask"
+             AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\$(HostRid)\joycecmd.dll" />
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -14,17 +30,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Boom\Boom.csproj" />
-    <!--ProjectReference Include="..\Cmdline\Cmdline.csproj">
-      <PrivateAssets>all</PrivateAssets>
-      <ExcludeAssets>runtime</ExcludeAssets>
-    </ProjectReference -->
-      <!--
-      <PrivateAssets>runtime</PrivateAssets>
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-      <OutputItemType>Content</OutputItemType>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Targets>Build;DebugSymbolsProjectOutputGroup</Targets>
-    </ProjectReference> -->
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
 
@@ -33,25 +38,35 @@
     <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />
   </ItemGroup>
 
-
   <Import Project="..\nogameCode\nogameCode.projitems" Label="Shared" />
 
-  <Target Condition=" '$(OS)' == 'Windows_NT' " Name="CompileAssetsWindowsHost" BeforeTargets="GatherResources">
-    <Message Text="compiling assets" />
-    <CompileAssetsTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Chushi\bin\Debug\net9.0\win-x64\publish\Chushi.exe" />
+  <!-- Compile assets -->
+  <Target Name="CompileAssetsHost" BeforeTargets="GatherResources">
+    <Message Text="compiling assets ($(HostRid))" />
+    <CompileAssetsTask OutputDirectory="../nogame/generated"
+                       GameJson="../models/nogame.json"
+                       Executable="..\Chushi\bin\Debug\net9.0\$(HostRid)\publish\Chushi$(ExeSuffix)" />
   </Target>
 
-  <Target Condition=" '$(OS)' == 'Windows_NT' " Name="GatherTexturesWindowsHost" BeforeTargets="GatherResources">
-    <Message Text="gathering textures" />
-    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net9.0\win-x64\publish\joycecmd.exe" />
+  <!-- Gather textures -->
+  <Target Name="GatherTexturesHost" BeforeTargets="GatherResources">
+    <Message Text="gathering textures ($(HostRid))" />
+    <PackTexturesTask OutputDirectory="../nogame/generated"
+                      GameJson="../models/nogame.json"
+                      Executable="..\Tooling\Cmdline\bin\Debug\net9.0\$(HostRid)\publish\joycecmd$(ExeSuffix)" />
   </Target>
-  <Target Condition=" '$(OS)' != 'Windows_NT' " Name="GatherTexturesLinuxHost" BeforeTargets="GatherResources">
-    <Message Text="gathering textures" />
-    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net9.0\linux-x64\publish\joycecmd" />
-  </Target>
+
+  <!-- Gather resources -->
   <Target Name="GatherResources" BeforeTargets="Compile">
-    <Message Text="compiling resources" />
-    <Res2TargetTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" />
+    <Message Text="compiling resources ($(HostRid))" />
+    <Res2TargetTask OutputDirectory="../nogame/generated"
+                    GameJson="../models/nogame.json" />
   </Target>
-    
+
+  <!-- Normalize executable suffix -->
+  <PropertyGroup>
+    <ExeSuffix Condition=" '$(OS)' == 'Windows_NT' ">.exe</ExeSuffix>
+    <ExeSuffix Condition=" '$(OS)' != 'Windows_NT' "></ExeSuffix>
+  </PropertyGroup>
+
 </Project>

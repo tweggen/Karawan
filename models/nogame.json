@@ -12,7 +12,7 @@
   "properties": { "__include__": "../models/json/properties.json" },
   "quests": { "__include__": "../models/json/quests.json" },
   "layers": { "__include__": "../models/json/layers.json" },
-  "scenes": { "__include__": "../models/json/scenes.json "},
+  "scenes": { "__include__": "../models/json/scenes.json" },
   "textures": { "__include__": "../models/json/textures.json" },
   "animations": { "__include__": "../models/json/animations.json" },
   "resources": { "__include__": "../models/json/resources.json" }
