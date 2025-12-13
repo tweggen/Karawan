@@ -137,7 +137,7 @@ namespace Splash.Silk
 
                 if ((cCameraParams.CameraFlags & engine.joyce.components.Camera3.Flags.EnableFog) != 0)
                 {
-                    _silkThreeD.SetFogDistance(200f);
+                    _silkThreeD.SetFogDistance(1000f);
                 }
                 else
                 {

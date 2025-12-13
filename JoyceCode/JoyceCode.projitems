@@ -363,7 +363,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Transform3ToParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Transform3ToWorld.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\HierarchyApi.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\MaterialCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\MatMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\mesh\Merger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Renderbuffer.cs" />

@@ -410,7 +410,8 @@ void main()
     {
         vec3 col3Unfogged = vec3(col4Unfogged.xyz);
         float distance = length(v3RelFragPosition);
-        float fogIntensity = clamp(distance, 0.0, fogDistance) / (fogDistance+50.0);
+        float fogIntensity = clamp(distance, 0.0, fogDistance) / (fogDistance);
+        fogIntensity = pow(fogIntensity, 0.5); 
         vec3 col3FoggedColor = (1.0-fogIntensity) * col3Unfogged + fogIntensity * col3Fog;
 
         finalColor = vec4(col3FoggedColor.xyz, col4Unfogged.w);

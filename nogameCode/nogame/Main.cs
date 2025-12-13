@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using engine;
-using engine.world;
+using engine.joyce;
 
 namespace nogame;
 
@@ -13,13 +13,24 @@ public class Main : AModule
 {
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
+        new SharedModule<engine.Resources>(),
+
+        /*
+         * These are game specific.
+         */
+        
+        new SharedModule<engine.quest.Manager>(),
+        new SharedModule<builtin.modules.inventory.PickableDirectory>(),
+        
+        
         new SharedModule<nogame.modules.AutoSave>(),
         new SharedModule<builtin.controllers.InputMapper>(),
         new SharedModule<builtin.tools.CameraWatcher>(),
         new SharedModule<builtin.modules.ScreenComposer>(),
         new SharedModule<nogame.modules.osd.Display>(),
         new SharedModule<engine.news.ClickModule>(),
-        new MyModule<nogame.modules.debugger.DebuggerToggle>()
+        new MyModule<nogame.modules.debugger.DebuggerToggle>(),
+        
     };
 
     private void _setupScreenComposition()

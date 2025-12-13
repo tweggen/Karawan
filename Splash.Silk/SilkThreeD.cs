@@ -970,7 +970,7 @@ public class SilkThreeD : IThreeD
     {
         _textureGenerator = I.Get<TextureGenerator>();
         _textureManager = I.Get<TextureManager>();
-        _shaderManager = I.Get<ShaderManager>();
+        _shaderManager = (I.Get<ModuleFactory>().FindModule(typeof(ShaderManager), true) as ShaderManager)!;
     }
 
     public SilkThreeD()

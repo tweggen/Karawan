@@ -16,7 +16,7 @@ internal class ObjectEntry<K, T>
 }
 
 
-public class ObjectFactory<K, T> : IDisposable where K : IComparable
+public class ObjectFactory<K, T> : AModule, IDisposable where K : IComparable
 {
     private object _lo = new();
     private SortedDictionary<K, ObjectEntry<K, T> > _mapObjects = new();
@@ -183,8 +183,8 @@ public class ObjectFactory<K, T> : IDisposable where K : IComparable
         }
     }
 
-
-    public void Dispose()
+    
+    public override void Dispose()
     {
         if (typeof(IDisposable).IsAssignableFrom(typeof(T)))
         {
@@ -197,5 +197,7 @@ public class ObjectFactory<K, T> : IDisposable where K : IComparable
                 }
             }
         }
+
+        base.Dispose();
     }
 }

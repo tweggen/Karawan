@@ -12,10 +12,13 @@ namespace engine;
 
 public abstract class AAssetImplementation : IAssetImplementation
 {
-    private bool _traceResources = true;
+    private bool _traceLoadingResources = true;
+    private bool _traceLoadingAnimations = false;
+    private bool _traceLoadingTextures = false;
     
     
     public SortedSet<string> AvailableAnimations = new();
+
     
     
     private void _whenLoadedResources(string path, JsonNode? node)
@@ -48,7 +51,7 @@ public abstract class AAssetImplementation : IAssetImplementation
                         }
                     }
 
-                    if (_traceResources)
+                    if (_traceLoadingResources)
                         Trace($"LoadResourcesTo: Added Resource \"{tag}\" from {uri}.");
 
                     string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uri);
@@ -91,7 +94,7 @@ public abstract class AAssetImplementation : IAssetImplementation
                         throw new InvalidDataException("no animationsUrl specified in resource.");
                     }
 
-                    if (_traceResources)
+                    if (_traceLoadingAnimations)
                         Trace($"LoadAnimationsTo: Added Animation \"{uriModel}\" from {uriModel}.");
 
                     pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel);
@@ -107,7 +110,7 @@ public abstract class AAssetImplementation : IAssetImplementation
                             Path.GetFileName(uriModel),
                             uriAnimations);
 
-                    if (_traceResources)
+                    if (_traceLoadingAnimations)
                         Trace($"LoadAnimationsTo: Added Animation {uriModel} with {uriAnimations} at {strFileName}.");
 
                     /*
@@ -127,7 +130,7 @@ public abstract class AAssetImplementation : IAssetImplementation
         }
         catch (Exception e)
         {
-            Trace($"Error loading resource: {e}");
+            Trace($"Error loading animation: {e}");
         }
     }
 
@@ -146,7 +149,7 @@ public abstract class AAssetImplementation : IAssetImplementation
             return;
         }
 
-        if (_traceResources)
+        if (_traceLoadingResources)
             Trace($"LoadTextureAtlas: Added Resource \"{atlasTag}\" from {atlasUri}.");
 
         string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), atlasUri);
