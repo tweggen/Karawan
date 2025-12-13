@@ -649,9 +649,9 @@ public class Platform : engine.IPlatform
         _renderSingleFrameStopwatch.Start();
         double msGotFrame = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
-        if (_iView.Size.X != 0 && _iView.Size.Y != 0)
+        if (_iView.FramebufferSize.X != 0 && _iView.FramebufferSize.Y != 0)
         {
-            _renderer.SetDimension(_iView.Size.X, _iView.Size.Y);
+            _renderer.SetDimension(_iView.FramebufferSize.X, _iView.FramebufferSize.Y);
         }
 
         _renderer.RenderFrame(renderFrame);
@@ -714,12 +714,19 @@ public class Platform : engine.IPlatform
     {
         if (size.X != 0 && size.Y != 0)
         {
+            /*
+             * Read the logical size.
+             */
+            var fbSize = _iView.FramebufferSize;
+            float scaleX = (float)fbSize.X / (float)size.X;
+            float scaleY = (float)fbSize.Y / (float)size.Y;
+            
             // TXWTODO: We are abusing the global settings as global variables.
-            _renderer.SetDimension(size.X, size.Y);
-            engine.GlobalSettings.Set("view.size", $"{size.X}x{size.Y}");
+            _renderer.SetDimension(fbSize.X, fbSize.Y);
+            engine.GlobalSettings.Set("view.size", $"{fbSize.X}x{fbSize.Y}");
             I.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
             {
-                PhysicalPosition = new(size.X, size.Y)
+                PhysicalPosition = new(fbSize.X, fbSize.Y)
             });
         }
     }
