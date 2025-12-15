@@ -398,7 +398,11 @@ namespace CmdLine
         private string tagOf(string uri)
         {
             string tag;
-            int idx = uri.LastIndexOf('/');
+            int idx = uri.LastIndexOf("/");
+            if (-1 == idx)
+            {
+                idx = uri.LastIndexOf("\\");
+            }
             if (idx != -1 && idx != uri.Length - 1)
             {
                 tag = uri.Substring(idx + 1);
@@ -433,14 +437,9 @@ namespace CmdLine
              */
             foreach (string file in _mix.AdditionalFiles)
             {
-                string tag = null;
-                string uri = file;
-                if (tag is null)
-                {
-                    tag = tagOf(uri);
-                }
-
-                MapResources.Add(tag, new Resource { Type = "file", Uri = uri, Tag = tag });
+                string tag = tagOf(file);
+                Trace($"Adding resource tag {tag} uri {file}");
+                MapResources.Add(tag, new Resource { Type = "file", Uri = file, Tag = tag });
             }
 
 
