@@ -126,14 +126,13 @@ public class DesktopMain
 
         I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
 
+
+        Console.WriteLine($"CWD is {cwd}");
+        
         /*
          * Bootstrap game by directly reading game config, setting up
          * asset implementation with the pathes.
          */
-        engine.casette.Loader cassetteLoader;
-
-        Console.WriteLine($"CWD is {cwd}");
-        
         I.Register<engine.casette.Loader>(() => {
             using (var streamJson =
                    File.OpenRead(

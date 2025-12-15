@@ -177,12 +177,7 @@
 	  <Content Include="..\models\fonts\Slideyouran-Regular.ttf">
 	    <Link>models\fonts\Slideyouran-Regular.ttf</Link>
 	  </Content>
-	  <Content Include="..\models\json\globalSettings.json">
-	    <Link>models\json\globalSettings.json</Link>
-	  </Content>
-	  <Content Include="..\models\json\implementations.json">
-	    <Link>models\json\implementations.json</Link>
-	  </Content>
+
 	  <Content Include="..\models\menu\shop.xml">
 	    <Link>models\menu\shop.xml</Link>
 	  </Content>

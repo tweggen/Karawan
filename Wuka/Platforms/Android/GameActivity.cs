@@ -184,35 +184,48 @@ namespace Wuka
             engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
             engine.GlobalSettings.Set("Engine.RWPath", System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData));
 
+            /*
+             * We need to explicitly reference the game to load it.
+             */
+            {
+                var rootDepends = new nogame.GameState();
+                System.Console.WriteLine("DOTNET silicon desert "+rootDepends);
+            }
+            
+            
+            I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
+
+            /*
+             * Setup singletons and statics
+             */
+            var assetManagerImplementation = new Wuka.AssetImplementation(Assets);
+
+            /*
+             * Bootstrap game by directly reading game config, setting up
+             * asset implementation with the pathes.
+             */
+            I.Register<engine.casette.Loader>(() => {
+                //using (var streamJson = engine.Assets.Open("nogame.json"))
+                {
+                    return new engine.casette.Loader(engine.Assets.Open("nogame.json"));
+                }
+            });
+            
+            assetManagerImplementation.WithLoader();
+            I.Get<engine.casette.Loader>().InterpretConfig();
+
             _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView, out var silkPlatform);
             silkPlatform.BeforeDoEvent = _beforeDoEvents;
             
             _iView.Initialize();
 
-            I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
             I.Register<Boom.ISoundAPI>(() =>
             {
                 var api = new Boom.OpenAL.API(_engine);
                 return api;
             });
 
-            /*
-             * We need to explicitly reference the game.
-             */
-            {
-                var rootDepends = new nogame.GameState();
-                System.Console.WriteLine("DOTNET silicon desert "+rootDepends);
-            }
-            engine.casette.Loader cassetteLoader = new(engine.Assets.Open("nogame.json"));
-
-            /*
-             * Setup singletons and statics
-             */
-            var assetManagerImplementation = new Wuka.AssetImplementation(Assets);
-            engine.Assets.SetAssetImplementation(assetManagerImplementation);
-            
-            cassetteLoader.InterpretConfig();
-            cassetteLoader.StartGame();
+            I.Get<engine.casette.Loader>().StartGame();
             
             _engine.Execute();
 
