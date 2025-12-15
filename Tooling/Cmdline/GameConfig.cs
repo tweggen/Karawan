@@ -395,6 +395,22 @@ namespace CmdLine
         }
 
 
+        private string tagOf(string uri)
+        {
+            string tag;
+            int idx = uri.LastIndexOf('/');
+            if (idx != -1 && idx != uri.Length - 1)
+            {
+                tag = uri.Substring(idx + 1);
+            }
+            else
+            {
+                tag = uri;
+            }
+            return tag;
+        }
+
+
         /**
          * Start resolving the configuration file tree.
          */
@@ -405,7 +421,7 @@ namespace CmdLine
             string pathGameJson = Path.Combine(CurrentPath,jsonPath);
             Trace($"pathGameJson = \"{pathGameJson}\"");
             string directoryGameJson = Path.GetDirectoryName(pathGameJson);
-            MapResources.Add(pathGameJson, new Resource { Type = "file", Uri = pathGameJson, Tag = Path.GetFileName(pathGameJson)});
+            MapResources.Add(tagOf(pathGameJson), new Resource { Type = "file", Uri = pathGameJson, Tag = tagOf(pathGameJson)});
             using (var stream = new FileStream(pathGameJson, FileMode.Open))
             {
                 _mix = new Mix() { Trace = this.Trace, Directory = directoryGameJson };
@@ -421,18 +437,10 @@ namespace CmdLine
                 string uri = file;
                 if (tag is null)
                 {
-                    int idx = uri.LastIndexOf('/');
-                    if (idx != -1 && idx != uri.Length - 1)
-                    {
-                        tag = uri.Substring(idx + 1);
-                    }
-                    else
-                    {
-                        tag = uri;
-                    }
+                    tag = tagOf(uri);
                 }
 
-                MapResources.Add(file, new Resource { Type = "file", Uri = uri, Tag = file });
+                MapResources.Add(tag, new Resource { Type = "file", Uri = uri, Tag = tag });
             }
 
 

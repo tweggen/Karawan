@@ -86,13 +86,19 @@ public class Mix
                          */
                         engine.Assets.AddAssociation(includePath, includePath);
                         
-                        if (engine.Assets.Exists(includePath))
+                        /*
+                         * Currently, we only accept an open call with the file name only
+                         */
+                        string fileNameOnly = Path.GetFileName(includePath);
+                        Trace($"Trying to open file name {fileNameOnly}");
+                        
+                        if (engine.Assets.Exists(fileNameOnly))
                         {
                             Stream fs = default;
                             JsonDocument doc = default;
                             try
                             {
-                                fs = engine.Assets.Open(includePath);
+                                fs = engine.Assets.Open(fileNameOnly);
                                 AdditionalFiles.Add(jsonCompletePath);
                                 doc = JsonDocument.Parse(fs);
                                 Trace("Adding include file "+includePath+ " at "+ jsonCompletePath);
@@ -101,7 +107,7 @@ public class Mix
                             }
                             catch (Exception _)
                             {
-                                Trace("Unable to open include file "+includePath+" at "+jsonCompletePath);
+                                Trace("Unable to open include file "+fileNameOnly+" at "+jsonCompletePath);
                             }
                             finally
                             {
@@ -109,7 +115,7 @@ public class Mix
                                 doc?.Dispose();
                             }
                         } else {
-                            Trace("include path does not exist "+jsonCompletePath);     
+                            Trace("include path does not exist "+fileNameOnly);     
                         }                       
                     } else {
                         Trace("include property null.");                            
