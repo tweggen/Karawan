@@ -405,6 +405,7 @@ namespace CmdLine
             string pathGameJson = Path.Combine(CurrentPath,jsonPath);
             Trace($"pathGameJson = \"{pathGameJson}\"");
             string directoryGameJson = Path.GetDirectoryName(pathGameJson);
+            MapResources.Add(pathGameJson, new Resource { Type = "file", Uri = pathGameJson, Tag = Path.GetFileName(pathGameJson)});
             using (var stream = new FileStream(pathGameJson, FileMode.Open))
             {
                 _mix = new Mix() { Trace = this.Trace, Directory = directoryGameJson };
