@@ -4,6 +4,19 @@ using static engine.Logger;
 
 namespace Karawan;
 
+
+/**
+ * Desktop asset implementation.
+ *
+ * This is a bit difficult: The list of resources is ttored inside the
+ * nogame.json and friends, which in turn is a resource file and is required
+ * before actually knowing about the resources.
+ * 
+ * While running it basically runs in two different conditions:
+ * 1. It has been installed in shipped. In that case, all asset files are flat inside the
+ *   installation directory.
+ * 2. It is in development. In that case, all files are in TXWTODO??
+ */
 public class AssetImplementation : AAssetImplementation
 {
     private object _lo = new();
@@ -77,5 +90,10 @@ public class AssetImplementation : AAssetImplementation
         }
 
         return stream;
+    }
+
+
+    public AssetImplementation()
+    {
     }
 }

@@ -1,19 +1,21 @@
 {
+  "resources": { "__include__": "nogame.resources.json" },
+  "globalSettings":  { "__include__": "nogame.globalSettings.json" },
+
   "defaults": {
     "loader": {
       "assembly": "nogame.dll"
     }
   },
-  "globalSettings":  { "__include__": "../models/json/globalSettings.json" },
-  "implementations": { "__include__": "../models/json/implementations.json" },
-  "mapProviders": { "__include__": "../models/json/mapProviders.json" },
-  "metaGen": { "__include__": "../models/json/metaGen.json" },
-  "modules": { "__include__": "../models/json/modules.json" },
-  "properties": { "__include__": "../models/json/properties.json" },
-  "quests": { "__include__": "../models/json/quests.json" },
-  "layers": { "__include__": "../models/json/layers.json" },
-  "scenes": { "__include__": "../models/json/scenes.json" },
-  "textures": { "__include__": "../models/json/textures.json" },
-  "animations": { "__include__": "../models/json/animations.json" },
-  "resources": { "__include__": "../models/json/resources.json" }
+  
+  "implementations": { "__include__": "nogame.implementations.json" },
+  "mapProviders": { "__include__": "nogame.mapProviders.json" },
+  "metaGen": { "__include__": "nogame.metaGen.json" },
+  "modules": { "__include__": "nogame.modules.json" },
+  "properties": { "__include__": "nogame.properties.json" },
+  "quests": { "__include__": "nogame.quests.json" },
+  "layers": { "__include__": "nogame.layers.json" },
+  "scenes": { "__include__": "nogame.scenes.json" },
+  "textures": { "__include__": "nogame.textures.json" },
+  "animations": { "__include__": "nogame.animations.json" },
 }
