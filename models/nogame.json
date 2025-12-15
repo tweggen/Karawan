@@ -17,5 +17,5 @@
   "layers": { "__include__": "nogame.layers.json" },
   "scenes": { "__include__": "nogame.scenes.json" },
   "textures": { "__include__": "nogame.textures.json" },
-  "animations": { "__include__": "nogame.animations.json" },
+  "animations": { "__include__": "nogame.animations.json" }
 }

@@ -94,9 +94,9 @@ public class DesktopMain
             if (Path.Exists("./models/nogame.json"))
             {
                 /*
-                 * I don't know this case.
+                 * Jetbrains Rider Windows Desktop Debug.
                  */
-                engine.GlobalSettings.Set("Engine.ResourcePath", "./nogame/");
+                engine.GlobalSettings.Set("Engine.ResourcePath", "./models/");
                 jsonPath = "../models/";
             }
             else
@@ -105,7 +105,7 @@ public class DesktopMain
                  * This is when we start from the debugger on windows.
                  */
                 jsonPath = "../models/";
-                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
+                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../models/");
             }
         }
 

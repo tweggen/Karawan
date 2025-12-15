@@ -37,7 +37,7 @@ public class ConsoleMain
                 /*
                 * I don't know this case.
                 */
-                strResourcePath = "./nogame/";
+                strResourcePath = "./models/";
                 jsonPath = "../models/";
             }
             else if (Path.Exists("../../../../nogame/"))
@@ -46,21 +46,21 @@ public class ConsoleMain
                  * This is when we start from the debugger on windows in Karawan
                  */
                 jsonPath = "../models/";
-                strResourcePath = "../../../../nogame/";
+                strResourcePath = "../../../../models/";
             } else if (Path.Exists("../../../../../nogame/"))
             {
                 /*
                 * This is in Chushi on windows when called from jetbrains compiler.
                 */
                 jsonPath = "../models/";
-                strResourcePath = "../../../../../nogame/";
+                strResourcePath = "../../../../../models/";
             } else if (Path.Exists("../../../../../../nogame/"))
             {
                 /*
                 * This is in Chushi on windows.
                 */
                 jsonPath = "../models/";
-                strResourcePath = "../../../../../../nogame/";
+                strResourcePath = "../../../../../../models/";
             }
             else
             {

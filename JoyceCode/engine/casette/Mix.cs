@@ -78,13 +78,16 @@ public class Mix
                         {
                             Trace($"Warning: include file for {pathProbe} does not exist.");
                         }
+                        else
+                        {
+                            /*
+                             * Just by referencing it, we add it to the list of associations (hack...)-
+                             * TXWTODO: We need  this on platforms that do not read a pre-compiled list of
+                             * assets.
+                             */
+                            engine.Assets.AddAssociation(includePath, jsonCompletePath);
                         
-                        /*
-                         * Just by referencing it, we add it to the list of associations (hack...)-
-                         * TXWTODO: We need this on platforms that do not read a pre-compiled list of
-                         * assets.
-                         */
-                        engine.Assets.AddAssociation(includePath, includePath);
+                        }
                         
                         /*
                          * Currently, we only accept an open call with the file name only
