@@ -20,7 +20,7 @@ public class Loader
         _strDefaultLoaderAssembly = path;
     }
 
-    static private bool _traceLoad = true;
+    static private bool _traceLoad = false;
     public static Assembly TryLoadDll(string dllPath)
     {
         if (_traceLoad) Trace($"dllPath = {dllPath}");
