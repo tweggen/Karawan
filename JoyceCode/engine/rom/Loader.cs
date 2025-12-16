@@ -20,7 +20,7 @@ public class Loader
         _strDefaultLoaderAssembly = path;
     }
 
-    static private bool _traceLoad = false;
+    static private bool _traceLoad = true;
     public static Assembly TryLoadDll(string dllPath)
     {
         if (_traceLoad) Trace($"dllPath = {dllPath}");
@@ -242,11 +242,18 @@ public class Loader
         Type type = null;
         try
         {
-            Assembly asm = TryLoadDll(dllPath);
-
-            if (null != asm)
+            try
             {
-                type = asm.GetType(fullClassName);
+                Assembly asm = TryLoadDll(dllPath);
+
+                if (null != asm)
+                {
+                    type = asm.GetType(fullClassName);
+                }
+            }
+            catch (Exception e)
+            {
+                Trace($"Error with dll loading, falling back to scanning all assemblies. ({dllPath}: {e})");
             }
 
             if (null == type)
