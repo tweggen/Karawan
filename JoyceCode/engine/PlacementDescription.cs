@@ -18,7 +18,7 @@ public class PlacementDescription
          * The thing is placed in absolute coordinates.
          * Caution, this is rarely applicable in the procedurally generated
          * world.
-         */
+         */ 
         World,
         
         /**
