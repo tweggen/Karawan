@@ -31,6 +31,7 @@ public class FragmentOperator : IFragmentOperator
     private engine.world.ClusterDesc _clusterDesc;
     private AABB _clusterAABB;
     private string _myKey;
+    private Engine _engine;
 
 
     public void FragmentOperatorGetAABB(out AABB aabb)
@@ -45,19 +46,55 @@ public class FragmentOperator : IFragmentOperator
     }
 
 
-    private void _placeNPC(Vector3 v3Pos)
+    private async Task _placeNPC(Context ctx, Vector3 v3Pos)
     {
         /*
          * Right now, this character does not have any behavior.
          */
 
-        var cmd = CharacterModelDescriptionFactory.CreateNPC(_rnd);
+        var cmd = CharacterModelDescriptionFactory.CreateNPC(ctx.Rnd);
         EntityCreator creator = new()
         {
             // no BehaviorFactory
             CharacterModelDescription = cmd,
             PhysicsName = EntityName
         };
+        var model = await creator.CreateAsync();
+        
+        _engine.QueueEntitySetupAction(EntityName, eTarget =>
+        {
+            int fragmentId = ctx.Fragment.NumericalId;
+
+            eTarget.Set(new engine.world.components.Owner(fragmentId));
+
+            /*
+             * We already setup the FromModel in case we utilize one of the characters as
+             * subject of a Quest.
+             */
+            eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = creator.ModelCacheParams });
+            
+            creator.CreateLogical(eTarget);
+            
+            /*
+             * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
+             * That way, the character will not be cleaned up immediately.
+             */
+            eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
+                Matrix4x4.CreateTranslation(ctx.Fragment.Position)));
+            
+            /*
+             * If we created physics for this one, take care to minimize
+             * the distance for physics support.
+             */
+            if (eTarget.Has<engine.physics.components.Body>())
+            {
+                ref var cBody = ref eTarget.Get<engine.physics.components.Body>();
+                if (cBody.PhysicsObject != null)
+                {
+                    cBody.PhysicsObject.MaxDistance = 10f;
+                }
+            }
+        });
     }
     
 
@@ -95,7 +132,7 @@ public class FragmentOperator : IFragmentOperator
 
             foreach (var quarter in listForestQuarters)
             {
-                _placeNPC(quarter.GetCenterPoint3());
+                _placeNPC(ctx, quarter.GetCenterPoint3());
             }
         };
     }
@@ -109,6 +146,7 @@ public class FragmentOperator : IFragmentOperator
         _clusterDesc = clusterDesc;
         _clusterAABB = clusterDesc.AABB;
         _myKey = strKey;
+        _engine = I.Get<Engine>();
     }
 
 

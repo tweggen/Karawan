@@ -13,7 +13,7 @@ public static class CharacterModelDescriptionFactory
         "man_coat_winter_Rig.fbx",
     };
 
-    public static nogame.characters.CharacterModelDescription CreateCitizen(RandomSource rnd)
+    public static nogame.characters.CharacterModelDescription CreateNPC(RandomSource rnd)
     {
         string strModel;
         int idxModel = (int)(rnd.GetFloat() * _arrModels.Length);
