@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine.joyce;
+using engine.streets;
 using static engine.Logger;
 
 namespace nogame.cities;
@@ -162,6 +163,11 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                         listInstanceDesc.Add(_treeInstanceGenerator.CreateInstance(
                             worldFragment, treePos, ctx.Rnd.Get16()));
                         nPlanted++;
+                    }
+
+                    if (nPlanted > 0)
+                    {
+                        quarter.Attributes |= Quarter.QuarterAttributes.Forest;
                     }
                 }
             }

@@ -243,6 +243,7 @@ namespace engine.streets
             building.SetHeight(height);
 
             quarter.AddDebugTag("haveBuilding", "true");
+            quarter.Attributes |= Quarter.QuarterAttributes.Building;
             estate.AddBuilding(building);
             
             /*

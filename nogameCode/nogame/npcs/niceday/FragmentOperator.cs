@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Threading.Tasks;
-using builtin.map;
 using engine;
 using engine.geom;
 using engine.joyce;
+using engine.streets;
 using engine.world;
 using static engine.Logger;
 
@@ -18,6 +19,7 @@ public class FragmentOperator : IFragmentOperator
 {
     static private object _lo = new();
     private engine.world.ClusterDesc _clusterDesc;
+    private AABB _clusterAABB;
     private string _myKey;
 
 
@@ -35,7 +37,30 @@ public class FragmentOperator : IFragmentOperator
 
     public Func<Task> FragmentOperatorApply(Fragment worldFragment, FragmentVisibility visib)
     {
-        return async () => { };
+        /*
+         * Look for a forest estate and place a character there.
+         */
+        return async () =>
+        {
+            /*
+             * Only create for 3d visibility, not for map.
+             */
+            if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
+            {
+                return;
+            }
+
+            /*
+             * The center of the fragment relative to the cluster.
+             */
+            Vector3 v3Center = _clusterDesc.Pos - worldFragment.Position;
+
+            var listForestQuarters = _clusterDesc.QuarterStore().QueryQuarters(
+                _clusterAABB,
+                Quarter.QuarterAttributes.Forest,
+                Quarter.QuarterAttributes.Forest | Quarter.QuarterAttributes.Building
+            );
+        };
     }
 
 
@@ -45,13 +70,8 @@ public class FragmentOperator : IFragmentOperator
     )
     {
         _clusterDesc = clusterDesc;
+        _clusterAABB = clusterDesc.AABB;
         _myKey = strKey;
-
-        I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.streets.materials.cluster",
-            name => new Material()
-            {
-                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff262222)
-            });
     }
 
 

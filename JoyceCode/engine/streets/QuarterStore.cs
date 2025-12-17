@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
+using engine.geom;
 using engine.world;
 using Octree;
 
@@ -72,12 +73,36 @@ namespace engine.streets
             _octreeQuarters.Add(quarter, bb);
             _listQuarters.Add(quarter);
         }
+        
 
         public List<Quarter> GetQuarters()
         {
             return _listQuarters;
         }
 
+        
+        public IReadOnlyList<Quarter> QueryQuarters(
+            in AABB aabb,
+            Quarter.QuarterAttributes attributeValue,
+            Quarter.QuarterAttributes attributeMask
+        )
+        {
+            List<Quarter> listQuarters = new();
+            foreach (var quarter in _listQuarters)
+            {
+                if ((quarter.Attributes & attributeMask) == (attributeValue & attributeMask))
+                {
+                    if (aabb.Contains(quarter.GetCenterPoint3()))
+                    {
+                        listQuarters.Add(quarter);
+                    }
+                }
+            }
+
+            return listQuarters.AsReadOnly();
+        }
+
+        
         public QuarterStore(ClusterDesc clusterDesc)
         {
             _clusterDesc = clusterDesc;

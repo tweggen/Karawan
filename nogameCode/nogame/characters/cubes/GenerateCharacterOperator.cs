@@ -93,30 +93,6 @@ internal class GenerateCharacterOperator : engine.world.IFragmentOperator
                 Fragment = worldFragment
             };
             
-            float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
-            float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
-
-            /*
-             * We don't apply the operator if the fragment completely is
-             * outside our boundary box (the cluster)
-             */
-            {
-                {
-                    float csh = _clusterDesc.Size / 2.0f;
-                    float fsh = engine.world.MetaGen.FragmentSize / 2.0f;
-                    if (
-                        (cx - csh) > (fsh)
-                        || (cx + csh) < (-fsh)
-                        || (cz - csh) > (fsh)
-                        || (cz + csh) < (-fsh)
-                    )
-                    {
-                        // trace( "Too far away: x="+_clusterDesc.x+", z="+_clusterDesc.z);
-                        return;
-                    }
-                }
-            }
-
             if (_trace)
                 Trace($"cluster '{_clusterDesc.IdString}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
 

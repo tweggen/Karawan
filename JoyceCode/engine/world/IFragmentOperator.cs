@@ -28,6 +28,9 @@ public interface IFragmentOperator
      * fragment in a given state and a certain configuratino, it shall generate
      * the same output.
      *
+     * The fragment operator is called if the worldFragment intersects with
+     * a previously queried AABB.
+     *
      * @param worldFragment
      *     The fragment to load into
      * @param visib

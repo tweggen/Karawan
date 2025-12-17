@@ -19,11 +19,15 @@ public class Quarter
     private Dictionary<string, string> _debugMap = new();
     private AABB _aabb = new();
 
-    public enum LocationAttributes
+    [Flags] 
+    public enum QuarterAttributes
     {
         Forest = 0x00000002,
         Building = 0x00000004
     }
+
+    public QuarterAttributes Attributes = 0;
+    
     
     public AABB AABB {
         get => _aabb;
