@@ -94,7 +94,16 @@ public class FragmentOperator : IFragmentOperator
                     cBody.PhysicsObject.MaxDistance = 10f;
                 }
             }
+            
+            if (!eTarget.Has<engine.joyce.components.GPUAnimationState>())
+            {
+                eTarget.Set(new engine.joyce.components.GPUAnimationState()
+                {
+                    AnimationState = cmd.AnimationState 
+                });
+            }
 
+            #error Setup animation without duplicating too much code from citizen behavior.
             I.Get<TransformApi>().SetTransforms(eTarget, 
                 true, 0x00000001,
                 Quaternion.Identity, v3Pos, Vector3.One);
