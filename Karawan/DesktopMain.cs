@@ -87,6 +87,7 @@ public class DesktopMain
              * This is when we start installed on windows.
              */
             engine.GlobalSettings.Set("Engine.ResourcePath", "./assets/");
+            engine.GlobalSettings.Set("Engine.GeneratedResourcePath", "./");
             jsonPath = "./";
         }
         else
@@ -107,6 +108,7 @@ public class DesktopMain
                 jsonPath = "../models/";
                 engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../models/");
             }
+            engine.GlobalSettings.Set("Engine.GeneratedResourcePath", "../nogame/generated");
         }
 
         {

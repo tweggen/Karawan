@@ -177,6 +177,7 @@ namespace Wuka
             engine.GlobalSettings.Set("platform.threeD.API.version", "310");
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
             engine.GlobalSettings.Set("Engine.ResourcePath", "./");
+            engine.GlobalSettings.Set("Engine.GeneratedResourcePath", "./");
             engine.GlobalSettings.Set("splash.touchControls", "true");
             engine.GlobalSettings.Set("Android", "true");
             engine.GlobalSettings.Set("platform.initialZoomState", "-16");

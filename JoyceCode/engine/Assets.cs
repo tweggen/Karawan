@@ -31,7 +31,7 @@ public sealed class Assets
     
     public static System.IO.Stream Open(in string filename)
     {
-        Trace($"Asked to open \"{filename}\"");
+        // Trace($"Asked to open \"{filename}\"");
         
         IAssetImplementation impl = null;
         lock (_staticlock)
@@ -50,7 +50,7 @@ public sealed class Assets
 
     public static bool Exists(in string filename)
     {
-        Trace($"Checked for \"{filename}\"");
+        // Trace($"Checked for \"{filename}\"");
 
         IAssetImplementation impl = null;
         lock (_staticlock)

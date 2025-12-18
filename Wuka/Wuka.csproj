@@ -139,6 +139,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<AndroidResource Include="Platforms/Android/Resources/values/colors.xml">
+		</AndroidResource>
 	  <AndroidResource Include="Platforms\Android\mipmap-anydpi-v26\sd_launcher.xml">
 	    <Generator>MSBuild:UpdateGeneratedFiles</Generator>
 	  </AndroidResource>
@@ -155,7 +157,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.4" />
 		<PackageReference Include="Silk.NET.Assimp" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.Input.Sdl" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.21.1.2" />

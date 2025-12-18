@@ -15,7 +15,7 @@
       },
       {
         "modelUrl": "../models/models/people/polyperfect/man_coat_winter_Rig.fbx",
-        "animationUrls": "Run_InPlace.fbx;Walk_Male.fbx;Death_FallForwards.fbx"
+        "animationUrls": "Idle_HardDay.fbx;Run_InPlace.fbx;Walk_Male.fbx;Death_FallForwards.fbx"
       },
       {
         "modelUrl": "../models/models/people/polyperfect/man_police_Rig.fbx",

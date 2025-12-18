@@ -97,14 +97,15 @@ public abstract class AAssetImplementation : IAssetImplementation
                     if (_traceLoadingAnimations)
                         Trace($"LoadAnimationsTo: Added Animation \"{uriModel}\" from {uriModel}.");
 
-                    pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel);
-                    if (!File.Exists(pathProbe))
+                    string probeModel = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel);
+                    if (!File.Exists(probeModel))
                     {
-                        Trace($"Warning: animation file for {pathProbe} does not exist.");
+                        Trace($"Warning: animation file for {probeModel} does not exist.");
                     }
 
                     AvailableAnimations.Add($"{uriModel};{uriAnimations}");
 
+                    string? uriBaked = null;
                     var strFileName =
                         ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
                             Path.GetFileName(uriModel),
@@ -117,14 +118,26 @@ public abstract class AAssetImplementation : IAssetImplementation
                      * If we are not compiling, probe for the baked animation file.
                      */
                     if (GlobalSettings.Get("joyce.CompileMode") != "true") {
-                        pathProbe = Path.Combine("generated", strFileName);
-                        if (!File.Exists(pathProbe))
+                        uriBaked = Path.Combine(
+                            GlobalSettings.Get("Engine.GeneratedResourcePath"), 
+                            strFileName);
+                        string probeBaked = Path.Combine(
+                            GlobalSettings.Get("Engine.ResourcePath"),
+                            uriBaked);
+                        if (!File.Exists(probeBaked))
                         {
-                            Trace($"Warning: resource file for {pathProbe} does not exist.");
+                            Trace($"Warning: resource file for {probeBaked} does not exist.");
                         }
                     }
 
-                    this.AddAssociation(strFileName, pathProbe);
+                    if (uriBaked != null)
+                    {
+                        this.AddAssociation(strFileName, uriBaked);
+                    }
+                    else
+                    {
+                        Trace($"Warning: Unable to bake animations for {strFileName}.");
+                    }
                 }
             }
         }
