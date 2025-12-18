@@ -67,48 +67,8 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
             strAnimation = CharacterModelDescription.IdleAnimName;
         }
 
-#if false
-        if (_debugNoAnimation > 0)
-        {
-            --_debugNoAnimation;
-            return;
-        }
-#endif
-
-        {
-            var mapAnimations = model.AnimationCollection.MapAnimations;
-            if (mapAnimations != null && mapAnimations.Count > 0)
-            {
-                if (!mapAnimations.ContainsKey(strAnimation))
-                {
-                    int a = 1;
-                }
-
-                _previousSpeed = speed;
-                var animation = mapAnimations[strAnimation];
-                var animState = cGpuAnimationState.AnimationState;
-                if (animState != null)
-                {
-                    animState.Flags = (ushort)((uint)animState.Flags & ~(uint)AnimationState.IsOneShot);
-                    animState.ModelAnimation = animation;
-                    animState.ModelAnimationFrame = 0;
-                }
-                else
-                {
-                    int a = 1;
-                    /*
-                     * We really should have an animation state at this point.
-                     */
-                }
-            }
-            else
-            {
-                /*
-                 * We really should have an animation here.
-                 */
-                int a = 1;
-            }
-        }
+        _previousSpeed = speed;
+        cGpuAnimationState.AnimationState?.SetAnimation(model, strAnimation, 0);
     }
 
     

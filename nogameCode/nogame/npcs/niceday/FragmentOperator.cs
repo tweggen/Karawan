@@ -102,6 +102,9 @@ public class FragmentOperator : IFragmentOperator
                     AnimationState = cmd.AnimationState 
                 });
             }
+            
+            ref var cGpuAnimationState = ref eTarget.Get<engine.joyce.components.GPUAnimationState>();
+            cGpuAnimationState.AnimationState?.SetAnimation(model, cmd.IdleAnimName);
 
             //#error Setup animation without duplicating too much code from citizen behavior.
             I.Get<TransformApi>().SetTransforms(eTarget, 

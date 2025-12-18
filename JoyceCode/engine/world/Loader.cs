@@ -441,7 +441,9 @@ namespace engine.world
 
         public float GetWalkingHeightAt(ClusterDesc cd, in Vector3 v3Position)
         {
-            return cd.AverageHeight + 1.5f;
+            return cd.AverageHeight 
+                   + engine.world.MetaGen.ClusterStreetHeight +
+                   engine.world.MetaGen.QuaterSidewalkOffset;
         }
 
 

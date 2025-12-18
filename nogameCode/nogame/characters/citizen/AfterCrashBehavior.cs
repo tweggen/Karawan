@@ -51,24 +51,7 @@ public class AfterCrashBehavior : ABehavior
                 ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
                 ref var model = ref cFromModel.Model;
 
-                var mapAnimations = model.AnimationCollection.MapAnimations;
-                if (mapAnimations != null && mapAnimations.Count > 0)
-                {
-                    string strAnimation = CharacterModelDescription.DeathAnimName;
-                    if (!mapAnimations.ContainsKey(strAnimation))
-                    {
-                        int a = 1;
-                    }
-                
-                    var animation = mapAnimations[strAnimation];
-                    var animState = cGpuAnimationState.AnimationState;
-                    if (animState != null)
-                    {
-                        animState.ModelAnimation = animation;
-                        animState.ModelAnimationFrame = 0;
-                        animState.Flags = (ushort)((uint)animState.Flags | (uint)AnimationState.IsOneShot);
-                    } 
-                }            
+                cGpuAnimationState.AnimationState?.SetAnimation(model, CharacterModelDescription.DeathAnimName, 0);
             }
         }
         if (t < LIFETIME)
