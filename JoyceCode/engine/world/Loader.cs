@@ -408,7 +408,7 @@ namespace engine.world
 
             return setVisib;
         }
-        
+
 
         /**
          * Load the fragments required for a given position into the
@@ -422,7 +422,7 @@ namespace engine.world
         public void WorldLoaderProvideFragments()
         {
             var setVisib = _updateSetVisib();
-            
+
             /*
              * Now we need to trigger actions
              * - load / modify fragment if it shall be visible.
@@ -432,10 +432,16 @@ namespace engine.world
              */
             foreach (var visib in setVisib)
             {
-                _findFragment(visib);                
+                _findFragment(visib);
             }
 
             _purgeFragments();
+        }
+
+
+        public float GetWalkingHeightAt(ClusterDesc cd, in Vector3 v3Position)
+        {
+            return cd.AverageHeight + 1.5f;
         }
 
 
@@ -447,12 +453,26 @@ namespace engine.world
             ClusterDesc cluster = I.Get<ClusterList>().GetClusterAt(position);
             if (cluster != null)
             {
-                return cluster.AverageHeight + 1.5f;
+                return GetWalkingHeightAt(cluster, position);
             }
             else
             {
                 return GetHeightAt(position.X, position.Z) + 0.1f;
             }
+        }
+
+
+        public Vector3 GetWalkingPosAt(in Vector3 v3Position)
+        {
+            float height = GetWalkingHeightAt(v3Position);
+            return v3Position with { Y = height };
+        }
+
+
+        public Vector3 GetWalkingPosAt(ClusterDesc cd, in Vector3 v3Position)
+        {
+            float height = GetWalkingHeightAt(v3Position);
+            return v3Position with { Y = height };
         }
         
 

@@ -94,6 +94,10 @@ public class FragmentOperator : IFragmentOperator
                     cBody.PhysicsObject.MaxDistance = 10f;
                 }
             }
+
+            I.Get<TransformApi>().SetTransforms(eTarget, 
+                true, 0x00000001,
+                Quaternion.Identity, v3Pos, Vector3.One);
         });
     }
     
@@ -119,11 +123,6 @@ public class FragmentOperator : IFragmentOperator
                 Fragment = worldFragment
             };
 
-            /*
-             * The center of the fragment relative to the cluster.
-             */
-           Vector3 v3Center = _clusterDesc.Pos - worldFragment.Position;
-
             var listForestQuarters = _clusterDesc.QuarterStore().QueryQuarters(
                 _clusterAABB,
                 Quarter.QuarterAttributes.Forest,
@@ -132,7 +131,10 @@ public class FragmentOperator : IFragmentOperator
 
             foreach (var quarter in listForestQuarters)
             {
-                _placeNPC(ctx, quarter.GetCenterPoint3());
+                await _placeNPC(ctx, 
+                    I.Get<MetaGen>().Loader.GetWalkingPosAt(
+                        _clusterDesc, 
+                        _clusterDesc.Pos + quarter.GetCenterPoint3()));
             }
         };
     }
