@@ -335,7 +335,7 @@ namespace CmdLine
         }
         
         
-        private SKBitmap _halfBitmap(in ReadOnlySpan<byte> spanPixels, int fullWidth, int fullHeight, int fullRowBytes)
+        private SKBitmap _halfBitmap(in ReadOnlySpan<byte> spanPixels, int fullWidth, int fullHeight, int fullRowBytes, SKColorType colorType)
         {
             var pf = spanPixels;
             int yFullOffset1 = 0;
@@ -400,7 +400,7 @@ namespace CmdLine
 
             SKBitmap bmHalf = new SKBitmap();
             GCHandle gcHandle = GCHandle.Alloc(p, GCHandleType.Pinned);
-            SKImageInfo ii = new SKImageInfo(halfWidth, halfHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
+            SKImageInfo ii = new SKImageInfo(halfWidth, halfHeight, colorType, SKAlphaType.Premul);
             bmHalf.InstallPixels(ii, gcHandle.AddrOfPinnedObject(), ii.RowBytes, delegate { gcHandle.Free(); });
             return bmHalf;
         }
@@ -434,10 +434,11 @@ namespace CmdLine
             }
             
             /*
-             * Creaete the root bitmap.
+             * Create the root bitmap.
              */
             SKBitmap skbSource = SKBitmap.FromImage(skiAtlas);
-            
+            Log.WriteLine($"Loaded bitmap has color type {skbSource.ColorType}\")");
+
             /*
              * This is the offset of the current mipmap level.
              */
@@ -449,7 +450,7 @@ namespace CmdLine
                 {
                     break;
                 }
-                SKBitmap skbHalf = _halfBitmap(skbSource.GetPixelSpan(), skbSource.Width, skbSource.Height, skbSource.RowBytes);
+                SKBitmap skbHalf = _halfBitmap(skbSource.GetPixelSpan(), skbSource.Width, skbSource.Height, skbSource.RowBytes, skbSource.ColorType);
                 xOffset += skbSource.Width;
                 skbSource.Dispose();
                 skbSource = skbHalf;
