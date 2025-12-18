@@ -103,7 +103,7 @@ public class FragmentOperator : IFragmentOperator
                 });
             }
 
-            #error Setup animation without duplicating too much code from citizen behavior.
+            //#error Setup animation without duplicating too much code from citizen behavior.
             I.Get<TransformApi>().SetTransforms(eTarget, 
                 true, 0x00000001,
                 Quaternion.Identity, v3Pos, Vector3.One);
