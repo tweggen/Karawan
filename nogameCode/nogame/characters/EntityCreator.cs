@@ -104,7 +104,17 @@ public class EntityCreator
 
         if (default != BehaviorFactory)
         {
-            _ePerson.Set(new engine.behave.components.Behavior(BehaviorFactory(_ePerson)));
+            IBehavior behavior;
+            try
+            {
+                behavior = BehaviorFactory(_ePerson);
+                _ePerson.Set(new engine.behave.components.Behavior(behavior));
+            }
+            catch (Exception e)
+            {
+                Warning($"Unable to instantiate behavior: {e}");                
+            }
+
         }
 
         /*

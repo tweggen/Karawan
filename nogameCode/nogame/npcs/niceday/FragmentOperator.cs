@@ -56,6 +56,7 @@ public class FragmentOperator : IFragmentOperator
         EntityCreator creator = new()
         {
             // no BehaviorFactory
+            BehaviorFactory = entity => new NearbyBehavior() {EPOI = entity},
             CharacterModelDescription = cmd,
             PhysicsName = EntityName
         };

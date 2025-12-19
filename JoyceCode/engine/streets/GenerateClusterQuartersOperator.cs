@@ -45,7 +45,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         List<Vector3> edges = new();
         List<Vector3> path = new();
 
-        path.Add(new Vector3(0f, world.MetaGen.QuaterSidewalkOffset, 0f));
+        path.Add(new Vector3(0f, world.MetaGen.QuarterSidewalkOffset, 0f));
         var delimList = quarter.GetDelims();
         int n = 0;
 

@@ -443,7 +443,7 @@ namespace engine.world
         {
             return cd.AverageHeight 
                    + engine.world.MetaGen.ClusterStreetHeight +
-                   engine.world.MetaGen.QuaterSidewalkOffset;
+                   engine.world.MetaGen.QuarterSidewalkOffset;
         }
 
 

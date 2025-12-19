@@ -117,7 +117,7 @@ public class CharacterCreator
             }
 
             float h = clusterDesc.AverageHeight + engine.world.MetaGen.ClusterStreetHeight +
-                      engine.world.MetaGen.QuaterSidewalkOffset;
+                      engine.world.MetaGen.QuarterSidewalkOffset;
             var v3This = new Vector3(dlThis.StartPoint.X, h, dlThis.StartPoint.Y );
             var v3Next = new Vector3(dlNext.StartPoint.X, h, dlNext.StartPoint.Y);
             var vu3Forward = Vector3.Normalize(v3Next - v3This);
