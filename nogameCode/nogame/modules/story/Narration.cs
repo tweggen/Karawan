@@ -475,13 +475,20 @@ public class Narration : AModule, IInputPart
             }
             _currentStory = null;
             _currentNChoices = 0;
-            
-            using var stream = engine.Assets.Open("story1.json");
-            using var sr = new StreamReader(stream, Encoding.UTF8);
-            string jsonStory = sr.ReadToEnd();
-            _currentStory = new Story(jsonStory);
-            _currentStory.BindExternalFunction("triggerQuest",
-                (string questName) => CatchAll(() => I.Get<engine.quest.Manager>().TriggerQuest(questName, true)));
+
+            try
+            {
+                using var stream = engine.Assets.Open("story1.json");
+                using var sr = new StreamReader(stream, Encoding.UTF8);
+                string jsonStory = sr.ReadToEnd();
+                _currentStory = new Story(jsonStory);
+                _currentStory.BindExternalFunction("triggerQuest",
+                    (string questName) => CatchAll(() => I.Get<engine.quest.Manager>().TriggerQuest(questName, true)));
+            }
+            catch (Exception e)
+            {
+                Error($"Failed to load story: {e.Message}");
+            }
         }
     }
     
