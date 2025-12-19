@@ -54,4 +54,9 @@ However, I hope public security didn't notice the bump.
 
 -> END // continues with HelloFishmonger after we reached the target.
 
+=== niceguy ==
+
+{~"Nice Guy It's a bit foggy today, isn't it?"|"Nice Guy: I like to hang out in these islands of green."|"Nice Guy: Has anyone ever seen the trees grow freits?"}
+
+-> END
 
