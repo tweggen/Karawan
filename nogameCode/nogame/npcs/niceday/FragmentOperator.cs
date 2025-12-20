@@ -64,53 +64,61 @@ public class FragmentOperator : IFragmentOperator
         
         _engine.QueueEntitySetupAction(EntityName, eTarget =>
         {
-            int fragmentId = ctx.Fragment.NumericalId;
-
-            eTarget.Set(new engine.world.components.Owner(fragmentId));
-
-            /*
-             * We already setup the FromModel in case we utilize one of the characters as
-             * subject of a Quest.
-             */
-            eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = creator.ModelCacheParams });
-            
-            creator.CreateLogical(eTarget);
-            
-            /*
-             * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
-             * That way, the character will not be cleaned up immediately.
-             */
-            eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
-                Matrix4x4.CreateTranslation(ctx.Fragment.Position)));
-            
-            /*
-             * If we created physics for this one, take care to minimize
-             * the distance for physics support.
-             */
-            if (eTarget.Has<engine.physics.components.Body>())
+            try
             {
-                ref var cBody = ref eTarget.Get<engine.physics.components.Body>();
-                if (cBody.PhysicsObject != null)
+                int fragmentId = ctx.Fragment.NumericalId;
+
+                eTarget.Set(new engine.world.components.Owner(fragmentId));
+
+                /*
+                 * We already setup the FromModel in case we utilize one of the characters as
+                 * subject of a Quest.
+                 */
+                eTarget.Set(new engine.joyce.components.FromModel()
+                    { Model = model, ModelCacheParams = creator.ModelCacheParams });
+
+                creator.CreateLogical(eTarget);
+
+                /*
+                 * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
+                 * That way, the character will not be cleaned up immediately.
+                 */
+                eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
+                    Matrix4x4.CreateTranslation(ctx.Fragment.Position)));
+
+                /*
+                 * If we created physics for this one, take care to minimize
+                 * the distance for physics support.
+                 */
+                if (eTarget.Has<engine.physics.components.Body>())
                 {
-                    cBody.PhysicsObject.MaxDistance = 10f;
+                    ref var cBody = ref eTarget.Get<engine.physics.components.Body>();
+                    if (cBody.PhysicsObject != null)
+                    {
+                        cBody.PhysicsObject.MaxDistance = 10f;
+                    }
                 }
-            }
-            
-            if (!eTarget.Has<engine.joyce.components.GPUAnimationState>())
-            {
-                eTarget.Set(new engine.joyce.components.GPUAnimationState()
-                {
-                    AnimationState = cmd.AnimationState 
-                });
-            }
-            
-            ref var cGpuAnimationState = ref eTarget.Get<engine.joyce.components.GPUAnimationState>();
-            cGpuAnimationState.AnimationState?.SetAnimation(model, cmd.IdleAnimName);
 
-            //#error Setup animation without duplicating too much code from citizen behavior.
-            I.Get<TransformApi>().SetTransforms(eTarget, 
-                true, 0x00000001,
-                Quaternion.Identity, v3Pos, Vector3.One);
+                if (!eTarget.Has<engine.joyce.components.GPUAnimationState>())
+                {
+                    eTarget.Set(new engine.joyce.components.GPUAnimationState()
+                    {
+                        AnimationState = cmd.AnimationState
+                    });
+                }
+
+                ref var cGpuAnimationState = ref eTarget.Get<engine.joyce.components.GPUAnimationState>();
+                cGpuAnimationState.AnimationState?.SetAnimation(model, cmd.IdleAnimName);
+
+                //#error Setup animation without duplicating too much code from citizen behavior.
+                I.Get<TransformApi>().SetTransforms(eTarget,
+                    true, 0x00000001,
+                    Quaternion.Identity, v3Pos, Vector3.One);
+            }
+            catch (Exception e)
+            {
+                Warning($"Exception in _placeNPC main code: {e}");
+            }
         });
     }
     
