@@ -494,6 +494,9 @@ public class WalkController : AController, IInputPart
             }
         }
         
+        bool isOnGround = false;
+        bool needAdjust = true;
+        
         /*
          * First clip the height to world ground. Anything covered by physics must be above.
          */
@@ -507,15 +510,16 @@ public class WalkController : AController, IInputPart
                  */
                 // TXWTODO: Emit ground hit if I was above                
                 vNewTargetPos.Y = heightAtTarget;
+                isOnGround = true;
+                _jumpState = JumpState.Grounded;
+                needAdjust = false;
             }
         }
 
-        bool isOnGround = false;
-        
         /*
          * Use raycast in direction of motion to find how far we may go / fall.
          */
-        lock (_engine.Simulation)
+        if (needAdjust) lock (_engine.Simulation)
         {
             /*
              * First raycast old position in direction of new front motion
@@ -689,7 +693,8 @@ public class WalkController : AController, IInputPart
                                  * gradually.
                                  */
                                 isOnGround = true;
-                                vNewTargetPos.Y += Single.Max(-10f * 1f / 60f, 1.7f - closestCollision);
+                                var adjust = Single.Max(-10f * 1f / 60f, 1.7f - closestCollision);
+                                vNewTargetPos.Y += adjust;
                             }
                         }
                         else
@@ -722,17 +727,18 @@ public class WalkController : AController, IInputPart
                      * decrease the vertical velocity.
                      */
                     _verticalImpulse -= 10f * 1f / 60f;
+                    
+                    /*
+                     * no floor below my feet, start/continue to fall.
+                     * Note, that this height (at minimum 30cm) should be above of what we
+                     * would fall in this frame. check: after one second we would have
+                     * 10m/s, so we would be below 10/60m/s == 1/6 m/s == 16cm / sec in the first frame.
+                     * Matter of fact it is much less due to the acceleration curve (x^2 curve).
+                     * So we safely can have the character fall downward.
+                     */
+                    vNewTargetPos.Y += _verticalImpulse * 1f / 60f;
                 }
 
-                /*
-                 * no floor below my feet, start/continue to fall.
-                 * Note, that this height (at minimum 30cm) should be above of what we
-                 * would fall in this frame. check: after one second we would have
-                 * 10m/s, so we would be below 10/60m/s == 1/6 m/s == 16cm / sec in the first frame.
-                 * Matter of fact it is much less due to the acceleration curve (x^2 curve).
-                 * So we safely can have the character fall downward.
-                 */
-                vNewTargetPos.Y += _verticalImpulse * 1f / 60f;
                 
             }
         }
