@@ -100,7 +100,8 @@ public class MetaGen
     
     private meta.ExecDesc _edRoot;
     private meta.AExecNode _enRoot;
-
+ 
+    
     public meta.ExecDesc EdRoot
     {
         get => _getEdRoot();
@@ -187,7 +188,7 @@ public class MetaGen
         };
     }
 
-   public void ApplyClusterOperators(ClusterDesc clusterDesc)
+    public void ApplyClusterOperators(ClusterDesc clusterDesc)
     {
         if (null == clusterDesc)
         {
@@ -264,8 +265,7 @@ public class MetaGen
 
         }
     }
-
-
+    
 
     /**
      * Execute all world operators for this metagen.
@@ -297,8 +297,7 @@ public class MetaGen
 
         Trace("WorldMetaGen: Done calling world operators.");
     }
-
-
+    
 
     /**
      * Call this after you added all of the modules.

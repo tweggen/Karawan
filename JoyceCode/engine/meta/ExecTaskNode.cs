@@ -31,6 +31,8 @@ public class ExecTaskNode : AExecNode
                 }
             }
         }
+        
+        // Trace($"Starting node {ExecDesc.Implementation} with {_instance}");
         Task? t = op(_instance);
         return t;
     }

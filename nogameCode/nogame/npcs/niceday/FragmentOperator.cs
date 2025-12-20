@@ -138,20 +138,25 @@ public class FragmentOperator : IFragmentOperator
                 return;
             }
 
+            Trace($"Starting nogame.npcs.niceday.FragmentOperator for {_clusterDesc.IdString} fragment {worldFragment.GetId()}");
             var ctx = new Context()
             {
                 Rnd = new(_myKey),
                 Fragment = worldFragment
             };
 
+            var aabbClusterRelFrag = worldFragment.AABB;
+            aabbClusterRelFrag.Offset(-_clusterDesc.Pos);
+            
             var listForestQuarters = _clusterDesc.QuarterStore().QueryQuarters(
-                _clusterAABB,
+                aabbClusterRelFrag,
                 Quarter.QuarterAttributes.Forest,
                 Quarter.QuarterAttributes.Forest | Quarter.QuarterAttributes.Building
             );
 
             foreach (var quarter in listForestQuarters)
             {
+                Trace($"Putting npc in {_clusterDesc.IdString} in {quarter.GetCenterPoint()}");
                 await _placeNPC(ctx, 
                     I.Get<MetaGen>().Loader.GetWalkingPosAt(
                         _clusterDesc, 

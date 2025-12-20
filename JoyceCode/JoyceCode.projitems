@@ -376,7 +376,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TransformApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\BuildExecTree.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecApplyParallelNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecDesc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\AExecNode.cs" />
@@ -385,7 +384,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecScope.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecTaskNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecSequenceNode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\TaskBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ControllerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\Event.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\EventQueue.cs" />
