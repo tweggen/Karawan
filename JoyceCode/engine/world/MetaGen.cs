@@ -252,7 +252,18 @@ public class MetaGen
 
                         if (TRACE_FRAGMENT_OPEARTORS) Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
 
-                        return e.Run(op.FragmentOperatorApply(fragment, visib));
+                        return e.Run(() =>
+                        {
+                            try
+                            {
+                                return op.FragmentOperatorApply(fragment, visib)();
+                            }
+                            catch (Exception e)
+                            {
+                                Trace($"Exception calling fragment operator: {e}.");
+                            }
+                            return Task.CompletedTask;
+                        });
                     }
                     else
                     {
