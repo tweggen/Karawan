@@ -1222,7 +1222,7 @@ public class Engine
     
     public Task Run(Action action) => _taskFactory.StartNew(action, CancellationToken.None, TaskCreationOptions.DenyChildAttach, _taskScheduler );
     public Task<TResult> Run<TResult>(Func<TResult> function) => _taskFactory.StartNew(function, CancellationToken.None, TaskCreationOptions.DenyChildAttach, _taskScheduler );
-    public Task Run(Func<System.Threading.Tasks.Task?> function) => _taskFactory.StartNew(function, CancellationToken.None, TaskCreationOptions.DenyChildAttach, _taskScheduler );
+    public Task Run(Func<System.Threading.Tasks.Task?> function) => _taskFactory.StartNew(function, CancellationToken.None, TaskCreationOptions.DenyChildAttach, _taskScheduler ).Unwrap();
 
 
     public Engine(engine.IPlatform platform)
