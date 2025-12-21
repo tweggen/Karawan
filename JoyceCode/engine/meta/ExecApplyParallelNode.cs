@@ -48,22 +48,20 @@ public class ExecApplyParallelNode : AExecNode
         }
 
         _children = new();
-
         ExecDesc edChild = ed0.Children[0];
-        
-        /*
-         * Now build the execnodes for the children by applying the parameter list(s).
-         * We create an intermediate parent scope that will contain the value of the
-         * apply list.
-         */
-        var pDummyApplyParams = new Dictionary<string, object>();
-        pDummyApplyParams[ed0.Target] = 0;
-
-        var esIntermediateParent = new ExecScope(esParent, pDummyApplyParams);
+    
+        // ✅ FIXED: Create a NEW scope for each child
         foreach (var applyParam in listToApply)
         {
-            esIntermediateParent.OverallParams[ed0.Target] = applyParam;
-            AExecNode enChild = ExecNodeFactory.CreateExecNode(edChild, esIntermediateParent);
+            // Create fresh parameters for THIS child only
+            var childParams = new Dictionary<string, object>();
+            childParams[ed0.Target] = applyParam;
+        
+            // Create a NEW ExecScope with its own dictionary
+            var esChild = new ExecScope(esParent, childParams);
+        
+            // Each child gets isolated parameters
+            AExecNode enChild = ExecNodeFactory.CreateExecNode(edChild, esChild);
             _children.Add(enChild);
         }
     }
