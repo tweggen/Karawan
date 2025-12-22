@@ -156,7 +156,7 @@ public class FragmentOperator : IFragmentOperator
 
             foreach (var quarter in listForestQuarters)
             {
-                Trace($"Putting npc in {_clusterDesc.IdString} in {quarter.GetCenterPoint()}");
+                // Trace($"Putting npc in {_clusterDesc.IdString} in {quarter.GetCenterPoint()}");
                 await _placeNPC(ctx, 
                     I.Get<MetaGen>().Loader.GetWalkingPosAt(
                         _clusterDesc, 

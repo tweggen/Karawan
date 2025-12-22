@@ -15,12 +15,12 @@ public class ExecSequenceNode : AExecNode
             {
                 foreach (AExecNode execNode in _children)
                 {
-                    Trace($"Starting execNode {execNode.ExecDesc.Comment}");
+                    // Trace($"Starting execNode {execNode.ExecDesc.Comment}");
                     Task? t = execNode.Execute(op);
                     if (null != t)
                     {
                         await t;
-                        Trace($"Done with execNode {execNode.ExecDesc.Comment}");
+                        // Trace($"Done with execNode {execNode.ExecDesc.Comment}");
                     }
                 }
             }

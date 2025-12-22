@@ -174,6 +174,7 @@ public class Narration : AModule, IInputPart
                  * We may ride around, leaving the conversation partner
                  */
                 shallBeInteractive = true;
+                
                 break;
 
             case State.Narration:
@@ -745,14 +746,23 @@ public class Narration : AModule, IInputPart
     }
 
 
-    private bool MayTriggerConversation()
+    public bool MayConverse()
     {
         lock (_lo)
         {
             return _mayConverse;
         }
     }
-    
+
+
+    public bool ShallBeInteractive()
+    {
+        lock (_lo)
+        {
+            return _shallBeInteractive;
+        }
+    }
+
 
     public void TriggerConversation(string strPath, string instanceId)
     {
@@ -856,6 +866,9 @@ public class Narration : AModule, IInputPart
              */
             _currentStory.Continue();           
         }
+        
+        // TXWTODO: Today, after loading, we always are in narration of the most recent story. And start telling it again.
+        _toState(State.Narration, true);
         
         /*
          * After we initialized the desired state, start the story.

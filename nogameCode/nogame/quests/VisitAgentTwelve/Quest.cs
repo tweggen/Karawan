@@ -34,7 +34,7 @@ public class Quest : AModule, IQuest, ICreator
     {
         // TXWTODO: Is this the proper way to advance the logic?
         I.Get<engine.quest.Manager>().DeactivateQuest(this);
-        I.Get<nogame.modules.story.Narration>().TriggerPath("agent12");
+        I.Get<nogame.modules.story.Narration>().TriggerNarration("agent12", "");
     }
 
     

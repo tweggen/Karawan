@@ -39,7 +39,7 @@ public class Quest : AModule, IQuest, ICreator
     private void _onReachTarget()
     {
         I.Get<engine.quest.Manager>().DeactivateQuest(this);
-        I.Get<nogame.modules.story.Narration>().TriggerPath("firstPubSecEncounter");
+        I.Get<nogame.modules.story.Narration>().TriggerNarration("firstPubSecEncounter", "");
     }
 
 
