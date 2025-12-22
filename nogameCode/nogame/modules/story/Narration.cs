@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using engine;
 using engine.draw;
 using engine.draw.components;
-using engine.geom;
 using engine.news;
 using Ink.Runtime;
-using nogame.modules.osd;
 using ObjLoader.Loader.Common;
 using static engine.Logger;
 
@@ -180,6 +179,18 @@ public class Narration : AModule, IInputPart
 
         return count;
     }
+
+
+    SortedDictionary<string, string> _computeTags(Story story)
+    {
+        if (story.currentTags != null)
+        {
+            return new(story.currentTags.Select(x => x.Split(':'))
+                .ToDictionary(parts => parts[0], parts => parts[1]));
+        }
+        else
+            return new();
+    }
     
 
     private void _displaySentence()
@@ -187,13 +198,23 @@ public class Narration : AModule, IInputPart
         _prepareSentence();
 
         
-        string strDisplay = "";
+        string strContent = "";
+        string strPerson = "";
         int nLFs = 0;
 
         float ytop;
         lock (_lo)
         {
-            strDisplay = _currentStory.currentText;
+            var tags = _computeTags(_currentStory);
+            if (tags.TryGetValue("person", out strPerson))
+            {
+                // Then we have a person                
+            }
+            else
+            {
+                strPerson = "";
+            }
+            strContent = _currentStory.currentText;
             nLFs = _countLF(_currentStory.currentText);
             
             _currentNChoices = _currentStory.currentChoices.Count;
@@ -214,6 +235,16 @@ public class Narration : AModule, IInputPart
             }
         }
 
+        string strDisplay;
+        if (String.IsNullOrWhiteSpace(strPerson))
+        {
+            strDisplay = strContent;
+        }
+        else
+        {
+            strDisplay = strPerson + "\n" + strContent;
+            nLFs++;
+        }
         ref var cSentenceOSDText = ref _eSentence.Get<engine.draw.components.OSDText>();
         cSentenceOSDText.Text = strDisplay;
         cSentenceOSDText.Position.Y = ytop;

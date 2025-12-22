@@ -29,12 +29,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\ink\ink-engine-runtime\ink-engine-runtime.csproj" />
     <ProjectReference Include="..\Boom\Boom.csproj" />
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ink.Engine.Runtime-Unofficial" Version="1.0.0-nightly-21091501" />
     <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />
   </ItemGroup>
 

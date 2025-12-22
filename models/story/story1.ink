@@ -56,7 +56,7 @@ However, I hope public security didn't notice the bump.
 
 === niceguy ==
 
-{~"Nice Guy It's a bit foggy today, isn't it?"|"Nice Guy: I like to hang out in these islands of green."|"Nice Guy: Has anyone ever seen the trees grow freits?"}
+{~ It's a bit foggy today, isn't it?|I like to hang out in these islands of green.|Has anyone ever seen the trees grow fruit?} # person:niceguy
 
 -> END
 

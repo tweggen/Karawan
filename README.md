@@ -8,10 +8,11 @@ This project consists of
 
 Check out this repo to any directory. Directly next to this directory, check out the projects 
 - [BepuPhysics2] (https://github.com/TimosForks/bepuphysics2.git) 
-- [Default Ecs entity components system] (https://github.com/TimosForks/DefaultEcs.git),
-- [3d obj file loader ObjLoader] (https://github.com/TimosForks/ObjLoader.git),
+- [Default Ecs entity components system] (https://github.com/TimosForks/DefaultEcs.git)
+- [3d obj file loader ObjLoader] (https://github.com/TimosForks/ObjLoader.git)
 - [fbx model loader] (https://github.com/TimosForks/FbxSharp.git) 
 - [glTF model loader] (https://github.com/KhronosGroup/glTF-CSharp-Loader.git)
+- [inky] (https://github.com/TimosForks/ink.git)
 
 Then, load the Karawan solution in the Karawan sub-directory of the Karawan repo and build it.
 It references the other projects.
