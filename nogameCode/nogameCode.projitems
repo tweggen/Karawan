@@ -90,7 +90,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WalkTouchButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\shop\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\skybox\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\CurrentStateEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\Narration.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\PersonSpeakingEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\World.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\CharacterModelDescriptionFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\Factory.cs" />

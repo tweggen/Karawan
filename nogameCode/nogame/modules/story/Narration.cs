@@ -16,9 +16,41 @@ using static engine.Logger;
 namespace nogame.modules.story;
 
 
+/**
+ * Implementation of a narrative system for the game.
+ *
+ * This system is used to drive both narration, prescripted scenes and NPC conversation.
+ *
+ * Because of its influence on interactivity, a narration system has a state:
+ *
+ * - idle: Interactive Gameplay, No narration.
+ * - conversation: Interactive Gameplay, Narration. User interrupts by leaving
+ * - narration: Interactive Gameplay, pre-scripted narration, including meaningful choices.
+ * - scripted scene: No interactive Gampleplay, pre-scripted narration, inclufing meaningful choices.
+ *
+ * - idle (interruptable)
+ *   - onNarration: Go.
+ *   - mayConverse: Yes
+ *   - onScripted: Go
+ *
+ * - Narration
+ *   - mayConverse: No
+ *   - mayScripted: Yes
+ *
+ * - Conversation (interruptable)
+ *   Conversation must not have meaningful content, or converts into narration first.
+ *   - onNarration: Queue?
+ *   - onScripted: Go
+ *
+ * - Scripted (not interruptible)
+ */
 public class Narration : AModule, IInputPart
 {
+    public static readonly string EventTypePersonSpeaking = "nogame.module.story.Narration.PersonSpeaking";
+    public static readonly string EventTypeCurrentState = "nogame.module.story.Narration.CurrentState";
+    
     private Story? _currentStory = null;
+    private string? _currentInstanceId = null;
     private int _currentNChoices = 0;
     public int _chosenOption = 0;
 
@@ -37,8 +69,189 @@ public class Narration : AModule, IInputPart
     public uint ChoiceColor { get; set; } = 0xffbbdddd;
     public uint ChoiceFill { get; set; } = 0x00000000;
 
+
+    private bool _mayConverse = true;
+    private bool _shallBeInteractive = true;
+
+    public enum State
+    {
+        Idle,
+        Conversation,
+        Narration,
+        ScriptedScene
+    }
     
+    private State _currentState = State.Idle;
+
+
+    private bool _mayTransitionNL(State newState)
+    {
+        bool isTransitionOk = false;
+        
+        /*
+         * So there is supposed to be a change.
+         * Check if we are allowewd to change.
+         */
+        switch (_currentState)
+        {
+            case State.Idle:
+                isTransitionOk = true;
+                break;
+            case State.Conversation:
+                isTransitionOk = true;
+                break;
+            case State.Narration:
+                switch (newState)
+                {
+                    case State.Idle:
+                        isTransitionOk = false;
+                        break;
+                    case State.Conversation:
+                        isTransitionOk = false;
+                        break;
+                    case State.Narration:
+                        isTransitionOk = true;
+                        break;
+                    case State.ScriptedScene:
+                        isTransitionOk = true;
+                        break;
+                }
+
+                break;
+            case State.ScriptedScene:
+                switch (newState)
+                {
+                    case State.Idle:
+                        isTransitionOk = false;
+                        break;
+                    case State.Conversation:
+                        isTransitionOk = false;
+                        break;
+                    case State.Narration:
+                        isTransitionOk = false;
+                        break;
+                    case State.ScriptedScene:
+                        isTransitionOk = true;
+                        break;
+                }
+
+                break;
+        }
+
+        return isTransitionOk;
+    }
     
+
+    private void _computeFlags(State state, ref bool mayConverse, ref bool shallBeInteractive)
+    {
+        /*
+         * Now, that we are allowed to change, set the proper values for some flags.
+         */
+        switch (_currentState)
+        {
+            case State.Idle:
+
+                /*
+                 * We may start any conversation.
+                 */
+                mayConverse = true;
+
+                /*
+                 * We may ride around, as there is no conversation ongoing.
+                 */
+                shallBeInteractive = true;
+
+                break;
+
+            case State.Conversation:
+
+                /*
+                 * We may start any other conversation, dismisssing the current one.
+                 */
+                mayConverse = true;
+
+                /*
+                 * We may ride around, leaving the conversation partner
+                 */
+                shallBeInteractive = true;
+                break;
+
+            case State.Narration:
+
+                /*
+                 * We may not start any conversation as long the narration still is going on.
+                 */
+                mayConverse = false;
+
+                /*
+                 * We may ride around, there is no restriction.
+                 */
+                shallBeInteractive = true;
+                
+                break;
+
+            case State.ScriptedScene:
+
+                /*
+                 * We may not start any conversation as long the scripted scene still is going on.
+                 */
+                mayConverse = false;
+
+                /*
+                 * We may not ride around manually.
+                 */
+                shallBeInteractive = false;
+                
+                break;
+        }
+
+    }
+
+
+    private bool _toState(State newState, bool isInternal)
+    {
+        lock (_lo)
+        {
+            /*
+             * If there is no change, just return success.
+             */
+            if (newState == _currentState)
+            {
+                return true;
+            }
+
+
+            bool isTransitionOk = false;
+            
+            if (isInternal)
+            {
+                isTransitionOk = true;
+            }
+            else
+            {
+                isTransitionOk = _mayTransitionNL(newState);
+            }
+
+            if (!isTransitionOk)
+            {
+                return false;
+            }
+
+            _currentState = newState;
+
+            _computeFlags(_currentState, ref _mayConverse, ref _shallBeInteractive);           
+        }
+        
+        I.Get<EventQueue>().Push(new CurrentStateEvent(EventTypeCurrentState, _currentState.ToString())
+        {
+            MayConverse = _mayConverse,
+            ShallBeInteractive = _shallBeInteractive
+        });
+
+        return true;
+    }
+
+
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<AutoSave>(),
@@ -200,6 +413,8 @@ public class Narration : AModule, IInputPart
         
         string strContent = "";
         string strPerson = "";
+        string strAnimation = "";
+        
         int nLFs = 0;
 
         float ytop;
@@ -214,6 +429,29 @@ public class Narration : AModule, IInputPart
             {
                 strPerson = "";
             }
+
+            if (tags.TryGetValue("animation", out strAnimation))
+            {
+                // Then we have an animation to play.
+            }
+            else
+            {
+                strAnimation = "";
+            }
+
+            /*
+             * Emit an event to other systems to let them know who is speaking
+             * and what animation is hinted.
+             */
+            if (!String.IsNullOrWhiteSpace(strPerson))
+            {
+                I.Get<EventQueue>().Push(new PersonSpeakingEvent(EventTypePersonSpeaking, "")
+                {
+                    Person = strPerson,
+                    Animation = strAnimation
+                });
+            }
+            
             strContent = _currentStory.currentText;
             nLFs = _countLF(_currentStory.currentText);
             
@@ -476,7 +714,17 @@ public class Narration : AModule, IInputPart
     }
     
     
-    public void TriggerPath(string strPath)
+    /**
+     * Trigger execution of a given story path.
+     *
+     * @param strPath
+     *     The path as defined in the story
+     * @param instanceId
+     *     An arbitrary ID passed to the system that will be passed back
+     *     in events triggered by this story. Can be used to identify one particular among
+     *     lots of similar NPCs.
+     */
+    private void _triggerPath(string strPath, string instanceId)
     {
         Story currentStory;
         lock (_lo)
@@ -488,11 +736,57 @@ public class Narration : AModule, IInputPart
             }
 
             currentStory = _currentStory;
+            _currentInstanceId = instanceId;
         }
 
         currentStory.ChoosePathString(strPath, true, null);
 
         _advanceStory();
+    }
+
+
+    private bool MayTriggerConversation()
+    {
+        lock (_lo)
+        {
+            return _mayConverse;
+        }
+    }
+    
+
+    public void TriggerConversation(string strPath, string instanceId)
+    {
+        if (!_toState(State.Conversation, false))
+        {
+            Warning($"Tried to trigger conversation {strPath} but was not allowed to.");
+            return;
+        }
+
+        _triggerPath(strPath, instanceId);
+    }
+
+
+    public void TriggerScriptedScene(string strPath, string instanceId)
+    {
+        if (!_toState(State.ScriptedScene, false))
+        {
+            Warning($"Tried to trigger scripted scene {strPath} but was not allowed to.");
+            return;
+        }
+
+        _triggerPath(strPath, instanceId);
+    }
+
+
+    public void TriggerNarration(string strPath, string instanceId)
+    {
+        if (!_toState(State.Narration, false))
+        {
+            Warning($"Tried to trigger narration {strPath} but was not allowed to.");
+            return;
+        }
+
+        _triggerPath(strPath, instanceId);
     }
 
     

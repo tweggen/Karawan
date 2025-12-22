@@ -67,7 +67,7 @@ public class WalkModule : AModule, IInputPart
              * We are supposed to get out of the car.
              */
             ev.IsHandled = true;
-            I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeGetIntoHover, ""));
+            I.Get<EventQueue>().Push(new Event(MainPlayModule.EventTypeGetIntoHover, ""));
         }
     }
 
@@ -77,7 +77,7 @@ public class WalkModule : AModule, IInputPart
         _engine.Player.Value = default;
         I.Get<HierarchyApi>().Delete(ref _ePerson);
         
-        I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsPersonDeactivated, ""));
+        I.Get<EventQueue>().Push(new Event(MainPlayModule.EventTypeIsPersonDeactivated, ""));
     }
     
     
@@ -156,7 +156,7 @@ public class WalkModule : AModule, IInputPart
                 /*
                  * Finally, we are boarded.
                  */
-                I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsPersonActivated, ""));
+                I.Get<EventQueue>().Push(new Event(MainPlayModule.EventTypeIsPersonActivated, ""));
             }); // End of queue mainthread action.
         }
         catch (Exception e)

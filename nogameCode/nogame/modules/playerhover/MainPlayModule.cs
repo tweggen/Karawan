@@ -37,13 +37,13 @@ public class MainPlayModule : engine.AModule, IInputPart
 {
     public static float MY_Z_ORDER = 24.9f;
 
-    public static readonly string EventCodeGetOutOfHover = "nogame.module.playerhover.GetOutOfHover";
-    public static readonly string EventCodeGetIntoHover = "nogame.module.playerhover.GetIntoHover";
+    public static readonly string EventTypeGetOutOfHover = "nogame.module.playerhover.GetOutOfHover";
+    public static readonly string EventTypeGetIntoHover = "nogame.module.playerhover.GetIntoHover";
     
-    public static readonly string EventCodeIsHoverActivated = "nogame.module.playerhover.IsHoverActivated";
-    public static readonly string EventCodeIsPersonActivated = "nogame.module.playerhover.IsPersonActivated";
-    public static readonly string EventCodeIsPersonDeactivated = "nogame.module.playerhover.IsPersonDeactivated";
-    public static readonly string EventCodeIsHoverDeactivated = "nogame.module.playerhover.IsHoverDeactivated";
+    public static readonly string EventTypeIsHoverActivated = "nogame.module.playerhover.IsHoverActivated";
+    public static readonly string EventTypeIsPersonActivated = "nogame.module.playerhover.IsPersonActivated";
+    public static readonly string EventTypeIsPersonDeactivated = "nogame.module.playerhover.IsPersonDeactivated";
+    public static readonly string EventTypeIsHoverDeactivated = "nogame.module.playerhover.IsHoverDeactivated";
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -102,7 +102,7 @@ public class MainPlayModule : engine.AModule, IInputPart
 
                     if (ev.Code == "<change>")
                     {
-                        I.Get<EventQueue>().Push(new Event(EventCodeGetIntoHover, ""));
+                        I.Get<EventQueue>().Push(new Event(EventTypeGetIntoHover, ""));
                         ev.IsHandled = true;
                     }
 
@@ -265,12 +265,12 @@ public class MainPlayModule : engine.AModule, IInputPart
 
     protected override void OnModuleActivate()
     {
-        Subscribe(EventCodeGetIntoHover, _onGetIntoHover);
-        Subscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
-        Subscribe(EventCodeIsHoverDeactivated, _onIsHoverDeactivated);
-        Subscribe(EventCodeIsPersonDeactivated, _onIsPersonDeactivated);
-        Subscribe(EventCodeIsHoverActivated, _onIsHoverActivated);
-        Subscribe(EventCodeIsPersonActivated, _onIsPersonActivated);
+        Subscribe(EventTypeGetIntoHover, _onGetIntoHover);
+        Subscribe(EventTypeGetOutOfHover, _onGetOutOfHover);
+        Subscribe(EventTypeIsHoverDeactivated, _onIsHoverDeactivated);
+        Subscribe(EventTypeIsPersonDeactivated, _onIsPersonDeactivated);
+        Subscribe(EventTypeIsHoverActivated, _onIsHoverActivated);
+        Subscribe(EventTypeIsPersonActivated, _onIsPersonActivated);
         
         _engine.Run(_setupPlayer);
     }
