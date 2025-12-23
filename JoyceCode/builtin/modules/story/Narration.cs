@@ -13,7 +13,7 @@ using Ink.Runtime;
 using ObjLoader.Loader.Common;
 using static engine.Logger;
 
-namespace nogame.modules.story;
+namespace builtin.modules.story;
 
 
 /**

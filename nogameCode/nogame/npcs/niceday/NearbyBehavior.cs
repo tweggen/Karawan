@@ -1,16 +1,12 @@
 using System;
-using System.Diagnostics;
 using System.Numerics;
 using DefaultEcs;
 using engine;
 using engine.behave;
 using engine.draw.components;
-using engine.draw.systems;
 using engine.joyce;
-using engine.joyce.components;
 using engine.news;
-using engine.physics;
-using nogame.modules.story;
+using builtin.modules.story;
 
 namespace nogame.npcs.niceday;
 
@@ -34,7 +30,7 @@ public class NearbyBehavior : ABehavior
         ev.IsHandled = true;
         
         // TXWTODO: Trigger conversation.
-        I.Get<nogame.modules.story.Narration>().TriggerConversation("niceguy", _eTarget.ToString());
+        I.Get<builtin.modules.story.Narration>().TriggerConversation("niceguy", _eTarget.ToString());
     }
 
     

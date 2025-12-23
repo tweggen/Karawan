@@ -1,4 +1,4 @@
-namespace nogame.modules.story;
+namespace builtin.modules.story;
 
 public class CurrentStateEvent : engine.news.Event
 {
