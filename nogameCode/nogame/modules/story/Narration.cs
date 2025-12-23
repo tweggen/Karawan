@@ -557,12 +557,16 @@ public class Narration : AModule, IInputPart
         bool dismissAll = false;
         lock (_lo)
         {
+            if (_currentState == State.Idle)
+            {
+                return;
+            }
             if (null == _currentStory)
             {
                 return;
             }
 
-            Trace($"Before continueing: canContinue == {_currentStory.canContinue}");
+            if (_trace) Trace($"Before continueing: canContinue == {_currentStory.canContinue}");
             if (!_currentStory.canContinue && _currentStory.currentChoices.Count == 0)
             {
                 dismissAll = true;
@@ -590,7 +594,7 @@ public class Narration : AModule, IInputPart
              * If we have a current string, display it.
              */
             _currentStory.Continue();
-            Trace($"After continueing: canContinue == {_currentStory.canContinue}");
+            if (_trace) Trace($"After continueing: canContinue == {_currentStory.canContinue}");
         }
 
         _displayStory();
@@ -798,7 +802,7 @@ public class Narration : AModule, IInputPart
 
         currentStory.ChoosePathString(strPath, true, null);
 
-        _displayStory();
+        _advanceStory();
     }
 
 

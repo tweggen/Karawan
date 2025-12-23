@@ -96,6 +96,10 @@ public class InputMapper : AModule
     }
 
     
+    /**
+     * Take the event passed to this method, emit both the event and its translation
+     * to a logical button into the event pipeline.
+     */
     public void EmitPlusTranslation(engine.news.Event ev)
     {
         if (null == _eq)

@@ -13,6 +13,9 @@ internal class Node<T>
 }
 
 
+/**
+ * Keep items of type T sorted descending to a float number specified as key.
+ */
 public class PriorityMap<T>
 {
     private object _lo = new();

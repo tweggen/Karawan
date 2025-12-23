@@ -330,6 +330,23 @@ as anything else, they also can be outdated. This would happen if they are
 rendered from a framebuffer who is newer inside memory than on GPU. In that case
 the texture also would be uploaded by the renderer.
 
+## Input events
+
+### Summary
+
+1. Platform receives events from various sources.
+2. Platform, applies logical translation according to config and posts both origina
+  and translation into event queue.
+3. One receiver of the event queue is the InputEventPipeline module. It distributes 
+  the events to listeners sorted by priority until it is consumed.
+4. The least prioritized receiver is the InputController, mapping events to 
+  standard game controller states. 
+  This captures cursor keys and similar input. Other higher prioritized modules still
+  may use them.
+5. Interactive elements of the game worlds need to receive input events before standard
+  controller. However, not every single behavior wants to be an input part.
+
+
 ## Entity lifecycle
 
 ### Introduction

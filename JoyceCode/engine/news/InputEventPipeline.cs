@@ -13,7 +13,7 @@ public class InputEventPipeline : engine.AModule
     private PriorityMap<IInputPart> _dictParts = new();
  
    
-    void _onInputEvent(engine.news.Event ev)
+    private void _onInputEvent(engine.news.Event ev)
     {
         /*
          * Now run distribution of key events in a dedicated task.
