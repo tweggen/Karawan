@@ -69,7 +69,8 @@ public class Narration : AModule, IInputPart
     public uint ChoiceColor { get; set; } = 0xffbbdddd;
     public uint ChoiceFill { get; set; } = 0x00000000;
 
-
+    private bool _trace = true;
+    
     private bool _mayConverse = true;
     private bool _shallBeInteractive = true;
 
@@ -211,6 +212,7 @@ public class Narration : AModule, IInputPart
 
     private bool _toState(State newState, bool isInternal)
     {
+        if (_trace) Trace($"Requesting state {newState} from {_currentState}, {(isInternal?"":"no ")} internal transition.");
         lock (_lo)
         {
             /*
@@ -218,6 +220,7 @@ public class Narration : AModule, IInputPart
              */
             if (newState == _currentState)
             {
+                if (_trace) Trace($"Rejecting change, already in state {newState}");
                 return true;
             }
 
@@ -226,11 +229,13 @@ public class Narration : AModule, IInputPart
             
             if (isInternal)
             {
+                if (_trace) Trace($"Performing transition because it is internal");
                 isTransitionOk = true;
             }
             else
             {
                 isTransitionOk = _mayTransitionNL(newState);
+                if (_trace) Trace($"Transitiion is {(isTransitionOk?"":"not ")} ok.");
             }
 
             if (!isTransitionOk)
@@ -240,7 +245,9 @@ public class Narration : AModule, IInputPart
 
             _currentState = newState;
 
-            _computeFlags(_currentState, ref _mayConverse, ref _shallBeInteractive);           
+            _computeFlags(_currentState, ref _mayConverse, ref _shallBeInteractive);
+            if (_trace)
+                Trace($"after transition mayConverse is {_mayConverse}, shallBeInteractive is {_shallBeInteractive}.");
         }
         
         I.Get<EventQueue>().Push(new CurrentStateEvent(EventTypeCurrentState, _currentState.ToString())
@@ -365,6 +372,7 @@ public class Narration : AModule, IInputPart
     {
         _dismissSentence();
         _dismissChoices();
+        _toState(State.Idle, true);
     }
     
 
@@ -495,8 +503,52 @@ public class Narration : AModule, IInputPart
         
         _updateOptions();
     }
+
+
+    private void _startStory()
+    {
+        
+    }
+
+
+    private void _displayStory()
+    {
+        bool dismissAll = false;
+        
+        lock (_lo)
+        {
+            if (null==_currentStory 
+                || String.IsNullOrWhiteSpace(_currentStory.currentText) 
+                    && !_currentStory.canContinue 
+                    && _currentStory.currentChoices.Count == 0)
+            {
+                dismissAll = true;
+            }
+        }
+            
+        /*
+         * If the story won't continue, just remove the display.
+         * Note: We need to check this twice, once before and once after
+         * continuing the story.
+         */
+        if (dismissAll)
+        {
+            _dismissDisplay();
+            return;
+        }
+
+        _displaySentence();
+    }
     
     
+    /**
+     * After loading or a key press, advance the story to the next item.
+     *
+     * Before advancing check, if anything can be advanced at all. Dismiss
+     * all visible content if nothing can be advanced any more. In other words,
+     * if it is the end of the current narration, close the currently visible
+     * story. After advancing look, if there is content to be displayed at all.
+     */
     private void _advanceStory()
     {
         /*
@@ -509,8 +561,9 @@ public class Narration : AModule, IInputPart
             {
                 return;
             }
-            
-            if (!_currentStory.canContinue)
+
+            Trace($"Before continueing: canContinue == {_currentStory.canContinue}");
+            if (!_currentStory.canContinue && _currentStory.currentChoices.Count == 0)
             {
                 dismissAll = true;
             }
@@ -518,6 +571,8 @@ public class Narration : AModule, IInputPart
         
         /*
          * If the story won't continue, just remove the display.
+         * Note: We need to check this twice, once before and once after
+           * continuing the story.
          */
         if (dismissAll)
         {
@@ -535,9 +590,10 @@ public class Narration : AModule, IInputPart
              * If we have a current string, display it.
              */
             _currentStory.Continue();
+            Trace($"After continueing: canContinue == {_currentStory.canContinue}");
         }
-            
-        _displaySentence();
+
+        _displayStory();
     }
 
 
@@ -742,7 +798,7 @@ public class Narration : AModule, IInputPart
 
         currentStory.ChoosePathString(strPath, true, null);
 
-        _advanceStory();
+        _displayStory();
     }
 
 

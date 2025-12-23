@@ -23,6 +23,10 @@ public class InputController : engine.AController, engine.IInputPart
 
     private object _lo = new();
 
+    /**
+     * We only propagate the inp0ut evets to the common space if nobody else
+     * in the pipeline already has captured it.
+     */
     public float MY_Z_ORDER { get; set; } = 0f;
     public float TouchLookSensitivity { get; set; } = 12f;
     public float TouchMoveSensitivity { get; set; } = 4.0f;
