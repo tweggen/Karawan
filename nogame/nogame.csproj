@@ -29,7 +29,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ink\ink-engine-runtime\ink-engine-runtime.csproj" />
     <ProjectReference Include="..\Boom\Boom.csproj" />
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>

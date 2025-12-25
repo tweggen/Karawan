@@ -90,6 +90,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WalkTouchButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\shop\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\skybox\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\CurrentStateEvent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\Narration.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\PersonSpeakingEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\World.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\CharacterModelDescriptionFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\Factory.cs" />
@@ -110,6 +113,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\GroundOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\PlaceDebrisOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapFragmentProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\tools\ANearbyBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\world\DropCoinModule.cs" />
   </ItemGroup>
   <ItemGroup>
