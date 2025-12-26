@@ -90,7 +90,7 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
              */
             _engine.Simulation.Bodies.SetLocalInertia(
                 cCitizenBody.Reference.Handle,
-                CharacterCreator.PInertiaSphere);
+                CharacterCreator.PInertiaCylinder);
             // TXWTODO: I would like to have the object stop more realistic. This is why I have a physics engine.
             cCitizenBody.Reference.MotionState.Velocity = Vector3.Zero;
         }
