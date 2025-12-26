@@ -76,7 +76,6 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
     {
         base.OnCollision(cev);
         var me = cev.ContactInfo.PropertiesA;
-        // _engine.AddDoomedEntity(me.Entity);
         
         ref engine.physics.components.Body cCitizenBody = ref me.Entity.Get<engine.physics.components.Body>();
 

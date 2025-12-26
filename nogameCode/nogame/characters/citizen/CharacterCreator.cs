@@ -33,10 +33,10 @@ public class CharacterCreator
     
     public static readonly string EntityName = "nogame.characters.citizen";
     public static readonly float PhysicsMass = 60f;
-    private static readonly float PhysicsRadius = 1f;
+
     public static BodyInertia PInertiaSphere = 
-        new BepuPhysics.Collidables.Sphere(
-            CharacterCreator.PhysicsRadius)
+        new BepuPhysics.Collidables.Cylinder(
+            0.2f, 1.00f)
         .ComputeInertia(CharacterCreator.PhysicsMass);
 
     private static object _classLock = new();
