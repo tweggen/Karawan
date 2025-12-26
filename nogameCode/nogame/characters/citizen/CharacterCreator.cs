@@ -1,19 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using BepuPhysics;
-using builtin.loader;
 using builtin.tools;
 using engine;
-using engine.geom;
-using engine.joyce;
-using engine.joyce.components;
 using engine.physics;
 using engine.streets;
 using engine.world;
-using nogame.cities;
+using OneOf.Types;
+using OneOf;
 using static engine.Logger;
 
 namespace nogame.characters.citizen;
@@ -152,15 +148,19 @@ public class CharacterCreator
     }
     
 
-    public static async Task<Action<DefaultEcs.Entity>> GenerateRandomCharacter(
+    public static async Task<OneOf<None, Action<DefaultEcs.Entity>>> GenerateRandomCharacter(
         builtin.tools.RandomSource rnd,
         ClusterDesc clusterDesc,
         Fragment worldFragment,
-        Quarter quarter,
-        QuarterDelim delim,
-        float relativePos,
-        int seed = 0)
+        int seed)
     {
+        CharacterCreator.ChooseQuarterDelimPointPos(rnd, worldFragment, clusterDesc,
+            out var quarter, out var delim , out var relativePos);
+        if (quarter == null)
+        {
+            return new None();
+        }
+        
         float speed;
         speed = (4f + rnd.GetFloat() * 3f) / 3.6f;
 
@@ -175,7 +175,7 @@ public class CharacterCreator
         };
         var model = await creator.CreateAsync();
 
-        return eTarget =>
+        return (Action<DefaultEcs.Entity>)(eTarget =>
         {
             int fragmentId = worldFragment.NumericalId;
 
@@ -208,6 +208,6 @@ public class CharacterCreator
                     cBody.PhysicsObject.MaxDistance = 10f;
                 }
             }
-        };
+        });
     }
 }

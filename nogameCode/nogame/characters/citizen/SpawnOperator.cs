@@ -6,6 +6,7 @@ using engine.behave;
 using engine.joyce;
 using engine.news;
 using engine.world;
+using OneOf.Types;
 using static engine.Logger;
 
 namespace nogame.characters.citizen;
@@ -145,43 +146,34 @@ public class SpawnOperator : ISpawnOperator
             try
             {
                 ClusterDesc cd = _clusterHeatMap.GetClusterDesc(idxFragment);
-                if (null == cd)
-                {
-                    /*
-                     * I don't know why we would have been called in the first place.
-                     */
-                }
-                else
+                if (cd != null)
                 {
                     engine.world.Fragment worldFragment;
                     if (_loader.TryGetFragment(idxFragment, out worldFragment))
                     {
-                        CharacterCreator.ChooseQuarterDelimPointPos(_rnd, worldFragment, cd,
-                            out var quarter, out var delim , out var relativePos);
-
-                        if (quarter != null)
+                        var characterResult = await CharacterCreator.GenerateRandomCharacter(
+                            _rnd, cd, worldFragment, _seed);
+                        if (characterResult.Value is None)
                         {
-                            var actCreateEntity = await CharacterCreator.GenerateRandomCharacter(
-                                _rnd, cd, worldFragment,
-                                quarter, delim, relativePos,
-                                _seed);
-                            _engine.QueueEntitySetupAction(CharacterCreator.EntityName, 
+                            spawnStatus.InCreation--;
+                        }
+                        else
+                        {
+                            _engine.QueueEntitySetupAction(CharacterCreator.EntityName,
                                 e =>
                                 {
-                                    actCreateEntity(e);
-                                    if (spawnStatus.InCreation == 0)
-                                    {
-                                        int a = 1;
-                                    }
+                                    characterResult.AsT1(e);
                                     spawnStatus.InCreation--;
                                 });
                             ++_seed;
                         }
-                        else
-                        {
-                            spawnStatus.InCreation--;
-                        }
                     }
+                }
+                else
+                {
+                    /*
+                     * I don't know why we would have been called in the first place.
+                     */
                 }
             }
             catch (Exception e)

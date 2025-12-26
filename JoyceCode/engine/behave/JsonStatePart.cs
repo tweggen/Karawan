@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using static engine.Logger;
 using static builtin.extensions.EntityTypedCalls;
 
-namespace builtin.npc;
+namespace engine.behave;
 
 
 /**

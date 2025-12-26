@@ -9,7 +9,7 @@ namespace engine.joyce;
  */
 public class HierarchyWatcher : AComponentWatcher<engine.joyce.components.Parent>
 {
-    protected override void _onComponentRemoved(in Entity entity, in Parent cOldComponent)
+    protected override void _onComponentRemoved(in Entity entity, in Parent cOldStrategy)
     {
         /*
          * If a parent component is being removed, we shall remove the child from its
@@ -18,21 +18,21 @@ public class HierarchyWatcher : AComponentWatcher<engine.joyce.components.Parent
          * We should, however, note, that the parent's entity might very well not exist
          * anymore.
          */
-        if (cOldComponent.Entity.IsAlive)
+        if (cOldStrategy.Entity.IsAlive)
         {
-            if (cOldComponent.Entity.Has<Children>())
+            if (cOldStrategy.Entity.Has<Children>())
             {
-                ref var cChildren = ref cOldComponent.Entity.Get<Children>();
-                cChildren.Entities?.Remove(cOldComponent.Entity);
+                ref var cChildren = ref cOldStrategy.Entity.Get<Children>();
+                cChildren.Entities?.Remove(cOldStrategy.Entity);
             }
         }
     }
 
-    protected override void _onComponentChanged(in Entity entity, in Parent cOldComponent, in Parent cNewComponent)
+    protected override void _onComponentChanged(in Entity entity, in Parent cOldStrategy, in Parent cNewStrategy)
     {
-        if (cOldComponent.Entity != cNewComponent.Entity)
+        if (cOldStrategy.Entity != cNewStrategy.Entity)
         {
-            _onComponentRemoved(entity, cOldComponent);
+            _onComponentRemoved(entity, cOldStrategy);
         }
     }
 }

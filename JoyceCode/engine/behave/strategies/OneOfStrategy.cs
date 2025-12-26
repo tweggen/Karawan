@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using DefaultEcs;
 using static engine.Logger;
 
-namespace builtin.npc;
+namespace engine.behave.strategies;
 
 /**
  * Implement a strategy where an external owner can call 
  */
 public class OneOfStrategy : ICompositeStrategy
 {
-    public SortedDictionary<string, IStrategyPart> _strategies = new SortedDictionary<string, IStrategyPart>();
+    public SortedDictionary<string, IStrategyPart> Strategies = new SortedDictionary<string, IStrategyPart>();
     public string StartStrategy;
     
     private IStrategyPart? _activeStrategy = null;
@@ -19,12 +19,13 @@ public class OneOfStrategy : ICompositeStrategy
     public IStrategyPart GetActiveStrategy()
     {
         ErrorThrow<NotImplementedException>("Not yet implemented.");
+        throw new NotImplementedException();
     }
 
 
     public void TriggerStrategy(string strStrategy)
     {
-        if (!_strategies.TryGetValue(strStrategy, out var strategy))
+        if (!Strategies.TryGetValue(strStrategy, out var strategy))
         {
             ErrorThrow<ArgumentException>($"Strategy '{strStrategy}' does not exist.");
         }
@@ -68,7 +69,7 @@ public class OneOfStrategy : ICompositeStrategy
 
         /* lock */
         {
-            if (_strategies.TryGetValue(StartStrategy, out startStrategy))
+            if (Strategies.TryGetValue(StartStrategy, out startStrategy))
             {
                 _activeStrategy = startStrategy;
             }

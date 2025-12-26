@@ -4,13 +4,13 @@ using static engine.Logger;
 
 namespace engine.behave;
 
-public class Manager : AComponentWatcher<components.Behavior>
+public class BehaviorManager : AComponentWatcher<components.Behavior>
 {
     protected override void _onComponentRemoved(
         in DefaultEcs.Entity entity,
-        in components.Behavior cOldBehavior)
+        in components.Behavior cOldStrategy)
     {
-        var oldProvider = cOldBehavior.Provider;
+        var oldProvider = cOldStrategy.Provider;
         if (oldProvider != null)
         {
             oldProvider.OnDetach(entity);
@@ -20,11 +20,11 @@ public class Manager : AComponentWatcher<components.Behavior>
 
     protected override void _onComponentChanged(
         in DefaultEcs.Entity entity,
-        in components.Behavior cOldBehavior,
-        in components.Behavior cNewBehavior)
+        in components.Behavior cOldStrategy,
+        in components.Behavior cNewStrategy)
     {
-        var oldProvider = cOldBehavior.Provider;
-        var newProvider = cNewBehavior.Provider;
+        var oldProvider = cOldStrategy.Provider;
+        var newProvider = cNewStrategy.Provider;
 
         if (oldProvider == newProvider)
         {
@@ -58,14 +58,12 @@ public class Manager : AComponentWatcher<components.Behavior>
 
     protected override void _onComponentAdded(
         in DefaultEcs.Entity entity, 
-        in components.Behavior cNewBehavior)
+        in components.Behavior cNewStrategy)
     {
-        var newProvider = cNewBehavior.Provider;
+        var newProvider = cNewStrategy.Provider;
         if (newProvider != null)
         {
             newProvider.OnAttach(_engine, entity);
         }
     }
-
-
 }

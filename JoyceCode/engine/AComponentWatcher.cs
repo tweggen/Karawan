@@ -27,27 +27,27 @@ public abstract class AComponentWatcher<T> : IDisposable where T : struct
 
     protected virtual void _onComponentRemoved(
         in DefaultEcs.Entity entity,
-        in T cOldComponent)
+        in T cOldStrategy)
     {
-        _remove(entity, cOldComponent);
+        _remove(entity, cOldStrategy);
     }
 
 
     protected virtual void _onComponentChanged(
         in DefaultEcs.Entity entity,
-        in T cOldComponent,
-        in T cNewComponent)
+        in T cOldStrategy,
+        in T cNewStrategy)
     {
-        _remove(entity, cOldComponent);
-        _add(entity, cNewComponent);
+        _remove(entity, cOldStrategy);
+        _add(entity, cNewStrategy);
     }
 
 
     protected virtual void _onComponentAdded(
         in DefaultEcs.Entity entity,
-        in T cNewComponent)
+        in T cNewStrategy)
     {
-        _add(entity, cNewComponent);
+        _add(entity, cNewStrategy);
     }
 
 

@@ -1,4 +1,4 @@
-namespace builtin.npc;
+namespace engine.behave;
 
 
 /**
