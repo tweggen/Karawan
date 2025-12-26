@@ -90,86 +90,21 @@ public class CharacterCreator
     }
 
 
-    private static Behavior _createDefaultBehavior(
-        RandomSource rnd,
-        ClusterDesc clusterDesc, 
-        Quarter quarter, QuarterDelim delim, float relativePosition, float speed,
-        CharacterModelDescription cmd)
-    {
-        List<builtin.tools.SegmentEnd> listSegments = new();
-
-        var delims = quarter.GetDelims();
-        int l = delims.Count;
-
-        int startIndex = 0;
-        for (int i = 0; i < l; ++i)
-        {
-            var dlThis = delims[i];
-            var dlNext = delims[(i + 1) % l];
-
-            if (delim == dlThis)
-            {
-                startIndex = i;
-            }
-
-            float h = clusterDesc.AverageHeight + engine.world.MetaGen.ClusterStreetHeight +
-                      engine.world.MetaGen.QuarterSidewalkOffset;
-            var v3This = new Vector3(dlThis.StartPoint.X, h, dlThis.StartPoint.Y );
-            var v3Next = new Vector3(dlNext.StartPoint.X, h, dlNext.StartPoint.Y);
-            var vu3Forward = Vector3.Normalize(v3Next - v3This);
-            var vu3Up = Vector3.UnitY;
-            var vu3Right = Vector3.Cross(vu3Forward, vu3Up);
-            v3This += -1.5f * vu3Right;
-            
-            listSegments.Add(
-                new()
-                {
-                    Position = v3This + clusterDesc.Pos,
-                    Up = vu3Up,
-                    Right = vu3Right
-                });
-        }
-
-
-        builtin.tools.SegmentNavigator segnav = new ()
-        {
-            ListSegments = listSegments,
-            StartIndex = startIndex,
-            StartRelative = rnd.GetFloat(),
-            LoopSegments = true,
-            Speed = speed
-        };
-
-        return new nogame.characters.citizen.Behavior()
-        {
-            Navigator = segnav,
-            CharacterModelDescription = cmd
-        };
-    }
-    
-
     public static async Task<OneOf<None, Action<DefaultEcs.Entity>>> GenerateRandomCharacter(
         builtin.tools.RandomSource rnd,
         ClusterDesc clusterDesc,
         Fragment worldFragment,
         int seed)
     {
-        CharacterCreator.ChooseQuarterDelimPointPos(rnd, worldFragment, clusterDesc,
-            out var quarter, out var delim , out var relativePos);
-        if (quarter == null)
+        var cmd = CharacterModelDescriptionFactory.CreateCitizen(rnd);
+        if (!EntityStrategy.TryCreate(rnd, clusterDesc, worldFragment, cmd, out var entityStrategy))
         {
             return new None();
         }
         
-        float speed;
-        speed = (4f + rnd.GetFloat() * 3f) / 3.6f;
-
-        var cmd = CharacterModelDescriptionFactory.CreateCitizen(rnd);
-        var behavior = _createDefaultBehavior(rnd, clusterDesc, quarter, delim, relativePos, speed, cmd);
-        
         EntityCreator creator = new()
         {
-            BehaviorFactory = entity => behavior,
+            EntityStrategyFactory = entity => entityStrategy,
             CharacterModelDescription = cmd,
             PhysicsName = EntityName,
         };

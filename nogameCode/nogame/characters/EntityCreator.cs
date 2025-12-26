@@ -23,6 +23,7 @@ public class EntityCreator
     public required string PhysicsName;
     
     public Func<Entity, IBehavior>? BehaviorFactory = null;
+    public Func<Entity, IEntityStrategy>? EntityStrategyFactory = null;
     public Func<Entity, CollisionProperties>? CollisionPropertiesFactory = null;
     
     public bool CreateRightHand = false;
@@ -102,6 +103,20 @@ public class EntityCreator
             _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
         }
 
+
+        if (default != EntityStrategyFactory)
+        {
+            try
+            {
+                IEntityStrategy strategy = EntityStrategyFactory(_ePerson);
+                _ePerson.Set(new engine.behave.components.Strategy(strategy));
+            }
+            catch (Exception e)
+            {
+                Warning($"Unable to instantiate entity strategy: {e}");
+            }
+        }
+        
         if (default != BehaviorFactory)
         {
             IBehavior behavior;
@@ -112,9 +127,8 @@ public class EntityCreator
             }
             catch (Exception e)
             {
-                Warning($"Unable to instantiate behavior: {e}");                
+                Warning($"Unable to instantiate behavior: {e}");
             }
-
         }
 
         /*

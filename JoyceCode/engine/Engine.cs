@@ -102,7 +102,8 @@ public class Engine
     private physics.Manager _managerPhysics;
     private gongzuo.LuaScriptManager _managerLuaScript;
     private builtin.map.MapIconManager _managerMapIcons;
-    private behave.BehaviorManager _behaviorManagerBehavior;
+    private behave.BehaviorManager _behaviorManager;
+    private behave.StrategyManager _strategyManager;
     private SceneSequencer _sceneSequencer;
 
     public event EventHandler<float> OnLogicalFrame;
@@ -969,8 +970,10 @@ public class Engine
         _cpuBoneSystem = new();
         _managerPhysics = new physics.Manager();
         _managerPhysics.Manage(this);
-        _behaviorManagerBehavior = new behave.BehaviorManager();
-        _behaviorManagerBehavior.Manage(this);
+        _behaviorManager = new behave.BehaviorManager();
+        _behaviorManager.Manage(this);
+        _strategyManager = new behave.StrategyManager();
+        _strategyManager.Manage(this);
         _managerLuaScript = new();
         _managerLuaScript.Manage(_ecsWorld);
         _managerMapIcons = new();
