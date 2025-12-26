@@ -14,6 +14,7 @@ using Creator = engine.world.components.Creator;
 
 using static engine.Logger;
 using Context = builtin.entitySaver.Context;
+using static builtin.extensions.EntityTypedCalls;
 
 namespace builtin;
 
@@ -219,11 +220,7 @@ public class EntitySaver : AModule
                         /*
                          * Set the deserialized component to the entity.
                          */
-                        MethodInfo baseMethod = typeof(DefaultEcs.Entity).GetMethods()
-                            .Where(m => m.Name == "Set" && m.GetParameters().Length == 1)
-                            .FirstOrDefault(m => true);
-                        var genericMethod = baseMethod.MakeGenericMethod(type);
-                        genericMethod.Invoke(e, new object[] { comp });
+                        e.Set(type, comp);
 
                         /*
                          * Finally, call setupfrom for each component that defines it.

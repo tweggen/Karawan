@@ -2,7 +2,7 @@ namespace builtin.npc;
 
 
 /**
- * Current state of an npc.
+ * Current part of the state of an npc.
  * A state can contain several members to modify the current NPCs properties:
  *
  * - Behavior to use
@@ -19,8 +19,12 @@ namespace builtin.npc;
  *
  * State implementations probably will emit events. FSM or strategy machine
  * will catch events and eventually trigger state transitions.
+ *
+ * All starts with an interface making a state accessible for control
+ * logic like an fsm.
  */
-public class AState
+public interface IStatePart
 {
-    
+    public void OnEnter(in DefaultEcs.Entity entity);
+    public void OnExit(in DefaultEcs.Entity entity);
 }

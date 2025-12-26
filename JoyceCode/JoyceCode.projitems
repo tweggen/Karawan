@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\Context.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\ConverterFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\ConverterRegistry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\extensions\EntityTypedCalls.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\extensions\MatrixInversion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\extensions\Vector4Extensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\InterfacePointerConverter.cs" />
@@ -34,7 +35,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\InvLuaBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\PickableDirectory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\PlayerWaypoint.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\npc\AState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\npc\IStatePart.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\npc\JsonStatePart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\npc\Puppeteer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\QuaternionJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Api.cs" />
