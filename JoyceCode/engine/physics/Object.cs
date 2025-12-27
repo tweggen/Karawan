@@ -316,6 +316,34 @@ public class Object : IDisposable
         return this;
     }
 
+
+    public void MakeKinematic(ref BodyReference pref)
+    {
+        lock (this.Engine.Simulation)
+        {
+            if (0 == (Flags & IsDynamic)) return;
+            Flags &= ~IsDynamic;
+            
+            RemoveContactListener();
+            pref.Awake = false;
+            pref.BecomeKinematic();
+        }
+    }
+
+    
+    public void MakeDynamic(in BodyReference pref, in BodyInertia inertia)
+    {
+        lock (this.Engine.Simulation)
+        {
+            if (0 != (Flags & IsDynamic)) return;
+            Flags |= IsDynamic;
+            
+            this.Engine.Simulation.Bodies.SetLocalInertia(pref.Handle, inertia);
+            pref.MotionState.Velocity = Vector3.Zero;
+            AddContactListener();
+        }
+    }
+
     
     public Object()
     {

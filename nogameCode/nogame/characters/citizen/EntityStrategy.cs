@@ -23,12 +23,12 @@ public class EntityStrategy : AOneOfStrategy
     private readonly ClusterDesc _clusterDesc;
     private readonly CharacterModelDescription _cmd;
 
-    private Behavior _behavior;
+    private WalkBehavior _walkBehavior;
     private readonly Quarter _quarter;
     private readonly QuarterDelim _delim;
     private readonly float _relativePos;
     
-    static public string CrashEventPath(DefaultEcs.Entity e) =>
+    static public string CrashEventPath(in DefaultEcs.Entity e) =>
         $"@{e.ToString()}/nogame.characters.citizen.onCrash";
     
     
@@ -61,7 +61,7 @@ public class EntityStrategy : AOneOfStrategy
     public override void Sync(in Entity entity)
     {
         base.Sync(entity);
-        _behavior.Sync(entity);
+        _walkBehavior.Sync(entity);
     }
 
 
@@ -75,12 +75,12 @@ public class EntityStrategy : AOneOfStrategy
     public override void OnAttach(in Engine engine0, in Entity entity)
     {
         base.OnAttach(in engine0, in entity);
-        entity.Set(new engine.behave.components.Behavior(_behavior));
+        entity.Set(new engine.behave.components.Behavior(_walkBehavior));
     }
     #endregion
 
 
-    private static Behavior? _createDefaultBehavior(
+    private static WalkBehavior? _createDefaultBehavior(
         RandomSource rnd,
         ClusterDesc clusterDesc,
         CharacterModelDescription cmd,
@@ -112,7 +112,7 @@ public class EntityStrategy : AOneOfStrategy
         /*
          * Now create the behavior using that very navigator.
          */
-        return new nogame.characters.citizen.Behavior()
+        return new nogame.characters.citizen.WalkBehavior()
         {
             Navigator = segnav,
             CharacterModelDescription = cmd
@@ -131,17 +131,17 @@ public class EntityStrategy : AOneOfStrategy
         _quarter = quarter;
         _delim = delim;
         _relativePos = relativePos;
+        
 
+        _walkBehavior = _createDefaultBehavior(rnd, clusterDesc, cmd,
+            quarter, delim, relativePos);
 
+        
         Strategies = new()
         {
-            { "walk", new WalkStrategy() },
-            { "recover", new RecoverStrategy() }
+            { "walk", new WalkStrategy() { WalkBehavior = _walkBehavior } },
+            { "recover", new RecoverStrategy() { CharacterModelDescription = cmd } }
         };
-
-
-        _behavior = _createDefaultBehavior(rnd, clusterDesc, cmd,
-            quarter, delim, relativePos);
     }
 
 

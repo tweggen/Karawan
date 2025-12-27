@@ -5,19 +5,15 @@ using DefaultEcs;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
+using engine.news;
 using engine.physics;
 using nogame.cities;
 using static engine.Logger;
 
 namespace nogame.characters.citizen;
 
-public class Behavior : builtin.tools.SimpleNavigationBehavior
+public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
 {
-    /**
-     * This is the entity that shall be updated to have the proper animation running.
-     */
-    public DefaultEcs.Entity EntityAnimation;
-
     public required CharacterModelDescription CharacterModelDescription;
     
     public static uint NDrawCallsPerCharacterBatch { get; set; } = 2;
@@ -75,37 +71,12 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
     public override void OnCollision(ContactEvent cev)
     {
         base.OnCollision(cev);
-        var me = cev.ContactInfo.PropertiesA;
         
-        ref engine.physics.components.Body cCitizenBody = ref me.Entity.Get<engine.physics.components.Body>();
-
         /*
-         * Become a dynamic thing with the proper inertia.
+         * Notify the owning strategy about the collision.
          */
-        lock (_engine.Simulation)
-        {
-            /*
-             * We need to call Simulation.Bodies.SetLocalInertia to remove the kinematic from a
-             * couple of lists.
-             */
-            _engine.Simulation.Bodies.SetLocalInertia(
-                cCitizenBody.Reference.Handle,
-                CharacterCreator.PInertiaCylinder);
-            // TXWTODO: I would like to have the object stop more realistic. This is why I have a physics engine.
-            cCitizenBody.Reference.MotionState.Velocity = Vector3.Zero;
-        }
-
-        cCitizenBody.PhysicsObject.Flags |= engine.physics.Object.IsDynamic;
-        cCitizenBody.PhysicsObject.AddContactListener();
-
-        /*
-         * Replace the previous behavior with the after crash behavior.
-         */
-        me.Entity.Get<engine.behave.components.Behavior>().Provider =
-            new nogame.characters.citizen.AfterCrashBehavior(_engine, me.Entity)
-            {
-                CharacterModelDescription = CharacterModelDescription
-            };
+        var me = cev.ContactInfo.PropertiesA;
+        I.Get<EventQueue>().Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
     }
 
 
@@ -116,14 +87,14 @@ public class Behavior : builtin.tools.SimpleNavigationBehavior
     }
 
 
-    public override void Sync(in DefaultEcs.Entity entity)
+    public override void OnAttach(in engine.Engine engine0, in Entity entity0)
     {
-        base.Sync(entity);
+        base.OnAttach(engine0, entity0);
+        
+        /*
+         * Make me a dynamic object to respond to the collision.
+         */
+        ref engine.physics.components.Body cCitizenBody = ref entity0.Get<engine.physics.components.Body>();
+        cCitizenBody.PhysicsObject?.MakeKinematic(ref cCitizenBody.Reference);
     }
-    
-
-    public Behavior()
-    {
-    }
-
 }

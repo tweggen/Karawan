@@ -12,11 +12,6 @@ namespace nogame.characters.citizen;
 
 public class AfterCrashBehavior : ABehavior
 {
-    private engine.Engine _engine;
-    private DefaultEcs.Entity _entity;
-
-    private IBehavior _oldBehavior = null;
-
     static private float LIFETIME = 10f;
     private float t = 0;
     private bool _deathAnimationTriggered = false;
@@ -35,11 +30,6 @@ public class AfterCrashBehavior : ABehavior
     }
     
 
-    public override void Sync(in DefaultEcs.Entity entity)
-    {
-    }
-    
-    
     public override void Behave(in Entity entity, float dt)
     {
         if (!_deathAnimationTriggered)
@@ -73,31 +63,6 @@ public class AfterCrashBehavior : ABehavior
                 
                 Vector3 vTargetPos = prefTarget.Pose.Position;
                 float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
-                #if false
-                Vector3 vTargetVelocity = prefTarget.Velocity.Linear;
-                {
-                    var properDeltaY = 0;
-                    var deltaY = vTargetPos.Y - (heightAtTarget + properDeltaY);
-                    const float threshDiff = 0.01f;
-
-                    Vector3 impulse;
-                    float properVelocity = 0f;
-                    if (deltaY < -threshDiff)
-                    {
-                        properVelocity = LevelUpThrust; // 1ms-1 up.
-                    }
-                    else if (deltaY > threshDiff)
-                    {
-                        properVelocity = -LevelDownThrust; // 1ms-1 down.
-                    }
-
-                    float deltaVelocity = properVelocity - vTargetVelocity.Y;
-                    float fireRate = deltaVelocity;
-                    impulse = new Vector3(0f, fireRate, 0f);
-                    vTotalImpulse += impulse;
-                }
-                #endif
-
 
                 /*
                  * Clip at bottom
@@ -108,41 +73,37 @@ public class AfterCrashBehavior : ABehavior
                     prefTarget.Pose.Position = vTargetPos;
                 }
 
+                // TXWTODO: Why do we not apply the downward impulse.
                 #if false
                 float massPerson = CharacterCreator.PhysicsMass;
                 entity.Set(new engine.joyce.components.Motion(prefTarget.Velocity.Linear));
 
                 prefTarget.ApplyImpulse(vTotalImpulse * dt * massPerson, new Vector3(0f, 0f, 0f));
                 #endif
+
                 prefTarget.Awake = true;
             }
         }
         else
         {
             /*
-             * Remove new behavior, doom entity.
+             * Remove any behavior and kill entity.
+             * TXWTODO: This should go to death strategy.
              */
-            ref engine.physics.components.Body cCitizenBody = ref entity.Get<engine.physics.components.Body>();
-            cCitizenBody.PhysicsObject.RemoveContactListener();
-            lock (_engine.Simulation)
-            {
-                var prefTarget = cCitizenBody.Reference;
-                prefTarget.Awake = false;
-                prefTarget.BecomeKinematic();
-            }
             entity.Remove<engine.behave.components.Behavior>();
             _engine.AddDoomedEntity(entity);
         }
     }
 
-    
-    public AfterCrashBehavior(engine.Engine engine0, DefaultEcs.Entity entity0)
+
+    public override void OnAttach(in engine.Engine engine0, in Entity entity0)
     {
-        _engine = engine0;
-        _entity = entity0;
-        if (_entity.Has<engine.behave.components.Behavior>())
-        {
-            _oldBehavior = _entity.Get<engine.behave.components.Behavior>().Provider;
-        }
+        base.OnAttach(engine0, entity0);
+        
+        /*
+         * Make me a dynamic object to respond to the collision.
+         */
+        ref engine.physics.components.Body cCitizenBody = ref entity0.Get<engine.physics.components.Body>();
+        cCitizenBody.PhysicsObject?.MakeDynamic(cCitizenBody.Reference, CharacterCreator.PInertiaCylinder);
     }
 }
