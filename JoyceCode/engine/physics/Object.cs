@@ -322,9 +322,13 @@ public class Object : IDisposable
         lock (this.Engine.Simulation)
         {
             if (0 == (Flags & IsDynamic)) return;
+            /*
+             * Caution, we need to remove the contact listener while
+             * we still are dynamic.
+             */
+            RemoveContactListener();
             Flags &= ~IsDynamic;
             
-            RemoveContactListener();
             pref.Awake = false;
             pref.BecomeKinematic();
         }
@@ -340,6 +344,11 @@ public class Object : IDisposable
             
             this.Engine.Simulation.Bodies.SetLocalInertia(pref.Handle, inertia);
             pref.MotionState.Velocity = Vector3.Zero;
+            
+            /*
+             * It is important to add the contact listener after the body
+             * has been made dynamic.
+             */
             AddContactListener();
         }
     }
