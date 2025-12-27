@@ -30,7 +30,7 @@ public class AfterCrashBehavior : ABehavior
         /*
          * Only notify if collided with the player or anything that collides which each other or the player.
          */
-        if (0 != (other.LayerMask & 0x0007))
+        if (other != null && 0 != (other.LayerMask & 0x0007))
         {
             I.Get<EventQueue>().Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
             Trace($"Collision with other {cev.ContactInfo.PropertiesB.Name}");
