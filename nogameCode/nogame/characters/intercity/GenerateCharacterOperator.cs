@@ -32,41 +32,37 @@ public class GenerateCharacterOperator : IWorldOperator
         /*
          * Read all data we need to scale our drawing.
          */
-        terrain.GroundOperator groundOperator = terrain.GroundOperator.Instance();
-        var skeleton = groundOperator.GetSkeleton();
-        int skeletonWidth = groundOperator.SkeletonWidth;
-        int skeletonHeight = groundOperator.SkeletonHeight;
-        
         Vector3 vuAB = Vector3.Normalize(cbPos - caPos);
         Vector3 vuUp = new Vector3(0f, 1f, 0f);
 
-        List<SegmentEnd> listSegments = new()
+        SegmentRoute sr = new()
         {
-            new()
+            Segments = new()
             {
-                Position = caPos,
-                Up = vuUp,
-                Right = Vector3.Cross(vuAB, vuUp)
+                new()
+                {
+                    Position = caPos,
+                    Up = vuUp,
+                    Right = Vector3.Cross(vuAB, vuUp)
+                },
+                new()
+                {
+                    Position = cbPos,
+                    Up = vuUp,
+                    Right = Vector3.Cross(-vuAB, vuUp)
+                }
             },
-            new()
-            {
-                Position = cbPos,
-                Up = vuUp,
-                Right = Vector3.Cross(-vuAB, vuUp)
-            }
+            LoopSegments = true
         };
         
         SegmentNavigator segnav = new SegmentNavigator()
         {
-            ListSegments = listSegments,
-            LoopSegments = true,
+            SegmentRoute = sr,
             Speed = 60f
         };
 
         var mcp = new ModelCacheParams()
         {
-
-
             Url = "tram1.obj",
             Params = new InstantiateModelParams()
             {

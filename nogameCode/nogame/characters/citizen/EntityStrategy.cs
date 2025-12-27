@@ -54,59 +54,26 @@ public class EntityStrategy : IEntityStrategy
         CharacterModelDescription cmd,
         Quarter quarter, QuarterDelim delim, float relativePos)
     {
-        float speed;
-        speed = (4f + rnd.GetFloat() * 3f) / 3.6f;
-
         /*
          * Create the route. The route always is around a quarter.
          */
-        List<builtin.tools.SegmentEnd> listSegments = new();
-        int startIndex = 0;
+        var segmentRoute = new QuarterRouteGenerator()
         {
-            /*
-             * Construct the route from navigation segments.
-             */
-            var delims = quarter.GetDelims();
-            int l = delims.Count;
+            ClusterDesc = clusterDesc, Quarter = quarter, QuarterDelim = delim
+        }.GenerateRoute();
 
-            for (int i = 0; i < l; ++i)
-            {
-                var dlThis = delims[i];
-                var dlNext = delims[(i + 1) % l];
-
-                if (delim == dlThis)
-                {
-                    startIndex = i;
-                }
-
-                float h = clusterDesc.AverageHeight + engine.world.MetaGen.ClusterStreetHeight +
-                          engine.world.MetaGen.QuarterSidewalkOffset;
-                var v3This = new Vector3(dlThis.StartPoint.X, h, dlThis.StartPoint.Y);
-                var v3Next = new Vector3(dlNext.StartPoint.X, h, dlNext.StartPoint.Y);
-                var vu3Forward = Vector3.Normalize(v3Next - v3This);
-                var vu3Up = Vector3.UnitY;
-                var vu3Right = Vector3.Cross(vu3Forward, vu3Up);
-                v3This += -1.5f * vu3Right;
-
-                listSegments.Add(
-                    new()
-                    {
-                        Position = v3This + clusterDesc.Pos,
-                        Up = vu3Up,
-                        Right = vu3Right
-                    });
-            }
-        }
+        /*
+         * This is the default speed.
+         */
+        float speed;
+        speed = (4f + rnd.GetFloat() * 3f) / 3.6f;
 
         /*
          * Create a segment navigator that will use the route.
          */
         builtin.tools.SegmentNavigator segnav = new()
         {
-            ListSegments = listSegments,
-            StartIndex = startIndex,
-            StartRelative = relativePos,
-            LoopSegments = true,
+            SegmentRoute = segmentRoute,
             Speed = speed
         };
 

@@ -27,8 +27,6 @@ public class SegmentEnd
  */
 public class SegmentNavigator : INavigator
 {
-    private float _speed = 50f;
-
     private float _absolutePos = 0f;
 
     /*
@@ -46,33 +44,26 @@ public class SegmentNavigator : INavigator
     private SegmentEnd? _b = null;
 
     private int _idxNextSegment;
-    private List<SegmentEnd> _listSegments;
-    public List<SegmentEnd> ListSegments
+    
+    private readonly List<SegmentEnd> _listSegments;
+    private readonly SegmentRoute _segmentRoute;
+    public SegmentRoute SegmentRoute
     {
-        get => _listSegments;
-        set
+        get => _segmentRoute;
+        init
         {
-            if (value.Count < 2)
+            if (value.Segments.Count < 2)
             {
                 ErrorThrow("List of segments must contain at least 2 items.", m => new ArgumentException(m));
             }
-
-            _listSegments = value;
+            
+            _segmentRoute = value;
+            _listSegments = value.Segments;
         }
     }
-
-    public int StartIndex = 0;
-    public float StartRelative = 0f; 
-
-
-    private bool _loopSegments;
-    public bool LoopSegments
-    {
-        get => _loopSegments;
-        set => _loopSegments = value;
-    }
     
-    
+
+    private float _speed = 50f;
     public float Speed
     {
         get => _speed;
@@ -115,9 +106,9 @@ public class SegmentNavigator : INavigator
     private void _setStartSegment()
     {
         int l = _listSegments.Count;
-        _a = _listSegments[(StartIndex+0) % l];
-        _b = _listSegments[(StartIndex+1) % l];
-        _idxNextSegment = (StartIndex+2) % l;
+        _a = _listSegments[(_segmentRoute.StartIndex+0) % l];
+        _b = _listSegments[(_segmentRoute.StartIndex+1) % l];
+        _idxNextSegment = (_segmentRoute.StartIndex+2) % l;
     }
 
 
@@ -142,7 +133,7 @@ public class SegmentNavigator : INavigator
         if (null == _a)
         {
             _setStartSegment();
-            _prepareSegment(StartRelative);
+            _prepareSegment(_segmentRoute.StartRelative);
         }
             
         while (totalTogo > 0.001)
