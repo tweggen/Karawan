@@ -15,7 +15,7 @@ public class SkAnimationsEntry : AAnimationsEntry
 
     private static int _nAnimations = 0;
 
-    private bool _traceAnimations = true;
+    private bool _traceAnimations = false;
 
     public Flags.GLAnimBuffers AnimStrategy;
 

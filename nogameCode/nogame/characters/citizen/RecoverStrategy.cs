@@ -1,8 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using engine;
 using engine.behave;
 using engine.news;
+using static engine.Logger;
 
 namespace nogame.characters.citizen;
 
@@ -40,6 +42,7 @@ public class RecoverStrategy : AEntityStrategyPart
      */
     private void _onCrashEvent(Event ev)
     {
+        Trace($"with entity {_entity.ToString()}");
         lock (this)
         {
             _recoverTimer?.Change(RecoverMilliseconds, Timeout.Infinite);

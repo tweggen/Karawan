@@ -150,7 +150,7 @@ class CharacterCreator
                 ,
                 MaxDistance = propMaxDistance,
                 
-                CollisionLayers = 0x0002,
+                CollisionLayers = 0x000a,
             }
         };
         

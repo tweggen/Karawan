@@ -23,6 +23,7 @@ public class CollisionProperties
      * - 0x0001 : The player
      * - 0x0002 : Other characters that interact with each other
      * - 0x0004 : Other characters that interact with the player
+     * - 0x0008 : Environment
      */
     [JsonInclude]
     public ushort LayerMask = 0xffff;

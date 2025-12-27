@@ -16,15 +16,8 @@ public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
 {
     public required CharacterModelDescription CharacterModelDescription;
     
-    public static uint NDrawCallsPerCharacterBatch { get; set; } = 2;
-
     public float _previousSpeed = Single.MinValue;
 
-    /**
-     * How long should this behavior not set up any animation
-     */
-    private int _debugNoAnimation = 60;
-    
     /**
      * Verify that the animation of the character matches the behavior.
      */
@@ -91,6 +84,11 @@ public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
     public override void OnAttach(in engine.Engine engine0, in Entity entity0)
     {
         base.OnAttach(engine0, entity0);
+
+        /*
+         * When attaching, we need to invalid the previously cached values.
+         */
+        _previousSpeed = Single.MinValue;
         
         /*
          * Make me a dynamic object to respond to the collision.

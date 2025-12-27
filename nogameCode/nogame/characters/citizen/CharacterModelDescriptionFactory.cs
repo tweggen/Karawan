@@ -59,7 +59,7 @@ public static class CharacterModelDescriptionFactory
                 MaxPhysicsDistance = 4f,
             
                 PhysicsAABB = new AABB(new Vector3(-0.30f, 0f, -0.15f), new Vector3(0.3f, 1.85f, 0.15f)),
-                CollisionLayers = 0x0002,
+                CollisionLayers = 0x000a,
             }
         };
     }
