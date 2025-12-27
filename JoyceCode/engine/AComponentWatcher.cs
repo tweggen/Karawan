@@ -36,10 +36,10 @@ public abstract class AComponentWatcher<T> : IDisposable where T : struct
     protected virtual void _onComponentChanged(
         in DefaultEcs.Entity entity,
         in T cOldStrategy,
-        in T cNewStrategy)
+        in T cNewBehavior)
     {
         _remove(entity, cOldStrategy);
-        _add(entity, cNewStrategy);
+        _add(entity, cNewBehavior);
     }
 
 

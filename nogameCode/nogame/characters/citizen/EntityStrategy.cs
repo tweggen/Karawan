@@ -15,19 +15,27 @@ namespace nogame.characters.citizen;
 /**
  * Strategy for citizen entities.
  *
- * Creates and owns the citizen's behavior.
+ * Uses two sub-strategies: WalkStrategy and RecoverStrategy.
  */
 public class EntityStrategy : AOneOfStrategy
 {
     private readonly RandomSource _rnd;
     private readonly ClusterDesc _clusterDesc;
     private readonly CharacterModelDescription _cmd;
-
-    private WalkBehavior _walkBehavior;
+    private readonly builtin.tools.SegmentNavigator _walkNavigator; 
+    
+    /*
+     * These are not used along the run but might serve as an example
+     * to store a state common to all sub-strategies.
+     */
     private readonly Quarter _quarter;
     private readonly QuarterDelim _delim;
     private readonly float _relativePos;
     
+    /**
+     * The path used by sub-ordinate behaviors to publish
+     * and by sub-ordinate strategies to subscribe to a collision.
+     */
     static public string CrashEventPath(in DefaultEcs.Entity e) =>
         $"@{e.ToString()}/nogame.characters.citizen.onCrash";
     
@@ -58,29 +66,13 @@ public class EntityStrategy : AOneOfStrategy
 
     
     #region IEntityStrategy
-    public override void Sync(in Entity entity)
-    {
-        base.Sync(entity);
-        _walkBehavior.Sync(entity);
-    }
-
-
-    public override void OnDetach(in Entity entity)
-    {
-        base.OnDetach(entity);
-        entity.Remove<engine.behave.components.Behavior>();
-    }
-
-
-    public override void OnAttach(in Engine engine0, in Entity entity)
-    {
-        base.OnAttach(in engine0, in entity);
-        entity.Set(new engine.behave.components.Behavior(_walkBehavior));
-    }
+    /*
+     * nothing to override
+     */
     #endregion
 
 
-    private static WalkBehavior? _createDefaultBehavior(
+    private static SegmentNavigator? _createWalkNavigator(
         RandomSource rnd,
         ClusterDesc clusterDesc,
         CharacterModelDescription cmd,
@@ -103,20 +95,13 @@ public class EntityStrategy : AOneOfStrategy
         /*
          * Create a segment navigator that will use the route.
          */
-        builtin.tools.SegmentNavigator segnav = new()
+        SegmentNavigator navigator = new SegmentNavigator()
         {
             SegmentRoute = segmentRoute,
             Speed = speed
         };
-
-        /*
-         * Now create the behavior using that very navigator.
-         */
-        return new nogame.characters.citizen.WalkBehavior()
-        {
-            Navigator = segnav,
-            CharacterModelDescription = cmd
-        };
+        
+        return navigator;
     }
 
 
@@ -133,18 +118,21 @@ public class EntityStrategy : AOneOfStrategy
         _relativePos = relativePos;
         
 
-        _walkBehavior = _createDefaultBehavior(rnd, clusterDesc, cmd,
+        _walkNavigator = _createWalkNavigator(rnd, clusterDesc, cmd,
             quarter, delim, relativePos);
 
         
         Strategies = new()
         {
-            { "walk", new WalkStrategy() { WalkBehavior = _walkBehavior } },
-            { "recover", new RecoverStrategy() { CharacterModelDescription = cmd } }
+            { "walk", new WalkStrategy() { Controller = this, CharacterModelDescription = cmd, Navigator =  _walkNavigator } },
+            { "recover", new RecoverStrategy() { Controller = this, CharacterModelDescription = cmd } }
         };
     }
 
 
+    /**
+     * Factory method to try to establish this strategy.
+     */
     public static bool TryCreate(
         RandomSource rnd,
         ClusterDesc clusterDesc,

@@ -8,9 +8,9 @@ public class BehaviorManager : AComponentWatcher<components.Behavior>
 {
     protected override void _onComponentRemoved(
         in DefaultEcs.Entity entity,
-        in components.Behavior cOldStrategy)
+        in components.Behavior cOldBehavior)
     {
-        var oldProvider = cOldStrategy.Provider;
+        var oldProvider = cOldBehavior.Provider;
         if (oldProvider != null)
         {
             oldProvider.OnDetach(entity);
@@ -20,11 +20,11 @@ public class BehaviorManager : AComponentWatcher<components.Behavior>
 
     protected override void _onComponentChanged(
         in DefaultEcs.Entity entity,
-        in components.Behavior cOldStrategy,
-        in components.Behavior cNewStrategy)
+        in components.Behavior cOldBehavior,
+        in components.Behavior cNewBehavior)
     {
-        var oldProvider = cOldStrategy.Provider;
-        var newProvider = cNewStrategy.Provider;
+        var oldProvider = cOldBehavior.Provider;
+        var newProvider = cNewBehavior.Provider;
 
         if (oldProvider == newProvider)
         {

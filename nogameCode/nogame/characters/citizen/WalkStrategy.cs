@@ -14,10 +14,14 @@ namespace nogame.characters.citizen;
  */
 public class WalkStrategy : AEntityStrategyPart
 {
+    public required CharacterModelDescription CharacterModelDescription { get; init; }
+
+    private WalkBehavior _walkBehavior;
+    
     /**
      * We need a walk behavior that exceeds our lifetime.
      */
-    public required WalkBehavior WalkBehavior { get; init; }
+    public required INavigator Navigator { get; init; }
     
     /**
      * If something crashes, I need to give up the driving strategy.
@@ -27,6 +31,7 @@ public class WalkStrategy : AEntityStrategyPart
         Controller.GiveUpStrategy(this);
     }
 
+    #region IStrategyPart
     
     /**
      * Remove walk behavior and clean up.
@@ -48,6 +53,29 @@ public class WalkStrategy : AEntityStrategyPart
         var sm = I.Get<SubscriptionManager>();
         sm.Subscribe(EntityStrategy.CrashEventPath(_entity), _onCrashEvent);
         
-        _entity.Set(new engine.behave.components.Behavior(WalkBehavior));
+        _entity.Set(new engine.behave.components.Behavior(_walkBehavior));
     }
+    
+    #endregion
+    
+    #region IEntityStrategy
+    
+    public override void OnDetach(in DefaultEcs.Entity entity)
+    {
+        _walkBehavior = null;
+        base.OnDetach(entity);
+    }
+    
+    
+    public override void OnAttach(in engine.Engine engine0, in DefaultEcs.Entity entity0)
+    {
+        base.OnAttach(engine0, entity0);
+        _walkBehavior = new WalkBehavior()
+        {
+            CharacterModelDescription = CharacterModelDescription, 
+            Navigator = Navigator
+        };
+    }
+    
+    #endregion
 }

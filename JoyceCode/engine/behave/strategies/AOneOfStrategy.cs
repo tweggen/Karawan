@@ -33,11 +33,14 @@ public abstract class AOneOfStrategy : IStrategyController, IStrategyPart, IEnti
 
 
     /**
+     * Before detaching me and the children, terminate the current strategy.
      * If we are used as entity strategy, and some of our children are entity
      * strategies, also dettach them.
      */
     public virtual void OnDetach(in Entity entity)
     {
+        TriggerStrategy(null);
+        
         foreach (var strategy in Strategies.Values)
         {
             IEntityStrategy? entityStrategy = strategy as IEntityStrategy;
@@ -51,6 +54,7 @@ public abstract class AOneOfStrategy : IStrategyController, IStrategyPart, IEnti
     /**
      * If we are used as entity strategy, and some of our children are entity
      * strategies, also do attach them.
+     * After the children are attached, trigger the start strategy. 
      */
     public virtual void OnAttach(in Engine engine0, in Entity entity)
     {
@@ -61,6 +65,8 @@ public abstract class AOneOfStrategy : IStrategyController, IStrategyPart, IEnti
             IEntityStrategy? entityStrategy = strategy as IEntityStrategy;
             if (entityStrategy != null) entityStrategy.OnAttach(engine0, entity);
         }
+        
+        TriggerStrategy(GetStartStrategy());
     }
     
     #endregion
@@ -82,28 +88,37 @@ public abstract class AOneOfStrategy : IStrategyController, IStrategyPart, IEnti
     #endregion
 
     
-    public virtual void TriggerStrategy(string strStrategy)
+    /**
+     * Set a new active strategy or terminate any.
+     *
+     * @param strStrategy The new strategy to trigger. If null, terminate any strategy.
+     */
+    public virtual void TriggerStrategy(string? strStrategy)
     {
-        if (!Strategies.TryGetValue(strStrategy, out var strategy))
+        IStrategyPart? newStrategy = null;
+        if (!String.IsNullOrEmpty(strStrategy))
         {
-            ErrorThrow<ArgumentException>($"Strategy '{strStrategy}' does not exist.");
+            if (!Strategies.TryGetValue(strStrategy, out newStrategy))
+            {
+                ErrorThrow<ArgumentException>($"Strategy '{strStrategy}' does not exist.");
+            }
         }
-        
+
         IStrategyPart? oldStrategy;
         
         /* lock */
         {
             oldStrategy = _activeStrategy;
-            _activeStrategy = strategy;
+            _activeStrategy = newStrategy;
         }
         if (oldStrategy != null)
         {
             oldStrategy.OnExit();
         }
 
-        if (strategy != null)
+        if (newStrategy != null)
         {
-            strategy.OnEnter();
+            newStrategy.OnEnter();
         }
     }
     

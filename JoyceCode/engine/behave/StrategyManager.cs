@@ -20,10 +20,10 @@ public class StrategyManager : AComponentWatcher<components.Strategy>
     protected override void _onComponentChanged(
         in DefaultEcs.Entity entity,
         in components.Strategy cOldStrategy,
-        in components.Strategy cNewStrategy)
+        in components.Strategy cNewBehavior)
     {
         var oldProvider = cOldStrategy.EntityStrategy;
-        var newProvider = cNewStrategy.EntityStrategy;
+        var newProvider = cNewBehavior.EntityStrategy;
 
         if (oldProvider == newProvider)
         {

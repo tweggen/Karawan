@@ -3,6 +3,7 @@ namespace engine.behave;
 
 public abstract class AEntityStrategyPart : AStrategyPart, IEntityStrategy
 {
+    protected Engine _engine;
     protected DefaultEcs.Entity _entity;
 
 
@@ -22,6 +23,7 @@ public abstract class AEntityStrategyPart : AStrategyPart, IEntityStrategy
 
     public virtual void OnAttach(in Engine engine0, in DefaultEcs.Entity entity)
     {
+        _engine = engine0;
         _entity = entity;
     }
 }

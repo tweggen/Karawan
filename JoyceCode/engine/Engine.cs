@@ -35,6 +35,7 @@ public class Engine
 {
     private object _lo = new();
 
+    public const int PrioEventHandler = 3;
     public const int PrioSetupEntity = 5;
     public const int PrioDefaultMainThread = 8;
     public const int PrioCleanup = Scheduler.PrioLowest;
@@ -461,6 +462,12 @@ public class Engine
     #endif
 
 
+    public void QueueEventHandler(in Action action)
+    {
+        _logicalThreadScheduler.Enqueue(action, PrioEventHandler);
+    }
+    
+
     public void QueueEntitySetupAction(
         string entityName, Action<DefaultEcs.Entity> setupAction)
     {
@@ -471,7 +478,7 @@ public class Engine
     }
 
 
-    public void QueueCleanupAction(Action action)
+    public void QueueCleanupAction(in Action action)
     {
         _logicalThreadScheduler.Enqueue(action, PrioCleanup);
     }

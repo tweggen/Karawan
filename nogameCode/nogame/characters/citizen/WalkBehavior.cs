@@ -28,9 +28,10 @@ public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
     /**
      * Verify that the animation of the character matches the behavior.
      */
-    private void _updateAnimation(DefaultEcs.Entity entity)
+    private void _behaveUpdateAnimation(in DefaultEcs.Entity entity, float dt)
     {
         if (!entity.IsAlive) return;
+        
         float speed = (Navigator as SegmentNavigator)!.Speed;
         if (speed == _previousSpeed) return;
         /*
@@ -82,8 +83,8 @@ public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
 
     public override void Behave(in Entity entity, float dt)
     {
-        base.Behave(in entity, dt);
-        _updateAnimation(entity);
+        base.Behave(entity, dt);
+        _behaveUpdateAnimation(entity, dt);
     }
 
 

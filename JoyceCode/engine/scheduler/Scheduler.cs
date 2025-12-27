@@ -14,7 +14,7 @@ public class Scheduler
 
     private WorkerQueue[] _workerQueues;
 
-    public void Enqueue(Action action, int priority)
+    public void Enqueue(in Action action, int priority)
     {
         Debug.Assert(priority > 0 && priority < NPrios);
         _workerQueues[priority].Enqueue(action);

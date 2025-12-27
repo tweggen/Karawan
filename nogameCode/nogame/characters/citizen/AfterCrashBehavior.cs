@@ -5,6 +5,7 @@ using engine;
 using engine.behave;
 using engine.joyce;
 using engine.joyce.components;
+using engine.news;
 using engine.physics;
 using static engine.Logger;
 
@@ -12,8 +13,6 @@ namespace nogame.characters.citizen;
 
 public class AfterCrashBehavior : ABehavior
 {
-    static private float LIFETIME = 10f;
-    private float t = 0;
     private bool _deathAnimationTriggered = false;
     
     public required CharacterModelDescription CharacterModelDescription;
@@ -21,17 +20,62 @@ public class AfterCrashBehavior : ABehavior
 
     public override void OnCollision(ContactEvent cev)
     {
-        var me = cev.ContactInfo.PropertiesA;
-
+        base.OnCollision(cev);
+        
         /*
-         * I collided again with something, so increase my timer. 
+         * Notify the owning strategy about the collision.
          */
-        t = builtin.tools.RandomSource.Instance.GetFloat()*2.0f + 0.5f;
+        var me = cev.ContactInfo.PropertiesA;
+        I.Get<EventQueue>().Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
     }
     
-
-    public override void Behave(in Entity entity, float dt)
+    
+    private void _behaveKeepAboveGround(in Entity entity, float dt)
     {
+        if (!entity.IsAlive) return;
+
+        /*
+         * Lift it up to the ground.
+         * Warning: Shared with WASDPhysics
+         */
+        Vector3 vTotalImpulse = new Vector3(0f, -9.81f, 0f);
+
+        float LevelUpThrust = 16f;
+        float LevelDownThrust = 16f;
+
+        lock (_engine.Simulation)
+        {
+            var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
+
+            Vector3 vTargetPos = prefTarget.Pose.Position;
+            float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
+
+            /*
+             * Clip at bottom
+             */
+            if (vTargetPos.Y < heightAtTarget)
+            {
+                vTargetPos.Y = heightAtTarget;
+                prefTarget.Pose.Position = vTargetPos;
+            }
+
+            // TXWTODO: Why do we not apply the downward impulse.
+#if false
+            float massPerson = CharacterCreator.PhysicsMass;
+            entity.Set(new engine.joyce.components.Motion(prefTarget.Velocity.Linear));
+
+            prefTarget.ApplyImpulse(vTotalImpulse * dt * massPerson, new Vector3(0f, 0f, 0f));
+#endif
+
+            prefTarget.Awake = true;
+        }
+    }
+
+
+    private void _behaveTriggerDeathAnimation(in Entity entity, float dt)
+    {
+        if (!entity.IsAlive) return;
+
         if (!_deathAnimationTriggered)
         {
             _deathAnimationTriggered = true;
@@ -44,55 +88,14 @@ public class AfterCrashBehavior : ABehavior
                 cGpuAnimationState.AnimationState?.SetAnimation(model, CharacterModelDescription.DeathAnimName, 0);
             }
         }
-        if (t < LIFETIME)
-        {
-            t += dt;
+        
+    }
+    
 
-            /*
-             * Lift it up to the ground.
-             * Warning: Shared with WASDPhysics
-             */
-            Vector3 vTotalImpulse = new Vector3(0f, -9.81f, 0f);
-
-            float LevelUpThrust = 16f;
-            float LevelDownThrust = 16f;
-
-            lock (_engine.Simulation)
-            {
-                var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
-                
-                Vector3 vTargetPos = prefTarget.Pose.Position;
-                float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
-
-                /*
-                 * Clip at bottom
-                 */
-                if (vTargetPos.Y < heightAtTarget)
-                {
-                    vTargetPos.Y = heightAtTarget;
-                    prefTarget.Pose.Position = vTargetPos;
-                }
-
-                // TXWTODO: Why do we not apply the downward impulse.
-                #if false
-                float massPerson = CharacterCreator.PhysicsMass;
-                entity.Set(new engine.joyce.components.Motion(prefTarget.Velocity.Linear));
-
-                prefTarget.ApplyImpulse(vTotalImpulse * dt * massPerson, new Vector3(0f, 0f, 0f));
-                #endif
-
-                prefTarget.Awake = true;
-            }
-        }
-        else
-        {
-            /*
-             * Remove any behavior and kill entity.
-             * TXWTODO: This should go to death strategy.
-             */
-            entity.Remove<engine.behave.components.Behavior>();
-            _engine.AddDoomedEntity(entity);
-        }
+    public override void Behave(in Entity entity, float dt)
+    {
+        _behaveTriggerDeathAnimation(entity, dt);
+        _behaveKeepAboveGround(entity, dt);        
     }
 
 

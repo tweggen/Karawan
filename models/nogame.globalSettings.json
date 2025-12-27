@@ -8,5 +8,5 @@
   "engine.physics.TraceCalls": false,
   "debug.option.forceTouchInterface": "false",
   "debug.option.mouseEnabled": "false",
-  "debug.option.autoLogin": "none"
+  "debug.option.autoLogin": "local"
 }

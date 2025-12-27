@@ -28,9 +28,9 @@ public class HierarchyWatcher : AComponentWatcher<engine.joyce.components.Parent
         }
     }
 
-    protected override void _onComponentChanged(in Entity entity, in Parent cOldStrategy, in Parent cNewStrategy)
+    protected override void _onComponentChanged(in Entity entity, in Parent cOldStrategy, in Parent cNewBehavior)
     {
-        if (cOldStrategy.Entity != cNewStrategy.Entity)
+        if (cOldStrategy.Entity != cNewBehavior.Entity)
         {
             _onComponentRemoved(entity, cOldStrategy);
         }

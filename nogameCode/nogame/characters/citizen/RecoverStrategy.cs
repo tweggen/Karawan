@@ -29,8 +29,8 @@ public class RecoverStrategy : AEntityStrategyPart
     private void _onTimeout(object state)
     {
         if (_timerGeneration != (int)state) return;
-        
-        Controller.GiveUpStrategy(this);
+        // TXWTODO: Frankly, I do not want to think about threading in strategies. Whichever way it may work.
+        _engine.QueueEventHandler(() => Controller.GiveUpStrategy(this));
     }
     
     
@@ -46,18 +46,27 @@ public class RecoverStrategy : AEntityStrategyPart
         }
     }
 
+    #region IEntityStrategy
     
     public override void OnDetach(in DefaultEcs.Entity entity)
     {
         _afterCrashBehavior = null;
+        base.OnDetach(entity);
     }
     
     
     public override void OnAttach(in engine.Engine engine0, in DefaultEcs.Entity entity0)
     {
-        _afterCrashBehavior = new AfterCrashBehavior() { CharacterModelDescription = CharacterModelDescription };
+        base.OnAttach(engine0, entity0);
+        _afterCrashBehavior = new AfterCrashBehavior()
+        {
+            CharacterModelDescription = CharacterModelDescription
+        };
     }
     
+    #endregion
+    
+    #region IStrategyPart
     
     /**
      * Remove crash behavior, clean up.
@@ -93,4 +102,6 @@ public class RecoverStrategy : AEntityStrategyPart
 
         _entity.Set(new engine.behave.components.Behavior(_afterCrashBehavior));
     }
+    
+    #endregion
 }
