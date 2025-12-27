@@ -8,12 +8,63 @@ namespace engine.behave.strategies;
 /**
  * Implement a strategy where an external owner can call 
  */
-public abstract class AOneOfStrategy : IStrategyController, IStrategyPart
+public abstract class AOneOfStrategy : IStrategyController, IStrategyPart, IEntityStrategy
 {
+    protected DefaultEcs.Entity _entity;
+    
     public SortedDictionary<string, IStrategyPart> Strategies = new SortedDictionary<string, IStrategyPart>();
     
     private IStrategyPart? _activeStrategy = null;
 
+    #region IEntityStrategy
+    
+    /**
+     * If we are used as entity strategy, and some of our children are entity
+     * strategies, also sync them.
+     */
+    public virtual void Sync(in Entity entity)
+    {
+        foreach (var strategy in Strategies.Values)
+        {
+            IEntityStrategy? entityStrategy = strategy as IEntityStrategy;
+            if (entityStrategy != null) entityStrategy.Sync(entity);
+        }
+    }
+
+
+    /**
+     * If we are used as entity strategy, and some of our children are entity
+     * strategies, also dettach them.
+     */
+    public virtual void OnDetach(in Entity entity)
+    {
+        foreach (var strategy in Strategies.Values)
+        {
+            IEntityStrategy? entityStrategy = strategy as IEntityStrategy;
+            if (entityStrategy != null) entityStrategy.OnDetach(entity);
+        }
+
+        _entity = default;
+    }
+
+
+    /**
+     * If we are used as entity strategy, and some of our children are entity
+     * strategies, also do attach them.
+     */
+    public virtual void OnAttach(in Engine engine0, in Entity entity)
+    {
+        _entity = entity;
+        
+        foreach (var strategy in Strategies.Values)
+        {
+            IEntityStrategy? entityStrategy = strategy as IEntityStrategy;
+            if (entityStrategy != null) entityStrategy.OnAttach(engine0, entity);
+        }
+    }
+    
+    #endregion
+    
     #region IStrategyController
     public IStrategyPart GetActiveStrategy()
     {
@@ -30,7 +81,8 @@ public abstract class AOneOfStrategy : IStrategyController, IStrategyPart
     public abstract string GetStartStrategy();
     #endregion
 
-    public void TriggerStrategy(string strStrategy)
+    
+    public virtual void TriggerStrategy(string strStrategy)
     {
         if (!Strategies.TryGetValue(strStrategy, out var strategy))
         {

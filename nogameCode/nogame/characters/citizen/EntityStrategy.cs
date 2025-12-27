@@ -17,7 +17,7 @@ namespace nogame.characters.citizen;
  *
  * Creates and owns the citizen's behavior.
  */
-public class EntityStrategy : AOneOfStrategy, IEntityStrategy
+public class EntityStrategy : AOneOfStrategy
 {
     private readonly RandomSource _rnd;
     private readonly ClusterDesc _clusterDesc;
@@ -27,29 +27,54 @@ public class EntityStrategy : AOneOfStrategy, IEntityStrategy
     private readonly Quarter _quarter;
     private readonly QuarterDelim _delim;
     private readonly float _relativePos;
-
-    /**
-     * This way we communiate crash events.
-     */
-    static public string CrashEventPath(in DefaultEcs.Entity e) =>
+    
+    static public string CrashEventPath(DefaultEcs.Entity e) =>
         $"@{e.ToString()}/nogame.characters.citizen.onCrash";
-
-
-    #region IEntityStrategy
-    public void Sync(in Entity entity)
+    
+    
+    /**
+     * If strategy walk gives up, we switch to recover.
+     */
+    public override void GiveUpStrategy(IStrategyPart strategy)
     {
+        if (strategy == Strategies["walk"])
+        {
+            TriggerStrategy("recover");
+        }
+        else if (strategy == Strategies["recover"])
+        {
+            TriggerStrategy("walk");
+        }
+    }
+
+    
+    /**
+     * Any character begins to walk.
+     */
+    public override string GetStartStrategy()
+    {
+        return "walk";
+    }
+
+    
+    #region IEntityStrategy
+    public override void Sync(in Entity entity)
+    {
+        base.Sync(entity);
         _behavior.Sync(entity);
     }
 
 
-    public void OnDetach(in Entity entity)
+    public override void OnDetach(in Entity entity)
     {
+        base.OnDetach(entity);
         entity.Remove<engine.behave.components.Behavior>();
     }
 
 
-    public void OnAttach(in Engine engine0, in Entity entity)
+    public override void OnAttach(in Engine engine0, in Entity entity)
     {
+        base.OnAttach(in engine0, in entity);
         entity.Set(new engine.behave.components.Behavior(_behavior));
     }
     #endregion
@@ -144,26 +169,5 @@ public class EntityStrategy : AOneOfStrategy, IEntityStrategy
          */
         entityStrategy = new(rnd, clusterDesc, cmd, quarter, delim, relativePos);
         return true;
-    }
-
-    
-    /**
-     * If strategy walk gives up, we switch to recover.
-     */
-    public override void GiveUpStrategy(IStrategyPart strategy)
-    {
-        if (strategy == Strategies["walk"])
-        {
-            TriggerStrategy("recover");
-        }
-    }
-
-    
-    /**
-     * Any character begins to walk.
-     */
-    public override string GetStartStrategy()
-    {
-        return "walk";
     }
 }

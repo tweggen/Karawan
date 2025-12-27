@@ -59,6 +59,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector4JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AAssetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\AEntityStrategyPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\AStrategyPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Strategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ICompositeStrategy.cs" />
