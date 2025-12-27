@@ -59,14 +59,16 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector4JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AAssetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\AStrategyPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Strategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ICompositeStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\IEntityStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\IStatePart.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\IStrategyController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\IStrategyPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\JsonStatePart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\StateBehavior.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\strategies\OneOfStrategy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\strategies\AOneOfStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\StrategyManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\LoaderSubscription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Mix.cs" />

@@ -8,20 +8,27 @@ namespace engine.behave.strategies;
 /**
  * Implement a strategy where an external owner can call 
  */
-public class OneOfStrategy : ICompositeStrategy
+public abstract class AOneOfStrategy : IStrategyController, IStrategyPart
 {
     public SortedDictionary<string, IStrategyPart> Strategies = new SortedDictionary<string, IStrategyPart>();
-    public string StartStrategy;
     
     private IStrategyPart? _activeStrategy = null;
-    
-    
+
+    #region IStrategyController
     public IStrategyPart GetActiveStrategy()
     {
-        ErrorThrow<NotImplementedException>("Not yet implemented.");
-        throw new NotImplementedException();
+        return _activeStrategy;
     }
 
+    public abstract void GiveUpStrategy(IStrategyPart strategy);
+    #endregion
+
+    #region My abstract addition
+    /**
+     * Specific child classes would need to implement this.
+     */
+    public abstract string GetStartStrategy();
+    #endregion
 
     public void TriggerStrategy(string strStrategy)
     {
@@ -49,6 +56,18 @@ public class OneOfStrategy : ICompositeStrategy
     }
     
     
+    #region IStrategyPart
+
+    /**
+     * We do not have a controller attached.
+     */
+    public IStrategyController Controller
+    {
+        get => throw new InvalidOperationException();
+        init { throw new InvalidOperationException(); }
+    }
+
+
     public void OnExit()
     {
         IStrategyPart? oldStrategy;
@@ -61,24 +80,26 @@ public class OneOfStrategy : ICompositeStrategy
 
         oldStrategy?.OnExit();
     }
-    
-    
+
+
     public void OnEnter()
     {
         IStrategyPart startStrategy;
 
         /* lock */
         {
-            if (Strategies.TryGetValue(StartStrategy, out startStrategy))
+            var strStartStrategy = GetStartStrategy();
+            if (Strategies.TryGetValue(strStartStrategy, out startStrategy))
             {
                 _activeStrategy = startStrategy;
             }
             else
             {
-                ErrorThrow<ArgumentException>($"Strategy '{StartStrategy}' does not exist.");
+                ErrorThrow<ArgumentException>($"Strategy '{strStartStrategy}' does not exist.");
             }
         }
         
         startStrategy.OnEnter();
     }
+    #endregion
 }

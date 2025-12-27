@@ -5,6 +5,7 @@ using DefaultEcs;
 using engine;
 using engine.behave;
 using engine.behave.strategies;
+using engine.news;
 using engine.streets;
 using engine.world;
 
@@ -16,38 +17,44 @@ namespace nogame.characters.citizen;
  *
  * Creates and owns the citizen's behavior.
  */
-public class EntityStrategy : IEntityStrategy
+public class EntityStrategy : AOneOfStrategy, IEntityStrategy
 {
-    private OneOfStrategy _strategyController = new();
-
     private readonly RandomSource _rnd;
     private readonly ClusterDesc _clusterDesc;
     private readonly CharacterModelDescription _cmd;
-        
+
     private Behavior _behavior;
     private readonly Quarter _quarter;
     private readonly QuarterDelim _delim;
     private readonly float _relativePos;
 
-    
+    /**
+     * This way we communiate crash events.
+     */
+    static public string CrashEventPath(in DefaultEcs.Entity e) =>
+        $"@{e.ToString()}/nogame.characters.citizen.onCrash";
+
+
+    #region IEntityStrategy
     public void Sync(in Entity entity)
     {
         _behavior.Sync(entity);
     }
 
-    
+
     public void OnDetach(in Entity entity)
     {
         entity.Remove<engine.behave.components.Behavior>();
     }
 
-    
+
     public void OnAttach(in Engine engine0, in Entity entity)
     {
         entity.Set(new engine.behave.components.Behavior(_behavior));
     }
+    #endregion
 
-    
+
     private static Behavior? _createDefaultBehavior(
         RandomSource rnd,
         ClusterDesc clusterDesc,
@@ -100,22 +107,19 @@ public class EntityStrategy : IEntityStrategy
         _delim = delim;
         _relativePos = relativePos;
 
-        
-        _strategyController = new()
+
+        Strategies = new()
         {
-            Strategies = new()
-            {
-                { "walk", new WalkStrategy() },
-                { "recover", new RecoverStrategy() }
-            }
+            { "walk", new WalkStrategy() },
+            { "recover", new RecoverStrategy() }
         };
 
-        
+
         _behavior = _createDefaultBehavior(rnd, clusterDesc, cmd,
             quarter, delim, relativePos);
     }
 
-    
+
     public static bool TryCreate(
         RandomSource rnd,
         ClusterDesc clusterDesc,
@@ -140,5 +144,26 @@ public class EntityStrategy : IEntityStrategy
          */
         entityStrategy = new(rnd, clusterDesc, cmd, quarter, delim, relativePos);
         return true;
+    }
+
+    
+    /**
+     * If strategy walk gives up, we switch to recover.
+     */
+    public override void GiveUpStrategy(IStrategyPart strategy)
+    {
+        if (strategy == Strategies["walk"])
+        {
+            TriggerStrategy("recover");
+        }
+    }
+
+    
+    /**
+     * Any character begins to walk.
+     */
+    public override string GetStartStrategy()
+    {
+        return "walk";
     }
 }
