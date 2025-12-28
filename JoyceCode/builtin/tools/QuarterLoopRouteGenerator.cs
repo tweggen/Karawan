@@ -12,8 +12,8 @@ namespace builtin.tools;
  */
 public class QuarterLoopRouteGenerator
 {
-    public ClusterDesc ClusterDesc { get; set; }
-    public Quarter Quarter { get; set; }
+    public required ClusterDesc ClusterDesc { get; set; }
+    public required Quarter Quarter { get; set; }
 
     
     public SegmentRoute GenerateRoute()
@@ -22,6 +22,11 @@ public class QuarterLoopRouteGenerator
         {
             LoopSegments = true
         };
+
+        if (null == Quarter)
+        {
+            int a = 1;
+        }
         
         /*
          * Construct the route from navigation segments.

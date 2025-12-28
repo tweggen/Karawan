@@ -24,12 +24,13 @@ public class Placer
         RandomSource _rnd, 
         in PlacementContext? pc, 
         in PlacementDescription plad, 
-        out PositionDescription pod)
+        out PositionDescription out_pod)
     {
         bool lookupCluster = false;
         bool lookupQuarter = false;
         bool lookupStreetPoint = false;
-        pod = new();
+        out_pod = default;
+        PositionDescription pod = new();
         
         /*
         * Look what we need to place it.
@@ -271,6 +272,8 @@ public class Placer
         
         pod.Position = v3ReferenceAccu;
 
+        out_pod = pod;
+        
         return true;
     }
 }

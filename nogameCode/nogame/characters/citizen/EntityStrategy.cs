@@ -112,7 +112,7 @@ public class EntityStrategy : AOneOfStrategy
         _cmd = cmd;
         _startPositionDescription = pod;
 
-        _walkNavigator = _createWalkNavigator(rnd, cmd, pod);
+        _walkNavigator = _createWalkNavigator(_rnd, _cmd, _startPositionDescription);
 
         
         Strategies = new()
