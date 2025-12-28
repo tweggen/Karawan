@@ -264,7 +264,13 @@ public class HoverModule : AModule, IInputPart
                         | CollisionProperties.CollisionFlags.IsDetectable
                         | CollisionProperties.CollisionFlags.TriggersCallbacks,
                     Name = PhysicsName,
-                    LayerMask = 0x00ff,
+                    /*
+                     * Interact with
+                     * - player (1) (why?)
+                     * - other characters interacting with player (4)
+                     * - environment (8)
+                     */
+                    LayerMask = 0x000D ,
                 };
             engine.physics.Object po;
             lock (_engine.Simulation)

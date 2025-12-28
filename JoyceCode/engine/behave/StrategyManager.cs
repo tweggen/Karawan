@@ -12,6 +12,9 @@ public class StrategyManager : AComponentWatcher<components.Strategy>
         var oldProvider = cOldStrategy.EntityStrategy;
         if (oldProvider != null)
         {
+            IStrategyPart? sp = oldProvider as IStrategyPart;
+            if (sp != null) sp.OnExit();
+
             oldProvider.OnDetach(entity);
         }
     }
@@ -40,6 +43,9 @@ public class StrategyManager : AComponentWatcher<components.Strategy>
         {
             if (null != oldProvider)
             {
+                IStrategyPart? sp = newProvider as IStrategyPart;
+                if (sp != null) sp.OnExit();
+
                 oldProvider.OnDetach(entity);
             }
 
@@ -50,6 +56,8 @@ public class StrategyManager : AComponentWatcher<components.Strategy>
                 {
                     newProvider.Sync(entity);
                 }
+                IStrategyPart? sp = newProvider as IStrategyPart;
+                if (sp != null) sp.OnEnter();
             }
         }
     }
@@ -63,6 +71,8 @@ public class StrategyManager : AComponentWatcher<components.Strategy>
         if (newProvider != null)
         {
             newProvider.OnAttach(_engine, entity);
+            IStrategyPart? sp = newProvider as IStrategyPart;
+            if (sp != null) sp.OnEnter();
         }
     }
 }
