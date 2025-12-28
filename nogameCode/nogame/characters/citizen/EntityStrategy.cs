@@ -143,7 +143,7 @@ public class EntityStrategy : AOneOfStrategy
         
         bool isPlaced = I.Get<Placer>().TryPlacing(rnd, pc, plad, out pod);
         if (!isPlaced) return;
-        pod.RelativePos = rnd.GetFloat();
+        pod.QuarterDelimPos = rnd.GetFloat();
     }
     
 

@@ -41,7 +41,7 @@ public class SegmentNavigator : INavigator
     
     private readonly List<SegmentEnd> _listSegments;
     private readonly SegmentRoute _segmentRoute;
-    public SegmentRoute SegmentRoute
+    public required SegmentRoute SegmentRoute
     {
         get => _segmentRoute;
         init
@@ -215,7 +215,7 @@ public class SegmentNavigator : INavigator
         if (null == _a)
         {
             _setStartSegment();
-            _prepareSegment(_position.RelativePos);
+            _prepareSegment(_position.QuarterDelimPos);
         }
             
         while (totalTogo > 0.001)
@@ -243,6 +243,10 @@ public class SegmentNavigator : INavigator
                 _prepareSegment();
             }
         }
+        
+        /*
+         * Save for navigation.
+         */
 
         float relativePos = _absolutePos / _distance;
         _vPosition = _a.Position + (_b.Position - _a.Position) * relativePos;
@@ -251,6 +255,39 @@ public class SegmentNavigator : INavigator
                 Vector3.Zero, 
                 _vuForward, 
                 new Vector3(0f, 1f, 0f)));
+        
+        /*
+         * Update semantic position
+         */
+        lock (_lo)
+        {
+            /*
+             * Fragment, cluster and quarter stay the same.
+             */
+            
+            _position.QuarterDelimIndex = (_idxNextSegment+_listSegments.Count-2) % _listSegments.Count;
+            _position.QuarterDelimPos = relativePos;
+
+            if (_position.Quarter != null)
+            {
+                _position.QuarterDelim = _position.Quarter.GetDelims()[_position.QuarterDelimIndex];
+                _position.Stroke = _position.QuarterDelim.Stroke;
+            }
+
+            if (_position.StreetPoint != null)
+            {
+                _position.StreetPointId = _position.StreetPoint.Id;
+                _position.StreetPoint = _position.QuarterDelim.StreetPoint;
+            }
+            
+            _position.Position = _vPosition;
+            _position.Orientation = _qOrientation;
+            
+            /*
+             * Invalidate ro copy.
+             */
+            _roPosition = null;
+        }
     }
 
 

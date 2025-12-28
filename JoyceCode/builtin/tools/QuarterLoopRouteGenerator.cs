@@ -50,10 +50,17 @@ public class QuarterLoopRouteGenerator
             var pod = new PositionDescription()
             {
                 ClusterDesc = ClusterDesc,
+                
                 Quarter = Quarter,
-                QuarterDelim = dlThis,
+                
                 QuarterDelimIndex = i,
                 QuarterDelimPos = 0f,
+                QuarterDelim = dlThis,
+
+                StreetPoint = dlThis.StreetPoint,
+                
+                Stroke = dlThis.Stroke,
+                
                 Position = v3This,
                 Orientation = Quaternion.CreateFromRotationMatrix(
                     Matrix4x4Extensions.CreateFromUnitAxis(vu3Right, vu3Up, vu3Forward)),
