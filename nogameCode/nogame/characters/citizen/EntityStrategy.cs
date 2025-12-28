@@ -26,7 +26,7 @@ public class EntityStrategy : AOneOfStrategy
     private readonly builtin.tools.SegmentNavigator _walkNavigator;
 
     private readonly PositionDescription _startPositionDescription;
-    
+    private PositionDescription _lastPositionDescription;
     
     /**
      * The path used by sub-ordinate behaviors to publish
@@ -43,11 +43,16 @@ public class EntityStrategy : AOneOfStrategy
     {
         if (strategy == Strategies["walk"])
         {
+            /*
+             * Read back position for next turn.
+             */
+            _lastPositionDescription = _walkNavigator.Position;
             TriggerStrategy("recover");
         }
         else if (strategy == Strategies["recover"])
         {
             TriggerStrategy("walk");
+            _walkNavigator.Position = _lastPositionDescription;
         }
     }
 

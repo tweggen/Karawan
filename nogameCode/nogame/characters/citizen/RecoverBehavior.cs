@@ -97,7 +97,7 @@ public class RecoverBehavior : ABehavior
                 ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
                 ref var model = ref cFromModel.Model;
 
-                cGpuAnimationState.AnimationState?.SetAnimation(model, CharacterModelDescription.DeathAnimName, 0);
+                cGpuAnimationState.AnimationState?.SetAnimation(model, CharacterModelDescription.DeathAnimName, 0, true);
             }
         }
         
