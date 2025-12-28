@@ -29,7 +29,7 @@ public class Placer
         bool lookupCluster = false;
         bool lookupQuarter = false;
         bool lookupStreetPoint = false;
-        pod = null;
+        pod = new();
         
         /*
         * Look what we need to place it.
@@ -238,11 +238,14 @@ public class Placer
                 int nDelims = quarterDelims.Count;
                 int idxDelim = (int)(_rnd.GetFloat() * nDelims);
                 var delim = quarterDelims[idxDelim];
+                sp = delim.StreetPoint;
 
                 pod.QuarterDelimIndex = idxDelim;
                 pod.QuarterDelim = delim;
                 pod.QuarterDelimPos = 0f;
             }
+
+            if (null == sp) return false;
 
             pod.StreetPoint = sp;
             pod.StreetPointId = sp.Id;
