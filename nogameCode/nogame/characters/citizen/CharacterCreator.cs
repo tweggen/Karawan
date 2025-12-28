@@ -42,38 +42,6 @@ public class CharacterCreator
     private static bool _trace = false;
     
     
-    static public void ChooseQuarterDelimPointPos(
-        builtin.tools.RandomSource rnd, Fragment worldFragment, ClusterDesc clusterDesc,
-        out Quarter quarter, out QuarterDelim delim, out float relativePos)
-    {
-        quarter = null;
-        delim = null;
-        relativePos = 0f;
-        
-        PlacementContext pc = new()
-        {
-            CurrentFragment = worldFragment,
-            CurrentCluster = clusterDesc
-        };
-
-        PlacementDescription plad = new()
-        {
-            ReferenceObject = PlacementDescription.Reference.StreetPoint,
-            WhichFragment = PlacementDescription.FragmentSelection.CurrentFragment,
-            WhichCluster = PlacementDescription.ClusterSelection.CurrentCluster,
-            WhichQuarter = PlacementDescription.QuarterSelection.AnyQuarter
-        };
-        
-        bool isPlaced = I.Get<Placer>().TryPlacing(rnd, pc, plad, out var placementResult);
-        
-        if (!isPlaced) return;
-        
-        quarter = placementResult.Quarter;
-        delim = placementResult.QuarterDelim;
-        relativePos = rnd.GetFloat();
-    }
-
-
     public static async Task<OneOf<None, Action<DefaultEcs.Entity>>> GenerateRandomCharacter(
         builtin.tools.RandomSource rnd,
         ClusterDesc clusterDesc,

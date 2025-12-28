@@ -22,15 +22,11 @@ public class EntityStrategy : AOneOfStrategy
     private readonly RandomSource _rnd;
     private readonly ClusterDesc _clusterDesc;
     private readonly CharacterModelDescription _cmd;
-    private readonly builtin.tools.SegmentNavigator _walkNavigator; 
     
-    /*
-     * These are not used along the run but might serve as an example
-     * to store a state common to all sub-strategies.
-     */
-    private readonly Quarter _quarter;
-    private readonly QuarterDelim _delim;
-    private readonly float _relativePos;
+    private readonly builtin.tools.SegmentNavigator _walkNavigator;
+
+    private readonly PositionDescription _startPositionDescription;
+    
     
     /**
      * The path used by sub-ordinate behaviors to publish
@@ -74,16 +70,16 @@ public class EntityStrategy : AOneOfStrategy
 
     private static SegmentNavigator? _createWalkNavigator(
         RandomSource rnd,
-        ClusterDesc clusterDesc,
         CharacterModelDescription cmd,
-        Quarter quarter, QuarterDelim delim, float relativePos)
+        PositionDescription startPositionDescription)
     {
         /*
          * Create the route. The route always is around a quarter.
          */
-        var segmentRoute = new QuarterRouteGenerator()
+        var segmentRoute = new QuarterLoopRouteGenerator()
         {
-            ClusterDesc = clusterDesc, Quarter = quarter, QuarterDelim = delim, RelativePos = relativePos
+            ClusterDesc = startPositionDescription.ClusterDesc, 
+            Quarter = startPositionDescription.Quarter
         }.GenerateRoute();
 
         /*
@@ -98,6 +94,7 @@ public class EntityStrategy : AOneOfStrategy
         SegmentNavigator navigator = new SegmentNavigator()
         {
             SegmentRoute = segmentRoute,
+            Position = startPositionDescription,
             Speed = speed
         };
         
@@ -108,18 +105,14 @@ public class EntityStrategy : AOneOfStrategy
     private EntityStrategy(RandomSource rnd,
         ClusterDesc clusterDesc,
         CharacterModelDescription cmd,
-        Quarter quarter, QuarterDelim delim, float relativePos)
+        PositionDescription pod)
     {
         _rnd = rnd;
         _clusterDesc = clusterDesc;
         _cmd = cmd;
-        _quarter = quarter;
-        _delim = delim;
-        _relativePos = relativePos;
-        
+        _startPositionDescription = pod;
 
-        _walkNavigator = _createWalkNavigator(rnd, clusterDesc, cmd,
-            quarter, delim, relativePos);
+        _walkNavigator = _createWalkNavigator(rnd, cmd, pod);
 
         
         Strategies = new()
@@ -130,9 +123,34 @@ public class EntityStrategy : AOneOfStrategy
     }
 
 
+    static public void _chooseStartPosition(
+        builtin.tools.RandomSource rnd, Fragment worldFragment, ClusterDesc clusterDesc,
+        out PositionDescription pod)
+    {
+        PlacementContext pc = new()
+        {
+            CurrentFragment = worldFragment,
+            CurrentCluster = clusterDesc
+        };
+
+        PlacementDescription plad = new()
+        {
+            ReferenceObject = PlacementDescription.Reference.StreetPoint,
+            WhichFragment = PlacementDescription.FragmentSelection.CurrentFragment,
+            WhichCluster = PlacementDescription.ClusterSelection.CurrentCluster,
+            WhichQuarter = PlacementDescription.QuarterSelection.AnyQuarter
+        };
+        
+        bool isPlaced = I.Get<Placer>().TryPlacing(rnd, pc, plad, out pod);
+        if (!isPlaced) return;
+        pod.RelativePos = rnd.GetFloat();
+    }
+    
+
+    
     /**
-     * Factory method to try to establish this strategy.
-     */
+      * Factory method to try to establish this strategy.
+      */
     public static bool TryCreate(
         RandomSource rnd,
         ClusterDesc clusterDesc,
@@ -143,9 +161,8 @@ public class EntityStrategy : AOneOfStrategy
         /*
          * Try to come up with an entity strategy for an entity at that location.
          */
-        CharacterCreator.ChooseQuarterDelimPointPos(rnd, worldFragment, clusterDesc,
-            out var quarter, out var delim, out var relativePos);
-        if (quarter == null)
+        _chooseStartPosition(rnd, worldFragment, clusterDesc, out var pod);
+        if (pod == null)
         {
             entityStrategy = null;
             return false;
@@ -155,7 +172,7 @@ public class EntityStrategy : AOneOfStrategy
          * Pass all that to the strategy ctor.
          * TXWTODO: Remove all the fuzz from the strategy ctor and factor into a state.
          */
-        entityStrategy = new(rnd, clusterDesc, cmd, quarter, delim, relativePos);
+        entityStrategy = new(rnd, clusterDesc, cmd, pod);
         return true;
     }
 }

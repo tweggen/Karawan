@@ -23,6 +23,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\ConverterFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\ConverterRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\extensions\EntityTypedCalls.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\extensions\Matrix4x4Extensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\extensions\MatrixInversion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\extensions\Vector4Extensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\InterfacePointerConverter.cs" />
@@ -53,7 +54,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Labels.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Rule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Value.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\QuarterRouteGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\QuarterLoopRouteGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SegmentEnd.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SegmentRoute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector2JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector4JsonConverter.cs" />

@@ -1,21 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using engine;
 using engine.behave;
+using builtin.extensions;
 using static engine.Logger;
 
 namespace builtin.tools;
 
-public class SegmentEnd
-{
-    public Vector3 Position;
-    public Vector3 Up;
-    public Vector3 Right;
-}
 
 /**
  * Implement a navigator for a run between two points.
@@ -27,6 +19,8 @@ public class SegmentEnd
  */
 public class SegmentNavigator : INavigator
 {
+    private object _lo = new();
+    
     private float _absolutePos = 0f;
 
     /*
@@ -59,6 +53,40 @@ public class SegmentNavigator : INavigator
             
             _segmentRoute = value;
             _listSegments = value.Segments;
+        }
+    }
+
+    private PositionDescription _roPosition = null;
+    private PositionDescription _position = null;
+
+    /**
+     * The current position of the navigator.
+     * If not set up at startup time, the navigation starts at the native start of the route.
+     */
+    public PositionDescription? Position
+    {
+        get
+        {
+            lock (_lo)
+            {
+                if (null == _roPosition)
+                {
+                    if (null != _position)
+                    {
+                        _roPosition = new PositionDescription(_position);
+                    }
+                }
+
+                return _roPosition;
+            }
+        }
+        set
+        {
+            lock (_lo)
+            {
+                _position = new PositionDescription(value);
+                _roPosition = null;
+            }
         }
     }
     
@@ -98,17 +126,71 @@ public class SegmentNavigator : INavigator
         _vuForward = _vForward / _distance;
         _absolutePos = relativePosition * _distance;
     }
+
+
+
+    private void _setABFromIndex(int idx, out SegmentEnd a, out SegmentEnd b, out int idxNextSegment)
+    {
+        int l = _listSegments.Count;
+        a = _listSegments[(idx+0) % l];
+        b = _listSegments[(idx+1) % l];
+        idxNextSegment = (idx+2) % l;
+    }
+
+
+    private PositionDescription _defaultPosition()
+    {
+        int defaultStartIndex = 0;
+        float defaultStartRelative = 0f;
+
+        var seg0 = _listSegments[defaultStartIndex];
+
+        if (seg0.PositionDescription != null)
+        {
+            return new PositionDescription(seg0.PositionDescription);
+        }
+        else
+        {
+            /*
+             * Unfortunately, this lacks any semantic information.
+             */
+            return new PositionDescription()
+            {
+                Position = seg0.Position,
+                Orientation = Quaternion.CreateFromRotationMatrix(
+                    Matrix4x4Extensions.CreateFromUnitAxis(
+                        seg0.Right, seg0.Up, Vector3.Cross(seg0.Right, seg0.Up)))
+            };
+        }
+    }
     
 
     /**
-     * Setup the initial segment.
+     * Make sure we have a position record.
+     * If we do not have any, create the default from the segment list.
+     */
+    private void _ensurePosition()
+    {
+        lock (_lo)
+        {
+            if (null == _position)
+            {
+                _position = _defaultPosition();
+                _roPosition = null;
+            }
+        }
+    }
+    
+
+    /**
+     * Setup the initial segment. This is called once to initialize the route.
+     * If no start position is known, it is loaded from Position.
+     * If Position is not defined, it is reset to the native starting point. 
      */
     private void _setStartSegment()
     {
-        int l = _listSegments.Count;
-        _a = _listSegments[(_segmentRoute.StartIndex+0) % l];
-        _b = _listSegments[(_segmentRoute.StartIndex+1) % l];
-        _idxNextSegment = (_segmentRoute.StartIndex+2) % l;
+        _ensurePosition();
+        _setABFromIndex(_position.QuarterDelimIndex, out _a, out _b, out _idxNextSegment);
     }
 
 
@@ -133,7 +215,7 @@ public class SegmentNavigator : INavigator
         if (null == _a)
         {
             _setStartSegment();
-            _prepareSegment(_segmentRoute.StartRelative);
+            _prepareSegment(_position.RelativePos);
         }
             
         while (totalTogo > 0.001)

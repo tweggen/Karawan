@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using System.Text.Json.Serialization;
 
@@ -28,4 +29,30 @@ public class PositionDescription
     
     [JsonInclude] public Vector3 Position;
     [JsonInclude] public Quaternion Orientation;
+
+
+    public PositionDescription()
+    {
+    }
+
+    public PositionDescription(PositionDescription other)
+    {
+        FragmentId = other.FragmentId;
+        Fragment = other.Fragment;
+        ClusterId = other.ClusterId;
+        ClusterName = other.ClusterName;
+        ClusterDesc = other.ClusterDesc;
+        QuarterName = other.QuarterName;
+        Quarter = other.Quarter;
+        StreetPointId = other.StreetPointId;
+        StreetPoint = other.StreetPoint;
+        QuarterDelim = other.QuarterDelim;
+        StrokeSid = other.StrokeSid;
+        Stroke = other.Stroke;
+        RelativePos = other.RelativePos;
+        QuarterDelimIndex = other.QuarterDelimIndex;
+        QuarterDelimPos = other.QuarterDelimPos;
+        Position = other.Position;
+        Orientation = other.Orientation;
+    }
 }

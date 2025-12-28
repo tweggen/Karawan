@@ -1,19 +1,28 @@
 using System.Numerics;
+using builtin.extensions;
+using engine;
 using engine.streets;
 using engine.world;
 
 namespace builtin.tools;
 
-public class QuarterRouteGenerator
+
+/**
+ * Generate a segment route for any given cluster/quarter combination..
+ */
+public class QuarterLoopRouteGenerator
 {
     public ClusterDesc ClusterDesc { get; set; }
     public Quarter Quarter { get; set; }
-    public QuarterDelim QuarterDelim { get; set; }
-    public float RelativePos { get; set; }
 
+    
     public SegmentRoute GenerateRoute()
     {
-        var sr = new SegmentRoute();
+        var sr = new SegmentRoute()
+        {
+            LoopSegments = true
+        };
+        
         /*
          * Construct the route from navigation segments.
          */
@@ -25,11 +34,6 @@ public class QuarterRouteGenerator
             var dlThis = delims[i];
             var dlNext = delims[(i + 1) % l];
 
-            if (QuarterDelim == dlThis)
-            {
-                sr.StartIndex = i;
-            }
-
             float h = ClusterDesc.AverageHeight + engine.world.MetaGen.ClusterStreetHeight +
                       engine.world.MetaGen.QuarterSidewalkOffset;
             var v3This = new Vector3(dlThis.StartPoint.X, h, dlThis.StartPoint.Y);
@@ -38,17 +42,28 @@ public class QuarterRouteGenerator
             var vu3Up = Vector3.UnitY;
             var vu3Right = Vector3.Cross(vu3Forward, vu3Up);
             v3This += -1.5f * vu3Right;
-
+            var pod = new PositionDescription()
+            {
+                ClusterDesc = ClusterDesc,
+                Quarter = Quarter,
+                QuarterDelim = dlThis,
+                QuarterDelimIndex = i,
+                QuarterDelimPos = 0f,
+                Position = v3This,
+                Orientation = Quaternion.CreateFromRotationMatrix(
+                    Matrix4x4Extensions.CreateFromUnitAxis(vu3Right, vu3Up, vu3Forward)),
+            };
+            
             sr.Segments.Add(
                 new()
                 {
                     Position = v3This + ClusterDesc.Pos,
                     Up = vu3Up,
-                    Right = vu3Right
+                    Right = vu3Right,
+                    PositionDescription = pod
                 });
         }
 
-        sr.StartRelative = RelativePos;
         return sr;
     }
 }
