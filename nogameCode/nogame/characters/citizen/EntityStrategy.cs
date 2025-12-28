@@ -83,7 +83,7 @@ public class EntityStrategy : AOneOfStrategy
          */
         var segmentRoute = new QuarterRouteGenerator()
         {
-            ClusterDesc = clusterDesc, Quarter = quarter, QuarterDelim = delim
+            ClusterDesc = clusterDesc, Quarter = quarter, QuarterDelim = delim, RelativePos = relativePos
         }.GenerateRoute();
 
         /*

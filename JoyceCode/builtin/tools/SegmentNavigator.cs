@@ -101,7 +101,7 @@ public class SegmentNavigator : INavigator
     
 
     /**
-     * Set rup the initial segment.
+     * Setup the initial segment.
      */
     private void _setStartSegment()
     {

@@ -9,7 +9,8 @@ public class QuarterRouteGenerator
     public ClusterDesc ClusterDesc { get; set; }
     public Quarter Quarter { get; set; }
     public QuarterDelim QuarterDelim { get; set; }
-    
+    public float RelativePos { get; set; }
+
     public SegmentRoute GenerateRoute()
     {
         var sr = new SegmentRoute();
@@ -47,6 +48,7 @@ public class QuarterRouteGenerator
                 });
         }
 
+        sr.StartRelative = RelativePos;
         return sr;
     }
 }
