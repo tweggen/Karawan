@@ -11,12 +11,13 @@ using static engine.Logger;
 
 namespace nogame.characters.citizen;
 
-public class AfterCrashBehavior : ABehavior
+public class RecoverBehavior : ABehavior
 {
     private bool _deathAnimationTriggered = false;
     
     public required CharacterModelDescription CharacterModelDescription;
-    
+
+    private bool _makeDynamic = false;
 
     public override void OnCollision(ContactEvent cev)
     {
@@ -75,7 +76,10 @@ public class AfterCrashBehavior : ABehavior
             prefTarget.ApplyImpulse(vTotalImpulse * dt * massPerson, new Vector3(0f, 0f, 0f));
 #endif
 
-            prefTarget.Awake = true;
+            if (_makeDynamic)
+            {
+                prefTarget.Awake = true;
+            }
         }
     }
 
@@ -112,9 +116,15 @@ public class AfterCrashBehavior : ABehavior
         base.OnAttach(engine0, entity0);
         
         /*
-         * Make me a dynamic object to respond to the collision.
+         * Do not make the thing dynamic, just let it fall.
          */
-        ref engine.physics.components.Body cCitizenBody = ref entity0.Get<engine.physics.components.Body>();
-        cCitizenBody.PhysicsObject?.MakeDynamic(cCitizenBody.Reference, CharacterCreator.PInertiaCylinder);
+        if (_makeDynamic)
+        {
+            /*
+             * Make me a dynamic object to respond to the collision.
+             */
+            ref engine.physics.components.Body cCitizenBody = ref entity0.Get<engine.physics.components.Body>();
+            cCitizenBody.PhysicsObject?.MakeDynamic(cCitizenBody.Reference, CharacterCreator.PInertiaCylinder);
+        }
     }
 }

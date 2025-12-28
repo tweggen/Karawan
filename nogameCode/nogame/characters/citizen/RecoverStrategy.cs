@@ -19,7 +19,7 @@ public class RecoverStrategy : AEntityStrategyPart
     public required CharacterModelDescription CharacterModelDescription { get; init; }
     public int RecoverMilliseconds { get; set; } = 5000;
     
-    private AfterCrashBehavior _afterCrashBehavior;
+    private RecoverBehavior _recoverBehavior;
 
     private Timer _recoverTimer;
     private int _timerGeneration = 0;
@@ -53,7 +53,7 @@ public class RecoverStrategy : AEntityStrategyPart
     
     public override void OnDetach(in DefaultEcs.Entity entity)
     {
-        _afterCrashBehavior = null;
+        _recoverBehavior = null;
         base.OnDetach(entity);
     }
     
@@ -61,7 +61,7 @@ public class RecoverStrategy : AEntityStrategyPart
     public override void OnAttach(in engine.Engine engine0, in DefaultEcs.Entity entity0)
     {
         base.OnAttach(engine0, entity0);
-        _afterCrashBehavior = new AfterCrashBehavior()
+        _recoverBehavior = new RecoverBehavior()
         {
             CharacterModelDescription = CharacterModelDescription
         };
@@ -103,7 +103,7 @@ public class RecoverStrategy : AEntityStrategyPart
             _recoverTimer = new System.Threading.Timer(_onTimeout, generation, RecoverMilliseconds, Timeout.Infinite);
         }
 
-        _entity.Set(new engine.behave.components.Behavior(_afterCrashBehavior));
+        _entity.Set(new engine.behave.components.Behavior(_recoverBehavior));
     }
     
     #endregion
