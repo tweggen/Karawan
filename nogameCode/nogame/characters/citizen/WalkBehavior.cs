@@ -70,7 +70,20 @@ public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
          * Notify the owning strategy about the collision.
          */
         var me = cev.ContactInfo.PropertiesA;
-        I.Get<EventQueue>().Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
+        var other = cev.ContactInfo.PropertiesB;
+
+        if (other != null)
+        {
+            if (0 != (other.LayerMask & 0x0010))
+            {
+                I.Get<EventQueue>().Push(new Event(EntityStrategy.HitEventPath(me.Entity), ""));
+            }
+
+            if (0 != (other.LayerMask & 0x0007))
+            {
+                I.Get<EventQueue>().Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
+            }
+        }
     }
 
 

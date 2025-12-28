@@ -29,12 +29,20 @@ public class RecoverBehavior : ABehavior
         var me = cev.ContactInfo.PropertiesA;
         var other = cev.ContactInfo.PropertiesB;
         /*
-         * Only notify if collided with the player or anything that collides which each other or the player.
+         * Only notify if collided with the player or anything that collides which each
+         * other or the player (0x07) or is hit by the player (0x0010)
          */
-        if (other != null && 0 != (other.LayerMask & 0x0007))
+        if (other != null)
         {
-            I.Get<EventQueue>().Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
-            Trace($"Collision with other {cev.ContactInfo.PropertiesB.Name}");
+            if (0 != (other.LayerMask & 0x0010))
+            {
+                I.Get<EventQueue>().Push(new Event(EntityStrategy.HitEventPath(me.Entity), ""));
+            }
+
+            if (0 != (other.LayerMask & 0x0007))
+            {
+                I.Get<EventQueue>().Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
+            }
         }
     }
     

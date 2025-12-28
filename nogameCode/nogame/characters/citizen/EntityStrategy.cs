@@ -1,13 +1,10 @@
-using System.Collections.Generic;
-using System.Numerics;
 using builtin.tools;
-using DefaultEcs;
 using engine;
 using engine.behave;
 using engine.behave.strategies;
 using engine.news;
-using engine.streets;
 using engine.world;
+using static engine.Logger;
 
 namespace nogame.characters.citizen;
 
@@ -35,21 +32,42 @@ public class EntityStrategy : AOneOfStrategy
     static public string CrashEventPath(in DefaultEcs.Entity e) =>
         $"@{e.ToString()}/nogame.characters.citizen.onCrash";
     
+    static public string HitEventPath(in DefaultEcs.Entity e) =>
+        $"@{e.ToString()}/nogame.characters.citizen.onHit";
+
+
+    private void _onCrashEvent(Event ev)
+    {
+        /*
+         * If we are not already in recover, transition to recover.
+         */
+        TriggerStrategy("recover");
+    }
+
+
+    private void _onHitEvent(Event ev)
+    {
+        /*
+         * If we are not already in flee, trigger flee.
+         */
+        TriggerStrategy("flee");
+    }
+    
     
     /**
-     * If strategy walk gives up, we switch to recover.
+     * If recover or flee gives up, we switch to recover.
      */
     public override void GiveUpStrategy(IStrategyPart strategy)
     {
         if (strategy == Strategies["walk"])
         {
-            /*
-             * Read back position for next turn.
-             */
-            _lastPositionDescription = _walkNavigator.Position;
-            TriggerStrategy("recover");
+            Warning("We should not receive a give up walk");
         }
         else if (strategy == Strategies["recover"])
+        {
+            TriggerStrategy("walk");
+            _walkNavigator.Position = _lastPositionDescription;
+        } 
         {
             TriggerStrategy("walk");
             _walkNavigator.Position = _lastPositionDescription;
@@ -66,13 +84,6 @@ public class EntityStrategy : AOneOfStrategy
     }
 
     
-    #region IEntityStrategy
-    /*
-     * nothing to override
-     */
-    #endregion
-
-
     private static SegmentNavigator? _createWalkNavigator(
         RandomSource rnd,
         CharacterModelDescription cmd,
@@ -107,6 +118,41 @@ public class EntityStrategy : AOneOfStrategy
     }
 
 
+    #region IStrategyPart
+    
+    /**
+     * Remove walk behavior and clean up.
+     */
+    public override void OnExit()
+    {
+        var sm = I.Get<SubscriptionManager>();
+        sm.Unsubscribe(EntityStrategy.CrashEventPath(_entity), _onCrashEvent);
+        sm.Unsubscribe(EntityStrategy.HitEventPath(_entity), _onHitEvent);
+        base.OnExit();
+    }
+
+    
+    /**
+     * Add walk behavior and initialize.
+     */
+    public override void OnEnter()
+    {
+        base.OnEnter();
+        var sm = I.Get<SubscriptionManager>();
+        sm.Subscribe(EntityStrategy.CrashEventPath(_entity), _onCrashEvent);
+        sm.Subscribe(EntityStrategy.HitEventPath(_entity), _onHitEvent);
+    }
+    
+    #endregion
+    
+    
+    #region IEntityStrategy
+    /*
+     * Nothing to override
+     */
+    #endregion
+
+    
     private EntityStrategy(RandomSource rnd,
         ClusterDesc clusterDesc,
         CharacterModelDescription cmd,
@@ -122,8 +168,9 @@ public class EntityStrategy : AOneOfStrategy
         
         Strategies = new()
         {
-            { "walk", new WalkStrategy() { Controller = this, CharacterModelDescription = cmd, Navigator =  _walkNavigator } },
-            { "recover", new RecoverStrategy() { Controller = this, CharacterModelDescription = cmd } }
+            { "flee", new FleeStrategy() { Controller = this, CharacterModelDescription = cmd, Navigator =  _walkNavigator } },
+            { "recover", new RecoverStrategy() { Controller = this, CharacterModelDescription = cmd } },
+            { "walk", new WalkStrategy() { Controller = this, CharacterModelDescription = cmd, Navigator =  _walkNavigator } }
         };
     }
 

@@ -23,13 +23,6 @@ public class WalkStrategy : AEntityStrategyPart
      */
     public required INavigator Navigator { get; init; }
     
-    /**
-     * If something crashes, I need to give up the driving strategy.
-     */
-    private void _onCrashEvent(Event ev)
-    {
-        Controller.GiveUpStrategy(this);
-    }
 
     #region IStrategyPart
     
@@ -39,9 +32,6 @@ public class WalkStrategy : AEntityStrategyPart
     public override void OnExit()
     {
         _entity.Remove<engine.behave.components.Behavior>();
-        
-        var sm = I.Get<SubscriptionManager>();
-        sm.Unsubscribe(EntityStrategy.CrashEventPath(_entity), _onCrashEvent);
     }
 
     
@@ -50,9 +40,6 @@ public class WalkStrategy : AEntityStrategyPart
      */
     public override void OnEnter()
     {
-        var sm = I.Get<SubscriptionManager>();
-        sm.Subscribe(EntityStrategy.CrashEventPath(_entity), _onCrashEvent);
-        
         _entity.Set(new engine.behave.components.Behavior(_walkBehavior));
     }
     

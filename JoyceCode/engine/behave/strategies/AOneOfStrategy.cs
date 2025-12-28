@@ -135,7 +135,7 @@ public abstract class AOneOfStrategy : IStrategyController, IStrategyPart, IEnti
     }
 
 
-    public void OnExit()
+    public virtual void OnExit()
     {
         IStrategyPart? oldStrategy;
         
@@ -149,7 +149,7 @@ public abstract class AOneOfStrategy : IStrategyController, IStrategyPart, IEnti
     }
 
 
-    public void OnEnter()
+    public virtual void OnEnter()
     {
         IStrategyPart startStrategy;
 
