@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using engine.geom;
 using Octree;
 using static engine.Logger;
 
@@ -437,6 +438,23 @@ public class StrokeStore
         return _listStrokes;
     }
 
+    
+    public IReadOnlyList<StreetPoint> QueryStreetPoints(
+        in AABB aabb
+    )
+    {
+        List<StreetPoint> listStreetPoints = new();
+        foreach (var sp in _listPoints)
+        {
+            if (aabb.Contains(sp.Pos3))
+            {
+                listStreetPoints.Add(sp);
+            }
+        }
+
+        return listStreetPoints.AsReadOnly();
+    }
+    
 
     public List<StreetPoint> GetStreetPoints()
     {

@@ -43,10 +43,20 @@ public class PlacementDescription
 
     public Reference ReferenceObject;
 
+    
+    public enum FragmentSelection
+    {
+        CurrentFragment,
+        AnyFragment
+    }
+    
+    public FragmentSelection WhichFragment;
+    
+    
     public enum ClusterSelection
     {
-        AnyCluster,
         CurrentCluster,
+        AnyCluster,
         ConnectedCluster
     }
 
@@ -54,11 +64,13 @@ public class PlacementDescription
     public uint ClusterAttributesValue;
     public uint ClusterAttributesMask;
 
+    
     public enum QuarterSelection
     {
-        AnyQuarter,
         CurrentQuarter,
-        NearbyQuarter
+        AnyQuarter,
+        NearbyQuarter,
+        IgnoreQuarter,
     }
 
     public QuarterSelection WhichQuarter;
@@ -66,10 +78,10 @@ public class PlacementDescription
     /**
      * Only place in quarters with the given tag.
      */
-    public string QuarterTag;
     public uint QuarterAttributesValue;
     public uint QuarterAttributesMask;
 
+    
     public enum Placement
     {
         /**

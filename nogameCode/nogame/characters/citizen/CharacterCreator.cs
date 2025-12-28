@@ -50,43 +50,27 @@ public class CharacterCreator
         delim = null;
         relativePos = 0f;
         
-        var quarterStore = clusterDesc.QuarterStore();
-        if (null == quarterStore)
+        PlacementContext pc = new()
         {
-            return;
-        }
+            CurrentFragment = worldFragment,
+            CurrentCluster = clusterDesc
+        };
 
-        var quartersList = quarterStore.GetQuarters();
-        if (null == quartersList)
+        PlacementDescription plad = new()
         {
-            return;
-        }
-
-        int nQuarters = quartersList.Count;
-        if (nQuarters == 0)
-        {
-            return;
-        }
-
-        int idxQuarter = (int)(rnd.GetFloat() * nQuarters);
-        quarter = quartersList[idxQuarter];
-        if (null == quarter)
-        {
-            return;
-        }
-
-        var quarterDelims = quarter.GetDelims();
-        if (null == quarterDelims || quarterDelims.Count <= 1)
-        {
-            quarter = null;
-            return;
-        }
-
-        int nDelims = quarterDelims.Count;
-        int idxDelim = (int)(rnd.GetFloat() * nDelims);
-        delim = quarterDelims[idxDelim];
+            ReferenceObject = PlacementDescription.Reference.StreetPoint,
+            WhichFragment = PlacementDescription.FragmentSelection.CurrentFragment,
+            WhichCluster = PlacementDescription.ClusterSelection.CurrentCluster,
+            WhichQuarter = PlacementDescription.QuarterSelection.AnyQuarter
+        };
+        
+        bool isPlaced = I.Get<Placer>().TryPlacing(rnd, pc, plad, out var placementResult);
+        
+        if (!isPlaced) return;
+        
+        quarter = placementResult.Quarter;
+        delim = placementResult.QuarterDelim;
         relativePos = rnd.GetFloat();
-        return;
     }
 
 
