@@ -28,7 +28,7 @@ public class FleeStrategy : AEntityStrategyPart
     public required INavigator Navigator { get; init; }
     
     
-    public int FleeMilliseconds { get; set; } = 5000;
+    public int FleeMilliseconds { get; set; } = 10000;
 
     private WalkBehavior _walkBehavior;
     

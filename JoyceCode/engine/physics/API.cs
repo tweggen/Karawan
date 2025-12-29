@@ -30,6 +30,64 @@ public class API
     private SortedDictionary<int, CollisionProperties> _mapStaticCollisionProperties = new();
 
     private SortedDictionary<ulong, uint> _previousCollisions = new();
+
+
+    private void _deliverToPart(
+        CollisionProperties propsA, CollisionProperties propsB, uint ahandle,
+        Func<ContactInfo> contactInfoFactory)
+    {
+        CollisionProperties.Layers solidB = 0;
+
+        if (propsB != null)
+        {
+            solidB = propsB.SolidLayerMask;
+        }
+        else
+        {
+            /*
+             * If it does not have any properties, we make it static environment.
+             */
+            solidB = CollisionProperties.Layers.StaticEnvironment;
+        }
+         
+        /*
+         * We need to pass this to object A if propsA sensititve layer and propsB solid layer mast have a match. 
+         */
+        if (null != propsA 
+            && 0 != (propsA.Flags & CollisionProperties.CollisionFlags.TriggersCallbacks)
+            && (propsA.SensitiveLayerMask & solidB) != 0)
+        {
+            _engine.QueueMainThreadAction(() =>
+            {
+                DefaultEcs.Entity entity = propsA.Entity;
+                if (entity.IsAlive && entity.IsEnabled())
+                {
+                    /*
+                     * Send the proper event
+                     */
+                    ContactInfo contactInfo = contactInfoFactory();
+                    
+                    var cev = new ContactEvent(contactInfo);
+
+                    if ((ahandle & 0x80000000) == 0)
+                    {
+                        if (entity.Has<engine.physics.components.Body>())
+                        {
+                            var cBody = entity.Get<engine.physics.components.Body>();
+                            cBody.PhysicsObject?.OnCollision?.Invoke(cev);
+                        }
+                    }
+                    if (entity.Has<engine.behave.components.Behavior>())
+                    {
+                        var cBehavior = entity.Get<engine.behave.components.Behavior>();
+                        var iBehaviorProvider = cBehavior.Provider;
+                        iBehaviorProvider?.OnCollision(cev);
+                    }
+                }
+            });
+        }
+    }
+    
     
     /**
      * This is the single one callback called for every collision.
@@ -38,147 +96,92 @@ public class API
     public void OnContactAdded<TManifold>(CollidableReference eventSource, CollidablePair pair, ref TManifold contactManifold,
         in Vector3 contactOffset, in Vector3 contactNormal, float depth, int featureId, int contactIndex, int workerIndex) where TManifold : struct, IContactManifold<TManifold>
     {
-        // Trace($"having contact.");
-
-        if (contactManifold.Count > 0)
+        try
         {
-            // Trace("There is something in the manifold.");
-        }
-
-        //physics.ContactInfo contactInfo = new(
-        //    eventSource, pair, contactOffset, contactNormal, depth);
-        
-        CollisionProperties propsA = null;
-        CollisionProperties propsB = null;
-
-        uint ahandle = 0;
-        uint bhandle = 0;
-        lock (_lo)
-        {
-            switch (pair.A.Mobility)
+            if (contactManifold.Count > 0)
             {
-                case CollidableMobility.Dynamic:
-                case CollidableMobility.Kinematic:
-                    _mapNonstaticCollisionProperties.TryGetValue(pair.A.BodyHandle.Value, out propsA);
-                    ahandle = (uint) pair.A.BodyHandle.Value;
-                    break;
-                case CollidableMobility.Static:
-                    _mapStaticCollisionProperties.TryGetValue(pair.A.StaticHandle.Value, out propsA);
-                    ahandle = (uint)0x80000000 | (uint) pair.A.StaticHandle.Value; 
-                    break;
+                // Trace("There is something in the manifold.");
             }
-            
-            switch (pair.B.Mobility)
-            {
-                case CollidableMobility.Dynamic:
-                case CollidableMobility.Kinematic:
-                    _mapNonstaticCollisionProperties.TryGetValue(pair.B.BodyHandle.Value, out propsB);
-                    bhandle = (uint) pair.B.BodyHandle.Value;
-                    break;
-                case CollidableMobility.Static:
-                    _mapStaticCollisionProperties.TryGetValue(pair.B.StaticHandle.Value, out propsB);
-                    bhandle = (uint)0x80000000 | (uint) pair.B.StaticHandle.Value;
-                    break;
-            }
-        }
 
-        ulong collHash = ((ulong)bhandle << 32) | (ulong)ahandle;
-        bool havePreviousCollision = false;
-        lock (_lo)
-        {
-            havePreviousCollision = _previousCollisions.TryGetValue(collHash, out uint lastFrameId);
-            /*
-             * Regardless, if we had a collision or not, update the frameId.
-             */
-            _previousCollisions[collHash] = _frameId;
-        }
-        
-        if (!havePreviousCollision)
-        {
-            /*
-             * We deliver collisions by calling the contact event handler of the behavior.
-             */
-            // TXWTODO: Maybe there's a faster way to enqueue?
-            Vector3 vContactOffset = contactOffset;
-            Vector3 vContactNormal = contactNormal;
-            if (null != propsA && 0 != (propsA.Flags & CollisionProperties.CollisionFlags.TriggersCallbacks))
+            //physics.ContactInfo contactInfo = new(
+            //    eventSource, pair, contactOffset, contactNormal, depth);
+
+            CollisionProperties propsA = null;
+            CollisionProperties propsB = null;
+
+            uint ahandle = 0;
+            uint bhandle = 0;
+            lock (_lo)
             {
-                _engine.QueueMainThreadAction(() =>
+                switch (pair.A.Mobility)
                 {
-                    DefaultEcs.Entity entity = propsA.Entity;
-                    if (entity.IsAlive && entity.IsEnabled())
-                    {
-                        /*
-                         * Send the proper event
-                         */
-                        physics.ContactInfo contactInfo = new(eventSource,
-                            new CollidablePair(pair.A, pair.B),
-                            vContactOffset, vContactNormal, depth)
-                        {
-                            PropertiesA =  propsA, PropertiesB = propsB
-                        };
-                        var cev = new ContactEvent(contactInfo);
+                    case CollidableMobility.Dynamic:
+                    case CollidableMobility.Kinematic:
+                        _mapNonstaticCollisionProperties.TryGetValue(pair.A.BodyHandle.Value, out propsA);
+                        ahandle = (uint)pair.A.BodyHandle.Value;
+                        break;
+                    case CollidableMobility.Static:
+                        _mapStaticCollisionProperties.TryGetValue(pair.A.StaticHandle.Value, out propsA);
+                        ahandle = (uint)0x80000000 | (uint)pair.A.StaticHandle.Value;
+                        break;
+                }
 
-                        if ((ahandle & 0x80000000) == 0)
-                        {
-                            if (entity.Has<engine.physics.components.Body>())
-                            {
-                                var cBody = entity.Get<engine.physics.components.Body>();
-                                cBody.PhysicsObject?.OnCollision?.Invoke(cev);
-                            }
-                        }
-                        if (entity.Has<engine.behave.components.Behavior>())
-                        {
-                            var cBehavior = entity.Get<engine.behave.components.Behavior>();
-                            var iBehaviorProvider = cBehavior.Provider;
-                            if (iBehaviorProvider != null)
-                            {
-                                iBehaviorProvider.OnCollision(cev);
-                            }
-                        }
-                    }
-                });
-            }
-            if (null != propsB && 0 != (propsB.Flags & CollisionProperties.CollisionFlags.TriggersCallbacks))
-            {
-                _engine.QueueMainThreadAction(() =>
+                switch (pair.B.Mobility)
                 {
-                    DefaultEcs.Entity entity = propsB.Entity;
-                    if (entity.IsAlive && entity.IsEnabled())
+                    case CollidableMobility.Dynamic:
+                    case CollidableMobility.Kinematic:
+                        _mapNonstaticCollisionProperties.TryGetValue(pair.B.BodyHandle.Value, out propsB);
+                        bhandle = (uint)pair.B.BodyHandle.Value;
+                        break;
+                    case CollidableMobility.Static:
+                        _mapStaticCollisionProperties.TryGetValue(pair.B.StaticHandle.Value, out propsB);
+                        bhandle = (uint)0x80000000 | (uint)pair.B.StaticHandle.Value;
+                        break;
+                }
+            }
+
+            ulong collHash = ((ulong)bhandle << 32) | (ulong)ahandle;
+            bool havePreviousCollision = false;
+            lock (_lo)
+            {
+                havePreviousCollision = _previousCollisions.TryGetValue(collHash, out uint lastFrameId);
+                /*
+                 * Regardless, if we had a collision or not, update the frameId.
+                 */
+                _previousCollisions[collHash] = _frameId;
+            }
+
+            if (!havePreviousCollision)
+            {
+                /*
+                 * We deliver collisions by calling the contact event handler of the behavior.
+                 */
+                // TXWTODO: Maybe there's a faster way to enqueue?
+                Vector3 vContactOffset = contactOffset;
+                Vector3 vContactNormal = contactNormal;
+                _deliverToPart(propsA, propsB, ahandle, () =>
+                    new ContactInfo(
+                        eventSource,
+                        new CollidablePair(pair.A, pair.B),
+                        vContactOffset, vContactNormal, depth)
                     {
-                        /*
-                         * Send the proper event
-                         */
-                        physics.ContactInfo contactInfo = new(eventSource,
-                            new CollidablePair(pair.B, pair.A),
-                            vContactOffset, vContactNormal, depth)
-                        {
-                            PropertiesA =  propsB, PropertiesB = propsA
-                        };
-                        var cev = new ContactEvent(contactInfo);
-                        
-                        if ((bhandle & 0x80000000) == 0)
-                        {
-                            if (entity.Has<engine.physics.components.Body>())
-                            {
-                                var cBody = entity.Get<engine.physics.components.Body>();
-                                cBody.PhysicsObject?.OnCollision?.Invoke(cev);
-                            }
-                        }
-                        if (entity.Has<engine.behave.components.Behavior>())
-                        {
-                            var cBehavior = entity.Get<engine.behave.components.Behavior>();
-                            var iBehaviorProvider = cBehavior.Provider;
-                            if (iBehaviorProvider != null)
-                            {
-                                iBehaviorProvider.OnCollision(cev);
-                            }
-                        }
-                    }
-                });
+                        PropertiesA = propsA, PropertiesB = propsB
+                    });
+
+                _deliverToPart(propsB, propsA, bhandle, () =>
+                    new ContactInfo(
+                        eventSource,
+                        new CollidablePair(pair.B, pair.A),
+                        vContactOffset, vContactNormal, depth)
+                    {
+                        PropertiesA = propsB, PropertiesB = propsA
+                    });
             }
         }
-
+        catch (Exception e)
+        {
+            int a = 1;
+        }
     }
 
 

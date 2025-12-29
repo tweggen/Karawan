@@ -130,8 +130,8 @@ namespace engine.physics
                 out var bSensitiveLayerMask);
 
             /*
-             * For the time being and for backward compat, we detect any collision
-             * in any direction.
+             * it is sufficient to symmetrically detect the collision, the callback handling
+             * will differentiate who actually was sensitive to what.
              */
             
             if ((aSolidLayerMask & bSensitiveLayerMask) != 0

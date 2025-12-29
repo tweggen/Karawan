@@ -150,7 +150,8 @@ class CharacterCreator
                 ,
                 MaxDistance = propMaxDistance,
                 
-                CollisionLayers = 0x000a,
+                SolidLayerMask = CollisionProperties.Layers.NpcVehicle,
+                SensitiveLayerMask = CollisionProperties.Layers.NpcCharacterSensitive
             }
         };
         
