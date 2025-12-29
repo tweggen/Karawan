@@ -14,6 +14,14 @@ using static engine.Logger;
 
 namespace nogame.characters.citizen;
 
+/**
+ * Contains all to create the character entity components for this npc.
+ * - Creating the mesh, physics [and sound] from the ChjaracterModelDescription
+ *   using the CharacterModelDescriptionFactory as input for the EntityCreator
+ * - Creating the EntityStrategy using the factory method containing
+ *   character state
+ * 
+ */
 public class CharacterCreator
 {
     /**
@@ -21,12 +29,6 @@ public class CharacterCreator
      * Setting this to two limits this to two different animation phases. That way on mobile platforms
      * that do not upload animation tables to gpu but require distinct draw calls, draw calls are saved.
      */
-    private class Context
-    {
-        public builtin.tools.RandomSource Rnd;
-        public engine.world.Fragment Fragment;
-    }
-    
     public static readonly string EntityName = "nogame.characters.citizen";
     public static readonly float PhysicsMass = 60f;
 
@@ -59,42 +61,13 @@ public class CharacterCreator
             EntityStrategyFactory = entity => entityStrategy,
             CharacterModelDescription = cmd,
             PhysicsName = EntityName,
+            Fragment = worldFragment
         };
         var model = await creator.CreateAsync();
 
         return (Action<DefaultEcs.Entity>)(eTarget =>
         {
-            int fragmentId = worldFragment.NumericalId;
-
-            eTarget.Set(new engine.world.components.Owner(fragmentId));
-
-            /*
-             * We already setup the FromModel in case we utilize one of the characters as
-             * subject of a Quest.
-             */
-            eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = creator.ModelCacheParams });
-            
             creator.CreateLogical(eTarget);
-            
-            /*
-             * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
-             * That way, the character will not be cleaned up immediately.
-             */
-            eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
-                Matrix4x4.CreateTranslation(worldFragment.Position)));
-            
-            /*
-             * If we created physics for this one, take care to minimize
-             * the distance for physics support.
-             */
-            if (eTarget.Has<engine.physics.components.Body>())
-            {
-                ref var cBody = ref eTarget.Get<engine.physics.components.Body>();
-                if (cBody.PhysicsObject != null)
-                {
-                    cBody.PhysicsObject.MaxDistance = 10f;
-                }
-            }
         });
     }
 }

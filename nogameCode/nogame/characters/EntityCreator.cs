@@ -21,6 +21,7 @@ public class EntityCreator
     public Vector3 Position = Vector3.Zero;
     public Quaternion Orientation = Quaternion.Identity;
     public required string PhysicsName;
+    public engine.world.Fragment Fragment = null;
     
     public Func<Entity, IBehavior>? BehaviorFactory = null;
     public Func<Entity, IEntityStrategy>? EntityStrategyFactory = null;
@@ -72,6 +73,31 @@ public class EntityCreator
             modelBuilder.BuildEntity(_ePerson);
             I.Get<ModelCache>().BuildPerInstancePhysics(_ePerson, modelBuilder, _model, ModelCacheParams);
             EntityAnimations = modelBuilder.GetAnimationsEntity();
+            
+            /*
+             * We already setup the FromModel in case we utilize one of the characters as
+             * subject of a Quest.
+             */
+            _ePerson.Set(new engine.joyce.components.FromModel()
+            {
+                Model = _model, ModelCacheParams = ModelCacheParams
+            });
+
+
+        }
+
+        if (Fragment != null)
+        {
+            int fragmentId = Fragment.NumericalId;
+            _ePerson.Set(new engine.world.components.Owner(fragmentId));
+            
+            /*
+             * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
+             * That way, the character will not be cleaned up immediately.
+             */
+            _ePerson.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
+                Matrix4x4.CreateTranslation(Fragment.Position)));
+
         }
 
         if (default != EntityAnimations)
@@ -101,6 +127,21 @@ public class EntityCreator
             }
 
             _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
+        }
+
+        {
+            /*
+             * If we created physics for this one, take care to minimize
+             * the distance for physics support.
+             */
+            if (_ePerson.Has<engine.physics.components.Body>())
+            {
+                ref var cBody = ref _ePerson.Get<engine.physics.components.Body>();
+                if (cBody.PhysicsObject != null)
+                {
+                    cBody.PhysicsObject.MaxDistance = CharacterModelDescription.PhysicsDistance;
+                }
+            }
         }
 
 

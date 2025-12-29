@@ -42,6 +42,7 @@ public static class CharacterModelDescriptionFactory
             ModelBaseBone = "Root_M",
             ModelUrl = strModel,
             Scale = "1",
+            PhysicsDistance = 10f,
             InstantiateModelParams = new()
             {               
                 GeomFlags = 0

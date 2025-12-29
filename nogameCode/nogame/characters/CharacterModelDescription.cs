@@ -29,4 +29,6 @@ public class CharacterModelDescription
     public AnimationState AnimationState { get; set; } = null;
     
     public InstantiateModelParams? InstantiateModelParams { get; set; } = null;
+
+    public float PhysicsDistance { get; set; } = 10f;
 }

@@ -58,7 +58,9 @@ public class FragmentOperator : IFragmentOperator
             // no BehaviorFactory
             BehaviorFactory = entity => new NearbyBehavior() {EPOI = entity},
             CharacterModelDescription = cmd,
-            PhysicsName = EntityName
+            PhysicsName = EntityName,
+            Fragment = ctx.Fragment,
+            Position = v3Pos
         };
         var model = await creator.CreateAsync();
         
@@ -66,39 +68,9 @@ public class FragmentOperator : IFragmentOperator
         {
             try
             {
-                int fragmentId = ctx.Fragment.NumericalId;
-
-                eTarget.Set(new engine.world.components.Owner(fragmentId));
-
-                /*
-                 * We already setup the FromModel in case we utilize one of the characters as
-                 * subject of a Quest.
-                 */
-                eTarget.Set(new engine.joyce.components.FromModel()
-                    { Model = model, ModelCacheParams = creator.ModelCacheParams });
-
                 creator.CreateLogical(eTarget);
 
-                /*
-                 * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
-                 * That way, the character will not be cleaned up immediately.
-                 */
-                eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
-                    Matrix4x4.CreateTranslation(ctx.Fragment.Position)));
-
-                /*
-                 * If we created physics for this one, take care to minimize
-                 * the distance for physics support.
-                 */
-                if (eTarget.Has<engine.physics.components.Body>())
-                {
-                    ref var cBody = ref eTarget.Get<engine.physics.components.Body>();
-                    if (cBody.PhysicsObject != null)
-                    {
-                        cBody.PhysicsObject.MaxDistance = 10f;
-                    }
-                }
-
+                // TXWTODO: Somehow do this generically.
                 if (!eTarget.Has<engine.joyce.components.GPUAnimationState>())
                 {
                     eTarget.Set(new engine.joyce.components.GPUAnimationState()
@@ -109,11 +81,6 @@ public class FragmentOperator : IFragmentOperator
 
                 ref var cGpuAnimationState = ref eTarget.Get<engine.joyce.components.GPUAnimationState>();
                 cGpuAnimationState.AnimationState?.SetAnimation(model, cmd.IdleAnimName);
-
-                //#error Setup animation without duplicating too much code from citizen behavior.
-                I.Get<TransformApi>().SetTransforms(eTarget,
-                    true, 0x00000001,
-                    Quaternion.Identity, v3Pos, Vector3.One);
             }
             catch (Exception e)
             {
