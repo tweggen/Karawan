@@ -15,6 +15,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\car3\CharacterCreator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\car3\SpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\CharacterModelDescription.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\CharacterState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\FleeStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\RecoverBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\WalkBehavior.cs" />

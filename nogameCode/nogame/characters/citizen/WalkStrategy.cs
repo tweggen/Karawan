@@ -15,7 +15,8 @@ namespace nogame.characters.citizen;
 public class WalkStrategy : AEntityStrategyPart
 {
     public required CharacterModelDescription CharacterModelDescription { get; init; }
-
+    public required CharacterState CharacterState { get; init; }
+    
     private WalkBehavior _walkBehavior;
     
     /**
@@ -40,6 +41,12 @@ public class WalkStrategy : AEntityStrategyPart
      */
     public override void OnEnter()
     {
+        /*
+         * In the walk state we walk with basic speed.
+         */
+        Navigator.Speed = CharacterState.BasicSpeed;
+
+
         _entity.Set(new engine.behave.components.Behavior(_walkBehavior));
     }
     

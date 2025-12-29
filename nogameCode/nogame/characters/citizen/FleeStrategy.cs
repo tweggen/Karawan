@@ -20,7 +20,8 @@ namespace nogame.characters.citizen;
 public class FleeStrategy : AEntityStrategyPart
 {
     public required CharacterModelDescription CharacterModelDescription { get; init; }
-    
+    public required CharacterState CharacterState { get; init; }
+
     /**
      * We need a walk behavior that exceeds our lifetime.
      */
@@ -87,12 +88,17 @@ public class FleeStrategy : AEntityStrategyPart
         var sm = I.Get<SubscriptionManager>();
         sm.Subscribe(EntityStrategy.HitEventPath(_entity), _onHitEvent);
 
+        /*
+         * In the flee state we run.
+         */
+        Navigator.Speed = CharacterState.BasicSpeed * 2f;
+        
         int generation = Interlocked.Increment(ref _timerGeneration);
         lock (this)
         {
             _fleeTimer = new System.Threading.Timer(_onTimeout, generation, FleeMilliseconds, Timeout.Infinite);
         }
-
+        
         _entity.Set(new engine.behave.components.Behavior(_walkBehavior));
     }
     

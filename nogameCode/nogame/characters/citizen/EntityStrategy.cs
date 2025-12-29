@@ -18,12 +18,14 @@ public class EntityStrategy : AOneOfStrategy
 {
     private readonly RandomSource _rnd;
     private readonly ClusterDesc _clusterDesc;
-    private readonly CharacterModelDescription _cmd;
     
     private readonly builtin.tools.SegmentNavigator _walkNavigator;
 
     private readonly PositionDescription _startPositionDescription;
     private PositionDescription _lastPositionDescription;
+
+    private readonly CharacterModelDescription _cmd;
+    public CharacterState CharacterState { get; set; }
     
     /**
      * The path used by sub-ordinate behaviors to publish
@@ -63,12 +65,11 @@ public class EntityStrategy : AOneOfStrategy
         {
             Warning("We should not receive a give up walk");
         }
-        else if (strategy == Strategies["recover"])
+        else if (
+            strategy == Strategies["recover"]
+            || strategy == Strategies["flee"])
         {
-            TriggerStrategy("walk");
-            _walkNavigator.Position = _lastPositionDescription;
-        } 
-        {
+            _lastPositionDescription = _walkNavigator.Position;
             TriggerStrategy("walk");
             _walkNavigator.Position = _lastPositionDescription;
         }
@@ -84,25 +85,16 @@ public class EntityStrategy : AOneOfStrategy
     }
 
     
-    private static SegmentNavigator? _createWalkNavigator(
-        RandomSource rnd,
-        CharacterModelDescription cmd,
-        PositionDescription startPositionDescription)
+    private SegmentNavigator? _createWalkNavigator()
     {
         /*
          * Create the route. The route always is around a quarter.
          */
         var segmentRoute = new QuarterLoopRouteGenerator()
         {
-            ClusterDesc = startPositionDescription.ClusterDesc, 
-            Quarter = startPositionDescription.Quarter
+            ClusterDesc = _startPositionDescription.ClusterDesc, 
+            Quarter = _startPositionDescription.Quarter
         }.GenerateRoute();
-
-        /*
-         * This is the default speed.
-         */
-        float speed;
-        speed = (4f + rnd.GetFloat() * 3f) / 3.6f;
 
         /*
          * Create a segment navigator that will use the route.
@@ -110,8 +102,7 @@ public class EntityStrategy : AOneOfStrategy
         SegmentNavigator navigator = new SegmentNavigator()
         {
             SegmentRoute = segmentRoute,
-            Position = startPositionDescription,
-            Speed = speed
+            Position = _startPositionDescription,
         };
         
         return navigator;
@@ -152,27 +143,49 @@ public class EntityStrategy : AOneOfStrategy
      */
     #endregion
 
-    
+
     private EntityStrategy(RandomSource rnd,
         ClusterDesc clusterDesc,
         CharacterModelDescription cmd,
-        PositionDescription pod)
+        PositionDescription pod,
+        CharacterState chd)
     {
         _rnd = rnd;
         _clusterDesc = clusterDesc;
         _cmd = cmd;
         _startPositionDescription = pod;
+        CharacterState = chd;
 
-        _walkNavigator = _createWalkNavigator(_rnd, _cmd, _startPositionDescription);
+        _walkNavigator = _createWalkNavigator();
 
-        
         Strategies = new()
         {
-            { "flee", new FleeStrategy() { Controller = this, CharacterModelDescription = cmd, Navigator =  _walkNavigator } },
-            { "recover", new RecoverStrategy() { Controller = this, CharacterModelDescription = cmd } },
-            { "walk", new WalkStrategy() { Controller = this, CharacterModelDescription = cmd, Navigator =  _walkNavigator } }
+            {
+                "flee", new FleeStrategy()
+                {
+                    Controller = this,
+                    CharacterModelDescription = cmd, CharacterState = CharacterState,
+                    Navigator = _walkNavigator
+                }
+            },
+            {
+                "recover", new RecoverStrategy()
+                {
+                    Controller = this,
+                    CharacterModelDescription = cmd, CharacterState = CharacterState
+                }
+            },
+            {
+                "walk", new WalkStrategy()
+                {
+                    Controller = this,
+                    CharacterModelDescription = cmd, CharacterState = CharacterState,
+                    Navigator = _walkNavigator
+                }
+            }
         };
     }
+
 
 
     static public void _chooseStartPosition(
@@ -192,9 +205,10 @@ public class EntityStrategy : AOneOfStrategy
             WhichCluster = PlacementDescription.ClusterSelection.CurrentCluster,
             WhichQuarter = PlacementDescription.QuarterSelection.AnyQuarter
         };
-        
+
         bool isPlaced = I.Get<Placer>().TryPlacing(rnd, pc, plad, out pod);
         if (!isPlaced) return;
+
         pod.QuarterDelimPos = rnd.GetFloat();
     }
     
@@ -221,10 +235,19 @@ public class EntityStrategy : AOneOfStrategy
         }
 
         /*
-         * Pass all that to the strategy ctor.
-         * TXWTODO: Remove all the fuzz from the strategy ctor and factor into a state.
+         * Now define, who we are, including, how fast we walk.
          */
-        entityStrategy = new(rnd, clusterDesc, cmd, pod);
+        CharacterState chd = new()
+        {
+            BasicSpeed = (4f + rnd.GetFloat() * 3f) / 3.6f,
+            Health = 100f
+        };
+        
+        /*
+         * Pass all that to the strategy ctor.
+         */
+        entityStrategy = new(rnd, clusterDesc, cmd, pod, chd);
+        
         return true;
     }
 }

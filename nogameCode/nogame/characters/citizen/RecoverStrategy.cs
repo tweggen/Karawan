@@ -16,6 +16,8 @@ namespace nogame.characters.citizen;
 public class RecoverStrategy : AEntityStrategyPart
 {
     public required CharacterModelDescription CharacterModelDescription { get; init; }
+    public required CharacterState CharacterState { get; init; }
+
     public int RecoverMilliseconds { get; set; } = 5000;
     
     private RecoverBehavior _recoverBehavior;
