@@ -1,4 +1,5 @@
 using engine.geom;
+using engine.physics;
 
 namespace engine.joyce;
 
@@ -81,7 +82,8 @@ public class InstantiateModelParams
     public float MaxPhysicsDistance { get; set; } = 10f;
     public float MaxAudioDistance { get; set; } = 10f;
 
-    public ushort CollisionLayers { get; set; } = 0x0004;
+    public CollisionProperties.Layers SolidLayerMask { get; set; } = CollisionProperties.Layers.NpcCharacter;
+    public CollisionProperties.Layers SensitiveLayerMask { get; set; } = CollisionProperties.Layers.NpcCharacterSensitive;
 
     public AABB? PhysicsAABB { get; set; } = null;
 

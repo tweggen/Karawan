@@ -87,7 +87,8 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
                 CollisionProperties.CollisionFlags.IsTangible 
                 | CollisionProperties.CollisionFlags.IsDetectable,
             Name = $"quarterfloor-{new Vector3(delimList[0].StartPoint.X, 0f, delimList[0].StartPoint.Y)+worldFragment.Position}",
-            LayerMask = 0x0008
+            SolidLayerMask = CollisionProperties.Layers.Terrain,
+            SensitiveLayerMask = 0
         };
         try
         {

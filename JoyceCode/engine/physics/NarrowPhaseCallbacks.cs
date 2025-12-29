@@ -43,29 +43,17 @@ namespace engine.physics
             _events.Initialize(simulation.Bodies);
         }
 
-        private bool _simpleShallDetect(CollidableReference a, CollidableReference b, bool alsoCollide)
+        private void _setCollisionFlags(
+            CollidableReference a,
+            out bool doACollide, 
+            out bool doADetect,
+            out CollisionProperties.Layers aSolidLayerMask, 
+            out CollisionProperties.Layers aSensitiveLayerMask)
         {
-            #if false
-            /*
-             * Short circuit, only care about collisions with the player (that is the
-             * only dynamic object).
-             */
-            if (a.Mobility != CollidableMobility.Dynamic && b.Mobility != CollidableMobility.Dynamic)
-            {
-                return false;
-            }
-            #endif
-
-            CollisionProperties propsA, propsB;
+            doACollide = false;
+            doADetect = false;
+            CollisionProperties propsA;
             
-            /*
-             * Try to obtain collision properties of either body.
-             *
-             * Currently, we only care about collision between dynamic and [static, kinetic] objects.
-             */
-            bool doACollide = false;
-            bool doADetect = false;
-            ushort aLayerMask = 0, bLayerMask = 0;
             switch (a.Mobility)
             {
                 case CollidableMobility.Dynamic:
@@ -73,13 +61,15 @@ namespace engine.physics
                     {
                         doACollide = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsTangible);
                         doADetect = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsDetectable);
-                        aLayerMask = propsA.LayerMask;
+                        aSolidLayerMask = propsA.SolidLayerMask;
+                        aSensitiveLayerMask = propsA.SensitiveLayerMask;
                     }
                     else
                     {
                         doACollide = true;
                         doADetect = true;
-                        aLayerMask = 0xffff;
+                        aSolidLayerMask = 0;
+                        aSensitiveLayerMask = CollisionProperties.Layers.All;
                     }
 
                     break;
@@ -89,74 +79,63 @@ namespace engine.physics
                     {
                         doACollide = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsTangible);
                         doADetect = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsDetectable);
-                        aLayerMask = propsA.LayerMask;
+                        aSolidLayerMask = propsA.SolidLayerMask;
+                        aSensitiveLayerMask = propsA.SensitiveLayerMask;
+                    }
+                    else
+                    {
+                        doACollide = true;
+                        doADetect = false;
+                        aSolidLayerMask = CollisionProperties.Layers.All;
+                        aSensitiveLayerMask = 0;
                     }
                     break;
                 
+                default:
                 case CollidableMobility.Static:
                     if (I.Get<engine.physics.API>().GetCollisionProperties(a.StaticHandle, out propsA))
                     {
                         doACollide = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsTangible);
                         doADetect = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsDetectable);
-                        aLayerMask = propsA.LayerMask;
+                        aSolidLayerMask = propsA.SolidLayerMask;
+                        aSensitiveLayerMask = propsA.SensitiveLayerMask;
                     }
                     else
                     {
                         doACollide = true;
                         doADetect = true;
-                        aLayerMask = 0xffff;
+                        aSolidLayerMask = CollisionProperties.Layers.All;
+                        aSensitiveLayerMask = 0;
                     }
-
                     break;
             }
+        }
 
-            bool doBCollide = false;
-            bool doBDetect = false;
-            switch (b.Mobility)
-            {
-                case CollidableMobility.Dynamic:
-                    if (I.Get<engine.physics.API>().GetCollisionProperties(b.BodyHandle, out propsB))
-                    {
-                        doBCollide = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsTangible);
-                        doBDetect = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsDetectable);
-                        bLayerMask = propsB.LayerMask;
-                    }
-                    else
-                    {
-                        doBCollide = true;
-                        doBDetect = true;
-                        bLayerMask = 0xffff;
-                    }
+        private bool _simpleShallDetect(CollidableReference a, CollidableReference b, bool alsoCollide)
+        {
+            /*
+             * Try to obtain collision properties of either body.
+             *
+             * Currently, we only care about collision between dynamic and [static, kinetic] objects.
+             */
+            _setCollisionFlags(a, 
+                out var doACollide, 
+                out var doADetect, 
+                out var aSolidLayerMask,
+                out var aSensitiveLayerMask);
+            _setCollisionFlags(b, 
+                out var doBCollide, 
+                out var doBDetect, 
+                out var bSolidLayerMask,
+                out var bSensitiveLayerMask);
 
-                    break;
-
-                case CollidableMobility.Kinematic:
-                    if (I.Get<engine.physics.API>().GetCollisionProperties(b.BodyHandle, out propsB))
-                    {
-                        doBCollide = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsTangible);
-                        doBDetect = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsDetectable);
-                        bLayerMask = propsB.LayerMask;
-                    }
-
-                    break;
-                case CollidableMobility.Static:
-                    if (I.Get<engine.physics.API>().GetCollisionProperties(b.StaticHandle, out propsB))
-                    {
-                        doBCollide = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsTangible);
-                        doBDetect = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsDetectable);
-                        bLayerMask = propsB.LayerMask;
-                    }
-                    else
-                    {
-                        doBCollide = true;
-                        doBDetect = true;
-                        bLayerMask = 0xffff;
-                    }
-                    
-                    break;
-            }
-
-            if ((aLayerMask & bLayerMask) != 0)
+            /*
+             * For the time being and for backward compat, we detect any collision
+             * in any direction.
+             */
+            
+            if ((aSolidLayerMask & bSensitiveLayerMask) != 0
+                || (bSolidLayerMask & aSensitiveLayerMask) != 0)
             {
                 if (alsoCollide)
                 {

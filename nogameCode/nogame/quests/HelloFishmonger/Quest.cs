@@ -8,6 +8,7 @@ using DefaultEcs;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
+using engine.physics;
 using engine.quest;
 using engine.streets;
 using engine.world;
@@ -211,7 +212,8 @@ public class Quest : AModule, IQuest, ICreator
                               | InstantiateModelParams.PHYSICS_CALLBACKS
                 ,
                 MaxDistance = 150,
-                CollisionLayers = 0x0002,
+                SolidLayerMask = CollisionProperties.Layers.NpcVehicle,
+                SensitiveLayerMask = CollisionProperties.Layers.AnyVehicle,
                 Name = _targetCarName
             }
         };

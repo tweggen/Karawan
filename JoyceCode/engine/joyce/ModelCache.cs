@@ -562,7 +562,8 @@ public class ModelCache
                     | (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_CALLBACKS) != 0)
                         ? CollisionProperties.CollisionFlags.TriggersCallbacks
                         : 0),
-                LayerMask = mcp.Params.CollisionLayers
+                SolidLayerMask = mcp.Params.SolidLayerMask,
+                SensitiveLayerMask = mcp.Params.SensitiveLayerMask
             };
 
             lock (_engine.Simulation)

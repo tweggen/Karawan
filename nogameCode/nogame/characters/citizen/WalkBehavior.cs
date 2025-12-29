@@ -74,12 +74,12 @@ public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
 
         if (other != null)
         {
-            if (0 != (other.LayerMask & 0x0010))
+            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyWeapon))
             {
                 I.Get<EventQueue>().Push(new Event(EntityStrategy.HitEventPath(me.Entity), ""));
             }
 
-            if (0 != (other.LayerMask & 0x0007))
+            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyVehicle))
             {
                 I.Get<EventQueue>().Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
             }

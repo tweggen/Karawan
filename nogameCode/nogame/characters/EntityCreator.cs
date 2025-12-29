@@ -161,7 +161,8 @@ public class EntityCreator
                             | CollisionProperties.CollisionFlags.IsDetectable
                             | CollisionProperties.CollisionFlags.TriggersCallbacks,
                         Name = $"{PhysicsName}.RightHand",
-                        LayerMask = 0x0010,
+                        SolidLayerMask = CollisionProperties.Layers.PlayerMelee,
+                        SensitiveLayerMask = 0
                     };
                 engine.physics.Object po;
                 lock (_engine.Simulation)

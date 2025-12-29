@@ -155,7 +155,8 @@ internal class GenerateCharacterOperator : engine.world.IFragmentOperator
                                         Entity = eTarget,
                                         Flags = CollisionProperties.CollisionFlags.IsDetectable,
                                         Name = "nogame.characters.cube",
-                                        LayerMask = 0x0004
+                                        SolidLayerMask = CollisionProperties.Layers.Collectable,
+                                        SensitiveLayerMask = CollisionProperties.Layers.Player,
                                     }
                                 };
                                 prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));

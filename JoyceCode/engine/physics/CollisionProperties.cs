@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using OneOf.Types;
 
 namespace engine.physics;
 
@@ -23,27 +24,55 @@ public class CollisionProperties
     {
         PlayerCharacter = 0x0001,
         PlayerVehicle = 0x0002,
-        PlayerWeapon = 0x0004,
+        Player = 0x0003,
+        
+        PlayerMelee = 0x0004,
         PlayerBullet = 0x0008,
+        PlayerWeapon = 0x000c,
+        
         NpcCharacter = 0x0010,
         NpcVehicle = 0x0020,
-        NpcWeapon = 0x0040,
-        NpcBullet = 0x0080, 
+        Npc = 0x0030,
+        
+        NpcMelee = 0x0040,
+        NpcBullet = 0x0080,
+        NpcWeapon = 0x00c0,
+        
+        PlayerSensitive = 
+            Npc 
+            | NpcWeapon 
+            
+            | Terrain
+            | StaticEnvironment 
+            | MovableEnvironment
+            | Collectable 
+            | QuestMarker,
+        
+        /**
+         * The usual npc is controlled and does not interact with the environment,
+         * but with other vehicles and armory of the player.
+         */
+        NpcCharacterSensitive = Player | PlayerMelee | PlayerBullet | NpcVehicle, 
+        
+        AnyVehicle = PlayerVehicle | NpcVehicle,
+        AnyWeapon = PlayerWeapon | NpcWeapon,
+        
         Terrain = 0x0100,
         StaticEnvironment = 0x0200,
         MovableEnvironment = 0x0400,
-        Collectables = 0x0800,
-        QuestMarker = 0x1000
+        Collectable = 0x0800,
+        QuestMarker = 0x1000,
+        
+        All = 0xffff
     }
 
     /**
-     * Layers by convention are:
-     * - 0x0001 : The player
-     * - 0x0002 : Other characters that interact with each other
-     * - 0x0004 : Other characters that interact with the player
-     * - 0x0008 : Environment
-     * - 0x0010 : Player weapon
+     * This is the mask of layers I am part of.
      */
-    [JsonInclude]
-    public ushort LayerMask = 0xffff;
+    [JsonInclude] public Layers SolidLayerMask = Layers.All;
+
+    /**
+     * This is the mask of layers I am sensitive to.
+     */
+    [JsonInclude] public Layers SensitiveLayerMask = Layers.All;
 }

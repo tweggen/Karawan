@@ -122,7 +122,8 @@ public class GeneratePolytopeOperator : IFragmentOperator
                         Entity = eTarget,
                         Name = "nogame.furniture.polytopeBall",
                         Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable,
-                        LayerMask = 0x0004,
+                        SolidLayerMask = CollisionProperties.Layers.Collectable,
+                        SensitiveLayerMask = CollisionProperties.Layers.Player
                     }
                 };
                 prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
