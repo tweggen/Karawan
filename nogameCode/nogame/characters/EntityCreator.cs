@@ -22,6 +22,7 @@ public class EntityCreator
     public Quaternion Orientation = Quaternion.Identity;
     public required string PhysicsName;
     public engine.world.Fragment Fragment = null;
+    public string InitialAnimName = null;
     
     public Func<Entity, IBehavior>? BehaviorFactory = null;
     public Func<Entity, IEntityStrategy>? EntityStrategyFactory = null;
@@ -105,6 +106,21 @@ public class EntityCreator
             CharacterModelDescription.EntityAnimations = EntityAnimations;
             CharacterModelDescription.Model = _model;
             CharacterModelDescription.AnimationState = _animStatePerson;
+            
+            if (!_ePerson.Has<engine.joyce.components.GPUAnimationState>())
+            {
+                _ePerson.Set(new engine.joyce.components.GPUAnimationState()
+                {
+                    AnimationState = CharacterModelDescription.AnimationState
+                });
+            }
+            
+            if (InitialAnimName != null)
+            {
+                // TXWTODO: Maybe we can even do an initial animation setup generically?
+                ref var cGpuAnimationState = ref _ePerson.Get<engine.joyce.components.GPUAnimationState>();
+                cGpuAnimationState.AnimationState?.SetAnimation(_model, InitialAnimName);
+            }
         }
         
         if (CollisionPropertiesFactory != null) {

@@ -60,7 +60,8 @@ public class FragmentOperator : IFragmentOperator
             CharacterModelDescription = cmd,
             PhysicsName = EntityName,
             Fragment = ctx.Fragment,
-            Position = v3Pos
+            Position = v3Pos,
+            InitialAnimName = cmd.IdleAnimName
         };
         var model = await creator.CreateAsync();
         
@@ -69,18 +70,6 @@ public class FragmentOperator : IFragmentOperator
             try
             {
                 creator.CreateLogical(eTarget);
-
-                // TXWTODO: Somehow do this generically.
-                if (!eTarget.Has<engine.joyce.components.GPUAnimationState>())
-                {
-                    eTarget.Set(new engine.joyce.components.GPUAnimationState()
-                    {
-                        AnimationState = cmd.AnimationState
-                    });
-                }
-
-                ref var cGpuAnimationState = ref eTarget.Get<engine.joyce.components.GPUAnimationState>();
-                cGpuAnimationState.AnimationState?.SetAnimation(model, cmd.IdleAnimName);
             }
             catch (Exception e)
             {
