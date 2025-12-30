@@ -57,19 +57,54 @@ public class EntityCreator
         try
         {
             /*
-             * Read the current position.
-             * Note, that we need to apply the player's position to the entity for
-             * the walking figure, because it is kinematic as opposed to the ship,
-             * that is dynamic, and thus needs the position on the physics.
+             * If true, we placec the character in this function.
+             * If false, somebody else (behavior, strategy) will place the character,
+             * likely in the very moment we attach the behavior or strategy.
              */
-            ref var v3PlayerPerson = ref Position;
-            ref var qPlayerPerson = ref Orientation;
+            bool doWePlace = true;
+            
+            IEntityStrategy? entityStrategy = null;
+            
+            /*
+             * Create a strategy if we have one.
+             * But do not set it yet.
+             */
+            if (default != EntityStrategyFactory)
+            {
+                try
+                {
+                    entityStrategy = EntityStrategyFactory(_ePerson);
+                    
+                    /*
+                     * If there is an entity strategy, and it has a position
+                     * description, take the initial position from the entity
+                     * strategy.
+                     */
+                    if (entityStrategy != null)
+                    {
+                        doWePlace = false;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Warning($"Unable to instantiate entity strategy: {e}");
+                }
+            }
 
 
-            _aTransform.SetPosition(_ePerson, v3PlayerPerson);
-            _aTransform.SetRotation(_ePerson, qPlayerPerson);
-            _aTransform.SetVisible(_ePerson, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
-            _aTransform.SetCameraMask(_ePerson, 0x0000ffff);
+            if (doWePlace)
+            {
+                /*
+                 * If we are supposed to position the figure, do it right now.
+                 */
+                ref var v3PlayerPerson = ref Position;
+                ref var qPlayerPerson = ref Orientation;
+
+                _aTransform.SetPosition(_ePerson, v3PlayerPerson);
+                _aTransform.SetRotation(_ePerson, qPlayerPerson);
+                _aTransform.SetVisible(_ePerson, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
+                _aTransform.SetCameraMask(_ePerson, 0x0000ffff);
+            }
 
             {
                 builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, InstantiateModelParams);
@@ -136,8 +171,12 @@ public class EntityCreator
                         _engine.PLog, _engine.Simulation,
                         0.3f, 1.8f,
                         out var pbody);
+                    /*
+                     * We place the physics object into the off because the system will
+                     * position the kinematic to its world position anyway. 
+                     */
                     po = new engine.physics.Object(_engine, _ePerson, new TypedIndex() { Packed = uintShape },
-                        v3PlayerPerson, qPlayerPerson, new(0f, personHeight / 2f, 0f))
+                        engine.physics.Object.OffPosition, Quaternion.Identity, new(0f, personHeight / 2f, 0f))
                     {
                         CollisionProperties = personCollisionProperties
                     }.AddContactListener();
@@ -232,7 +271,7 @@ public class EntityCreator
                             out var pbody);
                         po = new engine.physics.Object(_engine, _eRightHand,
                             new TypedIndex() { Packed = uintShape },
-                            v3PlayerPerson, qPlayerPerson)
+                            engine.physics.Object.OffPosition, Quaternion.Identity)
                         {
                             CollisionProperties = rightHandCollisionProperties
                         }.AddContactListener();

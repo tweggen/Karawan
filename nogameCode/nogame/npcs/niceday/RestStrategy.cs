@@ -31,7 +31,11 @@ public class RestStrategy : AEntityStrategyPart
     
     public override void OnEnter()
     {
-        _entity.Set(new engine.behave.components.Behavior(new NearbyBehavior() { EPOI = _entity }));
+        _entity.Set(new engine.behave.components.Behavior(new NearbyBehavior()
+        {
+            EPOI = _entity,
+            PositionDescription = PositionDescription
+        }));
 
         var sm = I.Get<SubscriptionManager>();
         sm.Subscribe(EntityStrategy.CrashHitEventPath(_entity), _onCrashHitEvent);

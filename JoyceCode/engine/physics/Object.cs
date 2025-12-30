@@ -35,6 +35,9 @@ public class Object : IDisposable
     public IList<Action>? ReleaseActions = null;
     
     
+    public static Vector3 OffPosition = new Vector3(0f, -10000f, 0f);
+    
+    
     /**
      * Offset of the physics object to the parent object.
      */
