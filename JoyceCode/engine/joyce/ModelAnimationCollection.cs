@@ -367,7 +367,7 @@ public partial class ModelAnimationCollection
             }
             else
             {
-                Warning($"Matrix for cpu for bone {mnRestPose.Name} could not be ingerted");
+                Warning($"Matrix for cpu for bone {mnRestPose.Name} could not be inserted");
                 cpuBakedFrames[frameno] = Matrix4x4.Identity;
             }
             

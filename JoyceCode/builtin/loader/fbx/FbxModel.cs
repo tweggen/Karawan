@@ -137,9 +137,13 @@ public class FbxModel : IDisposable
             ModelAnimation ma = _model.AnimationCollection.CreateAnimation(mnRestPose);
             ma.Name = String.IsNullOrWhiteSpace(strFallbackName)?aiAnim->MName.ToString():strFallbackName;
             Trace($"Found Animation \"{ma.Name}\" with {nChannels} channels.");
+            if (ma.Name.StartsWith("Walk_Male"))
+            {
+                int a = 1;
+            }
             ma.Duration = (float)aiAnim->MDuration / (float)aiAnim->MTicksPerSecond;
             ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
-            ma.NTicks = (aiAnim->MTicksPerSecond < 0.015f) ? 1 : (uint)(aiAnim->MDuration / aiAnim->MTicksPerSecond);
+            ma.NTicks = (uint)(aiAnim->MDuration);
             ma.MapChannels = new();
             uint nFrames = UInt32.Max((uint)(ma.Duration * 60f), 1);
             ma.NFrames = nFrames;
@@ -977,7 +981,7 @@ public class FbxModel : IDisposable
              * Before loading the additional urls, check, if we have a baked animation file
              * for all of them.
              */
-            try
+            if (false) try
             {
                 haveLoadedBakedAnimations = model.TryLoadModelAnimationCollection(out var animcoll);
                 if (haveLoadedBakedAnimations && animcoll != null)
