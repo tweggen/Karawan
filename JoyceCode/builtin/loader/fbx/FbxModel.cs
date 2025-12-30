@@ -173,46 +173,46 @@ public class FbxModel : IDisposable
             if (keys == null || keys.Length < 2)
                 return;
 
-            // We want to remove ALL leading keys that:
-            //  - have time == 0
-            //  - AND match the rest pose
-            //
-            // This handles:
-            //  - wrapped negative keys (now at t=0)
-            //  - reference pose keys at t=0
-            //  - cases where the rest pose is the 2nd key (or 3rd, etc.)
-            //  - any number of consecutive rest-pose keys at the start
+            // We keep the FIRST key at t=0 that is NOT rest pose.
+            // All other t=0 rest-pose keys are removed.
 
-            int start = 0;
+            List<KeyFrame<Quaternion>> result = new(keys.Length);
 
-            while (start < keys.Length - 1)
+            bool foundNonRestPoseZero = false;
+
+            foreach (var k in keys)
             {
-                // Only consider keys at t=0 as candidates for removal
-                if (keys[start].Time != 0f)
-                    break;
-
-                // If this key is NOT the rest pose, stop trimming
-                if (!IsRestPoseRotation(keys[start].Value, restRot))
-                    break;
-
-                // Otherwise: this is a rest-pose key at t=0 → remove it
-                start++;
+                if (k.Time == 0f)
+                {
+                    if (!IsRestPoseRotation(k.Value, restRot))
+                    {
+                        // Keep the first non-rest-pose key at t=0
+                        if (!foundNonRestPoseZero)
+                        {
+                            result.Add(k);
+                            foundNonRestPoseZero = true;
+                        }
+                        // If we already kept one, drop duplicates at t=0
+                    }
+                    else
+                    {
+                        // Drop rest-pose keys at t=0
+                        continue;
+                    }
+                }
+                else
+                {
+                    // Normal key, keep it
+                    result.Add(k);
+                }
             }
 
-            // Nothing to remove
-            if (start == 0)
-                return;
+            // Copy back into the original array
+            for (int i = 0; i < result.Count; ++i)
+                keys[i] = result[i];
 
-            int newLen = keys.Length - start;
-            if (newLen <= 0)
-                return;
-
-            // Compact the array in-place
-            for (int i = 0; i < newLen; ++i)
-                keys[i] = keys[i + start];
-
-            // Optional: clear trailing unused entries (not required but tidy)
-            for (int i = newLen; i < keys.Length; ++i)
+            // Clear the rest
+            for (int i = result.Count; i < keys.Length; ++i)
                 keys[i] = default;
         }
 
