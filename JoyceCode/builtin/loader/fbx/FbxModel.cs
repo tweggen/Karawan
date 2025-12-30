@@ -111,137 +111,205 @@ public class FbxModel : IDisposable
     }
     
     private unsafe void _loadAnimations(string strFallbackName, Scene* scene, ModelNode mnRestPose)
+{
+    if (scene->MAnimations == null)
+        return;
+
+    uint nAnimations = scene->MNumAnimations;
+    if (nAnimations == 0)
+        return;
+
+    for (int i = 0; i < nAnimations; ++i)
     {
-        if (scene->MAnimations == null)
-            return;
+        var aiAnim = scene->MAnimations[i];
+        if (aiAnim == null || aiAnim->MNumChannels == 0)
+            continue;
 
-        uint nAnimations = scene->MNumAnimations;
-        if (nAnimations == 0)
-            return;
+        uint nChannels = aiAnim->MNumChannels;
 
-        for (int i = 0; i < nAnimations; ++i)
+        ModelAnimation ma = _model.AnimationCollection.CreateAnimation(mnRestPose);
+        ma.Name = string.IsNullOrWhiteSpace(strFallbackName)
+            ? aiAnim->MName.ToString()
+            : strFallbackName;
+
+        ma.Duration       = (float)aiAnim->MDuration / (float)aiAnim->MTicksPerSecond;
+        ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
+        ma.NTicks         = (uint)aiAnim->MDuration;
+        ma.MapChannels    = new();
+
+        uint nFrames = UInt32.Max((uint)(ma.Duration * 60f), 1);
+        ma.NFrames = nFrames;
+        _model.AnimationCollection.PushAnimFrames(nFrames);
+
+        // Helpers live inside to keep scope tight
+        static void NormalizeTimes<T>(KeyFrame<T>[]? keys, float duration)
         {
-            var aiAnim = scene->MAnimations[i];
-            if (aiAnim == null || aiAnim->MNumChannels == 0)
+            if (keys == null || keys.Length == 0)
+                return;
+
+            for (int k = 0; k < keys.Length; ++k)
+            {
+                float t = keys[k].Time;
+
+                // Wrap into [0, duration)
+                t = t % duration;
+                if (t < 0)
+                    t += duration;
+
+                keys[k].Time = t;
+            }
+
+            Array.Sort(keys, (a, b) => a.Time.CompareTo(b.Time));
+        }
+
+        static bool IsRestPoseRotation(Quaternion q, Quaternion rest)
+        {
+            // Allow small deviation; adjust threshold if needed
+            return Math.Abs(Quaternion.Dot(q, rest)) > 0.9999f;
+        }
+
+        static void RemoveRestPoseRotationKeys(KeyFrame<Quaternion>[]? keys, Quaternion restRot)
+        {
+            if (keys == null || keys.Length < 2)
+                return;
+
+            // We want to remove ALL leading keys that:
+            //  - have time == 0
+            //  - AND match the rest pose
+            //
+            // This handles:
+            //  - wrapped negative keys (now at t=0)
+            //  - reference pose keys at t=0
+            //  - cases where the rest pose is the 2nd key (or 3rd, etc.)
+            //  - any number of consecutive rest-pose keys at the start
+
+            int start = 0;
+
+            while (start < keys.Length - 1)
+            {
+                // Only consider keys at t=0 as candidates for removal
+                if (keys[start].Time != 0f)
+                    break;
+
+                // If this key is NOT the rest pose, stop trimming
+                if (!IsRestPoseRotation(keys[start].Value, restRot))
+                    break;
+
+                // Otherwise: this is a rest-pose key at t=0 → remove it
+                start++;
+            }
+
+            // Nothing to remove
+            if (start == 0)
+                return;
+
+            int newLen = keys.Length - start;
+            if (newLen <= 0)
+                return;
+
+            // Compact the array in-place
+            for (int i = 0; i < newLen; ++i)
+                keys[i] = keys[i + start];
+
+            // Optional: clear trailing unused entries (not required but tidy)
+            for (int i = newLen; i < keys.Length; ++i)
+                keys[i] = default;
+        }
+
+
+        /*
+         * Given the rest pose matrix, extract the rotation from it.
+         */
+        static Quaternion ExtractRestPoseRotation(ModelNode node)
+        {
+            return Quaternion.CreateFromRotationMatrix(node.Transform.Matrix);
+        }
+
+        for (int j = 0; j < nChannels; ++j)
+        {
+            var aiChannel = aiAnim->MChannels[j];
+            if (aiChannel == null)
                 continue;
 
-            uint nChannels = aiAnim->MNumChannels;
+            string channelNodeName = aiChannel->MNodeName.ToString();
 
-            ModelAnimation ma = _model.AnimationCollection.CreateAnimation(mnRestPose);
-            ma.Name = string.IsNullOrWhiteSpace(strFallbackName) ? aiAnim->MName.ToString() : strFallbackName;
-            ma.Duration = (float)aiAnim->MDuration / (float)aiAnim->MTicksPerSecond;
-            if (ma.Name.StartsWith("Run_InPlace"))
+            if (!_model.Skeleton.MapBones.ContainsKey(channelNodeName) ||
+                !_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
+                continue;
+
+            ModelNode channelNode = _model.ModelNodeTree.MapNodes[channelNodeName];
+
+            if (ma.MapChannels.ContainsKey(channelNode))
+                continue;
+
+            uint nPositionKeys = aiChannel->MNumPositionKeys;
+            uint nScalingKeys  = aiChannel->MNumScalingKeys;
+            uint nRotationKeys = aiChannel->MNumRotationKeys;
+
+            if (nPositionKeys == 0 && nScalingKeys == 0 && nRotationKeys == 0)
+                continue;
+
+            ModelAnimChannel mac = ma.CreateChannel(
+                channelNode,
+                nPositionKeys != 0 ? new KeyFrame<Vector3>[nPositionKeys]     : null,
+                nRotationKeys != 0 ? new KeyFrame<Quaternion>[nRotationKeys] : null,
+                nScalingKeys  != 0 ? new KeyFrame<Vector3>[nScalingKeys]      : null
+            );
+
+            float duration = ma.Duration;
+
+            // Load raw keyframes
+            for (int l = 0; l < nPositionKeys; ++l)
             {
-                int a = 1;
+                mac.Positions![l] = new KeyFrame<Vector3>
+                {
+                    Time  = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
+                    Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
+                };
             }
 
-            ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
-            ma.NTicks = (uint)aiAnim->MDuration;
-            ma.MapChannels = new();
-
-            uint nFrames = UInt32.Max((uint)(ma.Duration * 60f), 1);
-            ma.NFrames = nFrames;
-            _model.AnimationCollection.PushAnimFrames(nFrames);
-
-            for (int j = 0; j < nChannels; ++j)
+            for (int l = 0; l < nScalingKeys; ++l)
             {
-                var aiChannel = aiAnim->MChannels[j];
-                if (aiChannel == null)
-                    continue;
-
-                string channelNodeName = aiChannel->MNodeName.ToString();
-                if (!_model.Skeleton.MapBones.ContainsKey(channelNodeName) ||
-                    !_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
-                    continue;
-
-                ModelNode channelNode = _model.ModelNodeTree.MapNodes[channelNodeName];
-
-                if (ma.MapChannels.ContainsKey(channelNode))
-                    continue;
-
-                uint nPositionKeys = aiChannel->MNumPositionKeys;
-                uint nScalingKeys = aiChannel->MNumScalingKeys;
-                uint nRotationKeys = aiChannel->MNumRotationKeys;
-
-                if (nPositionKeys == 0 && nScalingKeys == 0 && nRotationKeys == 0)
-                    continue;
-
-                ModelAnimChannel mac = ma.CreateChannel(
-                    channelNode,
-                    nPositionKeys != 0 ? new KeyFrame<Vector3>[nPositionKeys] : null,
-                    nRotationKeys != 0 ? new KeyFrame<Quaternion>[nRotationKeys] : null,
-                    nScalingKeys != 0 ? new KeyFrame<Vector3>[nScalingKeys] : null
-                );
-
-                float duration = ma.Duration;
-
-                // -------------------------------
-                //  Load raw keyframes
-                // -------------------------------
-                for (int l = 0; l < nPositionKeys; ++l)
+                mac.Scalings![l] = new KeyFrame<Vector3>
                 {
-                    mac.Positions![l] = new()
-                    {
-                        Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
-                    };
-                }
-
-                for (int l = 0; l < nScalingKeys; ++l)
-                {
-                    mac.Scalings![l] = new()
-                    {
-                        Time = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyceScale(aiChannel->MScalingKeys[l].MValue)
-                    };
-                }
-
-                for (int l = 0; l < nRotationKeys; ++l)
-                {
-                    mac.Rotations![l] = new()
-                    {
-                        Time = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
-                    };
-                }
-
-                // -------------------------------
-                //  NORMALIZE KEYFRAME TIMES
-                // -------------------------------
-                void NormalizeTimes<T>(KeyFrame<T>[]? keys)
-                {
-                    if (keys == null)
-                        return;
-
-                    for (int k = 0; k < keys.Length; ++k)
-                    {
-                        float t = keys[k].Time;
-
-                        // Wrap into [0, duration)
-                        t = t % duration;
-                        if (t < 0)
-                            t += duration;
-
-                        keys[k].Time = t;
-                    }
-
-                    // Re-sort by time
-                    Array.Sort(keys, (a, b) => a.Time.CompareTo(b.Time));
-                }
-
-                NormalizeTimes(mac.Positions);
-                NormalizeTimes(mac.Scalings);
-                NormalizeTimes(mac.Rotations);
-
-                // -------------------------------
-
-                ma.MapChannels[channelNode] = mac;
-                mac.Target = channelNode;
+                    Time  = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
+                    Value = _baxi.ToJoyceScale(aiChannel->MScalingKeys[l].MValue)
+                };
             }
 
-            _model.AnimationCollection.MapAnimations[ma.Name] = ma;
+            for (int l = 0; l < nRotationKeys; ++l)
+            {
+                mac.Rotations![l] = new KeyFrame<Quaternion>
+                {
+                    Time  = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
+                    Value = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
+                };
+            }
+
+            // Normalize times into [0, duration) and sort
+            NormalizeTimes(mac.Positions, duration);
+            NormalizeTimes(mac.Scalings,  duration);
+            NormalizeTimes(mac.Rotations, duration);
+
+            // Extract rest-pose rotation from your baked 4x4 bone matrix.
+            // Replace this with however you access that matrix:
+            //
+            //   Matrix4x4 restMatrix = channelNode.RestPoseMatrix;  // example
+            //   Quaternion restRot   = Quaternion.CreateFromRotationMatrix(restMatrix);
+            //
+            Quaternion restRot = ExtractRestPoseRotation(channelNode);
+
+            // Remove reference/rest-pose rotation keys at t = 0
+            RemoveRestPoseRotationKeys(mac.Rotations, restRot);
+
+            ma.MapChannels[channelNode] = mac;
+            mac.Target = channelNode;
         }
+
+        _model.AnimationCollection.MapAnimations[ma.Name] = ma;
     }
+}
+
 
     #if false
     private unsafe void _loadAnimations(string strFallbackName, Scene *scene, ModelNode mnRestPose)
