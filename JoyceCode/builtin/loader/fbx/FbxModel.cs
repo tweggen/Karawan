@@ -110,7 +110,140 @@ public class FbxModel : IDisposable
         }
     }
     
-    
+    private unsafe void _loadAnimations(string strFallbackName, Scene* scene, ModelNode mnRestPose)
+    {
+        if (scene->MAnimations == null)
+            return;
+
+        uint nAnimations = scene->MNumAnimations;
+        if (nAnimations == 0)
+            return;
+
+        for (int i = 0; i < nAnimations; ++i)
+        {
+            var aiAnim = scene->MAnimations[i];
+            if (aiAnim == null || aiAnim->MNumChannels == 0)
+                continue;
+
+            uint nChannels = aiAnim->MNumChannels;
+
+            ModelAnimation ma = _model.AnimationCollection.CreateAnimation(mnRestPose);
+            ma.Name = string.IsNullOrWhiteSpace(strFallbackName) ? aiAnim->MName.ToString() : strFallbackName;
+            ma.Duration = (float)aiAnim->MDuration / (float)aiAnim->MTicksPerSecond;
+            if (ma.Name.StartsWith("Run_InPlace"))
+            {
+                int a = 1;
+            }
+
+            ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
+            ma.NTicks = (uint)aiAnim->MDuration;
+            ma.MapChannels = new();
+
+            uint nFrames = UInt32.Max((uint)(ma.Duration * 60f), 1);
+            ma.NFrames = nFrames;
+            _model.AnimationCollection.PushAnimFrames(nFrames);
+
+            for (int j = 0; j < nChannels; ++j)
+            {
+                var aiChannel = aiAnim->MChannels[j];
+                if (aiChannel == null)
+                    continue;
+
+                string channelNodeName = aiChannel->MNodeName.ToString();
+                if (!_model.Skeleton.MapBones.ContainsKey(channelNodeName) ||
+                    !_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
+                    continue;
+
+                ModelNode channelNode = _model.ModelNodeTree.MapNodes[channelNodeName];
+
+                if (ma.MapChannels.ContainsKey(channelNode))
+                    continue;
+
+                uint nPositionKeys = aiChannel->MNumPositionKeys;
+                uint nScalingKeys = aiChannel->MNumScalingKeys;
+                uint nRotationKeys = aiChannel->MNumRotationKeys;
+
+                if (nPositionKeys == 0 && nScalingKeys == 0 && nRotationKeys == 0)
+                    continue;
+
+                ModelAnimChannel mac = ma.CreateChannel(
+                    channelNode,
+                    nPositionKeys != 0 ? new KeyFrame<Vector3>[nPositionKeys] : null,
+                    nRotationKeys != 0 ? new KeyFrame<Quaternion>[nRotationKeys] : null,
+                    nScalingKeys != 0 ? new KeyFrame<Vector3>[nScalingKeys] : null
+                );
+
+                float duration = ma.Duration;
+
+                // -------------------------------
+                //  Load raw keyframes
+                // -------------------------------
+                for (int l = 0; l < nPositionKeys; ++l)
+                {
+                    mac.Positions![l] = new()
+                    {
+                        Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
+                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
+                    };
+                }
+
+                for (int l = 0; l < nScalingKeys; ++l)
+                {
+                    mac.Scalings![l] = new()
+                    {
+                        Time = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
+                        Value = _baxi.ToJoyceScale(aiChannel->MScalingKeys[l].MValue)
+                    };
+                }
+
+                for (int l = 0; l < nRotationKeys; ++l)
+                {
+                    mac.Rotations![l] = new()
+                    {
+                        Time = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
+                        Value = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
+                    };
+                }
+
+                // -------------------------------
+                //  NORMALIZE KEYFRAME TIMES
+                // -------------------------------
+                void NormalizeTimes<T>(KeyFrame<T>[]? keys)
+                {
+                    if (keys == null)
+                        return;
+
+                    for (int k = 0; k < keys.Length; ++k)
+                    {
+                        float t = keys[k].Time;
+
+                        // Wrap into [0, duration)
+                        t = t % duration;
+                        if (t < 0)
+                            t += duration;
+
+                        keys[k].Time = t;
+                    }
+
+                    // Re-sort by time
+                    Array.Sort(keys, (a, b) => a.Time.CompareTo(b.Time));
+                }
+
+                NormalizeTimes(mac.Positions);
+                NormalizeTimes(mac.Scalings);
+                NormalizeTimes(mac.Rotations);
+
+                // -------------------------------
+
+                ma.MapChannels[channelNode] = mac;
+                mac.Target = channelNode;
+            }
+
+            _model.AnimationCollection.MapAnimations[ma.Name] = ma;
+        }
+    }
+
+    #if false
     private unsafe void _loadAnimations(string strFallbackName, Scene *scene, ModelNode mnRestPose)
     {
         if (null == scene->MAnimations)
@@ -137,7 +270,7 @@ public class FbxModel : IDisposable
             ModelAnimation ma = _model.AnimationCollection.CreateAnimation(mnRestPose);
             ma.Name = String.IsNullOrWhiteSpace(strFallbackName)?aiAnim->MName.ToString():strFallbackName;
             Trace($"Found Animation \"{ma.Name}\" with {nChannels} channels.");
-            if (ma.Name.StartsWith("Walk_Male"))
+            if (ma.Name.StartsWith("Run_InPlace"))
             {
                 int a = 1;
             }
@@ -229,6 +362,7 @@ public class FbxModel : IDisposable
             _model.AnimationCollection.MapAnimations[ma.Name] = ma;
         } 
     }
+    #endif
 
 
     private unsafe engine.joyce.Material _findMaterial(uint materialIndex, AssimpMesh.MColorsBuffer* colorsBuffer)
