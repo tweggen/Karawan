@@ -100,10 +100,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\PersonSpeakingEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\World.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\CharacterModelDescriptionFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\CharacterState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\EntityStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\Factory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\FragmentOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\NearbyBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\RestStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\HelloFishmonger\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\VisitAgentTwelve\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\loading\LoadingSpinBehavior.cs" />

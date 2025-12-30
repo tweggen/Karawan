@@ -5,6 +5,7 @@ using engine;
 using engine.behave;
 using engine.draw.components;
 using engine.joyce;
+using engine.joyce.components;
 using engine.news;
 using nogame.modules.story;
 
@@ -12,8 +13,9 @@ namespace nogame.tools;
 
 public abstract class ANearbyBehavior : ABehavior
 {
-    protected object _lo = new();
+    public PositionDescription? PositionDescription = null;
     
+    protected object _lo = new();
     protected Engine _engine;
     protected DefaultEcs.Entity _eTarget;
     public DefaultEcs.Entity EPOI;
@@ -122,8 +124,6 @@ public abstract class ANearbyBehavior : ABehavior
             return;
         }
 
-        _engine = engine0;
-        _eTarget = entity;
         _mayConverse = I.Get<Narration>().MayConverse();
         _eActionMarker = engine0.CreateEntity("poi.nogame.npcs.nicegui.action");
         _eActionMarker.Set(new OSDText(
@@ -142,5 +142,24 @@ public abstract class ANearbyBehavior : ABehavior
         sm.Subscribe(engine.news.Event.INPUT_BUTTON_PRESSED, _onInputButton, _onInputButtonDistance);
         sm.Subscribe(ActionEvent, OnAction);
         sm.Subscribe(nogame.modules.story.Narration.EventTypeCurrentState, _onNarrationStateChanged);
+    }
+
+
+    public override void OnAttach(in Engine engine0, in Entity entity0)
+    {
+        _engine = engine0;
+        _eTarget = entity0;
+
+        /*
+         * If we have a position description, place ourselves. 
+         */
+        if (null != PositionDescription)
+        {
+            _eTarget.Set(new engine.joyce.components.Transform3ToWorld(
+                0x00000001, 
+                Transform3ToWorld.Visible,
+                Matrix4x4.CreateFromQuaternion(PositionDescription.Orientation)
+                *Matrix4x4.CreateTranslation(PositionDescription.Position)));
+        }
     }
 }

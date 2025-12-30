@@ -36,12 +36,6 @@ public class CharacterCreator
         new BepuPhysics.Collidables.Cylinder(
             0.2f, 1.00f)
         .ComputeInertia(CharacterCreator.PhysicsMass);
-
-    private static object _classLock = new();
-
-    private static ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
-
-    private static bool _trace = false;
     
     
     public static async Task<OneOf<None, Action<DefaultEcs.Entity>>> GenerateRandomCharacter(
@@ -64,10 +58,6 @@ public class CharacterCreator
             Fragment = worldFragment
         };
         var model = await creator.CreateAsync();
-
-        return (Action<DefaultEcs.Entity>)(eTarget =>
-        {
-            creator.CreateLogical(eTarget);
-        });
+        return (Action<DefaultEcs.Entity>)(eTarget => creator.CreateLogical(eTarget));
     }
 }

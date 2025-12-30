@@ -1,8 +1,7 @@
-namespace nogame.characters.citizen;
+namespace nogame.npcs.niceday;
 
 public class CharacterState
 {
-    public required float BasicSpeed;
     public float Health = 100f;
     public float MaxHealth = 100f;
 }

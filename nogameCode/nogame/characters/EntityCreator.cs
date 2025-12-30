@@ -54,197 +54,205 @@ public class EntityCreator
 
     private Entity _createLogical()
     {
-        /*
-         * Read the current position.
-         * Note, that we need to apply the player's position to the entity for
-         * the walking figure, because it is kinematic as opposed to the ship,
-         * that is dynamic, and thus needs the position on the physics.
-         */
-        ref var v3PlayerPerson = ref Position;
-        ref var qPlayerPerson = ref Orientation;
-
-
-        _aTransform.SetPosition(_ePerson, v3PlayerPerson);
-        _aTransform.SetRotation(_ePerson, qPlayerPerson);
-        _aTransform.SetVisible(_ePerson, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
-        _aTransform.SetCameraMask(_ePerson, 0x0000ffff);
-
+        try
         {
-            builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, InstantiateModelParams);
-            modelBuilder.BuildEntity(_ePerson);
-            I.Get<ModelCache>().BuildPerInstancePhysics(_ePerson, modelBuilder, _model, ModelCacheParams);
-            EntityAnimations = modelBuilder.GetAnimationsEntity();
-            
             /*
-             * We already setup the FromModel in case we utilize one of the characters as
-             * subject of a Quest.
+             * Read the current position.
+             * Note, that we need to apply the player's position to the entity for
+             * the walking figure, because it is kinematic as opposed to the ship,
+             * that is dynamic, and thus needs the position on the physics.
              */
-            _ePerson.Set(new engine.joyce.components.FromModel()
+            ref var v3PlayerPerson = ref Position;
+            ref var qPlayerPerson = ref Orientation;
+
+
+            _aTransform.SetPosition(_ePerson, v3PlayerPerson);
+            _aTransform.SetRotation(_ePerson, qPlayerPerson);
+            _aTransform.SetVisible(_ePerson, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
+            _aTransform.SetCameraMask(_ePerson, 0x0000ffff);
+
             {
-                Model = _model, ModelCacheParams = ModelCacheParams
-            });
-
-
-        }
-
-        if (Fragment != null)
-        {
-            int fragmentId = Fragment.NumericalId;
-            _ePerson.Set(new engine.world.components.Owner(fragmentId));
-            
-            /*
-             * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
-             * That way, the character will not be cleaned up immediately.
-             */
-            _ePerson.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
-                Matrix4x4.CreateTranslation(Fragment.Position)));
-
-        }
-
-        if (default != EntityAnimations)
-        {
-            CharacterModelDescription.EntityAnimations = EntityAnimations;
-            CharacterModelDescription.Model = _model;
-            CharacterModelDescription.AnimationState = _animStatePerson;
-            
-            if (!_ePerson.Has<engine.joyce.components.GPUAnimationState>())
-            {
-                _ePerson.Set(new engine.joyce.components.GPUAnimationState()
+                builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, InstantiateModelParams);
+                modelBuilder.BuildEntity(_ePerson);
+                I.Get<ModelCache>().BuildPerInstancePhysics(_ePerson, modelBuilder, _model, ModelCacheParams);
+                EntityAnimations = modelBuilder.GetAnimationsEntity();
+                
+                /*
+                 * We already setup the FromModel in case we utilize one of the characters as
+                 * subject of a Quest.
+                 */
+                _ePerson.Set(new engine.joyce.components.FromModel()
                 {
-                    AnimationState = CharacterModelDescription.AnimationState
+                    Model = _model, ModelCacheParams = ModelCacheParams
                 });
-            }
-            
-            if (InitialAnimName != null)
-            {
-                // TXWTODO: Maybe we can even do an initial animation setup generically?
-                ref var cGpuAnimationState = ref _ePerson.Get<engine.joyce.components.GPUAnimationState>();
-                cGpuAnimationState.AnimationState?.SetAnimation(_model, InitialAnimName);
-            }
-        }
-        
-        if (CollisionPropertiesFactory != null) {
-            
-            engine.physics.CollisionProperties personCollisionProperties = CollisionPropertiesFactory(_ePerson);
-            engine.physics.Object po;
-            lock (_engine.Simulation)
-            {
-                float personHeight = 1.8f;
-                uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
-                    _engine.PLog, _engine.Simulation,
-                    0.3f, 1.8f,
-                    out var pbody);
-                po = new engine.physics.Object(_engine, _ePerson, new TypedIndex() { Packed = uintShape },
-                    v3PlayerPerson, qPlayerPerson, new(0f, personHeight / 2f, 0f))
-                {
-                    CollisionProperties = personCollisionProperties
-                }.AddContactListener();
-                _prefPerson = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+
+
             }
 
-            _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
-        }
-
-        {
-            /*
-             * If we created physics for this one, take care to minimize
-             * the distance for physics support.
-             */
-            if (_ePerson.Has<engine.physics.components.Body>())
+            if (Fragment != null)
             {
-                ref var cBody = ref _ePerson.Get<engine.physics.components.Body>();
-                if (cBody.PhysicsObject != null)
+                int fragmentId = Fragment.NumericalId;
+                _ePerson.Set(new engine.world.components.Owner(fragmentId));
+                
+                /*
+                 * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
+                 * That way, the character will not be cleaned up immediately.
+                 */
+                _ePerson.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
+                    Matrix4x4.CreateTranslation(Fragment.Position)));
+
+            }
+
+            if (default != EntityAnimations)
+            {
+                CharacterModelDescription.EntityAnimations = EntityAnimations;
+                CharacterModelDescription.Model = _model;
+                CharacterModelDescription.AnimationState = _animStatePerson;
+                
+                if (!_ePerson.Has<engine.joyce.components.GPUAnimationState>())
                 {
-                    cBody.PhysicsObject.MaxDistance = CharacterModelDescription.PhysicsDistance;
+                    _ePerson.Set(new engine.joyce.components.GPUAnimationState()
+                    {
+                        AnimationState = CharacterModelDescription.AnimationState
+                    });
+                }
+                
+                if (InitialAnimName != null)
+                {
+                    // TXWTODO: Maybe we can even do an initial animation setup generically?
+                    ref var cGpuAnimationState = ref _ePerson.Get<engine.joyce.components.GPUAnimationState>();
+                    cGpuAnimationState.AnimationState?.SetAnimation(_model, InitialAnimName);
                 }
             }
-        }
-
-
-        if (default != EntityStrategyFactory)
-        {
-            try
-            {
-                IEntityStrategy strategy = EntityStrategyFactory(_ePerson);
-                _ePerson.Set(new engine.behave.components.Strategy(strategy));
-            }
-            catch (Exception e)
-            {
-                Warning($"Unable to instantiate entity strategy: {e}");
-            }
-        }
-        
-        if (default != BehaviorFactory)
-        {
-            IBehavior behavior;
-            try
-            {
-                behavior = BehaviorFactory(_ePerson);
-                _ePerson.Set(new engine.behave.components.Behavior(behavior));
-            }
-            catch (Exception e)
-            {
-                Warning($"Unable to instantiate behavior: {e}");
-            }
-        }
-
-        /*
-         * Create a right hand entity attached to animation
-         */
-        if (CreateRightHand)
-        {
-            _eRightHand = _engine.CreateEntity("RootScene.playerperson.righthand");
-            I.Get<HierarchyApi>().SetParent(_eRightHand, _ePerson);
-            I.Get<TransformApi>().SetTransforms(_eRightHand, true,
-                0x0000ffff,
-                Quaternion.Identity, Vector3.Zero);
-            var idRightHandCube = InstanceDesc.CreateFromMatMesh(
-                new MatMesh(
-                    I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),
-                    engine.joyce.mesh.Tools.CreateCubeMesh("RootScene.playerperson.righthand", 0.2f)
-                ), 1000f
-            );
-            _eRightHand.Set(new CpuAnimated()
-                { AnimationState = _animStatePerson, ModelNodeName = "MiddleFinger2_R" });
-            _eRightHand.Set(new Instance3(idRightHandCube));
-
-            {
-                engine.physics.CollisionProperties rightHandCollisionProperties =
-                    new engine.physics.CollisionProperties
-                    {
-                        Entity = _eRightHand,
-                        Flags =
-                            CollisionProperties.CollisionFlags.IsTangible
-                            | CollisionProperties.CollisionFlags.IsDetectable
-                            | CollisionProperties.CollisionFlags.TriggersCallbacks,
-                        Name = $"{PhysicsName}.RightHand",
-                        SolidLayerMask = CollisionProperties.Layers.PlayerMelee,
-                        SensitiveLayerMask = 0
-                    };
+            
+            if (CollisionPropertiesFactory != null) {
+                
+                engine.physics.CollisionProperties personCollisionProperties = CollisionPropertiesFactory(_ePerson);
                 engine.physics.Object po;
                 lock (_engine.Simulation)
                 {
-                    uint uintShape = (uint)engine.physics.actions.CreateSphereShape.Execute(
+                    float personHeight = 1.8f;
+                    uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
                         _engine.PLog, _engine.Simulation,
-                        0.1f,
+                        0.3f, 1.8f,
                         out var pbody);
-                    po = new engine.physics.Object(_engine, _eRightHand,
-                        new TypedIndex() { Packed = uintShape },
-                        v3PlayerPerson, qPlayerPerson)
+                    po = new engine.physics.Object(_engine, _ePerson, new TypedIndex() { Packed = uintShape },
+                        v3PlayerPerson, qPlayerPerson, new(0f, personHeight / 2f, 0f))
                     {
-                        CollisionProperties = rightHandCollisionProperties
+                        CollisionProperties = personCollisionProperties
                     }.AddContactListener();
-                    _prefRightHand = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                    _prefPerson = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
                 }
 
-                _eRightHand.Set(new engine.physics.components.Body(po, _prefRightHand));
-                _eRightHand.Set(new engine.behave.components.Behavior(new HandBehavior()
-                {
-                }));
+                _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
             }
+
+            {
+                /*
+                 * If we created physics for this one, take care to minimize
+                 * the distance for physics support.
+                 */
+                if (_ePerson.Has<engine.physics.components.Body>())
+                {
+                    ref var cBody = ref _ePerson.Get<engine.physics.components.Body>();
+                    if (cBody.PhysicsObject != null)
+                    {
+                        cBody.PhysicsObject.MaxDistance = CharacterModelDescription.PhysicsDistance;
+                    }
+                }
+            }
+
+
+            if (default != EntityStrategyFactory)
+            {
+                try
+                {
+                    IEntityStrategy strategy = EntityStrategyFactory(_ePerson);
+                    _ePerson.Set(new engine.behave.components.Strategy(strategy));
+                }
+                catch (Exception e)
+                {
+                    Warning($"Unable to instantiate entity strategy: {e}");
+                }
+            }
+            
+            if (default != BehaviorFactory)
+            {
+                IBehavior behavior;
+                try
+                {
+                    behavior = BehaviorFactory(_ePerson);
+                    _ePerson.Set(new engine.behave.components.Behavior(behavior));
+                }
+                catch (Exception e)
+                {
+                    Warning($"Unable to instantiate behavior: {e}");
+                }
+            }
+
+            /*
+             * Create a right hand entity attached to animation
+             */
+            if (CreateRightHand)
+            {
+                _eRightHand = _engine.CreateEntity("RootScene.playerperson.righthand");
+                I.Get<HierarchyApi>().SetParent(_eRightHand, _ePerson);
+                I.Get<TransformApi>().SetTransforms(_eRightHand, true,
+                    0x0000ffff,
+                    Quaternion.Identity, Vector3.Zero);
+                var idRightHandCube = InstanceDesc.CreateFromMatMesh(
+                    new MatMesh(
+                        I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),
+                        engine.joyce.mesh.Tools.CreateCubeMesh("RootScene.playerperson.righthand", 0.2f)
+                    ), 1000f
+                );
+                _eRightHand.Set(new CpuAnimated()
+                    { AnimationState = _animStatePerson, ModelNodeName = "MiddleFinger2_R" });
+                _eRightHand.Set(new Instance3(idRightHandCube));
+
+                {
+                    engine.physics.CollisionProperties rightHandCollisionProperties =
+                        new engine.physics.CollisionProperties
+                        {
+                            Entity = _eRightHand,
+                            Flags =
+                                CollisionProperties.CollisionFlags.IsTangible
+                                | CollisionProperties.CollisionFlags.IsDetectable
+                                | CollisionProperties.CollisionFlags.TriggersCallbacks,
+                            Name = $"{PhysicsName}.RightHand",
+                            SolidLayerMask = CollisionProperties.Layers.PlayerMelee,
+                            SensitiveLayerMask = 0
+                        };
+                    engine.physics.Object po;
+                    lock (_engine.Simulation)
+                    {
+                        uint uintShape = (uint)engine.physics.actions.CreateSphereShape.Execute(
+                            _engine.PLog, _engine.Simulation,
+                            0.1f,
+                            out var pbody);
+                        po = new engine.physics.Object(_engine, _eRightHand,
+                            new TypedIndex() { Packed = uintShape },
+                            v3PlayerPerson, qPlayerPerson)
+                        {
+                            CollisionProperties = rightHandCollisionProperties
+                        }.AddContactListener();
+                        _prefRightHand = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                    }
+
+                    _eRightHand.Set(new engine.physics.components.Body(po, _prefRightHand));
+                    _eRightHand.Set(new engine.behave.components.Behavior(new HandBehavior()
+                    {
+                    }));
+                }
+            }
+            return _ePerson;
+        }
+        catch (Exception e)
+        {
+            Warning($"Exception in _createLogical code: {e}");
         }
 
-        return _ePerson;
+        return default;
     }
 
 

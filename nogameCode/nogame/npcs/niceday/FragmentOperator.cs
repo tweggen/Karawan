@@ -27,11 +27,9 @@ public class FragmentOperator : IFragmentOperator
     
     public static readonly string EntityName = "nogame.npcs.niceguy";
 
-    static private object _lo = new();
-    private engine.world.ClusterDesc _clusterDesc;
-    private AABB _clusterAABB;
-    private string _myKey;
-    private Engine _engine;
+    private readonly engine.world.ClusterDesc _clusterDesc;
+    private readonly string _myKey;
+    private readonly Engine _engine;
 
 
     public void FragmentOperatorGetAABB(out AABB aabb)
@@ -46,36 +44,31 @@ public class FragmentOperator : IFragmentOperator
     }
 
 
-    private async Task _placeNPC(Context ctx, Vector3 v3Pos)
+    private async Task _placeNPC(Context ctx, PositionDescription pod)
     {
         /*
          * Right now, this character does not have any behavior.
          */
 
         var cmd = CharacterModelDescriptionFactory.CreateNPC(ctx.Rnd);
+        if (!EntityStrategy.TryCreate(ctx.Rnd, pod, cmd, out var entityStrategy))
+        {
+            return;
+        }
+
+
         EntityCreator creator = new()
         {
-            // no BehaviorFactory
-            BehaviorFactory = entity => new NearbyBehavior() {EPOI = entity},
+            // TXWTODO: Establish this behavior in the RestStrategy.
+            // BehaviorFactory = entity => new NearbyBehavior() {EPOI = entity},
             CharacterModelDescription = cmd,
             PhysicsName = EntityName,
             Fragment = ctx.Fragment,
-            Position = v3Pos,
+            EntityStrategyFactory = e => entityStrategy,
             InitialAnimName = cmd.IdleAnimName
         };
         var model = await creator.CreateAsync();
-        
-        _engine.QueueEntitySetupAction(EntityName, eTarget =>
-        {
-            try
-            {
-                creator.CreateLogical(eTarget);
-            }
-            catch (Exception e)
-            {
-                Warning($"Exception in _placeNPC main code: {e}");
-            }
-        });
+        _engine.QueueEntitySetupAction(EntityName, eTarget => creator.CreateLogical(eTarget));
     }
     
 
@@ -112,11 +105,17 @@ public class FragmentOperator : IFragmentOperator
 
             foreach (var quarter in listForestQuarters)
             {
+                PositionDescription pod = new()
+                {
+                    Fragment = worldFragment,
+                    ClusterDesc = _clusterDesc,
+                    Quarter = quarter,
+                    Position = I.Get<MetaGen>().Loader.GetWalkingPosAt(
+                        _clusterDesc,
+                        _clusterDesc.Pos + quarter.GetCenterPoint3()),
+                };
                 // Trace($"Putting npc in {_clusterDesc.IdString} in {quarter.GetCenterPoint()}");
-                await _placeNPC(ctx, 
-                    I.Get<MetaGen>().Loader.GetWalkingPosAt(
-                        _clusterDesc, 
-                        _clusterDesc.Pos + quarter.GetCenterPoint3()));
+                await _placeNPC(ctx, pod); 
             }
         };
     }
@@ -128,7 +127,6 @@ public class FragmentOperator : IFragmentOperator
     )
     {
         _clusterDesc = clusterDesc;
-        _clusterAABB = clusterDesc.AABB;
         _myKey = strKey;
         _engine = I.Get<Engine>();
     }

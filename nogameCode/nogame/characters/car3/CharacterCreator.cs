@@ -84,23 +84,25 @@ class CharacterCreator
 
     static public StreetPoint? ChooseStreetPoint(builtin.tools.RandomSource rnd, Fragment worldFragment, ClusterDesc clusterDesc)
     {
-        /*
-         * Load all prerequisites
-         */
-        StreetPoint chosenStreetPoint = null;
+        PlacementContext pc = new() {
+            CurrentFragment = worldFragment,
+            CurrentCluster = clusterDesc
+        };
 
-        /*
-         * First, generate the set of street points within this fragemnt.
-         */
-        var listInFragment = clusterDesc.GetStreetPointsInFragment(worldFragment.IdxFragment);
-        var nStreetPoints = listInFragment.Count(); 
-        if (nStreetPoints == 0)
+        PlacementDescription plad = new()
         {
-            return null;
-        }
+            ReferenceObject = PlacementDescription.Reference.StreetPoint,
+            WhichFragment = PlacementDescription.FragmentSelection.CurrentFragment,
+            WhichCluster = PlacementDescription.ClusterSelection.CurrentCluster,
+            WhichQuarter = PlacementDescription.QuarterSelection.AnyQuarter
+        };
 
-        var idxPoint = rnd.GetInt(nStreetPoints - 1);
-        return listInFragment[idxPoint];
+        PositionDescription pod;
+        
+        bool isPlaced = I.Get<Placer>().TryPlacing(rnd, pc, plad, out pod);
+        if (!isPlaced) return null;
+
+        return pod.StreetPoint;
     }
 
 

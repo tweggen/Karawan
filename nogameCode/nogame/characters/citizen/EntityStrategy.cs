@@ -17,7 +17,6 @@ namespace nogame.characters.citizen;
 public class EntityStrategy : AOneOfStrategy
 {
     private readonly RandomSource _rnd;
-    private readonly ClusterDesc _clusterDesc;
     
     private readonly builtin.tools.SegmentNavigator _walkNavigator;
 
@@ -145,13 +144,11 @@ public class EntityStrategy : AOneOfStrategy
 
 
     private EntityStrategy(RandomSource rnd,
-        ClusterDesc clusterDesc,
         CharacterModelDescription cmd,
         PositionDescription pod,
         CharacterState chd)
     {
         _rnd = rnd;
-        _clusterDesc = clusterDesc;
         _cmd = cmd;
         _startPositionDescription = pod;
         CharacterState = chd;
@@ -240,13 +237,12 @@ public class EntityStrategy : AOneOfStrategy
         CharacterState chd = new()
         {
             BasicSpeed = (4f + rnd.GetFloat() * 3f) / 3.6f,
-            Health = 100f
         };
         
         /*
          * Pass all that to the strategy ctor.
          */
-        entityStrategy = new(rnd, clusterDesc, cmd, pod, chd);
+        entityStrategy = new(rnd, cmd, pod, chd);
         
         return true;
     }

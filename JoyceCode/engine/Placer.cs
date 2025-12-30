@@ -269,7 +269,8 @@ public class Placer
             default:
                 break;
         }
-        
+
+        var v3OnTerrain = I.Get<world.MetaGen>().Loader.GetWalkingPosAt(v3ReferenceAccu);
         pod.Position = v3ReferenceAccu;
 
         out_pod = pod;
