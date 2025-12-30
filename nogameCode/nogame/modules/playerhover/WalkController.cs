@@ -121,6 +121,8 @@ public class WalkController : AController, IInputPart
     private bool _isRunPressed = false;
     private bool _isFireTriggered = false;
 
+    private bool _traceWalking = true;
+
 
     protected override void OnLogicalFrame(object sender, float dt)
     {
@@ -499,6 +501,8 @@ public class WalkController : AController, IInputPart
         
         /*
          * First clip the height to world ground. Anything covered by physics must be above.
+         * This means, I can very well intersect physical floor with my legs. So we still
+         * need to raycast the floor.
          */
         float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetWalkingHeightAt(vNewTargetPos);
 
@@ -512,7 +516,7 @@ public class WalkController : AController, IInputPart
                 vNewTargetPos.Y = heightAtTarget;
                 isOnGround = true;
                 _jumpState = JumpState.Grounded;
-                needAdjust = false;
+                needAdjust = true;
             }
         }
 

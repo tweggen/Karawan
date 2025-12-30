@@ -383,7 +383,7 @@ public class Object : IDisposable
         Vector3 bodyOffset = default
         )
     {
-        Entity = entity;
+        Entity = entity;    
         Flags = IsDynamic;
         IntHandle = actions.CreateDynamic.Execute(engine.PLog, engine.Simulation, Position+BodyOffset, Orientation, inertia, shape);
         BodyOffset = bodyOffset;
