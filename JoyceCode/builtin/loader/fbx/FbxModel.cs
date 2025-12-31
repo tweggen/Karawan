@@ -320,7 +320,6 @@ public class FbxModel : IDisposable
             }
         
 
-            
             #if true
             SortedDictionary<double, int> mapRestCandidates = new();
 
@@ -502,11 +501,11 @@ public class FbxModel : IDisposable
                     mac.Positions = tmpPositions.ToArray();
                     
                     var tmpRotations = mac.Rotations.ToList();
-                    tmpPositions.RemoveAll(kf => kf.OrgTime == timeRestFrame);
+                    tmpRotations.RemoveAll(kf => kf.OrgTime == timeRestFrame);
                     mac.Rotations = tmpRotations.ToArray();
                     
                     var tmpScalings = mac.Scalings.ToList();
-                    tmpPositions.RemoveAll(kf => kf.OrgTime == timeRestFrame);
+                    tmpScalings.RemoveAll(kf => kf.OrgTime == timeRestFrame);
                     mac.Scalings = tmpScalings.ToArray();
                 }
                 
@@ -534,129 +533,7 @@ public class FbxModel : IDisposable
             _model.AnimationCollection.MapAnimations[ma.Name] = ma;
         }
     }
-
-
-    #if false
-    private unsafe void _loadAnimations(string strFallbackName, Scene *scene, ModelNode mnRestPose)
-    {
-        if (null == scene->MAnimations)
-        {
-            return;
-        }
-        
-        uint nAnimations = scene->MNumAnimations;
-        if (0 == nAnimations)
-        {
-            return;
-        }
-
-        for (int i = 0; i < nAnimations; ++i)
-        {
-            var aiAnim = scene->MAnimations[i];
-            if (null == aiAnim || 0 == aiAnim->MNumChannels)
-            {
-                continue;
-            }
-
-            uint nChannels = aiAnim->MNumChannels;
-
-            ModelAnimation ma = _model.AnimationCollection.CreateAnimation(mnRestPose);
-            ma.Name = String.IsNullOrWhiteSpace(strFallbackName)?aiAnim->MName.ToString():strFallbackName;
-            Trace($"Found Animation \"{ma.Name}\" with {nChannels} channels.");
-            if (ma.Name.StartsWith("Run_InPlace"))
-            {
-                int a = 1;
-            }
-            ma.Duration = (float)aiAnim->MDuration / (float)aiAnim->MTicksPerSecond;
-            ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
-            ma.NTicks = (uint)(aiAnim->MDuration);
-            ma.MapChannels = new();
-            uint nFrames = UInt32.Max((uint)(ma.Duration * 60f), 1);
-            ma.NFrames = nFrames;
-            _model.AnimationCollection.PushAnimFrames(nFrames);
-
-            for (int j = 0; j < nChannels; ++j)
-            {
-                var aiChannel = aiAnim->MChannels[j];
-                if (null == aiChannel)
-                {
-                    continue;
-                }
-                
-                string channelNodeName = aiChannel->MNodeName.ToString();
-                // Trace($"Animation \"{ma.Name}\" controls channel: {channelNodeName}");
-                if (!_model.Skeleton.MapBones.ContainsKey(channelNodeName))
-                {
-                    Warning($"Found animation channel for unknown bone {channelNodeName}, ignoring.");
-                    continue;
-                }
-                if (!_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
-                {
-                    Warning($"Found animation channel for unknown node {channelNodeName}, ignoring.");
-                    continue;
-                }
-                ModelNode channelNode = _model.ModelNodeTree.MapNodes[channelNodeName];
-
-                if (ma.MapChannels.ContainsKey(channelNode))
-                {
-                    Warning($"Found duplicate animation channel for {channelNodeName}, ignoring.");
-                    continue;
-                }
-
-                /*
-                 * Check, if we already have a bone data structure for this bone
-                 */
-                uint nPositionKeys = aiChannel->MNumPositionKeys;
-                uint nScalingKeys = aiChannel->MNumScalingKeys;
-                uint nRotationKeys = aiChannel->MNumRotationKeys;
-
-                if (0 == nPositionKeys && 0 == nScalingKeys && 0 == nRotationKeys)
-                {
-                    continue;
-                }
-
-                ModelAnimChannel mac = ma.CreateChannel(channelNode,
-                    (nPositionKeys != 0) ? new KeyFrame<Vector3>[nPositionKeys] : null,
-                    (nRotationKeys != 0) ? new KeyFrame<Quaternion>[nRotationKeys] : null,
-                    (nScalingKeys != 0) ? new KeyFrame<Vector3>[nScalingKeys] : null
-                );
-
-                for (int l = 0; l < nPositionKeys; ++l)
-                {
-                    mac.Positions![l] = new()
-                    {
-                        Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
-                    };
-                }
-                
-                for (int l = 0; l < nScalingKeys; ++l)
-                {
-                    mac.Scalings![l] = new()
-                    {
-                        Time = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyceScale(aiChannel->MScalingKeys[l].MValue)
-                    };
-                }
-                
-                for (int l = 0; l < nRotationKeys; ++l)
-                {
-                    mac.Rotations![l] = new()
-                    {
-                        Time = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
-                        Value = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
-                    };
-                }
-                
-                ma.MapChannels[channelNode] = mac;
-                mac.Target = channelNode;
-            }
-
-            _model.AnimationCollection.MapAnimations[ma.Name] = ma;
-        } 
-    }
-    #endif
-
+    
 
     private unsafe engine.joyce.Material _findMaterial(uint materialIndex, AssimpMesh.MColorsBuffer* colorsBuffer)
     {
