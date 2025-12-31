@@ -8,6 +8,7 @@ namespace engine.joyce;
 public struct KeyFrame<T>
 {
     public float Time;
+    public double OrgTime;
     public T Value;
 }
 

@@ -303,6 +303,7 @@ public class FbxModel : IDisposable
                     continue;
                 }
 
+                #if false
                 if (aiChannel->MNumPositionKeys != nKeyframes)
                 {
                     Warning($"Channel {aiChannel->MNodeName} has different number of position keyframes: {aiChannel->MNumPositionKeys} != {nKeyframes}");
@@ -315,90 +316,12 @@ public class FbxModel : IDisposable
                 {
                     Warning($"Channel {aiChannel->MNodeName} has different number of scaling keyframes: {aiChannel->MNumScalingKeys} != {nKeyframes}");
                 }
+                #endif
             }
         
 
-            #if false
-            /*
-             * Don't fortget we just track the sum for t==0
-             */
-            float[] sumRestDot = new float[nKeyframes];
-            uint[] nRestDot = new uint[nKeyframes];
-            int[] channelRestDot = new int[nKeyframes];
-            
-            /*
-             * ... then average the similarities of anything with Time=0f to the
-             * respective rest pose.
-             */
-            for (int j = 0; j < nChannels; ++j)
-            {
-                var aiChannel = aiAnim->MChannels[j];
-                if (aiChannel == null)
-                    continue;
-
-                string channelNodeName = aiChannel->MNodeName.ToString();
-
-                if (!_model.Skeleton.MapBones.ContainsKey(channelNodeName) ||
-                    !_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
-                    continue;
-
-                ModelNode node = _model.ModelNodeTree.MapNodes[channelNodeName];
-
-                if (ma.MapChannels.ContainsKey(node))
-                {
-                    continue;
-                }
-
-                var restRotation = Quaternion.CreateFromRotationMatrix(node.Transform.Matrix);
-
-                var nRotation = aiChannel->MNumRotationKeys;
-                for (int k = 0; k < nRotation; ++k)
-                {
-                    var normalizedTime = aiChannel->MRotationKeys[k].MTime % aiAnim->MDuration;
-                    if (normalizedTime < 0)
-                    {
-                        normalizedTime += aiAnim->MDuration;
-                    }
-                    if (normalizedTime != 0) continue;
-                    nRestDot[k]++;
-                    
-                    float dot = Quaternion.Dot(aiChannel->MRotationKeys[k].MValue, restRotation);
-                    Trace($"dot @{k} @{dot}");
-                    sumRestDot[k] += dot;
-                }
-            }
-            
-            
-            /*
-             * If there is more than one frame for time zero, the one with the highest correlation
-             * is the rest frame.
-             */
-            int idxRestFrame = -1;
-            float maxValue = Single.MinValue;
-            int nPossibleRests = 0;
-            for (int j = 0; j < nKeyframes; ++j)
-            {
-                if (nRestDot[j] == 0) continue;
-                var value = sumRestDot[j] / nRestDot[j];
-                if (value > maxValue)
-                {
-                    maxValue = value;
-                    idxRestFrame = j;
-                    ++nPossibleRests;
-                }
-            }
-
-            /*
-             * We only have a rest frame if we found more than one at t==0.
-             */
-            if (nPossibleRests <= 1)
-            {
-                idxRestFrame = -1;
-            }
-            #endif
             
             #if true
-            int idxRestFrame = -1;
             SortedDictionary<double, int> mapRestCandidates = new();
 
             /*
@@ -464,18 +387,34 @@ public class FbxModel : IDisposable
 
                 if (nZeroes > 1)
                 {
-                    if (mapRestCandidates.TryGetValue(timeChannelsRestFrame, out var nFoundUpToNow);
+                    if (mapRestCandidates.TryGetValue(timeChannelsRestFrame, out var nFoundUpToNow))
                     {
                         mapRestCandidates[timeChannelsRestFrame] = nFoundUpToNow + 1;
-                    } else
+                    } 
+                    else
                     {
                         mapRestCandidates[timeChannelsRestFrame] = 1;
                     }
                 }
             }
             #endif
+            
+            /*
+             * Now find out the timestamp with the most results.
+             */ 
+            double timeRestFrame = Double.MinValue;
+            int maxCount = 0;
+            foreach (var kv in mapRestCandidates)
+            {
+                if (kv.Value > maxCount)
+                {
+                    maxCount = kv.Value;
+                    timeRestFrame = kv.Key;
+                }
+            }
+            
 
-            Trace( $"Detected rest frame {idxRestFrame} in animation {ma.Name}");
+            Trace( $"Detected rest frame @{timeRestFrame} in animation {ma.Name} with {maxCount} votes.");
             
             for (int j = 0; j < nChannels; ++j)
             {
@@ -520,6 +459,7 @@ public class FbxModel : IDisposable
                     mac.Positions![l] = new KeyFrame<Vector3>
                     {
                         Time  = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
+                        OrgTime = (float)aiChannel->MPositionKeys[l].MTime,
                         Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
                     };
                 }
@@ -529,6 +469,7 @@ public class FbxModel : IDisposable
                     mac.Scalings![l] = new KeyFrame<Vector3>
                     {
                         Time  = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
+                        OrgTime = (float)aiChannel->MPositionKeys[l].MTime,
                         Value = _baxi.ToJoyceScale(aiChannel->MScalingKeys[l].MValue)
                     };
                 }
@@ -538,6 +479,7 @@ public class FbxModel : IDisposable
                     mac.Rotations![l] = new KeyFrame<Quaternion>
                     {
                         Time  = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
+                        OrgTime = (float)aiChannel->MPositionKeys[l].MTime,
                         Value = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
                     };
                 }
@@ -551,20 +493,20 @@ public class FbxModel : IDisposable
                 #endif
 
                 /*
-                 * Remove rest frame
+                 * Remove rest frame at thje given time position.
                  */
-                if (false && idxRestFrame >= 0)
+                if (timeRestFrame != Double.MinValue)
                 {
                     var tmpPositions = mac.Positions.ToList();
-                    tmpPositions.RemoveAt(idxRestFrame);
+                    tmpPositions.RemoveAll(kf => kf.OrgTime == timeRestFrame);
                     mac.Positions = tmpPositions.ToArray();
                     
                     var tmpRotations = mac.Rotations.ToList();
-                    tmpRotations.RemoveAt(idxRestFrame);
+                    tmpPositions.RemoveAll(kf => kf.OrgTime == timeRestFrame);
                     mac.Rotations = tmpRotations.ToArray();
                     
                     var tmpScalings = mac.Scalings.ToList();
-                    tmpScalings.RemoveAt(idxRestFrame);
+                    tmpPositions.RemoveAll(kf => kf.OrgTime == timeRestFrame);
                     mac.Scalings = tmpScalings.ToArray();
                 }
                 
