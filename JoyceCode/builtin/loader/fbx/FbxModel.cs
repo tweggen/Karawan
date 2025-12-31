@@ -320,7 +320,6 @@ public class FbxModel : IDisposable
             }
         
 
-            
             #if true
             SortedDictionary<double, int> mapRestCandidates = new();
 
@@ -502,11 +501,11 @@ public class FbxModel : IDisposable
                     mac.Positions = tmpPositions.ToArray();
                     
                     var tmpRotations = mac.Rotations.ToList();
-                    tmpPositions.RemoveAll(kf => kf.OrgTime == timeRestFrame);
+                    tmpRotations.RemoveAll(kf => kf.OrgTime == timeRestFrame);
                     mac.Rotations = tmpRotations.ToArray();
                     
                     var tmpScalings = mac.Scalings.ToList();
-                    tmpPositions.RemoveAll(kf => kf.OrgTime == timeRestFrame);
+                    tmpScalings.RemoveAll(kf => kf.OrgTime == timeRestFrame);
                     mac.Scalings = tmpScalings.ToArray();
                 }
                 
