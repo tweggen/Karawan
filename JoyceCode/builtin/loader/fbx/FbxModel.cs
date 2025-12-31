@@ -514,6 +514,7 @@ public class FbxModel : IDisposable
                 {
                     int a = 1;
                 }
+                
                 /*
                  * Normalize times into [0, duration) and sort
                  */
@@ -966,14 +967,33 @@ public class FbxModel : IDisposable
                 vertices.Add(vertex);
             }
 
-            // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+            /*
+             * now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+             * Meanwhile check if the mesh vertex order matches the normal.
+             */
             for (uint i = 0; i < mesh->MNumFaces; i++)
             {
                 Face face = mesh->MFaces[i];
                 // retrieve all indices of the face and store them in the indices vector
                 if (face.MNumIndices == 3)
                 {
-                    if (_axi.IsLeftHanded)
+                    Vector3 v3AverageNormal =
+                        vertices[(int)face.MIndices[0]].Normal 
+                        + vertices[(int)face.MIndices[1]].Normal 
+                        + vertices[(int)face.MIndices[2]].Normal;
+                    Vector3 v3ComputedNormal =
+                        Vector3.Cross(
+                            vertices[(int)face.MIndices[1]].Position - vertices[(int)face.MIndices[0]].Position,
+                            vertices[(int)face.MIndices[2]].Position - vertices[(int)face.MIndices[0]].Position);
+
+                    bool flip = !_axi.IsLeftHanded;
+
+                    if (Vector3.Dot(v3AverageNormal, v3ComputedNormal) < 0)
+                    {
+                        flip = !flip;
+                    }
+
+                    if (flip)
                     {
                         for (int j = (int)face.MNumIndices-1; j >= 0; j--)
                         {
