@@ -89,6 +89,13 @@ public partial class ModelAnimationCollection
     
     private static void _computeAnimFrame(in ModelAnimChannel mac, ref Matrix4x4 m4Anim, uint frameno)
     {
+        if (mac.ModelAnimation.Name.StartsWith("Run_InPlace") && mac.Target.Name.StartsWith("Elbow_"))
+        {
+            if (frameno == 1 || frameno == mac.ModelAnimation.NFrames - 1)
+            {
+                int a = 1;
+            }
+        }
         var kfPosition = mac.LerpPosition(frameno);
         var kfRotation = mac.SlerpRotation(frameno);
         var kfScaling = mac.LerpScaling(frameno);
