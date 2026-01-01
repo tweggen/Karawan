@@ -79,59 +79,6 @@ public class ModelAnimChannel
         };
     }
 
-#if false
-    private KeyFrame<Vector3> _lerpVector3(ref KeyFrame<Vector3>[] keyframes, uint frameno)
-    {
-        if (ModelAnimation.Name.StartsWith("Walk_Male") && (frameno==1 || frameno==ModelAnimation.NFrames-1))
-        {
-            int a = 1;
-        }
-        int l = keyframes.Length;
-        float animLength = ModelAnimation.Duration;
-        float frametime = Single.Min(frameno / 60f, ModelAnimation.Duration);
-        var key = new KeyFrame<Vector3>() { Time = frametime };
-
-        var idx = Array.BinarySearch<KeyFrame<Vector3>>(keyframes, key, new KeyFrameTimeComparer<Vector3>());
-        if (idx <= 0)
-        {
-            if (idx == 0)
-            {
-                return keyframes[0];
-            }
-
-            /*
-             * If we do not have an exact match, idx is the index of the first element that is larger
-             * than the key.
-             */
-            idx = ~idx;
-            
-            if (idx >= l)
-            {
-                return keyframes[l - 1];
-            }
-        }
-        else if (idx >= l)
-        {
-            return keyframes[l-1];
-        }
-
-        ref KeyFrame<Vector3> prevKey = ref keyframes[(idx+l - 1) % l];
-        ref KeyFrame<Vector3> nextKey = ref keyframes[idx];
-        float tPrev = prevKey.Time;
-        float tNext = nextKey.Time;
-        if (tPrev > tNext)
-        {
-            tPrev -= animLength;
-        }
-        float t = (frametime - tPrev) / (tNext - tPrev);
-        return new KeyFrame<Vector3>()
-            {
-                Time = frametime,
-                Value = Vector3.Lerp(prevKey.Value, nextKey.Value, t)
-            };
-    }
-#endif
-
 
     private KeyFrame<Quaternion> _slerpQuaternion /* Looping */(
         KeyFrame<Quaternion>[] keyframes,
@@ -189,61 +136,6 @@ public class ModelAnimChannel
         };
     }
     
-#if false
-    private KeyFrame<Quaternion> _slerpQuaternion(ref KeyFrame<Quaternion>[] keyframes, uint frameno)
-    {
-        int l = keyframes.Length;
-        float animLength = ModelAnimation.Duration;
-        float frametime = Single.Min(frameno / 60f, ModelAnimation.Duration);
-        var key = new KeyFrame<Quaternion>() { Time = frametime };
-
-        var idx = Array.BinarySearch<KeyFrame<Quaternion>>(keyframes, key, new KeyFrameTimeComparer<Quaternion>());
-        if (idx <= 0)
-        {
-            if (idx == 0)
-            {
-                return keyframes[0];
-            }
-
-            /*
-             * If we do not have an exact match, idx is the index of the first element that is larger
-             * than the key.
-             */
-            idx = ~idx;
-            
-            if (idx >= l)
-            {
-                return keyframes[l - 1];
-            }
-        }
-        else if (idx >= l)
-        {
-            return keyframes[l-1];
-        }
-
-        ref KeyFrame<Quaternion> prevKey = ref keyframes[(idx+l - 1) % l];
-        ref KeyFrame<Quaternion> nextKey = ref keyframes[idx];
-        float tPrev = prevKey.Time;
-        float tNext = nextKey.Time;
-        Quaternion q1 = prevKey.Value;
-        Quaternion q2 = nextKey.Value;
-        if (Quaternion.Dot(q1, q2) < 0)
-        {
-            q2 = -q2;
-        }
-        if (tPrev > tNext)
-        {
-            tPrev -= animLength;
-        }
-        float t = (frametime - tPrev) / (tNext - tPrev);
-        return new KeyFrame<Quaternion>()
-        {
-            Time = frametime,
-            Value = Quaternion.Slerp(q1, q2, t)
-        };
-
-    }
-#endif
 
     public KeyFrame<Vector3> LerpPosition(uint frameno) => _lerpVector3(Positions, frameno);
 

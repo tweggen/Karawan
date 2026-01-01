@@ -112,7 +112,7 @@ public class FbxModel : IDisposable
     }
     
 
-    static void NormalizeTimes<T>(KeyFrame<T>[]? keys, float duration)
+    static void NormalizeTimes<T>(ref KeyFrame<T>[]? keys, float duration)
     {
         if (keys == null || keys.Length == 0)
             return;
@@ -130,6 +130,7 @@ public class FbxModel : IDisposable
         }
 
         Array.Sort(keys, (a, b) => a.Time.CompareTo(b.Time));
+        keys = keys.DistinctBy(k => k.Time).ToArray();
     }
     
 
@@ -246,11 +247,6 @@ public class FbxModel : IDisposable
             ma.NFrames = nFrames;
             _model.AnimationCollection.PushAnimFrames(nFrames);
 
-            if (ma.Name.StartsWith("Walk_InPlace_Female"))
-            {
-                int a = 1;
-            }
-
             /*
              * Before going through the channels, try to identify the identity frame.
              *
@@ -281,44 +277,12 @@ public class FbxModel : IDisposable
                 nKeyframes = UInt32.Max(nKeyframes, aiChannel->MNumScalingKeys);
             }
 
-            /*
-             * Now count again, if all channels really have the same number of keyframes.
-             */
-            for (int j = 0; j < nChannels; ++j)
+
+            if (ma.Name.StartsWith("Run_InPlace"))
             {
-                var aiChannel = aiAnim->MChannels[j];
-                if (aiChannel == null)
-                    continue;
-
-                string channelNodeName = aiChannel->MNodeName.ToString();
-
-                if (!_model.Skeleton.MapBones.ContainsKey(channelNodeName) ||
-                    !_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
-                    continue;
-
-                ModelNode channelNode = _model.ModelNodeTree.MapNodes[channelNodeName];
-
-                if (ma.MapChannels.ContainsKey(channelNode))
-                {
-                    continue;
-                }
-
-                #if false
-                if (aiChannel->MNumPositionKeys != nKeyframes)
-                {
-                    Warning($"Channel {aiChannel->MNodeName} has different number of position keyframes: {aiChannel->MNumPositionKeys} != {nKeyframes}");
-                }
-                if (aiChannel->MNumRotationKeys != nKeyframes)
-                {
-                    Warning($"Channel {aiChannel->MNodeName} has different number of rotation keyframes: {aiChannel->MNumRotationKeys} != {nKeyframes}");
-                }
-                if (aiChannel->MNumScalingKeys != nKeyframes)
-                {
-                    Warning($"Channel {aiChannel->MNodeName} has different number of scaling keyframes: {aiChannel->MNumScalingKeys} != {nKeyframes}");
-                }
-                #endif
+                int a = 1;
             }
-        
+
 
             #if true
             SortedDictionary<double, int> mapRestCandidates = new();
@@ -517,15 +481,15 @@ public class FbxModel : IDisposable
                 /*
                  * Normalize times into [0, duration) and sort
                  */
-                NormalizeTimes(mac.Positions, duration);
-                NormalizeTimes(mac.Scalings,  duration);
-                NormalizeTimes(mac.Rotations, duration);
+                NormalizeTimes(ref mac.Positions, duration);
+                NormalizeTimes(ref mac.Scalings,  duration);
+                NormalizeTimes(ref mac.Rotations, duration);
 
                 ma.MapChannels[channelNode] = mac;
                 mac.Target = channelNode;
             }
             
-            if (ma.Name.StartsWith("Walk_InPlace_Female"))
+            if (ma.Name.StartsWith("Run_InPlace"))
             {
                 int a = 1;
             }
