@@ -212,8 +212,8 @@ public class EntityStrategy : AOneOfStrategy
 
     
     /**
-      * Factory method to try to establish this strategy.
-      */
+     * Factory method to try to establish this strategy.
+     */
     public static bool TryCreate(
         RandomSource rnd,
         ClusterDesc clusterDesc,

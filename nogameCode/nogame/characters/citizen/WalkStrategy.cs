@@ -46,7 +46,6 @@ public class WalkStrategy : AEntityStrategyPart
          */
         Navigator.Speed = CharacterState.BasicSpeed;
 
-
         _entity.Set(new engine.behave.components.Behavior(_walkBehavior));
     }
     

@@ -1268,7 +1268,7 @@ public class FbxModel : IDisposable
              * Before loading the additional urls, check, if we have a baked animation file
              * for all of them.
              */
-            if (false) try
+            try
             {
                 haveLoadedBakedAnimations = model.TryLoadModelAnimationCollection(out var animcoll);
                 if (haveLoadedBakedAnimations && animcoll != null)

@@ -396,6 +396,9 @@ public class WalkController : AController, IInputPart
             bool isShort = (currentFrame - _lastAttackFrame) < 40;
             AttackHand attackHand;
             _isFireTriggered = false;
+            #if true
+            attackHand = AttackHand.RightHand;
+            #else
             if (!isShort)
             {
                 attackHand = AttackHand.RightHand;
@@ -411,6 +414,7 @@ public class WalkController : AController, IInputPart
                     attackHand = AttackHand.RightHand;
                 }
             }
+            #endif
 
             newAnimState = attackHand == AttackHand.RightHand?CharacterAnimState.PunchingRight:CharacterAnimState.PunchingLeft;
             isOneShot = true;

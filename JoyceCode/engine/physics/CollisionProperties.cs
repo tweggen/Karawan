@@ -52,7 +52,7 @@ public class CollisionProperties
          * The usual npc is controlled and does not interact with the environment,
          * but with other vehicles and armory of the player.
          */
-        NpcCharacterSensitive = Player | PlayerMelee | PlayerBullet | NpcVehicle, 
+        NpcCharacterSensitive = PlayerVehicle | PlayerMelee | PlayerBullet | NpcVehicle, 
         
         AnyVehicle = PlayerVehicle | NpcVehicle,
         AnyWeapon = PlayerWeapon | NpcWeapon,
