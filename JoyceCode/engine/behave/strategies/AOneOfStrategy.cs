@@ -65,8 +65,6 @@ public abstract class AOneOfStrategy : IStrategyController, IStrategyPart, IEnti
             IEntityStrategy? entityStrategy = strategy as IEntityStrategy;
             if (entityStrategy != null) entityStrategy.OnAttach(engine0, entity);
         }
-        
-        TriggerStrategy(GetStartStrategy());
     }
     
     #endregion
