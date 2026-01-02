@@ -6,7 +6,13 @@ using engine.world.components;
 
 namespace engine.behave.systems;
 
-
+/**
+ * Kill all entities that have an owner and are outside of the current keep setting.
+ * Entities are killed if they have an owner and a behavior.
+ * The idea is that anyone who created them and lives as an owner would be
+ * able to recreate them.
+ * So take to better keep your position correct!
+ */
 [DefaultEcs.System.With(typeof(components.Behavior))]
 [DefaultEcs.System.With(typeof(joyce.components.Transform3ToWorld))]
 [DefaultEcs.System.With(typeof(Owner))]
@@ -26,6 +32,11 @@ internal class WiperSystem : DefaultEcs.System.AEntitySetSystem<engine.geom.AABB
         entities.CopyTo(copy);
         foreach (var entity in copy)
         {
+            if (entity.Has<engine.joyce.components.EntityName>() && entity.Get<engine.joyce.components.EntityName>()
+                    .Name.StartsWith("poi.nogame.npcs.nicegui.action"))
+            {
+                int a = 1;
+            }
             Vector3 pos = entity.Get<joyce.components.Transform3ToWorld>().Matrix.Translation;
             if (aabb.Contains(pos))
             {

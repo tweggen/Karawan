@@ -102,7 +102,12 @@ public abstract class ANearbyBehavior : ABehavior
         sm.Unsubscribe(engine.news.Event.INPUT_BUTTON_PRESSED, _onInputButton);
         _eActionMarker.Dispose();
     }
-    
+
+
+    public override void Sync(in Entity entity)
+    {
+        int a = 1;
+    }
     
     public override void OnDetach(in Entity entity)
     {
@@ -160,6 +165,8 @@ public abstract class ANearbyBehavior : ABehavior
                 Transform3ToWorld.Visible,
                 Matrix4x4.CreateFromQuaternion(PositionDescription.Orientation)
                 *Matrix4x4.CreateTranslation(PositionDescription.Position)));
+            _eTarget.Set(new engine.joyce.components.Transform3(true, 0x00000001, 
+                PositionDescription.Orientation, PositionDescription.Position));
         }
     }
 }

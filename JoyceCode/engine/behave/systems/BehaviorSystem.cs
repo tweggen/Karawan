@@ -35,6 +35,18 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
         entities.CopyTo(copiedEntities);
         foreach (var entity in copiedEntities)
         {
+            #if false
+            if (entity.Has<joyce.components.EntityName>())
+            {
+                ref var cEntityName = ref entity.Get<joyce.components.EntityName>();
+                string strEntityName = cEntityName.Name;
+                if (strEntityName.StartsWith("nogame.npcs.niceguy"))
+                {
+                    int a = 1;
+                }
+
+            }
+            #endif
             /*
              * We automagically update velocity from behavior.
              * Assuming, that it modifies Transform3

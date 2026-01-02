@@ -315,6 +315,7 @@ namespace engine.world
                  * And because the entities in addition have their FragmentId set, they would be
                  * deleted even if they currently are somewhere else.
                  */
+                Trace($"Purging behaviors outside of fragment {aabb.ToString()}.");
                 _engine.QueueCleanupAction(() => _wiperSystem.Update(aabb));
 
                 /*
