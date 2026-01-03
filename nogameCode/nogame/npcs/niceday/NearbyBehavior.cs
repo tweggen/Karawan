@@ -1,12 +1,5 @@
-using System;
-using System.Numerics;
-using DefaultEcs;
 using engine;
-using engine.behave;
-using engine.draw.components;
-using engine.joyce;
 using engine.news;
-using nogame.modules.story;
 
 namespace nogame.npcs.niceday;
 

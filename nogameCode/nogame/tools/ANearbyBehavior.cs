@@ -130,7 +130,7 @@ public abstract class ANearbyBehavior : ABehavior
         }
 
         _mayConverse = I.Get<Narration>().MayConverse();
-        _eActionMarker = engine0.CreateEntity("poi.nogame.npcs.nicegui.action");
+        _eActionMarker = engine0.CreateEntity(EntityName);
         _eActionMarker.Set(new OSDText(
             new Vector2(-100f, 0f), new Vector2(200f, 14f), 
             "E to talk", 18, 0xff22aaee,
