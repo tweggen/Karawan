@@ -580,6 +580,14 @@ public partial class ModelAnimationCollection
                     if (boneIdx >= 0 && boneIdx < frame0.BoneTransformations.Length)
                     {
                         var m = frame0.BoneTransformations[boneIdx];
+                        
+                        // Check determinant - negative means reflection/flip
+                        float det = m.GetDeterminant();
+                        if (det < 0)
+                        {
+                            Warning($"Spike: Animation '{ma.Name}' bone '{boneKvp.Key}' (index {boneIdx}) has NEGATIVE determinant {det:F4} - geometry will be flipped!");
+                        }
+                        
                         // Check if it's still identity (never touched during baking)
                         bool isIdentity = 
                             Math.Abs(m.M11 - 1f) < 0.0001f && Math.Abs(m.M22 - 1f) < 0.0001f && 
