@@ -158,6 +158,16 @@ public class Model
         {
             return false;
         }
+        
+        /*
+         * Allow disabling pre-baked animation loading via global settings.
+         * Useful for debugging bone weight issues or forcing re-baking.
+         */
+        if (engine.GlobalSettings.Get("joyce.DisablePrebakedAnimations") == "true")
+        {
+            Trace($"Pre-baked animations disabled via joyce.DisablePrebakedAnimations setting.");
+            return false;
+        }
 
         try
         {
