@@ -939,6 +939,10 @@ public class FbxModel : IDisposable
 
                         if (4 == l)
                         {
+                            /*
+                             * All 4 bone slots are occupied. Find the one with minimum weight
+                             * and replace it only if the new weight is greater.
+                             */
                             int minL = -1;
                             float minW = Single.MaxValue;
                             for (l = 0; l < 4; ++l)
@@ -950,14 +954,10 @@ public class FbxModel : IDisposable
                                 }
                             }
 
-                            if (minL != -1)
+                            if (minL != -1 && weight > minW)
                             {
                                 w4[minL] = weight;
                                 i4[minL] = (int)boneIndex;
-                            }
-                            else
-                            {
-                                int a = 1;
                             }
                         }
 
