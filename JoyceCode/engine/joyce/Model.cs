@@ -28,8 +28,6 @@ public class Model
     public string ModelUrl = "";
     public string? AnimationUrls = null;
     
-    public int MAX_BONES = 120;
-    
     public Skeleton? Skeleton = null;
     
     public float Scale = 1.0f;

@@ -405,6 +405,10 @@ public class SilkThreeD : IThreeD
                              * If we are supposed to load bone animations, let's do that.
                              */
                             int nBones = model.Skeleton!.NBones;
+                            if (nBones >= engine.joyce.Constants.MaxBones)
+                            {
+                                int a = 1;
+                            }
 #if false
                             Span<float> span =
                                 MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
@@ -430,6 +434,10 @@ public class SilkThreeD : IThreeD
                         {
                             vertexFlags = 1;
                             int nBones = model.Skeleton!.NBones;
+                            if (nBones >= engine.joyce.Constants.MaxBones)
+                            {
+                                int a = 1;
+                            }
                             sh.SetUniform(_locNBones, (uint)nBones);
                             _silkRenderState.UseBoneMatricesFrameUBO(model, modelAnimation, frameno);
                         }

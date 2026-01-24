@@ -528,11 +528,17 @@ public partial class ModelAnimationCollection
             ma.NFrames = nFrames;
             ma.BakedFrames = new ModelBakedFrame[ma.NFrames];
 
+            if (_model.Skeleton.NBones >= engine.joyce.Constants.MaxBones)
+            {
+                int a = 1;
+            }
+            
             for (int frameno = 0; frameno < nFrames; ++frameno)
             {
                 ModelBakedFrame bakedFrame = new()
                 {
-                    BoneTransformations = new Matrix4x4[Int32.Max(_model.Skeleton.NBones, _model.MAX_BONES)]
+                    BoneTransformations = new Matrix4x4[
+                        Int32.Max(_model.Skeleton.NBones, engine.joyce.Constants.MaxBones)]
                 };
                 for (int i = 0; i < bakedFrame.BoneTransformations.Length; ++i)
                     bakedFrame.BoneTransformations[i] = Matrix4x4.Identity;
