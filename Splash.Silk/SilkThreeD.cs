@@ -293,6 +293,9 @@ public class SilkThreeD : IThreeD
                 _locFrameno = shader.GetAttrib("instanceFrameno");
                 _locNBones = shader.GetUniform("nBones");
                 break;
+            case Flags.GLAnimBuffers.AnimUBO:
+                _locNBones = shader.GetUniform("nBones");
+                break;
             case Flags.GLAnimBuffers.AnimUniform:
                 _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
                 break;
@@ -426,6 +429,8 @@ public class SilkThreeD : IThreeD
                         if (model != null && modelAnimation != null)
                         {
                             vertexFlags = 1;
+                            int nBones = model.Skeleton!.NBones;
+                            sh.SetUniform(_locNBones, (uint)nBones);
                             _silkRenderState.UseBoneMatricesFrameUBO(model, modelAnimation, frameno);
                         }
                     }

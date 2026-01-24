@@ -28,6 +28,9 @@ uniform mat4 mvp;
 #if USE_ANIM_SSBO
 uniform uint nBones;
 #endif
+#if USE_ANIM_UBO
+uniform uint nBones;
+#endif
 #if USE_ANIM_UNIFORM
 uniform mat4 m4BoneMatrices[MAX_BONES];
 #endif
@@ -97,6 +100,34 @@ void main()
                     totalWeight = 1.0;
                     break;
                 }
+#if USE_ANIM_SSBO
+                /*
+                 * Additional check for SSBO: bone index must be within this model's
+                 * actual bone count, not just MAX_BONES. Otherwise we'd read garbage
+                 * from the SSBO (matrix from wrong frame or out of bounds).
+                 */
+                if (uint(boneId) >= nBones)
+                {
+                    v4TotalPosition = v4Vertex;
+                    v3TotalNormal = vertexNormal;
+                    totalWeight = 1.0;
+                    break;
+                }
+#endif
+#if USE_ANIM_UBO
+                /*
+                 * Additional check for UBO: bone index must be within this model's
+                 * actual bone count. The UBO is only filled with nBones matrices,
+                 * so reading beyond that would access uninitialized GPU memory.
+                 */
+                if (uint(boneId) >= nBones)
+                {
+                    v4TotalPosition = v4Vertex;
+                    v3TotalNormal = vertexNormal;
+                    totalWeight = 1.0;
+                    break;
+                }
+#endif
                 
                 mat4 m4BoneMatrix;
 #if USE_ANIM_SSBO
@@ -132,6 +163,17 @@ void main()
              * This prevents division by zero when v4TotalPosition.w == 0.
              */
             if (totalWeight == 0.0)
+            {
+                v4TotalPosition = v4Vertex;
+                v3TotalNormal = vertexNormal;
+            }
+            
+            /*
+             * Safety check: if w component is zero or very small (e.g., from
+             * garbage bone matrix data), fall back to original position to
+             * avoid Inf/NaN from the division below.
+             */
+            if (abs(v4TotalPosition.w) < 0.0001)
             {
                 v4TotalPosition = v4Vertex;
                 v3TotalNormal = vertexNormal;

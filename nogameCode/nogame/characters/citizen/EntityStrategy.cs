@@ -37,6 +37,9 @@ public class EntityStrategy : AOneOfStrategy
         $"@{e.ToString()}/nogame.characters.citizen.onHit";
 
 
+    /**
+     * I was hit by a vehicle
+     */
     private void _onCrashEvent(Event ev)
     {
         /*
@@ -46,12 +49,21 @@ public class EntityStrategy : AOneOfStrategy
     }
 
 
+    /**
+     * I was hit by a weapon
+     */
     private void _onHitEvent(Event ev)
     {
         /*
-         * If we are not already in flee, trigger flee.
+         * When I was hit by a weapon, flee, if you can.
+         * So flee, if you are not recovering and not already fleeing.
          */
-        TriggerStrategy("flee");
+        var activeStrategy = GetActiveStrategy();
+
+        if (activeStrategy != Strategies["recover"])
+        {
+            TriggerStrategy("flee");
+        }
     }
     
     
