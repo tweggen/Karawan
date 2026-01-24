@@ -868,6 +868,7 @@ public class FbxModel : IDisposable
              */
             if (mesh->MNumBones > 0 && mesh->MBones != null)
             {
+                Trace($"Spike: Processing mesh with {mesh->MNumBones} bones, {nMeshVertices} vertices");
                 /*
                  * For this mesh, there a bones given that influence the mesh.
                  * So collect the information about each individual bone.
@@ -998,6 +999,38 @@ public class FbxModel : IDisposable
                     jMesh.BoneIndices[j] = i4;
                     jMesh.BoneWeights[j] = w4;
 
+                }
+                
+                /*
+                 * Spike debug: Check for problematic vertex bone assignments
+                 */
+                int nBonesInSkeleton = skeleton.NBones;
+                for (int j = 0; j < nMeshVertices; ++j)
+                {
+                    var i4 = jMesh.BoneIndices[j];
+                    var w4 = jMesh.BoneWeights[j];
+                    
+                    // Check for vertices with no bone assignments
+                    if (i4[0] == -1 && i4[1] == -1 && i4[2] == -1 && i4[3] == -1)
+                    {
+                        Warning($"Spike: Vertex {j} has no bone assignments");
+                    }
+                    
+                    // Check for bone indices that exceed skeleton bone count
+                    for (int l = 0; l < 4; ++l)
+                    {
+                        if (i4[l] != -1 && i4[l] >= nBonesInSkeleton)
+                        {
+                            Warning($"Spike: Vertex {j} has bone index {i4[l]} >= nBones {nBonesInSkeleton}");
+                        }
+                    }
+                    
+                    // Check for zero total weight with assigned bones
+                    float totalW = w4[0] + w4[1] + w4[2] + w4[3];
+                    if (i4[0] != -1 && totalW < 0.001f)
+                    {
+                        Warning($"Spike: Vertex {j} has bones assigned but near-zero total weight {totalW}");
+                    }
                 }
             }
 

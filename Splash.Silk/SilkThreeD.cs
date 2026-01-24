@@ -378,6 +378,14 @@ public class SilkThreeD : IThreeD
             if (skAnimationsEntry != null)
             {
                 /*
+                 * Spike debug: Log animation strategy once
+                 */
+                if (_frameno % 300 == 0)
+                {
+                    Trace($"Spike: skAnimationsEntry.AnimStrategy = {skAnimationsEntry.AnimStrategy}");
+                }
+                
+                /*
                  * Adjust the rendering method according to the platform
                  */
                 switch (skAnimationsEntry.AnimStrategy)
@@ -407,7 +415,7 @@ public class SilkThreeD : IThreeD
                             int nBones = model.Skeleton!.NBones;
                             if (nBones >= engine.joyce.Constants.MaxBones)
                             {
-                                int a = 1;
+                                Warning($"Spike: nBones ({nBones}) >= MaxBones ({engine.joyce.Constants.MaxBones})");
                             }
 #if false
                             Span<float> span =
@@ -430,14 +438,86 @@ public class SilkThreeD : IThreeD
                     {
 
                         var model = skAnimationsEntry.Model;
+                        
+                        /*
+                         * Spike debug: Log to verify this code path is reached
+                         */
+                        if (_frameno % 60 == 0)
+                        {
+                            Trace($"Spike: AnimUBO case, model={model != null}, modelAnimation={modelAnimation != null}, frameno={frameno}");
+                        }
+                        
                         if (model != null && modelAnimation != null)
                         {
                             vertexFlags = 1;
                             int nBones = model.Skeleton!.NBones;
+                            
+                            /*
+                             * Spike debug: Log once to verify this code path is reached
+                             */
+                            if (_frameno % 60 == 0)
+                            {
+                                Trace($"Spike: AnimUBO path, nBones={nBones}, animation={modelAnimation.Name}, frameno={frameno}");
+                            }
+                            
                             if (nBones >= engine.joyce.Constants.MaxBones)
                             {
-                                int a = 1;
+                                Warning($"Spike: nBones ({nBones}) >= MaxBones ({engine.joyce.Constants.MaxBones})");
                             }
+                            
+                            /*
+                             * Spike debug: Check for suspicious bone matrices (once per second)
+                             */
+                            if (_frameno % 60 == 0)
+                            {
+                                int matrixBase = (int)(modelAnimation.FirstFrame + frameno) * nBones;
+                                for (int i = 0; i < nBones; i++)
+                                {
+                                    var m = model.AnimationCollection.AllBakedMatrices[matrixBase + i];
+                                    var bone = model.Skeleton.ListBones[i];
+                                    var boneName = bone?.Name ?? "unknown";
+                                    
+                                    if (m.M44 < 0.999f || m.M44 > 1.001f)
+                                    {
+                                        Warning($"Spike: Bone {i} ({boneName}) has unusual M44={m.M44}");
+                                    }
+                                    if (float.IsNaN(m.M11) || float.IsInfinity(m.M11) ||
+                                        float.IsNaN(m.M44) || float.IsInfinity(m.M44))
+                                    {
+                                        Warning($"Spike: Bone {i} ({boneName}) has NaN/Inf values");
+                                    }
+                                    // Check for extremely large translation values (>10m)
+                                    if (Math.Abs(m.M41) > 1000f || Math.Abs(m.M42) > 1000f || Math.Abs(m.M43) > 1000f)
+                                    {
+                                        Warning($"Spike: Bone {i} ({boneName}) has large translation: ({m.M41}, {m.M42}, {m.M43})");
+                                    }
+                                    // Check for identity-like matrices (bone not animating)
+                                    bool isIdentityLike = 
+                                        Math.Abs(m.M11 - 1f) < 0.001f && Math.Abs(m.M22 - 1f) < 0.001f && Math.Abs(m.M33 - 1f) < 0.001f &&
+                                        Math.Abs(m.M12) < 0.001f && Math.Abs(m.M13) < 0.001f &&
+                                        Math.Abs(m.M21) < 0.001f && Math.Abs(m.M23) < 0.001f &&
+                                        Math.Abs(m.M31) < 0.001f && Math.Abs(m.M32) < 0.001f &&
+                                        Math.Abs(m.M41) < 0.001f && Math.Abs(m.M42) < 0.001f && Math.Abs(m.M43) < 0.001f;
+                                    if (isIdentityLike)
+                                    {
+                                        Warning($"Spike: Bone {i} ({boneName}) has identity-like matrix - not animating?");
+                                    }
+                                    
+                                    // Check if baked matrix is similar to inverse bind pose (bone not getting animation)
+                                    if (bone != null)
+                                    {
+                                        var invBind = bone.Model2Bone;
+                                        float diff = Math.Abs(m.M11 - invBind.M11) + Math.Abs(m.M22 - invBind.M22) + 
+                                                     Math.Abs(m.M33 - invBind.M33) + Math.Abs(m.M41 - invBind.M41) +
+                                                     Math.Abs(m.M42 - invBind.M42) + Math.Abs(m.M43 - invBind.M43);
+                                        if (diff < 0.01f && !isIdentityLike)
+                                        {
+                                            Warning($"Spike: Bone {i} ({boneName}) matrix matches inverse bind pose - missing animation?");
+                                        }
+                                    }
+                                }
+                            }
+                            
                             sh.SetUniform(_locNBones, (uint)nBones);
                             _silkRenderState.UseBoneMatricesFrameUBO(model, modelAnimation, frameno);
                         }

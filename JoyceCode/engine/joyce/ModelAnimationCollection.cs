@@ -547,11 +547,16 @@ public partial class ModelAnimationCollection
 
             /*
              * Now for this animation, for every frame, recurse through the bones.
+             * 
+             * IMPORTANT: We use the MESH's node tree (mnRoot) for recursion, not the animation's
+             * RestPose. This ensures all bones in the mesh skeleton are visited, even if the
+             * animation FBX doesn't include them (e.g., face bones in body-only animations).
+             * Bones without animation channels will get their rest pose transform.
              */
             for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
             {
                 _bakeRecursiveNew(
-                    ma.RestPose,
+                    mnRoot,  // Use mesh's node tree, not ma.RestPose!
                     _model.ModelNodeTree,
                     BakeMode.Relative,
                     strModelBaseBone,
@@ -560,6 +565,35 @@ public partial class ModelAnimationCollection
                     //_m4Correction,
                     ma,
                     frameno);
+            }
+            
+            /*
+             * Spike debug: Check for bones that were never baked (still identity)
+             * This can happen if the animation FBX's node tree doesn't include all bones from the mesh.
+             */
+            if (ma.BakedFrames != null && ma.BakedFrames.Length > 0)
+            {
+                var frame0 = ma.BakedFrames[0];
+                foreach (var boneKvp in skeleton.MapBones)
+                {
+                    int boneIdx = boneKvp.Value.Index;
+                    if (boneIdx >= 0 && boneIdx < frame0.BoneTransformations.Length)
+                    {
+                        var m = frame0.BoneTransformations[boneIdx];
+                        // Check if it's still identity (never touched during baking)
+                        bool isIdentity = 
+                            Math.Abs(m.M11 - 1f) < 0.0001f && Math.Abs(m.M22 - 1f) < 0.0001f && 
+                            Math.Abs(m.M33 - 1f) < 0.0001f && Math.Abs(m.M44 - 1f) < 0.0001f &&
+                            Math.Abs(m.M12) < 0.0001f && Math.Abs(m.M13) < 0.0001f && Math.Abs(m.M14) < 0.0001f &&
+                            Math.Abs(m.M21) < 0.0001f && Math.Abs(m.M23) < 0.0001f && Math.Abs(m.M24) < 0.0001f &&
+                            Math.Abs(m.M31) < 0.0001f && Math.Abs(m.M32) < 0.0001f && Math.Abs(m.M34) < 0.0001f &&
+                            Math.Abs(m.M41) < 0.0001f && Math.Abs(m.M42) < 0.0001f && Math.Abs(m.M43) < 0.0001f;
+                        if (isIdentity)
+                        {
+                            Warning($"Spike: Animation '{ma.Name}' bone '{boneKvp.Key}' (index {boneIdx}) has IDENTITY matrix after baking - node not in animation tree?");
+                        }
+                    }
+                }
             }
         }
     }
