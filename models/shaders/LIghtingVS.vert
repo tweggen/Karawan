@@ -76,6 +76,8 @@ void main()
         {
             v4TotalPosition = vec4(0.0);
             v3TotalNormal = vec3(0.0);
+            float totalWeight = 0.0;
+            
             for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
             {
                 int boneId = vertexBoneIds[i];
@@ -92,7 +94,7 @@ void main()
                 {
                     v4TotalPosition = v4Vertex;
                     v3TotalNormal = vertexNormal;
-                    // v4TotalPosition = vec4(100.0, 100.0, 0.0, 1.0);
+                    totalWeight = 1.0;
                     break;
                 }
                 
@@ -121,6 +123,18 @@ void main()
                 v4TotalPosition += v4LocalPosition * weight;
                 vec3 v3LocalNormal = mat3(m4BoneMatrix) * vertexNormal;
                 v3TotalNormal += v3LocalNormal * weight;
+                totalWeight += weight;
+            }
+
+            /*
+             * If no bones affected this vertex (totalWeight == 0),
+             * fall back to the original untransformed position.
+             * This prevents division by zero when v4TotalPosition.w == 0.
+             */
+            if (totalWeight == 0.0)
+            {
+                v4TotalPosition = v4Vertex;
+                v3TotalNormal = vertexNormal;
             }
 
         } else if (iVertexFlags==4)
