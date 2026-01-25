@@ -40,6 +40,7 @@ public class ProjectFile
 /// - File metadata (existence, dirty state)
 /// - Build paths (solution, executable)
 /// - Section existence
+/// - Project metadata (author, description, etc.)
 /// </summary>
 public class AihaoProject
 {
@@ -69,6 +70,12 @@ public class AihaoProject
     /// Used to track file metadata (dirty state, existence).
     /// </summary>
     public Dictionary<string, ProjectFile> Files { get; set; } = new();
+    
+    /// <summary>
+    /// Project metadata such as author, description, version, etc.
+    /// Common keys: "author", "description", "version", "license", "website", "created", "modified"
+    /// </summary>
+    public Dictionary<string, string> Metadata { get; set; } = new();
     
     /// <summary>
     /// Path to the associated solution file for debugging (e.g., Karawan.sln).

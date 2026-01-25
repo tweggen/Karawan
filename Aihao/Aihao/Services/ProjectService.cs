@@ -81,6 +81,9 @@ public class ProjectService
             };
         }
         
+        // Extract metadata
+        ExtractMetadata(project);
+        
         // Extract defaults
         ExtractDefaults(project);
         
@@ -88,6 +91,54 @@ public class ProjectService
         DiscoverBuildPaths(project);
         
         return project;
+    }
+    
+    /// <summary>
+    /// Extract project metadata from /metadata or /project section.
+    /// Common keys: author, description, version, license, website, created, modified
+    /// </summary>
+    private void ExtractMetadata(AihaoProject project)
+    {
+        // Try /metadata section first
+        var metadata = project.Mix.GetTree("/metadata");
+        if (metadata is not JsonObject metadataObj)
+        {
+            // Fallback to /project section
+            metadata = project.Mix.GetTree("/project");
+        }
+        
+        if (metadata is JsonObject obj)
+        {
+            foreach (var kvp in obj)
+            {
+                if (kvp.Value is JsonValue value && value.TryGetValue<string>(out var strValue))
+                {
+                    project.Metadata[kvp.Key] = strValue;
+                }
+                else if (kvp.Value != null)
+                {
+                    // Store non-string values as their JSON representation
+                    project.Metadata[kvp.Key] = kvp.Value.ToJsonString();
+                }
+            }
+        }
+        
+        // Also check for common top-level metadata fields
+        var root = project.Mix.GetTree("/");
+        if (root is JsonObject rootObj)
+        {
+            var metadataKeys = new[] { "author", "description", "version", "license", "website", "created", "modified", "title" };
+            foreach (var key in metadataKeys)
+            {
+                if (!project.Metadata.ContainsKey(key) && 
+                    rootObj.TryGetPropertyValue(key, out var node) && 
+                    node is JsonValue val && 
+                    val.TryGetValue<string>(out var strVal))
+                {
+                    project.Metadata[key] = strVal;
+                }
+            }
+        }
     }
     
     /// <summary>
@@ -206,6 +257,24 @@ public class ProjectService
         var json = content.ToJsonString(JsonWriteOptions);
         await File.WriteAllTextAsync(file.AbsolutePath, json);
         file.IsDirty = false;
+    }
+    
+    /// <summary>
+    /// Save project metadata to the /metadata section.
+    /// </summary>
+    public async Task SaveMetadataAsync(AihaoProject project)
+    {
+        // Build metadata JSON object
+        var metadataObj = new JsonObject();
+        foreach (var kvp in project.Metadata)
+        {
+            metadataObj[kvp.Key] = kvp.Value;
+        }
+        
+        // For now, we'd need to update the root file
+        // This is complex because we need to preserve other content
+        // TODO: Implement proper metadata saving
+        await Task.CompletedTask;
     }
     
     /// <summary>

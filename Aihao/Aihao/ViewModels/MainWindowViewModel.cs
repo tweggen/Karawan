@@ -1,5 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Aihao.Models;
@@ -14,6 +16,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly ProjectService _projectService;
     private readonly ProcessService _processService;
     private readonly DockingService _dockingService;
+    private readonly FileDialogService _fileDialogService;
     
     [ObservableProperty]
     private string _title = "Aihao - Karawan Engine Editor";
@@ -29,6 +32,11 @@ public partial class MainWindowViewModel : ObservableObject
     
     [ObservableProperty]
     private bool _isGameRunning;
+    
+    /// <summary>
+    /// Last directory used for file dialogs, for convenience.
+    /// </summary>
+    private string? _lastDirectory;
     
     // Child ViewModels - these are the main panels
     public ProjectTreeViewModel ProjectTree { get; }
@@ -50,6 +58,7 @@ public partial class MainWindowViewModel : ObservableObject
         _projectService = new ProjectService();
         _processService = new ProcessService();
         _dockingService = new DockingService();
+        _fileDialogService = new FileDialogService();
         
         // Initialize all view models
         ProjectTree = new ProjectTreeViewModel();
@@ -205,7 +214,7 @@ public partial class MainWindowViewModel : ObservableObject
         // Create new document tab
         var tab = new DocumentTabViewModel
         {
-            Title = System.IO.Path.GetFileName(relativePath),
+            Title = Path.GetFileName(relativePath),
             FilePath = relativePath
         };
         
@@ -257,13 +266,64 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
     
+    /// <summary>
+    /// Open a project file using a file dialog.
+    /// </summary>
     [RelayCommand]
     private async Task OpenProject()
     {
-        // TODO: Show file dialog to select project file
-        // For now, hardcoded path for testing
-        var projectPath = "nogame.json";
-        await LoadProject(projectPath);
+        var path = await _fileDialogService.OpenJsonFileAsync(
+            "Open Karawan Project",
+            _lastDirectory);
+        
+        if (!string.IsNullOrEmpty(path))
+        {
+            _lastDirectory = Path.GetDirectoryName(path);
+            await LoadProject(path);
+        }
+    }
+    
+    /// <summary>
+    /// Save the current project to a new location.
+    /// </summary>
+    [RelayCommand]
+    private async Task SaveProjectAs()
+    {
+        if (CurrentProject == null) return;
+        
+        var suggestedName = CurrentProject.RootFilePath;
+        var path = await _fileDialogService.SaveJsonFileAsync(
+            "Save Project As",
+            suggestedName,
+            CurrentProject.ProjectDirectory);
+        
+        if (!string.IsNullOrEmpty(path))
+        {
+            try
+            {
+                StatusMessage = $"Saving project to: {path}";
+                
+                // Get the entire merged configuration
+                var rootContent = CurrentProject.Mix.GetTree("/");
+                if (rootContent != null)
+                {
+                    var options = new JsonSerializerOptions { WriteIndented = true };
+                    var json = rootContent.ToJsonString(options);
+                    await File.WriteAllTextAsync(path, json);
+                    
+                    StatusMessage = "Project saved";
+                    Console.AddLine($"Project saved to: {path}", LogLevel.Info);
+                    
+                    // Update last directory
+                    _lastDirectory = Path.GetDirectoryName(path);
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Save failed: {ex.Message}";
+                Console.AddLine($"Failed to save project: {ex.Message}", LogLevel.Error);
+            }
+        }
     }
     
     [RelayCommand]
@@ -291,12 +351,25 @@ public partial class MainWindowViewModel : ObservableObject
                 Console.AddLine($"  Files tracked: {CurrentProject.Files.Count}", LogLevel.Debug);
                 Console.AddLine($"  Additional files: {CurrentProject.Mix.AdditionalFiles.Count}", LogLevel.Debug);
                 
+                // Log metadata if present
+                if (CurrentProject.Metadata.Count > 0)
+                {
+                    Console.AddLine($"  Metadata:", LogLevel.Debug);
+                    foreach (var kvp in CurrentProject.Metadata)
+                    {
+                        Console.AddLine($"    {kvp.Key}: {kvp.Value}", LogLevel.Debug);
+                    }
+                }
+                
                 // Log existing sections
                 Console.AddLine($"  Sections:", LogLevel.Debug);
                 foreach (var section in CurrentProject.GetExistingSections())
                 {
                     Console.AddLine($"    {section.DisplayName}", LogLevel.Debug);
                 }
+                
+                // Update last directory
+                _lastDirectory = CurrentProject.ProjectDirectory;
             }
         }
         catch (Exception ex)
@@ -306,6 +379,9 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
     
+    /// <summary>
+    /// Save the current project (to existing location).
+    /// </summary>
     [RelayCommand]
     private async Task SaveProject()
     {
@@ -314,8 +390,8 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             StatusMessage = "Saving project...";
-            // TODO: Implement proper save logic
-            // This requires tracking which changes belong to which file
+            // TODO: Implement proper save logic that tracks changes per file
+            // For now, this is a placeholder
             StatusMessage = "Project saved";
             Console.AddLine("Project saved successfully", LogLevel.Info);
         }
@@ -323,6 +399,53 @@ public partial class MainWindowViewModel : ObservableObject
         {
             StatusMessage = $"Save failed: {ex.Message}";
             Console.AddLine($"Failed to save project: {ex.Message}", LogLevel.Error);
+        }
+    }
+    
+    /// <summary>
+    /// Add an overlay JSON file to the current project.
+    /// </summary>
+    [RelayCommand]
+    private async Task AddOverlay()
+    {
+        if (CurrentProject == null) return;
+        
+        var path = await _fileDialogService.OpenJsonFileAsync(
+            "Add Overlay File",
+            CurrentProject.ProjectDirectory);
+        
+        if (!string.IsNullOrEmpty(path))
+        {
+            try
+            {
+                // Determine mount path based on filename convention
+                // e.g., "debug.globalSettings.json" -> "/globalSettings" at priority 10
+                var fileName = Path.GetFileNameWithoutExtension(path);
+                var mountPath = "/"; // Default to root
+                var priority = 10;   // Default overlay priority
+                
+                // Check for section-specific overlay naming
+                foreach (var section in KnownSections.All)
+                {
+                    if (fileName.EndsWith($".{section.Id}", StringComparison.OrdinalIgnoreCase))
+                    {
+                        mountPath = section.JsonPath;
+                        break;
+                    }
+                }
+                
+                var relativePath = Path.GetRelativePath(CurrentProject.ProjectDirectory, path);
+                await _projectService.AddOverlayAsync(CurrentProject, relativePath, mountPath, priority);
+                
+                // Refresh the project tree
+                ProjectTree.LoadProject(CurrentProject);
+                
+                Console.AddLine($"Added overlay: {relativePath} at {mountPath} (priority {priority})", LogLevel.Info);
+            }
+            catch (Exception ex)
+            {
+                Console.AddLine($"Failed to add overlay: {ex.Message}", LogLevel.Error);
+            }
         }
     }
     
