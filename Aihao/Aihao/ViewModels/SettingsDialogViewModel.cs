@@ -323,6 +323,7 @@ public partial class SettingsDialogViewModel : ObservableObject
         return path switch
         {
             "theme" => settings.Theme,
+            "uiFontSize" => settings.UIFontSize,
             "editorFontSize" => settings.EditorFontSize,
             "restoreLastProject" => settings.RestoreLastProject,
             "autoSaveSettings" => settings.AutoSaveSettings,
@@ -342,8 +343,11 @@ public partial class SettingsDialogViewModel : ObservableObject
             case "theme":
                 settings.Theme = value as string ?? "Dark";
                 break;
+            case "uiFontSize":
+                settings.UIFontSize = value is int ui ? ui : 11;
+                break;
             case "editorFontSize":
-                settings.EditorFontSize = value is int i ? i : 13;
+                settings.EditorFontSize = value is int i ? i : 12;
                 break;
             case "restoreLastProject":
                 settings.RestoreLastProject = value is bool b && b;
@@ -443,6 +447,9 @@ public partial class SettingsDialogViewModel : ObservableObject
         }
         
         await _settingsService.SaveAsync();
+        
+        // Apply font size changes immediately
+        App.SetFontSizes(settings.UIFontSize, settings.EditorFontSize);
         
         HasChanges = false;
         RequestClose?.Invoke(this, true);

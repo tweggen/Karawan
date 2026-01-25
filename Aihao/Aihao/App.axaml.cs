@@ -12,8 +12,14 @@ public partial class App : Application
 {
     private MainWindowViewModel? _mainViewModel;
     
+    /// <summary>
+    /// Static reference for font size updates.
+    /// </summary>
+    public static App? Instance { get; private set; }
+    
     public override void Initialize()
     {
+        Instance = this;
         AvaloniaXamlLoader.Load(this);
     }
 
@@ -47,6 +53,11 @@ public partial class App : Application
         // Load user settings
         await _mainViewModel.InitializeAsync();
         
+        // Apply font sizes from settings
+        UpdateFontSizes(
+            _mainViewModel.UserSettings.UIFontSize,
+            _mainViewModel.UserSettings.EditorFontSize);
+        
         // Restore window state
         var (x, y, width, height, maximized) = _mainViewModel.GetSavedWindowState();
         
@@ -65,6 +76,25 @@ public partial class App : Application
         {
             mainWindow.WindowState = WindowState.Maximized;
         }
+    }
+    
+    /// <summary>
+    /// Update the global font sizes.
+    /// </summary>
+    public void UpdateFontSizes(int uiFontSize, int editorFontSize)
+    {
+        if (Resources == null) return;
+        
+        Resources["UIFontSize"] = (double)uiFontSize;
+        Resources["EditorFontSize"] = (double)editorFontSize;
+    }
+    
+    /// <summary>
+    /// Static helper to update font sizes from anywhere.
+    /// </summary>
+    public static void SetFontSizes(int uiFontSize, int editorFontSize)
+    {
+        Instance?.UpdateFontSizes(uiFontSize, editorFontSize);
     }
     
     private async void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)

@@ -170,11 +170,21 @@ public static class SettingsDefinitions
                     },
                     new SettingsItem
                     {
+                        JsonPath = "uiFontSize",
+                        DisplayName = "UI Font Size",
+                        Description = "Font size for menus, labels, and buttons",
+                        Type = SettingsItemType.Int,
+                        DefaultValue = 11,
+                        MinValue = 9,
+                        MaxValue = 18
+                    },
+                    new SettingsItem
+                    {
                         JsonPath = "editorFontSize",
                         DisplayName = "Editor Font Size",
                         Description = "Font size for code and JSON editors",
                         Type = SettingsItemType.Int,
-                        DefaultValue = 13,
+                        DefaultValue = 12,
                         MinValue = 8,
                         MaxValue = 32
                     }

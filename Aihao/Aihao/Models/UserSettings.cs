@@ -78,7 +78,12 @@ public class UserSettings
     /// <summary>
     /// Font size for code/JSON editors.
     /// </summary>
-    public int EditorFontSize { get; set; } = 13;
+    public int EditorFontSize { get; set; } = 12;
+    
+    /// <summary>
+    /// Font size for UI elements (menus, labels, buttons).
+    /// </summary>
+    public int UIFontSize { get; set; } = 11;
     
     /// <summary>
     /// Whether to auto-save settings on changes.
