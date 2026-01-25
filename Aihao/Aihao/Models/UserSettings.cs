@@ -122,6 +122,15 @@ public class UserSettings
     
     #endregion
     
+    #region Keybindings
+    
+    /// <summary>
+    /// User's custom keybinding overrides.
+    /// </summary>
+    public List<KeyBindingOverride> KeyBindingOverrides { get; set; } = new();
+    
+    #endregion
+    
     #region Helper Methods
     
     /// <summary>

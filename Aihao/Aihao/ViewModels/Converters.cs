@@ -158,3 +158,50 @@ public class BoolToFontWeightConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Converts recording state to background color.
+/// </summary>
+public class RecordingBackgroundConverter : IValueConverter
+{
+    public static readonly RecordingBackgroundConverter Instance = new();
+    
+    private static readonly SolidColorBrush RecordingBrush = new(Color.Parse("#1A007ACC"));
+    private static readonly SolidColorBrush NormalBrush = new(Colors.Transparent);
+    
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool isRecording && isRecording)
+        {
+            return RecordingBrush;
+        }
+        return NormalBrush;
+    }
+    
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts bool to opacity (true = 1.0, false = 0.5).
+/// </summary>
+public class BoolToOpacityConverter : IValueConverter
+{
+    public static readonly BoolToOpacityConverter Instance = new();
+    
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool b && b)
+        {
+            return 1.0;
+        }
+        return 0.5;
+    }
+    
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

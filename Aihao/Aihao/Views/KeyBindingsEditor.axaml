@@ -1,0 +1,181 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:Aihao.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+        x:Class="Aihao.Views.KeyBindingsEditor"
+        x:DataType="vm:KeyBindingsEditorViewModel"
+        Title="Keyboard Shortcuts"
+        Width="900" Height="600"
+        MinWidth="700" MinHeight="400"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True"
+        Background="{StaticResource EditorBackgroundBrush}"
+        KeyDown="OnKeyDown">
+    
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}"/>
+    </Window.KeyBindings>
+    
+    <DockPanel>
+        <!-- Bottom buttons -->
+        <Border DockPanel.Dock="Bottom" 
+                Background="{StaticResource ToolbarBackgroundBrush}" 
+                Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Reset button -->
+                <Button Grid.Column="0" 
+                        Content="Reset All to Defaults" 
+                        Command="{Binding ResetAllBindingsCommand}"
+                        ToolTip.Tip="Reset all keybindings to their defaults"/>
+                
+                <!-- Conflict warning -->
+                <TextBlock Grid.Column="1" 
+                           Text="{Binding ConflictWarning}"
+                           Foreground="Orange"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           IsVisible="{Binding ConflictWarning, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                
+                <!-- Save/Cancel -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Cancel" 
+                            Command="{Binding CancelCommand}"
+                            MinWidth="80"/>
+                    <Button Content="Save" 
+                            Command="{Binding SaveCommand}"
+                            IsEnabled="{Binding HasChanges}"
+                            MinWidth="80"
+                            Classes="accent"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Main content -->
+        <DockPanel>
+            <!-- Top: Search and filter -->
+            <Border DockPanel.Dock="Top" 
+                    Background="{StaticResource ToolbarBackgroundBrush}" 
+                    Padding="16,12">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0"
+                             Text="{Binding SearchText}"
+                             Watermark="Search keybindings..."
+                             Margin="0,0,16,0"/>
+                    <ComboBox Grid.Column="1"
+                              ItemsSource="{Binding Categories}"
+                              SelectedItem="{Binding SelectedCategory}"
+                              MinWidth="150"/>
+                </Grid>
+            </Border>
+            
+            <!-- Recording overlay hint -->
+            <Border DockPanel.Dock="Top"
+                    Background="#007ACC"
+                    Padding="16,8"
+                    IsVisible="{Binding RecordingItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                    <TextBlock Text="⌨️" VerticalAlignment="Center"/>
+                    <TextBlock Text="Press a key combination for:" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding RecordingItem.DisplayName}" 
+                               FontWeight="Bold" 
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="(Press Escape to cancel)" 
+                               Opacity="0.7" 
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            
+            <!-- Keybindings list -->
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" 
+                          VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding FilteredBindings}" Margin="16">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:KeyBindingItemVM">
+                            <Border Padding="8,12" 
+                                    BorderBrush="{StaticResource ToolbarBackgroundBrush}"
+                                    BorderThickness="0,0,0,1"
+                                    Background="{Binding IsRecording, Converter={x:Static vm:RecordingBackgroundConverter.Instance}}">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
+                                    <!-- Icon -->
+                                    <TextBlock Grid.Column="0" 
+                                               Text="{Binding Icon}" 
+                                               FontSize="16"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,12,0"
+                                               Width="24"/>
+                                    
+                                    <!-- Action info -->
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="●" 
+                                                       Foreground="{StaticResource AccentBrush}" 
+                                                       IsVisible="{Binding IsModified}"
+                                                       ToolTip.Tip="Modified"/>
+                                            <TextBlock Text="(requires project)" 
+                                                       Opacity="0.5" 
+                                                       FontSize="11"
+                                                       IsVisible="{Binding RequiresProject}"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding ActionId}" 
+                                                   Opacity="0.4" 
+                                                   FontSize="11"
+                                                   FontFamily="Consolas,Menlo,monospace"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Current binding display -->
+                                    <Border Grid.Column="2"
+                                            Background="{StaticResource ToolbarBackgroundBrush}"
+                                            CornerRadius="4"
+                                            Padding="12,6"
+                                            Margin="8,0"
+                                            MinWidth="120">
+                                        <TextBlock Text="{Binding CurrentBindingDisplay}"
+                                                   HorizontalAlignment="Center"
+                                                   FontFamily="Consolas,Menlo,monospace"
+                                                   Opacity="{Binding HasBinding, Converter={x:Static vm:BoolToOpacityConverter.Instance}}"/>
+                                    </Border>
+                                    
+                                    <!-- Record button -->
+                                    <Button Grid.Column="3"
+                                            Content="Record"
+                                            Command="{Binding $parent[ItemsControl].((vm:KeyBindingsEditorViewModel)DataContext).StartRecordingCommand}"
+                                            CommandParameter="{Binding}"
+                                            IsVisible="{Binding !IsRecording}"
+                                            Margin="4,0"/>
+                                    
+                                    <TextBlock Grid.Column="3"
+                                               Text="Recording..."
+                                               Foreground="#007ACC"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding IsRecording}"
+                                               Margin="4,0"/>
+                                    
+                                    <!-- Clear button -->
+                                    <Button Grid.Column="4"
+                                            Content="Clear"
+                                            Command="{Binding $parent[ItemsControl].((vm:KeyBindingsEditorViewModel)DataContext).ClearBindingCommand}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding HasBinding}"
+                                            Margin="4,0"/>
+                                    
+                                    <!-- Reset button -->
+                                    <Button Grid.Column="5"
+                                            Content="Reset"
+                                            Command="{Binding $parent[ItemsControl].((vm:KeyBindingsEditorViewModel)DataContext).ResetBindingCommand}"
+                                            CommandParameter="{Binding}"
+                                            IsVisible="{Binding IsModified}"
+                                            Margin="4,0"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </DockPanel>
+    </DockPanel>
+</Window>

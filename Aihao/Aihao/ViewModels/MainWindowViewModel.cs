@@ -18,6 +18,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly DockingService _dockingService;
     private readonly FileDialogService _fileDialogService;
     private readonly UserSettingsService _userSettingsService;
+    private readonly ActionService _actionService;
     
     [ObservableProperty]
     private string _title = "Aihao - Karawan Engine Editor";
@@ -44,6 +45,11 @@ public partial class MainWindowViewModel : ObservableObject
     /// </summary>
     public ObservableCollection<RecentProject> RecentProjects { get; } = new();
     
+    /// <summary>
+    /// The action service for executing commands.
+    /// </summary>
+    public ActionService ActionService => _actionService;
+    
     // Child ViewModels - these are the main panels
     public ProjectTreeViewModel ProjectTree { get; }
     public ConsoleWindowViewModel Console { get; }
@@ -66,6 +72,7 @@ public partial class MainWindowViewModel : ObservableObject
         _dockingService = new DockingService();
         _fileDialogService = new FileDialogService();
         _userSettingsService = new UserSettingsService();
+        _actionService = new ActionService();
         
         // Initialize all view models
         ProjectTree = new ProjectTreeViewModel();
@@ -102,6 +109,12 @@ public partial class MainWindowViewModel : ObservableObject
         // Load user settings
         await _userSettingsService.LoadAsync();
         
+        // Register all actions
+        RegisterActions();
+        
+        // Apply keybinding overrides from settings
+        _actionService.ApplyOverrides(UserSettings.KeyBindingOverrides);
+        
         // Populate recent projects
         RefreshRecentProjects();
         
@@ -116,6 +129,67 @@ public partial class MainWindowViewModel : ObservableObject
         }
         
         Console.AddLine($"Settings loaded from: {_userSettingsService.GetSettingsDirectory()}", LogLevel.Debug);
+        Console.AddLine($"Registered {_actionService.Actions.Count} actions", LogLevel.Debug);
+    }
+    
+    /// <summary>
+    /// Register all actions with the action service.
+    /// </summary>
+    private void RegisterActions()
+    {
+        foreach (var action in BuiltInActions.GetAll())
+        {
+            Func<Task> handler = action.Id switch
+            {
+                // File actions
+                BuiltInActions.Ids.FileOpen => OpenProject,
+                BuiltInActions.Ids.FileSave => SaveProject,
+                BuiltInActions.Ids.FileSaveAs => SaveProjectAs,
+                BuiltInActions.Ids.FileExit => Exit,
+                
+                // Edit actions
+                BuiltInActions.Ids.EditSettings => OpenSettings,
+                BuiltInActions.Ids.EditKeybindings => OpenKeybindings,
+                
+                // View actions
+                BuiltInActions.Ids.ViewConsole => () => { ShowConsole(); return Task.CompletedTask; },
+                BuiltInActions.Ids.ViewRenderOutput => () => { OpenRenderWindow(); return Task.CompletedTask; },
+                
+                // Project actions
+                BuiltInActions.Ids.ProjectBuild => BuildProject,
+                BuiltInActions.Ids.ProjectGlobalSettings => () => { OpenGlobalSettingsEditor(); return Task.CompletedTask; },
+                BuiltInActions.Ids.ProjectResources => () => { OpenResourcesEditor(); return Task.CompletedTask; },
+                BuiltInActions.Ids.ProjectMetagen => () => { OpenMetagenEditor(); return Task.CompletedTask; },
+                BuiltInActions.Ids.ProjectAddOverlay => AddOverlay,
+                
+                // Run actions
+                BuiltInActions.Ids.RunStart => RunGame,
+                BuiltInActions.Ids.RunDebug => DebugGame,
+                BuiltInActions.Ids.RunStop => () => { StopGame(); return Task.CompletedTask; },
+                
+                // Console actions
+                BuiltInActions.Ids.ConsoleClear => () => { ClearConsole(); return Task.CompletedTask; },
+                
+                // Default - log unhandled
+                _ => () => { Console.AddLine($"Action not implemented: {action.Id}", LogLevel.Warning); return Task.CompletedTask; }
+            };
+            
+            Func<bool>? canExecute = action.RequiresProject 
+                ? () => IsProjectLoaded 
+                : null;
+            
+            // Special case for stop - only when running
+            if (action.Id == BuiltInActions.Ids.RunStop)
+            {
+                canExecute = () => IsGameRunning;
+            }
+            else if (action.Id == BuiltInActions.Ids.RunStart || action.Id == BuiltInActions.Ids.RunDebug)
+            {
+                canExecute = () => IsProjectLoaded && !IsGameRunning;
+            }
+            
+            _actionService.RegisterAction(action, handler, canExecute);
+        }
     }
     
     /// <summary>
@@ -631,6 +705,27 @@ public partial class MainWindowViewModel : ObservableObject
     {
         var vm = new SettingsDialogViewModel(_userSettingsService);
         var dialog = new Views.SettingsDialog
+        {
+            DataContext = vm
+        };
+        
+        // Get the main window to set as owner
+        if (Avalonia.Application.Current?.ApplicationLifetime is 
+            Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop &&
+            desktop.MainWindow != null)
+        {
+            await dialog.ShowDialog(desktop.MainWindow);
+        }
+    }
+    
+    /// <summary>
+    /// Open the keybindings editor dialog.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenKeybindings()
+    {
+        var vm = new KeyBindingsEditorViewModel(_actionService, _userSettingsService);
+        var dialog = new Views.KeyBindingsEditor
         {
             DataContext = vm
         };
