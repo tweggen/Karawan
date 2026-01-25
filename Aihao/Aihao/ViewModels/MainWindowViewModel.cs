@@ -17,6 +17,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly ProcessService _processService;
     private readonly DockingService _dockingService;
     private readonly FileDialogService _fileDialogService;
+    private readonly UserSettingsService _userSettingsService;
     
     [ObservableProperty]
     private string _title = "Aihao - Karawan Engine Editor";
@@ -34,9 +35,14 @@ public partial class MainWindowViewModel : ObservableObject
     private bool _isGameRunning;
     
     /// <summary>
-    /// Last directory used for file dialogs, for convenience.
+    /// User settings (persisted across sessions).
     /// </summary>
-    private string? _lastDirectory;
+    public UserSettings UserSettings => _userSettingsService.Settings;
+    
+    /// <summary>
+    /// Recent projects for the File menu.
+    /// </summary>
+    public ObservableCollection<RecentProject> RecentProjects { get; } = new();
     
     // Child ViewModels - these are the main panels
     public ProjectTreeViewModel ProjectTree { get; }
@@ -59,6 +65,7 @@ public partial class MainWindowViewModel : ObservableObject
         _processService = new ProcessService();
         _dockingService = new DockingService();
         _fileDialogService = new FileDialogService();
+        _userSettingsService = new UserSettingsService();
         
         // Initialize all view models
         ProjectTree = new ProjectTreeViewModel();
@@ -85,6 +92,65 @@ public partial class MainWindowViewModel : ObservableObject
         
         // Register dockable windows
         RegisterDockableWindows();
+    }
+    
+    /// <summary>
+    /// Initialize the view model (call after construction, allows async).
+    /// </summary>
+    public async Task InitializeAsync()
+    {
+        // Load user settings
+        await _userSettingsService.LoadAsync();
+        
+        // Populate recent projects
+        RefreshRecentProjects();
+        
+        // Restore last project if enabled
+        if (UserSettings.RestoreLastProject && RecentProjects.Count > 0)
+        {
+            var lastProject = RecentProjects[0];
+            if (lastProject.Exists)
+            {
+                await LoadProject(lastProject.Path);
+            }
+        }
+        
+        Console.AddLine($"Settings loaded from: {_userSettingsService.GetSettingsDirectory()}", LogLevel.Debug);
+    }
+    
+    /// <summary>
+    /// Refresh the RecentProjects collection from settings.
+    /// </summary>
+    private void RefreshRecentProjects()
+    {
+        RecentProjects.Clear();
+        foreach (var project in UserSettings.RecentProjects)
+        {
+            RecentProjects.Add(project);
+        }
+    }
+    
+    /// <summary>
+    /// Save window state before closing.
+    /// </summary>
+    public async Task SaveWindowStateAsync(int? x, int? y, int? width, int? height, bool maximized)
+    {
+        _userSettingsService.SetWindowState(x, y, width, height, maximized);
+        await _userSettingsService.SaveAsync();
+    }
+    
+    /// <summary>
+    /// Get saved window state for restoration.
+    /// </summary>
+    public (int? X, int? Y, int? Width, int? Height, bool Maximized) GetSavedWindowState()
+    {
+        return (
+            UserSettings.WindowX,
+            UserSettings.WindowY,
+            UserSettings.WindowWidth,
+            UserSettings.WindowHeight,
+            UserSettings.WindowMaximized
+        );
     }
     
     private void RegisterDockableWindows()
@@ -274,11 +340,11 @@ public partial class MainWindowViewModel : ObservableObject
     {
         var path = await _fileDialogService.OpenJsonFileAsync(
             "Open Karawan Project",
-            _lastDirectory);
+            UserSettings.LastDirectory);
         
         if (!string.IsNullOrEmpty(path))
         {
-            _lastDirectory = Path.GetDirectoryName(path);
+            await _userSettingsService.SetLastDirectoryAsync(Path.GetDirectoryName(path));
             await LoadProject(path);
         }
     }
@@ -315,7 +381,7 @@ public partial class MainWindowViewModel : ObservableObject
                     Console.AddLine($"Project saved to: {path}", LogLevel.Info);
                     
                     // Update last directory
-                    _lastDirectory = Path.GetDirectoryName(path);
+                    await _userSettingsService.SetLastDirectoryAsync(Path.GetDirectoryName(path));
                 }
             }
             catch (Exception ex)
@@ -326,10 +392,22 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
     
+    /// <summary>
+    /// Open a recent project from the list.
+    /// </summary>
     [RelayCommand]
-    private async Task OpenRecentProject(string path)
+    private async Task OpenRecentProject(RecentProject? project)
     {
-        await LoadProject(path);
+        if (project == null || string.IsNullOrEmpty(project.Path)) return;
+        
+        if (!File.Exists(project.Path))
+        {
+            Console.AddLine($"Project file not found: {project.Path}", LogLevel.Warning);
+            project.Exists = false;
+            return;
+        }
+        
+        await LoadProject(project.Path);
     }
     
     private async Task LoadProject(string path)
@@ -368,8 +446,12 @@ public partial class MainWindowViewModel : ObservableObject
                     Console.AddLine($"    {section.DisplayName}", LogLevel.Debug);
                 }
                 
+                // Add to recent projects
+                await _userSettingsService.AddRecentProjectAsync(path, CurrentProject.Name);
+                RefreshRecentProjects();
+                
                 // Update last directory
-                _lastDirectory = CurrentProject.ProjectDirectory;
+                await _userSettingsService.SetLastDirectoryAsync(CurrentProject.ProjectDirectory);
             }
         }
         catch (Exception ex)
@@ -422,7 +504,7 @@ public partial class MainWindowViewModel : ObservableObject
                 // e.g., "debug.globalSettings.json" -> "/globalSettings" at priority 10
                 var fileName = Path.GetFileNameWithoutExtension(path);
                 var mountPath = "/"; // Default to root
-                var priority = 10;   // Default overlay priority
+                var priority = UserSettings.DefaultOverlayPriority;
                 
                 // Check for section-specific overlay naming
                 foreach (var section in KnownSections.All)
@@ -447,6 +529,18 @@ public partial class MainWindowViewModel : ObservableObject
                 Console.AddLine($"Failed to add overlay: {ex.Message}", LogLevel.Error);
             }
         }
+    }
+    
+    /// <summary>
+    /// Clear the recent projects list.
+    /// </summary>
+    [RelayCommand]
+    private async Task ClearRecentProjects()
+    {
+        UserSettings.RecentProjects.Clear();
+        RefreshRecentProjects();
+        await _userSettingsService.SaveAsync();
+        Console.AddLine("Recent projects cleared", LogLevel.Info);
     }
     
     [RelayCommand]
@@ -530,8 +624,11 @@ public partial class MainWindowViewModel : ObservableObject
     }
     
     [RelayCommand]
-    private void Exit()
+    private async Task Exit()
     {
+        // Save settings before exit
+        await _userSettingsService.SaveAsync();
+        
         // TODO: Check for unsaved changes
         Environment.Exit(0);
     }
