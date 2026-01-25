@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="450"
+             x:Class="Aihao.Views.ProjectTreeView"
+             x:DataType="vm:ProjectTreeViewModel">
+    
+    <DockPanel>
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Padding="4">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox Grid.Column="0" 
+                         Text="{Binding SearchText}"
+                         Watermark="Search files..."
+                         Margin="0,0,4,0"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                    <Button Content="🔄" 
+                            ToolTip.Tip="Refresh" 
+                            Command="{Binding RefreshTreeCommand}"
+                            Padding="6,4"/>
+                    <Button Content="−" 
+                            ToolTip.Tip="Collapse All" 
+                            Command="{Binding CollapseAllCommand}"
+                            Padding="6,4"/>
+                    <Button Content="+" 
+                            ToolTip.Tip="Expand All" 
+                            Command="{Binding ExpandAllCommand}"
+                            Padding="6,4"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Tree View -->
+        <TreeView ItemsSource="{Binding RootItems}"
+                  SelectedItem="{Binding SelectedItem}">
+            <TreeView.ItemTemplate>
+                <TreeDataTemplate ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" 
+                                Spacing="6"
+                                DoubleTapped="OnItemDoubleTapped">
+                        <TextBlock Text="{Binding Icon}" FontSize="14"/>
+                        <TextBlock Text="{Binding Name}" 
+                                   Opacity="{Binding Exists, Converter={x:Static vm:ExistsToOpacityConverter.Instance}}"/>
+                    </StackPanel>
+                </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+            <TreeView.Styles>
+                <Style Selector="TreeViewItem" x:DataType="vm:FileTreeItemViewModel">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                </Style>
+            </TreeView.Styles>
+        </TreeView>
+    </DockPanel>
+</UserControl>

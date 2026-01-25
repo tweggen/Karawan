@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="450"
+             x:Class="Aihao.Views.PropertiesEditor"
+             x:DataType="vm:PropertiesEditorViewModel">
+    
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                Padding="8,4">
+            <TextBlock Text="{Binding SelectedObjectName}" 
+                       FontWeight="SemiBold"/>
+        </Border>
+        
+        <!-- Toolbar -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4">
+            <Button Command="{Binding SaveCommand}" 
+                    Content="Apply" 
+                    IsEnabled="{Binding IsDirty}"
+                    Margin="2"/>
+        </StackPanel>
+        
+        <!-- Properties List -->
+        <ScrollViewer>
+            <ItemsControl ItemsSource="{Binding Properties}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:PropertyItemViewModel">
+                        <Border Padding="{Binding Depth, Converter={x:Static vm:DepthToMarginConverter.Instance}}">
+                            <Grid ColumnDefinitions="*,*">
+                                <TextBlock Grid.Column="0" 
+                                           Text="{Binding Name}"
+                                           VerticalAlignment="Center"
+                                           FontWeight="{Binding IsCategory, Converter={x:Static vm:BoolToFontWeightConverter.Instance}}"/>
+                                
+                                <ContentControl Grid.Column="1" 
+                                                IsVisible="{Binding !IsCategory}">
+                                    <ContentControl.Content>
+                                        <TextBox Text="{Binding Value}"
+                                                 IsVisible="{Binding !IsCategory}"/>
+                                    </ContentControl.Content>
+                                </ContentControl>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

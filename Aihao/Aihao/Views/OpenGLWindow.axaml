@@ -1,0 +1,90 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Aihao.Views.OpenGLWindow"
+             x:DataType="vm:OpenGLWindowViewModel">
+    
+    <DockPanel>
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                Padding="4">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+                    <!-- Render Mode -->
+                    <ComboBox MinWidth="100" SelectedIndex="0">
+                        <ComboBoxItem Content="Solid" 
+                                      IsSelected="{Binding CurrentRenderMode, Converter={x:Static vm:EnumToBoolConverter.Instance}, ConverterParameter={x:Static vm:RenderMode.Solid}}"/>
+                        <ComboBoxItem Content="Wireframe"/>
+                        <ComboBoxItem Content="Points"/>
+                        <ComboBoxItem Content="Solid + Wire"/>
+                    </ComboBox>
+                    
+                    <Separator/>
+                    
+                    <ToggleButton IsChecked="{Binding ShowGrid}" Content="Grid" ToolTip.Tip="Toggle Grid"/>
+                    <ToggleButton IsChecked="{Binding ShowAxes}" Content="Axes" ToolTip.Tip="Toggle Axes"/>
+                    
+                    <Separator/>
+                    
+                    <Button Command="{Binding ResetCameraCommand}" Content="Reset Camera" ToolTip.Tip="Reset Camera View"/>
+                    <Button Command="{Binding TakeScreenshotCommand}" Content="📷" ToolTip.Tip="Take Screenshot"/>
+                </StackPanel>
+                
+                <!-- Status -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="{Binding Fps, StringFormat='{}{0:F1} FPS'}" 
+                               VerticalAlignment="Center"
+                               Opacity="0.7"/>
+                    <TextBlock Text="{Binding Width, StringFormat='{}{0}x'}" 
+                               VerticalAlignment="Center"
+                               Opacity="0.5"/>
+                    <TextBlock Text="{Binding Height}" 
+                               VerticalAlignment="Center"
+                               Opacity="0.5"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- OpenGL Render Area -->
+        <Border Background="#1E1E1E" Name="RenderContainer">
+            <!-- The actual OpenGL control will be added here programmatically -->
+            <Grid>
+                <!-- Placeholder when not rendering -->
+                <StackPanel HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+                            IsVisible="{Binding !IsRendering}">
+                    <TextBlock Text="OpenGL Render Window" 
+                               FontSize="24"
+                               Foreground="#666"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding RendererInfo}" 
+                               Foreground="#444"
+                               HorizontalAlignment="Center"
+                               Margin="0,8,0,0"/>
+                </StackPanel>
+                
+                <!-- Overlay for camera info -->
+                <Border Background="#80000000" 
+                        HorizontalAlignment="Left" 
+                        VerticalAlignment="Bottom"
+                        Padding="8"
+                        Margin="4"
+                        CornerRadius="4"
+                        IsVisible="{Binding IsRendering}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding CameraDistance, StringFormat='Distance: {0:F1}'}" 
+                                   Foreground="White" FontSize="10"/>
+                        <TextBlock Text="{Binding CameraYaw, StringFormat='Yaw: {0:F1}°'}" 
+                                   Foreground="White" FontSize="10"/>
+                        <TextBlock Text="{Binding CameraPitch, StringFormat='Pitch: {0:F1}°'}" 
+                                   Foreground="White" FontSize="10"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </DockPanel>
+</UserControl>

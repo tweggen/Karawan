@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
+             x:Class="Aihao.Views.GlobalSettingsEditor"
+             x:DataType="vm:GlobalSettingsEditorViewModel">
+    
+    <DockPanel>
+        <!-- Toolbar -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4">
+            <Button Command="{Binding SaveCommand}" 
+                    Content="Save" 
+                    IsEnabled="{Binding IsDirty}"
+                    Margin="2"/>
+            <Button Command="{Binding AddSettingCommand}" 
+                    Content="Add Setting" 
+                    Margin="2"/>
+        </StackPanel>
+        
+        <!-- Settings List -->
+        <DataGrid ItemsSource="{Binding Settings}"
+                  AutoGenerateColumns="False"
+                  CanUserResizeColumns="True"
+                  GridLinesVisibility="Horizontal">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Key" 
+                                    Binding="{Binding Key}" 
+                                    Width="150"/>
+                <DataGridTextColumn Header="Value" 
+                                    Binding="{Binding Value}" 
+                                    Width="*"/>
+                <DataGridTemplateColumn Header="Type" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ValueType}" 
+                                       VerticalAlignment="Center"
+                                       Margin="4,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="" Width="40">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="×" 
+                                    Command="{Binding $parent[DataGrid].((vm:GlobalSettingsEditorViewModel)DataContext).RemoveSettingCommand}"
+                                    CommandParameter="{Binding}"
+                                    HorizontalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

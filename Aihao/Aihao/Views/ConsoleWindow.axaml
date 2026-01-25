@@ -1,0 +1,107 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="200"
+             x:Class="Aihao.Views.ConsoleWindow"
+             x:DataType="vm:ConsoleWindowViewModel">
+    
+    <DockPanel>
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                Padding="4">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Left: Title and Filters -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Console" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0"/>
+                    <Separator/>
+                    <ToggleButton IsChecked="{Binding ShowInfo}" 
+                                  Content="ℹ️ Info" 
+                                  ToolTip.Tip="Show Info Messages"
+                                  Padding="6,2"/>
+                    <ToggleButton IsChecked="{Binding ShowWarning}" 
+                                  Content="⚠️ Warn" 
+                                  ToolTip.Tip="Show Warnings"
+                                  Padding="6,2"/>
+                    <ToggleButton IsChecked="{Binding ShowError}" 
+                                  Content="❌ Error" 
+                                  ToolTip.Tip="Show Errors"
+                                  Padding="6,2"/>
+                    <ToggleButton IsChecked="{Binding ShowDebug}" 
+                                  Content="🔍 Debug" 
+                                  ToolTip.Tip="Show Debug Messages"
+                                  Padding="6,2"/>
+                </StackPanel>
+                
+                <!-- Center: Search -->
+                <TextBox Grid.Column="1" 
+                         Text="{Binding SearchText}"
+                         Watermark="Filter messages..."
+                         Margin="8,0"
+                         MaxWidth="300"
+                         HorizontalAlignment="Left"/>
+                
+                <!-- Right: Actions -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                    <ToggleButton IsChecked="{Binding AutoScroll}" 
+                                  Content="↓" 
+                                  ToolTip.Tip="Auto-scroll"
+                                  Padding="6,2"/>
+                    <Button Content="📋" 
+                            ToolTip.Tip="Copy to Clipboard"
+                            Command="{Binding CopyToClipboardCommand}"
+                            Padding="6,2"/>
+                    <Button Content="💾" 
+                            ToolTip.Tip="Save to File"
+                            Command="{Binding SaveToFileCommand}"
+                            Padding="6,2"/>
+                    <Button Content="🗑️" 
+                            ToolTip.Tip="Clear Console"
+                            Command="{Binding ClearCommand}"
+                            Padding="6,2"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Log Output -->
+        <Border Background="#1A1A1A">
+            <ScrollViewer Name="LogScrollViewer">
+                <ItemsControl ItemsSource="{Binding FilteredLines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ConsoleLineViewModel">
+                            <Border Padding="4,2" 
+                                    Background="Transparent"
+                                    PointerEntered="OnLinePointerEntered"
+                                    PointerExited="OnLinePointerExited">
+                                <Grid ColumnDefinitions="70,24,*">
+                                    <TextBlock Grid.Column="0" 
+                                               Text="{Binding TimestampText}"
+                                               FontFamily="Consolas,Courier New,monospace"
+                                               FontSize="11"
+                                               Foreground="#666666"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" 
+                                               Text="{Binding LevelIcon}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" 
+                                               Text="{Binding Text}"
+                                               FontFamily="Consolas,Courier New,monospace"
+                                               FontSize="12"
+                                               TextWrapping="NoWrap"
+                                               VerticalAlignment="Center">
+                                        <TextBlock.Foreground>
+                                            <SolidColorBrush Color="{Binding LevelColor}"/>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+    </DockPanel>
+</UserControl>

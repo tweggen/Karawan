@@ -1,0 +1,128 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
+             x:Class="Aihao.Views.MetagenEditor"
+             x:DataType="vm:MetagenEditorViewModel">
+    
+    <DockPanel>
+        <!-- Toolbar -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4" Spacing="4">
+            <Button Command="{Binding SaveCommand}" 
+                    Content="Save" 
+                    IsEnabled="{Binding IsDirty}"/>
+            <Button Command="{Binding GenerateCodeCommand}" 
+                    Content="Generate Code"/>
+            <Separator/>
+            <Button Command="{Binding AddTypeCommand}" Content="+ Add Type"/>
+        </StackPanel>
+        
+        <!-- Settings Panel -->
+        <Border DockPanel.Dock="Top" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                Padding="8"
+                Margin="4">
+            <Grid ColumnDefinitions="Auto,*,Auto,*" RowDefinitions="Auto,Auto">
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Output Path:" VerticalAlignment="Center" Margin="0,0,8,4"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding OutputPath}" Margin="0,0,16,4"/>
+                
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Namespace:" VerticalAlignment="Center" Margin="0,0,8,4"/>
+                <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding Namespace}" Margin="0,0,0,4"/>
+                
+                <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                          IsChecked="{Binding GeneratePartialClasses}"
+                          Content="Generate Partial Classes"/>
+                <CheckBox Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" 
+                          IsChecked="{Binding GenerateSerializers}"
+                          Content="Generate Serializers"/>
+            </Grid>
+        </Border>
+        
+        <!-- Main Content -->
+        <Grid ColumnDefinitions="250,5,*">
+            <!-- Types List -->
+            <DockPanel Grid.Column="0">
+                <TextBlock DockPanel.Dock="Top" Text="Types" FontWeight="Bold" Margin="4"/>
+                <ListBox ItemsSource="{Binding Types}"
+                         SelectedItem="{Binding SelectedType}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:MetagenTypeViewModel">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding BaseType, StringFormat=': {0}'}" 
+                                           Opacity="0.6"
+                                           IsVisible="{Binding BaseType, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                <TextBlock Text="(abstract)" 
+                                           Opacity="0.4"
+                                           IsVisible="{Binding IsAbstract}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+            
+            <!-- Type Editor -->
+            <DockPanel Grid.Column="2" IsVisible="{Binding SelectedType, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <!-- Type Properties -->
+                <Border DockPanel.Dock="Top" Padding="8" Margin="4">
+                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center" Margin="0,0,8,4"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedType.Name}" Margin="0,0,0,4"/>
+                        
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Base Type:" VerticalAlignment="Center" Margin="0,0,8,4"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedType.BaseType}" Margin="0,0,0,4"/>
+                        
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Description:" VerticalAlignment="Center" Margin="0,0,8,4"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedType.Description}" Margin="0,0,0,4"/>
+                        
+                        <CheckBox Grid.Row="3" Grid.Column="1" 
+                                  IsChecked="{Binding SelectedType.IsAbstract}"
+                                  Content="Is Abstract"/>
+                    </Grid>
+                </Border>
+                
+                <!-- Properties Header -->
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4" Spacing="4">
+                    <TextBlock Text="Properties" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Button Command="{Binding AddPropertyCommand}" Content="+ Add"/>
+                </StackPanel>
+                
+                <!-- Properties Grid -->
+                <DataGrid ItemsSource="{Binding SelectedType.Properties}"
+                          AutoGenerateColumns="False"
+                          CanUserResizeColumns="True"
+                          Margin="4">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="150"/>
+                        <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="100"/>
+                        <DataGridTextColumn Header="Default" Binding="{Binding DefaultValue}" Width="100"/>
+                        <DataGridCheckBoxColumn Header="Required" Binding="{Binding IsRequired}" Width="70"/>
+                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"/>
+                        <DataGridTemplateColumn Header="" Width="40">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="vm:MetagenPropertyViewModel">
+                                    <Button Content="×" 
+                                            Command="{Binding $parent[DataGrid].((vm:MetagenEditorViewModel)DataContext).RemovePropertyCommand}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+            
+            <!-- Placeholder when no type selected -->
+            <TextBlock Grid.Column="2" 
+                       Text="Select a type to edit its properties"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Opacity="0.5"
+                       IsVisible="{Binding SelectedType, Converter={x:Static ObjectConverters.IsNull}}"/>
+        </Grid>
+    </DockPanel>
+</UserControl>

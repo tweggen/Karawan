@@ -1,0 +1,88 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="450"
+             x:Class="Aihao.Views.ResourceListEditor"
+             x:DataType="vm:ResourceListEditorViewModel">
+    
+    <DockPanel>
+        <!-- Toolbar -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4" Spacing="4">
+            <Button Command="{Binding AddResourceCommand}" Content="+ Add"/>
+            <ComboBox ItemsSource="{Binding Categories}" 
+                      SelectedItem="{Binding SelectedCategory}"
+                      MinWidth="120"/>
+            <TextBox Text="{Binding SearchText}" 
+                     Watermark="Search resources..."
+                     MinWidth="200"/>
+        </StackPanel>
+        
+        <!-- Resource Grid -->
+        <DataGrid ItemsSource="{Binding FilteredResources}"
+                  SelectedItem="{Binding SelectedResource}"
+                  AutoGenerateColumns="False"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="" 
+                                    Binding="{Binding TypeIcon}" 
+                                    Width="30"
+                                    IsReadOnly="True"/>
+                <DataGridTextColumn Header="Name" 
+                                    Binding="{Binding Name}" 
+                                    Width="150"/>
+                <DataGridTextColumn Header="Type" 
+                                    Binding="{Binding Type}" 
+                                    Width="80"/>
+                <DataGridTextColumn Header="Category" 
+                                    Binding="{Binding Category}" 
+                                    Width="100"/>
+                <DataGridTextColumn Header="Path" 
+                                    Binding="{Binding Path}" 
+                                    Width="*"/>
+                <DataGridTextColumn Header="Status" 
+                                    Binding="{Binding Status}" 
+                                    Width="60"/>
+                <DataGridTemplateColumn Header="" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="vm:ResourceItemViewModel">
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <Button Content="📂" 
+                                        ToolTip.Tip="Open Location"
+                                        Command="{Binding $parent[DataGrid].((vm:ResourceListEditorViewModel)DataContext).OpenResourceLocationCommand}"
+                                        CommandParameter="{Binding}"
+                                        Padding="4,2"/>
+                                <Button Content="×" 
+                                        ToolTip.Tip="Remove"
+                                        Command="{Binding $parent[DataGrid].((vm:ResourceListEditorViewModel)DataContext).RemoveResourceCommand}"
+                                        CommandParameter="{Binding}"
+                                        Padding="4,2"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+            
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Add Resource" Command="{Binding AddResourceCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="Duplicate" 
+                              Command="{Binding DuplicateResourceCommand}"
+                              CommandParameter="{Binding SelectedResource}"/>
+                    <MenuItem Header="Open Location" 
+                              Command="{Binding OpenResourceLocationCommand}"
+                              CommandParameter="{Binding SelectedResource}"/>
+                    <Separator/>
+                    <MenuItem Header="Remove" 
+                              Command="{Binding RemoveResourceCommand}"
+                              CommandParameter="{Binding SelectedResource}"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <RootNamespace>Aihao</RootNamespace>
+    <AssemblyName>Aihao</AssemblyName>
+    <Version>0.1.0</Version>
+    <Authors>Karawan Team</Authors>
+    <Description>Aihao - Karawan Engine Editor</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.1" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.1" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    
+    <!-- Docking library for IDE-like layout -->
+    <PackageReference Include="Dock.Avalonia" Version="11.0.0" />
+    <PackageReference Include="Dock.Model.Mvvm" Version="11.0.0" />
+  </ItemGroup>
+  
+  <!-- Reference to Joyce engine for rendering integration -->
+  <!-- TODO: Add project reference when integrating with Joyce
+  <ItemGroup>
+    <ProjectReference Include="..\..\joyce\Joyce.csproj" />
+  </ItemGroup>
+  -->
+</Project>

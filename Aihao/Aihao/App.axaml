@@ -1,0 +1,27 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Aihao.App"
+             RequestedThemeVariant="Dark">
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+    
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Custom colors for IDE look -->
+            <Color x:Key="EditorBackgroundColor">#1E1E1E</Color>
+            <Color x:Key="PanelBackgroundColor">#252526</Color>
+            <Color x:Key="ToolbarBackgroundColor">#333333</Color>
+            <Color x:Key="AccentColor">#007ACC</Color>
+            <Color x:Key="ErrorColor">#F44747</Color>
+            <Color x:Key="WarningColor">#FF8C00</Color>
+            <Color x:Key="InfoColor">#3794FF</Color>
+            <Color x:Key="DebugColor">#6A9955</Color>
+            
+            <SolidColorBrush x:Key="EditorBackgroundBrush" Color="{StaticResource EditorBackgroundColor}"/>
+            <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{StaticResource PanelBackgroundColor}"/>
+            <SolidColorBrush x:Key="ToolbarBackgroundBrush" Color="{StaticResource ToolbarBackgroundColor}"/>
+            <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
