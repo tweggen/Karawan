@@ -4,6 +4,7 @@
              RequestedThemeVariant="Dark">
     <Application.Styles>
         <FluentTheme  DensityStyle="Compact" />
+        <StyleInclude Source="avares://Dock.Avalonia/Themes/DockFluentTheme.axaml" />
         
         <!-- Global font size style -->
         <Style Selector="Window">

@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels.Dock"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="400"
+             x:Class="Aihao.Views.Dock.InspectorToolView"
+             x:DataType="vm:InspectorToolViewModel">
+    
+    <DockPanel>
+        <Border DockPanel.Dock="Top" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                Padding="8,4">
+            <TextBlock Text="{Binding SelectedObjectName}" 
+                       FontWeight="SemiBold"
+                       TextTrimming="CharacterEllipsis"/>
+        </Border>
+        
+        <!-- Placeholder when nothing selected -->
+        <TextBlock Text="Select an item to inspect" 
+                   Opacity="0.5" 
+                   HorizontalAlignment="Center" 
+                   VerticalAlignment="Center"
+                   IsVisible="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNull}}"/>
+        
+        <!-- Future: Property grid for selected object -->
+        <ContentControl Content="{Binding SelectedObject}"
+                        IsVisible="{Binding SelectedObject, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+    </DockPanel>
+    
+</UserControl>

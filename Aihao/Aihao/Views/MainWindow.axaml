@@ -3,7 +3,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:Aihao.ViewModels"
+        xmlns:dock="using:Aihao.ViewModels.Dock"
         xmlns:views="using:Aihao.Views"
+        xmlns:dockViews="using:Aihao.Views.Dock"
+        xmlns:idc="clr-namespace:Dock.Avalonia.Controls;assembly=Dock.Avalonia"
         mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
         x:Class="Aihao.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -24,6 +27,37 @@
         <KeyBinding Gesture="Ctrl+P" Command="{Binding OpenQuickOpenCommand}"/>
         <KeyBinding Gesture="Ctrl+Shift+P" Command="{Binding OpenCommandPaletteCommand}"/>
     </Window.KeyBindings>
+    
+    <!-- DataTemplates for dockable views -->
+    <Window.DataTemplates>
+        <!-- Tool windows -->
+        <DataTemplate DataType="{x:Type dock:ProjectTreeToolViewModel}">
+            <dockViews:ProjectTreeToolView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dock:ConsoleToolViewModel}">
+            <dockViews:ConsoleToolView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dock:InspectorToolViewModel}">
+            <dockViews:InspectorToolView/>
+        </DataTemplate>
+        
+        <!-- Document windows -->
+        <DataTemplate DataType="{x:Type dock:GlobalSettingsDocumentViewModel}">
+            <dockViews:GlobalSettingsDocumentView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dock:PropertiesDocumentViewModel}">
+            <dockViews:PropertiesDocumentView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dock:ResourcesDocumentViewModel}">
+            <dockViews:ResourcesDocumentView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dock:MetagenDocumentViewModel}">
+            <dockViews:MetagenDocumentView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type dock:RenderOutputDocumentViewModel}">
+            <dockViews:RenderOutputDocumentView/>
+        </DataTemplate>
+    </Window.DataTemplates>
     
     <DockPanel>
         <!-- Menu Bar -->
@@ -59,11 +93,7 @@
                 <MenuItem Header="_Quick Open..." Command="{Binding OpenQuickOpenCommand}" InputGesture="Ctrl+P"/>
                 <MenuItem Header="_Command Palette..." Command="{Binding OpenCommandPaletteCommand}" InputGesture="Ctrl+Shift+P"/>
                 <Separator/>
-                <MenuItem Header="Project _Tree" />
-                <MenuItem Header="_Console" Command="{Binding ShowConsoleCommand}"/>
-                <MenuItem Header="P_roperties"/>
-                <Separator/>
-                <MenuItem Header="_Render Output" Command="{Binding OpenRenderWindowCommand}"/>
+                <MenuItem Header="Reset Layout" Command="{Binding ResetLayoutCommand}"/>
             </MenuItem>
             <MenuItem Header="_Project" IsEnabled="{Binding IsProjectLoaded}">
                 <MenuItem Header="_Build" Command="{Binding BuildProjectCommand}" InputGesture="Ctrl+Shift+B"/>
@@ -107,99 +137,9 @@
             </Grid>
         </Border>
         
-        <!-- Main Content -->
-        <Grid ColumnDefinitions="250,5,*,5,300" RowDefinitions="*,5,200">
-            <!-- Left Panel: Project Tree -->
-            <Border Grid.Column="0" Grid.RowSpan="3" Background="{StaticResource PanelBackgroundBrush}">
-                <DockPanel>
-                    <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="8,4">
-                        <TextBlock Text="Project" FontWeight="SemiBold"/>
-                    </Border>
-                    <views:ProjectTreeView DataContext="{Binding ProjectTree}"/>
-                </DockPanel>
-            </Border>
-            
-            <GridSplitter Grid.Column="1" Grid.RowSpan="3" ResizeDirection="Columns" Background="Transparent"/>
-            
-            <!-- Center: Document Tabs -->
-            <Border Grid.Column="2" Grid.Row="0" Background="{StaticResource EditorBackgroundBrush}">
-                <DockPanel>
-                    <!-- Tab Strip -->
-                    <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}">
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                            <ItemsControl ItemsSource="{Binding OpenDocuments}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:DocumentTabViewModel">
-                                        <Border Padding="12,6" 
-                                                Background="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).SelectedDocument, Converter={x:Static vm:SelectedTabConverter.Instance}, ConverterParameter={Binding}}"
-                                                PointerPressed="OnTabPointerPressed">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
-                                                <TextBlock Text="●" IsVisible="{Binding IsDirty}" Foreground="Orange" VerticalAlignment="Center"/>
-                                                <Button Content="×" 
-                                                        Padding="4,0"
-                                                        Background="Transparent"
-                                                        Command="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).CloseDocumentCommand}"
-                                                        CommandParameter="{Binding}"
-                                                        IsVisible="{Binding CanClose}"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </Border>
-                    
-                    <!-- Document Content -->
-                    <ContentControl Content="{Binding SelectedDocument.Content}">
-                        <ContentControl.DataTemplates>
-                            <DataTemplate DataType="{x:Type vm:GlobalSettingsEditorViewModel}">
-                                <views:GlobalSettingsEditor/>
-                            </DataTemplate>
-                            <DataTemplate DataType="{x:Type vm:PropertiesEditorViewModel}">
-                                <views:PropertiesEditor/>
-                            </DataTemplate>
-                            <DataTemplate DataType="{x:Type vm:ResourceListEditorViewModel}">
-                                <views:ResourceListEditor/>
-                            </DataTemplate>
-                            <DataTemplate DataType="{x:Type vm:MetagenEditorViewModel}">
-                                <views:MetagenEditor/>
-                            </DataTemplate>
-                            <DataTemplate DataType="{x:Type vm:OpenGLWindowViewModel}">
-                                <views:OpenGLWindow/>
-                            </DataTemplate>
-                        </ContentControl.DataTemplates>
-                    </ContentControl>
-                </DockPanel>
-            </Border>
-            
-            <GridSplitter Grid.Column="3" Grid.Row="0" ResizeDirection="Columns" Background="Transparent"/>
-            
-            <!-- Right Panel: Inspector (for selected item properties) -->
-            <Border Grid.Column="4" Grid.Row="0" Background="{StaticResource PanelBackgroundBrush}">
-                <DockPanel>
-                    <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="8,4">
-                        <TextBlock Text="Inspector" FontWeight="SemiBold"/>
-                    </Border>
-                    <!-- Inspector shows properties of selected item - placeholder for now -->
-                    <TextBlock Text="Select an item to inspect" 
-                               Opacity="0.5" 
-                               HorizontalAlignment="Center" 
-                               VerticalAlignment="Center"/>
-                </DockPanel>
-            </Border>
-            
-            <GridSplitter Grid.Column="2" Grid.ColumnSpan="3" Grid.Row="1" ResizeDirection="Rows" Background="Transparent"/>
-            
-            <!-- Bottom Panel: Console -->
-            <Border Grid.Column="2" Grid.ColumnSpan="3" Grid.Row="2" Background="{StaticResource PanelBackgroundBrush}">
-                <views:ConsoleWindow DataContext="{Binding Console}"/>
-            </Border>
-        </Grid>
+        <!-- Docking Layout -->
+        <idc:DockControl Layout="{Binding DockLayout}"
+                         InitializeLayout="True"
+                         InitializeFactory="True"/>
     </DockPanel>
 </Window>

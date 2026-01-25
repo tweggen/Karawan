@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels.Dock"
+             xmlns:views="using:Aihao.Views"
+             mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="400"
+             x:Class="Aihao.Views.Dock.ProjectTreeToolView"
+             x:DataType="vm:ProjectTreeToolViewModel">
+    
+    <views:ProjectTreeView DataContext="{Binding ProjectTree}"/>
+    
+</UserControl>

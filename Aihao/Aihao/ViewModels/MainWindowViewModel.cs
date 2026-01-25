@@ -8,8 +8,10 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Aihao.Models;
 using Aihao.Services;
+using Aihao.ViewModels.Dock;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Dock.Model.Core;
 
 namespace Aihao.ViewModels;
 
@@ -17,7 +19,6 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly ProjectService _projectService;
     private readonly ProcessService _processService;
-    private readonly DockingService _dockingService;
     private readonly FileDialogService _fileDialogService;
     private readonly UserSettingsService _userSettingsService;
     private readonly ActionService _actionService;
@@ -52,38 +53,32 @@ public partial class MainWindowViewModel : ObservableObject
     /// </summary>
     public ActionService ActionService => _actionService;
     
-    // Child ViewModels - these are the main panels
+    // Child ViewModels - tool windows
     public ProjectTreeViewModel ProjectTree { get; }
     public ConsoleWindowViewModel Console { get; }
-    public PropertiesEditorViewModel Properties { get; }
-    public GlobalSettingsEditorViewModel GlobalSettings { get; }
-    public ResourceListEditorViewModel Resources { get; }
-    public MetagenEditorViewModel Metagen { get; }
-    public OpenGLWindowViewModel RenderOutput { get; }
     
-    // Open document tabs
-    public ObservableCollection<DocumentTabViewModel> OpenDocuments { get; } = new();
+    // Docking system
+    private AihaoDockFactory? _dockFactory;
     
     [ObservableProperty]
-    private DocumentTabViewModel? _selectedDocument;
+    private IRootDock? _dockLayout;
     
     public MainWindowViewModel()
     {
         _projectService = new ProjectService();
         _processService = new ProcessService();
-        _dockingService = new DockingService();
         _fileDialogService = new FileDialogService();
         _userSettingsService = new UserSettingsService();
         _actionService = new ActionService();
         
-        // Initialize all view models
+        // Initialize tool window view models
         ProjectTree = new ProjectTreeViewModel();
         Console = new ConsoleWindowViewModel();
-        Properties = new PropertiesEditorViewModel();
-        GlobalSettings = new GlobalSettingsEditorViewModel();
-        Resources = new ResourceListEditorViewModel();
-        Metagen = new MetagenEditorViewModel();
-        RenderOutput = new OpenGLWindowViewModel();
+        
+        // Create the dock factory and layout
+        _dockFactory = new AihaoDockFactory(ProjectTree, Console);
+        DockLayout = _dockFactory.CreateLayout();
+        _dockFactory.InitLayout(DockLayout);
         
         // Wire up process output to console
         _processService.OutputReceived += (s, line) => Console.AddLine(line, LogLevel.Info);
@@ -98,9 +93,6 @@ public partial class MainWindowViewModel : ObservableObject
         // Wire up project tree selection
         ProjectTree.FileSelected += OnFileSelected;
         ProjectTree.FileDoubleClicked += OnFileDoubleClicked;
-        
-        // Register dockable windows
-        RegisterDockableWindows();
     }
     
     /// <summary>
@@ -231,17 +223,6 @@ public partial class MainWindowViewModel : ObservableObject
         );
     }
     
-    private void RegisterDockableWindows()
-    {
-        _dockingService.RegisterWindow("projectTree", "Project", typeof(ProjectTreeViewModel), DockPosition.Left);
-        _dockingService.RegisterWindow("console", "Console", typeof(ConsoleWindowViewModel), DockPosition.Bottom);
-        _dockingService.RegisterWindow("properties", "Properties", typeof(PropertiesEditorViewModel), DockPosition.Right);
-        _dockingService.RegisterWindow("globalSettings", "Global Settings", typeof(GlobalSettingsEditorViewModel), DockPosition.Center);
-        _dockingService.RegisterWindow("resources", "Resources", typeof(ResourceListEditorViewModel), DockPosition.Center);
-        _dockingService.RegisterWindow("metagen", "Metagen", typeof(MetagenEditorViewModel), DockPosition.Center);
-        _dockingService.RegisterWindow("renderOutput", "Render Output", typeof(OpenGLWindowViewModel), DockPosition.Center);
-    }
-    
     private void OnFileSelected(object? sender, FileTreeItemViewModel file)
     {
         // Update properties panel with selected item info
@@ -272,7 +253,7 @@ public partial class MainWindowViewModel : ObservableObject
     
     private void OpenSectionEditor(string sectionId)
     {
-        if (CurrentProject == null) return;
+        if (CurrentProject == null || _dockFactory == null) return;
         
         var definition = KnownSections.GetById(sectionId);
         if (definition == null)
@@ -297,39 +278,46 @@ public partial class MainWindowViewModel : ObservableObject
             case "globalSettings":
                 if (content is JsonObject settingsObj)
                 {
-                    GlobalSettings.LoadFromJson(settingsObj);
-                    OpenOrFocusDocument(definition.DisplayName, GlobalSettings);
+                    var editor = new GlobalSettingsEditorViewModel();
+                    editor.LoadFromJson(settingsObj);
+                    var doc = new GlobalSettingsDocumentViewModel(editor);
+                    _dockFactory.AddDocument(doc);
                 }
                 break;
                 
             case "properties":
                 if (content is JsonObject propertiesObj)
                 {
-                    // Create a new instance for the document tab (separate from the right panel inspector)
-                    var propertiesVm = new PropertiesEditorViewModel();
-                    propertiesVm.LoadFromJson(propertiesObj, definition.DisplayName);
-                    OpenOrFocusDocument(definition.DisplayName, propertiesVm);
+                    var editor = new PropertiesEditorViewModel();
+                    editor.LoadFromJson(propertiesObj, definition.DisplayName);
+                    var doc = new PropertiesDocumentViewModel(editor);
+                    _dockFactory.AddDocument(doc);
                 }
                 break;
                 
             case "metaGen":
                 if (content is JsonObject metagenObj)
                 {
-                    Metagen.LoadFromJson(metagenObj);
-                    OpenOrFocusDocument(definition.DisplayName, Metagen);
+                    var editor = new MetagenEditorViewModel();
+                    editor.LoadFromJson(metagenObj);
+                    var doc = new MetagenDocumentViewModel(editor);
+                    _dockFactory.AddDocument(doc);
                 }
                 break;
                 
             case "resources":
-                if (content is JsonArray resourcesArr)
                 {
-                    Resources.LoadFromJson(resourcesArr);
-                    OpenOrFocusDocument(definition.DisplayName, Resources);
-                }
-                else if (content is JsonObject resourcesObj)
-                {
-                    Resources.LoadFromJsonObject(resourcesObj);
-                    OpenOrFocusDocument(definition.DisplayName, Resources);
+                    var editor = new ResourceListEditorViewModel();
+                    if (content is JsonArray resourcesArr)
+                    {
+                        editor.LoadFromJson(resourcesArr);
+                    }
+                    else if (content is JsonObject resourcesObj)
+                    {
+                        editor.LoadFromJsonObject(resourcesObj);
+                    }
+                    var doc = new ResourcesDocumentViewModel(editor);
+                    _dockFactory.AddDocument(doc);
                 }
                 break;
                 
@@ -367,34 +355,20 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void OpenRenderWindow()
     {
-        OpenOrFocusDocument("Render Output", RenderOutput);
+        if (_dockFactory == null) return;
+        
+        var renderer = new OpenGLWindowViewModel();
+        var doc = new RenderOutputDocumentViewModel(renderer);
+        _dockFactory.AddDocument(doc);
     }
     
     private void OpenFileInEditor(string relativePath)
     {
-        if (CurrentProject == null) return;
+        if (CurrentProject == null || _dockFactory == null) return;
         
-        // Check if already open
-        foreach (var doc in OpenDocuments)
-        {
-            if (doc.FilePath == relativePath)
-            {
-                SelectedDocument = doc;
-                return;
-            }
-        }
-        
-        // Create new document tab
-        var tab = new DocumentTabViewModel
-        {
-            Title = Path.GetFileName(relativePath),
-            FilePath = relativePath
-        };
-        
-        // TODO: Create appropriate editor based on file content
-        
-        OpenDocuments.Add(tab);
-        SelectedDocument = tab;
+        var title = Path.GetFileName(relativePath);
+        var doc = new FileDocumentViewModel(title, relativePath);
+        _dockFactory.AddDocument(doc);
     }
     
     private void OpenJsonEditor(string title, JsonNode content)
@@ -403,42 +377,16 @@ public partial class MainWindowViewModel : ObservableObject
         Console.AddLine($"Would open JSON editor for: {title}", LogLevel.Debug);
     }
     
-    private void OpenOrFocusDocument(string title, object viewModel)
-    {
-        // Check if already open
-        foreach (var doc in OpenDocuments)
-        {
-            if (doc.Title == title)
-            {
-                SelectedDocument = doc;
-                return;
-            }
-        }
-        
-        // Create new document tab
-        var tab = new DocumentTabViewModel
-        {
-            Title = title,
-            Content = viewModel
-        };
-        
-        OpenDocuments.Add(tab);
-        SelectedDocument = tab;
-    }
-    
+    /// <summary>
+    /// Reset the dock layout to default.
+    /// </summary>
     [RelayCommand]
-    private void CloseDocument(DocumentTabViewModel? doc)
+    private void ResetLayout()
     {
-        if (doc != null)
-        {
-            OpenDocuments.Remove(doc);
-            
-            // Select another document or clear selection
-            if (SelectedDocument == doc)
-            {
-                SelectedDocument = OpenDocuments.Count > 0 ? OpenDocuments[0] : null;
-            }
-        }
+        _dockFactory = new AihaoDockFactory(ProjectTree, Console);
+        DockLayout = _dockFactory.CreateLayout();
+        _dockFactory.InitLayout(DockLayout);
+        Console.AddLine("Layout reset to default", LogLevel.Info);
     }
     
     /// <summary>
@@ -922,20 +870,15 @@ public partial class MainWindowViewModel : ObservableObject
             Action = () => { OpenRenderWindow(); return Task.CompletedTask; }
         });
         
-        // === Open Documents ===
-        foreach (var doc in OpenDocuments)
+        items.Add(new QuickOpenItem
         {
-            var docTitle = doc.Title;
-            items.Add(new QuickOpenItem
-            {
-                Id = $"doc.{doc.Title}",
-                DisplayName = doc.Title,
-                Description = string.IsNullOrEmpty(doc.FilePath) ? "Open document" : doc.FilePath,
-                Category = "Open Documents",
-                Icon = "📄",
-                Action = () => { SelectedDocument = OpenDocuments.FirstOrDefault(d => d.Title == docTitle); return Task.CompletedTask; }
-            });
-        }
+            Id = "view.resetLayout",
+            DisplayName = "Reset Layout",
+            Description = "Reset window layout to default",
+            Category = "Views",
+            Icon = "🔄",
+            Action = () => { ResetLayout(); return Task.CompletedTask; }
+        });
         
         return items;
     }
@@ -949,22 +892,4 @@ public partial class MainWindowViewModel : ObservableObject
         // TODO: Check for unsaved changes
         Environment.Exit(0);
     }
-}
-
-public partial class DocumentTabViewModel : ObservableObject
-{
-    [ObservableProperty]
-    private string _title = string.Empty;
-    
-    [ObservableProperty]
-    private string _filePath = string.Empty;
-    
-    [ObservableProperty]
-    private object? _content;
-    
-    [ObservableProperty]
-    private bool _isDirty;
-    
-    [ObservableProperty]
-    private bool _canClose = true;
 }

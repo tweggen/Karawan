@@ -25,8 +25,8 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     
     <!-- Docking library for IDE-like layout -->
-    <PackageReference Include="Dock.Avalonia" Version="11.0.0" />
-    <PackageReference Include="Dock.Model.Mvvm" Version="11.0.0" />
+    <PackageReference Include="Dock.Avalonia" Version="11.2.0.2" />
+    <PackageReference Include="Dock.Model.Mvvm" Version="11.2.0.2" />
     
     <!-- JoyceCode dependencies -->
     <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
