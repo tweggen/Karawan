@@ -7,47 +7,218 @@
              x:Class="Aihao.Views.PropertiesEditor"
              x:DataType="vm:PropertiesEditorViewModel">
     
+    <UserControl.Styles>
+        <!-- Modified background -->
+        <Style Selector="Border.prop-node">
+            <Setter Property="Padding" Value="2,1"/>
+            <Setter Property="CornerRadius" Value="2"/>
+        </Style>
+    </UserControl.Styles>
+    
     <DockPanel>
-        <!-- Header -->
+        <!-- Header with object name -->
         <Border DockPanel.Dock="Top" 
-                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-                Padding="8,4">
+                Background="{StaticResource ToolbarBackgroundBrush}"
+                Padding="4,2"
+                IsVisible="{Binding SelectedObjectName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
             <TextBlock Text="{Binding SelectedObjectName}" 
                        FontWeight="SemiBold"/>
         </Border>
         
         <!-- Toolbar -->
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4">
-            <Button Command="{Binding SaveCommand}" 
-                    Content="Apply" 
-                    IsEnabled="{Binding IsDirty}"
-                    Margin="2"/>
-        </StackPanel>
+        <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="4,2">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                <Button Grid.Column="0"
+                        Command="{Binding SaveCommand}" 
+                        Content="💾" 
+                        ToolTip.Tip="Apply Changes"
+                        IsEnabled="{Binding IsDirty}"
+                        Margin="0,0,2,0"/>
+                <Button Grid.Column="1"
+                        Command="{Binding AddPropertyCommand}" 
+                        Content="➕"
+                        ToolTip.Tip="Add Property"
+                        Margin="0,0,4,0"/>
+                
+                <!-- Search -->
+                <TextBox Grid.Column="2"
+                         Text="{Binding SearchText}"
+                         Watermark="Search..."
+                         Margin="4,0"/>
+                
+                <Button Grid.Column="3"
+                        Command="{Binding ExpandAllCommand}"
+                        Content="⊞"
+                        ToolTip.Tip="Expand All"
+                        Margin="4,0,0,0"/>
+                <Button Grid.Column="4"
+                        Command="{Binding CollapseAllCommand}"
+                        Content="⊟"
+                        ToolTip.Tip="Collapse All"
+                        Margin="2,0,0,0"/>
+            </Grid>
+        </Border>
         
-        <!-- Properties List -->
-        <ScrollViewer>
-            <ItemsControl ItemsSource="{Binding Properties}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:PropertyItemViewModel">
-                        <Border Padding="{Binding Depth, Converter={x:Static vm:DepthToMarginConverter.Instance}}">
-                            <Grid ColumnDefinitions="*,*">
-                                <TextBlock Grid.Column="0" 
-                                           Text="{Binding Name}"
-                                           VerticalAlignment="Center"
-                                           FontWeight="{Binding IsCategory, Converter={x:Static vm:BoolToFontWeightConverter.Instance}}"/>
+        <!-- Properties tree -->
+        <TreeView x:Name="PropertiesTree"
+                  ItemsSource="{Binding RootNodes}"
+                  SelectedItem="{Binding SelectedNode}"
+                  Padding="2">
+            <TreeView.Styles>
+                <Style Selector="TreeViewItem" x:DataType="vm:PropertyTreeNode">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                </Style>
+            </TreeView.Styles>
+            <TreeView.ItemTemplate>
+                <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:PropertyTreeNode">
+                    <Border Classes="prop-node"
+                            Background="{Binding IsModified, Converter={x:Static vm:ModifiedBackgroundConverter.Instance}}">
+                        <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                            <!-- Icon -->
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Icon}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,4,0"
+                                       Width="14"/>
+                            
+                            <!-- Name -->
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Name}"
+                                       FontWeight="{Binding IsBranch, Converter={x:Static vm:BoolToFontWeightConverter.Instance}}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,6,0"/>
+                            
+                            <!-- Value editor panel (only for leaves) -->
+                            <Panel Grid.Column="2" IsVisible="{Binding IsLeaf}">
                                 
-                                <ContentControl Grid.Column="1" 
-                                                IsVisible="{Binding !IsCategory}">
-                                    <ContentControl.Content>
-                                        <TextBox Text="{Binding Value}"
-                                                 IsVisible="{Binding !IsCategory}"/>
-                                    </ContentControl.Content>
-                                </ContentControl>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                                <!-- Resolution editor (WxH) -->
+                                <StackPanel Orientation="Horizontal"
+                                            IsVisible="{Binding EditorType, Converter={x:Static vm:PropertyEditorTypeConverter.IsResolution}}"
+                                            Spacing="2"
+                                            VerticalAlignment="Center">
+                                    <NumericUpDown Value="{Binding VectorX}"
+                                                   Minimum="1"
+                                                   Maximum="9999"
+                                                   FormatString="0"
+                                                   Width="55"
+                                                   ShowButtonSpinner="False"/>
+                                    <TextBlock Text="×" VerticalAlignment="Center"/>
+                                    <NumericUpDown Value="{Binding VectorY}"
+                                                   Minimum="1"
+                                                   Maximum="9999"
+                                                   FormatString="0"
+                                                   Width="55"
+                                                   ShowButtonSpinner="False"/>
+                                </StackPanel>
+                                
+                                <!-- Vector2 editor (X,Y) -->
+                                <StackPanel Orientation="Horizontal"
+                                            IsVisible="{Binding EditorType, Converter={x:Static vm:PropertyEditorTypeConverter.IsVector2}}"
+                                            Spacing="2"
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="X" Opacity="0.5" VerticalAlignment="Center"/>
+                                    <NumericUpDown Value="{Binding VectorX}"
+                                                   FormatString="0.##"
+                                                   Width="55"
+                                                   ShowButtonSpinner="False"/>
+                                    <TextBlock Text="Y" Opacity="0.5" VerticalAlignment="Center"/>
+                                    <NumericUpDown Value="{Binding VectorY}"
+                                                   FormatString="0.##"
+                                                   Width="55"
+                                                   ShowButtonSpinner="False"/>
+                                </StackPanel>
+                                
+                                <!-- Vector3 editor (X,Y,Z) -->
+                                <StackPanel Orientation="Horizontal"
+                                            IsVisible="{Binding EditorType, Converter={x:Static vm:PropertyEditorTypeConverter.IsVector3}}"
+                                            Spacing="2"
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="X" Opacity="0.5" VerticalAlignment="Center"/>
+                                    <NumericUpDown Value="{Binding VectorX}"
+                                                   FormatString="0.##"
+                                                   Width="50"
+                                                   ShowButtonSpinner="False"/>
+                                    <TextBlock Text="Y" Opacity="0.5" VerticalAlignment="Center"/>
+                                    <NumericUpDown Value="{Binding VectorY}"
+                                                   FormatString="0.##"
+                                                   Width="50"
+                                                   ShowButtonSpinner="False"/>
+                                    <TextBlock Text="Z" Opacity="0.5" VerticalAlignment="Center"/>
+                                    <NumericUpDown Value="{Binding VectorZ}"
+                                                   FormatString="0.##"
+                                                   Width="50"
+                                                   ShowButtonSpinner="False"/>
+                                </StackPanel>
+                                
+                                <!-- Color editor -->
+                                <StackPanel Orientation="Horizontal"
+                                            IsVisible="{Binding EditorType, Converter={x:Static vm:PropertyEditorTypeConverter.IsColor}}"
+                                            Spacing="4"
+                                            VerticalAlignment="Center">
+                                    <Border Width="20" Height="16" 
+                                            CornerRadius="2"
+                                            BorderBrush="Gray" BorderThickness="1">
+                                        <Border.Background>
+                                            <SolidColorBrush Color="{Binding Value, Converter={x:Static vm:HexToColorConverter.Instance}}"/>
+                                        </Border.Background>
+                                    </Border>
+                                    <TextBox Text="{Binding Value}"
+                                             Width="80"
+                                             ToolTip.Tip="{Binding ValidationError}"/>
+                                </StackPanel>
+                                
+                                <!-- Slider editor (for volume, distance, etc.) -->
+                                <StackPanel Orientation="Horizontal"
+                                            IsVisible="{Binding EditorType, Converter={x:Static vm:PropertyEditorTypeConverter.IsSlider}}"
+                                            Spacing="4"
+                                            VerticalAlignment="Center">
+                                    <Slider Value="{Binding SliderValue}"
+                                            Minimum="0"
+                                            Maximum="1000"
+                                            Width="80"
+                                            VerticalAlignment="Center"/>
+                                    <NumericUpDown Value="{Binding NumericValue}"
+                                                   FormatString="0.##"
+                                                   Width="65"
+                                                   ShowButtonSpinner="False"/>
+                                </StackPanel>
+                                
+                                <!-- Boolean toggle -->
+                                <CheckBox IsChecked="{Binding Value, Converter={x:Static vm:StringToBoolConverter.Instance}}"
+                                          IsVisible="{Binding ValueKind, Converter={x:Static vm:PropertyValueKindConverter.IsBoolean}}"
+                                          Content="{Binding Value}"
+                                          VerticalAlignment="Center"/>
+                                
+                                <!-- Default string/number editor -->
+                                <TextBox Text="{Binding Value}"
+                                         MinWidth="80"
+                                         MaxWidth="150"
+                                         VerticalAlignment="Center"
+                                         ToolTip.Tip="{Binding ValidationError}"
+                                         BorderBrush="{Binding ValidationError, Converter={x:Static vm:ErrorBorderConverter.Instance}}">
+                                    <TextBox.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="EditorType" Converter="{x:Static vm:PropertyEditorTypeConverter.IsDefault}"/>
+                                            <Binding Path="ValueKind" Converter="{x:Static vm:PropertyValueKindConverter.IsNotBoolean}"/>
+                                        </MultiBinding>
+                                    </TextBox.IsVisible>
+                                </TextBox>
+                            </Panel>
+                            
+                            <!-- Delete button (only for leaves) -->
+                            <Button Grid.Column="3"
+                                    Content="×"
+                                    Padding="2,0"
+                                    Background="Transparent"
+                                    Command="{Binding $parent[TreeView].((vm:PropertiesEditorViewModel)DataContext).RemovePropertyCommand}"
+                                    CommandParameter="{Binding}"
+                                    IsVisible="{Binding IsLeaf}"
+                                    ToolTip.Tip="Remove this property"
+                                    Margin="2,0,0,0"/>
+                        </Grid>
+                    </Border>
+                </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
     </DockPanel>
 </UserControl>

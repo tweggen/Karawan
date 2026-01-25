@@ -110,6 +110,105 @@ public class ModifiedBackgroundConverter : IValueConverter
 }
 
 /// <summary>
+/// Converts PropertyValueKind to boolean for visibility.
+/// </summary>
+public class PropertyValueKindConverter : IValueConverter
+{
+    public static readonly PropertyValueKindConverter IsBoolean = new(PropertyValueKind.Boolean);
+    public static readonly PropertyValueKindConverter IsNotBoolean = new(PropertyValueKind.Boolean, true);
+    public static readonly PropertyValueKindConverter IsNumeric = new(PropertyValueKind.Integer, false, PropertyValueKind.Float);
+    
+    private readonly PropertyValueKind _targetKind;
+    private readonly PropertyValueKind? _altKind;
+    private readonly bool _invert;
+    
+    public PropertyValueKindConverter(PropertyValueKind targetKind, bool invert = false, PropertyValueKind? altKind = null)
+    {
+        _targetKind = targetKind;
+        _invert = invert;
+        _altKind = altKind;
+    }
+    
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is PropertyValueKind kind)
+        {
+            bool matches = kind == _targetKind || (_altKind.HasValue && kind == _altKind.Value);
+            return _invert ? !matches : matches;
+        }
+        return _invert;
+    }
+    
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts PropertyEditorType to boolean for visibility.
+/// </summary>
+public class PropertyEditorTypeConverter : IValueConverter
+{
+    public static readonly PropertyEditorTypeConverter IsDefault = new(PropertyEditorType.Default);
+    public static readonly PropertyEditorTypeConverter IsResolution = new(PropertyEditorType.Resolution);
+    public static readonly PropertyEditorTypeConverter IsVector2 = new(PropertyEditorType.Vector2);
+    public static readonly PropertyEditorTypeConverter IsVector3 = new(PropertyEditorType.Vector3);
+    public static readonly PropertyEditorTypeConverter IsColor = new(PropertyEditorType.Color);
+    public static readonly PropertyEditorTypeConverter IsSlider = new(PropertyEditorType.Slider);
+    
+    private readonly PropertyEditorType _targetType;
+    
+    public PropertyEditorTypeConverter(PropertyEditorType targetType)
+    {
+        _targetType = targetType;
+    }
+    
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is PropertyEditorType editorType)
+            return editorType == _targetType;
+        return _targetType == PropertyEditorType.Default;
+    }
+    
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts hex color string to Avalonia Color.
+/// </summary>
+public class HexToColorConverter : IValueConverter
+{
+    public static readonly HexToColorConverter Instance = new();
+    
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is string hex && hex.StartsWith("#"))
+        {
+            try
+            {
+                return Color.Parse(hex);
+            }
+            catch
+            {
+                return Colors.Transparent;
+            }
+        }
+        return Colors.Transparent;
+    }
+    
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is Color color)
+            return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        return "#000000";
+    }
+}
+
+/// <summary>
 /// Converts validation error to border brush.
 /// </summary>
 public class ErrorBorderConverter : IValueConverter

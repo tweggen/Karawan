@@ -90,12 +90,9 @@
                                                Text="{Binding Text}"
                                                FontFamily="Consolas,Courier New,monospace"
                                                FontSize="12"
+                                               Foreground="{Binding LevelBrush}"
                                                TextWrapping="NoWrap"
-                                               VerticalAlignment="Center">
-                                        <TextBlock.Foreground>
-                                            <SolidColorBrush Color="{Binding LevelColor}"/>
-                                        </TextBlock.Foreground>
-                                    </TextBlock>
+                                               VerticalAlignment="Center"/>
                                 </Grid>
                             </Border>
                         </DataTemplate>

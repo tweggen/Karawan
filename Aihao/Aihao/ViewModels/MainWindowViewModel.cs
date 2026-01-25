@@ -252,14 +252,21 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (CurrentProject == null) return;
         
+        Console.AddLine($"Double-clicked: {file.Name}, NodeType: '{file.NodeType}', IsFile: {file.IsFile}", LogLevel.Debug);
+        
         // Open editor based on node type (section) or file
         if (!string.IsNullOrEmpty(file.NodeType))
         {
+            Console.AddLine($"Opening section editor for: {file.NodeType}", LogLevel.Debug);
             OpenSectionEditor(file.NodeType);
         }
         else if (file.IsFile && !string.IsNullOrEmpty(file.RelativePath))
         {
             OpenFileInEditor(file.RelativePath);
+        }
+        else
+        {
+            Console.AddLine($"No action for item: {file.Name}", LogLevel.Debug);
         }
     }
     
@@ -268,15 +275,21 @@ public partial class MainWindowViewModel : ObservableObject
         if (CurrentProject == null) return;
         
         var definition = KnownSections.GetById(sectionId);
-        if (definition == null) return;
+        if (definition == null)
+        {
+            Console.AddLine($"Unknown section: {sectionId}", LogLevel.Error);
+            return;
+        }
         
         // Get merged content from Mix
         var content = CurrentProject.GetSection(sectionId);
         if (content == null)
         {
-            Console.AddLine($"No content found for section: {sectionId}", LogLevel.Warning);
+            Console.AddLine($"No content found for section: {sectionId} (path: {definition.JsonPath})", LogLevel.Warning);
             return;
         }
+        
+        Console.AddLine($"Opening section {sectionId}: content type = {content.GetType().Name}", LogLevel.Debug);
         
         // Open the appropriate editor based on section type
         switch (sectionId)
@@ -286,6 +299,16 @@ public partial class MainWindowViewModel : ObservableObject
                 {
                     GlobalSettings.LoadFromJson(settingsObj);
                     OpenOrFocusDocument(definition.DisplayName, GlobalSettings);
+                }
+                break;
+                
+            case "properties":
+                if (content is JsonObject propertiesObj)
+                {
+                    // Create a new instance for the document tab (separate from the right panel inspector)
+                    var propertiesVm = new PropertiesEditorViewModel();
+                    propertiesVm.LoadFromJson(propertiesObj, definition.DisplayName);
+                    OpenOrFocusDocument(definition.DisplayName, propertiesVm);
                 }
                 break;
                 
@@ -321,6 +344,12 @@ public partial class MainWindowViewModel : ObservableObject
     private void OpenGlobalSettingsEditor()
     {
         OpenSectionEditor("globalSettings");
+    }
+    
+    [RelayCommand]
+    private void OpenPropertiesEditor()
+    {
+        OpenSectionEditor("properties");
     }
     
     [RelayCommand]
@@ -403,9 +432,11 @@ public partial class MainWindowViewModel : ObservableObject
         if (doc != null)
         {
             OpenDocuments.Remove(doc);
-            if (SelectedDocument == doc && OpenDocuments.Count > 0)
+            
+            // Select another document or clear selection
+            if (SelectedDocument == doc)
             {
-                SelectedDocument = OpenDocuments[0];
+                SelectedDocument = OpenDocuments.Count > 0 ? OpenDocuments[0] : null;
             }
         }
     }
@@ -518,10 +549,12 @@ public partial class MainWindowViewModel : ObservableObject
                 }
                 
                 // Log existing sections
-                Console.AddLine($"  Sections:", LogLevel.Debug);
+                Console.AddLine($"  Sections found:", LogLevel.Debug);
                 foreach (var section in CurrentProject.GetExistingSections())
                 {
-                    Console.AddLine($"    {section.DisplayName}", LogLevel.Debug);
+                    var sectionContent = CurrentProject.GetSection(section.Id);
+                    var contentType = sectionContent?.GetType().Name ?? "null";
+                    Console.AddLine($"    {section.DisplayName} ({section.Id}): {contentType}", LogLevel.Debug);
                 }
                 
                 // Add to recent projects

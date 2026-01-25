@@ -69,6 +69,7 @@
                 <MenuItem Header="_Build" Command="{Binding BuildProjectCommand}" InputGesture="Ctrl+Shift+B"/>
                 <Separator/>
                 <MenuItem Header="_Global Settings" Command="{Binding OpenGlobalSettingsEditorCommand}"/>
+                <MenuItem Header="_Properties" Command="{Binding OpenPropertiesEditorCommand}"/>
                 <MenuItem Header="_Resources" Command="{Binding OpenResourcesEditorCommand}"/>
                 <MenuItem Header="_Metagen" Command="{Binding OpenMetagenEditorCommand}"/>
             </MenuItem>
@@ -179,13 +180,17 @@
             
             <GridSplitter Grid.Column="3" Grid.Row="0" ResizeDirection="Columns" Background="Transparent"/>
             
-            <!-- Right Panel: Properties -->
+            <!-- Right Panel: Inspector (for selected item properties) -->
             <Border Grid.Column="4" Grid.Row="0" Background="{StaticResource PanelBackgroundBrush}">
                 <DockPanel>
                     <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="8,4">
-                        <TextBlock Text="Properties" FontWeight="SemiBold"/>
+                        <TextBlock Text="Inspector" FontWeight="SemiBold"/>
                     </Border>
-                    <views:PropertiesEditor DataContext="{Binding Properties}"/>
+                    <!-- Inspector shows properties of selected item - placeholder for now -->
+                    <TextBlock Text="Select an item to inspect" 
+                               Opacity="0.5" 
+                               HorizontalAlignment="Center" 
+                               VerticalAlignment="Center"/>
                 </DockPanel>
             </Border>
             

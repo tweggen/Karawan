@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Aihao.ViewModels;
 
 namespace Aihao.Views;
@@ -14,9 +13,25 @@ public partial class ProjectTreeView : UserControl
     
     private void OnItemDoubleTapped(object? sender, TappedEventArgs e)
     {
-        if (DataContext is ProjectTreeViewModel vm && vm.SelectedItem != null)
+        if (DataContext is ProjectTreeViewModel vm)
         {
-            vm.ItemDoubleClickedCommand.Execute(vm.SelectedItem);
+            // Get the actual item from the sender's DataContext, not from SelectedItem
+            // because selection may not have updated yet
+            FileTreeItemViewModel? item = null;
+            
+            if (sender is Control control && control.DataContext is FileTreeItemViewModel treeItem)
+            {
+                item = treeItem;
+            }
+            else if (vm.SelectedItem != null)
+            {
+                item = vm.SelectedItem;
+            }
+            
+            if (item != null)
+            {
+                vm.ItemDoubleClickedCommand.Execute(item);
+            }
         }
     }
 }

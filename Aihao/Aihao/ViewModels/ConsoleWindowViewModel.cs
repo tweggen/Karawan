@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -149,6 +150,22 @@ public partial class ConsoleLineViewModel : ObservableObject
         _ => "📝"
     };
     
+    private static readonly IBrush InfoBrush = new SolidColorBrush(Color.Parse("#3794FF"));
+    private static readonly IBrush WarningBrush = new SolidColorBrush(Color.Parse("#FF8C00"));
+    private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.Parse("#F44747"));
+    private static readonly IBrush DebugBrush = new SolidColorBrush(Color.Parse("#6A9955"));
+    private static readonly IBrush DefaultBrush = new SolidColorBrush(Color.Parse("#CCCCCC"));
+    
+    public IBrush LevelBrush => Level switch
+    {
+        LogLevel.Info => InfoBrush,
+        LogLevel.Warning => WarningBrush,
+        LogLevel.Error => ErrorBrush,
+        LogLevel.Debug => DebugBrush,
+        _ => DefaultBrush
+    };
+    
+    // Keep for compatibility
     public string LevelColor => Level switch
     {
         LogLevel.Info => "#3794FF",
