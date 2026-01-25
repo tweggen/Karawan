@@ -3,7 +3,7 @@
              x:Class="Aihao.App"
              RequestedThemeVariant="Dark">
     <Application.Styles>
-        <FluentTheme />
+        <FluentTheme  DensityStyle="Compact" />
         
         <!-- Global font size style -->
         <Style Selector="Window">
