@@ -72,6 +72,7 @@ public partial class MainWindowViewModel : ObservableObject
         
         // Wire up project tree selection
         ProjectTree.FileSelected += OnFileSelected;
+        ProjectTree.FileDoubleClicked += OnFileDoubleClicked;
         
         // Register dockable windows
         RegisterDockableWindows();
@@ -90,53 +91,108 @@ public partial class MainWindowViewModel : ObservableObject
     
     private void OnFileSelected(object? sender, FileTreeItemViewModel file)
     {
-        // Open the appropriate editor based on file type or node type
-        if (file.NodeType == "globalSettings" && CurrentProject?.RootDocument != null)
+        // Update properties panel with selected item info
+        StatusMessage = file.IsFile ? file.FullPath : file.Name;
+    }
+    
+    private void OnFileDoubleClicked(object? sender, FileTreeItemViewModel file)
+    {
+        if (CurrentProject == null) return;
+        
+        // Open editor based on node type (section) or file
+        if (!string.IsNullOrEmpty(file.NodeType))
         {
-            OpenGlobalSettingsEditor();
+            OpenSectionEditor(file.NodeType);
         }
-        else if (file.NodeType == "metagen" && CurrentProject?.RootDocument != null)
+        else if (file.IsFile && !string.IsNullOrEmpty(file.RelativePath))
         {
-            OpenMetagenEditor();
+            OpenFileInEditor(file.RelativePath);
         }
-        else if (file.NodeType == "resources" && CurrentProject?.RootDocument != null)
+    }
+    
+    private void OpenSectionEditor(string sectionId)
+    {
+        if (CurrentProject == null) return;
+        
+        var section = CurrentProject.GetSection(sectionId);
+        if (section == null || !section.Exists) return;
+        
+        // Get the content from the topmost active layer's file
+        JsonNode? content = null;
+        var writeTarget = section.GetWriteTarget();
+        
+        if (writeTarget?.FilePath != null &&
+            CurrentProject.IncludedFiles.TryGetValue(writeTarget.FilePath, out var includeFile))
         {
-            OpenResourcesEditor();
+            content = includeFile.Content;
         }
-        else if (file.IsFile)
+        else if (writeTarget?.FilePath == null && CurrentProject.RootFile?.Content != null)
         {
-            OpenFileInEditor(file.FullPath);
+            // Inline content in root file
+            content = CurrentProject.RootFile.Content[sectionId];
+        }
+        
+        if (content == null)
+        {
+            Console.AddLine($"No content found for section: {sectionId}", LogLevel.Warning);
+            return;
+        }
+        
+        // Open the appropriate editor based on section type
+        switch (sectionId)
+        {
+            case "globalSettings":
+                if (content is JsonObject settingsObj)
+                {
+                    GlobalSettings.LoadFromJson(settingsObj);
+                    OpenOrFocusDocument(section.Definition.DisplayName, GlobalSettings);
+                }
+                break;
+                
+            case "metaGen":
+                if (content is JsonObject metagenObj)
+                {
+                    Metagen.LoadFromJson(metagenObj);
+                    OpenOrFocusDocument(section.Definition.DisplayName, Metagen);
+                }
+                break;
+                
+            case "resources":
+                if (content is JsonArray resourcesArr)
+                {
+                    Resources.LoadFromJson(resourcesArr);
+                    OpenOrFocusDocument(section.Definition.DisplayName, Resources);
+                }
+                else if (content is JsonObject resourcesObj)
+                {
+                    Resources.LoadFromJsonObject(resourcesObj);
+                    OpenOrFocusDocument(section.Definition.DisplayName, Resources);
+                }
+                break;
+                
+            default:
+                // Open as generic JSON editor
+                OpenJsonEditor(section.Definition.DisplayName, content);
+                break;
         }
     }
     
     [RelayCommand]
     private void OpenGlobalSettingsEditor()
     {
-        if (CurrentProject?.RootDocument?["globalSettings"] is JsonObject settings)
-        {
-            GlobalSettings.LoadFromJson(settings);
-            OpenOrFocusDocument("Global Settings", GlobalSettings);
-        }
+        OpenSectionEditor("globalSettings");
     }
     
     [RelayCommand]
     private void OpenMetagenEditor()
     {
-        if (CurrentProject?.RootDocument?["metagen"] is JsonObject metagen)
-        {
-            Metagen.LoadFromJson(metagen);
-            OpenOrFocusDocument("Metagen", Metagen);
-        }
+        OpenSectionEditor("metaGen");
     }
     
     [RelayCommand]
     private void OpenResourcesEditor()
     {
-        if (CurrentProject?.RootDocument?["resources"] is JsonArray resources)
-        {
-            Resources.LoadFromJson(resources);
-            OpenOrFocusDocument("Resources", Resources);
-        }
+        OpenSectionEditor("resources");
     }
     
     [RelayCommand]
@@ -145,27 +201,41 @@ public partial class MainWindowViewModel : ObservableObject
         OpenOrFocusDocument("Render Output", RenderOutput);
     }
     
-    private void OpenFileInEditor(string path)
+    private void OpenFileInEditor(string relativePath)
     {
+        if (CurrentProject == null) return;
+        
         // Check if already open
         foreach (var doc in OpenDocuments)
         {
-            if (doc.FilePath == path)
+            if (doc.FilePath == relativePath)
             {
                 SelectedDocument = doc;
                 return;
             }
         }
         
+        // Get the file content
+        if (!CurrentProject.IncludedFiles.TryGetValue(relativePath, out var file))
+            return;
+        
         // Create new document tab
         var tab = new DocumentTabViewModel
         {
-            Title = System.IO.Path.GetFileName(path),
-            FilePath = path
+            Title = System.IO.Path.GetFileName(relativePath),
+            FilePath = relativePath
         };
+        
+        // TODO: Create appropriate editor based on file content
         
         OpenDocuments.Add(tab);
         SelectedDocument = tab;
+    }
+    
+    private void OpenJsonEditor(string title, JsonNode content)
+    {
+        // TODO: Create a generic JSON editor view model
+        Console.AddLine($"Would open JSON editor for: {title}", LogLevel.Debug);
     }
     
     private void OpenOrFocusDocument(string title, object viewModel)
@@ -233,8 +303,19 @@ public partial class MainWindowViewModel : ObservableObject
                 IsProjectLoaded = true;
                 StatusMessage = $"Loaded: {CurrentProject.Name}";
                 Console.AddLine($"Project loaded: {CurrentProject.Name}", LogLevel.Info);
-                Console.AddLine($"  Path: {CurrentProject.ProjectPath}", LogLevel.Debug);
-                Console.AddLine($"  Files: {CurrentProject.Files.Count}", LogLevel.Debug);
+                Console.AddLine($"  Directory: {CurrentProject.ProjectDirectory}", LogLevel.Debug);
+                Console.AddLine($"  Root file: {CurrentProject.RootFilePath}", LogLevel.Debug);
+                Console.AddLine($"  Included files: {CurrentProject.IncludedFiles.Count}", LogLevel.Debug);
+                
+                // Log sections with their layers
+                Console.AddLine($"  Sections:", LogLevel.Debug);
+                foreach (var section in CurrentProject.GetExistingSections())
+                {
+                    var layerInfo = section.Layers.Count == 1 
+                        ? section.Layers[0].DisplayName 
+                        : $"{section.Layers.Count} layers";
+                    Console.AddLine($"    {section.Definition.DisplayName}: {layerInfo}", LogLevel.Debug);
+                }
             }
         }
         catch (Exception ex)
@@ -252,7 +333,7 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             StatusMessage = "Saving project...";
-            await _projectService.SaveProjectAsync(CurrentProject);
+            await _projectService.SaveAllAsync(CurrentProject);
             StatusMessage = "Project saved";
             Console.AddLine("Project saved successfully", LogLevel.Info);
         }
@@ -334,7 +415,6 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void ShowConsole()
     {
-        // Ensure console is visible
         Console.IsVisible = true;
     }
     

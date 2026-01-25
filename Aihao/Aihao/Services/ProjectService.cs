@@ -9,18 +9,25 @@ using Aihao.Models;
 namespace Aihao.Services;
 
 /// <summary>
-/// Service for loading and saving Karawan engine projects
+/// Service for loading and saving Karawan engine projects.
+/// Mirrors the include resolution logic from engine.casette.Mix.
 /// </summary>
 public class ProjectService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    private static readonly JsonDocumentOptions JsonReadOptions = new()
     {
-        WriteIndented = true,
-        PropertyNameCaseInsensitive = true
+        AllowTrailingCommas = true,
+        CommentHandling = JsonCommentHandling.Skip
+    };
+    
+    private static readonly JsonSerializerOptions JsonWriteOptions = new()
+    {
+        WriteIndented = true
     };
     
     /// <summary>
-    /// Load a project from a JSON file
+    /// Load a project from a root JSON file (e.g., nogame.json).
+    /// Walks the include hierarchy to discover all related files.
     /// </summary>
     public async Task<AihaoProject> LoadProjectAsync(string projectPath)
     {
@@ -31,290 +38,422 @@ public class ProjectService
         
         var fullPath = Path.GetFullPath(projectPath);
         var projectDir = Path.GetDirectoryName(fullPath) ?? string.Empty;
-        
-        var jsonContent = await File.ReadAllTextAsync(fullPath);
-        var rootDocument = JsonNode.Parse(jsonContent) as JsonObject;
-        
-        if (rootDocument == null)
-        {
-            throw new InvalidDataException("Invalid project file: root must be a JSON object");
-        }
+        var rootFileName = Path.GetFileName(fullPath);
         
         var project = new AihaoProject
         {
-            Name = rootDocument["name"]?.GetValue<string>() ?? Path.GetFileNameWithoutExtension(projectPath),
-            ProjectPath = fullPath,
+            Name = Path.GetFileNameWithoutExtension(projectPath),
             ProjectDirectory = projectDir,
-            RootDocument = rootDocument
+            RootFilePath = rootFileName
         };
         
-        // Parse include paths
-        if (rootDocument["include"] is JsonArray includes)
-        {
-            foreach (var include in includes)
-            {
-                var includePath = include?.GetValue<string>();
-                if (!string.IsNullOrEmpty(includePath))
-                {
-                    project.IncludePaths.Add(includePath);
-                }
-            }
-        }
+        // Initialize all known sections
+        project.InitializeSections();
         
-        // Also check for "includes" (plural)
-        if (rootDocument["includes"] is JsonArray includesPlural)
-        {
-            foreach (var include in includesPlural)
-            {
-                var includePath = include?.GetValue<string>();
-                if (!string.IsNullOrEmpty(includePath))
-                {
-                    project.IncludePaths.Add(includePath);
-                }
-            }
-        }
+        // Load the root file and recursively process includes
+        await LoadIncludedFileAsync(project, rootFileName, "/", null);
         
-        // Discover all referenced files
-        await DiscoverProjectFilesAsync(project);
+        // Build section layers from discovered files
+        BuildSectionLayers(project);
         
-        // Try to find game executable and solution
+        // Extract defaults
+        ExtractDefaults(project);
+        
+        // Discover build paths
         DiscoverBuildPaths(project);
         
         return project;
     }
     
-    private async Task DiscoverProjectFilesAsync(AihaoProject project)
+    /// <summary>
+    /// Recursively load a JSON file and process its __include__ directives.
+    /// </summary>
+    private async Task LoadIncludedFileAsync(
+        AihaoProject project, 
+        string relativePath, 
+        string mountPath,
+        string? parentPath)
     {
-        // Add the main project file
-        project.Files.Add(new ProjectFile
+        // Avoid circular includes
+        if (project.IncludedFiles.ContainsKey(relativePath))
         {
-            RelativePath = Path.GetFileName(project.ProjectPath),
-            AbsolutePath = project.ProjectPath,
-            FileName = Path.GetFileName(project.ProjectPath),
-            Extension = Path.GetExtension(project.ProjectPath).TrimStart('.').ToLower(),
-            Exists = true,
-            FileType = ProjectFileType.ProjectFile
-        });
-        
-        // Process includes
-        foreach (var includePath in project.IncludePaths)
-        {
-            await ProcessIncludeAsync(project, includePath);
-        }
-        
-        // Scan for file references in the JSON
-        if (project.RootDocument != null)
-        {
-            ScanJsonForFiles(project, project.RootDocument, string.Empty);
-        }
-    }
-    
-    private async Task ProcessIncludeAsync(AihaoProject project, string includePath)
-    {
-        var fullPath = Path.Combine(project.ProjectDirectory, includePath);
-        
-        // Check if it's a glob pattern
-        if (includePath.Contains('*'))
-        {
-            var dir = Path.GetDirectoryName(fullPath) ?? project.ProjectDirectory;
-            var pattern = Path.GetFileName(includePath);
-            
-            if (Directory.Exists(dir))
+            // File already loaded - just add as child if not already
+            if (parentPath != null && 
+                project.IncludedFiles.TryGetValue(parentPath, out var parent) &&
+                !parent.ChildPaths.Contains(relativePath))
             {
-                foreach (var file in Directory.EnumerateFiles(dir, pattern, SearchOption.AllDirectories))
-                {
-                    AddProjectFile(project, file, ProjectFileType.Include);
-                }
+                parent.ChildPaths.Add(relativePath);
             }
-        }
-        else if (File.Exists(fullPath))
-        {
-            AddProjectFile(project, fullPath, ProjectFileType.Include);
-            
-            // If it's a JSON file, parse it for more references
-            if (fullPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-            {
-                try
-                {
-                    var content = await File.ReadAllTextAsync(fullPath);
-                    var node = JsonNode.Parse(content);
-                    if (node is JsonObject obj)
-                    {
-                        ScanJsonForFiles(project, obj, Path.GetDirectoryName(fullPath) ?? string.Empty);
-                    }
-                }
-                catch
-                {
-                    // Ignore parse errors in included files
-                }
-            }
-        }
-        else if (Directory.Exists(fullPath))
-        {
-            // Include entire directory
-            foreach (var file in Directory.EnumerateFiles(fullPath, "*.*", SearchOption.AllDirectories))
-            {
-                var fileType = GetFileTypeFromExtension(file);
-                AddProjectFile(project, file, fileType);
-            }
-        }
-    }
-    
-    private void ScanJsonForFiles(AihaoProject project, JsonObject obj, string basePath)
-    {
-        foreach (var property in obj)
-        {
-            ScanJsonNode(project, property.Value, basePath, property.Key);
-        }
-    }
-    
-    private void ScanJsonNode(AihaoProject project, JsonNode? node, string basePath, string propertyName)
-    {
-        if (node == null) return;
-        
-        if (node is JsonValue value && value.TryGetValue<string>(out var str))
-        {
-            // Check if this looks like a file path
-            if (LooksLikeFilePath(str, propertyName))
-            {
-                var fullPath = Path.IsPathRooted(str) 
-                    ? str 
-                    : Path.Combine(basePath.Length > 0 ? basePath : project.ProjectDirectory, str);
-                
-                if (File.Exists(fullPath) || str.Contains('.'))
-                {
-                    var fileType = GetFileTypeFromExtension(str);
-                    AddProjectFile(project, fullPath, fileType, node);
-                }
-            }
-        }
-        else if (node is JsonObject childObj)
-        {
-            ScanJsonForFiles(project, childObj, basePath);
-        }
-        else if (node is JsonArray array)
-        {
-            foreach (var item in array)
-            {
-                ScanJsonNode(project, item, basePath, propertyName);
-            }
-        }
-    }
-    
-    private static bool LooksLikeFilePath(string value, string propertyName)
-    {
-        // Check property name hints
-        var pathHints = new[] { "path", "file", "source", "texture", "model", "audio", "shader", "animation", "include" };
-        foreach (var hint in pathHints)
-        {
-            if (propertyName.Contains(hint, StringComparison.OrdinalIgnoreCase))
-                return true;
+            return;
         }
         
-        // Check value characteristics
-        if (value.Contains('/') || value.Contains('\\'))
-            return true;
-            
-        // Check for common extensions
-        var extensions = new[] { ".json", ".cs", ".glsl", ".hlsl", ".png", ".jpg", ".fbx", ".obj", ".wav", ".ogg", ".mp3" };
-        foreach (var ext in extensions)
-        {
-            if (value.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
+        var absolutePath = Path.Combine(project.ProjectDirectory, relativePath);
+        var exists = File.Exists(absolutePath);
         
-        return false;
-    }
-    
-    private static ProjectFileType GetFileTypeFromExtension(string path)
-    {
-        var ext = Path.GetExtension(path).ToLower();
-        return ext switch
-        {
-            ".json" => ProjectFileType.Config,
-            ".cs" => ProjectFileType.Source,
-            ".glsl" or ".hlsl" or ".vert" or ".frag" or ".shader" => ProjectFileType.Shader,
-            ".png" or ".jpg" or ".jpeg" or ".tga" or ".bmp" or ".dds" => ProjectFileType.Texture,
-            ".fbx" or ".obj" or ".gltf" or ".glb" or ".dae" => ProjectFileType.Model,
-            ".wav" or ".ogg" or ".mp3" or ".flac" => ProjectFileType.Audio,
-            ".anim" or ".animation" => ProjectFileType.Animation,
-            _ => ProjectFileType.Data
-        };
-    }
-    
-    private void AddProjectFile(AihaoProject project, string fullPath, ProjectFileType fileType, JsonNode? sourceNode = null)
-    {
-        // Check if already added
-        foreach (var existing in project.Files)
-        {
-            if (existing.AbsolutePath.Equals(fullPath, StringComparison.OrdinalIgnoreCase))
-                return;
-        }
-        
-        var relativePath = Path.GetRelativePath(project.ProjectDirectory, fullPath);
-        
-        project.Files.Add(new ProjectFile
+        var includedFile = new IncludedFile
         {
             RelativePath = relativePath,
-            AbsolutePath = fullPath,
-            FileName = Path.GetFileName(fullPath),
-            Extension = Path.GetExtension(fullPath).TrimStart('.').ToLower(),
-            Exists = File.Exists(fullPath),
-            FileType = fileType,
-            SourceNode = sourceNode
-        });
-    }
-    
-    private void DiscoverBuildPaths(AihaoProject project)
-    {
-        // Look for common build output locations
-        var possibleExePaths = new[]
-        {
-            Path.Combine(project.ProjectDirectory, "bin", "Debug", "net8.0", $"{project.Name}.exe"),
-            Path.Combine(project.ProjectDirectory, "bin", "Release", "net8.0", $"{project.Name}.exe"),
-            Path.Combine(project.ProjectDirectory, "..", "bin", "Debug", "net8.0", $"{project.Name}.exe"),
-            Path.Combine(project.ProjectDirectory, "..", "bin", "Release", "net8.0", $"{project.Name}.exe"),
+            AbsolutePath = absolutePath,
+            Exists = exists,
+            MountPath = mountPath,
+            ParentPath = parentPath
         };
         
-        foreach (var exePath in possibleExePaths)
+        project.IncludedFiles[relativePath] = includedFile;
+        
+        // Add to parent's children list
+        if (parentPath != null && project.IncludedFiles.TryGetValue(parentPath, out var parentFile))
         {
-            if (File.Exists(exePath))
-            {
-                project.GameExecutablePath = exePath;
-                break;
-            }
+            parentFile.ChildPaths.Add(relativePath);
         }
         
-        // Look for solution file
-        var possibleSlnPaths = new[]
+        if (!exists)
         {
-            Path.Combine(project.ProjectDirectory, $"{project.Name}.sln"),
-            Path.Combine(project.ProjectDirectory, "..", $"{project.Name}.sln"),
-            Path.Combine(project.ProjectDirectory, "..", "..", "Karawan.sln"),
-        };
+            return;
+        }
         
-        foreach (var slnPath in possibleSlnPaths)
+        // Parse the JSON content
+        try
         {
-            if (File.Exists(slnPath))
+            var jsonContent = await File.ReadAllTextAsync(absolutePath);
+            var jsonNode = JsonNode.Parse(jsonContent, documentOptions: JsonReadOptions);
+            
+            if (jsonNode is JsonObject jsonObject)
             {
-                project.SolutionPath = slnPath;
-                break;
+                includedFile.Content = jsonObject;
+                
+                // Walk the tree looking for __include__ directives
+                await ProcessIncludesAsync(project, relativePath, jsonObject, mountPath);
+            }
+        }
+        catch (JsonException ex)
+        {
+            // Store parse error but continue
+            System.Diagnostics.Debug.WriteLine($"JSON parse error in {relativePath}: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Walk a JSON object tree looking for __include__ properties.
+    /// This mirrors the behavior of Mix._upsertIncludes().
+    /// </summary>
+    private async Task ProcessIncludesAsync(
+        AihaoProject project,
+        string currentFilePath,
+        JsonObject jsonObject,
+        string currentMountPath)
+    {
+        var queue = new Queue<(JsonObject Obj, string Path)>();
+        queue.Enqueue((jsonObject, currentMountPath));
+        
+        while (queue.Count > 0)
+        {
+            var (obj, path) = queue.Dequeue();
+            
+            foreach (var property in obj)
+            {
+                var childPath = path.EndsWith("/") 
+                    ? path + property.Key 
+                    : path + "/" + property.Key;
+                
+                if (property.Value is JsonObject childObj)
+                {
+                    // Check for __include__ directive
+                    if (childObj.TryGetPropertyValue("__include__", out var includeNode) &&
+                        includeNode is JsonValue includeValue &&
+                        includeValue.TryGetValue<string>(out var includePath) &&
+                        !string.IsNullOrEmpty(includePath))
+                    {
+                        // Recursively load the included file
+                        await LoadIncludedFileAsync(project, includePath, childPath, currentFilePath);
+                    }
+                    else
+                    {
+                        // Continue walking this object
+                        queue.Enqueue((childObj, childPath));
+                    }
+                }
+                else if (property.Value is JsonArray array)
+                {
+                    // Walk array elements
+                    for (int i = 0; i < array.Count; i++)
+                    {
+                        if (array[i] is JsonObject arrayObj)
+                        {
+                            queue.Enqueue((arrayObj, $"{childPath}/{i}"));
+                        }
+                    }
+                }
             }
         }
     }
     
     /// <summary>
-    /// Save a project back to disk
+    /// Build section layers from discovered include files.
+    /// Maps each known section to its contributing files.
     /// </summary>
-    public async Task SaveProjectAsync(AihaoProject project)
+    private void BuildSectionLayers(AihaoProject project)
     {
-        if (project.RootDocument == null)
+        foreach (var file in project.IncludedFiles.Values)
         {
-            throw new InvalidOperationException("Project has no root document");
+            // Check if this file's mount path corresponds to a known section
+            var mountPath = file.MountPath;
+            
+            // Extract section ID from mount path (e.g., "/globalSettings" -> "globalSettings")
+            if (mountPath.StartsWith("/") && mountPath.Length > 1)
+            {
+                var sectionId = mountPath.Substring(1);
+                
+                // Handle nested paths - only take the first segment
+                var slashIndex = sectionId.IndexOf('/');
+                if (slashIndex > 0)
+                {
+                    sectionId = sectionId.Substring(0, slashIndex);
+                }
+                
+                var section = project.GetSection(sectionId);
+                if (section != null)
+                {
+                    // Determine priority: root file content = 0, included files = 0 (base layer)
+                    // User can add overlays at higher priorities later
+                    var priority = 0;
+                    
+                    var layer = new SectionLayer
+                    {
+                        Priority = priority,
+                        FilePath = file.RelativePath,
+                        IsActive = true,
+                        IsOverlay = false,
+                        DisplayName = Path.GetFileName(file.RelativePath)
+                    };
+                    
+                    section.Layers.Add(layer);
+                }
+            }
         }
         
-        var json = project.RootDocument.ToJsonString(JsonOptions);
-        await File.WriteAllTextAsync(project.ProjectPath, json);
-        project.IsDirty = false;
+        // Also check for inline sections in the root file (no __include__)
+        var rootFile = project.RootFile;
+        if (rootFile?.Content != null)
+        {
+            foreach (var property in rootFile.Content)
+            {
+                var section = project.GetSection(property.Key);
+                if (section == null) continue;
+                
+                // Check if we already have a layer for this section
+                bool hasLayer = false;
+                foreach (var layer in section.Layers)
+                {
+                    if (layer.FilePath == rootFile.RelativePath)
+                    {
+                        hasLayer = true;
+                        break;
+                    }
+                }
+                
+                // If no layer yet and content is not just an __include__, add inline layer
+                if (!hasLayer && property.Value is JsonObject obj)
+                {
+                    if (!obj.ContainsKey("__include__"))
+                    {
+                        var layer = new SectionLayer
+                        {
+                            Priority = 0,
+                            FilePath = null, // Inline in root
+                            IsActive = true,
+                            IsOverlay = false,
+                            DisplayName = "Inline"
+                        };
+                        section.Layers.Add(layer);
+                    }
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Extract defaults section for loader assembly info.
+    /// </summary>
+    private void ExtractDefaults(AihaoProject project)
+    {
+        var rootFile = project.RootFile;
+        if (rootFile?.Content == null)
+            return;
+            
+        if (rootFile.Content.TryGetPropertyValue("defaults", out var defaultsNode) &&
+            defaultsNode is JsonObject defaults)
+        {
+            if (defaults.TryGetPropertyValue("loader", out var loaderNode) &&
+                loaderNode is JsonObject loader &&
+                loader.TryGetPropertyValue("assembly", out var assemblyNode) &&
+                assemblyNode is JsonValue assemblyValue &&
+                assemblyValue.TryGetValue<string>(out var assembly))
+            {
+                project.DefaultLoaderAssembly = assembly;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Try to find game executable and solution paths.
+    /// </summary>
+    private void DiscoverBuildPaths(AihaoProject project)
+    {
+        // Look for Karawan.sln in parent directories
+        var searchDir = project.ProjectDirectory;
+        for (int i = 0; i < 3; i++)
+        {
+            var slnPath = Path.Combine(searchDir, "Karawan.sln");
+            if (File.Exists(slnPath))
+            {
+                project.SolutionPath = slnPath;
+                break;
+            }
+            
+            var parentDir = Path.GetDirectoryName(searchDir);
+            if (string.IsNullOrEmpty(parentDir) || parentDir == searchDir)
+                break;
+            searchDir = parentDir;
+        }
+        
+        // Look for game executable based on project name
+        if (project.SolutionPath != null)
+        {
+            var slnDir = Path.GetDirectoryName(project.SolutionPath) ?? string.Empty;
+            var possibleExePaths = new[]
+            {
+                Path.Combine(slnDir, project.Name, "bin", "Debug", "net8.0", $"{project.Name}.exe"),
+                Path.Combine(slnDir, project.Name, "bin", "Debug", "net9.0", $"{project.Name}.exe"),
+                Path.Combine(slnDir, project.Name, "bin", "Release", "net8.0", $"{project.Name}.exe"),
+                Path.Combine(slnDir, "Karawan", "bin", "Debug", "net8.0", "Karawan.exe"),
+                Path.Combine(slnDir, "Karawan", "bin", "Debug", "net9.0", "Karawan.exe"),
+            };
+            
+            foreach (var exePath in possibleExePaths)
+            {
+                if (File.Exists(exePath))
+                {
+                    project.GameExecutablePath = exePath;
+                    break;
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Save a specific file in the project.
+    /// </summary>
+    public async Task SaveFileAsync(AihaoProject project, string relativePath)
+    {
+        if (!project.IncludedFiles.TryGetValue(relativePath, out var file))
+        {
+            throw new ArgumentException($"File not found in project: {relativePath}");
+        }
+        
+        if (file.Content == null)
+        {
+            throw new InvalidOperationException($"File has no content: {relativePath}");
+        }
+        
+        var json = file.Content.ToJsonString(JsonWriteOptions);
+        await File.WriteAllTextAsync(file.AbsolutePath, json);
+        file.IsDirty = false;
+    }
+    
+    /// <summary>
+    /// Save all dirty files in the project.
+    /// </summary>
+    public async Task SaveAllAsync(AihaoProject project)
+    {
+        foreach (var file in project.IncludedFiles.Values)
+        {
+            if (file.IsDirty && file.Content != null)
+            {
+                await SaveFileAsync(project, file.RelativePath);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Reload a specific file from disk.
+    /// </summary>
+    public async Task ReloadFileAsync(AihaoProject project, string relativePath)
+    {
+        if (!project.IncludedFiles.TryGetValue(relativePath, out var file))
+        {
+            throw new ArgumentException($"File not found in project: {relativePath}");
+        }
+        
+        if (!file.Exists || !File.Exists(file.AbsolutePath))
+        {
+            file.Exists = false;
+            file.Content = null;
+            return;
+        }
+        
+        try
+        {
+            var jsonContent = await File.ReadAllTextAsync(file.AbsolutePath);
+            var jsonNode = JsonNode.Parse(jsonContent, documentOptions: JsonReadOptions);
+            
+            if (jsonNode is JsonObject jsonObject)
+            {
+                file.Content = jsonObject;
+                file.IsDirty = false;
+            }
+        }
+        catch (JsonException)
+        {
+            // Keep existing content on parse error
+        }
+    }
+    
+    /// <summary>
+    /// Add an overlay file to a section.
+    /// </summary>
+    public async Task AddOverlayAsync(AihaoProject project, string sectionId, string filePath, int priority = 10)
+    {
+        var section = project.GetSection(sectionId);
+        if (section == null)
+        {
+            throw new ArgumentException($"Unknown section: {sectionId}");
+        }
+        
+        // Load the overlay file if not already loaded
+        if (!project.IncludedFiles.ContainsKey(filePath))
+        {
+            await LoadIncludedFileAsync(project, filePath, section.Definition.JsonPath, null);
+        }
+        
+        // Add as overlay layer
+        section.AddOverlay(filePath, priority, Path.GetFileName(filePath));
+    }
+    
+    /// <summary>
+    /// Remove an overlay from a section.
+    /// </summary>
+    public void RemoveOverlay(AihaoProject project, string sectionId, string filePath)
+    {
+        var section = project.GetSection(sectionId);
+        section?.RemoveOverlay(filePath);
+    }
+    
+    /// <summary>
+    /// Toggle the active state of a layer.
+    /// </summary>
+    public void SetLayerActive(AihaoProject project, string sectionId, string? filePath, bool active)
+    {
+        var section = project.GetSection(sectionId);
+        if (section == null) return;
+        
+        foreach (var layer in section.Layers)
+        {
+            if (layer.FilePath == filePath)
+            {
+                layer.IsActive = active;
+                break;
+            }
+        }
     }
 }

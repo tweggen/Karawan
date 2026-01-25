@@ -37,9 +37,28 @@ public partial class ResourceListEditorViewModel : ObservableObject
         {
             if (item is JsonObject resourceObj)
             {
+                AddResourceFromJson(resourceObj);
+            }
+        }
+        
+        ApplyFilter();
+    }
+    
+    public void LoadFromJsonObject(JsonObject resourcesObject)
+    {
+        Resources.Clear();
+        Categories.Clear();
+        Categories.Add("All");
+        
+        // Handle case where resources file is a JSON object with named entries
+        foreach (var kvp in resourcesObject)
+        {
+            if (kvp.Value is JsonObject resourceObj)
+            {
+                // Use the key as the name if not specified
                 var resource = new ResourceItemViewModel
                 {
-                    Name = resourceObj["name"]?.GetValue<string>() ?? "Unnamed",
+                    Name = resourceObj["name"]?.GetValue<string>() ?? kvp.Key,
                     Type = resourceObj["type"]?.GetValue<string>() ?? "Unknown",
                     Path = resourceObj["path"]?.GetValue<string>() ?? string.Empty,
                     Category = resourceObj["category"]?.GetValue<string>() ?? "Uncategorized"
@@ -52,9 +71,38 @@ public partial class ResourceListEditorViewModel : ObservableObject
                     Categories.Add(resource.Category);
                 }
             }
+            else if (kvp.Value is JsonArray arr)
+            {
+                // Might be an array under a category key
+                foreach (var item in arr)
+                {
+                    if (item is JsonObject itemObj)
+                    {
+                        AddResourceFromJson(itemObj, kvp.Key);
+                    }
+                }
+            }
         }
         
         ApplyFilter();
+    }
+    
+    private void AddResourceFromJson(JsonObject resourceObj, string? defaultCategory = null)
+    {
+        var resource = new ResourceItemViewModel
+        {
+            Name = resourceObj["name"]?.GetValue<string>() ?? "Unnamed",
+            Type = resourceObj["type"]?.GetValue<string>() ?? "Unknown",
+            Path = resourceObj["path"]?.GetValue<string>() ?? string.Empty,
+            Category = resourceObj["category"]?.GetValue<string>() ?? defaultCategory ?? "Uncategorized"
+        };
+        
+        Resources.Add(resource);
+        
+        if (!Categories.Contains(resource.Category))
+        {
+            Categories.Add(resource.Category);
+        }
     }
     
     partial void OnSearchTextChanged(string value) => ApplyFilter();

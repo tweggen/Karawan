@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using Aihao.Models;
@@ -34,52 +35,38 @@ public partial class ProjectTreeViewModel : ObservableObject
             Icon = "📁"
         };
         
-        // Add special nodes for JSON sections
-        if (project.GlobalSettings != null)
+        // Add sections folder with existing sections
+        var sectionsFolder = new FileTreeItemViewModel
         {
-            root.Children.Add(new FileTreeItemViewModel
+            Name = "Sections",
+            IsFolder = true,
+            IsExpanded = true,
+            Icon = "📂"
+        };
+        
+        foreach (var sectionState in project.GetExistingSections())
+        {
+            var sectionNode = new FileTreeItemViewModel
             {
-                Name = "Global Settings",
-                NodeType = "globalSettings",
+                Name = sectionState.Definition.DisplayName,
+                NodeType = sectionState.Definition.Id,
+                JsonPath = sectionState.Definition.JsonPath,
                 IsFolder = false,
-                Icon = "⚙️"
-            });
+                Icon = sectionState.Definition.Icon
+            };
+            
+            // Show layer count if multiple layers
+            if (sectionState.Layers.Count > 1)
+            {
+                sectionNode.Name = $"{sectionState.Definition.DisplayName} ({sectionState.Layers.Count} layers)";
+            }
+            
+            sectionsFolder.Children.Add(sectionNode);
         }
         
-        if (project.Properties != null)
-        {
-            root.Children.Add(new FileTreeItemViewModel
-            {
-                Name = "Properties",
-                NodeType = "properties",
-                IsFolder = false,
-                Icon = "📋"
-            });
-        }
+        root.Children.Add(sectionsFolder);
         
-        if (project.Metagen != null)
-        {
-            root.Children.Add(new FileTreeItemViewModel
-            {
-                Name = "Metagen",
-                NodeType = "metagen",
-                IsFolder = false,
-                Icon = "🔧"
-            });
-        }
-        
-        if (project.Resources != null)
-        {
-            root.Children.Add(new FileTreeItemViewModel
-            {
-                Name = "Resources",
-                NodeType = "resources",
-                IsFolder = false,
-                Icon = "📦"
-            });
-        }
-        
-        // Create file tree from project files
+        // Create file tree from included files
         var filesFolder = new FileTreeItemViewModel
         {
             Name = "Files",
@@ -88,88 +75,42 @@ public partial class ProjectTreeViewModel : ObservableObject
             Icon = "📂"
         };
         
-        // Group files by directory
-        var directories = new Dictionary<string, FileTreeItemViewModel>();
-        
-        foreach (var file in project.Files)
+        // Build tree structure from IncludedFiles
+        if (project.RootFile != null)
         {
-            var dirPath = Path.GetDirectoryName(file.RelativePath) ?? string.Empty;
-            
-            if (string.IsNullOrEmpty(dirPath) || dirPath == ".")
-            {
-                // Root level file
-                filesFolder.Children.Add(CreateFileNode(file));
-            }
-            else
-            {
-                // Create directory hierarchy
-                var pathParts = dirPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                var currentPath = string.Empty;
-                var currentParent = filesFolder;
-                
-                foreach (var part in pathParts)
-                {
-                    currentPath = Path.Combine(currentPath, part);
-                    
-                    if (!directories.TryGetValue(currentPath, out var dirNode))
-                    {
-                        dirNode = new FileTreeItemViewModel
-                        {
-                            Name = part,
-                            FullPath = Path.Combine(project.ProjectDirectory, currentPath),
-                            IsFolder = true,
-                            Icon = "📂"
-                        };
-                        directories[currentPath] = dirNode;
-                        currentParent.Children.Add(dirNode);
-                    }
-                    
-                    currentParent = dirNode;
-                }
-                
-                currentParent.Children.Add(CreateFileNode(file));
-            }
+            var rootFileNode = CreateIncludedFileNode(project, project.RootFile);
+            rootFileNode.IsExpanded = true;
+            filesFolder.Children.Add(rootFileNode);
         }
         
         root.Children.Add(filesFolder);
         RootItems.Add(root);
     }
     
-    private FileTreeItemViewModel CreateFileNode(ProjectFile file)
+    private FileTreeItemViewModel CreateIncludedFileNode(AihaoProject project, IncludedFile file)
     {
-        return new FileTreeItemViewModel
+        var node = new FileTreeItemViewModel
         {
-            Name = file.FileName,
+            Name = Path.GetFileName(file.RelativePath),
             FullPath = file.AbsolutePath,
-            IsFolder = false,
+            RelativePath = file.RelativePath,
+            JsonPath = file.MountPath,
+            IsFolder = file.ChildPaths.Count > 0,
             IsFile = true,
-            FileType = file.FileType,
             Exists = file.Exists,
-            Icon = GetFileIcon(file.FileType, file.Extension)
+            Icon = file.Exists ? "📄" : "⚠️"
         };
-    }
-    
-    private string GetFileIcon(ProjectFileType fileType, string extension)
-    {
-        return fileType switch
+        
+        // Add children recursively
+        foreach (var childPath in file.ChildPaths)
         {
-            ProjectFileType.ProjectFile => "📄",
-            ProjectFileType.Source => "📝",
-            ProjectFileType.Shader => "✨",
-            ProjectFileType.Texture => "🖼️",
-            ProjectFileType.Model => "📦",
-            ProjectFileType.Audio => "🔊",
-            ProjectFileType.Animation => "🎬",
-            ProjectFileType.Config => "⚙️",
-            _ => extension switch
+            if (project.IncludedFiles.TryGetValue(childPath, out var childFile))
             {
-                "json" => "📋",
-                "xml" => "📋",
-                "txt" => "📝",
-                "md" => "📝",
-                _ => "📄"
+                node.Children.Add(CreateIncludedFileNode(project, childFile));
             }
-        };
+        }
+        
+        return node;
     }
     
     partial void OnSelectedItemChanged(FileTreeItemViewModel? value)
@@ -185,7 +126,7 @@ public partial class ProjectTreeViewModel : ObservableObject
     {
         if (item != null)
         {
-            if (item.IsFolder)
+            if (item.IsFolder && !item.IsFile)
             {
                 item.IsExpanded = !item.IsExpanded;
             }
@@ -248,7 +189,16 @@ public partial class FileTreeItemViewModel : ObservableObject
     private string _fullPath = string.Empty;
     
     [ObservableProperty]
+    private string _relativePath = string.Empty;
+    
+    [ObservableProperty]
     private string _nodeType = string.Empty;
+    
+    [ObservableProperty]
+    private string _jsonPath = string.Empty;
+    
+    [ObservableProperty]
+    private string? _includeFilePath;
     
     [ObservableProperty]
     private bool _isFolder;
@@ -264,9 +214,6 @@ public partial class FileTreeItemViewModel : ObservableObject
     
     [ObservableProperty]
     private string _icon = "📄";
-    
-    [ObservableProperty]
-    private ProjectFileType _fileType;
     
     public ObservableCollection<FileTreeItemViewModel> Children { get; } = new();
 }
