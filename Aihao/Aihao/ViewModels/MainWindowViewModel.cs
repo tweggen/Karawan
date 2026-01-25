@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -154,6 +156,8 @@ public partial class MainWindowViewModel : ObservableObject
                 // View actions
                 BuiltInActions.Ids.ViewConsole => () => { ShowConsole(); return Task.CompletedTask; },
                 BuiltInActions.Ids.ViewRenderOutput => () => { OpenRenderWindow(); return Task.CompletedTask; },
+                BuiltInActions.Ids.ViewCommandPalette => OpenCommandPalette,
+                BuiltInActions.Ids.ViewQuickOpen => OpenQuickOpen,
                 
                 // Project actions
                 BuiltInActions.Ids.ProjectBuild => BuildProject,
@@ -737,6 +741,170 @@ public partial class MainWindowViewModel : ObservableObject
         {
             await dialog.ShowDialog(desktop.MainWindow);
         }
+    }
+    
+    /// <summary>
+    /// Open the Quick Open palette (Ctrl+P) - navigate to things.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenQuickOpen()
+    {
+        var quickOpenItems = GetQuickOpenItems();
+        var vm = new CommandPaletteViewModel(
+            CommandPaletteMode.QuickOpen,
+            _actionService,
+            quickOpenItems,
+            IsProjectLoaded,
+            _actionService.CanExecute);
+        
+        var dialog = new Views.CommandPalette
+        {
+            DataContext = vm
+        };
+        
+        // Get the main window to set as owner
+        if (Avalonia.Application.Current?.ApplicationLifetime is 
+            Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop &&
+            desktop.MainWindow != null)
+        {
+            await dialog.ShowDialog(desktop.MainWindow);
+        }
+    }
+    
+    /// <summary>
+    /// Open the Command Palette (Ctrl+Shift+P) - execute actions.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenCommandPalette()
+    {
+        var vm = new CommandPaletteViewModel(
+            CommandPaletteMode.Commands,
+            _actionService,
+            new List<QuickOpenItem>(),
+            IsProjectLoaded,
+            _actionService.CanExecute);
+        
+        var dialog = new Views.CommandPalette
+        {
+            DataContext = vm
+        };
+        
+        // Get the main window to set as owner
+        if (Avalonia.Application.Current?.ApplicationLifetime is 
+            Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop &&
+            desktop.MainWindow != null)
+        {
+            await dialog.ShowDialog(desktop.MainWindow);
+        }
+    }
+    
+    /// <summary>
+    /// Get the list of items available in Quick Open.
+    /// </summary>
+    private List<QuickOpenItem> GetQuickOpenItems()
+    {
+        var items = new List<QuickOpenItem>();
+        
+        // === Application Dialogs ===
+        items.Add(new QuickOpenItem
+        {
+            Id = "settings",
+            DisplayName = "Settings",
+            Description = "Open application settings",
+            Category = "Settings",
+            Icon = "⚙️",
+            Keywords = new List<string> { "preferences", "options", "config" },
+            Action = OpenSettings
+        });
+        
+        items.Add(new QuickOpenItem
+        {
+            Id = "keybindings",
+            DisplayName = "Keyboard Shortcuts",
+            Description = "Configure keyboard shortcuts",
+            Category = "Settings",
+            Icon = "⌨️",
+            Keywords = new List<string> { "keys", "bindings", "hotkeys", "shortcuts" },
+            Action = OpenKeybindings
+        });
+        
+        // === Project Section Editors ===
+        if (CurrentProject != null)
+        {
+            foreach (var section in CurrentProject.GetExistingSections())
+            {
+                var sectionId = section.Id;
+                items.Add(new QuickOpenItem
+                {
+                    Id = $"section.{sectionId}",
+                    DisplayName = section.DisplayName,
+                    Description = $"Open {section.DisplayName} editor",
+                    Category = "Editors",
+                    Icon = section.Icon,
+                    Keywords = new List<string> { sectionId, "editor" },
+                    RequiresProject = true,
+                    Action = () => { OpenSectionEditor(sectionId); return Task.CompletedTask; }
+                });
+            }
+        }
+        else
+        {
+            // Show all possible sections (grayed out without project)
+            foreach (var section in KnownSections.All)
+            {
+                var sectionId = section.Id;
+                items.Add(new QuickOpenItem
+                {
+                    Id = $"section.{sectionId}",
+                    DisplayName = section.DisplayName,
+                    Description = $"Open {section.DisplayName} editor",
+                    Category = "Editors",
+                    Icon = section.Icon,
+                    Keywords = new List<string> { sectionId, "editor" },
+                    RequiresProject = true,
+                    Action = () => { OpenSectionEditor(sectionId); return Task.CompletedTask; }
+                });
+            }
+        }
+        
+        // === View panels ===
+        items.Add(new QuickOpenItem
+        {
+            Id = "view.console",
+            DisplayName = "Console",
+            Description = "Show the console panel",
+            Category = "Views",
+            Icon = "📋",
+            Action = () => { ShowConsole(); return Task.CompletedTask; }
+        });
+        
+        items.Add(new QuickOpenItem
+        {
+            Id = "view.render",
+            DisplayName = "Render Output",
+            Description = "Show the render output window",
+            Category = "Views",
+            Icon = "🖥️",
+            RequiresProject = true,
+            Action = () => { OpenRenderWindow(); return Task.CompletedTask; }
+        });
+        
+        // === Open Documents ===
+        foreach (var doc in OpenDocuments)
+        {
+            var docTitle = doc.Title;
+            items.Add(new QuickOpenItem
+            {
+                Id = $"doc.{doc.Title}",
+                DisplayName = doc.Title,
+                Description = string.IsNullOrEmpty(doc.FilePath) ? "Open document" : doc.FilePath,
+                Category = "Open Documents",
+                Icon = "📄",
+                Action = () => { SelectedDocument = OpenDocuments.FirstOrDefault(d => d.Title == docTitle); return Task.CompletedTask; }
+            });
+        }
+        
+        return items;
     }
     
     [RelayCommand]

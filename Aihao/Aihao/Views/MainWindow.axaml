@@ -21,6 +21,8 @@
         <KeyBinding Gesture="Shift+F5" Command="{Binding StopGameCommand}"/>
         <KeyBinding Gesture="Ctrl+OemComma" Command="{Binding OpenSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+Shift+K" Command="{Binding OpenKeybindingsCommand}"/>
+        <KeyBinding Gesture="Ctrl+P" Command="{Binding OpenQuickOpenCommand}"/>
+        <KeyBinding Gesture="Ctrl+Shift+P" Command="{Binding OpenCommandPaletteCommand}"/>
     </Window.KeyBindings>
     
     <DockPanel>
@@ -54,9 +56,12 @@
                 <MenuItem Header="_Keyboard Shortcuts..." Command="{Binding OpenKeybindingsCommand}" InputGesture="Ctrl+Shift+K"/>
             </MenuItem>
             <MenuItem Header="_View">
-                <MenuItem Header="_Project Tree" />
+                <MenuItem Header="_Quick Open..." Command="{Binding OpenQuickOpenCommand}" InputGesture="Ctrl+P"/>
+                <MenuItem Header="_Command Palette..." Command="{Binding OpenCommandPaletteCommand}" InputGesture="Ctrl+Shift+P"/>
+                <Separator/>
+                <MenuItem Header="Project _Tree" />
                 <MenuItem Header="_Console" Command="{Binding ShowConsoleCommand}"/>
-                <MenuItem Header="_Properties"/>
+                <MenuItem Header="P_roperties"/>
                 <Separator/>
                 <MenuItem Header="_Render Output" Command="{Binding OpenRenderWindowCommand}"/>
             </MenuItem>

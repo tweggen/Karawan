@@ -33,6 +33,7 @@ public static class BuiltInActions
         public const string ViewProperties = "aihao.view.properties";
         public const string ViewRenderOutput = "aihao.view.renderOutput";
         public const string ViewCommandPalette = "aihao.view.commandPalette";
+        public const string ViewQuickOpen = "aihao.view.quickOpen";
         
         // Project actions
         public const string ProjectBuild = "aihao.project.build";
@@ -178,11 +179,21 @@ public static class BuiltInActions
             {
                 Id = Ids.ViewCommandPalette,
                 DisplayName = "Command Palette",
-                Description = "Open the command palette",
+                Description = "Open the command palette to run actions",
                 Category = "View",
                 Icon = "🔍",
                 DefaultKeyBinding = new KeyBinding { Key = "P", Modifiers = KeyModifiers.Control | KeyModifiers.Shift },
                 ShowInCommandPalette = false // Don't show command palette in itself
+            },
+            new ActionDefinition
+            {
+                Id = Ids.ViewQuickOpen,
+                DisplayName = "Quick Open",
+                Description = "Quickly navigate to editors and views",
+                Category = "View",
+                Icon = "📂",
+                DefaultKeyBinding = new KeyBinding { Key = "P", Modifiers = KeyModifiers.Control },
+                ShowInCommandPalette = false // Don't show quick open in command palette
             },
             
             // === Project ===
