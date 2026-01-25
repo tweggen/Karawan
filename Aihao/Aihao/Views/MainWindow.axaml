@@ -83,35 +83,35 @@
         </Menu>
         
         <!-- Toolbar -->
-        <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="4">
-            <StackPanel Orientation="Horizontal" Spacing="4">
-                <Button Content="📂" ToolTip.Tip="Open Project" Command="{Binding OpenProjectCommand}"/>
-                <Button Content="💾" ToolTip.Tip="Save Project" Command="{Binding SaveProjectCommand}" IsEnabled="{Binding IsProjectLoaded}"/>
+        <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="1">
+            <StackPanel Orientation="Horizontal" Spacing="1">
+                <Button Content="📂" ToolTip.Tip="Open Project" Command="{Binding OpenProjectCommand}" Padding="3,1"/>
+                <Button Content="💾" ToolTip.Tip="Save Project" Command="{Binding SaveProjectCommand}" IsEnabled="{Binding IsProjectLoaded}" Padding="3,1"/>
                 <Separator/>
-                <Button Content="🔨" ToolTip.Tip="Build (Ctrl+Shift+B)" Command="{Binding BuildProjectCommand}" IsEnabled="{Binding IsProjectLoaded}"/>
+                <Button Content="🔨" ToolTip.Tip="Build (Ctrl+Shift+B)" Command="{Binding BuildProjectCommand}" IsEnabled="{Binding IsProjectLoaded}" Padding="3,1"/>
                 <Separator/>
-                <Button Content="▶️" ToolTip.Tip="Run (F5)" Command="{Binding RunGameCommand}" IsEnabled="{Binding IsProjectLoaded}" IsVisible="{Binding !IsGameRunning}"/>
-                <Button Content="🐛" ToolTip.Tip="Debug (Ctrl+F5)" Command="{Binding DebugGameCommand}" IsEnabled="{Binding IsProjectLoaded}" IsVisible="{Binding !IsGameRunning}"/>
-                <Button Content="⏹️" ToolTip.Tip="Stop (Shift+F5)" Command="{Binding StopGameCommand}" IsVisible="{Binding IsGameRunning}"/>
+                <Button Content="▶️" ToolTip.Tip="Run (F5)" Command="{Binding RunGameCommand}" IsEnabled="{Binding IsProjectLoaded}" IsVisible="{Binding !IsGameRunning}" Padding="3,1"/>
+                <Button Content="🐛" ToolTip.Tip="Debug (Ctrl+F5)" Command="{Binding DebugGameCommand}" IsEnabled="{Binding IsProjectLoaded}" IsVisible="{Binding !IsGameRunning}" Padding="3,1"/>
+                <Button Content="⏹️" ToolTip.Tip="Stop (Shift+F5)" Command="{Binding StopGameCommand}" IsVisible="{Binding IsGameRunning}" Padding="3,1"/>
             </StackPanel>
         </Border>
         
         <!-- Status Bar -->
-        <Border DockPanel.Dock="Bottom" Background="{StaticResource ToolbarBackgroundBrush}" Padding="8,4">
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource ToolbarBackgroundBrush}" Padding="4,1">
             <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                     <TextBlock Text="{Binding Console.StatusText}" Opacity="0.7" VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
         </Border>
         
         <!-- Main Content -->
-        <Grid ColumnDefinitions="250,5,*,5,300" RowDefinitions="*,5,200">
+        <Grid ColumnDefinitions="200,2,*,2,250" RowDefinitions="*,2,150">
             <!-- Left Panel: Project Tree -->
             <Border Grid.Column="0" Grid.RowSpan="3" Background="{StaticResource PanelBackgroundBrush}">
                 <DockPanel>
-                    <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="8,4">
+                    <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="4,1">
                         <TextBlock Text="Project" FontWeight="SemiBold"/>
                     </Border>
                     <views:ProjectTreeView DataContext="{Binding ProjectTree}"/>
@@ -134,10 +134,10 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:DocumentTabViewModel">
-                                        <Border Padding="12,6" 
+                                        <Border Padding="6,2" 
                                                 Background="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).SelectedDocument, Converter={x:Static vm:SelectedTabConverter.Instance}, ConverterParameter={Binding}}"
                                                 PointerPressed="OnTabPointerPressed">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
                                                 <TextBlock Text="●" IsVisible="{Binding IsDirty}" Foreground="Orange" VerticalAlignment="Center"/>
                                                 <Button Content="×" 
@@ -182,7 +182,7 @@
             <!-- Right Panel: Properties -->
             <Border Grid.Column="4" Grid.Row="0" Background="{StaticResource PanelBackgroundBrush}">
                 <DockPanel>
-                    <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="8,4">
+                    <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="4,1">
                         <TextBlock Text="Properties" FontWeight="SemiBold"/>
                     </Border>
                     <views:PropertiesEditor DataContext="{Binding Properties}"/>

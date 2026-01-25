@@ -4,12 +4,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:Aihao.ViewModels"
         xmlns:models="using:Aihao.Models"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
         x:Class="Aihao.Views.SettingsDialog"
         x:DataType="vm:SettingsDialogViewModel"
         Title="Settings"
-        Width="800" Height="600"
-        MinWidth="600" MinHeight="400"
+        Width="700" Height="500"
+        MinWidth="500" MinHeight="350"
         WindowStartupLocation="CenterOwner"
         CanResize="True"
         Background="{StaticResource EditorBackgroundBrush}">
@@ -22,14 +22,14 @@
     <Window.Resources>
         <!-- Setting item template -->
         <DataTemplate x:Key="SettingItemTemplate" x:DataType="vm:SettingsItemVM">
-            <Border Padding="0,12" 
+            <Border Padding="0,6" 
                     BorderBrush="{StaticResource ToolbarBackgroundBrush}"
                     BorderThickness="0,0,0,1">
                 <Grid RowDefinitions="Auto,Auto">
                     <!-- Header: name, description, modified indicator -->
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
+                        <StackPanel Grid.Column="0" Spacing="1">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
                                 <TextBlock Text="{Binding DisplayName}" 
                                            FontWeight="SemiBold"/>
                                 <TextBlock Text="●" 
@@ -42,28 +42,26 @@
                                            ToolTip.Tip="Requires restart"/>
                             </StackPanel>
                             <TextBlock Text="{Binding Description}" 
-                                       Opacity="0.7" 
+                                       Opacity="0.6" 
                                        TextWrapping="Wrap"
-                                       FontSize="12"
-                                       MaxWidth="450"/>
+                                       MaxWidth="400"/>
                         </StackPanel>
                         
                         <!-- JSON path (subtle) -->
                         <TextBlock Grid.Column="1"
                                    Text="{Binding JsonPath}"
-                                   Opacity="0.3"
-                                   FontSize="11"
+                                   Opacity="0.25"
                                    FontFamily="Consolas,Menlo,monospace"
                                    VerticalAlignment="Top"
-                                   Margin="16,0,0,0"/>
+                                   Margin="8,0,0,0"/>
                     </Grid>
                     
                     <!-- Editor control based on type - only one will be visible -->
-                    <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                    <StackPanel Grid.Row="1" Margin="0,4,0,0">
                         <!-- String -->
                         <TextBox Text="{Binding StringValue}"
                                  IsVisible="{Binding Type, Converter={x:Static vm:SettingsTypeConverter.IsString}}"
-                                 MaxWidth="400"
+                                 MaxWidth="350"
                                  HorizontalAlignment="Left"/>
                         
                         <!-- Bool -->
@@ -77,7 +75,7 @@
                                        Maximum="{Binding MaxValueDecimal}"
                                        IsVisible="{Binding Type, Converter={x:Static vm:SettingsTypeConverter.IsInt}}"
                                        FormatString="0"
-                                       Width="150"
+                                       Width="120"
                                        HorizontalAlignment="Left"/>
                         
                         <!-- Choice -->
@@ -85,7 +83,7 @@
                                   SelectedValue="{Binding StringValue}"
                                   SelectedValueBinding="{Binding Value}"
                                   IsVisible="{Binding Type, Converter={x:Static vm:SettingsTypeConverter.IsChoice}}"
-                                  MinWidth="200"
+                                  MinWidth="150"
                                   HorizontalAlignment="Left">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:ChoiceOption">
@@ -97,10 +95,10 @@
                         <!-- Path -->
                         <Grid ColumnDefinitions="*,Auto"
                               IsVisible="{Binding Type, Converter={x:Static vm:SettingsTypeConverter.IsPath}}"
-                              MaxWidth="500"
+                              MaxWidth="400"
                               HorizontalAlignment="Left">
-                            <TextBox Grid.Column="0" Text="{Binding StringValue}" Margin="0,0,8,0"/>
-                            <Button Grid.Column="1" Content="Browse..." Padding="12,6"/>
+                            <TextBox Grid.Column="0" Text="{Binding StringValue}" Margin="0,0,4,0"/>
+                            <Button Grid.Column="1" Content="Browse..."/>
                         </Grid>
                     </StackPanel>
                 </Grid>
@@ -112,11 +110,11 @@
         <!-- Bottom buttons -->
         <Border DockPanel.Dock="Bottom" 
                 Background="{StaticResource ToolbarBackgroundBrush}" 
-                Padding="16,12">
+                Padding="8,6">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Reset button -->
                 <Button Grid.Column="0" 
-                        Content="Reset All to Defaults" 
+                        Content="Reset All" 
                         Command="{Binding ResetToDefaultsCommand}"
                         ToolTip.Tip="Reset all settings to their default values"/>
                 
@@ -124,7 +122,7 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" 
                             HorizontalAlignment="Center" 
                             IsVisible="{Binding HasRestartRequired}"
-                            Spacing="8">
+                            Spacing="4">
                     <TextBlock Text="⚠️" Foreground="Orange" VerticalAlignment="Center"/>
                     <TextBlock Text="Some changes require restart" 
                                Foreground="Orange" 
@@ -132,38 +130,38 @@
                 </StackPanel>
                 
                 <!-- Save/Cancel -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
                     <Button Content="Cancel" 
                             Command="{Binding CancelCommand}"
-                            MinWidth="80"/>
+                            MinWidth="60"/>
                     <Button Content="Save" 
                             Command="{Binding SaveCommand}"
                             IsEnabled="{Binding HasChanges}"
-                            MinWidth="80"
+                            MinWidth="60"
                             Classes="accent"/>
                 </StackPanel>
             </Grid>
         </Border>
         
         <!-- Main content -->
-        <Grid ColumnDefinitions="220,1,*">
+        <Grid ColumnDefinitions="180,1,*">
             <!-- Left: Section tree -->
             <Border Grid.Column="0" Background="{StaticResource PanelBackgroundBrush}">
                 <DockPanel>
                     <!-- Search box -->
-                    <Border DockPanel.Dock="Top" Padding="8">
+                    <Border DockPanel.Dock="Top" Padding="4">
                         <TextBox Text="{Binding SearchText}"
-                                 Watermark="Search settings..."/>
+                                 Watermark="Search..."/>
                     </Border>
                     
                     <!-- Tree -->
                     <TreeView ItemsSource="{Binding Sections}"
                               SelectedItem="{Binding SelectedSection}"
-                              Padding="4">
+                              Padding="2">
                         <TreeView.ItemTemplate>
                             <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:SettingsSectionViewModel">
-                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="4">
-                                    <TextBlock Text="{Binding Icon}" FontSize="14"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6" Margin="2">
+                                    <TextBlock Text="{Binding Icon}"/>
                                     <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </TreeDataTemplate>
@@ -181,12 +179,11 @@
                     <!-- Section header -->
                     <Border DockPanel.Dock="Top" 
                             Background="{StaticResource ToolbarBackgroundBrush}" 
-                            Padding="16,12">
+                            Padding="8,4">
                         <Grid ColumnDefinitions="Auto,*,Auto">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <TextBlock Text="{Binding SelectedSection.Icon}" FontSize="20" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding SelectedSection.Icon}" VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding SelectedSection.DisplayName}" 
-                                           FontSize="18" 
                                            FontWeight="SemiBold"
                                            VerticalAlignment="Center"/>
                             </StackPanel>
@@ -202,7 +199,7 @@
                                   VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding SelectedSection.Items}"
                                       ItemTemplate="{StaticResource SettingItemTemplate}"
-                                      Margin="16"/>
+                                      Margin="8"/>
                     </ScrollViewer>
                 </DockPanel>
             </Border>

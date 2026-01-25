@@ -3,13 +3,13 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:Aihao.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="350"
         x:Class="Aihao.Views.CommandPalette"
         x:DataType="vm:CommandPaletteViewModel"
         Title="Command Palette"
-        Width="600"
+        Width="500"
         SizeToContent="Height"
-        MaxHeight="500"
+        MaxHeight="400"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
         ShowInTaskbar="False"
@@ -21,8 +21,8 @@
         <!-- Selected item style -->
         <Style Selector="Border.palette-item">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="CornerRadius" Value="2"/>
         </Style>
         <Style Selector="Border.palette-item.selected">
             <Setter Property="Background" Value="#007ACC"/>
@@ -38,20 +38,19 @@
     <Border Background="{StaticResource PanelBackgroundBrush}"
             BorderBrush="{StaticResource ToolbarBackgroundBrush}"
             BorderThickness="1"
-            CornerRadius="8"
+            CornerRadius="4"
             Padding="0"
-            BoxShadow="0 8 32 0 #40000000">
+            BoxShadow="0 4 16 0 #40000000">
         <StackPanel>
             <!-- Search box at top -->
-            <Border Padding="12">
+            <Border Padding="6">
                 <TextBox x:Name="SearchBox"
                          Text="{Binding SearchText}"
                          Watermark="{Binding Placeholder}"
-                         FontSize="16"
-                         Padding="12,10"
+                         Padding="6,4"
                          BorderThickness="0"
                          Background="{StaticResource EditorBackgroundBrush}"
-                         CornerRadius="4"/>
+                         CornerRadius="2"/>
             </Border>
             
             <!-- Separator -->
@@ -62,9 +61,9 @@
             <ScrollViewer x:Name="ResultsScroller"
                           HorizontalScrollBarVisibility="Disabled"
                           VerticalScrollBarVisibility="Auto"
-                          MaxHeight="380"
+                          MaxHeight="320"
                           IsVisible="{Binding FilteredItems.Count}">
-                <ItemsControl ItemsSource="{Binding FilteredItems}" Margin="8">
+                <ItemsControl ItemsSource="{Binding FilteredItems}" Margin="4">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:CommandPaletteItemVM">
                             <Border Classes="palette-item"
@@ -75,26 +74,22 @@
                                     <!-- Icon -->
                                     <TextBlock Grid.Column="0"
                                                Text="{Binding Icon}"
-                                               FontSize="16"
                                                VerticalAlignment="Center"
-                                               Margin="0,0,12,0"
-                                               Width="24"
+                                               Margin="0,0,8,0"
+                                               Width="18"
                                                IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                     
                                     <!-- Name and description -->
-                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <StackPanel Grid.Column="1" Spacing="0" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
                                             <TextBlock Text="{Binding DisplayName}" 
-                                                       FontWeight="SemiBold"
-                                                       FontSize="14"/>
+                                                       FontWeight="SemiBold"/>
                                             <TextBlock Text="{Binding Category}"
                                                        Opacity="0.5"
-                                                       FontSize="12"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                         <TextBlock Text="{Binding Description}"
                                                    Opacity="0.6"
-                                                   FontSize="12"
                                                    TextTrimming="CharacterEllipsis"
                                                    IsVisible="{Binding Description, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                     </StackPanel>
@@ -102,13 +97,12 @@
                                     <!-- Keybinding -->
                                     <Border Grid.Column="2"
                                             Background="{StaticResource ToolbarBackgroundBrush}"
-                                            CornerRadius="4"
-                                            Padding="8,4"
+                                            CornerRadius="2"
+                                            Padding="4,1"
                                             VerticalAlignment="Center"
                                             IsVisible="{Binding KeyBindingDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
                                         <TextBlock Text="{Binding KeyBindingDisplay}"
                                                    FontFamily="Consolas,Menlo,monospace"
-                                                   FontSize="11"
                                                    Opacity="0.8"/>
                                     </Border>
                                 </Grid>
@@ -122,7 +116,7 @@
             <TextBlock Text="No results found"
                        HorizontalAlignment="Center"
                        Opacity="0.5"
-                       Margin="20"
+                       Margin="12"
                        IsVisible="{Binding !FilteredItems.Count}"/>
         </StackPanel>
     </Border>
