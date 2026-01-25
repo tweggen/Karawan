@@ -8,10 +8,10 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Aihao.Models;
 using Aihao.Services;
-using Aihao.ViewModels.Dock;
+using Aihao.ViewModels.Docking;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dock.Model.Core;
+using Dock.Model.Controls;
 
 namespace Aihao.ViewModels;
 
@@ -61,7 +61,7 @@ public partial class MainWindowViewModel : ObservableObject
     private AihaoDockFactory? _dockFactory;
     
     [ObservableProperty]
-    private IRootDock? _dockLayout;
+    private global::Dock.Model.Controls.IRootDock? _dockLayout;
     
     public MainWindowViewModel()
     {

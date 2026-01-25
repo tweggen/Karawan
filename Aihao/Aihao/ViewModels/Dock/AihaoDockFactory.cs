@@ -6,7 +6,7 @@ using Dock.Model.Core;
 using Dock.Model.Mvvm;
 using Dock.Model.Mvvm.Controls;
 
-namespace Aihao.ViewModels.Dock;
+namespace Aihao.ViewModels.Docking;
 
 /// <summary>
 /// Factory that creates the docking layout for Aihao.
@@ -127,22 +127,7 @@ public class AihaoDockFactory : Factory
             DefaultDockable = mainLayout
         };
         
-        _rootDock.Left = CreatePinnedDock();
-        _rootDock.Right = CreatePinnedDock();
-        _rootDock.Top = CreatePinnedDock();
-        _rootDock.Bottom = CreatePinnedDock();
-        
         return _rootDock;
-    }
-    
-    private IPinnedDock CreatePinnedDock()
-    {
-        return new PinnedDock
-        {
-            Alignment = Alignment.Unset,
-            IsCollapsable = true,
-            VisibleDockables = CreateList<IDockable>()
-        };
     }
     
     public override void InitLayout(IDockable layout)

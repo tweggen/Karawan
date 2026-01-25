@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Mvvm.Controls;
 
-namespace Aihao.ViewModels.Dock;
+namespace Aihao.ViewModels.Docking;
 
 /// <summary>
 /// Base class for all dockable tool windows (Project Tree, Console, Inspector, etc.)

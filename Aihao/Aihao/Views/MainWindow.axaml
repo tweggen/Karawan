@@ -3,7 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:Aihao.ViewModels"
-        xmlns:dock="using:Aihao.ViewModels.Dock"
+        xmlns:dock="using:Aihao.ViewModels.Docking"
         xmlns:views="using:Aihao.Views"
         xmlns:dockViews="using:Aihao.Views.Dock"
         xmlns:idc="clr-namespace:Dock.Avalonia.Controls;assembly=Dock.Avalonia"
