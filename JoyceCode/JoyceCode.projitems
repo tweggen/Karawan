@@ -73,6 +73,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\StateBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\strategies\AOneOfStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\StrategyManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\casette\IMixFileProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\LoaderSubscription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Mix.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\View.cs" />

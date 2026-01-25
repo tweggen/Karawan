@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using Aihao.Models;
@@ -44,29 +43,23 @@ public partial class ProjectTreeViewModel : ObservableObject
             Icon = "📂"
         };
         
-        foreach (var sectionState in project.GetExistingSections())
+        foreach (var definition in project.GetExistingSections())
         {
             var sectionNode = new FileTreeItemViewModel
             {
-                Name = sectionState.Definition.DisplayName,
-                NodeType = sectionState.Definition.Id,
-                JsonPath = sectionState.Definition.JsonPath,
+                Name = definition.DisplayName,
+                NodeType = definition.Id,
+                JsonPath = definition.JsonPath,
                 IsFolder = false,
-                Icon = sectionState.Definition.Icon
+                Icon = definition.Icon
             };
-            
-            // Show layer count if multiple layers
-            if (sectionState.Layers.Count > 1)
-            {
-                sectionNode.Name = $"{sectionState.Definition.DisplayName} ({sectionState.Layers.Count} layers)";
-            }
             
             sectionsFolder.Children.Add(sectionNode);
         }
         
         root.Children.Add(sectionsFolder);
         
-        // Create file tree from included files
+        // Create file tree from tracked files
         var filesFolder = new FileTreeItemViewModel
         {
             Name = "Files",
@@ -75,42 +68,46 @@ public partial class ProjectTreeViewModel : ObservableObject
             Icon = "📂"
         };
         
-        // Build tree structure from IncludedFiles
-        if (project.RootFile != null)
+        // Add root file first
+        if (project.Files.TryGetValue(project.RootFilePath, out var rootFile))
         {
-            var rootFileNode = CreateIncludedFileNode(project, project.RootFile);
-            rootFileNode.IsExpanded = true;
+            var rootFileNode = new FileTreeItemViewModel
+            {
+                Name = Path.GetFileName(rootFile.RelativePath),
+                FullPath = rootFile.AbsolutePath,
+                RelativePath = rootFile.RelativePath,
+                IsFolder = false,
+                IsFile = true,
+                Exists = rootFile.Exists,
+                Icon = rootFile.Exists ? "📄" : "⚠️"
+            };
             filesFolder.Children.Add(rootFileNode);
+        }
+        
+        // Add additional files (from __include__)
+        foreach (var additionalFile in project.Mix.AdditionalFiles)
+        {
+            var fileName = Path.GetFileName(additionalFile);
+            if (fileName == project.RootFilePath) continue;
+            
+            project.Files.TryGetValue(fileName, out var file);
+            var exists = file?.Exists ?? File.Exists(Path.Combine(project.ProjectDirectory, additionalFile));
+            
+            var fileNode = new FileTreeItemViewModel
+            {
+                Name = fileName,
+                FullPath = Path.Combine(project.ProjectDirectory, additionalFile),
+                RelativePath = additionalFile,
+                IsFolder = false,
+                IsFile = true,
+                Exists = exists,
+                Icon = exists ? "📄" : "⚠️"
+            };
+            filesFolder.Children.Add(fileNode);
         }
         
         root.Children.Add(filesFolder);
         RootItems.Add(root);
-    }
-    
-    private FileTreeItemViewModel CreateIncludedFileNode(AihaoProject project, IncludedFile file)
-    {
-        var node = new FileTreeItemViewModel
-        {
-            Name = Path.GetFileName(file.RelativePath),
-            FullPath = file.AbsolutePath,
-            RelativePath = file.RelativePath,
-            JsonPath = file.MountPath,
-            IsFolder = file.ChildPaths.Count > 0,
-            IsFile = true,
-            Exists = file.Exists,
-            Icon = file.Exists ? "📄" : "⚠️"
-        };
-        
-        // Add children recursively
-        foreach (var childPath in file.ChildPaths)
-        {
-            if (project.IncludedFiles.TryGetValue(childPath, out var childFile))
-            {
-                node.Children.Add(CreateIncludedFileNode(project, childFile));
-            }
-        }
-        
-        return node;
     }
     
     partial void OnSelectedItemChanged(FileTreeItemViewModel? value)

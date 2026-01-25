@@ -1,25 +1,19 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Aihao.Models;
+using engine.casette;
 
 namespace Aihao.Services;
 
 /// <summary>
 /// Service for loading and saving Karawan engine projects.
-/// Mirrors the include resolution logic from engine.casette.Mix.
+/// Uses Mix directly for JSON merging and include resolution.
 /// </summary>
 public class ProjectService
 {
-    private static readonly JsonDocumentOptions JsonReadOptions = new()
-    {
-        AllowTrailingCommas = true,
-        CommentHandling = JsonCommentHandling.Skip
-    };
-    
     private static readonly JsonSerializerOptions JsonWriteOptions = new()
     {
         WriteIndented = true
@@ -27,7 +21,7 @@ public class ProjectService
     
     /// <summary>
     /// Load a project from a root JSON file (e.g., nogame.json).
-    /// Walks the include hierarchy to discover all related files.
+    /// Creates a Mix instance and loads the configuration tree.
     /// </summary>
     public async Task<AihaoProject> LoadProjectAsync(string projectPath)
     {
@@ -40,21 +34,52 @@ public class ProjectService
         var projectDir = Path.GetDirectoryName(fullPath) ?? string.Empty;
         var rootFileName = Path.GetFileName(fullPath);
         
+        // Create the file provider for editor context
+        var fileProvider = new EditorFileProvider(projectDir);
+        
+        // Create Mix with the editor file provider
+        var mix = new Mix(fileProvider)
+        {
+            Directory = "" // Files are relative to projectDir, handled by EditorFileProvider
+        };
+        
         var project = new AihaoProject
         {
             Name = Path.GetFileNameWithoutExtension(projectPath),
             ProjectDirectory = projectDir,
-            RootFilePath = rootFileName
+            RootFilePath = rootFileName,
+            Mix = mix
         };
         
-        // Initialize all known sections
-        project.InitializeSections();
+        // Load the root file into Mix
+        await Task.Run(() =>
+        {
+            using var stream = File.OpenRead(fullPath);
+            mix.UpsertFragment("/", stream, priority: 0);
+        });
         
-        // Load the root file and recursively process includes
-        await LoadIncludedFileAsync(project, rootFileName, "/", null);
+        // Track the root file
+        project.Files[rootFileName] = new ProjectFile
+        {
+            RelativePath = rootFileName,
+            AbsolutePath = fullPath,
+            Exists = true,
+            IsDirty = false
+        };
         
-        // Build section layers from discovered files
-        BuildSectionLayers(project);
+        // Track additional files discovered via __include__
+        foreach (var additionalFile in mix.AdditionalFiles)
+        {
+            var relPath = Path.GetFileName(additionalFile);
+            var absPath = Path.Combine(projectDir, additionalFile);
+            project.Files[relPath] = new ProjectFile
+            {
+                RelativePath = relPath,
+                AbsolutePath = absPath,
+                Exists = File.Exists(absPath),
+                IsDirty = false
+            };
+        }
         
         // Extract defaults
         ExtractDefaults(project);
@@ -66,232 +91,21 @@ public class ProjectService
     }
     
     /// <summary>
-    /// Recursively load a JSON file and process its __include__ directives.
-    /// </summary>
-    private async Task LoadIncludedFileAsync(
-        AihaoProject project, 
-        string relativePath, 
-        string mountPath,
-        string? parentPath)
-    {
-        // Avoid circular includes
-        if (project.IncludedFiles.ContainsKey(relativePath))
-        {
-            // File already loaded - just add as child if not already
-            if (parentPath != null && 
-                project.IncludedFiles.TryGetValue(parentPath, out var parent) &&
-                !parent.ChildPaths.Contains(relativePath))
-            {
-                parent.ChildPaths.Add(relativePath);
-            }
-            return;
-        }
-        
-        var absolutePath = Path.Combine(project.ProjectDirectory, relativePath);
-        var exists = File.Exists(absolutePath);
-        
-        var includedFile = new IncludedFile
-        {
-            RelativePath = relativePath,
-            AbsolutePath = absolutePath,
-            Exists = exists,
-            MountPath = mountPath,
-            ParentPath = parentPath
-        };
-        
-        project.IncludedFiles[relativePath] = includedFile;
-        
-        // Add to parent's children list
-        if (parentPath != null && project.IncludedFiles.TryGetValue(parentPath, out var parentFile))
-        {
-            parentFile.ChildPaths.Add(relativePath);
-        }
-        
-        if (!exists)
-        {
-            return;
-        }
-        
-        // Parse the JSON content
-        try
-        {
-            var jsonContent = await File.ReadAllTextAsync(absolutePath);
-            var jsonNode = JsonNode.Parse(jsonContent, documentOptions: JsonReadOptions);
-            
-            if (jsonNode is JsonObject jsonObject)
-            {
-                includedFile.Content = jsonObject;
-                
-                // Walk the tree looking for __include__ directives
-                await ProcessIncludesAsync(project, relativePath, jsonObject, mountPath);
-            }
-        }
-        catch (JsonException ex)
-        {
-            // Store parse error but continue
-            System.Diagnostics.Debug.WriteLine($"JSON parse error in {relativePath}: {ex.Message}");
-        }
-    }
-    
-    /// <summary>
-    /// Walk a JSON object tree looking for __include__ properties.
-    /// This mirrors the behavior of Mix._upsertIncludes().
-    /// </summary>
-    private async Task ProcessIncludesAsync(
-        AihaoProject project,
-        string currentFilePath,
-        JsonObject jsonObject,
-        string currentMountPath)
-    {
-        var queue = new Queue<(JsonObject Obj, string Path)>();
-        queue.Enqueue((jsonObject, currentMountPath));
-        
-        while (queue.Count > 0)
-        {
-            var (obj, path) = queue.Dequeue();
-            
-            foreach (var property in obj)
-            {
-                var childPath = path.EndsWith("/") 
-                    ? path + property.Key 
-                    : path + "/" + property.Key;
-                
-                if (property.Value is JsonObject childObj)
-                {
-                    // Check for __include__ directive
-                    if (childObj.TryGetPropertyValue("__include__", out var includeNode) &&
-                        includeNode is JsonValue includeValue &&
-                        includeValue.TryGetValue<string>(out var includePath) &&
-                        !string.IsNullOrEmpty(includePath))
-                    {
-                        // Recursively load the included file
-                        await LoadIncludedFileAsync(project, includePath, childPath, currentFilePath);
-                    }
-                    else
-                    {
-                        // Continue walking this object
-                        queue.Enqueue((childObj, childPath));
-                    }
-                }
-                else if (property.Value is JsonArray array)
-                {
-                    // Walk array elements
-                    for (int i = 0; i < array.Count; i++)
-                    {
-                        if (array[i] is JsonObject arrayObj)
-                        {
-                            queue.Enqueue((arrayObj, $"{childPath}/{i}"));
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    /// <summary>
-    /// Build section layers from discovered include files.
-    /// Maps each known section to its contributing files.
-    /// </summary>
-    private void BuildSectionLayers(AihaoProject project)
-    {
-        foreach (var file in project.IncludedFiles.Values)
-        {
-            // Check if this file's mount path corresponds to a known section
-            var mountPath = file.MountPath;
-            
-            // Extract section ID from mount path (e.g., "/globalSettings" -> "globalSettings")
-            if (mountPath.StartsWith("/") && mountPath.Length > 1)
-            {
-                var sectionId = mountPath.Substring(1);
-                
-                // Handle nested paths - only take the first segment
-                var slashIndex = sectionId.IndexOf('/');
-                if (slashIndex > 0)
-                {
-                    sectionId = sectionId.Substring(0, slashIndex);
-                }
-                
-                var section = project.GetSection(sectionId);
-                if (section != null)
-                {
-                    // Determine priority: root file content = 0, included files = 0 (base layer)
-                    // User can add overlays at higher priorities later
-                    var priority = 0;
-                    
-                    var layer = new SectionLayer
-                    {
-                        Priority = priority,
-                        FilePath = file.RelativePath,
-                        IsActive = true,
-                        IsOverlay = false,
-                        DisplayName = Path.GetFileName(file.RelativePath)
-                    };
-                    
-                    section.Layers.Add(layer);
-                }
-            }
-        }
-        
-        // Also check for inline sections in the root file (no __include__)
-        var rootFile = project.RootFile;
-        if (rootFile?.Content != null)
-        {
-            foreach (var property in rootFile.Content)
-            {
-                var section = project.GetSection(property.Key);
-                if (section == null) continue;
-                
-                // Check if we already have a layer for this section
-                bool hasLayer = false;
-                foreach (var layer in section.Layers)
-                {
-                    if (layer.FilePath == rootFile.RelativePath)
-                    {
-                        hasLayer = true;
-                        break;
-                    }
-                }
-                
-                // If no layer yet and content is not just an __include__, add inline layer
-                if (!hasLayer && property.Value is JsonObject obj)
-                {
-                    if (!obj.ContainsKey("__include__"))
-                    {
-                        var layer = new SectionLayer
-                        {
-                            Priority = 0,
-                            FilePath = null, // Inline in root
-                            IsActive = true,
-                            IsOverlay = false,
-                            DisplayName = "Inline"
-                        };
-                        section.Layers.Add(layer);
-                    }
-                }
-            }
-        }
-    }
-    
-    /// <summary>
     /// Extract defaults section for loader assembly info.
     /// </summary>
     private void ExtractDefaults(AihaoProject project)
     {
-        var rootFile = project.RootFile;
-        if (rootFile?.Content == null)
+        var defaults = project.Mix.GetTree("/defaults");
+        if (defaults is not JsonObject defaultsObj)
             return;
             
-        if (rootFile.Content.TryGetPropertyValue("defaults", out var defaultsNode) &&
-            defaultsNode is JsonObject defaults)
+        if (defaultsObj.TryGetPropertyValue("loader", out var loaderNode) &&
+            loaderNode is JsonObject loader &&
+            loader.TryGetPropertyValue("assembly", out var assemblyNode) &&
+            assemblyNode is JsonValue assemblyValue &&
+            assemblyValue.TryGetValue<string>(out var assembly))
         {
-            if (defaults.TryGetPropertyValue("loader", out var loaderNode) &&
-                loaderNode is JsonObject loader &&
-                loader.TryGetPropertyValue("assembly", out var assemblyNode) &&
-                assemblyNode is JsonValue assemblyValue &&
-                assemblyValue.TryGetValue<string>(out var assembly))
-            {
-                project.DefaultLoaderAssembly = assembly;
-            }
+            project.DefaultLoaderAssembly = assembly;
         }
     }
     
@@ -342,118 +156,64 @@ public class ProjectService
     }
     
     /// <summary>
-    /// Save a specific file in the project.
+    /// Add an overlay file at a specific path with given priority.
+    /// Higher priority values override lower ones.
     /// </summary>
-    public async Task SaveFileAsync(AihaoProject project, string relativePath)
+    public async Task AddOverlayAsync(AihaoProject project, string filePath, string mountPath, int priority)
     {
-        if (!project.IncludedFiles.TryGetValue(relativePath, out var file))
+        var fullPath = Path.Combine(project.ProjectDirectory, filePath);
+        if (!File.Exists(fullPath))
+        {
+            throw new FileNotFoundException($"Overlay file not found: {fullPath}");
+        }
+        
+        await Task.Run(() =>
+        {
+            using var stream = File.OpenRead(fullPath);
+            project.Mix.UpsertFragment(mountPath, stream, priority);
+        });
+        
+        // Track the file
+        project.Files[filePath] = new ProjectFile
+        {
+            RelativePath = filePath,
+            AbsolutePath = fullPath,
+            Exists = true,
+            IsDirty = false
+        };
+    }
+    
+    /// <summary>
+    /// Remove an overlay at a specific path and priority.
+    /// </summary>
+    public void RemoveOverlay(AihaoProject project, string mountPath, int priority)
+    {
+        project.Mix.RemoveFragment(mountPath, priority);
+    }
+    
+    /// <summary>
+    /// Save changes to a specific file.
+    /// Note: This requires tracking which changes belong to which file,
+    /// which is complex with Mix's merged view. For now, this is a placeholder.
+    /// </summary>
+    public async Task SaveFileAsync(AihaoProject project, string relativePath, JsonObject content)
+    {
+        if (!project.Files.TryGetValue(relativePath, out var file))
         {
             throw new ArgumentException($"File not found in project: {relativePath}");
         }
         
-        if (file.Content == null)
-        {
-            throw new InvalidOperationException($"File has no content: {relativePath}");
-        }
-        
-        var json = file.Content.ToJsonString(JsonWriteOptions);
+        var json = content.ToJsonString(JsonWriteOptions);
         await File.WriteAllTextAsync(file.AbsolutePath, json);
         file.IsDirty = false;
     }
     
     /// <summary>
-    /// Save all dirty files in the project.
+    /// Reload the entire project from disk.
     /// </summary>
-    public async Task SaveAllAsync(AihaoProject project)
+    public async Task<AihaoProject> ReloadProjectAsync(AihaoProject project)
     {
-        foreach (var file in project.IncludedFiles.Values)
-        {
-            if (file.IsDirty && file.Content != null)
-            {
-                await SaveFileAsync(project, file.RelativePath);
-            }
-        }
-    }
-    
-    /// <summary>
-    /// Reload a specific file from disk.
-    /// </summary>
-    public async Task ReloadFileAsync(AihaoProject project, string relativePath)
-    {
-        if (!project.IncludedFiles.TryGetValue(relativePath, out var file))
-        {
-            throw new ArgumentException($"File not found in project: {relativePath}");
-        }
-        
-        if (!file.Exists || !File.Exists(file.AbsolutePath))
-        {
-            file.Exists = false;
-            file.Content = null;
-            return;
-        }
-        
-        try
-        {
-            var jsonContent = await File.ReadAllTextAsync(file.AbsolutePath);
-            var jsonNode = JsonNode.Parse(jsonContent, documentOptions: JsonReadOptions);
-            
-            if (jsonNode is JsonObject jsonObject)
-            {
-                file.Content = jsonObject;
-                file.IsDirty = false;
-            }
-        }
-        catch (JsonException)
-        {
-            // Keep existing content on parse error
-        }
-    }
-    
-    /// <summary>
-    /// Add an overlay file to a section.
-    /// </summary>
-    public async Task AddOverlayAsync(AihaoProject project, string sectionId, string filePath, int priority = 10)
-    {
-        var section = project.GetSection(sectionId);
-        if (section == null)
-        {
-            throw new ArgumentException($"Unknown section: {sectionId}");
-        }
-        
-        // Load the overlay file if not already loaded
-        if (!project.IncludedFiles.ContainsKey(filePath))
-        {
-            await LoadIncludedFileAsync(project, filePath, section.Definition.JsonPath, null);
-        }
-        
-        // Add as overlay layer
-        section.AddOverlay(filePath, priority, Path.GetFileName(filePath));
-    }
-    
-    /// <summary>
-    /// Remove an overlay from a section.
-    /// </summary>
-    public void RemoveOverlay(AihaoProject project, string sectionId, string filePath)
-    {
-        var section = project.GetSection(sectionId);
-        section?.RemoveOverlay(filePath);
-    }
-    
-    /// <summary>
-    /// Toggle the active state of a layer.
-    /// </summary>
-    public void SetLayerActive(AihaoProject project, string sectionId, string? filePath, bool active)
-    {
-        var section = project.GetSection(sectionId);
-        if (section == null) return;
-        
-        foreach (var layer in section.Layers)
-        {
-            if (layer.FilePath == filePath)
-            {
-                layer.IsActive = active;
-                break;
-            }
-        }
+        var fullPath = Path.Combine(project.ProjectDirectory, project.RootFilePath);
+        return await LoadProjectAsync(fullPath);
     }
 }

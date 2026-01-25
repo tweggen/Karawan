@@ -8,6 +8,34 @@ using static engine.Logger;
 namespace engine.casette;
 
 
+/// <summary>
+/// Default file provider that uses engine.Assets for file access.
+/// Used when running in the engine context.
+/// </summary>
+public class EngineAssetFileProvider : IMixFileProvider
+{
+    public bool Exists(string path)
+    {
+        return engine.Assets.Exists(path);
+    }
+    
+    public Stream Open(string path)
+    {
+        return engine.Assets.Open(path);
+    }
+    
+    public void AddAssociation(string key, string path)
+    {
+        engine.Assets.AddAssociation(key, path);
+    }
+    
+    public string ResolvePath(string relativePath)
+    {
+        return Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), relativePath);
+    }
+}
+
+
 /**
  * This is the central configuration manager.
  * Setup code can add or remove layers of configuration, clients can subscribe
@@ -20,6 +48,12 @@ public class Mix
     public string Directory = "";
 
     public HashSet<string> AdditionalFiles = new HashSet<string>();
+    
+    /// <summary>
+    /// Optional file provider for loading include files.
+    /// If null, includes are not automatically resolved.
+    /// </summary>
+    public IMixFileProvider? FileProvider { get; set; }
 
     public void GetTree(string path, Action<JsonNode?> actParse)
     {
@@ -32,6 +66,15 @@ public class Mix
         return _view.GetMergedSubtree(path);
     }
     
+    
+    /// <summary>
+    /// Subscribe to changes at a specific path.
+    /// </summary>
+    public IDisposable Subscribe(string path, Action<View.DomChangeEvent> handler)
+    {
+        return _view.Subscribe(path, handler);
+    }
+    
 
     public void RemoveFragment(string rootPath, int priority = 0)
     {
@@ -41,6 +84,12 @@ public class Mix
 
     private void _upsertIncludes(string rootPath, JsonElement je, int priority)
     {
+        // Skip include processing if no file provider is set
+        if (FileProvider == null)
+        {
+            return;
+        }
+        
         var queue = new Queue<(string Path, JsonElement Element)>();
         queue.Enqueue((rootPath, je));
 
@@ -48,7 +97,6 @@ public class Mix
         {
             var (currentPath, currentElement) = queue.Dequeue();
             Trace("Analysing path "+currentPath);
-            var cwd = Environment.CurrentDirectory;
 
             if (currentElement.ValueKind == JsonValueKind.Object)
             {
@@ -66,10 +114,9 @@ public class Mix
                         string jsonCompletePath = Path.Combine(Directory, includePath);
 
                         /*
-                         * We use includePath as tag. It may be extended by "Directory" to actually
-                         * form a proper path (but is not now in the game).
+                         * Resolve to full path using the file provider
                          */
-                        string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), jsonCompletePath);
+                        string pathProbe = FileProvider.ResolvePath(jsonCompletePath);
                         
                         /*
                          * Sneak if the resource exists?
@@ -85,7 +132,7 @@ public class Mix
                              * TXWTODO: We need  this on platforms that do not read a pre-compiled list of
                              * assets.
                              */
-                            engine.Assets.AddAssociation(includePath, jsonCompletePath);
+                            FileProvider.AddAssociation(includePath, jsonCompletePath);
                         
                         }
                         
@@ -95,13 +142,13 @@ public class Mix
                         string fileNameOnly = Path.GetFileName(includePath);
                         Trace($"Trying to open file name {fileNameOnly}");
                         
-                        if (engine.Assets.Exists(fileNameOnly))
+                        if (FileProvider.Exists(fileNameOnly))
                         {
                             Stream fs = default;
                             JsonDocument doc = default;
                             try
                             {
-                                fs = engine.Assets.Open(fileNameOnly);
+                                fs = FileProvider.Open(fileNameOnly);
                                 AdditionalFiles.Add(jsonCompletePath);
                                 doc = JsonDocument.Parse(fs);
                                 Trace("Adding include file "+includePath+ " at "+ jsonCompletePath);
@@ -178,5 +225,14 @@ public class Mix
 
     public Mix()
     {
+    }
+    
+    
+    /// <summary>
+    /// Create a Mix with a specific file provider.
+    /// </summary>
+    public Mix(IMixFileProvider fileProvider)
+    {
+        FileProvider = fileProvider;
     }
 }

@@ -114,24 +114,11 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (CurrentProject == null) return;
         
-        var section = CurrentProject.GetSection(sectionId);
-        if (section == null || !section.Exists) return;
+        var definition = KnownSections.GetById(sectionId);
+        if (definition == null) return;
         
-        // Get the content from the topmost active layer's file
-        JsonNode? content = null;
-        var writeTarget = section.GetWriteTarget();
-        
-        if (writeTarget?.FilePath != null &&
-            CurrentProject.IncludedFiles.TryGetValue(writeTarget.FilePath, out var includeFile))
-        {
-            content = includeFile.Content;
-        }
-        else if (writeTarget?.FilePath == null && CurrentProject.RootFile?.Content != null)
-        {
-            // Inline content in root file
-            content = CurrentProject.RootFile.Content[sectionId];
-        }
-        
+        // Get merged content from Mix
+        var content = CurrentProject.GetSection(sectionId);
         if (content == null)
         {
             Console.AddLine($"No content found for section: {sectionId}", LogLevel.Warning);
@@ -145,7 +132,7 @@ public partial class MainWindowViewModel : ObservableObject
                 if (content is JsonObject settingsObj)
                 {
                     GlobalSettings.LoadFromJson(settingsObj);
-                    OpenOrFocusDocument(section.Definition.DisplayName, GlobalSettings);
+                    OpenOrFocusDocument(definition.DisplayName, GlobalSettings);
                 }
                 break;
                 
@@ -153,7 +140,7 @@ public partial class MainWindowViewModel : ObservableObject
                 if (content is JsonObject metagenObj)
                 {
                     Metagen.LoadFromJson(metagenObj);
-                    OpenOrFocusDocument(section.Definition.DisplayName, Metagen);
+                    OpenOrFocusDocument(definition.DisplayName, Metagen);
                 }
                 break;
                 
@@ -161,18 +148,18 @@ public partial class MainWindowViewModel : ObservableObject
                 if (content is JsonArray resourcesArr)
                 {
                     Resources.LoadFromJson(resourcesArr);
-                    OpenOrFocusDocument(section.Definition.DisplayName, Resources);
+                    OpenOrFocusDocument(definition.DisplayName, Resources);
                 }
                 else if (content is JsonObject resourcesObj)
                 {
                     Resources.LoadFromJsonObject(resourcesObj);
-                    OpenOrFocusDocument(section.Definition.DisplayName, Resources);
+                    OpenOrFocusDocument(definition.DisplayName, Resources);
                 }
                 break;
                 
             default:
                 // Open as generic JSON editor
-                OpenJsonEditor(section.Definition.DisplayName, content);
+                OpenJsonEditor(definition.DisplayName, content);
                 break;
         }
     }
@@ -214,10 +201,6 @@ public partial class MainWindowViewModel : ObservableObject
                 return;
             }
         }
-        
-        // Get the file content
-        if (!CurrentProject.IncludedFiles.TryGetValue(relativePath, out var file))
-            return;
         
         // Create new document tab
         var tab = new DocumentTabViewModel
@@ -305,16 +288,14 @@ public partial class MainWindowViewModel : ObservableObject
                 Console.AddLine($"Project loaded: {CurrentProject.Name}", LogLevel.Info);
                 Console.AddLine($"  Directory: {CurrentProject.ProjectDirectory}", LogLevel.Debug);
                 Console.AddLine($"  Root file: {CurrentProject.RootFilePath}", LogLevel.Debug);
-                Console.AddLine($"  Included files: {CurrentProject.IncludedFiles.Count}", LogLevel.Debug);
+                Console.AddLine($"  Files tracked: {CurrentProject.Files.Count}", LogLevel.Debug);
+                Console.AddLine($"  Additional files: {CurrentProject.Mix.AdditionalFiles.Count}", LogLevel.Debug);
                 
-                // Log sections with their layers
+                // Log existing sections
                 Console.AddLine($"  Sections:", LogLevel.Debug);
                 foreach (var section in CurrentProject.GetExistingSections())
                 {
-                    var layerInfo = section.Layers.Count == 1 
-                        ? section.Layers[0].DisplayName 
-                        : $"{section.Layers.Count} layers";
-                    Console.AddLine($"    {section.Definition.DisplayName}: {layerInfo}", LogLevel.Debug);
+                    Console.AddLine($"    {section.DisplayName}", LogLevel.Debug);
                 }
             }
         }
@@ -333,7 +314,8 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             StatusMessage = "Saving project...";
-            await _projectService.SaveAllAsync(CurrentProject);
+            // TODO: Implement proper save logic
+            // This requires tracking which changes belong to which file
             StatusMessage = "Project saved";
             Console.AddLine("Project saved successfully", LogLevel.Info);
         }

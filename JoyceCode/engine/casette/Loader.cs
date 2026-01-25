@@ -396,8 +396,9 @@ public class Loader
     {
         /*
          * This is a special case to register the Mix instance here.
+         * We use the EngineAssetFileProvider for loading includes via engine.Assets.
          */
-        I.Register<engine.casette.Mix>(() => new engine.casette.Mix());
+        I.Register<engine.casette.Mix>(() => new engine.casette.Mix(new EngineAssetFileProvider()));
         _mix = I.Get<Mix>();
         _loadGameConfigFile(stream);
     }

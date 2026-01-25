@@ -173,64 +173,65 @@ models/
 └── [subdirectories with assets]
 ```
 
-## Aihao Architecture
+## Aihao Integration
 
-Aihao models the Mix system with explicit support for sections and overlay layers.
+Aihao uses Mix directly from JoyceCode, ensuring the editor shows exactly what the engine will load.
 
-### Section Definitions (Compile-Time)
-
-Known sections are predefined in `KnownSections.cs`:
-
-| Section ID | JSON Path | Display Name |
-|------------|-----------|-------------|
-| globalSettings | /globalSettings | Global Settings |
-| modules | /modules | Modules |
-| resources | /resources | Resources |
-| implementations | /implementations | Implementations |
-| mapProviders | /mapProviders | Map Providers |
-| metaGen | /metaGen | MetaGen |
-| properties | /properties | Properties |
-| quests | /quests | Quests |
-| layers | /layers | Layers |
-| scenes | /scenes | Scenes |
-| textures | /textures | Textures |
-| animations | /animations | Animations |
-| defaults | /defaults | Defaults |
-
-### Layer System (Runtime)
-
-Each section can have multiple layers, similar to how Mix handles priorities:
+### Architecture
 
 ```
-SectionState
-├── Definition: SectionDefinition  // The predefined section
-└── Layers: List<SectionLayer>     // Ordered by priority
-    └── SectionLayer
-        ├── Priority: int          // 0 = base, higher = overlay
-        ├── FilePath: string?      // Source file (null = inline)
-        ├── IsActive: bool         // Can toggle on/off
-        └── IsOverlay: bool        // User-added vs discovered
+AihaoProject
+├── Mix                    // The engine's Mix instance
+│   ├── FileProvider      // EditorFileProvider (filesystem-based)
+│   ├── UpsertFragment()  // Load JSON with priority
+│   ├── GetTree()         // Get merged content
+│   └── Subscribe()       // React to changes
+├── Files                  // Track file metadata (dirty, exists)
+└── GetSection(id)        // Convenience: Mix.GetTree(section.JsonPath)
 ```
 
-### Overlay Use Cases
+### Why Direct Integration?
 
-1. **Debug Configuration**: Add `debug.globalSettings.json` at priority 10
-2. **Platform Overrides**: Add `windows.properties.json` for platform-specific settings
-3. **User Preferences**: Add `local.globalSettings.json` (gitignored) for personal settings
-4. **Mod Support**: Add mod files as high-priority overlays
+1. **Single Source of Truth**: Mix IS the configuration authority
+2. **Exact Runtime Behavior**: Editor shows what engine will load
+3. **Automatic Includes**: Mix resolves `__include__` directives
+4. **Subscription System**: UI can react to configuration changes
+5. **No Duplication**: No reimplementing merge logic
 
-### Write Target Resolution
+### EditorFileProvider
 
-When saving changes to a section:
-1. Find the topmost (highest priority) active layer
-2. Write changes to that layer's file
-3. If layer is inline (FilePath = null), write to root file
+Aihao provides `EditorFileProvider` implementing `IMixFileProvider`:
+- Uses direct filesystem access (vs engine's Assets system)
+- Resolves paths relative to project directory
+- No association tracking needed
 
 ```csharp
-// Get where changes to globalSettings should be saved
-var targetPath = project.GetWriteTargetPath("globalSettings");
-// Returns "debug.globalSettings.json" if overlay is active,
-// or "nogame.globalSettings.json" for base layer
+// Load a project
+var fileProvider = new EditorFileProvider(projectDir);
+var mix = new Mix(fileProvider);
+using var stream = File.OpenRead(projectPath);
+mix.UpsertFragment("/", stream, priority: 0);
+
+// Get merged section
+var globalSettings = mix.GetTree("/globalSettings");
+
+// Add overlay
+mix.UpsertFragment("/globalSettings", overlayStream, priority: 10);
+```
+
+### Overlay Support
+
+Overlays work via Mix's priority system:
+
+```csharp
+// Base configuration (priority 0)
+mix.UpsertFragment("/", baseStream, priority: 0);
+
+// Debug overlay (priority 10, overrides base)
+mix.UpsertFragment("/globalSettings", debugStream, priority: 10);
+
+// Remove overlay
+mix.RemoveFragment("/globalSettings", priority: 10);
 ```
 
 ## Thread Safety

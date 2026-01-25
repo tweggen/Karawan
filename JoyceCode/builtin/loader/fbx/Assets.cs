@@ -1,7 +1,6 @@
-using System;
 using System.Runtime.InteropServices;
-using ImGuiNET;
 using Silk.NET.Assimp;
+using File = Silk.NET.Assimp.File;
 
 namespace builtin.loader.fbx;
 
