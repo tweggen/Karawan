@@ -19,6 +19,7 @@
         <KeyBinding Gesture="F5" Command="{Binding RunGameCommand}"/>
         <KeyBinding Gesture="Ctrl+F5" Command="{Binding DebugGameCommand}"/>
         <KeyBinding Gesture="Shift+F5" Command="{Binding StopGameCommand}"/>
+        <KeyBinding Gesture="Ctrl+OemComma" Command="{Binding OpenSettingsCommand}"/>
     </Window.KeyBindings>
     
     <DockPanel>
@@ -28,12 +29,27 @@
                 <MenuItem Header="_Open Project..." Command="{Binding OpenProjectCommand}" InputGesture="Ctrl+O"/>
                 <Separator/>
                 <MenuItem Header="_Save Project" Command="{Binding SaveProjectCommand}" InputGesture="Ctrl+S" IsEnabled="{Binding IsProjectLoaded}"/>
+                <MenuItem Header="Save Project _As..." Command="{Binding SaveProjectAsCommand}" IsEnabled="{Binding IsProjectLoaded}"/>
+                <Separator/>
+                <MenuItem Header="Recent Projects" ItemsSource="{Binding RecentProjects}" IsEnabled="{Binding RecentProjects.Count}">
+                    <MenuItem.ItemTemplate>
+                        <DataTemplate>
+                            <MenuItem Header="{Binding Name}" 
+                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenRecentProjectCommand}"
+                                      CommandParameter="{Binding}"
+                                      ToolTip.Tip="{Binding Path}"/>
+                        </DataTemplate>
+                    </MenuItem.ItemTemplate>
+                </MenuItem>
+                <MenuItem Header="Clear Recent Projects" Command="{Binding ClearRecentProjectsCommand}"/>
                 <Separator/>
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
             </MenuItem>
             <MenuItem Header="_Edit">
                 <MenuItem Header="_Undo" IsEnabled="False"/>
                 <MenuItem Header="_Redo" IsEnabled="False"/>
+                <Separator/>
+                <MenuItem Header="_Settings..." Command="{Binding OpenSettingsCommand}" InputGesture="Ctrl+,"/>
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="_Project Tree" />

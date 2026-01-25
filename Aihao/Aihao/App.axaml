@@ -22,6 +22,9 @@
             <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{StaticResource PanelBackgroundColor}"/>
             <SolidColorBrush x:Key="ToolbarBackgroundBrush" Color="{StaticResource ToolbarBackgroundColor}"/>
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+            <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
+            <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}"/>
+            <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -623,6 +623,27 @@ public partial class MainWindowViewModel : ObservableObject
         Console.Clear();
     }
     
+    /// <summary>
+    /// Open the settings dialog.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenSettings()
+    {
+        var vm = new SettingsDialogViewModel(_userSettingsService);
+        var dialog = new Views.SettingsDialog
+        {
+            DataContext = vm
+        };
+        
+        // Get the main window to set as owner
+        if (Avalonia.Application.Current?.ApplicationLifetime is 
+            Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop &&
+            desktop.MainWindow != null)
+        {
+            await dialog.ShowDialog(desktop.MainWindow);
+        }
+    }
+    
     [RelayCommand]
     private async Task Exit()
     {
