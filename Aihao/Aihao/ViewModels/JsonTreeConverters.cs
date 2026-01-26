@@ -6,37 +6,6 @@ using Avalonia.Media;
 namespace Aihao.ViewModels;
 
 /// <summary>
-/// Converts JsonValueKind to boolean for visibility.
-/// </summary>
-public class JsonValueKindToBoolConverter : IValueConverter
-{
-    public static readonly JsonValueKindToBoolConverter IsBool = new(true);
-    public static readonly JsonValueKindToBoolConverter IsNotBool = new(false);
-    
-    private readonly bool _checkForBool;
-    
-    public JsonValueKindToBoolConverter(bool checkForBool)
-    {
-        _checkForBool = checkForBool;
-    }
-    
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is JsonValueKind kind)
-        {
-            bool isBool = kind == JsonValueKind.True || kind == JsonValueKind.False;
-            return _checkForBool ? isBool : !isBool;
-        }
-        return !_checkForBool; // Default to showing non-bool editor
-    }
-    
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
-}
-
-/// <summary>
 /// Converts string "true"/"false" to bool and back.
 /// </summary>
 public class StringToBoolConverter : IValueConverter
@@ -55,34 +24,6 @@ public class StringToBoolConverter : IValueConverter
         if (value is bool b)
             return b ? "true" : "false";
         return "false";
-    }
-}
-
-/// <summary>
-/// Converts SpecialEditorType to boolean for visibility.
-/// </summary>
-public class EditorTypeConverter : IValueConverter
-{
-    public static readonly EditorTypeConverter IsResolution = new(SpecialEditorType.Resolution);
-    public static readonly EditorTypeConverter IsDefault = new(SpecialEditorType.Default);
-    
-    private readonly SpecialEditorType _targetType;
-    
-    public EditorTypeConverter(SpecialEditorType targetType)
-    {
-        _targetType = targetType;
-    }
-    
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is SpecialEditorType editorType)
-            return editorType == _targetType;
-        return _targetType == SpecialEditorType.Default; // Default to showing default editor
-    }
-    
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
     }
 }
 
@@ -111,6 +52,7 @@ public class ModifiedBackgroundConverter : IValueConverter
 
 /// <summary>
 /// Converts PropertyValueKind to boolean for visibility.
+/// Used by PropertiesEditor - may be deprecated when migrated to unified editor.
 /// </summary>
 public class PropertyValueKindConverter : IValueConverter
 {
@@ -147,6 +89,7 @@ public class PropertyValueKindConverter : IValueConverter
 
 /// <summary>
 /// Converts PropertyEditorType to boolean for visibility.
+/// Used by PropertiesEditor - may be deprecated when migrated to unified editor.
 /// </summary>
 public class PropertyEditorTypeConverter : IValueConverter
 {
@@ -178,7 +121,7 @@ public class PropertyEditorTypeConverter : IValueConverter
 }
 
 /// <summary>
-/// Converts hex color string to Avalonia Color.
+/// Converts hex color string to Avalonia SolidColorBrush for Background binding.
 /// </summary>
 public class HexToColorConverter : IValueConverter
 {
@@ -190,20 +133,21 @@ public class HexToColorConverter : IValueConverter
         {
             try
             {
-                return Color.Parse(hex);
+                var color = Color.Parse(hex);
+                return new SolidColorBrush(color);
             }
             catch
             {
-                return Colors.Transparent;
+                return Brushes.Transparent;
             }
         }
-        return Colors.Transparent;
+        return Brushes.Transparent;
     }
     
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is Color color)
-            return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        if (value is SolidColorBrush brush)
+            return $"#{brush.Color.R:X2}{brush.Color.G:X2}{brush.Color.B:X2}";
         return "#000000";
     }
 }
@@ -221,7 +165,7 @@ public class ErrorBorderConverter : IValueConverter
     {
         if (value is string error && !string.IsNullOrEmpty(error))
             return ErrorBrush;
-        return null; // Use default border
+        return null;
     }
     
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

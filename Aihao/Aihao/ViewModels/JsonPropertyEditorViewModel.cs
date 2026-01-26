@@ -25,22 +25,23 @@ public enum JsonNodeValueKind
 }
 
 /// <summary>
-/// Specialized editor types for property values.
+/// Special editor types for property nodes.
+/// Determined by key pattern or value format.
 /// </summary>
-public enum SpecializedEditorType
+public enum NodeEditorType
 {
     Default,
     Resolution,   // WxH format (e.g., 1920x1080)
     Vector2,      // X,Y format
     Vector3,      // X,Y,Z format
     Color,        // #RRGGBB or #RRGGBBAA
-    Slider        // Numeric with slider control
+    Slider        // Numeric with slider UI
 }
 
 /// <summary>
 /// Represents a node in a JSON property tree.
 /// Can be a leaf (string, number, bool, null) or a branch (object, array).
-/// Supports specialized editors based on key patterns or value formats.
+/// Supports special editors based on key patterns or value formats.
 /// </summary>
 public partial class PropertyNodeViewModel : ObservableObject
 {
@@ -48,9 +49,6 @@ public partial class PropertyNodeViewModel : ObservableObject
     
     [ObservableProperty]
     private string _name = string.Empty;
-    
-    [ObservableProperty]
-    private string _fullPath = string.Empty;
     
     [ObservableProperty]
     private string _value = string.Empty;
@@ -79,6 +77,13 @@ public partial class PropertyNodeViewModel : ObservableObject
     [ObservableProperty]
     private string? _validationError;
     
+    /// <summary>
+    /// Full path from root (e.g., "graphics.resolution").
+    /// Used for determining editor type by key pattern.
+    /// </summary>
+    [ObservableProperty]
+    private string _fullPath = string.Empty;
+    
     public ObservableCollection<PropertyNodeViewModel> Children { get; } = new();
     
     #region Computed Properties
@@ -104,44 +109,17 @@ public partial class PropertyNodeViewModel : ObservableObject
     public string DisplayName => IsArrayElement ? $"[{ArrayIndex}]" : Name;
     
     /// <summary>
-    /// Specialized editor type based on key pattern or value format.
+    /// Determines the special editor type based on key pattern or value format.
     /// </summary>
-    public SpecializedEditorType EditorType => DetermineEditorType();
+    public NodeEditorType EditorType => DetermineEditorType();
     
     /// <summary>
     /// Icon for the node based on type.
     /// </summary>
-    public string Icon
-    {
-        get
-        {
-            if (IsBranch)
-            {
-                return ValueKind == JsonNodeValueKind.Array 
-                    ? (IsExpanded ? "📋" : "📑")
-                    : (IsExpanded ? "📂" : "📁");
-            }
-            
-            return EditorType switch
-            {
-                SpecializedEditorType.Resolution => "📐",
-                SpecializedEditorType.Vector2 => "↔",
-                SpecializedEditorType.Vector3 => "⊞",
-                SpecializedEditorType.Color => "🎨",
-                SpecializedEditorType.Slider => "🎚",
-                _ => ValueKind switch
-                {
-                    JsonNodeValueKind.Boolean => "☑",
-                    JsonNodeValueKind.Number => "#",
-                    JsonNodeValueKind.Null => "∅",
-                    _ => "𝐓"
-                }
-            };
-        }
-    }
+    public string Icon => GetIcon();
     
     /// <summary>
-    /// Summary text for collapsed branches or display.
+    /// Summary text for collapsed branches.
     /// </summary>
     public string Summary
     {
@@ -151,14 +129,15 @@ public partial class PropertyNodeViewModel : ObservableObject
             if (ValueKind == JsonNodeValueKind.Array)
                 return $"[{Children.Count} items]";
             if (ValueKind == JsonNodeValueKind.Object)
-                return $"{{ {Children.Count} }}";
+                return $"{{ {Children.Count} properties }}";
             return "";
         }
     }
     
-    /// <summary>
-    /// ComboBox index for value kind selection.
-    /// </summary>
+    #endregion
+    
+    #region Value Kind Visibility Properties
+    
     public int ValueKindIndex
     {
         get => (int)ValueKind;
@@ -171,27 +150,6 @@ public partial class PropertyNodeViewModel : ObservableObject
         }
     }
     
-    #endregion
-    
-    #region Type-specific visibility properties
-    
-    public bool IsStringType => ValueKind == JsonNodeValueKind.String && EditorType == SpecializedEditorType.Default;
-    public bool IsNumberType => ValueKind == JsonNodeValueKind.Number && EditorType != SpecializedEditorType.Slider;
-    public bool IsBooleanType => ValueKind == JsonNodeValueKind.Boolean;
-    public bool IsNullType => ValueKind == JsonNodeValueKind.Null;
-    public bool IsResolutionType => EditorType == SpecializedEditorType.Resolution;
-    public bool IsVector2Type => EditorType == SpecializedEditorType.Vector2;
-    public bool IsVector3Type => EditorType == SpecializedEditorType.Vector3;
-    public bool IsColorType => EditorType == SpecializedEditorType.Color;
-    public bool IsSliderType => EditorType == SpecializedEditorType.Slider;
-    
-    #endregion
-    
-    #region Specialized Editor Properties
-    
-    /// <summary>
-    /// Boolean value for checkbox binding.
-    /// </summary>
     public bool BoolValue
     {
         get => Value.Equals("true", StringComparison.OrdinalIgnoreCase);
@@ -202,53 +160,93 @@ public partial class PropertyNodeViewModel : ObservableObject
         }
     }
     
+    public bool IsStringType => ValueKind == JsonNodeValueKind.String;
+    public bool IsNumberType => ValueKind == JsonNodeValueKind.Number;
+    public bool IsBooleanType => ValueKind == JsonNodeValueKind.Boolean;
+    public bool IsNullType => ValueKind == JsonNodeValueKind.Null;
+    
+    #endregion
+    
+    #region Editor Type Visibility Properties
+    
+    public bool IsDefaultEditor => EditorType == NodeEditorType.Default && IsLeaf;
+    public bool IsResolutionEditor => EditorType == NodeEditorType.Resolution;
+    public bool IsVector2Editor => EditorType == NodeEditorType.Vector2;
+    public bool IsVector3Editor => EditorType == NodeEditorType.Vector3;
+    public bool IsColorEditor => EditorType == NodeEditorType.Color;
+    public bool IsSliderEditor => EditorType == NodeEditorType.Slider;
+    
     /// <summary>
-    /// For resolution/vector - X component.
+    /// Show default text editor only when no special editor applies.
+    /// </summary>
+    public bool ShowDefaultTextEditor => IsLeaf && EditorType == NodeEditorType.Default && 
+                                          !IsBooleanType && !IsNullType;
+    
+    #endregion
+    
+    #region Special Editor Value Properties
+    
+    /// <summary>
+    /// For resolution editor - width component.
+    /// </summary>
+    public decimal ResolutionWidth
+    {
+        get => ParseVectorComponent(Value, 0, 'x');
+        set => Value = $"{(int)value}x{(int)ResolutionHeight}";
+    }
+    
+    /// <summary>
+    /// For resolution editor - height component.
+    /// </summary>
+    public decimal ResolutionHeight
+    {
+        get => ParseVectorComponent(Value, 1, 'x');
+        set => Value = $"{(int)ResolutionWidth}x{(int)value}";
+    }
+    
+    /// <summary>
+    /// For vector2/vector3 editor - X component.
     /// </summary>
     public decimal VectorX
     {
-        get => ParseVectorComponent(Value, 0);
+        get => ParseVectorComponent(Value, 0, ',');
         set => Value = ReplaceVectorComponent(Value, 0, value);
     }
     
     /// <summary>
-    /// For resolution/vector - Y component.
+    /// For vector2/vector3 editor - Y component.
     /// </summary>
     public decimal VectorY
     {
-        get => ParseVectorComponent(Value, 1);
+        get => ParseVectorComponent(Value, 1, ',');
         set => Value = ReplaceVectorComponent(Value, 1, value);
     }
     
     /// <summary>
-    /// For vector3 - Z component.
+    /// For vector3 editor - Z component.
     /// </summary>
     public decimal VectorZ
     {
-        get => ParseVectorComponent(Value, 2);
+        get => ParseVectorComponent(Value, 2, ',');
         set => Value = ReplaceVectorComponent(Value, 2, value);
     }
     
     /// <summary>
-    /// For slider control (0-100 range typically).
+    /// For slider editor - numeric value as double.
     /// </summary>
     public double SliderValue
     {
-        get => double.TryParse(Value, out var d) ? d : 0;
+        get => double.TryParse(Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var d) ? d : 0;
         set => Value = value.ToString("G", CultureInfo.InvariantCulture);
     }
     
     /// <summary>
-    /// Color value for color picker.
+    /// For numeric editor - value as decimal.
     /// </summary>
-    public string ColorValue
+    public decimal NumericValue
     {
-        get => Value.StartsWith("#") ? Value : "#000000";
-        set
-        {
-            if (value.StartsWith("#"))
-                Value = value;
-        }
+        get => decimal.TryParse(Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var d) ? d : 0;
+        set => Value = value.ToString("G", CultureInfo.InvariantCulture);
     }
     
     #endregion
@@ -270,17 +268,7 @@ public partial class PropertyNodeViewModel : ObservableObject
     {
         Validate();
         MarkModified();
-        
-        // Notify all computed properties
-        OnPropertyChanged(nameof(BoolValue));
-        OnPropertyChanged(nameof(Summary));
-        OnPropertyChanged(nameof(VectorX));
-        OnPropertyChanged(nameof(VectorY));
-        OnPropertyChanged(nameof(VectorZ));
-        OnPropertyChanged(nameof(SliderValue));
-        OnPropertyChanged(nameof(ColorValue));
-        OnPropertyChanged(nameof(EditorType));
-        NotifyEditorTypeProperties();
+        NotifyValueDependentProperties();
     }
     
     partial void OnNameChanged(string value)
@@ -288,14 +276,12 @@ public partial class PropertyNodeViewModel : ObservableObject
         UpdateFullPath();
         MarkModified();
         OnPropertyChanged(nameof(DisplayName));
-        OnPropertyChanged(nameof(EditorType));
-        NotifyEditorTypeProperties();
+        NotifyEditorTypeChanged();
     }
     
     partial void OnFullPathChanged(string value)
     {
-        OnPropertyChanged(nameof(EditorType));
-        NotifyEditorTypeProperties();
+        NotifyEditorTypeChanged();
     }
     
     partial void OnValueKindChanged(JsonNodeValueKind value)
@@ -305,9 +291,12 @@ public partial class PropertyNodeViewModel : ObservableObject
         OnPropertyChanged(nameof(IsBranch));
         OnPropertyChanged(nameof(ValueKindIndex));
         OnPropertyChanged(nameof(Summary));
-        NotifyEditorTypeProperties();
+        OnPropertyChanged(nameof(IsStringType));
+        OnPropertyChanged(nameof(IsNumberType));
+        OnPropertyChanged(nameof(IsBooleanType));
+        OnPropertyChanged(nameof(IsNullType));
+        NotifyEditorTypeChanged();
         
-        // Clear children when changing to leaf type
         if (IsLeaf)
         {
             Children.Clear();
@@ -321,72 +310,110 @@ public partial class PropertyNodeViewModel : ObservableObject
         OnPropertyChanged(nameof(Icon));
     }
     
-    private void NotifyEditorTypeProperties()
+    private void NotifyValueDependentProperties()
     {
+        OnPropertyChanged(nameof(BoolValue));
+        OnPropertyChanged(nameof(Summary));
+        OnPropertyChanged(nameof(ResolutionWidth));
+        OnPropertyChanged(nameof(ResolutionHeight));
+        OnPropertyChanged(nameof(VectorX));
+        OnPropertyChanged(nameof(VectorY));
+        OnPropertyChanged(nameof(VectorZ));
+        OnPropertyChanged(nameof(SliderValue));
+        OnPropertyChanged(nameof(NumericValue));
+        NotifyEditorTypeChanged();
+    }
+    
+    private void NotifyEditorTypeChanged()
+    {
+        OnPropertyChanged(nameof(EditorType));
         OnPropertyChanged(nameof(Icon));
-        OnPropertyChanged(nameof(IsStringType));
-        OnPropertyChanged(nameof(IsNumberType));
-        OnPropertyChanged(nameof(IsBooleanType));
-        OnPropertyChanged(nameof(IsNullType));
-        OnPropertyChanged(nameof(IsResolutionType));
-        OnPropertyChanged(nameof(IsVector2Type));
-        OnPropertyChanged(nameof(IsVector3Type));
-        OnPropertyChanged(nameof(IsColorType));
-        OnPropertyChanged(nameof(IsSliderType));
+        OnPropertyChanged(nameof(IsDefaultEditor));
+        OnPropertyChanged(nameof(IsResolutionEditor));
+        OnPropertyChanged(nameof(IsVector2Editor));
+        OnPropertyChanged(nameof(IsVector3Editor));
+        OnPropertyChanged(nameof(IsColorEditor));
+        OnPropertyChanged(nameof(IsSliderEditor));
+        OnPropertyChanged(nameof(ShowDefaultTextEditor));
     }
     
     #endregion
     
-    #region Editor Type Detection
+    #region Helper Methods
     
-    private SpecializedEditorType DetermineEditorType()
+    private string GetIcon()
     {
-        if (!IsLeaf) return SpecializedEditorType.Default;
+        if (IsBranch)
+        {
+            return ValueKind switch
+            {
+                JsonNodeValueKind.Object => IsExpanded ? "📂" : "📁",
+                JsonNodeValueKind.Array => IsExpanded ? "📋" : "📑",
+                _ => "📁"
+            };
+        }
+        
+        return EditorType switch
+        {
+            NodeEditorType.Resolution => "📐",
+            NodeEditorType.Vector2 => "↔",
+            NodeEditorType.Vector3 => "⊞",
+            NodeEditorType.Color => "🎨",
+            NodeEditorType.Slider => "🎚",
+            _ => ValueKind switch
+            {
+                JsonNodeValueKind.Boolean => "☑",
+                JsonNodeValueKind.Number => "#",
+                JsonNodeValueKind.Null => "∅",
+                _ => "𝐓"
+            }
+        };
+    }
+    
+    private NodeEditorType DetermineEditorType()
+    {
+        if (!IsLeaf) return NodeEditorType.Default;
         
         var lowerPath = FullPath.ToLowerInvariant();
         var lowerName = Name.ToLowerInvariant();
         
         // Check key patterns first
         if (lowerPath.EndsWith(".resolution") || lowerName == "resolution")
-            return SpecializedEditorType.Resolution;
+            return NodeEditorType.Resolution;
         
         if (lowerPath.EndsWith(".color") || lowerName == "color" || lowerName.EndsWith("color"))
-            return SpecializedEditorType.Color;
+            return NodeEditorType.Color;
         
         if (lowerPath.EndsWith(".position") || lowerPath.EndsWith(".scale") || 
             lowerPath.EndsWith(".rotation") || lowerPath.EndsWith(".vector3") ||
             lowerName == "position" || lowerName == "scale" || lowerName == "rotation")
-            return SpecializedEditorType.Vector3;
+            return NodeEditorType.Vector3;
         
         if (lowerPath.EndsWith(".size") || lowerPath.EndsWith(".offset") || 
             lowerPath.EndsWith(".vector2") || lowerName == "size" || lowerName == "offset")
-            return SpecializedEditorType.Vector2;
-        
-        // Slider for volume/distance-like values
-        if (ValueKind == JsonNodeValueKind.Number && 
-            (lowerName.Contains("volume") || lowerName.Contains("opacity") || 
-             lowerName.Contains("alpha") || lowerName.Contains("intensity")))
-            return SpecializedEditorType.Slider;
+            return NodeEditorType.Vector2;
         
         // Check value format
         if (Regex.IsMatch(Value, @"^\d+x\d+$"))
-            return SpecializedEditorType.Resolution;
+            return NodeEditorType.Resolution;
         
         if (Regex.IsMatch(Value, @"^-?\d+\.?\d*,-?\d+\.?\d*,-?\d+\.?\d*$"))
-            return SpecializedEditorType.Vector3;
+            return NodeEditorType.Vector3;
         
         if (Regex.IsMatch(Value, @"^-?\d+\.?\d*,-?\d+\.?\d*$"))
-            return SpecializedEditorType.Vector2;
+            return NodeEditorType.Vector2;
         
         if (Regex.IsMatch(Value, @"^#[0-9A-Fa-f]{6,8}$"))
-            return SpecializedEditorType.Color;
+            return NodeEditorType.Color;
         
-        return SpecializedEditorType.Default;
+        // Numeric types get slider for certain property names
+        if (ValueKind == JsonNodeValueKind.Number && 
+            (lowerName.Contains("volume") || lowerName.Contains("opacity") || 
+             lowerName.Contains("alpha") || lowerName.Contains("percent")))
+            return NodeEditorType.Slider;
+        
+        return NodeEditorType.Default;
     }
-    
-    #endregion
-    
-    #region Validation
     
     private void Validate()
     {
@@ -394,21 +421,21 @@ public partial class PropertyNodeViewModel : ObservableObject
         
         switch (EditorType)
         {
-            case SpecializedEditorType.Resolution:
+            case NodeEditorType.Resolution:
                 if (!Regex.IsMatch(Value, @"^\d+x\d+$"))
-                    ValidationError = "Format: WxH (e.g., 1920x1080)";
+                    ValidationError = "Must be in format WxH (e.g., 1920x1080)";
                 break;
-            case SpecializedEditorType.Vector2:
+            case NodeEditorType.Vector2:
                 if (!Regex.IsMatch(Value, @"^-?\d+\.?\d*,-?\d+\.?\d*$"))
-                    ValidationError = "Format: X,Y";
+                    ValidationError = "Must be in format X,Y";
                 break;
-            case SpecializedEditorType.Vector3:
+            case NodeEditorType.Vector3:
                 if (!Regex.IsMatch(Value, @"^-?\d+\.?\d*,-?\d+\.?\d*,-?\d+\.?\d*$"))
-                    ValidationError = "Format: X,Y,Z";
+                    ValidationError = "Must be in format X,Y,Z";
                 break;
-            case SpecializedEditorType.Color:
+            case NodeEditorType.Color:
                 if (!Regex.IsMatch(Value, @"^#[0-9A-Fa-f]{6,8}$"))
-                    ValidationError = "Format: #RRGGBB or #RRGGBBAA";
+                    ValidationError = "Must be hex color (#RRGGBB or #RRGGBBAA)";
                 break;
         }
         
@@ -418,7 +445,7 @@ public partial class PropertyNodeViewModel : ObservableObject
             switch (ValueKind)
             {
                 case JsonNodeValueKind.Number:
-                    if (!double.TryParse(Value, out _))
+                    if (!double.TryParse(Value, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
                         ValidationError = "Must be a valid number";
                     break;
                 case JsonNodeValueKind.Boolean:
@@ -429,64 +456,13 @@ public partial class PropertyNodeViewModel : ObservableObject
         }
     }
     
-    #endregion
-    
-    #region Vector/Resolution Helpers
-    
-    private static decimal ParseVectorComponent(string value, int index)
-    {
-        // Handle "WxH" format (resolution)
-        if (value.Contains('x'))
-        {
-            var parts = value.Split('x');
-            if (index < parts.Length && decimal.TryParse(parts[index], out var v))
-                return v;
-            return 0;
-        }
-        
-        // Handle "X,Y" or "X,Y,Z" format
-        if (value.Contains(','))
-        {
-            var parts = value.Split(',');
-            if (index < parts.Length && decimal.TryParse(parts[index], out var v))
-                return v;
-            return 0;
-        }
-        
-        return 0;
-    }
-    
-    private string ReplaceVectorComponent(string value, int index, decimal newValue)
-    {
-        // Handle "WxH" format (resolution)
-        if (value.Contains('x') || EditorType == SpecializedEditorType.Resolution)
-        {
-            var parts = value.Contains('x') ? value.Split('x') : new[] { "0", "0" };
-            while (parts.Length <= index)
-                parts = parts.Concat(new[] { "0" }).ToArray();
-            parts[index] = ((int)newValue).ToString();
-            return string.Join("x", parts);
-        }
-        
-        // Handle "X,Y" or "X,Y,Z" format
-        var commaparts = value.Contains(',') ? value.Split(',') : new[] { "0", "0", "0" };
-        while (commaparts.Length <= index)
-            commaparts = commaparts.Concat(new[] { "0" }).ToArray();
-        commaparts[index] = newValue.ToString(CultureInfo.InvariantCulture);
-        return string.Join(",", commaparts.Take(EditorType == SpecializedEditorType.Vector3 ? 3 : 2));
-    }
-    
-    #endregion
-    
-    #region Path Management
-    
     private void UpdateFullPath()
     {
         if (Parent != null)
         {
-            FullPath = IsArrayElement 
-                ? $"{Parent.FullPath}[{ArrayIndex}]" 
-                : string.IsNullOrEmpty(Parent.FullPath) ? Name : $"{Parent.FullPath}.{Name}";
+            FullPath = string.IsNullOrEmpty(Parent.FullPath) 
+                ? Name 
+                : $"{Parent.FullPath}.{Name}";
         }
         else
         {
@@ -500,7 +476,28 @@ public partial class PropertyNodeViewModel : ObservableObject
         }
     }
     
-    #endregion
+    private static decimal ParseVectorComponent(string value, int index, char separator)
+    {
+        var parts = value.Split(separator);
+        if (index < parts.Length && decimal.TryParse(parts[index], NumberStyles.Any, 
+            CultureInfo.InvariantCulture, out var v))
+            return v;
+        return 0;
+    }
+    
+    private static string ReplaceVectorComponent(string value, int index, decimal newValue)
+    {
+        var separator = value.Contains('x') ? 'x' : ',';
+        var parts = value.Split(separator);
+        if (index < parts.Length)
+        {
+            parts[index] = separator == 'x' 
+                ? ((int)newValue).ToString() 
+                : newValue.ToString(CultureInfo.InvariantCulture);
+            return string.Join(separator.ToString(), parts);
+        }
+        return value;
+    }
     
     private void MarkModified()
     {
@@ -508,9 +505,10 @@ public partial class PropertyNodeViewModel : ObservableObject
         _onModified?.Invoke();
     }
     
-    /// <summary>
-    /// Event fired when this node requests to be removed.
-    /// </summary>
+    #endregion
+    
+    #region Events and Commands
+    
     public event EventHandler? RemoveRequested;
     
     [RelayCommand]
@@ -558,13 +556,11 @@ public partial class PropertyNodeViewModel : ObservableObject
         {
             Children.Remove(child);
             
-            // Reindex array elements
             if (ValueKind == JsonNodeValueKind.Array)
             {
                 for (int i = 0; i < Children.Count; i++)
                 {
                     Children[i].ArrayIndex = i;
-                    Children[i].UpdateFullPath();
                 }
             }
             
@@ -584,9 +580,10 @@ public partial class PropertyNodeViewModel : ObservableObject
         return $"{baseName}{counter}";
     }
     
-    /// <summary>
-    /// Convert this node and its children to a JsonNode.
-    /// </summary>
+    #endregion
+    
+    #region Serialization
+    
     public JsonNode? ToJsonNode()
     {
         switch (ValueKind)
@@ -628,16 +625,8 @@ public partial class PropertyNodeViewModel : ObservableObject
         }
     }
     
-    /// <summary>
-    /// Create a PropertyNodeViewModel from a JsonNode.
-    /// </summary>
-    public static PropertyNodeViewModel FromJsonNode(
-        string name, 
-        JsonNode? node, 
-        Action? onModified = null, 
-        int arrayIndex = -1,
-        PropertyNodeViewModel? parent = null,
-        string parentPath = "")
+    public static PropertyNodeViewModel FromJsonNode(string name, JsonNode? node, Action? onModified = null, 
+        int arrayIndex = -1, PropertyNodeViewModel? parent = null, string parentPath = "")
     {
         var vm = new PropertyNodeViewModel(onModified)
         {
@@ -646,11 +635,15 @@ public partial class PropertyNodeViewModel : ObservableObject
             Parent = parent
         };
         
-        // Calculate full path
+        // Build full path
         if (arrayIndex >= 0)
+        {
             vm.FullPath = string.IsNullOrEmpty(parentPath) ? $"[{arrayIndex}]" : $"{parentPath}[{arrayIndex}]";
+        }
         else
+        {
             vm.FullPath = string.IsNullOrEmpty(parentPath) ? name : $"{parentPath}.{name}";
+        }
         
         if (node == null)
         {
@@ -698,10 +691,7 @@ public partial class PropertyNodeViewModel : ObservableObject
                     {
                         vm.Children.Remove(c);
                         for (int i = 0; i < vm.Children.Count; i++)
-                        {
                             vm.Children[i].ArrayIndex = i;
-                            vm.Children[i].UpdateFullPath();
-                        }
                         onModified?.Invoke();
                     }
                 };
@@ -729,12 +719,14 @@ public partial class PropertyNodeViewModel : ObservableObject
         vm.IsModified = false;
         return vm;
     }
+    
+    #endregion
 }
 
 /// <summary>
 /// ViewModel for a reusable JSON property tree editor.
 /// Can be used standalone or embedded in other editors.
-/// Supports specialized editors for various value types.
+/// Supports special editors for resolution, vectors, colors, etc.
 /// </summary>
 public partial class JsonPropertyEditorViewModel : ObservableObject
 {
@@ -768,126 +760,10 @@ public partial class JsonPropertyEditorViewModel : ObservableObject
     /// </summary>
     public event EventHandler? Modified;
     
-    /// <summary>
-    /// Load from a JsonObject (for flat key-value settings like globalSettings).
-    /// Keys with dots are treated as paths and create a tree structure.
-    /// </summary>
-    public void LoadFromFlatJson(JsonObject flatSettings)
-    {
-        _originalJson = flatSettings;
-        RootNodes.Clear();
-        
-        // Build tree from flat key-value pairs (keys like "audio.volume" become nested)
-        foreach (var property in flatSettings)
-        {
-            AddNodeFromPath(property.Key, property.Value);
-        }
-        
-        // Sort children at each level
-        SortChildren(RootNodes);
-        
-        IsDirty = false;
-        ClearModifiedFlags();
-    }
-    
-    private void AddNodeFromPath(string path, JsonNode? value)
-    {
-        var parts = path.Split('.');
-        var currentLevel = RootNodes;
-        var currentPath = "";
-        
-        for (int i = 0; i < parts.Length; i++)
-        {
-            var part = parts[i];
-            currentPath = string.IsNullOrEmpty(currentPath) ? part : $"{currentPath}.{part}";
-            var isLast = i == parts.Length - 1;
-            
-            var existing = currentLevel.FirstOrDefault(n => n.Name == part);
-            
-            if (existing == null)
-            {
-                var node = new PropertyNodeViewModel(MarkDirty)
-                {
-                    Name = part,
-                    FullPath = currentPath
-                };
-                node.RemoveRequested += OnRootChildRemoveRequested;
-                
-                if (isLast)
-                {
-                    SetNodeValue(node, value);
-                }
-                else
-                {
-                    // Intermediate branch node
-                    node.ValueKind = JsonNodeValueKind.Object;
-                }
-                
-                currentLevel.Add(node);
-                existing = node;
-            }
-            else if (isLast)
-            {
-                SetNodeValue(existing, value);
-            }
-            
-            currentLevel = existing.Children;
-        }
-    }
-    
-    private static void SetNodeValue(PropertyNodeViewModel node, JsonNode? value)
-    {
-        if (value == null)
-        {
-            node.ValueKind = JsonNodeValueKind.Null;
-            node.Value = "null";
-        }
-        else if (value is JsonValue jv)
-        {
-            if (jv.TryGetValue<bool>(out var boolVal))
-            {
-                node.ValueKind = JsonNodeValueKind.Boolean;
-                node.Value = boolVal.ToString().ToLower();
-            }
-            else if (jv.TryGetValue<int>(out var intVal))
-            {
-                node.ValueKind = JsonNodeValueKind.Number;
-                node.Value = intVal.ToString();
-            }
-            else if (jv.TryGetValue<double>(out var doubleVal))
-            {
-                node.ValueKind = JsonNodeValueKind.Number;
-                node.Value = doubleVal.ToString(CultureInfo.InvariantCulture);
-            }
-            else if (jv.TryGetValue<string>(out var strVal))
-            {
-                node.ValueKind = JsonNodeValueKind.String;
-                node.Value = strVal;
-            }
-        }
-        else if (value is JsonArray || value is JsonObject)
-        {
-            // For nested objects/arrays, recursively build
-            var tempNode = PropertyNodeViewModel.FromJsonNode(node.Name, value, null, -1, null, 
-                node.FullPath.Contains('.') ? node.FullPath.Substring(0, node.FullPath.LastIndexOf('.')) : "");
-            node.ValueKind = tempNode.ValueKind;
-            node.Value = tempNode.Value;
-            foreach (var child in tempNode.Children)
-            {
-                child.Parent = node;
-                node.Children.Add(child);
-            }
-        }
-        
-        node.IsModified = false;
-    }
-    
-    /// <summary>
-    /// Load from a JsonNode (for nested structures like implementation properties).
-    /// </summary>
     public void LoadFromJson(JsonNode? node)
     {
         RootNodes.Clear();
+        _originalJson = node as JsonObject;
         
         if (node is JsonObject obj)
         {
@@ -932,22 +808,6 @@ public partial class JsonPropertyEditorViewModel : ObservableObject
         IsDirty = false;
     }
     
-    private void SortChildren(ObservableCollection<PropertyNodeViewModel> nodes)
-    {
-        var sorted = nodes
-            .OrderByDescending(n => n.IsBranch)
-            .ThenBy(n => n.Name)
-            .ToList();
-        
-        nodes.Clear();
-        foreach (var node in sorted)
-        {
-            nodes.Add(node);
-            if (node.Children.Count > 0)
-                SortChildren(node.Children);
-        }
-    }
-    
     private void OnRootChildRemoveRequested(object? sender, EventArgs e)
     {
         if (sender is PropertyNodeViewModel node)
@@ -968,6 +828,20 @@ public partial class JsonPropertyEditorViewModel : ObservableObject
     {
         IsDirty = true;
         Modified?.Invoke(this, EventArgs.Empty);
+    }
+    
+    [RelayCommand]
+    private void Save()
+    {
+        if (_originalJson == null) return;
+        
+        _originalJson.Clear();
+        foreach (var node in RootNodes)
+        {
+            _originalJson[node.Name] = node.ToJsonNode();
+        }
+        
+        ClearModifiedFlags();
     }
     
     [RelayCommand]
@@ -1001,6 +875,7 @@ public partial class JsonPropertyEditorViewModel : ObservableObject
         var node = new PropertyNodeViewModel(MarkDirty)
         {
             ArrayIndex = RootNodes.Count,
+            FullPath = $"[{RootNodes.Count}]",
             Value = "",
             ValueKind = JsonNodeValueKind.String,
             IsModified = true
@@ -1021,37 +896,6 @@ public partial class JsonPropertyEditorViewModel : ObservableObject
     private void CollapseAll()
     {
         SetExpansion(RootNodes, false);
-    }
-    
-    [RelayCommand]
-    private void Save()
-    {
-        if (_originalJson != null)
-        {
-            // Rebuild flat JSON from tree
-            _originalJson.Clear();
-            SaveNodesToFlatJson(_originalJson, RootNodes, "");
-        }
-        
-        ClearModifiedFlags();
-        IsDirty = false;
-    }
-    
-    private void SaveNodesToFlatJson(JsonObject target, IEnumerable<PropertyNodeViewModel> nodes, string prefix)
-    {
-        foreach (var node in nodes)
-        {
-            var path = string.IsNullOrEmpty(prefix) ? node.Name : $"{prefix}.{node.Name}";
-            
-            if (node.IsLeaf)
-            {
-                target[path] = node.ToJsonNode();
-            }
-            else
-            {
-                SaveNodesToFlatJson(target, node.Children, path);
-            }
-        }
     }
     
     private void SetExpansion(IEnumerable<PropertyNodeViewModel> nodes, bool expanded)
@@ -1102,16 +946,6 @@ public partial class JsonPropertyEditorViewModel : ObservableObject
         {
             result[node.Name] = node.ToJsonNode();
         }
-        return result;
-    }
-    
-    /// <summary>
-    /// Convert the tree to flat JSON (dot-separated keys).
-    /// </summary>
-    public JsonObject ToFlatJsonObject()
-    {
-        var result = new JsonObject();
-        SaveNodesToFlatJson(result, RootNodes, "");
         return result;
     }
     

@@ -3,140 +3,25 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:Aihao.ViewModels"
+             xmlns:views="using:Aihao.Views"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="400"
              x:Class="Aihao.Views.GlobalSettingsEditor"
              x:DataType="vm:GlobalSettingsEditorViewModel">
     
-    <UserControl.Styles>
-        <!-- Modified background -->
-        <Style Selector="Border.node-container">
-            <Setter Property="Padding" Value="2,1"/>
-            <Setter Property="CornerRadius" Value="2"/>
-        </Style>
-    </UserControl.Styles>
-    
     <DockPanel>
-        <!-- Toolbar -->
-        <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="4,2">
-            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto">
-                <Button Grid.Column="0"
-                        Command="{Binding SaveCommand}" 
+        <!-- Top toolbar with Save button -->
+        <Border DockPanel.Dock="Top" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                Padding="4,2">
+            <StackPanel Orientation="Horizontal">
+                <Button Command="{Binding SaveCommand}" 
                         Content="💾 Save" 
                         IsEnabled="{Binding IsDirty}"
-                        Margin="0,0,4,0"/>
-                <Button Grid.Column="1"
-                        Command="{Binding AddSettingCommand}" 
-                        Content="➕ Add"
-                        Margin="0,0,4,0"/>
-                <Separator Grid.Column="2" Margin="4,0"/>
-                
-                <!-- Search -->
-                <TextBox Grid.Column="3"
-                         Text="{Binding SearchText}"
-                         Watermark="Search..."
-                         Margin="4,0"/>
-                
-                <Button Grid.Column="4"
-                        Command="{Binding ExpandAllCommand}"
-                        Content="⊞"
-                        ToolTip.Tip="Expand All"
-                        Margin="4,0,0,0"/>
-                <Button Grid.Column="5"
-                        Command="{Binding CollapseAllCommand}"
-                        Content="⊟"
-                        ToolTip.Tip="Collapse All"
-                        Margin="2,0,0,0"/>
-            </Grid>
+                        Padding="8,4"/>
+            </StackPanel>
         </Border>
         
-        <!-- Main content: Tree view -->
-        <TreeView x:Name="SettingsTree"
-                  ItemsSource="{Binding RootNodes}"
-                  SelectedItem="{Binding SelectedNode}"
-                  Padding="4">
-            <TreeView.Styles>
-                <Style Selector="TreeViewItem" x:DataType="vm:JsonTreeNode">
-                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
-                </Style>
-            </TreeView.Styles>
-            <TreeView.ItemTemplate>
-                <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:JsonTreeNode">
-                    <Border Classes="node-container"
-                            Background="{Binding IsModified, Converter={x:Static vm:ModifiedBackgroundConverter.Instance}}">
-                        <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-                            <!-- Icon -->
-                            <TextBlock Grid.Column="0"
-                                       Text="{Binding Icon}"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,6,0"
-                                       Width="16"/>
-                            
-                            <!-- Name -->
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding Name}"
-                                       FontWeight="{Binding IsBranch, Converter={x:Static vm:BoolToFontWeightConverter.Instance}}"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,8,0"/>
-                            
-                            <!-- Value editor panel (only for leaves) -->
-                            <Panel Grid.Column="2" IsVisible="{Binding IsLeaf}">
-                                
-                                <!-- Resolution editor -->
-                                <StackPanel Orientation="Horizontal"
-                                            IsVisible="{Binding EditorType, Converter={x:Static vm:EditorTypeConverter.IsResolution}}"
-                                            Spacing="2"
-                                            VerticalAlignment="Center">
-                                    <NumericUpDown Value="{Binding ResolutionWidth}"
-                                                   Minimum="1"
-                                                   Maximum="9999"
-                                                   FormatString="0"
-                                                   Width="65"
-                                                   ShowButtonSpinner="False"/>
-                                    <TextBlock Text="×" VerticalAlignment="Center" Margin="2,0"/>
-                                    <NumericUpDown Value="{Binding ResolutionHeight}"
-                                                   Minimum="1"
-                                                   Maximum="9999"
-                                                   FormatString="0"
-                                                   Width="65"
-                                                   ShowButtonSpinner="False"/>
-                                </StackPanel>
-                                
-                                <!-- Boolean toggle -->
-                                <CheckBox IsChecked="{Binding Value, Converter={x:Static vm:StringToBoolConverter.Instance}}"
-                                          IsVisible="{Binding ValueKind, Converter={x:Static vm:JsonValueKindToBoolConverter.IsBool}}"
-                                          Content="{Binding Value}"
-                                          VerticalAlignment="Center"/>
-                                
-                                <!-- Default string/number editor -->
-                                <TextBox Text="{Binding Value}"
-                                         MinWidth="120"
-                                         MaxWidth="250"
-                                         VerticalAlignment="Center"
-                                         ToolTip.Tip="{Binding ValidationError}"
-                                         BorderBrush="{Binding ValidationError, Converter={x:Static vm:ErrorBorderConverter.Instance}}">
-                                    <TextBox.IsVisible>
-                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                            <Binding Path="EditorType" Converter="{x:Static vm:EditorTypeConverter.IsDefault}"/>
-                                            <Binding Path="ValueKind" Converter="{x:Static vm:JsonValueKindToBoolConverter.IsNotBool}"/>
-                                        </MultiBinding>
-                                    </TextBox.IsVisible>
-                                </TextBox>
-                            </Panel>
-                            
-                            <!-- Delete button (only for leaves) -->
-                            <Button Grid.Column="3"
-                                    Content="×"
-                                    Padding="4,0"
-                                    Background="Transparent"
-                                    Command="{Binding $parent[TreeView].((vm:GlobalSettingsEditorViewModel)DataContext).RemoveSettingCommand}"
-                                    CommandParameter="{Binding}"
-                                    IsVisible="{Binding IsLeaf}"
-                                    ToolTip.Tip="Remove this setting"
-                                    Margin="4,0,0,0"/>
-                        </Grid>
-                    </Border>
-                </TreeDataTemplate>
-            </TreeView.ItemTemplate>
-        </TreeView>
+        <!-- Unified Property Editor -->
+        <views:JsonPropertyEditor DataContext="{Binding PropertyEditor}"/>
     </DockPanel>
 </UserControl>
