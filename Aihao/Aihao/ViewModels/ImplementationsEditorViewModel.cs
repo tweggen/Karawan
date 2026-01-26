@@ -51,11 +51,55 @@ public partial class ImplementationPropertyViewModel : ObservableObject
     public ObservableCollection<KeyValuePair<string, string>> DictionaryEntries { get; } = new();
     
     /// <summary>
+    /// Event fired when this property requests removal.
+    /// </summary>
+    public event EventHandler? RemoveRequested;
+    
+    /// <summary>
     /// Display value for the property (shows summary for dictionaries).
     /// </summary>
     public string DisplayValue => PropertyType == ImplementationPropertyType.Dictionary
         ? $"{{ {DictionaryEntries.Count} entries }}"
         : Value;
+    
+    /// <summary>
+    /// Index for ComboBox binding.
+    /// </summary>
+    public int PropertyTypeIndex
+    {
+        get => (int)PropertyType;
+        set
+        {
+            if (value >= 0 && value <= 2)
+            {
+                PropertyType = (ImplementationPropertyType)value;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// True if this is a Dictionary type.
+    /// </summary>
+    public bool IsDictionary => PropertyType == ImplementationPropertyType.Dictionary;
+    
+    /// <summary>
+    /// True if this is NOT a Dictionary type.
+    /// </summary>
+    public bool IsNotDictionary => PropertyType != ImplementationPropertyType.Dictionary;
+    
+    partial void OnPropertyTypeChanged(ImplementationPropertyType value)
+    {
+        OnPropertyChanged(nameof(PropertyTypeIndex));
+        OnPropertyChanged(nameof(IsDictionary));
+        OnPropertyChanged(nameof(IsNotDictionary));
+        OnPropertyChanged(nameof(DisplayValue));
+    }
+    
+    [RelayCommand]
+    private void Remove()
+    {
+        RemoveRequested?.Invoke(this, EventArgs.Empty);
+    }
 }
 
 public enum ImplementationPropertyType
@@ -105,6 +149,11 @@ public partial class ImplementationViewModel : ObservableObject
     public ObservableCollection<ImplementationPropertyViewModel> Properties { get; } = new();
     
     /// <summary>
+    /// True if there are no properties.
+    /// </summary>
+    public bool HasNoProperties => Properties.Count == 0;
+    
+    /// <summary>
     /// Summary text for display in the list.
     /// </summary>
     public string Summary => GetSummary();
@@ -120,12 +169,62 @@ public partial class ImplementationViewModel : ObservableObject
         _ => "❓"
     };
     
+    /// <summary>
+    /// Index for ComboBox binding.
+    /// </summary>
+    public int CreationTypeIndex
+    {
+        get => (int)CreationType;
+        set
+        {
+            if (value >= 0 && value <= 2)
+            {
+                CreationType = (ImplementationCreationType)value;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// True if creation type is ExplicitClass.
+    /// </summary>
+    public bool IsExplicitClass => CreationType == ImplementationCreationType.ExplicitClass;
+    
+    /// <summary>
+    /// True if creation type is FactoryMethod.
+    /// </summary>
+    public bool IsFactoryMethod => CreationType == ImplementationCreationType.FactoryMethod;
+    
     public ImplementationViewModel(ImplementationsEditorViewModel owner)
     {
         _owner = owner;
         InterfaceType.PropertyChanged += (_, _) => OnModified();
         ClassName.PropertyChanged += (_, _) => OnModified();
         FactoryMethod.PropertyChanged += (_, _) => OnModified();
+        Properties.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoProperties));
+    }
+    
+    [RelayCommand]
+    private void AddProperty()
+    {
+        var prop = new ImplementationPropertyViewModel
+        {
+            Name = "newProperty",
+            PropertyType = ImplementationPropertyType.String
+        };
+        prop.RemoveRequested += OnPropertyRemoveRequested;
+        Properties.Add(prop);
+        IsModified = true;
+        _owner.MarkDirty();
+    }
+    
+    private void OnPropertyRemoveRequested(object? sender, EventArgs e)
+    {
+        if (sender is ImplementationPropertyViewModel prop)
+        {
+            Properties.Remove(prop);
+            IsModified = true;
+            _owner.MarkDirty();
+        }
     }
     
     partial void OnCreationTypeChanged(ImplementationCreationType value)
@@ -133,6 +232,9 @@ public partial class ImplementationViewModel : ObservableObject
         OnModified();
         OnPropertyChanged(nameof(Summary));
         OnPropertyChanged(nameof(Icon));
+        OnPropertyChanged(nameof(CreationTypeIndex));
+        OnPropertyChanged(nameof(IsExplicitClass));
+        OnPropertyChanged(nameof(IsFactoryMethod));
     }
     
     partial void OnCassettePathChanged(string value) => OnModified();
@@ -252,6 +354,22 @@ public partial class ImplementationsEditorViewModel : ObservableObject
     
     [ObservableProperty]
     private ImplementationViewModel? _selectedImplementation;
+    
+    /// <summary>
+    /// True if an implementation is selected.
+    /// </summary>
+    public bool HasSelectedImplementation => SelectedImplementation != null;
+    
+    /// <summary>
+    /// True if no implementation is selected.
+    /// </summary>
+    public bool HasNoSelectedImplementation => SelectedImplementation == null;
+    
+    partial void OnSelectedImplementationChanged(ImplementationViewModel? value)
+    {
+        OnPropertyChanged(nameof(HasSelectedImplementation));
+        OnPropertyChanged(nameof(HasNoSelectedImplementation));
+    }
     
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -392,6 +510,15 @@ public partial class ImplementationsEditorViewModel : ObservableObject
             foreach (var prop in propsObj)
             {
                 var propVm = new ImplementationPropertyViewModel { Name = prop.Key };
+                propVm.RemoveRequested += (s, e) =>
+                {
+                    if (s is ImplementationPropertyViewModel p)
+                    {
+                        impl.Properties.Remove(p);
+                        impl.IsModified = true;
+                        MarkDirty();
+                    }
+                };
                 
                 if (prop.Value is JsonObject dictObj)
                 {

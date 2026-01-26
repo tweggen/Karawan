@@ -9,22 +9,23 @@ namespace Aihao.Views;
 public partial class ConsoleWindow : UserControl
 {
     private ScrollViewer? _scrollViewer;
+    private SelectableTextBlock? _logTextBlock;
     
     public ConsoleWindow()
     {
         InitializeComponent();
-        
-        // Set up auto-scroll
         Loaded += OnLoaded;
     }
     
     private void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         _scrollViewer = this.FindControl<ScrollViewer>("LogScrollViewer");
+        _logTextBlock = this.FindControl<SelectableTextBlock>("LogTextBlock");
         
         if (DataContext is ConsoleWindowViewModel vm)
         {
             vm.FilteredLines.CollectionChanged += OnLinesChanged;
+            vm.SelectAllRequested += OnSelectAllRequested;
         }
     }
     
@@ -36,19 +37,9 @@ public partial class ConsoleWindow : UserControl
         }
     }
     
-    private void OnLinePointerEntered(object? sender, PointerEventArgs e)
+    private void OnSelectAllRequested(object? sender, System.EventArgs e)
     {
-        if (sender is Border border)
-        {
-            border.Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#2A2A2A"));
-        }
-    }
-    
-    private void OnLinePointerExited(object? sender, PointerEventArgs e)
-    {
-        if (sender is Border border)
-        {
-            border.Background = Avalonia.Media.Brushes.Transparent;
-        }
+        _logTextBlock?.SelectAll();
+        _logTextBlock?.Focus();
     }
 }

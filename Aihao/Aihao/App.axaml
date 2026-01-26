@@ -6,6 +6,7 @@
     <Application.Styles>
         <FluentTheme DensityStyle="Compact" />
         <DockFluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
         
         <!-- Global font size style -->
         <Style Selector="Window">

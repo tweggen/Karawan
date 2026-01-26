@@ -1,6 +1,10 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -43,6 +47,17 @@ public partial class ConsoleWindowViewModel : ObservableObject
     [ObservableProperty]
     private string _statusText = "0 messages";
     
+    /// <summary>
+    /// Formatted output text for the SelectableTextBlock.
+    /// </summary>
+    [ObservableProperty]
+    private string _formattedOutput = string.Empty;
+    
+    /// <summary>
+    /// Event raised when SelectAll is requested.
+    /// </summary>
+    public event EventHandler? SelectAllRequested;
+    
     public void AddLine(string text, LogLevel level)
     {
         var line = new ConsoleLineViewModel
@@ -80,6 +95,7 @@ public partial class ConsoleWindowViewModel : ObservableObject
     private void ApplyFilter()
     {
         FilteredLines.Clear();
+        var sb = new StringBuilder();
         
         foreach (var line in Lines)
         {
@@ -100,8 +116,11 @@ public partial class ConsoleWindowViewModel : ObservableObject
             if (textMatch)
             {
                 FilteredLines.Add(line);
+                sb.AppendLine($"[{line.TimestampText}] [{line.Level,-7}] {line.Text}");
             }
         }
+        
+        FormattedOutput = sb.ToString();
     }
     
     [RelayCommand]
@@ -109,6 +128,7 @@ public partial class ConsoleWindowViewModel : ObservableObject
     {
         Lines.Clear();
         FilteredLines.Clear();
+        FormattedOutput = string.Empty;
         _infoCount = 0;
         _warningCount = 0;
         _errorCount = 0;
@@ -116,9 +136,37 @@ public partial class ConsoleWindowViewModel : ObservableObject
     }
     
     [RelayCommand]
-    private void CopyToClipboard()
+    private void SelectAll()
     {
-        // TODO: Copy all filtered lines to clipboard
+        SelectAllRequested?.Invoke(this, EventArgs.Empty);
+    }
+    
+    [RelayCommand]
+    private async Task CopyToClipboardAsync()
+    {
+        var sb = new StringBuilder();
+        foreach (var line in FilteredLines)
+        {
+            sb.AppendLine($"[{line.TimestampText}] [{line.Level}] {line.Text}");
+        }
+        
+        var text = sb.ToString();
+        if (string.IsNullOrEmpty(text))
+            return;
+        
+        try
+        {
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+                desktop.MainWindow?.Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(text);
+                AddLine($"Copied {FilteredLines.Count} lines to clipboard", LogLevel.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            AddLine($"Failed to copy to clipboard: {ex.Message}", LogLevel.Error);
+        }
     }
     
     [RelayCommand]

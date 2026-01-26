@@ -48,6 +48,11 @@ public partial class CSharpTypeReference : ObservableObject
     private bool _isValid = true;
     
     /// <summary>
+    /// True if there is a validation error.
+    /// </summary>
+    public bool HasError => !IsValid;
+    
+    /// <summary>
     /// The namespace portion (everything before the last dot for types,
     /// everything before the second-to-last dot for methods).
     /// </summary>
@@ -93,6 +98,11 @@ public partial class CSharpTypeReference : ObservableObject
         Validate();
         OnPropertyChanged(nameof(ClassName));
         OnPropertyChanged(nameof(MethodName));
+    }
+    
+    partial void OnIsValidChanged(bool value)
+    {
+        OnPropertyChanged(nameof(HasError));
     }
     
     private void Validate()

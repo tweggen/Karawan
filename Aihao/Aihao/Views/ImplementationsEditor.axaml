@@ -35,8 +35,7 @@
                               Width="200"/>
                     <Button Command="{Binding ClearFilterCommand}" 
                             Content="✕"
-                            ToolTip.Tip="Clear filters"
-                            IsVisible="{Binding SearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            ToolTip.Tip="Clear filters"/>
                 </StackPanel>
                 
                 <!-- Right: Stats -->
@@ -119,10 +118,11 @@
             
             <!-- Right: Implementation Editor -->
             <Border Grid.Column="2" 
-                    IsVisible="{Binding SelectedImplementation, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    IsVisible="{Binding HasSelectedImplementation}">
                 <ScrollViewer>
                     <StackPanel Margin="8" Spacing="16"
-                                DataContext="{Binding SelectedImplementation}">
+                                DataContext="{Binding SelectedImplementation}"
+                                x:DataType="vm:ImplementationViewModel">
                         
                         <!-- Interface Type -->
                         <StackPanel Spacing="4">
@@ -133,7 +133,7 @@
                         <!-- Creation Type -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="Creation Type" FontWeight="SemiBold"/>
-                            <ComboBox SelectedIndex="{Binding CreationType, Converter={x:Static vm:Converters.EnumToIndex}}"
+                            <ComboBox SelectedIndex="{Binding CreationTypeIndex}"
                                       HorizontalAlignment="Stretch">
                                 <ComboBoxItem Content="🔄 Self-Registering (use interface as class)"/>
                                 <ComboBoxItem Content="📦 Explicit Class"/>
@@ -143,14 +143,14 @@
                         
                         <!-- Class Name (when ExplicitClass) -->
                         <StackPanel Spacing="4"
-                                    IsVisible="{Binding CreationType, Converter={x:Static vm:Converters.IsExplicitClass}}">
+                                    IsVisible="{Binding IsExplicitClass}">
                             <TextBlock Text="Class Name" FontWeight="SemiBold"/>
                             <views:CSharpTypeReferenceEditor DataContext="{Binding ClassName}"/>
                         </StackPanel>
                         
                         <!-- Factory Method (when FactoryMethod) -->
                         <StackPanel Spacing="4"
-                                    IsVisible="{Binding CreationType, Converter={x:Static vm:Converters.IsFactoryMethod}}">
+                                    IsVisible="{Binding IsFactoryMethod}">
                             <TextBlock Text="Factory Method" FontWeight="SemiBold"/>
                             <views:CSharpTypeReferenceEditor DataContext="{Binding FactoryMethod}"/>
                             <TextBlock Text="Format: Namespace.ClassName.MethodName" 
@@ -171,7 +171,7 @@
                         <!-- Properties Section -->
                         <Expander Header="Properties" IsExpanded="True">
                             <StackPanel Spacing="8" Margin="0,8,0,0">
-                                <Button Command="{Binding $parent[UserControl].((vm:ImplementationsEditorViewModel)DataContext).AddPropertyCommand}"
+                                <Button Command="{Binding AddPropertyCommand}"
                                         Content="+ Add Property"
                                         HorizontalAlignment="Left"/>
                                 
@@ -192,7 +192,7 @@
                                                     
                                                     <!-- Property Type -->
                                                     <ComboBox Grid.Row="0" Grid.Column="1"
-                                                              SelectedIndex="{Binding PropertyType, Converter={x:Static vm:Converters.EnumToIndex}}"
+                                                              SelectedIndex="{Binding PropertyTypeIndex}"
                                                               Width="100"
                                                               Margin="0,0,8,4">
                                                         <ComboBoxItem Content="String"/>
@@ -203,20 +203,19 @@
                                                     <!-- Remove Button -->
                                                     <Button Grid.Row="0" Grid.Column="2"
                                                             Content="✕"
-                                                            Command="{Binding $parent[UserControl].((vm:ImplementationsEditorViewModel)DataContext).RemovePropertyCommand}"
-                                                            CommandParameter="{Binding}"/>
+                                                            Command="{Binding RemoveCommand}"/>
                                                     
                                                     <!-- Value (for String/Number) -->
                                                     <TextBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
                                                              Text="{Binding Value}"
                                                              Watermark="Value"
-                                                             IsVisible="{Binding PropertyType, Converter={x:Static vm:Converters.IsNotDictionary}}"/>
+                                                             IsVisible="{Binding IsNotDictionary}"/>
                                                     
                                                     <!-- Dictionary entries hint -->
                                                     <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
                                                                Text="{Binding DisplayValue}"
                                                                Opacity="0.6"
-                                                               IsVisible="{Binding PropertyType, Converter={x:Static vm:Converters.IsDictionary}}"/>
+                                                               IsVisible="{Binding IsDictionary}"/>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -225,7 +224,7 @@
                                 
                                 <TextBlock Text="No properties defined"
                                            Opacity="0.5"
-                                           IsVisible="{Binding !Properties.Count}"/>
+                                           IsVisible="{Binding HasNoProperties}"/>
                             </StackPanel>
                         </Expander>
                         
@@ -241,7 +240,7 @@
                                          MinHeight="100"
                                          MaxHeight="300"
                                          FontFamily="Consolas, Menlo, monospace"
-                                         Watermark="{ ... JSON config ... }"
+                                         Watermark="JSON config object"
                                          IsVisible="{Binding HasConfig}"/>
                             </StackPanel>
                         </Expander>
@@ -256,7 +255,7 @@
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        Opacity="0.5"
-                       IsVisible="{Binding SelectedImplementation, Converter={x:Static ObjectConverters.IsNull}}"/>
+                       IsVisible="{Binding HasNoSelectedImplementation}"/>
         </Grid>
     </DockPanel>
 </UserControl>

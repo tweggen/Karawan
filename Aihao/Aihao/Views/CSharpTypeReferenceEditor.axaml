@@ -11,8 +11,7 @@
         <TextBox Grid.Column="0"
                  Text="{Binding FullName}"
                  Watermark="Fully qualified type name..."
-                 FontFamily="Consolas, Menlo, monospace"
-                 Classes.hasError="{Binding !IsValid}"/>
+                 FontFamily="Consolas, Menlo, monospace"/>
         
         <!-- Validation indicator -->
         <Border Grid.Column="1" 
@@ -20,16 +19,10 @@
                 Margin="4,0,0,0"
                 VerticalAlignment="Center"
                 ToolTip.Tip="{Binding ValidationError}"
-                IsVisible="{Binding !IsValid}">
+                IsVisible="{Binding HasError}">
             <TextBlock Text="⚠️" 
                        HorizontalAlignment="Center"
                        Foreground="Orange"/>
         </Border>
     </Grid>
-    
-    <UserControl.Styles>
-        <Style Selector="TextBox.hasError">
-            <Setter Property="BorderBrush" Value="Orange"/>
-        </Style>
-    </UserControl.Styles>
 </UserControl>

@@ -5,7 +5,8 @@
              xmlns:vm="using:Aihao.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="200"
              x:Class="Aihao.Views.ConsoleWindow"
-             x:DataType="vm:ConsoleWindowViewModel">
+             x:DataType="vm:ConsoleWindowViewModel"
+             Focusable="True">
     
     <DockPanel>
         <!-- Toolbar -->
@@ -50,7 +51,7 @@
                                   ToolTip.Tip="Auto-scroll"
                                   Padding="6,2"/>
                     <Button Content="📋" 
-                            ToolTip.Tip="Copy to Clipboard"
+                            ToolTip.Tip="Copy to Clipboard (Ctrl+C)"
                             Command="{Binding CopyToClipboardCommand}"
                             Padding="6,2"/>
                     <Button Content="💾" 
@@ -65,40 +66,24 @@
             </Grid>
         </Border>
         
-        <!-- Log Output -->
+        <!-- Log Output - Selectable Text -->
         <Border Background="#1A1A1A">
-            <ScrollViewer Name="LogScrollViewer">
-                <ItemsControl ItemsSource="{Binding FilteredLines}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:ConsoleLineViewModel">
-                            <Border Padding="4,2" 
-                                    Background="Transparent"
-                                    PointerEntered="OnLinePointerEntered"
-                                    PointerExited="OnLinePointerExited">
-                                <Grid ColumnDefinitions="70,24,*">
-                                    <TextBlock Grid.Column="0" 
-                                               Text="{Binding TimestampText}"
-                                               FontFamily="Consolas,Courier New,monospace"
-                                               FontSize="11"
-                                               Foreground="#666666"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" 
-                                               Text="{Binding LevelIcon}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="2" 
-                                               Text="{Binding Text}"
-                                               FontFamily="Consolas,Courier New,monospace"
-                                               FontSize="12"
-                                               Foreground="{Binding LevelBrush}"
-                                               TextWrapping="NoWrap"
-                                               VerticalAlignment="Center"/>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+            <ScrollViewer Name="LogScrollViewer" 
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto">
+                <SelectableTextBlock Name="LogTextBlock"
+                                     Text="{Binding FormattedOutput}"
+                                     FontFamily="Consolas,Courier New,monospace"
+                                     FontSize="12"
+                                     Foreground="#CCCCCC"
+                                     Padding="4"
+                                     TextWrapping="NoWrap"/>
             </ScrollViewer>
         </Border>
     </DockPanel>
+    
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllCommand}"/>
+        <KeyBinding Gesture="Cmd+A" Command="{Binding SelectAllCommand}"/>
+    </UserControl.KeyBindings>
 </UserControl>
