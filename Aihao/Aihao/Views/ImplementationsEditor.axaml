@@ -168,64 +168,11 @@
                                        Opacity="0.6"/>
                         </StackPanel>
                         
-                        <!-- Properties Section -->
+                        <!-- Properties Section - using unified JsonPropertyEditor -->
                         <Expander Header="Properties" IsExpanded="True">
-                            <StackPanel Spacing="8" Margin="0,8,0,0">
-                                <Button Command="{Binding AddPropertyCommand}"
-                                        Content="+ Add Property"
-                                        HorizontalAlignment="Left"/>
-                                
-                                <ItemsControl ItemsSource="{Binding Properties}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:ImplementationPropertyViewModel">
-                                            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                                                    CornerRadius="4"
-                                                    Padding="8"
-                                                    Margin="0,0,0,4">
-                                                <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto">
-                                                    <!-- Property Name -->
-                                                    <TextBox Grid.Row="0" Grid.Column="0"
-                                                             Text="{Binding Name}"
-                                                             Watermark="Property name"
-                                                             FontFamily="Consolas, Menlo, monospace"
-                                                             Margin="0,0,8,4"/>
-                                                    
-                                                    <!-- Property Type -->
-                                                    <ComboBox Grid.Row="0" Grid.Column="1"
-                                                              SelectedIndex="{Binding PropertyTypeIndex}"
-                                                              Width="100"
-                                                              Margin="0,0,8,4">
-                                                        <ComboBoxItem Content="String"/>
-                                                        <ComboBoxItem Content="Number"/>
-                                                        <ComboBoxItem Content="Dictionary"/>
-                                                    </ComboBox>
-                                                    
-                                                    <!-- Remove Button -->
-                                                    <Button Grid.Row="0" Grid.Column="2"
-                                                            Content="✕"
-                                                            Command="{Binding RemoveCommand}"/>
-                                                    
-                                                    <!-- Value (for String/Number) -->
-                                                    <TextBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
-                                                             Text="{Binding Value}"
-                                                             Watermark="Value"
-                                                             IsVisible="{Binding IsNotDictionary}"/>
-                                                    
-                                                    <!-- Dictionary entries hint -->
-                                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
-                                                               Text="{Binding DisplayValue}"
-                                                               Opacity="0.6"
-                                                               IsVisible="{Binding IsDictionary}"/>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                
-                                <TextBlock Text="No properties defined"
-                                           Opacity="0.5"
-                                           IsVisible="{Binding HasNoProperties}"/>
-                            </StackPanel>
+                            <Border MinHeight="150" MaxHeight="400">
+                                <views:JsonPropertyEditor DataContext="{Binding PropertiesEditor}"/>
+                            </Border>
                         </Expander>
                         
                         <!-- Config Section -->

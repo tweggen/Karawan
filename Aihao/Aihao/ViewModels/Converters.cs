@@ -8,6 +8,68 @@ using Aihao.Models;
 namespace Aihao.ViewModels;
 
 /// <summary>
+/// Converters for PropertyValueType in the property tree editor.
+/// </summary>
+public static class PropertyValueTypeConverters
+{
+    public static readonly IValueConverter IsString = new PropertyValueTypeMatchConverter(PropertyValueType.String);
+    public static readonly IValueConverter IsNumber = new PropertyValueTypeMatchConverter(PropertyValueType.Number);
+    public static readonly IValueConverter IsBoolean = new PropertyValueTypeMatchConverter(PropertyValueType.Boolean);
+    public static readonly IValueConverter IsNull = new PropertyValueTypeMatchConverter(PropertyValueType.Null);
+    public static readonly IValueConverter IsObject = new PropertyValueTypeMatchConverter(PropertyValueType.Object);
+    public static readonly IValueConverter IsArray = new PropertyValueTypeMatchConverter(PropertyValueType.Array);
+    public static readonly IValueConverter IsStringOrNumber = new PropertyValueTypeMultiMatchConverter(PropertyValueType.String, PropertyValueType.Number);
+    
+    private class PropertyValueTypeMatchConverter : IValueConverter
+    {
+        private readonly PropertyValueType _targetType;
+        
+        public PropertyValueTypeMatchConverter(PropertyValueType targetType)
+        {
+            _targetType = targetType;
+        }
+        
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is PropertyValueType type)
+            {
+                return type == _targetType;
+            }
+            return false;
+        }
+        
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    
+    private class PropertyValueTypeMultiMatchConverter : IValueConverter
+    {
+        private readonly PropertyValueType[] _targetTypes;
+        
+        public PropertyValueTypeMultiMatchConverter(params PropertyValueType[] targetTypes)
+        {
+            _targetTypes = targetTypes;
+        }
+        
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is PropertyValueType type)
+            {
+                return Array.IndexOf(_targetTypes, type) >= 0;
+            }
+            return false;
+        }
+        
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
+
+/// <summary>
 /// Converters for settings item types.
 /// </summary>
 public static class SettingsTypeConverter

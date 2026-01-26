@@ -1,0 +1,197 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             x:Class="Aihao.Views.PropertyTreeEditor"
+             x:DataType="vm:PropertyTreeEditorViewModel">
+    
+    <UserControl.Styles>
+        <!-- Node container styling -->
+        <Style Selector="Border.property-node">
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="CornerRadius" Value="3"/>
+        </Style>
+        <Style Selector="Border.property-node.modified">
+            <Setter Property="Background" Value="#30FFA500"/>
+        </Style>
+        
+        <!-- Subtle type badge -->
+        <Style Selector="Border.type-badge">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush}"/>
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="Padding" Value="4,1"/>
+        </Style>
+    </UserControl.Styles>
+    
+    <DockPanel>
+        <!-- Compact Toolbar -->
+        <Border DockPanel.Dock="Top" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                Padding="4,2"
+                IsVisible="{Binding !IsReadOnly}">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                <Button Grid.Column="0"
+                        Command="{Binding AddRootPropertyCommand}"
+                        Content="+ Add"
+                        Padding="8,2"
+                        FontSize="11"/>
+                
+                <TextBox Grid.Column="1"
+                         Text="{Binding SearchText}"
+                         Watermark="🔍 Search..."
+                         Margin="8,0"
+                         FontSize="11"/>
+                
+                <Button Grid.Column="2"
+                        Command="{Binding ExpandAllCommand}"
+                        Content="⊞"
+                        ToolTip.Tip="Expand All"
+                        Padding="6,2"
+                        FontSize="11"/>
+                <Button Grid.Column="3"
+                        Command="{Binding CollapseAllCommand}"
+                        Content="⊟"
+                        ToolTip.Tip="Collapse All"
+                        Padding="6,2"
+                        Margin="2,0,0,0"
+                        FontSize="11"/>
+            </Grid>
+        </Border>
+        
+        <!-- Property Tree -->
+        <TreeView ItemsSource="{Binding RootNodes}"
+                  SelectedItem="{Binding SelectedNode}"
+                  Padding="4">
+            <TreeView.Styles>
+                <Style Selector="TreeViewItem" x:DataType="vm:PropertyNode">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                </Style>
+            </TreeView.Styles>
+            <TreeView.ItemTemplate>
+                <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:PropertyNode">
+                    <Border Classes="property-node"
+                            Classes.modified="{Binding IsModified}">
+                        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" MinHeight="24">
+                            <!-- Icon -->
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Icon}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,6,0"
+                                       FontSize="12"
+                                       Width="16"/>
+                            
+                            <!-- Name (editable for non-array elements) -->
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding Name}"
+                                     IsVisible="{Binding !IsArrayElement}"
+                                     IsReadOnly="{Binding $parent[TreeView].((vm:PropertyTreeEditorViewModel)DataContext).IsReadOnly}"
+                                     FontFamily="Consolas, Menlo, monospace"
+                                     FontSize="12"
+                                     MinWidth="80"
+                                     Padding="4,2"
+                                     VerticalAlignment="Center"
+                                     Margin="0,0,8,0"/>
+                            
+                            <!-- Array index display (read-only) -->
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding DisplayName}"
+                                       IsVisible="{Binding IsArrayElement}"
+                                       FontFamily="Consolas, Menlo, monospace"
+                                       FontSize="12"
+                                       Opacity="0.7"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                            
+                            <!-- Value editor for leaves -->
+                            <Panel Grid.Column="2" IsVisible="{Binding IsLeaf}">
+                                <!-- Boolean toggle -->
+                                <CheckBox IsChecked="{Binding BoolValue}"
+                                          IsVisible="{Binding ValueType, Converter={x:Static vm:PropertyValueTypeConverters.IsBoolean}}"
+                                          IsEnabled="{Binding !$parent[TreeView].((vm:PropertyTreeEditorViewModel)DataContext).IsReadOnly}"
+                                          VerticalAlignment="Center"/>
+                                
+                                <!-- Null display -->
+                                <TextBlock Text="null"
+                                           IsVisible="{Binding ValueType, Converter={x:Static vm:PropertyValueTypeConverters.IsNull}}"
+                                           Opacity="0.5"
+                                           FontStyle="Italic"
+                                           VerticalAlignment="Center"/>
+                                
+                                <!-- String/Number editor -->
+                                <TextBox Text="{Binding Value}"
+                                         IsReadOnly="{Binding $parent[TreeView].((vm:PropertyTreeEditorViewModel)DataContext).IsReadOnly}"
+                                         FontFamily="Consolas, Menlo, monospace"
+                                         FontSize="12"
+                                         MinWidth="100"
+                                         Padding="4,2"
+                                         VerticalAlignment="Center"
+                                         ToolTip.Tip="{Binding ValidationError}">
+                                    <TextBox.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="IsLeaf"/>
+                                            <Binding Path="ValueType" Converter="{x:Static vm:PropertyValueTypeConverters.IsStringOrNumber}"/>
+                                        </MultiBinding>
+                                    </TextBox.IsVisible>
+                                    <TextBox.Styles>
+                                        <Style Selector="TextBox:error">
+                                            <Setter Property="BorderBrush" Value="Red"/>
+                                        </Style>
+                                    </TextBox.Styles>
+                                </TextBox>
+                            </Panel>
+                            
+                            <!-- Summary for containers -->
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding Summary}"
+                                       IsVisible="{Binding IsContainer}"
+                                       Opacity="0.5"
+                                       FontSize="11"
+                                       VerticalAlignment="Center"/>
+                            
+                            <!-- Type selector -->
+                            <ComboBox Grid.Column="3"
+                                      SelectedIndex="{Binding ValueTypeIndex}"
+                                      IsEnabled="{Binding !$parent[TreeView].((vm:PropertyTreeEditorViewModel)DataContext).IsReadOnly}"
+                                      FontSize="11"
+                                      Padding="4,2"
+                                      MinWidth="80"
+                                      VerticalAlignment="Center"
+                                      Margin="8,0">
+                                <ComboBoxItem Content="String" FontSize="11"/>
+                                <ComboBoxItem Content="Number" FontSize="11"/>
+                                <ComboBoxItem Content="Boolean" FontSize="11"/>
+                                <ComboBoxItem Content="Null" FontSize="11"/>
+                                <ComboBoxItem Content="Object" FontSize="11"/>
+                                <ComboBoxItem Content="Array" FontSize="11"/>
+                            </ComboBox>
+                            
+                            <!-- Actions -->
+                            <StackPanel Grid.Column="4" 
+                                        Orientation="Horizontal"
+                                        IsVisible="{Binding !$parent[TreeView].((vm:PropertyTreeEditorViewModel)DataContext).IsReadOnly}">
+                                <!-- Add child (for containers) -->
+                                <Button Content="+"
+                                        Command="{Binding AddChildNodeCommand}"
+                                        IsVisible="{Binding IsContainer}"
+                                        ToolTip.Tip="Add child"
+                                        Padding="6,2"
+                                        FontSize="11"
+                                        Margin="0,0,2,0"/>
+                                
+                                <!-- Remove -->
+                                <Button Content="×"
+                                        Command="{Binding RemoveCommand}"
+                                        ToolTip.Tip="Remove"
+                                        Padding="6,2"
+                                        FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+    </DockPanel>
+</UserControl>

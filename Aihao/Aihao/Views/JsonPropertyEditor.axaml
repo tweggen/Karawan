@@ -1,0 +1,203 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             x:Class="Aihao.Views.JsonPropertyEditor"
+             x:DataType="vm:JsonPropertyEditorViewModel">
+    
+    <UserControl.Styles>
+        <!-- Node container styling -->
+        <Style Selector="Border.property-node">
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="CornerRadius" Value="3"/>
+        </Style>
+        <Style Selector="Border.property-node:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListLowBrush}"/>
+        </Style>
+        <Style Selector="Border.property-node.modified">
+            <Setter Property="Background" Value="#20FFA500"/>
+        </Style>
+        
+        <!-- Compact input styling -->
+        <Style Selector="TextBox.property-value">
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="MinHeight" Value="24"/>
+            <Setter Property="FontFamily" Value="Consolas, Menlo, monospace"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="ComboBox.property-type">
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="MinHeight" Value="24"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+    </UserControl.Styles>
+    
+    <DockPanel>
+        <!-- Optional Toolbar (can be hidden) -->
+        <Border DockPanel.Dock="Top" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                Padding="4,2"
+                IsVisible="{Binding AllowAddRemove}">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                <Button Grid.Column="0"
+                        Command="{Binding AddPropertyCommand}"
+                        Content="+ Add"
+                        Padding="8,2"
+                        FontSize="11"/>
+                
+                <TextBox Grid.Column="1"
+                         Text="{Binding SearchText}"
+                         Watermark="🔍 Search..."
+                         Margin="8,0"
+                         Padding="4,2"
+                         FontSize="11"/>
+                
+                <Button Grid.Column="2"
+                        Command="{Binding ExpandAllCommand}"
+                        Content="⊞"
+                        ToolTip.Tip="Expand All"
+                        Padding="6,2"
+                        FontSize="11"/>
+                <Button Grid.Column="3"
+                        Command="{Binding CollapseAllCommand}"
+                        Content="⊟"
+                        ToolTip.Tip="Collapse All"
+                        Padding="6,2"
+                        Margin="2,0,0,0"
+                        FontSize="11"/>
+            </Grid>
+        </Border>
+        
+        <!-- Tree View -->
+        <TreeView ItemsSource="{Binding RootNodes}"
+                  SelectedItem="{Binding SelectedNode}"
+                  Padding="4">
+            <TreeView.Styles>
+                <Style Selector="TreeViewItem" x:DataType="vm:PropertyNodeViewModel">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                </Style>
+            </TreeView.Styles>
+            
+            <TreeView.ItemTemplate>
+                <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:PropertyNodeViewModel">
+                    <Border Classes="property-node"
+                            Classes.modified="{Binding IsModified}">
+                        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" MinHeight="24">
+                            <!-- Icon -->
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Icon}"
+                                       VerticalAlignment="Center"
+                                       FontSize="12"
+                                       Width="18"
+                                       Margin="0,0,4,0"/>
+                            
+                            <!-- Name (editable for object properties, display-only for array items) -->
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding Name}"
+                                     Classes="property-value"
+                                     IsVisible="{Binding !IsArrayElement}"
+                                     MinWidth="80"
+                                     MaxWidth="150"
+                                     Margin="0,0,8,0"
+                                     VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding DisplayName}"
+                                       IsVisible="{Binding IsArrayElement}"
+                                       FontFamily="Consolas, Menlo, monospace"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"
+                                       Opacity="0.7"/>
+                            
+                            <!-- Value area -->
+                            <Panel Grid.Column="2" VerticalAlignment="Center">
+                                <!-- Leaf: Show value editor based on type -->
+                                <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding IsLeaf}">
+                                    <!-- Type selector -->
+                                    <ComboBox Grid.Column="0"
+                                              SelectedIndex="{Binding ValueKindIndex}"
+                                              Classes="property-type"
+                                              Width="75"
+                                              Margin="0,0,4,0"
+                                              IsVisible="{Binding $parent[UserControl].((vm:JsonPropertyEditorViewModel)DataContext).AllowTypeChange}">
+                                        <ComboBoxItem Content="Text" FontSize="11"/>
+                                        <ComboBoxItem Content="Number" FontSize="11"/>
+                                        <ComboBoxItem Content="Bool" FontSize="11"/>
+                                        <ComboBoxItem Content="Null" FontSize="11"/>
+                                        <ComboBoxItem Content="Object" FontSize="11"/>
+                                        <ComboBoxItem Content="Array" FontSize="11"/>
+                                    </ComboBox>
+                                    
+                                    <!-- Value editors based on type -->
+                                    <Panel Grid.Column="1">
+                                        <!-- String value -->
+                                        <TextBox Text="{Binding Value}"
+                                                 Classes="property-value"
+                                                 IsVisible="{Binding IsStringType}"
+                                                 MinWidth="100"/>
+                                        
+                                        <!-- Number value -->
+                                        <TextBox Text="{Binding Value}"
+                                                 Classes="property-value"
+                                                 IsVisible="{Binding IsNumberType}"
+                                                 MinWidth="80"/>
+                                        
+                                        <!-- Boolean value -->
+                                        <CheckBox IsChecked="{Binding BoolValue}"
+                                                  Content="{Binding Value}"
+                                                  IsVisible="{Binding IsBooleanType}"
+                                                  VerticalAlignment="Center"/>
+                                        
+                                        <!-- Null indicator -->
+                                        <TextBlock Text="null"
+                                                   Opacity="0.5"
+                                                   FontStyle="Italic"
+                                                   IsVisible="{Binding IsNullType}"
+                                                   VerticalAlignment="Center"/>
+                                    </Panel>
+                                </Grid>
+                                
+                                <!-- Branch: Show summary and add button -->
+                                <StackPanel Orientation="Horizontal" 
+                                            IsVisible="{Binding IsBranch}"
+                                            Spacing="8">
+                                    <TextBlock Text="{Binding Summary}"
+                                               Opacity="0.6"
+                                               FontSize="11"
+                                               VerticalAlignment="Center"/>
+                                    <Button Content="+"
+                                            Command="{Binding AddChildCommand}"
+                                            Padding="6,1"
+                                            FontSize="11"
+                                            ToolTip.Tip="Add child"
+                                            IsVisible="{Binding $parent[UserControl].((vm:JsonPropertyEditorViewModel)DataContext).AllowAddRemove}"/>
+                                </StackPanel>
+                            </Panel>
+                            
+                            <!-- Modified indicator -->
+                            <Ellipse Grid.Column="3"
+                                     Width="6" Height="6"
+                                     Fill="Orange"
+                                     VerticalAlignment="Center"
+                                     Margin="4,0"
+                                     IsVisible="{Binding IsModified}"/>
+                            
+                            <!-- Remove button -->
+                            <Button Grid.Column="4"
+                                    Content="×"
+                                    Command="{Binding RemoveCommand}"
+                                    Padding="4,0"
+                                    FontSize="12"
+                                    Background="Transparent"
+                                    ToolTip.Tip="Remove"
+                                    IsVisible="{Binding $parent[UserControl].((vm:JsonPropertyEditorViewModel)DataContext).AllowAddRemove}"/>
+                        </Grid>
+                    </Border>
+                </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+    </DockPanel>
+</UserControl>

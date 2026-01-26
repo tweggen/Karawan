@@ -146,12 +146,18 @@ public partial class ImplementationViewModel : ObservableObject
     [ObservableProperty]
     private bool _isModified;
     
+    /// <summary>
+    /// The unified property editor for this implementation's properties.
+    /// </summary>
+    public JsonPropertyEditorViewModel PropertiesEditor { get; }
+    
+    // Keep old collection for backward compatibility during transition
     public ObservableCollection<ImplementationPropertyViewModel> Properties { get; } = new();
     
     /// <summary>
     /// True if there are no properties.
     /// </summary>
-    public bool HasNoProperties => Properties.Count == 0;
+    public bool HasNoProperties => PropertiesEditor.RootNodes.Count == 0;
     
     /// <summary>
     /// Summary text for display in the list.
@@ -200,31 +206,38 @@ public partial class ImplementationViewModel : ObservableObject
         InterfaceType.PropertyChanged += (_, _) => OnModified();
         ClassName.PropertyChanged += (_, _) => OnModified();
         FactoryMethod.PropertyChanged += (_, _) => OnModified();
-        Properties.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoProperties));
+        
+        // Initialize the unified property editor
+        PropertiesEditor = new JsonPropertyEditorViewModel
+        {
+            Title = "Properties",
+            AllowTypeChange = true,
+            AllowAddRemove = true
+        };
+        PropertiesEditor.Modified += (_, _) => OnModified();
+        PropertiesEditor.RootNodes.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoProperties));
+    }
+    
+    /// <summary>
+    /// Load properties from a JsonObject.
+    /// </summary>
+    public void LoadProperties(JsonObject? propsObj)
+    {
+        if (propsObj != null)
+        {
+            PropertiesEditor.LoadFromJson(propsObj);
+        }
+        else
+        {
+            PropertiesEditor.RootNodes.Clear();
+        }
+        PropertiesEditor.ClearModifiedFlags();
     }
     
     [RelayCommand]
     private void AddProperty()
     {
-        var prop = new ImplementationPropertyViewModel
-        {
-            Name = "newProperty",
-            PropertyType = ImplementationPropertyType.String
-        };
-        prop.RemoveRequested += OnPropertyRemoveRequested;
-        Properties.Add(prop);
-        IsModified = true;
-        _owner.MarkDirty();
-    }
-    
-    private void OnPropertyRemoveRequested(object? sender, EventArgs e)
-    {
-        if (sender is ImplementationPropertyViewModel prop)
-        {
-            Properties.Remove(prop);
-            IsModified = true;
-            _owner.MarkDirty();
-        }
+        PropertiesEditor.AddPropertyCommand.Execute(null);
     }
     
     partial void OnCreationTypeChanged(ImplementationCreationType value)
@@ -266,7 +279,7 @@ public partial class ImplementationViewModel : ObservableObject
     {
         // Self-registering with no extras = null
         if (CreationType == ImplementationCreationType.SelfRegistering &&
-            Properties.Count == 0 &&
+            PropertiesEditor.RootNodes.Count == 0 &&
             !HasConfig &&
             string.IsNullOrEmpty(CassettePath))
         {
@@ -292,32 +305,10 @@ public partial class ImplementationViewModel : ObservableObject
             obj["cassettePath"] = CassettePath;
         }
         
-        // Properties
-        if (Properties.Count > 0)
+        // Properties from the unified editor
+        if (PropertiesEditor.RootNodes.Count > 0)
         {
-            var propsObj = new JsonObject();
-            foreach (var prop in Properties)
-            {
-                if (prop.PropertyType == ImplementationPropertyType.Dictionary)
-                {
-                    var dictObj = new JsonObject();
-                    foreach (var entry in prop.DictionaryEntries)
-                    {
-                        dictObj[entry.Key] = entry.Value;
-                    }
-                    propsObj[prop.Name] = dictObj;
-                }
-                else if (prop.PropertyType == ImplementationPropertyType.Number &&
-                         double.TryParse(prop.Value, out var numVal))
-                {
-                    propsObj[prop.Name] = numVal;
-                }
-                else
-                {
-                    propsObj[prop.Name] = prop.Value;
-                }
-            }
-            obj["properties"] = propsObj;
+            obj["properties"] = PropertiesEditor.ToJsonObject();
         }
         
         // Config
@@ -503,50 +494,11 @@ public partial class ImplementationsEditorViewModel : ObservableObject
             impl.CassettePath = cassettePath;
         }
         
-        // Properties
+        // Properties - use the unified property editor
         if (obj.TryGetPropertyValue("properties", out var propsNode) &&
             propsNode is JsonObject propsObj)
         {
-            foreach (var prop in propsObj)
-            {
-                var propVm = new ImplementationPropertyViewModel { Name = prop.Key };
-                propVm.RemoveRequested += (s, e) =>
-                {
-                    if (s is ImplementationPropertyViewModel p)
-                    {
-                        impl.Properties.Remove(p);
-                        impl.IsModified = true;
-                        MarkDirty();
-                    }
-                };
-                
-                if (prop.Value is JsonObject dictObj)
-                {
-                    propVm.PropertyType = ImplementationPropertyType.Dictionary;
-                    foreach (var entry in dictObj)
-                    {
-                        var entryValue = entry.Value is JsonValue jv && jv.TryGetValue<string>(out var sv)
-                            ? sv
-                            : entry.Value?.ToJsonString() ?? "";
-                        propVm.DictionaryEntries.Add(new KeyValuePair<string, string>(entry.Key, entryValue));
-                    }
-                }
-                else if (prop.Value is JsonValue propVal)
-                {
-                    if (propVal.TryGetValue<double>(out var numVal))
-                    {
-                        propVm.PropertyType = ImplementationPropertyType.Number;
-                        propVm.Value = numVal.ToString();
-                    }
-                    else if (propVal.TryGetValue<string>(out var strVal))
-                    {
-                        propVm.PropertyType = ImplementationPropertyType.String;
-                        propVm.Value = strVal;
-                    }
-                }
-                
-                impl.Properties.Add(propVm);
-            }
+            impl.LoadProperties(propsObj);
         }
         
         // Config
