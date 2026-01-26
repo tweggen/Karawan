@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
@@ -17,17 +17,18 @@
 
   <ItemGroup>
     <!-- Avalonia UI -->
-    <PackageReference Include="Avalonia" Version="11.2.1" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.2.1" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.1" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.1" Condition="'$(Configuration)' == 'Debug'" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="Avalonia" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.8" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     
     <!-- Docking library for IDE-like layout -->
-    <PackageReference Include="Dock.Avalonia" Version="11.2.0.2" />
-    <PackageReference Include="Dock.Model" Version="11.2.0.2" />
-    <PackageReference Include="Dock.Model.Mvvm" Version="11.2.0.2" />
+    <PackageReference Include="Dock.Avalonia" Version="11.3.8" />
+    <PackageReference Include="Dock.Avalonia.Themes.Fluent" Version="11.3.8" />
+    <PackageReference Include="Dock.Model" Version="11.3.8" />
+    <PackageReference Include="Dock.Model.Mvvm" Version="11.3.8" />
     
     <!-- JoyceCode dependencies -->
     <PackageReference Include="ImGui.NET" Version="1.91.6.1" />

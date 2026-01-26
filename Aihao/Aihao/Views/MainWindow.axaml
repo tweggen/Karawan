@@ -59,59 +59,64 @@
         </DataTemplate>
     </Window.DataTemplates>
     
+    <!-- Native Menu (appears in macOS menu bar, falls back to in-window on Windows/Linux) -->
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <NativeMenuItem Header="File">
+                <NativeMenu>
+                    <NativeMenuItem Header="Open Project..." Command="{Binding OpenProjectCommand}" Gesture="Cmd+O"/>
+                    <NativeMenuItemSeparator/>
+                    <NativeMenuItem Header="Save Project" Command="{Binding SaveProjectCommand}" Gesture="Cmd+S"/>
+                    <NativeMenuItem Header="Save Project As..." Command="{Binding SaveProjectAsCommand}"/>
+                    <NativeMenuItemSeparator/>
+                    <NativeMenuItem Header="Exit" Command="{Binding ExitCommand}"/>
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="Edit">
+                <NativeMenu>
+                    <NativeMenuItem Header="Undo" IsEnabled="False"/>
+                    <NativeMenuItem Header="Redo" IsEnabled="False"/>
+                    <NativeMenuItemSeparator/>
+                    <NativeMenuItem Header="Settings..." Command="{Binding OpenSettingsCommand}" Gesture="Cmd+,"/>
+                    <NativeMenuItem Header="Keyboard Shortcuts..." Command="{Binding OpenKeybindingsCommand}" Gesture="Cmd+Shift+K"/>
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="View">
+                <NativeMenu>
+                    <NativeMenuItem Header="Quick Open..." Command="{Binding OpenQuickOpenCommand}" Gesture="Cmd+P"/>
+                    <NativeMenuItem Header="Command Palette..." Command="{Binding OpenCommandPaletteCommand}" Gesture="Cmd+Shift+P"/>
+                    <NativeMenuItemSeparator/>
+                    <NativeMenuItem Header="Reset Layout" Command="{Binding ResetLayoutCommand}"/>
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="Project">
+                <NativeMenu>
+                    <NativeMenuItem Header="Build" Command="{Binding BuildProjectCommand}" Gesture="Cmd+Shift+B"/>
+                    <NativeMenuItemSeparator/>
+                    <NativeMenuItem Header="Global Settings" Command="{Binding OpenGlobalSettingsEditorCommand}"/>
+                    <NativeMenuItem Header="Properties" Command="{Binding OpenPropertiesEditorCommand}"/>
+                    <NativeMenuItem Header="Resources" Command="{Binding OpenResourcesEditorCommand}"/>
+                    <NativeMenuItem Header="Metagen" Command="{Binding OpenMetagenEditorCommand}"/>
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="Run">
+                <NativeMenu>
+                    <NativeMenuItem Header="Start" Command="{Binding RunGameCommand}" Gesture="F5"/>
+                    <NativeMenuItem Header="Start with Debugger" Command="{Binding DebugGameCommand}" Gesture="Cmd+F5"/>
+                    <NativeMenuItem Header="Stop" Command="{Binding StopGameCommand}" Gesture="Shift+F5"/>
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="Help">
+                <NativeMenu>
+                    <NativeMenuItem Header="About Aihao"/>
+                </NativeMenu>
+            </NativeMenuItem>
+        </NativeMenu>
+    </NativeMenu.Menu>
+    
     <DockPanel>
-        <!-- Menu Bar -->
-        <Menu DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open Project..." Command="{Binding OpenProjectCommand}" InputGesture="Ctrl+O"/>
-                <Separator/>
-                <MenuItem Header="_Save Project" Command="{Binding SaveProjectCommand}" InputGesture="Ctrl+S" IsEnabled="{Binding IsProjectLoaded}"/>
-                <MenuItem Header="Save Project _As..." Command="{Binding SaveProjectAsCommand}" IsEnabled="{Binding IsProjectLoaded}"/>
-                <Separator/>
-                <MenuItem Header="Recent Projects" ItemsSource="{Binding RecentProjects}" IsEnabled="{Binding RecentProjects.Count}">
-                    <MenuItem.ItemTemplate>
-                        <DataTemplate>
-                            <MenuItem Header="{Binding Name}" 
-                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenRecentProjectCommand}"
-                                      CommandParameter="{Binding}"
-                                      ToolTip.Tip="{Binding Path}"/>
-                        </DataTemplate>
-                    </MenuItem.ItemTemplate>
-                </MenuItem>
-                <MenuItem Header="Clear Recent Projects" Command="{Binding ClearRecentProjectsCommand}"/>
-                <Separator/>
-                <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
-            </MenuItem>
-            <MenuItem Header="_Edit">
-                <MenuItem Header="_Undo" IsEnabled="False"/>
-                <MenuItem Header="_Redo" IsEnabled="False"/>
-                <Separator/>
-                <MenuItem Header="_Settings..." Command="{Binding OpenSettingsCommand}" InputGesture="Ctrl+,"/>
-                <MenuItem Header="_Keyboard Shortcuts..." Command="{Binding OpenKeybindingsCommand}" InputGesture="Ctrl+Shift+K"/>
-            </MenuItem>
-            <MenuItem Header="_View">
-                <MenuItem Header="_Quick Open..." Command="{Binding OpenQuickOpenCommand}" InputGesture="Ctrl+P"/>
-                <MenuItem Header="_Command Palette..." Command="{Binding OpenCommandPaletteCommand}" InputGesture="Ctrl+Shift+P"/>
-                <Separator/>
-                <MenuItem Header="Reset Layout" Command="{Binding ResetLayoutCommand}"/>
-            </MenuItem>
-            <MenuItem Header="_Project" IsEnabled="{Binding IsProjectLoaded}">
-                <MenuItem Header="_Build" Command="{Binding BuildProjectCommand}" InputGesture="Ctrl+Shift+B"/>
-                <Separator/>
-                <MenuItem Header="_Global Settings" Command="{Binding OpenGlobalSettingsEditorCommand}"/>
-                <MenuItem Header="_Properties" Command="{Binding OpenPropertiesEditorCommand}"/>
-                <MenuItem Header="_Resources" Command="{Binding OpenResourcesEditorCommand}"/>
-                <MenuItem Header="_Metagen" Command="{Binding OpenMetagenEditorCommand}"/>
-            </MenuItem>
-            <MenuItem Header="_Run" IsEnabled="{Binding IsProjectLoaded}">
-                <MenuItem Header="_Start" Command="{Binding RunGameCommand}" InputGesture="F5" IsEnabled="{Binding !IsGameRunning}"/>
-                <MenuItem Header="Start with _Debugger" Command="{Binding DebugGameCommand}" InputGesture="Ctrl+F5" IsEnabled="{Binding !IsGameRunning}"/>
-                <MenuItem Header="_Stop" Command="{Binding StopGameCommand}" InputGesture="Shift+F5" IsEnabled="{Binding IsGameRunning}"/>
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About Aihao"/>
-            </MenuItem>
-        </Menu>
+        <!-- NativeMenuBar: shows as in-window menu on Windows/Linux, hidden on macOS (uses native menu bar) -->
+        <NativeMenuBar DockPanel.Dock="Top"/>
         
         <!-- Toolbar -->
         <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBackgroundBrush}" Padding="4">
