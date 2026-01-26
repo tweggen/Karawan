@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:Aihao.ViewModels"
+        xmlns:models="using:Aihao.Models"
         xmlns:dock="using:Aihao.ViewModels.Docking"
         xmlns:views="using:Aihao.Views"
         xmlns:dockViews="using:Aihao.Views.Dock"
@@ -65,6 +66,9 @@
             <NativeMenuItem Header="File">
                 <NativeMenu>
                     <NativeMenuItem Header="Open Project..." Command="{Binding OpenProjectCommand}" Gesture="Cmd+O"/>
+                    <NativeMenuItem Header="Open Recent">
+                        <NativeMenu/>
+                    </NativeMenuItem>
                     <NativeMenuItemSeparator/>
                     <NativeMenuItem Header="Save Project" Command="{Binding SaveProjectCommand}" Gesture="Cmd+S"/>
                     <NativeMenuItem Header="Save Project As..." Command="{Binding SaveProjectAsCommand}"/>
