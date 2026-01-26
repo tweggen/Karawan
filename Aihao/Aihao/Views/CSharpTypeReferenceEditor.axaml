@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="using:Aihao.Models"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="30"
+             x:Class="Aihao.Views.CSharpTypeReferenceEditor"
+             x:DataType="models:CSharpTypeReference">
+    
+    <Grid ColumnDefinitions="*,Auto">
+        <TextBox Grid.Column="0"
+                 Text="{Binding FullName}"
+                 Watermark="Fully qualified type name..."
+                 FontFamily="Consolas, Menlo, monospace"
+                 Classes.hasError="{Binding !IsValid}"/>
+        
+        <!-- Validation indicator -->
+        <Border Grid.Column="1" 
+                Width="24" 
+                Margin="4,0,0,0"
+                VerticalAlignment="Center"
+                ToolTip.Tip="{Binding ValidationError}"
+                IsVisible="{Binding !IsValid}">
+            <TextBlock Text="⚠️" 
+                       HorizontalAlignment="Center"
+                       Foreground="Orange"/>
+        </Border>
+    </Grid>
+    
+    <UserControl.Styles>
+        <Style Selector="TextBox.hasError">
+            <Setter Property="BorderBrush" Value="Orange"/>
+        </Style>
+    </UserControl.Styles>
+</UserControl>

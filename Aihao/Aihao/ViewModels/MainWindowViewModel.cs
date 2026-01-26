@@ -321,6 +321,16 @@ public partial class MainWindowViewModel : ObservableObject
                 }
                 break;
                 
+            case "implementations":
+                if (content is JsonObject implementationsObj)
+                {
+                    var editor = new ImplementationsEditorViewModel();
+                    editor.LoadFromJson(implementationsObj);
+                    var doc = new ImplementationsDocumentViewModel(editor);
+                    _dockFactory.AddDocument(doc);
+                }
+                break;
+                
             default:
                 // Open as generic JSON editor
                 OpenJsonEditor(definition.DisplayName, content);

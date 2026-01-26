@@ -180,6 +180,25 @@ public partial class RenderOutputDocumentViewModel : DocumentViewModel
 }
 
 /// <summary>
+/// Document for Implementations editor
+/// </summary>
+public partial class ImplementationsDocumentViewModel : DocumentViewModel
+{
+    public ImplementationsEditorViewModel Editor { get; }
+    
+    public ImplementationsDocumentViewModel(ImplementationsEditorViewModel editor)
+    {
+        Editor = editor;
+        Content = editor;
+        Id = "Implementations";
+        Title = "Implementations";
+        Icon = "🔌";
+        CanClose = true;
+        CanPin = false;
+    }
+}
+
+/// <summary>
 /// Generic document for JSON/text file editing
 /// </summary>
 public partial class FileDocumentViewModel : DocumentViewModel

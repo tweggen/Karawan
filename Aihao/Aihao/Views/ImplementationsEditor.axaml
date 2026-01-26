@@ -1,0 +1,262 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             xmlns:views="using:Aihao.Views"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="Aihao.Views.ImplementationsEditor"
+             x:DataType="vm:ImplementationsEditorViewModel">
+    
+    <DockPanel>
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                Padding="4">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Left: Actions -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+                    <Button Command="{Binding SaveCommand}" 
+                            Content="💾 Save" 
+                            IsEnabled="{Binding IsDirty}"/>
+                    <Separator/>
+                    <Button Command="{Binding AddImplementationCommand}" 
+                            Content="+ Add"/>
+                </StackPanel>
+                
+                <!-- Center: Search and Filter -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                    <TextBox Text="{Binding SearchText}" 
+                             Watermark="🔍 Search..."
+                             Width="200"/>
+                    <ComboBox ItemsSource="{Binding AvailableNamespaces}"
+                              SelectedItem="{Binding FilterNamespace}"
+                              PlaceholderText="Filter by namespace..."
+                              Width="200"/>
+                    <Button Command="{Binding ClearFilterCommand}" 
+                            Content="✕"
+                            ToolTip.Tip="Clear filters"
+                            IsVisible="{Binding SearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                </StackPanel>
+                
+                <!-- Right: Stats -->
+                <TextBlock Grid.Column="2" 
+                           VerticalAlignment="Center"
+                           Opacity="0.6">
+                    <Run Text="{Binding Implementations.Count}"/>
+                    <Run Text=" implementations"/>
+                </TextBlock>
+            </Grid>
+        </Border>
+        
+        <!-- Main Content: Split View -->
+        <Grid ColumnDefinitions="350,5,*">
+            <!-- Left: Implementations List -->
+            <DockPanel Grid.Column="0">
+                <TextBlock DockPanel.Dock="Top" 
+                           Text="Implementations" 
+                           FontWeight="Bold" 
+                           Margin="8,8,8,4"/>
+                
+                <ListBox ItemsSource="{Binding FilteredImplementations}"
+                         SelectedItem="{Binding SelectedImplementation}"
+                         Margin="4">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ImplementationViewModel">
+                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="2">
+                                <!-- Icon -->
+                                <TextBlock Grid.Column="0" 
+                                           Text="{Binding Icon}" 
+                                           Margin="0,0,8,0"
+                                           VerticalAlignment="Center"/>
+                                
+                                <!-- Type name -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding InterfaceType.ShortName}" 
+                                               FontWeight="SemiBold"
+                                               FontFamily="Consolas, Menlo, monospace"/>
+                                    <TextBlock Text="{Binding InterfaceType.Namespace}" 
+                                               FontSize="11"
+                                               Opacity="0.6"
+                                               FontFamily="Consolas, Menlo, monospace"/>
+                                </StackPanel>
+                                
+                                <!-- Summary -->
+                                <TextBlock Grid.Column="2" 
+                                           Text="{Binding Summary}"
+                                           Opacity="0.5"
+                                           FontSize="11"
+                                           VerticalAlignment="Center"
+                                           Margin="8,0,0,0"/>
+                                
+                                <!-- Modified indicator -->
+                                <Ellipse Grid.Column="2"
+                                         Width="6" Height="6"
+                                         Fill="Orange"
+                                         HorizontalAlignment="Right"
+                                         VerticalAlignment="Top"
+                                         Margin="0,-2,-2,0"
+                                         IsVisible="{Binding IsModified}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                    
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Duplicate" 
+                                      Command="{Binding DuplicateImplementationCommand}"
+                                      CommandParameter="{Binding SelectedImplementation}"/>
+                            <Separator/>
+                            <MenuItem Header="Remove" 
+                                      Command="{Binding RemoveImplementationCommand}"
+                                      CommandParameter="{Binding SelectedImplementation}"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
+                </ListBox>
+            </DockPanel>
+            
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+            
+            <!-- Right: Implementation Editor -->
+            <Border Grid.Column="2" 
+                    IsVisible="{Binding SelectedImplementation, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <ScrollViewer>
+                    <StackPanel Margin="8" Spacing="16"
+                                DataContext="{Binding SelectedImplementation}">
+                        
+                        <!-- Interface Type -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Interface Type" FontWeight="SemiBold"/>
+                            <views:CSharpTypeReferenceEditor DataContext="{Binding InterfaceType}"/>
+                        </StackPanel>
+                        
+                        <!-- Creation Type -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Creation Type" FontWeight="SemiBold"/>
+                            <ComboBox SelectedIndex="{Binding CreationType, Converter={x:Static vm:Converters.EnumToIndex}}"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="🔄 Self-Registering (use interface as class)"/>
+                                <ComboBoxItem Content="📦 Explicit Class"/>
+                                <ComboBoxItem Content="🏭 Factory Method"/>
+                            </ComboBox>
+                        </StackPanel>
+                        
+                        <!-- Class Name (when ExplicitClass) -->
+                        <StackPanel Spacing="4"
+                                    IsVisible="{Binding CreationType, Converter={x:Static vm:Converters.IsExplicitClass}}">
+                            <TextBlock Text="Class Name" FontWeight="SemiBold"/>
+                            <views:CSharpTypeReferenceEditor DataContext="{Binding ClassName}"/>
+                        </StackPanel>
+                        
+                        <!-- Factory Method (when FactoryMethod) -->
+                        <StackPanel Spacing="4"
+                                    IsVisible="{Binding CreationType, Converter={x:Static vm:Converters.IsFactoryMethod}}">
+                            <TextBlock Text="Factory Method" FontWeight="SemiBold"/>
+                            <views:CSharpTypeReferenceEditor DataContext="{Binding FactoryMethod}"/>
+                            <TextBlock Text="Format: Namespace.ClassName.MethodName" 
+                                       FontSize="11" 
+                                       Opacity="0.6"/>
+                        </StackPanel>
+                        
+                        <!-- Cassette Path -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Cassette Path (optional)" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding CassettePath}"
+                                     Watermark="/path/to/config"/>
+                            <TextBlock Text="Load additional config from this Mix path" 
+                                       FontSize="11" 
+                                       Opacity="0.6"/>
+                        </StackPanel>
+                        
+                        <!-- Properties Section -->
+                        <Expander Header="Properties" IsExpanded="True">
+                            <StackPanel Spacing="8" Margin="0,8,0,0">
+                                <Button Command="{Binding $parent[UserControl].((vm:ImplementationsEditorViewModel)DataContext).AddPropertyCommand}"
+                                        Content="+ Add Property"
+                                        HorizontalAlignment="Left"/>
+                                
+                                <ItemsControl ItemsSource="{Binding Properties}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:ImplementationPropertyViewModel">
+                                            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="8"
+                                                    Margin="0,0,0,4">
+                                                <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto">
+                                                    <!-- Property Name -->
+                                                    <TextBox Grid.Row="0" Grid.Column="0"
+                                                             Text="{Binding Name}"
+                                                             Watermark="Property name"
+                                                             FontFamily="Consolas, Menlo, monospace"
+                                                             Margin="0,0,8,4"/>
+                                                    
+                                                    <!-- Property Type -->
+                                                    <ComboBox Grid.Row="0" Grid.Column="1"
+                                                              SelectedIndex="{Binding PropertyType, Converter={x:Static vm:Converters.EnumToIndex}}"
+                                                              Width="100"
+                                                              Margin="0,0,8,4">
+                                                        <ComboBoxItem Content="String"/>
+                                                        <ComboBoxItem Content="Number"/>
+                                                        <ComboBoxItem Content="Dictionary"/>
+                                                    </ComboBox>
+                                                    
+                                                    <!-- Remove Button -->
+                                                    <Button Grid.Row="0" Grid.Column="2"
+                                                            Content="✕"
+                                                            Command="{Binding $parent[UserControl].((vm:ImplementationsEditorViewModel)DataContext).RemovePropertyCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                    
+                                                    <!-- Value (for String/Number) -->
+                                                    <TextBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                                                             Text="{Binding Value}"
+                                                             Watermark="Value"
+                                                             IsVisible="{Binding PropertyType, Converter={x:Static vm:Converters.IsNotDictionary}}"/>
+                                                    
+                                                    <!-- Dictionary entries hint -->
+                                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                                                               Text="{Binding DisplayValue}"
+                                                               Opacity="0.6"
+                                                               IsVisible="{Binding PropertyType, Converter={x:Static vm:Converters.IsDictionary}}"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                
+                                <TextBlock Text="No properties defined"
+                                           Opacity="0.5"
+                                           IsVisible="{Binding !Properties.Count}"/>
+                            </StackPanel>
+                        </Expander>
+                        
+                        <!-- Config Section -->
+                        <Expander Header="Config (ISerializable)">
+                            <StackPanel Spacing="8" Margin="0,8,0,0">
+                                <CheckBox IsChecked="{Binding HasConfig}"
+                                          Content="Has inline config object"/>
+                                
+                                <TextBox Text="{Binding ConfigJson}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="100"
+                                         MaxHeight="300"
+                                         FontFamily="Consolas, Menlo, monospace"
+                                         Watermark="{ ... JSON config ... }"
+                                         IsVisible="{Binding HasConfig}"/>
+                            </StackPanel>
+                        </Expander>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+            
+            <!-- Placeholder when nothing selected -->
+            <TextBlock Grid.Column="2"
+                       Text="Select an implementation to edit"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Opacity="0.5"
+                       IsVisible="{Binding SelectedImplementation, Converter={x:Static ObjectConverters.IsNull}}"/>
+        </Grid>
+    </DockPanel>
+</UserControl>
