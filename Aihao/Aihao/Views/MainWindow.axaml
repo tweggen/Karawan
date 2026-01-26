@@ -55,6 +55,9 @@
         <DataTemplate DataType="{x:Type dock:MetagenDocumentViewModel}">
             <dockViews:MetagenDocumentView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type dock:ImplementationsDocumentViewModel}">
+            <dockViews:ImplementationsDocumentView/>
+        </DataTemplate>
         <DataTemplate DataType="{x:Type dock:RenderOutputDocumentViewModel}">
             <dockViews:RenderOutputDocumentView/>
         </DataTemplate>
