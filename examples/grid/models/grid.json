@@ -1,0 +1,27 @@
+{
+  "resources": { "list": [] },
+  
+  "globalSettings": {
+    "list": [
+      { "key": "nogame.framebuffer.resolution", "value": "1280x720" }
+    ]
+  },
+
+  "defaults": {
+    "loader": {
+      "assembly": "grid.dll"
+    }
+  },
+
+  "implementations": {},
+  
+  "modules": {
+    "root": {
+      "className": "grid.Main"
+    }
+  },
+
+  "textures": {
+    "channels": {}
+  }
+}

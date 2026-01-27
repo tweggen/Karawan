@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <AssemblyName>grid</AssemblyName>
+    <RootNamespace>grid</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Boom\Boom.csproj" />
+    <ProjectReference Include="..\..\Joyce\Joyce.csproj" />
+  </ItemGroup>
+
+  <!-- Copy grid.dll to the launcher's output directory after build -->
+  <Target Name="CopyToLauncher" AfterTargets="Build">
+    <PropertyGroup>
+      <LauncherOutputDir>$(MSBuildThisFileDirectory)..\Launcher\bin\$(Configuration)\$(TargetFramework)\</LauncherOutputDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(LauncherOutputDir)" Condition="!Exists('$(LauncherOutputDir)')" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LauncherOutputDir)" SkipUnchangedFiles="true" />
+    <Message Text="Copied $(TargetFileName) to $(LauncherOutputDir)" Importance="high" />
+  </Target>
+
+</Project>

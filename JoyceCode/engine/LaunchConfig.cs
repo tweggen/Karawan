@@ -18,6 +18,14 @@ public class LaunchConfig
         /// </summary>
         [JsonPropertyName("configPath")]
         public string ConfigPath { get; set; } = "game.json";
+        
+        /// <summary>
+        /// Optional: Path to the game assembly DLL.
+        /// If specified, will be pre-loaded before the game config is processed.
+        /// This allows specifying the assembly in the launch config instead of/in addition to the game config.
+        /// </summary>
+        [JsonPropertyName("assembly")]
+        public string Assembly { get; set; } = null;
     }
 
     public class BrandingConfig

@@ -1,0 +1,20 @@
+{
+  "game": {
+    "configPath": "grid.json",
+    "assembly": "grid.dll"
+  },
+  "branding": {
+    "vendor": "Karawan Examples",
+    "appName": "grid",
+    "windowTitle": "Karawan Grid Example",
+    "appIcon": ""
+  },
+  "platform": {
+    "initialZoomState": "0",
+    "touchControls": "false",
+    "suspendOnUnfocus": "false",
+    "createOSD": "false",
+    "createUI": "false",
+    "playTitleMusic": "false"
+  }
+}
