@@ -1,9 +1,5 @@
-﻿using System;
-using System.ComponentModel;
+using System;
 using System.IO;
-using System.Net.Mime;
-using System.Threading;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using engine;
 using Silk.NET.Core;
@@ -16,209 +12,155 @@ namespace Karawan;
 
 public class DesktopMain
 {
-    public static void LoadGame(engine.Engine engine0, string dllPath, string fullClassName, string methodName)
+    /// <summary>
+    /// Determine the resource path based on the current environment.
+    /// </summary>
+    private static string _determineResourcePath()
     {
-
-        Assembly asm = Assembly.LoadFrom(dllPath);
-        Type t = asm.GetType(fullClassName);
-
-        //
-        // 2. We will be invoking a method: 'public int MyMethod(int count, string text)'
-        //
-        var methodInfo = t.GetMethod(methodName, new Type[] { typeof(engine.Engine) });
-        if (methodInfo == null)
+        if (Directory.Exists("assets"))
         {
-            // never throw generic Exception - replace this with some other exception type
-            throw new Exception("Unable to find game startup method.");
+            // Installed/shipped mode on Windows
+            return "./assets/";
         }
 
-        //
-        // 5. Specify parameters for the method we will be invoking: 'int MyMethod(int count, string text)'
-        //
-        object[] parameters = new object[1];
-        parameters[0] = engine0; // 'count' parameter
+        if (File.Exists("./models/game.launch.json") || File.Exists("./models/nogame.json"))
+        {
+            // Jetbrains Rider / direct run from project root
+            return "./models/";
+        }
 
-        //
-        // 6. Invoke method 'int MyMethod(int count, string text)'
-        //
-        var r = methodInfo.Invoke(null, parameters);
-        Console.WriteLine(r);
+        // Running from bin/Debug or similar
+        return "../../../../../models/";
     }
 
+    /// <summary>
+    /// Setup platform-specific graphics API settings.
+    /// </summary>
+    private static void _setupPlatformGraphics()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            GlobalSettings.Set("platform.threeD.API", "OpenGL");
+            GlobalSettings.Set("platform.threeD.API.version", "410");
+        }
+        else
+        {
+            // Windows and Linux
+            GlobalSettings.Set("platform.threeD.API", "OpenGL");
+            GlobalSettings.Set("platform.threeD.API.version", "430");
+        }
+
+        GlobalSettings.Set("engine.NailLogicalFPS", "true");
+    }
 
     public static void Main(string[] args)
     {
-        // System.Environment.SetEnvironmentVariable("ALSOFT_LOGLEVEL", "3");
-        
-        var cwd = System.IO.Directory.GetCurrentDirectory();
-        string jsonPath;
-        
-        /*
-         * Setup globals and statics
-         */
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
-            engine.GlobalSettings.Set("platform.threeD.API.version", "410");
-            engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
-            engine.GlobalSettings.Set("platform.threeD.API.version", "430");
-            engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
-            engine.GlobalSettings.Set("platform.threeD.API.version", "430");
-            engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
-        }
-        else
-        {
-            engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
-            engine.GlobalSettings.Set("platform.threeD.API.version", "430");
-            engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
-        }
+        var cwd = Directory.GetCurrentDirectory();
+        Console.WriteLine($"CWD is {cwd}");
 
+        // 1. Setup platform graphics (platform-specific, not game-specific)
+        _setupPlatformGraphics();
+
+        // 2. Determine resource path
+        string resourcePath = _determineResourcePath();
+        GlobalSettings.Set("Engine.ResourcePath", resourcePath);
+
+        // 3. Load launch configuration (game-agnostic mechanism)
+        var launchConfig = LaunchConfig.LoadFromStandardLocations(resourcePath);
+
+        // 4. Determine generated resource path
+        string generatedPath;
         if (Directory.Exists("assets"))
         {
-            /*
-             * This is when we start installed on windows.
-             */
-            engine.GlobalSettings.Set("Engine.ResourcePath", "./assets/");
-            engine.GlobalSettings.Set("Engine.GeneratedResourcePath", "./");
-            jsonPath = "./";
+            // Installed mode - generated resources are in assets folder
+            generatedPath = "./";
         }
         else
         {
-            if (Path.Exists("./models/nogame.json"))
-            {
-                /*
-                 * Jetbrains Rider Windows Desktop Debug.
-                 */
-                engine.GlobalSettings.Set("Engine.ResourcePath", "./models/");
-                jsonPath = "../models/";
-            }
-            else
-            {
-                /*
-                 * This is when we start from the debugger on windows.
-                 */
-                jsonPath = "../models/";
-                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../models/");
-            }
-            engine.GlobalSettings.Set("Engine.GeneratedResourcePath", "../nogame/generated");
+            // Development mode - generated resources are in nogame/generated
+            generatedPath = "../nogame/generated";
         }
+        GlobalSettings.Set("Engine.GeneratedResourcePath", generatedPath);
 
-        {
-            string userRWPath = System.Environment.GetFolderPath(
-                Environment.SpecialFolder.ApplicationData);
-            string vendorRWPath = Path.Combine(userRWPath, "nassau records");
-            string appRWPath = Path.Combine(vendorRWPath, "silicondesert2");
-            System.IO.Directory.CreateDirectory(appRWPath);
-            engine.GlobalSettings.Set("Engine.RWPath", appRWPath);
-        }
-        
-        // TXWTODO: How to know the underlying platform does have touch events?
-        engine.GlobalSettings.Set("splash.touchControls", "false");
-        engine.GlobalSettings.Set("platform.suspendOnUnfocus", "false");
-        engine.GlobalSettings.Set("platform.initialZoomState", "0");
+        // 5. Apply game-specific settings from launch config
+        launchConfig.ApplyToGlobalSettings();
 
-
+        // 6. Register engine services
         I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
 
-
-        Console.WriteLine($"CWD is {cwd}");
+        // 7. Setup asset implementation and load game config
+        // The game config path is relative to the resource path
+        string gameConfigPath = Path.Combine(resourcePath, launchConfig.Game.ConfigPath);
+        // Normalize the path
+        gameConfigPath = Path.GetFullPath(gameConfigPath);
+        Console.WriteLine($"Loading game config from: {gameConfigPath}");
         
-        /*
-         * Bootstrap game by directly reading game config, setting up
-         * asset implementation with the pathes.
-         */
-        I.Register<engine.casette.Loader>(() => {
-            using (var streamJson =
-                   File.OpenRead(
-                       Path.Combine(
-                           engine.GlobalSettings.Get("Engine.ResourcePath"),
-                           jsonPath + "nogame.json")))
-            {
-                return new engine.casette.Loader(streamJson);
-            }
+        I.Register<engine.casette.Loader>(() =>
+        {
+            using var streamJson = File.OpenRead(gameConfigPath);
+            return new engine.casette.Loader(streamJson);
         });
-        
-        var iassetDesktop = new Karawan.AssetImplementation();
+
+        var iassetDesktop = new AssetImplementation();
         iassetDesktop.WithLoader();
         I.Get<engine.casette.Loader>().InterpretConfig();
 
-        
-        IWindow iWindow = null;
-
-        bool startFullscreen = true;
+        // 8. Create window
+        bool startFullscreen;
 #if DEBUG
         startFullscreen = false;
 #else
         startFullscreen = true;
 #endif
 
-        {
-            var options = WindowOptions.Default;
+        var options = WindowOptions.Default;
+        options.Size = new Vector2D<int>(1280, 720);
+        options.Title = launchConfig.Branding.WindowTitle;
+        options.FramesPerSecond = 60;
+        options.VSync = false;
+        options.ShouldSwapAutomatically = false;
+        options.WindowState = WindowState.Normal;
+        options.PreferredDepthBufferBits = 16;
 
-            // options.API = GraphicsAPI.
-            /*
-             * Even if we don't start up fullscreen, we need to setup a size anyway.  
-             */
-            options.Size = new Vector2D<int>(1280, 720);
-            // TXWTODO: This is game specific
-            options.Title = "codename Karawan";
-            options.FramesPerSecond = 60;
-            options.VSync = false;
-            options.ShouldSwapAutomatically = false;
-            options.WindowState = WindowState.Normal;
-            options.PreferredDepthBufferBits = 16;
-            iWindow = Window.Create(options);
+        IWindow iWindow = Window.Create(options);
+        iWindow.Size = new Vector2D<int>(1280, 720);
 
-            iWindow.Size = new Vector2D<int>(1280, 720);
-
-
-        }
-
+        // 9. Create engine
         var e = Splash.Silk.Platform.EasyCreate(args, iWindow, out var _);
         e.SetFullscreen(startFullscreen);
 
         iWindow.Initialize();
+
+        // 10. Set window icon
         try
         {
-            // TXWTODO: This also is game specific.
-            System.IO.Stream streamImage = engine.Assets.Open("appiconpng.png");
-            using (var img = Image.Load<Rgba32>(streamImage))
-            {
-                byte[] pixelArray = new byte[img.Width * img.Height * 4];
-                img.CopyPixelDataTo(pixelArray);
-                RawImage rawImage = new RawImage(img.Width, img.Height, pixelArray.AsMemory());
-                iWindow.SetWindowIcon(ref rawImage);
-            }
+            string iconPath = launchConfig.Branding.AppIcon;
+            using Stream streamImage = engine.Assets.Open(iconPath);
+            using var img = Image.Load<Rgba32>(streamImage);
+            byte[] pixelArray = new byte[img.Width * img.Height * 4];
+            img.CopyPixelDataTo(pixelArray);
+            RawImage rawImage = new RawImage(img.Width, img.Height, pixelArray.AsMemory());
+            iWindow.SetWindowIcon(ref rawImage);
         }
         catch (Exception)
         {
-            // Unable to set icon
+            // Unable to set icon - not critical
         }
 
+        // 11. Setup logging
         {
             engine.ConsoleLogger logger = new(e);
             engine.Logger.SetLogTarget(logger);
         }
 
-        I.Register<Boom.ISoundAPI>(() =>
-        {
-            var api = new Boom.OpenAL.API(e);
-            return api;
-        });
+        // 12. Register audio API
+        I.Register<Boom.ISoundAPI>(() => new Boom.OpenAL.API(e));
 
+        // 13. Start game
         I.Get<engine.casette.Loader>().StartGame();
-        
+
         e.Execute();
 
-        // Add Call to remove an implementations.
-        System.Environment.Exit(0);
+        Environment.Exit(0);
     }
 }

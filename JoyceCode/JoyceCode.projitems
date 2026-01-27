@@ -365,6 +365,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\systems\NewParentSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IAssetImplementation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\LaunchConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ILogTarget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\I.cs" />
