@@ -1275,6 +1275,10 @@ public class Engine
         I.Register<System.Net.Http.HttpClient>(() => new System.Net.Http.HttpClient());
 
         I.Register<BakedAnimationCatalogue>(() => new BakedAnimationCatalogue());
+        
+        // World generation infrastructure
+        I.Register<engine.world.ClusterList>(() => new world.ClusterList());
+        I.Register<engine.world.MetaGen>(() => new world.MetaGen());
 
         _mouseEnabler = new(_mouseEnableFunc);
         _keyboardEnabler = new(_keyboardEnableFunc);
