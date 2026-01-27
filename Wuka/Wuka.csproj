@@ -126,6 +126,13 @@
 
 	<Import Project="../nogame/generated/AndroidResources.xml" />
 	
+	<!-- Game launch configuration -->
+	<ItemGroup>
+	  <AndroidAsset Include="../models/game.launch.android.json" LogicalName="game.launch.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	</ItemGroup>
+	
 	<ItemGroup>
 	  <AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libopenal.so">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

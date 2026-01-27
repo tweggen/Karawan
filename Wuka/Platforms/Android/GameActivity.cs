@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
@@ -33,7 +33,6 @@ namespace Wuka
 
         private Silk.NET.Windowing.IView _iView;
         private engine.Engine _engine;
-
 
 
         protected override void OnStop()
@@ -153,6 +152,16 @@ namespace Wuka
             #endif
         }
 
+        /// <summary>
+        /// Force the game assembly to be included by the linker.
+        /// This is the ONE unavoidable game-specific reference for Android.
+        /// The .NET linker needs a static reference to include the assembly.
+        /// </summary>
+        private void _ensureGameAssemblyLoaded()
+        {
+            var _ = typeof(nogame.GameState);
+            System.Console.WriteLine("DOTNET game assembly loaded");
+        }
 
         void _triggerGame()
         {
@@ -165,73 +174,71 @@ namespace Wuka
                 _triggeredGame = true;
             }
 
+            // 1. Setup view options (platform-specific, not game-specific)
             var options = ViewOptions.Default;
             options.API = new GraphicsAPI(ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(3, 0));
             options.FramesPerSecond = 60;
             options.VSync = false;
             options.ShouldSwapAutomatically = false;
-            _iView = Silk.NET.Windowing.Window.GetView(options); // note also GetView, instead of Window.Create.
+            _iView = Silk.NET.Windowing.Window.GetView(options);
 
-            engine.GlobalSettings.Set("nogame.CreateOSD", "true");
-            engine.GlobalSettings.Set("platform.threeD.API", "OpenGLES");
-            engine.GlobalSettings.Set("platform.threeD.API.version", "310");
-            engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
-            engine.GlobalSettings.Set("Engine.ResourcePath", "./");
-            engine.GlobalSettings.Set("Engine.GeneratedResourcePath", "./");
-            engine.GlobalSettings.Set("splash.touchControls", "true");
-            engine.GlobalSettings.Set("Android", "true");
-            engine.GlobalSettings.Set("platform.initialZoomState", "-16");
-            engine.GlobalSettings.Set("nogame.CreateUI", "false");
-            engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
-            engine.GlobalSettings.Set("Engine.RWPath", System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData));
+            // 2. Setup Android platform constants (platform-specific, not game-specific)
+            GlobalSettings.Set("platform.threeD.API", "OpenGLES");
+            GlobalSettings.Set("platform.threeD.API.version", "310");
+            GlobalSettings.Set("engine.NailLogicalFPS", "true");
+            GlobalSettings.Set("Engine.ResourcePath", "./");
+            GlobalSettings.Set("Engine.GeneratedResourcePath", "./");
+            GlobalSettings.Set("Android", "true");
 
-            /*
-             * We need to explicitly reference the game to load it.
-             */
-            {
-                var rootDepends = new nogame.GameState();
-                System.Console.WriteLine("DOTNET silicon desert "+rootDepends);
-            }
-            
-            
+            // 3. Register texture catalogue (engine service, not game-specific)
             I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
 
-            /*
-             * Setup singletons and statics
-             */
+            // 4. Setup asset implementation FIRST (platform-specific)
             var assetManagerImplementation = new Wuka.AssetImplementation(Assets);
 
-            /*
-             * Bootstrap game by directly reading game config, setting up
-             * asset implementation with the pathes.
-             */
-            I.Register<engine.casette.Loader>(() => {
-                //using (var streamJson = engine.Assets.Open("nogame.json"))
-                {
-                    return new engine.casette.Loader(engine.Assets.Open("nogame.json"));
-                }
-            });
+            // 5. Load launch config via the asset system
+            var launchConfig = LaunchConfig.LoadFromAssets("game.launch.json");
             
+            // 6. Apply game-specific settings from config
+            // Note: On Android we override some settings for mobile experience
+            GlobalSettings.Set("splash.touchControls", "true");  // Always true on Android
+            GlobalSettings.Set("platform.initialZoomState", launchConfig.Platform.InitialZoomState);
+            GlobalSettings.Set("nogame.CreateOSD", launchConfig.Platform.CreateOSD);
+            GlobalSettings.Set("nogame.CreateUI", launchConfig.Platform.CreateUI);
+            GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", launchConfig.Platform.PlayTitleMusic);
+            GlobalSettings.Set("Engine.RWPath", System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData));
+
+            // 7. Force assembly loading (REQUIRED for linker)
+            _ensureGameAssemblyLoaded();
+
+            // 8. Load game config (path from launch config, not hard-coded)
+            I.Register<engine.casette.Loader>(() =>
+            {
+                return new engine.casette.Loader(engine.Assets.Open(launchConfig.Game.ConfigPath));
+            });
+
             assetManagerImplementation.WithLoader();
             I.Get<engine.casette.Loader>().InterpretConfig();
 
+            // 9. Create engine
             _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView, out var silkPlatform);
             silkPlatform.BeforeDoEvent = _beforeDoEvents;
             
             _iView.Initialize();
 
+            // 10. Register audio API
             I.Register<Boom.ISoundAPI>(() =>
             {
                 var api = new Boom.OpenAL.API(_engine);
                 return api;
             });
 
+            // 11. Start game
             I.Get<engine.casette.Loader>().StartGame();
             
             _engine.Execute();
 
             I.Get<Boom.ISoundAPI>().Dispose();
-
         }
 
         protected override void OnRun()

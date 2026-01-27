@@ -1,0 +1,19 @@
+{
+  "game": {
+    "configPath": "nogame.json"
+  },
+  "branding": {
+    "vendor": "nassau records",
+    "appName": "silicondesert2",
+    "windowTitle": "Silicon Desert 2",
+    "appIcon": "appiconpng.png"
+  },
+  "platform": {
+    "initialZoomState": "-16",
+    "touchControls": "true",
+    "suspendOnUnfocus": "false",
+    "createOSD": "true",
+    "createUI": "false",
+    "playTitleMusic": "true"
+  }
+}
