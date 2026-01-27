@@ -239,10 +239,31 @@ public class Platform : engine.IPlatform
     }
 
     
+    /**
+     * Push an event and optionally its translated logical version.
+     * This replicates the InputMapper.EmitPlusTranslation functionality
+     * but handles the case where InputMapper is not available (e.g., minimal examples).
+     */
     private void _pushTranslate(in Event ev)
     {
-        // TXWTODO: Have a locally resolved input manager variable.
-        _inputMapper.EmitPlusTranslation(ev);
+        var eq = I.Get<EventQueue>();
+        if (null == eq)
+        {
+            return;
+        }
+        
+        // Always push the original event
+        eq.Push(ev);
+        
+        // If InputMapper is available, also push the translated logical event
+        if (null != _inputMapper)
+        {
+            Event? evLogical = _inputMapper.ToLogical(ev);
+            if (null != evLogical)
+            {
+                eq.Push(evLogical);
+            }
+        }
     }
     
 
@@ -768,7 +789,8 @@ public class Platform : engine.IPlatform
 
     public void Execute()
     {
-        _inputMapper = I.Get<builtin.controllers.InputMapper>();
+        // InputMapper is optional - minimal examples may not have it registered
+        _inputMapper = I.TryGet<builtin.controllers.InputMapper>();
 
 
         /*

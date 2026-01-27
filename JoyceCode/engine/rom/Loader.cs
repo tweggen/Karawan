@@ -21,68 +21,105 @@ public class Loader
     }
 
     static private bool _traceLoad = false;
+    
+    
+    /// <summary>
+    /// Get a list of directories to search for assemblies.
+    /// Prioritizes CWD-relative paths over executable directory.
+    /// </summary>
+    private static IEnumerable<string> _getAssemblySearchPaths()
+    {
+        // 1. CWD-relative paths (for generic launcher scenarios where CWD is the game project)
+        string cwd = Directory.GetCurrentDirectory();
+        yield return Path.Combine(cwd, "bin", "Debug", "net9.0");
+        yield return Path.Combine(cwd, "bin", "Release", "net9.0");
+        yield return Path.Combine(cwd, "bin", "Debug", "net9.0", "osx-arm64");
+        yield return Path.Combine(cwd, "bin", "Release", "net9.0", "osx-arm64");
+        yield return Path.Combine(cwd, "bin", "Debug", "net9.0", "win-x64");
+        yield return Path.Combine(cwd, "bin", "Release", "net9.0", "win-x64");
+        yield return cwd;
+        
+        // 2. Executable directory paths
+        var orgExecPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
+        if (!string.IsNullOrEmpty(orgExecPath))
+        {
+            string execDirectoryPath;
+            if (orgExecPath.StartsWith("file:\\"))
+            {
+                execDirectoryPath = orgExecPath.Substring(6);
+            }
+            else if (orgExecPath.StartsWith("file:/"))
+            {
+                execDirectoryPath = orgExecPath.Substring(5);
+            }
+            else
+            {
+                execDirectoryPath = orgExecPath;
+            }
+            
+            yield return execDirectoryPath;
+            
+            // Android debug override path
+            string androidOverridePath = execDirectoryPath.Replace(".__override__", "");
+            if (androidOverridePath != execDirectoryPath)
+            {
+                yield return androidOverridePath;
+            }
+        }
+        
+        // 3. AppDomain base directory
+        yield return AppDomain.CurrentDomain.BaseDirectory;
+    }
+    
+    
     public static Assembly TryLoadDll(string dllPath)
     {
         if (_traceLoad) Trace($"dllPath = {dllPath}");
+        
+        // If dllPath is already an absolute path that exists, use it directly
+        if (Path.IsPathRooted(dllPath) && File.Exists(dllPath))
+        {
+            try
+            {
+                if (_traceLoad) Trace($"Loading from absolute path: {dllPath}");
+                return Assembly.LoadFrom(dllPath);
+            }
+            catch (Exception e)
+            {
+                Trace($"Unable to load dll from absolute path {dllPath}: {e}");
+                ErrorThrow<InvalidOperationException>($"Unable to load dll {dllPath}: {e}");
+                return null;
+            }
+        }
+        
+        // Search for the dll in various locations
+        foreach (var searchDir in _getAssemblySearchPaths())
+        {
+            string fullPath = Path.Combine(searchDir, dllPath);
+            if (_traceLoad) Trace($"Checking: {fullPath}");
+            
+            if (File.Exists(fullPath))
+            {
+                try
+                {
+                    if (_traceLoad) Trace($"Found and loading: {fullPath}");
+                    return Assembly.LoadFrom(fullPath);
+                }
+                catch (Exception e)
+                {
+                    Trace($"Unable to load dll {dllPath} from {fullPath}: {e}");
+                    // Continue searching in other paths
+                }
+            }
+        }
+        
+        // If not found in any search path, report error
+        Error($"Unable to find {dllPath} in any search path.");
+        
+        // Try one more time with the original path (let OS loader decide)
         try
         {
-            bool foundDll = false;
-
-            var orgExecPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
-            if (_traceLoad) Trace($"orgExecPath = {orgExecPath}");
-            string execDirectoryPath = "";
-            if (null == orgExecPath)
-            {
-                orgExecPath = "";
-            }
-            else
-            {
-                /*
-                 * Remove the url type head from the name. This considers both linux and windows
-                 * type of names.
-                 */
-                if (orgExecPath.StartsWith("file:\\"))
-                {
-                    execDirectoryPath = orgExecPath.Substring(6);
-                } else if (orgExecPath.StartsWith("file:/"))
-                {
-                    execDirectoryPath = orgExecPath.Substring(5);
-                }
-                //execDirectoryPath = orgExecPath.Replace("file:/", "").Replace("file:\\", "");
-            }
-            if (_traceLoad) Trace($"execDirectoryPath = {execDirectoryPath}");
-
-
-            /*
-             * If we couldn't find it by its given name, look in the debug override path
-             * (for android).
-             */
-            if (!File.Exists(Path.Combine(execDirectoryPath, dllPath)))
-            {
-                execDirectoryPath = execDirectoryPath?.Replace(".__override__", "");
-            }
-            if (_traceLoad) Trace($"execDirectoryPath = {execDirectoryPath}");
-
-            /*
-             * Test first, if we can find the file.
-             */
-            string pathToLookFirst = Path.Combine(execDirectoryPath, dllPath); 
-            if (File.Exists(pathToLookFirst))
-            {
-                foundDll = true;
-            }
-            else
-            {
-                Error($"Unable to find {dllPath} in {pathToLookFirst}.");
-                
-                /*
-                 * Even though, let the OS loader decide whether it really can't be found.
-                 */
-            }
-
-            Assembly asm = Assembly.LoadFrom(pathToLookFirst);
-            
-            return asm;
+            return Assembly.LoadFrom(dllPath);
         }
         catch (Exception e)
         {

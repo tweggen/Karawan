@@ -184,26 +184,41 @@ public class DesktopMain
         
         Console.WriteLine($"Game assembly: {assemblyName}");
 
+        // Get CWD for searching relative to the game project
+        string cwd = Directory.GetCurrentDirectory();
+        
+        // Search paths prioritizing CWD-relative locations (game project) over launcher binary location
         string[] searchPaths = {
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, assemblyName),
+            // CWD-relative paths (game project)
+            Path.Combine(cwd, "bin", "Debug", "net9.0", assemblyName),
+            Path.Combine(cwd, "bin", "Release", "net9.0", assemblyName),
+            Path.Combine(cwd, "bin", "Debug", "net9.0", "osx-arm64", assemblyName),
+            Path.Combine(cwd, "bin", "Release", "net9.0", "osx-arm64", assemblyName),
+            Path.Combine(cwd, "bin", "Debug", "net9.0", "win-x64", assemblyName),
+            Path.Combine(cwd, "bin", "Release", "net9.0", "win-x64", assemblyName),
+            Path.Combine(cwd, assemblyName),
+            // Resource path relative
             Path.Combine(resourcePath, assemblyName),
-            Path.Combine(resourcePath, "..", assemblyName),
             Path.Combine(resourcePath, "..", "bin", "Debug", "net9.0", assemblyName),
-            assemblyName
+            Path.Combine(resourcePath, "..", "bin", "Release", "net9.0", assemblyName),
+            // Launcher binary directory (fallback - e.g., if DLL was copied there)
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, assemblyName),
         };
 
+        Console.WriteLine($"Searching for assembly in:");
         foreach (var searchPath in searchPaths)
         {
             string fullPath = Path.GetFullPath(searchPath);
+            Console.WriteLine($"  {fullPath}");
             if (File.Exists(fullPath))
             {
-                Console.WriteLine($"Pre-loading assembly from: {fullPath}");
+                Console.WriteLine($"  -> FOUND! Pre-loading assembly from: {fullPath}");
                 engine.rom.Loader.TryLoadDll(fullPath);
                 return;
             }
         }
 
-        Console.WriteLine($"Warning: Could not find assembly {assemblyName}");
+        Console.WriteLine($"Warning: Could not find assembly {assemblyName} in any search path.");
     }
 
     public static void Main(string[] args)

@@ -1,5 +1,11 @@
 {
-  "resources": { "list": [] },
+  "resources": {
+    "list": [
+      { "uri": "shaders/LIghtingVS.vert" },
+      { "uri": "shaders/LIghtingFS.frag" },
+      { "uri": "shaders/ScreenFS.frag" }
+    ]
+  },
   
   "globalSettings": {
     "list": [

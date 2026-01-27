@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using engine;
 using static engine.Logger;
 
@@ -57,19 +58,24 @@ public class AssetImplementation : AAssetImplementation
         string resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
 
         System.IO.Stream? stream = null;
+        
+        // First try to open by tag directly
         try
         {
-            stream = System.IO.File.OpenRead(resourcePath + tag);
+            string fullPath = Path.Combine(resourcePath, tag);
+            stream = File.OpenRead(fullPath);
             return stream;
         }
-        catch (System.Exception e)
+        catch (System.Exception)
         {
             // Try the URI instead
         }
 
+        // If tag didn't work, try the URI from associations
         if (uri != null)
         {
-            stream = System.IO.File.OpenRead(resourcePath + uri);
+            string fullPath = Path.Combine(resourcePath, uri);
+            stream = File.OpenRead(fullPath);
         }
 
         return stream;

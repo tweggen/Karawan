@@ -134,6 +134,36 @@ public sealed class I
     }
 
 
+    /**
+     * Try to get an instance without throwing if not registered.
+     * Returns null if the type is not registered.
+     */
+    public T TryGetInstance<T>() where T : class
+    {
+        InstanceEntry instanceEntry;
+        lock (_lo)
+        {
+            if (!_mapInstances.TryGetValue(typeof(T), out instanceEntry))
+            {
+                return null;
+            }
+
+            if (null == instanceEntry)
+            {
+                return null;
+            }
+        }
+
+        return (T)_getInstance(instanceEntry);
+    }
+
+
+    public static T TryGet<T>() where T : class
+    {
+        return Instance.TryGetInstance<T>();
+    }
+
+
     public void StartLoading()
     {
         bool doLoad = false;
