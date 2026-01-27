@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using DefaultEcs;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
@@ -8,194 +9,203 @@ using engine.joyce.components;
 namespace grid;
 
 /// <summary>
-/// Minimal scene that creates:
-/// - A 1x1m cube at the origin
-/// - A camera 5m away looking at the origin
-/// - A directional light
-/// - An ambient light
+/// A minimal scene with a rotating cube, camera, and lighting.
 /// </summary>
 public class Scene : AModule, IScene
 {
-    private DefaultEcs.Entity _eCube;
-    private DefaultEcs.Entity _eCamera;
-    private DefaultEcs.Entity _eDirectionalLight;
-    private DefaultEcs.Entity _eAmbientLight;
-
-    private TransformApi _aTransform;
-
-    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>();
+    private Entity _eCube;
+    private Entity _eCamera;
+    private Entity _eDirectionalLight;
+    private Entity _eAmbientLight;
+    
+    private float _rotationAngle = 0f;
+    private const float RotationSpeed = 0.5f; // radians per second
 
     /// <summary>
-    /// Create a simple cube mesh with colored faces.
+    /// Create the cube mesh with normals.
+    /// </summary>
+    private Mesh _createCubeMesh()
+    {
+        // Use the engine's built-in cube mesh creator
+        var mesh = engine.joyce.mesh.Tools.CreateCubeMesh("GridCube", 1.0f);
+        
+        // The cube mesh from Tools doesn't have normals, so we need to add them
+        // For a cube, normals point outward from each face
+        // Since the mesh has 24 vertices (4 per face * 6 faces), we add normals per vertex
+        mesh.Normals = new List<Vector3>();
+        
+        int verticesPerFace = 4;
+        // Back (-Z)
+        for (int i = 0; i < verticesPerFace; i++) mesh.Normals.Add(new Vector3(0, 0, -1));
+        // Front (+Z)
+        for (int i = 0; i < verticesPerFace; i++) mesh.Normals.Add(new Vector3(0, 0, 1));
+        // Top (+Y)
+        for (int i = 0; i < verticesPerFace; i++) mesh.Normals.Add(new Vector3(0, 1, 0));
+        // Bottom (-Y)
+        for (int i = 0; i < verticesPerFace; i++) mesh.Normals.Add(new Vector3(0, -1, 0));
+        // Right (+X)
+        for (int i = 0; i < verticesPerFace; i++) mesh.Normals.Add(new Vector3(1, 0, 0));
+        // Left (-X)
+        for (int i = 0; i < verticesPerFace; i++) mesh.Normals.Add(new Vector3(-1, 0, 0));
+        
+        return mesh;
+    }
+    
+    /// <summary>
+    /// Create the instance description for the cube (mesh + material).
     /// </summary>
     private InstanceDesc _createCubeInstanceDesc()
     {
-        // Create a 1x1m cube mesh
-        var mesh = engine.joyce.mesh.Tools.CreateCubeMesh("grid.cube", 1.0f);
-        mesh.GenerateNormals();
-
-        // Create a simple material (gray color)
-        var material = new Material()
-        {
-            AlbedoColor = 0xff808080, // Gray
-            EmissiveColor = 0xff000000,
-        };
-
-        // Combine mesh and material
-        var matmesh = new MatMesh(material, mesh);
-
-        // Create instance description
-        var instanceDesc = new InstanceDesc()
-        {
-            Meshes = new List<MatMesh>() { matmesh }
-        };
-
-        return instanceDesc;
-    }
-
-    /// <summary>
-    /// Create the 3D entities for this scene.
-    /// </summary>
-    private void _createEntities()
-    {
-        _aTransform = I.Get<TransformApi>();
-
-        // 1. Create the cube at the origin
-        {
-            _eCube = _engine.CreateEntity("Grid.Cube");
-            
-            var instanceDesc = _createCubeInstanceDesc();
-            
-            // Add the Instance3 component to make it visible
-            _eCube.Set(new Instance3(instanceDesc));
-            
-            // Position at origin (default)
-            _aTransform.SetTransforms(_eCube, 
-                true, 0x00000001,  // visible, camera mask
-                Quaternion.Identity,
-                Vector3.Zero);
-        }
-
-        // 2. Create the directional light
-        {
-            _eDirectionalLight = _engine.CreateEntity("Grid.DirectionalLight");
-            
-            // White-ish directional light
-            _eDirectionalLight.Set(new DirectionalLight(new Vector4(0.8f, 0.8f, 0.8f, 1.0f)));
-            
-            // Rotate the light to come from above and to the side
-            // This creates a nice angle that shows the cube's 3D shape
-            var lightRotation = Quaternion.CreateFromYawPitchRoll(
-                45f * MathF.PI / 180f,  // Yaw (around Y)
-                -45f * MathF.PI / 180f, // Pitch (around X) - negative to come from above
-                0f);                     // Roll (around Z)
-            _aTransform.SetRotation(_eDirectionalLight, lightRotation);
-        }
-
-        // 3. Create ambient light
-        {
-            _eAmbientLight = _engine.CreateEntity("Grid.AmbientLight");
-            
-            // Dim ambient light so shadows are visible
-            _eAmbientLight.Set(new AmbientLight(new Vector4(0.2f, 0.2f, 0.2f, 1.0f)));
-        }
-
-        // 4. Create the camera
-        {
-            _eCamera = _engine.CreateEntity("Grid.Camera");
-            
-            var camera = new Camera3()
-            {
-                Angle = 60.0f,
-                NearFrustum = 0.1f,
-                FarFrustum = 100f,
-                CameraFlags = Camera3.Flags.None,
-                CameraMask = 0x00000001,
-                Renderbuffer = I.Get<ObjectRegistry<Renderbuffer>>().Get("main_3d")
-            };
-            _eCamera.Set(camera);
-            
-            // Position camera 5m away, looking at origin
-            // Place it at an angle so we can see multiple faces of the cube
-            Vector3 cameraPosition = new Vector3(3f, 3f, 5f);
-            _aTransform.SetPosition(_eCamera, cameraPosition);
-            
-            // Calculate rotation to look at origin
-            Vector3 lookDirection = Vector3.Normalize(Vector3.Zero - cameraPosition);
-            Vector3 up = Vector3.UnitY;
-            
-            // Create look-at rotation
-            // The camera looks along -Z in its local space, so we need to rotate accordingly
-            var lookRotation = _createLookAtRotation(cameraPosition, Vector3.Zero, up);
-            _aTransform.SetRotation(_eCamera, lookRotation);
-            
-            _aTransform.SetCameraMask(_eCamera, 0x00000001);
-            _aTransform.SetVisible(_eCamera, true);
-        }
-
-        // Set this camera as the engine's main camera
-        _engine.Camera.Value = _eCamera;
-    }
-
-    /// <summary>
-    /// Create a rotation quaternion that makes an object at 'from' look at 'to'.
-    /// </summary>
-    private Quaternion _createLookAtRotation(Vector3 from, Vector3 to, Vector3 up)
-    {
-        Vector3 forward = Vector3.Normalize(to - from);
+        var mesh = _createCubeMesh();
         
-        // Handle the case where forward is parallel to up
-        if (MathF.Abs(Vector3.Dot(forward, up)) > 0.999f)
+        // Create a simple gray material
+        var material = new Material
         {
-            up = Vector3.UnitX;
-        }
-
-        Vector3 right = Vector3.Normalize(Vector3.Cross(up, forward));
-        Vector3 correctedUp = Vector3.Cross(forward, right);
-
-        // Build rotation matrix
-        Matrix4x4 rotationMatrix = new Matrix4x4(
-            right.X, right.Y, right.Z, 0,
-            correctedUp.X, correctedUp.Y, correctedUp.Z, 0,
-            forward.X, forward.Y, forward.Z, 0,
-            0, 0, 0, 1
-        );
-
-        return Quaternion.CreateFromRotationMatrix(rotationMatrix);
+            AlbedoColor = 0xff808080  // Gray color (ARGB)
+        };
+        
+        // Build the InstanceDesc
+        var meshes = new List<Mesh> { mesh };
+        var meshMaterials = new List<int> { 0 };
+        var materials = new List<Material> { material };
+        var modelNodes = new List<ModelNode>();
+        
+        return new InstanceDesc(meshes, meshMaterials, materials, modelNodes, 100f);
     }
 
+    /// <summary>
+    /// Create a look-at matrix for the camera.
+    /// </summary>
+    private Matrix4x4 _createLookAtMatrix(Vector3 position, Vector3 target, Vector3 up)
+    {
+        // Create a view-style matrix but we need the inverse for the transform
+        // (camera transform is where the camera IS, not what it sees)
+        var forward = Vector3.Normalize(target - position);
+        var right = Vector3.Normalize(Vector3.Cross(up, forward));
+        var actualUp = Vector3.Cross(forward, right);
+        
+        // Build the camera's world matrix (position + orientation)
+        return new Matrix4x4(
+            right.X, right.Y, right.Z, 0,
+            actualUp.X, actualUp.Y, actualUp.Z, 0,
+            forward.X, forward.Y, forward.Z, 0,
+            position.X, position.Y, position.Z, 1
+        );
+    }
+
+    /// <summary>
+    /// Set up the scene entities.
+    /// </summary>
+    private void _setupScene()
+    {
+        // 1. Create the cube entity at origin
+        _eCube = _engine.CreateEntity("GridCube");
+        var cubeInstanceDesc = _createCubeInstanceDesc();
+        
+        _eCube.Set(new Transform3ToWorld(
+            0x00000001,  // CameraMask
+            Transform3ToWorld.Visible,  // Flags
+            Matrix4x4.Identity  // At origin, no rotation
+        ));
+        _eCube.Set(new Instance3(cubeInstanceDesc));
+
+        // 2. Create the camera
+        _eCamera = _engine.CreateEntity("GridCamera");
+        
+        Vector3 cameraPosition = new Vector3(3f, 3f, 5f);
+        Vector3 cameraTarget = Vector3.Zero;
+        Matrix4x4 cameraMatrix = _createLookAtMatrix(cameraPosition, cameraTarget, Vector3.UnitY);
+        
+        _eCamera.Set(new Transform3ToWorld(
+            0x00000001,  // CameraMask
+            Transform3ToWorld.Visible,  // Flags
+            cameraMatrix
+        ));
+        
+        _eCamera.Set(new Camera3
+        {
+            Angle = 60f,
+            NearFrustum = 0.1f,
+            FarFrustum = 100f,
+            CameraMask = 0x00000001,
+            CameraFlags = 0
+        });
+
+        // 3. Create directional light (sun-like)
+        _eDirectionalLight = _engine.CreateEntity("GridDirectionalLight");
+        
+        // Light direction: 45 degrees down, 45 degrees to the side
+        float pitch = MathF.PI / 4f;  // 45 degrees
+        float yaw = MathF.PI / 4f;    // 45 degrees
+        Matrix4x4 lightMatrix = Matrix4x4.CreateFromYawPitchRoll(yaw, pitch, 0f);
+        
+        _eDirectionalLight.Set(new Transform3ToWorld(
+            0x00000001,
+            Transform3ToWorld.Visible,
+            lightMatrix
+        ));
+        
+        _eDirectionalLight.Set(new DirectionalLight(
+            new Vector4(0.8f, 0.8f, 0.8f, 1f)  // White light
+        ));
+
+        // 4. Create ambient light
+        _eAmbientLight = _engine.CreateEntity("GridAmbientLight");
+        
+        _eAmbientLight.Set(new Transform3ToWorld(
+            0x00000001,
+            Transform3ToWorld.Visible,
+            Matrix4x4.Identity
+        ));
+        
+        _eAmbientLight.Set(new AmbientLight(
+            new Vector4(0.2f, 0.2f, 0.2f, 1f)  // Dim ambient
+        ));
+    }
+
+    /// <summary>
+    /// Called every logical frame to update the scene.
+    /// </summary>
     public void SceneOnLogicalFrame(float dt)
     {
-        // Optional: Rotate the cube slowly for visual interest
-        if (_eCube.IsAlive)
+        // Rotate the cube around the Y axis
+        _rotationAngle += RotationSpeed * dt;
+        
+        if (_eCube.IsAlive && _eCube.Has<Transform3ToWorld>())
         {
-            var currentRotation = _aTransform.GetRotation(_eCube);
-            var deltaRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, dt * 0.5f);
-            _aTransform.SetRotation(_eCube, currentRotation * deltaRotation);
+            var transform = _eCube.Get<Transform3ToWorld>();
+            transform.Matrix = Matrix4x4.CreateRotationY(_rotationAngle);
+            _eCube.Set(transform);
         }
     }
 
+    /// <summary>
+    /// Called when the scene becomes active.
+    /// </summary>
     public void SceneKickoff()
     {
-        // Nothing special needed for kickoff
+        // Scene is now running
     }
 
     protected override void OnModuleActivate()
     {
-        _createEntities();
+        base.OnModuleActivate();
+        
+        // Set up all scene entities
+        _setupScene();
         
         // Register this scene with the scene sequencer
-        I.Get<SceneSequencer>().AddScene(0, this);
+        I.Get<SceneSequencer>().AddScene(0f, this);
     }
 
     protected override void OnModuleDeactivate()
     {
-        I.Get<SceneSequencer>().RemoveScene(this);
-        
         // Clean up entities
         if (_eCube.IsAlive) _eCube.Dispose();
         if (_eCamera.IsAlive) _eCamera.Dispose();
         if (_eDirectionalLight.IsAlive) _eDirectionalLight.Dispose();
         if (_eAmbientLight.IsAlive) _eAmbientLight.Dispose();
+        
+        base.OnModuleDeactivate();
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using engine;
 using Silk.NET.Windowing;
 using Silk.NET.Maths;
@@ -9,65 +10,120 @@ namespace Karawan.GenericLauncher;
 
 /// <summary>
 /// Generic desktop launcher for any Karawan game.
-/// 
-/// This launcher does NOT have compile-time dependencies on any game project.
-/// Instead, it loads game assemblies dynamically at runtime based on configuration.
-/// 
-/// To use:
-/// 1. Build your game project (e.g., grid.dll)
-/// 2. Copy the game DLL to the launcher's output directory (or a known location)
-/// 3. Ensure game.launch.json points to the correct game config
-/// 4. Ensure the game config specifies the correct assembly in defaults.loader.assembly
-/// 5. Run the launcher
 /// </summary>
 public class DesktopMain
 {
     /// <summary>
-    /// Search for the resource path by looking for key configuration files.
+    /// Regex to detect if a path is inside a .NET build output directory.
     /// </summary>
-    private static string _determineResourcePath()
+    private static readonly Regex BuildOutputPattern = new Regex(
+        @"[/\\]bin[/\\](Debug|Release)[/\\]net\d+\.\d+([/\\][a-z]+-[a-z0-9]+)?$",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>
+    /// If the given path is a build output directory, return the project root.
+    /// Otherwise return null.
+    /// </summary>
+    private static string _tryGetProjectRootFromBuildDir(string path)
     {
-        // Check various possible locations for the models folder
-        string[] possiblePaths = {
-            "./models/",
-            "../models/",
-            "../../models/",
-            "../../../models/",
-            "../../../../models/",
-            "../../../../../models/",
-            "../../../../../../models/",
-        };
-
-        foreach (var path in possiblePaths)
+        var match = BuildOutputPattern.Match(path);
+        if (match.Success)
         {
-            if (File.Exists(Path.Combine(path, "game.launch.json")))
-            {
-                Console.WriteLine($"Found game.launch.json at {path}");
-                return path;
-            }
+            string projectRoot = path.Substring(0, match.Index);
+            Console.WriteLine($"  '{path}' is a build dir, project root: '{projectRoot}'");
+            return projectRoot;
         }
-
-        // Also check for any .json game config directly
-        foreach (var path in possiblePaths)
-        {
-            if (Directory.Exists(path))
-            {
-                var jsonFiles = Directory.GetFiles(path, "*.json");
-                if (jsonFiles.Length > 0)
-                {
-                    Console.WriteLine($"Found config files at {path}");
-                    return path;
-                }
-            }
-        }
-
-        Console.WriteLine("Warning: Could not find models directory, using ./models/");
-        return "./models/";
+        Console.WriteLine($"  '{path}' is NOT a build dir");
+        return null;
     }
 
     /// <summary>
-    /// Setup platform-specific graphics API settings.
+    /// Try to find game.launch.json starting from the given base directory.
+    /// Returns the directory containing game.launch.json, or null if not found.
     /// </summary>
+    private static string _tryFindLaunchConfig(string baseDir)
+    {
+        string[] subPaths = { "models", "." };
+        
+        foreach (var subPath in subPaths)
+        {
+            string candidatePath = Path.GetFullPath(Path.Combine(baseDir, subPath));
+            string launchConfigPath = Path.Combine(candidatePath, "game.launch.json");
+            
+            Console.WriteLine($"  Checking: {launchConfigPath}");
+            if (File.Exists(launchConfigPath))
+            {
+                Console.WriteLine($"  FOUND!");
+                return candidatePath;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Determine the resource path by checking standard locations.
+    /// 
+    /// Priority:
+    /// 1. CWD (if not a build dir) -> models/ or ./
+    /// 2. CWD project root (if CWD is a build dir) -> models/ or ./
+    /// 3. Executable location project root (if exe is in build dir) -> models/ or ./
+    /// </summary>
+    private static string _determineResourcePath()
+    {
+        string cwd = Directory.GetCurrentDirectory();
+        string exeDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
+        
+        Console.WriteLine($"=== Resource Path Detection ===");
+        Console.WriteLine($"CWD: {cwd}");
+        Console.WriteLine($"Exe Dir: {exeDir}");
+
+        // Build list of base directories to search
+        var searchBases = new System.Collections.Generic.List<string>();
+
+        // 1. Check CWD
+        string cwdProjectRoot = _tryGetProjectRootFromBuildDir(cwd);
+        if (cwdProjectRoot != null)
+        {
+            // CWD is a build dir - use its project root
+            searchBases.Add(cwdProjectRoot);
+        }
+        else
+        {
+            // CWD is not a build dir - use it directly (this is the expected case)
+            searchBases.Add(cwd);
+        }
+
+        // 2. Check executable location (as fallback)
+        if (exeDir != cwd)
+        {
+            string exeProjectRoot = _tryGetProjectRootFromBuildDir(exeDir);
+            if (exeProjectRoot != null)
+            {
+                // Don't add exe project root - that would be the launcher project, not the game
+                // This is intentional - we want CWD to control which game we run
+                Console.WriteLine($"  (Skipping exe project root - use CWD to specify game)");
+            }
+        }
+
+        // Search for game.launch.json
+        Console.WriteLine($"Searching for game.launch.json...");
+        foreach (var baseDir in searchBases)
+        {
+            string found = _tryFindLaunchConfig(baseDir);
+            if (found != null)
+            {
+                Console.WriteLine($"=== Resource path: {found} ===");
+                return found;
+            }
+        }
+
+        // Fallback
+        string fallback = Path.GetFullPath(Path.Combine(cwd, "models"));
+        Console.WriteLine($"WARNING: game.launch.json not found!");
+        Console.WriteLine($"=== Fallback resource path: {fallback} ===");
+        return fallback;
+    }
+
     private static void _setupPlatformGraphics()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
@@ -80,27 +136,20 @@ public class DesktopMain
             GlobalSettings.Set("platform.threeD.API", "OpenGL");
             GlobalSettings.Set("platform.threeD.API.version", "430");
         }
-
         GlobalSettings.Set("engine.NailLogicalFPS", "true");
     }
 
-    /// <summary>
-    /// Pre-load game assemblies before the loader needs them.
-    /// This ensures the assemblies are available when the loader tries to instantiate game classes.
-    /// </summary>
     private static void _preloadGameAssemblies(string resourcePath, LaunchConfig launchConfig)
     {
         string assemblyName = null;
         
-        // First, check if assembly is specified directly in launch config
         if (!string.IsNullOrEmpty(launchConfig.Game.Assembly))
         {
             assemblyName = launchConfig.Game.Assembly;
-            Console.WriteLine($"Assembly specified in launch config: {assemblyName}");
+            Console.WriteLine($"Assembly from launch config: {assemblyName}");
         }
         else
         {
-            // Otherwise, read from the game config
             string gameConfigPath = Path.Combine(resourcePath, launchConfig.Game.ConfigPath);
             if (!File.Exists(gameConfigPath))
             {
@@ -135,7 +184,6 @@ public class DesktopMain
         
         Console.WriteLine($"Game assembly: {assemblyName}");
 
-        // Try to pre-load the assembly from various locations
         string[] searchPaths = {
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, assemblyName),
             Path.Combine(resourcePath, assemblyName),
@@ -155,40 +203,37 @@ public class DesktopMain
             }
         }
 
-        Console.WriteLine($"Warning: Could not find assembly {assemblyName} in search paths.");
-        Console.WriteLine("The loader will attempt to find it at runtime.");
+        Console.WriteLine($"Warning: Could not find assembly {assemblyName}");
     }
 
     public static void Main(string[] args)
     {
-        var cwd = Directory.GetCurrentDirectory();
-        Console.WriteLine($"Karawan Generic Launcher");
-        Console.WriteLine($"CWD: {cwd}");
-        Console.WriteLine($"Base Directory: {AppDomain.CurrentDomain.BaseDirectory}");
+        Console.WriteLine($"=== Karawan Generic Launcher ===");
 
         // 1. Setup platform graphics
         _setupPlatformGraphics();
 
         // 2. Determine resource path
         string resourcePath = _determineResourcePath();
-        resourcePath = Path.GetFullPath(resourcePath);
-        Console.WriteLine($"Resource path: {resourcePath}");
         GlobalSettings.Set("Engine.ResourcePath", resourcePath);
         GlobalSettings.Set("Engine.GeneratedResourcePath", resourcePath);
 
-        // 3. Load launch configuration
-        var launchConfig = LaunchConfig.LoadFromStandardLocations(resourcePath);
-        Console.WriteLine($"Window title: {launchConfig.Branding.WindowTitle}");
-        Console.WriteLine($"Game config: {launchConfig.Game.ConfigPath}");
+        // 3. Load launch configuration from the resource path
+        string launchConfigPath = Path.Combine(resourcePath, "game.launch.json");
+        Console.WriteLine($"Loading launch config from: {launchConfigPath}");
+        var launchConfig = LaunchConfig.Load(launchConfigPath);
+        Console.WriteLine($"  Window title: {launchConfig.Branding.WindowTitle}");
+        Console.WriteLine($"  Game config: {launchConfig.Game.ConfigPath}");
+        Console.WriteLine($"  Assembly: {launchConfig.Game.Assembly ?? "(from game config)"}");
         launchConfig.ApplyToGlobalSettings();
 
-        // 4. Pre-load game assemblies (critical for dynamic loading)
+        // 4. Pre-load game assemblies
         _preloadGameAssemblies(resourcePath, launchConfig);
 
         // 5. Register engine services
         I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
 
-        // 6. Setup asset implementation and load game config
+        // 6. Load game config
         string gameConfigPath = Path.Combine(resourcePath, launchConfig.Game.ConfigPath);
         gameConfigPath = Path.GetFullPath(gameConfigPath);
         Console.WriteLine($"Loading game config from: {gameConfigPath}");
@@ -231,7 +276,7 @@ public class DesktopMain
         // 10. Register audio API
         I.Register<Boom.ISoundAPI>(() => new Boom.OpenAL.API(e));
 
-        // 11. Start game (this will dynamically load and instantiate the root module)
+        // 11. Start game
         Console.WriteLine("Starting game...");
         I.Get<engine.casette.Loader>().StartGame();
 

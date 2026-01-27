@@ -1,117 +1,92 @@
 # Karawan Generic Launcher
 
-A game-agnostic desktop launcher for any Karawan engine game.
+A game-agnostic launcher that can run any Karawan game through dynamic assembly loading.
 
-## Key Feature: Dynamic Game Loading
+## How It Works
 
-This launcher has **no compile-time dependencies** on any game project. Instead, it:
+The launcher:
+1. **Detects the project root** - If running from a build output directory (e.g., `bin/Debug/net9.0/`), it automatically navigates back to the project root
+2. **Finds the game config** - Looks for `game.launch.json` in standard locations (`models/`, `./`)
+3. **Loads game assemblies dynamically** - No compile-time dependency on any game project
+4. **Starts the game** - Instantiates the root module specified in the config
 
-1. Reads `game.launch.json` to find the game configuration
-2. Pre-loads the game assembly (DLL) at runtime
-3. Uses the `casette.Loader` to dynamically instantiate the root module
+## Resource Path Detection
 
-This means **the same launcher binary can run any Karawan game**.
+The launcher uses smart path detection to handle various launch scenarios:
+
+### Build Output Detection
+If the current working directory matches a .NET build output pattern:
+- `*/bin/Debug/net*.*/`
+- `*/bin/Release/net*.*/`
+- `*/bin/Debug/net*.*/win-x64/` (or other RID)
+- `*/bin/Release/net*.*/osx-arm64/` (or other RID)
+
+The launcher strips this suffix to find the project root.
+
+### Search Order
+1. Project root (if detected) + `models/game.launch.json`
+2. Project root (if detected) + `./game.launch.json`
+3. CWD + `models/game.launch.json`
+4. CWD + `./game.launch.json`
+5. Fallback to `./models/`
+
+## Configuration Files
+
+### game.launch.json
+Located in the `models/` directory of your game project:
+
+```json
+{
+  "branding": {
+    "windowTitle": "My Game"
+  },
+  "game": {
+    "configPath": "mygame.json",
+    "assembly": "mygame.dll"
+  }
+}
+```
+
+### Game Config (e.g., mygame.json)
+Standard Karawan game configuration with modules, resources, etc.
 
 ## Usage
 
-### Running a Game
+### From IDE (Rider/Visual Studio)
+1. Set working directory to your game project (e.g., `examples/grid/`)
+2. Run the launcher executable
+3. The launcher detects it's in a build dir and finds your game config
 
-1. Build your game project to produce `yourgame.dll`
-2. Copy `yourgame.dll` to the launcher's output directory
-3. Create a `models/` folder with:
-   - `game.launch.json` - points to your game config and assembly
-   - `yourgame.json` - your game's configuration
-4. Run the launcher
-
-### Configuration
-
-#### game.launch.json
-```json
-{
-  "game": {
-    "configPath": "yourgame.json",
-    "assembly": "yourgame.dll"
-  },
-  "branding": {
-    "vendor": "Your Company",
-    "appName": "yourgame",
-    "windowTitle": "Your Game Title"
-  },
-  "platform": {
-    "createOSD": "false",
-    "createUI": "true"
-  }
-}
-```
-
-#### yourgame.json
-```json
-{
-  "defaults": {
-    "loader": {
-      "assembly": "yourgame.dll"
-    }
-  },
-  "modules": {
-    "root": {
-      "className": "YourNamespace.Main"
-    }
-  },
-  "globalSettings": {
-    "list": [
-      { "key": "nogame.framebuffer.resolution", "value": "1280x720" }
-    ]
-  }
-}
-```
-
-## Assembly Search Paths
-
-The launcher looks for game assemblies in these locations (in order):
-
-1. Launcher's base directory (`bin/Debug/net9.0/`)
-2. Resource path (where `game.launch.json` is)
-3. Parent of resource path
-4. `../bin/Debug/net9.0/` relative to resource path
-5. The assembly name as-is (system search)
-
-## Building
-
+### From Command Line
 ```bash
-cd examples/Launcher
-dotnet build
-```
-
-## Running the Grid Example
-
-```bash
-# Build the grid example
 cd examples/grid
-dotnet build
-
-# Copy grid.dll to the launcher
-cp bin/Debug/net9.0/grid.dll ../Launcher/bin/Debug/net9.0/
-
-# Run from the grid directory (so it finds the models folder)
-cd ../Launcher/bin/Debug/net9.0
-./Karawan.GenericLauncher
+../../examples/Launcher/bin/Debug/net9.0/Karawan.GenericLauncher
 ```
 
-Or set up a symbolic link / copy the models folder to the launcher output.
+### With Run Configuration
+Create a run configuration that:
+1. Builds the game project first (copies DLL to launcher output)
+2. Builds the launcher
+3. Sets working directory to the game project
+4. Runs the launcher executable
 
-## Project Structure
+## Example: Grid Project
+
+The grid example demonstrates basic setup:
 
 ```
-examples/
-├── Launcher/
-│   ├── Karawan.GenericLauncher.csproj  # No game references!
-│   ├── DesktopMain.cs                   # Entry point
-│   └── AssetImplementation.cs           # Asset loader
-└── grid/
-    ├── grid.csproj                      # Example game
-    ├── Main.cs
-    ├── Scene.cs
-    └── models/
-        ├── game.launch.json
-        └── grid.json
+examples/grid/
+├── grid.csproj          # Game project (builds grid.dll)
+├── Main.cs              # Entry point (IModule)
+├── Scene.cs             # Scene implementation
+├── models/
+│   ├── game.launch.json # Launch config
+│   └── grid.json        # Game config
+└── README.md
 ```
+
+The launcher, when run from `examples/grid/`, will:
+1. Detect CWD is not a build directory
+2. Find `models/game.launch.json`
+3. Load `grid.dll` dynamically
+4. Instantiate `grid.Main` as the root module

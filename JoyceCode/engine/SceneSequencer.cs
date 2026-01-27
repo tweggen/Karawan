@@ -239,7 +239,8 @@ public class SceneSequencer : IDisposable
 
                         try
                         {
-                            IScene scene = engine.rom.Loader.LoadClass("nogame.dll", className) as IScene;
+                            // Use the default loader assembly (set from game config)
+                            IScene scene = engine.rom.Loader.LoadClass(className) as IScene;
                             return scene;
                         }
                         catch (Exception e)
