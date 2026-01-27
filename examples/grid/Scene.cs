@@ -58,10 +58,12 @@ public class Scene : AModule, IScene
     {
         var mesh = _createCubeMesh();
         
-        // Create a simple gray material
+        // Create a simple material with an explicit texture to avoid atlas lookup issues.
+        // Use the built-in black texture as a base, the AlbedoColor uniform will provide the actual color.
         var material = new Material
         {
-            AlbedoColor = 0xff808080  // Gray color (ARGB)
+            AlbedoColor = 0xff808080,  // Gray color (ARGB format: full alpha, gray RGB)
+            Texture = new Texture(Texture.BLACK)  // Explicit texture to avoid color->texture atlas lookup
         };
         
         // Build the InstanceDesc
@@ -94,7 +96,7 @@ public class Scene : AModule, IScene
     }
 
     /// <summary>
-    /// Set up the scene entities.
+    /// Set up the scene entities. Must be called from the logical thread.
     /// </summary>
     private void _setupScene()
     {
@@ -130,19 +132,20 @@ public class Scene : AModule, IScene
             CameraMask = 0x00000001,
             CameraFlags = 0
         });
+        
+        // Register the camera with the engine
+        _engine.Camera.Value = _eCamera;
 
         // 3. Create directional light (sun-like)
         _eDirectionalLight = _engine.CreateEntity("GridDirectionalLight");
         
-        // Light direction: 45 degrees down, 45 degrees to the side
-        float pitch = MathF.PI / 4f;  // 45 degrees
-        float yaw = MathF.PI / 4f;    // 45 degrees
-        Matrix4x4 lightMatrix = Matrix4x4.CreateFromYawPitchRoll(yaw, pitch, 0f);
+        // Light pointing down and to the side
+        Vector3 lightDirection = Vector3.Normalize(new Vector3(1f, -1f, 1f));
         
         _eDirectionalLight.Set(new Transform3ToWorld(
             0x00000001,
             Transform3ToWorld.Visible,
-            lightMatrix
+            Matrix4x4.Identity
         ));
         
         _eDirectionalLight.Set(new DirectionalLight(
@@ -159,7 +162,7 @@ public class Scene : AModule, IScene
         ));
         
         _eAmbientLight.Set(new AmbientLight(
-            new Vector4(0.2f, 0.2f, 0.2f, 1f)  // Dim ambient
+            new Vector4(0.3f, 0.3f, 0.3f, 1f)  // Ambient light
         ));
     }
 
@@ -191,20 +194,27 @@ public class Scene : AModule, IScene
     {
         base.OnModuleActivate();
         
-        // Set up all scene entities
-        _setupScene();
-        
-        // Register this scene with the scene sequencer
-        I.Get<SceneSequencer>().AddScene(0f, this);
+        // Queue the scene setup to run on the logical thread
+        _engine.QueueMainThreadAction(() =>
+        {
+            _setupScene();
+            
+            // Register this scene with the scene sequencer
+            I.Get<SceneSequencer>().AddScene(0f, this);
+        });
     }
 
     protected override void OnModuleDeactivate()
     {
-        // Clean up entities
-        if (_eCube.IsAlive) _eCube.Dispose();
-        if (_eCamera.IsAlive) _eCamera.Dispose();
-        if (_eDirectionalLight.IsAlive) _eDirectionalLight.Dispose();
-        if (_eAmbientLight.IsAlive) _eAmbientLight.Dispose();
+        // Queue cleanup to run on the logical thread
+        _engine.QueueMainThreadAction(() =>
+        {
+            // Clean up entities
+            if (_eCube.IsAlive) _eCube.Dispose();
+            if (_eCamera.IsAlive) _eCamera.Dispose();
+            if (_eDirectionalLight.IsAlive) _eDirectionalLight.Dispose();
+            if (_eAmbientLight.IsAlive) _eAmbientLight.Dispose();
+        });
         
         base.OnModuleDeactivate();
     }
