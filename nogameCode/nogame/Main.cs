@@ -62,7 +62,6 @@ public class Main : AModule
 
     protected override void OnModuleActivate()
     {
-        I.Register<engine.world.ClusterList>(() => new engine.world.ClusterList());
         // TXWTODO: Looks a bit out of place, looks more like platform specific.
         I.Get<Boom.ISoundAPI>().SetupDone();
         
