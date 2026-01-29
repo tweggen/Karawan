@@ -158,11 +158,13 @@ public class SceneSequencer : IDisposable
      */
     private bool _checkedMainScene(string name)
     {
+        #if false
         if ("logos"!=name && null == I.Get<engine.world.MetaGen>().Loader)
         {
             return false;
         }
-
+        #endif
+        
         Func<IScene> factoryFunction = null;
         lock(_lo)
         {

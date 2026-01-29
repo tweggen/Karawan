@@ -41,5 +41,8 @@ public class Main : AModule
         
         // Sound API setup done (even if we don't use sound)
         I.Get<Boom.ISoundAPI>()?.SetupDone();
+        
+        I.Get<SceneSequencer>().Load();
+        I.Get<SceneSequencer>().Run();
     }
 }

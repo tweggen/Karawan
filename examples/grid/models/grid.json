@@ -27,6 +27,15 @@
     }
   },
 
+  "scenes": {
+    "catalogue": {
+      "grid": {
+        "className": "grid.Scene"
+      }
+    },
+    "startup": "grid"
+  },
+
   "textures": {
     "channels": {}
   }
