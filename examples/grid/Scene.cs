@@ -73,17 +73,17 @@ public class Scene : AModule, IScene
     /// <summary>
     /// Create a camera world matrix from position looking at target.
     /// </summary>
-    private Matrix4x4 _createLookAtMatrix(Vector3 position, Vector3 target, Vector3 up)
+    private Matrix4x4 _createLookAtMatrix(Vector3 v3Position, Vector3 v3Target, Vector3 v3Up)
     {
-        var forward = Vector3.Normalize(target - position);
-        var right = Vector3.Normalize(Vector3.Cross(up, forward));
-        var actualUp = Vector3.Cross(forward, right);
+        var v3MinusZ = Vector3.Normalize(v3Target - v3Position);
+        var v3Right = Vector3.Normalize(Vector3.Cross(v3MinusZ, v3Up));
+        var v3ActualUp = Vector3.Cross(v3Right, v3MinusZ);
         
         return new Matrix4x4(
-            right.X, right.Y, right.Z, 0,
-            actualUp.X, actualUp.Y, actualUp.Z, 0,
-            forward.X, forward.Y, forward.Z, 0,
-            position.X, position.Y, position.Z, 1
+            v3Right.X, v3Right.Y, v3Right.Z, 0,
+            v3ActualUp.X, v3ActualUp.Y, v3ActualUp.Z, 0,
+            -v3MinusZ.X, -v3MinusZ.Y, -v3MinusZ.Z, 0,
+            v3Position.X, v3Position.Y, v3Position.Z, 1
         );
     }
 
@@ -109,7 +109,7 @@ public class Scene : AModule, IScene
         _eCamera.Set(new Camera3
         {
             Angle = 60f,
-            NearFrustum = 0.1f,
+            NearFrustum = 0.01f,
             FarFrustum = 100f,
             CameraMask = 0x00000001,
             CameraFlags = 0

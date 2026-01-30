@@ -113,7 +113,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
     {
         cameraOutput.Camera3.GetViewMatrix(out var mView, cameraOutput.TransformToWorld);
         cameraOutput.Camera3.GetProjectionMatrix(out var mProjection,new Vector2(1f, 1f));
-#error Test Cube is culled on near frustum
+
         _vCameraPos = cameraOutput.TransformToWorld.Translation;
         
         var mViewProj = mView * mProjection;

@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Grid Example" type="DotNetProject" factoryName=".NET Project">
-    <option name="EXE_PATH" value="$PROJECT_DIR$/examples/Launcher/bin/Debug/net9.0/osx-arm64/Karawan.GenericLauncher" />
+    <option name="EXE_PATH" value="$PROJECT_DIR$/examples/Launcher/bin/Debug/net9.0-windows10.0.22000.0/win-x64/Karawan.GenericLauncher.exe" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples/grid/" />
     <option name="PASS_PARENT_ENVS" value="1" />
@@ -15,10 +15,11 @@
     <option name="PROJECT_ARGUMENTS_TRACKING" value="1" />
     <option name="PROJECT_WORKING_DIRECTORY_TRACKING" value="0" />
     <option name="PROJECT_KIND" value="DotNetCore" />
-    <option name="PROJECT_TFM" value="net9.0" />
+    <option name="PROJECT_TFM" value="net9.0-windows10.0.22000.0" />
     <method v="2">
       <option name="DotNetBuildConfiguration" enabled="true" project="$PROJECT_DIR$/examples/grid/grid.csproj" />
       <option name="Build" />
+      <option name="Build" default="false" projectName="grid" projectPath="$PROJECT_DIR$/examples/grid/grid.csproj" />
     </method>
   </configuration>
 </component>
