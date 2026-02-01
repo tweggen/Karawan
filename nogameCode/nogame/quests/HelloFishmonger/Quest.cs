@@ -49,10 +49,7 @@ public class Quest : AModule, IQuest, ICreator
 
     private string _targetCarName = "Fishmonger's car";
 
-    public Description GetDescription()
-    {
-        return _description;
-    }
+    public Description GetDescription() => _description;
 
 
     public bool IsActive
@@ -181,7 +178,8 @@ public class Quest : AModule, IQuest, ICreator
      */
     public void SaveEntityTo(Entity eLoader, out JsonNode jn)
     {
-        jn = JsonValue.Create("no additional info from HelloFishmonger yet"); 
+        jn = JsonValue.Create($"no additional info from {Name} yet"); 
+        return;
     }
 
 
