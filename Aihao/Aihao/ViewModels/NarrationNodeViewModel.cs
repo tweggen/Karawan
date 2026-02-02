@@ -71,7 +71,9 @@ public partial class NarrationNodeViewModel : ObservableObject
     /// </summary>
     public void InitializeMarkup()
     {
+        System.Console.Error.WriteLine($"[NarrationNodeVM] InitializeMarkup: NodeId={NodeId}, Flow.Count={Flow.Count}");
         UpdateMarkupFromFlow();
+        System.Console.Error.WriteLine($"[NarrationNodeVM] InitializeMarkup: MarkupText length={MarkupText?.Length ?? -1}, first 200=[{MarkupText?[..Math.Min(MarkupText?.Length ?? 0, 200)] ?? "NULL"}]");
     }
 
     public void LoadFromJson(string nodeId, JsonObject obj)

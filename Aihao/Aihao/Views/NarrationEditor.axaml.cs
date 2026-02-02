@@ -5,8 +5,10 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using Avalonia.Threading;
 using AvaloniaEdit;
+using AvaloniaEdit.Document;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
+using AvaloniaEdit.Rendering;
 using Aihao.ViewModels;
 
 namespace Aihao.Views;
@@ -23,8 +25,26 @@ public partial class NarrationEditor : UserControl
     {
         InitializeComponent();
         LoadSyntaxHighlighting();
+        SetupEditorColors();
         TokenPopupControl.DataContext = _popupVm;
         DataContextChanged += OnDataContextChanged;
+    }
+
+    private void SetupEditorColors()
+    {
+        var fg = new SolidColorBrush(Color.Parse("#D4D4D4"));
+        var bg = new SolidColorBrush(Color.Parse("#1E1E2E"));
+
+        MarkupEditor.Foreground = fg;
+        MarkupEditor.Background = bg;
+        MarkupEditor.TextArea.Foreground = fg;
+        MarkupEditor.TextArea.Background = bg;
+        MarkupEditor.TextArea.TextView.LinkTextForegroundBrush = Brushes.CornflowerBlue;
+        MarkupEditor.LineNumbersForeground = new SolidColorBrush(Color.FromRgb(0x85, 0x85, 0x85));
+
+        // Force default text color via a line transformer — this ensures
+        // AvaloniaEdit's own rendering pipeline uses our foreground color.
+        MarkupEditor.TextArea.TextView.LineTransformers.Insert(0, new DefaultForegroundColorizer(fg));
     }
 
     private void LoadSyntaxHighlighting()
@@ -48,12 +68,15 @@ public partial class NarrationEditor : UserControl
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        System.Console.Error.WriteLine($"[NarrationEditor] OnDataContextChanged: DataContext is {DataContext?.GetType().Name ?? "null"}");
         if (DataContext is NarrationEditorViewModel vm)
         {
+            System.Console.Error.WriteLine($"[NarrationEditor] VM.SelectedNode={vm.SelectedNode?.NodeId ?? "null"}, VM.SelectedScriptName={vm.SelectedScriptName ?? "null"}, Nodes.Count={vm.Nodes.Count}");
             vm.PropertyChanged += (s, args) =>
             {
                 if (args.PropertyName == nameof(vm.SelectedNode))
                 {
+                    System.Console.Error.WriteLine($"[NarrationEditor] PropertyChanged: SelectedNode -> {vm.SelectedNode?.NodeId ?? "null"}");
                     OnSelectedNodeChanged(vm.SelectedNode);
                     RebuildGraph(vm);
                 }
@@ -69,6 +92,13 @@ public partial class NarrationEditor : UserControl
 
     private void OnSelectedNodeChanged(NarrationNodeViewModel? node)
     {
+        System.Console.Error.WriteLine($"[NarrationEditor] OnSelectedNodeChanged: node={node?.NodeId ?? "null"}, MarkupText length={node?.MarkupText?.Length ?? -1}");
+        if (node != null)
+        {
+            System.Console.Error.WriteLine($"[NarrationEditor] MarkupText first 200 chars: [{node.MarkupText?[..Math.Min(node.MarkupText?.Length ?? 0, 200)] ?? "NULL"}]");
+            System.Console.Error.WriteLine($"[NarrationEditor] Flow.Count={node.Flow.Count}");
+        }
+
         // Unsubscribe from old node
         if (_currentNode != null)
         {
@@ -92,6 +122,7 @@ public partial class NarrationEditor : UserControl
     {
         if (e.PropertyName == nameof(NarrationNodeViewModel.MarkupText) && !_isUpdatingEditor)
         {
+            System.Console.Error.WriteLine($"[NarrationEditor] OnNodePropertyChanged: MarkupText changed, length={_currentNode?.MarkupText?.Length ?? -1}");
             if (_currentNode != null)
                 SetEditorText(_currentNode.MarkupText);
         }
@@ -99,10 +130,12 @@ public partial class NarrationEditor : UserControl
 
     private void SetEditorText(string text)
     {
+        System.Console.Error.WriteLine($"[NarrationEditor] SetEditorText: length={text?.Length ?? -1}, editor IsVisible={MarkupEditor.IsVisible}, editor Bounds={MarkupEditor.Bounds}");
         _isUpdatingEditor = true;
         try
         {
-            MarkupEditor.Text = text;
+            MarkupEditor.Document.Text = text ?? "";
+            System.Console.Error.WriteLine($"[NarrationEditor] SetEditorText: Document.Text length after set={MarkupEditor.Document.TextLength}");
         }
         finally
         {
@@ -112,9 +145,18 @@ public partial class NarrationEditor : UserControl
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
+        System.Console.Error.WriteLine($"[NarrationEditor] OnAttachedToVisualTree: _currentNode={_currentNode?.NodeId ?? "null"}");
         base.OnAttachedToVisualTree(e);
         MarkupEditor.TextChanged += OnEditorTextChanged;
         MarkupEditor.TextArea.PointerPressed += OnEditorPointerPressed;
+
+        // Defer text sync until after layout
+        Dispatcher.UIThread.Post(() =>
+        {
+            System.Console.Error.WriteLine($"[NarrationEditor] Deferred sync: _currentNode={_currentNode?.NodeId ?? "null"}, MarkupText length={_currentNode?.MarkupText?.Length ?? -1}, editor Bounds={MarkupEditor.Bounds}");
+            if (_currentNode != null)
+                SetEditorText(_currentNode.MarkupText);
+        }, DispatcherPriority.Loaded);
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -218,7 +260,7 @@ public partial class NarrationEditor : UserControl
                 _isUpdatingEditor = true;
                 try
                 {
-                    _currentNode.UpdateFlowFromMarkup(MarkupEditor.Text);
+                    _currentNode.UpdateFlowFromMarkup(MarkupEditor.Document.Text);
                 }
                 finally
                 {
@@ -302,5 +344,28 @@ public partial class NarrationEditor : UserControl
 
             canvas.Children.Add(rect);
         }
+    }
+}
+
+/// <summary>
+/// Applies a default foreground color to all text in the editor.
+/// This ensures text is visible regardless of AvaloniaEdit's theme handling.
+/// </summary>
+internal class DefaultForegroundColorizer : DocumentColorizingTransformer
+{
+    private readonly IBrush _foreground;
+
+    public DefaultForegroundColorizer(IBrush foreground)
+    {
+        _foreground = foreground;
+    }
+
+    protected override void ColorizeLine(DocumentLine line)
+    {
+        if (line.Length == 0) return;
+        ChangeLinePart(line.Offset, line.EndOffset, element =>
+        {
+            element.TextRunProperties.SetForegroundBrush(_foreground);
+        });
     }
 }

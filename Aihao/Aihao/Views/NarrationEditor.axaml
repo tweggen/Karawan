@@ -84,6 +84,10 @@
                                                  FontSize="13"
                                                  ShowLineNumbers="True"
                                                  WordWrap="True"
+                                                 Background="#FF1E1E2E"
+                                                 Foreground="#FFD4D4D4"
+                                                 HorizontalAlignment="Stretch"
+                                                 VerticalAlignment="Stretch"
                                                  IsVisible="{Binding SelectedNode, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                         <Popup x:Name="TokenPopup" PlacementMode="Pointer" IsLightDismissEnabled="True">
                             <local:NarrationTokenPopup x:Name="TokenPopupControl"/>
