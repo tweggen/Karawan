@@ -18,6 +18,12 @@ public partial class NarrationTokenPopupViewModel : ObservableObject
         UpdateFilter();
     }
 
+    partial void OnSelectedItemChanged(string? value)
+    {
+        if (value != null)
+            OnItemSelected?.Invoke(value);
+    }
+
     public void UpdateFilter()
     {
         FilteredItems.Clear();
