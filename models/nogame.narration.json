@@ -1,0 +1,87 @@
+{
+  "bindings": {
+  },
+  "startup": "main",
+  "triggers": {
+    "interact.niceguy": { "script": "niceguy", "mode": "conversation" }
+  },
+  "scripts": {
+    "main": {
+      "start": "intro",
+      "nodes": {
+        "intro": {
+          "flow": [
+            { "speaker": "narrator" },
+            { "text": "Again I looked around. This was all? This was it?" },
+            { "text": "Rumours are this is a vast space. Rumours are this is inside something." },
+            { "text": "They say we run the world that is outside of us." },
+            { "text": "For now, I need something that runs the inside of me." },
+            { "choices": [
+              { "text": "Find a Ramen shop", "goto": "ramen1" },
+              { "text": "Go get a drink.", "goto": "drink1" }
+            ]}
+          ]
+        },
+        "ramen1": {
+          "flow": [
+            { "text": "Where can I get some hot and tasty ramen here?" },
+            { "text": "I guess the navigation should display." },
+            { "events": [{ "type": "quest.trigger", "quest": "nogame.quests.VisitAgentTwelve.Quest" }] }
+          ]
+        },
+        "drink1": {
+          "flow": [
+            { "text": "Might be early or late, you never know, surely it's dim. A drink wouldn't hurt." },
+            { "text": "Let's see if navigation can help us." },
+            { "events": [{ "type": "quest.trigger", "quest": "nogame.quests.VisitAgentTwelve.Quest" }] }
+          ]
+        }
+      }
+    },
+    "agent12": {
+      "start": "arrive",
+      "nodes": {
+        "arrive": {
+          "flow": [
+            { "text": "I can't see agent 12. He usually would be here if I long for a beverage or a meal." },
+            { "text": "He would tell me something, you know, get straight to it." },
+            { "goto": "wonder" }
+          ]
+        },
+        "wonder": {
+          "flow": [
+            { "text": "Sometimes I wonder if he knows the fishmongers. Though I never dared to ask him." },
+            { "text": "I should ... wait I have a signal" },
+            { "text": "... I should look on the map to find that car he's in." },
+            { "events": [{ "type": "quest.trigger", "quest": "nogame.quests.HelloFishmonger.Quest" }] }
+          ]
+        }
+      }
+    },
+    "firstPubSecEncounter": {
+      "start": "bump",
+      "nodes": {
+        "bump": {
+          "flow": [
+            { "text": "Well, I hit them, but they just rode on. Guess I have to repair my car." },
+            { "text": "Driving into any arbitrary polytope will do it." },
+            { "text": "However, I hope public security didn't notice the bump." }
+          ]
+        }
+      }
+    },
+    "niceguy": {
+      "start": "greet",
+      "nodes": {
+        "greet": {
+          "speaker": "niceguy",
+          "texts": [
+            "It's a bit foggy today, isn't it?",
+            "I like to hang out in these islands of green.",
+            "Has anyone ever seen the trees grow fruit?"
+          ]
+        }
+      }
+    }
+  }
+}
