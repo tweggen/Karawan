@@ -1,4 +1,4 @@
-
+#if false
 using System;
 using System.Numerics;
 using System.Text.Json;
@@ -22,12 +22,12 @@ namespace nogame.quests.Taxi;
  *
  * Instantiating this quest selects a citizen far off if none is given
  * and selects a target, if none is given.
- * Then, if the quest marker is hit with the car, a navigation is started. 
+ * Then, if the quest marker is hit with the car, a navigation is started.
  */
 public class Quest : AModule, IQuest, ICreator
 {
     public string Name { get; set; } = typeof(Quest).FullName;
-    
+
     private Description _description = new()
     {
         Title = "Be a good cab driver.",
@@ -39,12 +39,12 @@ public class Quest : AModule, IQuest, ICreator
 
     private bool _isActive = false;
     public bool IsActive { get => _isActive; set => _isActive = value; }
-    
+
 
     public ClusterDesc GuestCluster { get; set; } = new();
     public string RandomSeed { get; set; } = "taxi";
-    
-    
+
+
     public async Task CreateEntities()
     {
         return;
@@ -60,7 +60,7 @@ public class Quest : AModule, IQuest, ICreator
 
     public void SaveEntityTo(Entity eLoader, out JsonNode jn)
     {
-        jn = JsonValue.Create($"no additional info from {Name} yet"); 
+        jn = JsonValue.Create($"no additional info from {Name} yet");
         return;
     }
 
@@ -81,7 +81,7 @@ public class Quest : AModule, IQuest, ICreator
             WhichCluster = PlacementDescription.ClusterSelection.CurrentCluster,
             WhichQuarter = PlacementDescription.QuarterSelection.AnyQuarter
         };
-        
+
         PositionDescription pod;
 
         bool isPlaced = I.Get<Placer>().TryPlacing(new RandomSource(RandomSeed), pc, plad, out pod);
@@ -89,26 +89,26 @@ public class Quest : AModule, IQuest, ICreator
         {
             ErrorThrow<InvalidOperationException>($"Unable to place guest in cluster {GuestCluster.Name}.");
         }
-        
+
         return pod.Position;
 
     }
-    
+
 
     /**
      * As long the quest is in the state find guest, we display the guest marker.
      */
     private void _createGuestMarker(Vector3 v3Marker)
     {
-        
+
     }
-    
-    
+
+
     /**
-     * As soon we have picked up the guest we need to create the target marker.  
+     * As soon we have picked up the guest we need to create the target marker.
      */
-    
-    
+
+
     private void _startRide()
     {
         _engine.Player.CallWithEntity(e =>
@@ -132,7 +132,7 @@ public class Quest : AModule, IQuest, ICreator
             }));
     }
 
-    
+
     protected override void OnModuleDeactivate()
     {
         _questTarget?.ModuleDeactivate();
@@ -150,3 +150,4 @@ public class Quest : AModule, IQuest, ICreator
         _engine.Run(_startQuest);
     }
 }
+#endif

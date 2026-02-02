@@ -409,6 +409,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\InputEventPipeline.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\KeyEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\SubscriptionManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationScript.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationConditionEvaluator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationInterpolator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationEvents.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationRunner.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ObjectFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ObjectRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\API.cs" />

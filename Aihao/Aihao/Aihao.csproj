@@ -50,7 +50,6 @@
     <ProjectReference Include="..\..\..\BepuPhysics2\BepuUtilities\BepuUtilities.csproj" />
     <ProjectReference Include="..\..\..\DefaultEcs\source\DefaultEcs\DefaultEcs.csproj" />
     <ProjectReference Include="..\..\..\glTF-CSharp-Loader\glTFLoader\glTFLoader.csproj" />
-    <ProjectReference Include="..\..\..\ink\ink-engine-runtime\ink-engine-runtime.csproj" />
     <ProjectReference Include="..\..\..\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj" />
     <ProjectReference Include="..\..\..\FbxSharp\FbxSharp.csproj" />
   </ItemGroup>
