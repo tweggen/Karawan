@@ -88,7 +88,9 @@
                                                  HorizontalAlignment="Stretch"
                                                  VerticalAlignment="Stretch"
                                                  IsVisible="{Binding SelectedNode, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                        <Popup x:Name="TokenPopup" PlacementMode="Pointer" IsLightDismissEnabled="True">
+                        <Popup x:Name="TokenPopup" Placement="AnchorAndGravity"
+                               PlacementAnchor="BottomLeft" PlacementGravity="BottomRight"
+                               IsLightDismissEnabled="True">
                             <local:NarrationTokenPopup x:Name="TokenPopupControl"/>
                         </Popup>
                     </Panel>

@@ -167,46 +167,73 @@ public partial class NarrationEditor : UserControl
         base.OnDetachedFromVisualTree(e);
     }
 
+    private Point? _lastRightClickPosition;
+
     private void OnEditorPointerPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
     {
-        // Delay slightly to let caret update
-        Dispatcher.UIThread.Post(() => TryShowTokenPopup(), DispatcherPriority.Input);
+        var props = e.GetCurrentPoint(MarkupEditor.TextArea.TextView).Properties;
+        if (props.IsRightButtonPressed)
+        {
+            // Store click position relative to the text view for popup placement
+            _lastRightClickPosition = e.GetPosition(MarkupEditor.TextArea.TextView);
+
+            // Compute the text offset at the click position instead of using the caret
+            var clickPos = e.GetPosition(MarkupEditor.TextArea.TextView);
+            var textPos = MarkupEditor.TextArea.TextView.GetPosition(clickPos);
+            int clickOffset;
+            if (textPos.HasValue)
+            {
+                clickOffset = MarkupEditor.Document.GetOffset(textPos.Value.Location);
+            }
+            else
+            {
+                clickOffset = MarkupEditor.CaretOffset;
+            }
+
+            Dispatcher.UIThread.Post(() => TryShowTokenPopup(clickOffset), DispatcherPriority.Input);
+        }
     }
 
-    private void TryShowTokenPopup()
+    private void TryShowTokenPopup(int offset)
     {
         if (_currentNode == null) return;
         var doc = MarkupEditor.Document;
-        var offset = MarkupEditor.CaretOffset;
         if (offset < 0 || offset >= doc.TextLength) return;
 
         var line = doc.GetLineByOffset(offset);
-        var lineText = doc.GetText(line.Offset, line.Length).TrimStart();
+        var rawLine = doc.GetText(line.Offset, line.Length);
+        var lineText = rawLine.TrimStart();
 
         string? tokenType = null;
         string currentToken = "";
         int tokenStart = 0, tokenEnd = 0;
 
+        // Check for @ speaker at start of line
         if (lineText.StartsWith('@'))
         {
             tokenType = "speaker";
-            // Token is the word after @
             var content = lineText[1..].Split(' ', 2)[0];
             currentToken = content;
-            tokenStart = line.Offset + (doc.GetText(line.Offset, line.Length).IndexOf('@')) + 1;
+            tokenStart = line.Offset + rawLine.IndexOf('@') + 1;
             tokenEnd = tokenStart + content.Length;
         }
-        else if (lineText.StartsWith("->"))
+        else
         {
-            tokenType = "goto";
-            var content = lineText[2..].Trim();
-            currentToken = content;
-            var rawLine = doc.GetText(line.Offset, line.Length);
+            // Check for -> anywhere on the line (standalone goto or inline choice goto)
             var arrowIdx = rawLine.IndexOf("->");
-            tokenStart = line.Offset + arrowIdx + 2;
-            // Skip whitespace
-            while (tokenStart < line.EndOffset && doc.GetCharAt(tokenStart) == ' ') tokenStart++;
-            tokenEnd = line.EndOffset;
+            if (arrowIdx >= 0)
+            {
+                // Only activate if the click is on or after the -> token
+                var arrowAbsOffset = line.Offset + arrowIdx;
+                if (offset >= arrowAbsOffset)
+                {
+                    tokenType = "goto";
+                    tokenStart = arrowAbsOffset + 2;
+                    while (tokenStart < line.EndOffset && doc.GetCharAt(tokenStart) == ' ') tokenStart++;
+                    tokenEnd = line.EndOffset;
+                    currentToken = doc.GetText(tokenStart, tokenEnd - tokenStart).Trim();
+                }
+            }
         }
 
         if (tokenType == null) return;
@@ -238,6 +265,14 @@ public partial class NarrationEditor : UserControl
             doc.Replace(tokenStart, tokenEnd - tokenStart, selected);
             TokenPopup.IsOpen = false;
         };
+
+        // Position popup at the right-click location
+        if (_lastRightClickPosition.HasValue)
+        {
+            var p = _lastRightClickPosition.Value;
+            TokenPopup.PlacementTarget = MarkupEditor.TextArea.TextView;
+            TokenPopup.PlacementRect = new Rect(p.X, p.Y, 1, 1);
+        }
 
         TokenPopup.IsOpen = true;
     }
