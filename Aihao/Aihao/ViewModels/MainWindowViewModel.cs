@@ -232,9 +232,9 @@ public partial class MainWindowViewModel : ObservableObject
     private void OnFileDoubleClicked(object? sender, FileTreeItemViewModel file)
     {
         if (CurrentProject == null) return;
-        
+
         Console.AddLine($"Double-clicked: {file.Name}, NodeType: '{file.NodeType}', IsFile: {file.IsFile}", LogLevel.Debug);
-        
+
         // Open editor based on node type (section) or file
         if (!string.IsNullOrEmpty(file.NodeType))
         {
@@ -243,12 +243,49 @@ public partial class MainWindowViewModel : ObservableObject
         }
         else if (file.IsFile && !string.IsNullOrEmpty(file.RelativePath))
         {
-            OpenFileInEditor(file.RelativePath);
+            // Check if this file is an __include__ for a known section
+            var sectionId = ResolveSectionForFile(file.Name);
+            if (sectionId != null)
+            {
+                Console.AddLine($"File maps to section: {sectionId}", LogLevel.Debug);
+                OpenSectionEditor(sectionId);
+            }
+            else
+            {
+                OpenFileInEditor(file.RelativePath);
+            }
         }
         else
         {
             Console.AddLine($"No action for item: {file.Name}", LogLevel.Debug);
         }
+    }
+
+    /// <summary>
+    /// Check if a filename corresponds to a known section's __include__ file.
+    /// Convention: the root JSON has "sectionId": { "__include__": "filename" }.
+    /// We detect this by checking if the filename matches "projectName.sectionId.json".
+    /// </summary>
+    private string? ResolveSectionForFile(string fileName)
+    {
+        if (CurrentProject == null) return null;
+
+        var projectName = CurrentProject.Name;
+
+        foreach (var section in KnownSections.All)
+        {
+            // Match convention: "nogame.narration.json" -> section "narration"
+            var expectedName = $"{projectName}.{section.Id}.json";
+            if (string.Equals(fileName, expectedName, StringComparison.OrdinalIgnoreCase))
+            {
+                // Verify the section actually has content
+                var content = CurrentProject.GetSection(section.Id);
+                if (content != null)
+                    return section.Id;
+            }
+        }
+
+        return null;
     }
     
     private void OpenSectionEditor(string sectionId)
@@ -330,7 +367,17 @@ public partial class MainWindowViewModel : ObservableObject
                     _dockFactory.AddDocument(doc);
                 }
                 break;
-                
+
+            case "narration":
+                if (content is JsonObject narrationObj)
+                {
+                    var editor = new NarrationEditorViewModel();
+                    editor.LoadFromJson(narrationObj);
+                    var doc = new NarrationDocumentViewModel(editor);
+                    _dockFactory.AddDocument(doc);
+                }
+                break;
+
             default:
                 // Open as generic JSON editor
                 OpenJsonEditor(definition.DisplayName, content);

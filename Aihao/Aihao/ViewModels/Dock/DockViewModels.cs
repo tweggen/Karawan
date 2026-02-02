@@ -199,6 +199,25 @@ public partial class ImplementationsDocumentViewModel : DocumentViewModel
 }
 
 /// <summary>
+/// Document for Narration editor
+/// </summary>
+public partial class NarrationDocumentViewModel : DocumentViewModel
+{
+    public NarrationEditorViewModel Editor { get; }
+
+    public NarrationDocumentViewModel(NarrationEditorViewModel editor)
+    {
+        Editor = editor;
+        Content = editor;
+        Id = "Narration";
+        Title = "Narration";
+        Icon = "🎭";
+        CanClose = true;
+        CanPin = false;
+    }
+}
+
+/// <summary>
 /// Generic document for JSON/text file editing
 /// </summary>
 public partial class FileDocumentViewModel : DocumentViewModel

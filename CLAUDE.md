@@ -83,3 +83,68 @@ Platform events → logical translation → event queue → `InputEventPipeline`
 
 ### Game Assembly Loading
 The launcher loads game DLLs dynamically based on `game.launch.json` (`/defaults/loader/assembly`). This allows different games to run on the same engine.
+
+### Aihao Editor IDE
+
+Aihao is an Avalonia 11-based game editor built with **CommunityToolkit.Mvvm** and **Dock.Avalonia** for a dockable panel layout.
+
+#### Tech Stack
+- **UI**: Avalonia 11.3.8 (cross-platform desktop)
+- **Layout**: Dock.Avalonia (tool windows + document tabs)
+- **MVVM**: CommunityToolkit.Mvvm (`[ObservableProperty]`, `[RelayCommand]`)
+- **JSON**: System.Text.Json throughout
+
+#### JSON Loading & Storage
+The editor uses **Mix** (from JoyceCode) as its single source of truth. `EditorFileProvider` (implements `IMixFileProvider`) gives Mix direct filesystem access instead of the engine's asset system. Loading flow:
+
+1. `ProjectService.LoadProjectAsync()` creates a Mix instance with `EditorFileProvider`
+2. Root JSON is loaded at `/` with priority 0; `__include__` files are discovered and tracked
+3. `AihaoProject` wraps the Mix instance and exposes `GetSection(sectionId)` → `JsonNode`
+4. Overlays can be added at higher priority via `AddOverlayAsync()` for debug/override configs
+
+Saving reverses the flow: `ViewModel.ToJsonObject()` → serialize → write to disk via `ProjectService.SaveFileAsync()`.
+
+#### Editor Architecture
+
+Each config section (globalSettings, properties, resources, implementations, metaGen) has:
+- A **DocumentViewModel** (dockable tab) that owns a section-specific editor VM
+- A **section editor ViewModel** that typically wraps `JsonPropertyEditorViewModel`
+- An **AXAML View** mapped via `DataTemplate` in MainWindow
+
+The generic `JsonPropertyEditorViewModel` + `PropertyNodeViewModel` provide recursive JSON tree editing. `PropertyNodeViewModel` represents any JSON node with:
+- `Name`, `Value`, `ValueKind` (String/Number/Boolean/Null/Object/Array)
+- `Children` (ObservableCollection for objects/arrays)
+- `IsModified` dirty tracking with callback propagation to parent
+- `ToJsonNode()` / `FromJsonNode()` for round-trip serialization
+- Auto-detected special editors (resolution, vector2/3, color, slider) based on key patterns and value format
+
+#### Change Flow
+```
+UI TextBox → Binding → PropertyNodeViewModel.Value setter
+  → Validate() → MarkModified() → _onModified callback
+  → JsonPropertyEditorViewModel.IsDirty = true
+  → Document tab shows dirty indicator
+  → Save: ToJsonObject() → ProjectService.SaveFileAsync()
+```
+
+#### Docking Layout
+- **Left pane**: Project tree (tool window)
+- **Center**: Document tabs (section editors, render output)
+- **Right pane**: Inspector (tool window)
+- **Bottom**: Console with level filtering and search
+- `AihaoDockFactory` builds the layout; `DockingService` manages registration
+
+#### Key Services
+- `ProjectService` — load/save/reload projects, overlay management
+- `ProcessService` — build/run/debug game, IDE detection (Rider/VS/VS Code)
+- `ActionService` — command registry with keybinding overrides
+- `UserSettingsService` — persists preferences to `~/.aihao/settings.json`
+
+#### Patterns to Follow When Adding Editors
+1. Create a `FooEditorViewModel : ObservableObject` with load/save methods operating on `JsonNode`
+2. Create a `FooDocumentViewModel : DocumentViewModel` wrapping the editor VM
+3. Create a `FooEditor.axaml` view with bindings
+4. Create a `FooDocumentView.axaml` hosting the editor view
+5. Register the DataTemplate mapping in `MainWindow.axaml`
+6. Register the document type in `AihaoDockFactory`
+7. Add an open action in `MainWindowViewModel` + `BuiltInActions`

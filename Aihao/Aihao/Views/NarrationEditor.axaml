@@ -1,0 +1,245 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700"
+             x:Class="Aihao.Views.NarrationEditor"
+             x:DataType="vm:NarrationEditorViewModel">
+
+    <DockPanel>
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Padding="8,4" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Save" Command="{Binding SaveCommand}"/>
+                <Separator/>
+                <TextBlock Text="Script:" VerticalAlignment="Center"/>
+                <ComboBox ItemsSource="{Binding ScriptNames}"
+                          SelectedItem="{Binding SelectedScriptName}"
+                          MinWidth="150"/>
+                <Button Content="+ Script" Command="{Binding AddScriptCommand}"/>
+                <Separator/>
+                <TextBlock Text="Start Node:" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding StartNodeId}" MinWidth="100"/>
+                <Separator/>
+                <TextBlock Text="{Binding IsDirty, StringFormat='{}Modified: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main content: 3-pane + graph -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Top: 3-pane editor -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="3*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Node list -->
+                <DockPanel Grid.Column="0">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
+                        <Button Content="+ Node" Command="{Binding AddNodeCommand}" FontSize="11"/>
+                    </StackPanel>
+                    <ListBox ItemsSource="{Binding Nodes}"
+                             SelectedItem="{Binding SelectedNode}"
+                             Margin="4">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:NarrationNodeViewModel">
+                                <TextBlock Text="{Binding NodeId}" FontSize="12"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+
+                <GridSplitter Grid.Column="1" Width="4" ResizeBehavior="PreviousAndNext"/>
+
+                <!-- Center: Screenplay view (flow statements) -->
+                <DockPanel Grid.Column="2">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4"
+                                IsVisible="{Binding SelectedNode, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Text="Flow:" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <Button Content="+ Text" Command="{Binding SelectedNode.AddTextCommand}" FontSize="11"/>
+                        <Button Content="+ Speaker" Command="{Binding SelectedNode.AddSpeakerCommand}" FontSize="11"/>
+                        <Button Content="+ Choices" Command="{Binding SelectedNode.AddChoicesCommand}" FontSize="11"/>
+                        <Button Content="+ Events" Command="{Binding SelectedNode.AddEventsCommand}" FontSize="11"/>
+                        <Button Content="+ Goto" Command="{Binding SelectedNode.AddGotoCommand}" FontSize="11"/>
+                    </StackPanel>
+
+                    <ListBox ItemsSource="{Binding SelectedNode.Flow}"
+                             SelectedItem="{Binding SelectedNode.SelectedStatement}"
+                             Margin="4">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:NarrationStatementViewModel">
+                                <Border Padding="6,4" Margin="0,1" CornerRadius="4"
+                                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                        BorderThickness="1">
+                                    <DockPanel>
+                                        <!-- Kind badge -->
+                                        <Border DockPanel.Dock="Left" Padding="4,2" CornerRadius="3" Margin="0,0,8,0"
+                                                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                                            <TextBlock Text="{Binding KindLabel}" FontSize="10" FontWeight="Bold"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- Content based on kind -->
+                                        <Panel>
+                                            <!-- Text -->
+                                            <TextBox Text="{Binding Text}"
+                                                     IsVisible="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:StatementKind.Text}}"
+                                                     TextWrapping="Wrap" AcceptsReturn="True"
+                                                     FontFamily="Consolas,Menlo,monospace" FontSize="12"
+                                                     Watermark="Enter text..."
+                                                     BorderThickness="0" Background="Transparent"/>
+
+                                            <!-- Speaker -->
+                                            <StackPanel Orientation="Horizontal" Spacing="8"
+                                                        IsVisible="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:StatementKind.Speaker}}">
+                                                <Border Padding="6,2" CornerRadius="10"
+                                                        Background="{DynamicResource SystemAccentColor}">
+                                                    <TextBox Text="{Binding Speaker}" BorderThickness="0"
+                                                             Background="Transparent" FontSize="12" Watermark="speaker name"/>
+                                                </Border>
+                                                <TextBox Text="{Binding Animation}" FontSize="11"
+                                                         Watermark="animation" MinWidth="80"
+                                                         BorderThickness="0" Background="Transparent"/>
+                                            </StackPanel>
+
+                                            <!-- Goto -->
+                                            <StackPanel Orientation="Horizontal" Spacing="4"
+                                                        IsVisible="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:StatementKind.Goto}}">
+                                                <TextBlock Text="-->" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                <TextBox Text="{Binding GotoTarget}" MinWidth="120"
+                                                         BorderThickness="0" Background="Transparent"
+                                                         Watermark="target node" FontSize="12"/>
+                                            </StackPanel>
+
+                                            <!-- Choices -->
+                                            <ItemsControl ItemsSource="{Binding Choices}"
+                                                          IsVisible="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:StatementKind.Choices}}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:NarrationChoiceViewModel">
+                                                        <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,1">
+                                                            <TextBlock Text=">" VerticalAlignment="Center" Opacity="0.5"/>
+                                                            <TextBox Text="{Binding Text}" MinWidth="200"
+                                                                     BorderThickness="0" Background="Transparent"
+                                                                     FontSize="12" Watermark="choice text"/>
+                                                            <TextBlock Text="-->" VerticalAlignment="Center" Opacity="0.5"/>
+                                                            <TextBox Text="{Binding GotoTarget}" MinWidth="80"
+                                                                     BorderThickness="0" Background="Transparent"
+                                                                     FontSize="11" Watermark="goto"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <!-- Events -->
+                                            <ItemsControl ItemsSource="{Binding Events}"
+                                                          IsVisible="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:StatementKind.Events}}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:NarrationEventViewModel">
+                                                        <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,1">
+                                                            <Border Padding="4,1" CornerRadius="3"
+                                                                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                                                                <TextBox Text="{Binding Type}" FontSize="11"
+                                                                         BorderThickness="0" Background="Transparent"
+                                                                         Watermark="event.type"/>
+                                                            </Border>
+                                                            <TextBox Text="{Binding ParamsText}" FontSize="11"
+                                                                     BorderThickness="0" Background="Transparent"
+                                                                     Watermark="key=value, ..." MinWidth="200"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <!-- Texts (random) -->
+                                            <ItemsControl ItemsSource="{Binding Texts}"
+                                                          IsVisible="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:StatementKind.Texts}}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}" FontSize="12" Margin="0,1"
+                                                                   FontFamily="Consolas,Menlo,monospace"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Panel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+
+                <GridSplitter Grid.Column="3" Width="4" ResizeBehavior="PreviousAndNext"/>
+
+                <!-- Right: Node detail panel -->
+                <ScrollViewer Grid.Column="4" Margin="4">
+                    <StackPanel Spacing="8"
+                                IsVisible="{Binding SelectedNode, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Text="Node Detail" FontWeight="SemiBold" FontSize="14"/>
+
+                        <TextBlock Text="Node ID:" FontSize="11"/>
+                        <TextBox Text="{Binding SelectedNode.NodeId}"/>
+
+                        <TextBlock Text="Condition:" FontSize="11"/>
+                        <TextBox Text="{Binding SelectedNode.Condition}" Watermark="optional condition"/>
+
+                        <Separator Margin="0,8"/>
+
+                        <!-- Selected statement detail -->
+                        <TextBlock Text="Selected Statement" FontWeight="SemiBold" FontSize="14"
+                                   IsVisible="{Binding SelectedNode.SelectedStatement, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                        <StackPanel Spacing="4"
+                                    IsVisible="{Binding SelectedNode.SelectedStatement, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <TextBlock Text="{Binding SelectedNode.SelectedStatement.KindLabel, StringFormat='Type: {0}'}" FontSize="11"/>
+
+                            <TextBlock Text="Condition:" FontSize="11"/>
+                            <TextBox Text="{Binding SelectedNode.SelectedStatement.Condition}" Watermark="optional condition"/>
+                        </StackPanel>
+
+                        <Separator Margin="0,8"/>
+
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Button Content="Move Up" FontSize="11"
+                                    Command="{Binding SelectedNode.MoveUpCommand}"
+                                    CommandParameter="{Binding SelectedNode.SelectedStatement}"/>
+                            <Button Content="Move Down" FontSize="11"
+                                    Command="{Binding SelectedNode.MoveDownCommand}"
+                                    CommandParameter="{Binding SelectedNode.SelectedStatement}"/>
+                            <Button Content="Delete" FontSize="11"
+                                    Command="{Binding SelectedNode.RemoveStatementCommand}"
+                                    CommandParameter="{Binding SelectedNode.SelectedStatement}"/>
+                        </StackPanel>
+
+                        <Separator Margin="0,8"/>
+                        <Button Content="Delete Node"
+                                Command="{Binding RemoveNodeCommand}"
+                                CommandParameter="{Binding SelectedNode}"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <GridSplitter Grid.Row="1" Height="4" ResizeBehavior="PreviousAndNext"/>
+
+            <!-- Bottom: Script graph view -->
+            <Border Grid.Row="2" Margin="4">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="Script Graph" FontWeight="SemiBold" FontSize="12" Margin="4,2"/>
+                    <Canvas x:Name="GraphCanvas" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}"
+                            ClipToBounds="True"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>
