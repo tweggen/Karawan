@@ -15,12 +15,6 @@
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button Content="Save" Command="{Binding SaveCommand}"/>
                 <Separator/>
-                <TextBlock Text="Script:" VerticalAlignment="Center"/>
-                <ComboBox ItemsSource="{Binding ScriptNames}"
-                          SelectedItem="{Binding SelectedScriptName}"
-                          MinWidth="150"/>
-                <Button Content="+ Script" Command="{Binding AddScriptCommand}"/>
-                <Separator/>
                 <TextBlock Text="Start Node:" VerticalAlignment="Center"/>
                 <TextBox Text="{Binding StartNodeId}" MinWidth="100"/>
                 <Separator/>
@@ -47,20 +41,25 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: Node list -->
+                <!-- Left: Script/Node tree -->
                 <DockPanel Grid.Column="0">
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
+                        <Button Content="+ Script" Command="{Binding AddScriptCommand}" FontSize="11"/>
                         <Button Content="+ Node" Command="{Binding AddNodeCommand}" FontSize="11"/>
                     </StackPanel>
-                    <ListBox ItemsSource="{Binding Nodes}"
-                             SelectedItem="{Binding SelectedNode}"
-                             Margin="4">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:NarrationNodeViewModel">
+                    <TreeView ItemsSource="{Binding ScriptTree}"
+                              SelectedItem="{Binding SelectedTreeItem}"
+                              Margin="4">
+                        <TreeView.DataTemplates>
+                            <TreeDataTemplate DataType="vm:ScriptTreeItem"
+                                              ItemsSource="{Binding Nodes}">
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12"/>
+                            </TreeDataTemplate>
+                            <DataTemplate DataType="vm:NarrationNodeViewModel">
                                 <TextBlock Text="{Binding NodeId}" FontSize="12"/>
                             </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                        </TreeView.DataTemplates>
+                    </TreeView>
                 </DockPanel>
 
                 <GridSplitter Grid.Column="1" Width="4" ResizeBehavior="PreviousAndNext"/>

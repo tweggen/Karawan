@@ -17,6 +17,16 @@ public partial class NarrationTriggerViewModel : ObservableObject
 }
 
 /// <summary>
+/// Represents a script as a top-level tree item containing its nodes.
+/// </summary>
+public partial class ScriptTreeItem : ObservableObject
+{
+    [ObservableProperty] private string _name = "";
+    [ObservableProperty] private bool _isExpanded;
+    public ObservableCollection<NarrationNodeViewModel> Nodes { get; } = new();
+}
+
+/// <summary>
 /// Top-level editor ViewModel for the narration section.
 /// Manages all scripts, triggers, bindings, and startup config.
 /// </summary>
@@ -33,9 +43,19 @@ public partial class NarrationEditorViewModel : ObservableObject
     [ObservableProperty] private string? _selectedScriptName;
 
     /// <summary>
-    /// Nodes of the currently selected script.
+    /// Tree of scripts with their child nodes.
     /// </summary>
-    public ObservableCollection<NarrationNodeViewModel> Nodes { get; } = new();
+    public ObservableCollection<ScriptTreeItem> ScriptTree { get; } = new();
+
+    /// <summary>
+    /// The currently selected item in the tree (ScriptTreeItem or NarrationNodeViewModel).
+    /// </summary>
+    [ObservableProperty] private object? _selectedTreeItem;
+
+    /// <summary>
+    /// Nodes of the currently selected script (reference to the active ScriptTreeItem.Nodes).
+    /// </summary>
+    public ObservableCollection<NarrationNodeViewModel> Nodes { get; private set; } = new();
 
     [ObservableProperty] private NarrationNodeViewModel? _selectedNode;
 
@@ -54,16 +74,39 @@ public partial class NarrationEditorViewModel : ObservableObject
     /// </summary>
     [ObservableProperty] private string _startNodeId = "";
 
+    partial void OnSelectedTreeItemChanged(object? value)
+    {
+        switch (value)
+        {
+            case ScriptTreeItem scriptItem:
+                if (SelectedScriptName != scriptItem.Name)
+                    SelectedScriptName = scriptItem.Name;
+                scriptItem.IsExpanded = true;
+                break;
+            case NarrationNodeViewModel nodeVm:
+            {
+                // Find the parent script
+                var parent = ScriptTree.FirstOrDefault(s => s.Nodes.Contains(nodeVm));
+                if (parent != null && SelectedScriptName != parent.Name)
+                    SelectedScriptName = parent.Name;
+                SelectedNode = nodeVm;
+                break;
+            }
+        }
+    }
+
     public void LoadFromJson(JsonObject narrationObj)
     {
         _fullNarrationObj = narrationObj;
         ScriptNames.Clear();
-        Nodes.Clear();
+        ScriptTree.Clear();
+        Nodes = new ObservableCollection<NarrationNodeViewModel>();
         Triggers.Clear();
         _scriptObjects.Clear();
         _scriptStartNodes.Clear();
         SelectedScriptName = null;
         SelectedNode = null;
+        SelectedTreeItem = null;
 
         if (narrationObj.TryGetPropertyValue("startup", out var startupNode))
             Startup = startupNode?.GetValue<string>() ?? "";
@@ -85,7 +128,7 @@ public partial class NarrationEditorViewModel : ObservableObject
             }
         }
 
-        // Load script names
+        // Load script names and build tree
         if (narrationObj.TryGetPropertyValue("scripts", out var scriptsNode) && scriptsNode is JsonObject scriptsObj)
         {
             foreach (var kvp in scriptsObj)
@@ -97,34 +140,34 @@ public partial class NarrationEditorViewModel : ObservableObject
                     if (scriptObj.TryGetPropertyValue("start", out var startNode))
                         _scriptStartNodes[kvp.Key] = startNode?.GetValue<string>() ?? "";
                 }
+
+                var treeItem = new ScriptTreeItem { Name = kvp.Key };
+                PopulateTreeItemNodes(treeItem, kvp.Key);
+                ScriptTree.Add(treeItem);
             }
 
             // Select first script (or startup script)
             if (ScriptNames.Count > 0)
             {
-                SelectedScriptName = ScriptNames.Contains(Startup) ? Startup : ScriptNames[0];
+                var targetName = ScriptNames.Contains(Startup) ? Startup : ScriptNames[0];
+                SelectedScriptName = targetName;
+                var targetItem = ScriptTree.FirstOrDefault(s => s.Name == targetName);
+                if (targetItem != null)
+                {
+                    targetItem.IsExpanded = true;
+                    SelectedTreeItem = targetItem;
+                }
             }
         }
 
         IsDirty = false;
     }
 
-    partial void OnSelectedScriptNameChanged(string? value)
+    private void PopulateTreeItemNodes(ScriptTreeItem treeItem, string scriptName)
     {
-        LoadScript(value);
-    }
-
-    private void LoadScript(string? scriptName)
-    {
-        Nodes.Clear();
-        SelectedNode = null;
-        StartNodeId = "";
-
-        if (scriptName == null || !_scriptObjects.TryGetValue(scriptName, out var scriptObj))
+        treeItem.Nodes.Clear();
+        if (!_scriptObjects.TryGetValue(scriptName, out var scriptObj))
             return;
-
-        if (_scriptStartNodes.TryGetValue(scriptName, out var startId))
-            StartNodeId = startId;
 
         if (scriptObj.TryGetPropertyValue("nodes", out var nodesNode) && nodesNode is JsonObject nodesObj)
         {
@@ -136,9 +179,36 @@ public partial class NarrationEditorViewModel : ObservableObject
                     nodeVm.LoadFromJson(kvp.Key, nodeObj);
                     nodeVm.InitializeMarkup();
                     nodeVm.SetModifiedCallback(() => IsDirty = true);
-                    Nodes.Add(nodeVm);
+                    treeItem.Nodes.Add(nodeVm);
                 }
             }
+        }
+    }
+
+    partial void OnSelectedScriptNameChanged(string? value)
+    {
+        LoadScript(value);
+    }
+
+    private void LoadScript(string? scriptName)
+    {
+        SelectedNode = null;
+        StartNodeId = "";
+
+        if (scriptName == null || !_scriptObjects.TryGetValue(scriptName, out _))
+        {
+            Nodes = new ObservableCollection<NarrationNodeViewModel>();
+            return;
+        }
+
+        if (_scriptStartNodes.TryGetValue(scriptName, out var startId))
+            StartNodeId = startId;
+
+        // Point Nodes to the tree item's nodes collection
+        var treeItem = ScriptTree.FirstOrDefault(s => s.Name == scriptName);
+        if (treeItem != null)
+        {
+            Nodes = treeItem.Nodes;
         }
 
         // Select start node or first
@@ -167,6 +237,12 @@ public partial class NarrationEditorViewModel : ObservableObject
             SaveCurrentScriptToStorage();
         }
 
+        // Save all scripts from tree
+        foreach (var item in ScriptTree)
+        {
+            SaveScriptTreeItemToStorage(item);
+        }
+
         // Rebuild scripts object
         var scriptsObj = new JsonObject();
         foreach (var name in ScriptNames)
@@ -181,43 +257,65 @@ public partial class NarrationEditorViewModel : ObservableObject
         return result;
     }
 
-    private void SaveCurrentScriptToStorage()
+    private void SaveScriptTreeItemToStorage(ScriptTreeItem item)
     {
-        if (SelectedScriptName == null) return;
-
         var scriptObj = new JsonObject();
-        if (!string.IsNullOrEmpty(StartNodeId))
-            scriptObj["start"] = StartNodeId;
+        if (_scriptStartNodes.TryGetValue(item.Name, out var startId) && !string.IsNullOrEmpty(startId))
+            scriptObj["start"] = startId;
 
         var nodesObj = new JsonObject();
-        foreach (var node in Nodes)
+        foreach (var node in item.Nodes)
         {
             nodesObj[node.NodeId] = node.ToJson();
         }
         scriptObj["nodes"] = nodesObj;
 
-        _scriptObjects[SelectedScriptName] = scriptObj;
-        _scriptStartNodes[SelectedScriptName] = StartNodeId;
+        _scriptObjects[item.Name] = scriptObj;
+    }
+
+    private void SaveCurrentScriptToStorage()
+    {
+        if (SelectedScriptName == null) return;
+
+        var treeItem = ScriptTree.FirstOrDefault(s => s.Name == SelectedScriptName);
+        if (treeItem != null)
+        {
+            SaveScriptTreeItemToStorage(treeItem);
+            _scriptStartNodes[SelectedScriptName] = StartNodeId;
+        }
     }
 
     [RelayCommand]
     private void AddNode()
     {
-        var id = $"newNode{Nodes.Count + 1}";
+        if (SelectedScriptName == null) return;
+
+        var treeItem = ScriptTree.FirstOrDefault(s => s.Name == SelectedScriptName);
+        if (treeItem == null) return;
+
+        var id = $"newNode{treeItem.Nodes.Count + 1}";
         var node = new NarrationNodeViewModel { NodeId = id };
         node.SetModifiedCallback(() => IsDirty = true);
-        Nodes.Add(node);
+        treeItem.Nodes.Add(node);
+        treeItem.IsExpanded = true;
         SelectedNode = node;
+        SelectedTreeItem = node;
         IsDirty = true;
     }
 
     [RelayCommand]
     private void RemoveNode(NarrationNodeViewModel? node)
     {
-        if (node != null && Nodes.Remove(node))
+        if (node == null) return;
+
+        var parent = ScriptTree.FirstOrDefault(s => s.Nodes.Contains(node));
+        if (parent != null && parent.Nodes.Remove(node))
         {
             if (SelectedNode == node)
-                SelectedNode = Nodes.FirstOrDefault();
+            {
+                SelectedNode = parent.Nodes.FirstOrDefault();
+                SelectedTreeItem = SelectedNode ?? (object)parent;
+            }
             IsDirty = true;
         }
     }
@@ -229,7 +327,12 @@ public partial class NarrationEditorViewModel : ObservableObject
         ScriptNames.Add(name);
         _scriptObjects[name] = new JsonObject { ["start"] = "start", ["nodes"] = new JsonObject() };
         _scriptStartNodes[name] = "start";
+
+        var treeItem = new ScriptTreeItem { Name = name, IsExpanded = true };
+        ScriptTree.Add(treeItem);
+
         SelectedScriptName = name;
+        SelectedTreeItem = treeItem;
         IsDirty = true;
     }
 
