@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="NarrationMarkup"
+                  xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+  <Color name="Speaker" foreground="#FF4EC9B0" fontWeight="bold" />
+  <Color name="Choice" foreground="#FFDCDCAA" />
+  <Color name="Goto" foreground="#FFC586C0" fontWeight="bold" />
+  <Color name="Event" foreground="#FFCE9178" />
+
+  <RuleSet>
+    <!-- Speaker: @name -->
+    <Rule color="Speaker">^@.+$</Rule>
+    <!-- Choice: -# ... -->
+    <Rule color="Choice">^-#.+$</Rule>
+    <!-- Goto: -> target -->
+    <Rule color="Goto">^-&gt;.+$</Rule>
+    <!-- Event: !type ... -->
+    <Rule color="Event">^!.+$</Rule>
+  </RuleSet>
+</SyntaxDefinition>

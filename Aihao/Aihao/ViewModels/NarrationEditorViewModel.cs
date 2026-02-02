@@ -134,6 +134,7 @@ public partial class NarrationEditorViewModel : ObservableObject
                 {
                     var nodeVm = new NarrationNodeViewModel();
                     nodeVm.LoadFromJson(kvp.Key, nodeObj);
+                    nodeVm.InitializeMarkup();
                     nodeVm.SetModifiedCallback(() => IsDirty = true);
                     Nodes.Add(nodeVm);
                 }

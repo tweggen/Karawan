@@ -22,6 +22,7 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.8" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.8" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.8" Condition="'$(Configuration)' == 'Debug'" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     
@@ -54,6 +55,10 @@
     <ProjectReference Include="..\..\..\FbxSharp\FbxSharp.csproj" />
   </ItemGroup>
   
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\NarrationMarkup.xshd" />
+  </ItemGroup>
+
   <!-- Import JoyceCode shared project for Mix/View and other engine code -->
   <Import Project="..\..\JoyceCode\JoyceCode.projitems" Label="Shared" />
   

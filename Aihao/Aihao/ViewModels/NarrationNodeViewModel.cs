@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Aihao.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -13,16 +14,65 @@ public partial class NarrationNodeViewModel : ObservableObject
 {
     [ObservableProperty] private string _nodeId = "";
     [ObservableProperty] private string _condition = "";
+    [ObservableProperty] private string _markupText = "";
 
     public ObservableCollection<NarrationStatementViewModel> Flow { get; } = new();
 
     [ObservableProperty] private NarrationStatementViewModel? _selectedStatement;
 
     private Action? _onModified;
+    private bool _isUpdatingFromFlow;
+    private bool _isUpdatingFromMarkup;
 
     public void SetModifiedCallback(Action callback) => _onModified = callback;
 
     private void MarkModified() => _onModified?.Invoke();
+
+    /// <summary>
+    /// Rebuild MarkupText from the current Flow statements.
+    /// </summary>
+    public void UpdateMarkupFromFlow()
+    {
+        if (_isUpdatingFromMarkup) return;
+        _isUpdatingFromFlow = true;
+        try
+        {
+            MarkupText = NarrationMarkupSerializer.Serialize(Flow);
+        }
+        finally
+        {
+            _isUpdatingFromFlow = false;
+        }
+    }
+
+    /// <summary>
+    /// Parse markup text and replace Flow statements.
+    /// </summary>
+    public void UpdateFlowFromMarkup(string markup)
+    {
+        if (_isUpdatingFromFlow) return;
+        _isUpdatingFromMarkup = true;
+        try
+        {
+            var statements = NarrationMarkupParser.Parse(markup);
+            Flow.Clear();
+            foreach (var s in statements)
+                Flow.Add(s);
+            MarkModified();
+        }
+        finally
+        {
+            _isUpdatingFromMarkup = false;
+        }
+    }
+
+    /// <summary>
+    /// Called after LoadFromJson to initialize MarkupText.
+    /// </summary>
+    public void InitializeMarkup()
+    {
+        UpdateMarkupFromFlow();
+    }
 
     public void LoadFromJson(string nodeId, JsonObject obj)
     {
@@ -115,53 +165,51 @@ public partial class NarrationNodeViewModel : ObservableObject
     [RelayCommand]
     private void AddText()
     {
-        var stmt = new NarrationStatementViewModel { Kind = StatementKind.Text, Text = "New text..." };
-        InsertStatement(stmt);
+        InsertMarkupAtEnd("New text...");
     }
 
     [RelayCommand]
     private void AddSpeaker()
     {
-        var stmt = new NarrationStatementViewModel { Kind = StatementKind.Speaker, Speaker = "narrator" };
-        InsertStatement(stmt);
+        InsertMarkupAtEnd("@narrator");
     }
 
     [RelayCommand]
     private void AddChoices()
     {
-        var stmt = new NarrationStatementViewModel { Kind = StatementKind.Choices };
-        stmt.Choices.Add(new NarrationChoiceViewModel { Text = "Option 1" });
-        InsertStatement(stmt);
+        InsertMarkupAtEnd("-# Option 1");
     }
 
     [RelayCommand]
     private void AddEvents()
     {
-        var stmt = new NarrationStatementViewModel { Kind = StatementKind.Events };
-        stmt.Events.Add(new NarrationEventViewModel { Type = "event.type" });
-        InsertStatement(stmt);
+        InsertMarkupAtEnd("!event.type");
     }
 
     [RelayCommand]
     private void AddGoto()
     {
-        var stmt = new NarrationStatementViewModel { Kind = StatementKind.Goto, GotoTarget = "" };
-        InsertStatement(stmt);
+        InsertMarkupAtEnd("-> ");
     }
 
-    private void InsertStatement(NarrationStatementViewModel stmt)
+    private void InsertMarkupAtEnd(string text)
     {
-        var idx = SelectedStatement != null ? Flow.IndexOf(SelectedStatement) + 1 : Flow.Count;
-        Flow.Insert(idx, stmt);
-        SelectedStatement = stmt;
-        MarkModified();
+        var current = MarkupText ?? "";
+        if (current.Length > 0 && !current.EndsWith('\n'))
+            current += "\n";
+        current += "\n" + text;
+        MarkupText = current;
+        UpdateFlowFromMarkup(current);
     }
 
     [RelayCommand]
     private void RemoveStatement(NarrationStatementViewModel? stmt)
     {
         if (stmt != null && Flow.Remove(stmt))
+        {
+            UpdateMarkupFromFlow();
             MarkModified();
+        }
     }
 
     [RelayCommand]
@@ -172,6 +220,7 @@ public partial class NarrationNodeViewModel : ObservableObject
         if (idx > 0)
         {
             Flow.Move(idx, idx - 1);
+            UpdateMarkupFromFlow();
             MarkModified();
         }
     }
@@ -184,6 +233,7 @@ public partial class NarrationNodeViewModel : ObservableObject
         if (idx >= 0 && idx < Flow.Count - 1)
         {
             Flow.Move(idx, idx + 1);
+            UpdateMarkupFromFlow();
             MarkModified();
         }
     }
