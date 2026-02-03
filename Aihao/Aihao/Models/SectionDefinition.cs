@@ -24,11 +24,12 @@ public static class KnownSections
     public static readonly SectionDefinition Animations = new("animations", "/animations", "Animations", "🎞️");
     public static readonly SectionDefinition Defaults = new("defaults", "/defaults", "Defaults", "📝");
     public static readonly SectionDefinition Narration = new("narration", "/narration", "Narration", "🎭");
+    public static readonly SectionDefinition Characters = new("characters", "/characters", "Characters", "👤");
 
     public static readonly IReadOnlyList<SectionDefinition> All = new[]
     {
         GlobalSettings, Modules, Resources, Implementations, MapProviders,
-        MetaGen, Properties, Quests, Layers, Scenes, Textures, Animations, Defaults, Narration
+        MetaGen, Properties, Quests, Layers, Scenes, Textures, Animations, Defaults, Narration, Characters
     };
     
     public static SectionDefinition? GetById(string id)

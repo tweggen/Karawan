@@ -1,0 +1,26 @@
+{
+  "narrator": {
+    "displayName": "Narrator",
+    "description": "The omniscient narrator voice",
+    "portrait": null,
+    "properties": {}
+  },
+  "player": {
+    "displayName": "Player",
+    "description": "The player character",
+    "portrait": "portraits/player.png",
+    "entityTemplate": "playerCharacter",
+    "properties": {}
+  },
+  "niceguy": {
+    "displayName": "Nice Guy",
+    "description": "A friendly NPC who hangs around parks",
+    "portrait": "portraits/niceguy.png",
+    "entityTemplate": "npcGeneric",
+    "modelDescription": "models/characters/niceguy",
+    "properties": {
+      "voiceStyle": "friendly",
+      "faction": "civilian"
+    }
+  }
+}

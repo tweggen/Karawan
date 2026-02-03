@@ -21,6 +21,21 @@ public partial class NarrationEditor : UserControl
     private bool _isUpdatingEditor;
     private NarrationTokenPopupViewModel _popupVm = new();
 
+    /// <summary>
+    /// Character IDs available for speaker autocomplete.
+    /// Set from the parent document view model.
+    /// </summary>
+    public static readonly StyledProperty<IEnumerable<string>> CharacterIdsProperty =
+        AvaloniaProperty.Register<NarrationEditor, IEnumerable<string>>(
+            nameof(CharacterIds),
+            defaultValue: Enumerable.Empty<string>());
+
+    public IEnumerable<string> CharacterIds
+    {
+        get => GetValue(CharacterIdsProperty);
+        set => SetValue(CharacterIdsProperty, value);
+    }
+
     public NarrationEditor()
     {
         InitializeComponent();
@@ -241,7 +256,22 @@ public partial class NarrationEditor : UserControl
         _popupVm.AllItems.Clear();
         if (tokenType == "speaker")
         {
-            var speakers = new HashSet<string> { "narrator", "player" };
+            var speakers = new HashSet<string>();
+
+            // First, add character IDs from the characters section (primary source)
+            foreach (var charId in CharacterIds)
+            {
+                speakers.Add(charId);
+            }
+
+            // Fallback: add default speakers if no characters defined
+            if (speakers.Count == 0)
+            {
+                speakers.Add("narrator");
+                speakers.Add("player");
+            }
+
+            // Also include dynamically-discovered speakers from current script (for backwards compatibility)
             if (DataContext is NarrationEditorViewModel editorVm)
             {
                 foreach (var node in editorVm.Nodes)

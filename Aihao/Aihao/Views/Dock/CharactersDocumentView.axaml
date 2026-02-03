@@ -5,10 +5,9 @@
              xmlns:vm="using:Aihao.ViewModels.Docking"
              xmlns:views="using:Aihao.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
-             x:Class="Aihao.Views.Dock.NarrationDocumentView"
-             x:DataType="vm:NarrationDocumentViewModel">
+             x:Class="Aihao.Views.Dock.CharactersDocumentView"
+             x:DataType="vm:CharactersDocumentViewModel">
 
-    <views:NarrationEditor DataContext="{Binding Editor}"
-                           CharacterIds="{Binding CharacterIds}"/>
+    <views:CharacterEditor DataContext="{Binding Editor}"/>
 
 </UserControl>

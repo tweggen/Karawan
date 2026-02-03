@@ -3,7 +3,8 @@
     "list": [
       { "uri": "shaders/LIghtingVS.vert" },
       { "uri": "shaders/LIghtingFS.frag" },
-      { "uri": "shaders/ScreenFS.frag" }
+      { "uri": "shaders/ScreenFS.frag" },
+      { "uri": "griddata.json" }
     ]
   },
   

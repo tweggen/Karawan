@@ -64,6 +64,9 @@
         <DataTemplate DataType="{x:Type dock:NarrationDocumentViewModel}">
             <dockViews:NarrationDocumentView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type dock:CharactersDocumentViewModel}">
+            <dockViews:CharactersDocumentView/>
+        </DataTemplate>
     </Window.DataTemplates>
     
     <!-- Native Menu (appears in macOS menu bar, falls back to in-window on Windows/Linux) -->

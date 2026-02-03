@@ -1,0 +1,196 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels"
+             xmlns:views="using:Aihao.Views"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="Aihao.Views.CharacterEditor"
+             x:DataType="vm:CharacterEditorViewModel">
+
+    <DockPanel>
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                Padding="4">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Left: Actions -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+                    <Button Command="{Binding SaveCommand}"
+                            Content="Save"
+                            IsEnabled="{Binding IsDirty}"/>
+                    <Separator/>
+                    <Button Command="{Binding AddCharacterCommand}"
+                            Content="+ Add"/>
+                </StackPanel>
+
+                <!-- Center: Search -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                    <TextBox Text="{Binding SearchText}"
+                             Watermark="Search..."
+                             Width="200"/>
+                    <Button Command="{Binding ClearFilterCommand}"
+                            Content="X"
+                            ToolTip.Tip="Clear search"/>
+                </StackPanel>
+
+                <!-- Right: Stats -->
+                <TextBlock Grid.Column="2"
+                           VerticalAlignment="Center"
+                           Opacity="0.6">
+                    <Run Text="{Binding Characters.Count}"/>
+                    <Run Text=" characters"/>
+                </TextBlock>
+            </Grid>
+        </Border>
+
+        <!-- Main Content: Split View -->
+        <Grid ColumnDefinitions="300,5,*">
+            <!-- Left: Characters List -->
+            <DockPanel Grid.Column="0">
+                <TextBlock DockPanel.Dock="Top"
+                           Text="Characters"
+                           FontWeight="Bold"
+                           Margin="8,8,8,4"/>
+
+                <ListBox ItemsSource="{Binding FilteredCharacters}"
+                         SelectedItem="{Binding SelectedCharacter}"
+                         Margin="4">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CharacterViewModel">
+                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="2">
+                                <!-- Icon -->
+                                <TextBlock Grid.Column="0"
+                                           Text="@"
+                                           Margin="0,0,8,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Consolas, Menlo, monospace"/>
+
+                                <!-- Character info -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Id}"
+                                               FontWeight="SemiBold"
+                                               FontFamily="Consolas, Menlo, monospace"/>
+                                    <TextBlock Text="{Binding DisplayName}"
+                                               FontSize="11"
+                                               Opacity="0.7"/>
+                                </StackPanel>
+
+                                <!-- Modified indicator -->
+                                <Ellipse Grid.Column="2"
+                                         Width="6" Height="6"
+                                         Fill="Orange"
+                                         HorizontalAlignment="Right"
+                                         VerticalAlignment="Top"
+                                         Margin="0,-2,-2,0"
+                                         IsVisible="{Binding IsModified}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Duplicate"
+                                      Command="{Binding DuplicateCharacterCommand}"
+                                      CommandParameter="{Binding SelectedCharacter}"/>
+                            <Separator/>
+                            <MenuItem Header="Remove"
+                                      Command="{Binding RemoveCharacterCommand}"
+                                      CommandParameter="{Binding SelectedCharacter}"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
+                </ListBox>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+
+            <!-- Right: Character Editor -->
+            <Border Grid.Column="2"
+                    IsVisible="{Binding HasSelectedCharacter}">
+                <ScrollViewer>
+                    <StackPanel Margin="8" Spacing="16"
+                                DataContext="{Binding SelectedCharacter}"
+                                x:DataType="vm:CharacterViewModel">
+
+                        <!-- Character ID -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Character ID" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding Id}"
+                                     Watermark="unique_id"
+                                     FontFamily="Consolas, Menlo, monospace"/>
+                            <TextBlock Text="Unique identifier used in narration @speaker references"
+                                       FontSize="11"
+                                       Opacity="0.6"/>
+                        </StackPanel>
+
+                        <!-- Display Name -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Display Name" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding DisplayName}"
+                                     Watermark="Character Name"/>
+                            <TextBlock Text="Human-readable name shown in dialogs and UI"
+                                       FontSize="11"
+                                       Opacity="0.6"/>
+                        </StackPanel>
+
+                        <!-- Description -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Description" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding Description}"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     MinHeight="60"
+                                     Watermark="Editor-only description of this character"/>
+                        </StackPanel>
+
+                        <!-- Portrait -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Portrait" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding Portrait}"
+                                     Watermark="portraits/character.png"/>
+                            <TextBlock Text="Optional path to portrait image asset"
+                                       FontSize="11"
+                                       Opacity="0.6"/>
+                        </StackPanel>
+
+                        <!-- Entity Template -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Entity Template" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding EntityTemplate}"
+                                     Watermark="entityTemplateName"/>
+                            <TextBlock Text="Optional reference to entity creator template for runtime spawning"
+                                       FontSize="11"
+                                       Opacity="0.6"/>
+                        </StackPanel>
+
+                        <!-- Model Description -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Model Description" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding ModelDescription}"
+                                     Watermark="models/characters/name"/>
+                            <TextBlock Text="Optional reference to character 3D model"
+                                       FontSize="11"
+                                       Opacity="0.6"/>
+                        </StackPanel>
+
+                        <!-- Properties Section - using unified JsonPropertyEditor -->
+                        <Expander Header="Custom Properties" IsExpanded="True">
+                            <Border MinHeight="150" MaxHeight="400">
+                                <views:JsonPropertyEditor DataContext="{Binding PropertiesEditor}"/>
+                            </Border>
+                        </Expander>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Placeholder when nothing selected -->
+            <TextBlock Grid.Column="2"
+                       Text="Select a character to edit"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Opacity="0.5"
+                       IsVisible="{Binding HasNoSelectedCharacter}"/>
+        </Grid>
+    </DockPanel>
+</UserControl>

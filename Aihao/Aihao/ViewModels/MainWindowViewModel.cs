@@ -373,7 +373,20 @@ public partial class MainWindowViewModel : ObservableObject
                 {
                     var editor = new NarrationEditorViewModel();
                     editor.LoadFromJson(narrationObj);
-                    var doc = new NarrationDocumentViewModel(editor);
+                    // Get character IDs for speaker autocomplete
+                    var characterService = new Services.CharacterService(CurrentProject);
+                    var characterIds = characterService.GetCharacterIds();
+                    var doc = new NarrationDocumentViewModel(editor, characterIds);
+                    _dockFactory.AddDocument(doc);
+                }
+                break;
+
+            case "characters":
+                if (content is JsonObject charactersObj)
+                {
+                    var editor = new CharacterEditorViewModel();
+                    editor.LoadFromJson(charactersObj);
+                    var doc = new CharactersDocumentViewModel(editor);
                     _dockFactory.AddDocument(doc);
                 }
                 break;

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Mvvm.Controls;
 
@@ -205,13 +207,38 @@ public partial class NarrationDocumentViewModel : DocumentViewModel
 {
     public NarrationEditorViewModel Editor { get; }
 
-    public NarrationDocumentViewModel(NarrationEditorViewModel editor)
+    /// <summary>
+    /// Character IDs available for speaker autocomplete.
+    /// </summary>
+    public IEnumerable<string> CharacterIds { get; }
+
+    public NarrationDocumentViewModel(NarrationEditorViewModel editor, IEnumerable<string>? characterIds = null)
     {
         Editor = editor;
+        CharacterIds = characterIds ?? Enumerable.Empty<string>();
         Content = editor;
         Id = "Narration";
         Title = "Narration";
         Icon = "🎭";
+        CanClose = true;
+        CanPin = false;
+    }
+}
+
+/// <summary>
+/// Document for Characters editor
+/// </summary>
+public partial class CharactersDocumentViewModel : DocumentViewModel
+{
+    public CharacterEditorViewModel Editor { get; }
+
+    public CharactersDocumentViewModel(CharacterEditorViewModel editor)
+    {
+        Editor = editor;
+        Content = editor;
+        Id = "Characters";
+        Title = "Characters";
+        Icon = "👤";
         CanClose = true;
         CanPin = false;
     }
