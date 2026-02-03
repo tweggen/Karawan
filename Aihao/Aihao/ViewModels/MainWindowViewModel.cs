@@ -371,10 +371,18 @@ public partial class MainWindowViewModel : ObservableObject
             case "narration":
                 if (content is JsonObject narrationObj)
                 {
+                    // Extract speakers from narration and add any missing ones to characters
+                    var characterService = new Services.CharacterService(CurrentProject);
+                    var speakersInNarration = Services.CharacterService.ExtractSpeakersFromNarration(narrationObj);
+                    var addedCount = characterService.AddMissingCharacters(speakersInNarration);
+                    if (addedCount > 0)
+                    {
+                        Console.AddLine($"Added {addedCount} new character(s) from narration", LogLevel.Info);
+                    }
+
                     var editor = new NarrationEditorViewModel();
                     editor.LoadFromJson(narrationObj);
-                    // Get character IDs for speaker autocomplete
-                    var characterService = new Services.CharacterService(CurrentProject);
+                    // Get character IDs for speaker autocomplete (now includes newly added ones)
                     var characterIds = characterService.GetCharacterIds();
                     var doc = new NarrationDocumentViewModel(editor, characterIds);
                     _dockFactory.AddDocument(doc);

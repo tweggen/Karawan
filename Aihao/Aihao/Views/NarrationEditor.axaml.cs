@@ -288,8 +288,11 @@ public partial class NarrationEditor : UserControl
                     _popupVm.AllItems.Add(node.NodeId);
         }
 
-        _popupVm.SearchText = currentToken;
+        // Clear search to show all items, but pre-select the current token
+        _popupVm.SearchText = "";
         _popupVm.UpdateFilter();
+        // Pre-select the current token (OnItemSelected is null at this point, so no callback fires)
+        _popupVm.SelectedItem = string.IsNullOrEmpty(currentToken) ? null : currentToken;
         _popupVm.OnItemSelected = selected =>
         {
             doc.Replace(tokenStart, tokenEnd - tokenStart, selected);
