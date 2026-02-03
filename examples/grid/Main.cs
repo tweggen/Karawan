@@ -36,8 +36,7 @@ public class Main : AModule
 
         // Activate the scene
         var scene = new Scene();
-        _engine.AddModule(scene);
-        scene.ModuleActivate();
+        _engine.AddModule(scene); 
         
         // Sound API setup done (even if we don't use sound)
         I.Get<Boom.ISoundAPI>()?.SetupDone();

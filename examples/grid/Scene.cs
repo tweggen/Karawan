@@ -52,10 +52,18 @@ public class Scene : AModule, IScene, IInputPart
     private Entity _eCamera;
     private Entity _eDirectionalLight;
     private Entity _eAmbientLight;
+    private Entity _ePointLight;
 
     private GridData _gridData;
     private int _currentFrameIndex = 0;
+    private float _rotationAngle = 0f;
     private InstanceDesc _cubeInstanceDesc;
+
+    public override IEnumerable<IModuleDependency> ModuleDepends() =>
+        new List<IModuleDependency>()
+        {
+            new SharedModule<InputEventPipeline>()
+        };
 
     /// <summary>
     /// Create the cube mesh with normals.
@@ -186,8 +194,11 @@ public class Scene : AModule, IScene, IInputPart
         float z = row * ColumnBaseSize + offsetZ;
         float y = height / 2f; // Bottom of cube at y=0
 
-        // Scale Y by height, translate to position
-        return Matrix4x4.CreateScale(1f, height, 1f) * Matrix4x4.CreateTranslation(x, y, z);
+        // Scale X/Z to 90% for 10% gap between columns, Y by height
+        // Then translate to position, then rotate entire grid around Y axis
+        return Matrix4x4.CreateScale(0.9f, height, 0.9f)
+            * Matrix4x4.CreateTranslation(x, y, z)
+            * Matrix4x4.CreateRotationY(_rotationAngle);
     }
 
     /// <summary>
@@ -238,6 +249,24 @@ public class Scene : AModule, IScene, IInputPart
     {
         if (_gridData == null || _gridData.Frames.Length == 0) return;
         _currentFrameIndex = (_currentFrameIndex - 1 + _gridData.Frames.Length) % _gridData.Frames.Length;
+        _engine.QueueMainThreadAction(_updateGridDisplay);
+    }
+
+    /// <summary>
+    /// Rotate the grid clockwise (when viewed from above).
+    /// </summary>
+    private void _rotateRight()
+    {
+        _rotationAngle -= 0.1f; // ~5.7 degrees
+        _engine.QueueMainThreadAction(_updateGridDisplay);
+    }
+
+    /// <summary>
+    /// Rotate the grid counter-clockwise (when viewed from above).
+    /// </summary>
+    private void _rotateLeft()
+    {
+        _rotationAngle += 0.1f; // ~5.7 degrees
         _engine.QueueMainThreadAction(_updateGridDisplay);
     }
 
@@ -298,13 +327,20 @@ public class Scene : AModule, IScene, IInputPart
         _eAmbientLight.Set(new Transform3ToWorld(0x00000001, Transform3ToWorld.Visible, Matrix4x4.Identity));
         _eAmbientLight.Set(new AmbientLight(new Vector4(0.3f, 0.3f, 0.3f, 1f)));
 
+        // Create point light above the grid
+        _ePointLight = _engine.CreateEntity("GridPointLight");
+        Vector3 pointLightPos = new Vector3(0f, 10f, 0f);
+        _ePointLight.Set(new Transform3ToWorld(0x00000001, Transform3ToWorld.Visible,
+            Matrix4x4.CreateTranslation(pointLightPos)));
+        _ePointLight.Set(new PointLight(new Vector4(1f, 1f, 1f, 1f), 50f));
+
         // Register for frame updates
-        I.Get<SceneSequencer>().AddScene(0f, this);
+        // I.Get<SceneSequencer>().AddScene(0f, this);
 
         // Display the first frame
         _updateGridDisplay();
 
-        Trace("Grid scene setup complete. Use Left/Right arrows to navigate frames.");
+        Trace("Grid scene setup complete. Up/Down: navigate frames, Left/Right: rotate.");
     }
 
     public void InputPartOnInputEvent(Event ev)
@@ -313,12 +349,20 @@ public class Scene : AModule, IScene, IInputPart
         {
             switch (ev.Code)
             {
-                case "(cursorright)":
+                case "(cursorup)":
                     _nextFrame();
                     ev.IsHandled = true;
                     break;
-                case "(cursorleft)":
+                case "(cursordown)":
                     _previousFrame();
+                    ev.IsHandled = true;
+                    break;
+                case "(cursorright)":
+                    _rotateRight();
+                    ev.IsHandled = true;
+                    break;
+                case "(cursorleft)":
+                    _rotateLeft();
                     ev.IsHandled = true;
                     break;
             }
@@ -341,7 +385,7 @@ public class Scene : AModule, IScene, IInputPart
         Trace("Grid Scene activating...");
 
         // Register for input events
-        I.Get<InputEventPipeline>().AddInputPart(InputZOrder, this);
+        M<InputEventPipeline>().AddInputPart(InputZOrder, this);
 
         // Setup must run on the logical thread
         _engine.QueueMainThreadAction(_setupScene);
@@ -352,7 +396,7 @@ public class Scene : AModule, IScene, IInputPart
         Trace("Grid Scene deactivating...");
 
         // Unregister from input events
-        I.Get<InputEventPipeline>().RemoveInputPart(this);
+        M<InputEventPipeline>().RemoveInputPart(this);
 
         _engine.QueueMainThreadAction(() =>
         {
@@ -370,6 +414,7 @@ public class Scene : AModule, IScene, IInputPart
             if (_eCamera.IsAlive) _eCamera.Dispose();
             if (_eDirectionalLight.IsAlive) _eDirectionalLight.Dispose();
             if (_eAmbientLight.IsAlive) _eAmbientLight.Dispose();
+            if (_ePointLight.IsAlive) _ePointLight.Dispose();
         });
 
         base.OnModuleDeactivate();
