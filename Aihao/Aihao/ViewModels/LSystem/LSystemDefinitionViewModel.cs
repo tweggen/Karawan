@@ -11,6 +11,8 @@ namespace Aihao.ViewModels.LSystem;
 public partial class LSystemDefinitionViewModel : ObservableObject
 {
     [ObservableProperty] private string _name = "";
+    [ObservableProperty] private string _description = "";
+    [ObservableProperty] private string _type = "";
 
     /// <summary>
     /// The seed parts (initial state).
@@ -51,6 +53,8 @@ public partial class LSystemDefinitionViewModel : ObservableObject
     }
 
     partial void OnNameChanged(string value) => _onModified?.Invoke();
+    partial void OnDescriptionChanged(string value) => _onModified?.Invoke();
+    partial void OnTypeChanged(string value) => _onModified?.Invoke();
 
     partial void OnSelectedSeedPartChanged(LSystemPartViewModel? value)
     {
@@ -70,6 +74,8 @@ public partial class LSystemDefinitionViewModel : ObservableObject
     public void LoadFromJson(string name, JsonObject obj)
     {
         Name = name;
+        Description = obj["description"]?.GetValue<string>() ?? "";
+        Type = obj["type"]?.GetValue<string>() ?? "";
 
         Seed.Clear();
         if (obj.TryGetPropertyValue("seed", out var seedNode) && seedNode is JsonObject seedObj)
@@ -123,6 +129,11 @@ public partial class LSystemDefinitionViewModel : ObservableObject
     public JsonObject ToJson()
     {
         var obj = new JsonObject { ["name"] = Name };
+
+        if (!string.IsNullOrEmpty(Description))
+            obj["description"] = Description;
+
+        // Note: "type" is handled by LSystemEditorViewModel.ToJson() for parametric systems
 
         // Seed
         var seedPartsArr = new JsonArray();

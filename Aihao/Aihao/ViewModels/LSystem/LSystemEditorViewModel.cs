@@ -152,6 +152,7 @@ public partial class LSystemEditorViewModel : ObservableObject
 
     /// <summary>
     /// All L-system configurations (for parametric systems).
+    /// Maps definition name to its embedded config (for parametric L-systems).
     /// </summary>
     public ObservableCollection<LSystemConfigViewModel> Configs { get; } = new();
 
@@ -166,6 +167,9 @@ public partial class LSystemEditorViewModel : ObservableObject
 
     // Internal storage
     private JsonObject? _fullLSystemsObj;
+
+    // Track whether we loaded from array format (true) or object format (false)
+    private bool _usesArrayFormat;
 
     partial void OnSelectedTreeItemChanged(object? value)
     {
@@ -199,36 +203,73 @@ public partial class LSystemEditorViewModel : ObservableObject
         SelectedConfig = null;
         CurrentEditor = null;
 
-        // Load definitions
-        if (lsystemsObj.TryGetPropertyValue("definitions", out var defsNode) && defsNode is JsonObject defsObj)
+        // Try array format first (actual file format: { "lsystems": [...] })
+        if (lsystemsObj.TryGetPropertyValue("lsystems", out var lsystemsNode) && lsystemsNode is JsonArray lsystemsArr)
         {
-            foreach (var kvp in defsObj)
+            _usesArrayFormat = true;
+            foreach (var item in lsystemsArr)
             {
-                if (kvp.Value is JsonObject defObj)
+                if (item is JsonObject itemObj)
                 {
+                    var name = itemObj["name"]?.GetValue<string>() ?? "";
+                    var type = itemObj["type"]?.GetValue<string>() ?? "";
+
+                    // All items are definitions (they have seed, rules, macros)
                     var def = new LSystemDefinitionViewModel();
-                    def.LoadFromJson(kvp.Key, defObj);
+                    def.LoadFromJson(name, itemObj);
                     def.SetModifiedCallback(() => IsDirty = true);
                     Definitions.Add(def);
 
-                    TreeItems.Add(new LSystemTreeItem { Name = kvp.Key, Type = "definition" });
+                    TreeItems.Add(new LSystemTreeItem { Name = name, Type = "definition" });
+
+                    // Parametric items also have embedded config
+                    if (type == "parametric" && itemObj.TryGetPropertyValue("config", out var cfgNode) && cfgNode is JsonObject cfgObj)
+                    {
+                        var cfg = new LSystemConfigViewModel();
+                        cfg.LoadFromJson(name, cfgObj);
+                        cfg.SetModifiedCallback(() => IsDirty = true);
+                        Configs.Add(cfg);
+                        // Note: config is associated with the definition by name, not a separate tree item
+                    }
                 }
             }
         }
-
-        // Load configurations
-        if (lsystemsObj.TryGetPropertyValue("configs", out var cfgsNode) && cfgsNode is JsonObject cfgsObj)
+        // Fall back to object format (for compatibility: { "definitions": {...}, "configs": {...} })
+        else
         {
-            foreach (var kvp in cfgsObj)
-            {
-                if (kvp.Value is JsonObject cfgObj)
-                {
-                    var cfg = new LSystemConfigViewModel();
-                    cfg.LoadFromJson(kvp.Key, cfgObj);
-                    cfg.SetModifiedCallback(() => IsDirty = true);
-                    Configs.Add(cfg);
+            _usesArrayFormat = false;
 
-                    TreeItems.Add(new LSystemTreeItem { Name = kvp.Key, Type = "config" });
+            // Load definitions
+            if (lsystemsObj.TryGetPropertyValue("definitions", out var defsNode) && defsNode is JsonObject defsObj)
+            {
+                foreach (var kvp in defsObj)
+                {
+                    if (kvp.Value is JsonObject defObj)
+                    {
+                        var def = new LSystemDefinitionViewModel();
+                        def.LoadFromJson(kvp.Key, defObj);
+                        def.SetModifiedCallback(() => IsDirty = true);
+                        Definitions.Add(def);
+
+                        TreeItems.Add(new LSystemTreeItem { Name = kvp.Key, Type = "definition" });
+                    }
+                }
+            }
+
+            // Load configurations
+            if (lsystemsObj.TryGetPropertyValue("configs", out var cfgsNode) && cfgsNode is JsonObject cfgsObj)
+            {
+                foreach (var kvp in cfgsObj)
+                {
+                    if (kvp.Value is JsonObject cfgObj)
+                    {
+                        var cfg = new LSystemConfigViewModel();
+                        cfg.LoadFromJson(kvp.Key, cfgObj);
+                        cfg.SetModifiedCallback(() => IsDirty = true);
+                        Configs.Add(cfg);
+
+                        TreeItems.Add(new LSystemTreeItem { Name = kvp.Key, Type = "config" });
+                    }
                 }
             }
         }
@@ -244,25 +285,47 @@ public partial class LSystemEditorViewModel : ObservableObject
 
     public JsonObject ToJson()
     {
-        var result = _fullLSystemsObj?.DeepClone() as JsonObject ?? new JsonObject();
+        var result = new JsonObject();
 
-        // Write definitions
-        var defsObj = new JsonObject();
-        foreach (var def in Definitions)
+        if (_usesArrayFormat)
         {
-            defsObj[def.Name] = def.ToJson();
-        }
-        result["definitions"] = defsObj;
-
-        // Write configs
-        if (Configs.Count > 0)
-        {
-            var cfgsObj = new JsonObject();
-            foreach (var cfg in Configs)
+            // Write in array format: { "lsystems": [...] }
+            var lsystemsArr = new JsonArray();
+            foreach (var def in Definitions)
             {
-                cfgsObj[cfg.Name] = cfg.ToJson();
+                var defJson = def.ToJson();
+
+                // Check if this definition has an associated config (parametric L-system)
+                var cfg = Configs.FirstOrDefault(c => c.Name == def.Name);
+                if (cfg != null)
+                {
+                    defJson["type"] = "parametric";
+                    defJson["config"] = cfg.ToJson();
+                }
+
+                lsystemsArr.Add(defJson);
             }
-            result["configs"] = cfgsObj;
+            result["lsystems"] = lsystemsArr;
+        }
+        else
+        {
+            // Write in object format: { "definitions": {...}, "configs": {...} }
+            var defsObj = new JsonObject();
+            foreach (var def in Definitions)
+            {
+                defsObj[def.Name] = def.ToJson();
+            }
+            result["definitions"] = defsObj;
+
+            if (Configs.Count > 0)
+            {
+                var cfgsObj = new JsonObject();
+                foreach (var cfg in Configs)
+                {
+                    cfgsObj[cfg.Name] = cfg.ToJson();
+                }
+                result["configs"] = cfgsObj;
+            }
         }
 
         return result;
