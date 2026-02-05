@@ -399,6 +399,16 @@ public partial class MainWindowViewModel : ObservableObject
                 }
                 break;
 
+            case "lsystems":
+                if (content is JsonObject lsystemsObj)
+                {
+                    var editor = new LSystem.LSystemEditorViewModel();
+                    editor.LoadFromJson(lsystemsObj);
+                    var doc = new LSystemsDocumentViewModel(editor);
+                    _dockFactory.AddDocument(doc);
+                }
+                break;
+
             default:
                 // Open as generic JSON editor
                 OpenJsonEditor(definition.DisplayName, content);

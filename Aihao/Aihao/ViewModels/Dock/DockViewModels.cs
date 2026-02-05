@@ -245,6 +245,25 @@ public partial class CharactersDocumentViewModel : DocumentViewModel
 }
 
 /// <summary>
+/// Document for L-Systems editor
+/// </summary>
+public partial class LSystemsDocumentViewModel : DocumentViewModel
+{
+    public LSystem.LSystemEditorViewModel Editor { get; }
+
+    public LSystemsDocumentViewModel(LSystem.LSystemEditorViewModel editor)
+    {
+        Editor = editor;
+        Content = editor;
+        Id = "LSystems";
+        Title = "L-Systems";
+        Icon = "🌳";
+        CanClose = true;
+        CanPin = false;
+    }
+}
+
+/// <summary>
 /// Generic document for JSON/text file editing
 /// </summary>
 public partial class FileDocumentViewModel : DocumentViewModel

@@ -306,6 +306,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Rule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\State.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\System.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\LSystemDefinition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\LSystemLoader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Expressions\ExprNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Expressions\ExpressionContext.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Expressions\ExpressionEvaluator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Expressions\ExpressionLexer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Expressions\ExpressionParser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Expressions\LuaExpressionEvaluator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SectionMeter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SegmentNavigator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SimpleNavigationBehavior.cs" />

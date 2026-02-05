@@ -19,5 +19,6 @@
   "textures": { "__include__": "nogame.textures.json" },
   "animations": { "__include__": "nogame.animations.json" },
   "narration": { "__include__": "nogame.narration.json" },
-  "characters": { "__include__": "nogame.characters.json" }
+  "characters": { "__include__": "nogame.characters.json" },
+  "lsystems": { "__include__": "nogame.lsystems.json" }
 }

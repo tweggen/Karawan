@@ -1,0 +1,320 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels.LSystem"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700"
+             x:Class="Aihao.Views.LSystemEditor"
+             x:DataType="vm:LSystemEditorViewModel">
+
+    <DockPanel>
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Padding="8,4" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Save" Command="{Binding SaveCommand}"/>
+                <Separator/>
+                <Button Content="+ Definition" Command="{Binding AddDefinitionCommand}"/>
+                <Button Content="+ Config" Command="{Binding AddConfigCommand}"/>
+                <Button Content="Remove" Command="{Binding RemoveSelectedCommand}"/>
+                <Separator/>
+                <TextBlock Text="{Binding IsDirty, StringFormat='{}Modified: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main content: 3-pane layout -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="280"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: L-System tree -->
+            <DockPanel Grid.Column="0">
+                <TextBlock DockPanel.Dock="Top" Text="L-Systems" FontWeight="SemiBold" Margin="8,8,8,4"/>
+                <ListBox ItemsSource="{Binding TreeItems}"
+                         SelectedItem="{Binding SelectedTreeItem}"
+                         Margin="4">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="vm:LSystemTreeItem">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding Type}" FontSize="10" Opacity="0.6" Width="60"/>
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="1" Width="4" ResizeBehavior="PreviousAndNext"/>
+
+            <!-- Center: Definition/Config editor -->
+            <ScrollViewer Grid.Column="2" Margin="4">
+                <StackPanel Spacing="12">
+                    <!-- Definition Editor -->
+                    <StackPanel IsVisible="{Binding SelectedDefinition, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Text="L-System Definition" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+
+                        <TextBlock Text="Name:" FontSize="11"/>
+                        <TextBox Text="{Binding SelectedDefinition.Name}" Margin="0,0,0,12"/>
+
+                        <!-- Seed Parts -->
+                        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,12">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,8">
+                                    <TextBlock Text="Seed Parts" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <Button DockPanel.Dock="Right" Content="+ Part"
+                                            Command="{Binding SelectedDefinition.AddSeedPartCommand}"
+                                            HorizontalAlignment="Right" FontSize="11"/>
+                                </DockPanel>
+                                <ItemsControl ItemsSource="{Binding SelectedDefinition.Seed}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:LSystemPartViewModel">
+                                            <Border Background="{DynamicResource SystemControlBackgroundChromeLowBrush}"
+                                                    CornerRadius="2" Padding="4" Margin="0,2">
+                                                <DockPanel>
+                                                    <Button DockPanel.Dock="Right" Content="X" FontSize="10"
+                                                            Command="{Binding $parent[ItemsControl].DataContext.SelectedDefinition.RemoveSeedPartCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                    <TextBox Text="{Binding Name}" Margin="0,0,4,0"/>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Rules -->
+                        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,12">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,8">
+                                    <TextBlock Text="Rules" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <Button DockPanel.Dock="Right" Content="+ Rule"
+                                            Command="{Binding SelectedDefinition.AddRuleCommand}"
+                                            HorizontalAlignment="Right" FontSize="11"/>
+                                </DockPanel>
+                                <ListBox ItemsSource="{Binding SelectedDefinition.Rules}"
+                                         SelectedItem="{Binding SelectedDefinition.SelectedRule}"
+                                         MaxHeight="200">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate DataType="vm:LSystemRuleViewModel">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding Match}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Condition}" Opacity="0.6"
+                                                           IsVisible="{Binding Condition, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Macros -->
+                        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                BorderThickness="1" CornerRadius="4" Padding="8">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,8">
+                                    <TextBlock Text="Macros" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <Button DockPanel.Dock="Right" Content="+ Macro"
+                                            Command="{Binding SelectedDefinition.AddMacroCommand}"
+                                            HorizontalAlignment="Right" FontSize="11"/>
+                                </DockPanel>
+                                <ListBox ItemsSource="{Binding SelectedDefinition.Macros}"
+                                         SelectedItem="{Binding SelectedDefinition.SelectedMacro}"
+                                         MaxHeight="150">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate DataType="vm:LSystemRuleViewModel">
+                                            <TextBlock Text="{Binding Match}" FontWeight="SemiBold"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Config Editor -->
+                    <StackPanel IsVisible="{Binding SelectedConfig, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Text="L-System Configuration" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+
+                        <TextBlock Text="Name:" FontSize="11"/>
+                        <TextBox Text="{Binding SelectedConfig.Name}" Margin="0,0,0,12"/>
+
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,0,0,12">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Story Height:" FontSize="11" Margin="0,4"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedConfig.StoryHeight}" Margin="4"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Min Segment Stories:" FontSize="11" Margin="0,4"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedConfig.MinSegmentStories}" Margin="4"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Shrink Amount:" FontSize="11" Margin="0,4"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedConfig.ShrinkAmount}" Margin="4"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Segment Probability:" FontSize="11" Margin="0,4"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedConfig.SegmentProbability}" Margin="4"/>
+                        </Grid>
+
+                        <!-- Materials -->
+                        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                BorderThickness="1" CornerRadius="4" Padding="8">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,8">
+                                    <TextBlock Text="Materials" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <Button DockPanel.Dock="Right" Content="+ Material"
+                                            Command="{Binding SelectedConfig.AddMaterialCommand}"
+                                            HorizontalAlignment="Right" FontSize="11"/>
+                                </DockPanel>
+                                <ItemsControl ItemsSource="{Binding SelectedConfig.Materials}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:LSystemParamViewModel">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2">
+                                                <TextBox Grid.Column="0" Text="{Binding Key}" Width="80" Margin="0,0,4,0"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Value}"/>
+                                                <Button Grid.Column="2" Content="X" FontSize="10" Margin="4,0,0,0"
+                                                        Command="{Binding $parent[ItemsControl].DataContext.SelectedConfig.RemoveMaterialCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <GridSplitter Grid.Column="3" Width="4" ResizeBehavior="PreviousAndNext"/>
+
+            <!-- Right: Rule/Macro detail panel -->
+            <ScrollViewer Grid.Column="4" Margin="4">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Rule Detail" FontWeight="SemiBold" FontSize="14"/>
+
+                    <!-- Rule detail when a rule is selected -->
+                    <StackPanel IsVisible="{Binding SelectedDefinition.SelectedRule, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Text="Match Pattern:" FontSize="11"/>
+                        <TextBox Text="{Binding SelectedDefinition.SelectedRule.Match}" Margin="0,0,0,8"/>
+
+                        <TextBlock Text="Condition:" FontSize="11"/>
+                        <TextBox Text="{Binding SelectedDefinition.SelectedRule.Condition}"
+                                 Watermark="e.g. $r > 0.02 &amp;&amp; $l > 0.1" Margin="0,0,0,8"/>
+
+                        <TextBlock Text="Probability:" FontSize="11"/>
+                        <TextBox Text="{Binding SelectedDefinition.SelectedRule.Probability}" Margin="0,0,0,8"/>
+
+                        <Separator Margin="0,8"/>
+
+                        <!-- Transform parts -->
+                        <DockPanel Margin="0,0,0,8">
+                            <TextBlock Text="Transform Parts" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <Button DockPanel.Dock="Right" Content="+ Part"
+                                    Command="{Binding SelectedDefinition.SelectedRule.AddPartCommand}"
+                                    HorizontalAlignment="Right" FontSize="11"/>
+                        </DockPanel>
+
+                        <ItemsControl ItemsSource="{Binding SelectedDefinition.SelectedRule.Transform}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:LSystemPartViewModel">
+                                    <Border Background="{DynamicResource SystemControlBackgroundChromeLowBrush}"
+                                            CornerRadius="2" Padding="4" Margin="0,2">
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2">
+                                                    <Button Content="^" FontSize="10"
+                                                            Command="{Binding $parent[ItemsControl].DataContext.SelectedDefinition.SelectedRule.MovePartUpCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                    <Button Content="v" FontSize="10"
+                                                            Command="{Binding $parent[ItemsControl].DataContext.SelectedDefinition.SelectedRule.MovePartDownCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                    <Button Content="X" FontSize="10"
+                                                            Command="{Binding $parent[ItemsControl].DataContext.SelectedDefinition.SelectedRule.RemovePartCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                </StackPanel>
+                                                <TextBox Text="{Binding Name}" Margin="0,0,4,0"/>
+                                            </DockPanel>
+                                            <!-- Parameters -->
+                                            <ItemsControl ItemsSource="{Binding Parameters}" Margin="8,4,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="vm:LSystemParamViewModel">
+                                                        <Grid ColumnDefinitions="60,*" Margin="0,1">
+                                                            <TextBlock Grid.Column="0" Text="{Binding Key, StringFormat='{}{0}:'}"
+                                                                       FontSize="10" Opacity="0.8"/>
+                                                            <TextBox Grid.Column="1" Text="{Binding Value}" FontSize="10"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Separator Margin="0,8"/>
+                        <Button Content="Remove Rule" FontSize="11"
+                                Command="{Binding SelectedDefinition.RemoveRuleCommand}"
+                                CommandParameter="{Binding SelectedDefinition.SelectedRule}"/>
+                    </StackPanel>
+
+                    <!-- Macro detail when a macro is selected -->
+                    <StackPanel IsVisible="{Binding SelectedDefinition.SelectedMacro, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Text="Macro Detail" FontWeight="SemiBold" FontSize="14" Margin="0,8,0,0"/>
+
+                        <TextBlock Text="Match Pattern:" FontSize="11"/>
+                        <TextBox Text="{Binding SelectedDefinition.SelectedMacro.Match}" Margin="0,0,0,8"/>
+
+                        <Separator Margin="0,8"/>
+
+                        <!-- Transform parts -->
+                        <DockPanel Margin="0,0,0,8">
+                            <TextBlock Text="Transform Parts" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <Button DockPanel.Dock="Right" Content="+ Part"
+                                    Command="{Binding SelectedDefinition.SelectedMacro.AddPartCommand}"
+                                    HorizontalAlignment="Right" FontSize="11"/>
+                        </DockPanel>
+
+                        <ItemsControl ItemsSource="{Binding SelectedDefinition.SelectedMacro.Transform}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:LSystemPartViewModel">
+                                    <Border Background="{DynamicResource SystemControlBackgroundChromeLowBrush}"
+                                            CornerRadius="2" Padding="4" Margin="0,2">
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <Button DockPanel.Dock="Right" Content="X" FontSize="10"
+                                                        Command="{Binding $parent[ItemsControl].DataContext.SelectedDefinition.SelectedMacro.RemovePartCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                                <TextBox Text="{Binding Name}" Margin="0,0,4,0"/>
+                                            </DockPanel>
+                                            <!-- Parameters -->
+                                            <ItemsControl ItemsSource="{Binding Parameters}" Margin="8,4,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="vm:LSystemParamViewModel">
+                                                        <Grid ColumnDefinitions="60,*" Margin="0,1">
+                                                            <TextBlock Grid.Column="0" Text="{Binding Key, StringFormat='{}{0}:'}"
+                                                                       FontSize="10" Opacity="0.8"/>
+                                                            <TextBox Grid.Column="1" Text="{Binding Value}" FontSize="10"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Separator Margin="0,8"/>
+                        <Button Content="Remove Macro" FontSize="11"
+                                Command="{Binding SelectedDefinition.RemoveMacroCommand}"
+                                CommandParameter="{Binding SelectedDefinition.SelectedMacro}"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</UserControl>
