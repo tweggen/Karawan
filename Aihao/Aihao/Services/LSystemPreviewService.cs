@@ -1,14 +1,16 @@
 using System;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
+using engine.joyce;
 using Splash.Silk;
 
 namespace Aihao.Services;
 
 /// <summary>
 /// Manages L-System generation on a background thread.
-/// Delegates all engine/rendering work to PreviewHelper (which lives in Splash.Silk
-/// to avoid type conflicts with the shared JoyceCode project).
+/// Now that Aihao references Joyce normally, all JoyceCode types
+/// (MatMesh, InstanceDesc, etc.) are the same types Splash uses.
 /// </summary>
 public sealed class LSystemPreviewService
 {
@@ -22,7 +24,34 @@ public sealed class LSystemPreviewService
         return await Task.Run(() =>
         {
             ct.ThrowIfCancellationRequested();
-            return PreviewHelper.Instance.GenerateLSystem(definitionJson, iterations);
+
+            try
+            {
+                var loader = new builtin.tools.Lindenmayer.LSystemLoader();
+                var definition = loader.LoadDefinition(definitionJson);
+                var system = loader.CreateSystem(definition);
+                var generator = new builtin.tools.Lindenmayer.LGenerator(system, "preview");
+                var instance = generator.Generate(iterations);
+
+                var interpreter = new builtin.tools.Lindenmayer.AlphaInterpreter(instance);
+                var matMesh = new MatMesh();
+                interpreter.Run(null, Vector3.Zero, matMesh, null);
+
+                if (matMesh.IsEmpty())
+                {
+                    PreviewHelper.Instance.ClearInstanceDesc();
+                    return false;
+                }
+
+                var id = InstanceDesc.CreateFromMatMesh(matMesh, 500f);
+                PreviewHelper.Instance.SetInstanceDesc(id);
+                return true;
+            }
+            catch
+            {
+                PreviewHelper.Instance.ClearInstanceDesc();
+                return false;
+            }
         }, ct);
     }
 }

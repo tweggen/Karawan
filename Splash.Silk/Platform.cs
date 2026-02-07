@@ -891,21 +891,36 @@ public class Platform : engine.IPlatform
         _silkThreeD = I.Get<IThreeD>() as SilkThreeD;
         _silkThreeD.SetupDone();
 
-        _engine.RunMainThread(() =>
+        if (_iView != null)
+        {
+            _engine.RunMainThread(() =>
+            {
+                /*
+                 * Internal helpers managing various entities.
+                 */
+                _instanceManager = I.Get<InstanceManager>();
+                _instanceManager.Manage(_engine.GetEcsWorld());
+                _cameraManager = I.Get<CameraManager>();
+                _cameraManager.Manage(_engine.GetEcsWorld());
+
+                /*
+                 * Create the main screen renderer.
+                 */
+                _logicalRenderer = I.Get<LogicalRenderer>();
+            });
+        }
+        else
         {
             /*
-             * Internal helpers managing various entities.
+             * Headless mode: no logical thread will process the queue,
+             * so initialize managers synchronously.
              */
             _instanceManager = I.Get<InstanceManager>();
-            _instanceManager.Manage(_engine.GetEcsWorld());
+            _instanceManager.Manage(_engine.GetEcsWorldDangerous());
             _cameraManager = I.Get<CameraManager>();
-            _cameraManager.Manage(_engine.GetEcsWorld());
-
-            /*
-             * Create the main screen renderer.
-             */
+            _cameraManager.Manage(_engine.GetEcsWorldDangerous());
             _logicalRenderer = I.Get<LogicalRenderer>();
-        });
+        }
 
         _renderer = new SilkRenderer();
     }

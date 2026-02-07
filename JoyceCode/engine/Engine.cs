@@ -1205,6 +1205,16 @@ public class Engine
     }
 
 
+    /// <summary>
+    /// Mark the engine as running in single-threaded / headless mode.
+    /// This allows ECS world access from any thread when no logical thread is running.
+    /// </summary>
+    public void SetHeadless()
+    {
+        _isSingleThreaded = true;
+    }
+
+
     public void SetViewRectangle(Vector2 ul, Vector2 lr)
     {
         _vViewUl = ul;

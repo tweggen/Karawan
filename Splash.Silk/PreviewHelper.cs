@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Numerics;
 using engine;
 using engine.joyce;
@@ -12,16 +10,14 @@ using Splash.components;
 namespace Splash.Silk;
 
 /// <summary>
-/// Helper that encapsulates headless engine + preview rendering.
-/// Lives in Splash.Silk to avoid type conflicts when called from projects
-/// that also include JoyceCode as a shared project.
+/// Renders preview geometry via the Joyce engine's Splash.Silk renderer.
+/// GL initialization and render only — no engine bootstrap or game logic.
 /// </summary>
 public sealed class PreviewHelper
 {
     private static readonly object _lo = new();
     private static PreviewHelper? _instance;
 
-    private engine.Engine? _engine;
     private Platform? _platform;
     private GL? _gl;
     private bool _isInitialized;
@@ -49,11 +45,10 @@ public sealed class PreviewHelper
     }
 
     /// <summary>
-    /// Initialize the headless engine. Must be called from the GL thread.
-    /// The getProcAddress delegate bridges the Avalonia GL context.
-    /// resourcePath is the project directory containing shader files (e.g. ".../models/").
+    /// Initialize the GL context. Must be called from the GL thread.
+    /// The engine and platform must already be created before calling this.
     /// </summary>
-    public void Initialize(Func<string, nint> getProcAddress, string resourcePath)
+    public void Initialize(Func<string, nint> getProcAddress, Platform platform)
     {
         if (_isInitialized) return;
 
@@ -61,30 +56,7 @@ public sealed class PreviewHelper
         {
             if (_isInitialized) return;
 
-            // Set up resource path so the engine can find shaders
-            engine.GlobalSettings.Set("Engine.ResourcePath", resourcePath);
-
-            // Set up graphics API settings (required by ShaderSource for GLSL version header)
-            if (string.IsNullOrEmpty(engine.GlobalSettings.Get("platform.threeD.API")))
-            {
-                engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
-                engine.GlobalSettings.Set("platform.threeD.API.version",
-                    System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
-                        System.Runtime.InteropServices.OSPlatform.OSX) ? "410" : "430");
-            }
-
-            // Register a minimal asset implementation before engine creation
-            var assetImpl = new HeadlessAssetImplementation(resourcePath);
-
-            // Register TextureCatalogue before engine creation
-            I.Register<TextureCatalogue>(() => new TextureCatalogue());
-
-            // Create the headless engine + platform
-            _engine = Platform.EasyCreateHeadless(Array.Empty<string>(), out _platform);
-
-            // Register a synthetic "rgba" atlas entry so FindColorTexture works
-            var tc = I.Get<TextureCatalogue>();
-            tc.AddAtlasEntry("rgba", "rgba", Vector2.Zero, Vector2.One, 64, 64, false);
+            _platform = platform;
 
             // Create the Silk.NET GL context from the getProcAddress delegate
             _gl = GL.GetApi(new DelegateProcContext(getProcAddress));
@@ -92,53 +64,28 @@ public sealed class PreviewHelper
             // Initialize the platform's GL state
             _platform.SetExternalGL(_gl);
 
-            // Create ECS light entities so LightCollector.CollectLights() finds them
-            var eAmbient = _engine.CreateEntity("Preview.AmbientLight");
-            eAmbient.Set(new AmbientLight(new Vector4(0.3f, 0.3f, 0.35f, 1f)));
-
-            var eLight = _engine.CreateEntity("Preview.DirectionalLight");
-            eLight.Set(new DirectionalLight(new Vector4(0.9f, 0.9f, 0.9f, 1f)));
-            var lightRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, -45f * MathF.PI / 180f);
-            var lightMatrix = Matrix4x4.CreateFromQuaternion(lightRotation);
-            eLight.Set(new Transform3ToWorld(
-                0xffffffff, Transform3ToWorld.Visible, lightMatrix));
-
             _isInitialized = true;
         }
     }
 
     /// <summary>
-    /// Generate an L-System from JSON and prepare geometry for upload.
-    /// Can be called from any thread. Returns true if geometry was produced.
+    /// Thread-safe setter for pending mesh geometry.
+    /// The mesh will be uploaded on the next RenderPreview call (GL thread).
     /// </summary>
-    public bool GenerateLSystem(string definitionJson, int iterations)
+    public void SetInstanceDesc(InstanceDesc id)
     {
-        try
+        lock (_lo) { _pendingInstanceDesc = id; }
+    }
+
+    /// <summary>
+    /// Clear any pending or current geometry.
+    /// </summary>
+    public void ClearInstanceDesc()
+    {
+        lock (_lo)
         {
-            var loader = new builtin.tools.Lindenmayer.LSystemLoader();
-            var definition = loader.LoadDefinition(definitionJson);
-            var system = loader.CreateSystem(definition);
-            var generator = new builtin.tools.Lindenmayer.LGenerator(system, "preview");
-            var instance = generator.Generate(iterations);
-
-            var interpreter = new builtin.tools.Lindenmayer.AlphaInterpreter(instance);
-            var matMesh = new MatMesh();
-            interpreter.Run(null, Vector3.Zero, matMesh, null);
-
-            if (matMesh.IsEmpty())
-            {
-                lock (_lo) { _pendingInstanceDesc = null; }
-                return false;
-            }
-
-            var id = InstanceDesc.CreateFromMatMesh(matMesh, 500f);
-            lock (_lo) { _pendingInstanceDesc = id; }
-            return true;
-        }
-        catch
-        {
-            lock (_lo) { _pendingInstanceDesc = null; }
-            return false;
+            _pendingInstanceDesc = null;
+            _currentPfInstance = null;
         }
     }
 
@@ -234,66 +181,6 @@ public sealed class PreviewHelper
         m.M41 = cameraPos.X; m.M42 = cameraPos.Y; m.M43 = cameraPos.Z;
 
         return m;
-    }
-
-    /// <summary>
-    /// Minimal asset implementation for headless mode.
-    /// Opens files from the resource path on the filesystem.
-    /// </summary>
-    private sealed class HeadlessAssetImplementation : IAssetImplementation
-    {
-        private readonly string _resourcePath;
-        private readonly SortedDictionary<string, string> _associations = new();
-
-        /// <summary>
-        /// Subdirectories to probe when a bare filename isn't found directly.
-        /// Matches how the normal config-based flow maps e.g. "LIghtingVS.vert" → "shaders/LIghtingVS.vert".
-        /// </summary>
-        private static readonly string[] _probeDirs = ["shaders"];
-
-        public HeadlessAssetImplementation(string resourcePath)
-        {
-            _resourcePath = resourcePath;
-            engine.Assets.SetAssetImplementation(this);
-        }
-
-        public Stream Open(in string filename)
-        {
-            var path = _resolve(filename);
-            if (path != null)
-                return File.OpenRead(path);
-
-            throw new FileNotFoundException($"Asset not found: {filename} (resourcePath={_resourcePath})", filename);
-        }
-
-        public bool Exists(in string filename) => _resolve(filename) != null;
-
-        public void AddAssociation(string tag, string uri) => _associations[tag] = uri;
-
-        public IReadOnlyDictionary<string, string> GetAssets() => _associations;
-
-        private string? _resolve(in string filename)
-        {
-            // 1. Try directly under resource path
-            var path = Path.Combine(_resourcePath, filename);
-            if (File.Exists(path)) return path;
-
-            // 2. Try the associated URI
-            if (_associations.TryGetValue(filename, out var uri))
-            {
-                path = Path.Combine(_resourcePath, uri);
-                if (File.Exists(path)) return path;
-            }
-
-            // 3. Probe well-known subdirectories
-            foreach (var dir in _probeDirs)
-            {
-                path = Path.Combine(_resourcePath, dir, filename);
-                if (File.Exists(path)) return path;
-            }
-
-            return null;
-        }
     }
 
     /// <summary>
