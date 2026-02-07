@@ -38,16 +38,19 @@ public sealed class LSystemPreviewService
 
                 if (matMesh.IsEmpty())
                 {
+                    System.Console.Error.WriteLine("[LSystemPreview] MatMesh is empty");
                     EnginePreviewService.Instance.ClearInstanceDesc();
                     return false;
                 }
 
                 var id = InstanceDesc.CreateFromMatMesh(matMesh, 500f);
+                System.Console.Error.WriteLine($"[LSystemPreview] Created InstanceDesc: {id.Meshes?.Count ?? 0} meshes, {id.Materials?.Count ?? 0} materials");
                 EnginePreviewService.Instance.SetInstanceDesc(id);
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Console.Error.WriteLine($"[LSystemPreview] Generation failed: {ex}");
                 EnginePreviewService.Instance.ClearInstanceDesc();
                 return false;
             }

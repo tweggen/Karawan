@@ -74,8 +74,17 @@ public sealed class PreviewHelper
         _platform.CollectRenderData(null);
 
         // Non-blocking dequeue (frame was just enqueued by CollectRenderData)
-        var renderFrame = I.Get<LogicalRenderer>().TryDequeueRenderFrame();
-        if (renderFrame == null) return;
+        var renderFrame = I.Get<Splash.LogicalRenderer>().TryDequeueRenderFrame();
+        if (renderFrame == null)
+        {
+            System.Console.Error.WriteLine("[PreviewHelper] No render frame produced.");
+            return;
+        }
+
+        int nParts = renderFrame.RenderParts.Count;
+        int nEntities = renderFrame.FrameStats.NEntities;
+        System.Console.Error.WriteLine(
+            $"[PreviewHelper] Frame #{renderFrame.FrameNumber}: {nParts} parts, {nEntities} entities, viewport={viewportWidth}x{viewportHeight}, fbo={targetFbo}");
 
         _platform.RenderExternalFrame(in renderFrame, viewportWidth, viewportHeight,
             targetFbo, saveRestoreState: true);

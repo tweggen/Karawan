@@ -165,10 +165,13 @@ public sealed class EnginePreviewService
         {
             if (_geometryEntity.Has<Instance3>())
                 _geometryEntity.Remove<Instance3>();
+            System.Console.Error.WriteLine("[EnginePreview] Cleared geometry.");
         }
         else if (newId != null)
         {
             _geometryEntity.Set(new Instance3(newId));
+            System.Console.Error.WriteLine(
+                $"[EnginePreview] Set Instance3: {newId.Meshes?.Count ?? 0} meshes, {newId.Materials?.Count ?? 0} materials");
         }
 
         // Update camera transform from orbit parameters

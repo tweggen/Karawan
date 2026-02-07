@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Aihao.Controls;
+using Aihao.Services;
 using Aihao.ViewModels.LSystem;
 
 namespace Aihao.Views.LSystem;
@@ -31,6 +32,12 @@ public partial class LSystemPreviewControl : UserControl
             _glPreview.PointerReleased += OnPreviewPointerReleased;
             _glPreview.PointerWheelChanged += OnPreviewPointerWheel;
             _glPreview.GlReady += OnGlReady;
+
+            // If GL was already initialized before we subscribed, trigger manually
+            if (EnginePreviewService.Instance.IsInitialized)
+            {
+                OnGlReady();
+            }
         }
     }
 

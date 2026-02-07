@@ -9,7 +9,7 @@ public class Params
 
     public Params Clone()
     {
-        return new Params(Map.DeepClone() as JsonObject);
+        return new Params(Map?.DeepClone() as JsonObject);
     }
 
     public JsonNode this[string key]
