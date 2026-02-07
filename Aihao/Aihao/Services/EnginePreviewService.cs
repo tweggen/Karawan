@@ -96,6 +96,11 @@ public sealed class EnginePreviewService
         // Register TextureCatalogue before engine creation
         I.Register<TextureCatalogue>(() => new TextureCatalogue());
 
+        // Register a minimal casette.Loader with empty config so engine subsystems
+        // (SceneSequencer, GlobalSettings, etc.) that call WhenLoaded() don't fail.
+        I.Register<engine.casette.Loader>(() =>
+            new engine.casette.Loader(new MemoryStream(System.Text.Encoding.UTF8.GetBytes("{}"))));
+
         // Create the headless engine + platform
         _engine = Platform.EasyCreateHeadless(Array.Empty<string>(), out _platform);
 
