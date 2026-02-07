@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 using engine;
 using engine.joyce;
@@ -49,14 +51,30 @@ public sealed class PreviewHelper
     /// <summary>
     /// Initialize the headless engine. Must be called from the GL thread.
     /// The getProcAddress delegate bridges the Avalonia GL context.
+    /// resourcePath is the project directory containing shader files (e.g. ".../models/").
     /// </summary>
-    public void Initialize(Func<string, nint> getProcAddress)
+    public void Initialize(Func<string, nint> getProcAddress, string resourcePath)
     {
         if (_isInitialized) return;
 
         lock (_lo)
         {
             if (_isInitialized) return;
+
+            // Set up resource path so the engine can find shaders
+            engine.GlobalSettings.Set("Engine.ResourcePath", resourcePath);
+
+            // Set up graphics API settings (required by ShaderSource for GLSL version header)
+            if (string.IsNullOrEmpty(engine.GlobalSettings.Get("platform.threeD.API")))
+            {
+                engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
+                engine.GlobalSettings.Set("platform.threeD.API.version",
+                    System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                        System.Runtime.InteropServices.OSPlatform.OSX) ? "410" : "430");
+            }
+
+            // Register a minimal asset implementation before engine creation
+            var assetImpl = new HeadlessAssetImplementation(resourcePath);
 
             // Register TextureCatalogue before engine creation
             I.Register<TextureCatalogue>(() => new TextureCatalogue());
@@ -210,6 +228,66 @@ public sealed class PreviewHelper
         m.M41 = cameraPos.X; m.M42 = cameraPos.Y; m.M43 = cameraPos.Z;
 
         return m;
+    }
+
+    /// <summary>
+    /// Minimal asset implementation for headless mode.
+    /// Opens files from the resource path on the filesystem.
+    /// </summary>
+    private sealed class HeadlessAssetImplementation : IAssetImplementation
+    {
+        private readonly string _resourcePath;
+        private readonly SortedDictionary<string, string> _associations = new();
+
+        /// <summary>
+        /// Subdirectories to probe when a bare filename isn't found directly.
+        /// Matches how the normal config-based flow maps e.g. "LIghtingVS.vert" → "shaders/LIghtingVS.vert".
+        /// </summary>
+        private static readonly string[] _probeDirs = ["shaders"];
+
+        public HeadlessAssetImplementation(string resourcePath)
+        {
+            _resourcePath = resourcePath;
+            engine.Assets.SetAssetImplementation(this);
+        }
+
+        public Stream Open(in string filename)
+        {
+            var path = _resolve(filename);
+            if (path != null)
+                return File.OpenRead(path);
+
+            throw new FileNotFoundException($"Asset not found: {filename} (resourcePath={_resourcePath})", filename);
+        }
+
+        public bool Exists(in string filename) => _resolve(filename) != null;
+
+        public void AddAssociation(string tag, string uri) => _associations[tag] = uri;
+
+        public IReadOnlyDictionary<string, string> GetAssets() => _associations;
+
+        private string? _resolve(in string filename)
+        {
+            // 1. Try directly under resource path
+            var path = Path.Combine(_resourcePath, filename);
+            if (File.Exists(path)) return path;
+
+            // 2. Try the associated URI
+            if (_associations.TryGetValue(filename, out var uri))
+            {
+                path = Path.Combine(_resourcePath, uri);
+                if (File.Exists(path)) return path;
+            }
+
+            // 3. Probe well-known subdirectories
+            foreach (var dir in _probeDirs)
+            {
+                path = Path.Combine(_resourcePath, dir, filename);
+                if (File.Exists(path)) return path;
+            }
+
+            return null;
+        }
     }
 
     /// <summary>

@@ -5,6 +5,7 @@ namespace Aihao.Services;
 
 /// <summary>
 /// Thin wrapper around PreviewHelper that manages initialization from Avalonia's GL context.
+/// Set ResourcePath before the GL control initializes (e.g. when opening a project).
 /// </summary>
 public sealed class EnginePreviewService
 {
@@ -12,6 +13,12 @@ public sealed class EnginePreviewService
     private static EnginePreviewService? _instance;
 
     public bool IsInitialized => PreviewHelper.Instance.IsInitialized;
+
+    /// <summary>
+    /// The project's resource directory (e.g. AihaoProject.ProjectDirectory).
+    /// Must be set before Initialize() is called.
+    /// </summary>
+    public string? ResourcePath { get; set; }
 
     private EnginePreviewService() { }
 
@@ -36,7 +43,9 @@ public sealed class EnginePreviewService
     public void Initialize(GlInterface glInterface)
     {
         if (PreviewHelper.Instance.IsInitialized) return;
-        PreviewHelper.Instance.Initialize(glInterface.GetProcAddress);
+        if (string.IsNullOrEmpty(ResourcePath)) return;
+
+        PreviewHelper.Instance.Initialize(glInterface.GetProcAddress, ResourcePath!);
     }
 
     /// <summary>

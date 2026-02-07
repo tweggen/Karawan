@@ -402,6 +402,13 @@ public partial class MainWindowViewModel : ObservableObject
             case "lsystems":
                 if (content is JsonObject lsystemsObj)
                 {
+                    // Ensure the preview engine knows the project's resource directory
+                    if (CurrentProject != null)
+                    {
+                        Services.EnginePreviewService.Instance.ResourcePath =
+                            CurrentProject.ProjectDirectory;
+                    }
+
                     var editor = new LSystem.LSystemEditorViewModel();
                     editor.LoadFromJson(lsystemsObj);
                     var doc = new LSystemsDocumentViewModel(editor);
