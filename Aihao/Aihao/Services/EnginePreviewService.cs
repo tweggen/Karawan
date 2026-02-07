@@ -128,7 +128,8 @@ public sealed class EnginePreviewService
             Angle = 60f,
             NearFrustum = 0.1f,
             FarFrustum = 1000f,
-            CameraMask = 0xffffffff
+            CameraMask = 0xffffffff,
+            CameraFlags = Camera3.Flags.EnableFog
         });
         _cameraEntity.Set(new Transform3ToWorld(
             0xffffffff, Transform3ToWorld.Visible, Matrix4x4.Identity));
@@ -268,6 +269,9 @@ public sealed class EnginePreviewService
 
         public Stream Open(in string filename)
         {
+            if (filename == "rgba")
+                return _generateRgbaAtlas();
+
             var path = _resolve(filename);
             if (path != null)
                 return File.OpenRead(path);
@@ -275,11 +279,74 @@ public sealed class EnginePreviewService
             throw new FileNotFoundException($"Asset not found: {filename} (resourcePath={_resourcePath})", filename);
         }
 
-        public bool Exists(in string filename) => _resolve(filename) != null;
+        public bool Exists(in string filename) => filename == "rgba" || _resolve(filename) != null;
 
         public void AddAssociation(string tag, string uri) => _associations[tag] = uri;
 
         public IReadOnlyDictionary<string, string> GetAssets() => _associations;
+
+        /// <summary>
+        /// Generate a 64x64 BMP color palette matching TextureCatalogue.FindColorTexture's mapping.
+        /// Reverses the bit manipulation: given pixel (px,py), reconstruct the RGB color
+        /// that FindColorTexture would map to that position.
+        /// </summary>
+        private static MemoryStream _generateRgbaAtlas()
+        {
+            const int width = 64;
+            const int height = 64;
+            int rowBytes = width * 3;
+            int rowPadding = (4 - (rowBytes % 4)) % 4;
+            int paddedRowBytes = rowBytes + rowPadding;
+            int pixelDataSize = paddedRowBytes * height;
+            int fileSize = 14 + 40 + pixelDataSize;
+
+            var ms = new MemoryStream(fileSize);
+            var bw = new BinaryWriter(ms);
+
+            // BITMAPFILEHEADER (14 bytes)
+            bw.Write((byte)'B'); bw.Write((byte)'M');
+            bw.Write(fileSize);
+            bw.Write((short)0); bw.Write((short)0);
+            bw.Write(14 + 40);
+
+            // BITMAPINFOHEADER (40 bytes)
+            bw.Write(40);
+            bw.Write(width);
+            bw.Write(height);
+            bw.Write((short)1);
+            bw.Write((short)24);
+            bw.Write(0);
+            bw.Write(pixelDataSize);
+            bw.Write(0); bw.Write(0);
+            bw.Write(0); bw.Write(0);
+
+            // Pixel data (bottom-up, BGR)
+            for (int py = 0; py < height; py++)
+            {
+                for (int px = 0; px < width; px++)
+                {
+                    // Reverse FindColorTexture bit mapping:
+                    // x = (g >> 1) & 0x30 | (r >> 4) & 0x0e
+                    // y = (a >> 2) & 0x20 | (b >> 3) & 0x1c | (g >> 6) & 0x02
+                    byte r = (byte)(((px >> 1) & 0x07) << 5);
+                    byte g = (byte)((((py >> 1) & 0x01) << 7) | (((px >> 4) & 0x03) << 5));
+                    byte b = (byte)(((py >> 2) & 0x07) << 5);
+
+                    // Fill lower bits by replicating high bits
+                    r |= (byte)(r >> 3); r |= (byte)(r >> 6);
+                    g |= (byte)(g >> 3); g |= (byte)(g >> 6);
+                    b |= (byte)(b >> 3); b |= (byte)(b >> 6);
+
+                    bw.Write(b);
+                    bw.Write(g);
+                    bw.Write(r);
+                }
+                for (int p = 0; p < rowPadding; p++) bw.Write((byte)0);
+            }
+
+            ms.Position = 0;
+            return ms;
+        }
 
         private string? _resolve(in string filename)
         {
