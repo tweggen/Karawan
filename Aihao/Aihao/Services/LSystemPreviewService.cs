@@ -24,6 +24,9 @@ public sealed class LSystemPreviewService
         {
             ct.ThrowIfCancellationRequested();
 
+            if (!EnginePreviewService.Instance.IsInitialized)
+                return false;
+
             try
             {
                 var loader = new builtin.tools.Lindenmayer.LSystemLoader();

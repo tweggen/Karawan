@@ -30,7 +30,14 @@ public class SkSingleShaderEntry : ASingleShaderEntry
         CheckError(_gl,$"glGetShaderInfoLog {handle}.");
         if (!string.IsNullOrWhiteSpace(infoLog))
         {
-            ErrorThrow($"Error compiling shader of type {type}, failed with error {infoLog}", (m)=>new InvalidExpressionException(m));
+            if (infoLog.Contains("error", StringComparison.OrdinalIgnoreCase))
+            {
+                ErrorThrow($"Error compiling shader of type {type}, failed with error {infoLog}", (m)=>new InvalidExpressionException(m));
+            }
+            else
+            {
+                Warning($"Shader {type} compiled with warnings: {infoLog}");
+            }
         }
 
         return handle;
