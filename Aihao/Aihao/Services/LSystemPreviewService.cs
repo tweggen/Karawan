@@ -3,7 +3,6 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using engine.joyce;
-using Splash.Silk;
 
 namespace Aihao.Services;
 
@@ -39,17 +38,17 @@ public sealed class LSystemPreviewService
 
                 if (matMesh.IsEmpty())
                 {
-                    PreviewHelper.Instance.ClearInstanceDesc();
+                    EnginePreviewService.Instance.ClearInstanceDesc();
                     return false;
                 }
 
                 var id = InstanceDesc.CreateFromMatMesh(matMesh, 500f);
-                PreviewHelper.Instance.SetInstanceDesc(id);
+                EnginePreviewService.Instance.SetInstanceDesc(id);
                 return true;
             }
             catch
             {
-                PreviewHelper.Instance.ClearInstanceDesc();
+                EnginePreviewService.Instance.ClearInstanceDesc();
                 return false;
             }
         }, ct);

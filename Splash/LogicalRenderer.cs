@@ -227,6 +227,19 @@ public class LogicalRenderer
         }
         return null;
     }
+
+
+    public RenderFrame TryDequeueRenderFrame()
+    {
+        lock (_lo)
+        {
+            if (_renderQueue.Count > 0)
+            {
+                return _renderQueue.Dequeue();
+            }
+        }
+        return null;
+    }
     
     
     public LogicalRenderer()
@@ -234,12 +247,9 @@ public class LogicalRenderer
         _engine = I.Get<Engine>();
         _threeD = I.Get<IThreeD>();
 
-        _engine.RunMainThread(() =>
-        {
-            _createPfInstanceSystem = new();
-            _createPfRenderbufferSystem = new();
-            _drawInstancesSystem = new();
-            _drawSkyboxesSystem = new();
-        });
+        _createPfInstanceSystem = new();
+        _createPfRenderbufferSystem = new();
+        _drawInstancesSystem = new();
+        _drawSkyboxesSystem = new();
     }
 }

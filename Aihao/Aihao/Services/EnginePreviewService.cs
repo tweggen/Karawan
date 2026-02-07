@@ -12,8 +12,8 @@ namespace Aihao.Services;
 
 /// <summary>
 /// Owns the headless engine lifecycle for preview rendering.
-/// Bootstraps the engine, registers services, creates lights, then delegates
-/// GL initialization and rendering to PreviewHelper.
+/// Bootstraps the engine, registers services, creates ECS entities (camera, geometry, lights),
+/// then delegates GL initialization and rendering to PreviewHelper.
 /// </summary>
 public sealed class EnginePreviewService
 {
@@ -22,6 +22,11 @@ public sealed class EnginePreviewService
 
     private engine.Engine? _engine;
     private Platform? _platform;
+
+    private DefaultEcs.Entity _cameraEntity;
+    private DefaultEcs.Entity _geometryEntity;
+    private InstanceDesc? _pendingInstanceDesc;
+    private bool _pendingClear;
 
     public bool IsInitialized => PreviewHelper.Instance.IsInitialized;
 
@@ -46,6 +51,23 @@ public sealed class EnginePreviewService
             }
             return _instance;
         }
+    }
+
+    /// <summary>
+    /// Thread-safe setter for pending mesh geometry.
+    /// The geometry will be applied to the ECS entity on the next RenderPreview call (GL thread).
+    /// </summary>
+    public void SetInstanceDesc(InstanceDesc id)
+    {
+        lock (_lo) { _pendingInstanceDesc = id; _pendingClear = false; }
+    }
+
+    /// <summary>
+    /// Clear any pending or current geometry.
+    /// </summary>
+    public void ClearInstanceDesc()
+    {
+        lock (_lo) { _pendingInstanceDesc = null; _pendingClear = true; }
     }
 
     /// <summary>
@@ -95,18 +117,92 @@ public sealed class EnginePreviewService
         eLight.Set(new Transform3ToWorld(
             0xffffffff, Transform3ToWorld.Visible, lightMatrix));
 
+        // Camera entity (standard ECS camera — same approach as GenericLauncher)
+        _cameraEntity = _engine.CreateEntity("Preview.Camera");
+        _cameraEntity.Set(new Camera3
+        {
+            Angle = 60f,
+            NearFrustum = 0.1f,
+            FarFrustum = 1000f,
+            CameraMask = 0xffffffff
+        });
+        _cameraEntity.Set(new Transform3ToWorld(
+            0xffffffff, Transform3ToWorld.Visible, Matrix4x4.Identity));
+
+        // Geometry entity (Instance3 added when geometry arrives)
+        _geometryEntity = _engine.CreateEntity("Preview.Geometry");
+        _geometryEntity.Set(new Transform3ToWorld(
+            0xffffffff, Transform3ToWorld.Visible, Matrix4x4.Identity));
+
         // Initialize PreviewHelper for GL-only setup
         PreviewHelper.Instance.Initialize(glInterface.GetProcAddress, _platform);
     }
 
     /// <summary>
     /// Render the current preview geometry. Must be called from the GL thread.
+    /// Applies pending geometry to ECS entities, updates the camera, then delegates to PreviewHelper.
     /// </summary>
     public void RenderPreview(int width, int height, uint targetFbo,
         float cameraDistance, float cameraYaw, float cameraPitch)
     {
-        PreviewHelper.Instance.RenderPreview(width, height, targetFbo,
-            cameraDistance, cameraYaw, cameraPitch);
+        // Apply pending geometry on GL thread (thread-safe handoff)
+        InstanceDesc? newId;
+        bool doClear;
+        lock (_lo)
+        {
+            newId = _pendingInstanceDesc;
+            doClear = _pendingClear;
+            _pendingInstanceDesc = null;
+            _pendingClear = false;
+        }
+
+        if (doClear)
+        {
+            if (_geometryEntity.Has<Instance3>())
+                _geometryEntity.Remove<Instance3>();
+        }
+        else if (newId != null)
+        {
+            _geometryEntity.Set(new Instance3(newId));
+        }
+
+        // Update camera transform from orbit parameters
+        _cameraEntity.Set(new Transform3ToWorld(
+            0xffffffff, Transform3ToWorld.Visible,
+            BuildCameraTransform(cameraDistance, cameraYaw, cameraPitch)));
+
+        PreviewHelper.Instance.RenderPreview(width, height, targetFbo);
+    }
+
+    private static Matrix4x4 BuildCameraTransform(float distance, float yaw, float pitch)
+    {
+        float yawRad = yaw * MathF.PI / 180f;
+        float pitchRad = pitch * MathF.PI / 180f;
+
+        float cosP = MathF.Cos(pitchRad);
+        float sinP = MathF.Sin(pitchRad);
+        float cosY = MathF.Cos(yawRad);
+        float sinY = MathF.Sin(yawRad);
+
+        var cameraPos = new Vector3(
+            distance * cosP * sinY,
+            distance * sinP,
+            distance * cosP * cosY);
+
+        var target = Vector3.Zero;
+        var up = Vector3.UnitY;
+
+        var forward = Vector3.Normalize(target - cameraPos);
+        var right = Vector3.Normalize(Vector3.Cross(forward, up));
+        var cameraUp = Vector3.Cross(right, forward);
+
+        var m = Matrix4x4.Identity;
+        m.M11 = right.X; m.M12 = right.Y; m.M13 = right.Z;
+        m.M21 = cameraUp.X; m.M22 = cameraUp.Y; m.M23 = cameraUp.Z;
+        m.M31 = -forward.X; m.M32 = -forward.Y; m.M33 = -forward.Z;
+        m.M41 = cameraPos.X; m.M42 = cameraPos.Y; m.M43 = cameraPos.Z;
+
+        return m;
     }
 
     /// <summary>
