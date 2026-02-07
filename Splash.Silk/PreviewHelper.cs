@@ -92,6 +92,17 @@ public sealed class PreviewHelper
             // Initialize the platform's GL state
             _platform.SetExternalGL(_gl);
 
+            // Create ECS light entities so LightCollector.CollectLights() finds them
+            var eAmbient = _engine.CreateEntity("Preview.AmbientLight");
+            eAmbient.Set(new AmbientLight(new Vector4(0.3f, 0.3f, 0.35f, 1f)));
+
+            var eLight = _engine.CreateEntity("Preview.DirectionalLight");
+            eLight.Set(new DirectionalLight(new Vector4(0.9f, 0.9f, 0.9f, 1f)));
+            var lightRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, -45f * MathF.PI / 180f);
+            var lightMatrix = Matrix4x4.CreateFromQuaternion(lightRotation);
+            eLight.Set(new Transform3ToWorld(
+                0xffffffff, Transform3ToWorld.Visible, lightMatrix));
+
             _isInitialized = true;
         }
     }
@@ -181,13 +192,8 @@ public sealed class PreviewHelper
             FrameStats = frameStats
         };
 
-        // Add a directional light for basic illumination
-        renderFrame.ListDirectionalLights.Add(
-            new DirectionalLight(new Vector4(1f, 1f, 1f, 1f)));
-
-        // Add ambient light so geometry is visible without full ECS lighting
-        renderFrame.ListAmbientLights.Add(
-            new AmbientLight(new Vector4(0.3f, 0.3f, 0.35f, 1f)));
+        // Collect lights from ECS entities (matches how LogicalRenderer works)
+        renderFrame.LightCollector.CollectLights();
 
         var renderPart = new RenderPart
         {

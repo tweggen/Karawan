@@ -2,6 +2,7 @@ using System;
 using Aihao.Services;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
+using Avalonia.Threading;
 
 namespace Aihao.Controls;
 
@@ -13,6 +14,14 @@ public class AvaloniaGlPreviewControl : OpenGlControlBase
     private bool _glInitialized;
 
     /// <summary>
+    /// Number of follow-up frames to request after new content arrives.
+    /// The engine's upload budget (1ms/frame) may require several frames
+    /// to finish uploading materials (shader compile) and meshes before
+    /// the first successful draw.
+    /// </summary>
+    private int _warmupFramesRemaining;
+
+    /// <summary>
     /// Camera parameters set by the parent control.
     /// </summary>
     public float CameraDistance { get; set; } = 30f;
@@ -22,7 +31,19 @@ public class AvaloniaGlPreviewControl : OpenGlControlBase
     /// <summary>
     /// Whether there is geometry ready to render.
     /// </summary>
-    public bool HasContent { get; set; }
+    public bool HasContent
+    {
+        get => _hasContent;
+        set
+        {
+            if (_hasContent != value)
+            {
+                _hasContent = value;
+                if (value) _warmupFramesRemaining = 6;
+            }
+        }
+    }
+    private bool _hasContent;
 
     /// <summary>
     /// Raised when GL is ready and the engine preview service has been initialized.
@@ -45,7 +66,7 @@ public class AvaloniaGlPreviewControl : OpenGlControlBase
 
     protected override void OnOpenGlRender(GlInterface gl, int fb)
     {
-        if (!_glInitialized || !HasContent) return;
+        if (!_glInitialized || !_hasContent) return;
 
         var bounds = Bounds;
         int width = Math.Max(1, (int)(bounds.Width * (VisualRoot?.RenderScaling ?? 1.0)));
@@ -54,6 +75,13 @@ public class AvaloniaGlPreviewControl : OpenGlControlBase
         EnginePreviewService.Instance.RenderPreview(
             width, height, (uint)fb,
             CameraDistance, CameraYaw, CameraPitch);
+
+        // Request follow-up frames so material/mesh uploads complete
+        if (_warmupFramesRemaining > 0)
+        {
+            _warmupFramesRemaining--;
+            Dispatcher.UIThread.Post(InvalidateVisual, DispatcherPriority.Render);
+        }
     }
 
     protected override void OnOpenGlDeinit(GlInterface gl)
