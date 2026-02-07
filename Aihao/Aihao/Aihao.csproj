@@ -43,6 +43,7 @@
     <PackageReference Include="clipper.NetStandard2" Version="6.4.2" />
     <PackageReference Include="NetOctree" Version="2.1.0" />
     <PackageReference Include="Silk.NET.Assimp" Version="2.22.0" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
   </ItemGroup>
   
   <!-- JoyceCode dependencies - external projects -->
@@ -53,6 +54,9 @@
     <ProjectReference Include="..\..\..\glTF-CSharp-Loader\glTFLoader\glTFLoader.csproj" />
     <ProjectReference Include="..\..\..\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj" />
     <ProjectReference Include="..\..\..\FbxSharp\FbxSharp.csproj" />
+    <ProjectReference Include="..\..\Joyce\Joyce.csproj" ExcludeAssets="compile" PrivateAssets="all" />
+    <ProjectReference Include="..\..\Splash\Splash.csproj" />
+    <ProjectReference Include="..\..\Splash.Silk\Splash.Silk.csproj" />
   </ItemGroup>
   
   <ItemGroup>

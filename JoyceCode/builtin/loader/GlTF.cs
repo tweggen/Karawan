@@ -953,8 +953,8 @@ public class GlTF
             var pbr = glMaterial.PbrMetallicRoughness;
             var mat = I.Get<ObjectRegistry<engine.joyce.Material>>().FindLike(new()
             {
-                AlbedoColor   = new Vector4(pbr.BaseColorFactor[0], pbr.BaseColorFactor[1], pbr.BaseColorFactor[2], pbr.BaseColorFactor[3]).ToRGBA32(),
-                EmissiveColor = new Vector4(glMaterial.EmissiveFactor[0], glMaterial.EmissiveFactor[1], glMaterial.EmissiveFactor[2], 1.0f).ToRGBA32()
+                AlbedoColor   = extensions.Vector4Extensions.ToRGBA32(new Vector4(pbr.BaseColorFactor[0], pbr.BaseColorFactor[1], pbr.BaseColorFactor[2], pbr.BaseColorFactor[3])),
+                EmissiveColor = extensions.Vector4Extensions.ToRGBA32(new Vector4(glMaterial.EmissiveFactor[0], glMaterial.EmissiveFactor[1], glMaterial.EmissiveFactor[2], 1.0f))
             });
             _dictMaterialsByGltf.Add(realIndex, mat);
             realIndex++;

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Aihao.ViewModels.LSystem;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Mvvm.Controls;
 
@@ -258,6 +259,25 @@ public partial class LSystemsDocumentViewModel : DocumentViewModel
         Id = "LSystems";
         Title = "L-Systems";
         Icon = "🌳";
+        CanClose = true;
+        CanPin = false;
+    }
+}
+
+/// <summary>
+/// Document for L-System 3D Preview (pop-out)
+/// </summary>
+public partial class LSystemPreviewDocumentViewModel : DocumentViewModel
+{
+    public LSystemPreviewViewModel Preview { get; }
+
+    public LSystemPreviewDocumentViewModel(LSystemPreviewViewModel preview)
+    {
+        Preview = preview;
+        Content = preview;
+        Id = "LSystemPreview";
+        Title = "L-System Preview";
+        Icon = "🌲";
         CanClose = true;
         CanPin = false;
     }

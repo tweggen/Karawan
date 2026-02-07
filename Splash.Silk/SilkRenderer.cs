@@ -16,6 +16,7 @@ namespace Splash.Silk
         private object _lo = new();
 
         private engine.Engine _engine;
+        private uint _targetFbo = 0;
 
         private readonly IThreeD _threeD;
         private readonly SilkThreeD _silkThreeD;
@@ -117,7 +118,7 @@ namespace Splash.Silk
                 }
                 else
                 {
-                    _gl.BindFramebuffer(GLEnum.Framebuffer, 0);
+                    _gl.BindFramebuffer(GLEnum.Framebuffer, _targetFbo);
                     _nailViewport(true, cCameraParams.UL,cCameraParams.LR, true);
                 }
                 
@@ -301,6 +302,21 @@ namespace Splash.Silk
             _renderParts(renderFrame.RenderParts);
             _nailViewport(false, Vector2.Zero, Vector2.One, true);
             _silkThreeD.EndRenderFrame();
+        }
+
+
+        public void RenderFrameToFbo(in RenderFrame renderFrame, uint targetFbo)
+        {
+            _targetFbo = targetFbo;
+            _silkThreeD.BeginRenderFrame(renderFrame);
+            _gl = _silkThreeD.GetGL();
+            _gl.BindFramebuffer(GLEnum.Framebuffer, targetFbo);
+            CheckError(_gl, "glBindFramebuffer (external)");
+            _nailViewport(true, Vector2.Zero, Vector2.One, true);
+            _renderParts(renderFrame.RenderParts);
+            _nailViewport(false, Vector2.Zero, Vector2.One, true);
+            _silkThreeD.EndRenderFrame();
+            _targetFbo = 0;
         }
 
 

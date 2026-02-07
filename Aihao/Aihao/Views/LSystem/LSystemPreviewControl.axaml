@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Aihao.ViewModels.LSystem"
+             xmlns:controls="using:Aihao.Controls"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             x:Class="Aihao.Views.LSystem.LSystemPreviewControl"
+             x:DataType="vm:LSystemPreviewViewModel">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Toolbar -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="4">
+            <TextBlock Text="Iterations:" VerticalAlignment="Center" />
+            <NumericUpDown Value="{Binding Iterations}" Minimum="0" Maximum="10"
+                           Width="80" FormatString="0" />
+            <Button Content="Refresh" Command="{Binding RefreshPreviewCommand}" />
+            <Button Content="Reset Camera" Command="{Binding ResetCameraCommand}" />
+            <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center"
+                       Foreground="Gray" Margin="8,0,0,0" />
+            <!-- Spinner when generating -->
+            <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsGenerating}"
+                         Width="60" Height="12" />
+        </StackPanel>
+
+        <!-- GL Preview -->
+        <Border Grid.Row="1" Background="#262630">
+            <controls:AvaloniaGlPreviewControl x:Name="GlPreview" />
+        </Border>
+    </Grid>
+</UserControl>

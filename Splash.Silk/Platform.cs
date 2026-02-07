@@ -856,25 +856,28 @@ public class Platform : engine.IPlatform
         string baseDirectory = System.AppContext.BaseDirectory;
         System.Console.WriteLine($"Running in directory {baseDirectory}");
 
-        if (_iView.GetType().FullName.Contains("Glfw"))
+        if (_iView != null)
         {
-            _underlyingFrameworks = UnderlyingFrameworks.Glfw;
-        } else if (_iView.GetType().FullName.Contains("Sdl"))
-        {
-            _underlyingFrameworks = UnderlyingFrameworks.Sdl;
+            if (_iView.GetType().FullName.Contains("Glfw"))
+            {
+                _underlyingFrameworks = UnderlyingFrameworks.Glfw;
+            } else if (_iView.GetType().FullName.Contains("Sdl"))
+            {
+                _underlyingFrameworks = UnderlyingFrameworks.Sdl;
+            }
+
+            /*
+             * First, event handling from UI.
+             */
+            _iView.Load += _windowOnLoad;
+            _iView.Resize += _windowOnResize;
+            _iView.Render += _windowOnRender;
+            _iView.Update += _windowOnUpdate;
+            _iView.Closing += _windowOnClose;
+            _iView.FocusChanged += _windowOnFocusChanged;
+            // TXWTODO: Add this handler to handle window resizes.
+            // _iView.FramebufferResize +=
         }
-        
-        /*
-         * First, event handling from UI.
-         */
-        _iView.Load += _windowOnLoad;
-        _iView.Resize += _windowOnResize;
-        _iView.Render += _windowOnRender;
-        _iView.Update += _windowOnUpdate;
-        _iView.Closing += _windowOnClose;
-        _iView.FocusChanged += _windowOnFocusChanged;
-        // TXWTODO: Add this handler to handle window resizes.
-        // _iView.FramebufferResize +=
 
         // TXWTODO: Test DEBUG and PLATFORM_ANDROID for format options.
         // disable and bind cursor.
@@ -914,6 +917,37 @@ public class Platform : engine.IPlatform
         {
             return _isRunning;
         }
+    }
+
+
+    public void SetExternalGL(GL gl)
+    {
+        _silkThreeD.SetGL(gl);
+        gl.ClearDepth(1f);
+        gl.ClearColor(0.15f, 0.15f, 0.18f, 1f);
+    }
+
+
+    public InstanceManager InstanceManager => _instanceManager;
+
+
+    public void RenderExternalFrame(in RenderFrame renderFrame, int viewportWidth, int viewportHeight,
+        uint targetFbo, bool saveRestoreState = true)
+    {
+        _renderer.SetDimension(viewportWidth, viewportHeight);
+        if (saveRestoreState)
+        {
+            var gl = (_silkThreeD as SilkThreeD).GetGL();
+            using (new GlStateSaver(gl))
+            {
+                _renderer.RenderFrameToFbo(renderFrame, targetFbo);
+            }
+        }
+        else
+        {
+            _renderer.RenderFrameToFbo(renderFrame, targetFbo);
+        }
+        _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
     }
 
 
@@ -962,6 +996,20 @@ public class Platform : engine.IPlatform
         platform.SetupDone();
         e.PlatformSetupDone();
 
+        return e;
+    }
+
+
+    static public engine.Engine EasyCreateHeadless(string[] args, out Platform out_platform)
+    {
+        var platform = new Platform(args);
+        out_platform = platform;
+        I.Register<engine.Engine>(() => new engine.Engine(platform));
+        engine.Engine e = I.Get<engine.Engine>();
+        e.SetupDone();
+        platform.SetEngine(e);
+        platform.SetupDone();
+        e.PlatformSetupDone();
         return e;
     }
 }

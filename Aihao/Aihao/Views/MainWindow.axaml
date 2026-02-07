@@ -70,6 +70,9 @@
         <DataTemplate DataType="{x:Type dock:LSystemsDocumentViewModel}">
             <dockViews:LSystemsDocumentView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type dock:LSystemPreviewDocumentViewModel}">
+            <dockViews:LSystemPreviewDocumentView/>
+        </DataTemplate>
     </Window.DataTemplates>
     
     <!-- Native Menu (appears in macOS menu bar, falls back to in-window on Windows/Linux) -->

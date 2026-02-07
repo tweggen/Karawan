@@ -141,6 +141,11 @@ public partial class LSystemEditorViewModel : ObservableObject
     [ObservableProperty] private bool _isDirty;
 
     /// <summary>
+    /// Preview ViewModel for the 3D preview pane.
+    /// </summary>
+    public LSystemPreviewViewModel Preview { get; } = new();
+
+    /// <summary>
     /// Tree of L-system definitions and configs.
     /// </summary>
     public ObservableCollection<LSystemTreeItem> TreeItems { get; } = new();
@@ -181,6 +186,7 @@ public partial class LSystemEditorViewModel : ObservableObject
                 SelectedDefinition = def;
                 SelectedConfig = null;
                 CurrentEditor = def;
+                Preview.SetDefinition(def);
             }
             else if (item.Type == "config")
             {
@@ -188,6 +194,7 @@ public partial class LSystemEditorViewModel : ObservableObject
                 SelectedConfig = cfg;
                 SelectedDefinition = null;
                 CurrentEditor = cfg;
+                Preview.SetDefinition(null);
             }
         }
     }
