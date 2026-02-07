@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
+using Aihao.Graphics;
 using Avalonia.OpenGL;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
+using Silk.NET.OpenGL;
 using Splash.Silk;
 
 namespace Aihao.Services;
@@ -81,13 +83,10 @@ public sealed class EnginePreviewService
         // Set up resource path so the engine can find shaders
         engine.GlobalSettings.Set("Engine.ResourcePath", ResourcePath!);
 
-        // Set up graphics API settings (required by ShaderSource for GLSL version header)
+        // Detect actual GL version from Avalonia's context before setting shader version
         if (string.IsNullOrEmpty(engine.GlobalSettings.Get("platform.threeD.API")))
         {
-            engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
-            engine.GlobalSettings.Set("platform.threeD.API.version",
-                System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
-                    System.Runtime.InteropServices.OSPlatform.OSX) ? "410" : "430");
+            _detectAndSetGlVersion(glInterface);
         }
 
         // Register a minimal asset implementation before engine creation
@@ -180,6 +179,43 @@ public sealed class EnginePreviewService
             BuildCameraTransform(cameraDistance, cameraYaw, cameraPitch)));
 
         PreviewHelper.Instance.RenderPreview(width, height, targetFbo);
+    }
+
+    private static void _detectAndSetGlVersion(GlInterface glInterface)
+    {
+        using var ctx = new AvaloniaNativeContext(glInterface);
+        var gl = GL.GetApi(ctx);
+        string versionStr = gl.GetStringS(Silk.NET.OpenGL.StringName.Version) ?? "";
+        System.Console.Error.WriteLine($"[EnginePreview] GL version string: \"{versionStr}\"");
+
+        string api;
+        string version;
+
+        if (versionStr.StartsWith("OpenGL ES", StringComparison.OrdinalIgnoreCase))
+        {
+            // e.g. "OpenGL ES 3.0" or "OpenGL ES 3.1 ..."
+            api = "OpenGLES";
+            var parts = versionStr.Split(' ');
+            // parts[2] should be "3.0" or "3.1"
+            var verParts = (parts.Length >= 3 ? parts[2] : "3.0").Split('.');
+            int major = int.TryParse(verParts[0], out var m) ? m : 3;
+            int minor = int.TryParse(verParts.Length > 1 ? verParts[1] : "0", out var n) ? n : 0;
+            version = $"{major}{minor}0";
+        }
+        else
+        {
+            // e.g. "4.6.0 NVIDIA 546.33" or "3.3 Mesa 23.1"
+            api = "OpenGL";
+            var verPart = versionStr.Split(' ')[0]; // "4.6.0" or "3.3"
+            var parts = verPart.Split('.');
+            int major = int.TryParse(parts[0], out var m) ? m : 3;
+            int minor = int.TryParse(parts.Length > 1 ? parts[1] : "3", out var n) ? n : 3;
+            version = $"{major}{minor}0";
+        }
+
+        System.Console.Error.WriteLine($"[EnginePreview] Detected API={api}, version={version}");
+        engine.GlobalSettings.Set("platform.threeD.API", api);
+        engine.GlobalSettings.Set("platform.threeD.API.version", version);
     }
 
     private static Matrix4x4 BuildCameraTransform(float distance, float yaw, float pitch)
