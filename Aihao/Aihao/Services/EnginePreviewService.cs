@@ -143,15 +143,15 @@ public sealed class EnginePreviewService
 
             var eLight = _engine.CreateEntity("Preview.DirectionalLight");
             eLight.Set(new DirectionalLight(new Vector4(0.9f, 0.9f, 0.9f, 1f)));
-            var lightRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, -45f * MathF.PI / 180f);
+            var lightRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 90f * MathF.PI / 180f);
             var lightMatrix = Matrix4x4.CreateFromQuaternion(lightRotation);
             eLight.Set(new Transform3ToWorld(
                 0xffffffff, Transform3ToWorld.Visible, lightMatrix));
 
             // Camera entity (standard ECS camera — same approach as GenericLauncher)
-            float cameraDistance = 20f;
-            Vector3 cameraPos = new Vector3(0f, 0f, -cameraDistance);
-            Matrix4x4 cameraMatrix = _createLookAtMatrix(cameraPos, Vector3.Zero, Vector3.UnitY);
+            float cameraDistance = 10f;
+            Vector3 cameraPos = new Vector3(0f, 1.8f, cameraDistance);
+            Matrix4x4 cameraMatrix = _createLookAtMatrix(cameraPos, new Vector3(0f, 1.8f, 0f), Vector3.UnitY);
 
             _cameraEntity = _engine.CreateEntity("Preview.Camera");
             _cameraEntity.Set(new Camera3
