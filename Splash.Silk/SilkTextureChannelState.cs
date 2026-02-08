@@ -20,6 +20,17 @@ public class SilkTextureChannelState
             _currentSkTexture = null;
         }
     }
+
+
+    /// <summary>
+    /// Reset cached state without issuing GL calls.
+    /// Call at frame boundaries when external code (e.g. GlStateSaver)
+    /// may have changed the actual GL texture bindings.
+    /// </summary>
+    public void ResetCachedState()
+    {
+        _currentSkTexture = null;
+    }
     
     
     private void _useTexture(SkTexture? skTexture)

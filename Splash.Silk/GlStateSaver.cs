@@ -32,6 +32,9 @@ public sealed class GlStateSaver : IDisposable
     private readonly bool _lastEnableDepthTest;
     private readonly bool _lastEnableStencilTest;
     private readonly bool _lastEnableScissorTest;
+    private readonly bool _lastDepthMask;
+    private readonly int _lastFrontFace;
+    private readonly int _lastCullFaceMode;
 
     public GlStateSaver(GL gl)
     {
@@ -65,6 +68,10 @@ public sealed class GlStateSaver : IDisposable
         _lastEnableDepthTest = _gl.IsEnabled(GLEnum.DepthTest);
         _lastEnableStencilTest = _gl.IsEnabled(GLEnum.StencilTest);
         _lastEnableScissorTest = _gl.IsEnabled(GLEnum.ScissorTest);
+
+        _gl.GetBoolean(GLEnum.DepthWritemask, out _lastDepthMask);
+        _gl.GetInteger(GLEnum.FrontFace, out _lastFrontFace);
+        _gl.GetInteger(GLEnum.CullFaceMode, out _lastCullFaceMode);
     }
 
     public void Dispose()
@@ -88,6 +95,10 @@ public sealed class GlStateSaver : IDisposable
         _setEnabled(GLEnum.DepthTest, _lastEnableDepthTest);
         _setEnabled(GLEnum.StencilTest, _lastEnableStencilTest);
         _setEnabled(GLEnum.ScissorTest, _lastEnableScissorTest);
+
+        _gl.DepthMask(_lastDepthMask);
+        _gl.FrontFace((FrontFaceDirection)_lastFrontFace);
+        _gl.CullFace((TriangleFace)_lastCullFaceMode);
 
         _gl.Viewport(
             _lastViewport[0], _lastViewport[1],

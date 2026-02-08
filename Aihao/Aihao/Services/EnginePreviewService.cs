@@ -73,6 +73,23 @@ public sealed class EnginePreviewService
     }
 
     /// <summary>
+    /// Create a camera world matrix from position looking at target.
+    /// </summary>
+    private Matrix4x4 _createLookAtMatrix(Vector3 v3Position, Vector3 v3Target, Vector3 v3Up)
+    {
+        var v3MinusZ = Vector3.Normalize(v3Target - v3Position);
+        var v3Right = Vector3.Normalize(Vector3.Cross(v3MinusZ, v3Up));
+        var v3ActualUp = Vector3.Cross(v3Right, v3MinusZ);
+
+        return new Matrix4x4(
+            v3Right.X, v3Right.Y, v3Right.Z, 0,
+            v3ActualUp.X, v3ActualUp.Y, v3ActualUp.Z, 0,
+            -v3MinusZ.X, -v3MinusZ.Y, -v3MinusZ.Z, 0,
+            v3Position.X, v3Position.Y, v3Position.Z, 1
+        );
+    }
+
+    /// <summary>
     /// Initialize the headless engine and GL context. Must be called from the GL thread.
     /// </summary>
     public void Initialize(GlInterface glInterface)
@@ -132,17 +149,21 @@ public sealed class EnginePreviewService
                 0xffffffff, Transform3ToWorld.Visible, lightMatrix));
 
             // Camera entity (standard ECS camera — same approach as GenericLauncher)
+            float cameraDistance = 20f;
+            Vector3 cameraPos = new Vector3(0f, 0f, -cameraDistance);
+            Matrix4x4 cameraMatrix = _createLookAtMatrix(cameraPos, Vector3.Zero, Vector3.UnitY);
+
             _cameraEntity = _engine.CreateEntity("Preview.Camera");
             _cameraEntity.Set(new Camera3
             {
                 Angle = 60f,
-                NearFrustum = 0.1f,
-                FarFrustum = 1000f,
+                NearFrustum = 5f,
+                FarFrustum = 200f,
                 CameraMask = 0xffffffff,
                 CameraFlags = Camera3.Flags.EnableFog
             });
             _cameraEntity.Set(new Transform3ToWorld(
-                0xffffffff, Transform3ToWorld.Visible, Matrix4x4.Identity));
+                0xffffffff, Transform3ToWorld.Visible, cameraMatrix));
 
             // Geometry entity (Instance3 added when geometry arrives)
             _geometryEntity = _engine.CreateEntity("Preview.Geometry");

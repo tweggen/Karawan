@@ -101,6 +101,22 @@ public class SilkRenderState
     }
     
     
+    /// <summary>
+    /// Reset all cached state without issuing GL calls.
+    /// Must be called at frame boundaries when external code (e.g. GlStateSaver)
+    /// may have changed the actual GL state behind our back.
+    /// </summary>
+    public void ResetCachedState()
+    {
+        _lastProgramEntry = null;
+        _isBoundModelBakedFrame = false;
+        _modelAnimation = null;
+        BoneMatrices = null;
+        Texture0.ResetCachedState();
+        Texture2.ResetCachedState();
+    }
+
+
     public void UseProgramEntry(SkProgramEntry sh, Action<SkProgramEntry> firstTimeFunc)
     {
         if (_lastProgramEntry == sh) return;

@@ -310,6 +310,14 @@ namespace Splash.Silk
             _targetFbo = targetFbo;
             _silkThreeD.BeginRenderFrame(renderFrame);
             _gl = _silkThreeD.GetGL();
+
+            // Ensure critical GL state is correct for 3D rendering.
+            // When sharing a GL context (e.g. Avalonia), the host may leave
+            // DepthMask/FrontFace/CullFace in unexpected states.
+            _gl.DepthMask(true);
+            _gl.FrontFace(FrontFaceDirection.Ccw);
+            _gl.CullFace(TriangleFace.Back);
+
             _gl.BindFramebuffer(GLEnum.Framebuffer, targetFbo);
             CheckError(_gl, "glBindFramebuffer (external)");
             _nailViewport(true, Vector2.Zero, Vector2.One, true);
