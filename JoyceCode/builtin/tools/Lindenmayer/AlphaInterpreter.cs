@@ -77,15 +77,11 @@ public class AlphaInterpreter
         IList<Func<IList<StaticHandle>, Action>> listCreatePhysicsTarget
     )
     {
-        var alphaResources = _alphaResources.Value;
         var parts = _instance.State.Parts;
-        
+
         var state = new AlphaState(null);
         state.Position = v3Start;
 
-        var matnameLeaves = "nogame.cities.trees.materials.treeleave";
-        var matLeaves = I.Get<ObjectRegistry<Material>>().Get(matnameLeaves);
-        
         foreach (Part part in parts)
         {
             // trace('Before part: rotation is ${state.rotation}.');
@@ -149,11 +145,11 @@ public class AlphaInterpreter
                     engine.joyce.Mesh meshExtrusion = new("mesh_cyl_rl");
                     ext.BuildGeom(meshExtrusion);
                     state.Position += vd;
-                    mmTarget.Add(matLeaves, meshExtrusion);
+                    mmTarget.Add(_getMaterialForColor(state.Color), meshExtrusion);
 
                     break;
                 }
-                
+
                 case "flat(r,l)":
                 {
                     var vs = state.Position;
@@ -174,25 +170,23 @@ public class AlphaInterpreter
 
                     vd *= (float)p["l"];
                     vr *= (float)p["r"];
-                    // vt *= p["r"];
-                    // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
+                    vt *= (float)p["r"] * 0.02f; // very thin for flat ribbon effect
 
                     /*
-                     * Make a trivial four sided poly.
+                     * Make a thin diamond cross-section.
                      */
                     var poly = new List<Vector3>();
                     poly.Add(vs + vr);
-                    //poly.push( new geom.Vector3D( vs.x + vt.x, vs.y + vt.y ,vs.z + vt.z ) );
+                    poly.Add(vs + vt);
                     poly.Add(vs - vr);
-                    // poly.push( new geom.Vector3D( vs.x - vt.x, vs.y - vt.y ,vs.z - vt.z ) );
+                    poly.Add(vs - vt);
                     var path = new List<Vector3>();
                     path.Add(vd);
-                    // trace( 'poly: $poly' );
                     engine.joyce.Mesh meshExtrusion = new("mesh_flat_rl");
                     var ext = new ExtrudePoly(poly, path, 27, 100f, false, false, false);
                     ext.BuildGeom(meshExtrusion);
                     state.Position += vd;
-                    mmTarget.Add(matLeaves, meshExtrusion);
+                    mmTarget.Add(_getMaterialForColor(state.Color), meshExtrusion);
 
                     break;
                 }
@@ -322,6 +316,25 @@ public class AlphaInterpreter
                     break;
             }
         }
+    }
+
+
+    /// <summary>
+    /// Get or create a material matching the given fill color.
+    /// </summary>
+    private Material _getMaterialForColor(Vector3 color)
+    {
+        uint colorUint = 0xFF000000
+                         | ((uint)(Math.Clamp(color.X, 0f, 1f) * 255f) << 16)
+                         | ((uint)(Math.Clamp(color.Y, 0f, 1f) * 255f) << 8)
+                         | (uint)(Math.Clamp(color.Z, 0f, 1f) * 255f);
+        string matName = $"lsystem.color.{colorUint:X8}";
+        var registry = I.Get<ObjectRegistry<Material>>();
+        registry.RegisterFactory(matName, _ => new Material
+        {
+            Texture = I.Get<TextureCatalogue>().FindColorTexture(colorUint)
+        });
+        return registry.Get(matName);
     }
 
 

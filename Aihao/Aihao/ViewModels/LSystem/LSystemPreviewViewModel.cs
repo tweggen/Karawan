@@ -41,6 +41,7 @@ public partial class LSystemPreviewViewModel : ObservableObject
         {
             StatusText = "No definition selected";
             HasContent = false;
+            RenderFrameChanged?.Invoke();
             return;
         }
         _ = RefreshPreviewAsync();
@@ -71,17 +72,17 @@ public partial class LSystemPreviewViewModel : ObservableObject
             {
                 StatusText = "Empty result";
                 HasContent = false;
-                return;
             }
-
-            HasContent = true;
-            StatusText = $"Generated ({Iterations} iterations)";
-
-            RenderFrameChanged?.Invoke();
+            else
+            {
+                HasContent = true;
+                StatusText = $"Generated ({Iterations} iterations)";
+            }
         }
         catch (OperationCanceledException)
         {
             // Generation was cancelled, ignore
+            return;
         }
         catch (Exception ex)
         {
@@ -91,6 +92,7 @@ public partial class LSystemPreviewViewModel : ObservableObject
         finally
         {
             IsGenerating = false;
+            RenderFrameChanged?.Invoke();
         }
     }
 
