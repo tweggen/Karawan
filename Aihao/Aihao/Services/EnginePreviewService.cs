@@ -103,41 +103,52 @@ public sealed class EnginePreviewService
         // Create the headless engine + platform
         _engine = Platform.EasyCreateHeadless(Array.Empty<string>(), out _platform);
 
-        // Mark headless so ECS world access works without a logical thread.
-        _engine.SetHeadless();
+        // Produce render frames every logical frame even without a loaded scene.
+        _engine.SetCollectRenderDataAlways(true);
 
         // Register a synthetic "rgba" atlas entry so FindColorTexture works
         var tc = I.Get<TextureCatalogue>();
         tc.AddAtlasEntry("rgba", "rgba", Vector2.Zero, Vector2.One, 64, 64, false);
 
-        // Create ECS light entities so LightCollector.CollectLights() finds them
-        var eAmbient = _engine.CreateEntity("Preview.AmbientLight");
-        eAmbient.Set(new AmbientLight(new Vector4(0.3f, 0.3f, 0.35f, 1f)));
+        // Start the engine's logical thread (drains scheduler, runs _onLogicalFrame at 60fps).
+        // We skip _platform.Execute() — Avalonia controls the render loop.
+        _engine.ExecuteLogicalThreadOnly();
 
-        var eLight = _engine.CreateEntity("Preview.DirectionalLight");
-        eLight.Set(new DirectionalLight(new Vector4(0.9f, 0.9f, 0.9f, 1f)));
-        var lightRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, -45f * MathF.PI / 180f);
-        var lightMatrix = Matrix4x4.CreateFromQuaternion(lightRotation);
-        eLight.Set(new Transform3ToWorld(
-            0xffffffff, Transform3ToWorld.Visible, lightMatrix));
+        // Unlock _onLogicalFrame — must come before TaskMainThread().Wait() to avoid deadlock.
+        _engine.CallOnPlatformAvailable();
 
-        // Camera entity (standard ECS camera — same approach as GenericLauncher)
-        _cameraEntity = _engine.CreateEntity("Preview.Camera");
-        _cameraEntity.Set(new Camera3
+        // Create ECS entities on the logical thread for thread safety.
+        _engine.TaskMainThread(() =>
         {
-            Angle = 60f,
-            NearFrustum = 0.1f,
-            FarFrustum = 1000f,
-            CameraMask = 0xffffffff,
-            CameraFlags = Camera3.Flags.EnableFog
-        });
-        _cameraEntity.Set(new Transform3ToWorld(
-            0xffffffff, Transform3ToWorld.Visible, Matrix4x4.Identity));
+            // Light entities so LightCollector.CollectLights() finds them
+            var eAmbient = _engine.CreateEntity("Preview.AmbientLight");
+            eAmbient.Set(new AmbientLight(new Vector4(0.3f, 0.3f, 0.35f, 1f)));
 
-        // Geometry entity (Instance3 added when geometry arrives)
-        _geometryEntity = _engine.CreateEntity("Preview.Geometry");
-        _geometryEntity.Set(new Transform3ToWorld(
-            0xffffffff, Transform3ToWorld.Visible, Matrix4x4.Identity));
+            var eLight = _engine.CreateEntity("Preview.DirectionalLight");
+            eLight.Set(new DirectionalLight(new Vector4(0.9f, 0.9f, 0.9f, 1f)));
+            var lightRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, -45f * MathF.PI / 180f);
+            var lightMatrix = Matrix4x4.CreateFromQuaternion(lightRotation);
+            eLight.Set(new Transform3ToWorld(
+                0xffffffff, Transform3ToWorld.Visible, lightMatrix));
+
+            // Camera entity (standard ECS camera — same approach as GenericLauncher)
+            _cameraEntity = _engine.CreateEntity("Preview.Camera");
+            _cameraEntity.Set(new Camera3
+            {
+                Angle = 60f,
+                NearFrustum = 0.1f,
+                FarFrustum = 1000f,
+                CameraMask = 0xffffffff,
+                CameraFlags = Camera3.Flags.EnableFog
+            });
+            _cameraEntity.Set(new Transform3ToWorld(
+                0xffffffff, Transform3ToWorld.Visible, Matrix4x4.Identity));
+
+            // Geometry entity (Instance3 added when geometry arrives)
+            _geometryEntity = _engine.CreateEntity("Preview.Geometry");
+            _geometryEntity.Set(new Transform3ToWorld(
+                0xffffffff, Transform3ToWorld.Visible, Matrix4x4.Identity));
+        }).Wait();
 
         // Initialize PreviewHelper for GL-only setup
         PreviewHelper.Instance.Initialize(glInterface.GetProcAddress, _platform);
@@ -145,12 +156,12 @@ public sealed class EnginePreviewService
 
     /// <summary>
     /// Render the current preview geometry. Must be called from the GL thread.
-    /// Applies pending geometry to ECS entities, updates the camera, then delegates to PreviewHelper.
+    /// Queues entity updates to the logical thread, then dequeues and renders the latest frame.
     /// </summary>
     public void RenderPreview(int width, int height, uint targetFbo,
         float cameraDistance, float cameraYaw, float cameraPitch)
     {
-        // Apply pending geometry on GL thread (thread-safe handoff)
+        // Capture pending geometry (thread-safe handoff)
         InstanceDesc? newId;
         bool doClear;
         lock (_lo)
@@ -161,25 +172,48 @@ public sealed class EnginePreviewService
             _pendingClear = false;
         }
 
-        if (doClear)
+        // Queue ECS writes to the logical thread (applied next frame)
+        if (doClear || newId != null)
         {
-            if (_geometryEntity.Has<Instance3>())
-                _geometryEntity.Remove<Instance3>();
-            System.Console.Error.WriteLine("[EnginePreview] Cleared geometry.");
-        }
-        else if (newId != null)
-        {
-            _geometryEntity.Set(new Instance3(newId));
-            System.Console.Error.WriteLine(
-                $"[EnginePreview] Set Instance3: {newId.Meshes?.Count ?? 0} meshes, {newId.Materials?.Count ?? 0} materials");
+            var capturedId = newId;
+            var capturedClear = doClear;
+            _engine!.QueueMainThreadAction(() =>
+            {
+                if (capturedClear)
+                {
+                    if (_geometryEntity.Has<Instance3>())
+                        _geometryEntity.Remove<Instance3>();
+                    System.Console.Error.WriteLine("[EnginePreview] Cleared geometry.");
+                }
+                else if (capturedId != null)
+                {
+                    _geometryEntity.Set(new Instance3(capturedId));
+                    System.Console.Error.WriteLine(
+                        $"[EnginePreview] Set Instance3: {capturedId.Meshes?.Count ?? 0} meshes, {capturedId.Materials?.Count ?? 0} materials");
+                }
+            });
         }
 
-        // Update camera transform from orbit parameters
-        _cameraEntity.Set(new Transform3ToWorld(
-            0xffffffff, Transform3ToWorld.Visible,
-            BuildCameraTransform(cameraDistance, cameraYaw, cameraPitch)));
+        // Queue camera transform update to logical thread
+        var capturedTransform = BuildCameraTransform(cameraDistance, cameraYaw, cameraPitch);
+        _engine!.QueueMainThreadAction(() =>
+        {
+            _cameraEntity.Set(new Transform3ToWorld(
+                0xffffffff, Transform3ToWorld.Visible, capturedTransform));
+        });
 
         PreviewHelper.Instance.RenderPreview(width, height, targetFbo);
+    }
+
+    /// <summary>
+    /// Shut down the engine and its logical thread.
+    /// </summary>
+    public void Shutdown()
+    {
+        if (_engine != null)
+        {
+            _engine.Exit();
+        }
     }
 
     private static void _detectAndSetGlVersion(GlInterface glInterface)

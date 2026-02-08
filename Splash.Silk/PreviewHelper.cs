@@ -64,20 +64,16 @@ public sealed class PreviewHelper
 
     /// <summary>
     /// Render via the standard ECS pipeline. Must be called from the GL thread.
-    /// Camera and geometry entities must already exist in the ECS world.
+    /// The logical thread produces RenderFrames via CollectRenderData; we just dequeue and render.
     /// </summary>
     public void RenderPreview(int viewportWidth, int viewportHeight, uint targetFbo)
     {
         if (!_isInitialized || _platform == null) return;
 
-        // Run the standard pipeline: systems process ECS entities and enqueue a RenderFrame
-        _platform.CollectRenderData(null);
-
-        // Non-blocking dequeue (frame was just enqueued by CollectRenderData)
+        // Non-blocking dequeue — logical thread produces frames
         var renderFrame = I.Get<Splash.LogicalRenderer>().TryDequeueRenderFrame();
         if (renderFrame == null)
         {
-            System.Console.Error.WriteLine("[PreviewHelper] No render frame produced.");
             return;
         }
 

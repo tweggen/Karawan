@@ -151,6 +151,7 @@ public class Engine
     
     private bool _platformIsAvailable = false;
     private bool _isRunning = true;
+    private bool _collectRenderDataAlways = false;
 
     private uint _frameNumber = 0;
 
@@ -765,9 +766,9 @@ public class Engine
             {
                 _platform.CollectRenderData(_sceneSequencer.MainScene);
             }
-            else
+            else if (_collectRenderDataAlways)
             {
-                // ErrorThrow("Null scene", (m) => new InvalidOperationException(m));
+                _platform.CollectRenderData(null);
             }
         }
 
@@ -904,6 +905,18 @@ public class Engine
         {
             _platform.Execute();
         }
+    }
+
+
+    /// <summary>
+    /// Start only the logical thread without calling _platform.Execute().
+    /// Use for editor/preview mode where the host controls the render loop.
+    /// </summary>
+    public void ExecuteLogicalThreadOnly()
+    {
+        _logicalThread = new Thread(_logicalThreadFunction);
+        _logicalThread.Priority = ThreadPriority.AboveNormal;
+        _logicalThread.Start();
     }
 
 
@@ -1212,6 +1225,16 @@ public class Engine
     public void SetHeadless()
     {
         _isSingleThreaded = true;
+    }
+
+
+    /// <summary>
+    /// When set, CollectRenderData(null) runs every logical frame
+    /// even without a loaded scene. Used by editor preview.
+    /// </summary>
+    public void SetCollectRenderDataAlways(bool value)
+    {
+        _collectRenderDataAlways = value;
     }
 
 
