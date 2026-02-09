@@ -76,6 +76,7 @@
   "nogame.SetupMetaGen": null,
   "nogame.intercity.Network": null,
   "engine.quest.Manager": null,
+  "engine.quest.QuestFactory": null,
   "engine.narration.NarrationManager": null,
   "nogame.modules.story.Narration": null,
   "engine.news.ClickModule": null,

@@ -178,6 +178,22 @@ public class NarrationManager : AModule
 
 
     /// <summary>
+    /// Trigger the startup script if one is configured and the system is idle.
+    /// Called by game-level code when the game scene is ready.
+    /// </summary>
+    public async Task<NarrationRunner.NodeResult> TriggerStartup()
+    {
+        if (!string.IsNullOrEmpty(_startupScript) && _currentState == State.Idle)
+        {
+            Trace($"NarrationManager: triggering startup script '{_startupScript}'.");
+            return await TriggerScript(_startupScript, "narration", "");
+        }
+
+        return null;
+    }
+
+
+    /// <summary>
     /// Check if the narration system is currently idle.
     /// </summary>
     public bool IsIdle() => _currentState == State.Idle;
@@ -414,19 +430,7 @@ public class NarrationManager : AModule
 
     private void _onAfterLoadGame(object sender, object objGameState)
     {
-        if (!string.IsNullOrEmpty(_startupScript))
-        {
-            // Delay startup narration to let the game world settle after load.
-            Task.Delay(5000).ContinueWith(t =>
-            {
-                _engine.QueueMainThreadAction(async () =>
-                {
-                    if (_currentState == State.Idle)
-                    {
-                        await TriggerScript(_startupScript, "narration", "");
-                    }
-                });
-            });
-        }
+        // Startup narration is triggered by game-level code via TriggerStartup()
+        // when the root scene kicks off, not here.
     }
 }

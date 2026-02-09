@@ -440,6 +440,15 @@ public class Narration : AModule, IInputPart
     }
 
 
+    private void _onRootKickoff(Event ev)
+    {
+        _engine.QueueMainThreadAction(async () =>
+        {
+            await M<NarrationManager>().TriggerStartup();
+        });
+    }
+
+
     protected override void OnModuleDeactivate()
     {
         M<InputEventPipeline>().RemoveInputPart(this);
@@ -470,6 +479,7 @@ public class Narration : AModule, IInputPart
         Subscribe("nogame.modules.story.sentence.onClick", _onClickSentence);
         Subscribe(NodeReachedEvent.EVENT_TYPE, _onNodeReached);
         Subscribe(ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
+        Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
     }
 
 
