@@ -23,12 +23,14 @@ public class SilkTextureChannelState
 
 
     /// <summary>
-    /// Reset cached state without issuing GL calls.
-    /// Call at frame boundaries when external code (e.g. GlStateSaver)
+    /// Reset cached state at frame boundaries when external code (e.g. GlStateSaver)
     /// may have changed the actual GL texture bindings.
+    /// Binds the transparent fallback to ensure a known GL state, preventing
+    /// stale textures from bleeding across frames.
     /// </summary>
     public void ResetCachedState()
     {
+        _transparentSkTexture.ActiveAndBind(_textureUnit);
         _currentSkTexture = null;
     }
     
