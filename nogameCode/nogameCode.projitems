@@ -112,6 +112,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\HelloFishmonger\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\Taxi\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\VisitAgentTwelve\Quest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\VisitAgentTwelve\VisitAgentTwelveStrategy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\VisitAgentTwelve\NavigateStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\loading\LoadingSpinBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\loading\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\logos\Scene.cs" />

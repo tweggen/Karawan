@@ -151,7 +151,8 @@ public sealed class EnginePreviewService
             // Camera entity (standard ECS camera — same approach as GenericLauncher)
             float cameraDistance = 10f;
             Vector3 cameraPos = new Vector3(0f, 1.8f, cameraDistance);
-            Matrix4x4 cameraMatrix = _createLookAtMatrix(cameraPos, new Vector3(0f, 1.8f, 0f), Vector3.UnitY);
+            Matrix4x4 cameraMatrix = _createLookAtMatrix(cameraPos,
+                new Vector3(0f, 1.8f, 0f), Vector3.UnitY);
 
             _cameraEntity = _engine.CreateEntity("Preview.Camera");
             _cameraEntity.Set(new Camera3

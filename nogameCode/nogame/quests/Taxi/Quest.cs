@@ -1,4 +1,3 @@
-#if false
 using System;
 using System.Numerics;
 using System.Text.Json;
@@ -23,6 +22,17 @@ namespace nogame.quests.Taxi;
  * Instantiating this quest selects a citizen far off if none is given
  * and selects a target, if none is given.
  * Then, if the quest marker is hit with the car, a navigation is started.
+ *
+ * States:
+ * -#1 Waiting to reach the citizen
+ *    A citizen is spawned to request a taxi
+ *    Transition to #2 once the citizen is reached
+ * -#2 Wait for reach the target
+ *    A target streetpoint is selected
+ *    The citizen is made invisible and deactivated in some way.
+ * -#3 The taxi has reached the target
+ *    The citizen is somehow integrated into the target's citizen flow.
+ *    The quest terminates.
  */
 public class Quest : AModule, IQuest, ICreator
 {
@@ -31,7 +41,7 @@ public class Quest : AModule, IQuest, ICreator
     private Description _description = new()
     {
         Title = "Be a good cab driver.",
-        ShortDescription = "The passenger wants to get to their target.!",
+        ShortDescription = "The passenger wants to get to their target.",
         LongDescription = "Isn't this a chase again?"
     };
 
@@ -43,6 +53,14 @@ public class Quest : AModule, IQuest, ICreator
 
     public ClusterDesc GuestCluster { get; set; } = new();
     public string RandomSeed { get; set; } = "taxi";
+
+    private DefaultEcs.Entity _eTarget;
+    private engine.quest.TrailVehicle _questTarget;
+
+    private void _onReachTarget()
+    {
+        // TXWTODO: Implement taxi quest completion.
+    }
 
 
     public async Task CreateEntities()
@@ -108,7 +126,6 @@ public class Quest : AModule, IQuest, ICreator
      * As soon we have picked up the guest we need to create the target marker.
      */
 
-
     private void _startRide()
     {
         _engine.Player.CallWithEntity(e =>
@@ -129,10 +146,23 @@ public class Quest : AModule, IQuest, ICreator
                 };
 
                 _questTarget.ModuleActivate();
-            }));
+             }));
     }
 
 
+    /// <summary>
+    /// Start the actual quest.
+    /// </summary>
+    private async Task _startQuest()
+    {
+        // TXWTODO: Implement quest start logic.
+        await Task.CompletedTask;
+    }
+    
+
+    /// <summary>
+    /// Terminate the quest.
+    /// </summary>
     protected override void OnModuleDeactivate()
     {
         _questTarget?.ModuleDeactivate();
@@ -143,6 +173,9 @@ public class Quest : AModule, IQuest, ICreator
     }
 
 
+    /// <summary>
+    ///  Start the actual quest.
+    /// </summary>
     protected override void OnModuleActivate()
     {
         _isActive = true;
@@ -150,4 +183,3 @@ public class Quest : AModule, IQuest, ICreator
         _engine.Run(_startQuest);
     }
 }
-#endif

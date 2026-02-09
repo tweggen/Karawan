@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using engine;
 using engine.narration;
+using engine.quest;
 using static engine.Logger;
 
 namespace nogame.modules.story;
@@ -13,10 +14,42 @@ namespace nogame.modules.story;
 /// </summary>
 public static class NarrationBindings
 {
+    private static void _registerQuestFactories(QuestFactory questFactory)
+    {
+        questFactory.RegisterQuest("nogame.quests.VisitAgentTwelve.Quest",
+            async (engine, eQuest) =>
+            {
+                var targetPos =
+                    await nogame.quests.VisitAgentTwelve.VisitAgentTwelveStrategy
+                        .ComputeTargetLocationAsync(engine);
+
+                await engine.TaskMainThread(() =>
+                {
+                    eQuest.Set(new engine.quest.components.QuestInfo
+                    {
+                        QuestId = "nogame.quests.VisitAgentTwelve.Quest",
+                        Title = "Come to the location.",
+                        ShortDescription = "Try to find the marker on the map and reach it.",
+                        LongDescription =
+                            "Every journey starts with the first step. Reach for the third step" +
+                            " to make it an experience."
+                    });
+
+                    eQuest.Set(new engine.behave.components.Strategy(
+                        new nogame.quests.VisitAgentTwelve.VisitAgentTwelveStrategy(targetPos)));
+                });
+            });
+    }
+
+
     public static void Register(NarrationManager manager)
     {
+        var questFactory = I.Get<QuestFactory>();
+        _registerQuestFactories(questFactory);
+
         // Quest triggering: used in narration event descriptors like
         // { "type": "quest.trigger", "quest": "nogame.quests.VisitAgentTwelve.Quest" }
+        // New-style quests use QuestFactory; unregistered quests fall back to old Manager.
         manager.RegisterEventHandler("quest.trigger", async (desc) =>
         {
             if (desc.Params.TryGetValue("quest", out var questNameObj))
@@ -24,15 +57,20 @@ public static class NarrationBindings
                 string questName = questNameObj.ToString();
                 try
                 {
-                    I.Get<engine.quest.Manager>().TriggerQuest(questName, true);
+                    if (questFactory.HasQuest(questName))
+                    {
+                        await questFactory.TriggerQuest(questName, true);
+                    }
+                    else
+                    {
+                        await I.Get<engine.quest.Manager>().TriggerQuest(questName, true);
+                    }
                 }
                 catch (Exception e)
                 {
                     Warning($"NarrationBindings: quest.trigger failed for '{questName}': {e.Message}");
                 }
             }
-
-            await Task.CompletedTask;
         });
 
         // Property set: used in narration events like
