@@ -425,6 +425,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationRunner.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\testing\JoyceTestEventSource.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\testing\JoyceTestEventSink.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\testing\TestDriverModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ObjectFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ObjectRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\API.cs" />

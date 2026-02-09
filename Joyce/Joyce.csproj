@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\glTF-CSharp-Loader\glTFLoader\glTFLoader.csproj" />
     <ProjectReference Include="..\..\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj" />
     <ProjectReference Include="..\..\FbxSharp\FbxSharp.csproj" />
+    <ProjectReference Include="..\ExpectEngine\ExpectEngine.csproj" />
   </ItemGroup>
 
   <ItemGroup>

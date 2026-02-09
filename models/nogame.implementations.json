@@ -113,5 +113,6 @@
   "nogame.modules.Gameplay": null,
   "nogame.modules.GameSetup": null,
   "nogame.inv.coin.Factory": null,
-  "nogame.world.DropCoinModule": null
+  "nogame.world.DropCoinModule": null,
+  "engine.testing.TestDriverModule": null
 }

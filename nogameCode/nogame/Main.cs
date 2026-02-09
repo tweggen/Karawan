@@ -30,7 +30,8 @@ public class Main : AModule
         new SharedModule<nogame.modules.osd.Display>(),
         new SharedModule<engine.news.ClickModule>(),
         new MyModule<nogame.modules.debugger.DebuggerToggle>(),
-        
+        new MyModule<engine.testing.TestDriverModule>(),
+
     };
 
     private void _setupScreenComposition()

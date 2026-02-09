@@ -1,0 +1,26 @@
+{
+  "name": "startup-smoke",
+  "description": "Verify engine starts, root scene kicks off, and narration begins",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": { "type": "nogame.scenes.root.Scene.kickoff" },
+      "timeout": 60,
+      "comment": "Wait for the main scene to start (includes logo sequence)"
+    },
+    {
+      "expect": { "type": "narration.script.started" },
+      "timeout": 15,
+      "comment": "Narration should auto-start after scene kickoff"
+    },
+    {
+      "expect": { "type": "narration.node.reached" },
+      "timeout": 10,
+      "comment": "First narration node should be reached"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}
