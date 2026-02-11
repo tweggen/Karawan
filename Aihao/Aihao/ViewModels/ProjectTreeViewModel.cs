@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using Aihao.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -84,8 +85,8 @@ public partial class ProjectTreeViewModel : ObservableObject
             filesFolder.Children.Add(rootFileNode);
         }
         
-        // Add additional files (from __include__)
-        foreach (var additionalFile in project.Mix.AdditionalFiles)
+        // Add additional files (from __include__), sorted alphabetically
+        foreach (var additionalFile in project.Mix.AdditionalFiles.OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase))
         {
             var fileName = Path.GetFileName(additionalFile);
             if (fileName == project.RootFilePath) continue;

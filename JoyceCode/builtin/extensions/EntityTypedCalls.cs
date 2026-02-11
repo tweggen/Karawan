@@ -19,8 +19,8 @@ static public class EntityTypedCalls
             .Where(m => m.Name == "Remove" && m.GetParameters().Length == 0)
             .FirstOrDefault(m => true));
     
-    private static SortedDictionary<System.Type, MethodInfo> _removeCache = new();
-    private static SortedDictionary<System.Type, MethodInfo> _setCache = new();
+    private static Dictionary<System.Type, MethodInfo> _removeCache = new();
+    private static Dictionary<System.Type, MethodInfo> _setCache = new();
     
     public static void Set(this in DefaultEcs.Entity entity, System.Type type, in object comp)
     {
