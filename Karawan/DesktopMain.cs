@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using engine;
 using Silk.NET.Core;
 using Silk.NET.Windowing;
@@ -12,6 +13,65 @@ namespace Karawan;
 
 public class DesktopMain
 {
+    private static void _applySettingsOverrides(string[] args)
+    {
+        // --settings-file <path>: load a JSON object, apply each property as a GlobalSetting
+        for (int i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i] == "--settings-file")
+            {
+                string filePath = args[i + 1];
+                if (File.Exists(filePath))
+                {
+                    Console.WriteLine($"Loading settings overrides from: {filePath}");
+                    string json = File.ReadAllText(filePath);
+                    using var doc = JsonDocument.Parse(json);
+                    foreach (var prop in doc.RootElement.EnumerateObject())
+                    {
+                        string value = prop.Value.ValueKind == JsonValueKind.String
+                            ? prop.Value.GetString()
+                            : prop.Value.ToString();
+                        GlobalSettings.Set(prop.Name, value);
+                        Console.WriteLine($"  {prop.Name} = {value}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Warning: settings file not found: {filePath}");
+                }
+            }
+        }
+
+        // --setting <key>=<value>: individual GlobalSettings override (repeatable)
+        for (int i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i] == "--setting")
+            {
+                string kv = args[i + 1];
+                int eq = kv.IndexOf('=');
+                if (eq > 0)
+                {
+                    string key = kv.Substring(0, eq);
+                    string value = kv.Substring(eq + 1);
+                    GlobalSettings.Set(key, value);
+                    Console.WriteLine($"Setting override: {key} = {value}");
+                }
+            }
+        }
+    }
+
+    private static string _resolveRWPathOverride(string[] args)
+    {
+        for (int i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i] == "--rwpath")
+            {
+                return args[i + 1];
+            }
+        }
+        return Environment.GetEnvironmentVariable("JOYCE_RWPATH");
+    }
+
     /// <summary>
     /// Determine the resource path based on the current environment.
     /// </summary>
@@ -94,7 +154,7 @@ public class DesktopMain
         // Normalize the path
         gameConfigPath = Path.GetFullPath(gameConfigPath);
         Console.WriteLine($"Loading game config from: {gameConfigPath}");
-        
+
         I.Register<engine.casette.Loader>(() =>
         {
             using var streamJson = File.OpenRead(gameConfigPath);
@@ -104,6 +164,20 @@ public class DesktopMain
         var iassetDesktop = new AssetImplementation();
         iassetDesktop.WithLoader();
         I.Get<engine.casette.Loader>().InterpretConfig();
+
+        // Override RWPath if specified via CLI or environment variable.
+        // Applied after InterpretConfig so CLI args take precedence over game config.
+        string rwPathOverride = _resolveRWPathOverride(args);
+        if (!string.IsNullOrEmpty(rwPathOverride))
+        {
+            Directory.CreateDirectory(rwPathOverride);
+            GlobalSettings.Set("Engine.RWPath", rwPathOverride);
+            Console.WriteLine($"RWPath overridden to: {rwPathOverride}");
+        }
+
+        // Apply settings overrides from --settings-file and --setting args.
+        // Applied after InterpretConfig so CLI args take precedence over game config.
+        _applySettingsOverrides(args);
 
         // 8. Create window
         bool startFullscreen;

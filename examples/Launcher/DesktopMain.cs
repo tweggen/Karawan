@@ -124,6 +124,63 @@ public class DesktopMain
         return fallback;
     }
 
+    private static void _applySettingsOverrides(string[] args)
+    {
+        for (int i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i] == "--settings-file")
+            {
+                string filePath = args[i + 1];
+                if (File.Exists(filePath))
+                {
+                    Console.WriteLine($"Loading settings overrides from: {filePath}");
+                    string json = File.ReadAllText(filePath);
+                    using var doc = System.Text.Json.JsonDocument.Parse(json);
+                    foreach (var prop in doc.RootElement.EnumerateObject())
+                    {
+                        string value = prop.Value.ValueKind == System.Text.Json.JsonValueKind.String
+                            ? prop.Value.GetString()
+                            : prop.Value.ToString();
+                        GlobalSettings.Set(prop.Key, value);
+                        Console.WriteLine($"  {prop.Key} = {value}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Warning: settings file not found: {filePath}");
+                }
+            }
+        }
+
+        for (int i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i] == "--setting")
+            {
+                string kv = args[i + 1];
+                int eq = kv.IndexOf('=');
+                if (eq > 0)
+                {
+                    string key = kv.Substring(0, eq);
+                    string value = kv.Substring(eq + 1);
+                    GlobalSettings.Set(key, value);
+                    Console.WriteLine($"Setting override: {key} = {value}");
+                }
+            }
+        }
+    }
+
+    private static string _resolveRWPathOverride(string[] args)
+    {
+        for (int i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i] == "--rwpath")
+            {
+                return args[i + 1];
+            }
+        }
+        return Environment.GetEnvironmentVariable("JOYCE_RWPATH");
+    }
+
     private static void _setupPlatformGraphics()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
@@ -262,6 +319,20 @@ public class DesktopMain
         var iassetDesktop = new AssetImplementation();
         iassetDesktop.WithLoader();
         I.Get<engine.casette.Loader>().InterpretConfig();
+
+        // Override RWPath if specified via CLI or environment variable.
+        // Applied after InterpretConfig so CLI args take precedence over game config.
+        string rwPathOverride = _resolveRWPathOverride(args);
+        if (!string.IsNullOrEmpty(rwPathOverride))
+        {
+            Directory.CreateDirectory(rwPathOverride);
+            GlobalSettings.Set("Engine.RWPath", rwPathOverride);
+            Console.WriteLine($"RWPath overridden to: {rwPathOverride}");
+        }
+
+        // Apply settings overrides from --settings-file and --setting args.
+        // Applied after InterpretConfig so CLI args take precedence over game config.
+        _applySettingsOverrides(args);
 
         // 7. Create window
         var options = WindowOptions.Default;

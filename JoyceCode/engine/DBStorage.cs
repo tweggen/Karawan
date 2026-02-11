@@ -79,9 +79,7 @@ public class DBStorage : engine.AModule
         try
         {
             var col = db.GetCollection<ObjType>();
-            Trace($"Collection has {col.Count()}: {col}");
-            var allGameStates = col.FindAll();
-            ObjType? foundGameState = col.FindById(1);
+            ObjType? foundGameState = col.FindAll().FirstOrDefault();
             if (foundGameState != null)
             {
                 gameState = foundGameState;
@@ -90,7 +88,7 @@ public class DBStorage : engine.AModule
         }
         catch (Exception e)
         {
-            Error($"Unable to load previous savegagme: {e}");
+            Error($"Unable to load previous savegame: {e}");
         }
 
         return haveIt;

@@ -1,0 +1,66 @@
+{
+  "name": "narration-save",
+  "description": "Advance narration past intro to ramen1, trigger save, then quit. Creates save data for narration-restore-verify.",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": { "type": "nogame.scenes.root.Scene.kickoff" },
+      "timeout": 60,
+      "comment": "Wait for root scene kickoff (includes logo sequence)"
+    },
+    {
+      "expect": { "type": "narration.script.started", "code": "main" },
+      "timeout": 15,
+      "comment": "Main narration script auto-starts"
+    },
+    {
+      "expect": { "type": "narration.node.reached", "code": "intro" },
+      "timeout": 10,
+      "comment": "First intro text: Again I looked around..."
+    },
+    { "sleep": 500, "comment": "Let display settle" },
+
+    { "inject": { "type": "input.key.pressed", "code": " " }, "comment": "Advance past text 1" },
+    {
+      "expect": { "type": "narration.node.reached", "code": "intro" },
+      "timeout": 5,
+      "comment": "Second intro text: Rumours are..."
+    },
+
+    { "inject": { "type": "input.key.pressed", "code": " " }, "comment": "Advance past text 2" },
+    {
+      "expect": { "type": "narration.node.reached", "code": "intro" },
+      "timeout": 5,
+      "comment": "Third intro text: They say..."
+    },
+
+    { "inject": { "type": "input.key.pressed", "code": " " }, "comment": "Advance past text 3" },
+    {
+      "expect": { "type": "narration.node.reached", "code": "intro" },
+      "timeout": 5,
+      "comment": "Fourth intro text: For now, I need..."
+    },
+
+    { "inject": { "type": "input.key.pressed", "code": " " }, "comment": "Advance past text 4 to choices" },
+    {
+      "expect": { "type": "narration.node.reached", "code": "intro" },
+      "timeout": 5,
+      "comment": "Choices displayed: ramen or drink"
+    },
+
+    { "inject": { "type": "input.key.pressed", "code": "1" }, "comment": "Choose option 1: Find a Ramen shop" },
+    {
+      "expect": { "type": "narration.node.reached", "code": "ramen1" },
+      "timeout": 5,
+      "comment": "Reached ramen1 node"
+    },
+
+    {
+      "inject": { "type": "builtin.SaveGame.TriggerSave", "code": "test" },
+      "comment": "Trigger save while at ramen1"
+    },
+    { "sleep": 2000, "comment": "Wait for save to complete" },
+
+    { "action": "quit", "result": "pass" }
+  ]
+}

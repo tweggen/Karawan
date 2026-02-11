@@ -435,11 +435,12 @@ public class Narration : AModule, IInputPart
                 };
             }
 
-            M<AutoSave>().GameState.Story = json.ToJsonString();
+            string jsonStr = json.ToJsonString();
+            M<AutoSave>().GameState.Story = jsonStr;
         }
         catch (Exception e)
         {
-            Warning($"Narration: error saving narration state: {e.Message}");
+            Warning($"Narration._onBeforeSaveGame: error: {e.Message}");
         }
     }
 
@@ -489,7 +490,7 @@ public class Narration : AModule, IInputPart
         }
         catch (Exception e)
         {
-            Warning($"Narration: error restoring narration state: {e.Message}");
+            Warning($"Unable to restore narration state: {e.Message}");
             return false;
         }
     }
@@ -568,7 +569,14 @@ public class Narration : AModule, IInputPart
 
     private void _onRootKickoff(Event ev)
     {
-        if (_startupTriggered) return;
+        if (_startupTriggered)
+        {
+            if (_pendingRestore != null)
+            {
+                _executePendingRestore();
+            }
+            return;
+        }
         _startupTriggered = true;
 
         _engine.QueueMainThreadAction(async () =>
@@ -611,29 +619,14 @@ public class Narration : AModule, IInputPart
         Subscribe(NodeReachedEvent.EVENT_TYPE, _onNodeReached);
         Subscribe(ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
         Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
-
-        // Attempt to restore narration state from a loaded save.
-        // OnAfterLoadGame fires before modules activate, so GameState.Story
-        // is already populated by the time we get here.
-        if (_tryRestoreNarrationState() && _pendingRestore != null)
-        {
-            if (M<NarrationManager>().AreScriptsLoaded)
-            {
-                _executePendingRestore();
-            }
-            else
-            {
-                I.Get<engine.casette.Loader>().WhenLoaded("/narration", (path, jn) =>
-                {
-                    _executePendingRestore();
-                });
-            }
-        }
     }
 
 
     private void _onAfterLoadGame(object sender, object objGameState)
     {
-        // Restore is handled in OnModuleActivate, which runs after GameState is populated.
+        // GameState is now available — parse narration state. Actual restore
+        // execution is deferred to _onRootKickoff so that the game world and
+        // UI are fully ready (matching the fresh-start flow).
+        _tryRestoreNarrationState();
     }
 }

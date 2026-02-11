@@ -1,0 +1,23 @@
+{
+  "name": "narration-restore-verify",
+  "description": "After loading a save made at ramen1, verify narration resumes there instead of restarting from intro. Requires narration-save to have run first with the same JOYCE_RWPATH.",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": { "type": "nogame.scenes.root.Scene.kickoff" },
+      "timeout": 60,
+      "comment": "Wait for root scene kickoff"
+    },
+    {
+      "expect": { "type": "narration.script.started", "code": "main" },
+      "timeout": 30,
+      "comment": "Narration should start (either from restore or from intro)"
+    },
+    {
+      "expect": { "type": "narration.node.reached", "code": "ramen1" },
+      "timeout": 15,
+      "comment": "MUST resume at ramen1. If this times out, the bug is present: narration restarted at intro instead of restoring saved position."
+    },
+    { "action": "quit", "result": "pass" }
+  ]
+}

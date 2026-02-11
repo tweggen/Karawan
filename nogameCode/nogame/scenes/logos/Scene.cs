@@ -141,9 +141,16 @@ public class Scene : AModule, IScene
 
     private void _displayLoginStatus(string status)
     {
-        if (M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText))
+        try
         {
-            wMenuLoginStatusText["text"] = status;
+            if (M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText))
+            {
+                wMenuLoginStatusText["text"] = status;
+            }
+        }
+        catch (Exception)
+        {
+            // Login menu UI may not be available (e.g., auto-login mode)
         }
     }
     
@@ -170,7 +177,11 @@ public class Scene : AModule, IScene
         
         _displayLoginStatus("logged in.");
 
-        _engine.QueueMainThreadAction(() => DeactivateMyModule<nogame.modules.menu.LoginMenuModule>());
+        _engine.QueueMainThreadAction(() =>
+        {
+            try { DeactivateMyModule<nogame.modules.menu.LoginMenuModule>(); }
+            catch (Exception) { /* LoginMenuModule may not be active in auto-login mode */ }
+        });
         _engine.QueueMainThreadAction(() => _loadLoadingScene());
         _engine.QueueMainThreadAction(() => {
 
@@ -424,12 +435,6 @@ public class Scene : AModule, IScene
          */
         _aTransform = I.Get<engine.joyce.TransformApi>();
 
-        bool shouldPlayTitle = engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false";
-        
-        engine.I.Get<Boom.Jukebox>().LoadThenPlaySong(
-            "shaklengokhsi.ogg", shouldPlayTitle?0.05f:0f, false,
-            _onTitleSongStarted, _onTitleSongStopped);
-
         /*
          * Moving light
          */
@@ -437,7 +442,7 @@ public class Scene : AModule, IScene
             _eLight = _engine.CreateEntity("LogosScene.PointLight");
             _eLight.Set(new engine.joyce.components.PointLight(
                 new Vector4(1f, 0.95f, 0.9f, 1.0f), 15.0f));
-            _aTransform.SetRotation(_eLight, 
+            _aTransform.SetRotation(_eLight,
                 Quaternion.CreateFromAxisAngle(
                     new Vector3(0f, 1f, 0f), Single.Pi/2f));
             _aTransform.SetPosition(_eLight, new Vector3(0f, /*-10f + 3f * t*/ 0f, 25f));
@@ -465,5 +470,37 @@ public class Scene : AModule, IScene
 
         I.Get<Boom.ISoundAPI>().SoundMask = 0xffff0000;
         I.Get<SceneSequencer>().AddScene(5, this);
+
+        string autoLogin = engine.GlobalSettings.Get("debug.option.autoLogin");
+        bool hasAutoLogin = !string.IsNullOrEmpty(autoLogin) && autoLogin != "false";
+
+        if (hasAutoLogin)
+        {
+            /*
+             * Skip title song for automated/test startup — defer until the
+             * main game loop is running so Timeline scheduling works.
+             */
+            _engine.QueueMainThreadAction(() =>
+            {
+                var timeline = I.Get<engine.Timeline>();
+                timeline.SetMarker(TimepointTitlesongStarted, DateTime.Now);
+                _isStartingGame = true;
+
+                // Preload MetaGen (normally scheduled from _onTitleSongStarted)
+                _preload();
+
+                bool reset = (autoLogin == "new");
+                bool syncOnline = (autoLogin == "global" || autoLogin == "globally");
+                I.Get<AutoSave>().SyncOnline = syncOnline;
+                _startGame(reset);
+            });
+        }
+        else
+        {
+            bool shouldPlayTitle = engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false";
+            engine.I.Get<Boom.Jukebox>().LoadThenPlaySong(
+                "shaklengokhsi.ogg", shouldPlayTitle?0.05f:0f, false,
+                _onTitleSongStarted, _onTitleSongStopped);
+        }
     }
 }
