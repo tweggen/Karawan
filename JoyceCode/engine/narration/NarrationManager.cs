@@ -9,6 +9,20 @@ namespace engine.narration;
 
 
 /// <summary>
+/// Snapshot of the narration manager state for save/restore.
+/// </summary>
+public class NarrationSaveState
+{
+    public bool IsActive { get; set; }
+    public string ScriptName { get; set; }
+    public string Mode { get; set; }
+    public string InstanceId { get; set; }
+    public string NodeId { get; set; }
+    public Dictionary<string, int> VisitCounts { get; set; }
+}
+
+
+/// <summary>
 /// Central narration manager module. Loads scripts and triggers from the Mix DOM
 /// at /narration, manages the state machine, and owns the active NarrationRunner.
 ///
@@ -56,6 +70,7 @@ public class NarrationManager : AModule
     public NarrationRunner ActiveRunner => _activeRunner;
     public NarrationInterpolator Interpolator => _interpolator;
     public NarrationConditionEvaluator ConditionEvaluator => _conditionEvaluator;
+    public bool AreScriptsLoaded => _scripts.Count > 0;
 
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
@@ -190,6 +205,64 @@ public class NarrationManager : AModule
         }
 
         return null;
+    }
+
+
+    /// <summary>
+    /// Get a snapshot of the current narration state for serialization.
+    /// </summary>
+    public NarrationSaveState GetNarrationState()
+    {
+        if (_activeRunner == null || _activeRunner.IsFinished)
+        {
+            return new NarrationSaveState { IsActive = false };
+        }
+
+        var (nodeId, visitCounts) = _activeRunner.GetSaveState();
+        return new NarrationSaveState
+        {
+            IsActive = true,
+            ScriptName = _activeScriptName,
+            Mode = _currentState switch
+            {
+                State.Conversation => "conversation",
+                State.Narration => "narration",
+                State.ScriptedScene => "scriptedScene",
+                _ => "conversation"
+            },
+            InstanceId = _activeInstanceId,
+            NodeId = nodeId,
+            VisitCounts = visitCounts
+        };
+    }
+
+
+    /// <summary>
+    /// Restore a script at a specific node with saved visit counts.
+    /// Unlike TriggerScript, this skips the _mayTransition check since
+    /// we are restoring known-good state from a save.
+    /// </summary>
+    public async Task<NarrationRunner.NodeResult> RestoreScript(
+        string scriptName, string mode, string instanceId,
+        string nodeId, Dictionary<string, int> visitCounts)
+    {
+        if (!_scripts.TryGetValue(scriptName, out var script))
+        {
+            Warning($"NarrationManager: script '{scriptName}' not found for restore.");
+            return null;
+        }
+
+        State newState = _parseMode(mode);
+        _toState(newState);
+        _activeScriptName = scriptName;
+        _activeInstanceId = instanceId;
+        _activeRunner = new NarrationRunner(script, _interpolator, _conditionEvaluator);
+
+        _pushEvent(new ScriptStartedEvent(scriptName, mode, instanceId));
+
+        var result = await _activeRunner.RestoreAt(nodeId, visitCounts);
+        result = await _processAndAutoAdvance(result);
+        return result;
     }
 
 

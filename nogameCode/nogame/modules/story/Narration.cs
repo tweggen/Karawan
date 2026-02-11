@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using engine;
 using engine.draw;
@@ -45,6 +47,19 @@ public class Narration : AModule, IInputPart
     public uint ChoiceFill { get; set; } = 0x00000000;
 
     private NarrationRunner.NodeResult _currentResult;
+
+    private bool _startupTriggered = false;
+
+    private class PendingRestore
+    {
+        public string ScriptName;
+        public string Mode;
+        public string InstanceId;
+        public string NodeId;
+        public Dictionary<string, int> VisitCounts;
+    }
+
+    private PendingRestore _pendingRestore = null;
 
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
@@ -388,6 +403,117 @@ public class Narration : AModule, IInputPart
     #endregion
 
 
+    #region Save/Restore
+
+    private void _onBeforeSaveGame(object sender, object _)
+    {
+        try
+        {
+            var manager = M<NarrationManager>();
+            var state = manager.GetNarrationState();
+
+            var json = new JsonObject
+            {
+                ["startupTriggered"] = _startupTriggered
+            };
+
+            if (state.IsActive)
+            {
+                var visitCountsObj = new JsonObject();
+                foreach (var kvp in state.VisitCounts)
+                {
+                    visitCountsObj[kvp.Key] = kvp.Value;
+                }
+
+                json["activeScript"] = new JsonObject
+                {
+                    ["name"] = state.ScriptName,
+                    ["mode"] = state.Mode,
+                    ["instanceId"] = state.InstanceId,
+                    ["nodeId"] = state.NodeId,
+                    ["visitCounts"] = visitCountsObj
+                };
+            }
+
+            M<AutoSave>().GameState.Story = json.ToJsonString();
+        }
+        catch (Exception e)
+        {
+            Warning($"Narration: error saving narration state: {e.Message}");
+        }
+    }
+
+
+    private bool _tryRestoreNarrationState()
+    {
+        try
+        {
+            string storyJson = M<AutoSave>().GameState.Story;
+            if (string.IsNullOrEmpty(storyJson))
+            {
+                return false;
+            }
+
+            var json = JsonNode.Parse(storyJson);
+            if (json == null)
+            {
+                return false;
+            }
+
+            _startupTriggered = json["startupTriggered"]?.GetValue<bool>() ?? false;
+
+            var activeScript = json["activeScript"];
+            if (activeScript != null)
+            {
+                var visitCounts = new Dictionary<string, int>();
+                var vcNode = activeScript["visitCounts"];
+                if (vcNode is JsonObject vcObj)
+                {
+                    foreach (var kvp in vcObj)
+                    {
+                        visitCounts[kvp.Key] = kvp.Value.GetValue<int>();
+                    }
+                }
+
+                _pendingRestore = new PendingRestore
+                {
+                    ScriptName = activeScript["name"]?.GetValue<string>() ?? "",
+                    Mode = activeScript["mode"]?.GetValue<string>() ?? "conversation",
+                    InstanceId = activeScript["instanceId"]?.GetValue<string>() ?? "",
+                    NodeId = activeScript["nodeId"]?.GetValue<string>() ?? "",
+                    VisitCounts = visitCounts
+                };
+            }
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            Warning($"Narration: error restoring narration state: {e.Message}");
+            return false;
+        }
+    }
+
+
+    private void _executePendingRestore()
+    {
+        var restore = _pendingRestore;
+        _pendingRestore = null;
+
+        if (restore == null) return;
+
+        _engine.QueueMainThreadAction(async () =>
+        {
+            var result = await M<NarrationManager>().RestoreScript(
+                restore.ScriptName, restore.Mode, restore.InstanceId,
+                restore.NodeId, restore.VisitCounts);
+            _displayNodeResult(result);
+        });
+    }
+
+    #endregion
+
+
     private void _onClickSentence(Event ev)
     {
         var manager = M<NarrationManager>();
@@ -442,6 +568,9 @@ public class Narration : AModule, IInputPart
 
     private void _onRootKickoff(Event ev)
     {
+        if (_startupTriggered) return;
+        _startupTriggered = true;
+
         _engine.QueueMainThreadAction(async () =>
         {
             await M<NarrationManager>().TriggerStartup();
@@ -452,6 +581,7 @@ public class Narration : AModule, IInputPart
     protected override void OnModuleDeactivate()
     {
         M<InputEventPipeline>().RemoveInputPart(this);
+        M<Saver>().OnBeforeSaveGame -= _onBeforeSaveGame;
         M<Saver>().OnAfterLoadGame -= _onAfterLoadGame;
     }
 
@@ -471,6 +601,7 @@ public class Narration : AModule, IInputPart
         }
 
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        M<Saver>().OnBeforeSaveGame += _onBeforeSaveGame;
         M<Saver>().OnAfterLoadGame += _onAfterLoadGame;
 
         // Register game-specific narration bindings
@@ -480,23 +611,29 @@ public class Narration : AModule, IInputPart
         Subscribe(NodeReachedEvent.EVENT_TYPE, _onNodeReached);
         Subscribe(ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
         Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
+
+        // Attempt to restore narration state from a loaded save.
+        // OnAfterLoadGame fires before modules activate, so GameState.Story
+        // is already populated by the time we get here.
+        if (_tryRestoreNarrationState() && _pendingRestore != null)
+        {
+            if (M<NarrationManager>().AreScriptsLoaded)
+            {
+                _executePendingRestore();
+            }
+            else
+            {
+                I.Get<engine.casette.Loader>().WhenLoaded("/narration", (path, jn) =>
+                {
+                    _executePendingRestore();
+                });
+            }
+        }
     }
 
 
     private void _onAfterLoadGame(object sender, object objGameState)
     {
-        // After loading, check if NarrationManager has restored state and display it.
-        var manager = M<NarrationManager>();
-        if (manager.ActiveRunner != null && !manager.ActiveRunner.IsFinished)
-        {
-            Task.Delay(5000).ContinueWith(t =>
-            {
-                _engine.QueueMainThreadAction(() =>
-                {
-                    // Re-display current node if runner is active
-                    // The NodeReachedEvent will handle display via subscription
-                });
-            });
-        }
+        // Restore is handled in OnModuleActivate, which runs after GameState is populated.
     }
 }
