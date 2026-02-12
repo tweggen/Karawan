@@ -567,42 +567,6 @@ public partial class ModelAnimationCollection
                     frameno);
             }
             
-            /*
-             * Spike debug: Check for bones that were never baked (still identity)
-             * This can happen if the animation FBX's node tree doesn't include all bones from the mesh.
-             */
-            if (ma.BakedFrames != null && ma.BakedFrames.Length > 0)
-            {
-                var frame0 = ma.BakedFrames[0];
-                foreach (var boneKvp in skeleton.MapBones)
-                {
-                    int boneIdx = boneKvp.Value.Index;
-                    if (boneIdx >= 0 && boneIdx < frame0.BoneTransformations.Length)
-                    {
-                        var m = frame0.BoneTransformations[boneIdx];
-                        
-                        // Check determinant - negative means reflection/flip
-                        float det = m.GetDeterminant();
-                        if (det < 0)
-                        {
-                            Warning($"Spike: Animation '{ma.Name}' bone '{boneKvp.Key}' (index {boneIdx}) has NEGATIVE determinant {det:F4} - geometry will be flipped!");
-                        }
-                        
-                        // Check if it's still identity (never touched during baking)
-                        bool isIdentity = 
-                            Math.Abs(m.M11 - 1f) < 0.0001f && Math.Abs(m.M22 - 1f) < 0.0001f && 
-                            Math.Abs(m.M33 - 1f) < 0.0001f && Math.Abs(m.M44 - 1f) < 0.0001f &&
-                            Math.Abs(m.M12) < 0.0001f && Math.Abs(m.M13) < 0.0001f && Math.Abs(m.M14) < 0.0001f &&
-                            Math.Abs(m.M21) < 0.0001f && Math.Abs(m.M23) < 0.0001f && Math.Abs(m.M24) < 0.0001f &&
-                            Math.Abs(m.M31) < 0.0001f && Math.Abs(m.M32) < 0.0001f && Math.Abs(m.M34) < 0.0001f &&
-                            Math.Abs(m.M41) < 0.0001f && Math.Abs(m.M42) < 0.0001f && Math.Abs(m.M43) < 0.0001f;
-                        if (isIdentity)
-                        {
-                            Warning($"Spike: Animation '{ma.Name}' bone '{boneKvp.Key}' (index {boneIdx}) has IDENTITY matrix after baking - node not in animation tree?");
-                        }
-                    }
-                }
-            }
         }
     }
 
