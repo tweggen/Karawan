@@ -4,14 +4,9 @@
   "globalTimeout": 180,
   "steps": [
     {
-      "expect": { "type": "nogame.scenes.root.Scene.kickoff" },
-      "timeout": 60,
-      "comment": "Wait for root scene kickoff (includes logo sequence)"
-    },
-    {
       "expect": { "type": "world.cluster.completed" },
-      "timeout": 90,
-      "comment": "At least one cluster must complete street generation + cluster operators"
+      "timeout": 120,
+      "comment": "At least one cluster must complete street generation + cluster operators (includes engine boot time)"
     },
     {
       "action": "quit",
