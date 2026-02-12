@@ -369,6 +369,7 @@ public class GenerateClustersOperator : world.IWorldOperator
         _useClusters(worldMetaGen, acd);
         _saveClusters(acd);
         Trace("GenerateClustersOperator: Done.");
+        I.Get<engine.news.EventQueue>().Push(new ClustersGeneratedEvent(acd.Count));
     });
     
 

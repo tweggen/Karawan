@@ -488,6 +488,8 @@ public class ClusterDesc
         I.Get<MetaGen>().ApplyClusterOperators(this);
 
         _clusterState = ClusterState.Done;
+
+        I.Get<engine.news.EventQueue>().Push(new ClusterCompletedEvent(Name));
     }
 
 

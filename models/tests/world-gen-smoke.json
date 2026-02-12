@@ -1,0 +1,21 @@
+{
+  "name": "world-gen-smoke",
+  "description": "Verify world generation pipeline: clusters generated, streets built, cluster operators run",
+  "globalTimeout": 180,
+  "steps": [
+    {
+      "expect": { "type": "nogame.scenes.root.Scene.kickoff" },
+      "timeout": 60,
+      "comment": "Wait for root scene kickoff (includes logo sequence)"
+    },
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 90,
+      "comment": "At least one cluster must complete street generation + cluster operators"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

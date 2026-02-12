@@ -483,6 +483,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\Loader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\MetaGen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\TerrainKnitter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\WorldEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Main.cs" />
   </ItemGroup>
 </Project>
