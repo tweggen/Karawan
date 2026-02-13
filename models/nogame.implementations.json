@@ -17,6 +17,7 @@
   "nogame.modules.shop.Module": null,
   "nogame.modules.osd.Display": null,
   "nogame.modules.osd.Camera": null,
+  "nogame.quests.Taxi.TaxiNpcSpawnerModule": null,
   "builtin.controllers.InputMapper": {
     "properties": {
       "MapLogicalToDescription":{
