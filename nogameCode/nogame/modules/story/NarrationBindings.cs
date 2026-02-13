@@ -1,9 +1,21 @@
 using System;
+using System.Linq;
+using System.Numerics;
 using System.Threading.Tasks;
+using DefaultEcs;
 using engine;
+using engine.joyce;
+using engine.joyce.components;
 using engine.narration;
+using engine.physics;
 using engine.quest;
+using engine.streets;
+using engine.world;
+using engine.world.components;
+using nogame.characters.car3;
+using nogame.cities;
 using static engine.Logger;
+using Behavior = engine.behave.components.Behavior;
 
 namespace nogame.modules.story;
 
@@ -37,6 +49,102 @@ public static class NarrationBindings
 
                     eQuest.Set(new engine.behave.components.Strategy(
                         new nogame.quests.VisitAgentTwelve.VisitAgentTwelveStrategy(targetPos)));
+                });
+            });
+
+        questFactory.RegisterQuest("nogame.quests.HelloFishmonger.Quest",
+            async (engine, eQuest) =>
+            {
+                string targetCarName = "Fishmonger's car";
+
+                var mcp = new ModelCacheParams()
+                {
+                    Url = "car6.obj",
+                    Properties = new()
+                    {
+                        ["primarycolor"] = "#ffffff00"
+                    },
+                    Params = new()
+                    {
+                        GeomFlags = 0 | InstantiateModelParams.CENTER_X
+                                      | InstantiateModelParams.CENTER_Z
+                                      | InstantiateModelParams.ROTATE_Y180
+                                      | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
+                                      | InstantiateModelParams.BUILD_PHYSICS
+                                      | InstantiateModelParams.PHYSICS_DETECTABLE
+                                      | InstantiateModelParams.PHYSICS_TANGIBLE
+                                      | InstantiateModelParams.PHYSICS_CALLBACKS,
+                        MaxDistance = 150,
+                        SolidLayerMask = CollisionProperties.Layers.NpcVehicle,
+                        SensitiveLayerMask = CollisionProperties.Layers.AnyVehicle,
+                        Name = targetCarName
+                    }
+                };
+
+                var model = await I.Get<ModelCache>().LoadModel(mcp);
+
+                Entity eCarEntity = default;
+
+                await engine.TaskMainThread(() =>
+                {
+                    float minDist = 100f;
+                    float minDist2 = minDist * minDist;
+
+                    var clusterDesc = I.Get<ClusterList>().GetClusterAt(Vector3.Zero);
+                    Vector3 v3Cluster = clusterDesc.Pos;
+                    var listStreetPoints = clusterDesc.StrokeStore().GetStreetPoints();
+                    engine.Player.TryGet(out var ePlayer);
+
+                    StreetPoint? spStart = listStreetPoints.FirstOrDefault(
+                        sp =>
+                            (sp.Pos3 with { Y = 0f } - ePlayer.Get<Transform3ToWorld>().Matrix.Translation with { Y = 0 })
+                            .LengthSquared() >= minDist2
+                            && I.Get<MetaGen>().Loader.TryGetFragment(
+                                Fragment.PosToIndex3(sp.Pos3 + v3Cluster), out _));
+                    if (null == spStart)
+                    {
+                        spStart = listStreetPoints.First();
+                    }
+
+                    I.Get<MetaGen>().Loader.TryGetFragment(
+                        Fragment.PosToIndex3(spStart.Pos3 + v3Cluster), out var worldFragment);
+
+                    eCarEntity = engine.CreateEntity(targetCarName);
+
+                    CharacterCreator.SetupCharacterMT(
+                        eCarEntity,
+                        clusterDesc, worldFragment, spStart,
+                        model, mcp,
+                        new nogame.characters.car3.Behavior()
+                        {
+                            Navigator = new StreetNavigationController()
+                            {
+                                ClusterDesc = clusterDesc,
+                                StartPoint = spStart,
+                                Seed = 100,
+                                Speed = 35f
+                            }
+                        },
+                        null
+                    );
+
+                    eCarEntity.Set(new EntityName(targetCarName));
+                    eCarEntity.Set(new Creator(Creator.CreatorId_Hardcoded));
+
+                    ref var cBehavior = ref eCarEntity.Get<Behavior>();
+                    cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
+
+                    eQuest.Set(new engine.quest.components.QuestInfo
+                    {
+                        QuestId = "nogame.quests.HelloFishmonger.Quest",
+                        Title = "Trail the car.",
+                        ShortDescription =
+                            "The car quickly is departing. Follow it to its target!",
+                        LongDescription = "Isn't this a chase again?"
+                    });
+
+                    eQuest.Set(new engine.behave.components.Strategy(
+                        new nogame.quests.HelloFishmonger.HelloFishmongerStrategy(eCarEntity)));
                 });
             });
     }
