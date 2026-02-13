@@ -141,56 +141,39 @@ The narration JSON format stays identical:
 
 ## Implementation Plan
 
-### Phase 1: Add QuestInfo component (non-breaking)
+### Phase 1: Add QuestInfo component (non-breaking) — COMPLETE
 
-**Files to create:**
-- `JoyceCode/engine/quest/components/QuestInfo.cs` — the new component as described above
+**Files created:**
+- `JoyceCode/engine/quest/components/QuestInfo.cs`
 
-**Files to modify:**
-- None yet. The old system continues to work.
+### Phase 2: Migrate VisitAgentTwelve — COMPLETE
 
-**Validation:** Build succeeds. No behavioral change.
+**Files created:**
+- `nogameCode/nogame/quests/VisitAgentTwelve/VisitAgentTwelveStrategy.cs` — `AOneOfStrategy` with `"navigate"` phase
+- `nogameCode/nogame/quests/VisitAgentTwelve/NavigateStrategy.cs` — `AEntityStrategyPart` using `ToLocation`
 
-### Phase 2: Create the first strategy-based quest (parallel to old system)
+**Files modified:**
+- `nogameCode/nogame/modules/story/NarrationBindings.cs` — added `QuestFactory` registration, hybrid routing (QuestFactory first, Manager fallback)
+- `JoyceCode/engine/quest/QuestFactory.cs` — created as lightweight service (non-static, registered via `I`)
 
-Pick the simplest quest: **VisitAgentTwelve**. It has one phase (go to location).
+**Files deleted:**
+- `nogameCode/nogame/quests/VisitAgentTwelve/Quest.cs` — old IQuest/AModule/ICreator implementation
 
-**Files to create:**
-- `nogameCode/nogame/quests/VisitAgentTwelve/VisitAgentTwelveStrategy.cs`
-  - Extends `AOneOfStrategy` with a single child strategy `"navigate"`
-  - `GetStartStrategy()` returns `"navigate"`
-  - `GiveUpStrategy()` handles completion (deactivate quest, trigger narration)
+### Phase 3: Migrate HelloFishmonger — COMPLETE
 
-- `nogameCode/nogame/quests/VisitAgentTwelve/NavigateStrategy.cs`
-  - Extends `AEntityStrategyPart`
-  - `OnAttach`: compute target location (the `_computeTargetLocationLT` logic)
-  - `OnEnter`: create `ToLocation` with marker, subscribe to reach event
-  - `OnExit`: dispose `ToLocation`, unsubscribe
-  - When target reached: call `Controller.GiveUpStrategy(this)`
+**Files created:**
+- `nogameCode/nogame/quests/HelloFishmonger/HelloFishmongerStrategy.cs` — `AOneOfStrategy` with `"trail"` phase
+- `nogameCode/nogame/quests/HelloFishmonger/TrailStrategy.cs` — `AEntityStrategyPart` using `TrailVehicle`
 
-**Files to modify:**
-- Create a temporary factory/helper to instantiate the quest entity with both `QuestInfo` and `Strategy` components. This can initially live alongside `quest.Manager` — triggered by a different narration event type or by extending the existing trigger path.
+**Key implementation detail:** Car creation logic (model loading, street point selection, `CharacterCreator.SetupCharacterMT`) moved into the factory lambda in `NarrationBindings._registerQuestFactories()`. The car entity is created alongside the quest entity but is not a child — it remains alive after quest completion (matching original behavior).
 
-**Validation:**
-- The quest works end-to-end: narration triggers it, marker appears, reaching the marker completes it, narration continues.
-- Quest entity has `QuestInfo` component queryable for quest log.
-- Save/load works via `[IsPersistable]` on `QuestInfo` + `Strategy`.
+**Files modified:**
+- `nogameCode/nogame/modules/story/NarrationBindings.cs` — added HelloFishmonger factory registration
+- `nogameCode/nogameCode.projitems` — swapped old Quest.cs for new strategy files
+- `models/nogame.quests.json` — emptied to `{}` (all quests now use QuestFactory)
 
-### Phase 3: Migrate HelloFishmonger
-
-Single-phase quest (trail a vehicle), but involves creating a target entity.
-
-**Files to create:**
-- `nogameCode/nogame/quests/HelloFishmonger/HelloFishmongerStrategy.cs` — `AOneOfStrategy`
-- `nogameCode/nogame/quests/HelloFishmonger/TrailStrategy.cs` — `AEntityStrategyPart`
-  - `OnAttach`: create the car entity (the `CreateEntities` logic)
-  - `OnEnter`: create `TrailVehicle` marker
-  - `OnExit`: dispose marker
-  - On reach: `Controller.GiveUpStrategy(this)` → deactivate + trigger narration
-
-**Key detail:** The car entity should be a child of the quest entity via hierarchy. When the quest entity is deleted, the car is cleaned up automatically.
-
-**Validation:** Same as Phase 2. Also verify that saving/loading reconstructs the car entity correctly.
+**Files deleted:**
+- `nogameCode/nogame/quests/HelloFishmonger/Quest.cs` — old IQuest/AModule/ICreator implementation
 
 ### Phase 4: Migrate Taxi quest (multi-phase)
 
@@ -257,75 +240,29 @@ Once all quests are migrated:
 
 ---
 
-## Quest Factory / Trigger Helper
+## Quest Factory / Trigger Helper — IMPLEMENTED
 
-A lightweight replacement for `quest.Manager`. This is NOT a full subsystem — just a convenience layer.
+`QuestFactory` is a non-static service registered via `I.Get<QuestFactory>()`. It supports async factory lambdas (needed for model loading, target computation). Lives in `JoyceCode/engine/quest/QuestFactory.cs`.
 
-```csharp
-namespace engine.quest;
+Key API:
+- `RegisterQuest(string questId, Func<Engine, Entity, Task> factory)` — registers an async factory
+- `HasQuest(string questId)` — checks if a quest is registered
+- `TriggerQuest(string questId, bool activate)` — creates entity, runs factory, activates
+- `DeactivateQuest(Entity eQuest)` — deactivates, removes Strategy, disposes entity, saves
 
-public static class QuestFactory
-{
-    private static SortedDictionary<string, Func<Engine, Entity>> _factories = new();
-
-    public static void RegisterQuest(string questId, Func<Engine, Entity> factory)
-    {
-        _factories[questId] = factory;
-    }
-
-    public static void TriggerQuest(string questId, bool activate)
-    {
-        var engine = I.Get<Engine>();
-
-        // Check if already exists
-        var existing = engine.GetEcsWorld().GetEntities()
-            .With<components.QuestInfo>()
-            .AsEnumerable()
-            .FirstOrDefault(e => e.Get<components.QuestInfo>().QuestId == questId);
-
-        if (existing.IsAlive)
-        {
-            if (activate && !existing.Get<components.QuestInfo>().IsActive)
-            {
-                ref var qi = ref existing.Get<components.QuestInfo>();
-                qi.IsActive = true;
-            }
-            return;
-        }
-
-        if (!_factories.TryGetValue(questId, out var factory))
-        {
-            Logger.Error($"Unknown quest: {questId}");
-            return;
-        }
-
-        var eQuest = factory(engine);
-        if (activate)
-        {
-            ref var qi = ref eQuest.Get<components.QuestInfo>();
-            qi.IsActive = true;
-        }
-    }
-}
-```
-
-Quest registration (e.g., in a game startup module or loaded from config):
+Quest registration lives in `NarrationBindings._registerQuestFactories()`:
 
 ```csharp
-QuestFactory.RegisterQuest("nogame.quests.VisitAgentTwelve", engine =>
-{
-    var e = engine.CreateEntity("quest VisitAgentTwelve");
-    e.Set(new QuestInfo
+questFactory.RegisterQuest("nogame.quests.VisitAgentTwelve.Quest",
+    async (engine, eQuest) =>
     {
-        QuestId = "nogame.quests.VisitAgentTwelve",
-        Title = "Come to the location.",
-        ShortDescription = "Find the marker on the map and reach it.",
-        IsActive = false
+        var targetPos = await VisitAgentTwelveStrategy.ComputeTargetLocationAsync(engine);
+        await engine.TaskMainThread(() =>
+        {
+            eQuest.Set(new QuestInfo { QuestId = "...", Title = "...", ... });
+            eQuest.Set(new Strategy(new VisitAgentTwelveStrategy(targetPos)));
+        });
     });
-    e.Set(new Strategy(new VisitAgentTwelveStrategy()));
-    e.Set(new Creator(I.Get<CreatorRegistry>().FindCreatorId(/* ... */)));
-    return e;
-});
 ```
 
 ---

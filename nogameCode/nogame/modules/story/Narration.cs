@@ -9,6 +9,7 @@ using engine.draw;
 using engine.draw.components;
 using engine.narration;
 using engine.news;
+using engine.quest;
 using static engine.Logger;
 
 namespace nogame.modules.story;
@@ -567,6 +568,30 @@ public class Narration : AModule, IInputPart
     }
 
 
+    private bool _autoTriggerFired = false;
+
+    private void _onClusterCompletedAutoTrigger(Event ev)
+    {
+        if (_autoTriggerFired) return;
+        _autoTriggerFired = true;
+
+        string questId = GlobalSettings.Get("quest.autoTrigger");
+        if (string.IsNullOrEmpty(questId)) return;
+
+        _engine.QueueMainThreadAction(async () =>
+        {
+            try
+            {
+                await I.Get<QuestFactory>().TriggerQuest(questId, true);
+            }
+            catch (Exception e)
+            {
+                Warning($"quest.autoTrigger failed for '{questId}': {e.Message}");
+            }
+        });
+    }
+
+
     private void _onRootKickoff(Event ev)
     {
         if (_startupTriggered)
@@ -619,6 +644,7 @@ public class Narration : AModule, IInputPart
         Subscribe(NodeReachedEvent.EVENT_TYPE, _onNodeReached);
         Subscribe(ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
         Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
+        Subscribe(engine.world.ClusterCompletedEvent.EVENT_TYPE, _onClusterCompletedAutoTrigger);
     }
 
 

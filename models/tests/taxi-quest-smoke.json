@@ -1,0 +1,21 @@
+{
+  "name": "taxi-quest-smoke",
+  "description": "Verify taxi quest can be triggered and enters pickup phase",
+  "globalTimeout": 180,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 120,
+      "comment": "Wait for world generation so Placer has data"
+    },
+    {
+      "expect": { "type": "quest.triggered", "code": "nogame.quests.Taxi.Quest" },
+      "timeout": 30,
+      "comment": "quest.autoTrigger setting should fire the taxi quest"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

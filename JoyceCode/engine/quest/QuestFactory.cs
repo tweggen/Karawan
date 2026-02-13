@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DefaultEcs;
+using engine.news;
 using engine.quest.components;
 using static engine.Logger;
 
@@ -87,6 +88,8 @@ public class QuestFactory
                 qi.IsActive = true;
             });
         }
+
+        I.Get<EventQueue>().Push(new QuestTriggeredEvent(questId));
     }
 
 
@@ -100,9 +103,11 @@ public class QuestFactory
         {
             if (!eQuest.IsAlive) return;
 
+            string questId = null;
             if (eQuest.Has<QuestInfo>())
             {
                 ref var qi = ref eQuest.Get<QuestInfo>();
+                questId = qi.QuestId;
                 qi.IsActive = false;
             }
 
@@ -114,6 +119,11 @@ public class QuestFactory
 
             eQuest.Dispose();
             I.Get<Saver>().Save("quest deactivated");
+
+            if (questId != null)
+            {
+                I.Get<EventQueue>().Push(new QuestDeactivatedEvent(questId));
+            }
         });
     }
 

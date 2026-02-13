@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using builtin.tools;
 using DefaultEcs;
 using engine;
 using engine.joyce;
@@ -145,6 +146,47 @@ public static class NarrationBindings
 
                     eQuest.Set(new engine.behave.components.Strategy(
                         new nogame.quests.HelloFishmonger.HelloFishmongerStrategy(eCarEntity)));
+                });
+            });
+
+        questFactory.RegisterQuest("nogame.quests.Taxi.Quest",
+            async (engine, eQuest) =>
+            {
+                var clusterDesc = I.Get<ClusterList>().GetClusterAt(Vector3.Zero);
+
+                var pc = new PlacementContext() { CurrentCluster = clusterDesc };
+                var plad = new PlacementDescription()
+                {
+                    ReferenceObject = PlacementDescription.Reference.StreetPoint,
+                    WhichFragment = PlacementDescription.FragmentSelection.AnyFragment,
+                    WhichCluster = PlacementDescription.ClusterSelection.CurrentCluster,
+                    WhichQuarter = PlacementDescription.QuarterSelection.AnyQuarter
+                };
+
+                if (!I.Get<Placer>().TryPlacing(new RandomSource("taxi-guest"), pc, plad, out var guestPod))
+                {
+                    Warning("NarrationBindings: Unable to place taxi guest.");
+                    return;
+                }
+
+                if (!I.Get<Placer>().TryPlacing(new RandomSource("taxi-dest"), pc, plad, out var destPod))
+                {
+                    Warning("NarrationBindings: Unable to place taxi destination.");
+                    return;
+                }
+
+                await engine.TaskMainThread(() =>
+                {
+                    eQuest.Set(new engine.quest.components.QuestInfo
+                    {
+                        QuestId = "nogame.quests.Taxi.Quest",
+                        Title = "Be a good cab driver.",
+                        ShortDescription = "The passenger wants to get to their target.",
+                        LongDescription = "Isn't this a chase again?"
+                    });
+
+                    eQuest.Set(new engine.behave.components.Strategy(
+                        new nogame.quests.Taxi.TaxiQuestStrategy(guestPod.Position, destPod.Position)));
                 });
             });
     }
