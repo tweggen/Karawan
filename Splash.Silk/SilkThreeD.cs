@@ -376,7 +376,7 @@ public class SilkThreeD : IThreeD
 
         if (_checkGLErrors) CheckError(gl,"Beginning of DrawMeshInstanced");
 
-        if (_frameno % 300 == 0)
+        if (false && _frameno % 300 == 0)
         {
             SkMeshEntry dbgMesh = ((SkMeshEntry)aMeshEntry);
             SkMaterialEntry dbgMat = ((SkMaterialEntry)aMaterialEntry);
