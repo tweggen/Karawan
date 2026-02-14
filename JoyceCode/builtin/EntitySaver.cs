@@ -21,6 +21,29 @@ namespace builtin;
 
 public class EntitySaver : AModule
 {
+    private readonly Dictionary<string, Type> _typeCache = new();
+
+    private Type ResolveType(string typeName)
+    {
+        if (_typeCache.TryGetValue(typeName, out var cached))
+            return cached;
+
+        var type = Type.GetType(typeName);
+        if (type == null)
+        {
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                type = asm.GetType(typeName);
+                if (type != null) break;
+            }
+        }
+
+        if (type != null)
+            _typeCache[typeName] = type;
+
+        return type;
+    }
+
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<ConverterRegistry>() {},
@@ -194,7 +217,12 @@ public class EntitySaver : AModule
                     {
                         var strComponentName = jpComponent.Name;
                         var jeComponent = jpComponent.Value;
-                        var type = Type.GetType(strComponentName)!;
+                        var type = ResolveType(strComponentName);
+                        if (type == null)
+                        {
+                            Error($"Unable to find type '{strComponentName}' for deserialization.");
+                            continue;
+                        }
 
                         Object comp = null;
                         try

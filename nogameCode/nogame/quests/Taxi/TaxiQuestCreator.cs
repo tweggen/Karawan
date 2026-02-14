@@ -6,6 +6,7 @@ using DefaultEcs;
 using engine;
 using engine.quest;
 using engine.world;
+using static engine.Logger;
 
 namespace nogame.quests.Taxi;
 
@@ -22,6 +23,11 @@ public class TaxiQuestCreator : ICreator
     {
         return () =>
         {
+            if (!eLoaded.Has<TaxiQuestData>())
+            {
+                Warning($"TaxiQuestCreator: entity missing TaxiQuestData, cannot restore quest.");
+                return Task.CompletedTask;
+            }
             var data = eLoaded.Get<TaxiQuestData>();
 
             string startPhase = data.Phase switch
