@@ -185,6 +185,18 @@ public static class NarrationBindings
                         LongDescription = "Isn't this a chase again?"
                     });
 
+                    eQuest.Set(new nogame.quests.Taxi.TaxiQuestData
+                    {
+                        GuestPosition = guestPod.Position,
+                        DestinationPosition = destPod.Position,
+                        Phase = 0
+                    });
+
+                    var spawnerModule = (nogame.quests.Taxi.TaxiNpcSpawnerModule)
+                        I.Get<ModuleFactory>().FindModule(typeof(nogame.quests.Taxi.TaxiNpcSpawnerModule), false);
+                    eQuest.Set(new engine.world.components.Creator(
+                        I.Get<engine.world.CreatorRegistry>().FindCreatorId(spawnerModule.TaxiQuestCreator)));
+
                     eQuest.Set(new engine.behave.components.Strategy(
                         new nogame.quests.Taxi.TaxiQuestStrategy(guestPod.Position, destPod.Position)));
                 });

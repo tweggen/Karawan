@@ -34,8 +34,10 @@ public class TaxiNpcSpawnerModule : AModule
     }
 
     private readonly List<NpcRecord> _npcRecords = new();
+    private readonly List<NpcRecord> _hiddenRecords = new();
     private bool _isTaxiQuestActive = false;
     private int _replacementCounter = 0;
+    internal TaxiQuestCreator TaxiQuestCreator { get; private set; }
 
     private const uint _mapCameraMask = 0x00800000;
     private const float _sensitiveRadius = 3f;
@@ -124,6 +126,9 @@ public class TaxiNpcSpawnerModule : AModule
         {
             _npcRecords.Add(record);
         }
+
+        I.Get<engine.news.EventQueue>().Push(
+            new engine.news.Event("taxi.npc.spawned", clusterDesc.Name));
     }
 
 
@@ -131,17 +136,31 @@ public class TaxiNpcSpawnerModule : AModule
     {
         _engine.QueueMainThreadAction(() =>
         {
+            List<NpcRecord> toHide;
             lock (_lo)
             {
                 if (_isTaxiQuestActive) return;
                 if (!_npcRecords.Contains(record)) return;
                 _isTaxiQuestActive = true;
                 _npcRecords.Remove(record);
+
+                toHide = new List<NpcRecord>(_npcRecords);
+                _hiddenRecords.AddRange(_npcRecords);
+                _npcRecords.Clear();
             }
 
             if (record.MarkerEntity.IsAlive)
             {
                 I.Get<HierarchyApi>().Delete(ref record.MarkerEntity);
+            }
+
+            foreach (var r in toHide)
+            {
+                if (r.MarkerEntity.IsAlive)
+                {
+                    var e = r.MarkerEntity;
+                    I.Get<HierarchyApi>().Delete(ref e);
+                }
             }
 
             _ = I.Get<QuestFactory>().TriggerQuest(_questId, true);
@@ -175,6 +194,25 @@ public class TaxiNpcSpawnerModule : AModule
                 if (quarter.IsInvalid()) continue;
                 if (rnd.GetFloat() < 0.1f)
                 {
+                    lock (_lo)
+                    {
+                        if (_isTaxiQuestActive)
+                        {
+                            Vector3 v3Local = quarter.GetDelims().First().StreetPoint.Pos3;
+                            Vector3 v3World = (clusterDesc.Pos + v3Local) with
+                            {
+                                Y = clusterDesc.AverageHeight + 2f
+                            };
+                            _hiddenRecords.Add(new NpcRecord
+                            {
+                                ClusterDesc = clusterDesc,
+                                Quarter = quarter,
+                                Position = v3World
+                            });
+                            continue;
+                        }
+                    }
+
                     _spawnSingleNpcLT(clusterDesc, quarter, rnd);
                 }
             }
@@ -186,16 +224,30 @@ public class TaxiNpcSpawnerModule : AModule
     {
         if (ev.Code != _questId) return;
 
+        List<NpcRecord> toRestore;
         lock (_lo)
         {
             _isTaxiQuestActive = false;
+            toRestore = new List<NpcRecord>(_hiddenRecords);
+            _hiddenRecords.Clear();
         }
 
+        // Respawn previously hidden markers.
+        _engine.QueueMainThreadAction(() =>
+        {
+            foreach (var r in toRestore)
+            {
+                var rnd = new RandomSource(r.ClusterDesc.Name + "taxinpc");
+                _spawnSingleNpcLT(r.ClusterDesc, r.Quarter, rnd);
+            }
+        });
+
+        // Spawn one replacement for the consumed marker.
         var clusterList = I.Get<ClusterList>();
         var allClusters = clusterList.GetClusterList();
         if (allClusters.Count == 0) return;
 
-        var rnd = new RandomSource($"taxinpc.replace.{_replacementCounter++}");
+        var rnd2 = new RandomSource($"taxinpc.replace.{_replacementCounter++}");
 
         HashSet<Quarter> occupiedQuarters;
         lock (_lo)
@@ -203,21 +255,26 @@ public class TaxiNpcSpawnerModule : AModule
             occupiedQuarters = new HashSet<Quarter>(_npcRecords.Select(r => r.Quarter));
         }
 
-        int clusterStartIdx = rnd.GetInt(allClusters.Count);
+        foreach (var r in toRestore)
+        {
+            occupiedQuarters.Add(r.Quarter);
+        }
+
+        int clusterStartIdx = rnd2.GetInt(allClusters.Count);
         for (int ci = 0; ci < allClusters.Count; ci++)
         {
             var cd = allClusters[(clusterStartIdx + ci) % allClusters.Count];
             var quarters = cd.QuarterStore().GetQuarters();
             if (quarters == null || quarters.Count == 0) continue;
 
-            int quarterStartIdx = rnd.GetInt(quarters.Count);
+            int quarterStartIdx = rnd2.GetInt(quarters.Count);
             for (int qi = 0; qi < quarters.Count; qi++)
             {
                 var q = quarters[(quarterStartIdx + qi) % quarters.Count];
                 if (q.IsInvalid()) continue;
                 if (!occupiedQuarters.Contains(q))
                 {
-                    _engine.QueueMainThreadAction(() => _spawnSingleNpcLT(cd, q, rnd));
+                    _engine.QueueMainThreadAction(() => _spawnSingleNpcLT(cd, q, rnd2));
                     return;
                 }
             }
@@ -232,6 +289,7 @@ public class TaxiNpcSpawnerModule : AModule
         {
             records = new List<NpcRecord>(_npcRecords);
             _npcRecords.Clear();
+            _hiddenRecords.Clear();
         }
 
         foreach (var record in records)
@@ -245,15 +303,49 @@ public class TaxiNpcSpawnerModule : AModule
     }
 
 
+    private void _onQuestTriggered(engine.news.Event ev)
+    {
+        if (ev.Code != _questId) return;
+
+        _engine.QueueMainThreadAction(() =>
+        {
+            List<NpcRecord> toHide;
+            lock (_lo)
+            {
+                if (_isTaxiQuestActive) return;
+                _isTaxiQuestActive = true;
+
+                toHide = new List<NpcRecord>(_npcRecords);
+                _hiddenRecords.AddRange(_npcRecords);
+                _npcRecords.Clear();
+            }
+
+            foreach (var r in toHide)
+            {
+                if (r.MarkerEntity.IsAlive)
+                {
+                    var e = r.MarkerEntity;
+                    I.Get<HierarchyApi>().Delete(ref e);
+                }
+            }
+        });
+    }
+
+
     protected override void OnModuleDeactivate()
     {
+        I.Get<engine.world.CreatorRegistry>().UnregisterCreator(TaxiQuestCreator);
         _engine.QueueMainThreadAction(_destroyAllNpcsLT);
     }
 
 
     protected override void OnModuleActivate()
     {
+        TaxiQuestCreator = new TaxiQuestCreator();
+        I.Get<engine.world.CreatorRegistry>().RegisterCreator(TaxiQuestCreator);
+
         Subscribe(ClusterCompletedEvent.EVENT_TYPE, _onClusterCompleted);
         Subscribe(QuestDeactivatedEvent.EVENT_TYPE, _onQuestDeactivated);
+        Subscribe(QuestTriggeredEvent.EVENT_TYPE, _onQuestTriggered);
     }
 }

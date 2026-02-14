@@ -11,13 +11,21 @@ namespace nogame.quests.Taxi;
 /// </summary>
 public class TaxiQuestStrategy : AOneOfStrategy
 {
-    public override string GetStartStrategy() => "pickup";
+    private readonly string _startPhase;
+
+    public override string GetStartStrategy() => _startPhase;
 
 
     public override void GiveUpStrategy(IStrategyPart strategy)
     {
         if (strategy == Strategies["pickup"])
         {
+            if (_entity.Has<TaxiQuestData>())
+            {
+                ref var data = ref _entity.Get<TaxiQuestData>();
+                data.Phase = 1;
+            }
+
             TriggerStrategy("driving");
         }
         else if (strategy == Strategies["driving"])
@@ -28,8 +36,9 @@ public class TaxiQuestStrategy : AOneOfStrategy
     }
 
 
-    public TaxiQuestStrategy(Vector3 guestPosition, Vector3 destinationPosition)
+    public TaxiQuestStrategy(Vector3 guestPosition, Vector3 destinationPosition, string startPhase = "pickup")
     {
+        _startPhase = startPhase;
         Strategies = new()
         {
             {

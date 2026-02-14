@@ -1,0 +1,21 @@
+{
+  "name": "taxi-markers-visible",
+  "description": "Verify taxi NPC markers are spawned after cluster generation",
+  "globalTimeout": 180,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 120,
+      "comment": "Wait for at least one cluster to complete"
+    },
+    {
+      "expect": { "type": "taxi.npc.spawned" },
+      "timeout": 30,
+      "comment": "At least one taxi NPC marker should be spawned in the completed cluster"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

@@ -12,5 +12,6 @@ public class GameSetup : AModule
          * Modules to populate the world after world-building.
          */
         new MyModule<DropCoinModule>(),
+        new SharedModule<nogame.quests.Taxi.TaxiNpcSpawnerModule>(),
     };
 }
