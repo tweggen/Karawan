@@ -543,11 +543,11 @@ public class SilkThreeD : IThreeD
             bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
             if (_checkGLErrors) CheckError(gl,"New matrix Buffer Object");
 
-            if (_frameno % 300 == 0)
+            if (false && _frameno % 300 == 0)
             {
                 System.Console.Error.WriteLine(
                     $"[DrawMeshInstanced] _locInstanceMatrices={_locInstanceMatrices}, _locMvp={_locMvp}, _locVertexFlags={_locVertexFlags}");
-            }
+            }   
 
             for (uint i = 0; i < 4; ++i)
             {

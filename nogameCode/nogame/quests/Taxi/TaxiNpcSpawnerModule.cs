@@ -118,7 +118,7 @@ public class TaxiNpcSpawnerModule : AModule
         var eMapIcon = _engine.CreateEntity($"taxi.npc map {clusterDesc.Name}");
         I.Get<HierarchyApi>().SetParent(eMapIcon, eMarker);
         I.Get<TransformApi>().SetTransforms(eMapIcon, true, _mapCameraMask, Quaternion.Identity, Vector3.Zero);
-        eMapIcon.Set(new MapIcon() { Code = MapIcon.IconCode.Target0 });
+        eMapIcon.Set(new MapIcon() { Code = MapIcon.IconCode.Taxi });
 
         lock (_lo)
         {

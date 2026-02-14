@@ -1,6 +1,7 @@
 using System.Numerics;
 using engine;
 using engine.behave;
+using engine.world.components;
 
 namespace nogame.quests.Taxi;
 
@@ -35,6 +36,7 @@ public class PickupStrategy : AEntityStrategyPart
             SensitivePhysicsName = nogame.modules.playerhover.MainPlayModule.PhysicsStem,
             SensitiveRadius = 10f,
             MapCameraMask = nogame.modules.map.Module.MapCameraMask,
+            MapIcon = MapIcon.IconCode.TaxiTarget,
             OnReachTarget = _onReachTarget
         };
         _questTarget.ModuleActivate();

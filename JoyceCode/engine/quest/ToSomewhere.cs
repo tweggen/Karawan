@@ -9,6 +9,7 @@ using engine.joyce;
 using engine.joyce.components;
 using engine.physics;
 using engine.physics.components;
+using engine.world.components;
 using static engine.Logger;
 using Object = System.Object;
 
@@ -45,6 +46,11 @@ public class ToSomewhere : AModule
      * The map we shall render on
      */
     public uint MapCameraMask { get; set; } = 0x00800000;
+
+    /**
+     * What icon shall be used as targetß
+     */
+    public MapIcon.IconCode MapIcon { get; set; } = world.components.MapIcon.IconCode.Target0;
     
     /**
      * If I am supposed to create a visible target for this one.
@@ -168,7 +174,7 @@ public class ToSomewhere : AModule
             MapCameraMask, Quaternion.Identity, Vector3.Zero);
 
         eMapMarker.Set(new engine.world.components.MapIcon()
-            { Code = engine.world.components.MapIcon.IconCode.Target0 });
+            { Code = MapIcon });
     }
 
     private Lazy<Mesh> _jMesh = new(() => joyce.mesh.Tools.CreateCubeMesh($"waypoint [idx]", 3f));

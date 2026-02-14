@@ -11,8 +11,8 @@ public struct MapIcon
         Eat = 3,
         Drink = 4,
         Target0 = 5,
-        Game6 = 6,
-        Game7 = 7
+        Taxi = 6,
+        TaxiTarget = 7
     }
     public IconCode Code;
 }
