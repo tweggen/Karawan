@@ -11,8 +11,11 @@ public interface ICreator
     /**
      * Setup a given entity from serializable data.
      * This is required e.g. after loading an entity from disk.
+     *
+     * We expect the method to return a task that can be awaited from any
+     * thread resolving into an action that must run in the main thread.
      */
-    public Func<Task> SetupEntityFrom(DefaultEcs.Entity eLoaded, JsonElement je);
+    public Task<Action> SetupEntityFrom(DefaultEcs.Entity eLoaded, JsonElement je);
 
     public void SaveEntityTo(DefaultEcs.Entity eLoader, out JsonNode jn);
 }

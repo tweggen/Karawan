@@ -189,7 +189,7 @@ public class EntitySaver : AModule
     public async Task LoadAll(JsonElement jeAll)
     {
         List<Task> listSetupTasks = new();
-        List<(DefaultEcs.Entity, JsonElement)> listCreatorEntities = new();
+        List<(DefaultEcs.Entity, ICreator, JsonElement)> listCreatorEntities = new();
         
         var context = new Context();
         JsonSerializerOptions serializerOptions = new()
@@ -277,28 +277,37 @@ public class EntitySaver : AModule
 
                 if (jeEntity.TryGetProperty("creator", out var jeCreator))
                 {
-                    listCreatorEntities.Add((e, jeCreator));
+                    if (e.Has<Creator>())
+                    {
+                        var cCreator = e.Get<Creator>();
+                        ICreator? iCreator = I.Get<CreatorRegistry>().GetCreator(cCreator.CreatorId);
+                        if (null != iCreator)
+                        {
+                            listCreatorEntities.Add((e, iCreator, jeCreator));
+                        }
+                    }
                 }
             }
         });
         
         await Task.WhenAll(listSetupTasks);
-        await _engine.TaskMainThread(() => {
-            /*
-             * So everything has been loaded into the vartious components and been individually
-             * set up. Now we can call creators for setting up their content which now may depend
-             * on other entities.
-             */
-            foreach (var (e, jeCreator) in listCreatorEntities)
+        
+        /*
+         * So everything has been loaded into the vartious components and been individually
+         * set up. Now we can call creators for setting up their content which now may depend
+         * on other entities.
+         */
+        var iCreatorTasks = listCreatorEntities 
+            .Select(async tuple =>
             {
-                var cCreator = e.Get<Creator>();
-                ICreator? iCreator = I.Get<CreatorRegistry>().GetCreator(cCreator.CreatorId);
-                if (null == iCreator)
-                {
-                    continue;
-                }
-                iCreator.SetupEntityFrom(e, jeCreator);
-            }
-        });
+                var (e, iCreator, jeCreator) = tuple; 
+                var action = await iCreator.SetupEntityFrom(e, jeCreator); 
+                _engine.QueueMainThreadAction(action);
+            }) .ToList();
+        
+        /*
+         * Colntinue as soon everything has been queued.
+         */
+        await Task.WhenAll(iCreatorTasks);
     }
 }

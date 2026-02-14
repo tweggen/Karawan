@@ -184,26 +184,25 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
      * Called after all entities are initialized. Called because of the Creator component
      * in the entity.
      */
-    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je) => (async () =>
+    public async Task<Action> SetupEntityFrom(Entity eLoaded, JsonElement je) => (() =>
     {
         /*
          * We are called because we are the creator. However, we want to delegate that call
          * to allow the individual quest to initialize itself-
          */
+        /*
+         * Note that we are right now in the logical thread.
+         */
         try
         {
-            engine.quest.components.Quest cQuest;
-            IQuest iQuest = default;
+            //engine.quest.components.Quest cQuest;
+            // IQuest iQuest = default;
             
-            await _engine.TaskMainThread(() =>
-            {
-                /*
-                 * The entity does have a Quest object with a quest instantiated. Load that.
-                 */
-                // TXWTODO: This is suppsed to be in the logical thread.
-                engine.quest.components.Quest cQuest = eLoaded.Get<engine.quest.components.Quest>();
-                iQuest = cQuest.ActiveQuest;
-            });
+            /*
+             * The entity does have a Quest object with a quest instantiated. Load that.
+             */
+            engine.quest.components.Quest cQuest = eLoaded.Get<engine.quest.components.Quest>();
+            IQuest? iQuest = cQuest.ActiveQuest;
 
             if (null == iQuest)
             {
@@ -222,17 +221,27 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             ICreator iCreator = iQuest as ICreator;
             if (iCreator != null)
             {
-                await iCreator.SetupEntityFrom(eLoaded, je)();
+                _engine.Run(async () =>
+                {
+                    var setupAction = await iCreator.SetupEntityFrom(eLoaded, je);
+
+                    _engine.QueueMainThreadAction(
+                        () =>
+                        {
+                            setupAction();
+                            
+                            /*
+                             * Finally, if the quest is marked active, activate it now.
+                             */
+                            if (iQuest.IsActive)
+                            {
+                                ActivateQuest(iQuest);
+                            }
+                        });
+                });
             }
 
             
-            /*
-             * Finally, if the quest is marked active, activate it now.
-             */
-            if (iQuest.IsActive)
-            {
-                ActivateQuest(iQuest);
-            }
         }
         catch (Exception e)
         {

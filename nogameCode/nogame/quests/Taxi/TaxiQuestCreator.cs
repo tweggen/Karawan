@@ -19,14 +19,14 @@ public class TaxiQuestCreator : ICreator
 {
     private const string _questId = "nogame.quests.Taxi.Quest";
 
-    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je)
+    public async Task<Action> SetupEntityFrom(Entity eLoaded, JsonElement je)
     {
         return () =>
         {
             if (!eLoaded.Has<TaxiQuestData>())
             {
                 Warning($"TaxiQuestCreator: entity missing TaxiQuestData, cannot restore quest.");
-                return Task.CompletedTask;
+                return;
             }
             var data = eLoaded.Get<TaxiQuestData>();
 
@@ -41,8 +41,6 @@ public class TaxiQuestCreator : ICreator
             eLoaded.Set(new engine.behave.components.Strategy(strategy));
 
             I.Get<engine.news.EventQueue>().Push(new QuestTriggeredEvent(_questId));
-
-            return Task.CompletedTask;
         };
     }
 
