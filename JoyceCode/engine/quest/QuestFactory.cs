@@ -111,18 +111,23 @@ public class QuestFactory
                 qi.IsActive = false;
             }
 
-            // Removing Strategy triggers StrategyManager → OnExit + OnDetach.
-            if (eQuest.Has<engine.behave.components.Strategy>())
+            try
             {
-                eQuest.Remove<engine.behave.components.Strategy>();
+                // Removing Strategy triggers StrategyManager → OnExit + OnDetach.
+                if (eQuest.Has<engine.behave.components.Strategy>())
+                {
+                    eQuest.Remove<engine.behave.components.Strategy>();
+                }
+
+                eQuest.Dispose();
+                I.Get<Saver>().Save("quest deactivated");
             }
-
-            eQuest.Dispose();
-            I.Get<Saver>().Save("quest deactivated");
-
-            if (questId != null)
+            finally
             {
-                I.Get<EventQueue>().Push(new QuestDeactivatedEvent(questId));
+                if (questId != null)
+                {
+                    I.Get<EventQueue>().Push(new QuestDeactivatedEvent(questId));
+                }
             }
         });
     }

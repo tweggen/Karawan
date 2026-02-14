@@ -106,25 +106,30 @@ public class ToSomewhere : AModule
         if (cev.ContactInfo.PropertiesB?.Name?.StartsWith(SensitivePhysicsName) ?? false)
         {
             /*
-             * Before anyone kills it, trigger the vanishing behavior
+             * Guard against multiple physics callbacks firing while the player
+             * overlaps the goal.  _isStopped is also set in OnModuleDeactivate.
              */
-            // TXWTODO: I believe this is completely pointless, as we delete _eMeshMarker is a grandchild of eGoal very soon below.
-            _engine.QueueMainThreadAction(() =>
-            {
-                _eMeshMarker.Get<engine.behave.components.Behavior>().Provider = new GoalMarkerVanishBehavior();
-            });
+            if (_isStopped) return;
+            _isStopped = true;
+
+            Trace("Called onCollision of ToLocation.");
 
             /*
-             * At this point we can call whatever has been reached.
+             * Queue everything on the main thread so that the full strategy
+             * lifecycle (OnExit / OnDetach / DeactivateQuest) runs on the
+             * logical thread, avoiding memory-visibility issues with
+             * _activeStrategy and _questTarget fields.
              */
-            Trace("Called onCollision of ToLocation.");
-            
-            if (OnReachTarget != default)
+            _engine.QueueMainThreadAction(() =>
             {
-                OnReachTarget();
-            }
-            
-            // TXWTODO: ModuleDeactivate is probably called by the user in OnReachTarget, so why would we additionally delete the target marker?
+                if (_eMeshMarker.IsAlive)
+                {
+                    _eMeshMarker.Get<engine.behave.components.Behavior>().Provider =
+                        new GoalMarkerVanishBehavior();
+                }
+
+                OnReachTarget?.Invoke();
+            });
         }
     }
 
