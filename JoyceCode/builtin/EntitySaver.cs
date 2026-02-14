@@ -189,7 +189,7 @@ public class EntitySaver : AModule
     public async Task LoadAll(JsonElement jeAll)
     {
         List<Task> listSetupTasks = new();
-        List<(DefaultEcs.Entity, JsonElement)> listCreatorEntites = new();
+        List<(DefaultEcs.Entity, JsonElement)> listCreatorEntities = new();
         
         var context = new Context();
         JsonSerializerOptions serializerOptions = new()
@@ -277,21 +277,19 @@ public class EntitySaver : AModule
 
                 if (jeEntity.TryGetProperty("creator", out var jeCreator))
                 {
-                    listCreatorEntites.Add((e, jeCreator));
+                    listCreatorEntities.Add((e, jeCreator));
                 }
             }
         });
         
-        await Task.WhenAll(listSetupTasks).ContinueWith(tAll =>
-        {
-            List<Task> listSetupEntityTasks = new();
-            
+        await Task.WhenAll(listSetupTasks);
+        await _engine.TaskMainThread(() => {
             /*
              * So everything has been loaded into the vartious components and been individually
              * set up. Now we can call creators for setting up their content which now may depend
              * on other entities.
              */
-            foreach (var (e, jeCreator) in listCreatorEntites)
+            foreach (var (e, jeCreator) in listCreatorEntities)
             {
                 var cCreator = e.Get<Creator>();
                 ICreator? iCreator = I.Get<CreatorRegistry>().GetCreator(cCreator.CreatorId);
@@ -299,13 +297,8 @@ public class EntitySaver : AModule
                 {
                     continue;
                 }
-                listSetupEntityTasks.Add(iCreator.SetupEntityFrom(e, jeCreator)());
+                iCreator.SetupEntityFrom(e, jeCreator);
             }
-
-            /*
-             * Let the caller now when all of the setup tasks have been performed.
-             */
-            return Task.WhenAll(listSetupEntityTasks);
         });
     }
 }
