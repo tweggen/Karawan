@@ -240,16 +240,36 @@ public class ToSomewhere : AModule
 
     private void _updateRoute(Object state)
     {
+        if (_isStopped) return;
+
         Route routeTarget;
         lock (_lo)
         {
             routeTarget = _routeTarget;
         }
 
-        routeTarget?.Search(_onJunctions);
+        if (routeTarget == null)
+        {
+            /*
+             * Route creation failed earlier (e.g. player not ready).
+             * Retry on the main thread.
+             */
+            _engine.QueueMainThreadAction(() =>
+            {
+                if (_isStopped) return;
+                if (_tryCreateRouteLT())
+                {
+                    _routeTarget.Activate();
+                    _routeTarget.Search(_onJunctions);
+                }
+            });
+            return;
+        }
+
+        routeTarget.Search(_onJunctions);
     }
-    
-    
+
+
     private void _stopRoute()
     {
         Route routeTarget;
@@ -264,7 +284,7 @@ public class ToSomewhere : AModule
         updateRouteTimer?.Dispose();
         _engine.QueueMainThreadAction(_deleteWaypointsLT);
     }
-    
+
 
     private void _startRouteLT()
     {
@@ -274,21 +294,24 @@ public class ToSomewhere : AModule
             routeTarget = _routeTarget;
         }
 
-        routeTarget.Activate();
-        routeTarget.Search(_onJunctions);
+        if (routeTarget != null)
+        {
+            routeTarget.Activate();
+            routeTarget.Search(_onJunctions);
+        }
 
         /*
          * Set up a periodic timer to update the route.
-         * This also acts as a retry mechanism: if the initial search
-         * fails (e.g. after game load when navigation data isn't fully
-         * ready yet), subsequent timer ticks will retry the search.
+         * This also acts as a retry mechanism: if _tryCreateRouteLT
+         * failed (e.g. player not available yet), subsequent timer
+         * ticks will retry route creation and search.
          */
         _updateRouteTimer = new System.Threading.Timer(
             _updateRoute,
             this,
             7104, 7104);
     }
-    
+
 
     private void _destroyRoute()
     {
@@ -309,41 +332,52 @@ public class ToSomewhere : AModule
         wTarget?.Dispose();
         wStart?.Dispose();
     }
-    
-    
-    private void _createRouteLT()
+
+
+    /**
+     * Try to create the route. Returns true on success, false if
+     * preconditions (player entity, satnav module) are not met yet.
+     */
+    private bool _tryCreateRouteLT()
     {
         if (!_engine.Player.TryGet(out var ePlayer))
         {
-            ErrorThrow<InvalidOperationException>("No player defined currently.");
+            Trace("ToSomewhere: Player not available yet, deferring route creation.");
+            return false;
         }
 
-        if (ParentEntity != default)
+        try
         {
-            /*
-             * Create a route from the player to the target.
-             */
-            _wTarget = new EntityWaypoint()
+            if (ParentEntity != default)
             {
-                Carrot = ParentEntity
-                // TXWTODO: Shouldn't we also set the relative position?
-            };
-        }
-        else
-        {
-            _wTarget = new StaticWaypoint()
+                _wTarget = new EntityWaypoint()
+                {
+                    Carrot = ParentEntity
+                };
+            }
+            else
             {
-                Location = RelativePosition
-            };
-        }
+                _wTarget = new StaticWaypoint()
+                {
+                    Location = RelativePosition
+                };
+            }
 
-        _wStart = new PlayerWaypoint();
-        
-        /*
-         * Finally, create a route from it.
-         */
-        _routeTarget = M<builtin.modules.satnav.Module>().CreateRoute(
-            _wStart, _wTarget);
+            _wStart = new PlayerWaypoint();
+
+            lock (_lo)
+            {
+                _routeTarget = M<builtin.modules.satnav.Module>().CreateRoute(
+                    _wStart, _wTarget);
+            }
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            Warning($"ToSomewhere: Unable to create route: {e.Message}");
+            return false;
+        }
     }
 
 
@@ -429,7 +463,7 @@ public class ToSomewhere : AModule
         });
         _engine.QueueMainThreadAction(() =>
         {
-            _createRouteLT();
+            _tryCreateRouteLT();
             _startRouteLT();
         });
     }
