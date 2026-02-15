@@ -195,7 +195,7 @@ public class ToSomewhere : AModule
              * Delete any old waypoints, if still there.
              */
             _deleteWaypointsLT();
-            
+
             /*
              * Do not create new routes.
              */
@@ -206,7 +206,7 @@ public class ToSomewhere : AModule
                 true,
                 MapCameraMask | 0x00000001,
                 Quaternion.Identity, Vector3.Zero);
-            
+
             var eWayPoint = _engine.CreateEntity($"waypoints");
 
             I.Get<HierarchyApi>().SetParent(eWayPoint, _eRouteParent);
@@ -222,7 +222,7 @@ public class ToSomewhere : AModule
                 var v3Direction = nl.End.Position - nl.Start.Position;
                 var vu3Right = Vector3.Normalize(new(v3Direction.Z, 0f, -v3Direction.X));
 
-                joyce.mesh.Tools.AddQuadXYUV(jMesh, 
+                joyce.mesh.Tools.AddQuadXYUV(jMesh,
                     nl.Start.Position+2f*vu3Right, -4f*vu3Right, v3Direction,
                     Vector2.Zero, Vector2.Zero, Vector2.Zero
                     );
@@ -230,13 +230,8 @@ public class ToSomewhere : AModule
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
                 new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.ToSomewhere.materials.waypoint"),
                     jMesh), 10000f);
-            
+
             eWayPoint.Set(new Instance3(jInstanceDesc));
-            
-            _updateRouteTimer = new System.Threading.Timer(
-                _updateRoute, 
-                this, 
-                7104, 0);
 
         });
     }
@@ -281,7 +276,17 @@ public class ToSomewhere : AModule
 
         routeTarget.Activate();
         routeTarget.Search(_onJunctions);
-            
+
+        /*
+         * Set up a periodic timer to update the route.
+         * This also acts as a retry mechanism: if the initial search
+         * fails (e.g. after game load when navigation data isn't fully
+         * ready yet), subsequent timer ticks will retry the search.
+         */
+        _updateRouteTimer = new System.Threading.Timer(
+            _updateRoute,
+            this,
+            7104, 7104);
     }
     
 
