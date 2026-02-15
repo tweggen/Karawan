@@ -32,8 +32,8 @@ public class ClickModule : AModule, engine.IInputPart
     private void _handleClickEvent(Event ev)
     {
         if (_trace) Trace($"Handling {ev}");
-        
-        _clickableHandler.OnClick(new Event(Event.INPUT_LOGICAL_PRESSED, ev.Code)
+
+        var logicalEv = new Event(Event.INPUT_LOGICAL_PRESSED, ev.Code)
         {
             PhysicalPosition = ev.PhysicalPosition,
             PhysicalSize = ev.PhysicalSize,
@@ -41,15 +41,20 @@ public class ClickModule : AModule, engine.IInputPart
             Data1 = ev.Data1,
             Data2 = ev.Data2,
             Data3 = ev.Data3,
-        });
+        };
+        _clickableHandler.OnClick(logicalEv);
+        if (logicalEv.IsHandled)
+        {
+            ev.IsHandled = true;
+        }
     }
 
 
     private void _handleReleaseEvent(Event ev)
     {
         if (_trace) Trace($"Handling {ev}");
-        
-        _clickableHandler.OnRelease(new Event(Event.INPUT_LOGICAL_RELEASED, ev.Code)
+
+        var logicalEv = new Event(Event.INPUT_LOGICAL_RELEASED, ev.Code)
         {
             PhysicalPosition = ev.PhysicalPosition,
             PhysicalSize = ev.PhysicalSize,
@@ -57,7 +62,12 @@ public class ClickModule : AModule, engine.IInputPart
             Data1 = ev.Data1,
             Data2 = ev.Data2,
             Data3 = ev.Data3,
-        });
+        };
+        _clickableHandler.OnRelease(logicalEv);
+        if (logicalEv.IsHandled)
+        {
+            ev.IsHandled = true;
+        }
     }
 
 

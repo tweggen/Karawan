@@ -77,7 +77,15 @@ public class FingerStateHandler
 
         if (null != oldFingerState)
         {
-            oldFingerState.HandleReleased(ev);
+            var releaseEv = new Event(Event.INPUT_FINGER_RELEASED, ev.Code)
+            {
+                PhysicalPosition = ev.PhysicalPosition,
+                PhysicalSize = ev.PhysicalSize,
+                LogicalPosition = ev.LogicalPosition,
+                Data1 = ev.Data1,
+                Data2 = ev.Data2,
+            };
+            oldFingerState.HandleReleased(releaseEv);
         }
 
         if (null != localFingerStateFactory)
