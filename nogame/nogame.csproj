@@ -39,6 +39,11 @@
 
   <Import Project="..\nogameCode\nogameCode.projitems" Label="Shared" />
 
+  <!-- Ensure the generated output directory exists -->
+  <Target Name="EnsureGeneratedDirectory" BeforeTargets="CompileAssetsHost;GatherTexturesHost;GatherResources">
+    <MakeDir Directories="../nogame/generated" />
+  </Target>
+
   <!-- Compile assets -->
   <Target Name="CompileAssetsHost" BeforeTargets="GatherResources">
     <Message Text="compiling assets ($(HostRid))" />
