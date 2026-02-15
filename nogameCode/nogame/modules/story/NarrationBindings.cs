@@ -152,15 +152,29 @@ public static class NarrationBindings
         questFactory.RegisterQuest("nogame.quests.Taxi.Quest",
             async (engine, eQuest) =>
             {
-                var clusterDesc = I.Get<ClusterList>().GetClusterAt(Vector3.Zero);
+                Vector3 v3Player = Vector3.Zero;
+                if (engine.Player.TryGet(out var ePlayer)
+                    && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
+                {
+                    v3Player = ePlayer.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
+                }
 
-                var pc = new PlacementContext() { CurrentCluster = clusterDesc };
+                var clusterDesc = I.Get<ClusterList>().GetClusterAt(v3Player);
+
+                var pc = new PlacementContext()
+                {
+                    CurrentCluster = clusterDesc,
+                    CurrentPosition = v3Player
+                };
                 var plad = new PlacementDescription()
                 {
                     ReferenceObject = PlacementDescription.Reference.StreetPoint,
                     WhichFragment = PlacementDescription.FragmentSelection.AnyFragment,
                     WhichCluster = PlacementDescription.ClusterSelection.CurrentCluster,
-                    WhichQuarter = PlacementDescription.QuarterSelection.AnyQuarter
+                    WhichQuarter = PlacementDescription.QuarterSelection.AnyQuarter,
+                    MinDistance = 100f,
+                    MaxDistance = 300f,
+                    MaxAttempts = 20
                 };
 
                 if (!I.Get<Placer>().TryPlacing(new RandomSource("taxi-dest"), pc, plad, out var destPod))

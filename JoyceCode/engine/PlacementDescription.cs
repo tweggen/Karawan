@@ -115,4 +115,12 @@ public class PlacementDescription
      * The orientation of the thing to place.
      */
     public Quaternion Orientation;
+
+    /**
+     * Distance constraints relative to PlacementContext.CurrentPosition.
+     * Only used when MaxAttempts > 1.
+     */
+    public float MinDistance = 0f;
+    public float MaxDistance = float.MaxValue;
+    public int MaxAttempts = 1;
 }

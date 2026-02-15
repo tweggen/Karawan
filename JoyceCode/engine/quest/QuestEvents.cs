@@ -24,8 +24,13 @@ public class QuestDeactivatedEvent : engine.news.Event
 {
     public const string EVENT_TYPE = "quest.deactivated";
 
-    public QuestDeactivatedEvent(string questId)
+    public string Title { get; init; }
+    public bool IsSuccess { get; init; }
+
+    public QuestDeactivatedEvent(string questId, string title = "", bool isSuccess = true)
         : base(EVENT_TYPE, questId)
     {
+        Title = title;
+        IsSuccess = isSuccess;
     }
 }

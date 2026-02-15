@@ -310,6 +310,28 @@ public class SpawnController : AController
     }
     
 
+    /**
+     * Force-spawn a character of the given behavior type at the specified world position.
+     */
+    public void ForceSpawn(Type behaviorType, System.Numerics.Vector3 position)
+    {
+        ISpawnOperator op;
+        lock (_lo)
+        {
+            if (!_mapSpawnOperators.TryGetValue(behaviorType, out op))
+            {
+                return;
+            }
+        }
+
+        var action = op.SpawnCharacterAt(position);
+        if (action != null)
+        {
+            _engine.Run(action);
+        }
+    }
+
+
     public void AddSpawnOperator(ISpawnOperator op)
     {
         Type behaviorType = op.BehaviorType;

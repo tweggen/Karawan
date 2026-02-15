@@ -250,12 +250,38 @@ public class EntityStrategy : AOneOfStrategy
         {
             BasicSpeed = (4f + rnd.GetFloat() * 3f) / 3.6f,
         };
-        
+
         /*
          * Pass all that to the strategy ctor.
          */
         entityStrategy = new(rnd, cmd, pod, chd);
-        
+
+        return true;
+    }
+
+
+    /**
+     * Factory method that creates a strategy at a pre-determined position.
+     * Skips _chooseStartPosition and uses the given PositionDescription directly.
+     */
+    public static bool TryCreateAt(
+        RandomSource rnd,
+        PositionDescription pod,
+        CharacterModelDescription cmd,
+        out EntityStrategy entityStrategy)
+    {
+        if (pod == null)
+        {
+            entityStrategy = null;
+            return false;
+        }
+
+        CharacterState chd = new()
+        {
+            BasicSpeed = (4f + rnd.GetFloat() * 3f) / 3.6f,
+        };
+
+        entityStrategy = new(rnd, cmd, pod, chd);
         return true;
     }
 }

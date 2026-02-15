@@ -21,9 +21,40 @@ public class Placer
      * this may or may not be possible.
      */
     public bool TryPlacing(
-        RandomSource _rnd, 
-        in PlacementContext? pc, 
-        in PlacementDescription plad, 
+        RandomSource _rnd,
+        in PlacementContext? pc,
+        in PlacementDescription plad,
+        out PositionDescription out_pod)
+    {
+        int maxAttempts = plad.MaxAttempts;
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            if (_tryPlacingOnce(_rnd, pc, plad, out out_pod))
+            {
+                if (maxAttempts > 1 && pc != null)
+                {
+                    var dx = out_pod.Position.X - pc.CurrentPosition.X;
+                    var dz = out_pod.Position.Z - pc.CurrentPosition.Z;
+                    var dist = MathF.Sqrt(dx * dx + dz * dz);
+                    if (dist < plad.MinDistance || dist > plad.MaxDistance)
+                    {
+                        continue;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        out_pod = default;
+        return false;
+    }
+
+
+    private bool _tryPlacingOnce(
+        RandomSource _rnd,
+        in PlacementContext? pc,
+        in PlacementDescription plad,
         out PositionDescription out_pod)
     {
         bool lookupCluster = false;
@@ -31,7 +62,7 @@ public class Placer
         bool lookupStreetPoint = false;
         out_pod = default;
         PositionDescription pod = new();
-        
+
         /*
         * Look what we need to place it.
         */
@@ -44,29 +75,29 @@ public class Placer
                 {
                     lookupQuarter = true;
                 }
-                break; 
+                break;
             case PlacementDescription.Reference.Quarter:
                 lookupQuarter = true;
                 lookupCluster = true;
                 break;
             case PlacementDescription.Reference.Cluster:
                 lookupCluster = true;
-                break; 
+                break;
             default:
             case PlacementDescription.Reference.World:
                 /*
-                * Trivial case, no reference required.  
+                * Trivial case, no reference required.
                 */
                 break;
         }
 
-        
+
         Vector3 v3ReferenceAccu = Vector3.Zero;
         Fragment? fragment = null;
         ClusterDesc? cd = null;
         Quarter? q = null;
         StreetPoint? sp = null;
-        
+
         /*
          * now lookup in inverse order.
          */
@@ -78,11 +109,11 @@ public class Placer
         {
             fragment = pc.CurrentFragment;
         }
-        
+
         if (lookupCluster)
         {
             ClusterList clusterList = _clusterList.Value;
-            
+
             switch (plad.WhichCluster)
             {
                 case PlacementDescription.ClusterSelection.AnyCluster:
@@ -97,7 +128,7 @@ public class Placer
                     if (pc == null) return false;
                     if (pc.CurrentCluster == null) return false;
                     cd = pc.CurrentCluster;
-                    
+
                     break;
                 case PlacementDescription.ClusterSelection.ConnectedCluster:
                     ErrorThrow<NotImplementedException>("Selecting a connected cluster is not implemented yet.");
@@ -124,7 +155,7 @@ public class Placer
         if (lookupQuarter)
         {
             /*
-            * Of course, a quarter always requires a previously selected cluster. 
+            * Of course, a quarter always requires a previously selected cluster.
             */
             if (cd == null)
             {
@@ -139,7 +170,7 @@ public class Placer
                      * If we have a fragment constraint, we can only chose from the
                      * quarters inside this fragment.
                      */
-                    
+
                     IReadOnlyList<Quarter> listQuarters;
                     if (fragment != null)
                     {
@@ -154,7 +185,7 @@ public class Placer
                     q = listQuarters[_rnd.GetInt(l)];
                     break;
                 }
-                
+
                 case PlacementDescription.QuarterSelection.CurrentQuarter:
                     if (pc == null) return false;
                     if (pc.CurrentQuarter == null) return false;
@@ -168,11 +199,11 @@ public class Placer
                         if (!fragment.AABB.Contains(q.GetCenterPoint3())) return false;
                     }
                     break;
-                
+
                 case PlacementDescription.QuarterSelection.NearbyQuarter:
                     ErrorThrow<NotImplementedException>("Selecting a nearby quarter is not implemented yet.");
                     break;
-                
+
                 default:
                     return false;
             }
@@ -194,7 +225,7 @@ public class Placer
             {
                 return false;
             }
-            
+
             /*
              * Are we randomly chosing street points in the acceptable range, or are we restricted
              * to a given quarter?
@@ -210,7 +241,7 @@ public class Placer
                 if (null != fragment)
                 {
                     listStreetPoints = cd.StrokeStore().QueryStreetPoints(fragment.AABB);
-                } 
+                }
                 else
                 {
                     listStreetPoints = cd.StrokeStore().GetStreetPoints();
@@ -261,11 +292,11 @@ public class Placer
             case PlacementDescription.Reference.StreetPoint:
                 v3ReferenceAccu += sp.Pos3;
                 break;
-            
+
             case PlacementDescription.Reference.Quarter:
                 v3ReferenceAccu += q.GetCenterPoint3();
                 break;
-            
+
             default:
                 break;
         }
@@ -274,7 +305,7 @@ public class Placer
         pod.Position = v3ReferenceAccu;
 
         out_pod = pod;
-        
+
         return true;
     }
 }

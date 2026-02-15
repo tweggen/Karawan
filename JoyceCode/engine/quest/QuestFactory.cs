@@ -97,17 +97,19 @@ public class QuestFactory
     /// Deactivate and dispose a quest entity.
     /// Call this from strategy completion handlers.
     /// </summary>
-    public void DeactivateQuest(Entity eQuest)
+    public void DeactivateQuest(Entity eQuest, bool isSuccess = true)
     {
         _engine.QueueMainThreadAction(() =>
         {
             if (!eQuest.IsAlive) return;
 
             string questId = null;
+            string title = "";
             if (eQuest.Has<QuestInfo>())
             {
                 ref var qi = ref eQuest.Get<QuestInfo>();
                 questId = qi.QuestId;
+                title = qi.Title ?? "";
                 qi.IsActive = false;
             }
 
@@ -126,7 +128,7 @@ public class QuestFactory
             {
                 if (questId != null)
                 {
-                    I.Get<EventQueue>().Push(new QuestDeactivatedEvent(questId));
+                    I.Get<EventQueue>().Push(new QuestDeactivatedEvent(questId, title, isSuccess));
                 }
             }
         });

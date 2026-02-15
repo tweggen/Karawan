@@ -49,7 +49,7 @@ public class CharacterCreator
         {
             return new None();
         }
-        
+
         EntityCreator creator = new()
         {
             EntityStrategyFactory = entity => entityStrategy,
@@ -58,6 +58,29 @@ public class CharacterCreator
             Fragment = worldFragment
         };
         var model = await creator.CreateAsync();
+        return (Action<DefaultEcs.Entity>)(eTarget => creator.CreateLogical(eTarget));
+    }
+
+
+    public static async Task<OneOf<None, Action<DefaultEcs.Entity>>> GenerateCharacterAt(
+        builtin.tools.RandomSource rnd,
+        PositionDescription pod,
+        int seed)
+    {
+        var cmd = CharacterModelDescriptionFactory.CreateCitizen(rnd);
+        if (!EntityStrategy.TryCreateAt(rnd, pod, cmd, out var entityStrategy))
+        {
+            return new None();
+        }
+
+        EntityCreator creator = new()
+        {
+            EntityStrategyFactory = entity => entityStrategy,
+            CharacterModelDescription = cmd,
+            PhysicsName = EntityName,
+            Fragment = pod.Fragment
+        };
+        await creator.CreateAsync();
         return (Action<DefaultEcs.Entity>)(eTarget => creator.CreateLogical(eTarget));
     }
 }

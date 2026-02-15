@@ -60,4 +60,10 @@ public interface ISpawnOperator
     public Action SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats);
 
     public void TerminateCharacters(List<(Index3,DefaultEcs.Entity)> listKills);
+
+    /**
+     * Force-spawn a character at a specific world position.
+     * Returns an action to run on the engine, or null if not supported.
+     */
+    public Action SpawnCharacterAt(Vector3 worldPosition) => null;
 }

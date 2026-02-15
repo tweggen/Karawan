@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using engine;
 using engine.behave;
@@ -180,6 +181,89 @@ public class SpawnOperator : ISpawnOperator
             {
                 spawnStatus.InCreation--;
                 Error($"Exception spawning character: {e}");
+            }
+        };
+    }
+
+
+    public Action SpawnCharacterAt(Vector3 worldPosition)
+    {
+        var clusterList = I.Get<ClusterList>();
+        var cd = clusterList.GetClusterAt(worldPosition);
+        if (cd == null) return null;
+
+        var quarter = cd.QuarterStore().GuessQuarter(new Vector2(worldPosition.X, worldPosition.Z));
+        if (quarter == null) return null;
+
+        if (!_loader.TryGetFragment(Fragment.PosToIndex3(worldPosition), out var worldFragment))
+        {
+            return null;
+        }
+
+        /*
+         * Find nearest street point from the quarter's delims.
+         */
+        var delims = quarter.GetDelims();
+        if (delims == null || delims.Count == 0) return null;
+
+        engine.streets.StreetPoint nearestSp = null;
+        float nearestDist2 = float.MaxValue;
+        int nearestIdx = 0;
+        engine.streets.QuarterDelim nearestDelim = null;
+        for (int i = 0; i < delims.Count; i++)
+        {
+            var d = delims[i];
+            if (d.StreetPoint == null) continue;
+            var dx = d.StreetPoint.Pos3.X - worldPosition.X + cd.Pos.X;
+            var dz = d.StreetPoint.Pos3.Z - worldPosition.Z + cd.Pos.Z;
+            var dist2 = dx * dx + dz * dz;
+            if (dist2 < nearestDist2)
+            {
+                nearestDist2 = dist2;
+                nearestSp = d.StreetPoint;
+                nearestIdx = i;
+                nearestDelim = d;
+            }
+        }
+
+        if (nearestSp == null) return null;
+
+        var pod = new engine.PositionDescription()
+        {
+            ClusterDesc = cd,
+            ClusterId = cd.IdString,
+            ClusterName = cd.Name,
+            Quarter = quarter,
+            QuarterName = quarter.GetDebugString(),
+            StreetPoint = nearestSp,
+            StreetPointId = nearestSp.Id,
+            QuarterDelimIndex = nearestIdx,
+            QuarterDelim = nearestDelim,
+            QuarterDelimPos = 0f,
+            Position = worldPosition,
+            Fragment = worldFragment
+        };
+
+        return async () =>
+        {
+            try
+            {
+                var rnd = new builtin.tools.RandomSource($"forceSpawn.{worldPosition}");
+                var characterResult = await CharacterCreator.GenerateCharacterAt(rnd, pod, _seed);
+                if (characterResult.Value is None)
+                {
+                    return;
+                }
+
+                _engine.QueueEntitySetupAction(CharacterCreator.EntityName, e =>
+                {
+                    characterResult.AsT1(e);
+                });
+                ++_seed;
+            }
+            catch (Exception e)
+            {
+                Error($"Exception force-spawning citizen: {e}");
             }
         };
     }
