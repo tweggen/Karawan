@@ -163,12 +163,6 @@ public static class NarrationBindings
                     WhichQuarter = PlacementDescription.QuarterSelection.AnyQuarter
                 };
 
-                if (!I.Get<Placer>().TryPlacing(new RandomSource("taxi-guest"), pc, plad, out var guestPod))
-                {
-                    Warning("NarrationBindings: Unable to place taxi guest.");
-                    return;
-                }
-
                 if (!I.Get<Placer>().TryPlacing(new RandomSource("taxi-dest"), pc, plad, out var destPod))
                 {
                     Warning("NarrationBindings: Unable to place taxi destination.");
@@ -187,9 +181,9 @@ public static class NarrationBindings
 
                     eQuest.Set(new nogame.quests.Taxi.TaxiQuestData
                     {
-                        GuestPosition = guestPod.Position,
+                        GuestPosition = Vector3.Zero,
                         DestinationPosition = destPod.Position,
-                        Phase = 0
+                        Phase = 1
                     });
 
                     var spawnerModule = (nogame.quests.Taxi.TaxiNpcSpawnerModule)
@@ -198,7 +192,7 @@ public static class NarrationBindings
                         I.Get<engine.world.CreatorRegistry>().FindCreatorId(spawnerModule.TaxiQuestCreator)));
 
                     eQuest.Set(new engine.behave.components.Strategy(
-                        new nogame.quests.Taxi.TaxiQuestStrategy(guestPod.Position, destPod.Position)));
+                        new nogame.quests.Taxi.TaxiQuestStrategy(Vector3.Zero, destPod.Position, "driving")));
                 });
             });
     }
