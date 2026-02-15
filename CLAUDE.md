@@ -29,6 +29,10 @@ dotnet run --project examples/Launcher/Karawan.GenericLauncher.csproj
 
 No test suite exists in this repository.
 
+**Build notes:**
+- The `nogame/generated/` directory is auto-created by an `EnsureGeneratedDirectory` MSBuild target before asset compilation. If you see build errors about missing generated files, verify this target runs first.
+- Build pipeline order in `nogame.csproj`: `EnsureGeneratedDirectory` → `CompileAssetsHost` (Chushi) → `GatherTexturesHost` (texture packer) → `GatherResources` (resource compiler) → `Compile`
+
 ## Architecture
 
 ### ECS Foundation
@@ -83,6 +87,25 @@ Platform events → logical translation → event queue → `InputEventPipeline`
 
 ### Game Assembly Loading
 The launcher loads game DLLs dynamically based on `game.launch.json` (`/defaults/loader/assembly`). This allows different games to run on the same engine.
+
+### Quest System
+Quests use ECS entities with `QuestInfo` and `Strategy` components. `QuestFactory` creates/activates/deactivates quest entities. Strategy-based quests use `AOneOfStrategy` for multi-phase state machines (e.g., taxi quest has pickup → driving phases). `QuestDeactivatedEvent` carries `Title` and `IsSuccess` for completion feedback.
+
+Key classes:
+- `QuestFactory` (`JoyceCode/engine/quest/QuestFactory.cs`) — quest lifecycle management
+- `ToSomewhere` (`JoyceCode/engine/quest/ToSomewhere.cs`) — base module for navigation-based quest targets (creates physics goal, visual marker, satnav route with fault-tolerant periodic retry)
+- `ICreator` implementations — save/load quest state via `TaxiQuestData` etc.
+
+### Placement System
+`Placer` (`JoyceCode/engine/Placer.cs`) places entities in the world using `PlacementDescription` constraints:
+- `MinDistance`/`MaxDistance` — horizontal distance filtering from `PlacementContext.CurrentPosition`
+- `MaxAttempts` — retry loop for distance-constrained placement
+
+### ForceSpawn API
+`SpawnController.ForceSpawn(Type behaviorType, Vector3 position)` spawns a full-lifecycle character at a specific position:
+- Looks up `ISpawnOperator` by behavior type
+- Calls `ISpawnOperator.SpawnCharacterAt(Vector3)` (default interface method)
+- Citizen implementation finds cluster/quarter/streetpoint, builds `PositionDescription`, creates entity with full Walk→Flee→Recover strategy
 
 ### Aihao Editor IDE
 
