@@ -89,13 +89,22 @@ Platform events → logical translation → event queue → `InputEventPipeline`
 The launcher loads game DLLs dynamically based on `game.launch.json` (`/defaults/loader/assembly`). This allows different games to run on the same engine.
 
 ### Quest System
-Quests are pure ECS entities with `QuestInfo` and `Strategy` components. The old `IQuest`/`quest.Manager` system has been fully removed (Phase 5 complete). `QuestFactory` creates/activates/deactivates quest entities. Strategy-based quests use `AOneOfStrategy` for multi-phase state machines (e.g., taxi quest has pickup → driving phases). `QuestDeactivatedEvent` carries `Title` and `IsSuccess` for completion feedback. The Quest Log UI is accessible from the pause menu (Phase 6 complete). See `QUEST_REFACTOR.md` for full migration history.
+Quests are pure ECS entities with `QuestInfo` and `Strategy` components. The old `IQuest`/`quest.Manager` system has been fully removed (Phase 5 complete). `QuestFactory` creates/activates/deactivates quest entities. Strategy-based quests use `AOneOfStrategy` for multi-phase state machines (e.g., taxi quest has pickup → driving phases). `QuestDeactivatedEvent` carries `Title` and `IsSuccess` for completion feedback. The Quest Log UI is accessible from the pause menu and supports Follow/Unfollow per quest (Phase 6+7 complete). See `QUEST_REFACTOR.md` for full migration history.
+
+#### Followed Quest (Phase 7)
+At most one active quest is the "followed" quest — only it renders its goal marker and satnav route. `SatnavService` is the central singleton managing this:
+- Auto-follows the first triggered quest; auto-advances to the next when a followed quest completes
+- `FollowedQuestId` persisted in `GameState` and restored on load
+- Fires `QuestFollowedEvent` / `QuestUnfollowedEvent` (Code = questId)
+- `ToSomewhere.OwnerQuestEntity` — set on all quest navigation targets; when set, marker and route are only created/shown while the owning quest is followed. Unset = legacy behavior (always shown).
+- Quest Log UI shows Follow/Unfollow buttons per active quest (uses the newly-implemented `<if test='...'>` JT XML element)
 
 Key classes:
 - `QuestFactory` (`JoyceCode/engine/quest/QuestFactory.cs`) — quest lifecycle management (register, trigger, deactivate)
-- `ToSomewhere` (`JoyceCode/engine/quest/ToSomewhere.cs`) — base module for navigation-based quest targets (creates physics goal, visual marker, satnav route with fault-tolerant periodic retry)
-- `NarrationBindings` (`nogameCode/nogame/modules/story/NarrationBindings.cs`) — quest factory registrations and narration event wiring
-- `QuestLuaBindings` (`nogameCode/nogame/quests/QuestLuaBindings.cs`) — Lua bindings exposing quest data to the pause menu UI
+- `ISatnavService` / `SatnavService` (`JoyceCode/engine/quest/ISatnavService.cs`, `nogameCode/nogame/quest/SatnavService.cs`) — followed quest tracking, auto-follow, persistence; registered as `engine.quest.ISatnavService` in `nogame.implementations.json`
+- `ToSomewhere` (`JoyceCode/engine/quest/ToSomewhere.cs`) — base module for navigation-based quest targets; set `OwnerQuestEntity` to opt into followed-quest visibility control
+- `NarrationBindings` (`nogameCode/nogame/modules/story/NarrationBindings.cs`) — quest factory registrations, narration event wiring, and early `ISatnavService` initialization
+- `QuestLuaBindings` (`nogameCode/nogame/quests/QuestLuaBindings.cs`) — Lua bindings: `getQuestList()` (includes `followed` field), `followQuest(id)`, `unfollowQuest()`, `isFollowed(id)`
 - `ICreator` implementations — save/load quest state via `TaxiQuestData` etc.
 
 ### Placement System
