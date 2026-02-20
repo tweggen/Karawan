@@ -50,10 +50,12 @@ public class AvaloniaGlPreviewControl : OpenGlControlBase
     /// </summary>
     public event Action? GlReady;
 
+    private bool _traceGL = false;
+
     protected override void OnOpenGlInit(GlInterface gl)
     {
         base.OnOpenGlInit(gl);
-        System.Console.Error.WriteLine("[GlPreview] OnOpenGlInit called");
+        if (_traceGL) System.Console.Error.WriteLine("[GlPreview] OnOpenGlInit called");
 
         var service = EnginePreviewService.Instance;
         if (!service.IsInitialized)
@@ -62,7 +64,7 @@ public class AvaloniaGlPreviewControl : OpenGlControlBase
         }
 
         _glInitialized = true;
-        System.Console.Error.WriteLine($"[GlPreview] OnOpenGlInit done, IsInitialized={service.IsInitialized}, GlReady has {GlReady?.GetInvocationList()?.Length ?? 0} subscribers");
+        if (_traceGL) System.Console.Error.WriteLine($"[GlPreview] OnOpenGlInit done, IsInitialized={service.IsInitialized}, GlReady has {GlReady?.GetInvocationList()?.Length ?? 0} subscribers");
         GlReady?.Invoke();
     }
 
@@ -73,7 +75,7 @@ public class AvaloniaGlPreviewControl : OpenGlControlBase
             System.Console.Error.WriteLine($"[GlPreview] OnOpenGlRender skipped: _glInitialized={_glInitialized}, _hasContent={_hasContent}");
             return;
         }
-        System.Console.Error.WriteLine($"[GlPreview] OnOpenGlRender: rendering frame");
+        if (_traceGL) System.Console.Error.WriteLine($"[GlPreview] OnOpenGlRender: rendering frame");
 
         var bounds = Bounds;
         int width = Math.Max(1, (int)(bounds.Width * (VisualRoot?.RenderScaling ?? 1.0)));

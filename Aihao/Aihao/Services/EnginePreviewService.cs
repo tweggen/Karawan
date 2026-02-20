@@ -149,7 +149,7 @@ public sealed class EnginePreviewService
                 0xffffffff, Transform3ToWorld.Visible, lightMatrix));
 
             // Camera entity (standard ECS camera — same approach as GenericLauncher)
-            float cameraDistance = 10f;
+            float cameraDistance = 5f;
             Vector3 cameraPos = new Vector3(0f, 1.8f, cameraDistance);
             Matrix4x4 cameraMatrix = _createLookAtMatrix(cameraPos,
                 new Vector3(0f, 1.8f, 0f), Vector3.UnitY);
@@ -290,7 +290,7 @@ public sealed class EnginePreviewService
             distance * sinP,
             distance * cosP * cosY);
 
-        var target = Vector3.Zero;
+        var target = 1.8f * Vector3.UnitY; //Vector3.Zero;
         var up = Vector3.UnitY;
 
         var forward = Vector3.Normalize(target - cameraPos);
