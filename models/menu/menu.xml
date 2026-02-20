@@ -71,6 +71,7 @@
         <vbox width='250' x='200' y='200'>
             <text color='#666666' height='40'>Options</text>
             <option color="#999999" onClick='jt:replaceAll("pausemenu", "menuInventory")'>Inventory...</option>
+            <option color="#999999" onClick='jt:replaceAll("pausemenu", "menuQuestLog")'>Quest Log...</option>
             <option color='#999999' onClick='joyce:ev("nogame.modules.menu.toggleMenu")'>Continue</option>
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuHelp")'>Help...</option>
             <option color='#999999' onClick='os.exit()'>Exit to desktop...</option>
@@ -86,6 +87,15 @@
                     <option color='#999999' width='40' onClick='joyce:ev("nogame.modules.menuInventory.useItem", id)'>Use</option>
                     <option color='#999999' width='40' onClick='joyce:ev("nogame.modules.menuInventory.dropItem", id)'>Drop</option>
                 </hmenu>
+            </for>
+            <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>
+        </vmenu>
+    </view>
+    <view layer='pausemenu' id='menuQuestLog'>
+        <vmenu width='250' x='200' y='100'>
+            <text color='#666666' height='40'>Quest Log</text>
+            <for items='{return questlog:getQuestList()}'>
+                <text color='#999999' height='20' text="{return title}"/>
             </for>
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>
         </vmenu>

@@ -232,12 +232,15 @@ The `TaxiQuestStrategy.GiveUpStrategy()` updates child `QuestInfo.State` as phas
 - `JoyceCode/engine/quest/GoalMarkerVanishBehavior.cs` — still useful
 - `models/nogame.quests.json` — kept as `{}` (referenced by Aihao editor `SectionDefinition.Quests`)
 
-### Phase 6: Quest log integration
+### Phase 6: Quest Log UI — COMPLETE
 
-**Files to create or modify:**
-- A `QuestLogSystem` or query helper that collects all entities with `QuestInfo` for UI display
-- Support for hierarchy: show parent quests with expandable sub-objectives
-- UI bindings (depends on whether this is in-game HUD or Aihao editor)
+**Files created:**
+- `nogameCode/nogame/quests/QuestLuaBindings.cs` — Lua bindings exposing `getQuestList()` to jt XML (follows `InvLuaBindings` pattern)
+
+**Files modified:**
+- `nogameCode/nogameCode.projitems` — added compile entry for `QuestLuaBindings.cs`
+- `nogameCode/nogame/Main.cs` — registered `questlog` Lua binding namespace via `AddDefaultBinding`
+- `models/menu/menu.xml` — added "Quest Log..." option in pause menu and `menuQuestLog` view with `<for>` loop over `questlog:getQuestList()`
 
 ---
 
