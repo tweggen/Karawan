@@ -89,14 +89,14 @@ Platform events → logical translation → event queue → `InputEventPipeline`
 The launcher loads game DLLs dynamically based on `game.launch.json` (`/defaults/loader/assembly`). This allows different games to run on the same engine.
 
 ### Quest System
-Quests are pure ECS entities with `QuestInfo` and `Strategy` components. The old `IQuest`/`quest.Manager` system has been fully removed (Phase 5 complete). `QuestFactory` creates/activates/deactivates quest entities. Strategy-based quests use `AOneOfStrategy` for multi-phase state machines (e.g., taxi quest has pickup → driving phases). `QuestDeactivatedEvent` carries `Title` and `IsSuccess` for completion feedback. See `QUEST_REFACTOR.md` for full migration history.
+Quests are pure ECS entities with `QuestInfo` and `Strategy` components. The old `IQuest`/`quest.Manager` system has been fully removed (Phase 5 complete). `QuestFactory` creates/activates/deactivates quest entities. Strategy-based quests use `AOneOfStrategy` for multi-phase state machines (e.g., taxi quest has pickup → driving phases). `QuestDeactivatedEvent` carries `Title` and `IsSuccess` for completion feedback. The Quest Log UI is accessible from the pause menu (Phase 6 complete). See `QUEST_REFACTOR.md` for full migration history.
 
 Key classes:
 - `QuestFactory` (`JoyceCode/engine/quest/QuestFactory.cs`) — quest lifecycle management (register, trigger, deactivate)
 - `ToSomewhere` (`JoyceCode/engine/quest/ToSomewhere.cs`) — base module for navigation-based quest targets (creates physics goal, visual marker, satnav route with fault-tolerant periodic retry)
 - `NarrationBindings` (`nogameCode/nogame/modules/story/NarrationBindings.cs`) — quest factory registrations and narration event wiring
+- `QuestLuaBindings` (`nogameCode/nogame/quests/QuestLuaBindings.cs`) — Lua bindings exposing quest data to the pause menu UI
 - `ICreator` implementations — save/load quest state via `TaxiQuestData` etc.
-- Remaining work: Phase 6 (Quest Log UI) not yet started
 
 ### Placement System
 `Placer` (`JoyceCode/engine/Placer.cs`) places entities in the world using `PlacementDescription` constraints:
