@@ -104,7 +104,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\PlacementDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Placer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\PositionDescription.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\components\Quest.cs" />
+
     <Compile Include="$(MSBuildThisFileDirectory)engine\scheduler\Scheduler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\scheduler\WorkerQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetPointConverter.cs" />
@@ -246,11 +246,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ObjectCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ShapeFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\PriorityMap.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\AreaEnteredBehavior.cs" />
+
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerSpinBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerVanishBehavior.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\IQuest.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\Manager.cs" />
+
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\QuestEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\QuestFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\components\QuestInfo.cs" />

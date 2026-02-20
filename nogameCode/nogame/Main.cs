@@ -18,8 +18,6 @@ public class Main : AModule
         /*
          * These are game specific.
          */
-        
-        new SharedModule<engine.quest.Manager>(),
         new SharedModule<builtin.modules.inventory.PickableDirectory>(),
         
         

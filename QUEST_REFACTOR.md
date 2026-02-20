@@ -210,26 +210,27 @@ The `TaxiQuestStrategy.GiveUpStrategy()` updates child `QuestInfo.State` as phas
 
 **Validation:** Full three-phase quest works. Sub-objectives visible in quest log query. Save/load across phases.
 
-### Phase 5: Replace quest infrastructure
+### Phase 5: Remove old quest infrastructure — COMPLETE
 
-Once all quests are migrated:
+**Files deleted:**
+- `JoyceCode/engine/quest/IQuest.cs` — interface, no implementations remained
+- `JoyceCode/engine/quest/Manager.cs` — replaced by `QuestFactory`
+- `JoyceCode/engine/quest/components/Quest.cs` — replaced by `QuestInfo`
+- `JoyceCode/engine/quest/AreaEnteredBehavior.cs` — unused stub from early prototyping
 
-**Files to delete:**
-- `JoyceCode/engine/quest/IQuest.cs` — interface no longer needed
-- `JoyceCode/engine/quest/Manager.cs` — replaced by lightweight trigger helper + ECS queries
-- `JoyceCode/engine/quest/components/Quest.cs` — replaced by `QuestInfo.cs`
+**Files modified:**
+- `JoyceCode/JoyceCode.projitems` — removed compile entries for deleted files
+- `nogameCode/nogame/Main.cs` — removed `SharedModule<engine.quest.Manager>()` registration
+- `nogameCode/nogame/modules/story/NarrationBindings.cs` — removed dead Manager fallback from `quest.trigger` handler; now calls `QuestFactory.TriggerQuest()` directly
+- `JoyceCode/builtin/entitySaver/ConverterRegistry.cs` — removed `InterfacePointerConverter<IQuest>` registration
 
-**Files to modify:**
-- `nogameCode/nogame/modules/story/NarrationBindings.cs` — update `quest.trigger` handler to use the new factory/helper instead of `quest.Manager`
-- `models/nogame.quests.json` — update to reference new strategy classes (or keep as a simple name→class mapping for the factory)
-- Any save file migration if needed (rename `Quest` component to `QuestInfo` in serialized data)
-
-**Files to keep (unchanged):**
-- `JoyceCode/engine/quest/ToSomewhere.cs` — still useful as a reusable module for creating goal markers and navigation. Strategy parts call it from their `OnEnter`/`OnExit`.
+**Files kept (unchanged):**
+- `JoyceCode/engine/quest/ToSomewhere.cs` — reusable module for goal markers and navigation
 - `JoyceCode/engine/quest/ToLocation.cs` — thin wrapper, still useful
 - `JoyceCode/engine/quest/TrailVehicle.cs` — thin wrapper, still useful
 - `JoyceCode/engine/quest/GoalMarkerSpinBehavior.cs` — still useful
 - `JoyceCode/engine/quest/GoalMarkerVanishBehavior.cs` — still useful
+- `models/nogame.quests.json` — kept as `{}` (referenced by Aihao editor `SectionDefinition.Quests`)
 
 ### Phase 6: Quest log integration
 

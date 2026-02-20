@@ -124,7 +124,6 @@ public class ConverterRegistry : AModule
         _mapConverters.Add(typeof(engine.joyce.components.FromModel), context => new engine.joyce.components.FromModelConverter() { Context =  context });
         _mapConverters.Add(typeof(engine.behave.IBehavior), context => new InterfacePointerConverter<IBehavior>());
         _mapConverters.Add(typeof(engine.behave.INavigator), context => new InterfacePointerConverter<INavigator>());
-        _mapConverters.Add(typeof(engine.quest.IQuest), context => new InterfacePointerConverter<engine.quest.IQuest>());
 
         // _mapInterfaceConverters.Add(typeof(IBehavior), context => new InterfacePointerConverter<IBehavior>());
         

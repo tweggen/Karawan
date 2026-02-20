@@ -11,7 +11,6 @@ namespace engine.quest;
 
 /// <summary>
 /// Lightweight service for creating and managing strategy-based quest entities.
-/// Replaces the quest.Manager for new-style quests.
 /// </summary>
 public class QuestFactory
 {

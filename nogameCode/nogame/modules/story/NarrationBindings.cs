@@ -219,7 +219,6 @@ public static class NarrationBindings
 
         // Quest triggering: used in narration event descriptors like
         // { "type": "quest.trigger", "quest": "nogame.quests.VisitAgentTwelve.Quest" }
-        // New-style quests use QuestFactory; unregistered quests fall back to old Manager.
         manager.RegisterEventHandler("quest.trigger", async (desc) =>
         {
             if (desc.Params.TryGetValue("quest", out var questNameObj))
@@ -227,14 +226,7 @@ public static class NarrationBindings
                 string questName = questNameObj.ToString();
                 try
                 {
-                    if (questFactory.HasQuest(questName))
-                    {
-                        await questFactory.TriggerQuest(questName, true);
-                    }
-                    else
-                    {
-                        await I.Get<engine.quest.Manager>().TriggerQuest(questName, true);
-                    }
+                    await questFactory.TriggerQuest(questName, true);
                 }
                 catch (Exception e)
                 {
