@@ -25,6 +25,8 @@ public class GameState
     public int PlayerEntity { get; set; } = 0;
 
     public string Story { get; set; } = "";
+
+    public string FollowedQuestId { get; set; } = null;
     
     public string Entities { get; set; } = "";
     

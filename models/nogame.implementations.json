@@ -78,6 +78,7 @@
   "nogame.intercity.Network": null,
   "engine.quest.Manager": null,
   "engine.quest.QuestFactory": null,
+  "engine.quest.ISatnavService": { "className": "nogame.quest.SatnavService" },
   "engine.narration.NarrationManager": null,
   "nogame.modules.story.Narration": null,
   "engine.news.ClickModule": null,

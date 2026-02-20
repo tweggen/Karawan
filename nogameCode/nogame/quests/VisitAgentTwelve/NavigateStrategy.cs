@@ -31,6 +31,7 @@ public class NavigateStrategy : AEntityStrategyPart
 
         _questTarget = new engine.quest.ToLocation()
         {
+            OwnerQuestEntity = _entity,
             RelativePosition = v3Target,
             SensitivePhysicsName = nogame.modules.playerhover.MainPlayModule.PhysicsStem,
             SensitiveRadius = 10f,

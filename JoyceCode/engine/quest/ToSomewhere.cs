@@ -7,8 +7,10 @@ using builtin.modules.satnav;
 using builtin.modules.satnav.desc;
 using engine.joyce;
 using engine.joyce.components;
+using engine.news;
 using engine.physics;
 using engine.physics.components;
+using engine.quest.components;
 using engine.world.components;
 using static engine.Logger;
 using Object = System.Object;
@@ -22,12 +24,20 @@ public class ToSomewhere : AModule
      * An internal name for the goal
      */
     public string Name { get; set; } = "Unnamed goal";
-    
+
     /**
      * May be set to a parent entity this behaviour shall be attached
      * to.
      */
     public DefaultEcs.Entity ParentEntity { get; set; }
+
+    /**
+     * The quest entity that owns this navigation target.
+     * When set, this ToSomewhere only shows its marker and route
+     * when the owning quest is the currently followed quest.
+     * When default (unset), legacy behavior applies: always show marker and route.
+     */
+    public DefaultEcs.Entity OwnerQuestEntity { get; set; }
 
     /**
      * Where, relative to its parent (or to the world) shall
@@ -48,15 +58,15 @@ public class ToSomewhere : AModule
     public uint MapCameraMask { get; set; } = 0x00800000;
 
     /**
-     * What icon shall be used as targetß
+     * What icon shall be used as target
      */
     public MapIcon.IconCode MapIcon { get; set; } = world.components.MapIcon.IconCode.Target0;
-    
+
     /**
      * If I am supposed to create a visible target for this one.
      */
     public bool DoCreateVisibleTarget { get; set; } = true;
-    
+
     public Action OnReachTarget = default;
 
     /**
@@ -72,7 +82,7 @@ public class ToSomewhere : AModule
 
     private IWaypoint _wStart = null;
     private IWaypoint _wTarget = null;
-    
+
     /**
      * The specific visual marker of the mission.
      */
@@ -80,13 +90,13 @@ public class ToSomewhere : AModule
     private DefaultEcs.Entity _eMeshMarker;
 
     private DefaultEcs.Entity _eRouteParent;
-    
+
     /*
      * The abstract mission target that physically shall be reached.
      */
     private DefaultEcs.Entity _eGoal;
-        
-    
+
+
     private static Lazy<engine.joyce.InstanceDesc> _jMeshGoal = new(
         () => InstanceDesc.CreateFromMatMesh(
             new MatMesh(
@@ -96,7 +106,7 @@ public class ToSomewhere : AModule
             400f
         )
     );
-    
+
 
     private static Lazy<GoalMarkerSpinBehavior> _goalMarkerSpinBehavior = new(() => new GoalMarkerSpinBehavior());
 
@@ -133,7 +143,7 @@ public class ToSomewhere : AModule
         }
     }
 
-    
+
     private void _deleteWaypointsLT()
     {
         if (_eRouteParent != default)
@@ -142,7 +152,7 @@ public class ToSomewhere : AModule
         }
     }
 
-    
+
     private void _destroyTargetInstanceLT()
     {
         if (_eGoal.IsAlive)
@@ -150,8 +160,8 @@ public class ToSomewhere : AModule
              I.Get<HierarchyApi>().Delete(ref _eGoal);
         }
     }
-    
-    
+
+
     /**
      * Create the default target marker
      */
@@ -164,7 +174,7 @@ public class ToSomewhere : AModule
         _eMeshMarker = _engine.CreateEntity($"quest.goal {Name} mesh marker");
         _eMeshMarker.Set(new engine.joyce.components.Instance3(_jMeshGoal.Value));
         I.Get<HierarchyApi>().SetParent(_eMeshMarker, _eMarker);
-        I.Get<TransformApi>().SetTransforms(_eMeshMarker, true, 0x0000ffff, Quaternion.Identity, 
+        I.Get<TransformApi>().SetTransforms(_eMeshMarker, true, 0x0000ffff, Quaternion.Identity,
             Vector3.Zero,
             new Vector3(SensitiveRadius, 3f, SensitiveRadius));
         _eMeshMarker.Set(
@@ -172,10 +182,10 @@ public class ToSomewhere : AModule
             {
                 MaxDistance = 2000
             });
-        
+
         DefaultEcs.Entity eMapMarker = _engine.CreateEntity($"quest.goal {Name} map marker");
-        I.Get<HierarchyApi>().SetParent(eMapMarker, _eMarker); 
-        I.Get<TransformApi>().SetTransforms(eMapMarker, true, 
+        I.Get<HierarchyApi>().SetParent(eMapMarker, _eMarker);
+        I.Get<TransformApi>().SetTransforms(eMapMarker, true,
             MapCameraMask, Quaternion.Identity, Vector3.Zero);
 
         eMapMarker.Set(new engine.world.components.MapIcon()
@@ -417,12 +427,12 @@ public class ToSomewhere : AModule
 
         I.Get<joyce.TransformApi>().SetTransforms(_eGoal, true, 0, Quaternion.Identity, RelativePosition);
 
-        if (DoCreateVisibleTarget)
+        if (DoCreateVisibleTarget && _shouldShowMarker())
         {
             _createTargetInstance(_eGoal);
         }
     }
-    
+
 
     private void _destroyGoal()
     {
@@ -431,8 +441,72 @@ public class ToSomewhere : AModule
             _destroyTargetInstanceLT();
         });
     }
-    
-    
+
+
+    /**
+     * Returns true if this ToSomewhere should display its goal marker and start its route.
+     * Legacy behavior (no OwnerQuestEntity): always true.
+     * With OwnerQuestEntity: only true when the quest is currently followed.
+     */
+    private bool _shouldShowMarker()
+    {
+        if (OwnerQuestEntity == default) return true;
+        var svc = I.TryGet<ISatnavService>();
+        return svc == null || svc.IsFollowed(OwnerQuestEntity);
+    }
+
+
+    private void _handleQuestFollowed(Event ev)
+    {
+        if (OwnerQuestEntity == default || !OwnerQuestEntity.IsAlive) return;
+        if (!OwnerQuestEntity.Has<QuestInfo>()) return;
+        if (OwnerQuestEntity.Get<QuestInfo>().QuestId != ev.Code) return;
+
+        // Our quest became the followed quest.
+        _engine.QueueMainThreadAction(() =>
+        {
+            if (_isStopped) return;
+            if (!_eMeshMarker.IsAlive && DoCreateVisibleTarget && _eGoal.IsAlive)
+            {
+                _createTargetInstance(_eGoal);
+            }
+        });
+
+        // Start route if not already running.
+        Route routeTarget;
+        lock (_lo) { routeTarget = _routeTarget; }
+        if (routeTarget == null)
+        {
+            _engine.QueueMainThreadAction(() =>
+            {
+                if (_isStopped) return;
+                _tryCreateRouteLT();
+                _startRouteLT();
+            });
+        }
+    }
+
+
+    private void _handleQuestUnfollowed(Event ev)
+    {
+        if (OwnerQuestEntity == default || !OwnerQuestEntity.IsAlive) return;
+        if (!OwnerQuestEntity.Has<QuestInfo>()) return;
+        if (OwnerQuestEntity.Get<QuestInfo>().QuestId != ev.Code) return;
+
+        // Our quest was unfollowed — stop route and hide marker.
+        _stopRoute();
+        _destroyRoute();
+        _engine.QueueMainThreadAction(() =>
+        {
+            if (_eMarker.IsAlive)
+            {
+                I.Get<HierarchyApi>().Delete(ref _eMarker);
+            }
+            _deleteWaypointsLT();
+        });
+    }
+
+
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<builtin.modules.satnav.Module>()
@@ -446,7 +520,7 @@ public class ToSomewhere : AModule
         _destroyRoute();
         _destroyGoal();
     }
-    
+
 
     protected override void OnModuleActivate()
     {
@@ -456,15 +530,25 @@ public class ToSomewhere : AModule
                 Texture = I.Get<TextureCatalogue>().FindColorTexture(0xffeeaa22)
             });
 
-        
+        if (OwnerQuestEntity != default)
+        {
+            Subscribe(QuestFollowedEvent.EVENT_TYPE, _handleQuestFollowed);
+            Subscribe(QuestUnfollowedEvent.EVENT_TYPE, _handleQuestUnfollowed);
+        }
+
         _engine.QueueMainThreadAction(() =>
         {
             _createGoalLT();
         });
-        _engine.QueueMainThreadAction(() =>
+
+        // Only start route navigation if this quest is followed (or no owner = legacy).
+        if (_shouldShowMarker())
         {
-            _tryCreateRouteLT();
-            _startRouteLT();
-        });
+            _engine.QueueMainThreadAction(() =>
+            {
+                _tryCreateRouteLT();
+                _startRouteLT();
+            });
+        }
     }
 }

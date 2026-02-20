@@ -21,6 +21,7 @@ public class TrailStrategy : AEntityStrategyPart
     {
         _questTarget = new engine.quest.TrailVehicle()
         {
+            OwnerQuestEntity = _entity,
             SensitivePhysicsName = nogame.modules.playerhover.MainPlayModule.PhysicsStem,
             MapCameraMask = nogame.modules.map.Module.MapCameraMask,
             ParentEntity = CarEntity,

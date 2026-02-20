@@ -96,6 +96,15 @@
             <text color='#666666' height='40'>Quest Log</text>
             <for items='{return questlog:getQuestList()}'>
                 <text color='#999999' height='20' text="{return title}"/>
+                <text color='#777777' height='15' text="{return description}"/>
+                <if test='{return active}'>
+                    <if test='{return followed}'>
+                        <option color='#88ff88' height='20' onClick='questlog:unfollowQuest()'>Unfollow</option>
+                    </if>
+                    <if test='{return not followed}'>
+                        <option color='#aaaaaa' height='20' onClick='questlog:followQuest(id)'>Follow</option>
+                    </if>
+                </if>
             </for>
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>
         </vmenu>

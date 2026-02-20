@@ -453,6 +453,36 @@ public class Parser
                 }
                 break;
             case "if":
+                if (xWidget.HasAttribute("test"))
+                {
+                    string strTest = xWidget.GetAttribute("test");
+                    var lTest = strTest.Length;
+                    if (lTest > 2 && strTest[0] == '{' && strTest[1] != '{' && strTest[lTest - 1] == '}')
+                    {
+                        var lseTest = _compiledCache.Value.Find(
+                            $"if:{strTest}",
+                            strTest.Substring(1, lTest - 2),
+                            (lse) => PushContext(lse));
+
+                        // Apply current item bindings (e.g. from an enclosing <for> loop)
+                        // so the test expression can access item variables like {return followed}.
+                        if (lbfParent != null)
+                        {
+                            lseTest.PushBinding(lbfParent);
+                        }
+
+                        var testResult = lseTest.CallSingleResult();
+                        bool condition = testResult is bool b ? b : testResult != null;
+
+                        if (condition)
+                        {
+                            foreach (XmlNode xnChild in xWidget.ChildNodes)
+                            {
+                                BuildChildNode(xnChild, wParent, lbfParent);
+                            }
+                        }
+                    }
+                }
                 break;
             default:
                 w = BuildWidget(xWidget, lbfParent);

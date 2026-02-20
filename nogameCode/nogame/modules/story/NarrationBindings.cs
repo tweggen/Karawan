@@ -217,6 +217,10 @@ public static class NarrationBindings
         var questFactory = I.Get<QuestFactory>();
         _registerQuestFactories(questFactory);
 
+        // Ensure SatnavService is created early so it can subscribe to quest events
+        // before any quests are triggered.
+        I.Get<engine.quest.ISatnavService>();
+
         // Quest triggering: used in narration event descriptors like
         // { "type": "quest.trigger", "quest": "nogame.quests.VisitAgentTwelve.Quest" }
         manager.RegisterEventHandler("quest.trigger", async (desc) =>

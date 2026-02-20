@@ -109,6 +109,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\NearbyBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\RestStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\RunToBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\quest\SatnavService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\QuestLuaBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\HelloFishmonger\HelloFishmongerStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\HelloFishmonger\TrailStrategy.cs" />
