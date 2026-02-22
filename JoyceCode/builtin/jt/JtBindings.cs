@@ -57,6 +57,13 @@ public class JtBindings
     }
 
 
+    public void refresh(string layername, string id)
+    {
+        close(layername, id);
+        open(layername, id);
+    }
+    
+    
     /**
      * Close all windows and open a new one. 
      */
