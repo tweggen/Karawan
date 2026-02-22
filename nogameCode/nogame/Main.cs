@@ -19,14 +19,15 @@ public class Main : AModule
          * These are game specific.
          */
         new SharedModule<builtin.modules.inventory.PickableDirectory>(),
-        
-        
+
+
         new SharedModule<nogame.modules.AutoSave>(),
         new SharedModule<builtin.controllers.InputMapper>(),
         new SharedModule<builtin.tools.CameraWatcher>(),
         new SharedModule<builtin.modules.ScreenComposer>(),
         new SharedModule<nogame.modules.osd.Display>(),
         new SharedModule<engine.news.ClickModule>(),
+        new SharedModule<engine.quest.QuestCompletionModule>(),
         new MyModule<nogame.modules.debugger.DebuggerToggle>(),
         new MyModule<engine.testing.TestDriverModule>(),
 

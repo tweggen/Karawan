@@ -254,6 +254,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\QuestFollowEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\ISatnavService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\QuestFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\QuestCompletionModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\components\QuestInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\ToSomewhere.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\TrailVehicle.cs" />

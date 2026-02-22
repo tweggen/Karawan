@@ -6,7 +6,6 @@ using BepuPhysics;
 using builtin.tools;
 using engine;
 using engine.draw;
-using engine.draw.components;
 using engine.joyce;
 using engine.joyce.components;
 using engine.physics;
@@ -225,27 +224,6 @@ public class TaxiNpcSpawnerModule : AModule
     private void _onQuestDeactivated(engine.news.Event ev)
     {
         if (ev.Code != _questId) return;
-
-        if (ev is QuestDeactivatedEvent qde)
-        {
-            _engine.QueueMainThreadAction(() =>
-            {
-                string toastText = qde.IsSuccess
-                    ? $"Finished {qde.Title}"
-                    : $"Missed {qde.Title}";
-                uint textColor = qde.IsSuccess ? 0xff44cc44u : 0xffcc4444u;
-
-                var eToast = _engine.CreateEntity("taxi.quest.toast");
-                eToast.Set(new OSDText(
-                    new Vector2(393f - 150f, 120f), new Vector2(300f, 50f),
-                    toastText,
-                    36, textColor, 0x88000000u,
-                    HAlign.Center));
-                eToast.Set(new engine.behave.components.Behavior(
-                    new AutoRemoveBehavior() { Lifetime = 3.0f })
-                { MaxDistance = short.MaxValue });
-            });
-        }
 
         List<NpcRecord> toRestore;
         lock (_lo)
