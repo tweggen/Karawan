@@ -75,8 +75,57 @@ public class Route : IDisposable
                 _pathfinder = new LocalPathfinder(navCursors[0], navCursors[1]);
 
                 listLanes = _pathfinder.Pathfind();
-                if (null != listLanes)
+                if (null != listLanes && listLanes.Count > 0)
                 {
+                    // Project the target onto nearby lane segments to find the
+                    // closest point on the street. Check the last two lanes to
+                    // handle the overshoot case (nearest junction past the target).
+                    int bestIdx = listLanes.Count - 1;
+                    float bestDist = float.MaxValue;
+                    Vector3 bestProj = listLanes[^1].End.Position;
+
+                    int startCheck = Math.Max(0, listLanes.Count - 2);
+                    for (int i = startCheck; i < listLanes.Count; i++)
+                    {
+                        var lane = listLanes[i];
+                        Vector3 ab = lane.End.Position - lane.Start.Position;
+                        Vector3 ap = v3EndCenter - lane.Start.Position;
+                        float abLenSq = Vector3.Dot(ab, ab);
+                        float t = abLenSq > 0f
+                            ? Math.Clamp(Vector3.Dot(ap, ab) / abLenSq, 0f, 1f)
+                            : 0f;
+                        Vector3 proj = lane.Start.Position + t * ab;
+                        float dist = (v3EndCenter - proj).Length();
+                        if (dist < bestDist)
+                        {
+                            bestDist = dist;
+                            bestIdx = i;
+                            bestProj = proj;
+                        }
+                    }
+
+                    // Remove all lanes after the closest one.
+                    while (listLanes.Count > bestIdx + 1)
+                    {
+                        listLanes.RemoveAt(listLanes.Count - 1);
+                    }
+
+                    // Truncate the closest lane to end at the projected point.
+                    NavJunction njEnd = new NavJunction()
+                    {
+                        Position = bestProj,
+                        StartingLanes = new(),
+                        EndingLanes = new()
+                    };
+                    var bestLane = listLanes[bestIdx];
+                    listLanes[bestIdx] = new NavLane()
+                    {
+                        Start = bestLane.Start,
+                        End = njEnd,
+                        Length = (bestProj - bestLane.Start.Position).Length(),
+                        MaxSpeed = bestLane.MaxSpeed
+                    };
+
                     _engine.Run(() => onPath(listLanes));
                 }
             }
