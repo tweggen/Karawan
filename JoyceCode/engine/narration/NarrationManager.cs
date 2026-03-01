@@ -417,6 +417,12 @@ public class NarrationManager : AModule
                 return result;
             }
 
+            // An event handler may have ended/replaced the script.
+            if (_activeRunner == null || _activeRunner.IsFinished)
+            {
+                break;
+            }
+
             // Auto-advance: get the next step
             result = await _activeRunner.Advance();
         }

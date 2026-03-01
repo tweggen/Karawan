@@ -22,6 +22,9 @@ public abstract class ANearbyBehavior : ABehavior
     private DefaultEcs.Entity _eActionMarker;
     private bool _mayConverse = true;
 
+    
+    public abstract string Prompt { get; }
+    
     public abstract string Name { get; }
     public string ActionEvent
     {
@@ -133,7 +136,7 @@ public abstract class ANearbyBehavior : ABehavior
         _eActionMarker = engine0.CreateEntity(EntityName);
         _eActionMarker.Set(new OSDText(
             new Vector2(-100f, 0f), new Vector2(200f, 14f), 
-            "E to talk", 18, 0xff22aaee,
+            Prompt, 18, 0xff22aaee,
             0x00000000, engine.draw.HAlign.Center) { MaxDistance = 2f*Distance, CameraMask = 1});
         _eActionMarker.Set(new engine.behave.components.Clickable()
         {

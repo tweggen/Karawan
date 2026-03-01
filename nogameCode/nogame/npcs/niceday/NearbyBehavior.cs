@@ -7,6 +7,7 @@ public class NearbyBehavior : nogame.tools.ANearbyBehavior
 {
     public override string Name { get => "nogame.npcs.niceday.talk"; }
 
+    public override string Prompt { get => "E to Talk"; }
 
     protected override void OnAction(Event ev)
     {

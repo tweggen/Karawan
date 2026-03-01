@@ -14,6 +14,8 @@ public class ShopNearbyBehavior : ANearbyBehavior
 {
     public override string Name { get => "nogame.modules.shop.open"; }
 
+    public override string Prompt { get => "E to Open shop"; }
+    
     protected override void OnAction(Event ev)
     {
         I.Get<nogame.modules.shop.Module>().ModuleActivate();
