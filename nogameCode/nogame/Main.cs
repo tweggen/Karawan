@@ -27,6 +27,7 @@ public class Main : AModule
         new SharedModule<builtin.modules.ScreenComposer>(),
         new SharedModule<nogame.modules.osd.Display>(),
         new SharedModule<engine.news.ClickModule>(),
+        new SharedModule<engine.quest.QuestTriggeredModule>(),
         new SharedModule<engine.quest.QuestCompletionModule>(),
         new MyModule<nogame.modules.debugger.DebuggerToggle>(),
         new MyModule<engine.testing.TestDriverModule>(),

@@ -188,9 +188,9 @@ public static class NarrationBindings
                     eQuest.Set(new engine.quest.components.QuestInfo
                     {
                         QuestId = "nogame.quests.Taxi.Quest",
-                        Title = "Be a good cab driver.",
-                        ShortDescription = "The passenger wants to get to their target.",
-                        LongDescription = "Isn't this a chase again?"
+                        Title = "Taxi",
+                        ShortDescription = "Shuttle a passenger to their destination",
+                        LongDescription = "Drive the passenger to their target location."
                     });
 
                     eQuest.Set(new nogame.quests.Taxi.TaxiQuestData
