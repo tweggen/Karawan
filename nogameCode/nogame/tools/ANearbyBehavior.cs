@@ -79,7 +79,7 @@ public abstract class ANearbyBehavior : ABehavior
      */
     private void _onNarrationStateChanged(Event ev)
     {
-        var csev = ev as nogame.modules.story.CurrentStateEvent;
+        var csev = ev as engine.narration.NarrationStateEvent;
         lock (_lo)
         {
             if (_mayConverse == csev.MayConverse)
