@@ -25,7 +25,8 @@
         "<change>": "Change something about you",
         "<map>": "Toggle map",
         "<menu>": "Toggle menu",
-        "<developer>": "Toggle developer view"
+        "<developer>": "Toggle developer view",
+        "<followquest>": "Follow the currently-triggered quest"
       },
       "MapButtonToLogical": {
         "input.key.pressed:e": "input.button.pressed:<interact>",
@@ -52,6 +53,8 @@
         "input.key.released:(shiftleft)": "input.button.released:<run>",
         "input.gamepad.button.pressed:LeftShoulder": "input.button.pressed:<run>",
         "input.gamepad.button.released:LeftShoulder": "input.button.released:<run>",
+        "input.key.pressed:q": "input.button.pressed:<followquest>",
+        "input.key.released:q": "input.button.released:<followquest>",
         "input.gamepad.button.pressed:DPadUp": "input.button.pressed:<cursorup>",
         "input.gamepad.button.released:DPadUp": "input.button.released:<cursorup>",
         "input.gamepad.button.pressed:DPadDown": "input.button.pressed:<cursordown>",

@@ -249,6 +249,7 @@
 
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerSpinBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerVanishBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\FollowQuestToastBehavior.cs" />
 
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\QuestEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\QuestFollowEvents.cs" />
