@@ -79,7 +79,6 @@
   "builtin.jt.Factory": null,
   "nogame.SetupMetaGen": null,
   "nogame.intercity.Network": null,
-  "engine.quest.Manager": null,
   "engine.quest.QuestFactory": null,
   "engine.quest.QuestTriggeredModule": null,
   "engine.quest.QuestCompletionModule": null,
