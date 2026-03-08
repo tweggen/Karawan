@@ -1,210 +1,191 @@
 # Wuka Android Native Library Analysis
 
-**Date:** 2026-03-08
+**Date:** 2026-03-08 (post-cleanup revision)
 **Target:** `net9.0-android35.0` (min API 26)
-**Build warnings:** XA0141 (16KB page size), XA4301 (duplicate .so in APK)
+**Silk.NET:** 2.23.0 | **OpenAL.Soft.Native:** 1.23.1
 
 ---
 
 ## 1. What Actually Ends Up in the APK
 
-Inspecting `de.nassau_records.silicondesert2.apk` (Debug, arm64-v8a):
+Inspecting `de.nassau_records.silicondesert2.apk` (Debug, arm64-v8a) after cleanup:
 
-| Library | Size | Source | Purpose |
-|---------|------|--------|---------|
-| `libSDL2.so` | 1.4 MB | Silk.NET.Windowing.Sdl 2.22.0 AAR | SDL2 for Android (used by engine) |
-| `libSDL2-2.0.so` | 1.8 MB | Ultz.Native.SDL 2.30.8 NuGet (`linux-arm64`) | **SUPERFLUOUS** — Linux SDL2 build, see section 10 |
-| `libmain.so` | 5.7 KB | Silk.NET.Windowing.Sdl 2.22.0 AAR | SDL2 JNI entry point |
-| `libopenal.so` | 428 KB | Local: `android/arm64-v8a/` | OpenAL Soft audio |
-| `libassimp.so` | 11.2 MB | Local: `android/arm64-v8a/` | Assimp model loader |
-| `libc++_shared.so` | 8.8 MB | Local: `android/arm64-v8a/` | C++ stdlib (for assimp) |
-| `liblua54.so` | 282 KB | (from engine build) | Lua scripting |
-| `libSkiaSharp.so` | 8.6 MB | SkiaSharp NuGet | MAUI rendering |
-| `libmonosgen-2.0.so` | 3.0 MB | .NET runtime | Mono runtime |
-| `libmonodroid.so` | 491 KB | .NET runtime | Android bridge |
-| `libxamarin-app.so` | 3.4 MB | Build-generated | App native image |
-| `libxamarin-debug-app-helper.so` | 66 KB | .NET runtime (Debug only) | Debugger |
-| `libmono-component-debugger.so` | 194 KB | .NET runtime (Debug only) | Debugger |
-| `libmono-component-hot_reload.so` | 63 KB | .NET runtime (Debug only) | Hot reload |
-| `libmono-component-marshal-ilgen.so` | 35 KB | .NET runtime | IL marshalling |
-| `libarc.bin.so` | 18 KB | .NET runtime | Archive |
-| `libSystem.Native.so` | 98 KB | .NET runtime | System native |
-| `libSystem.Globalization.Native.so` | 70 KB | .NET runtime | Globalization |
-| `libSystem.IO.Compression.Native.so` | 742 KB | .NET runtime | Compression |
-| `libSystem.Security.Cryptography.Native.Android.so` | 161 KB | .NET runtime | Crypto |
+| Library | Size | Source | Status |
+|---------|------|--------|--------|
+| `libSDL2.so` | 1.4 MB | Silk.NET.Windowing.Sdl 2.23.0 AAR | OK — Android SDL2 |
+| `libSDL2-2.0.so` | 1.7 MB | Ultz.Native.SDL 2.32.10 (transitive) | **SUPERFLUOUS** — Linux SDL2, see section 4 |
+| `libmain.so` | 5.7 KB | Silk.NET.Windowing.Sdl 2.23.0 AAR | OK — SDL2 JNI entry |
+| `libopenal.so` | 1.0 MB | Silk.NET.OpenAL.Soft.Native 1.23.1 NuGet | **WRONG BINARY** — Linux build, see section 3 |
+| `libassimp.so` | 11.2 MB | Local: `android/arm64-v8a/` | OK — NDK r29-beta1 |
+| `libc++_shared.so` | 8.8 MB | Local: `android/arm64-v8a/` | OK — NDK r27-beta1 |
+| `liblua54.so` | 282 KB | Engine build | OK |
+| `libSkiaSharp.so` | 8.6 MB | SkiaSharp NuGet | OK |
+| `libmonosgen-2.0.so` | 3.0 MB | .NET runtime | OK |
+| `libmonodroid.so` | 491 KB | .NET runtime | OK |
+| `libxamarin-app.so` | 3.4 MB | Build-generated | OK |
+| `libxamarin-debug-app-helper.so` | 66 KB | .NET runtime (Debug only) | OK |
+| `libmono-component-debugger.so` | 194 KB | .NET runtime (Debug only) | OK |
+| `libmono-component-hot_reload.so` | 63 KB | .NET runtime (Debug only) | OK |
+| `libmono-component-marshal-ilgen.so` | 35 KB | .NET runtime | OK |
+| `libarc.bin.so` | 18 KB | .NET runtime | OK |
+| `libSystem.Native.so` | 98 KB | .NET runtime | OK |
+| `libSystem.Globalization.Native.so` | 70 KB | .NET runtime | OK |
+| `libSystem.IO.Compression.Native.so` | 742 KB | .NET runtime | OK |
+| `libSystem.Security.Cryptography.Native.Android.so` | 161 KB | .NET runtime | OK |
 
 ---
 
-## 2. The Three Sources of Native Libraries
+## 2. Sources of Native Libraries
 
-### Source A: Silk.NET.Windowing.Sdl 2.22.0 — AAR (automatic)
+### Source A: Silk.NET.Windowing.Sdl 2.23.0 — AAR (automatic)
 
-The NuGet package ships `app-release.aar` (and a duplicate `Silk.NET.Windowing.Sdl.aar`) containing SDL2 for Android:
+Ships `Silk.NET.Windowing.Sdl.aar` containing the proper Android SDL2:
 
 ```
-jni/arm64-v8a/libSDL2.so    (1.4 MB)
-jni/arm64-v8a/libmain.so    (5.7 KB)
+jni/arm64-v8a/libSDL2.so    (1.4 MB)  — Android build, 1506 exported symbols
+jni/arm64-v8a/libmain.so    (5.7 KB)  — JNI entry point
 jni/armeabi-v7a/libSDL2.so  (1.0 MB)
 jni/armeabi-v7a/libmain.so  (13.6 KB)
-jni/x86/libSDL2.so          (1.6 MB)
-jni/x86/libmain.so          (5.4 KB)
-jni/x86_64/libSDL2.so       (1.6 MB)
-jni/x86_64/libmain.so       (6.0 KB)
+jni/x86/...  jni/x86_64/...
 ```
 
-These are included automatically by the Android build system when it processes the AAR. No csproj entry needed. **This is the SDL2 the engine actually uses.**
+**Note:** The AAR binary is byte-identical to the 2.22.0 version (same MD5). The 2.23.0 upgrade fixed the duplicate AAR issue (no more `app-release.aar` alongside `Silk.NET.Windowing.Sdl.aar`), but did not update the SDL2 native libraries — they're still not 16KB page-aligned.
 
-### Source B: Ultz.Native.SDL 2.30.8 — NuGet runtime (automatic, UNWANTED)
+### Source B: Ultz.Native.SDL 2.32.10 — transitive dependency (UNWANTED)
 
-Provides `runtimes/linux-arm64/native/libSDL2-2.0.so` (1.8 MB). This is a **Linux** ARM64 binary (not Android-specific), but .NET for Android picks it up because `linux-arm64` maps to the same architecture. It ends up in the APK as `lib/arm64-v8a/libSDL2-2.0.so` alongside the real Android `libSDL2.so`.
+`Silk.NET.SDL 2.23.0` declares a hard dependency on `Ultz.Native.SDL 2.32.10` for **all TFMs** (no Android-specific override). This pulls in `runtimes/linux-arm64/native/libSDL2-2.0.so` (1.7 MB) — a Linux desktop SDL2 binary that .NET for Android erroneously includes because `linux-arm64` arch-matches `android-arm64`.
 
-**This is superfluous.** The engine links against `libSDL2.so` from the AAR, not `libSDL2-2.0.so`.
+Cannot be removed as a direct package reference since it's a transitive dependency. Must be excluded via MSBuild — see section 5.
 
-### Source C: Local `AndroidNativeLibrary` entries (manual)
+### Source C: Silk.NET.OpenAL.Soft.Native 1.23.1 — NuGet runtime (NEW PROBLEM)
 
-Three libraries manually placed in **two duplicate directories**:
+Version 1.23.1 now provides `runtimes/linux-arm64/native/libopenal.so` (1.0 MB) — which 1.21.1.2 did not. Same `linux-arm64` → `android-arm64` bleed-through as Ultz.Native.SDL. This NuGet version **wins over** the local `AndroidNativeLibrary` (428 KB), which is silently ignored with XA4301.
 
-| Library | `android/` dir | `libs/` dir | Identical? |
-|---------|---------------|-------------|------------|
-| `libassimp.so` (arm64) | 11.2 MB, NDK r29-beta1 | 11.2 MB, NDK r29-beta1 | **YES** (same MD5) |
-| `libc++_shared.so` (arm64) | 8.8 MB, NDK r27-beta1 | 8.8 MB, NDK r27-beta1 | **YES** (same MD5) |
-| `libopenal.so` (arm64) | 428 KB, stripped | 1.4 MB, GNU/Linux, not stripped | **NO** (different builds!) |
+### Source D: Local `AndroidNativeLibrary` entries (manual)
 
-Same pattern for armeabi-v7a (all identical between `android/` and `libs/`).
+After cleanup, only the `android/` directory remains:
 
-The csproj declares **both** directories as `AndroidNativeLibrary`:
-- Lines 101-112: `android/{arch}/libc++_shared.so` and `libassimp.so`
-- Lines 113-124: `libs/{arch}/libc++_shared.so` and `libassimp.so`
-- Lines 137-145: `android/arm64-v8a/libopenal.so`, `libs/arm64-v8a/libopenal.so`, `libs/armeabi-v7a/libopenal.so`
-
-**The `android/` directory wins** (declared first in csproj). The `libs/` duplicates produce XA4301 warnings and are ignored.
+| Library | arm64-v8a | armeabi-v7a |
+|---------|-----------|-------------|
+| `libassimp.so` | 11.2 MB, NDK r29-beta1 | 9.3 MB |
+| `libc++_shared.so` | 8.8 MB, NDK r27-beta1 | 6.9 MB |
+| `libopenal.so` | 428 KB, Android build | 374 KB |
 
 ---
 
-## 3. The libopenal.so Situation
+## 3. CRITICAL: libopenal.so — Wrong Binary in APK
 
-Two different builds exist:
+The NuGet `Silk.NET.OpenAL.Soft.Native 1.23.1` `linux-arm64` libopenal (1.0 MB) is shipping instead of the local Android build (428 KB). These are fundamentally different binaries:
 
-| Location | Size | `file` output | Notes |
-|----------|------|---------------|-------|
-| `android/arm64-v8a/` | 428 KB | `ARM aarch64, SYSV, stripped` | **In the APK.** No NDK tag. Origin unknown. |
-| `libs/arm64-v8a/` | 1.4 MB | `ARM aarch64, GNU/Linux, not stripped` | Ignored (duplicate). This is a Linux build, likely wrong platform. |
+| | NuGet (linux-arm64) — IN APK | Local (android/) — IGNORED |
+|---|---|---|
+| Size | 1,044,848 bytes | 428,368 bytes |
+| Exported functions | 361 | 284 |
+| **Dynamic dependencies** | `libstdc++.so.6` | `libdl.so` |
+| | `libm.so.6` | **`libOpenSLES.so`** |
+| | `libgcc_s.so.1` | `liblog.so` |
+| | `libc.so.6` | `libstdc++.so` |
+| | **`ld-linux-aarch64.so.1`** | `libm.so` |
+| | | `libc.so` |
 
-The NuGet `Silk.NET.OpenAL.Soft.Native 1.21.1.2` does **not** provide an Android `.so` — only linux-x64, osx-x64, win-x64, win-x86. Both local copies were manually sourced.
+**The NuGet version links against Linux glibc** (`libc.so.6`, `libm.so.6`, `ld-linux-aarch64.so.1`). These do not exist on Android. It will **fail to load at runtime**.
 
-The `android/` version (428 KB, stripped) is the one that ships. It works, but has no NDK provenance tag — likely an older OpenAL Soft Android build.
+The local version links against `libOpenSLES.so` (Android's native audio API) and `liblog.so` (Android logging) — it's the correct Android NDK build.
 
----
-
-## 4. Duplicate/Superfluous Files
-
-### Entirely superfluous
-
-| File | Why |
-|------|-----|
-| `Ultz.Native.SDL` NuGet package reference | Provides `libSDL2-2.0.so` which is unused — engine uses `libSDL2.so` from Silk.NET AAR |
-| `android/x86_64/libopenal.so` | Only file in x86_64 dir, not referenced in csproj, incomplete arch support |
-
-### Duplicate (one copy is ignored at build time)
-
-| File | Winner (in APK) | Loser (ignored) |
-|------|-----------------|-----------------|
-| `libassimp.so` arm64 | `android/arm64-v8a/` | `libs/arm64-v8a/` (identical) |
-| `libc++_shared.so` arm64 | `android/arm64-v8a/` | `libs/arm64-v8a/` (identical) |
-| `libopenal.so` arm64 | `android/arm64-v8a/` (428 KB) | `libs/arm64-v8a/` (1.4 MB, different!) |
-| `libassimp.so` armv7 | `android/armeabi-v7a/` | `libs/armeabi-v7a/` (identical) |
-| `libc++_shared.so` armv7 | `android/armeabi-v7a/` | `libs/armeabi-v7a/` (identical) |
-| `libopenal.so` armv7 | (not declared for android/) | `libs/armeabi-v7a/` |
-| `libSDL2.so` | Silk.NET.Windowing.Sdl AAR | Also in AAR duplicate (Silk.NET.Windowing.Sdl.aar = app-release.aar) |
-| `libmain.so` | Silk.NET.Windowing.Sdl AAR | Also in AAR duplicate |
-
-### The AAR duplication
-
-The NuGet package `Silk.NET.Windowing.Sdl 2.22.0` ships **two identical AARs**:
-- `app-release.aar`
-- `Silk.NET.Windowing.Sdl.aar`
-
-Both contain the same `libSDL2.so` + `libmain.so`. The build processes both, producing XA4301 warnings for the second copy.
+**This is a regression from upgrading OpenAL.Soft.Native 1.21.1.2 → 1.23.1.** Version 1.21.1.2 didn't provide `linux-arm64`, so the local copy was used.
 
 ---
 
-## 5. Dead csproj Configuration
+## 4. libSDL2-2.0.so — Still Superfluous (Transitive)
 
-The PropertyGroups at lines 43-69 are conditioned on **`net7.0-android33.0`** but the TargetFramework is **`net9.0-android35.0`**:
+Even though `Ultz.Native.SDL` was removed as a direct package reference, it's back as version 2.32.10 via `Silk.NET.SDL 2.23.0 → Ultz.Native.SDL 2.32.10` (declared for all TFMs, no Android exception).
+
+The symbol analysis from the previous revision still applies — `libSDL2.so` (AAR) is a strict superset of `libSDL2-2.0.so` (Ultz) with 670 additional Android-specific symbols (JNI, EGL, Android audio backends, HIDAPI, etc.). The Ultz version has only 5 Linux-specific symbols not in the AAR.
+
+---
+
+## 5. Remaining Build Warnings
+
+### XA0141 — 16KB page size (Android 16/API 36)
+
+| Library | Source | Fix |
+|---------|--------|-----|
+| `libSDL2-2.0.so` | Ultz.Native.SDL 2.32.10 (transitive) | Exclude from APK |
+| `libSDL2.so` | Silk.NET.Windowing.Sdl 2.23.0 AAR | Upstream (same binary as 2.22.0) |
+| `libmain.so` | Silk.NET.Windowing.Sdl 2.23.0 AAR | Upstream (same binary as 2.22.0) |
+| `libopenal.so` | Silk.NET.OpenAL.Soft.Native 1.23.1 NuGet | Exclude NuGet version, use local |
+
+### XA4301 — Duplicate .so
+
+| Library | Winner | Loser |
+|---------|--------|-------|
+| `libopenal.so` | NuGet 1.23.1 (wrong!) | Local AndroidNativeLibrary (correct!) |
+
+---
+
+## 6. Recommended Fixes
+
+### Fix 1: Exclude NuGet native libs that bleed into Android (CRITICAL)
+
+Add to `Wuka.csproj` to prevent `linux-arm64` NuGet runtimes from overriding local Android libs:
 
 ```xml
-<!-- DEAD — never matches! -->
-<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-android33.0|AnyCPU'">
-  <ApplicationId>de.nassau_records.silicondesert2</ApplicationId>
-  <ApplicationTitle>Silicon Desert 2</ApplicationTitle>
-  ...
-</PropertyGroup>
+<!-- Exclude Linux native libs from NuGet packages that bleed into Android builds.
+     Silk.NET.SDL depends on Ultz.Native.SDL which provides libSDL2-2.0.so for linux-arm64.
+     Silk.NET.OpenAL.Soft.Native provides libopenal.so for linux-arm64.
+     Both are Linux desktop binaries, not Android. The AAR provides the real Android SDL2,
+     and our local AndroidNativeLibrary provides the correct Android OpenAL. -->
+<PackageReference Include="Ultz.Native.SDL" Version="2.32.10" ExcludeAssets="native" PrivateAssets="all" />
+<PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1" ExcludeAssets="native" PrivateAssets="all" />
 ```
 
-This means:
-- `ApplicationId` falls back to default `com.companyname.wuka` (but AndroidManifest.xml overrides to `de.nassau_records.silicondesert2`, so it still works)
-- `ApplicationTitle` falls back to `Wuka` (cosmetic only)
-- `AndroidPackageFormat`, `AndroidStoreUncompressedFileExtensions`, etc. use defaults
+This keeps the managed code from these packages but prevents their `runtimes/linux-arm64/native/*.so` files from being included in the APK.
+
+### Fix 2: Delete orphaned x86_64 directory
+
+`Platforms/Android/android/x86_64/` contains only `libopenal.so` — incomplete, not referenced in csproj. Delete it.
+
+### Fix 3: Remove stale None Remove entries
+
+Lines 94-96 reference `libs/` paths and a root-level `libopenal.so` that no longer exist:
+
+```xml
+<!-- Remove these lines: -->
+<None Remove="Platforms\Android\libopenal.so" />
+<None Remove="Platforms\Android\libs\arm64-v8a\libopenal.so" />
+<None Remove="Platforms\Android\libs\armeabi-v7a\libopenal.so" />
+```
+
+### Fix 4 (cosmetic): Remove CopyToOutputDirectory
+
+`CopyToOutputDirectory` is unnecessary for `AndroidNativeLibrary` items. They go into the APK via the Android build pipeline, not via output copy.
+
+### Fix 5 (longer term): 16KB page alignment
+
+For Android 16 (API 36) compatibility:
+- `libopenal.so` (local): Rebuild with `-Wl,-z,max-page-size=16384`
+- `libSDL2.so` + `libmain.so` (AAR): Wait for Silk.NET update with 16KB-aligned SDL2
+- Consider stripping `libassimp.so` (11.2 MB, not stripped) and `libc++_shared.so` (8.8 MB, with debug_info) to reduce APK size
 
 ---
 
-## 6. XA0141 — 16KB Page Size Warnings
+## 7. What Changed from the Previous Analysis
 
-Android 16 (API 36) requires ELF segments aligned to 16KB. These libraries fail the check:
-
-| Library | Source | Fix needed |
-|---------|--------|------------|
-| `libSDL2-2.0.so` | Ultz.Native.SDL 2.30.8 | Remove the package (superfluous anyway) |
-| `libSDL2.so` | Silk.NET.Windowing.Sdl 2.22.0 AAR | Upstream: update Silk.NET |
-| `libmain.so` | Silk.NET.Windowing.Sdl 2.22.0 AAR | Upstream: update Silk.NET |
-| `libopenal.so` | Local `android/arm64-v8a/` | Rebuild with `-Wl,-z,max-page-size=16384` |
-
-Note: `libassimp.so` and `libc++_shared.so` (NDK r29-beta1/r27-beta1) are likely already 16KB-aligned since newer NDK versions default to it. The build did NOT warn about them.
-
----
-
-## 7. Debug vs Release Build
-
-Both configurations currently use the **same native libraries** — there is no conditional inclusion. The difference is only in .NET runtime components:
-
-| Component | Debug | Release |
-|-----------|-------|---------|
-| `libxamarin-debug-app-helper.so` | Included | Excluded |
-| `libmono-component-debugger.so` | Included | Excluded |
-| `libmono-component-hot_reload.so` | Included | Excluded |
-| Native .so from csproj | Same | Same |
-| NuGet native libs | Same | Same |
-
-Since the PropertyGroup conditions for Release are dead (wrong TFM), there's effectively no difference in the manual native lib configuration between Debug and Release.
+| Item | Before (Silk.NET 2.22.0) | After (Silk.NET 2.23.0) |
+|------|-------------------------|------------------------|
+| `Ultz.Native.SDL` | Direct reference, v2.30.8 | Removed direct ref, but v2.32.10 back as transitive dep |
+| `libSDL2-2.0.so` in APK | Yes (1.8 MB) | Still yes (1.7 MB) — from transitive dep |
+| `libs/` directory | Existed, full duplicate | Deleted |
+| Dead PropertyGroups | Active (wrong TFM) | Commented out |
+| AAR duplication | Two AARs (`app-release.aar` + `Silk.NET.Windowing.Sdl.aar`) | One AAR only — **fixed in 2.23.0** |
+| `libopenal.so` in APK | Local 428 KB (correct Android build) | **NuGet 1.0 MB (WRONG — Linux build!)** |
+| `Silk.NET.OpenAL.Soft.Native` | v1.21.1.2 (no linux-arm64) | v1.23.1 (has linux-arm64 — bleeds into APK) |
+| XA4301 warnings | `libc++_shared`, `libassimp`, `libopenal`, `libmain`, `libSDL2` | Only `libopenal` (local ignored by NuGet) |
+| XA0141 warnings | 4 libraries | Same 4 libraries (AAR unchanged) |
 
 ---
 
-## 8. Recommended Cleanup
-
-### Quick fixes (no rebuild of native libs needed)
-
-1. **Remove `Ultz.Native.SDL` package reference** (line 173) — `libSDL2-2.0.so` is unused, wastes 1.8 MB in APK, triggers XA0141
-2. **Delete `libs/` directory entirely** — it's a complete duplicate of `android/` (except libopenal where the `libs/` version is actually a Linux binary, not Android)
-3. **Remove all `libs/` AndroidNativeLibrary entries** from csproj (lines 113-124, 140-145)
-4. **Remove `None Remove` lines for `libs/`** (lines 95-96)
-5. **Delete `android/x86_64/`** — only contains libopenal, no other libs, not referenced in csproj
-6. **Fix PropertyGroup TFM conditions** — change `net7.0-android33.0` to `net9.0-android35.0`
-
-### Needs native lib rebuild
-
-7. **Rebuild `libopenal.so`** with 16KB page alignment (`-Wl,-z,max-page-size=16384`) for Android 16 compatibility
-8. Consider stripping debug info from `libassimp.so` (11.2 MB) and `libc++_shared.so` (8.8 MB) to reduce APK size
-
-### Upstream dependency updates (longer term)
-
-9. **Update Silk.NET** to a version that ships 16KB-aligned `libSDL2.so` and `libmain.so` in its AAR
-10. Consider whether `Silk.NET.OpenAL.Soft.Native` is needed at all in Wuka (it provides no Android libs)
-
----
-
-## 9. Clean Minimal csproj Native Lib Section
-
-After cleanup, the native lib section should look like:
+## 8. Clean csproj Native Lib Section (Target State)
 
 ```xml
 <ItemGroup>
@@ -224,44 +205,12 @@ After cleanup, the native lib section should look like:
   <AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libassimp.so" />
   <AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libopenal.so" />
 </ItemGroup>
+
+<!-- ... -->
+
+<ItemGroup>
+  <!-- Exclude Linux native libs from transitive NuGet deps that bleed into Android -->
+  <PackageReference Include="Ultz.Native.SDL" Version="2.32.10" ExcludeAssets="native" PrivateAssets="all" />
+  <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1" ExcludeAssets="native" PrivateAssets="all" />
+</ItemGroup>
 ```
-
-Note: `CopyToOutputDirectory` is unnecessary for `AndroidNativeLibrary` items — they go into the APK via the Android build pipeline, not via output directory copy.
-
----
-
-## 10. Symbol Analysis: libSDL2.so vs libSDL2-2.0.so
-
-Detailed ELF dynamic symbol comparison (arm64-v8a):
-
-| | libSDL2.so (AAR / Silk.NET) | libSDL2-2.0.so (Ultz) |
-|---|---|---|
-| **Exported functions** | **1506** | **841** |
-| **Common symbols** | 836 | 836 |
-| **Unique symbols** | **670** | **5** |
-
-**The AAR `libSDL2.so` is a strict superset.** All 836 public SDL2 API functions in Ultz are also in the AAR version. The AAR has 670 additional symbols:
-
-### Only in AAR (Android-specific, 670 symbols)
-
-- **JNI bridge** (59 symbols): `Java_org_libsdl_app_SDLActivity_*`, `Java_org_libsdl_app_SDLAudioManager_*`, `Java_org_libsdl_app_SDLControllerManager_*` — the Java-to-native interface required for Android
-- **Android platform backend** (100+ symbols): `Android_JNI_*`, `Android_*`, `ANDROIDAUDIO_*` — audio, input, window, clipboard, permissions, screen keyboard
-- **EGL/Vulkan Android** (30+ symbols): `SDL_EGL_*`, `Android_Vulkan_*`, `Android_GLES_*` — Android GL context management
-- **Android audio** (~10 symbols): `aaudio_*`, `openslES_*` — AAudio and OpenSL ES backends
-- **HIDAPI** (25+ symbols): `HIDAPI_*`, `PLATFORM_hid_*`, `_ZN10CHIDDevice*` — USB/Bluetooth gamepad support
-- **SDL internals** (400+ symbols): `SDL_Private*`, `SDL_Send*`, `SDL_SYS_*`, `SDL_*Init`, `SDL_*Quit` — subsystem initialization, event dispatch, etc.
-- **SDLTest** (~60 symbols): `SDLTest_*` — test framework (compiled in but unused)
-- **Android-only APIs**: `SDL_AndroidGetActivity`, `SDL_AndroidGetJNIEnv`, `SDL_GetAndroidSDKVersion`, `SDL_IsAndroidTV`, `SDL_IsChromebook`, etc.
-
-### Only in Ultz (Linux-specific, 5 symbols)
-
-- `SDL_DYNAPI_entry` — SDL dynamic API dispatch (Linux loader mechanism)
-- `SDL_LinuxSetThreadPriority` — Linux-only thread priority
-- `SDL_LinuxSetThreadPriorityAndPolicy` — Linux-only thread scheduling
-- `_init` / `_fini` — ELF constructor/destructor (Linux convention)
-
-### Conclusion
-
-`libSDL2-2.0.so` from Ultz.Native.SDL is a **Linux desktop** build. It was packaged under `runtimes/linux-arm64/` and .NET for Android incorrectly picks it up because ARM64 matches. It provides zero Android-specific functionality. The Silk.NET P/Invoke layer links against `libSDL2` (the AAR one), not `libSDL2-2.0`.
-
-**`Ultz.Native.SDL` should be removed from Wuka's NuGet references.** It adds 1.8 MB of dead weight and triggers XA0141 warnings.
