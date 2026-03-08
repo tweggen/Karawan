@@ -362,4 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /.idea/.idea.Karawan/.idea
+**/.idea/
 /Setup/InstallSiliconDesert2.exe
