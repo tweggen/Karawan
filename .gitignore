@@ -363,4 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /.idea/.idea.Karawan/.idea
 **/.idea/
+imgui.ini
 /Setup/InstallSiliconDesert2.exe
