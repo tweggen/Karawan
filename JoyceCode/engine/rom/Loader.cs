@@ -39,26 +39,35 @@ public class Loader
         yield return Path.Combine(cwd, "bin", "Release", "net9.0", "win-x64");
         yield return cwd;
         
-        // 2. Executable directory paths
-        var orgExecPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
-        if (!string.IsNullOrEmpty(orgExecPath))
+        // 2. Executable directory paths (prefer Location over obsolete CodeBase)
+        string execLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        string execDirectoryPath = null;
+        if (!string.IsNullOrEmpty(execLocation))
         {
-            string execDirectoryPath;
-            if (orgExecPath.StartsWith("file:\\"))
+            execDirectoryPath = Path.GetDirectoryName(execLocation);
+        }
+        else
+        {
+            // Fallback for platforms where Location is empty (single-file, AOT)
+#pragma warning disable SYSLIB0012
+            var orgExecPath = Path.GetDirectoryName(
+                System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
+#pragma warning restore SYSLIB0012
+            if (!string.IsNullOrEmpty(orgExecPath))
             {
-                execDirectoryPath = orgExecPath.Substring(6);
+                if (orgExecPath.StartsWith("file:\\"))
+                    execDirectoryPath = orgExecPath.Substring(6);
+                else if (orgExecPath.StartsWith("file:/"))
+                    execDirectoryPath = orgExecPath.Substring(5);
+                else
+                    execDirectoryPath = orgExecPath;
             }
-            else if (orgExecPath.StartsWith("file:/"))
-            {
-                execDirectoryPath = orgExecPath.Substring(5);
-            }
-            else
-            {
-                execDirectoryPath = orgExecPath;
-            }
-            
+        }
+
+        if (!string.IsNullOrEmpty(execDirectoryPath))
+        {
             yield return execDirectoryPath;
-            
+
             // Android debug override path
             string androidOverridePath = execDirectoryPath.Replace(".__override__", "");
             if (androidOverridePath != execDirectoryPath)
@@ -75,7 +84,19 @@ public class Loader
     public static Assembly TryLoadDll(string dllPath)
     {
         if (_traceLoad) Trace($"dllPath = {dllPath}");
-        
+
+        // Check if the assembly is already loaded in the AppDomain (e.g. on Android
+        // where assemblies are bundled in the APK and pre-loaded via static references).
+        string targetName = Path.GetFileNameWithoutExtension(dllPath);
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (string.Equals(asm.GetName().Name, targetName, StringComparison.OrdinalIgnoreCase))
+            {
+                if (_traceLoad) Trace($"Found already loaded assembly: {asm.GetName().Name}");
+                return asm;
+            }
+        }
+
         // If dllPath is already an absolute path that exists, use it directly
         if (Path.IsPathRooted(dllPath) && File.Exists(dllPath))
         {
