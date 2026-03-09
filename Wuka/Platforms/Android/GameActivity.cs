@@ -159,7 +159,8 @@ namespace Wuka
         /// </summary>
         private void _ensureGameAssemblyLoaded()
         {
-            var _ = typeof(nogame.GameState);
+            var gameAssembly = typeof(nogame.GameState).Assembly;
+            engine.rom.Loader.PreRegisterAssembly(gameAssembly);
             System.Console.WriteLine("DOTNET game assembly loaded");
         }
 

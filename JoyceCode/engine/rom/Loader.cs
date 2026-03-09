@@ -12,12 +12,28 @@ public class Loader
 {
     static private SortedDictionary<string, Assembly> _mapAlreadyLoaded = new SortedDictionary<string, Assembly>();
     static private SortedSet<string> _setLoadFailed = new SortedSet<string>();
+    static private SortedDictionary<string, Assembly> _preRegistered = new SortedDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
     private static string _strDefaultLoaderAssembly;
 
     public static void SetDefaultLoaderAssembly(string path)
     {
         _strDefaultLoaderAssembly = path;
+    }
+
+
+    /// <summary>
+    /// Pre-register an assembly so TryLoadDll can find it without scanning AppDomain.
+    /// Required on Android debug (Rider fast deployment) where AppDomain.GetAssemblies()
+    /// may not list all loaded assemblies.
+    /// </summary>
+    public static void PreRegisterAssembly(Assembly assembly)
+    {
+        string name = assembly.GetName().Name;
+        if (!_preRegistered.ContainsKey(name))
+        {
+            _preRegistered[name] = assembly;
+        }
     }
 
     static private bool _traceLoad = false;
@@ -95,6 +111,14 @@ public class Loader
                 if (_traceLoad) Trace($"Found already loaded assembly: {asm.GetName().Name}");
                 return asm;
             }
+        }
+
+        // Check pre-registered assemblies (Android debug/Rider fast deployment
+        // may not list all assemblies in AppDomain.GetAssemblies()).
+        if (_preRegistered.TryGetValue(targetName, out var preRegisteredAsm))
+        {
+            if (_traceLoad) Trace($"Found pre-registered assembly: {preRegisteredAsm.GetName().Name}");
+            return preRegisteredAsm;
         }
 
         // If dllPath is already an absolute path that exists, use it directly
