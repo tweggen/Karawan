@@ -40,33 +40,9 @@
 	  <RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
 	</PropertyGroup>
 	
-	<!-- PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-android33.0|AnyCPU'">
-	  <AndroidPackageFormat>aab</AndroidPackageFormat>
-	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
-	  <DebugSymbols>True</DebugSymbols>
-	  <AndroidUseAapt2>True</AndroidUseAapt2>
-	  <AndroidStoreUncompressedFileExtensions>.ogg;.png</AndroidStoreUncompressedFileExtensions>
-	  <Debugger>Xamarin</Debugger>
-	  <ApplicationTitle>Silicon Desert 2</ApplicationTitle>
-	  <ApplicationId>de.nassau_records.silicondesert2</ApplicationId>
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
 	  <RunAOTCompilation>False</RunAOTCompilation>
-	  <EnableLLVM>False</EnableLLVM>
-	  <AndroidEnableSGenConcurrent>False</AndroidEnableSGenConcurrent>
 	</PropertyGroup>
-	
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android33.0|AnyCPU'">
-	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
-	  <RunAOTCompilation>False</RunAOTCompilation>
-	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
-	  <AndroidUseAapt2>True</AndroidUseAapt2>
-	  <AndroidStoreUncompressedFileExtensions>.ogg;.png</AndroidStoreUncompressedFileExtensions>
-	  <Debugger>Xamarin</Debugger>
-	  <ApplicationTitle>Silicon Desert 2</ApplicationTitle>
-	  <ApplicationId>de.nassau_records.silicondesert2</ApplicationId>
-	  <EnableLLVM>False</EnableLLVM>
-	  <AndroidEnableSGenConcurrent>False</AndroidEnableSGenConcurrent>
-	  <AndroidPackageFormat>aab</AndroidPackageFormat>
-	</PropertyGroup -->
 
 	<ItemGroup>
 		<!-- App Icon -->
