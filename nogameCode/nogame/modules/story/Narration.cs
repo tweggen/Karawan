@@ -247,11 +247,13 @@ public class Narration : AModule, IInputPart
         string strContent = result.Text;
         string strPerson = result.Speaker ?? "";
         int nLFs = _countLF(strContent);
+        bool hasSpeaker = !string.IsNullOrWhiteSpace(strPerson);
+        int nTextLines = nLFs + 1 + (hasSpeaker ? 1 : 0);
 
         _currentNChoices = result.Choices?.Count ?? 0;
         _chosenOption = 0;
 
-        float ytop = BottomY - LineHeight * (nLFs + _currentNChoices + 1);
+        float ytop = BottomY - LineHeight * (nTextLines + _currentNChoices);
 
         if (_currentNChoices > 0)
         {
@@ -259,7 +261,7 @@ public class Narration : AModule, IInputPart
             _listEOptions = new();
             for (int i = 0; i < _currentNChoices; ++i)
             {
-                var eChoice = _createOptionEntity(i, ytop + LineHeight * (i + 1f), $"{i + 1}) " + result.Choices[i]);
+                var eChoice = _createOptionEntity(i, ytop + LineHeight * (nTextLines + i), $"{i + 1}) " + result.Choices[i]);
                 _listEOptions.Add(eChoice);
             }
         }
@@ -268,21 +270,12 @@ public class Narration : AModule, IInputPart
             _dismissChoices();
         }
 
-        string strDisplay;
-        if (string.IsNullOrWhiteSpace(strPerson))
-        {
-            strDisplay = strContent;
-        }
-        else
-        {
-            strDisplay = strPerson + "\n" + strContent;
-            nLFs++;
-        }
+        string strDisplay = hasSpeaker ? strPerson + "\n" + strContent : strContent;
 
         ref var cSentenceOSDText = ref _eSentence.Get<OSDText>();
         cSentenceOSDText.Text = strDisplay;
         cSentenceOSDText.Position.Y = ytop;
-        cSentenceOSDText.Size.Y = (nLFs + 1) * LineHeight;
+        cSentenceOSDText.Size.Y = nTextLines * LineHeight;
 
         if (_soundTty != null)
         {
