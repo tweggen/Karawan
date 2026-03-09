@@ -2,7 +2,9 @@ using System;
 using System.Numerics;
 using Android.Content;
 using Android.Runtime;
+using Android.Text;
 using Android.Views;
+using Android.Views.InputMethods;
 using engine;
 using engine.news;
 using Org.Libsdl.App;
@@ -162,11 +164,25 @@ public class GameSurface : SDLSurface
     }
 
 
+    public override IInputConnection OnCreateInputConnection(EditorInfo outAttrs)
+    {
+        var ic = base.OnCreateInputConnection(outAttrs);
+
+        // Prevent fullscreen/extract mode keyboard in landscape
+        outAttrs.ImeOptions |= ImeFlags.NoFullscreen;
+
+        // Disable autocomplete and word suggestions
+        outAttrs.InputType = InputTypes.ClassText | InputTypes.TextFlagNoSuggestions;
+
+        return ic;
+    }
+
+
     protected GameSurface(IntPtr javaReference, JniHandleOwnership transfer) : base(javaReference, transfer)
     {
     }
 
-    
+
     public GameSurface(Context context) : base(context)
     {
     }
