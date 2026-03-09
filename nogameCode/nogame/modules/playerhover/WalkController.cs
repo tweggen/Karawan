@@ -366,7 +366,8 @@ public class WalkController : AController, IInputPart
                     _jumpState = JumpState.Starting;
                     
                     /*
-                     * Add an impulse of a sudden acceleration up of 10m/s.
+                     * Jump impulse: 6 m/s with 20 m/s² gravity gives
+                     * 0.9m height and 0.6s total air time.
                      */
                     _verticalImpulse += 6f;
                     break;
@@ -627,7 +628,7 @@ public class WalkController : AController, IInputPart
                 CollisionProperties? collisionProperties = null;
                 Vector3 vCollision;
                 // TXWTODO: Workaround to raycast in eye line.
-                aPhysics.RayCastSync(vNewTargetPos + 1.7f*Vector3.UnitY, -Vector3.UnitY, 1.7f + 10f * 1f/60f,
+                aPhysics.RayCastSync(vNewTargetPos + 1.7f*Vector3.UnitY, -Vector3.UnitY, 1.7f + 20f * 1f/60f,
                     (CollidableReference cRef, CollisionProperties props, float t, Vector3 vThisCollision) =>
                     {
                         bool isRelevant = false;
@@ -701,7 +702,7 @@ public class WalkController : AController, IInputPart
                                  * gradually.
                                  */
                                 isOnGround = true;
-                                var adjust = Single.Max(-10f * 1f / 60f, 1.7f - closestCollision);
+                                var adjust = Single.Max(-20f * 1f / 60f, 1.7f - closestCollision);
                                 vNewTargetPos.Y += adjust;
                             }
                         }
@@ -734,7 +735,7 @@ public class WalkController : AController, IInputPart
                     /*
                      * decrease the vertical velocity.
                      */
-                    _verticalImpulse -= 10f * 1f / 60f;
+                    _verticalImpulse -= 20f * 1f / 60f;
                     
                     /*
                      * no floor below my feet, start/continue to fall.
