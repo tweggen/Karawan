@@ -52,7 +52,7 @@ public class ClickableFingerState : AFingerState
     public override void HandlePressed(Event ev)
     {
         base.HandlePressed(ev);
-        
+
         var factory = Clickable.ClickEventFactory;
         if (factory != null)
         {
@@ -62,14 +62,13 @@ public class ClickableFingerState : AFingerState
                 if (cev != null)
                 {
                     I.Get<EventQueue>().Push(cev);
+                    ev.IsHandled = true;
                 }
             }
             catch (Exception e)
             {
                 Warning($"Caught exception while executing click event factory Press: {e}.");
             }
-
-            ev.IsHandled = true;
         }
     }
 
