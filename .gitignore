@@ -365,3 +365,7 @@ FodyWeavers.xsd
 **/.idea/
 imgui.ini
 /Setup/InstallSiliconDesert2.exe
+
+
+# Cursor MCP config (may contain secrets)
+.cursor/mcp.json
