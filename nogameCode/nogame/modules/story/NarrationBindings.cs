@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -27,6 +28,52 @@ namespace nogame.modules.story;
 /// </summary>
 public static class NarrationBindings
 {
+    private static readonly object _lo = new();
+    private static Dictionary<string, object> _narrationProps = new();
+
+
+    /// <summary>
+    /// Returns a snapshot of all props set by narration events (for saving).
+    /// </summary>
+    public static Dictionary<string, object> GetNarrationProps()
+    {
+        lock (_lo)
+        {
+            return new Dictionary<string, object>(_narrationProps);
+        }
+    }
+
+
+    /// <summary>
+    /// Restores narration props from a saved dictionary. Calls Props.Set() for each
+    /// and populates the tracking dictionary.
+    /// </summary>
+    public static void RestoreNarrationProps(Dictionary<string, object> props)
+    {
+        lock (_lo)
+        {
+            _narrationProps = new Dictionary<string, object>(props);
+        }
+
+        foreach (var kvp in props)
+        {
+            Props.Set(kvp.Key, kvp.Value);
+        }
+    }
+
+
+    /// <summary>
+    /// Clears all tracked narration props (for new game).
+    /// </summary>
+    public static void ClearNarrationProps()
+    {
+        lock (_lo)
+        {
+            _narrationProps.Clear();
+        }
+    }
+
+
     private static void _registerQuestFactories(QuestFactory questFactory)
     {
         questFactory.RegisterQuest("nogame.quests.VisitAgentTwelve.Quest",
@@ -245,7 +292,12 @@ public static class NarrationBindings
         {
             if (desc.Params.TryGetValue("key", out var keyObj) && desc.Params.TryGetValue("value", out var valueObj))
             {
-                Props.Set(keyObj.ToString(), valueObj);
+                string key = keyObj.ToString();
+                Props.Set(key, valueObj);
+                lock (_lo)
+                {
+                    _narrationProps[key] = valueObj;
+                }
             }
 
             await Task.CompletedTask;

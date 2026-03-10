@@ -429,6 +429,18 @@ public class Narration : AModule, IInputPart
                 };
             }
 
+            var narrationProps = NarrationBindings.GetNarrationProps();
+            if (narrationProps.Count > 0)
+            {
+                var propsObj = new JsonObject();
+                foreach (var kvp in narrationProps)
+                {
+                    propsObj[kvp.Key] = JsonValue.Create(kvp.Value);
+                }
+
+                json["props"] = propsObj;
+            }
+
             string jsonStr = json.ToJsonString();
             M<AutoSave>().GameState.Story = jsonStr;
         }
@@ -456,6 +468,35 @@ public class Narration : AModule, IInputPart
             }
 
             _startupTriggered = json["startupTriggered"]?.GetValue<bool>() ?? false;
+
+            var propsNode = json["props"];
+            if (propsNode is JsonObject propsObj)
+            {
+                var restoredProps = new Dictionary<string, object>();
+                foreach (var kvp in propsObj)
+                {
+                    if (kvp.Value is JsonValue jv)
+                    {
+                        switch (jv.GetValueKind())
+                        {
+                            case JsonValueKind.String:
+                                restoredProps[kvp.Key] = jv.GetValue<string>();
+                                break;
+                            case JsonValueKind.Number:
+                                restoredProps[kvp.Key] = jv.GetValue<float>();
+                                break;
+                            case JsonValueKind.True:
+                                restoredProps[kvp.Key] = true;
+                                break;
+                            case JsonValueKind.False:
+                                restoredProps[kvp.Key] = false;
+                                break;
+                        }
+                    }
+                }
+
+                NarrationBindings.RestoreNarrationProps(restoredProps);
+            }
 
             var activeScript = json["activeScript"];
             if (activeScript != null)
