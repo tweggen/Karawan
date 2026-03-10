@@ -66,13 +66,14 @@ Entity persistence: all `[IsPersistable]`-marked ECS components are serialized t
 
 The `Story` field contains a JSON string with:
 - `startupTriggered` (bool) — whether the startup narration has fired
+- `props` (object) — narration-set properties (key/value pairs set via `props.set` events). Tracked in `NarrationBindings._narrationProps`, serialized on save, restored before any scripts run on load. Supports string, float, and bool values.
 - `activeScript.name` — script identifier
 - `activeScript.mode` — "conversation", "narration", or "scriptedScene"
 - `activeScript.instanceId` — context instance (e.g. NPC entity ID)
 - `activeScript.nodeId` — current node in the script
 - `activeScript.visitCounts` — per-node visit count dictionary
 
-**Known gaps:** NPC conversation history, props/conditions state, and speaker context outside the active script are not persisted.
+**Remaining gaps:** NPC conversation history is not explicitly tracked (can be solved by adding `props.set` events to conversation scripts — the props persistence will handle it automatically). Speaker context outside the active script is not a real gap — `RestoreAt` re-enters the node and re-processes Speaker flow statements.
 
 ### gameconfig.db — GameConfig (single document, BsonId = 1)
 
