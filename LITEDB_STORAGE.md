@@ -42,21 +42,37 @@ No differences. Database initialization is identical in both modes.
 
 ### gamestate.db — GameState (single document, BsonId = 2)
 
-| Field | Type | Purpose |
-|-------|------|---------|
-| `Id` | int | BsonId = 2 (constant) |
-| `PlayerPosition` | Vector3 | Player world position |
-| `PlayerOrientation` | Quaternion | Player facing direction |
-| `Health` | int | Player health value |
-| `PlayerEntity` | int | Entity ID reference |
-| `Story` | string | Story state/progress |
-| `FollowedQuestId` | string | Currently active quest |
-| `Entities` | string | JSON-serialized all persistable entity components |
-| `GameNow` | DateTime | In-game clock/time |
-| `NumberCubes` | int | Collectible count |
-| `NumberPolytopes` | int | Collectible count |
+| Field | Type | Default | Purpose |
+|-------|------|---------|---------|
+| `Id` | int | 2 | BsonId (constant) |
+| `PlayerPosition` | Vector3 | Zero | Player world position |
+| `PlayerOrientation` | Quaternion | Identity | Player facing direction |
+| `Health` | int | 1000 | Player health value |
+| `Cash` | int | 0 | Player currency |
+| `PlayerMode` | string | "hover" | Current player mode ("hover", "walking") |
+| `PlayerEntity` | int | 0 | Legacy player mode (0=hover, 1=walk) |
+| `Story` | string | "" | Active narration script state (JSON) |
+| `FollowedQuestId` | string | null | Quest currently followed for satnav/markers |
+| `FollowedQuestIds` | List\<string\> | [] | All followed quest IDs (redundant with entity persistence, kept for quick access) |
+| `WorldModifications` | List\<string\> | [] | World modification descriptors (e.g. "destroyed:building:cluster3:42") |
+| `Entities` | string | "" | JSON-serialized all persistable entity components |
+| `GameNow` | DateTime | GameT0 | In-game clock/time |
+| `NumberCubes` | int | 0 | Collectible count |
+| `NumberPolytopes` | int | 0 | Collectible count |
 
 Entity persistence: all `[IsPersistable]`-marked ECS components are serialized to JSON via `EntitySaver` and stored in the `Entities` string field. On load, `EntitySaver.LoadAll()` restores them.
+
+### Narration State (Story field)
+
+The `Story` field contains a JSON string with:
+- `startupTriggered` (bool) — whether the startup narration has fired
+- `activeScript.name` — script identifier
+- `activeScript.mode` — "conversation", "narration", or "scriptedScene"
+- `activeScript.instanceId` — context instance (e.g. NPC entity ID)
+- `activeScript.nodeId` — current node in the script
+- `activeScript.visitCounts` — per-node visit count dictionary
+
+**Known gaps:** NPC conversation history, props/conditions state, and speaker context outside the active script are not persisted.
 
 ### gameconfig.db — GameConfig (single document, BsonId = 1)
 
