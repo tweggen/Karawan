@@ -62,11 +62,18 @@ public class Platform : engine.IPlatform
 
 
     private bool _keyboardEnabled = false;
+    private string _keyboardInputType = "text";
 
     public bool KeyboardEnabled
     {
         get => _keyboardEnabled;
         set => _platformThreadActions.Enqueue(() => _setKeyboardEnabled(value));
+    }
+
+    public string KeyboardInputType
+    {
+        get => _keyboardInputType;
+        set => _keyboardInputType = value;
     }
 
 
@@ -287,7 +294,33 @@ public class Platform : engine.IPlatform
 
     private void _onKeyChar(IKeyboard arg1, char arg3)
     {
-        I.Get<EventQueue>().Push(new Event(Event.INPUT_KEY_CHARACTER, arg3.ToString()));
+        string keyCode = null;
+        switch (arg3)
+        {
+            case '\b':
+                keyCode = "(backspace)";
+                break;
+            case '\t':
+                keyCode = "(tab)";
+                break;
+            case '\n':
+            case '\r':
+                keyCode = "(enter)";
+                break;
+            case '\x7f':
+                keyCode = "(delete)";
+                break;
+            default:
+                if (!char.IsControl(arg3))
+                {
+                    I.Get<EventQueue>().Push(new Event(Event.INPUT_KEY_CHARACTER, arg3.ToString()));
+                }
+                return;
+        }
+
+        // Emit press+release pair for translated control characters.
+        _pushTranslate(new Event(Event.INPUT_KEY_PRESSED, keyCode));
+        _pushTranslate(new Event(Event.INPUT_KEY_RELEASED, keyCode));
     }
 
 

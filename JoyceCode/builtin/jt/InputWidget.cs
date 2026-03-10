@@ -7,10 +7,16 @@ public class InputWidget : TextWidget
 {
     public string ValueProperty = "text";
 
+    /**
+     * The input type hint for the platform keyboard.
+     * Values: "text", "email", "password", "number"
+     */
+    public string InputType = "text";
+
     internal int _cursorPos()
     {
         int oldPosition = GetAttr("cursorPos", -1);
-        
+
         if (oldPosition < 0)
         {
             string oldValue = GetAttr(ValueProperty, "");
@@ -25,7 +31,7 @@ public class InputWidget : TextWidget
     {
         string oldValue = GetAttr(ValueProperty, "");
         int oldPosition = GetAttr("cursorPos", -1);
-        
+
         int len = oldValue.Length;
         if (oldPosition < 0)
         {
@@ -42,12 +48,14 @@ public class InputWidget : TextWidget
     {
         string oldValue = GetAttr(ValueProperty, "");
         int oldPosition = GetAttr("cursorPos", -1);
-        
+
         int len = oldValue.Length;
         if (oldPosition < 0)
         {
             oldPosition = len;
         }
+
+        oldPosition = Int32.Clamp(oldPosition, 0, len);
 
         if (oldPosition == len)
         {
@@ -59,7 +67,7 @@ public class InputWidget : TextWidget
             + oldValue.Substring(oldPosition + 1);
 
         this[ValueProperty] = newValue;
-        
+
         _emitEvent("onChange");
     }
 
@@ -68,12 +76,14 @@ public class InputWidget : TextWidget
     {
         string oldValue = GetAttr(ValueProperty, "");
         int oldPosition = GetAttr("cursorPos", -1);
-        
+
         int len = oldValue.Length;
         if (oldPosition < 0)
         {
             oldPosition = len;
         }
+
+        oldPosition = Int32.Clamp(oldPosition, 0, len);
 
         if (oldPosition == 0)
         {
@@ -95,12 +105,14 @@ public class InputWidget : TextWidget
     {
         string oldValue = GetAttr(ValueProperty, "");
         int oldPosition = GetAttr("cursorPos", -1);
-        
+
         int len = oldValue.Length;
         if (oldPosition < 0)
         {
             oldPosition = len;
         }
+
+        oldPosition = Int32.Clamp(oldPosition, 0, len);
 
         string newValue =
             oldValue.Substring(0, oldPosition)
@@ -112,8 +124,26 @@ public class InputWidget : TextWidget
         _emitEvent("onChange");
 
     }
-    
-    
+
+
+    /**
+     * Handle INPUT_TEXT_REPLACE from Android IME:
+     * Delete Data1 characters before cursor, then insert Code.
+     */
+    protected void _replaceText(int deleteCount, string newText)
+    {
+        for (int i = 0; i < deleteCount; i++)
+        {
+            _backspace();
+        }
+
+        if (!string.IsNullOrEmpty(newText))
+        {
+            _insert(newText);
+        }
+    }
+
+
     protected override void _handleSelfInputEvent(engine.news.Event ev)
     {
         bool isFocussed = this.IsFocussed;
@@ -124,7 +154,16 @@ public class InputWidget : TextWidget
         }
         else
         {
-            if (ev.Type.StartsWith(Event.INPUT_KEY_CHARACTER)) 
+            if (ev.Type == Event.INPUT_TEXT_REPLACE)
+            {
+                /*
+                 * Atomic text replacement from Android IME.
+                 * Delete the composing region and insert committed text.
+                 */
+                _replaceText((int)ev.Data1, ev.Code);
+                ev.IsHandled = true;
+            }
+            else if (ev.Type.StartsWith(Event.INPUT_KEY_CHARACTER))
             {
                 /*
                  * Insert input at current cursor.

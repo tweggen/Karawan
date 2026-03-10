@@ -4,62 +4,106 @@
 
 On Android in landscape mode, the system keyboard opens in **fullscreen/extract mode** by default. This covers the entire screen with a text editor overlay, hiding the game. Additionally, autocomplete and word replacement send composed text that conflicts with the engine's character-by-character input handling.
 
-## Solution (Implemented)
+### IME Composition Bug (Fixed)
 
-Override `OnCreateInputConnection()` in `Wuka/Platforms/Android/GameSurface.cs`:
+Android IME uses a composing region for autocorrect/prediction. SDL translates IME operations (`commitText`, `setComposingText`) into backspace + character sequences. But InputWidget doesn't track the composing region, so SDL's backspaces (meant to clear the composition buffer) eat into committed text, corrupting the cursor position. After selecting an autocorrect suggestion and continuing to type, characters would appear at position 0 in reverse order.
 
-- **`ImeFlags.NoFullscreen`** on `EditorInfo.ImeOptions` -- prevents fullscreen/extract mode keyboard in landscape. The keyboard shows as a compact strip at the bottom instead.
-- **`InputTypes.ClassText | InputTypes.TextFlagNoSuggestions`** on `EditorInfo.InputType` -- disables autocomplete and word suggestions.
+## Solution
 
-This is the same approach used by games like Genshin Impact (`IME_FLAG_NO_FULLSCREEN`).
+### Custom InputConnection (KarawanInputConnection)
 
-### Alternative Fallback (Not Implemented)
+`KarawanInputConnection` wraps SDL's `IInputConnection` and intercepts IME operations directly:
 
-If `OnCreateInputConnection` doesn't propagate through SDL's view hierarchy, an SDL hint can be set in `Platform._setKeyboardEnabled()`:
+- **`CommitText`** — emits `INPUT_TEXT_REPLACE` event (deletes composing region + inserts committed text atomically)
+- **`SetComposingText`** — tracks composing length only (no preview in text field)
+- **`DeleteSurroundingText`** — emits proper backspace/delete events for real text deletion
+- **`SendKeyEvent`** — delegates to SDL's connection for physical key handling
 
-```csharp
-// 0x00080001 = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-SDL_SetHint("SDL_ANDROID_INPUT_TYPE", "0x00080001");
+This replaces SDL's broken backspace+retype translation with clean, atomic text operations.
+
+### Input Type Support
+
+InputWidget supports an `inputType` attribute (set in JT XML) that configures the Android keyboard:
+
+| inputType | Android InputType | Composition | Use case |
+|-----------|------------------|-------------|----------|
+| `text` (default) | ClassText + NoSuggestions | Via KarawanInputConnection | General text |
+| `email` | TextVariationEmailAddress | Disabled (per-char commit) | Email addresses |
+| `password` | TextVariationVisiblePassword | Disabled | Passwords |
+| `number` | ClassNumber | Disabled | Numeric input |
+
+Usage in JT XML:
+```xml
+<input inputType="email" text="" />
 ```
 
-`TYPE_TEXT_VARIATION_VISIBLE_PASSWORD` is a more aggressive fallback that also disables suggestions.
+### Control Character Filtering
+
+`Platform._onKeyChar` translates control characters into proper key events instead of inserting them as literal text:
+
+- `\b` (0x08) → `(backspace)` press+release
+- `\t` (0x09) → `(tab)` press+release
+- `\n`/`\r` → `(enter)` press+release
+- `\x7f` (DEL) → `(delete)` press+release
+- Other `char.IsControl()` characters → silently dropped
+
+### Keyboard Landscape Mode
+
+Override `OnCreateInputConnection()` in `GameSurface.cs`:
+
+- **`ImeFlags.NoFullscreen`** on `EditorInfo.ImeOptions` -- prevents fullscreen/extract mode keyboard in landscape
+- Input type flags set based on the active widget's `inputType` attribute
 
 ## Input Architecture
 
-### Event Flow
+### Event Flow (Desktop)
 
 ```
 Platform._onKeyChar(IKeyboard, char)
+  -> control char filtering
   -> EventQueue.Push(INPUT_KEY_CHARACTER event)
   -> Engine._onLogicalFrame() processes event queue
   -> Widget.HandleInputEvent() dispatches to focussed widget
-  -> InputWidget._handleInputEvent() inserts/deletes characters
+  -> InputWidget._handleSelfInputEvent() inserts/deletes characters
+```
+
+### Event Flow (Android with KarawanInputConnection)
+
+```
+Android IME commitText("hello")
+  -> KarawanInputConnection.CommitText()
+  -> EventQueue.Push(INPUT_TEXT_REPLACE, code="hello", data1=composingLength)
+  -> Engine._onLogicalFrame() processes event queue
+  -> InputWidget._handleSelfInputEvent()
+  -> _replaceText(): backspace composingLength chars, then insert "hello"
 ```
 
 ### Keyboard Enable/Disable Flow
 
 ```
 InputWidgetImplementation.OnPropertyChanged("focussed", true)
-  -> Engine.EnableKeyboard()          (CountedEnabler pattern)
+  -> Engine.SetKeyboardInputType(inputType)  (reads widget's inputType attr)
+  -> Engine.EnableKeyboard()                 (CountedEnabler pattern)
   -> Platform.KeyboardEnabled = true
   -> _setKeyboardEnabled(true)
-  -> IKeyboard.BeginInput()           (Silk.NET -> SDL_StartTextInput)
+  -> IKeyboard.BeginInput()                  (Silk.NET -> SDL_StartTextInput)
+  -> Android: GameSurface.OnCreateInputConnection() called
+  -> Returns KarawanInputConnection (text) or SDL's connection (email/password/number)
 ```
-
-On Android, SDL shows the system soft keyboard. `GameSurface.OnCreateInputConnection()` is called by the Android framework whenever the IME connects, allowing us to configure flags before the keyboard appears.
 
 ### Key Classes
 
 | Class | Location | Role |
 |-------|----------|------|
-| InputWidget | JoyceCode/builtin/jt/InputWidget.cs | JT text input widget, handles INPUT_KEY_CHARACTER events |
-| InputWidgetImplementation | JoyceCode/builtin/jt/InputWidgetImplementation.cs | Manages keyboard enable/disable on focus change |
+| InputWidget | JoyceCode/builtin/jt/InputWidget.cs | JT text input widget, handles INPUT_KEY_CHARACTER and INPUT_TEXT_REPLACE |
+| InputWidgetImplementation | JoyceCode/builtin/jt/InputWidgetImplementation.cs | Manages keyboard enable/disable, passes inputType |
+| KarawanInputConnection | Wuka/Platforms/Android/KarawanInputConnection.cs | Custom InputConnection wrapping SDL's, emits INPUT_TEXT_REPLACE |
 | TextWidgetImplementation | JoyceCode/builtin/jt/TextWidgetImplementation.cs | Computes OSDText position/size for rendering |
 | OSDText | JoyceCode/engine/draw/components/OSDText.cs | Component with Position, Size, GaugeValue (cursor pos) |
-| Engine | JoyceCode/engine/Engine.cs | EnableKeyboard/DisableKeyboard via CountedEnabler |
-| IPlatform | JoyceCode/engine/IPlatform.cs | Interface: `KeyboardEnabled { get; set; }` |
-| Platform | Splash.Silk/Platform.cs | Calls Silk.NET IKeyboard.BeginInput/EndInput |
-| GameSurface | Wuka/Platforms/Android/GameSurface.cs | Android SDL surface, OnCreateInputConnection override |
+| Engine | JoyceCode/engine/Engine.cs | EnableKeyboard/DisableKeyboard, SetKeyboardInputType |
+| IPlatform | JoyceCode/engine/IPlatform.cs | Interface: `KeyboardEnabled`, `KeyboardInputType` |
+| Platform | Splash.Silk/Platform.cs | Calls Silk.NET BeginInput/EndInput, control char filtering |
+| GameSurface | Wuka/Platforms/Android/GameSurface.cs | Android SDL surface, input type selection |
 
 ## Future: Input Field Position Awareness
 

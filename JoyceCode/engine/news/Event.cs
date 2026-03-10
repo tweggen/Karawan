@@ -7,6 +7,12 @@ public class Event
     public const string INPUT_KEY_PRESSED = "input.key.pressed";
     public const string INPUT_KEY_RELEASED = "input.key.released";
     public const string INPUT_KEY_CHARACTER = "input.key.character";
+
+    /**
+     * Replace text at cursor: delete Data1 characters before cursor, then insert Code.
+     * Used by Android IME to atomically commit composed text.
+     */
+    public const string INPUT_TEXT_REPLACE = "input.text.replace";
     public const string INPUT_TOUCH_ANY = "input.touch.";
     public const string INPUT_TOUCH_PRESSED = "input.touch.pressed";
     public const string INPUT_TOUCH_RELEASED = "input.touch.released";

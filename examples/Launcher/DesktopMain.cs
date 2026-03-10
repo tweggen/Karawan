@@ -1,4 +1,4 @@
-trusing System;
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -141,8 +141,8 @@ public class DesktopMain
                         string value = prop.Value.ValueKind == System.Text.Json.JsonValueKind.String
                             ? prop.Value.GetString()
                             : prop.Value.ToString();
-                        GlobalSettings.Set(prop.Key, value);
-                        Console.WriteLine($"  {prop.Key} = {value}");
+                        GlobalSettings.Set(prop.Name, value);
+                        Console.WriteLine($"  {prop.Name} = {value}");
                     }
                 }
                 else

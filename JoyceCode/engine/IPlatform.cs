@@ -16,6 +16,12 @@ namespace engine
         public bool KeyboardEnabled { get; set; }
 
         /**
+         * Hint for the platform keyboard input type.
+         * Values: "text", "email", "password", "number"
+         */
+        public string KeyboardInputType { get; set; }
+
+        /**
          * Collect all data from the ECS to later render a frame.
          * Depending on the rendering queue, the implementation can
          * decide not to collect any data at all.

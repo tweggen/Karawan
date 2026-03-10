@@ -1155,6 +1155,15 @@ public class Engine
         _platform.KeyboardEnabled = f;
     }
     private builtin.CountedEnabler _keyboardEnabler;
+    public string KeyboardInputType
+    {
+        get => _platform?.KeyboardInputType ?? "text";
+    }
+
+    public void SetKeyboardInputType(string inputType)
+    {
+        _platform.KeyboardInputType = inputType;
+    }
     public void EnableKeyboard() => _keyboardEnabler.Add();
     public void DisableKeyboard() => _keyboardEnabler.Remove();
 

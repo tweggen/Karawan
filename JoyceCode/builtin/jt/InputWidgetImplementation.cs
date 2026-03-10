@@ -24,7 +24,11 @@ public class InputWidgetImplementation : TextWidgetImplementation
             {
                 _isKeyboardEnabled = true;
             }
-            I.Get<Engine>().EnableKeyboard();
+
+            string inputType = _widget.GetAttr("inputType", "text");
+            var engine = I.Get<Engine>();
+            engine.SetKeyboardInputType(inputType);
+            engine.EnableKeyboard();
         }
     }
     

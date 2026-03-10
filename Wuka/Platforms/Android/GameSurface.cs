@@ -171,10 +171,44 @@ public class GameSurface : SDLSurface
         // Prevent fullscreen/extract mode keyboard in landscape
         outAttrs.ImeOptions |= ImeFlags.NoFullscreen;
 
-        // Disable autocomplete and word suggestions
-        outAttrs.InputType = InputTypes.ClassText | InputTypes.TextFlagNoSuggestions;
+        /*
+         * Select input type and connection based on the current keyboard input type.
+         * On "email"/"password"/"number", we disable composition entirely so each
+         * character commits immediately. On "text", we use a custom InputConnection
+         * that properly handles IME composition by emitting INPUT_TEXT_REPLACE events.
+         */
+        string inputType = "text";
+        try
+        {
+            var engine = I.Get<engine.Engine>();
+            if (engine != null)
+            {
+                inputType = engine.KeyboardInputType;
+            }
+        }
+        catch (Exception)
+        {
+            // Engine not ready yet, use default.
+        }
 
-        return ic;
+        switch (inputType)
+        {
+            case "email":
+                outAttrs.InputType = InputTypes.ClassText | InputTypes.TextVariationEmailAddress;
+                return ic;
+
+            case "password":
+                outAttrs.InputType = InputTypes.ClassText | InputTypes.TextVariationVisiblePassword;
+                return ic;
+
+            case "number":
+                outAttrs.InputType = InputTypes.ClassNumber;
+                return ic;
+
+            default:
+                outAttrs.InputType = InputTypes.ClassText | InputTypes.TextFlagNoSuggestions;
+                return new KarawanInputConnection(ic);
+        }
     }
 
 
