@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using engine.geom;
 using static engine.Logger;
@@ -18,16 +19,41 @@ public class GameState
     public int NumberCubes { get; set; } = 0;
     public int NumberPolytopes { get; set; } = 0;
     public int Health { get; set; } = 1000;
-    
+    public int Cash { get; set; } = 0;
+
+    /**
+     * The player mode, e.g. "hover", "walking".
+     * Legacy: PlayerEntity 0 means hover, 1 means walk.
+     */
+    public string PlayerMode { get; set; } = "hover";
+
     /**
      * 0 currently means hover, 1 means walk.
      */
     public int PlayerEntity { get; set; } = 0;
 
+    /**
+     * The currently active narration script state (JSON).
+     */
     public string Story { get; set; } = "";
 
+    /**
+     * The quest currently being followed for satnav/markers.
+     */
     public string FollowedQuestId { get; set; } = null;
-    
+
+    /**
+     * List of quest IDs the player is following.
+     * Redundant with entity persistence but kept for quick access.
+     */
+    public List<string> FollowedQuestIds { get; set; } = new();
+
+    /**
+     * List of strings describing world modifications applied by the player
+     * or game events (e.g. "destroyed:building:cluster3:42", "unlocked:gate:north").
+     */
+    public List<string> WorldModifications { get; set; } = new();
+
     public string Entities { get; set; } = "";
     
     private DateTime _gameNow = GameT0;
