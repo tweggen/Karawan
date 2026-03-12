@@ -9,9 +9,9 @@
 - **World State Graph**
   - **Responsibility:** Holds locations, factions, NPCs, artifacts, and their relations.
   - **Type:** Mutable graph (nodes + edges + attributes).
-- **Narrative State**
-  - **Responsibility:** Tracks active arcs, completed storylets, motif progression, emotional trajectory.
-  - **Type:** Structured state object, linked to world graph.
+- **Narrative State (per-NPC)**
+  - **Responsibility:** Tracks active arcs, completed storylets, motif progression, emotional trajectory **per NPC entity**. Each NPC carries its own narrative state. A global aggregation layer provides cross-NPC queries.
+  - **Type:** Structured state object per entity, linked to world graph.
 - **Storylet Library**
   - **Responsibility:** Persistent store of all storylets (ordinary / uncommon / extraordinary).
   - **Type:** Database or in-memory index with query capabilities.
@@ -112,6 +112,10 @@ I’ll use a JSON-like notation for clarity; you can map this to your preferred 
       ],
       "narrative": [
         { "not_active_arc": "community_vs_chaos" }
+      ],
+      "entity": [
+        { "property": "trust", "min": 0.3 },
+        { "property": "anger", "max": 0.5 }
       ]
     },
 
@@ -136,6 +140,10 @@ I’ll use a JSON-like notation for clarity; you can map this to your preferred 
         { "type": "unlock_storylet", "id": "bandit_raid" },
         { "type": "motif_progress", "motif": "village_elder", "delta": 1 },
         { "type": "emotion_delta", "value": 1 }   // adjust emotional trajectory
+      ],
+      "entity_mutations": [
+        { "property": "trust", "delta": 0.1 },
+        { "property": "anger", "delta": -0.2 }
       ]
     }
   }
@@ -275,41 +283,230 @@ I’ll use a JSON-like notation for clarity; you can map this to your preferred 
 
 ---
 
-## 3. Runtime flow (simplified)
+### 2.7 Entity properties schema
 
-1. **Update world state** from simulation/gameplay.
-2. **Update narrative state** (emotional trajectory, motif progress, active arcs).
-3. **Arc selection/expansion:**
-   - If no active arc or arc node completed:
-     - Choose next arc from `ArcLibrary` based on:
-       - Rarity
-       - Thematic fit with recent history
-       - World conditions
-   - Apply `ArcRewriteRules` to possibly:
-     - Expand node into nested arc
-     - Add parallel arc
-     - Substitute arc
-4. **Storylet selection:**
-   - For current arc node:
-     - Query `StoryletLibrary` with:
-       - `required_tone`
-       - `required_function`
-       - `required_thematic_tags`
-       - World preconditions
-       - Motif requirements
-     - Apply rarity weights and diversity constraints (avoid recent repeats).
-5. **Binding:**
-   - Bind storylet roles (location, NPC, artifact) to concrete world entities.
-6. **Execution:**
-   - Present quest/scene to player.
-7. **Graph rewriting:**
-   - Apply storylet `postconditions` to:
-     - WorldState (nodes/edges/attributes)
-     - NarrativeState (active arcs, emotional trajectory, motif progress)
-8. Loop.
+```json
+{
+  "EntityProperties": {
+    "entity_id": "npc_023",
+    "seed": 948172,
+    "properties": {
+      "anger": 0.2,
+      "trust": 0.6,
+      "fatigue": 0.4,
+      "loyalty": 0.8,
+      "curiosity": 0.5
+    },
+    "deviation_log": [
+      {
+        "graph_position": { "arc_id": "community_vs_chaos", "edge_index": 1, "progress": 0.4 },
+        "event": "player_mediated_conflict",
+        "timestamp": 48200,
+        "property_snapshot": { "anger": 0.7, "trust": 0.3 }
+      }
+    ]
+  }
+}
+```
+
+Properties are mutable numeric values (0.0–1.0) on each NPC entity. They are read by storylet preconditions and edge interrupt conditions, and written by postconditions, world events, strategy execution, and player interactions. Two NPCs with identical seeds but different accumulated properties will take different story branches — this is the primary source of emergent individuality.
+
+The `deviation_log` records player-caused branch deviations from the seed-deterministic path, enabling story reconstruction.
 
 ---
 
-If you want, next step could be:  
-- Turning this into concrete **type definitions** (e.g., TypeScript/JSON Schema)  
-- Or mapping it to your existing **graph rewriting engine’s primitives** (node types, rule syntax, etc.).
+### 2.8 Edge interrupt schema
+
+```json
+{
+  "EdgeInterrupt": {
+    "id": "road_rage_interrupt",
+
+    "trigger": {
+      "event_types": ["npc_collision", "player_interaction"],
+      "entity_conditions": [
+        { "property": "anger", "min": 0.6 }
+      ],
+      "world_conditions": [
+        { "type": "location", "tag": "road" }
+      ]
+    },
+
+    "priority": 70,
+
+    "scope": "nest",
+
+    "branch_arc": "confrontation_micro_arc",
+
+    "return_condition": {
+      "type": "on_resolution",
+      "invalidate_parent_if": [
+        { "property": "anger", "min": 0.9 }
+      ]
+    },
+
+    "cancel_effects": {
+      "entity_mutations": [
+        { "property": "trust", "delta": -0.3 }
+      ],
+      "narrative_mutations": [
+        { "type": "unlock_storylet", "id": "grudge_formation" }
+      ]
+    }
+  }
+}
+```
+
+Edge interrupts declare:
+- **trigger**: event types + entity property conditions + world conditions that activate this interrupt
+- **priority**: conflict resolution when multiple interrupts target the same edge (higher wins)
+- **scope**: `nest` (push parent, run branch, return) | `parallel` (run alongside parent) | `replace` (abandon parent) | `cancel` (invalidate parent with cancel-specific effects)
+- **branch_arc**: the arc to activate on interrupt
+- **return_condition**: for `nest` scope — when the branch resolves, determines whether parent resumes or is invalidated based on post-branch entity state
+- **cancel_effects**: postconditions that fire only when the parent arc is cancelled (distinct from normal resolution)
+
+---
+
+### 2.9 Per-NPC narrative state schema
+
+```json
+{
+  "NpcNarrativeState": {
+    "entity_id": "npc_023",
+    "seed": 948172,
+    "graph_position": {
+      "current_edge": { "arc_id": "community_vs_chaos", "from_node": 0, "to_node": 1 },
+      "edge_progress": 0.6,
+      "depth": 3
+    },
+    "arc_stack": [
+      {
+        "arc_id": "community_vs_chaos",
+        "paused_edge": { "from_node": 0, "to_node": 1 },
+        "edge_progress_snapshot": 0.4,
+        "reason": "nest:confrontation_micro_arc"
+      }
+    ],
+    "parallel_arcs": [],
+    "active_arcs": [
+      {
+        "arc_id": "confrontation_micro_arc",
+        "current_node_index": 1,
+        "bound_context": {
+          "location": "street_segment_47",
+          "other_npc": "npc_089"
+        }
+      }
+    ],
+    "completed_arcs": [
+      { "arc_id": "trust_vs_betrayal", "outcome": "resolved", "timestamp": 41000 }
+    ],
+    "emotional_trajectory": {
+      "current_value": 0.7,
+      "history": [0, 0.3, 0.5, 0.7]
+    },
+    "fired_storylets": ["village_festival", "market_argument"],
+    "motif_instances": ["village_elder_instance_01"]
+  }
+}
+```
+
+Key additions vs. the original global NarrativeState:
+- **Per-entity**: each NPC carries this independently
+- **arc_stack**: supports nested interrupts with mid-edge resumption (stack semantics)
+- **parallel_arcs**: arcs running alongside the main arc with join conditions
+- **graph_position**: current edge + progress + subdivision depth for lazy evaluation
+- **seed**: enables deterministic regeneration of unperturbed branches
+
+---
+
+### 2.10 Fork/join schema
+
+```json
+{
+  "ForkJoin": {
+    "parent_arc": "community_vs_chaos",
+    "parallel_arc": "trust_vs_betrayal",
+    "join_condition": "sync",
+    "shared_bindings": {
+      "location": "village_01",
+      "motif": "village_elder"
+    }
+  }
+}
+```
+
+Join conditions:
+- `sync` — both arcs must complete before the NPC advances
+- `race` — first arc to complete wins; the other is cancelled
+- `independent` — no synchronization; arcs run and resolve on their own timelines
+
+---
+
+## 3. Runtime flow (revised)
+
+The runtime processes each actively simulated NPC (Tier 2 + story-pinned) independently. See `NPC_STORIES_DESIGN.md` for simulation tier definitions.
+
+### 3.1 Per-NPC tick (on node arrival or interrupt)
+
+1. **Check for edge interrupts:**
+   - Evaluate all registered `EdgeInterrupt` triggers against current entity properties, world state, and pending events.
+   - If multiple interrupts match, highest priority wins.
+   - Apply interrupt scope:
+     - `nest` → push current arc onto `arc_stack`, activate `branch_arc`
+     - `parallel` → add to `parallel_arcs` with join condition
+     - `replace` → discard current arc, activate `branch_arc`
+     - `cancel` → discard current arc, fire `cancel_effects`
+
+2. **Node arrival (no interrupt):**
+   - If the outgoing edge exists (previously generated), follow it.
+   - If not, **subdivide**: use seed + depth to generate next story node and edge.
+   - Evaluate entity properties against edge/node preconditions to select branch direction.
+
+3. **Arc selection (if no active arc):**
+   - Choose next arc from `ArcLibrary` based on:
+     - Rarity
+     - Thematic fit with NPC’s emotional trajectory
+     - World conditions
+     - Entity property state (e.g., high anger biases toward conflict arcs)
+   - Apply `ArcRewriteRules` to possibly expand, nest, or compose.
+
+4. **Storylet selection (for current arc node):**
+   - Query `StoryletLibrary` with:
+     - `required_tone`, `required_function`, `required_thematic_tags`
+     - World preconditions
+     - **Entity property preconditions** (e.g., `anger > 0.7`)
+     - Motif requirements
+   - Apply rarity weights and diversity constraints.
+
+5. **Binding:**
+   - Bind storylet roles (location, NPC, artifact) to concrete world entities.
+
+6. **Execution:**
+   - If player is nearby (Tier 1): present as visible scene / dialogue / quest hook.
+   - If Tier 2 only: resolve silently, advance state.
+
+7. **Postconditions:**
+   - Apply `world_mutations` to WorldState.
+   - Apply `narrative_mutations` to NPC’s NarrativeState.
+   - Apply `entity_mutations` to NPC’s properties (e.g., `anger += 0.3`, `trust -= 0.1`).
+   - Log deviation if player interaction caused a non-seed-deterministic branch.
+
+8. **Stack/join resolution:**
+   - If nested arc resolved: check `return_condition`. Resume parent from `arc_stack` or invalidate.
+   - If parallel arc resolved: evaluate join condition (`sync`, `race`, `independent`).
+
+### 3.2 Edge traversal (between nodes)
+
+No story computation. The NPC acts according to the current edge’s parameters (spatial movement, animation, strategy execution). Position is derived from edge progress, not simulated per-frame. This is the common case — the vast majority of time is spent here.
+
+### 3.3 Property drift
+
+Entity properties change continuously from multiple sources:
+- **Storylet postconditions** (discrete jumps at story nodes)
+- **World events** (e.g., faction conflict raises anger for all faction members)
+- **Strategy execution** (e.g., socializing reduces fatigue, increases trust toward present NPCs)
+- **Player interaction** (e.g., helping an NPC increases their trust)
+- **Passive decay/growth** (configurable per property — anger decays over time, loyalty is sticky)
+
+This drift means that even without player involvement, NPCs gradually diverge from their seed-deterministic paths as their accumulated experiences shape their property state. Two NPCs with identical seeds placed in different clusters will live different lives.
