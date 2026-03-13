@@ -27,8 +27,19 @@ public class TestbedMain
 
     private static string _determineResourcePath()
     {
-        if (File.Exists("./models/nogame.json")) return "./models/";
-        return "../../../../../models/";
+        // Walk up from working directory to find the models/ folder
+        string dir = Directory.GetCurrentDirectory();
+        for (int i = 0; i < 8; i++)
+        {
+            string candidate = Path.Combine(dir, "models", "nogame.json");
+            if (File.Exists(candidate))
+                return Path.Combine(dir, "models") + Path.DirectorySeparatorChar;
+            string parent = Path.GetDirectoryName(dir);
+            if (parent == null || parent == dir) break;
+            dir = parent;
+        }
+        // Fallback
+        return "./models/";
     }
 
 
