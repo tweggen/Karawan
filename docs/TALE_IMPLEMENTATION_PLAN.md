@@ -3,6 +3,46 @@
 
 ---
 
+## Current Status (2026-03-13)
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| 0A — Testbed Infra | **Complete** | Headless bootstrap, ClusterViewer, SpatialModel, NpcAssigner |
+| 0B — DES Engine | **Complete** | EventQueue, NpcSchedule, EncounterResolver, StoryletSelector, RelationshipTracker, DesSimulation |
+| 0C — Output & Automation | **Complete** | JSONL logger, metrics JSON, target validation, traces, graph, CLI |
+| 1 — Stories + Content | Not started | Storylet authoring format, NpcNarrativeState, property balancing |
+| 2 — Strategies | Not started | Strategy executors for spatial verbs |
+| 3 — Interactions | Not started | Interaction pool, encounter probability tuning |
+| 4 — Player | Not started | Player enters NPC storylines |
+| 5 — Escalation | Not started | Branching, interrupts, escalation storylets |
+
+### Phase 0 Results
+
+**Performance** (500 NPCs, seed 42):
+- 7 days: ~1,000ms wall-clock
+- 365 days: ~5,300ms wall-clock (Release mode) — target was <10s
+
+**Key metrics (7-day run)**:
+- 67,514 interactions (all "greet" — trust starts at 0, 7 days too short for acquaintance tier)
+- 20,491 unique relationships
+- Graph: clustering_coefficient=0.532, degree_gini=0.255, largest_component=1.0
+- Hunger mean=0.947 (daily gain exceeds lunch reduction — needs Phase 1 balance work)
+
+**Production code** lives in `JoyceCode/engine/tale/`:
+- `EventQueue.cs` — min-heap priority queue
+- `NpcSchedule.cs` — per-NPC state
+- `EncounterResolver.cs` — probabilistic encounter detection with inline compaction
+- `StoryletSelector.cs` — placeholder role-based schedule templates
+- `RelationshipTracker.cs` — trust tracking, interaction types, tier progression
+- `SimMetrics.cs` — graph analysis (BFS components, clustering, Gini)
+- `DesSimulation.cs` — main DES loop with day boundaries, traces
+- `IEventLogger.cs` / `JsonlEventLogger.cs` — structured event output
+- `SpatialModel.cs` — location graph extracted from ClusterDesc
+
+**Testbed** in `Testbed/`:
+- `TestbedMain.cs` — CLI harness with `--days`, `--seed`, `--npcs`, `--quiet`, etc.
+- `testbed_targets.json` — metric bounds for pass/fail
+
 ## Implementation Task Files
 
 The full plan is split into self-contained files in `docs/tale/`. Each file can be read by Claude Code alongside `REFERENCE.md` to implement that phase.
@@ -45,11 +85,11 @@ For architectural context and rationale behind the plan:
 ## Phase Dependencies
 
 ```
-0A (Testbed Infra)  ──→  0B (DES Engine)  ──→  0C (Output)
+0A (Testbed Infra)  ──→  0B (DES Engine)  ──→  0C (Output)     ← ALL COMPLETE
                                 ↕
 1 (Stories + Content)  ──→  2 (Strategies)  ──→  3 (Interactions)  ──→  4 (Player)
                                                         ↓
                                                   5 (Escalation)
 ```
 
-Phases 0A-0C and Phase 1 can be developed in parallel. The DES code (0B) is production Tier 3 simulation — it lives in JoyceCode/nogameCode, not in the Testbed project.
+Phases 0A-0C and Phase 1 can be developed in parallel. The DES code (0B) is production Tier 3 simulation — it lives in JoyceCode, not in the Testbed project.
