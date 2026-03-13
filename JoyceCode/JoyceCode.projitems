@@ -463,6 +463,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\SimMetrics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\StoryletDefinition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupDetector.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\JsonlEventLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resources.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resource\ShaderSource.cs" />

@@ -24,6 +24,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\EntityStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\RecoverStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\SpawnOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\GoToStrategyPart.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\IdleBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\StayAtStrategyPart.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleEntityStrategy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleSpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\WalkStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\CubeVanishBehavior.cs" />
@@ -99,6 +104,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\Narration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\NarrationBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\PersonSpeakingEvent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\tale\TaleModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\World.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\CharacterModelDescriptionFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\CharacterState.cs" />

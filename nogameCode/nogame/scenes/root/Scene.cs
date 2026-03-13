@@ -48,6 +48,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<builtin.modules.Stats>() { ShallActivate = false },
         new SharedModule<nogame.modules.story.Narration>(),
         new SharedModule<nogame.quests.Taxi.TaxiNpcSpawnerModule>(),
+        new SharedModule<nogame.modules.tale.TaleModule>(),
         new SharedModule<builtin.controllers.InputController>(),
         new SharedModule<InputEventPipeline>(),
     };
@@ -322,6 +323,13 @@ public class Scene : AModule, IScene, IInputPart
         // TXWTODO: Generalize this.
         M<SpawnController>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
+
+        // TALE-driven NPC spawning (Phase 2)
+        var taleManager = I.TryGet<engine.tale.TaleManager>();
+        if (taleManager != null)
+        {
+            M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.TaleSpawnOperator(taleManager));
+        }
         
         Subscribe("nogame.modules.menu.save", _triggerSave);
         Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
