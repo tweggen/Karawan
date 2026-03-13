@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace engine.tale;
 
@@ -9,87 +10,113 @@ public enum StoryletLocationType
     Workplace,
     SocialVenue,
     EatVenue,
-    Street
-}
-
-public class StoryletTemplate
-{
-    public string Id;
-    public float DurationMinutes;
-    public StoryletLocationType LocationType;
+    Street,
+    Current
 }
 
 /// <summary>
-/// Placeholder storylet selector using hardcoded schedule templates per role.
-/// Phase 1 replaces this with the full storylet library.
+/// JSON-driven storylet selector. Evaluates preconditions against NPC state
+/// and selects via weighted random with seed determinism.
 /// </summary>
 public class StoryletSelector
 {
-    private static readonly StoryletTemplate[] WorkerSchedule =
-    {
-        new() { Id = "wake_up",      DurationMinutes = 45,  LocationType = StoryletLocationType.Home },
-        new() { Id = "work_manual",  DurationMinutes = 270, LocationType = StoryletLocationType.Workplace },
-        new() { Id = "lunch_break",  DurationMinutes = 30,  LocationType = StoryletLocationType.EatVenue },
-        new() { Id = "work_manual",  DurationMinutes = 270, LocationType = StoryletLocationType.Workplace },
-        new() { Id = "socialize",    DurationMinutes = 150, LocationType = StoryletLocationType.SocialVenue },
-        new() { Id = "sleep",        DurationMinutes = 570, LocationType = StoryletLocationType.Home },
-    };
+    private readonly StoryletLibrary _library;
+    // Reusable candidate buffer to avoid allocation per selection
+    private readonly List<StoryletDefinition> _candidates = new();
 
-    private static readonly StoryletTemplate[] MerchantSchedule =
-    {
-        new() { Id = "wake_up",          DurationMinutes = 45,  LocationType = StoryletLocationType.Home },
-        new() { Id = "open_shop",        DurationMinutes = 240, LocationType = StoryletLocationType.Workplace },
-        new() { Id = "lunch_break",      DurationMinutes = 30,  LocationType = StoryletLocationType.EatVenue },
-        new() { Id = "serve_customers",  DurationMinutes = 240, LocationType = StoryletLocationType.Workplace },
-        new() { Id = "socialize",        DurationMinutes = 150, LocationType = StoryletLocationType.SocialVenue },
-        new() { Id = "sleep",            DurationMinutes = 630, LocationType = StoryletLocationType.Home },
-    };
-
-    private static readonly StoryletTemplate[] SocialiteSchedule =
-    {
-        new() { Id = "wake_up_late", DurationMinutes = 60,  LocationType = StoryletLocationType.Home },
-        new() { Id = "wander",       DurationMinutes = 120, LocationType = StoryletLocationType.SocialVenue },
-        new() { Id = "eat_out",      DurationMinutes = 60,  LocationType = StoryletLocationType.EatVenue },
-        new() { Id = "socialize",    DurationMinutes = 240, LocationType = StoryletLocationType.SocialVenue },
-        new() { Id = "bar",          DurationMinutes = 180, LocationType = StoryletLocationType.SocialVenue },
-        new() { Id = "sleep_late",   DurationMinutes = 660, LocationType = StoryletLocationType.Home },
-    };
-
-    private static readonly StoryletTemplate[] DrifterSchedule =
-    {
-        new() { Id = "wake_anywhere",  DurationMinutes = 30,  LocationType = StoryletLocationType.Home },
-        new() { Id = "scavenge",       DurationMinutes = 180, LocationType = StoryletLocationType.Street },
-        new() { Id = "wander",         DurationMinutes = 300, LocationType = StoryletLocationType.Street },
-        new() { Id = "rest",           DurationMinutes = 120, LocationType = StoryletLocationType.Home },
-        new() { Id = "sleep_anywhere", DurationMinutes = 600, LocationType = StoryletLocationType.Home },
-    };
-
-    private static readonly Dictionary<string, StoryletTemplate[]> Schedules = new()
-    {
-        { "Worker", WorkerSchedule },
-        { "Merchant", MerchantSchedule },
-        { "Socialite", SocialiteSchedule },
-        { "Drifter", DrifterSchedule },
-    };
+    /// <summary>Background hunger accumulation rate per hour awake.</summary>
+    public float HungerPerHour = 0.04f;
 
 
-    public StoryletTemplate[] GetScheduleForRole(string role)
+    public StoryletSelector(StoryletLibrary library)
     {
-        return Schedules.TryGetValue(role, out var schedule) ? schedule : WorkerSchedule;
+        _library = library;
     }
 
 
-    public StoryletTemplate SelectNext(NpcSchedule npc)
+    public static float ComputeDesperation(NpcSchedule npc)
     {
-        var schedule = GetScheduleForRole(npc.Role);
-        return schedule[npc.ScheduleStep % schedule.Length];
+        float hunger = npc.Properties.GetValueOrDefault("hunger", 0f);
+        float wealth = npc.Properties.GetValueOrDefault("wealth", 0.5f);
+        float anger = npc.Properties.GetValueOrDefault("anger", 0f);
+        float health = npc.Properties.GetValueOrDefault("health", 1f);
+        return Math.Clamp(hunger * 0.4f + (1f - wealth) * 0.3f + anger * 0.2f + (1f - health) * 0.1f, 0f, 1f);
     }
 
 
-    public void AdvanceStep(NpcSchedule npc)
+    public StoryletDefinition SelectNext(NpcSchedule npc, DateTime currentTime)
     {
-        var schedule = GetScheduleForRole(npc.Role);
-        npc.ScheduleStep = (npc.ScheduleStep + 1) % schedule.Length;
+        _candidates.Clear();
+        var timeOfDay = currentTime.TimeOfDay;
+        float desperation = ComputeDesperation(npc);
+        float morality = npc.Properties.GetValueOrDefault("morality", 0.7f);
+
+        var pool = _library.GetCandidates(npc.Role);
+
+        foreach (var def in pool)
+        {
+            if (!PassesPreconditions(def, npc, timeOfDay, desperation, morality))
+                continue;
+            _candidates.Add(def);
+        }
+
+        if (_candidates.Count == 0)
+            return _library.GetFallback(timeOfDay);
+
+        // Weighted random selection with seed determinism
+        var rng = new Random(npc.Seed + npc.ScheduleStep * 7919);
+        return WeightedSelect(_candidates, rng);
+    }
+
+
+    private static bool PassesPreconditions(StoryletDefinition def, NpcSchedule npc,
+        TimeSpan timeOfDay, float desperation, float morality)
+    {
+        // Time of day
+        if (def.TimeOfDay.HasValue && !def.TimeOfDay.Value.Contains(timeOfDay))
+            return false;
+
+        // Desperation gate
+        if (def.DesperationMin.HasValue && desperation < def.DesperationMin.Value)
+            return false;
+
+        // Morality gate
+        if (def.MoralityMax.HasValue && morality > def.MoralityMax.Value)
+            return false;
+
+        // Property range preconditions
+        foreach (var (prop, range) in def.PropertyPreconditions)
+        {
+            float value = npc.Properties.GetValueOrDefault(prop, 0.5f);
+            if (range.Min.HasValue && value < range.Min.Value) return false;
+            if (range.Max.HasValue && value > range.Max.Value) return false;
+        }
+
+        // Location feasibility: skip if NPC can't reach the location
+        if (def.LocationRef == "workplace" && npc.WorkplaceLocationId < 0) return false;
+        if (def.LocationRef == "home" && npc.HomeLocationId < 0) return false;
+        if (def.LocationRef == "social_venue" && (npc.SocialVenueIds == null || npc.SocialVenueIds.Count == 0))
+            return false;
+
+        return true;
+    }
+
+
+    private static StoryletDefinition WeightedSelect(List<StoryletDefinition> candidates, Random rng)
+    {
+        float totalWeight = 0f;
+        for (int i = 0; i < candidates.Count; i++)
+            totalWeight += candidates[i].Weight;
+
+        float roll = (float)(rng.NextDouble() * totalWeight);
+        float cumulative = 0f;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            cumulative += candidates[i].Weight;
+            if (roll < cumulative)
+                return candidates[i];
+        }
+        return candidates[candidates.Count - 1];
     }
 
 
@@ -97,39 +124,48 @@ public class StoryletSelector
     /// Apply postconditions from a completed storylet.
     /// Returns a dictionary of property deltas for logging.
     /// </summary>
+    public Dictionary<string, float> ApplyPostconditions(NpcSchedule npc,
+        StoryletDefinition storylet, float durationMinutes, Dictionary<string, float> deltasBuffer)
+    {
+        deltasBuffer.Clear();
+
+        // Apply storylet postconditions
+        foreach (var (prop, expr) in storylet.Postconditions)
+        {
+            if (expr.StartsWith("="))
+            {
+                float value = float.Parse(expr.AsSpan(1), CultureInfo.InvariantCulture);
+                RecordSet(npc, prop, value, deltasBuffer);
+            }
+            else
+            {
+                float delta = float.Parse(expr, CultureInfo.InvariantCulture);
+                RecordDelta(npc, prop, delta, deltasBuffer);
+            }
+        }
+
+        // Background hunger tick (unless storylet already modified hunger)
+        if (!storylet.Postconditions.ContainsKey("hunger"))
+        {
+            float hoursAwake = durationMinutes / 60f;
+            RecordDelta(npc, "hunger", HungerPerHour * hoursAwake, deltasBuffer);
+        }
+
+        return deltasBuffer;
+    }
+
+
+    /// <summary>
+    /// Legacy overload for compatibility with DesSimulation which passes storylet ID string.
+    /// Falls back to hunger tick only when storylet definition is not found.
+    /// </summary>
     public Dictionary<string, float> ApplyPostconditions(NpcSchedule npc, string storyletId,
         float durationMinutes, Dictionary<string, float> deltasBuffer)
     {
         deltasBuffer.Clear();
-
-        switch (storyletId)
-        {
-            case "work_manual":
-            case "open_shop":
-            case "serve_customers":
-                RecordDelta(npc, "fatigue", 0.28f, deltasBuffer);
-                RecordDelta(npc, "wealth", 0.08f, deltasBuffer);
-                RecordHungerTick(npc, durationMinutes, deltasBuffer);
-                break;
-
-            case "sleep":
-            case "sleep_late":
-            case "sleep_anywhere":
-                RecordSet(npc, "fatigue", 0.1f, deltasBuffer);
-                break;
-
-            case "lunch_break":
-            case "eat_out":
-                RecordDelta(npc, "hunger", -0.55f, deltasBuffer);
-                RecordDelta(npc, "wealth", -0.03f, deltasBuffer);
-                RecordHungerTick(npc, durationMinutes, deltasBuffer);
-                break;
-
-            default:
-                RecordHungerTick(npc, durationMinutes, deltasBuffer);
-                break;
-        }
-
+        // Just apply hunger tick as fallback
+        float hoursAwake = durationMinutes / 60f;
+        RecordDelta(npc, "hunger", HungerPerHour * hoursAwake, deltasBuffer);
         return deltasBuffer;
     }
 
@@ -152,16 +188,7 @@ public class StoryletSelector
         Dictionary<string, float> deltas)
     {
         float old = npc.Properties.GetValueOrDefault(prop, 0.5f);
-        npc.Properties[prop] = value;
-        deltas[prop] = value - old;
-    }
-
-
-    private static void RecordHungerTick(NpcSchedule npc, float durationMinutes,
-        Dictionary<string, float> deltas)
-    {
-        float hoursAwake = durationMinutes / 60f;
-        float delta = 0.06f * hoursAwake;
-        RecordDelta(npc, "hunger", delta, deltas);
+        npc.Properties[prop] = Math.Clamp(value, 0f, 1f);
+        deltas[prop] = npc.Properties[prop] - old;
     }
 }

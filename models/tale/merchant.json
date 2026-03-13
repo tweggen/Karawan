@@ -1,0 +1,48 @@
+[
+  {
+    "id": "open_shop",
+    "name": "Open Shop",
+    "roles": ["merchant"],
+    "time_of_day": { "min": "07:00", "max": "10:00" },
+    "postconditions": { "fatigue": "+0.05" },
+    "location": "workplace",
+    "duration_minutes": 30,
+    "weight": 2.0,
+    "tags": ["routine", "economic"]
+  },
+  {
+    "id": "serve_customers",
+    "name": "Serve Customers",
+    "roles": ["merchant"],
+    "time_of_day": { "min": "08:00", "max": "18:00" },
+    "preconditions": { "fatigue": { "max": 0.85 } },
+    "postconditions": { "fatigue": "+0.2", "wealth": "+0.06" },
+    "location": "workplace",
+    "duration_minutes_min": 180,
+    "duration_minutes_max": 240,
+    "weight": 3.0,
+    "tags": ["routine", "economic", "work"]
+  },
+  {
+    "id": "close_shop",
+    "name": "Close Shop",
+    "roles": ["merchant"],
+    "time_of_day": { "min": "17:00", "max": "20:00" },
+    "postconditions": { "fatigue": "+0.03" },
+    "location": "workplace",
+    "duration_minutes": 20,
+    "weight": 2.0,
+    "tags": ["routine", "economic"]
+  },
+  {
+    "id": "restock",
+    "name": "Restock",
+    "roles": ["merchant"],
+    "time_of_day": { "min": "06:00", "max": "10:00" },
+    "postconditions": { "fatigue": "+0.1", "wealth": "-0.05" },
+    "location": "workplace",
+    "duration_minutes": 60,
+    "weight": 1.0,
+    "tags": ["routine", "economic"]
+  }
+]

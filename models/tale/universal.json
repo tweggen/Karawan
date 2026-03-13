@@ -1,0 +1,85 @@
+[
+  {
+    "id": "wake_up",
+    "name": "Wake Up",
+    "roles": [],
+    "time_of_day": { "min": "05:00", "max": "09:00" },
+    "preconditions": { "fatigue": { "max": 0.3 } },
+    "postconditions": { "fatigue": "-0.05", "hunger": "+0.08" },
+    "location": "home",
+    "duration_minutes_min": 30,
+    "duration_minutes_max": 45,
+    "weight": 0.5,
+    "tags": ["routine"]
+  },
+  {
+    "id": "sleep",
+    "name": "Sleep",
+    "roles": [],
+    "time_of_day": { "min": "20:00", "max": "06:00" },
+    "preconditions": { "fatigue": { "min": 0.5 } },
+    "postconditions": { "fatigue": "=0.1", "wealth": "-0.02" },
+    "location": "home",
+    "duration_minutes_min": 480,
+    "duration_minutes_max": 600,
+    "weight": 3.0,
+    "tags": ["routine", "rest"]
+  },
+  {
+    "id": "eat_at_home",
+    "name": "Eat at Home",
+    "roles": [],
+    "preconditions": { "hunger": { "min": 0.5 } },
+    "postconditions": { "hunger": "-0.45", "wealth": "-0.02" },
+    "location": "home",
+    "duration_minutes": 20,
+    "weight": 2.0,
+    "tags": ["routine", "eating"]
+  },
+  {
+    "id": "eat_out",
+    "name": "Eat Out",
+    "roles": [],
+    "preconditions": { "hunger": { "min": 0.5 } },
+    "postconditions": { "hunger": "-0.55", "wealth": "-0.03" },
+    "location": "nearest_shop_Eat",
+    "duration_minutes": 30,
+    "weight": 1.5,
+    "tags": ["routine", "eating"]
+  },
+  {
+    "id": "wander",
+    "name": "Wander",
+    "roles": [],
+    "time_of_day": { "min": "08:00", "max": "22:00" },
+    "postconditions": { "fatigue": "+0.05" },
+    "location": "random_street",
+    "duration_minutes_min": 30,
+    "duration_minutes_max": 60,
+    "weight": 0.3,
+    "tags": ["routine", "fallback"]
+  },
+  {
+    "id": "rest",
+    "name": "Rest",
+    "roles": [],
+    "preconditions": { "fatigue": { "min": 0.5 } },
+    "postconditions": { "fatigue": "-0.1", "anger": "-0.02" },
+    "location": "current",
+    "duration_minutes": 30,
+    "weight": 1.0,
+    "tags": ["routine", "rest"]
+  },
+  {
+    "id": "socialize",
+    "name": "Socialize",
+    "roles": [],
+    "time_of_day": { "min": "16:00", "max": "23:00" },
+    "postconditions": { "happiness": "+0.1", "fatigue": "+0.05", "anger": "-0.03" },
+    "location": "social_venue",
+    "duration_minutes_min": 60,
+    "duration_minutes_max": 150,
+    "weight": 0.8,
+    "tags": ["routine", "social"]
+  }
+]

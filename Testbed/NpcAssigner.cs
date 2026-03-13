@@ -10,7 +10,8 @@ public enum NpcRole
     Worker,
     Merchant,
     Socialite,
-    Drifter
+    Drifter,
+    Authority
 }
 
 public class NpcAssignment
@@ -54,13 +55,14 @@ public static class NpcAssigner
             int npcSeed = rng.Next();
             var npcRng = new Random(npcSeed);
 
-            // Deterministic role from seed
+            // Deterministic role from seed: 38% worker, 19% merchant, 19% socialite, 19% drifter, 5% authority
             NpcRole role = (NpcRole)(npcRng.Next(100) switch
             {
-                < 40 => (int)NpcRole.Worker,
-                < 60 => (int)NpcRole.Merchant,
-                < 80 => (int)NpcRole.Socialite,
-                _ => (int)NpcRole.Drifter
+                < 38 => (int)NpcRole.Worker,
+                < 57 => (int)NpcRole.Merchant,
+                < 76 => (int)NpcRole.Socialite,
+                < 95 => (int)NpcRole.Drifter,
+                _ => (int)NpcRole.Authority
             });
 
             // Pick home
@@ -87,6 +89,11 @@ public static class NpcAssigner
                     else if (workplaces.Count > 0)
                         workplaceId = workplaces[npcRng.Next(workplaces.Count)].Id;
                     break;
+                case NpcRole.Authority:
+                    // Authority uses a workplace as their station
+                    if (workplaces.Count > 0)
+                        workplaceId = workplaces[npcRng.Next(workplaces.Count)].Id;
+                    break;
                 case NpcRole.Drifter:
                     // Drifters have no fixed workplace
                     break;
@@ -106,7 +113,7 @@ public static class NpcAssigner
                 }
             }
 
-            // Base properties
+            // Base properties with morality
             var props = new Dictionary<string, float>
             {
                 { "anger", (float)(npcRng.NextDouble() * 0.2) },
@@ -122,10 +129,24 @@ public static class NpcAssigner
                         NpcRole.Worker => 0.2f + (float)(npcRng.NextDouble() * 0.4),
                         NpcRole.Socialite => 0.3f + (float)(npcRng.NextDouble() * 0.5),
                         NpcRole.Drifter => (float)(npcRng.NextDouble() * 0.3),
+                        NpcRole.Authority => 0.3f + (float)(npcRng.NextDouble() * 0.3),
                         _ => 0.3f
                     }
                 },
-                { "reputation", 0.3f + (float)(npcRng.NextDouble() * 0.4) }
+                { "reputation", role switch
+                    {
+                        NpcRole.Authority => 0.6f + (float)(npcRng.NextDouble() * 0.3),
+                        NpcRole.Drifter => 0.1f + (float)(npcRng.NextDouble() * 0.3),
+                        _ => 0.3f + (float)(npcRng.NextDouble() * 0.4)
+                    }
+                },
+                { "morality", role switch
+                    {
+                        NpcRole.Authority => 0.7f + (float)(npcRng.NextDouble() * 0.2),
+                        NpcRole.Drifter => 0.4f + (float)(npcRng.NextDouble() * 0.3),
+                        _ => 0.6f + (float)(npcRng.NextDouble() * 0.2)
+                    }
+                }
             };
 
             assignments.Add(new NpcAssignment

@@ -218,6 +218,20 @@ public class TestbedMain
             Trust = new Dictionary<int, float>()
         }).ToList();
 
+        // Load storylet library
+        string taleResourcePath = GlobalSettings.Get("Engine.ResourcePath") ?? "./models/";
+        string talePath = Path.Combine(taleResourcePath, "tale");
+        var library = new StoryletLibrary();
+        if (Directory.Exists(talePath))
+        {
+            library.LoadFromDirectory(talePath);
+            Log($"  Loaded {library.All.Count} storylet definitions from {Path.GetFullPath(talePath)}");
+        }
+        else
+        {
+            Log($"  WARNING: tale directory not found at {Path.GetFullPath(talePath)}");
+        }
+
         // Setup simulation
         var simStart = new DateTime(2024, 1, 1, 0, 0, 0);
         var simEnd = simStart.AddDays(_days);
@@ -241,7 +255,7 @@ public class TestbedMain
         var tracedIds = SelectTracedNpcs(assignments, _traceCount);
         sim.SetTracedNpcs(tracedIds);
 
-        sim.Initialize(spatialModel, schedules, logger, simStart, _seed);
+        sim.Initialize(spatialModel, schedules, library, logger, simStart, _seed);
 
         // Run and measure
         var sw = Stopwatch.StartNew();
@@ -256,6 +270,13 @@ public class TestbedMain
         Log($"  Total events:       {sim.EventsProcessed}");
         Log($"  Encounters:         {sim.Encounters.TotalEncounters}");
         Log($"  Relationships:      {sim.Relationships.AllRelationships.Count}");
+        if (sim.LastGroupDetection != null)
+        {
+            Log($"  Groups detected:    {sim.LastGroupDetection.TotalGroups}");
+            Log($"  NPCs in groups:     {sim.LastGroupDetection.NpcsInGroups}");
+            foreach (var (type, count) in sim.LastGroupDetection.GroupsByType)
+                Log($"    {type}: {count}");
+        }
         Log($"  Wall-clock time:    {sw.Elapsed.TotalMilliseconds:F1} ms");
         Log($"  Events/second:      {sim.EventsProcessed / Math.Max(sw.Elapsed.TotalSeconds, 0.001):F0}");
 
@@ -306,7 +327,7 @@ public class TestbedMain
     private static List<int> SelectTracedNpcs(List<NpcAssignment> assignments, int count)
     {
         var ids = new List<int>();
-        var roles = new[] { "Worker", "Merchant", "Socialite", "Drifter" };
+        var roles = new[] { "Worker", "Merchant", "Socialite", "Drifter", "Authority" };
         foreach (var role in roles)
         {
             var npc = assignments.FirstOrDefault(a => a.Role.ToString() == role);
@@ -362,7 +383,7 @@ public class TestbedMain
                     // Show key props
                     if (trace.PropsSnapshot != null)
                     {
-                        var keyProps = new[] { "fatigue", "hunger", "wealth" };
+                        var keyProps = new[] { "fatigue", "hunger", "wealth", "morality" };
                         var propsStr = string.Join(", ",
                             keyProps.Where(p => trace.PropsSnapshot.ContainsKey(p))
                                 .Select(p => $"{p}={trace.PropsSnapshot[p]:F2}"));

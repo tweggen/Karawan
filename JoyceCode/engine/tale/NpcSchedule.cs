@@ -8,7 +8,7 @@ public class NpcSchedule
 {
     public int NpcId;
     public int Seed;
-    public string Role; // "Worker", "Merchant", "Socialite", "Drifter"
+    public string Role; // "Worker", "Merchant", "Socialite", "Drifter", "Authority"
 
     // Current state
     public int CurrentLocationId;
@@ -27,6 +27,9 @@ public class NpcSchedule
 
     // Per-NPC trust relationships
     public Dictionary<int, float> Trust;
+
+    // Group membership (-1 = no group)
+    public int GroupId = -1;
 
 
     /// <summary>

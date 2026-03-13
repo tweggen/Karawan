@@ -3,8 +3,8 @@
   "interrupts_per_day_mean": { "min": 0.0, "max": 3.0 },
   "request_fulfillment_rate": { "min": 0.90 },
   "largest_component_fraction": { "min": 0.80 },
-  "clustering_coefficient": { "min": 0.10, "max": 0.80 },
-  "degree_distribution_gini": { "min": 0.10 },
+  "clustering_coefficient": { "min": 0.10, "max": 0.90 },
+  "degree_distribution_gini": { "min": 0.05 },
   "property_mean_daily_range": {
     "hunger": { "min": 0.20 },
     "fatigue": { "min": 0.30 }

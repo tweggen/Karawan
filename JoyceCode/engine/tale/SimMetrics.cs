@@ -25,6 +25,10 @@ public class MetricsCollector
     public readonly Dictionary<string, int> InteractionsByType = new();
     public readonly Dictionary<int, int> EncountersByLocation = new();
     public int? FirstConflictDay;
+    public int? FirstGangFormationDay;
+    public int NpcsInGroupsAtEnd;
+    public int TotalGroupsAtEnd;
+    public Dictionary<string, int> GroupsByTypeAtEnd = new();
 
     // Per-role
     public readonly Dictionary<string, int> StoryletsByRole = new();
@@ -61,6 +65,8 @@ public class MetricsCollector
         _dailyEncounters[npcB] = cb + 1;
 
         if (interactionType == "argue" && FirstConflictDay == null)
+            FirstConflictDay = day;
+        if (interactionType is "rob" or "intimidate" or "blackmail" && FirstConflictDay == null)
             FirstConflictDay = day;
     }
 
@@ -114,6 +120,17 @@ public class MetricsCollector
     }
 
 
+    public void OnGroupDetection(GroupDetectionResult result, int day)
+    {
+        NpcsInGroupsAtEnd = result.NpcsInGroups;
+        TotalGroupsAtEnd = result.TotalGroups;
+        GroupsByTypeAtEnd = new Dictionary<string, int>(result.GroupsByType);
+
+        if (result.GroupsByType.ContainsKey("criminal") && FirstGangFormationDay == null)
+            FirstGangFormationDay = day;
+    }
+
+
     public Dictionary<string, object> ComputeFinalMetrics(
         IReadOnlyDictionary<int, NpcSchedule> npcs,
         RelationshipTracker relationships,
@@ -124,7 +141,7 @@ public class MetricsCollector
 
         // Property stats
         var propertyStats = new Dictionary<string, object>();
-        var allProps = new[] { "hunger", "fatigue", "wealth", "health", "anger", "fear", "happiness", "reputation" };
+        var allProps = new[] { "hunger", "fatigue", "wealth", "health", "anger", "fear", "happiness", "reputation", "morality" };
         foreach (var prop in allProps)
         {
             var values = npcs.Values
@@ -206,8 +223,10 @@ public class MetricsCollector
             ["escalation"] = new Dictionary<string, object>
             {
                 ["first_conflict_day"] = FirstConflictDay.HasValue ? (object)FirstConflictDay.Value : null,
-                ["first_gang_formation_day"] = (object)null,
-                ["npcs_in_escalation_at_end"] = 0
+                ["first_gang_formation_day"] = FirstGangFormationDay.HasValue ? (object)FirstGangFormationDay.Value : null,
+                ["npcs_in_groups_at_end"] = NpcsInGroupsAtEnd,
+                ["total_groups_at_end"] = TotalGroupsAtEnd,
+                ["groups_by_type"] = GroupsByTypeAtEnd.ToDictionary(kv => kv.Key, kv => (object)kv.Value)
             },
             ["location_hotspots"] = hotspots
         };

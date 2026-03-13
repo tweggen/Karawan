@@ -1,0 +1,37 @@
+[
+  {
+    "id": "scavenge",
+    "name": "Scavenge",
+    "roles": ["drifter"],
+    "time_of_day": { "min": "06:00", "max": "18:00" },
+    "postconditions": { "wealth": "+0.01", "fatigue": "+0.15", "anger": "+0.03" },
+    "location": "random_street",
+    "duration_minutes_min": 60,
+    "duration_minutes_max": 120,
+    "weight": 2.0,
+    "tags": ["routine", "economic"]
+  },
+  {
+    "id": "beg",
+    "name": "Beg",
+    "roles": ["drifter"],
+    "time_of_day": { "min": "08:00", "max": "20:00" },
+    "postconditions": { "wealth": "+0.01", "reputation": "-0.02", "anger": "+0.04" },
+    "location": "random_street",
+    "duration_minutes": 60,
+    "weight": 1.5,
+    "tags": ["routine", "economic"]
+  },
+  {
+    "id": "sleep_rough",
+    "name": "Sleep Rough",
+    "roles": ["drifter"],
+    "time_of_day": { "min": "20:00", "max": "06:00" },
+    "preconditions": { "fatigue": { "min": 0.4 } },
+    "postconditions": { "fatigue": "=0.2", "health": "-0.02", "anger": "+0.02" },
+    "location": "current",
+    "duration_minutes": 480,
+    "weight": 2.5,
+    "tags": ["routine", "rest"]
+  }
+]

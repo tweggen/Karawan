@@ -49,14 +49,64 @@ public class RelationshipTracker
 
 
     /// <summary>
-    /// Determine interaction type based on current trust and NPC properties.
+    /// Determine interaction type based on trust, NPC properties, and roles.
+    /// Includes criminal and authority interaction types gated on property thresholds.
     /// </summary>
-    public string DetermineInteractionType(float trust, float angerA, float angerB, Random rng)
+    public string DetermineInteractionType(float trust, NpcSchedule npcA, NpcSchedule npcB, Random rng)
     {
+        float angerA = npcA.Properties.GetValueOrDefault("anger", 0f);
+        float angerB = npcB.Properties.GetValueOrDefault("anger", 0f);
+        float moralityA = npcA.Properties.GetValueOrDefault("morality", 0.7f);
+        float moralityB = npcB.Properties.GetValueOrDefault("morality", 0.7f);
+        float wealthA = npcA.Properties.GetValueOrDefault("wealth", 0.5f);
+        float wealthB = npcB.Properties.GetValueOrDefault("wealth", 0.5f);
+        float reputationB = npcB.Properties.GetValueOrDefault("reputation", 0.5f);
+        float desperationA = StoryletSelector.ComputeDesperation(npcA);
+        float desperationB = StoryletSelector.ComputeDesperation(npcB);
+
+        // Authority patrol check: authority encounters low-reputation NPC
+        if (npcA.Role == "Authority" && reputationB < 0.2f && trust < 0.2f)
+        {
+            if (rng.NextDouble() < 0.4)
+                return "patrol_check";
+        }
+        if (npcB.Role == "Authority" && npcA.Properties.GetValueOrDefault("reputation", 0.5f) < 0.2f && trust < 0.2f)
+        {
+            if (rng.NextDouble() < 0.4)
+                return "patrol_check";
+        }
+
+        // Rob: desperate + low morality attacker, wealthy target, low trust
+        if (desperationA > 0.6f && moralityA < 0.3f && wealthB > 0.4f && trust < 0.2f)
+        {
+            if (rng.NextDouble() < 0.15 * desperationA)
+                return "rob";
+        }
+        if (desperationB > 0.6f && moralityB < 0.3f && wealthA > 0.4f && trust < 0.2f)
+        {
+            if (rng.NextDouble() < 0.15 * desperationB)
+                return "rob";
+        }
+
+        // Intimidate: angry + low morality, low trust
+        if (angerA > 0.5f && moralityA < 0.4f && trust < 0.3f)
+        {
+            if (rng.NextDouble() < 0.2)
+                return "intimidate";
+        }
+
+        // Recruit: both desperate, both low morality, high trust
+        if (desperationA > 0.5f && desperationB > 0.5f && moralityA < 0.4f && moralityB < 0.4f && trust > 0.5f)
+        {
+            if (rng.NextDouble() < 0.15)
+                return "recruit";
+        }
+
         // Argue if either NPC is angry and trust is low
         if ((angerA > 0.5f || angerB > 0.5f) && trust < 0.3f && rng.NextDouble() < 0.3)
             return "argue";
 
+        // Standard trust-based interactions
         double roll = rng.NextDouble();
         if (trust < 0.2f)
             return "greet";
@@ -68,15 +118,38 @@ public class RelationshipTracker
     }
 
 
+    /// <summary>
+    /// Legacy overload for backward compatibility.
+    /// </summary>
+    public string DetermineInteractionType(float trust, float angerA, float angerB, Random rng)
+    {
+        if ((angerA > 0.5f || angerB > 0.5f) && trust < 0.3f && rng.NextDouble() < 0.3)
+            return "argue";
+
+        double roll = rng.NextDouble();
+        if (trust < 0.2f) return "greet";
+        if (trust < 0.5f) return roll < 0.4 ? "greet" : "chat";
+        if (trust < 0.8f) return roll < 0.3 ? "chat" : roll < 0.6 ? "trade" : "help";
+        return roll < 0.3 ? "trade" : roll < 0.8 ? "help" : "chat";
+    }
+
+
     public static float TrustDelta(string interactionType)
     {
         return interactionType switch
         {
-            "greet" => 0.015f,
+            "greet" => 0.02f,       // raised from 0.015 for faster acquaintance formation
             "chat" => 0.03f,
             "trade" => 0.025f,
             "help" => 0.05f,
             "argue" => -0.04f,
+            "rob" => -0.15f,
+            "blackmail" => -0.2f,
+            "intimidate" => -0.1f,
+            "recruit" => 0.08f,
+            "report_crime" => 0.02f,
+            "patrol_check" => 0f,
+            "arrest" => -0.3f,
             _ => 0.01f
         };
     }

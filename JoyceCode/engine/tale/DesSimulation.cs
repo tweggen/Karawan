@@ -15,13 +15,16 @@ public class DesSimulation
     private Dictionary<int, NpcSchedule> _npcs;
     private EncounterResolver _encounters;
     private SpatialModel _spatial;
+    private StoryletLibrary _library;
     private StoryletSelector _storylets;
     private IEventLogger _logger;
     private RelationshipTracker _relationships;
     private MetricsCollector _metrics;
+    private GroupDetector _groupDetector;
     private DateTime _clock;
     private DateTime _startTime;
     private Random _rng;
+    private int _lastGroupDetectionDay;
 
     // Reusable buffer for property deltas
     private readonly Dictionary<string, float> _deltasBuffer = new();
@@ -31,6 +34,7 @@ public class DesSimulation
     public RelationshipTracker Relationships => _relationships;
     public MetricsCollector Metrics => _metrics;
     public IReadOnlyDictionary<int, NpcSchedule> Npcs => _npcs;
+    public GroupDetectionResult LastGroupDetection { get; private set; }
 
     // Trace collection for sampled NPCs
     public record struct TraceEntry(
@@ -59,18 +63,21 @@ public class DesSimulation
 
 
     public void Initialize(SpatialModel model, List<NpcSchedule> npcs,
-        IEventLogger logger, DateTime startTime, int seed = 42)
+        StoryletLibrary library, IEventLogger logger, DateTime startTime, int seed = 42)
     {
         _spatial = model;
+        _library = library;
         _logger = logger;
         _startTime = startTime;
         _clock = startTime;
         _rng = new Random(seed);
         _queue = new EventQueue();
         _encounters = new EncounterResolver();
-        _storylets = new StoryletSelector();
+        _storylets = new StoryletSelector(library);
         _relationships = new RelationshipTracker();
         _metrics = new MetricsCollector();
+        _groupDetector = new GroupDetector();
+        _lastGroupDetectionDay = 0;
 
         _npcs = new Dictionary<int, NpcSchedule>(npcs.Count);
         foreach (var npc in npcs)
@@ -104,6 +111,16 @@ public class DesSimulation
             {
                 int completedDay = (int)(nextDayBoundary - _startTime.Date).TotalDays;
                 EmitDaySummaries(completedDay);
+                ApplyMoralityDrift();
+
+                // Group detection every 30 days
+                if (completedDay - _lastGroupDetectionDay >= 30)
+                {
+                    LastGroupDetection = _groupDetector.Detect(_relationships, _npcs);
+                    _metrics.OnGroupDetection(LastGroupDetection, completedDay);
+                    _lastGroupDetectionDay = completedDay;
+                }
+
                 _metrics.OnDayEnd();
                 _encounters.ClearDailyDedup();
 
@@ -138,6 +155,11 @@ public class DesSimulation
         // Final day summary
         int finalDay = (int)(_clock.Date - _startTime.Date).TotalDays + 1;
         EmitDaySummaries(finalDay);
+
+        // Final group detection
+        LastGroupDetection = _groupDetector.Detect(_relationships, _npcs);
+        _metrics.OnGroupDetection(LastGroupDetection, finalDay);
+
         _metrics.OnDayEnd();
         _logger.Flush();
     }
@@ -158,6 +180,7 @@ public class DesSimulation
             "Merchant" => 7f,
             "Socialite" => 9f,
             "Drifter" => 5f,
+            "Authority" => 6f,
             _ => 6f
         };
         float jitterMinutes = (npc.Seed % 60) - 30;
@@ -183,16 +206,19 @@ public class DesSimulation
         float previousDuration = (float)(npc.CurrentEnd - npc.CurrentStart).TotalMinutes;
         int day = DayOf(_clock);
 
-        // 1. Apply postconditions and collect deltas
-        var deltas = _storylets.ApplyPostconditions(npc, previousStorylet, previousDuration, _deltasBuffer);
+        // 1. Apply postconditions from previous storylet (data-driven if definition found)
+        var prevDef = _library.GetById(previousStorylet);
+        var deltas = prevDef != null
+            ? _storylets.ApplyPostconditions(npc, prevDef, previousDuration, _deltasBuffer)
+            : _storylets.ApplyPostconditions(npc, previousStorylet, previousDuration, _deltasBuffer);
 
         // Track property changes for metrics
         foreach (var kvp in npc.Properties)
             _metrics.OnPropertyChanged(npc.NpcId, kvp.Key, kvp.Value);
 
         // 2. Select next storylet
-        var next = _storylets.SelectNext(npc);
-        _storylets.AdvanceStep(npc);
+        var next = _storylets.SelectNext(npc, _clock);
+        npc.ScheduleStep++;
 
         // 3. Resolve destination location
         int destination = ResolveLocation(npc, next);
@@ -200,29 +226,31 @@ public class DesSimulation
         // 4. Compute travel time
         float travelMinutes = _spatial.GetTravelTime(npc.CurrentLocationId, destination);
 
-        // 5. Update NPC state
-        int previousLocation = npc.CurrentLocationId;
+        // 5. Determine duration
+        float durationMinutes = next.GetDuration(_rng);
+
+        // 6. Update NPC state
         npc.CurrentStorylet = next.Id;
         npc.CurrentLocationId = destination;
         npc.CurrentStart = _clock + TimeSpan.FromMinutes(travelMinutes);
-        npc.CurrentEnd = npc.CurrentStart + TimeSpan.FromMinutes(next.DurationMinutes);
+        npc.CurrentEnd = npc.CurrentStart + TimeSpan.FromMinutes(durationMinutes);
 
-        // 6. Register presence for encounter detection
+        // 7. Register presence for encounter detection
         _encounters.RegisterPresence(npc.NpcId, destination, npc.CurrentStart, npc.CurrentEnd);
 
-        // 7. Check for encounters at this location
+        // 8. Check for encounters at this location
         var loc = _spatial.GetLocation(destination);
         string locType = loc?.Type ?? "street_segment";
         var encounterResults = _encounters.CheckEncounters(
             npc.NpcId, destination, npc.CurrentStart, npc.CurrentEnd, locType, _rng);
 
-        // 8. Process encounters: determine type, update trust, log
+        // 9. Process encounters: determine type, update trust, log
         foreach (var (otherId, encounterTime) in encounterResults)
         {
             ProcessEncounter(npc.NpcId, otherId, destination, locType, encounterTime, day);
         }
 
-        // 9. Schedule next NodeArrival
+        // 10. Schedule next NodeArrival
         _queue.Push(new SimEvent
         {
             GameTime = npc.CurrentEnd,
@@ -230,15 +258,15 @@ public class DesSimulation
             Type = SimEventType.NodeArrival
         });
 
-        // 10. Log node arrival
+        // 11. Log node arrival
         var deltasSnapshot = new Dictionary<string, float>(deltas);
         _logger.LogNodeArrival(npc.NpcId, next.Id, destination, locType,
             _clock, day, npc.Properties, deltasSnapshot);
 
-        // 11. Track metrics
+        // 12. Track metrics
         _metrics.OnStoryletCompleted(npc.NpcId, npc.Role);
 
-        // 12. Collect trace
+        // 13. Collect trace
         if (_tracedNpcs != null && _tracedNpcs.Contains(npc.NpcId))
         {
             _traces.Add(new TraceEntry(
@@ -253,11 +281,20 @@ public class DesSimulation
     private void ProcessEncounter(int npcA, int npcB, int locationId,
         string locationType, DateTime encounterTime, int day)
     {
-        // Determine interaction type
+        // Determine interaction type using NPC-aware overload
         float currentTrust = _relationships.GetTrust(npcA, npcB);
-        float angerA = _npcs.TryGetValue(npcA, out var a) ? a.Properties.GetValueOrDefault("anger", 0f) : 0f;
-        float angerB = _npcs.TryGetValue(npcB, out var b) ? b.Properties.GetValueOrDefault("anger", 0f) : 0f;
-        string interactionType = _relationships.DetermineInteractionType(currentTrust, angerA, angerB, _rng);
+        var schedA = _npcs.GetValueOrDefault(npcA);
+        var schedB = _npcs.GetValueOrDefault(npcB);
+
+        string interactionType;
+        if (schedA != null && schedB != null)
+            interactionType = _relationships.DetermineInteractionType(currentTrust, schedA, schedB, _rng);
+        else
+        {
+            float angerA = schedA?.Properties.GetValueOrDefault("anger", 0f) ?? 0f;
+            float angerB = schedB?.Properties.GetValueOrDefault("anger", 0f) ?? 0f;
+            interactionType = _relationships.DetermineInteractionType(currentTrust, angerA, angerB, _rng);
+        }
 
         // Update trust
         var (oldTrust, newTrust, oldTier, newTier) = _relationships.RecordInteraction(npcA, npcB, interactionType, day);
@@ -283,16 +320,41 @@ public class DesSimulation
         {
             if (_tracedNpcs.Contains(npcA))
             {
-                string otherRole = _npcs.TryGetValue(npcB, out var ob) ? ob.Role : "?";
+                string otherRole = schedB?.Role ?? "?";
                 _traceEncounters.Add(new TraceEncounter(
                     npcA, npcB, otherRole, interactionType, encounterTime, oldTrust, newTrust));
             }
             if (_tracedNpcs.Contains(npcB))
             {
-                string otherRole = _npcs.TryGetValue(npcA, out var oa) ? oa.Role : "?";
+                string otherRole = schedA?.Role ?? "?";
                 _traceEncounters.Add(new TraceEncounter(
                     npcB, npcA, otherRole, interactionType, encounterTime, oldTrust, newTrust));
             }
+        }
+    }
+
+
+    /// <summary>
+    /// Drift morality based on desperation. Called once per sim day.
+    /// </summary>
+    private void ApplyMoralityDrift()
+    {
+        foreach (var npc in _npcs.Values)
+        {
+            float morality = npc.Properties.GetValueOrDefault("morality", 0.7f);
+            float desperation = StoryletSelector.ComputeDesperation(npc);
+
+            // Desperation pushes morality down
+            float drift = 0f;
+            if (desperation > 0.4f)
+                drift -= (desperation - 0.4f) * 0.03f;
+
+            // Low desperation allows slow morality recovery
+            if (desperation < 0.2f)
+                drift += 0.003f;
+
+            if (drift != 0f)
+                npc.Properties["morality"] = Math.Clamp(morality + drift, 0f, 1f);
         }
     }
 
@@ -311,9 +373,9 @@ public class DesSimulation
     }
 
 
-    private int ResolveLocation(NpcSchedule npc, StoryletTemplate storylet)
+    private int ResolveLocation(NpcSchedule npc, StoryletDefinition storylet)
     {
-        int resolved = storylet.LocationType switch
+        int resolved = storylet.ResolveLocationType() switch
         {
             StoryletLocationType.Home => npc.HomeLocationId,
             StoryletLocationType.Workplace => npc.WorkplaceLocationId,

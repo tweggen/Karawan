@@ -1,0 +1,40 @@
+[
+  {
+    "id": "work_manual",
+    "name": "Manual Labor",
+    "roles": ["worker"],
+    "time_of_day": { "min": "07:00", "max": "17:00" },
+    "preconditions": { "fatigue": { "max": 0.85 } },
+    "postconditions": { "fatigue": "+0.28", "wealth": "+0.04" },
+    "location": "workplace",
+    "duration_minutes_min": 240,
+    "duration_minutes_max": 300,
+    "weight": 3.0,
+    "tags": ["routine", "economic", "work"]
+  },
+  {
+    "id": "work_office",
+    "name": "Office Work",
+    "roles": ["worker"],
+    "time_of_day": { "min": "07:00", "max": "17:00" },
+    "preconditions": { "fatigue": { "max": 0.85 } },
+    "postconditions": { "fatigue": "+0.15", "wealth": "+0.05" },
+    "location": "workplace",
+    "duration_minutes_min": 240,
+    "duration_minutes_max": 300,
+    "weight": 2.0,
+    "tags": ["routine", "economic", "work"]
+  },
+  {
+    "id": "lunch_break",
+    "name": "Lunch Break",
+    "roles": ["worker"],
+    "time_of_day": { "min": "11:00", "max": "14:00" },
+    "preconditions": { "hunger": { "min": 0.4 } },
+    "postconditions": { "hunger": "-0.55", "wealth": "-0.03" },
+    "location": "nearest_shop_Eat",
+    "duration_minutes": 25,
+    "weight": 2.5,
+    "tags": ["routine", "eating"]
+  }
+]
