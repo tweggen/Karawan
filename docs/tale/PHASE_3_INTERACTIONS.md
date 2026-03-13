@@ -125,8 +125,21 @@ This keeps Tier 3 simulation cheap while preventing requests from always timing 
 |----|---------|------|---------------|
 | `argue` | co-located + mutual trust<0.3 or competing interest | interact_with(other, argue) | anger +0.2 both, trust -0.1 |
 | `threaten` | anger>0.7 + target trust<0.2 | interact_with(target, threaten) | target fear +0.3 |
-| `report_to_authority` | witnessed threat + knows authority NPC + trust>0.4 | emit request(investigate, target=authority) | — |
+| `report_to_authority` | witnessed threat/crime + knows authority NPC + trust>0.4 | emit request(investigate, target=authority) | — |
 | `flee` | fear>0.7 | go_to(home) | fear -0.2, anger +0.1 |
+
+**Criminal interactions (builds on Phase 1 desperation mechanics):**
+
+Phase 1 introduces the `morality` property and `desperation` score that gate criminal interaction types (rob, blackmail, intimidate, recruit). Phase 3 extends these into full interaction-pool flows:
+
+| Id | Trigger | Verb | Postconditions |
+|----|---------|------|---------------|
+| `rob_with_backup` | criminal group + target wealthy + co-located with group member | interact_with(target, rob) | Higher success rate than solo rob; group trust +0.05 |
+| `blackmail` | knows witnessed_crime fact + target is perpetrator + morality<0.3 | emit request(payment, target=perpetrator) | Recurring wealth drain via interaction pool |
+| `fence_goods` | criminal group member + stolen goods + knows merchant(trust>0.3, morality<0.5) | interact_with(merchant, trade_stolen) | wealth +0.06, merchant morality -0.01 |
+| `tip_off_authority` | witness + knows authority(trust>0.4) + morality>0.5 | emit request(investigate) | Creates crime_report in pool for authority to claim |
+
+Note: Phase 1's `GroupDetector` identifies criminal groups by trust-clique + shared low-morality/low-wealth profile. Phase 3 uses these group IDs to unlock group-coordinated interactions.
 
 ### 5. Encounter → Interaction Mapping
 

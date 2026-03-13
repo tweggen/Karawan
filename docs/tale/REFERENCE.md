@@ -12,7 +12,9 @@ Every NPC gets a flat `Dictionary<string, float>` (range 0.0–1.0). No class hi
 |----------|-----------|
 | **Emotional** | `anger`, `fear`, `trust`, `happiness` |
 | **Physical** | `health`, `fatigue`, `hunger` |
-| **Social** | `wealth`, `reputation` |
+| **Social** | `wealth`, `reputation`, `morality` |
+
+`morality` (0.0–1.0, default ~0.6–0.8) represents how far an NPC will go before resorting to illegitimate means. Drifts downward under sustained desperation; drifts upward through positive social contact.
 
 Specific roles may add entries (e.g., `inventory_stress` for merchants). Trust is per-relationship (`trust_<npcId>`), not global — the base `trust` property is a default/average.
 
@@ -60,8 +62,9 @@ Roles determine which storylets an NPC can access and their schedule template.
 | **Merchant** | At shop during business hours | wake → open_shop → serve → close_shop → socialize → sleep |
 | **Socialite** | Late riser, frequent venue visits | wake_late → wander → eat_out → socialize → bar → sleep_late |
 | **Drifter** | No fixed schedule, wanders | wake_anywhere → scavenge → wander → rest → sleep_anywhere |
+| **Authority** | Patrols, responds to crime reports | wake → patrol → investigate → patrol → report → sleep |
 
-Assigned deterministically from NPC seed.
+Assigned deterministically from NPC seed. Roles are initial tendencies, not permanent — a desperate Worker with collapsed morality may start selecting Drifter or criminal storylets.
 
 ---
 

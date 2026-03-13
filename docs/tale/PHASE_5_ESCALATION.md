@@ -104,9 +104,11 @@ Escalation storylets have **high precondition thresholds** — they only fire af
 
 **Social escalation:**
 
+Note: Phase 1's `GroupDetector` already identifies emergent groups from the trust graph. Phase 5 upgrades detected groups into active factions with unlocked storylets.
+
 | Id | Preconditions | Verb | Postconditions |
 |----|---------------|------|---------------|
-| `form_gang` | 3+ NPCs with mutual trust>0.7 + avg reputation<0.4 + avg wealth<0.3 | interact_with(group, recruit) | Unlock group storylets: `intimidate_together`, `territory_claim` |
+| `form_gang` | GroupDetector found criminal clique (3+ NPCs, mutual trust>0.7, avg morality<0.4, avg wealth<0.3) | interact_with(group, recruit) | Upgrade group: unlock `intimidate_together`, `territory_claim` |
 | `become_informant` | knows authority (trust>0.5) + knows gang member (trust>0.3) | interact_with(authority, inform) | Dual loyalty: contradictory obligations |
 | `community_meeting` | 5+ NPCs in quarter + shared high anger about common target | stay_at(venue) → interact_with(group, discuss) | Collective storylet: `protest`, `petition_authority`, `vigilante_action` |
 | `flee_cluster` | fear>0.8 + anger<0.3 | use_transport(current, other_cluster) | NPC leaves cluster entirely. Appears in another cluster's Tier 3 pool. |
