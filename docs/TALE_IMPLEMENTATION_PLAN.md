@@ -10,8 +10,8 @@
 | 0A — Testbed Infra | **Complete** | Headless bootstrap, ClusterViewer, SpatialModel, NpcAssigner |
 | 0B — DES Engine | **Complete** | EventQueue, NpcSchedule, EncounterResolver, StoryletSelector, RelationshipTracker, DesSimulation |
 | 0C — Output & Automation | **Complete** | JSONL logger, metrics JSON, target validation, traces, graph, CLI |
-| 1 — Stories + Content | Not started | Storylet authoring format, NpcNarrativeState, property balancing |
-| 2 — Strategies | Not started | Strategy executors for spatial verbs |
+| 1 — Stories + Content | **Complete** | JSON storylet library, data-driven selection, emergent crime/groups, morality drift |
+| 2 — Strategies | **Complete** | TaleManager, GoTo/StayAt strategy parts, TaleEntityStrategy, TaleSpawnOperator |
 | 3 — Interactions | Not started | Interaction pool, encounter probability tuning |
 | 4 — Player | Not started | Player enters NPC storylines |
 | 5 — Escalation | Not started | Branching, interrupts, escalation storylets |
@@ -42,6 +42,39 @@
 **Testbed** in `Testbed/`:
 - `TestbedMain.cs` — CLI harness with `--days`, `--seed`, `--npcs`, `--quiet`, etc.
 - `testbed_targets.json` — metric bounds for pass/fail
+
+### Phase 1 Results
+
+**JSON-driven storylet system** replacing hardcoded schedule templates:
+- `StoryletDefinition.cs` / `StoryletLibrary.cs` — loads storylets from `models/tale/*.json`
+- `GroupDetector.cs` — Bron-Kerbosch clique detection on high-trust subgraph
+- 7 JSON storylet files: universal, worker, merchant, socialite, drifter, authority, desperation
+- Data-driven preconditions: time_of_day, property ranges, desperation, morality gates
+- Morality drift: desperation pushes morality down; low desperation allows recovery
+- Emergent behavior (90-day, 500 NPCs): 39k argues, 5.7k intimidations, 105 robberies, 50 recruits
+
+**Key fixes:**
+- InvariantCulture float parsing (critical on German-locale systems)
+- Bron-Kerbosch performance: trust threshold 0.75, MaxCliques=500 cap, 30-day detection interval
+
+### Phase 2 Results
+
+**Story-to-strategy bridge** translating DES storylets into visible NPC behavior:
+
+**Engine-level** (`JoyceCode/engine/tale/`):
+- `TaleManager.cs` — runtime manager advancing storylets at game time, location resolution, spawn API
+
+**Game-level** (`nogameCode/nogame/characters/citizen/`):
+- `GoToStrategyPart.cs` — walk-to-destination via 2-point SegmentRoute, arrival detection in Sync
+- `StayAtStrategyPart.cs` — idle at location for real-time duration (game-time converted via RealSecondsPerGameDay)
+- `IdleBehavior.cs` — stationary behavior with idle animation and collision handling
+- `TaleEntityStrategy.cs` — AOneOfStrategy: travel → activity → advance → repeat; reuses citizen flee/recover
+- `TaleSpawnOperator.cs` — ISpawnOperator spawning TALE-driven NPCs via SpawnController
+
+**Module** (`nogameCode/nogame/modules/tale/`):
+- `TaleModule.cs` — bootstraps StoryletLibrary, registers TaleManager service
+
+**Integration**: Scene.cs registers TaleSpawnOperator alongside existing citizen SpawnOperator
 
 ## Implementation Task Files
 
@@ -85,11 +118,13 @@ For architectural context and rationale behind the plan:
 ## Phase Dependencies
 
 ```
-0A (Testbed Infra)  ──→  0B (DES Engine)  ──→  0C (Output)     ← ALL COMPLETE
+0A (Testbed Infra)  ──→  0B (DES Engine)  ──→  0C (Output)         ← ALL COMPLETE
                                 ↕
-1 (Stories + Content)  ──→  2 (Strategies)  ──→  3 (Interactions)  ──→  4 (Player)
-                                                        ↓
-                                                  5 (Escalation)
+1 (Stories + Content)  ──→  2 (Strategies)                          ← BOTH COMPLETE
+                                  ↓
+                          3 (Interactions)  ──→  4 (Player)
+                                  ↓
+                          5 (Escalation)
 ```
 
-Phases 0A-0C and Phase 1 can be developed in parallel. The DES code (0B) is production Tier 3 simulation — it lives in JoyceCode, not in the Testbed project.
+Phases 0A-0C, 1, and 2 are complete. Next: Phase 3 (interaction pool, encounter probability tuning). The DES code (0B) is production Tier 3 simulation — it lives in JoyceCode, not in the Testbed project.
