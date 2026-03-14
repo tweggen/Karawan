@@ -168,9 +168,14 @@ models/tests/tale/
 
 ---
 
-## Phase 3: NPC-NPC Interactions (Request/Signal System) — JUST IMPLEMENTED
+## Phase 3: NPC-NPC Interactions (Request/Signal System) — ✅ ALL 22 TESTS PASSING
 
 **Objective**: Validate request emission, claiming, fulfillment, abstract resolution, and event logging.
+
+**Status**: All 22/22 tests passing as of 2026-03-14. Fixed issues:
+1. `node_arrival` event Code now uses storylet ID instead of location ID (TestRunner/TestRunnerMain.cs:323)
+2. Signal emission added on direct (Tier-2) claim completion (DesSimulation.cs:389-391)
+3. Debug console output removed from TestEventLogger for cleaner test output
 
 ### Test Categories (20+ scripts)
 
@@ -299,10 +304,18 @@ models/tests/tale/
 ## Test Execution Strategy
 
 ### Single-Phase Validation
+
+Build TestRunner:
+```bash
+dotnet build TestRunner/TestRunner.csproj -c Release -p:EnableSourceLink=false
+```
+
+Run Phase 3 tests:
 ```bash
 # Run all Phase 3 tests
 for script in models/tests/tale/phase3-interactions/*.json; do
-  JOYCE_TEST_SCRIPT="$script" dotnet run --project nogame/nogame.csproj
+  JOYCE_TEST_SCRIPT="tests/tale/phase3-interactions/$(basename $script)" \
+    ./TestRunner/bin/Release/net9.0/TestRunner
   if [ $? -ne 0 ]; then
     echo "FAILED: $script"
     exit 1
@@ -317,12 +330,12 @@ dotnet run --project Testbed -- --days 30 --events-file events.jsonl --expect-ph
 ```
 
 ### Continuous Integration
-- Phase 0: **MUST PASS** (foundation)
-- Phase 1: **MUST PASS** (core loop)
-- Phase 2: **SHOULD PASS** (quest foundation)
-- Phase 3: **SHOULD PASS** (interactions) ← CURRENT
-- Phase 4: **NICE-TO-HAVE** (player)
-- Phase 5: **NICE-TO-HAVE** (emergent)
+- Phase 0: **✅ PASSING** (foundation) — 20/20 PASS
+- Phase 1: **✅ PASSING** (core loop) — 20/20 PASS
+- Phase 2: **⏳ IN PROGRESS** (quest foundation) — test specs ready, implementation pending
+- Phase 3: **✅ PASSING** (interactions) — 22/22 PASS ← JUST COMPLETED
+- Phase 4: **⏳ QUEUED** (player)
+- Phase 5: **⏳ QUEUED** (emergent)
 
 ---
 

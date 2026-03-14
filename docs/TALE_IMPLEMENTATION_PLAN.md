@@ -3,7 +3,7 @@
 
 ---
 
-## Current Status (2026-03-13)
+## Current Status (2026-03-14)
 
 | Phase | Status | Notes |
 |-------|--------|-------|
@@ -12,7 +12,7 @@
 | 0C — Output & Automation | **Complete** | JSONL logger, metrics JSON, target validation, traces, graph, CLI |
 | 1 — Stories + Content | **Complete** | JSON storylet library, data-driven selection, emergent crime/groups, morality drift |
 | 2 — Strategies | **Complete** | TaleManager, GoTo/StayAt strategy parts, TaleEntityStrategy, TaleSpawnOperator |
-| 3 — Interactions | Not started | Interaction pool, encounter probability tuning |
+| 3 — Interactions | **Complete** | Interaction pool, request/signal events, Tier-2 direct + Tier-3 abstract resolution, all 22 tests passing |
 | 4 — Player | Not started | Player enters NPC storylines |
 | 5 — Escalation | Not started | Branching, interrupts, escalation storylets |
 
@@ -76,6 +76,31 @@
 
 **Integration**: Scene.cs registers TaleSpawnOperator alongside existing citizen SpawnOperator
 
+### Phase 3 Results
+
+**NPC-NPC interaction system** with request emission, claiming, and signal fulfillment:
+
+**Engine-level** (`JoyceCode/engine/tale/`):
+- `InteractionRequest.cs` — Request data structure (ID, type, requester, timeout, claimer)
+- `InteractionSignal.cs` — Signal data structure (ID, type, source NPC, timestamp)
+- `InteractionPool.cs` — Cluster-scoped pool managing request lifecycle
+- `DesSimulation.cs` — Integration points: emit requests from postconditions, claim during encounters, resolve unclaimed via Tier-3 abstract
+- `IEventLogger.cs` extensions — LogRequestEmitted, LogRequestClaimed, LogSignalEmitted
+- `TestEventLogger.cs` (TestRunner) — Bridges DES events to test framework
+
+**Test Infrastructure**:
+- `TestRunner/TestRunner.csproj` — Dedicated test CLI harness
+- `TestRunner/TestRunnerMain.cs` — Full engine initialization, background DES simulation, test script execution
+- `models/tests/tale/phase3-interactions/` — 22 JSON test scripts (all passing)
+
+**Test Results** (2026-03-14):
+- ✅ **22/22 Phase 3 tests passing**
+- ✅ **62/62 total tests passing** (Phases 0, 1, 3)
+- **Key fixes**:
+  - Fixed `node_arrival` Code field to use storylet ID instead of location ID
+  - Added signal emission on direct (Tier-2) claim in CheckAndClaimRequests
+  - Removed debug console output from TestEventLogger
+
 ## Implementation Task Files
 
 The full plan is split into self-contained files in `docs/tale/`. Each file can be read by Claude Code alongside `REFERENCE.md` to implement that phase.
@@ -123,8 +148,11 @@ For architectural context and rationale behind the plan:
 1 (Stories + Content)  ──→  2 (Strategies)                          ← BOTH COMPLETE
                                   ↓
                           3 (Interactions)  ──→  4 (Player)
-                                  ↓
-                          5 (Escalation)
+                                  ↓                  ↓
+                          5 (Escalation)  ←──────┘
 ```
 
-Phases 0A-0C, 1, and 2 are complete. Next: Phase 3 (interaction pool, encounter probability tuning). The DES code (0B) is production Tier 3 simulation — it lives in JoyceCode, not in the Testbed project.
+**Status**: Phases 0A-0C, 1, 2, and 3 are complete. All test suites passing (62/62).
+- Phase 3 test infrastructure fixed and fully operational (TestRunner harness)
+- Next: Phase 2 strategy tests + Phase 4 player integration tests
+- The DES code (0B, 1, 3) is production Tier 3 simulation — it lives in JoyceCode, not in the Testbed project.

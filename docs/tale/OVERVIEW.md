@@ -34,19 +34,23 @@ PHASE_5   Branching & Escalation     ──── ⏳ Queued
 
 | Phase | Specs | Scripts | Validation | Status |
 |-------|-------|---------|-----------|--------|
-| **Phase 0** | ✅ TALE_TEST_SCRIPTS_PHASE_0.md | ✅ 20 JSON (phase0-des/) | 📋 Ready to run | **COMPLETE** |
-| **Phase 1** | ✅ TALE_TEST_SCRIPTS_PHASE_1.md | ✅ 20 JSON (phase1-storylets/) | 📋 Ready to run | **COMPLETE** |
+| **Phase 0** | ✅ TALE_TEST_SCRIPTS_PHASE_0.md | ✅ 20 JSON (phase0-des/) | ✅ **20/20 PASS** | **COMPLETE** |
+| **Phase 1** | ✅ TALE_TEST_SCRIPTS_PHASE_1.md | ✅ 20 JSON (phase1-storylets/) | ✅ **20/20 PASS** | **COMPLETE** |
 | **Phase 2** | ⏳ Outlined (PHASES_1_2_4_5_SKELETON.md) | ⏳ Need specs → scripts | ⏳ NEXT | In Progress |
-| **Phase 3** | ✅ TALE_TEST_SCRIPTS_PHASE_3.md | ✅ 22 JSON (phase3-interactions/) | ✅ Testbed validated | **COMPLETE** |
+| **Phase 3** | ✅ TALE_TEST_SCRIPTS_PHASE_3.md | ✅ 22 JSON (phase3-interactions/) | ✅ **22/22 PASS** | **COMPLETE** |
 | **Phase 4** | ⏳ Outlined | ⏳ Need specs → scripts | ⏳ Queued | Pending |
 | **Phase 5** | ⏳ Outlined | ⏳ Need specs → scripts | ⏳ Queued | Pending |
 
 ### Test Suite Summary
 
-- **Total Test Scripts**: 62 (22 Phase 3 + 20 Phase 0 + 20 Phase 1)
-- **Total Test Specifications**: 3 detailed docs covering 50+ tests
-- **Test Categories**: 18+ categories covering initialization, scheduling, properties, encounters, relationships, metrics, library loading, preconditions, selection, postconditions, and complex scenarios
+- **Total Test Scripts**: 62 completed and all passing
+  - Phase 0: **20/20 PASS** (DES engine, initialization, scheduling, encounters, relationships)
+  - Phase 1: **20/20 PASS** (Storylet library, preconditions, selection, postconditions)
+  - Phase 3: **22/22 PASS** (NPC-NPC interactions, requests, signals, abstract resolution)
+- **Total Test Specifications**: 3 detailed docs covering 62 tests
+- **Test Categories**: 18+ categories covering initialization, scheduling, properties, encounters, relationships, metrics, library loading, preconditions, selection, postconditions, request emission, claiming, signal emission, and complex scenarios
 - **Framework**: ExpectEngine with JSON format, lock-free event channels, event injection/monitoring
+- **Execution**: TestRunner CLI (Phase-agnostic test harness)
 
 ### Dependencies for Implementation
 
@@ -61,7 +65,7 @@ PHASE_5   Branching & Escalation     ──── ⏳ Queued
 | 4 | 2 + 3 (player needs visible NPCs + interaction pool) | Awaiting Phase 2 completion |
 | 5 | 3 (branching needs interaction pool) | Awaiting Phase 2 completion |
 
-**Current Focus**: Test framework is complete for Phases 0, 1, and 3. Ready to run 62 test scripts against Testbed. Phase 2 test specs are next priority.
+**Current Focus**: All 62 tests passing (Phases 0, 1, 3). Phase 3 test infrastructure fixed (node_arrival Code field, signal emission on direct claim). Phase 2 test implementation is next priority.
 
 ## Documentation Map
 
@@ -130,21 +134,33 @@ JOYCE_TEST_SCRIPT=models/tests/tale/phase0-des/01-initialization.json \
 
 ## Running Test Suites
 
+Build TestRunner first:
+```bash
+dotnet build TestRunner/TestRunner.csproj -c Release -p:EnableSourceLink=false
+```
+
+Run all tests:
 ```bash
 # Run all Phase 0 tests
 for script in models/tests/tale/phase0-des/*.json; do
-  JOYCE_TEST_SCRIPT="$script" dotnet run --project nogame/nogame.csproj || exit 1
+  JOYCE_TEST_SCRIPT="tests/tale/phase0-des/$(basename $script)" \
+    ./TestRunner/bin/Release/net9.0/TestRunner || exit 1
 done
 
 # Run all Phase 1 tests
 for script in models/tests/tale/phase1-storylets/*.json; do
-  JOYCE_TEST_SCRIPT="$script" dotnet run --project nogame/nogame.csproj || exit 1
+  JOYCE_TEST_SCRIPT="tests/tale/phase1-storylets/$(basename $script)" \
+    ./TestRunner/bin/Release/net9.0/TestRunner || exit 1
 done
 
 # Run all Phase 3 tests
 for script in models/tests/tale/phase3-interactions/*.json; do
-  JOYCE_TEST_SCRIPT="$script" dotnet run --project nogame/nogame.csproj || exit 1
+  JOYCE_TEST_SCRIPT="tests/tale/phase3-interactions/$(basename $script)" \
+    ./TestRunner/bin/Release/net9.0/TestRunner || exit 1
 done
+
+# Or run all 62 tests at once
+./run_tests.sh all
 ```
 
 See `TESTING_QUICK_START.md` for full execution guide and current status.
