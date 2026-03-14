@@ -100,19 +100,17 @@ public class TestRunnerMain
         // Verify that modules were created
         Console.WriteLine($"Engine has {e.GetModules().Count} modules registered");
 
-        // Manually create and activate TestDriverModule
-        Console.WriteLine("Creating TestDriverModule...");
+        // Get and activate TestDriverModule from DI container
+        Console.WriteLine("Activating TestDriverModule...");
         try
         {
-            var testModule = new engine.testing.TestDriverModule();
-            testModule.SetEngine(e);
+            var testModule = I.Get<engine.testing.TestDriverModule>();
             testModule.ModuleActivate();
-            Console.WriteLine("TestDriverModule created and activated");
-            e.AddModule(testModule);
+            Console.WriteLine("TestDriverModule activated");
         }
         catch (System.Exception ex)
         {
-            Console.Error.WriteLine($"Error with TestDriver: {ex}");
+            Console.Error.WriteLine($"Error activating TestDriverModule: {ex.Message}");
         }
 
         Console.WriteLine("Starting test execution...");
