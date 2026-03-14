@@ -11,7 +11,7 @@
 | 0B — DES Engine | **Complete** | EventQueue, NpcSchedule, EncounterResolver, StoryletSelector, RelationshipTracker, DesSimulation |
 | 0C — Output & Automation | **Complete** | JSONL logger, metrics JSON, target validation, traces, graph, CLI |
 | 1 — Stories + Content | **Complete** | JSON storylet library, data-driven selection, emergent crime/groups, morality drift |
-| 2 — Strategies | **Complete** | TaleManager, GoTo/StayAt strategy parts, TaleEntityStrategy, TaleSpawnOperator |
+| 2 — Strategies | **Complete** | TaleManager, GoTo/StayAt strategy parts, TaleEntityStrategy, TaleSpawnOperator, all 20 tests passing |
 | 3 — Interactions | **Complete** | Interaction pool, request/signal events, Tier-2 direct + Tier-3 abstract resolution, all 22 tests passing |
 | 4 — Player | Not started | Player enters NPC storylines |
 | 5 — Escalation | Not started | Branching, interrupts, escalation storylets |

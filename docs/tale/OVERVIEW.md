@@ -36,19 +36,20 @@ PHASE_5   Branching & Escalation     ──── ⏳ Queued
 |-------|-------|---------|-----------|--------|
 | **Phase 0** | ✅ TALE_TEST_SCRIPTS_PHASE_0.md | ✅ 20 JSON (phase0-des/) | ✅ **20/20 PASS** | **COMPLETE** |
 | **Phase 1** | ✅ TALE_TEST_SCRIPTS_PHASE_1.md | ✅ 20 JSON (phase1-storylets/) | ✅ **20/20 PASS** | **COMPLETE** |
-| **Phase 2** | ⏳ Outlined (PHASES_1_2_4_5_SKELETON.md) | ⏳ Need specs → scripts | ⏳ NEXT | In Progress |
+| **Phase 2** | ✅ TALE_TEST_SCRIPTS_PHASE_2.md | ✅ 20 JSON (phase2-strategies/) | ✅ **20/20 PASS** | **COMPLETE** |
 | **Phase 3** | ✅ TALE_TEST_SCRIPTS_PHASE_3.md | ✅ 22 JSON (phase3-interactions/) | ✅ **22/22 PASS** | **COMPLETE** |
 | **Phase 4** | ⏳ Outlined | ⏳ Need specs → scripts | ⏳ Queued | Pending |
 | **Phase 5** | ⏳ Outlined | ⏳ Need specs → scripts | ⏳ Queued | Pending |
 
 ### Test Suite Summary
 
-- **Total Test Scripts**: 62 completed and all passing
+- **Total Test Scripts**: 82 completed and all passing (62 original + 20 Phase 2)
   - Phase 0: **20/20 PASS** (DES engine, initialization, scheduling, encounters, relationships)
   - Phase 1: **20/20 PASS** (Storylet library, preconditions, selection, postconditions)
+  - Phase 2: **20/20 PASS** (Strategy system, phase transitions, DES integration, multi-NPC coordination)
   - Phase 3: **22/22 PASS** (NPC-NPC interactions, requests, signals, abstract resolution)
-- **Total Test Specifications**: 3 detailed docs covering 62 tests
-- **Test Categories**: 18+ categories covering initialization, scheduling, properties, encounters, relationships, metrics, library loading, preconditions, selection, postconditions, request emission, claiming, signal emission, and complex scenarios
+- **Total Test Specifications**: 4 detailed docs covering 82 tests
+- **Test Categories**: 20+ categories covering initialization, scheduling, properties, encounters, relationships, metrics, library loading, preconditions, selection, postconditions, strategy phases, transitions, DES integration, request emission, claiming, signal emission, and complex scenarios
 - **Framework**: ExpectEngine with JSON format, lock-free event channels, event injection/monitoring
 - **Execution**: TestRunner CLI (Phase-agnostic test harness)
 
@@ -65,7 +66,7 @@ PHASE_5   Branching & Escalation     ──── ⏳ Queued
 | 4 | 2 + 3 (player needs visible NPCs + interaction pool) | Awaiting Phase 2 completion |
 | 5 | 3 (branching needs interaction pool) | Awaiting Phase 2 completion |
 
-**Current Focus**: All 62 tests passing (Phases 0, 1, 3). Phase 3 test infrastructure fixed (node_arrival Code field, signal emission on direct claim). Phase 2 test implementation is next priority.
+**Current Focus**: All 82 tests passing (Phases 0, 1, 2, 3). Strategy system fully validated with 20 comprehensive Phase 2 tests. Phase 4 (Player integration) is next priority.
 
 ## Documentation Map
 

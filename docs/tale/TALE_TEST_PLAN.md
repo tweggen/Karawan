@@ -128,9 +128,16 @@ models/tests/tale/
 
 ---
 
-## Phase 2: Strategies (Story-to-Strategy Translation & Multi-Phase Quests)
+## Phase 2: Strategies (Story-to-Strategy Translation & Multi-Phase Quests) — ✅ ALL 20 TESTS PASSING
 
 **Objective**: Validate strategy selection, phase transitions, and quest-like behavior from composed storylets.
+
+**Status**: All 20/20 tests passing as of 2026-03-14. Comprehensive coverage of:
+- Strategy data structures (creation, phase access, properties)
+- Phase transitions (explicit, sequential, preconditions, timeouts, completion)
+- Phase-specific behavior (storylet filtering, lockdown, timeout handling)
+- DES integration (strategies as storylets, multi-phase scenarios like taxi)
+- Advanced scenarios (interrupts, resume, failure paths, nesting, recovery)
 
 ### Test Categories (20+ scripts)
 
@@ -332,8 +339,8 @@ dotnet run --project Testbed -- --days 30 --events-file events.jsonl --expect-ph
 ### Continuous Integration
 - Phase 0: **✅ PASSING** (foundation) — 20/20 PASS
 - Phase 1: **✅ PASSING** (core loop) — 20/20 PASS
-- Phase 2: **⏳ IN PROGRESS** (quest foundation) — test specs ready, implementation pending
-- Phase 3: **✅ PASSING** (interactions) — 22/22 PASS ← JUST COMPLETED
+- Phase 2: **✅ PASSING** (quest foundation) — 20/20 PASS ← JUST COMPLETED
+- Phase 3: **✅ PASSING** (interactions) — 22/22 PASS
 - Phase 4: **⏳ QUEUED** (player)
 - Phase 5: **⏳ QUEUED** (emergent)
 
