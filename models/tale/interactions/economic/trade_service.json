@@ -1,0 +1,34 @@
+[
+  {
+    "id": "seek_trade_service",
+    "name": "Seek Trade Service",
+    "roles": ["worker", "merchant"],
+    "preconditions": {
+      "wealth": { "max": 0.4 }
+    },
+    "location": "social_venue",
+    "duration_minutes": 5,
+    "postconditions": {
+      "request": {
+        "type": "trade_service",
+        "location": "current",
+        "urgency": 0.5,
+        "timeout_minutes": 120
+      }
+    }
+  },
+  {
+    "id": "provide_trade_service",
+    "name": "Provide Trade Service",
+    "roles": ["merchant", "drifter"],
+    "claim_trigger": {
+      "request_type": "trade_service",
+      "role_match": ["merchant", "drifter"]
+    },
+    "location": "social_venue",
+    "duration_minutes": 20,
+    "postconditions": {
+      "wealth": "+0.03"
+    }
+  }
+]

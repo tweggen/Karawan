@@ -1,0 +1,34 @@
+[
+  {
+    "id": "merchant_needs_restock",
+    "name": "Merchant Needs Restock",
+    "roles": ["merchant"],
+    "preconditions": {
+      "wealth": { "max": 0.3 }
+    },
+    "location": "workplace",
+    "duration_minutes": 3,
+    "postconditions": {
+      "request": {
+        "type": "restock_supply",
+        "location": "current",
+        "urgency": 0.8,
+        "timeout_minutes": 90
+      }
+    }
+  },
+  {
+    "id": "supply_goods",
+    "name": "Supply Goods to Merchant",
+    "roles": ["merchant", "drifter"],
+    "claim_trigger": {
+      "request_type": "restock_supply",
+      "role_match": ["merchant", "drifter"]
+    },
+    "location": "workplace",
+    "duration_minutes": 40,
+    "postconditions": {
+      "wealth": "+0.06"
+    }
+  }
+]

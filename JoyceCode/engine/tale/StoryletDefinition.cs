@@ -26,6 +26,30 @@ public struct TimeWindow
     }
 }
 
+public class InteractionRequestDescriptor
+{
+    public string Type;                     // "food_delivery", "help", "trade", etc.
+    public string LocationRef;              // "current", "home", "workplace", etc.
+    public float Urgency;                   // 0.0-1.0
+    public int TimeoutMinutes;              // How long before request expires
+    public string VariableKey;              // e.g., "$current_request" for storing in NPC state
+}
+
+public class InteractionClaimTrigger
+{
+    public string RequestType;              // What type of request triggers this
+    public string[] RoleMatch;              // Roles that can claim (["merchant", "drifter"])
+    public string InterruptScope;           // "nest" (pause current, run interaction, resume)
+}
+
+public class WaitEdgeDescriptor
+{
+    public string SignalType;               // "request_fulfilled", "request_failed"
+    public string RequestIdVariable;        // "$current_request"
+    public int TimeoutMinutes;              // Max wait time
+    public string FallbackStorylet;         // If timeout, jump to this
+}
+
 public class StoryletDefinition
 {
     public string Id;
@@ -42,6 +66,11 @@ public class StoryletDefinition
     public string LocationRef; // where to go: "workplace", "home", "nearest_shop_Eat", etc.
     public float Weight;
     public string[] Tags;
+
+    // Phase 3: Interaction support
+    public InteractionRequestDescriptor RequestPostcondition;
+    public InteractionClaimTrigger ClaimTrigger;
+    public WaitEdgeDescriptor WaitEdge;
 
     public float GetDuration(Random rng)
     {
@@ -196,6 +225,53 @@ public class StoryletLibrary
             foreach (var t in tags.EnumerateArray())
                 tagList.Add(t.GetString());
             def.Tags = tagList.ToArray();
+        }
+
+        // Phase 3: Interaction postconditions
+        if (elem.TryGetProperty("postconditions", out var postsElem) && postsElem.TryGetProperty("request", out var reqPost))
+        {
+            def.RequestPostcondition = new InteractionRequestDescriptor();
+            if (reqPost.TryGetProperty("type", out var reqType))
+                def.RequestPostcondition.Type = reqType.GetString();
+            if (reqPost.TryGetProperty("location", out var reqLoc))
+                def.RequestPostcondition.LocationRef = reqLoc.GetString();
+            if (reqPost.TryGetProperty("urgency", out var reqUrg))
+                def.RequestPostcondition.Urgency = reqUrg.GetSingle();
+            if (reqPost.TryGetProperty("timeout_minutes", out var reqTimeout))
+                def.RequestPostcondition.TimeoutMinutes = reqTimeout.GetInt32();
+            if (reqPost.TryGetProperty("variable_key", out var reqVar))
+                def.RequestPostcondition.VariableKey = reqVar.GetString();
+        }
+
+        // Phase 3: Claim triggers
+        if (elem.TryGetProperty("claim_trigger", out var claimTrig))
+        {
+            def.ClaimTrigger = new InteractionClaimTrigger();
+            if (claimTrig.TryGetProperty("request_type", out var ctReqType))
+                def.ClaimTrigger.RequestType = ctReqType.GetString();
+            if (claimTrig.TryGetProperty("role_match", out var ctRoles))
+            {
+                var roleList = new List<string>();
+                foreach (var r in ctRoles.EnumerateArray())
+                    roleList.Add(r.GetString());
+                def.ClaimTrigger.RoleMatch = roleList.ToArray();
+            }
+            if (claimTrig.TryGetProperty("interrupt_scope", out var ctScope))
+                def.ClaimTrigger.InterruptScope = ctScope.GetString();
+        }
+
+        // Phase 3: Wait edges
+        if (elem.TryGetProperty("wait_edge", out var waitE))
+        {
+            def.WaitEdge = new WaitEdgeDescriptor();
+            if (waitE.TryGetProperty("signal_type", out var weSig))
+                def.WaitEdge.SignalType = weSig.GetString();
+            if (waitE.TryGetProperty("request_id", out var weReqId))
+                def.WaitEdge.RequestIdVariable = weReqId.GetString();
+            if (waitE.TryGetProperty("timeout_minutes", out var weTimeout))
+                def.WaitEdge.TimeoutMinutes = weTimeout.GetInt32();
+            if (waitE.TryGetProperty("fallback_storylet", out var weFall))
+                def.WaitEdge.FallbackStorylet = weFall.GetString();
         }
 
         return def;

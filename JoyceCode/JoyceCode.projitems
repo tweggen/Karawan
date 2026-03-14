@@ -465,6 +465,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupDetector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\JsonlEventLogger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionRequest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionSignal.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionPool.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resources.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resource\ShaderSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ross\ImageSharpFramebuffer.cs" />

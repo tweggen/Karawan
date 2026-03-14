@@ -1,0 +1,33 @@
+[
+  {
+    "id": "ask_for_help",
+    "name": "Ask for Help",
+    "roles": ["drifter", "worker"],
+    "preconditions": {
+      "desperation_min": 0.5
+    },
+    "location": "street_segment",
+    "duration_minutes": 3,
+    "postconditions": {
+      "request": {
+        "type": "help_request",
+        "location": "current",
+        "urgency": 0.9,
+        "timeout_minutes": 60
+      }
+    }
+  },
+  {
+    "id": "provide_help",
+    "name": "Provide Help",
+    "roles": ["worker", "socialite"],
+    "claim_trigger": {
+      "request_type": "help_request",
+      "role_match": ["worker", "socialite"]
+    },
+    "location": "current",
+    "duration_minutes": 15,
+    "postconditions": {
+    }
+  }
+]

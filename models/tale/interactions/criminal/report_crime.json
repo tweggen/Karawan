@@ -1,0 +1,33 @@
+[
+  {
+    "id": "witness_crime",
+    "name": "Witness Crime",
+    "roles": ["worker", "socialite"],
+    "preconditions": {
+      "morality": { "min": 0.5 }
+    },
+    "location": "street_segment",
+    "duration_minutes": 3,
+    "postconditions": {
+      "request": {
+        "type": "crime_report",
+        "location": "current",
+        "urgency": 0.8,
+        "timeout_minutes": 120
+      }
+    }
+  },
+  {
+    "id": "investigate_crime",
+    "name": "Investigate Crime",
+    "roles": ["authority"],
+    "claim_trigger": {
+      "request_type": "crime_report",
+      "role_match": ["authority"]
+    },
+    "location": "current",
+    "duration_minutes": 30,
+    "postconditions": {
+    }
+  }
+]

@@ -1,0 +1,31 @@
+[
+  {
+    "id": "initiate_argument",
+    "name": "Initiate Argument",
+    "preconditions": {
+      "anger": { "min": 0.6 }
+    },
+    "location": "social_venue",
+    "duration_minutes": 5,
+    "postconditions": {
+      "request": {
+        "type": "argument",
+        "location": "current",
+        "urgency": 0.7,
+        "timeout_minutes": 15
+      }
+    }
+  },
+  {
+    "id": "engage_in_argument",
+    "name": "Engage in Argument",
+    "claim_trigger": {
+      "request_type": "argument",
+      "role_match": []
+    },
+    "location": "current",
+    "duration_minutes": 10,
+    "postconditions": {
+    }
+  }
+]

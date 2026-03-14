@@ -1,0 +1,34 @@
+[
+  {
+    "id": "attempt_pickpocket",
+    "name": "Attempt Pickpocket",
+    "roles": ["drifter"],
+    "preconditions": {
+      "desperation_min": 0.7,
+      "morality_max": 0.3
+    },
+    "location": "social_venue",
+    "duration_minutes": 3,
+    "postconditions": {
+      "request": {
+        "type": "pickpocket",
+        "location": "current",
+        "urgency": 0.6,
+        "timeout_minutes": 5
+      }
+    }
+  },
+  {
+    "id": "catch_pickpocket",
+    "name": "Catch Pickpocket",
+    "roles": ["authority"],
+    "claim_trigger": {
+      "request_type": "pickpocket",
+      "role_match": ["authority"]
+    },
+    "location": "current",
+    "duration_minutes": 15,
+    "postconditions": {
+    }
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "initiate_greeting",
+    "name": "Initiate Greeting",
+    "roles": ["socialite", "worker"],
+    "location": "social_venue",
+    "duration_minutes": 2,
+    "postconditions": {
+      "request": {
+        "type": "greeting",
+        "location": "current",
+        "urgency": 0.3,
+        "timeout_minutes": 30
+      }
+    }
+  },
+  {
+    "id": "respond_to_greeting",
+    "name": "Respond to Greeting",
+    "roles": ["worker", "socialite", "merchant"],
+    "claim_trigger": {
+      "request_type": "greeting",
+      "role_match": ["worker", "socialite", "merchant"]
+    },
+    "location": "current",
+    "duration_minutes": 5,
+    "postconditions": {
+    }
+  }
+]

@@ -134,6 +134,54 @@ public class JsonlEventLogger : IEventLogger, IDisposable
     }
 
 
+    public void LogRequestEmitted(int requestId, int requesterId, string requestType, int locationId,
+        float urgency, int timeoutMinutes, string storyletContext, DateTime gameTime, int day)
+    {
+        _sb.Clear();
+        _sb.Append("{\"t\":\"").Append(gameTime.ToString("yyyy-MM-ddTHH:mm:ss")).Append('"');
+        _sb.Append(",\"day\":").Append(day);
+        _sb.Append(",\"npc\":").Append(requesterId);
+        _sb.Append(",\"evt\":\"request_emitted\"");
+        _sb.Append(",\"request_id\":").Append(requestId);
+        _sb.Append(",\"request_type\":\"").Append(requestType).Append('"');
+        _sb.Append(",\"location\":").Append(locationId);
+        _sb.Append(",\"urgency\":").AppendFormat("{0:F2}", urgency);
+        _sb.Append(",\"timeout_minutes\":").Append(timeoutMinutes);
+        _sb.Append(",\"storylet_context\":\"").Append(storyletContext).Append('"');
+        _sb.Append('}');
+        _writer.WriteLine(_sb);
+    }
+
+
+    public void LogRequestClaimed(int requestId, int claimerId, DateTime gameTime, int day)
+    {
+        _sb.Clear();
+        _sb.Append("{\"t\":\"").Append(gameTime.ToString("yyyy-MM-ddTHH:mm:ss")).Append('"');
+        _sb.Append(",\"day\":").Append(day);
+        _sb.Append(",\"npc\":").Append(claimerId);
+        _sb.Append(",\"evt\":\"request_claimed\"");
+        _sb.Append(",\"request_id\":").Append(requestId);
+        _sb.Append('}');
+        _writer.WriteLine(_sb);
+    }
+
+
+    public void LogSignalEmitted(int signalId, int requestId, string signalType, int sourceNpcId,
+        DateTime gameTime, int day)
+    {
+        _sb.Clear();
+        _sb.Append("{\"t\":\"").Append(gameTime.ToString("yyyy-MM-ddTHH:mm:ss")).Append('"');
+        _sb.Append(",\"day\":").Append(day);
+        _sb.Append(",\"npc\":").Append(sourceNpcId);
+        _sb.Append(",\"evt\":\"signal_emitted\"");
+        _sb.Append(",\"signal_id\":").Append(signalId);
+        _sb.Append(",\"request_id\":").Append(requestId);
+        _sb.Append(",\"signal_type\":\"").Append(signalType).Append('"');
+        _sb.Append('}');
+        _writer.WriteLine(_sb);
+    }
+
+
     public void Flush()
     {
         _writer.Flush();

@@ -21,6 +21,7 @@ public class DesSimulation
     private RelationshipTracker _relationships;
     private MetricsCollector _metrics;
     private GroupDetector _groupDetector;
+    private InteractionPool _interactionPool;
     private DateTime _clock;
     private DateTime _startTime;
     private Random _rng;
@@ -35,6 +36,7 @@ public class DesSimulation
     public MetricsCollector Metrics => _metrics;
     public IReadOnlyDictionary<int, NpcSchedule> Npcs => _npcs;
     public GroupDetectionResult LastGroupDetection { get; private set; }
+    public InteractionPool InteractionPool => _interactionPool;
 
     // Trace collection for sampled NPCs
     public record struct TraceEntry(
@@ -77,6 +79,7 @@ public class DesSimulation
         _relationships = new RelationshipTracker();
         _metrics = new MetricsCollector();
         _groupDetector = new GroupDetector();
+        _interactionPool = new InteractionPool();
         _lastGroupDetectionDay = 0;
 
         _npcs = new Dictionary<int, NpcSchedule>(npcs.Count);
@@ -112,6 +115,9 @@ public class DesSimulation
                 int completedDay = (int)(nextDayBoundary - _startTime.Date).TotalDays;
                 EmitDaySummaries(completedDay);
                 ApplyMoralityDrift();
+
+                // Interaction pool cleanup and abstract resolution
+                ResolveInteractionsDaily(nextDayBoundary, completedDay);
 
                 // Group detection every 30 days
                 if (completedDay - _lastGroupDetectionDay >= 30)
@@ -235,6 +241,19 @@ public class DesSimulation
         npc.CurrentStart = _clock + TimeSpan.FromMinutes(travelMinutes);
         npc.CurrentEnd = npc.CurrentStart + TimeSpan.FromMinutes(durationMinutes);
 
+        // 6b. Emit interaction request if postcondition specifies one
+        if (next.RequestPostcondition != null)
+        {
+            int reqLoc = destination; // Use current location
+            DateTime reqTimeout = _clock.AddMinutes(next.RequestPostcondition.TimeoutMinutes);
+            int requestId = _interactionPool.EmitRequest(
+                npc.NpcId, next.RequestPostcondition.Type, reqLoc,
+                next.RequestPostcondition.Urgency, reqTimeout, next.Id);
+            _logger.LogRequestEmitted(requestId, npc.NpcId, next.RequestPostcondition.Type,
+                reqLoc, next.RequestPostcondition.Urgency,
+                next.RequestPostcondition.TimeoutMinutes, next.Id, _clock, day);
+        }
+
         // 7. Register presence for encounter detection
         _encounters.RegisterPresence(npc.NpcId, destination, npc.CurrentStart, npc.CurrentEnd);
 
@@ -281,6 +300,10 @@ public class DesSimulation
     private void ProcessEncounter(int npcA, int npcB, int locationId,
         string locationType, DateTime encounterTime, int day)
     {
+        // Check for interaction requests that either NPC can claim
+        CheckAndClaimRequests(npcA, npcB, encounterTime, day);
+        CheckAndClaimRequests(npcB, npcA, encounterTime, day);
+
         // Determine interaction type using NPC-aware overload
         float currentTrust = _relationships.GetTrust(npcA, npcB);
         var schedA = _npcs.GetValueOrDefault(npcA);
@@ -331,6 +354,91 @@ public class DesSimulation
                     npcB, npcA, otherRole, interactionType, encounterTime, oldTrust, newTrust));
             }
         }
+    }
+
+
+    private void CheckAndClaimRequests(int npcId, int otherNpcId, DateTime encounterTime, int day)
+    {
+        var npc = _npcs.GetValueOrDefault(npcId);
+        if (npc == null) return;
+
+        // Find active requests this NPC can claim
+        var activeRequests = _interactionPool.GetActiveRequests(encounterTime);
+        foreach (var request in activeRequests)
+        {
+            // Skip if already claimed
+            if (request.ClaimerId.HasValue) continue;
+
+            // Look for a storylet with a matching claim trigger
+            var candidates = _library.GetCandidates(npc.Role);
+            foreach (var storylet in candidates)
+            {
+                if (storylet.ClaimTrigger == null) continue;
+                if (storylet.ClaimTrigger.RequestType != request.Type) continue;
+
+                // Check if NPC's role matches the claim trigger
+                if (storylet.ClaimTrigger.RoleMatch != null &&
+                    storylet.ClaimTrigger.RoleMatch.Length > 0 &&
+                    !storylet.ClaimTrigger.RoleMatch.Contains(npc.Role.ToLowerInvariant()))
+                    continue;
+
+                // Claim the request
+                if (_interactionPool.ClaimRequest(request.Id, npcId))
+                {
+                    _logger.LogRequestClaimed(request.Id, npcId, encounterTime, day);
+                    break; // Only claim one request per encounter
+                }
+            }
+        }
+    }
+
+
+    private void ResolveInteractionsDaily(DateTime dayBoundary, int completedDay)
+    {
+        // Purge expired requests
+        int expiredCount = _interactionPool.PurgeExpired(dayBoundary);
+
+        // Tier 3 abstract resolution: for unclaimed requests, check if any Tier 3 NPC matches
+        var activeRequests = _interactionPool.GetActiveRequests(dayBoundary);
+        foreach (var request in activeRequests)
+        {
+            if (request.ClaimerId.HasValue) continue; // Already claimed
+
+            // Get matching request types and candidate roles
+            var requestTypeCapabilities = GetCapableRoles(request.Type);
+            var candidates = _npcs.Values
+                .Where(n => requestTypeCapabilities.Contains(n.Role.ToLowerInvariant()))
+                .ToList();
+
+            if (candidates.Any())
+            {
+                // Pick a random candidate to fulfill abstractly
+                var chosen = candidates[_rng.Next(candidates.Count)];
+                int signalId = _interactionPool.EmitSignal(request.Id, "request_fulfilled",
+                    -1, dayBoundary); // -1 = abstract/system source
+                _logger.LogSignalEmitted(signalId, request.Id, "request_fulfilled", -1, dayBoundary, completedDay);
+            }
+        }
+    }
+
+
+    private static HashSet<string> GetCapableRoles(string requestType)
+    {
+        // Map request types to roles that can fulfill them
+        return requestType switch
+        {
+            "food_delivery" => new HashSet<string> { "merchant", "drifter" },
+            "restock_supply" => new HashSet<string> { "merchant", "drifter" },
+            "trade_service" => new HashSet<string> { "merchant", "drifter" },
+            "greeting" => new HashSet<string> { "worker", "socialite", "merchant", "drifter" },
+            "help_request" => new HashSet<string> { "worker", "socialite" },
+            "argument" => new HashSet<string> { "worker", "socialite", "drifter" },
+            "threat" => new HashSet<string> { "drifter" },
+            "pickpocket" => new HashSet<string> { "authority" },
+            "blackmail" => new HashSet<string> { "drifter" },
+            "crime_report" => new HashSet<string> { "authority" },
+            _ => new HashSet<string>()
+        };
     }
 
 

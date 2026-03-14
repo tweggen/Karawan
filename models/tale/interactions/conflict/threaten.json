@@ -1,0 +1,33 @@
+[
+  {
+    "id": "initiate_threat",
+    "name": "Initiate Threat",
+    "roles": ["drifter"],
+    "preconditions": {
+      "anger": { "min": 0.7 },
+      "desperation_min": 0.6
+    },
+    "location": "street_segment",
+    "duration_minutes": 2,
+    "postconditions": {
+      "request": {
+        "type": "threat",
+        "location": "current",
+        "urgency": 0.9,
+        "timeout_minutes": 10
+      }
+    }
+  },
+  {
+    "id": "flee_from_threat",
+    "name": "Flee From Threat",
+    "claim_trigger": {
+      "request_type": "threat",
+      "role_match": []
+    },
+    "location": "random_street",
+    "duration_minutes": 20,
+    "postconditions": {
+    }
+  }
+]

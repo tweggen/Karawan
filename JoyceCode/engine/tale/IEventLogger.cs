@@ -24,6 +24,14 @@ public interface IEventLogger
     void LogDaySummary(int npcId, int day, int storyletsCompleted, int encounters,
         Dictionary<string, float> props, Dictionary<int, float> topRelationships);
 
+    void LogRequestEmitted(int requestId, int requesterId, string requestType, int locationId,
+        float urgency, int timeoutMinutes, string storyletContext, DateTime gameTime, int day);
+
+    void LogRequestClaimed(int requestId, int claimerId, DateTime gameTime, int day);
+
+    void LogSignalEmitted(int signalId, int requestId, string signalType, int sourceNpcId,
+        DateTime gameTime, int day);
+
     void Flush();
 }
 
@@ -48,6 +56,14 @@ public class NullEventLogger : IEventLogger
 
     public void LogDaySummary(int npcId, int day, int storyletsCompleted, int encounters,
         Dictionary<string, float> props, Dictionary<int, float> topRelationships) { }
+
+    public void LogRequestEmitted(int requestId, int requesterId, string requestType, int locationId,
+        float urgency, int timeoutMinutes, string storyletContext, DateTime gameTime, int day) { }
+
+    public void LogRequestClaimed(int requestId, int claimerId, DateTime gameTime, int day) { }
+
+    public void LogSignalEmitted(int signalId, int requestId, string signalType, int sourceNpcId,
+        DateTime gameTime, int day) { }
 
     public void Flush() { }
 }
