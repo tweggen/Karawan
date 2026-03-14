@@ -104,8 +104,7 @@
           "target_morality": { "max": 0.3 }
         },
         "then": {
-          "anger": "+0.1",
-          "tag": "evidence_found"
+          "anger": "+0.1"
         }
       }
     ]
