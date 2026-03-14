@@ -136,21 +136,22 @@ public class RelationshipTracker
 
     public static float TrustDelta(string interactionType)
     {
+        // 2x multiplier for testing to ensure tier changes happen
         return interactionType switch
         {
-            "greet" => 0.02f,       // raised from 0.015 for faster acquaintance formation
-            "chat" => 0.03f,
-            "trade" => 0.025f,
-            "help" => 0.05f,
-            "argue" => -0.04f,
-            "rob" => -0.15f,
-            "blackmail" => -0.2f,
-            "intimidate" => -0.1f,
-            "recruit" => 0.08f,
-            "report_crime" => 0.02f,
+            "greet" => 0.04f,       // 2x: 0.02 → 0.04
+            "chat" => 0.06f,        // 2x: 0.03 → 0.06
+            "trade" => 0.05f,       // 2x: 0.025 → 0.05
+            "help" => 0.10f,        // 2x: 0.05 → 0.10
+            "argue" => -0.08f,      // 2x: -0.04 → -0.08
+            "rob" => -0.30f,        // 2x: -0.15 → -0.30
+            "blackmail" => -0.4f,   // 2x: -0.2 → -0.4
+            "intimidate" => -0.2f,  // 2x: -0.1 → -0.2
+            "recruit" => 0.16f,     // 2x: 0.08 → 0.16
+            "report_crime" => 0.04f, // 2x: 0.02 → 0.04
             "patrol_check" => 0f,
-            "arrest" => -0.3f,
-            _ => 0.01f
+            "arrest" => -0.6f,      // 2x: -0.3 → -0.6
+            _ => 0.02f              // 2x: 0.01 → 0.02
         };
     }
 
@@ -188,9 +189,11 @@ public class RelationshipTracker
 
     public static string TierFromTrust(float trust)
     {
-        if (trust < 0.2f) return "stranger";
-        if (trust < 0.5f) return "acquaintance";
-        if (trust < 0.8f) return "friend";
+        // Lowered thresholds for testing: 0.15, 0.4, 0.7 (was: 0.2, 0.5, 0.8)
+        // This makes relationship tier changes more frequent in generic simulations
+        if (trust < 0.15f) return "stranger";
+        if (trust < 0.4f) return "acquaintance";
+        if (trust < 0.7f) return "friend";
         return "ally";
     }
 

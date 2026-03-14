@@ -386,6 +386,9 @@ public class DesSimulation
                 if (_interactionPool.ClaimRequest(request.Id, npcId))
                 {
                     _logger.LogRequestClaimed(request.Id, npcId, encounterTime, day);
+                    // Emit fulfillment signal for direct Tier-2 claim
+                    int signalId = _interactionPool.EmitSignal(request.Id, "request_fulfilled", npcId, encounterTime);
+                    _logger.LogSignalEmitted(signalId, request.Id, "request_fulfilled", npcId, encounterTime, day);
                     break; // Only claim one request per encounter
                 }
             }

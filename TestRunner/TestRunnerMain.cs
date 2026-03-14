@@ -188,7 +188,7 @@ public class TestRunnerMain
             // Create and run simulation
             var sim = new engine.tale.DesSimulation();
             var simStart = new System.DateTime(2024, 1, 1, 0, 0, 0);
-            var simEnd = simStart.AddDays(1);  // Run for 1 day
+            var simEnd = simStart.AddDays(7);  // Run for 7 days to generate more encounters
 
             // Use test event logger that bridges to engine's SubscriptionManager for test framework
             sim.Initialize(spatial, schedules, library, new TestEventLogger(), simStart, seed: 42);
@@ -301,7 +301,7 @@ internal class TestEventLogger : engine.tale.IEventLogger
 {
     private readonly engine.news.EventQueue _eventQueue;
 
-    public bool WantsDaySummary => false;
+    public bool WantsDaySummary => true;
 
     public TestEventLogger()
     {
@@ -319,7 +319,7 @@ internal class TestEventLogger : engine.tale.IEventLogger
         System.DateTime gameTime, int day, System.Collections.Generic.Dictionary<string, float> props,
         System.Collections.Generic.Dictionary<string, float> deltas)
     {
-        _eventQueue.Push(new engine.news.Event("node_arrival", locationId.ToString()));
+        _eventQueue.Push(new engine.news.Event("node_arrival", storylet));
     }
 
     public void LogEncounter(int npcA, int npcB, string interactionType, int locationId,
