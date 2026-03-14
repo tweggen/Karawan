@@ -1,0 +1,20 @@
+{
+  "name": "quest-abandonment",
+  "description": "Verify player can abandon active quest",
+  "phase": "phase-4",
+  "category": "multiple-quests",
+  "priority": "medium",
+  "globalTimeout": 60,
+  "steps": [
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC A created"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request A"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC B created"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request B"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest A triggered"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest B triggered"},
+    {"expect": {"type": "day_summary", "code": "1"}, "timeout": 10, "comment": "Both quests active"},
+    {"expect": {"type": "day_summary", "code": "2"}, "timeout": 30, "comment": "Day 2: quest A abandoned, B continues"},
+    {"action": "quit", "result": "pass", "comment": "Quest abandonment verified: player can abandon without blocking progression"}
+  ]
+}

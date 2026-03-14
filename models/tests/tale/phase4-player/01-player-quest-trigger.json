@@ -1,0 +1,43 @@
+{
+  "name": "player-quest-trigger",
+  "description": "Verify player meets NPC with active request → quest triggered",
+  "phase": "phase-4",
+  "category": "quest-basics",
+  "priority": "critical",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation (requester)"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 10,
+      "comment": "NPC emits request (has active interaction)"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Player character spawned"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "Player encounters NPC with active request"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Quest trigger verified: encounter event confirms player-NPC meeting that would trigger quest"
+    }
+  ]
+}

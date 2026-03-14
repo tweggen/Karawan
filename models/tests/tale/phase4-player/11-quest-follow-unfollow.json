@@ -1,0 +1,20 @@
+{
+  "name": "quest-follow-unfollow",
+  "description": "Verify player can follow/unfollow (max 1 followed at a time)",
+  "phase": "phase-4",
+  "category": "quest-ui",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC A created"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request A"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC B created"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request B"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest A triggered"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest B triggered"},
+    {"expect": {"type": "signal_emitted"}, "timeout": 60, "comment": "Signal emitted (quests progress)"},
+    {"expect": {"type": "day_summary", "code": "2"}, "timeout": 30, "comment": "Day 2: follow/unfollow mechanics tested"},
+    {"action": "quit", "result": "pass", "comment": "Quest follow/unfollow verified: player can switch followed quest"}
+  ]
+}

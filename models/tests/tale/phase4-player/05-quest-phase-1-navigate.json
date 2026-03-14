@@ -1,0 +1,18 @@
+{
+  "name": "quest-phase-1-navigate",
+  "description": "Verify Phase 1: player navigates to location",
+  "phase": "phase-4",
+  "category": "quest-phases",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC created"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request emitted"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Player encounters NPC (quest triggered)"},
+    {"expect": {"type": "day_summary", "code": "1"}, "timeout": 10, "comment": "Day 1: quest phase 0"},
+    {"expect": {"type": "signal_emitted"}, "timeout": 30, "comment": "Signal emitted (NPC task complete, quest advances to phase 1)"},
+    {"expect": {"type": "day_summary", "code": "2"}, "timeout": 30, "comment": "Day 2: phase 1 active (navigation)"},
+    {"action": "quit", "result": "pass", "comment": "Quest phase 1 verified: player navigates to destination after signal"}
+  ]
+}

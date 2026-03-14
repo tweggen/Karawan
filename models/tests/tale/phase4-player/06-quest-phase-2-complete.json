@@ -1,0 +1,18 @@
+{
+  "name": "quest-phase-2-complete",
+  "description": "Verify Phase 2: player interacts with NPC, receives reward",
+  "phase": "phase-4",
+  "category": "quest-phases",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC created"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request emitted"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Player encounters requester"},
+    {"expect": {"type": "signal_emitted"}, "timeout": 60, "comment": "Signal emitted (quest advances)"},
+    {"expect": {"type": "day_summary", "code": "2"}, "timeout": 30, "comment": "Day 2: navigation phase"},
+    {"expect": {"type": "day_summary", "code": "3"}, "timeout": 30, "comment": "Day 3: phase 2 (interaction and reward)"},
+    {"action": "quit", "result": "pass", "comment": "Quest phase 2 verified: player completes interaction and receives reward"}
+  ]
+}

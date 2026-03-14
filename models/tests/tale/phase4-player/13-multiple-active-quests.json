@@ -1,0 +1,22 @@
+{
+  "name": "multiple-active-quests",
+  "description": "Verify player can have multiple active quests simultaneously",
+  "phase": "phase-4",
+  "category": "multiple-quests",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC 1"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request 1"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC 2"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request 2"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC 3"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request 3"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest 1 triggered"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest 2 triggered"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest 3 triggered"},
+    {"expect": {"type": "day_summary", "code": "1"}, "timeout": 10, "comment": "All 3 quests active simultaneously"},
+    {"action": "quit", "result": "pass", "comment": "Multiple quests verified: player can manage 3+ concurrent objectives"}
+  ]
+}

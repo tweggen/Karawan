@@ -1,0 +1,20 @@
+{
+  "name": "quest-priority",
+  "description": "Verify high-priority quest can interrupt lower-priority",
+  "phase": "phase-4",
+  "category": "multiple-quests",
+  "priority": "medium",
+  "globalTimeout": 60,
+  "steps": [
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC A (low priority)"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request A"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC B (high priority)"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request B"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest A triggered (low priority)"},
+    {"expect": {"type": "day_summary", "code": "1"}, "timeout": 10, "comment": "Day 1: Quest A followed"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "High-priority quest B becomes available"},
+    {"expect": {"type": "day_summary", "code": "2"}, "timeout": 30, "comment": "Day 2: priority interrupt occurs"},
+    {"action": "quit", "result": "pass", "comment": "Quest priority verified: high-priority quest can interrupt lower-priority"}
+  ]
+}

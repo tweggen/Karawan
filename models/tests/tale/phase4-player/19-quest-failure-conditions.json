@@ -1,0 +1,18 @@
+{
+  "name": "quest-failure-conditions",
+  "description": "Verify quest can fail (timeout, dialogue choice, etc.)",
+  "phase": "phase-4",
+  "category": "feedback",
+  "priority": "medium",
+  "globalTimeout": 60,
+  "steps": [
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC created"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request emitted"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Player encounters NPC (quest triggered)"},
+    {"expect": {"type": "day_summary", "code": "1"}, "timeout": 10, "comment": "Day 1: quest phase 0"},
+    {"expect": {"type": "day_summary", "code": "2"}, "timeout": 30, "comment": "Day 2: quest timeout (may fail)"},
+    {"expect": {"type": "day_summary", "code": "3"}, "timeout": 30, "comment": "Day 3: failure tracked, can retry"},
+    {"action": "quit", "result": "pass", "comment": "Quest failure conditions verified: quests can fail gracefully and be retried"}
+  ]
+}

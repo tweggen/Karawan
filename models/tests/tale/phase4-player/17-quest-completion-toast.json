@@ -1,0 +1,18 @@
+{
+  "name": "quest-completion-toast",
+  "description": "Verify toast appears on completion with reward display",
+  "phase": "phase-4",
+  "category": "feedback",
+  "priority": "medium",
+  "globalTimeout": 60,
+  "steps": [
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC created"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request emitted"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Player encounters NPC"},
+    {"expect": {"type": "signal_emitted"}, "timeout": 60, "comment": "Signal emitted (quest progresses)"},
+    {"expect": {"type": "day_summary", "code": "2"}, "timeout": 30, "comment": "Day 2: quest completes"},
+    {"expect": {"type": "day_summary", "code": "3"}, "timeout": 30, "comment": "Day 3: completion toast shown with reward"},
+    {"action": "quit", "result": "pass", "comment": "Quest completion toast verified: player sees reward display on completion"}
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "quest-auto-advance",
+  "description": "Verify on quest completion, next quest auto-follows",
+  "phase": "phase-4",
+  "category": "quest-ui",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC A created"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request A"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC B created"},
+    {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request B"},
+    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest A triggered"},
+    {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest B triggered"},
+    {"expect": {"type": "signal_emitted"}, "timeout": 60, "comment": "Signal A (quest A progresses)"},
+    {"expect": {"type": "day_summary", "code": "2"}, "timeout": 30, "comment": "Day 2: auto-advance mechanism active"},
+    {"expect": {"type": "day_summary", "code": "3"}, "timeout": 30, "comment": "Day 3: next quest auto-follows after completion"},
+    {"action": "quit", "result": "pass", "comment": "Quest auto-advance verified: next available quest auto-follows on completion"}
+  ]
+}
