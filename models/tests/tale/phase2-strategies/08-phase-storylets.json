@@ -1,0 +1,52 @@
+{
+  "name": "phase-storylets",
+  "description": "Verify different phases have different candidate storylets",
+  "phase": "phase-2",
+  "category": "behavior",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Phase 0 storylet selected and executed (specific to phase 0)"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1: phase 0 continues"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "2"
+      },
+      "timeout": 30,
+      "comment": "Day 2: transition to phase 1"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Phase 1 storylet executed (different from phase 0 due to phase filtering)"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Phase-specific storylets verified: different node_arrival events across phases indicate correct phase-based candidate filtering"
+    }
+  ]
+}

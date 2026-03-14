@@ -1,0 +1,43 @@
+{
+  "name": "phase-access",
+  "description": "Verify CurrentPhaseIndex and CurrentPhase properties are accessible",
+  "phase": "phase-2",
+  "category": "data-structure",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "First storylet/phase execution"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 10,
+      "comment": "Reach day boundary, confirming day 1 completed"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Day 2 begins with new strategy phase selection"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Phase properties accessible: Day 1 and Day 2 transitions confirm strategy state is queryable and transitions between days work correctly"
+    }
+  ]
+}

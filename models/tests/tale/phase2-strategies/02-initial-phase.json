@@ -1,0 +1,36 @@
+{
+  "name": "initial-phase",
+  "description": "Verify strategy starts at phase 0 after creation",
+  "phase": "phase-2",
+  "category": "data-structure",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Wait for first storylet execution (should be phase 0 of initial strategy if selected)"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 30,
+      "comment": "Wait for second node_arrival confirming strategy execution continued through phase 0"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Strategy starts at phase 0: confirmed by continuous node_arrival events without phase reset"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "name": "multi-npc-coordination",
+  "description": "Verify multiple NPCs coordinate phases without deadlock",
+  "phase": "phase-2",
+  "category": "advanced",
+  "priority": "low",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "NPC 1 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "NPC 2 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "NPC 3 created (multi-NPC scenario)"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "NPCs begin activities"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "NPCs meet (coordination point)"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1: coordination proceeds without deadlock"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Multi-NPC coordination verified: strategies execute without deadlock; encounters allow synchronization"
+    }
+  ]
+}

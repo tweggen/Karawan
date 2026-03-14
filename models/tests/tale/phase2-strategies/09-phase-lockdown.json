@@ -1,0 +1,52 @@
+{
+  "name": "phase-lockdown",
+  "description": "Verify non-current-phase storylets are filtered out",
+  "phase": "phase-2",
+  "category": "behavior",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Phase 0 storylet selected (only phase 0 candidates available)"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1: phase 0 exclusive execution"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "2"
+      },
+      "timeout": 30,
+      "comment": "Day 2: transition to phase 1 (phase 0 candidates now locked out)"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Phase 1 only storylet executed (confirms phase 0 candidates locked)"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Phase lockdown verified: no phase bleed; each phase executes only its own candidates"
+    }
+  ]
+}

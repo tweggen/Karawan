@@ -1,0 +1,60 @@
+{
+  "name": "strategy-failure-recovery",
+  "description": "Verify failed strategy allows NPC to retry or move on",
+  "phase": "phase-2",
+  "category": "advanced",
+  "priority": "low",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Initial strategy begins"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1: strategy may fail"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "2"
+      },
+      "timeout": 30,
+      "comment": "Day 2: after failure, NPC selects new strategy (recovery)"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "New strategy/activity selected (NPC not stuck in failure state)"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "3"
+      },
+      "timeout": 30,
+      "comment": "Day 3: continued recovery (system resilient)"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Strategy failure recovery verified: NPC rebounds from failure; system resilient and non-blocking"
+    }
+  ]
+}

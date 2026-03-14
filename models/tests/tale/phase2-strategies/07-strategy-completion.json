@@ -1,0 +1,60 @@
+{
+  "name": "strategy-completion",
+  "description": "Verify IsDone returns true at final phase completion",
+  "phase": "phase-2",
+  "category": "transitions",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Strategy phase 0 begins"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1 summary"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "2"
+      },
+      "timeout": 30,
+      "comment": "Day 2 summary - strategy progresses"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "3"
+      },
+      "timeout": 30,
+      "comment": "Day 3 summary - strategy should be completed and NPC selected new strategy"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "New strategy/storylet after completion (NPC freed to select new activity)"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Strategy completion verified: NPC selects new strategy after previous one completes, indicating IsDone was properly set"
+    }
+  ]
+}

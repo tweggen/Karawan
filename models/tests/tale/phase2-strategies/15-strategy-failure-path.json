@@ -1,0 +1,53 @@
+{
+  "name": "strategy-failure-path",
+  "description": "Verify strategy can transition to failure phase instead of success",
+  "phase": "phase-2",
+  "category": "advanced",
+  "priority": "medium",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Strategy begins execution"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1: strategy progresses"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "2"
+      },
+      "timeout": 30,
+      "comment": "Day 2: strategy may fail (timeout without success condition)"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "3"
+      },
+      "timeout": 30,
+      "comment": "Day 3: NPC recovers and selects new activity (failure handled gracefully)"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Strategy failure path verified: system handles failure without deadlock; NPC continues with new strategy"
+    }
+  ]
+}

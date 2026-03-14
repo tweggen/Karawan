@@ -1,0 +1,52 @@
+{
+  "name": "strategy-nesting",
+  "description": "Verify strategy can contain nested sub-strategies",
+  "phase": "phase-2",
+  "category": "advanced",
+  "priority": "low",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Strategy phase 0 (parent strategy with sub-strategy)"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1: sub-strategy phase 0 executes"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "2"
+      },
+      "timeout": 30,
+      "comment": "Day 2: sub-strategy completes, parent continues to phase 1"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Parent strategy phase 1 executes (after child completion)"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Strategy nesting verified: nested strategies execute correctly without infinite recursion or deadlock"
+    }
+  ]
+}

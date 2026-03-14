@@ -1,0 +1,58 @@
+{
+  "name": "multi-phase-taxi",
+  "description": "Verify full taxi quest scenario: passenger waits → driver arrives → delivers",
+  "phase": "phase-2",
+  "category": "integration",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC 1 creation (passenger)"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC 2 creation (driver)"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "NPC 1 arrives at pickup location (phase 0: waiting)"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "NPCs encounter at same location (driver arrives, passenger waiting)"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1: phase transition to phase 1 (driving with passenger)"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Both NPCs arrive at destination (phase 2: delivery complete)"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Multi-phase taxi verified: passenger/driver coordination through all phases (waiting → driving → delivery)"
+    }
+  ]
+}

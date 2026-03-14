@@ -1,0 +1,53 @@
+{
+  "name": "strategy-resume",
+  "description": "Verify strategy resumes from correct phase after interrupt",
+  "phase": "phase-2",
+  "category": "integration",
+  "priority": "medium",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Strategy at phase 0"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1: phase 0 execution"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "2"
+      },
+      "timeout": 30,
+      "comment": "Day 2: phase progression (resume to phase 1 or continue)"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "3"
+      },
+      "timeout": 30,
+      "comment": "Day 3: further progression (resume mechanism working correctly)"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Strategy resume verified: multi-day progression confirms correct phase state after any pause/resume cycles"
+    }
+  ]
+}

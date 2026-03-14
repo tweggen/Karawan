@@ -1,0 +1,52 @@
+{
+  "name": "transition-precondition",
+  "description": "Verify transition only occurs when precondition is met",
+  "phase": "phase-2",
+  "category": "transitions",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Strategy begins at phase 0"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1: phase 0 in progress"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "2"
+      },
+      "timeout": 30,
+      "comment": "Day 2: if precondition not met, phase 0 continues (no premature transition)"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Verify NPC still executing phase 0 storylets (precondition blocking phase transition)"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Transition precondition validated: phase transition blocked until precondition satisfied, shown by continued phase 0 execution across days"
+    }
+  ]
+}

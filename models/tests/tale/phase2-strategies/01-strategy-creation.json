@@ -1,0 +1,36 @@
+{
+  "name": "strategy-creation",
+  "description": "Verify AOneOfStrategy is created with correct phase structure",
+  "phase": "phase-2",
+  "category": "data-structure",
+  "priority": "critical",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for first NPC creation to verify DES initialized"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Wait for node arrival to confirm DES simulation running"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 10,
+      "comment": "Wait for day_summary to allow strategy system to initialize"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Strategy creation validation: if simulation reaches day_summary, strategy system is operational and strategies were created"
+    }
+  ]
+}

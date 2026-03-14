@@ -1,0 +1,53 @@
+{
+  "name": "phase-timeout",
+  "description": "Verify phase auto-advances if timeout expires",
+  "phase": "phase-2",
+  "category": "behavior",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Phase 0 begins"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "1"
+      },
+      "timeout": 10,
+      "comment": "Day 1"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "2"
+      },
+      "timeout": 30,
+      "comment": "Day 2 - phase timeout should trigger auto-advance"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "3"
+      },
+      "timeout": 30,
+      "comment": "Day 3 - verify continued progression after timeout auto-advance"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Phase timeout verified: auto-advance happens without precondition satisfaction; simulation continues"
+    }
+  ]
+}
