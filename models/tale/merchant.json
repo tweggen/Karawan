@@ -44,5 +44,78 @@
     "duration_minutes": 60,
     "weight": 1.0,
     "tags": ["routine", "economic"]
+  },
+  {
+    "id": "deliver_food",
+    "name": "Deliver Food",
+    "roles": ["merchant", "drifter"],
+    "claim_trigger": {
+      "request_type": "food_delivery",
+      "role_match": ["merchant", "drifter"]
+    },
+    "location": "workplace",
+    "duration_minutes": 30,
+    "postconditions": {
+      "wealth": "+0.04"
+    }
+  },
+  {
+    "id": "merchant_needs_restock",
+    "name": "Merchant Needs Restock",
+    "roles": ["merchant"],
+    "preconditions": {
+      "wealth": { "max": 0.3 }
+    },
+    "location": "workplace",
+    "duration_minutes": 3,
+    "postconditions": {
+      "request": {
+        "type": "restock_supply",
+        "location": "current",
+        "urgency": 0.8,
+        "timeout_minutes": 90
+      }
+    }
+  },
+  {
+    "id": "supply_goods",
+    "name": "Supply Goods to Merchant",
+    "roles": ["merchant", "drifter"],
+    "claim_trigger": {
+      "request_type": "restock_supply",
+      "role_match": ["merchant", "drifter"]
+    },
+    "location": "workplace",
+    "duration_minutes": 40,
+    "postconditions": {
+      "wealth": "+0.06"
+    }
+  },
+  {
+    "id": "provide_trade_service",
+    "name": "Provide Trade Service",
+    "roles": ["merchant", "drifter"],
+    "claim_trigger": {
+      "request_type": "trade_service",
+      "role_match": ["merchant", "drifter"]
+    },
+    "location": "social_venue",
+    "duration_minutes": 20,
+    "postconditions": {
+      "wealth": "+0.03"
+    }
+  },
+  {
+    "id": "respond_to_greeting",
+    "name": "Respond to Greeting",
+    "roles": ["worker", "socialite", "merchant"],
+    "claim_trigger": {
+      "request_type": "greeting",
+      "role_match": ["worker", "socialite", "merchant"]
+    },
+    "location": "current",
+    "duration_minutes": 5,
+    "postconditions": {
+    }
   }
 ]

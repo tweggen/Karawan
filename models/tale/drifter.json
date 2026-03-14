@@ -33,5 +33,104 @@
     "duration_minutes": 480,
     "weight": 2.5,
     "tags": ["routine", "rest"]
+  },
+  {
+    "id": "deliver_food",
+    "name": "Deliver Food",
+    "roles": ["merchant", "drifter"],
+    "claim_trigger": {
+      "request_type": "food_delivery",
+      "role_match": ["merchant", "drifter"]
+    },
+    "location": "workplace",
+    "duration_minutes": 30,
+    "postconditions": {
+      "wealth": "+0.04"
+    }
+  },
+  {
+    "id": "supply_goods",
+    "name": "Supply Goods to Merchant",
+    "roles": ["merchant", "drifter"],
+    "claim_trigger": {
+      "request_type": "restock_supply",
+      "role_match": ["merchant", "drifter"]
+    },
+    "location": "workplace",
+    "duration_minutes": 40,
+    "postconditions": {
+      "wealth": "+0.06"
+    }
+  },
+  {
+    "id": "provide_trade_service",
+    "name": "Provide Trade Service",
+    "roles": ["merchant", "drifter"],
+    "claim_trigger": {
+      "request_type": "trade_service",
+      "role_match": ["merchant", "drifter"]
+    },
+    "location": "social_venue",
+    "duration_minutes": 20,
+    "postconditions": {
+      "wealth": "+0.03"
+    }
+  },
+  {
+    "id": "initiate_threat",
+    "name": "Initiate Threat",
+    "roles": ["drifter"],
+    "preconditions": {
+      "anger": { "min": 0.7 },
+      "desperation_min": 0.6
+    },
+    "location": "street_segment",
+    "duration_minutes": 2,
+    "postconditions": {
+      "request": {
+        "type": "threat",
+        "location": "current",
+        "urgency": 0.9,
+        "timeout_minutes": 10
+      }
+    }
+  },
+  {
+    "id": "attempt_pickpocket",
+    "name": "Attempt Pickpocket",
+    "roles": ["drifter"],
+    "preconditions": {
+      "desperation_min": 0.7,
+      "morality_max": 0.3
+    },
+    "location": "social_venue",
+    "duration_minutes": 3,
+    "postconditions": {
+      "request": {
+        "type": "pickpocket",
+        "location": "current",
+        "urgency": 0.6,
+        "timeout_minutes": 5
+      }
+    }
+  },
+  {
+    "id": "initiate_blackmail",
+    "name": "Initiate Blackmail",
+    "roles": ["drifter"],
+    "preconditions": {
+      "desperation_min": 0.8,
+      "morality_max": 0.2
+    },
+    "location": "street_segment",
+    "duration_minutes": 2,
+    "postconditions": {
+      "request": {
+        "type": "blackmail",
+        "location": "current",
+        "urgency": 0.8,
+        "timeout_minutes": 180
+      }
+    }
   }
 ]

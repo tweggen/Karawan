@@ -45,5 +45,31 @@
     "duration_minutes": 30,
     "weight": 1.0,
     "tags": ["routine", "authority"]
+  },
+  {
+    "id": "catch_pickpocket",
+    "name": "Catch Pickpocket",
+    "roles": ["authority"],
+    "claim_trigger": {
+      "request_type": "pickpocket",
+      "role_match": ["authority"]
+    },
+    "location": "current",
+    "duration_minutes": 15,
+    "postconditions": {
+    }
+  },
+  {
+    "id": "investigate_crime",
+    "name": "Investigate Crime",
+    "roles": ["authority"],
+    "claim_trigger": {
+      "request_type": "crime_report",
+      "role_match": ["authority"]
+    },
+    "location": "current",
+    "duration_minutes": 30,
+    "postconditions": {
+    }
   }
 ]

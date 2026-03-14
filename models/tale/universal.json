@@ -81,5 +81,63 @@
     "duration_minutes_max": 150,
     "weight": 0.8,
     "tags": ["routine", "social"]
+  },
+  {
+    "id": "initiate_argument",
+    "name": "Initiate Argument",
+    "roles": [],
+    "preconditions": {
+      "anger": { "min": 0.6 }
+    },
+    "location": "social_venue",
+    "duration_minutes": 5,
+    "postconditions": {
+      "request": {
+        "type": "argument",
+        "location": "current",
+        "urgency": 0.7,
+        "timeout_minutes": 15
+      }
+    }
+  },
+  {
+    "id": "engage_in_argument",
+    "name": "Engage in Argument",
+    "roles": [],
+    "claim_trigger": {
+      "request_type": "argument",
+      "role_match": []
+    },
+    "location": "current",
+    "duration_minutes": 10,
+    "postconditions": {
+    }
+  },
+  {
+    "id": "flee_from_threat",
+    "name": "Flee From Threat",
+    "roles": [],
+    "claim_trigger": {
+      "request_type": "threat",
+      "role_match": []
+    },
+    "location": "random_street",
+    "duration_minutes": 20,
+    "postconditions": {
+    }
+  },
+  {
+    "id": "respond_to_blackmail",
+    "name": "Respond to Blackmail",
+    "roles": [],
+    "claim_trigger": {
+      "request_type": "blackmail",
+      "role_match": []
+    },
+    "location": "current",
+    "duration_minutes": 10,
+    "postconditions": {
+      "wealth": "-0.05"
+    }
   }
 ]

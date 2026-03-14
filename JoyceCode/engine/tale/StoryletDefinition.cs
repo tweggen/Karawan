@@ -215,7 +215,11 @@ public class StoryletLibrary
         if (elem.TryGetProperty("postconditions", out var posts))
         {
             foreach (var prop in posts.EnumerateObject())
-                def.Postconditions[prop.Name] = prop.Value.GetString();
+            {
+                // Skip nested objects (request, signal) - those are handled in Phase 3 sections
+                if (prop.Value.ValueKind == JsonValueKind.String)
+                    def.Postconditions[prop.Name] = prop.Value.GetString();
+            }
         }
 
         // Tags
