@@ -1,0 +1,10 @@
+{
+  "name": "Conditional postconditions - self property matching",
+  "description": "Postconditions_if evaluates self properties and applies matching branch effects",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "escalation_triggered", "count": { "min": 1 } },
+    { "code": "day_summary", "count": { "min": 50 } }
+  ]
+}

@@ -87,10 +87,16 @@ public class StoryletSelector
         // Property range preconditions
         foreach (var (prop, range) in def.PropertyPreconditions)
         {
+            if (prop == "in_group") continue;  // Handle in_group separately below
+
             float value = npc.Properties.GetValueOrDefault(prop, 0.5f);
             if (range.Min.HasValue && value < range.Min.Value) return false;
             if (range.Max.HasValue && value > range.Max.Value) return false;
         }
+
+        // in_group precondition
+        if (def.PropertyPreconditions.ContainsKey("in_group") && npc.GroupId == -1)
+            return false;
 
         // Location feasibility: skip if NPC can't reach the location
         if (def.LocationRef == "workplace" && npc.WorkplaceLocationId < 0) return false;
@@ -190,5 +196,103 @@ public class StoryletSelector
         float old = npc.Properties.GetValueOrDefault(prop, 0.5f);
         npc.Properties[prop] = Math.Clamp(value, 0f, 1f);
         deltas[prop] = npc.Properties[prop] - old;
+    }
+
+
+    /// <summary>
+    /// Apply conditional postconditions based on self and target NPC properties.
+    /// Evaluates postconditions_if branches in order, applies effects from the first matching branch,
+    /// and returns the forced next storylet ID (if specified).
+    /// </summary>
+    public static string? ApplyConditionalPostconditions(
+        StoryletDefinition def, NpcSchedule self, NpcSchedule? target)
+    {
+        if (def?.PostconditionsIf == null || def.PostconditionsIf.Count == 0)
+            return null;
+
+        var deltasBuf = new Dictionary<string, float>();
+
+        foreach (var branch in def.PostconditionsIf)
+        {
+            // Evaluate self conditions
+            bool selfMatches = true;
+            if (branch.SelfConditions != null)
+            {
+                foreach (var (prop, range) in branch.SelfConditions)
+                {
+                    float value = self.Properties.GetValueOrDefault(prop, 0.5f);
+                    if (range.Min.HasValue && value < range.Min.Value)
+                    {
+                        selfMatches = false;
+                        break;
+                    }
+                    if (range.Max.HasValue && value > range.Max.Value)
+                    {
+                        selfMatches = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!selfMatches) continue;
+
+            // Evaluate target conditions
+            bool targetMatches = true;
+            if (branch.TargetConditions != null)
+            {
+                if (target == null) targetMatches = false;
+                else
+                {
+                    foreach (var (prop, range) in branch.TargetConditions)
+                    {
+                        float value = target.Properties.GetValueOrDefault(prop, 0.5f);
+                        if (range.Min.HasValue && value < range.Min.Value)
+                        {
+                            targetMatches = false;
+                            break;
+                        }
+                        if (range.Max.HasValue && value > range.Max.Value)
+                        {
+                            targetMatches = false;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!targetMatches) continue;
+
+            // Both self and target conditions matched: apply postconditions
+            foreach (var (prop, expr) in branch.Then)
+            {
+                string targetProp = prop;
+                NpcSchedule? targetNpc = self;
+
+                // Check if this targets the other NPC (props starting with "target_" go to target NPC)
+                if (prop.StartsWith("target_"))
+                {
+                    if (target == null) continue;
+                    targetProp = prop.Substring("target_".Length);
+                    targetNpc = target;
+                }
+
+                // Apply the delta/set
+                if (expr.StartsWith("="))
+                {
+                    float value = float.Parse(expr.AsSpan(1), CultureInfo.InvariantCulture);
+                    RecordSet(targetNpc, targetProp, value, deltasBuf);
+                }
+                else
+                {
+                    float delta = float.Parse(expr, CultureInfo.InvariantCulture);
+                    RecordDelta(targetNpc, targetProp, delta, deltasBuf);
+                }
+            }
+
+            // First matching branch found and applied
+            return branch.StoryletNext;
+        }
+
+        return null;
     }
 }

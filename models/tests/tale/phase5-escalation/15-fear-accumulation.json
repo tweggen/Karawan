@@ -1,0 +1,10 @@
+{
+  "name": "Fear accumulation and flee response",
+  "description": "fear property increases, flee_cluster triggered when fear > 0.7",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "encounter", "count": { "min": 1 } },
+    { "code": "escalation_triggered", "count": { "min": 1 } }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Escalation events distributed across simulation",
+  "description": "Multiple escalation_triggered events occur throughout 60-day simulation",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "escalation_triggered", "count": { "min": 3 } },
+    { "code": "day_summary", "count": { "min": 50 } }
+  ]
+}

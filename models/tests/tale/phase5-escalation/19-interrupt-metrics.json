@@ -1,0 +1,10 @@
+{
+  "name": "Interrupt metrics tracked correctly",
+  "description": "MetricsCollector.TotalInterrupts incremented on each interrupt, interrupts_per_day computed",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "interrupt_fired", "count": { "min": 1 } },
+    { "code": "day_summary", "count": { "min": 50 } }
+  ]
+}

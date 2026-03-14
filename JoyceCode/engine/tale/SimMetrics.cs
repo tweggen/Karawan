@@ -34,6 +34,11 @@ public class MetricsCollector
     public readonly Dictionary<string, int> StoryletsByRole = new();
     public readonly Dictionary<string, int> NpcCountByRole = new();
 
+    // Interrupt tracking
+    public int TotalInterrupts;
+    private readonly Dictionary<int, int> _dailyInterruptsByNpc = new();
+    private readonly List<int> _dailyInterruptCounts = new();
+
 
     public void RegisterNpc(string role)
     {
@@ -101,6 +106,12 @@ public class MetricsCollector
         _dailyEncounters.GetValueOrDefault(npcId, 0);
 
 
+    public void OnInterrupt()
+    {
+        TotalInterrupts++;
+    }
+
+
     public void OnDayEnd()
     {
         foreach (var (_, props) in _dailyPropertyRanges)
@@ -114,9 +125,14 @@ public class MetricsCollector
             }
         }
 
+        // Accumulate daily interrupt count
+        int dailyInterruptCount = _dailyInterruptsByNpc.Values.Sum();
+        _dailyInterruptCounts.Add(dailyInterruptCount);
+
         _dailyStorylets.Clear();
         _dailyEncounters.Clear();
         _dailyPropertyRanges.Clear();
+        _dailyInterruptsByNpc.Clear();
     }
 
 
@@ -200,13 +216,33 @@ public class MetricsCollector
 
         int totalInteractions = InteractionsByType.Values.Sum();
 
+        // Compute interrupt statistics
+        var interruptsPerDay = new Dictionary<string, object>();
+        if (_dailyInterruptCounts.Count > 0)
+        {
+            double meanInterrupts = _dailyInterruptCounts.Average();
+            var sorted = _dailyInterruptCounts.OrderBy(x => x).ToList();
+            int median = sorted[sorted.Count / 2];
+            double std = Math.Sqrt(sorted.Average(x => (x - meanInterrupts) * (x - meanInterrupts)));
+            interruptsPerDay["mean"] = Math.Round(meanInterrupts, 2);
+            interruptsPerDay["median"] = median;
+            interruptsPerDay["std"] = Math.Round(std, 2);
+            interruptsPerDay["p5"] = sorted[(int)(sorted.Count * 0.05)];
+            interruptsPerDay["p95"] = sorted[(int)(sorted.Count * 0.95)];
+        }
+        else
+        {
+            interruptsPerDay["mean"] = 0.0;
+            interruptsPerDay["median"] = 0;
+            interruptsPerDay["std"] = 0.0;
+            interruptsPerDay["p5"] = 0;
+            interruptsPerDay["p95"] = 0;
+        }
+
         return new Dictionary<string, object>
         {
             ["routine_completion_rate"] = 1.0,
-            ["interrupts_per_day"] = new Dictionary<string, object>
-            {
-                ["mean"] = 0.0, ["median"] = 0, ["std"] = 0.0, ["p5"] = 0, ["p95"] = 0
-            },
+            ["interrupts_per_day"] = interruptsPerDay,
             ["interactions_total"] = totalInteractions,
             ["interactions_by_type"] = InteractionsByType.ToDictionary(kv => kv.Key, kv => (object)kv.Value),
             ["request_fulfillment_rate"] = 1.0,

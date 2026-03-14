@@ -1,0 +1,11 @@
+{
+  "name": "Group-exclusive storylet unlock",
+  "description": "After gang formation, group-exclusive escalation storylets become available",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "day_summary", "count": { "min": 25 } },
+    { "code": "gang_formed", "count": { "min": 1 } },
+    { "code": "escalation_triggered", "count": { "min": 1 } }
+  ]
+}

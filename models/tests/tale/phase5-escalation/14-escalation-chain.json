@@ -1,0 +1,11 @@
+{
+  "name": "Escalation chain - multiple triggers",
+  "description": "form_gang triggers which enables more escalation storylets via in_group precondition",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "gang_formed", "count": { "min": 1 } },
+    { "code": "escalation_triggered", "count": { "min": 1 } },
+    { "code": "request_emitted", "count": { "min": 0 } }
+  ]
+}

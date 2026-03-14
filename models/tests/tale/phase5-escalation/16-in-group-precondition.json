@@ -1,0 +1,10 @@
+{
+  "name": "In-group precondition filtering",
+  "description": "Storylets with in_group precondition only unlock after NPC joins group",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "gang_formed", "count": { "min": 1 } },
+    { "code": "node_arrival", "count": { "min": 20 } }
+  ]
+}

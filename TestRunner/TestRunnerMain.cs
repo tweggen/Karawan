@@ -167,6 +167,9 @@ public class TestRunnerMain
             var schedules = new System.Collections.Generic.List<engine.tale.NpcSchedule>();
             for (int i = 0; i < 10; i++)
             {
+                // Seed escalation-prone NPCs (drifters with low morality)
+                bool isEscalationProne = (i == 2 || i == 7) && (i % 5) == 3; // NPCs 2 and 7 are drifters
+
                 schedules.Add(new engine.tale.NpcSchedule
                 {
                     NpcId = i,
@@ -177,8 +180,16 @@ public class TestRunnerMain
                     SocialVenueIds = new System.Collections.Generic.List<int> { 2 },
                     Properties = new System.Collections.Generic.Dictionary<string, float>
                     {
+                        ["fear"] = 0.1f,
+                        ["reputation"] = 0.5f,
+                        ["anger"] = isEscalationProne ? 0.5f : 0.1f,
+                        ["wealth"] = isEscalationProne ? 0.2f : 0.5f,
+                        ["hunger"] = 0.3f,
+                        ["fatigue"] = 0.3f,
+                        ["health"] = 0.8f,
+                        ["happiness"] = 0.5f,
+                        ["morality"] = isEscalationProne ? 0.25f : 0.7f,
                         ["desperation"] = 0.5f,
-                        ["morality"] = 0.5f,
                         ["social"] = 0.5f
                     },
                     Trust = new System.Collections.Generic.Dictionary<int, float>()
@@ -196,8 +207,16 @@ public class TestRunnerMain
                 SocialVenueIds = new System.Collections.Generic.List<int> { 2 },
                 Properties = new System.Collections.Generic.Dictionary<string, float>
                 {
+                    ["fear"] = 0.1f,
+                    ["reputation"] = 0.5f,
+                    ["anger"] = 0.1f,
+                    ["wealth"] = 0.5f,
+                    ["hunger"] = 0.3f,
+                    ["fatigue"] = 0.3f,
+                    ["health"] = 0.8f,
+                    ["happiness"] = 0.5f,
+                    ["morality"] = 0.7f,
                     ["desperation"] = 0.5f,
-                    ["morality"] = 0.5f,
                     ["social"] = 0.5f
                 },
                 Trust = new System.Collections.Generic.Dictionary<int, float>()
@@ -206,7 +225,7 @@ public class TestRunnerMain
             // Create and run simulation
             var sim = new engine.tale.DesSimulation();
             var simStart = new System.DateTime(2024, 1, 1, 0, 0, 0);
-            var simEnd = simStart.AddDays(7);  // Run for 7 days to generate more encounters
+            var simEnd = simStart.AddDays(60);  // Run for 60 days for Phase 5 escalation testing
 
             // Use test event logger that bridges to engine's SubscriptionManager for test framework
             sim.Initialize(spatial, schedules, library, new TestEventLogger(), simStart, seed: 42);
@@ -374,6 +393,29 @@ internal class TestEventLogger : engine.tale.IEventLogger
         System.DateTime gameTime, int day)
     {
         _eventQueue.Push(new engine.news.Event("signal_emitted", signalId.ToString()));
+    }
+
+    public void LogInterruptFired(int npcId, string interruptStorylet, string scope,
+        string pausedStorylet, int day, System.DateTime gameTime)
+    {
+        _eventQueue.Push(new engine.news.Event("interrupt_fired", npcId.ToString()));
+    }
+
+    public void LogStoryletResumed(int npcId, string storylet, int day, System.DateTime gameTime)
+    {
+        _eventQueue.Push(new engine.news.Event("storylet_resumed", npcId.ToString()));
+    }
+
+    public void LogEscalationTriggered(int npcId, string escalationId, int targetNpcId,
+        int day, System.DateTime gameTime)
+    {
+        _eventQueue.Push(new engine.news.Event("escalation_triggered", $"{npcId}:{escalationId}"));
+    }
+
+    public void LogGangFormed(int groupId, System.Collections.Generic.List<int> members, string groupType,
+        int day, System.DateTime gameTime)
+    {
+        _eventQueue.Push(new engine.news.Event("gang_formed", groupId.ToString()));
     }
 
     public void Flush() { }

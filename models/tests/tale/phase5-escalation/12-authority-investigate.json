@@ -1,0 +1,10 @@
+{
+  "name": "Authority investigation on crime report",
+  "description": "authority investigates crime_report request via claim_trigger",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "request_emitted", "count": { "min": 1 } },
+    { "code": "escalation_triggered", "count": { "min": 1 } }
+  ]
+}

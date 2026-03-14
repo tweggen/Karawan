@@ -222,8 +222,57 @@ public class DesSimulation
         foreach (var kvp in npc.Properties)
             _metrics.OnPropertyChanged(npc.NpcId, kvp.Key, kvp.Value);
 
-        // 2. Select next storylet
-        var next = _storylets.SelectNext(npc, _clock);
+        // 2. Select next storylet (with interrupt and escalation resolution)
+        StoryletDefinition next;
+
+        // 2a. Handle forced next storylet from conditional postcondition
+        if (npc.NextForcedStorylet != null)
+        {
+            next = _library.GetById(npc.NextForcedStorylet) ?? _storylets.SelectNext(npc, _clock);
+            npc.NextForcedStorylet = null;
+        }
+        // 2b. Handle pending interrupt
+        else if (npc.ArcStack.HasPendingInterrupt)
+        {
+            var scope = npc.ArcStack.PendingInterruptScope!.Value;
+            var interruptId = npc.ArcStack.PendingInterruptStorylet!;
+            npc.ArcStack.ClearInterrupt();
+
+            if (scope == InterruptScope.Nest)
+            {
+                // Pause current storylet, switch to interrupt
+                npc.ArcStack.Push(new PausedStorylet
+                {
+                    StoryletId = previousStorylet,
+                    RemainingDurationMinutes = Math.Max(0, (float)(npc.CurrentEnd - _clock).TotalMinutes),
+                    PropertiesAtPause = new Dictionary<string, float>(npc.Properties)
+                });
+                next = _library.GetById(interruptId) ?? _storylets.SelectNext(npc, _clock);
+            }
+            else if (scope == InterruptScope.Replace)
+            {
+                // Simply replace current with interrupt (don't pause)
+                next = _library.GetById(interruptId) ?? _storylets.SelectNext(npc, _clock);
+            }
+            else // Cancel
+            {
+                // Fall through to normal selection
+                next = _storylets.SelectNext(npc, _clock);
+            }
+        }
+        // 2c. Resume paused arc if no pending interrupt
+        else if (npc.ArcStack.PausedArcs.Count > 0)
+        {
+            var resumed = npc.ArcStack.TryPop()!.Value;
+            next = _library.GetById(resumed.StoryletId) ?? _storylets.SelectNext(npc, _clock);
+            _logger.LogStoryletResumed(npc.NpcId, resumed.StoryletId, day, _clock);
+        }
+        else
+        {
+            // Normal selection
+            next = _storylets.SelectNext(npc, _clock);
+        }
+
         npc.ScheduleStep++;
 
         // 3. Resolve destination location
@@ -300,14 +349,18 @@ public class DesSimulation
     private void ProcessEncounter(int npcA, int npcB, int locationId,
         string locationType, DateTime encounterTime, int day)
     {
+        // Record encounter partners for interrupt context
+        var schedA = _npcs.GetValueOrDefault(npcA);
+        var schedB = _npcs.GetValueOrDefault(npcB);
+        if (schedA != null) schedA.LastEncounterPartnerId = npcB;
+        if (schedB != null) schedB.LastEncounterPartnerId = npcA;
+
         // Check for interaction requests that either NPC can claim
         CheckAndClaimRequests(npcA, npcB, encounterTime, day);
         CheckAndClaimRequests(npcB, npcA, encounterTime, day);
 
         // Determine interaction type using NPC-aware overload
         float currentTrust = _relationships.GetTrust(npcA, npcB);
-        var schedA = _npcs.GetValueOrDefault(npcA);
-        var schedB = _npcs.GetValueOrDefault(npcB);
 
         string interactionType;
         if (schedA != null && schedB != null)
@@ -352,6 +405,60 @@ public class DesSimulation
                 string otherRole = schedA?.Role ?? "?";
                 _traceEncounters.Add(new TraceEncounter(
                     npcB, npcA, otherRole, interactionType, encounterTime, oldTrust, newTrust));
+            }
+        }
+
+        // Phase 5: Apply conditional postconditions and trigger escalation/interrupts
+        if (schedA != null && schedB != null)
+        {
+            // Check if A's current storylet has conditional postconditions
+            var defA = _library.GetById(schedA.CurrentStorylet);
+            if (defA?.PostconditionsIf != null)
+            {
+                string? nextA = StoryletSelector.ApplyConditionalPostconditions(defA, schedA, schedB);
+                if (nextA != null)
+                {
+                    schedA.NextForcedStorylet = nextA;
+                    _logger.LogEscalationTriggered(schedA.NpcId, defA.Id, schedB.NpcId, day, encounterTime);
+                }
+                // Trigger interrupt on B if A's storylet has high priority
+                if (defA.InterruptPriority >= 5)
+                {
+                    var defB = _library.GetById(schedB.CurrentStorylet);
+                    if (defB == null || defB.InterruptPriority < defA.InterruptPriority)
+                    {
+                        var scope = defA.InterruptPriority >= 8 ? InterruptScope.Replace : InterruptScope.Nest;
+                        schedB.ArcStack.SetInterrupt(defA.Id, scope);
+                        _logger.LogInterruptFired(schedB.NpcId, defA.Id, scope.ToString(),
+                            schedB.CurrentStorylet, day, encounterTime);
+                        _metrics.OnInterrupt();
+                    }
+                }
+            }
+
+            // Check if B's current storylet has conditional postconditions (symmetric)
+            var defB2 = _library.GetById(schedB.CurrentStorylet);
+            if (defB2?.PostconditionsIf != null)
+            {
+                string? nextB = StoryletSelector.ApplyConditionalPostconditions(defB2, schedB, schedA);
+                if (nextB != null)
+                {
+                    schedB.NextForcedStorylet = nextB;
+                    _logger.LogEscalationTriggered(schedB.NpcId, defB2.Id, schedA.NpcId, day, encounterTime);
+                }
+                // Trigger interrupt on A if B's storylet has high priority
+                if (defB2.InterruptPriority >= 5)
+                {
+                    var defA2 = _library.GetById(schedA.CurrentStorylet);
+                    if (defA2 == null || defA2.InterruptPriority < defB2.InterruptPriority)
+                    {
+                        var scope = defB2.InterruptPriority >= 8 ? InterruptScope.Replace : InterruptScope.Nest;
+                        schedA.ArcStack.SetInterrupt(defB2.Id, scope);
+                        _logger.LogInterruptFired(schedA.NpcId, defB2.Id, scope.ToString(),
+                            schedA.CurrentStorylet, day, encounterTime);
+                        _metrics.OnInterrupt();
+                    }
+                }
             }
         }
     }

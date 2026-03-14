@@ -1,0 +1,10 @@
+{
+  "name": "GroupId assignment via GroupDetector",
+  "description": "GroupDetector.Detect assigns GroupId to NPCs in detected groups",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "day_summary", "count": { "min": 25 } },
+    { "code": "gang_formed", "count": { "min": 1 } }
+  ]
+}

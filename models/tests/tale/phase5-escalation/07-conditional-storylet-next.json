@@ -1,0 +1,10 @@
+{
+  "name": "Conditional postconditions - forced next storylet",
+  "description": "Postconditions_if can force next storylet via storylet_next field",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "escalation_triggered", "count": { "min": 1 } },
+    { "code": "node_arrival", "count": { "min": 20 } }
+  ]
+}

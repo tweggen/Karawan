@@ -1,0 +1,10 @@
+{
+  "name": "Protection racket - victim refuses",
+  "description": "demand_protection with target.fear < 0.5 triggers threaten_harder branch",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "escalation_triggered", "count": { "min": 1 } },
+    { "code": "day_summary", "count": { "min": 50 } }
+  ]
+}

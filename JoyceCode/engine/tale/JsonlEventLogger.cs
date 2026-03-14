@@ -182,6 +182,65 @@ public class JsonlEventLogger : IEventLogger, IDisposable
     }
 
 
+    public void LogInterruptFired(int npcId, string interruptStorylet, string scope,
+        string pausedStorylet, int day, DateTime gameTime)
+    {
+        _sb.Clear();
+        _sb.Append("{\"t\":\"").Append(gameTime.ToString("yyyy-MM-ddTHH:mm:ss")).Append('"');
+        _sb.Append(",\"day\":").Append(day);
+        _sb.Append(",\"npc\":").Append(npcId);
+        _sb.Append(",\"evt\":\"interrupt_fired\"");
+        _sb.Append(",\"interrupt_storylet\":\"").Append(interruptStorylet).Append('"');
+        _sb.Append(",\"scope\":\"").Append(scope).Append('"');
+        _sb.Append(",\"paused_storylet\":\"").Append(pausedStorylet).Append('"');
+        _sb.Append('}');
+        _writer.WriteLine(_sb);
+    }
+
+
+    public void LogStoryletResumed(int npcId, string storylet, int day, DateTime gameTime)
+    {
+        _sb.Clear();
+        _sb.Append("{\"t\":\"").Append(gameTime.ToString("yyyy-MM-ddTHH:mm:ss")).Append('"');
+        _sb.Append(",\"day\":").Append(day);
+        _sb.Append(",\"npc\":").Append(npcId);
+        _sb.Append(",\"evt\":\"storylet_resumed\"");
+        _sb.Append(",\"storylet\":\"").Append(storylet).Append('"');
+        _sb.Append('}');
+        _writer.WriteLine(_sb);
+    }
+
+
+    public void LogEscalationTriggered(int npcId, string escalationId, int targetNpcId,
+        int day, DateTime gameTime)
+    {
+        _sb.Clear();
+        _sb.Append("{\"t\":\"").Append(gameTime.ToString("yyyy-MM-ddTHH:mm:ss")).Append('"');
+        _sb.Append(",\"day\":").Append(day);
+        _sb.Append(",\"npc\":").Append(npcId);
+        _sb.Append(",\"evt\":\"escalation_triggered\"");
+        _sb.Append(",\"escalation_id\":\"").Append(escalationId).Append('"');
+        _sb.Append(",\"target_npc\":").Append(targetNpcId);
+        _sb.Append('}');
+        _writer.WriteLine(_sb);
+    }
+
+
+    public void LogGangFormed(int groupId, List<int> members, string groupType,
+        int day, DateTime gameTime)
+    {
+        _sb.Clear();
+        _sb.Append("{\"t\":\"").Append(gameTime.ToString("yyyy-MM-ddTHH:mm:ss")).Append('"');
+        _sb.Append(",\"day\":").Append(day);
+        _sb.Append(",\"evt\":\"gang_formed\"");
+        _sb.Append(",\"group_id\":").Append(groupId);
+        _sb.Append(",\"group_type\":\"").Append(groupType).Append('"');
+        _sb.Append(",\"members\":").Append(JsonSerializer.Serialize(members, JsonOpts));
+        _sb.Append('}');
+        _writer.WriteLine(_sb);
+    }
+
+
     public void Flush()
     {
         _writer.Flush();

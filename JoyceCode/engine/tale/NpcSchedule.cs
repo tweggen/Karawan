@@ -31,6 +31,11 @@ public class NpcSchedule
     // Group membership (-1 = no group)
     public int GroupId = -1;
 
+    // Phase 5: Interrupt and escalation support
+    public ArcStack ArcStack = new();
+    public int LastEncounterPartnerId = -1;
+    public string? NextForcedStorylet;
+
 
     /// <summary>
     /// Compute position as a pure function of schedule state.

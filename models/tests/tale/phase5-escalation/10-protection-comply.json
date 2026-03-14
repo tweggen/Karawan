@@ -1,0 +1,10 @@
+{
+  "name": "Protection racket - victim complies",
+  "description": "demand_protection triggers with target.fear > 0.5, sets protection_established tag",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "escalation_triggered", "count": { "min": 1 } },
+    { "code": "node_arrival", "count": { "min": 20 } }
+  ]
+}

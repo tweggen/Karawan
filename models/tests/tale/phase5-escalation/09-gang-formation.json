@@ -1,0 +1,10 @@
+{
+  "name": "Gang formation within 60 days",
+  "description": "Group detection finds criminal gang formation from group_detected via GroupDetector",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "gang_formed", "count": { "min": 1 } },
+    { "code": "day_summary", "count": { "min": 50 } }
+  ]
+}

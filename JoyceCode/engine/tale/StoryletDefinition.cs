@@ -50,6 +50,14 @@ public class WaitEdgeDescriptor
     public string FallbackStorylet;         // If timeout, jump to this
 }
 
+public class ConditionalBranch
+{
+    public Dictionary<string, PreconditionRange>? SelfConditions;       // conditions on self
+    public Dictionary<string, PreconditionRange>? TargetConditions;     // conditions on target (keys had "target_" prefix stripped)
+    public Dictionary<string, string> Then = new();                     // postconditions: +/-/= format
+    public string? StoryletNext;                                        // forced next storylet
+}
+
 public class StoryletDefinition
 {
     public string Id;
@@ -71,6 +79,10 @@ public class StoryletDefinition
     public InteractionRequestDescriptor RequestPostcondition;
     public InteractionClaimTrigger ClaimTrigger;
     public WaitEdgeDescriptor WaitEdge;
+
+    // Phase 5: Conditional postconditions and interrupts
+    public List<ConditionalBranch>? PostconditionsIf;
+    public int InterruptPriority = 1;   // 1=routine, 5+=escalation trigger, 10=max
 
     public float GetDuration(Random rng)
     {
@@ -278,7 +290,74 @@ public class StoryletLibrary
                 def.WaitEdge.FallbackStorylet = weFall.GetString();
         }
 
+        // Phase 5: Conditional postconditions
+        if (elem.TryGetProperty("postconditions_if", out var pif))
+            def.PostconditionsIf = ParseConditionalBranches(pif);
+
+        // Phase 5: Interrupt priority
+        if (elem.TryGetProperty("interrupt_priority", out var ip))
+            def.InterruptPriority = ip.GetInt32();
+
         return def;
+    }
+
+
+    private static List<ConditionalBranch> ParseConditionalBranches(JsonElement arr)
+    {
+        var branches = new List<ConditionalBranch>();
+        if (arr.ValueKind != JsonValueKind.Array) return branches;
+
+        foreach (var elem in arr.EnumerateArray())
+        {
+            var branch = new ConditionalBranch();
+
+            // Parse condition (splits into self/target based on key prefix)
+            if (elem.TryGetProperty("condition", out var condObj) && condObj.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in condObj.EnumerateObject())
+                {
+                    var range = new PreconditionRange();
+                    if (prop.Value.ValueKind == JsonValueKind.Object)
+                    {
+                        if (prop.Value.TryGetProperty("min", out var pmin))
+                            range.Min = pmin.GetSingle();
+                        if (prop.Value.TryGetProperty("max", out var pmax))
+                            range.Max = pmax.GetSingle();
+                    }
+
+                    if (prop.Name.StartsWith("target_"))
+                    {
+                        if (branch.TargetConditions == null)
+                            branch.TargetConditions = new();
+                        branch.TargetConditions[prop.Name.Substring("target_".Length)] = range;
+                    }
+                    else
+                    {
+                        if (branch.SelfConditions == null)
+                            branch.SelfConditions = new();
+                        branch.SelfConditions[prop.Name] = range;
+                    }
+                }
+            }
+
+            // Parse then (postconditions)
+            if (elem.TryGetProperty("then", out var thenObj) && thenObj.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in thenObj.EnumerateObject())
+                {
+                    if (prop.Value.ValueKind == JsonValueKind.String)
+                        branch.Then[prop.Name] = prop.Value.GetString();
+                }
+            }
+
+            // Parse storylet_next
+            if (elem.TryGetProperty("storylet_next", out var sn))
+                branch.StoryletNext = sn.GetString();
+
+            branches.Add(branch);
+        }
+
+        return branches;
     }
 
 

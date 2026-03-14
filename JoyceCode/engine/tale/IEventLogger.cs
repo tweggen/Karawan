@@ -32,6 +32,17 @@ public interface IEventLogger
     void LogSignalEmitted(int signalId, int requestId, string signalType, int sourceNpcId,
         DateTime gameTime, int day);
 
+    void LogInterruptFired(int npcId, string interruptStorylet, string scope,
+        string pausedStorylet, int day, DateTime gameTime);
+
+    void LogStoryletResumed(int npcId, string storylet, int day, DateTime gameTime);
+
+    void LogEscalationTriggered(int npcId, string escalationId, int targetNpcId,
+        int day, DateTime gameTime);
+
+    void LogGangFormed(int groupId, List<int> members, string groupType,
+        int day, DateTime gameTime);
+
     void Flush();
 }
 
@@ -64,6 +75,17 @@ public class NullEventLogger : IEventLogger
 
     public void LogSignalEmitted(int signalId, int requestId, string signalType, int sourceNpcId,
         DateTime gameTime, int day) { }
+
+    public void LogInterruptFired(int npcId, string interruptStorylet, string scope,
+        string pausedStorylet, int day, DateTime gameTime) { }
+
+    public void LogStoryletResumed(int npcId, string storylet, int day, DateTime gameTime) { }
+
+    public void LogEscalationTriggered(int npcId, string escalationId, int targetNpcId,
+        int day, DateTime gameTime) { }
+
+    public void LogGangFormed(int groupId, List<int> members, string groupType,
+        int day, DateTime gameTime) { }
 
     public void Flush() { }
 }

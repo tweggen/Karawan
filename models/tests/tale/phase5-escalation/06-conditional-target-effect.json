@@ -1,0 +1,10 @@
+{
+  "name": "Conditional postconditions - target property effects",
+  "description": "Postconditions_if can apply effects to target NPC (target_* properties)",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "encounter", "count": { "min": 1 } },
+    { "code": "escalation_triggered", "count": { "min": 1 } }
+  ]
+}

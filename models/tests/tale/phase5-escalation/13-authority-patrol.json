@@ -1,0 +1,10 @@
+{
+  "name": "Authority patrol establishment",
+  "description": "establish_patrol triggered by anger > 0.5, authority sets up patrol route",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "escalation_triggered", "count": { "min": 1 } },
+    { "code": "node_arrival", "count": { "min": 20 } }
+  ]
+}

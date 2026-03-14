@@ -1,0 +1,311 @@
+[
+  {
+    "id": "demand_protection",
+    "name": "Demand Protection",
+    "roles": ["drifter"],
+    "preconditions": {
+      "wealth": { "min": 0.6 },
+      "in_group": {}
+    },
+    "weight": 2.0,
+    "duration_minutes": 30,
+    "location": "current",
+    "interrupt_priority": 7,
+    "postconditions": {},
+    "postconditions_if": [
+      {
+        "condition": {
+          "target_fear": { "min": 0.5 }
+        },
+        "then": {
+          "wealth": "+0.15",
+          "target_fear": "+0.1"
+        },
+        "storylet_next": "collect_protection",
+        "tags": ["protection_established"]
+      },
+      {
+        "condition": {
+          "target_fear": { "max": 0.5 }
+        },
+        "then": {
+          "anger": "+0.2"
+        },
+        "storylet_next": "threaten_harder",
+        "tags": ["protection_refused"]
+      }
+    ]
+  },
+  {
+    "id": "collect_protection",
+    "name": "Collect Protection Payment",
+    "roles": ["drifter"],
+    "preconditions": {
+      "in_group": {}
+    },
+    "weight": 1.5,
+    "duration_minutes": 20,
+    "location": "current",
+    "interrupt_priority": 5,
+    "postconditions": {
+      "wealth": "+0.1",
+      "reputation": "+0.05"
+    }
+  },
+  {
+    "id": "threaten_harder",
+    "name": "Escalate Threats",
+    "roles": ["drifter"],
+    "preconditions": {
+      "anger": { "min": 0.4 },
+      "in_group": {}
+    },
+    "weight": 1.8,
+    "duration_minutes": 25,
+    "location": "current",
+    "interrupt_priority": 8,
+    "postconditions": {
+      "anger": "-0.1",
+      "reputation": "-0.1"
+    }
+  },
+  {
+    "id": "form_trade_partnership",
+    "name": "Form Trade Partnership",
+    "roles": ["merchant", "worker"],
+    "preconditions": {
+      "social": { "min": 0.6 }
+    },
+    "weight": 1.2,
+    "duration_minutes": 45,
+    "location": "workplace",
+    "interrupt_priority": 2,
+    "postconditions": {
+      "wealth": "+0.05",
+      "happiness": "+0.1"
+    }
+  },
+  {
+    "id": "investigate_complaint",
+    "name": "Investigate Crime Report",
+    "roles": ["authority"],
+    "claim_trigger": {
+      "request_type": "crime_report",
+      "role_match": ["authority"]
+    },
+    "weight": 2.0,
+    "duration_minutes": 60,
+    "location": "current",
+    "interrupt_priority": 6,
+    "postconditions": {},
+    "postconditions_if": [
+      {
+        "condition": {
+          "target_morality": { "max": 0.3 }
+        },
+        "then": {
+          "anger": "+0.1",
+          "tag": "evidence_found"
+        }
+      }
+    ]
+  },
+  {
+    "id": "establish_patrol",
+    "name": "Establish Patrol Route",
+    "roles": ["authority"],
+    "preconditions": {
+      "anger": { "min": 0.5 }
+    },
+    "weight": 1.5,
+    "duration_minutes": 120,
+    "location": "street_segment",
+    "interrupt_priority": 5,
+    "postconditions": {
+      "anger": "-0.1",
+      "reputation": "+0.15"
+    }
+  },
+  {
+    "id": "prepare_arrest",
+    "name": "Prepare for Arrest",
+    "roles": ["authority"],
+    "preconditions": {
+      "tags": ["evidence_found"]
+    },
+    "weight": 1.3,
+    "duration_minutes": 40,
+    "location": "current",
+    "interrupt_priority": 9,
+    "postconditions": {
+      "reputation": "+0.2",
+      "anger": "-0.05"
+    }
+  },
+  {
+    "id": "form_gang",
+    "name": "Form Criminal Group",
+    "roles": ["drifter", "worker"],
+    "preconditions": {
+      "in_group": {},
+      "morality": { "max": 0.4 },
+      "wealth": { "max": 0.3 }
+    },
+    "weight": 1.0,
+    "duration_minutes": 90,
+    "location": "current",
+    "interrupt_priority": 6,
+    "postconditions": {
+      "reputation": "-0.1",
+      "morality": "-0.15"
+    }
+  },
+  {
+    "id": "flee_cluster",
+    "name": "Flee the Cluster",
+    "roles": ["drifter", "worker"],
+    "preconditions": {
+      "fear": { "min": 0.7 },
+      "anger": { "max": 0.3 }
+    },
+    "weight": 1.5,
+    "duration_minutes": 180,
+    "location": "street_segment",
+    "interrupt_priority": 6,
+    "postconditions": {
+      "fear": "-0.3",
+      "anger": "-0.1",
+      "reputation": "-0.2"
+    }
+  },
+  {
+    "id": "seek_revenge",
+    "name": "Seek Revenge",
+    "roles": ["drifter"],
+    "preconditions": {
+      "anger": { "min": 0.8 }
+    },
+    "weight": 1.3,
+    "duration_minutes": 50,
+    "location": "current",
+    "interrupt_priority": 6,
+    "postconditions": {
+      "anger": "-0.2",
+      "morality": "-0.1"
+    }
+  },
+  {
+    "id": "territory_claim",
+    "name": "Claim Territory",
+    "roles": ["drifter"],
+    "preconditions": {
+      "in_group": {},
+      "morality": { "max": 0.3 }
+    },
+    "weight": 1.4,
+    "duration_minutes": 40,
+    "location": "current",
+    "interrupt_priority": 5,
+    "postconditions": {
+      "reputation": "+0.1",
+      "anger": "+0.05",
+      "request": {
+        "type": "territory_claim",
+        "urgency": 0.8,
+        "timeout_minutes": 1440
+      }
+    }
+  },
+  {
+    "id": "intimidate_together",
+    "name": "Intimidate Others",
+    "roles": ["drifter"],
+    "preconditions": {
+      "in_group": {}
+    },
+    "weight": 1.2,
+    "duration_minutes": 35,
+    "location": "current",
+    "interrupt_priority": 6,
+    "postconditions": {
+      "reputation": "+0.05",
+      "anger": "-0.05"
+    }
+  },
+  {
+    "id": "report_crime",
+    "name": "Report Crime to Authorities",
+    "roles": ["worker", "merchant"],
+    "preconditions": {
+      "fear": { "min": 0.4 }
+    },
+    "weight": 1.1,
+    "duration_minutes": 30,
+    "location": "current",
+    "interrupt_priority": 4,
+    "postconditions": {
+      "fear": "-0.2",
+      "happiness": "+0.1",
+      "request": {
+        "type": "crime_report",
+        "urgency": 0.9,
+        "timeout_minutes": 2880
+      }
+    }
+  },
+  {
+    "id": "organize_criminal_operation",
+    "name": "Organize Criminal Operation",
+    "roles": ["drifter"],
+    "preconditions": {
+      "in_group": {},
+      "morality": { "max": 0.2 },
+      "reputation": { "min": 0.5 }
+    },
+    "weight": 0.8,
+    "duration_minutes": 120,
+    "location": "current",
+    "interrupt_priority": 7,
+    "postconditions": {
+      "wealth": "+0.2",
+      "morality": "-0.2",
+      "reputation": "-0.15"
+    }
+  },
+  {
+    "id": "profit_sharing",
+    "name": "Distribute Profits",
+    "roles": ["drifter"],
+    "preconditions": {
+      "in_group": {},
+      "wealth": { "min": 0.7 }
+    },
+    "weight": 1.0,
+    "duration_minutes": 25,
+    "location": "current",
+    "interrupt_priority": 3,
+    "postconditions": {
+      "wealth": "-0.1",
+      "happiness": "+0.15",
+      "reputation": "+0.1"
+    }
+  },
+  {
+    "id": "defend_territory",
+    "name": "Defend Group Territory",
+    "roles": ["drifter"],
+    "preconditions": {
+      "in_group": {},
+      "anger": { "min": 0.5 }
+    },
+    "weight": 1.6,
+    "duration_minutes": 50,
+    "location": "current",
+    "interrupt_priority": 8,
+    "postconditions": {
+      "health": "-0.1",
+      "anger": "-0.15",
+      "reputation": "+0.2"
+    }
+  }
+]
