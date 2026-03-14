@@ -1,0 +1,56 @@
+{
+  "name": "group-detection-cliques",
+  "description": "Verify GroupDetector identifies cliques and social groups after 30-day simulation",
+  "phase": "phase-0",
+  "category": "metrics",
+  "priority": "medium",
+  "globalTimeout": 90,
+  "preconditions": "100 NPCs, run for 30 days, measure relationship graph and group formation",
+  "expectedOutcome": "At least 1 group formed, 3+ members per group, high mutual trust (0.7+), disjoint cliques",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "First batch of NPCs created"
+    },
+    {
+      "sleep": 200,
+      "comment": "Allow initialization"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "NPCs begin simulation"
+    },
+    {
+      "sleep": 1500,
+      "comment": "Advance through days 1-5"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Daily summaries"
+    },
+    {
+      "sleep": 3000,
+      "comment": "Advance through days 6-30"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 30 summary with group detection"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

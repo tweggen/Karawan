@@ -1,0 +1,56 @@
+{
+  "name": "jsonl-event-logging",
+  "description": "Verify all events are logged to JSONL format with complete and valid fields",
+  "phase": "phase-0",
+  "category": "metrics",
+  "priority": "high",
+  "globalTimeout": 40,
+  "preconditions": "5 NPCs running for 2 days, capture JSONL event log",
+  "expectedOutcome": "Valid JSONL format, all events have required fields, timestamps monotonic, 50+ events logged",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "First NPC created"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow initialization"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "NPCs begin activities"
+    },
+    {
+      "sleep": 800,
+      "comment": "Run day 1"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 1 boundary"
+    },
+    {
+      "sleep": 600,
+      "comment": "Run day 2"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 2 boundary, all events logged"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

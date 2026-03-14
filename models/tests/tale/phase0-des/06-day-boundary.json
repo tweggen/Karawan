@@ -1,0 +1,56 @@
+{
+  "name": "day-boundary-cleanup",
+  "description": "Verify day boundary fires at midnight, cleans up presence, and resets metrics",
+  "phase": "phase-0",
+  "category": "scheduling",
+  "priority": "high",
+  "globalTimeout": 35,
+  "preconditions": "10 NPCs running, simulate to 2024-01-01 23:59:00 with metrics on day 1",
+  "expectedOutcome": "day_summary event fires at midnight, daily presence cleared, metrics finalized",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "First NPCs created"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow NPC initialization"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "NPCs begin activities"
+    },
+    {
+      "sleep": 500,
+      "comment": "Advance toward end of day 1"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Continued activities on day 1"
+    },
+    {
+      "sleep": 1000,
+      "comment": "Advance to end of day 1 / start of day 2"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day boundary processing fires day_summary event"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

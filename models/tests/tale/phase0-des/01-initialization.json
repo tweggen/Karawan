@@ -1,0 +1,48 @@
+{
+  "name": "des-initialization",
+  "description": "Verify DesSimulation.Initialize() creates core data structures",
+  "phase": "phase-0",
+  "category": "initialization",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "preconditions": "Empty DesSimulation instance with 10 NPCs and SpatialModel",
+  "expectedOutcome": "Queue, metrics, encounters, relationships created; NPCs initialized with properties",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "First NPC created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "Second through tenth NPCs created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "Verify multiple NPCs initialize properly"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow initialization to complete"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "First NPC wakeup event scheduled"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

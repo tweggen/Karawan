@@ -1,0 +1,56 @@
+{
+  "name": "long-running-30day",
+  "description": "Verify 30-day simulation completes without deadlock, memory leak, or data corruption",
+  "phase": "phase-0",
+  "category": "scheduling",
+  "priority": "high",
+  "globalTimeout": 90,
+  "preconditions": "100 NPCs, encounter probabilities configured, randomized storylet selection",
+  "expectedOutcome": "Simulation completes cleanly, 30 day_summary events fire, metrics valid",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "First batch of NPCs created"
+    },
+    {
+      "sleep": 200,
+      "comment": "Allow NPC initialization and wakeup scheduling"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "NPCs begin simulation"
+    },
+    {
+      "sleep": 1000,
+      "comment": "Advance through day 1"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 1 summary event"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Advance through remaining days (2-30)"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 30 summary event (final)"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

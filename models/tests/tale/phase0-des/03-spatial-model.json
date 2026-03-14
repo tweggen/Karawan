@@ -1,0 +1,45 @@
+{
+  "name": "spatial-model-loading",
+  "description": "Verify SpatialModel loads locations and computes travel times correctly",
+  "phase": "phase-0",
+  "category": "initialization",
+  "priority": "high",
+  "globalTimeout": 30,
+  "preconditions": "SpatialModel with 25 locations, cluster size 1000m",
+  "expectedOutcome": "Locations accessible, travel times valid, deterministic, and correlate with distance",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "At least one NPC to verify spatial model in use"
+    },
+    {
+      "sleep": 100,
+      "comment": "Spatial model should be loaded during cluster initialization"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "NPC arrival proves locations are accessible"
+    },
+    {
+      "sleep": 500,
+      "comment": "Allow multiple arrivals to test different locations"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "Second location arrival verifies travel time calculation"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

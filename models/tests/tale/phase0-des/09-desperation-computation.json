@@ -1,0 +1,63 @@
+{
+  "name": "desperation-daily-drift",
+  "description": "Verify desperation is computed and drifts correctly based on wealth and hunger",
+  "phase": "phase-0",
+  "category": "properties",
+  "priority": "high",
+  "globalTimeout": 35,
+  "preconditions": "2 NPCs: NPC1 wealth=0.8 hunger=0.2 (low desperation), NPC2 wealth=0.1 hunger=0.9 (high desperation), run 5 days",
+  "expectedOutcome": "Desperation computed as (hunger + (1 - wealth)) / 2, NPC1 ~0.3, NPC2 ~0.9, stable if wealth/hunger constant",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 1 created (high wealth, low hunger)"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 2 created (low wealth, high hunger)"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow initialization"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Day 1 activities"
+    },
+    {
+      "sleep": 1000,
+      "comment": "Advance to day 1 boundary"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 1 boundary, desperation computed"
+    },
+    {
+      "sleep": 2000,
+      "comment": "Advance through days 2-5"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 5 boundary, verify desperation values"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

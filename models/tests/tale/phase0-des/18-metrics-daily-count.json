@@ -1,0 +1,67 @@
+{
+  "name": "metrics-daily-counting",
+  "description": "Verify daily metrics (storylet completion, encounter counts) are tracked correctly",
+  "phase": "phase-0",
+  "category": "metrics",
+  "priority": "medium",
+  "globalTimeout": 35,
+  "preconditions": "10 NPCs running for 3 days, encounter probabilities configured",
+  "expectedOutcome": "Daily metrics accurate, counts reset at boundaries, independent per day",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "First batch of NPCs created"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow initialization"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "NPCs begin activities on day 1"
+    },
+    {
+      "sleep": 800,
+      "comment": "Run day 1"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 1 summary with metrics"
+    },
+    {
+      "sleep": 600,
+      "comment": "Run day 2"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 2 summary with metrics, counts reset"
+    },
+    {
+      "sleep": 600,
+      "comment": "Run day 3"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 3 summary, independent counts"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

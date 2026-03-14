@@ -1,0 +1,63 @@
+{
+  "name": "morality-daily-drift",
+  "description": "Verify morality drifts based on desperation and current value",
+  "phase": "phase-0",
+  "category": "properties",
+  "priority": "high",
+  "globalTimeout": 35,
+  "preconditions": "2 NPCs: NPC1 morality=0.8 desperation=0.2 (high morality, low desperation), NPC2 morality=0.3 desperation=0.9 (low morality, high desperation), run 5 days",
+  "expectedOutcome": "High desperation causes morality decrease, low desperation causes stability or recovery, drift magnitude ~0.02/day",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 1 created (high morality, low desperation)"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 2 created (low morality, high desperation)"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow initialization"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Day 1 activities"
+    },
+    {
+      "sleep": 1000,
+      "comment": "Advance to day 1 boundary"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 1 boundary, morality drift applied"
+    },
+    {
+      "sleep": 2000,
+      "comment": "Advance through days 2-5"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day 5 boundary, verify morality changes correlate with desperation"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

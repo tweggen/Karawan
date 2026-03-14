@@ -1,0 +1,73 @@
+{
+  "name": "encounter-trust-update",
+  "description": "Verify encounter events update trust values and log relationship changes",
+  "phase": "phase-0",
+  "category": "encounters",
+  "priority": "critical",
+  "globalTimeout": 35,
+  "preconditions": "2 NPCs with initial trust=0.5, NPC1 anger=0.1 morality=0.8 (positive), NPC2 anger=0.9 morality=0.2 (negative)",
+  "expectedOutcome": "Trust updated (may be asymmetric), relationship_changed logged with before/after values",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 1 created (positive personality)"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 2 created (negative personality)"
+    },
+    {
+      "sleep": 200,
+      "comment": "Allow scheduling"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "NPC 1 arrives at venue"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "NPC 2 arrives at venue"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow encounter processing"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 10,
+      "comment": "Encounter event fires"
+    },
+    {
+      "expect": {
+        "type": "relationship_changed"
+      },
+      "timeout": 10,
+      "comment": "First NPC relationship updated"
+    },
+    {
+      "expect": {
+        "type": "relationship_changed"
+      },
+      "timeout": 10,
+      "comment": "Second NPC relationship updated"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

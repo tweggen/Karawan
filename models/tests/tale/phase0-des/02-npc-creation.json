@@ -1,0 +1,69 @@
+{
+  "name": "npc-creation-wakeup",
+  "description": "Verify NPC creation triggers initialization and wakeup event scheduling",
+  "phase": "phase-0",
+  "category": "initialization",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "preconditions": "Fresh DesSimulation, 5 NPCs to be created, time: 2024-01-01 04:00:00",
+  "expectedOutcome": "Each NPC gets npc_created event, wakeup scheduled in 05:00-09:00 range, properties initialized",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 1 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 2 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 3 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 4 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 5 created"
+    },
+    {
+      "sleep": 200,
+      "comment": "Allow wakeup scheduling"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "First wakeup event fires"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Wakeup events for remaining NPCs"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

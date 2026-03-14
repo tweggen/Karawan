@@ -1,0 +1,66 @@
+{
+  "name": "encounter-at-shared-location",
+  "description": "Verify two NPCs at same location trigger encounter event",
+  "phase": "phase-0",
+  "category": "encounters",
+  "priority": "critical",
+  "globalTimeout": 35,
+  "preconditions": "2 NPCs scheduled at social_venue 14:00-16:00, neutral trust initially",
+  "expectedOutcome": "Both NPCs arrive at venue, encounter event fires, relationship_changed logged",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 1 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 2 created"
+    },
+    {
+      "sleep": 200,
+      "comment": "Allow scheduling to complete"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "First NPC arrives at venue"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "Second NPC arrives at venue"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow encounter processing"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 10,
+      "comment": "Encounter event fires when both NPCs present"
+    },
+    {
+      "expect": {
+        "type": "relationship_changed"
+      },
+      "timeout": 10,
+      "comment": "Relationship tracking updated"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

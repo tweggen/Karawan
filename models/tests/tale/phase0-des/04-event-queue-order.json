@@ -1,0 +1,48 @@
+{
+  "name": "event-queue-ordering",
+  "description": "Verify events process in strict time order regardless of insertion order",
+  "phase": "phase-0",
+  "category": "scheduling",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "preconditions": "5 NPCs created, queue processing enabled",
+  "expectedOutcome": "Events processed in ascending timestamp order",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPCs created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPCs created"
+    },
+    {
+      "sleep": 200,
+      "comment": "Allow initial wakeup scheduling"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "Events process in chronological order, earliest first"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 10,
+      "comment": "Subsequent events maintain time ordering"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

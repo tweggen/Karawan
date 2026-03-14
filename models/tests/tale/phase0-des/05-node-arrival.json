@@ -1,0 +1,52 @@
+{
+  "name": "node-arrival-postconditions",
+  "description": "Verify NodeArrival event triggers location change, postconditions, and next event scheduling",
+  "phase": "phase-0",
+  "category": "scheduling",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "preconditions": "2 NPCs at home, storylet 'go_to_workplace' selected (60 min duration, fatigue +0.2)",
+  "expectedOutcome": "Location changes, postcondition applied, next event scheduled, events logged",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 1 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 2 created"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow initialization"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "Wakeup at home (initial location)"
+    },
+    {
+      "sleep": 300,
+      "comment": "Time passes, NPC completes home activity"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "Next node arrival (location changed, postconditions applied)"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

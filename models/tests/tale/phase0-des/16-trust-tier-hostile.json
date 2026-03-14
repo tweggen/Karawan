@@ -1,0 +1,77 @@
+{
+  "name": "trust-tier-hostile-progression",
+  "description": "Verify negative interactions decrease trust and trigger hostile tier",
+  "phase": "phase-0",
+  "category": "relationships",
+  "priority": "high",
+  "globalTimeout": 35,
+  "preconditions": "2 NPCs with initial trust=0.5 (neutral), NPC1 anger=0.9 morality=0.1 (negative), encounter 5 times over 5 days",
+  "expectedOutcome": "Trust decreases with each encounter, reaches hostile tier (0.1 or less), interaction type changes",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 1 created (negative personality)"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 2 created"
+    },
+    {
+      "sleep": 200,
+      "comment": "Allow scheduling"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "Day 1 activities"
+    },
+    {
+      "sleep": 500,
+      "comment": "Advance through encounters"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 10,
+      "comment": "First encounter"
+    },
+    {
+      "expect": {
+        "type": "relationship_changed"
+      },
+      "timeout": 10,
+      "comment": "Trust decreases"
+    },
+    {
+      "sleep": 1500,
+      "comment": "Advance through remaining days"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 10,
+      "comment": "Subsequent encounters"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 20,
+      "comment": "Day boundary"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

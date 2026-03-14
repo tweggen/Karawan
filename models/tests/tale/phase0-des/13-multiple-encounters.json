@@ -1,0 +1,87 @@
+{
+  "name": "multiple-encounters-three-npcs",
+  "description": "Verify 3+ NPCs at same location generate all possible pair encounters",
+  "phase": "phase-0",
+  "category": "encounters",
+  "priority": "high",
+  "globalTimeout": 40,
+  "preconditions": "3 NPCs scheduled at social_venue 14:00-15:00",
+  "expectedOutcome": "3 pair encounters generated: (1,2), (1,3), (2,3), 6 relationship_changed events total",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 1 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 2 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 5,
+      "comment": "NPC 3 created"
+    },
+    {
+      "sleep": 200,
+      "comment": "Allow scheduling"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "First NPC arrives at venue"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "Second NPC arrives at venue"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "Third NPC arrives at venue"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow encounter processing"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 10,
+      "comment": "First pair encounter"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 10,
+      "comment": "Second pair encounter"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 10,
+      "comment": "Third pair encounter"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}
