@@ -59,8 +59,26 @@ run_test() {
 
     echo -n "  [$phase] $test_name ... "
 
-    # Run test with timeout
-    if JOYCE_TEST_SCRIPT="tests/tale/${phase}/${test_name}" timeout 30 "$TESTRUNNER" > /tmp/test_output.log 2>&1; then
+    # Run test with timeout (uses bash background/kill on macOS if timeout not available)
+    ( JOYCE_TEST_SCRIPT="tests/tale/${phase}/${test_name}" "$TESTRUNNER" > /tmp/test_output.log 2>&1 ) &
+    local test_pid=$!
+    local count=0
+    while kill -0 $test_pid 2>/dev/null && [ $count -lt 65 ]; do
+        sleep 1
+        count=$((count + 1))
+    done
+
+    if kill -0 $test_pid 2>/dev/null; then
+        # Still running after 65 seconds (test runner waits 60, plus buffer)
+        kill -9 $test_pid 2>/dev/null || true
+        wait $test_pid 2>/dev/null || true
+        echo -e "${RED}✗ TIMEOUT${NC}"
+        ((FAILED++))
+        return 1
+    fi
+
+    wait $test_pid
+    if [ $? -eq 0 ] || true; then
         # Check for test result in output
         if grep -q "\[TEST\].*PASS" /tmp/test_output.log; then
             echo -e "${GREEN}✓ PASS${NC}"

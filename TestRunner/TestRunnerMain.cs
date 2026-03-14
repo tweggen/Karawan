@@ -190,7 +190,8 @@ public class TestRunnerMain
             var simStart = new System.DateTime(2024, 1, 1, 0, 0, 0);
             var simEnd = simStart.AddDays(1);  // Run for 1 day
 
-            sim.Initialize(spatial, schedules, library, new engine.tale.NullEventLogger(), simStart, seed: 42);
+            // Use test event logger that bridges to engine's SubscriptionManager for test framework
+            sim.Initialize(spatial, schedules, library, new TestEventLogger(), simStart, seed: 42);
             Console.WriteLine("DES simulation initialized. Running...");
 
             sim.RunUntil(simEnd);
@@ -290,4 +291,72 @@ internal class MinimalAssetImplementation : engine.AAssetImplementation
     {
         return new System.Collections.Generic.Dictionary<string, string>();
     }
+}
+
+/// <summary>
+/// Event logger that bridges DES simulation events to the engine's EventQueue
+/// so that the test framework (JoyceTestEventSource) can receive and validate them.
+/// </summary>
+internal class TestEventLogger : engine.tale.IEventLogger
+{
+    private readonly engine.news.EventQueue _eventQueue;
+
+    public bool WantsDaySummary => false;
+
+    public TestEventLogger()
+    {
+        _eventQueue = engine.I.Get<engine.news.EventQueue>();
+    }
+
+    public void LogNpcCreated(int npcId, int seed, string role, int homeLocationId,
+        int workplaceLocationId, System.Collections.Generic.List<int> socialVenues,
+        System.Collections.Generic.Dictionary<string, float> props, System.DateTime gameTime)
+    {
+        _eventQueue.Push(new engine.news.Event("npc_created", npcId.ToString()));
+    }
+
+    public void LogNodeArrival(int npcId, string storylet, int locationId, string locationType,
+        System.DateTime gameTime, int day, System.Collections.Generic.Dictionary<string, float> props,
+        System.Collections.Generic.Dictionary<string, float> deltas)
+    {
+        _eventQueue.Push(new engine.news.Event("node_arrival", locationId.ToString()));
+    }
+
+    public void LogEncounter(int npcA, int npcB, string interactionType, int locationId,
+        string locationType, System.DateTime gameTime, int day,
+        float trustBefore, float trustAfter)
+    {
+        _eventQueue.Push(new engine.news.Event("encounter", $"{npcA}:{npcB}"));
+    }
+
+    public void LogRelationshipChanged(int npcA, int npcB, string oldTier, string newTier,
+        float trust, int interactionCount, System.DateTime gameTime, int day)
+    {
+        _eventQueue.Push(new engine.news.Event("relationship_changed", $"{npcA}:{npcB}"));
+    }
+
+    public void LogDaySummary(int npcId, int day, int storyletsCompleted, int encounters,
+        System.Collections.Generic.Dictionary<string, float> props, System.Collections.Generic.Dictionary<int, float> topRelationships)
+    {
+        _eventQueue.Push(new engine.news.Event("day_summary", day.ToString()));
+    }
+
+    public void LogRequestEmitted(int requestId, int requesterId, string requestType, int locationId,
+        float urgency, int timeoutMinutes, string storyletContext, System.DateTime gameTime, int day)
+    {
+        _eventQueue.Push(new engine.news.Event("request_emitted", requestId.ToString()));
+    }
+
+    public void LogRequestClaimed(int requestId, int claimerId, System.DateTime gameTime, int day)
+    {
+        _eventQueue.Push(new engine.news.Event("request_claimed", requestId.ToString()));
+    }
+
+    public void LogSignalEmitted(int signalId, int requestId, string signalType, int sourceNpcId,
+        System.DateTime gameTime, int day)
+    {
+        _eventQueue.Push(new engine.news.Event("signal_emitted", signalId.ToString()));
+    }
+
+    public void Flush() { }
 }
