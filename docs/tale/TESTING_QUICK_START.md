@@ -68,7 +68,14 @@ You now have a complete testing plan for the TALE narrative engine:
 - Organized into 6 categories: initialization, scheduling, properties, encounters, relationships, metrics
 - Test priorities: 6 critical, 9 high, 2 medium
 
-**Next**: Run Phase 0 tests against Testbed to validate DES engine.
+### ✅ DONE — Phase 1 Tests (Detailed Specs & Scripts Complete)
+**Status**: 20 JSON test scripts implemented, all validated with jq
+- Created detailed TALE_TEST_SCRIPTS_PHASE_1.md with full specifications
+- Implemented all 20 JSON scripts in models/tests/tale/phase1-storylets/
+- Organized into 5 categories: library, preconditions, selection, postconditions, complex
+- Test priorities: 2 critical, 11 high, 5 medium, 2 low
+
+**Next**: Run Phase 0 and Phase 1 tests against Testbed to validate DES and Storylet systems.
 
 ### 🟢 PRIORITY 1 — Run Phase 3 and Phase 0 Tests Against Testbed
 **Status**: 42 total test scripts ready (22 Phase 3 + 20 Phase 0)
@@ -94,16 +101,16 @@ Steps:
    ```
 3. Verify event types and fulfillment metrics in outputs
 
-### 🟡 PRIORITY 2 — Expand & Implement Phase 1 Tests
+### 🟡 PRIORITY 2 — Expand & Implement Phase 2 Tests
 **Status**: 20 outlines exist (PHASES_1_2_4_5_SKELETON.md)
-**Task**: Detail specs, create 20 JSON scripts
+**Task**: Detail specs, create 20 JSON scripts for Strategy System
 **Time Est**: 5-7 hours
-**Rationale**: Core storylet selection logic
+**Rationale**: Multi-phase quest composition and state machines
 
 Steps:
-1. Read PHASES_1_2_4_5_SKELETON.md (Phase 1 section)
-2. Expand Phase 1 outlines to detailed spec (like PHASE_0.md)
-3. Create 20 JSON files in `models/tests/tale/phase1-storylets/`
+1. Read PHASES_1_2_4_5_SKELETON.md (Phase 2 section)
+2. Expand Phase 2 outlines to detailed spec (like PHASE_1.md)
+3. Create 20 JSON files in `models/tests/tale/phase2-strategies/`
 4. Run full test suite
 
 ### 🟡 PRIORITY 3 — Expand & Implement Phase 1 Tests
@@ -221,16 +228,16 @@ dotnet run --project Testbed -- --days 30 --events-file events.jsonl
 - [x] Phase 0 tests implemented (20 JSON files in models/tests/tale/phase0-des/)
 - [ ] Phase 0 tests executed and all passing
 
-### Phases 1, 2, 4, 5 (OUTLINE → DETAILED → IMPLEMENT)
+### Phase 1 (COMPLETE ✅)
+- [x] Phase 1 tests expanded to detailed specs (TALE_TEST_SCRIPTS_PHASE_1.md)
+- [x] Phase 1 tests implemented (20 JSON files in models/tests/tale/phase1-storylets/)
+- [ ] Phase 1 tests executed and all passing
 
-**Phase 1 (Storylet System) — PRIORITY 2**
-- [ ] Phase 1 tests expanded to detailed specs (TALE_TEST_SCRIPTS_PHASE_1.md)
-- [ ] Phase 1 tests implemented (20 JSON files)
-- [ ] Phase 1 tests all passing
+### Phases 2, 4, 5 (OUTLINE → DETAILED → IMPLEMENT)
 
-**Phase 2 (Strategy-to-Story Bridge) — PRIORITY 3**
+**Phase 2 (Strategy-to-Story Bridge) — PRIORITY 2**
 - [ ] Phase 2 tests expanded to detailed specs (TALE_TEST_SCRIPTS_PHASE_2.md)
-- [ ] Phase 2 tests implemented (20 JSON files)
+- [ ] Phase 2 tests implemented (20 JSON files in models/tests/tale/phase2-strategies/)
 - [ ] Phase 2 tests all passing
 
 **Phase 4 (Player Interaction) — PRIORITY 4**
