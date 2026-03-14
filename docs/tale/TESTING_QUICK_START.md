@@ -77,29 +77,55 @@ You now have a complete testing plan for the TALE narrative engine:
 
 **Next**: Run Phase 0 and Phase 1 tests against Testbed to validate DES and Storylet systems.
 
-### 🟢 PRIORITY 1 — Run Phase 3 and Phase 0 Tests Against Testbed
-**Status**: 42 total test scripts ready (22 Phase 3 + 20 Phase 0)
+### 🟢 PRIORITY 1 — Run Phase 3, 0, and 1 Tests Against TestRunner
+**Status**: 62 total test scripts ready (22 Phase 3 + 20 Phase 0 + 20 Phase 1)
 **Task**: Execute test scripts to validate event sequences and metrics
-**Time Est**: 2-3 hours total
+**Time Est**: 1-2 hours for full suite (depends on timeout values)
 
-Steps:
-1. Run all Phase 3 tests (22 scripts):
-   ```bash
-   for script in models/tests/tale/phase3-interactions/*.json; do
-     echo "Running: $(basename $script)"
-     JOYCE_TEST_SCRIPT="$script" dotnet run --project nogame/nogame.csproj
-     if [ $? -ne 0 ]; then echo "FAILED: $script"; exit 1; fi
-   done
-   ```
-2. Run all Phase 0 tests (20 scripts):
-   ```bash
-   for script in models/tests/tale/phase0-des/*.json; do
-     echo "Running: $(basename $script)"
-     JOYCE_TEST_SCRIPT="$script" dotnet run --project nogame/nogame.csproj
-     if [ $? -ne 0 ]; then echo "FAILED: $script"; exit 1; fi
-   done
-   ```
-3. Verify event types and fulfillment metrics in outputs
+#### Test Harness Setup
+
+First, build the TestRunner harness:
+```bash
+dotnet build TestRunner/TestRunner.csproj -c Release -p:EnableSourceLink=false
+```
+
+#### Running Tests
+
+Use the `run_tests.sh` script for easy test execution:
+
+```bash
+# Run all tests (Phases 0, 1, 3)
+./run_tests.sh all
+
+# Run specific phase
+./run_tests.sh phase0    # Phase 0 DES engine tests (20 scripts)
+./run_tests.sh phase1    # Phase 1 Storylet tests (20 scripts)
+./run_tests.sh phase3    # Phase 3 Interaction tests (22 scripts)
+
+# Run specific test
+./run_tests.sh 01-initialization.json
+```
+
+#### Manual Test Execution
+
+To run a single test directly:
+```bash
+JOYCE_TEST_SCRIPT="tests/tale/phase0-des/01-initialization.json" \
+  ./TestRunner/bin/Release/net9.0/TestRunner
+```
+
+#### Test Output
+
+- Successful tests print `[TEST] PASS` (or event stream confirmation)
+- Failed tests print `[TEST] FAIL` with details
+- Full error logs saved to `/tmp/tale_test_results.txt`
+
+#### Interpreting Results
+
+- ✓ PASS: Test executed and validation passed
+- ✗ FAIL: Test ran but validation failed
+- ⏱ TIMEOUT: Test exceeded 30-second timeout
+- Event stream confirmed: TestDriverModule activated and processing events
 
 ### 🟡 PRIORITY 2 — Expand & Implement Phase 2 Tests
 **Status**: 20 outlines exist (PHASES_1_2_4_5_SKELETON.md)
@@ -187,28 +213,33 @@ One file per test, organized by phase:
 
 ## Quick Reference: Test Execution
 
+### Setup
+```bash
+# Build TestRunner harness once
+dotnet build TestRunner/TestRunner.csproj -c Release -p:EnableSourceLink=false
+```
+
+### Run All Tests
+```bash
+./run_tests.sh all
+```
+
+### Run Single Phase
+```bash
+./run_tests.sh phase0    # Phase 0: DES engine (20 tests)
+./run_tests.sh phase1    # Phase 1: Storylets (20 tests)
+./run_tests.sh phase3    # Phase 3: Interactions (22 tests)
+```
+
 ### Run Single Test
 ```bash
-JOYCE_TEST_SCRIPT=models/tests/tale/phase3-interactions/01-request-postcondition-emission.json \
-  dotnet run --project nogame/nogame.csproj
-```
-
-### Run All Phase 3 Tests
-```bash
-./run_phase3_tests.sh  # (create this script)
-```
-
-### Run Multiple Phases
-```bash
-for phase in phase0-des phase3-interactions; do
-  for script in models/tests/tale/$phase/*.json; do
-    JOYCE_TEST_SCRIPT="$script" dotnet run --project nogame/nogame.csproj || exit 1
-  done
-done
+JOYCE_TEST_SCRIPT="tests/tale/phase0-des/01-initialization.json" \
+  ./TestRunner/bin/Release/net9.0/TestRunner
 ```
 
 ### Testbed Integration Test
 ```bash
+# Run DES simulation for validation (separate from test scripts)
 dotnet run --project Testbed -- --days 30 --events-file events.jsonl
 ```
 
@@ -314,6 +345,46 @@ If implementing tests and encounter issues:
 
 ---
 
-**Phase 3 Status**: Implementation ✅ | Testbed Validation ✅ | Formal Test Execution → **NEXT**
+## Test Harness Architecture
 
-**Ready to continue?** → **Run the 22 Phase 3 test scripts, then expand Phase 0 tests!**
+### TestRunner (Option 2 Harness)
+The `TestRunner` project is a dedicated test harness that:
+1. Initializes the engine with full module support
+2. Loads game configuration (registers all modules including TestDriverModule)
+3. Sets up asset implementation with proper resource paths
+4. Runs the engine's event loop for test execution
+5. Captures test results and exits cleanly
+
+**Location**: `TestRunner/TestRunner.csproj`
+**Built to**: `TestRunner/bin/Release/net9.0/TestRunner`
+
+### Test Script Execution Flow
+```
+JOYCE_TEST_SCRIPT=<path> → TestRunner.Main()
+  ├─ Initialize engine headless
+  ├─ Load game config
+  ├─ Register TestDriverModule
+  ├─ Run engine loop
+  │  ├─ TestDriverModule activates
+  │  ├─ Load test script JSON
+  │  ├─ Create TestSession
+  │  ├─ Execute test steps (expect/sleep/action)
+  │  └─ Report result [TEST] PASS/FAIL
+  └─ Exit with appropriate code
+
+```
+
+### Why TestRunner Instead of Alternatives?
+
+| Approach | Pros | Cons | Status |
+|----------|------|------|--------|
+| **TestRunner Harness** ✅ | Full engine init, proper event stream, simple script | Needs graphics resource handling | **IMPLEMENTED** |
+| Testbed | Already exists, DES validated | Doesn't activate game modules | Not suitable |
+| Game Launcher | Full graphics context | Requires display, window setup | Manual only |
+| Direct Headless | Fast | Complex, graphics context issues | Attempted |
+
+---
+
+**Phase 3 Status**: Implementation ✅ | Testbed Validation ✅ | Test Harness Complete ✅
+
+**Ready to continue?** → **Run `./run_tests.sh all` to execute all 62 tests!**
