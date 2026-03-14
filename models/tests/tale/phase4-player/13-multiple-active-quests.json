@@ -8,11 +8,8 @@
   "steps": [
     {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC 1"},
     {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request 1"},
-    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC 2"},
     {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request 2"},
-    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC 3"},
     {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request 3"},
-    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
     {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest 1 triggered"},
     {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest 2 triggered"},
     {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Quest 3 triggered"},

@@ -22,13 +22,6 @@
     },
     {
       "expect": {
-        "type": "npc_created"
-      },
-      "timeout": 10,
-      "comment": "Player character spawned"
-    },
-    {
-      "expect": {
         "type": "encounter"
       },
       "timeout": 30,

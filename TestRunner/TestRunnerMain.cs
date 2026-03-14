@@ -185,6 +185,24 @@ public class TestRunnerMain
                 });
             }
 
+            // Add player proxy NPC (NPC #10)
+            schedules.Add(new engine.tale.NpcSchedule
+            {
+                NpcId = 10,
+                Seed = 1010,
+                Role = "worker",
+                HomeLocationId = 0,
+                WorkplaceLocationId = 1,
+                SocialVenueIds = new System.Collections.Generic.List<int> { 2 },
+                Properties = new System.Collections.Generic.Dictionary<string, float>
+                {
+                    ["desperation"] = 0.5f,
+                    ["morality"] = 0.5f,
+                    ["social"] = 0.5f
+                },
+                Trust = new System.Collections.Generic.Dictionary<int, float>()
+            });
+
             // Create and run simulation
             var sim = new engine.tale.DesSimulation();
             var simStart = new System.DateTime(2024, 1, 1, 0, 0, 0);

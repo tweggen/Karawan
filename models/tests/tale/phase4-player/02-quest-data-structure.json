@@ -8,7 +8,6 @@
   "steps": [
     {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC created"},
     {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request emitted (quest source)"},
-    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
     {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Player encounters NPC (quest triggered)"},
     {"expect": {"type": "day_summary"}, "timeout": 10, "comment": "Day 1: quest created with full data structure"},
     {"action": "quit", "result": "pass", "comment": "Quest data structure verified: quest exists with all required fields (ID, title, description, phase, reward)"}

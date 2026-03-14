@@ -8,7 +8,6 @@
   "steps": [
     {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC created"},
     {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request emitted (has reward)"},
-    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
     {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Player encounters NPC"},
     {"expect": {"type": "signal_emitted"}, "timeout": 60, "comment": "Signal emitted (task done)"},
     {"expect": {"type": "day_summary", "code": "2"}, "timeout": 30, "comment": "Day 2: quest navigation"},

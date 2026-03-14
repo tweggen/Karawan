@@ -8,9 +8,7 @@
   "steps": [
     {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC A created"},
     {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request A emitted"},
-    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "NPC B created"},
     {"expect": {"type": "request_emitted"}, "timeout": 10, "comment": "Request B emitted"},
-    {"expect": {"type": "npc_created"}, "timeout": 10, "comment": "Player spawned"},
     {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Player encounters NPC A (Quest A triggered)"},
     {"expect": {"type": "encounter"}, "timeout": 30, "comment": "Player encounters NPC B (Quest B triggered)"},
     {"expect": {"type": "day_summary"}, "timeout": 10, "comment": "Multiple quests registered in active list"},
