@@ -1,0 +1,63 @@
+{
+  "name": "signal-logging",
+  "description": "Verify signal_emitted event logged with all metadata (signal_id, request_id, type, source)",
+  "phase": "phase-3",
+  "category": "signal-emission",
+  "priority": "medium",
+  "globalTimeout": 90,
+  "preconditions": "Signal emitted (from previous test scenario)",
+  "expectedOutcome": "signal_emitted event contains all required fields: signal_id, request_id, signal_type, source_npc",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Setup"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Setup"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit and claim"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Capture request"
+    },
+    {
+      "sleep": 10000,
+      "comment": "Claim and fulfill"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 20,
+      "comment": "Claimed"
+    },
+    {
+      "sleep": 10000,
+      "comment": "Complete activity"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 30,
+      "comment": "Capture signal with all fields"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

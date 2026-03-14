@@ -1,0 +1,91 @@
+{
+  "name": "multiple-requesters-same-claimer",
+  "description": "Verify one NPC can claim multiple requests from different requesters",
+  "phase": "phase-3",
+  "category": "advanced-scenarios",
+  "priority": "medium",
+  "globalTimeout": 90,
+  "preconditions": "3 NPCs: 2 requesters, 1 claimer (merchant) capable of fulfilling both request types",
+  "expectedOutcome": "Claimer successfully claims and fulfills 2 requests sequentially",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Requester 1"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Requester 2"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Claimer (merchant)"
+    },
+    {
+      "sleep": 10000,
+      "comment": "Emit requests"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request from requester 1"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request from requester 2"
+    },
+    {
+      "sleep": 10000,
+      "comment": "Encounters"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 20,
+      "comment": "Claimer claims request 1"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 20,
+      "comment": "Claimer claims request 2"
+    },
+    {
+      "sleep": 15000,
+      "comment": "Fulfill both requests"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 20,
+      "comment": "Signal for request 1"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 20,
+      "comment": "Signal for request 2"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

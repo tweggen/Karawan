@@ -1,0 +1,66 @@
+{
+  "name": "abstract-resolution-daily-cleanup",
+  "description": "Verify unclaimed requests matched to capable roles during daily cleanup",
+  "phase": "phase-3",
+  "category": "tier3-resolution",
+  "priority": "critical",
+  "globalTimeout": 90,
+  "preconditions": "Multiple unclaimed requests at day boundary with various types",
+  "expectedOutcome": "Abstract resolution matches requests to capable roles; signal_emitted events appear",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Setup"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit requests"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request 1"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request 2"
+    },
+    {
+      "sleep": 30000,
+      "comment": "Advance to day boundary"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 30,
+      "comment": "Day processing"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 10,
+      "comment": "Abstract resolution fulfilled request 1"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 10,
+      "comment": "Abstract resolution fulfilled request 2"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

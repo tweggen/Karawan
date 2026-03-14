@@ -1,0 +1,52 @@
+{
+  "name": "abstract-food-delivery-merchant",
+  "description": "Verify 'food_delivery' request matched to merchant/drifter Tier 3 pool",
+  "phase": "phase-3",
+  "category": "tier3-resolution",
+  "priority": "high",
+  "globalTimeout": 90,
+  "preconditions": "Worker emits 'food_delivery' request; no merchants/drifters encounter during day",
+  "expectedOutcome": "Abstract resolution fulfills food_delivery request via Tier 3 match",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Worker NPC"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit food_delivery"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "food_delivery request"
+    },
+    {
+      "sleep": 30000,
+      "comment": "No encounters occur; advance to day boundary"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 30,
+      "comment": "Day processing with abstract resolution"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 10,
+      "comment": "Abstract merchant/drifter fulfills delivery"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

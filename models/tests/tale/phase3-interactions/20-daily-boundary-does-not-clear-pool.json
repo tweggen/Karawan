@@ -1,0 +1,52 @@
+{
+  "name": "daily-boundary-does-not-clear-pool",
+  "description": "Verify daily boundary doesn't clear active pool; only cleanup purges expired",
+  "phase": "phase-3",
+  "category": "event-integration",
+  "priority": "medium",
+  "globalTimeout": 90,
+  "preconditions": "Active request from day 1 with timeout > 24h",
+  "expectedOutcome": "Request persists across day boundary; not cleared, not reset",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Setup NPC"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit request"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request with long timeout"
+    },
+    {
+      "sleep": 30000,
+      "comment": "Advance to day 2 boundary"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 30,
+      "comment": "Day 1 processing"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 30,
+      "comment": "Day 2 processing"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "name": "signal-abstract-source",
+  "description": "Verify Tier 3 abstract resolution emits signal with SourceNpcId = -1",
+  "phase": "phase-3",
+  "category": "signal-emission",
+  "priority": "high",
+  "globalTimeout": 90,
+  "preconditions": "Unclaimed request at day boundary; no encounters claim it",
+  "expectedOutcome": "signal_emitted with source_npc=-1 (system/abstract)",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Setup NPC"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit request"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request created"
+    },
+    {
+      "sleep": 30000,
+      "comment": "Advance to day boundary (no encounters to claim)"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 30,
+      "comment": "Day boundary processing"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 10,
+      "comment": "Signal from abstract resolution (source=-1)"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

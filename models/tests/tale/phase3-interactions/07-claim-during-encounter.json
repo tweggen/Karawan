@@ -1,0 +1,59 @@
+{
+  "name": "claim-during-encounter",
+  "description": "Verify that when two NPCs meet, one can claim the other's active request",
+  "phase": "phase-3",
+  "category": "request-claiming",
+  "priority": "critical",
+  "globalTimeout": 75,
+  "preconditions": "2 NPCs with compatible roles (requester=Worker, claimer=Merchant); orders and deliveries at same venue",
+  "expectedOutcome": "request_claimed event logged; request ClaimerId updated",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "NPC 1 created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "NPC 2 created"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Advance time for NPCs to reach same location"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Verify request from first NPC"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Wait for encounter window"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "Verify encounter occurs"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 10,
+      "comment": "Verify request claimed during encounter"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

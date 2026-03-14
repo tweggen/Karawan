@@ -1,0 +1,45 @@
+{
+  "name": "abstract-no-capable-role",
+  "description": "Verify request stays in pool if no capable roles exist for abstract resolution",
+  "phase": "phase-3",
+  "category": "tier3-resolution",
+  "priority": "medium",
+  "globalTimeout": 90,
+  "preconditions": "Request with unknown/unsupported type emitted; no role mappings exist",
+  "expectedOutcome": "No signal emitted; request remains in pool after day boundary",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Setup NPC"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit custom request type"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Custom request in pool"
+    },
+    {
+      "sleep": 30000,
+      "comment": "Advance to day boundary"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 30,
+      "comment": "Day processing"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

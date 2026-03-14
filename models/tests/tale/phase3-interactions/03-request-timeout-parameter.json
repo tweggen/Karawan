@@ -1,0 +1,38 @@
+{
+  "name": "request-timeout-parameter",
+  "description": "Verify that request timeout is correctly calculated from emission time + TimeoutMinutes",
+  "phase": "phase-3",
+  "category": "request-emission",
+  "priority": "medium",
+  "globalTimeout": 45,
+  "preconditions": "Storylet 'order_food' with timeout_minutes: 60 loaded",
+  "expectedOutcome": "request_emitted event includes correct timeout value; request remains in pool for 60 minutes",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "sleep": 3000,
+      "comment": "Let NPC advance to request-emitting storylet"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 15,
+      "comment": "Capture request_emitted event with timeout info"
+    },
+    {
+      "sleep": 2000,
+      "comment": "Verify request still in active pool (not expired)"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

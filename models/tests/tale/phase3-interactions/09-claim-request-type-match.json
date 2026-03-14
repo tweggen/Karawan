@@ -1,0 +1,66 @@
+{
+  "name": "claim-request-type-match",
+  "description": "Verify that ClaimTrigger must match request type to claim",
+  "phase": "phase-3",
+  "category": "request-claiming",
+  "priority": "high",
+  "globalTimeout": 75,
+  "preconditions": "NPC emits two request types; claimer has trigger for only one type",
+  "expectedOutcome": "Only matching request type can be claimed",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Requester created"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Claimer created"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit requests"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "First request (type A)"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Second request (type B)"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Encounter window"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "Encounter occurs"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 10,
+      "comment": "Only matching type claimed"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

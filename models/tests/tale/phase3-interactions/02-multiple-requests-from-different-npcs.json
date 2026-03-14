@@ -1,0 +1,62 @@
+{
+  "name": "multiple-requests-from-different-npcs",
+  "description": "Verify that multiple NPCs can emit different request types to the pool",
+  "phase": "phase-3",
+  "category": "request-emission",
+  "priority": "high",
+  "globalTimeout": 90,
+  "preconditions": "DES with 3 NPCs: Worker, Merchant, Drifter; storylets: order_food, merchant_needs_restock, ask_for_help loaded",
+  "expectedOutcome": "3 request_emitted events with different types (food_delivery, restock_supply, help_request) and sequential IDs",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for first NPC creation"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for second NPC creation"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for third NPC creation"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Advance time for NPCs to start activities and emit requests"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Expect first request (food_delivery)"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Expect second request (restock_supply)"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Expect third request (help_request)"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

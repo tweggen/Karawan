@@ -1,0 +1,63 @@
+{
+  "name": "interaction-pool-metrics",
+  "description": "Verify pool metrics tracked correctly (active, claimed, expired, fulfilled)",
+  "phase": "phase-3",
+  "category": "event-integration",
+  "priority": "high",
+  "globalTimeout": 90,
+  "preconditions": "Multiple requests at various states (active, claimed, expired, fulfilled)",
+  "expectedOutcome": "Metrics accurately reflect pool state across lifecycle",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Setup"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit requests"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request 1"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request 2"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Claims and fulfillment"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 20,
+      "comment": "Claim occurs"
+    },
+    {
+      "sleep": 10000,
+      "comment": "Complete and signal"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 30,
+      "comment": "Fulfillment signal"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

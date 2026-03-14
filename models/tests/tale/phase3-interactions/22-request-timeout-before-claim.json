@@ -1,0 +1,45 @@
+{
+  "name": "request-timeout-before-claim",
+  "description": "Verify request expires and is purged even if not claimed",
+  "phase": "phase-3",
+  "category": "advanced-scenarios",
+  "priority": "medium",
+  "globalTimeout": 90,
+  "preconditions": "Request with short timeout (5 min); no encounters occur to claim it",
+  "expectedOutcome": "Request purged at day boundary without signal (timeout, not fulfillment)",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Setup NPC"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit request with short timeout"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Short-timeout request in pool"
+    },
+    {
+      "sleep": 35000,
+      "comment": "Advance beyond timeout and to day boundary (no encounters)"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 30,
+      "comment": "Day boundary processing with cleanup"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

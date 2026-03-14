@@ -1,0 +1,52 @@
+{
+  "name": "abstract-help-request-worker",
+  "description": "Verify 'help_request' matched to worker/socialite Tier 3 pool",
+  "phase": "phase-3",
+  "category": "tier3-resolution",
+  "priority": "high",
+  "globalTimeout": 90,
+  "preconditions": "Drifter emits 'help_request'; no workers/socialites encounter during day",
+  "expectedOutcome": "Abstract resolution fulfills help_request via Tier 3 match",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Drifter NPC"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit help_request"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "help_request emitted"
+    },
+    {
+      "sleep": 30000,
+      "comment": "No encounters; advance to day boundary"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 30,
+      "comment": "Day processing"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 10,
+      "comment": "Abstract worker/socialite fulfills help"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

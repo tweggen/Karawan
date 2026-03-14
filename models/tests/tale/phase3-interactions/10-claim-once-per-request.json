@@ -1,0 +1,87 @@
+{
+  "name": "claim-once-per-request",
+  "description": "Verify that a request can only be claimed once",
+  "phase": "phase-3",
+  "category": "request-claiming",
+  "priority": "high",
+  "globalTimeout": 90,
+  "preconditions": "1 request emitted; 3 NPCs capable of claiming; sequential encounters",
+  "expectedOutcome": "Only first NPC to claim succeeds; second and third fail",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Requester"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Claimer 1"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Claimer 2"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Claimer 3"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit and encounter sequence"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request created"
+    },
+    {
+      "sleep": 10000,
+      "comment": "Sequential encounters"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "First encounter"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 10,
+      "comment": "First claim succeeds"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "Second encounter"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "Third encounter (no claim expected)"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

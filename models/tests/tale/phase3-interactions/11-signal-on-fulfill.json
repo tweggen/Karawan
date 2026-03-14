@@ -1,0 +1,70 @@
+{
+  "name": "signal-on-fulfill",
+  "description": "Verify that claimer emits 'request_fulfilled' signal after completing request",
+  "phase": "phase-3",
+  "category": "signal-emission",
+  "priority": "high",
+  "globalTimeout": 90,
+  "preconditions": "NPC1 emits request; NPC2 claims it; NPC2 completes delivery storylet",
+  "expectedOutcome": "signal_emitted event with type='request_fulfilled' appears after NPC2 completes activity",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "NPC1 (requester)"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "NPC2 (claimer)"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit request"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request in pool"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Encounter"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "NPCs meet"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 10,
+      "comment": "NPC2 claims"
+    },
+    {
+      "sleep": 10000,
+      "comment": "NPC2 completes delivery (30min activity)"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 30,
+      "comment": "Signal emitted when NPC2 completes"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

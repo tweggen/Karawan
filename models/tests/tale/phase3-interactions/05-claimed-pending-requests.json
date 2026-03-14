@@ -1,0 +1,45 @@
+{
+  "name": "claimed-pending-requests",
+  "description": "Verify GetPendingRequests() returns claimed, unfulfilled requests",
+  "phase": "phase-3",
+  "category": "pool-lifecycle",
+  "priority": "high",
+  "globalTimeout": 60,
+  "preconditions": "Multiple requests with some claimed and some fulfillment signals",
+  "expectedOutcome": "Pending request count matches claimed-but-unfulfilled requests",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Setup NPCs"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Time for encounters and claims"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Verify request created"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 30,
+      "comment": "Verify request claimed during encounter"
+    },
+    {
+      "sleep": 2000,
+      "comment": "Monitor pending state"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

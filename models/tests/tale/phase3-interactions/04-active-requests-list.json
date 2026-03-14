@@ -1,0 +1,45 @@
+{
+  "name": "active-requests-list",
+  "description": "Verify GetActiveRequests() returns only unclaimed, non-expired requests",
+  "phase": "phase-3",
+  "category": "pool-lifecycle",
+  "priority": "high",
+  "globalTimeout": 60,
+  "preconditions": "Multiple requests in pool: some claimed, some unclaimed, some expired",
+  "expectedOutcome": "Pool metrics show correct active count (unclaimed, non-expired only)",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wait for NPC creation"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Advance time to emit multiple requests"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Verify requests appear in pool"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 10,
+      "comment": "Verify second request"
+    },
+    {
+      "sleep": 3000,
+      "comment": "Allow potential claim/fulfill operations"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

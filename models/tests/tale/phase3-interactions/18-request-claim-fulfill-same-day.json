@@ -1,0 +1,70 @@
+{
+  "name": "request-claim-fulfill-same-day",
+  "description": "Verify complete lifecycle in single day: emit → claim → fulfill → signal",
+  "phase": "phase-3",
+  "category": "event-integration",
+  "priority": "high",
+  "globalTimeout": 90,
+  "preconditions": "2 NPCs (requester, claimer) at same venue; compatible roles; delivery storylet",
+  "expectedOutcome": "Full cycle completes: request_emitted → encounter → request_claimed → signal_emitted",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Requester NPC"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Claimer NPC"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit request"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request in pool"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Encounter occurs"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "NPCs meet"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 10,
+      "comment": "Claimed during encounter"
+    },
+    {
+      "sleep": 10000,
+      "comment": "Claimer completes delivery"
+    },
+    {
+      "expect": {
+        "type": "signal_emitted"
+      },
+      "timeout": 30,
+      "comment": "Signal sent after completion"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

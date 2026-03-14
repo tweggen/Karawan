@@ -1,0 +1,73 @@
+{
+  "name": "claim-role-matching",
+  "description": "Verify that claiming NPC must have role in ClaimTrigger.RoleMatch",
+  "phase": "phase-3",
+  "category": "request-claiming",
+  "priority": "high",
+  "globalTimeout": 75,
+  "preconditions": "3 NPCs: requester, wrong-role NPC, correct-role NPC; all at same location",
+  "expectedOutcome": "Only correct-role NPC can claim; wrong-role NPC cannot",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Requester NPC"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Wrong-role NPC (e.g., Worker when Merchant needed)"
+    },
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Correct-role NPC (e.g., Merchant)"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Time for interactions"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Request created"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Encounters occur"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "First encounter (wrong role)"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 30,
+      "comment": "Second encounter (correct role)"
+    },
+    {
+      "expect": {
+        "type": "request_claimed"
+      },
+      "timeout": 10,
+      "comment": "Only correct role should claim"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

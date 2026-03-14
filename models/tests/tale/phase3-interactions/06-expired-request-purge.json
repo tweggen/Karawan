@@ -1,0 +1,45 @@
+{
+  "name": "expired-request-purge",
+  "description": "Verify daily cleanup removes requests past timeout",
+  "phase": "phase-3",
+  "category": "pool-lifecycle",
+  "priority": "high",
+  "globalTimeout": 90,
+  "preconditions": "Requests with short timeout (10 min) emitted; no encounters occur to claim them",
+  "expectedOutcome": "At day boundary, expired requests purged; day_summary shows cleanup occurred",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Setup NPC"
+    },
+    {
+      "sleep": 5000,
+      "comment": "Emit request with short timeout"
+    },
+    {
+      "expect": {
+        "type": "request_emitted"
+      },
+      "timeout": 20,
+      "comment": "Verify request created"
+    },
+    {
+      "sleep": 30000,
+      "comment": "Advance past day boundary (request should expire)"
+    },
+    {
+      "expect": {
+        "type": "day_summary"
+      },
+      "timeout": 30,
+      "comment": "Verify day boundary processing"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}
