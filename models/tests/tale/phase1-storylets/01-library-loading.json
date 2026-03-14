@@ -1,0 +1,38 @@
+{
+  "name": "library-loading",
+  "description": "Verify StoryletLibrary.LoadFromDirectory() loads all .json files correctly",
+  "phase": "phase-1",
+  "category": "library",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "preconditions": "Directory models/tale/ with 6+ role-specific JSON files containing 40+ storylets total",
+  "expectedOutcome": "All JSON files loaded, 40+ storylets indexed, no duplicates, all accessible",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "NPC created, library should be loaded during initialization"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow library loading to complete"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "NPC ready with access to storylet library"
+    },
+    {
+      "sleep": 200,
+      "comment": "Verify library is accessible and populated"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}

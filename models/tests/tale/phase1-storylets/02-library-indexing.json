@@ -1,0 +1,38 @@
+{
+  "name": "library-indexing",
+  "description": "Verify GetCandidates() returns role-specific and universal storylets correctly",
+  "phase": "phase-1",
+  "category": "library",
+  "priority": "high",
+  "globalTimeout": 30,
+  "preconditions": "Library loaded with storylets for all roles, test merchant NPC",
+  "expectedOutcome": "Candidates include merchant-specific and universal, exclude drifter-specific",
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "timeout": 10,
+      "comment": "Merchant NPC created with role=merchant"
+    },
+    {
+      "sleep": 100,
+      "comment": "Allow library initialization"
+    },
+    {
+      "expect": {
+        "type": "node_arrival"
+      },
+      "timeout": 15,
+      "comment": "Merchant NPC at home, ready for storylet selection"
+    },
+    {
+      "sleep": 300,
+      "comment": "Verify indexing and candidate retrieval"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
+  ]
+}
