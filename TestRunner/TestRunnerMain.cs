@@ -44,6 +44,7 @@ public class TestRunnerMain
     public static void Main(string[] args)
     {
         Console.WriteLine("=== TALE Test Runner ===");
+        Console.WriteLine($"Timestamp: {System.DateTime.UtcNow:u}");
 
         string testScript = Environment.GetEnvironmentVariable("JOYCE_TEST_SCRIPT");
         if (string.IsNullOrEmpty(testScript))
@@ -83,7 +84,9 @@ public class TestRunnerMain
             return new engine.casette.Loader(streamJson);
         });
 
+        // Interpret config BEFORE engine creation (so modules are registered)
         I.Get<engine.casette.Loader>().InterpretConfig();
+        Console.WriteLine("Config interpreted. Modules registered.");
 
         // Create headless engine
         Console.WriteLine("Creating headless engine...");
@@ -94,11 +97,125 @@ public class TestRunnerMain
             engine.Logger.SetLogTarget(logger);
         }
 
-        Console.WriteLine("Starting test execution...");
-        e.Execute();
+        // Verify that modules were created
+        Console.WriteLine($"Engine has {e.GetModules().Count} modules registered");
 
-        Console.WriteLine("Test execution completed.");
-        Environment.Exit(0);
+        // Manually create and activate TestDriverModule
+        Console.WriteLine("Creating TestDriverModule...");
+        try
+        {
+            var testModule = new engine.testing.TestDriverModule();
+            testModule.SetEngine(e);
+            testModule.ModuleActivate();
+            Console.WriteLine("TestDriverModule created and activated");
+            e.AddModule(testModule);
+        }
+        catch (System.Exception ex)
+        {
+            Console.Error.WriteLine($"Error with TestDriver: {ex}");
+        }
+
+        Console.WriteLine("Starting test execution...");
+
+        // Start DES simulation in a background thread (non-blocking)
+        // This generates DES events that tests will validate
+        System.Threading.Thread simThread = new System.Threading.Thread(() =>
+        {
+            System.Threading.Thread.Sleep(500);  // Give test framework time to initialize
+
+            Console.WriteLine("Setting up DES simulation...");
+
+            // Load storylet library
+            string talePath = System.IO.Path.Combine(resourcePath, "tale");
+            var library = new engine.tale.StoryletLibrary();
+            if (System.IO.Directory.Exists(talePath))
+            {
+                library.LoadFromDirectory(talePath);
+                Console.WriteLine($"Loaded {library.All.Count} storylets");
+            }
+
+            // Create minimal spatial model (3 locations)
+            var spatial = new engine.tale.SpatialModel();
+            spatial.Locations.Add(new engine.tale.Location
+            {
+                Id = 0,
+                Type = "residential",
+                Position = new System.Numerics.Vector3(0, 0, 0),
+                Capacity = 50,
+                QuarterIndex = 0,
+                EstateIndex = 0
+            });
+            spatial.Locations.Add(new engine.tale.Location
+            {
+                Id = 1,
+                Type = "commercial",
+                Position = new System.Numerics.Vector3(10, 0, 0),
+                Capacity = 50,
+                QuarterIndex = 0,
+                EstateIndex = 0
+            });
+            spatial.Locations.Add(new engine.tale.Location
+            {
+                Id = 2,
+                Type = "social_venue",
+                Position = new System.Numerics.Vector3(0, 10, 0),
+                Capacity = 50,
+                QuarterIndex = 0,
+                EstateIndex = 0
+            });
+            spatial.BuildIndex();
+
+            // Create 10 NPC schedules for testing
+            var schedules = new System.Collections.Generic.List<engine.tale.NpcSchedule>();
+            for (int i = 0; i < 10; i++)
+            {
+                schedules.Add(new engine.tale.NpcSchedule
+                {
+                    NpcId = i,
+                    Seed = 1000 + i,
+                    Role = new[]{"merchant", "worker", "drifter", "socialite", "authority"}[i % 5],
+                    HomeLocationId = 0,
+                    WorkplaceLocationId = 1,
+                    SocialVenueIds = new System.Collections.Generic.List<int> { 2 },
+                    Properties = new System.Collections.Generic.Dictionary<string, float>
+                    {
+                        ["desperation"] = 0.5f,
+                        ["morality"] = 0.5f,
+                        ["social"] = 0.5f
+                    },
+                    Trust = new System.Collections.Generic.Dictionary<int, float>()
+                });
+            }
+
+            // Create and run simulation
+            var sim = new engine.tale.DesSimulation();
+            var simStart = new System.DateTime(2024, 1, 1, 0, 0, 0);
+            var simEnd = simStart.AddDays(1);  // Run for 1 day
+
+            sim.Initialize(spatial, schedules, library, new engine.tale.NullEventLogger(), simStart, seed: 42);
+            Console.WriteLine("DES simulation initialized. Running...");
+
+            sim.RunUntil(simEnd);
+            Console.WriteLine($"DES simulation completed. {sim.EventsProcessed} events processed.");
+        })
+        {
+            IsBackground = true,
+            Name = "SimulationThread"
+        };
+        simThread.Start();
+
+        // Run engine logical thread (event processing loop)
+        // TestDriverModule will process the test and call e.Exit()
+        e.ExecuteLogicalThreadOnly();
+        e.CallOnPlatformAvailable();
+
+        // Wait for test completion (60 second timeout)
+        // TestDriverModule._reportResult() calls e.Exit() and Environment.Exit()
+        // The logical thread processes the exit action via its scheduler loop
+        System.Threading.Thread.Sleep(60000);
+
+        Console.WriteLine("Test execution timeout or completed after 60 seconds.");
+        Environment.Exit(1); // If we reach here, test timed out
     }
 }
 
