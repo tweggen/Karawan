@@ -1,0 +1,22 @@
+{
+  "title": "100-phase7-role-distribution: NPCs distributed among roles by weights",
+  "description": "NPCs distributed among roles by weights",
+  "phase": "phase7-spatial",
+  "category": "Integration & Edge Cases",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: NPCs distributed among roles by weights"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Integration & Edge Cases"
+}

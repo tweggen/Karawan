@@ -1,0 +1,22 @@
+{
+  "title": "57-find-nearest-eat-venue: FindNearestOfType filters Eat venues",
+  "description": "FindNearestOfType filters Eat venues",
+  "phase": "phase7-spatial",
+  "category": "Travel Time Calculations",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: FindNearestOfType filters Eat venues"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Travel Time Calculations"
+}

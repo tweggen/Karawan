@@ -1,0 +1,22 @@
+{
+  "title": "69-outdoor-idle-animation: Outdoor activity shows idle animation",
+  "description": "Outdoor activity shows idle animation",
+  "phase": "phase7-spatial",
+  "category": "Building Occupancy & Indoor Activities",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Outdoor activity shows idle animation"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Building Occupancy & Indoor Activities"
+}

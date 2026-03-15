@@ -1,0 +1,22 @@
+{
+  "title": "93-phase7-deviated-npc-persisted: Deviated NPC position preserved across save/load",
+  "description": "Deviated NPC position preserved across save/load",
+  "phase": "phase7-spatial",
+  "category": "Integration & Edge Cases",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Deviated NPC position preserved across save/load"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Integration & Edge Cases"
+}

@@ -1,0 +1,22 @@
+{
+  "title": "33-entry-position-street-height: Entry position projected to street height",
+  "description": "Entry position projected to street height",
+  "phase": "phase7-spatial",
+  "category": "Entry Position Computation",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Entry position projected to street height"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Entry Position Computation"
+}

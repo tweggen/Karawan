@@ -1,0 +1,22 @@
+{
+  "title": "94-phase7-multiple-clusters: SpatialModel correctly tracks multiple clusters",
+  "description": "SpatialModel correctly tracks multiple clusters",
+  "phase": "phase7-spatial",
+  "category": "Integration & Edge Cases",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: SpatialModel correctly tracks multiple clusters"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Integration & Edge Cases"
+}

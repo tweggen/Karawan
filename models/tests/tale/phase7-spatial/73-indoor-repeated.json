@@ -1,0 +1,22 @@
+{
+  "title": "73-indoor-repeated: Multiple indoor activities handled correctly",
+  "description": "Multiple indoor activities handled correctly",
+  "phase": "phase7-spatial",
+  "category": "Building Occupancy & Indoor Activities",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Multiple indoor activities handled correctly"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Building Occupancy & Indoor Activities"
+}

@@ -1,0 +1,22 @@
+{
+  "title": "56-find-nearest-exact-type: FindNearestOfType respects shop type filter",
+  "description": "FindNearestOfType respects shop type filter",
+  "phase": "phase7-spatial",
+  "category": "Travel Time Calculations",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: FindNearestOfType respects shop type filter"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Travel Time Calculations"
+}

@@ -1,0 +1,22 @@
+{
+  "title": "78-current-world-position-from-entry: CurrentWorldPosition uses location entry position",
+  "description": "CurrentWorldPosition uses location entry position",
+  "phase": "phase7-spatial",
+  "category": "Fragment-Accurate Position Tracking",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: CurrentWorldPosition uses location entry position"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Fragment-Accurate Position Tracking"
+}

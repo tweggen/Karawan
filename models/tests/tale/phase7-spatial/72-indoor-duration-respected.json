@@ -1,0 +1,22 @@
+{
+  "title": "72-indoor-duration-respected: Stay duration respected for indoor activities",
+  "description": "Stay duration respected for indoor activities",
+  "phase": "phase7-spatial",
+  "category": "Building Occupancy & Indoor Activities",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Stay duration respected for indoor activities"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Building Occupancy & Indoor Activities"
+}

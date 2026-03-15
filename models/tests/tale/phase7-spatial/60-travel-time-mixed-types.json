@@ -1,0 +1,22 @@
+{
+  "title": "60-travel-time-mixed-types: Travel time works across different location types",
+  "description": "Travel time works across different location types",
+  "phase": "phase7-spatial",
+  "category": "Travel Time Calculations",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Travel time works across different location types"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Travel Time Calculations"
+}

@@ -1,0 +1,22 @@
+{
+  "title": "55-find-nearest-no-match: FindNearestOfType returns -1 if no match",
+  "description": "FindNearestOfType returns -1 if no match",
+  "phase": "phase7-spatial",
+  "category": "Travel Time Calculations",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: FindNearestOfType returns -1 if no match"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Travel Time Calculations"
+}

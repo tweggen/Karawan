@@ -1,0 +1,22 @@
+{
+  "title": "41-entry-position-cluster-offset: Entry position includes cluster offset",
+  "description": "Entry position includes cluster offset",
+  "phase": "phase7-spatial",
+  "category": "Entry Position Computation",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Entry position includes cluster offset"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Entry Position Computation"
+}

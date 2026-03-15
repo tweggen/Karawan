@@ -1,0 +1,22 @@
+{
+  "title": "12-spatial-model-mixed-shops: Extract different shop types (Eat, Drink, Game2)",
+  "description": "Extract different shop types (Eat, Drink, Game2)",
+  "phase": "phase7-spatial",
+  "category": "SpatialModel Extraction",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Extract different shop types (Eat, Drink, Game2)"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - SpatialModel Extraction"
+}

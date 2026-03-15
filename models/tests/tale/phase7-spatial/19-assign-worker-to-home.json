@@ -1,0 +1,22 @@
+{
+  "title": "19-assign-worker-to-home: Worker NPC assigned to home",
+  "description": "Worker NPC assigned to home",
+  "phase": "phase7-spatial",
+  "category": "Location Type Assignment",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Worker NPC assigned to home"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Location Type Assignment"
+}

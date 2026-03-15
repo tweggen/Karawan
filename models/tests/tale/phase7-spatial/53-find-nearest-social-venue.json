@@ -1,0 +1,22 @@
+{
+  "title": "53-find-nearest-social-venue: FindNearestOfType locates closest social venue",
+  "description": "FindNearestOfType locates closest social venue",
+  "phase": "phase7-spatial",
+  "category": "Travel Time Calculations",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: FindNearestOfType locates closest social venue"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Travel Time Calculations"
+}

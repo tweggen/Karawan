@@ -1,0 +1,22 @@
+{
+  "title": "86-current-position-serialized: CurrentWorldPosition saved to deviated NPC data",
+  "description": "CurrentWorldPosition saved to deviated NPC data",
+  "phase": "phase7-spatial",
+  "category": "Fragment-Accurate Position Tracking",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: CurrentWorldPosition saved to deviated NPC data"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Fragment-Accurate Position Tracking"
+}

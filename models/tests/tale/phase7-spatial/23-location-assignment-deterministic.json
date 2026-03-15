@@ -1,0 +1,22 @@
+{
+  "title": "23-location-assignment-deterministic: Location assignment is deterministic per NPC seed",
+  "description": "Location assignment is deterministic per NPC seed",
+  "phase": "phase7-spatial",
+  "category": "Location Type Assignment",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Location assignment is deterministic per NPC seed"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Location Type Assignment"
+}

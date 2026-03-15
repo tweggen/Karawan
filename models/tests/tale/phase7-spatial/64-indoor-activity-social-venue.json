@@ -1,0 +1,22 @@
+{
+  "title": "64-indoor-activity-social-venue: Social venue location triggers IsIndoorActivity",
+  "description": "Social venue location triggers IsIndoorActivity",
+  "phase": "phase7-spatial",
+  "category": "Building Occupancy & Indoor Activities",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Social venue location triggers IsIndoorActivity"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Building Occupancy & Indoor Activities"
+}

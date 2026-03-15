@@ -1,0 +1,22 @@
+{
+  "title": "54-find-nearest-street-segment: FindNearestOfType locates closest street point",
+  "description": "FindNearestOfType locates closest street point",
+  "phase": "phase7-spatial",
+  "category": "Travel Time Calculations",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: FindNearestOfType locates closest street point"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Travel Time Calculations"
+}

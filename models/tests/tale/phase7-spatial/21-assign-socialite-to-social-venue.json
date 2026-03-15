@@ -1,0 +1,22 @@
+{
+  "title": "21-assign-socialite-to-social-venue: Socialite NPC assigned to social venue",
+  "description": "Socialite NPC assigned to social venue",
+  "phase": "phase7-spatial",
+  "category": "Location Type Assignment",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Socialite NPC assigned to social venue"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Location Type Assignment"
+}

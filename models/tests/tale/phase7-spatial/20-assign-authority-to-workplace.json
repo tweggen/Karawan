@@ -1,0 +1,22 @@
+{
+  "title": "20-assign-authority-to-workplace: Authority NPC assigned to workplace",
+  "description": "Authority NPC assigned to workplace",
+  "phase": "phase7-spatial",
+  "category": "Location Type Assignment",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Authority NPC assigned to workplace"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Location Type Assignment"
+}

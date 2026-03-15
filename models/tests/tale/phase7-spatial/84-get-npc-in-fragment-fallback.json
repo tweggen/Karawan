@@ -1,0 +1,22 @@
+{
+  "title": "84-get-npc-in-fragment-fallback: GetNpcsInFragment falls back to home if current is zero",
+  "description": "GetNpcsInFragment falls back to home if current is zero",
+  "phase": "phase7-spatial",
+  "category": "Fragment-Accurate Position Tracking",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: GetNpcsInFragment falls back to home if current is zero"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Fragment-Accurate Position Tracking"
+}

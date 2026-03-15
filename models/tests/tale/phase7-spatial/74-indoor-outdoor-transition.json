@@ -1,0 +1,22 @@
+{
+  "title": "74-indoor-outdoor-transition: Transition from indoor to outdoor activity",
+  "description": "Transition from indoor to outdoor activity",
+  "phase": "phase7-spatial",
+  "category": "Building Occupancy & Indoor Activities",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Transition from indoor to outdoor activity"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Building Occupancy & Indoor Activities"
+}

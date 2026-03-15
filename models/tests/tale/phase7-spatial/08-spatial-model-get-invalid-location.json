@@ -1,0 +1,22 @@
+{
+  "title": "08-spatial-model-get-invalid-location: GetLocation returns null for invalid ID",
+  "description": "GetLocation returns null for invalid ID",
+  "phase": "phase7-spatial",
+  "category": "SpatialModel Extraction",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: GetLocation returns null for invalid ID"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - SpatialModel Extraction"
+}

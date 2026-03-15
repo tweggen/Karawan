@@ -1,0 +1,22 @@
+{
+  "title": "81-get-npc-in-fragment-workplace: NPC in workplace fragment appears there",
+  "description": "NPC in workplace fragment appears there",
+  "phase": "phase7-spatial",
+  "category": "Fragment-Accurate Position Tracking",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: NPC in workplace fragment appears there"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Fragment-Accurate Position Tracking"
+}

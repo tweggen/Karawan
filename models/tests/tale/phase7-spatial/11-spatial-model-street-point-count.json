@@ -1,0 +1,22 @@
+{
+  "title": "11-spatial-model-street-point-count: StreetPointCount tracks street segments",
+  "description": "StreetPointCount tracks street segments",
+  "phase": "phase7-spatial",
+  "category": "SpatialModel Extraction",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: StreetPointCount tracks street segments"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - SpatialModel Extraction"
+}

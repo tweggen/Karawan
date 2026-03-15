@@ -1,0 +1,22 @@
+{
+  "title": "15-spatial-model-estate-index: Locations track estate index",
+  "description": "Locations track estate index",
+  "phase": "phase7-spatial",
+  "category": "SpatialModel Extraction",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Locations track estate index"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - SpatialModel Extraction"
+}

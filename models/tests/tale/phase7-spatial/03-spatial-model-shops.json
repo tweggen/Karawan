@@ -1,0 +1,22 @@
+{
+  "title": "03-spatial-model-shops: Extract shops into social_venue locations",
+  "description": "Extract shops into social_venue locations",
+  "phase": "phase7-spatial",
+  "category": "SpatialModel Extraction",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Extract shops into social_venue locations"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - SpatialModel Extraction"
+}

@@ -1,0 +1,22 @@
+{
+  "title": "30-npc-workplace-location: NPC WorkplaceLocationId set from SpatialModel",
+  "description": "NPC WorkplaceLocationId set from SpatialModel",
+  "phase": "phase7-spatial",
+  "category": "Location Type Assignment",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: NPC WorkplaceLocationId set from SpatialModel"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Location Type Assignment"
+}

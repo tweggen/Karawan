@@ -1,0 +1,22 @@
+{
+  "title": "87-current-position-deserialized: CurrentWorldPosition restored from save data",
+  "description": "CurrentWorldPosition restored from save data",
+  "phase": "phase7-spatial",
+  "category": "Fragment-Accurate Position Tracking",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: CurrentWorldPosition restored from save data"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Fragment-Accurate Position Tracking"
+}

@@ -1,0 +1,22 @@
+{
+  "title": "97-phase7-entry-vs-position: EntryPosition used for appearance, Position for queries",
+  "description": "EntryPosition used for appearance, Position for queries",
+  "phase": "phase7-spatial",
+  "category": "Integration & Edge Cases",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: EntryPosition used for appearance, Position for queries"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Integration & Edge Cases"
+}

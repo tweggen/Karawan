@@ -1,0 +1,22 @@
+{
+  "title": "80-get-npc-in-fragment-current: GetNpcsInFragment uses current position not home",
+  "description": "GetNpcsInFragment uses current position not home",
+  "phase": "phase7-spatial",
+  "category": "Fragment-Accurate Position Tracking",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: GetNpcsInFragment uses current position not home"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Fragment-Accurate Position Tracking"
+}

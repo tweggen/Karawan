@@ -1,0 +1,22 @@
+{
+  "title": "48-travel-time-walking-speed: Travel time based on 75 m/min walking speed",
+  "description": "Travel time based on 75 m/min walking speed",
+  "phase": "phase7-spatial",
+  "category": "Travel Time Calculations",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Travel time based on 75 m/min walking speed"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Travel Time Calculations"
+}

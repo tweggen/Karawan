@@ -1,0 +1,22 @@
+{
+  "title": "99-phase7-location-id-collision: No ID collisions across location types",
+  "description": "No ID collisions across location types",
+  "phase": "phase7-spatial",
+  "category": "Integration & Edge Cases",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: No ID collisions across location types"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Integration & Edge Cases"
+}

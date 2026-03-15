@@ -1,0 +1,22 @@
+{
+  "title": "22-assign-drifter-to-street: Drifter NPC can be assigned to street segment",
+  "description": "Drifter NPC can be assigned to street segment",
+  "phase": "phase7-spatial",
+  "category": "Location Type Assignment",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Drifter NPC can be assigned to street segment"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Location Type Assignment"
+}

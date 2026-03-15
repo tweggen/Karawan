@@ -1,0 +1,22 @@
+{
+  "title": "79-get-npc-in-fragment-home: GetNpcsInFragment includes NPCs in home fragment",
+  "description": "GetNpcsInFragment includes NPCs in home fragment",
+  "phase": "phase7-spatial",
+  "category": "Fragment-Accurate Position Tracking",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: GetNpcsInFragment includes NPCs in home fragment"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Fragment-Accurate Position Tracking"
+}

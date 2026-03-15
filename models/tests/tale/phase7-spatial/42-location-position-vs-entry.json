@@ -1,0 +1,22 @@
+{
+  "title": "42-location-position-vs-entry: Location.Position vs EntryPosition distinction",
+  "description": "Location.Position vs EntryPosition distinction",
+  "phase": "phase7-spatial",
+  "category": "Entry Position Computation",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Location.Position vs EntryPosition distinction"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Entry Position Computation"
+}

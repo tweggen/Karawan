@@ -1,0 +1,22 @@
+{
+  "title": "17-assign-merchant-to-social-venue: Merchant NPC assigned to social venue",
+  "description": "Merchant NPC assigned to social venue",
+  "phase": "phase7-spatial",
+  "category": "Location Type Assignment",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Merchant NPC assigned to social venue"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Location Type Assignment"
+}

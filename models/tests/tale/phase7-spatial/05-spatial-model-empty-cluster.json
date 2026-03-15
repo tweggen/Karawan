@@ -1,0 +1,22 @@
+{
+  "title": "05-spatial-model-empty-cluster: Handle cluster with no buildings gracefully",
+  "description": "Handle cluster with no buildings gracefully",
+  "phase": "phase7-spatial",
+  "category": "SpatialModel Extraction",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Handle cluster with no buildings gracefully"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - SpatialModel Extraction"
+}

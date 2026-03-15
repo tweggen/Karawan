@@ -1,0 +1,22 @@
+{
+  "title": "36-entry-position-street-segment: Street segment entry position equals position",
+  "description": "Street segment entry position equals position",
+  "phase": "phase7-spatial",
+  "category": "Entry Position Computation",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Street segment entry position equals position"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Entry Position Computation"
+}

@@ -1,0 +1,22 @@
+{
+  "title": "83-get-npc-in-fragment-shop: Merchant in shop appears in shop fragment",
+  "description": "Merchant in shop appears in shop fragment",
+  "phase": "phase7-spatial",
+  "category": "Fragment-Accurate Position Tracking",
+  "steps": [
+    {
+      "step": "setup",
+      "action": "Initialize cluster with buildings and spatial model"
+    },
+    {
+      "step": "populate",
+      "action": "Generate NPC population with location assignments"
+    },
+    {
+      "step": "verify",
+      "action": "Verify: Merchant in shop appears in shop fragment"
+    }
+  ],
+  "expectedResult": "Test condition met",
+  "notes": "Phase 7 Test - Fragment-Accurate Position Tracking"
+}
