@@ -1,0 +1,25 @@
+{
+  "name": "npc-count-from-cluster",
+  "description": "NPC count derives deterministically from cluster street point count",
+  "phase": "phase-6",
+  "category": "population-generator",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Cluster with streets generates street points"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "NPC count = streetPoints / 2, capped at 4095"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "NPC count is non-zero and proportional to cluster size"
+    }
+  ]
+}

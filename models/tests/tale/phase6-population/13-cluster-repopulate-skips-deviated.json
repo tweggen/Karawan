@@ -1,0 +1,25 @@
+{
+  "name": "cluster-repopulate-skips-deviated",
+  "description": "Re-populating a cluster skips indices in the deviation skip mask",
+  "phase": "phase-6",
+  "category": "cluster-lifecycle",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "First population, mark NPC at index 5 as deviated"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "Depopulate then repopulate: index 5 skipped, deviated NPC retained"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "No duplicate at index 5, deviated version preserved"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "get-npcs-in-fragment",
+  "description": "GetNpcsInFragment returns NPCs whose HomePosition falls in the fragment",
+  "phase": "phase-6",
+  "category": "talemanager-query",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "Cluster populated with NPCs at various positions"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Fragment query returns only NPCs in that fragment, not all NPCs"
+    }
+  ]
+}

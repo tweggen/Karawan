@@ -115,11 +115,19 @@ public class TestRunnerMain
 
         Console.WriteLine("Starting test execution...");
 
+        bool isPhase6 = testScript.Contains("phase6");
+
         // Start DES simulation in a background thread (non-blocking)
         // This generates DES events that tests will validate
         System.Threading.Thread simThread = new System.Threading.Thread(() =>
         {
             System.Threading.Thread.Sleep(500);  // Give test framework time to initialize
+
+            if (isPhase6)
+            {
+                RunPhase6Tests(resourcePath);
+                return;
+            }
 
             Console.WriteLine("Setting up DES simulation...");
 
@@ -253,7 +261,204 @@ public class TestRunnerMain
         Console.WriteLine("Test execution timeout or completed after 60 seconds.");
         Environment.Exit(1); // If we reach here, test timed out
     }
+
+
+    private static void RunPhase6Tests(string resourcePath)
+    {
+        Console.WriteLine("Setting up Phase 6 tests (population/cluster lifecycle)...");
+        var eventQueue = engine.I.Get<engine.news.EventQueue>();
+
+        // Load storylet library
+        string talePath = System.IO.Path.Combine(resourcePath, "tale");
+        var library = new engine.tale.StoryletLibrary();
+        if (System.IO.Directory.Exists(talePath))
+        {
+            library.LoadFromDirectory(talePath);
+            Console.WriteLine($"Loaded {library.All.Count} storylets");
+        }
+
+        // Create and initialize TaleManager
+        var taleManager = new engine.tale.TaleManager();
+        taleManager.Initialize(library, null);
+
+        // Create a mock ClusterDesc-like spatial model for testing
+        // We'll use the SpatialModel to create NPC schedules, then test TaleManager
+        var generator = new engine.tale.TalePopulationGenerator();
+
+        // --- Test: Create schedules directly (simulating what PopulateCluster does) ---
+        // Use a deterministic seed to create test NPCs
+        var rnd = new builtin.tools.RandomSource("test-cluster-0");
+
+        // Create test street points (simulating what a cluster would provide)
+        var streetPositions = new System.Collections.Generic.List<System.Numerics.Vector3>();
+        for (int i = 0; i < 20; i++)
+        {
+            streetPositions.Add(new System.Numerics.Vector3(
+                rnd.GetFloat() * 400f - 200f,
+                2.15f,  // ground height
+                rnd.GetFloat() * 400f - 200f));
+        }
+
+        // Generate NPC schedules manually (since we don't have a real ClusterDesc)
+        int clusterIndex = 0;
+        string clusterSeed = "cluster-clusters-testworld-0";
+        var schedules = new System.Collections.Generic.List<engine.tale.NpcSchedule>();
+        string[] roles = { "worker", "merchant", "socialite", "drifter", "authority" };
+
+        for (int i = 0; i < 10; i++)
+        {
+            var npcRnd = new builtin.tools.RandomSource(clusterSeed + "-npc-" + i);
+            int npcId = engine.tale.NpcSchedule.MakeNpcId(clusterIndex, i);
+            int homeIdx = npcRnd.GetInt(streetPositions.Count - 1);
+            int workIdx = npcRnd.GetInt(streetPositions.Count - 1);
+
+            var schedule = new engine.tale.NpcSchedule
+            {
+                NpcId = npcId,
+                Seed = npcId,
+                Role = roles[npcRnd.GetInt(4)],
+                ClusterIndex = clusterIndex,
+                NpcIndex = i,
+                HomeLocationId = homeIdx,
+                WorkplaceLocationId = workIdx,
+                SocialVenueIds = new System.Collections.Generic.List<int> { npcRnd.GetInt(streetPositions.Count - 1) },
+                HomePosition = streetPositions[homeIdx],
+                WorkplacePosition = streetPositions[workIdx],
+                CurrentLocationId = homeIdx,
+                Properties = new System.Collections.Generic.Dictionary<string, float>
+                {
+                    ["hunger"] = 0f,
+                    ["health"] = 0.9f + npcRnd.GetFloat() * 0.1f,
+                    ["fatigue"] = npcRnd.GetFloat() * 0.2f,
+                    ["anger"] = npcRnd.GetFloat() * 0.1f,
+                    ["fear"] = 0f,
+                    ["trust"] = 0.4f + npcRnd.GetFloat() * 0.2f,
+                    ["happiness"] = 0.4f + npcRnd.GetFloat() * 0.3f,
+                    ["reputation"] = 0.4f + npcRnd.GetFloat() * 0.2f,
+                    ["morality"] = 0.6f + npcRnd.GetFloat() * 0.2f,
+                    ["wealth"] = 0.3f + npcRnd.GetFloat() * 0.4f,
+                },
+                Trust = new System.Collections.Generic.Dictionary<int, float>(),
+                HasPlayerDeviation = false,
+            };
+            schedules.Add(schedule);
+        }
+
+        // Register all schedules with TaleManager
+        foreach (var s in schedules)
+        {
+            taleManager.RegisterNpc(s);
+        }
+
+        Console.WriteLine($"Phase 6: Created {schedules.Count} NPC schedules for cluster {clusterIndex}");
+
+        // Emit world.cluster.completed (simulating cluster activation)
+        eventQueue.Push(new engine.news.Event("world.cluster.completed", "TestCluster0"));
+        Console.WriteLine("Phase 6: Emitted world.cluster.completed");
+
+        // Emit tale.cluster.populated
+        eventQueue.Push(new engine.news.Event("tale.cluster.populated", clusterIndex.ToString()));
+        Console.WriteLine("Phase 6: Emitted tale.cluster.populated");
+
+        // --- Test deviation tracking ---
+        // Mark NPC at index 2 as deviated
+        var deviatedNpc = schedules[2];
+        deviatedNpc.HasPlayerDeviation = true;
+        deviatedNpc.Properties["anger"] = 0.9f;
+        deviatedNpc.Properties["wealth"] = 0.1f;
+        deviatedNpc.Trust[42] = 0.8f;
+
+        // Re-register to update skip mask
+        taleManager.RegisterNpc(deviatedNpc);
+        Console.WriteLine($"Phase 6: Marked NPC {deviatedNpc.NpcId} (index {deviatedNpc.NpcIndex}) as deviated");
+
+        // --- Test second cluster ---
+        int clusterIndex2 = 1;
+        string clusterSeed2 = "cluster-clusters-testworld-1";
+        var schedules2 = new System.Collections.Generic.List<engine.tale.NpcSchedule>();
+
+        for (int i = 0; i < 8; i++)
+        {
+            var npcRnd = new builtin.tools.RandomSource(clusterSeed2 + "-npc-" + i);
+            int npcId = engine.tale.NpcSchedule.MakeNpcId(clusterIndex2, i);
+            int homeIdx = npcRnd.GetInt(streetPositions.Count - 1);
+            int workIdx = npcRnd.GetInt(streetPositions.Count - 1);
+
+            var schedule = new engine.tale.NpcSchedule
+            {
+                NpcId = npcId,
+                Seed = npcId,
+                Role = roles[npcRnd.GetInt(4)],
+                ClusterIndex = clusterIndex2,
+                NpcIndex = i,
+                HomeLocationId = homeIdx,
+                WorkplaceLocationId = workIdx,
+                SocialVenueIds = new System.Collections.Generic.List<int> { npcRnd.GetInt(streetPositions.Count - 1) },
+                HomePosition = streetPositions[homeIdx],
+                WorkplacePosition = streetPositions[workIdx],
+                CurrentLocationId = homeIdx,
+                Properties = new System.Collections.Generic.Dictionary<string, float>
+                {
+                    ["hunger"] = 0f, ["health"] = 0.95f, ["fatigue"] = 0.1f,
+                    ["anger"] = 0.05f, ["fear"] = 0f, ["trust"] = 0.5f,
+                    ["happiness"] = 0.5f, ["reputation"] = 0.5f,
+                    ["morality"] = 0.7f, ["wealth"] = 0.4f,
+                },
+                Trust = new System.Collections.Generic.Dictionary<int, float>(),
+                HasPlayerDeviation = false,
+            };
+            schedules2.Add(schedule);
+        }
+
+        foreach (var s in schedules2)
+        {
+            taleManager.RegisterNpc(s);
+        }
+
+        // Emit second cluster events
+        eventQueue.Push(new engine.news.Event("world.cluster.completed", "TestCluster1"));
+        eventQueue.Push(new engine.news.Event("tale.cluster.populated", clusterIndex2.ToString()));
+        Console.WriteLine($"Phase 6: Created {schedules2.Count} NPC schedules for cluster {clusterIndex2}");
+
+        // --- Test AdvanceNpc ---
+        var firstNpc = schedules[0];
+        var storylet = taleManager.AdvanceNpc(firstNpc.NpcId, new System.DateTime(2024, 1, 1, 8, 0, 0));
+        if (storylet != null)
+        {
+            Console.WriteLine($"Phase 6: AdvanceNpc returned storylet '{storylet.Id}' for NPC {firstNpc.NpcId}");
+        }
+        else
+        {
+            Console.WriteLine($"Phase 6: AdvanceNpc returned null (fallback) for NPC {firstNpc.NpcId}");
+        }
+
+        // --- Validate NPC ID encoding ---
+        foreach (var s in schedules)
+        {
+            int decoded_cluster = engine.tale.NpcSchedule.GetClusterIndex(s.NpcId);
+            int decoded_npc = engine.tale.NpcSchedule.GetNpcIndex(s.NpcId);
+            if (decoded_cluster != s.ClusterIndex || decoded_npc != s.NpcIndex)
+            {
+                Console.Error.WriteLine($"Phase 6 ERROR: NPC ID encoding mismatch for NPC {s.NpcId}");
+            }
+        }
+        Console.WriteLine("Phase 6: NPC ID encoding round-trip validated");
+
+        // --- Validate deviation queries ---
+        var deviated = taleManager.GetAllDeviatedNpcs();
+        Console.WriteLine($"Phase 6: GetAllDeviatedNpcs returned {deviated.Count} NPCs");
+        var skipMask = taleManager.GetDeviationSkipMask(clusterIndex);
+        Console.WriteLine($"Phase 6: Skip mask for cluster {clusterIndex}: {(skipMask != null ? skipMask.Count + " entries" : "null")}");
+
+        // --- Validate GetNpcsInFragment ---
+        var homeFragment = engine.world.Fragment.PosToIndex3(firstNpc.HomePosition);
+        var npcsInFrag = taleManager.GetNpcsInFragment(homeFragment);
+        Console.WriteLine($"Phase 6: GetNpcsInFragment({homeFragment.I},{homeFragment.K}) returned {npcsInFrag.Count} NPCs");
+
+        Console.WriteLine("Phase 6 test setup complete.");
+    }
 }
+
 
 /// <summary>
 /// Minimal asset implementation for test running.

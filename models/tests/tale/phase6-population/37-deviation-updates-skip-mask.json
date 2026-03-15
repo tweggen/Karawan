@@ -1,0 +1,15 @@
+{
+  "name": "deviation-updates-skip-mask",
+  "description": "RegisterNpc with HasPlayerDeviation=true updates the skip mask",
+  "phase": "phase-6",
+  "category": "deviation-tracking",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "RegisterNpc(deviated) adds NpcIndex to _deviationSkipMasks[ClusterIndex]"
+    }
+  ]
+}

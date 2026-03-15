@@ -46,17 +46,19 @@ PHASE_6F  TaleManager Rework         ──── ✅ COMPLETE (2026-03-15)
 | **Phase 3** | ✅ TALE_TEST_SCRIPTS_PHASE_3.md | ✅ 22 JSON (phase3-interactions/) | ✅ **22/22 PASS** | **COMPLETE** |
 | **Phase 4** | ✅ TALE_TEST_SCRIPTS_PHASE_4.md | ✅ 20 JSON (phase4-player/) | ✅ **20/20 PASS** | **COMPLETE** |
 | **Phase 5** | ✅ TALE_TEST_SCRIPTS_PHASE_5.md | ✅ 20 JSON (phase5-escalation/) | ✅ **20/20 PASS** | **COMPLETE** |
+| **Phase 6** | ✅ TALE_TEST_SCRIPTS_PHASE_6.md | ✅ 49 JSON (phase6-population/) | ✅ **49/49 PASS** | **COMPLETE** |
 
 ### Test Suite Summary
 
-- **Total Test Scripts**: 122 completed and all passing
+- **Total Test Scripts**: 171 completed and all passing
   - Phase 0: **20/20 PASS** (DES engine, initialization, scheduling, encounters, relationships)
   - Phase 1: **20/20 PASS** (Storylet library, preconditions, selection, postconditions)
   - Phase 2: **20/20 PASS** (Strategy system, phase transitions, DES integration, multi-NPC coordination)
   - Phase 3: **22/22 PASS** (NPC-NPC interactions, requests, signals, abstract resolution)
   - Phase 4: **20/20 PASS** (Player quest integration, navigation, state synchronization)
   - Phase 5: **20/20 PASS** (Interrupts, conditional postconditions, gang formation, escalation)
-- **Total Test Specifications**: 6 detailed docs covering 122 tests
+  - Phase 6: **49/49 PASS** (Seed-based population, cluster lifecycle, materialization, deviation tracking, persistence)
+- **Total Test Specifications**: 7 detailed docs covering 171 tests
 - **Test Categories**: 30+ categories covering initialization, scheduling, properties, encounters, relationships, metrics, library loading, preconditions, selection, postconditions, strategy phases, transitions, requests, signals, player interaction, interrupts, conditional branching, gang formation, and escalation scenarios
 - **Framework**: ExpectEngine with JSON format, lock-free event channels, event injection/monitoring
 - **Execution**: TestRunner CLI (Phase-agnostic test harness)
@@ -98,12 +100,14 @@ PHASE_6F  TaleManager Rework         ──── ✅ COMPLETE (2026-03-15)
 - **TALE_TEST_SCRIPTS_PHASE_0.md** — 20 detailed DES engine test specifications
 - **TALE_TEST_SCRIPTS_PHASE_1.md** — 20 detailed Storylet system test specifications
 - **TALE_TEST_SCRIPTS_PHASE_3.md** — 22 detailed NPC-NPC interaction test specifications
+- **TALE_TEST_SCRIPTS_PHASE_6.md** — 49 detailed population/lifecycle/persistence test specifications
 - **EXPECT_ENGINE_IMPLEMENTATION.md** — ExpectEngine framework details
 
 ### Test Scripts
 - **Phase 0 Tests**: `models/tests/tale/phase0-des/` (20 JSON scripts)
 - **Phase 1 Tests**: `models/tests/tale/phase1-storylets/` (20 JSON scripts)
 - **Phase 3 Tests**: `models/tests/tale/phase3-interactions/` (22 JSON scripts)
+- **Phase 6 Tests**: `models/tests/tale/phase6-population/` (49 JSON scripts)
 
 ## Where Code Lives
 

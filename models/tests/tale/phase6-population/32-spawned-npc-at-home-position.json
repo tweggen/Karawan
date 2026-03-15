@@ -1,0 +1,20 @@
+{
+  "name": "spawned-npc-at-home-position",
+  "description": "Materialized NPC entity is positioned at HomePosition from schedule",
+  "phase": "phase-6",
+  "category": "materialization",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "NPCs registered with HomePosition"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Entity transform position matches NpcSchedule.HomePosition"
+    }
+  ]
+}

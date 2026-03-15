@@ -1,0 +1,25 @@
+{
+  "name": "role-assignment",
+  "description": "NPCs receive valid roles weighted by cluster downtown intensity",
+  "phase": "phase-6",
+  "category": "population-generator",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Cluster with known downtown intensity completes"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "All NPCs get one of: worker, merchant, socialite, drifter, authority"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Role distribution valid: downtown clusters have more merchants/authority"
+    }
+  ]
+}

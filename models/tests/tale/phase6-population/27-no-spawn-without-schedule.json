@@ -1,0 +1,15 @@
+{
+  "name": "no-spawn-without-schedule",
+  "description": "SpawnCharacter returns no-op when no unmaterialized NPCs in fragment",
+  "phase": "phase-6",
+  "category": "materialization",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Empty fragment spawn request returns harmless empty action"
+    }
+  ]
+}

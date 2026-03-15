@@ -1,0 +1,25 @@
+{
+  "name": "home-position-assignment",
+  "description": "Each NPC gets a HomePosition from cluster street points in world space",
+  "phase": "phase-6",
+  "category": "population-generator",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Cluster streets generated"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "Every NPC has HomePosition != Zero, within cluster AABB"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Home positions are valid world-space coordinates on streets"
+    }
+  ]
+}

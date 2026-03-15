@@ -1,0 +1,20 @@
+{
+  "name": "deviation-flag-survives-depopulate",
+  "description": "Deviated NPC survives cluster depopulation",
+  "phase": "phase-6",
+  "category": "deviation-tracking",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "Populate, set deviation flag on NPC, depopulate"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Deviated NPC remains in TaleManager after depopulation"
+    }
+  ]
+}

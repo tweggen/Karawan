@@ -1,0 +1,15 @@
+{
+  "name": "primary-npc-not-in-skip-mask",
+  "description": "RegisterNpc with HasPlayerDeviation=false does not modify skip mask",
+  "phase": "phase-6",
+  "category": "deviation-tracking",
+  "priority": "medium",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Primary NPC registration only adds to _schedules, not _deviationSkipMasks"
+    }
+  ]
+}

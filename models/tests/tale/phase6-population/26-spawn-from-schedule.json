@@ -1,0 +1,25 @@
+{
+  "name": "spawn-from-schedule",
+  "description": "TaleSpawnOperator spawns ECS entity from existing NpcSchedule",
+  "phase": "phase-6",
+  "category": "materialization",
+  "priority": "critical",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Cluster activates and populates"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "Schedules registered"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "SpawnCharacter picks unmaterialized NPC from fragment, creates entity"
+    }
+  ]
+}

@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 
 # Paths
 TEST_BASE="models/tests/tale"
-TESTRUNNER="./TestRunner/bin/Release/net9.0/TestRunner"
+TESTRUNNER="./TestRunner/bin/Release/net9.0-windows10.0.22000.0/TestRunner.exe"
 RESULTS_FILE="/tmp/tale_test_results.txt"
 
 # Check TestRunner exists
@@ -44,8 +44,10 @@ elif [ "$FILTER" = "phase4" ]; then
     PHASES=("phase4-player")
 elif [ "$FILTER" = "phase5" ]; then
     PHASES=("phase5-escalation")
+elif [ "$FILTER" = "phase6" ]; then
+    PHASES=("phase6-population")
 elif [ "$FILTER" = "all" ]; then
-    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation")
+    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population")
 else
     # Assume it's a specific test file
     PHASES=()

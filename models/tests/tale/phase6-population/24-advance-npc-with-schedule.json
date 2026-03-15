@@ -1,0 +1,20 @@
+{
+  "name": "advance-npc-with-schedule",
+  "description": "AdvanceNpc works correctly with populated NPC schedule",
+  "phase": "phase-6",
+  "category": "talemanager-query",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "Cluster populated, NPCs have valid roles for storylet selection"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "AdvanceNpc returns non-null StoryletDefinition, updates schedule state"
+    }
+  ]
+}

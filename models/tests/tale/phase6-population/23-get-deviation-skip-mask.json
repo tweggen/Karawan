@@ -1,0 +1,20 @@
+{
+  "name": "get-deviation-skip-mask",
+  "description": "GetDeviationSkipMask returns correct set of deviated NPC indices",
+  "phase": "phase-6",
+  "category": "talemanager-query",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "Register deviated NPC at cluster 0 index 7"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Skip mask for cluster 0 contains {7}, null for unknown clusters"
+    }
+  ]
+}

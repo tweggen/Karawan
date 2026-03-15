@@ -1,0 +1,25 @@
+{
+  "name": "deviations-across-clusters",
+  "description": "Deviations in different clusters are tracked independently",
+  "phase": "phase-6",
+  "category": "deviation-tracking",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "Populate cluster A, deviate index 3"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 30,
+      "comment": "Populate cluster B, deviate index 5"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Each cluster has its own skip mask, depopulating A keeps B's deviations"
+    }
+  ]
+}

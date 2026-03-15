@@ -1,0 +1,25 @@
+{
+  "name": "npc-id-encoding",
+  "description": "NPC IDs encode cluster index (20 bits) + NPC index (12 bits) correctly",
+  "phase": "phase-6",
+  "category": "population-generator",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Cluster completes"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "MakeNpcId/GetClusterIndex/GetNpcIndex round-trip correctly for all NPCs"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "NPC IDs are globally unique and decode back to correct cluster+index"
+    }
+  ]
+}

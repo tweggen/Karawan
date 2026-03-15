@@ -1,0 +1,25 @@
+{
+  "name": "cluster-no-double-populate",
+  "description": "Calling PopulateCluster twice for same cluster is idempotent",
+  "phase": "phase-6",
+  "category": "cluster-lifecycle",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "First cluster completion"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "Population registered"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Second PopulateCluster call for same index is a no-op, no duplicates"
+    }
+  ]
+}

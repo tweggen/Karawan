@@ -1,0 +1,25 @@
+{
+  "name": "cluster-completed-populates",
+  "description": "ClusterCompletedEvent triggers TaleManager.PopulateCluster()",
+  "phase": "phase-6",
+  "category": "cluster-lifecycle",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Cluster activation fires ClusterCompletedEvent"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "TaleModule receives event, calls PopulateCluster, schedules registered"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "TaleManager.IsClusterPopulated() returns true after event"
+    }
+  ]
+}

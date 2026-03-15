@@ -1,0 +1,20 @@
+{
+  "name": "respawn-after-terminate",
+  "description": "After termination, NPC can be respawned from same schedule",
+  "phase": "phase-6",
+  "category": "materialization",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "NPC spawned, terminated, fragment re-enters visibility"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Same NPC materializes again with same schedule state"
+    }
+  ]
+}

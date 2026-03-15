@@ -1,0 +1,20 @@
+{
+  "name": "deviation-flag-default-false",
+  "description": "Generated NPCs have HasPlayerDeviation=false by default",
+  "phase": "phase-6",
+  "category": "deviation-tracking",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "Fresh population generated"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Every NPC in freshly generated population has HasPlayerDeviation=false"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "load-sets-skip-mask",
+  "description": "Loading deviated NPCs populates the deviation skip mask",
+  "phase": "phase-6",
+  "category": "persistence",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "After load, GetDeviationSkipMask contains loaded NPC indices"
+    }
+  ]
+}

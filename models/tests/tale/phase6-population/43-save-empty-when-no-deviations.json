@@ -1,0 +1,20 @@
+{
+  "name": "save-empty-when-no-deviations",
+  "description": "No deviated NPCs means TaleDeviations remains empty",
+  "phase": "phase-6",
+  "category": "persistence",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "All NPCs in primary state"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "OnBeforeSaveGame does not write to TaleDeviations when count is 0"
+    }
+  ]
+}

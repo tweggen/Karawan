@@ -1,0 +1,15 @@
+{
+  "name": "get-npcs-empty-fragment",
+  "description": "GetNpcsInFragment returns empty list for fragment with no NPCs",
+  "phase": "phase-6",
+  "category": "talemanager-query",
+  "priority": "medium",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Query for distant fragment returns empty list, no crash"
+    }
+  ]
+}

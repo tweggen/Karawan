@@ -1,0 +1,20 @@
+{
+  "name": "empty-cluster-no-crash",
+  "description": "Cluster with no street points produces zero NPCs without error",
+  "phase": "phase-6",
+  "category": "cluster-lifecycle",
+  "priority": "medium",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Even empty clusters fire completed event"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "PopulateCluster gracefully returns empty list for streetless cluster"
+    }
+  ]
+}

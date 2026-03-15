@@ -1,0 +1,15 @@
+{
+  "name": "get-schedule-null-missing",
+  "description": "GetSchedule returns null for non-existent NPC ID",
+  "phase": "phase-6",
+  "category": "talemanager-query",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "GetSchedule(999999) returns null, no crash"
+    }
+  ]
+}

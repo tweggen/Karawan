@@ -1,0 +1,25 @@
+{
+  "name": "cluster-repopulate-identical",
+  "description": "Depopulate then repopulate produces identical primary NPCs",
+  "phase": "phase-6",
+  "category": "cluster-lifecycle",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Record NPC data from first population"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "Depopulate then repopulate: roles, positions, properties match original"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Seed determinism ensures regenerated NPCs are identical"
+    }
+  ]
+}

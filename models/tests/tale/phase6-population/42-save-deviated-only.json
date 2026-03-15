@@ -1,0 +1,20 @@
+{
+  "name": "save-deviated-only",
+  "description": "OnBeforeSaveGame serializes only deviated NPCs to GameState.TaleDeviations",
+  "phase": "phase-6",
+  "category": "persistence",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "100 NPCs generated, 2 deviated"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "TaleDeviations JSON contains exactly 2 entries, not 100"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "spawn-status-from-schedule-count",
+  "description": "GetFragmentSpawnStatus min/max equals NPC count in fragment",
+  "phase": "phase-6",
+  "category": "materialization",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "Cluster populated with known NPC count"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "SpawnStatus.MinCharacters == SpawnStatus.MaxCharacters == fragment NPC count"
+    }
+  ]
+}

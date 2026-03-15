@@ -1,0 +1,35 @@
+{
+  "name": "multiple-clusters-independent",
+  "description": "Multiple clusters can be populated independently with unique NPC IDs",
+  "phase": "phase-6",
+  "category": "cluster-lifecycle",
+  "priority": "high",
+  "globalTimeout": 60,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "First cluster completes"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "First cluster populated"
+    },
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 30,
+      "comment": "Second cluster completes"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "Second cluster populated with non-overlapping NPC IDs"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "No NPC ID collisions between clusters"
+    }
+  ]
+}

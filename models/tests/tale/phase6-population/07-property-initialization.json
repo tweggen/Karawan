@@ -1,0 +1,25 @@
+{
+  "name": "property-initialization",
+  "description": "NPC properties initialized with role-appropriate defaults and seed variation",
+  "phase": "phase-6",
+  "category": "population-generator",
+  "priority": "high",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Cluster completes"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "NPCs have hunger, health, wealth, morality, anger, fear, trust, happiness, reputation"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "All properties in 0.0-1.0 range, workers have lower wealth than merchants"
+    }
+  ]
+}

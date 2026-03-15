@@ -1,0 +1,25 @@
+{
+  "name": "cluster-depopulate-primary",
+  "description": "DepopulateCluster removes non-deviated schedules from TaleManager",
+  "phase": "phase-6",
+  "category": "cluster-lifecycle",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Cluster populated"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "NPCs registered in TaleManager"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "After DepopulateCluster, GetSchedule returns null for primary NPCs"
+    }
+  ]
+}

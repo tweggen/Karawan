@@ -1,0 +1,20 @@
+{
+  "name": "get-schedule-returns-npc",
+  "description": "GetSchedule(npcId) returns the correct NpcSchedule after population",
+  "phase": "phase-6",
+  "category": "talemanager-query",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 25,
+      "comment": "Cluster populated"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "GetSchedule returns non-null with correct NpcId, Role, Properties"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "cluster-depopulate-keeps-deviated",
+  "description": "DepopulateCluster retains NPCs with HasPlayerDeviation=true",
+  "phase": "phase-6",
+  "category": "cluster-lifecycle",
+  "priority": "critical",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "expect": { "type": "world.cluster.completed" },
+      "timeout": 20,
+      "comment": "Cluster populated"
+    },
+    {
+      "expect": { "type": "tale.cluster.populated" },
+      "timeout": 10,
+      "comment": "Mark one NPC as deviated, then depopulate"
+    },
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "Deviated NPC survives depopulation, GetSchedule still returns it"
+    }
+  ]
+}

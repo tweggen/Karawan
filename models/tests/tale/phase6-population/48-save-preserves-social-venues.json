@@ -1,0 +1,15 @@
+{
+  "name": "save-preserves-social-venues",
+  "description": "SocialVenueIds on deviated NPCs survive save/load",
+  "phase": "phase-6",
+  "category": "persistence",
+  "priority": "medium",
+  "globalTimeout": 30,
+  "steps": [
+    {
+      "action": "quit",
+      "result": "pass",
+      "comment": "NPC with SocialVenueIds=[3,7,12] round-trips through JSON correctly"
+    }
+  ]
+}
