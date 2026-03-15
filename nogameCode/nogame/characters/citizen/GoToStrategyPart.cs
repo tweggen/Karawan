@@ -35,6 +35,20 @@ public class GoToStrategyPart : AEntityStrategyPart
 
         var startPos = CurrentPosition?.Position ?? Vector3.Zero;
         var endPos = Destination;
+
+        // Compute proper ground height based on cluster/quarter geometry
+        float groundHeight = 0f;
+        if (CurrentPosition?.ClusterDesc != null)
+        {
+            groundHeight = CurrentPosition.ClusterDesc.AverageHeight +
+                          engine.world.MetaGen.ClusterStreetHeight +
+                          engine.world.MetaGen.QuarterSidewalkOffset;
+        }
+
+        // Apply proper Y coordinate to both route points
+        startPos.Y = groundHeight;
+        endPos.Y = groundHeight;
+
         _totalDistance = Vector3.Distance(startPos, endPos);
 
         if (_totalDistance < 0.5f)

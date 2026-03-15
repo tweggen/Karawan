@@ -129,6 +129,12 @@ public class TaleSpawnOperator : ISpawnOperator
                     return;
                 }
 
+                // Adjust position to proper ground height
+                float groundHeight = cd.AverageHeight +
+                                    engine.world.MetaGen.ClusterStreetHeight +
+                                    engine.world.MetaGen.QuarterSidewalkOffset;
+                pod.Position = pod.Position with { Y = groundHeight };
+
                 // Create character model
                 var cmd = CharacterModelDescriptionFactory.CreateCitizen(_rnd);
 
@@ -146,13 +152,24 @@ public class TaleSpawnOperator : ISpawnOperator
                     EntityStrategyFactory = entity => taleStrategy,
                     CharacterModelDescription = cmd,
                     PhysicsName = CharacterCreator.EntityName,
-                    Fragment = worldFragment
+                    Fragment = worldFragment,
+                    Position = pod.Position
                 };
                 var model = await creator.CreateAsync();
 
                 _engine.QueueEntitySetupAction(CharacterCreator.EntityName, e =>
                 {
                     creator.CreateLogical(e);
+
+                    // Position the entity at the starting location with camera mask (since strategy won't do it initially)
+                    I.Get<engine.joyce.TransformApi>().SetTransforms(
+                        e,
+                        true,                    // isVisible
+                        0x0000ffff,             // cameraMask (all 16 bits = visible to all cameras)
+                        Quaternion.Identity,    // orientation
+                        pod.Position            // position
+                    );
+
                     spawnStatus.InCreation--;
                 });
                 ++_seed;
