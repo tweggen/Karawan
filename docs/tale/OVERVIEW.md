@@ -28,6 +28,12 @@ PHASE_2   Strategy Translation       ──── ✅ COMPLETE (2026-03-14)
 PHASE_3   NPC-NPC Interaction        ──── ✅ COMPLETE (2026-03-14)
 PHASE_4   Player Intersection        ──── ✅ COMPLETE (2026-03-14)
 PHASE_5   Branching & Escalation     ──── ✅ COMPLETE (2026-03-14)
+PHASE_6A  Seed-Based Population Gen  ──── ✅ COMPLETE (2026-03-15)
+PHASE_6B  Cluster Lifecycle Hook     ──── ✅ COMPLETE (2026-03-15)
+PHASE_6C  SpawnOperator Rework       ──── ✅ COMPLETE (2026-03-15)
+PHASE_6D  Deviation Tracking         ──── ✅ COMPLETE (2026-03-15)
+PHASE_6E  Deviation Persistence      ──── ✅ COMPLETE (2026-03-15)
+PHASE_6F  TaleManager Rework         ──── ✅ COMPLETE (2026-03-15)
 ```
 
 ### Testing Status
@@ -62,21 +68,28 @@ PHASE_5   Branching & Escalation     ──── ✅ COMPLETE (2026-03-14)
 | 0A | Nothing (first step) | **Complete** |
 | 0B | 0A (spatial model) | **Complete** |
 | 0C | 0B (DES produces output) | **Complete** |
-| 1 | 0A or 0B (storylets run in DES or standalone) | Ready (implementation not started) |
-| 2 | 1 (storylets exist to translate) | Awaiting Phase 1 completion |
-| 3 | 1 + 0B (interaction pool needs DES + storylets) | **Complete** (implementation-wise) |
-| 4 | 2 + 3 (player needs visible NPCs + interaction pool) | Awaiting Phase 2 completion |
-| 5 | 3 (branching needs interaction pool) | Awaiting Phase 2 completion |
+| 1 | 0A or 0B (storylets run in DES or standalone) | **Complete** |
+| 2 | 1 (storylets exist to translate) | **Complete** |
+| 3 | 1 + 0B (interaction pool needs DES + storylets) | **Complete** |
+| 4 | 2 + 3 (player needs visible NPCs + interaction pool) | **Complete** |
+| 5 | 3 (branching needs interaction pool) | **Complete** |
+| 6A | 0-5 (needs TaleManager, StoryletLibrary, NpcSchedule) | Not started |
+| 6B | 6A (needs population generator to hook into cluster) | Not started |
+| 6C | 6B (needs populated TaleManager to query) | Not started |
+| 6D | 6C (needs working spawn/despawn to track interactions) | Not started |
+| 6E | 6D (needs deviation flags to know what to persist) | Not started |
+| 6F | 6A-6E (reworks TaleManager role based on full pipeline) | Not started |
 
-**Current Focus**: All 122 tests passing (Phases 0-5). Complete TALE implementation and test suite validated. Ready for production deployment.
+**Current Focus**: Phases 0-5 complete (122 tests passing). Phase 6 (production integration) in planning — see `PHASE_6.md` for the implementation plan.
 
 ## Documentation Map
 
 ### Implementation & Concepts
-- **REFERENCE.md** — Shared concepts (properties, verbs, roles, interaction primitives)
+- **REFERENCE.md** — Shared concepts (properties, verbs, roles, interaction primitives, simulation tiers, seed generation, deviation tracking)
 - **PHASE_0.md** — DES engine implementation (complete)
 - **PHASE_3.md** — NPC-NPC interaction system implementation (complete)
 - **PHASES_1_2_4_5_SKELETON.md** — Outlines for Phases 1, 2, 4, 5
+- **PHASE_6.md** — Production integration: seed-based population, cluster lifecycle, spawn rework, deviation persistence
 
 ### Testing Framework
 - **TESTING_QUICK_START.md** — Current status, execution guide, priorities (start here)
@@ -97,6 +110,12 @@ PHASE_5   Branching & Escalation     ──── ✅ COMPLETE (2026-03-14)
 - **Engine narrative code**: `JoyceCode/engine/tale/` — production DES engine
   - Phase 0: DesSimulation, EventQueue, RelationshipTracker, JsonlEventLogger
   - Phase 3: InteractionPool, InteractionRequest, InteractionSignal
+  - Phase 6: TaleManager (schedule registry), NpcSchedule, StoryletSelector
+- **Production integration**: `nogameCode/nogame/`
+  - TALE module: `modules/tale/TaleModule.cs` — bootstraps library + TaleManager
+  - TALE spawn: `characters/citizen/TaleSpawnOperator.cs` — materializes Tier 3 → Tier 2/1
+  - TALE strategy: `characters/citizen/TaleEntityStrategy.cs` — drives NPC behavior from schedule
+  - Scene hook: `scenes/root/Scene.cs` — registers TaleSpawnOperator with SpawnController
 - **Testbed driver**: `Testbed/` project — thin CLI harness for simulation
 - **Story content**: JSON data files in `models/tale/` — storylet definitions, role-specific content
   - Main files: merchant.json, worker.json, drifter.json, socialite.json, authority.json, universal.json

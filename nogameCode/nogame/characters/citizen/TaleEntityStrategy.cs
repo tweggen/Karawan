@@ -245,16 +245,16 @@ public class TaleEntityStrategy : AOneOfStrategy
 
 
     /// <summary>
-    /// Factory method: create a TaleEntityStrategy for an NPC at a given position.
+    /// Factory method: create a TaleEntityStrategy for an NPC with an existing schedule.
     /// </summary>
     public static bool TryCreate(
-        int npcId,
+        NpcSchedule schedule,
         TaleManager taleManager,
         PositionDescription pod,
         CharacterModelDescription cmd,
         out TaleEntityStrategy strategy)
     {
-        if (pod == null || taleManager == null)
+        if (pod == null || taleManager == null || schedule == null)
         {
             strategy = null;
             return false;
@@ -265,7 +265,7 @@ public class TaleEntityStrategy : AOneOfStrategy
             BasicSpeed = 4.5f / 3.6f // ~4.5 km/h walking speed
         };
 
-        strategy = new TaleEntityStrategy(npcId, taleManager, cmd, pod, characterState);
+        strategy = new TaleEntityStrategy(schedule.NpcId, taleManager, cmd, pod, characterState);
         return true;
     }
 }

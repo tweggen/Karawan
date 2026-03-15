@@ -54,6 +54,12 @@ public class GameState
      */
     public List<string> WorldModifications { get; set; } = new();
 
+    /// <summary>
+    /// Serialized TALE NPC deviations (JSON array of deviated NpcSchedule objects).
+    /// Only NPCs the player has interacted with and changed are stored here.
+    /// </summary>
+    public string TaleDeviations { get; set; } = "";
+
     public string Entities { get; set; } = "";
     
     private DateTime _gameNow = GameT0;

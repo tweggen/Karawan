@@ -1,26 +1,49 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using engine.joyce;
+using engine.world;
 
 namespace engine.tale;
 
 /// <summary>
-/// Runtime TALE manager. Maintains NpcSchedules and advances storylets
-/// at game time. Provides API for spawn operators and strategy completion
-/// callbacks.
+/// Runtime TALE manager. Cluster-aware registry of NpcSchedules.
+/// Manages Tier 3 background population with seed-based regeneration
+/// and deviation-only persistence.
 /// </summary>
 public class TaleManager
 {
     private StoryletLibrary _library;
     private StoryletSelector _selector;
     private SpatialModel _spatialModel;
-    private Dictionary<int, NpcSchedule> _schedules = new();
     private Random _rng;
+
+    /// <summary>
+    /// All schedules by NpcId. Includes both generated (primary) and deviated NPCs.
+    /// </summary>
+    private Dictionary<int, NpcSchedule> _schedules = new();
+
+    /// <summary>
+    /// Track which clusters are currently populated.
+    /// </summary>
+    private HashSet<int> _populatedClusters = new();
+
+    /// <summary>
+    /// Deviation skip masks per cluster: cluster index → set of NPC indices to skip on regeneration.
+    /// </summary>
+    private Dictionary<int, HashSet<int>> _deviationSkipMasks = new();
+
+    /// <summary>
+    /// NPC IDs that are currently materialized as Tier 2/1 ECS entities.
+    /// </summary>
+    private HashSet<int> _materializedNpcIds = new();
 
     /// <summary>
     /// Reusable buffer for property deltas in ApplyPostconditions.
     /// </summary>
     private readonly Dictionary<string, float> _deltasBuffer = new();
+
+    private readonly TalePopulationGenerator _generator = new();
 
 
     public void Initialize(StoryletLibrary library, SpatialModel spatialModel, int seed = 42)
@@ -32,9 +55,85 @@ public class TaleManager
     }
 
 
+    #region Cluster Lifecycle
+
+    /// <summary>
+    /// Populate a cluster: generate NPC schedules from seed, skipping deviated indices.
+    /// Called on ClusterCompletedEvent.
+    /// </summary>
+    public void PopulateCluster(ClusterDesc clusterDesc)
+    {
+        int clusterIndex = clusterDesc.Index;
+
+        if (_populatedClusters.Contains(clusterIndex))
+            return;
+
+        _deviationSkipMasks.TryGetValue(clusterIndex, out var skipMask);
+        var schedules = _generator.Generate(clusterDesc, skipMask);
+
+        foreach (var schedule in schedules)
+        {
+            _schedules[schedule.NpcId] = schedule;
+        }
+
+        _populatedClusters.Add(clusterIndex);
+    }
+
+
+    /// <summary>
+    /// Depopulate a cluster: remove non-deviated schedules (they can be regenerated).
+    /// Deviated NPCs remain in _schedules and their indices stay in the skip mask.
+    /// </summary>
+    public void DepopulateCluster(int clusterIndex)
+    {
+        if (!_populatedClusters.Contains(clusterIndex))
+            return;
+
+        var toRemove = new List<int>();
+        foreach (var kvp in _schedules)
+        {
+            if (kvp.Value.ClusterIndex == clusterIndex && !kvp.Value.HasPlayerDeviation)
+            {
+                toRemove.Add(kvp.Key);
+            }
+        }
+
+        foreach (var npcId in toRemove)
+        {
+            _schedules.Remove(npcId);
+            _materializedNpcIds.Remove(npcId);
+        }
+
+        _populatedClusters.Remove(clusterIndex);
+    }
+
+
+    /// <summary>
+    /// Check if a cluster is currently populated.
+    /// </summary>
+    public bool IsClusterPopulated(int clusterIndex) => _populatedClusters.Contains(clusterIndex);
+
+    #endregion
+
+
+    #region NPC Registration & Query
+
+    /// <summary>
+    /// Register a single NPC schedule (used for deviated NPCs loaded from save).
+    /// </summary>
     public void RegisterNpc(NpcSchedule schedule)
     {
         _schedules[schedule.NpcId] = schedule;
+
+        if (schedule.HasPlayerDeviation)
+        {
+            if (!_deviationSkipMasks.TryGetValue(schedule.ClusterIndex, out var mask))
+            {
+                mask = new HashSet<int>();
+                _deviationSkipMasks[schedule.ClusterIndex] = mask;
+            }
+            mask.Add(schedule.NpcIndex);
+        }
     }
 
 
@@ -46,6 +145,84 @@ public class TaleManager
 
     public IReadOnlyDictionary<int, NpcSchedule> AllSchedules => _schedules;
 
+
+    /// <summary>
+    /// Get all NPC schedules whose home position falls in the given fragment.
+    /// Used by TaleSpawnOperator to decide which NPCs to materialize.
+    /// </summary>
+    public List<NpcSchedule> GetNpcsInFragment(Index3 idxFragment)
+    {
+        var result = new List<NpcSchedule>();
+        foreach (var kvp in _schedules)
+        {
+            var npc = kvp.Value;
+            var npcFragment = Fragment.PosToIndex3(npc.HomePosition);
+            if (npcFragment.I == idxFragment.I && npcFragment.K == idxFragment.K)
+            {
+                result.Add(npc);
+            }
+        }
+        return result;
+    }
+
+
+    /// <summary>
+    /// Get all deviated NPCs for a given cluster (for persistence).
+    /// </summary>
+    public List<NpcSchedule> GetDeviatedNpcs(int clusterIndex)
+    {
+        var result = new List<NpcSchedule>();
+        foreach (var kvp in _schedules)
+        {
+            if (kvp.Value.ClusterIndex == clusterIndex && kvp.Value.HasPlayerDeviation)
+            {
+                result.Add(kvp.Value);
+            }
+        }
+        return result;
+    }
+
+
+    /// <summary>
+    /// Get all deviated NPCs across all clusters (for save).
+    /// </summary>
+    public List<NpcSchedule> GetAllDeviatedNpcs()
+    {
+        var result = new List<NpcSchedule>();
+        foreach (var kvp in _schedules)
+        {
+            if (kvp.Value.HasPlayerDeviation)
+            {
+                result.Add(kvp.Value);
+            }
+        }
+        return result;
+    }
+
+
+    /// <summary>
+    /// Get the deviation skip mask for a cluster.
+    /// </summary>
+    public HashSet<int> GetDeviationSkipMask(int clusterIndex)
+    {
+        return _deviationSkipMasks.GetValueOrDefault(clusterIndex);
+    }
+
+    #endregion
+
+
+    #region Materialization Tracking
+
+    public bool IsMaterialized(int npcId) => _materializedNpcIds.Contains(npcId);
+
+    public void SetMaterialized(int npcId) => _materializedNpcIds.Add(npcId);
+
+    public void SetDematerialized(int npcId) => _materializedNpcIds.Remove(npcId);
+
+    #endregion
+
+
+    #region Storylet Advancement
 
     /// <summary>
     /// Advance an NPC to its next storylet. Called when the entity strategy
@@ -106,7 +283,6 @@ public class TaleManager
 
     /// <summary>
     /// Get the world position for an NPC at a given game time.
-    /// Uses the spatial model to resolve location positions.
     /// </summary>
     public Vector3 GetWorldPosition(int npcId, DateTime gameNow)
     {
@@ -114,6 +290,10 @@ public class TaleManager
         return npc.PositionAt(gameNow, _spatialModel);
     }
 
+    #endregion
+
+
+    #region Location Resolution
 
     private int ResolveLocation(NpcSchedule npc, StoryletDefinition storylet)
     {
@@ -163,4 +343,6 @@ public class TaleManager
         }
         return npc.CurrentLocationId;
     }
+
+    #endregion
 }

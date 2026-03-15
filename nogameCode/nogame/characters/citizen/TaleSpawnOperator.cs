@@ -11,8 +11,8 @@ using static engine.Logger;
 namespace nogame.characters.citizen;
 
 /// <summary>
-/// Spawn operator for TALE-driven NPCs. Creates citizen entities that are
-/// controlled by TaleEntityStrategy instead of the default patrol-loop EntityStrategy.
+/// Spawn operator for TALE-driven NPCs. Materializes Tier 3 NPC schedules
+/// from TaleManager into Tier 2/1 ECS entities with TaleEntityStrategy.
 /// </summary>
 public class TaleSpawnOperator : ISpawnOperator
 {
@@ -24,7 +24,6 @@ public class TaleSpawnOperator : ISpawnOperator
     private builtin.tools.RandomSource _rnd = new("tale_citizen");
 
     private TaleManager _taleManager;
-    private int _seed = 0;
 
     private Dictionary<Index3, SpawnStatus> _mapFragmentStatus = new();
 
@@ -54,24 +53,12 @@ public class TaleSpawnOperator : ISpawnOperator
             spawnStatus = new SpawnStatus { InCreation = 0 };
             _mapFragmentStatus[idxFragment] = spawnStatus;
 
-            // Count how many TALE NPCs should be in this fragment
-            var cd = _clusterHeatMap.GetClusterDesc(idxFragment);
-            if (cd == null)
-            {
-                spawnStatus.MinCharacters = 0;
-                spawnStatus.MaxCharacters = 0;
-            }
-            else
-            {
-                // For now, TALE NPCs are a fixed small count per fragment
-                // This will be tuned as the TALE system populates
-                var ilistSPs = cd.GetStreetPointsInFragment(idxFragment);
-                float density = cd.GetAttributeIntensity(
-                    idxFragment.AsVector3(), ClusterDesc.LocationAttributes.Downtown);
-                float nMax = 2f * ilistSPs.Count * density;
-                spawnStatus.MinCharacters = (ushort)Math.Max(0, nMax * 0.5f);
-                spawnStatus.MaxCharacters = (ushort)(nMax);
-            }
+            // Count how many TALE NPCs are registered for this fragment
+            var npcsInFragment = _taleManager.GetNpcsInFragment(idxFragment);
+            int npcCount = npcsInFragment.Count;
+
+            spawnStatus.MinCharacters = (ushort)npcCount;
+            spawnStatus.MaxCharacters = (ushort)npcCount;
         }
     }
 
@@ -90,6 +77,13 @@ public class TaleSpawnOperator : ISpawnOperator
     {
         lock (_lo)
         {
+            // Dematerialize all NPCs in this fragment
+            var npcsInFragment = _taleManager.GetNpcsInFragment(idxFragment);
+            foreach (var npc in npcsInFragment)
+            {
+                _taleManager.SetDematerialized(npc.NpcId);
+            }
+
             _mapFragmentStatus.Remove(idxFragment);
         }
     }
@@ -97,6 +91,26 @@ public class TaleSpawnOperator : ISpawnOperator
 
     public Action SpawnCharacter(Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats)
     {
+        // Find the next unmaterialized NPC in this fragment
+        NpcSchedule targetNpc = null;
+        lock (_lo)
+        {
+            var npcsInFragment = _taleManager.GetNpcsInFragment(idxFragment);
+            foreach (var npc in npcsInFragment)
+            {
+                if (!_taleManager.IsMaterialized(npc.NpcId))
+                {
+                    targetNpc = npc;
+                    break;
+                }
+            }
+        }
+
+        if (targetNpc == null) return () => { };
+
+        int npcId = targetNpc.NpcId;
+        _taleManager.SetMaterialized(npcId);
+
         SpawnStatus spawnStatus;
         lock (_lo)
         {
@@ -112,37 +126,37 @@ public class TaleSpawnOperator : ISpawnOperator
                 if (cd == null)
                 {
                     spawnStatus.InCreation--;
+                    _taleManager.SetDematerialized(npcId);
                     return;
                 }
 
                 if (!_loader.TryGetFragment(idxFragment, out var worldFragment))
                 {
                     spawnStatus.InCreation--;
+                    _taleManager.SetDematerialized(npcId);
                     return;
                 }
 
-                // Choose start position
-                EntityStrategy._chooseStartPosition(_rnd, worldFragment, cd, out var pod);
-                if (pod == null)
+                // Use the NPC's home position from its schedule
+                var schedule = _taleManager.GetSchedule(npcId);
+                if (schedule == null)
                 {
                     spawnStatus.InCreation--;
+                    _taleManager.SetDematerialized(npcId);
                     return;
                 }
 
-                // Adjust position to proper ground height
-                float groundHeight = cd.AverageHeight +
-                                    engine.world.MetaGen.ClusterStreetHeight +
-                                    engine.world.MetaGen.QuarterSidewalkOffset;
-                pod.Position = pod.Position with { Y = groundHeight };
+                var pod = new PositionDescription { Position = schedule.HomePosition };
 
-                // Create character model
-                var cmd = CharacterModelDescriptionFactory.CreateCitizen(_rnd);
+                // Create character model deterministically from NPC seed
+                var npcRnd = new builtin.tools.RandomSource(cd.GetKey() + "-npc-" + schedule.NpcIndex + "-model");
+                var cmd = CharacterModelDescriptionFactory.CreateCitizen(npcRnd);
 
-                // Create TALE strategy
-                int npcId = _seed;
-                if (!TaleEntityStrategy.TryCreate(npcId, _taleManager, pod, cmd, out var taleStrategy))
+                // Create TALE strategy using the existing schedule
+                if (!TaleEntityStrategy.TryCreate(schedule, _taleManager, pod, cmd, out var taleStrategy))
                 {
                     spawnStatus.InCreation--;
+                    _taleManager.SetDematerialized(npcId);
                     return;
                 }
 
@@ -161,22 +175,21 @@ public class TaleSpawnOperator : ISpawnOperator
                 {
                     creator.CreateLogical(e);
 
-                    // Position the entity at the starting location with camera mask (since strategy won't do it initially)
                     I.Get<engine.joyce.TransformApi>().SetTransforms(
                         e,
-                        true,                    // isVisible
-                        0x0000ffff,             // cameraMask (all 16 bits = visible to all cameras)
-                        Quaternion.Identity,    // orientation
-                        pod.Position            // position
+                        true,
+                        0x0000ffff,
+                        Quaternion.Identity,
+                        pod.Position
                     );
 
                     spawnStatus.InCreation--;
                 });
-                ++_seed;
             }
             catch (Exception e)
             {
                 spawnStatus.InCreation--;
+                _taleManager.SetDematerialized(npcId);
                 Error($"Exception spawning TALE character: {e}");
             }
         };
