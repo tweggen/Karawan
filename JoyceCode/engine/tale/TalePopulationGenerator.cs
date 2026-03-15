@@ -25,9 +25,10 @@ public class TalePopulationGenerator
     /// Generate NPC schedules for a cluster, skipping deviated NPC indices.
     /// </summary>
     /// <param name="clusterDesc">The cluster to populate.</param>
+    /// <param name="spatialModel">Spatial model for location assignment. If null, falls back to street points.</param>
     /// <param name="skipIndices">NPC indices to skip (deviated NPCs loaded from save).</param>
     /// <returns>List of generated NpcSchedule objects (excludes skipped indices).</returns>
-    public List<NpcSchedule> Generate(ClusterDesc clusterDesc, HashSet<int> skipIndices = null)
+    public List<NpcSchedule> Generate(ClusterDesc clusterDesc, SpatialModel spatialModel, HashSet<int> skipIndices = null)
     {
         int clusterIndex = clusterDesc.Index;
         string clusterSeed = clusterDesc.GetKey();
@@ -45,7 +46,7 @@ public class TalePopulationGenerator
             if (skipIndices != null && skipIndices.Contains(i))
                 continue;
 
-            var schedule = GenerateNpc(clusterIndex, i, clusterSeed, clusterDesc, streetPoints);
+            var schedule = GenerateNpc(clusterIndex, i, clusterSeed, clusterDesc, streetPoints, spatialModel);
             schedules.Add(schedule);
         }
 
@@ -76,7 +77,8 @@ public class TalePopulationGenerator
         int npcIndex,
         string clusterSeed,
         ClusterDesc clusterDesc,
-        List<Vector3> streetPoints)
+        List<Vector3> streetPoints,
+        SpatialModel spatialModel)
     {
         // Independent seed per NPC — skipping other indices has no effect
         var rnd = new RandomSource(clusterSeed + "-npc-" + npcIndex);
@@ -86,20 +88,45 @@ public class TalePopulationGenerator
         // Assign role
         string role = PickRole(rnd, clusterDesc);
 
-        // Assign home position (pick a street point deterministically)
-        int homeIdx = rnd.GetInt(streetPoints.Count - 1);
-        Vector3 homePos = streetPoints[homeIdx];
+        // Assign location IDs from spatial model (if available)
+        int homeLocId, workLocId;
+        Vector3 homePos, workPos;
 
-        // Assign workplace position (different street point)
-        int workIdx = rnd.GetInt(streetPoints.Count - 1);
-        Vector3 workPos = streetPoints[workIdx];
+        if (spatialModel != null && spatialModel.Locations.Count > 0)
+        {
+            homeLocId = AssignLocationByRole(rnd, spatialModel, role, "home");
+            workLocId = AssignLocationByRole(rnd, spatialModel, role, "workplace");
+            var homeLoc = spatialModel.GetLocation(homeLocId);
+            var workLoc = spatialModel.GetLocation(workLocId);
+            homePos = homeLoc?.Position ?? Vector3.Zero;
+            workPos = workLoc?.Position ?? Vector3.Zero;
+        }
+        else
+        {
+            // Fallback: use street points as before
+            homeLocId = rnd.GetInt(streetPoints.Count - 1);
+            workLocId = rnd.GetInt(streetPoints.Count - 1);
+            homePos = streetPoints[homeLocId];
+            workPos = streetPoints[workLocId];
+        }
 
-        // Assign social venue positions (1-3 venues)
+        // Assign social venue IDs (1-3 venues)
         int venueCount = 1 + rnd.GetInt(2);
         var socialVenueIds = new List<int>(venueCount);
-        for (int v = 0; v < venueCount; v++)
+        if (spatialModel != null && spatialModel.Locations.Count > 0)
         {
-            socialVenueIds.Add(rnd.GetInt(streetPoints.Count - 1));
+            for (int v = 0; v < venueCount; v++)
+            {
+                int venueId = AssignLocationByRole(rnd, spatialModel, role, "social_venue");
+                socialVenueIds.Add(venueId);
+            }
+        }
+        else
+        {
+            for (int v = 0; v < venueCount; v++)
+            {
+                socialVenueIds.Add(rnd.GetInt(streetPoints.Count - 1));
+            }
         }
 
         // Generate initial properties with per-NPC variation
@@ -112,16 +139,82 @@ public class TalePopulationGenerator
             Role = role,
             ClusterIndex = clusterIndex,
             NpcIndex = npcIndex,
-            HomeLocationId = homeIdx,
-            WorkplaceLocationId = workIdx,
+            HomeLocationId = homeLocId,
+            WorkplaceLocationId = workLocId,
             SocialVenueIds = socialVenueIds,
             HomePosition = homePos,
             WorkplacePosition = workPos,
-            CurrentLocationId = homeIdx,
+            CurrentLocationId = homeLocId,
             Properties = properties,
             Trust = new Dictionary<int, float>(),
             HasPlayerDeviation = false,
         };
+    }
+
+
+    /// <summary>
+    /// Assign a location ID to an NPC based on role and location type preference.
+    /// Falls back to any location if type bucket is empty.
+    /// </summary>
+    private int AssignLocationByRole(RandomSource rnd, SpatialModel spatialModel, string role, string preferredType)
+    {
+        var candidates = new List<int>();
+
+        // Role-based location preference filtering
+        foreach (var loc in spatialModel.Locations)
+        {
+            bool matches = false;
+
+            switch (role)
+            {
+                case "merchant":
+                    matches = (preferredType == "shop" && loc.Type == "shop") ||
+                              (preferredType == "social_venue" && loc.Type == "social_venue") ||
+                              (preferredType == "workplace" && loc.Type == "shop") ||
+                              (preferredType == "home" && (loc.Type == "home" || loc.Type == "shop"));
+                    break;
+
+                case "worker":
+                case "authority":
+                    matches = (preferredType == "workplace" && loc.Type == "workplace") ||
+                              (preferredType == "home" && loc.Type == "home") ||
+                              (preferredType == "social_venue" && loc.Type == "social_venue");
+                    break;
+
+                case "socialite":
+                    matches = (preferredType == "social_venue" && loc.Type == "social_venue") ||
+                              (preferredType == "home" && (loc.Type == "home" || loc.Type == "street_segment")) ||
+                              (preferredType == "workplace" && loc.Type == "street_segment");
+                    break;
+
+                case "drifter":
+                    matches = (preferredType == "home" && (loc.Type == "home" || loc.Type == "street_segment")) ||
+                              (preferredType == "workplace" && loc.Type == "street_segment") ||
+                              (preferredType == "social_venue" && (loc.Type == "social_venue" || loc.Type == "street_segment"));
+                    break;
+
+                default:
+                    matches = loc.Type == preferredType;
+                    break;
+            }
+
+            if (matches)
+                candidates.Add(loc.Id);
+        }
+
+        // If no candidates for preferred type, fall back to any location
+        if (candidates.Count == 0)
+        {
+            foreach (var loc in spatialModel.Locations)
+                candidates.Add(loc.Id);
+        }
+
+        // Pick random candidate
+        if (candidates.Count == 0)
+            return 0;
+
+        int idx = rnd.GetInt(candidates.Count - 1);
+        return candidates[idx];
     }
 
 

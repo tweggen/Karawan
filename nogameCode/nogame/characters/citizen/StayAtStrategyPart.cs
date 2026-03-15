@@ -9,8 +9,9 @@ namespace nogame.characters.citizen;
 
 /// <summary>
 /// Strategy part: hold NPC at current location for a game-time duration.
-/// Plays idle animation. Signals GiveUpStrategy when the duration elapses.
-/// TaleEntityStrategy sets StayDurationSeconds before triggering this.
+/// If IsIndoorActivity is true, hides the NPC (no idle animation).
+/// Otherwise plays idle animation. Signals GiveUpStrategy when the duration elapses.
+/// TaleEntityStrategy sets StayDurationSeconds and IsIndoorActivity before triggering this.
 /// </summary>
 public class StayAtStrategyPart : AEntityStrategyPart
 {
@@ -23,6 +24,12 @@ public class StayAtStrategyPart : AEntityStrategyPart
     /// (RealSecondsPerGameDay).
     /// </summary>
     public float StayDurationSeconds { get; set; } = 10f;
+
+    /// <summary>
+    /// If true, NPC is indoors and should not display idle animation.
+    /// Set by TaleEntityStrategy based on location type.
+    /// </summary>
+    public bool IsIndoorActivity { get; set; } = false;
 
     private IdleBehavior _idleBehavior;
     private Timer _stayTimer;
@@ -38,12 +45,16 @@ public class StayAtStrategyPart : AEntityStrategyPart
 
     public override void OnEnter()
     {
-        _idleBehavior = new IdleBehavior
+        // Only set up idle behavior if this is an outdoor activity
+        if (!IsIndoorActivity)
         {
-            CharacterModelDescription = CharacterModelDescription
-        };
+            _idleBehavior = new IdleBehavior
+            {
+                CharacterModelDescription = CharacterModelDescription
+            };
 
-        _entity.Set(new engine.behave.components.Behavior(_idleBehavior));
+            _entity.Set(new engine.behave.components.Behavior(_idleBehavior));
+        }
 
         int milliseconds = (int)(StayDurationSeconds * 1000f);
         if (milliseconds < 100) milliseconds = 100;

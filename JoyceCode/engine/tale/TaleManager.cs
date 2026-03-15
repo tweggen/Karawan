@@ -15,7 +15,7 @@ public class TaleManager
 {
     private StoryletLibrary _library;
     private StoryletSelector _selector;
-    private SpatialModel _spatialModel;
+    private Dictionary<int, SpatialModel> _spatialModels = new();
     private Random _rng;
 
     /// <summary>
@@ -46,11 +46,10 @@ public class TaleManager
     private readonly TalePopulationGenerator _generator = new();
 
 
-    public void Initialize(StoryletLibrary library, SpatialModel spatialModel, int seed = 42)
+    public void Initialize(StoryletLibrary library, int seed = 42)
     {
         _library = library;
         _selector = new StoryletSelector(library);
-        _spatialModel = spatialModel;
         _rng = new Random(seed);
     }
 
@@ -59,17 +58,22 @@ public class TaleManager
 
     /// <summary>
     /// Populate a cluster: generate NPC schedules from seed, skipping deviated indices.
-    /// Called on ClusterCompletedEvent.
+    /// Called on ClusterCompletedEvent. SpatialModel is used for location assignment.
     /// </summary>
-    public void PopulateCluster(ClusterDesc clusterDesc)
+    public void PopulateCluster(ClusterDesc clusterDesc, SpatialModel spatialModel)
     {
         int clusterIndex = clusterDesc.Index;
 
         if (_populatedClusters.Contains(clusterIndex))
             return;
 
+        if (spatialModel != null)
+        {
+            _spatialModels[clusterIndex] = spatialModel;
+        }
+
         _deviationSkipMasks.TryGetValue(clusterIndex, out var skipMask);
-        var schedules = _generator.Generate(clusterDesc, skipMask);
+        var schedules = _generator.Generate(clusterDesc, spatialModel, skipMask);
 
         foreach (var schedule in schedules)
         {
@@ -83,6 +87,7 @@ public class TaleManager
     /// <summary>
     /// Depopulate a cluster: remove non-deviated schedules (they can be regenerated).
     /// Deviated NPCs remain in _schedules and their indices stay in the skip mask.
+    /// Also removes the spatial model for this cluster.
     /// </summary>
     public void DepopulateCluster(int clusterIndex)
     {
@@ -105,6 +110,7 @@ public class TaleManager
         }
 
         _populatedClusters.Remove(clusterIndex);
+        _spatialModels.Remove(clusterIndex);
     }
 
 
@@ -147,8 +153,9 @@ public class TaleManager
 
 
     /// <summary>
-    /// Get all NPC schedules whose home position falls in the given fragment.
+    /// Get all NPC schedules whose current position falls in the given fragment.
     /// Used by TaleSpawnOperator to decide which NPCs to materialize.
+    /// Uses CurrentWorldPosition if set (NPC has deviated), otherwise falls back to HomePosition.
     /// </summary>
     public List<NpcSchedule> GetNpcsInFragment(Index3 idxFragment)
     {
@@ -156,7 +163,9 @@ public class TaleManager
         foreach (var kvp in _schedules)
         {
             var npc = kvp.Value;
-            var npcFragment = Fragment.PosToIndex3(npc.HomePosition);
+            // Use current world position if set, otherwise use home position
+            Vector3 checkPos = npc.CurrentWorldPosition != Vector3.Zero ? npc.CurrentWorldPosition : npc.HomePosition;
+            var npcFragment = Fragment.PosToIndex3(checkPos);
             if (npcFragment.I == idxFragment.I && npcFragment.K == idxFragment.K)
             {
                 result.Add(npc);
@@ -253,9 +262,11 @@ public class TaleManager
         int destination = ResolveLocation(npc, next);
 
         // Compute travel time from spatial model
-        float travelMinutes = _spatialModel != null
-            ? _spatialModel.GetTravelTime(npc.CurrentLocationId, destination)
-            : 0f;
+        float travelMinutes = 0f;
+        if (_spatialModels.TryGetValue(npc.ClusterIndex, out var spatialModel) && spatialModel != null)
+        {
+            travelMinutes = spatialModel.GetTravelTime(npc.CurrentLocationId, destination);
+        }
 
         // Determine duration
         float durationMinutes = next.GetDuration(_rng);
@@ -265,6 +276,14 @@ public class TaleManager
         npc.CurrentLocationId = destination;
         npc.CurrentStart = gameNow + TimeSpan.FromMinutes(travelMinutes);
         npc.CurrentEnd = npc.CurrentStart + TimeSpan.FromMinutes(durationMinutes);
+
+        // Update current world position from location
+        if (_spatialModels.TryGetValue(npc.ClusterIndex, out spatialModel) && spatialModel != null)
+        {
+            var loc = spatialModel.GetLocation(destination);
+            if (loc != null)
+                npc.CurrentWorldPosition = loc.Position;
+        }
 
         return next;
     }
@@ -287,7 +306,17 @@ public class TaleManager
     public Vector3 GetWorldPosition(int npcId, DateTime gameNow)
     {
         if (!_schedules.TryGetValue(npcId, out var npc)) return Vector3.Zero;
-        return npc.PositionAt(gameNow, _spatialModel);
+        var spatialModel = _spatialModels.TryGetValue(npc.ClusterIndex, out var model) ? model : null;
+        return npc.PositionAt(gameNow, spatialModel);
+    }
+
+
+    /// <summary>
+    /// Get the spatial model for a cluster.
+    /// </summary>
+    public SpatialModel GetSpatialModel(int clusterIndex)
+    {
+        return _spatialModels.TryGetValue(clusterIndex, out var model) ? model : null;
     }
 
     #endregion
@@ -323,9 +352,10 @@ public class TaleManager
 
     private int ResolveEatVenue(NpcSchedule npc)
     {
-        if (_spatialModel != null)
+        var spatialModel = _spatialModels.TryGetValue(npc.ClusterIndex, out var model) ? model : null;
+        if (spatialModel != null)
         {
-            int eatId = _spatialModel.FindNearestOfType(npc.CurrentLocationId, "social_venue", "Eat");
+            int eatId = spatialModel.FindNearestOfType(npc.CurrentLocationId, "social_venue", "Eat");
             if (eatId >= 0) return eatId;
         }
         if (npc.SocialVenueIds != null && npc.SocialVenueIds.Count > 0)
@@ -336,9 +366,10 @@ public class TaleManager
 
     private int ResolveStreet(NpcSchedule npc)
     {
-        if (_spatialModel != null)
+        var spatialModel = _spatialModels.TryGetValue(npc.ClusterIndex, out var model) ? model : null;
+        if (spatialModel != null)
         {
-            int streetId = _spatialModel.FindNearestOfType(npc.CurrentLocationId, "street_segment");
+            int streetId = spatialModel.FindNearestOfType(npc.CurrentLocationId, "street_segment");
             if (streetId >= 0) return streetId;
         }
         return npc.CurrentLocationId;

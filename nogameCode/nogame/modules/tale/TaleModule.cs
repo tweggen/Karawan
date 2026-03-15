@@ -49,8 +49,13 @@ public class TaleModule : AModule
             return;
         }
 
-        _taleManager.PopulateCluster(clusterDesc);
-        Trace($"TALE: Populated cluster '{ev.Code}' (index {clusterDesc.Index}).");
+        // Extract spatial model for location assignment
+        var spatialModel = SpatialModel.ExtractFrom(clusterDesc);
+        _taleManager.PopulateCluster(clusterDesc, spatialModel);
+
+        Trace($"TALE: Populated cluster '{ev.Code}' (index {clusterDesc.Index}). " +
+              $"Spatial: {spatialModel.BuildingCount} buildings, {spatialModel.ShopCount} shops, " +
+              $"{spatialModel.StreetPointCount} street points.");
     }
 
 
@@ -126,7 +131,7 @@ public class TaleModule : AModule
 
             // Create and register TaleManager
             _taleManager = new TaleManager();
-            _taleManager.Initialize(library, null);
+            _taleManager.Initialize(library);
 
             I.Register<TaleManager>(() => _taleManager);
             Trace("TALE: TaleManager registered.");
@@ -189,6 +194,14 @@ public class TaleModule : AModule
         jo["workplacePositionY"] = npc.WorkplacePosition.Y;
         jo["workplacePositionZ"] = npc.WorkplacePosition.Z;
 
+        // Current world position (for fragment-accurate spawning)
+        if (npc.CurrentWorldPosition != System.Numerics.Vector3.Zero)
+        {
+            jo["currentWorldPositionX"] = npc.CurrentWorldPosition.X;
+            jo["currentWorldPositionY"] = npc.CurrentWorldPosition.Y;
+            jo["currentWorldPositionZ"] = npc.CurrentWorldPosition.Z;
+        }
+
         // Properties
         var jProps = new JsonObject();
         foreach (var kvp in npc.Properties)
@@ -247,6 +260,10 @@ public class TaleModule : AModule
             jo["workplacePositionX"]?.GetValue<float>() ?? 0f,
             jo["workplacePositionY"]?.GetValue<float>() ?? 0f,
             jo["workplacePositionZ"]?.GetValue<float>() ?? 0f);
+        npc.CurrentWorldPosition = new System.Numerics.Vector3(
+            jo["currentWorldPositionX"]?.GetValue<float>() ?? 0f,
+            jo["currentWorldPositionY"]?.GetValue<float>() ?? 0f,
+            jo["currentWorldPositionZ"]?.GetValue<float>() ?? 0f);
 
         // Properties
         npc.Properties = new System.Collections.Generic.Dictionary<string, float>();

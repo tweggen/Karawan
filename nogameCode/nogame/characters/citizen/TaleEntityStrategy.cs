@@ -109,6 +109,9 @@ public class TaleEntityStrategy : AOneOfStrategy
         // Set up go_to
         _goTo.Destination = destination;
         _goTo.CurrentPosition = _currentPosition;
+        // TODO Phase 7C: Async pathfinding can be added here if NavMap is exposed in I registry
+        _goTo.PrecomputedRoute = null;
+
         TriggerStrategy("travel");
     }
 
@@ -126,6 +129,18 @@ public class TaleEntityStrategy : AOneOfStrategy
         realSeconds = Math.Clamp(realSeconds, 2f, 300f);
 
         _stayAt.StayDurationSeconds = realSeconds;
+
+        // Detect if this is an indoor activity based on location type
+        _stayAt.IsIndoorActivity = false;
+        var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
+        if (spatialModel != null)
+        {
+            var loc = spatialModel.GetLocation(schedule.CurrentLocationId);
+            if (loc != null && loc.Type != "street_segment")
+            {
+                _stayAt.IsIndoorActivity = true;
+            }
+        }
     }
 
 

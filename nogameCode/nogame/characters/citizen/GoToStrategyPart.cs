@@ -8,8 +8,9 @@ using static engine.Logger;
 namespace nogame.characters.citizen;
 
 /// <summary>
-/// Strategy part: walk NPC to a destination position using a 2-point SegmentRoute.
+/// Strategy part: walk NPC to a destination position using a SegmentRoute.
 /// TaleEntityStrategy sets Destination/CurrentPosition before triggering this.
+/// If PrecomputedRoute is set, uses that; otherwise falls back to 2-point straight-line.
 /// Signals GiveUpStrategy when the NPC reaches the destination.
 /// </summary>
 public class GoToStrategyPart : AEntityStrategyPart
@@ -22,6 +23,9 @@ public class GoToStrategyPart : AEntityStrategyPart
 
     /// <summary>Set by TaleEntityStrategy before TriggerStrategy("travel").</summary>
     public PositionDescription CurrentPosition { get; set; }
+
+    /// <summary>Optional pre-computed route (from StreetRouteBuilder). If null, uses straight-line.</summary>
+    public SegmentRoute PrecomputedRoute { get; set; }
 
     private SegmentNavigator _navigator;
     private WalkBehavior _walkBehavior;
@@ -65,20 +69,29 @@ public class GoToStrategyPart : AEntityStrategyPart
         var right = Vector3.Cross(forward, up);
         if (right.LengthSquared() < 0.001f) right = Vector3.UnitX;
 
-        var route = new SegmentRoute();
-        route.Segments.Add(new SegmentEnd
+        // Use precomputed route if available, else fall back to straight-line
+        SegmentRoute route;
+        if (PrecomputedRoute != null)
         {
-            Position = startPos,
-            Up = up,
-            Right = right,
-            PositionDescription = CurrentPosition
-        });
-        route.Segments.Add(new SegmentEnd
+            route = PrecomputedRoute;
+        }
+        else
         {
-            Position = endPos,
-            Up = up,
-            Right = right
-        });
+            route = new SegmentRoute();
+            route.Segments.Add(new SegmentEnd
+            {
+                Position = startPos,
+                Up = up,
+                Right = right,
+                PositionDescription = CurrentPosition
+            });
+            route.Segments.Add(new SegmentEnd
+            {
+                Position = endPos,
+                Up = up,
+                Right = right
+            });
+        }
 
         _navigator = new SegmentNavigator
         {

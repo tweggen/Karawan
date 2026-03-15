@@ -29,6 +29,7 @@ public class NpcSchedule
     // World positions (for live game fragment mapping, independent of SpatialModel)
     public Vector3 HomePosition;
     public Vector3 WorkplacePosition;
+    public Vector3 CurrentWorldPosition;
 
     // Properties (0.0-1.0 range)
     public Dictionary<string, float> Properties;
@@ -59,14 +60,16 @@ public class NpcSchedule
 
     /// <summary>
     /// Compute position as a pure function of schedule state.
-    /// For Tier 3, returns the current location position.
+    /// For Tier 3, returns the current location's entry position (door/shop front).
     /// </summary>
     public Vector3 PositionAt(DateTime gameTime, SpatialModel model)
     {
         if (model != null)
         {
             var loc = model.GetLocation(CurrentLocationId);
-            return loc?.Position ?? HomePosition;
+            if (loc != null)
+                return loc.EntryPosition != Vector3.Zero ? loc.EntryPosition : loc.Position;
+            return HomePosition;
         }
 
         return HomePosition;

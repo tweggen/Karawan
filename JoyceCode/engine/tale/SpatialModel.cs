@@ -11,6 +11,7 @@ public class Location
     public int Id;
     public string Type; // "home", "workplace", "shop", "social_venue", "street_segment"
     public Vector3 Position;
+    public Vector3 EntryPosition; // Door/shop front position at street level
     public int Capacity;
     public string ShopType; // null if not a shop, else "Eat", "Drink", "Game2"
     public int QuarterIndex;
@@ -100,6 +101,8 @@ public class SpatialModel
         var strokeStore = cluster.StrokeStore();
         var streetPointToLocation = new Dictionary<int, int>();
 
+        float streetHeight = cluster.AverageHeight + MetaGen.ClusterStreetHeight + MetaGen.QuarterSidewalkOffset;
+
         var quarters = quarterStore.GetQuarters();
         for (int qi = 0; qi < quarters.Count; qi++)
         {
@@ -143,11 +146,15 @@ public class SpatialModel
                                 _ => "shop"
                             };
 
+                            var buildingCenter = building.GetCenter() + cluster.Pos;
+                            var entryPos = ComputeShopEntryPosition(sf, cluster, streetHeight);
+
                             model.Locations.Add(new Location
                             {
                                 Id = locationId++,
                                 Type = locationType,
-                                Position = building.GetCenter() + cluster.Pos,
+                                Position = buildingCenter,
+                                EntryPosition = entryPos,
                                 Capacity = (int)MathF.Max(1, building.GetHeight() / 3f),
                                 ShopType = shopType,
                                 QuarterIndex = qi,
@@ -162,11 +169,15 @@ public class SpatialModel
                         float normalizedDist = distFromCenter / (cluster.Size / 2f);
                         string type = normalizedDist > 0.4f ? "home" : "workplace";
 
+                        var buildingCenter = building.GetCenter() + cluster.Pos;
+                        var entryPos = new Vector3(buildingCenter.X, streetHeight, buildingCenter.Z);
+
                         model.Locations.Add(new Location
                         {
                             Id = locationId++,
                             Type = type,
-                            Position = building.GetCenter() + cluster.Pos,
+                            Position = buildingCenter,
+                            EntryPosition = entryPos,
                             Capacity = (int)MathF.Max(1, building.GetHeight() / 3f),
                             ShopType = null,
                             QuarterIndex = qi,
@@ -183,11 +194,15 @@ public class SpatialModel
         {
             int locId = locationId++;
             streetPointToLocation[sp.Id] = locId;
+            var pos = sp.Pos3 + cluster.Pos;
+            pos.Y = streetHeight;
+
             model.Locations.Add(new Location
             {
                 Id = locId,
                 Type = "street_segment",
-                Position = sp.Pos3 + cluster.Pos,
+                Position = pos,
+                EntryPosition = pos,
                 Capacity = 0,
                 ShopType = null,
                 QuarterIndex = -1,
@@ -224,5 +239,30 @@ public class SpatialModel
 
         model.BuildIndex();
         return model;
+    }
+
+
+    private static Vector3 ComputeShopEntryPosition(ShopFront shopFront, ClusterDesc cluster, float streetHeight)
+    {
+        var points = shopFront.GetPoints();
+        if (points.Count == 0)
+            return cluster.Pos;
+
+        Vector3 entry;
+        if (points.Count >= 2)
+        {
+            // Use midpoint of first two points
+            entry = (points[0] + points[1]) / 2f;
+        }
+        else
+        {
+            // Single point: use it directly
+            entry = points[0];
+        }
+
+        // Project to world space and street height
+        entry += cluster.Pos;
+        entry.Y = streetHeight;
+        return entry;
     }
 }
