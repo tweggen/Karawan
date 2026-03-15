@@ -322,7 +322,7 @@ public class Scene : AModule, IScene, IInputPart
         
         // TXWTODO: Generalize this.
         M<SpawnController>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
-        M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
+        //M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
 
         // TALE-driven NPC spawning (Phase 2)
         var taleManager = I.TryGet<engine.tale.TaleManager>();

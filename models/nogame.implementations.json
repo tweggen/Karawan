@@ -120,5 +120,6 @@
   "nogame.modules.GameSetup": null,
   "nogame.inv.coin.Factory": null,
   "nogame.world.DropCoinModule": null,
+  "nogame.modules.tale.TaleModule": null,
   "engine.testing.TestDriverModule": null
 }
