@@ -37,7 +37,7 @@ public class GoToStrategyPart : AEntityStrategyPart
     {
         _arrived = false;
 
-        var startPos = CurrentPosition?.Position ?? Vector3.Zero;
+         var startPos = CurrentPosition?.Position ?? Vector3.Zero;
         var endPos = Destination;
 
         // Compute proper ground height based on cluster/quarter geometry
