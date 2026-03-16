@@ -20,6 +20,12 @@ public class TalePopulationGenerator
     /// </summary>
     private static readonly float[] DefaultRoleWeights = { 0.40f, 0.15f, 0.20f, 0.15f, 0.10f };
 
+    /// <summary>
+    /// NPCs per street point. Legacy system used ~6 per street point per fragment;
+    /// we use 3 per street point for the whole cluster since ~2/3 will be indoors.
+    /// </summary>
+    private const int NpcsPerStreetPoint = 3;
+
 
     /// <summary>
     /// Generate NPC schedules for a cluster, skipping deviated NPC indices.
@@ -63,8 +69,8 @@ public class TalePopulationGenerator
         var streetPoints = CollectStreetPoints(clusterDesc);
         if (streetPoints.Count == 0) return 0;
 
-        // Roughly 1 NPC per 2 street points, capped at 4096 (12-bit NPC index limit)
-        int count = Math.Max(1, streetPoints.Count / 2);
+        // Scale with street density, capped at 4096 (12-bit NPC index limit)
+        int count = Math.Max(1, streetPoints.Count * NpcsPerStreetPoint);
         return Math.Min(count, 4095);
     }
 
@@ -146,6 +152,7 @@ public class TalePopulationGenerator
             WorkplacePosition = workPos,
             CurrentLocationId = homeLocId,
             Properties = properties,
+            CurrentWorldPosition = homePos,
             Trust = new Dictionary<int, float>(),
             HasPlayerDeviation = false,
         };
