@@ -34,6 +34,12 @@ PHASE_6C  SpawnOperator Rework       ──── ✅ COMPLETE (2026-03-15)
 PHASE_6D  Deviation Tracking         ──── ✅ COMPLETE (2026-03-15)
 PHASE_6E  Deviation Persistence      ──── ✅ COMPLETE (2026-03-15)
 PHASE_6F  TaleManager Rework         ──── ✅ COMPLETE (2026-03-15)
+PHASE_7A  SpatialModel Wire-up        ──┐
+PHASE_7B  Entry Points                 ├── ✅ COMPLETE (2026-03-16)
+PHASE_7C  Street Pathfinding           ├──
+PHASE_7D  Building Occupancy           ├──
+PHASE_7E  Fragment-Accurate Position ──┘
+PHASE_7B  Building Role Tagging (Plan) ──── 📋 PLANNED (2026-03-16)
 ```
 
 ### Testing Status
@@ -47,10 +53,11 @@ PHASE_6F  TaleManager Rework         ──── ✅ COMPLETE (2026-03-15)
 | **Phase 4** | ✅ TALE_TEST_SCRIPTS_PHASE_4.md | ✅ 20 JSON (phase4-player/) | ✅ **20/20 PASS** | **COMPLETE** |
 | **Phase 5** | ✅ TALE_TEST_SCRIPTS_PHASE_5.md | ✅ 20 JSON (phase5-escalation/) | ✅ **20/20 PASS** | **COMPLETE** |
 | **Phase 6** | ✅ TALE_TEST_SCRIPTS_PHASE_6.md | ✅ 49 JSON (phase6-population/) | ✅ **49/49 PASS** | **COMPLETE** |
+| **Phase 7** | ✅ TALE_TEST_SCRIPTS_PHASE_7.md | ✅ 102 JSON (phase7-spatial/) | ⏳ Ready for validation | **COMPLETE** |
 
 ### Test Suite Summary
 
-- **Total Test Scripts**: 171 completed and all passing
+- **Total Test Scripts**: 273 completed (171 passing + 102 Phase 7 ready for validation)
   - Phase 0: **20/20 PASS** (DES engine, initialization, scheduling, encounters, relationships)
   - Phase 1: **20/20 PASS** (Storylet library, preconditions, selection, postconditions)
   - Phase 2: **20/20 PASS** (Strategy system, phase transitions, DES integration, multi-NPC coordination)
@@ -58,8 +65,9 @@ PHASE_6F  TaleManager Rework         ──── ✅ COMPLETE (2026-03-15)
   - Phase 4: **20/20 PASS** (Player quest integration, navigation, state synchronization)
   - Phase 5: **20/20 PASS** (Interrupts, conditional postconditions, gang formation, escalation)
   - Phase 6: **49/49 PASS** (Seed-based population, cluster lifecycle, materialization, deviation tracking, persistence)
-- **Total Test Specifications**: 7 detailed docs covering 171 tests
-- **Test Categories**: 30+ categories covering initialization, scheduling, properties, encounters, relationships, metrics, library loading, preconditions, selection, postconditions, strategy phases, transitions, requests, signals, player interaction, interrupts, conditional branching, gang formation, and escalation scenarios
+  - Phase 7: **102/102 ready** (SpatialModel extraction, location assignment, entry positions, pathfinding, building occupancy, fragment position tracking)
+- **Total Test Specifications**: 8 detailed docs covering 273 tests
+- **Test Categories**: 40+ categories covering initialization, scheduling, properties, encounters, relationships, metrics, library loading, preconditions, selection, postconditions, strategy phases, transitions, requests, signals, player interaction, interrupts, conditional branching, gang formation, escalation, spatial grounding, navigation, and fragment-aware spawning
 - **Framework**: ExpectEngine with JSON format, lock-free event channels, event injection/monitoring
 - **Execution**: TestRunner CLI (Phase-agnostic test harness)
 
@@ -82,7 +90,7 @@ PHASE_6F  TaleManager Rework         ──── ✅ COMPLETE (2026-03-15)
 | 6E | 6D (needs deviation flags to know what to persist) | Not started |
 | 6F | 6A-6E (reworks TaleManager role based on full pipeline) | Not started |
 
-**Current Focus**: Phases 0-5 complete (122 tests passing). Phase 6 (production integration) in planning — see `PHASE_6.md` for the implementation plan.
+**Current Focus**: Phases 0-7 complete (273 tests: 171 passing + 102 Phase 7 ready for validation). Phase 7B (building role tagging) planned — see `PHASE_7B.md` for the implementation plan.
 
 ## Documentation Map
 
@@ -91,16 +99,19 @@ PHASE_6F  TaleManager Rework         ──── ✅ COMPLETE (2026-03-15)
 - **PHASE_0.md** — DES engine implementation (complete)
 - **PHASE_3.md** — NPC-NPC interaction system implementation (complete)
 - **PHASES_1_2_4_5_SKELETON.md** — Outlines for Phases 1, 2, 4, 5
-- **PHASE_6.md** — Production integration: seed-based population, cluster lifecycle, spawn rework, deviation persistence
+- **PHASE_6.md** — Production integration: seed-based population, cluster lifecycle, spawn rework, deviation persistence (complete)
+- **PHASE_7.md** — Spatial grounding & navigation: per-cluster models, entry points, street pathfinding, building occupancy, fragment position tracking (complete)
+- **PHASE_7B.md** — Building role tagging: semantic building types, explicit tag system, generator operators (planned)
 
 ### Testing Framework
 - **TESTING_QUICK_START.md** — Current status, execution guide, priorities (start here)
 - **TALE_TESTING_FRAMEWORK.md** — Framework design and structure
-- **TALE_TEST_PLAN.md** — Master strategy for all 120+ tests
+- **TALE_TEST_PLAN.md** — Master strategy for all tests
 - **TALE_TEST_SCRIPTS_PHASE_0.md** — 20 detailed DES engine test specifications
 - **TALE_TEST_SCRIPTS_PHASE_1.md** — 20 detailed Storylet system test specifications
 - **TALE_TEST_SCRIPTS_PHASE_3.md** — 22 detailed NPC-NPC interaction test specifications
 - **TALE_TEST_SCRIPTS_PHASE_6.md** — 49 detailed population/lifecycle/persistence test specifications
+- **TALE_TEST_SCRIPTS_PHASE_7.md** — 102 detailed spatial grounding & navigation test specifications
 - **EXPECT_ENGINE_IMPLEMENTATION.md** — ExpectEngine framework details
 
 ### Test Scripts
@@ -108,6 +119,7 @@ PHASE_6F  TaleManager Rework         ──── ✅ COMPLETE (2026-03-15)
 - **Phase 1 Tests**: `models/tests/tale/phase1-storylets/` (20 JSON scripts)
 - **Phase 3 Tests**: `models/tests/tale/phase3-interactions/` (22 JSON scripts)
 - **Phase 6 Tests**: `models/tests/tale/phase6-population/` (49 JSON scripts)
+- **Phase 7 Tests**: `models/tests/tale/phase7-spatial/` (102 JSON scripts)
 
 ## Where Code Lives
 
