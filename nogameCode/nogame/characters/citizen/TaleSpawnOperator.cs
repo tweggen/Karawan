@@ -60,6 +60,12 @@ public class TaleSpawnOperator : ISpawnOperator
         int npcCount = npcsInFragment.Count;
         spawnStatus.MinCharacters = (ushort)npcCount;
         spawnStatus.MaxCharacters = (ushort)npcCount;
+
+        if (npcCount > 0)
+        {
+            Trace($"TALE SPAWN: Fragment {idxFragment} has {npcCount} NPCs, " +
+                  $"inCreation={spawnStatus.InCreation}, isDying={spawnStatus.IsDying}");
+        }
     }
 
 
@@ -106,9 +112,14 @@ public class TaleSpawnOperator : ISpawnOperator
             }
         }
 
-        if (targetNpc == null) return () => { };
+        if (targetNpc == null)
+        {
+            Trace($"TALE SPAWN: No unmaterialized NPC found in fragment {idxFragment}.");
+            return () => { };
+        }
 
         int npcId = targetNpc.NpcId;
+        Trace($"TALE SPAWN: Spawning NPC {npcId} (role={targetNpc.Role}) at {targetNpc.HomePosition} in fragment {idxFragment}.");
         _taleManager.SetMaterialized(npcId);
 
         SpawnStatus spawnStatus;
@@ -125,6 +136,7 @@ public class TaleSpawnOperator : ISpawnOperator
                 ClusterDesc cd = _clusterHeatMap.GetClusterDesc(idxFragment);
                 if (cd == null)
                 {
+                    Warning($"TALE SPAWN: No ClusterDesc for fragment {idxFragment}, aborting NPC {npcId}.");
                     spawnStatus.InCreation--;
                     _taleManager.SetDematerialized(npcId);
                     return;
@@ -132,6 +144,7 @@ public class TaleSpawnOperator : ISpawnOperator
 
                 if (!_loader.TryGetFragment(idxFragment, out var worldFragment))
                 {
+                    Warning($"TALE SPAWN: No WorldFragment for {idxFragment}, aborting NPC {npcId}.");
                     spawnStatus.InCreation--;
                     _taleManager.SetDematerialized(npcId);
                     return;
@@ -141,6 +154,7 @@ public class TaleSpawnOperator : ISpawnOperator
                 var schedule = _taleManager.GetSchedule(npcId);
                 if (schedule == null)
                 {
+                    Warning($"TALE SPAWN: Schedule disappeared for NPC {npcId}, aborting.");
                     spawnStatus.InCreation--;
                     _taleManager.SetDematerialized(npcId);
                     return;
@@ -155,10 +169,13 @@ public class TaleSpawnOperator : ISpawnOperator
                 // Create TALE strategy using the existing schedule
                 if (!TaleEntityStrategy.TryCreate(schedule, _taleManager, pod, cmd, out var taleStrategy))
                 {
+                    Warning($"TALE SPAWN: TaleEntityStrategy.TryCreate failed for NPC {npcId}.");
                     spawnStatus.InCreation--;
                     _taleManager.SetDematerialized(npcId);
                     return;
                 }
+
+                Trace($"TALE SPAWN: Creating entity for NPC {npcId} at {pod.Position}.");
 
                 // Create entity
                 EntityCreator creator = new()

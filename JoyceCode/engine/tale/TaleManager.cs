@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using engine.joyce;
 using engine.world;
+using static engine.Logger;
 
 namespace engine.tale;
 
@@ -65,11 +67,21 @@ public class TaleManager
         int clusterIndex = clusterDesc.Index;
 
         if (_populatedClusters.Contains(clusterIndex))
+        {
+            Trace($"TALE MGR: Cluster {clusterIndex} already populated, skipping.");
             return;
+        }
 
         if (spatialModel != null)
         {
             _spatialModels[clusterIndex] = spatialModel;
+            Trace($"TALE MGR: Cluster {clusterIndex} spatial model: " +
+                  $"{spatialModel.Locations.Count} locations, {spatialModel.BuildingCount} buildings, " +
+                  $"{spatialModel.ShopCount} shops, {spatialModel.StreetPointCount} street points.");
+        }
+        else
+        {
+            Warning($"TALE MGR: Cluster {clusterIndex} has NO spatial model!");
         }
 
         _deviationSkipMasks.TryGetValue(clusterIndex, out var skipMask);
@@ -78,6 +90,28 @@ public class TaleManager
         foreach (var schedule in schedules)
         {
             _schedules[schedule.NpcId] = schedule;
+        }
+
+        // Diagnostic: show fragment distribution of generated NPCs
+        var fragmentCounts = new Dictionary<string, int>();
+        foreach (var schedule in schedules)
+        {
+            Vector3 pos = schedule.CurrentWorldPosition != Vector3.Zero
+                ? schedule.CurrentWorldPosition : schedule.HomePosition;
+            var frag = Fragment.PosToIndex3(pos);
+            string key = $"({frag.I},{frag.K})";
+            fragmentCounts[key] = fragmentCounts.GetValueOrDefault(key) + 1;
+        }
+        string distrib = string.Join(", ", fragmentCounts.Select(kv => $"{kv.Key}={kv.Value}"));
+        Trace($"TALE MGR: Populated cluster {clusterIndex} with {schedules.Count} NPCs. " +
+              $"Total schedules now: {_schedules.Count}. Fragment distribution: {distrib}");
+
+        // Show first few NPCs for debugging
+        for (int i = 0; i < Math.Min(3, schedules.Count); i++)
+        {
+            var s = schedules[i];
+            Trace($"TALE MGR:   NPC[{i}] id={s.NpcId} role={s.Role} home={s.HomePosition} " +
+                  $"worldPos={s.CurrentWorldPosition} homeLoc={s.HomeLocationId}");
         }
 
         _populatedClusters.Add(clusterIndex);
