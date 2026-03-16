@@ -24,7 +24,8 @@ public class TaleModule : AModule
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<modules.daynite.Controller>()
+        new SharedModule<modules.daynite.Controller>(),
+        new SharedModule<Saver>()
     };
 
 
@@ -142,17 +143,9 @@ public class TaleModule : AModule
             // Subscribe to cluster lifecycle
             Subscribe(ClusterCompletedEvent.EVENT_TYPE, _onClusterCompleted);
 
-            // Subscribe to save/load for deviation persistence (Saver may not be active yet)
-            var saver = M<Saver>();
-            if (saver != null)
-            {
-                saver.OnBeforeSaveGame += _onBeforeSaveGame;
-                saver.OnAfterLoadGame += _onAfterLoadGame;
-            }
-            else
-            {
-                Warning("TALE: Saver module not yet available, deviation persistence disabled.");
-            }
+            // Subscribe to save/load for deviation persistence
+            M<Saver>().OnBeforeSaveGame += _onBeforeSaveGame;
+            M<Saver>().OnAfterLoadGame += _onAfterLoadGame;
         }
         catch (Exception e)
         {
@@ -163,12 +156,8 @@ public class TaleModule : AModule
 
     protected override void OnModuleDeactivate()
     {
-        var saver = M<Saver>();
-        if (saver != null)
-        {
-            saver.OnBeforeSaveGame -= _onBeforeSaveGame;
-            saver.OnAfterLoadGame -= _onAfterLoadGame;
-        }
+        M<Saver>().OnBeforeSaveGame -= _onBeforeSaveGame;
+        M<Saver>().OnAfterLoadGame -= _onAfterLoadGame;
     }
 
 
