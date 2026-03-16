@@ -142,9 +142,17 @@ public class TaleModule : AModule
             // Subscribe to cluster lifecycle
             Subscribe(ClusterCompletedEvent.EVENT_TYPE, _onClusterCompleted);
 
-            // Subscribe to save/load for deviation persistence
-            M<Saver>().OnBeforeSaveGame += _onBeforeSaveGame;
-            M<Saver>().OnAfterLoadGame += _onAfterLoadGame;
+            // Subscribe to save/load for deviation persistence (Saver may not be active yet)
+            var saver = M<Saver>();
+            if (saver != null)
+            {
+                saver.OnBeforeSaveGame += _onBeforeSaveGame;
+                saver.OnAfterLoadGame += _onAfterLoadGame;
+            }
+            else
+            {
+                Warning("TALE: Saver module not yet available, deviation persistence disabled.");
+            }
         }
         catch (Exception e)
         {
@@ -155,14 +163,11 @@ public class TaleModule : AModule
 
     protected override void OnModuleDeactivate()
     {
-        try
+        var saver = M<Saver>();
+        if (saver != null)
         {
-            M<Saver>().OnBeforeSaveGame -= _onBeforeSaveGame;
-            M<Saver>().OnAfterLoadGame -= _onAfterLoadGame;
-        }
-        catch (Exception)
-        {
-            // Module may deactivate before Saver
+            saver.OnBeforeSaveGame -= _onBeforeSaveGame;
+            saver.OnAfterLoadGame -= _onAfterLoadGame;
         }
     }
 
