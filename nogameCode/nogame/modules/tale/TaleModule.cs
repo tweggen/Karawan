@@ -31,7 +31,12 @@ public class TaleModule : AModule
 
     private void _onClusterCompleted(Event ev)
     {
-        if (_taleManager == null) return;
+        Trace($"TALE: _onClusterCompleted fired! Type='{ev.Type}' Code='{ev.Code}'");
+        if (_taleManager == null)
+        {
+            Warning("TALE: _onClusterCompleted called but _taleManager is null!");
+            return;
+        }
 
         // Find the ClusterDesc by name (event Code carries the cluster name)
         ClusterDesc clusterDesc = null;

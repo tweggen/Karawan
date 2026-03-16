@@ -489,6 +489,7 @@ public class ClusterDesc
 
         _clusterState = ClusterState.Done;
 
+        Trace($"TALE DIAG: Pushing ClusterCompletedEvent for cluster '{Name}' (index {Index}).");
         I.Get<engine.news.EventQueue>().Push(new ClusterCompletedEvent(Name));
     }
 
