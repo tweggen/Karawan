@@ -52,14 +52,14 @@ public class TaleSpawnOperator : ISpawnOperator
         {
             spawnStatus = new SpawnStatus { InCreation = 0 };
             _mapFragmentStatus[idxFragment] = spawnStatus;
-
-            // Count how many TALE NPCs are registered for this fragment
-            var npcsInFragment = _taleManager.GetNpcsInFragment(idxFragment);
-            int npcCount = npcsInFragment.Count;
-
-            spawnStatus.MinCharacters = (ushort)npcCount;
-            spawnStatus.MaxCharacters = (ushort)npcCount;
         }
+
+        // Always refresh NPC count — cluster population may arrive after the
+        // fragment first becomes visible (ClusterCompletedEvent race).
+        var npcsInFragment = _taleManager.GetNpcsInFragment(idxFragment);
+        int npcCount = npcsInFragment.Count;
+        spawnStatus.MinCharacters = (ushort)npcCount;
+        spawnStatus.MaxCharacters = (ushort)npcCount;
     }
 
 
