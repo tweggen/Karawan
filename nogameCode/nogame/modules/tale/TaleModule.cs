@@ -29,6 +29,7 @@ public class TaleModule : AModule
     };
 
 
+    // TXWTODO: Let's investigate if it would make sense to make TaleModule a WorldOperator that triggers after clusters can be made
     private void _onClusterCompleted(Event ev)
     {
         Trace($"TALE: _onClusterCompleted fired! Type='{ev.Type}' Code='{ev.Code}'");
