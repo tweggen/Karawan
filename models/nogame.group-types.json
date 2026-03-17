@@ -1,0 +1,51 @@
+{
+  "/groups/types": [
+    {
+      "id": "patrol_unit",
+      "displayName": "Patrol Unit",
+      "priority": 100,
+      "rules": [
+        {
+          "type": "authority_threshold",
+          "parameters": {
+            "minimum_ratio": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "criminal",
+      "displayName": "Criminal Syndicate",
+      "priority": 90,
+      "rules": [
+        {
+          "type": "combined_threshold",
+          "parameters": {
+            "wealth_max": 0.3,
+            "morality_max": 0.4
+          }
+        }
+      ]
+    },
+    {
+      "id": "trade",
+      "displayName": "Trading Partnership",
+      "priority": 80,
+      "rules": [
+        {
+          "type": "combined_threshold",
+          "parameters": {
+            "wealth_min": 0.5,
+            "reputation_min": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "social",
+      "displayName": "Social Circle",
+      "priority": 0,
+      "rules": []
+    }
+  ]
+}

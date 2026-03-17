@@ -139,7 +139,9 @@ public class TaleModule : AModule
             // Create and register Role and Interaction registries
             I.Register<RoleRegistry>(() => new RoleRegistry());
             I.Register<InteractionTypeRegistry>(() => new InteractionTypeRegistry());
-            Trace("TALE: RoleRegistry and InteractionTypeRegistry registered.");
+            I.Register<RelationshipTierRegistry>(() => new RelationshipTierRegistry());
+            I.Register<GroupTypeRegistry>(() => new GroupTypeRegistry());
+            Trace("TALE: RoleRegistry, InteractionTypeRegistry, RelationshipTierRegistry, and GroupTypeRegistry registered.");
 
             // Create and register TaleManager
             _taleManager = new TaleManager();
@@ -179,6 +181,36 @@ public class TaleModule : AModule
                     }
                     registry.FinalizeOrder();
                     Trace($"TALE: Loaded {interactionsArray.Count} interaction type definitions.");
+                }
+            });
+
+            loader.WhenLoaded("/relationships/tiers", (path, tiersNode) =>
+            {
+                var registry = I.Get<RelationshipTierRegistry>();
+                if (tiersNode is JsonArray tiersArray)
+                {
+                    foreach (JsonNode tierNode in tiersArray)
+                    {
+                        var def = JsonSerializer.Deserialize<RelationshipTierDefinition>(tierNode.ToJsonString());
+                        if (def != null)
+                            registry.Add(def.Id, def);
+                    }
+                    Trace($"TALE: Loaded {tiersArray.Count} relationship tier definitions.");
+                }
+            });
+
+            loader.WhenLoaded("/groups/types", (path, typesNode) =>
+            {
+                var registry = I.Get<GroupTypeRegistry>();
+                if (typesNode is JsonArray typesArray)
+                {
+                    foreach (JsonNode typeNode in typesArray)
+                    {
+                        var def = JsonSerializer.Deserialize<GroupTypeDefinition>(typeNode.ToJsonString());
+                        if (def != null)
+                            registry.Add(def.Id, def);
+                    }
+                    Trace($"TALE: Loaded {typesArray.Count} group type definitions.");
                 }
             });
 

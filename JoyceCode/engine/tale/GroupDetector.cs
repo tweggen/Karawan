@@ -164,6 +164,18 @@ public class GroupDetector
 
     private static string ClassifyGroup(List<int> memberIds, IReadOnlyDictionary<int, NpcSchedule> npcs)
     {
+        try
+        {
+            var registry = I.Get<GroupTypeRegistry>();
+            if (registry != null)
+                return registry.ClassifyGroup(memberIds, npcs);
+        }
+        catch
+        {
+            // Registry not available, use fallback
+        }
+
+        // Fallback hardcoded classification
         float avgWealth = 0, avgMorality = 0, avgAnger = 0, avgReputation = 0;
         int authorityCount = 0;
         int count = 0;
@@ -175,7 +187,7 @@ public class GroupDetector
             avgMorality += npc.Properties.GetValueOrDefault("morality", 0.7f);
             avgAnger += npc.Properties.GetValueOrDefault("anger", 0f);
             avgReputation += npc.Properties.GetValueOrDefault("reputation", 0.5f);
-            if (npc.Role == "Authority") authorityCount++;
+            if (npc.Role == "authority") authorityCount++;
             count++;
         }
 

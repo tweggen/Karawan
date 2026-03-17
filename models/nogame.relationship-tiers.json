@@ -1,0 +1,28 @@
+{
+  "/relationships/tiers": [
+    {
+      "id": "stranger",
+      "displayName": "Stranger",
+      "minTrust": 0.0,
+      "maxTrust": 0.15
+    },
+    {
+      "id": "acquaintance",
+      "displayName": "Acquaintance",
+      "minTrust": 0.15,
+      "maxTrust": 0.4
+    },
+    {
+      "id": "friend",
+      "displayName": "Friend",
+      "minTrust": 0.4,
+      "maxTrust": 0.7
+    },
+    {
+      "id": "ally",
+      "displayName": "Close Ally",
+      "minTrust": 0.7,
+      "maxTrust": 1.0
+    }
+  ]
+}

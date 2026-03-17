@@ -279,7 +279,7 @@ public class TestRunnerMain
 
         // Create and initialize TaleManager
         var taleManager = new engine.tale.TaleManager();
-        taleManager.Initialize(library, null);
+        taleManager.Initialize(library, 42);
 
         // Create a mock ClusterDesc-like spatial model for testing
         // We'll use the SpatialModel to create NPC schedules, then test TaleManager

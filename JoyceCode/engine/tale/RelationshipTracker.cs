@@ -115,10 +115,24 @@ public class RelationshipTracker
     }
 
 
+    /// <summary>
+    /// Get tier ID for a given trust value using the registered tier configuration.
+    /// Falls back to hardcoded values if registry is not available.
+    /// </summary>
     public static string TierFromTrust(float trust)
     {
-        // Lowered thresholds for testing: 0.15, 0.4, 0.7 (was: 0.2, 0.5, 0.8)
-        // This makes relationship tier changes more frequent in generic simulations
+        try
+        {
+            var registry = I.Get<RelationshipTierRegistry>();
+            if (registry != null)
+                return registry.GetTierFromTrust(trust);
+        }
+        catch
+        {
+            // Registry not available, use fallback
+        }
+
+        // Fallback hardcoded values
         if (trust < 0.15f) return "stranger";
         if (trust < 0.4f) return "acquaintance";
         if (trust < 0.7f) return "friend";
