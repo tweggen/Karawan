@@ -158,14 +158,19 @@ public class TaleModule : AModule
                 var registry = I.Get<RoleRegistry>();
                 if (rolesNode is JsonArray rolesArray)
                 {
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     foreach (JsonNode roleNode in rolesArray)
                     {
-                        var def = JsonSerializer.Deserialize<RoleDefinition>(roleNode.ToJsonString());
-                        if (def != null)
+                        var def = JsonSerializer.Deserialize<RoleDefinition>(roleNode.ToJsonString(), options);
+                        if (def != null && !string.IsNullOrEmpty(def.Id))
                             registry.Add(def.Id, def);
+                        else if (def != null)
+                            Warning($"TALE: Role definition has null or empty Id: {roleNode.ToJsonString()}");
                     }
                     Trace($"TALE: Loaded {rolesArray.Count} role definitions.");
                 }
+                else
+                    Warning($"TALE: /roles is not a JsonArray, got {rolesNode?.GetType().Name ?? "null"}");
             });
 
             loader.WhenLoaded("/interactions", (path, interactionsNode) =>
@@ -173,15 +178,20 @@ public class TaleModule : AModule
                 var registry = I.Get<InteractionTypeRegistry>();
                 if (interactionsNode is JsonArray interactionsArray)
                 {
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     foreach (JsonNode typeNode in interactionsArray)
                     {
-                        var def = JsonSerializer.Deserialize<InteractionTypeDefinition>(typeNode.ToJsonString());
-                        if (def != null)
+                        var def = JsonSerializer.Deserialize<InteractionTypeDefinition>(typeNode.ToJsonString(), options);
+                        if (def != null && !string.IsNullOrEmpty(def.Id))
                             registry.Add(def.Id, def);
+                        else if (def != null)
+                            Warning($"TALE: Interaction type has null or empty Id: {typeNode.ToJsonString()}");
                     }
                     registry.FinalizeOrder();
                     Trace($"TALE: Loaded {interactionsArray.Count} interaction type definitions.");
                 }
+                else
+                    Warning($"TALE: /interactions is not a JsonArray, got {interactionsNode?.GetType().Name ?? "null"}");
             });
 
             loader.WhenLoaded("/relationships/tiers", (path, tiersNode) =>
@@ -189,14 +199,19 @@ public class TaleModule : AModule
                 var registry = I.Get<RelationshipTierRegistry>();
                 if (tiersNode is JsonArray tiersArray)
                 {
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     foreach (JsonNode tierNode in tiersArray)
                     {
-                        var def = JsonSerializer.Deserialize<RelationshipTierDefinition>(tierNode.ToJsonString());
-                        if (def != null)
+                        var def = JsonSerializer.Deserialize<RelationshipTierDefinition>(tierNode.ToJsonString(), options);
+                        if (def != null && !string.IsNullOrEmpty(def.Id))
                             registry.Add(def.Id, def);
+                        else if (def != null)
+                            Warning($"TALE: Relationship tier has null or empty Id: {tierNode.ToJsonString()}");
                     }
                     Trace($"TALE: Loaded {tiersArray.Count} relationship tier definitions.");
                 }
+                else
+                    Warning($"TALE: /relationships/tiers is not a JsonArray, got {tiersNode?.GetType().Name ?? "null"}");
             });
 
             loader.WhenLoaded("/groups/types", (path, typesNode) =>
@@ -204,14 +219,19 @@ public class TaleModule : AModule
                 var registry = I.Get<GroupTypeRegistry>();
                 if (typesNode is JsonArray typesArray)
                 {
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     foreach (JsonNode typeNode in typesArray)
                     {
-                        var def = JsonSerializer.Deserialize<GroupTypeDefinition>(typeNode.ToJsonString());
-                        if (def != null)
+                        var def = JsonSerializer.Deserialize<GroupTypeDefinition>(typeNode.ToJsonString(), options);
+                        if (def != null && !string.IsNullOrEmpty(def.Id))
                             registry.Add(def.Id, def);
+                        else if (def != null)
+                            Warning($"TALE: Group type has null or empty Id: {typeNode.ToJsonString()}");
                     }
                     Trace($"TALE: Loaded {typesArray.Count} group type definitions.");
                 }
+                else
+                    Warning($"TALE: /groups/types is not a JsonArray, got {typesNode?.GetType().Name ?? "null"}");
             });
 
             // Get cluster list for lifecycle events
