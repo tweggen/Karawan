@@ -6,6 +6,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .NET 9.0. It runs on Windows, Linux, macOS, and Android.
 
+## Quick Start (For New Instances)
+
+**First, read these in order:**
+1. `PROCESS.md` — Development workflow, mandatory documentation updates
+2. `docs/TESTING.md` — Testing infrastructure and how to run tests
+3. `docs/tale/TEST_DOCUMENTATION_STRATEGY.md` — Test spec maintenance
+
+**Current Status (as of March 17, 2026):**
+- ✅ Phase 0-7 TALE systems fully implemented
+- ✅ 171 regression tests passing (60-day simulations, ~5 min)
+- ✅ Recalibration test framework ready (365+ days, ~2-4 hours)
+- ✅ Configuration-driven roles, interactions, relationship tiers, group types
+- ✅ PROCESS.md and documentation audit cycle in place
+- ⚠️ Watch for JSON deserialization issues (case-sensitive, see TaleModule.cs)
+
+**Common First Tasks:**
+- **Adding a test**: Create JSON in `models/tests/tale/phaseN-*/`, update `docs/tale/PHASE_N.md`, run `./run_tests.sh phaseN`
+- **Tuning parameters**: Run `./run_recalibration_tests.sh phaseN` with `TALE_SIM_DAYS=365`
+- **New phase**: Use `EnterPlanMode`, create plan in `docs/roadmap/proposed/`, follow PROCESS.md
+- **Debugging**: Check `docs/tale/PHASE_N.md` for design, read actual test JSON for specs
+
+**Key Rules (from PROCESS.md):**
+- Documentation updates are MANDATORY (not optional)
+- Always run `./run_tests.sh all` before commit
+- Search for all references when changing systems
+- Keep JSON config case-insensitive in mind (use `PropertyNameCaseInsensitive = true`)
+
 ## Build & Run
 
 **Prerequisites:** Check out these repos as siblings to the Karawan directory:
