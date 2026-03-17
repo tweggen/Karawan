@@ -26,6 +26,50 @@ public class TestRunnerMain
         return "./models/";
     }
 
+    private static engine.tale.RoleRegistry _CreateDefaultRoleRegistry()
+    {
+        var registry = new engine.tale.RoleRegistry();
+        // Populate with hardcoded defaults (game authors can override via config)
+        registry.Add("worker", new engine.tale.RoleDefinition { Id = "worker", DisplayName = "Worker", DefaultWeight = 0.4f });
+        registry.Add("merchant", new engine.tale.RoleDefinition { Id = "merchant", DisplayName = "Merchant", DefaultWeight = 0.15f });
+        registry.Add("socialite", new engine.tale.RoleDefinition { Id = "socialite", DisplayName = "Socialite", DefaultWeight = 0.15f });
+        registry.Add("drifter", new engine.tale.RoleDefinition { Id = "drifter", DisplayName = "Drifter", DefaultWeight = 0.2f });
+        registry.Add("authority", new engine.tale.RoleDefinition { Id = "authority", DisplayName = "Authority", DefaultWeight = 0.1f });
+        return registry;
+    }
+
+    private static engine.tale.InteractionTypeRegistry _CreateDefaultInteractionTypeRegistry()
+    {
+        var registry = new engine.tale.InteractionTypeRegistry();
+        // Populate with hardcoded defaults
+        registry.Add("greet", new engine.tale.InteractionTypeDefinition { Id = "greet", DisplayName = "Greeting", TrustDelta = 0.04f });
+        registry.Add("chat", new engine.tale.InteractionTypeDefinition { Id = "chat", DisplayName = "Chat", TrustDelta = 0.06f });
+        registry.Add("trade", new engine.tale.InteractionTypeDefinition { Id = "trade", DisplayName = "Trade", TrustDelta = 0.05f });
+        registry.Add("help", new engine.tale.InteractionTypeDefinition { Id = "help", DisplayName = "Help", TrustDelta = 0.10f });
+        registry.Add("argue", new engine.tale.InteractionTypeDefinition { Id = "argue", DisplayName = "Argue", TrustDelta = -0.08f });
+        registry.Add("intimidate", new engine.tale.InteractionTypeDefinition { Id = "intimidate", DisplayName = "Intimidate", TrustDelta = -0.20f });
+        registry.Add("rob", new engine.tale.InteractionTypeDefinition { Id = "rob", DisplayName = "Rob", TrustDelta = -0.30f });
+        registry.Add("recruit", new engine.tale.InteractionTypeDefinition { Id = "recruit", DisplayName = "Recruit", TrustDelta = 0.16f });
+        registry.FinalizeOrder();
+        return registry;
+    }
+
+    private static engine.tale.RelationshipTierRegistry _CreateDefaultRelationshipTierRegistry()
+    {
+        var registry = new engine.tale.RelationshipTierRegistry();
+        registry.Add("stranger", new engine.tale.RelationshipTierDefinition { Id = "stranger", DisplayName = "Stranger", MinTrust = 0.0f, MaxTrust = 0.15f });
+        registry.Add("acquaintance", new engine.tale.RelationshipTierDefinition { Id = "acquaintance", DisplayName = "Acquaintance", MinTrust = 0.15f, MaxTrust = 0.4f });
+        registry.Add("friend", new engine.tale.RelationshipTierDefinition { Id = "friend", DisplayName = "Friend", MinTrust = 0.4f, MaxTrust = 0.7f });
+        registry.Add("ally", new engine.tale.RelationshipTierDefinition { Id = "ally", DisplayName = "Ally", MinTrust = 0.7f, MaxTrust = 1.0f });
+        return registry;
+    }
+
+    private static engine.tale.GroupTypeRegistry _CreateDefaultGroupTypeRegistry()
+    {
+        // For now, return an empty registry - group classification will use fallback logic
+        return new engine.tale.GroupTypeRegistry();
+    }
+
     private static void _setupPlatformGraphics()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
@@ -84,70 +128,15 @@ public class TestRunnerMain
             return new engine.casette.Loader(streamJson);
         });
 
-        // Register TALE registries BEFORE interpreting config (so hooks fire properly)
-        I.Register<engine.tale.RoleRegistry>(() => new engine.tale.RoleRegistry());
-        I.Register<engine.tale.InteractionTypeRegistry>(() => new engine.tale.InteractionTypeRegistry());
-        I.Register<engine.tale.RelationshipTierRegistry>(() => new engine.tale.RelationshipTierRegistry());
-        I.Register<engine.tale.GroupTypeRegistry>(() => new engine.tale.GroupTypeRegistry());
-
-        // Set up config hooks BEFORE interpreting config
-        var loader = I.Get<engine.casette.Loader>();
-        loader.WhenLoaded("/roles", (path, rolesNode) =>
-        {
-            var registry = I.Get<engine.tale.RoleRegistry>();
-            if (rolesNode is System.Text.Json.Nodes.JsonArray rolesArray)
-            {
-                foreach (var roleNode in rolesArray)
-                {
-                    var def = System.Text.Json.JsonSerializer.Deserialize<engine.tale.RoleDefinition>(roleNode.ToJsonString());
-                    if (def != null)
-                        registry.Add(def.Id, def);
-                }
-            }
-        });
-        loader.WhenLoaded("/interactions", (path, interactionsNode) =>
-        {
-            var registry = I.Get<engine.tale.InteractionTypeRegistry>();
-            if (interactionsNode is System.Text.Json.Nodes.JsonArray interactionsArray)
-            {
-                foreach (var typeNode in interactionsArray)
-                {
-                    var def = System.Text.Json.JsonSerializer.Deserialize<engine.tale.InteractionTypeDefinition>(typeNode.ToJsonString());
-                    if (def != null)
-                        registry.Add(def.Id, def);
-                }
-                registry.FinalizeOrder();
-            }
-        });
-        loader.WhenLoaded("/relationships/tiers", (path, tiersNode) =>
-        {
-            var registry = I.Get<engine.tale.RelationshipTierRegistry>();
-            if (tiersNode is System.Text.Json.Nodes.JsonArray tiersArray)
-            {
-                foreach (var tierNode in tiersArray)
-                {
-                    var def = System.Text.Json.JsonSerializer.Deserialize<engine.tale.RelationshipTierDefinition>(tierNode.ToJsonString());
-                    if (def != null)
-                        registry.Add(def.Id, def);
-                }
-            }
-        });
-        loader.WhenLoaded("/groups/types", (path, typesNode) =>
-        {
-            var registry = I.Get<engine.tale.GroupTypeRegistry>();
-            if (typesNode is System.Text.Json.Nodes.JsonArray typesArray)
-            {
-                foreach (var typeNode in typesArray)
-                {
-                    var def = System.Text.Json.JsonSerializer.Deserialize<engine.tale.GroupTypeDefinition>(typeNode.ToJsonString());
-                    if (def != null)
-                        registry.Add(def.Id, def);
-                }
-            }
-        });
+        // Register TALE registries with default configurations
+        // (Game authors can override these via config in nogame.json)
+        I.Register<engine.tale.RoleRegistry>(() => _CreateDefaultRoleRegistry());
+        I.Register<engine.tale.InteractionTypeRegistry>(() => _CreateDefaultInteractionTypeRegistry());
+        I.Register<engine.tale.RelationshipTierRegistry>(() => _CreateDefaultRelationshipTierRegistry());
+        I.Register<engine.tale.GroupTypeRegistry>(() => _CreateDefaultGroupTypeRegistry());
 
         // Interpret config BEFORE engine creation (so modules are registered)
-        loader.InterpretConfig();
+        I.Get<engine.casette.Loader>().InterpretConfig();
         Console.WriteLine("Config interpreted. Modules registered.");
 
         // Create headless engine
