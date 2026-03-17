@@ -1,5 +1,4 @@
-{
-  "/groups/types": [
+[
     {
       "id": "patrol_unit",
       "displayName": "Patrol Unit",
@@ -48,4 +47,3 @@
       "rules": []
     }
   ]
-}

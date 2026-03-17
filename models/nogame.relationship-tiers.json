@@ -1,5 +1,4 @@
-{
-  "/relationships/tiers": [
+[
     {
       "id": "stranger",
       "displayName": "Stranger",
@@ -25,4 +24,3 @@
       "maxTrust": 1.0
     }
   ]
-}

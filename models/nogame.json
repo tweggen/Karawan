@@ -20,5 +20,9 @@
   "animations": { "__include__": "nogame.animations.json" },
   "narration": { "__include__": "nogame.narration.json" },
   "characters": { "__include__": "nogame.characters.json" },
-  "lsystems": { "__include__": "nogame.lsystems.json" }
+  "lsystems": { "__include__": "nogame.lsystems.json" },
+  "roles": { "__include__": "nogame.roles.json" },
+  "interactions": { "__include__": "nogame.interactions.json" },
+  "relationships": { "tiers": { "__include__": "nogame.relationship-tiers.json" } },
+  "groups": { "types": { "__include__": "nogame.group-types.json" } }
 }

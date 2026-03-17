@@ -1,5 +1,4 @@
-{
-  "/interactions": [
+[
     {
       "id": "patrol_check",
       "displayName": "Patrol Check",
@@ -150,4 +149,3 @@
       "conditionParameters": {}
     }
   ]
-}

@@ -1,5 +1,4 @@
-{
-  "/roles": [
+[
     {
       "id": "worker",
       "displayName": "Factory Worker",
@@ -122,4 +121,3 @@
       "specialInteractionType": "patrol_check"
     }
   ]
-}

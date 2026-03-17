@@ -84,8 +84,70 @@ public class TestRunnerMain
             return new engine.casette.Loader(streamJson);
         });
 
+        // Register TALE registries BEFORE interpreting config (so hooks fire properly)
+        I.Register<engine.tale.RoleRegistry>(() => new engine.tale.RoleRegistry());
+        I.Register<engine.tale.InteractionTypeRegistry>(() => new engine.tale.InteractionTypeRegistry());
+        I.Register<engine.tale.RelationshipTierRegistry>(() => new engine.tale.RelationshipTierRegistry());
+        I.Register<engine.tale.GroupTypeRegistry>(() => new engine.tale.GroupTypeRegistry());
+
+        // Set up config hooks BEFORE interpreting config
+        var loader = I.Get<engine.casette.Loader>();
+        loader.WhenLoaded("/roles", (path, rolesNode) =>
+        {
+            var registry = I.Get<engine.tale.RoleRegistry>();
+            if (rolesNode is System.Text.Json.Nodes.JsonArray rolesArray)
+            {
+                foreach (var roleNode in rolesArray)
+                {
+                    var def = System.Text.Json.JsonSerializer.Deserialize<engine.tale.RoleDefinition>(roleNode.ToJsonString());
+                    if (def != null)
+                        registry.Add(def.Id, def);
+                }
+            }
+        });
+        loader.WhenLoaded("/interactions", (path, interactionsNode) =>
+        {
+            var registry = I.Get<engine.tale.InteractionTypeRegistry>();
+            if (interactionsNode is System.Text.Json.Nodes.JsonArray interactionsArray)
+            {
+                foreach (var typeNode in interactionsArray)
+                {
+                    var def = System.Text.Json.JsonSerializer.Deserialize<engine.tale.InteractionTypeDefinition>(typeNode.ToJsonString());
+                    if (def != null)
+                        registry.Add(def.Id, def);
+                }
+                registry.FinalizeOrder();
+            }
+        });
+        loader.WhenLoaded("/relationships/tiers", (path, tiersNode) =>
+        {
+            var registry = I.Get<engine.tale.RelationshipTierRegistry>();
+            if (tiersNode is System.Text.Json.Nodes.JsonArray tiersArray)
+            {
+                foreach (var tierNode in tiersArray)
+                {
+                    var def = System.Text.Json.JsonSerializer.Deserialize<engine.tale.RelationshipTierDefinition>(tierNode.ToJsonString());
+                    if (def != null)
+                        registry.Add(def.Id, def);
+                }
+            }
+        });
+        loader.WhenLoaded("/groups/types", (path, typesNode) =>
+        {
+            var registry = I.Get<engine.tale.GroupTypeRegistry>();
+            if (typesNode is System.Text.Json.Nodes.JsonArray typesArray)
+            {
+                foreach (var typeNode in typesArray)
+                {
+                    var def = System.Text.Json.JsonSerializer.Deserialize<engine.tale.GroupTypeDefinition>(typeNode.ToJsonString());
+                    if (def != null)
+                        registry.Add(def.Id, def);
+                }
+            }
+        });
+
         // Interpret config BEFORE engine creation (so modules are registered)
-        I.Get<engine.casette.Loader>().InterpretConfig();
+        loader.InterpretConfig();
         Console.WriteLine("Config interpreted. Modules registered.");
 
         // Create headless engine
