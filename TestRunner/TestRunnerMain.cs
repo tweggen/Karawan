@@ -284,7 +284,12 @@ public class TestRunnerMain
             // Create and run simulation
             var sim = new engine.tale.DesSimulation();
             var simStart = new System.DateTime(2024, 1, 1, 0, 0, 0);
-            var simEnd = simStart.AddDays(60);  // Run for 60 days for Phase 5 escalation testing
+
+            // Allow configurable simulation duration via environment variable
+            // TALE_SIM_DAYS: number of days to simulate (default: 60 for regression tests)
+            string simDaysStr = System.Environment.GetEnvironmentVariable("TALE_SIM_DAYS") ?? "60";
+            int simDays = int.TryParse(simDaysStr, out int days) ? days : 60;
+            var simEnd = simStart.AddDays(simDays);  // Configurable duration for regression/recalibration
 
             // Use test event logger that bridges to engine's SubscriptionManager for test framework
             sim.Initialize(spatial, schedules, library, new TestEventLogger(), simStart, seed: 42);

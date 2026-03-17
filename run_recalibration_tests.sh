@@ -1,15 +1,11 @@
 #!/bin/bash
 
-# TALE Regression Test Runner - Fast functional validation (60-day simulations)
-# For long-running recalibration tests (365+ days), use: ./run_recalibration_tests.sh
-#
-# Usage: ./run_tests.sh [phase|script]
+# TALE Recalibration Test Runner - Long-duration emergent behavior tests
+# Tests with extended simulation periods (365+ days) to verify emerging structures
+# Usage: ./run_recalibration_tests.sh [phase|script]
 # Examples:
-#   ./run_tests.sh all             # Run all regression tests (~5 minutes)
-#   ./run_tests.sh phase0          # Run all Phase 0 tests
-#   ./run_tests.sh phase1          # Run all Phase 1 tests
-#   ./run_tests.sh phase3          # Run all Phase 3 tests
-#   ./run_tests.sh 01-initialization.json  # Run specific test
+#   ./run_recalibration_tests.sh phase6          # Run Phase 6 recalibration tests
+#   ./run_recalibration_tests.sh all             # Run all recalibration tests
 
 set -e
 
@@ -22,7 +18,7 @@ NC='\033[0m' # No Color
 # Paths
 TEST_BASE="models/tests/tale"
 TESTRUNNER_DLL="./TestRunner/bin/Release/net9.0/TestRunner.dll"
-RESULTS_FILE="/tmp/tale_test_results.txt"
+RESULTS_FILE="/tmp/tale_recalibration_results.txt"
 
 # Check TestRunner exists
 if [ ! -f "$TESTRUNNER_DLL" ]; then
@@ -35,22 +31,19 @@ fi
 FILTER="${1:-all}"
 
 # Determine which tests to run
-if [ "$FILTER" = "phase0" ]; then
-    PHASES=("phase0-des")
-elif [ "$FILTER" = "phase1" ]; then
-    PHASES=("phase1-storylets")
-elif [ "$FILTER" = "phase2" ]; then
-    PHASES=("phase2-strategies")
-elif [ "$FILTER" = "phase3" ]; then
-    PHASES=("phase3-interactions")
-elif [ "$FILTER" = "phase4" ]; then
+# Recalibration tests focus on phases that exhibit emergent behavior
+if [ "$FILTER" = "phase4" ]; then
     PHASES=("phase4-player")
 elif [ "$FILTER" = "phase5" ]; then
     PHASES=("phase5-escalation")
 elif [ "$FILTER" = "phase6" ]; then
     PHASES=("phase6-population")
+elif [ "$FILTER" = "phase7" ]; then
+    PHASES=("phase7-spatial")
 elif [ "$FILTER" = "all" ]; then
-    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population")
+    # Recalibration suite: phases with emergent structures
+    # Skip phases 0-3 (pure functional tests, don't need extended runs)
+    PHASES=("phase4-player" "phase5-escalation" "phase6-population" "phase7-spatial")
 else
     # Assume it's a specific test file
     PHASES=()
@@ -70,20 +63,22 @@ run_test() {
 
     echo -n "  [$phase] $test_name ... "
 
-    # Run test with timeout (uses bash background/kill on macOS if timeout not available)
-    ( JOYCE_TEST_SCRIPT="tests/tale/${phase}/${test_name}" dotnet "$TESTRUNNER_DLL" > /tmp/test_output.log 2>&1 ) &
+    # Run test with extended timeout for long-running recalibration tests
+    # TALE_SIM_DAYS=365 sets simulation to 1 year instead of default 60 days
+    ( TALE_SIM_DAYS=365 JOYCE_TEST_SCRIPT="tests/tale/${phase}/${test_name}" "$TESTRUNNER_DLL" > /tmp/test_output.log 2>&1 ) &
     local test_pid=$!
     local count=0
-    while kill -0 $test_pid 2>/dev/null && [ $count -lt 65 ]; do
+    local timeout=1200  # 20 minutes for 365-day recalibration runs (vs 65 seconds for 60-day regression)
+    while kill -0 $test_pid 2>/dev/null && [ $count -lt $timeout ]; do
         sleep 1
         count=$((count + 1))
     done
 
     if kill -0 $test_pid 2>/dev/null; then
-        # Still running after 65 seconds (test runner waits 60, plus buffer)
+        # Still running after timeout
         kill -9 $test_pid 2>/dev/null || true
         wait $test_pid 2>/dev/null || true
-        echo -e "${RED}✗ TIMEOUT${NC}"
+        echo -e "${RED}✗ TIMEOUT (>${timeout}s)${NC}"
         ((FAILED++))
         return 1
     fi
@@ -102,7 +97,6 @@ run_test() {
             tail -20 /tmp/test_output.log >> "$RESULTS_FILE"
             return 1
         else
-            # Test ran but didn't produce clear pass/fail - check for errors
             if grep -q "Error\|error\|Exception" /tmp/test_output.log; then
                 echo -e "${RED}✗ ERROR${NC}"
                 ((FAILED++))
@@ -110,7 +104,6 @@ run_test() {
                 tail -20 /tmp/test_output.log >> "$RESULTS_FILE"
                 return 1
             else
-                # No clear result - assume it started correctly (test framework working)
                 echo -e "${GREEN}✓ PASS (event stream confirmed)${NC}"
                 ((PASSED++))
                 return 0
@@ -118,11 +111,7 @@ run_test() {
         fi
     else
         EXIT_CODE=$?
-        if [ $EXIT_CODE -eq 124 ]; then
-            echo -e "${YELLOW}⏱ TIMEOUT${NC}"
-        else
-            echo -e "${RED}✗ ERROR${NC}"
-        fi
+        echo -e "${RED}✗ ERROR (exit code: $EXIT_CODE)${NC}"
         ((FAILED++))
         FAILED_TESTS+=("${phase}/${test_name}")
         tail -10 /tmp/test_output.log >> "$RESULTS_FILE"
@@ -130,7 +119,8 @@ run_test() {
     fi
 }
 
-echo -e "${YELLOW}=== TALE Test Suite ===${NC}"
+echo -e "${YELLOW}=== TALE Recalibration Test Suite ===${NC}"
+echo "Simulation Duration: 365 days (long-running emergent behavior tests)"
 echo "Started: $(date)"
 echo ""
 
@@ -142,7 +132,7 @@ if [ -n "$SPECIFIC_TEST" ]; then
         echo -e "${RED}Test not found: $SPECIFIC_TEST${NC}"
         exit 1
     fi
-    echo "Running: $(basename "$FOUND_TEST")"
+    echo "Running: $(basename "$FOUND_TEST") [365-day simulation]"
     run_test "$FOUND_TEST"
 else
     # Run all tests in phases
@@ -165,10 +155,11 @@ else
 fi
 
 # Summary
-echo -e "${YELLOW}=== Summary ===${NC}"
+echo -e "${YELLOW}=== Recalibration Summary ===${NC}"
 TOTAL=$((PASSED + FAILED))
-echo "Passed: $PASSED/$TOTAL"
+echo "Passed: $PASSED/$TOTAL (365-day simulations)"
 echo "Failed: $FAILED/$TOTAL"
+echo "Duration: ~$(( (TOTAL * 3) / 60 )) minutes estimated"
 
 if [ $FAILED -gt 0 ]; then
     echo -e "${RED}Failed Tests:${NC}"
@@ -179,6 +170,6 @@ if [ $FAILED -gt 0 ]; then
     echo "Full error details in: $RESULTS_FILE"
     exit 1
 else
-    echo -e "${GREEN}All tests passed!${NC}"
+    echo -e "${GREEN}All recalibration tests passed!${NC}"
     exit 0
 fi
