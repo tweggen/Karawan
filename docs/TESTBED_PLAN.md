@@ -18,6 +18,85 @@ This cannot be tuned by playing the game at real-time speed. A headless testbed 
 
 ---
 
+## Current Testing Strategy (Regression vs Recalibration)
+
+As of March 2026, the TALE system uses a **two-tier testing approach** to balance fast feedback with comprehensive validation:
+
+### Regression Tests (`./run_tests.sh`)
+
+**Purpose**: Quick functional validation of core TALE systems
+**Simulation Duration**: 60 days (fast feedback)
+**Total Time**: ~5 minutes for all 171 tests
+**When to Run**: After every code change, in CI/CD pipeline
+**Status**: ✅ All 171 tests passing across 7 phases
+
+The regression test suite consists of 171 JSON test scripts organized by phase:
+- **Phase 0** (20 tests): DES engine core — event queue, scheduling, properties
+- **Phase 1** (20 tests): Storylet system — selection, preconditions, postconditions
+- **Phase 2** (20 tests): Strategy system — multi-phase state machines
+- **Phase 3** (22 tests): Interaction system — request/signal lifecycle
+- **Phase 4** (20 tests): Quest/player system — quest mechanics
+- **Phase 5** (20 tests): Escalation/interrupts — interrupt scopes, branches
+- **Phase 6** (49 tests): Population management — generation, deviance, persistence
+
+See `docs/TESTING.md` for complete testing documentation and usage guide.
+
+### Recalibration Tests (`./run_recalibration_tests.sh`)
+
+**Purpose**: Verify emergent structures and long-term behavioral equilibrium
+**Simulation Duration**: 365 days (1 year, configurable via `TALE_SIM_DAYS`)
+**Total Time**: ~2-4 hours for all tests
+**When to Run**: When adjusting NPC parameters, verifying economic models, tuning probability constants
+**Status**: ✅ Framework ready, test scripts pending
+
+The recalibration test suite focuses on phases with emergent behavior:
+- **Phase 4**: Quest completion rates, quest pattern stability over long term
+- **Phase 5**: Gang formation stability, conflict escalation chains
+- **Phase 6**: Population equilibrium, role distribution stability
+- **Phase 7**: Spatial movement patterns, location utilization over time
+
+### Implementation Details
+
+Both test suites use the **ExpectEngine framework**, a custom JSON-based test specification language:
+
+```json
+{
+  "name": "test-name",
+  "globalTimeout": 30,
+  "steps": [
+    { "expect": { "type": "event_type" }, "timeout": 5 },
+    { "action": "quit", "result": "pass" }
+  ]
+}
+```
+
+**Key Features**:
+- Environment variable `TALE_SIM_DAYS` controls simulation duration (default: 60)
+- Event-based assertions: tests wait for specific events (npc_created, node_arrival, request_emitted, etc.)
+- Timeout protection: each step has max wait time
+- Deterministic: fixed random seed ensures reproducible results
+
+### Testing Workflow
+
+**Development**:
+```bash
+# Fast feedback: check specific phase after code changes
+./run_tests.sh phase3
+```
+
+**Parameter Tuning**:
+```bash
+# Long-running: verify emergent behavior with 365-day simulations
+./run_recalibration_tests.sh all
+```
+
+**CI/CD Pipeline**:
+- **On PR**: `./run_tests.sh all` (5 min, gates merge)
+- **Nightly**: `./run_recalibration_tests.sh all` (4+ hours, reports trends)
+- **Before Release**: Both suites + manual gameplay validation
+
+---
+
 ## Architecture
 
 ### Two Simulation Modes
