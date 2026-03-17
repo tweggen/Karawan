@@ -18,12 +18,12 @@ NC='\033[0m' # No Color
 
 # Paths
 TEST_BASE="models/tests/tale"
-TESTRUNNER="./TestRunner/bin/Release/net9.0-windows10.0.22000.0/TestRunner.exe"
+TESTRUNNER_DLL="./TestRunner/bin/Release/net9.0/TestRunner.dll"
 RESULTS_FILE="/tmp/tale_test_results.txt"
 
 # Check TestRunner exists
-if [ ! -f "$TESTRUNNER" ]; then
-    echo -e "${RED}Error: TestRunner not found at $TESTRUNNER${NC}"
+if [ ! -f "$TESTRUNNER_DLL" ]; then
+    echo -e "${RED}Error: TestRunner not found at $TESTRUNNER_DLL${NC}"
     echo "Please run: dotnet build TestRunner/TestRunner.csproj -c Release"
     exit 1
 fi
@@ -68,7 +68,7 @@ run_test() {
     echo -n "  [$phase] $test_name ... "
 
     # Run test with timeout (uses bash background/kill on macOS if timeout not available)
-    ( JOYCE_TEST_SCRIPT="tests/tale/${phase}/${test_name}" "$TESTRUNNER" > /tmp/test_output.log 2>&1 ) &
+    ( JOYCE_TEST_SCRIPT="tests/tale/${phase}/${test_name}" dotnet "$TESTRUNNER_DLL" > /tmp/test_output.log 2>&1 ) &
     local test_pid=$!
     local count=0
     while kill -0 $test_pid 2>/dev/null && [ $count -lt 65 ]; do
