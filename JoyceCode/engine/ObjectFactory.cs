@@ -16,6 +16,27 @@ internal class ObjectEntry<K, T>
 }
 
 
+/// <summary>
+/// Thin IReadOnlyList wrapper that caches keys from a SortedDictionary once,
+/// avoiding re-enumeration on repeated access.
+/// </summary>
+internal class KeyListView<K> : IReadOnlyList<K> where K : IComparable
+{
+    private readonly List<K> _cachedKeys;
+
+    public KeyListView(IEnumerable<K> keys)
+    {
+        _cachedKeys = new List<K>(keys);
+    }
+
+    public K this[int index] => _cachedKeys[index];
+    public int Count => _cachedKeys.Count;
+
+    public IEnumerator<K> GetEnumerator() => _cachedKeys.GetEnumerator();
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => _cachedKeys.GetEnumerator();
+}
+
+
 public class ObjectFactory<K, T> : AModule, IDisposable where K : IComparable
 {
     private object _lo = new();
@@ -146,8 +167,22 @@ public class ObjectFactory<K, T> : AModule, IDisposable where K : IComparable
             return _mapObjects.ContainsKey(name);
         }
     }
-    
-    
+
+
+    /// <summary>
+    /// Get a readonly list of all keys in sorted order. Keys are cached at call time,
+    /// so multiple calls may return different list instances if the registry changes,
+    /// but individual list instances are immutable from the caller's perspective.
+    /// </summary>
+    public IReadOnlyList<K> GetKeys()
+    {
+        lock (_lo)
+        {
+            return new KeyListView<K>(_mapObjects.Keys);
+        }
+    }
+
+
     public T Get(K name)
     {
         ObjectEntry<K, T> instanceEntry;
