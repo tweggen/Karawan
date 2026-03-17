@@ -470,6 +470,16 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionSignal.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionPool.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TalePopulationGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RoleDefinition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RoleRegistry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionTypeDefinition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\IInteractionCondition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionTypeRegistry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\conditions\TrustBasedCondition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\conditions\CriminalCondition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\conditions\AngerBasedCondition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\conditions\AuthorityCondition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\conditions\RecruitCondition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resources.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resource\ShaderSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ross\ImageSharpFramebuffer.cs" />

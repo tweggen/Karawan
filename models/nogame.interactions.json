@@ -1,0 +1,153 @@
+{
+  "/interactions": [
+    {
+      "id": "patrol_check",
+      "displayName": "Patrol Check",
+      "trustDelta": 0.0,
+      "category": "authority",
+      "selectionPriority": 100,
+      "conditionClassName": "engine.tale.conditions.AuthorityCondition",
+      "conditionParameters": {
+        "maxReputation": 0.2,
+        "maxTrust": 0.2,
+        "probability": 0.4
+      }
+    },
+    {
+      "id": "rob",
+      "displayName": "Robbery",
+      "trustDelta": -0.30,
+      "category": "conflict",
+      "selectionPriority": 50,
+      "conditionClassName": "engine.tale.conditions.CriminalCondition",
+      "conditionParameters": {
+        "minDesperation": 0.6,
+        "maxMorality": 0.3,
+        "minWealthTarget": 0.4,
+        "maxTrust": 0.2,
+        "probability": 0.15
+      }
+    },
+    {
+      "id": "intimidate",
+      "displayName": "Intimidation",
+      "trustDelta": -0.20,
+      "category": "conflict",
+      "selectionPriority": 40,
+      "conditionClassName": "engine.tale.conditions.AngerBasedCondition",
+      "conditionParameters": {
+        "minAnger": 0.5,
+        "maxMorality": 0.4,
+        "maxTrust": 0.3,
+        "probability": 0.2
+      }
+    },
+    {
+      "id": "recruit",
+      "displayName": "Recruitment",
+      "trustDelta": 0.16,
+      "category": "special",
+      "selectionPriority": 45,
+      "conditionClassName": "engine.tale.conditions.RecruitCondition",
+      "conditionParameters": {
+        "minDesperation": 0.5,
+        "maxMorality": 0.4,
+        "minTrust": 0.5,
+        "probability": 0.15
+      }
+    },
+    {
+      "id": "argue",
+      "displayName": "Argument",
+      "trustDelta": -0.08,
+      "category": "conflict",
+      "selectionPriority": 30,
+      "conditionClassName": "engine.tale.conditions.AngerBasedCondition",
+      "conditionParameters": {
+        "minAnger": 0.5,
+        "maxMorality": 1.0,
+        "maxTrust": 0.3,
+        "probability": 0.3
+      }
+    },
+    {
+      "id": "greet",
+      "displayName": "Greeting",
+      "trustDelta": 0.04,
+      "category": "positive",
+      "selectionPriority": 1,
+      "conditionClassName": "engine.tale.conditions.TrustBasedCondition",
+      "conditionParameters": {
+        "minTrust": 0.0,
+        "maxTrust": 0.2,
+        "probability": 1.0
+      }
+    },
+    {
+      "id": "chat",
+      "displayName": "Chat",
+      "trustDelta": 0.06,
+      "category": "positive",
+      "selectionPriority": 10,
+      "conditionClassName": "engine.tale.conditions.TrustBasedCondition",
+      "conditionParameters": {
+        "minTrust": 0.2,
+        "maxTrust": 0.8,
+        "probability": 0.5
+      }
+    },
+    {
+      "id": "trade",
+      "displayName": "Trade",
+      "trustDelta": 0.05,
+      "category": "positive",
+      "selectionPriority": 10,
+      "conditionClassName": "engine.tale.conditions.TrustBasedCondition",
+      "conditionParameters": {
+        "minTrust": 0.5,
+        "maxTrust": 1.0,
+        "probability": 0.5
+      }
+    },
+    {
+      "id": "help",
+      "displayName": "Mutual Aid",
+      "trustDelta": 0.10,
+      "category": "positive",
+      "selectionPriority": 10,
+      "conditionClassName": "engine.tale.conditions.TrustBasedCondition",
+      "conditionParameters": {
+        "minTrust": 0.5,
+        "maxTrust": 1.0,
+        "probability": 0.5
+      }
+    },
+    {
+      "id": "report_crime",
+      "displayName": "Crime Report",
+      "trustDelta": 0.04,
+      "category": "authority",
+      "selectionPriority": 0,
+      "conditionClassName": null,
+      "conditionParameters": {}
+    },
+    {
+      "id": "blackmail",
+      "displayName": "Blackmail",
+      "trustDelta": -0.40,
+      "category": "conflict",
+      "selectionPriority": 0,
+      "conditionClassName": null,
+      "conditionParameters": {}
+    },
+    {
+      "id": "arrest",
+      "displayName": "Arrest",
+      "trustDelta": -0.60,
+      "category": "authority",
+      "selectionPriority": 0,
+      "conditionClassName": null,
+      "conditionParameters": {}
+    }
+  ]
+}

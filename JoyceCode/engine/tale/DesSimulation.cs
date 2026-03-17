@@ -180,15 +180,10 @@ public class DesSimulation
         npc.CurrentStorylet = "sleep";
         npc.CurrentStart = startTime - TimeSpan.FromHours(8);
 
-        float baseWakeHour = npc.Role switch
-        {
-            "Worker" => 6f,
-            "Merchant" => 7f,
-            "Socialite" => 9f,
-            "Drifter" => 5f,
-            "Authority" => 6f,
-            _ => 6f
-        };
+        var roleRegistry = I.Get<RoleRegistry>();
+        var roleDef = roleRegistry.Get(npc.Role.ToLowerInvariant()) ?? roleRegistry.Get("worker");
+        float baseWakeHour = roleDef?.BaseWakeHour ?? 6f;
+
         float jitterMinutes = (npc.Seed % 60) - 30;
         npc.CurrentEnd = startTime.AddHours(baseWakeHour).AddMinutes(jitterMinutes);
         npc.ScheduleStep = 0;
@@ -532,23 +527,18 @@ public class DesSimulation
     }
 
 
-    private static HashSet<string> GetCapableRoles(string requestType)
+    private HashSet<string> GetCapableRoles(string requestType)
     {
-        // Map request types to roles that can fulfill them
-        return requestType switch
+        var registry = I.Get<RoleRegistry>();
+        var capable = new HashSet<string>();
+        var roleIds = registry.GetKeys();
+        foreach (var roleId in roleIds)
         {
-            "food_delivery" => new HashSet<string> { "merchant", "drifter" },
-            "restock_supply" => new HashSet<string> { "merchant", "drifter" },
-            "trade_service" => new HashSet<string> { "merchant", "drifter" },
-            "greeting" => new HashSet<string> { "worker", "socialite", "merchant", "drifter" },
-            "help_request" => new HashSet<string> { "worker", "socialite" },
-            "argument" => new HashSet<string> { "worker", "socialite", "drifter" },
-            "threat" => new HashSet<string> { "drifter" },
-            "pickpocket" => new HashSet<string> { "authority" },
-            "blackmail" => new HashSet<string> { "drifter" },
-            "crime_report" => new HashSet<string> { "authority" },
-            _ => new HashSet<string>()
-        };
+            var roleDef = registry.Get(roleId);
+            if (roleDef?.FulfillableRequestTypes?.Contains(requestType) ?? false)
+                capable.Add(roleId);
+        }
+        return capable;
     }
 
 

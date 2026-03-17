@@ -1,0 +1,125 @@
+{
+  "/roles": [
+    {
+      "id": "worker",
+      "displayName": "Factory Worker",
+      "defaultWeight": 0.40,
+      "baseWakeHour": 6.0,
+      "locationPreferences": {
+        "home": ["home"],
+        "workplace": ["workplace"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.6, 0.8],
+        "wealth": [0.3, 0.6],
+        "reputation": [0.3, 0.7]
+      },
+      "fulfillableRequestTypes": [
+        "greeting",
+        "help_request",
+        "argument"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null
+    },
+    {
+      "id": "merchant",
+      "displayName": "Shop Owner",
+      "defaultWeight": 0.15,
+      "baseWakeHour": 7.0,
+      "locationPreferences": {
+        "home": ["home", "shop"],
+        "workplace": ["shop"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.5, 0.8],
+        "wealth": [0.5, 0.8],
+        "reputation": [0.3, 0.7]
+      },
+      "fulfillableRequestTypes": [
+        "food_delivery",
+        "restock_supply",
+        "trade_service",
+        "greeting"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null
+    },
+    {
+      "id": "socialite",
+      "displayName": "Social Butterfly",
+      "defaultWeight": 0.20,
+      "baseWakeHour": 9.0,
+      "locationPreferences": {
+        "home": ["home", "street_segment"],
+        "workplace": ["street_segment", "social_venue"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.5, 0.8],
+        "wealth": [0.4, 0.8],
+        "reputation": [0.3, 0.7]
+      },
+      "fulfillableRequestTypes": [
+        "greeting",
+        "help_request",
+        "argument"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null
+    },
+    {
+      "id": "drifter",
+      "displayName": "Drifter",
+      "defaultWeight": 0.15,
+      "baseWakeHour": 5.0,
+      "locationPreferences": {
+        "home": ["home", "street_segment"],
+        "workplace": ["street_segment"],
+        "social_venue": ["social_venue", "street_segment"],
+        "eat_venue": ["social_venue", "street_segment"]
+      },
+      "propertyRanges": {
+        "morality": [0.3, 0.7],
+        "wealth": [0.05, 0.25],
+        "reputation": [0.1, 0.4]
+      },
+      "fulfillableRequestTypes": [
+        "food_delivery",
+        "restock_supply",
+        "greeting",
+        "argument",
+        "threat"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null
+    },
+    {
+      "id": "authority",
+      "displayName": "Police Officer",
+      "defaultWeight": 0.10,
+      "baseWakeHour": 6.0,
+      "locationPreferences": {
+        "home": ["home"],
+        "workplace": ["workplace"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.6, 0.9],
+        "wealth": [0.4, 0.6],
+        "reputation": [0.6, 0.9]
+      },
+      "fulfillableRequestTypes": [
+        "crime_report"
+      ],
+      "groupClassificationMarker": "Authority",
+      "specialInteractionType": "patrol_check"
+    }
+  ]
+}

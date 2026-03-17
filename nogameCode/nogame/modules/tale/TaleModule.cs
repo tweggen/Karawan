@@ -136,12 +136,51 @@ public class TaleModule : AModule
             library.LoadFromDirectory(talePath);
             Trace($"TALE: Loaded {library.GetCandidates("worker").Count} storylets.");
 
+            // Create and register Role and Interaction registries
+            I.Register<RoleRegistry>(() => new RoleRegistry());
+            I.Register<InteractionTypeRegistry>(() => new InteractionTypeRegistry());
+            Trace("TALE: RoleRegistry and InteractionTypeRegistry registered.");
+
             // Create and register TaleManager
             _taleManager = new TaleManager();
             _taleManager.Initialize(library);
 
             I.Register<TaleManager>(() => _taleManager);
             Trace("TALE: TaleManager registered.");
+
+            // Load roles and interaction types from config
+            var loader = I.Get<engine.casette.Loader>();
+
+            loader.WhenLoaded("/roles", (path, rolesNode) =>
+            {
+                var registry = I.Get<RoleRegistry>();
+                if (rolesNode is JsonArray rolesArray)
+                {
+                    foreach (JsonNode roleNode in rolesArray)
+                    {
+                        var def = JsonSerializer.Deserialize<RoleDefinition>(roleNode.ToJsonString());
+                        if (def != null)
+                            registry.Add(def.Id, def);
+                    }
+                    Trace($"TALE: Loaded {rolesArray.Count} role definitions.");
+                }
+            });
+
+            loader.WhenLoaded("/interactions", (path, interactionsNode) =>
+            {
+                var registry = I.Get<InteractionTypeRegistry>();
+                if (interactionsNode is JsonArray interactionsArray)
+                {
+                    foreach (JsonNode typeNode in interactionsArray)
+                    {
+                        var def = JsonSerializer.Deserialize<InteractionTypeDefinition>(typeNode.ToJsonString());
+                        if (def != null)
+                            registry.Add(def.Id, def);
+                    }
+                    registry.FinalizeOrder();
+                    Trace($"TALE: Loaded {interactionsArray.Count} interaction type definitions.");
+                }
+            });
 
             // Get cluster list for lifecycle events
             _clusterList = I.Get<ClusterList>();
