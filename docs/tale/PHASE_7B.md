@@ -31,47 +31,51 @@ Phase 7B introduces an **explicit tagging system** for buildings, mirroring the 
 
 ---
 
-## Phase 7B-1: Implement ClusterDesc.LocationAttributes.Living
+## Phase 7B-1: Implement ClusterDesc.LocationAttributes.Living & Industrial
 
-**Current State**: `ClusterDesc.LocationAttributes.Living` is declared but stubbed:
+**Current State**: `ClusterDesc.LocationAttributes.Living` and `Industrial` are declared but stubbed in `GetAttributeIntensity()`:
 
 ```csharp
-// In ClusterDesc.cs
-public float GetAttributeIntensity(Vector3 position, LocationAttributes attr)
-{
-    return attr switch
-    {
-        LocationAttributes.Downtown => /* computed from streets/density */ ...,
-        LocationAttributes.Shopping => /* computed from shops */ ...,
-        LocationAttributes.Living => 0.5f,  // ← STUB
-        LocationAttributes.Industrial => 0.0f,  // ← STUB
-        _ => 0.0f
-    };
-}
+case LocationAttributes.Living:
+    break;  // ← STUB
+
+case LocationAttributes.Industrial:
+    break;  // ← STUB
 ```
 
-**What to Do**: Implement proper Living intensity computation:
+**Design Principle**: Define Living and Industrial by **geometric position**, not by counting generated buildings (which would be circular—buildings are generated based on attribute intensity). Instead:
+- **Living**: Ring around downtown/shopping, residential neighborhoods with overlap to commercial areas
+- **Industrial**: Outermost area (periphery), high intensity at edges, low towards center
+
+**Pattern Reference**: Downtown uses `dist / (size/2)` with Gaussian. Shopping uses `dist / (size/3) + 0.2f` offset to create a ring.
+
+**What to Do**: Implement Living and Industrial following the same pattern:
 
 ```csharp
-LocationAttributes.Living => _computeLivingIntensity(position),
-
-private float _computeLivingIntensity(Vector3 position)
+case LocationAttributes.Living:
 {
-    // High Living intensity near residential buildings
-    // Formula: count nearby residential buildings, weighted by proximity
-    float intensity = 0.0f;
-    foreach (var building in Buildings)
-    {
-        float distSq = Vector3.DistanceSquared(position, building.Center);
-        float distWeight = 1.0f / (1.0f + distSq / (ClusterSize * ClusterSize));
-        intensity += distWeight;
-    }
-    return Math.Min(intensity / Buildings.Count, 1.0f);
+    // Ring around downtown/shopping, overlapping with shopping ring
+    // Residential neighborhoods form a middle band with commerce nearby
+    var dist = (_pos - v3Spot).Length();
+    dist = dist / (_size / 2.5f) + 0.3f;  // Wider radius than shopping
+    var gauss = Single.Exp(-(dist * dist));
+    return gauss;
+}
+
+case LocationAttributes.Industrial:
+{
+    // Outermost area - inverse of downtown
+    // High intensity at periphery, low towards center
+    var dist = (_pos - v3Spot).Length();
+    dist = dist / (_size / 2f);
+    // Invert: high when far from center
+    var intensity = 1.0f - Single.Exp(-(dist * dist) * 2f);
+    return intensity;
 }
 ```
 
 **Files to Modify**:
-- `JoyceCode/world/generation/ClusterDesc.cs` — Implement `_computeLivingIntensity()`
+- `JoyceCode/engine/world/ClusterDesc.cs` — Implement Living and Industrial cases in `GetAttributeIntensity()`
 
 ---
 
@@ -124,83 +128,88 @@ public class Tags
 
 ---
 
-## Phase 7B-3: Create GenerateBuildingRolesOperator
+## Phase 7B-3: Update QuarterGenerator to Assign Building Roles
 
-**Current Pattern**: `GenerateShopsOperator` (in `metaGen/ClusterOperator.cs`) deterministically stamps shop tags:
+**Why Here?** Building roles must be determined **at creation time**, not later:
+- `QuarterGenerator._createBuildings()` is where Building objects are instantiated
+- It already queries `GetAttributeIntensity()` for Downtown (height) and Shopping (shops)
+- Roles control building construction, so must be known before geometry generation
+- This happens during cluster operator phase, before TALE initialization needs the info
+
+**Current State** (QuarterGenerator.cs):
 
 ```csharp
-public class GenerateShopsOperator : AClusterOperator
+private void _createBuildings(in Quarter quarter, in Estate estate)
 {
-    public override void Apply(ClusterDesc cluster)
-    {
-        // For each shop, derive tags from cluster attributes and shop geometry
-        foreach (var shopFront in cluster.ShopFronts)
-        {
-            var tags = DetermineShopTags(shopFront, cluster);
-            foreach (var tag in tags)
-                shopFront.Tags.Add(tag);
-        }
-    }
+    // ... existing code ...
+    // Already uses intensity to determine height and shops
+    float downtownness = _clusterDesc.GetAttributeIntensity(..., LocationAttributes.Downtown);
+    float shoppingness = _clusterDesc.GetAttributeIntensity(..., LocationAttributes.Shopping);
 
-    private List<string> DetermineShopTags(ShopFront sf, ClusterDesc cluster)
-    {
-        // Use cluster attribute intensity to decide shop type
-        // E.g., high Downtown + high Shopping → "shop Trade"
-        // High Shopping alone → "shop Eat" or "shop Drink"
-        // Return list like {"shop Eat", "shop Drink"}
-    }
+    var building = new streets.Building() { ClusterDesc = _clusterDesc };
+    building.AddPoints(p);
+    building.SetHeight(height);
+    // ← Need to assign roles/tags here
 }
 ```
 
-**What to Do**: Create `GenerateBuildingRolesOperator` (same pattern):
+**What to Do**: After creating building (line 221), compute and assign role tags:
 
 ```csharp
-public class GenerateBuildingRolesOperator : AClusterOperator
+private void _createBuildings(in Quarter quarter, in Estate estate)
 {
-    public override void Apply(ClusterDesc cluster)
-    {
-        foreach (var building in cluster.Buildings)
-        {
-            var tags = DetermineBuildingRoles(building, cluster);
-            foreach (var tag in tags)
-                building.Tags.Add(tag);
-        }
-    }
+    // ... existing code to create building ...
+    var building = new streets.Building() { ClusterDesc = _clusterDesc };
+    building.AddPoints(p);
+    building.SetHeight(height);
 
-    private List<string> DetermineBuildingRoles(Building building, ClusterDesc cluster)
-    {
-        // Seed from building position
-        var rnd = new RandomSource(cluster.IdString + "-building-" + building.Id);
+    // NEW: Assign building roles based on location attributes
+    var buildingRoles = _determineBuildingRoles(building, estate);
+    foreach (var role in buildingRoles)
+        building.Tags.Add(role);
 
-        // Compute location attribute intensity at building center
-        float livingIntensity = cluster.GetAttributeIntensity(building.Center, LocationAttributes.Living);
-        float downstairsIntensity = cluster.GetAttributeIntensity(building.Center, LocationAttributes.Downtown);
-        float industrialIntensity = cluster.GetAttributeIntensity(building.Center, LocationAttributes.Industrial);
+    quarter.AddDebugTag("haveBuilding", "true");
+    // ... rest of existing code ...
+}
 
-        // Decision tree: which role(s) does this building fill?
-        var roles = new List<string>();
+private List<string> _determineBuildingRoles(Building building, Estate estate)
+{
+    // Seed from building position for determinism
+    var rnd = new RandomSource(_clusterDesc.IdString + "-building-" + building.Id);
 
-        if (livingIntensity > 0.6f)
-            roles.Add("residential");
+    // Compute location attribute intensity at building center
+    float livingIntensity = _clusterDesc.GetAttributeIntensity(
+        building.GetCenter() + _clusterDesc.Pos,
+        ClusterDesc.LocationAttributes.Living);
+    float downstairsIntensity = _clusterDesc.GetAttributeIntensity(
+        building.GetCenter() + _clusterDesc.Pos,
+        ClusterDesc.LocationAttributes.Downtown);
+    float industrialIntensity = _clusterDesc.GetAttributeIntensity(
+        building.GetCenter() + _clusterDesc.Pos,
+        ClusterDesc.LocationAttributes.Industrial);
 
-        if (downstairsIntensity > 0.5f && livingIntensity < 0.7f)
-            roles.Add("office");
+    // Decision tree: which role(s) does this building fill?
+    var roles = new List<string>();
 
-        if (industrialIntensity > 0.4f)
-            roles.Add("warehouse");
+    if (livingIntensity > 0.6f)
+        roles.Add("residential");
 
-        // If no roles assigned, default to residential
-        if (roles.Count == 0)
-            roles.Add("residential");
+    if (downstairsIntensity > 0.5f && livingIntensity < 0.7f)
+        roles.Add("office");
 
-        return roles;
-    }
+    if (industrialIntensity > 0.4f)
+        roles.Add("warehouse");
+
+    // If no roles assigned, default to residential
+    if (roles.Count == 0)
+        roles.Add("residential");
+
+    return roles;
 }
 ```
 
-**Files to Create/Modify**:
-- `JoyceCode/world/generation/metaGen/GenerateBuildingRolesOperator.cs` — **Create** new operator
-- `JoyceCode/world/generation/metaGen/ClusterDesc.cs` — Register operator in build pipeline (after `GenerateShopsOperator`)
+**Files to Modify**:
+- `JoyceCode/engine/streets/QuarterGenerator.cs` — Add role computation in `_createBuildings()` and new `_determineBuildingRoles()` method
 
 ---
 
@@ -339,13 +348,13 @@ private bool IsRoleValidForLocation(string role, string locationType)
 ## Implementation Order
 
 ```
-Phase 7B-1: Implement ClusterDesc.LocationAttributes.Living
+Phase 7B-1: Implement ClusterDesc.LocationAttributes.Living & Industrial
     │
     ▼
 Phase 7B-2: Add Building.Tags property
     │
     ▼
-Phase 7B-3: Create GenerateBuildingRolesOperator
+Phase 7B-3: Update QuarterGenerator to assign building roles at creation time
     │
     ▼
 Phase 7B-4: Update SpatialModel.ExtractFrom() to read Building.Tags
@@ -356,7 +365,7 @@ Phase 7B-4: Update SpatialModel.ExtractFrom() to read Building.Tags
     (Phase 7B-6 is automatic — no implementation needed)
 ```
 
-Each sub-phase is ~30 minutes of work. Total: 2-3 hours for full Phase 7B.
+Each sub-phase is ~20-30 minutes of work. Total: 1.5-2 hours for full Phase 7B.
 
 ---
 
@@ -364,15 +373,23 @@ Each sub-phase is ~30 minutes of work. Total: 2-3 hours for full Phase 7B.
 
 | File | Change | Complexity |
 |------|--------|-----------|
-| `JoyceCode/world/generation/ClusterDesc.cs` | Implement Living intensity | Medium |
-| `JoyceCode/world/generation/Building.cs` | Add Tags property | Trivial |
-| `JoyceCode/world/generation/metaGen/GenerateBuildingRolesOperator.cs` | **Create** new operator | Medium |
-| `JoyceCode/world/generation/metaGen/ClusterDesc.cs` | Register operator in pipeline | Trivial |
+| `JoyceCode/engine/world/ClusterDesc.cs` | Implement Living & Industrial intensities | Medium |
+| `JoyceCode/engine/world/Building.cs` | Add Tags property | Trivial |
+| `JoyceCode/engine/streets/QuarterGenerator.cs` | Assign building roles at creation time | Low |
 | `JoyceCode/engine/tale/SpatialModel.cs` | Read Building.Tags in ExtractFrom() | Low |
 
 ---
 
 ## Design Rationale
+
+### Why Geometric Position (Not Building Counting)?
+
+Attribute intensities must be defined **independently of generated buildings**, because:
+- Buildings themselves are generated *based on* attribute intensity values
+- Counting buildings to define intensity creates circular logic
+- Instead, intensities represent **urban design intent**: "this is where residential should be"
+
+Solution: Define intensity by position/distance (Downtown gaussian from center, Shopping as a ring, Living as a middle ring, Industrial at periphery). This gives us deterministic, predictable urban geography that guides building generation, not the reverse.
 
 ### Why Tags Instead of an Enum?
 
@@ -386,12 +403,23 @@ An **Enum** would be rigid:
 - Need code changes to add new roles
 - Less designer control
 
-### Why ClusterOperator Instead of Fixed Roles?
+### Why Assign Roles in QuarterGenerator (Not a Separate Operator)?
 
-A `ClusterOperator` (like `GenerateShopsOperator`) allows:
-- **Deterministic but varied**: Same cluster seed always produces same tags, but they're computed from cluster intensity (not hardcoded)
-- **Swappable**: Different world generation styles can use different building role operators
-- **Testable**: Operator logic can be unit-tested independently
+Building roles **must be assigned at creation time** because:
+- `QuarterGenerator._createBuildings()` is where Building objects are instantiated
+- Roles determine building construction characteristics (geometry, height, layout)
+- QuarterGenerator already queries attribute intensities for other properties (height, shops)
+- Assigning roles at creation keeps all building properties deterministic in one place
+- Timeline: QuarterGenerator runs during street generation (early), before TALE initialization and before rendering
+
+A separate cluster operator would be too late—it would run after buildings are created, missing the opportunity to influence construction.
+
+### Why Dynamic Role Computation (Not Hardcoded Enum)?
+
+Dynamic role computation from attribute intensities allows:
+- **Cluster variation**: Different clusters get different role distributions based on their geography
+- **Designer control**: World generators that query `GetAttributeIntensity()` can weight roles differently
+- **Extensibility**: New roles can be added without touching QuarterGenerator code
 
 ### Why Start with Phase 7B Instead of Earlier?
 
