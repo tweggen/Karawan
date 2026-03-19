@@ -63,8 +63,8 @@ public class TaleSpawnOperator : ISpawnOperator
 
         if (npcCount > 0)
         {
-            Trace($"TALE SPAWN: Fragment {idxFragment} has {npcCount} NPCs, " +
-                  $"inCreation={spawnStatus.InCreation}, isDying={spawnStatus.IsDying}");
+            //Trace($"TALE SPAWN: Fragment {idxFragment} has {npcCount} NPCs, " +
+            //s      $"inCreation={spawnStatus.InCreation}, isDying={spawnStatus.IsDying}");
         }
     }
 
@@ -114,7 +114,7 @@ public class TaleSpawnOperator : ISpawnOperator
 
         if (targetNpc == null)
         {
-            Trace($"TALE SPAWN: No unmaterialized NPC found in fragment {idxFragment}.");
+            // Trace($"TALE SPAWN: No unmaterialized NPC found in fragment {idxFragment}.");
             return () => { };
         }
 
