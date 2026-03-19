@@ -598,13 +598,25 @@ public class ClusterDesc
             }
 
             case LocationAttributes.Industrial:
-                /*
-                 * 
-                 */
-                break;
-            
+            {
+                // Outermost area - inverse of downtown
+                // High intensity at periphery, low towards center
+                var dist = (_pos - v3Spot).Length();
+                dist = dist / (_size / 2f);
+                // Invert: high when far from center
+                var intensity = 1.0f - Single.Exp(-(dist * dist) * 2f);
+                return intensity;
+            }
+
             case LocationAttributes.Living:
-                break;
+            {
+                // Ring around downtown/shopping, overlapping with shopping ring
+                // Residential neighborhoods form a middle band with commerce nearby
+                var dist = (_pos - v3Spot).Length();
+                dist = dist / (_size / 2.5f) + 0.3f;  // Wider radius than shopping
+                var gauss = Single.Exp(-(dist * dist));
+                return gauss;
+            }
 
             case LocationAttributes.Shopping:
             {

@@ -78,8 +78,44 @@ namespace engine.streets
                 // frontPoints.Add(pA + vuAB * (lenBefore+len) + vuNAB*0.1f);
             }
         }
-        
-        
+
+        private List<string> _determineBuildingRoles(Building building)
+        {
+            // Seed from building position for determinism
+            var buildingCenter = building.GetCenter();
+            var rnd = new RandomSource(_clusterDesc.IdString + "-building-" + buildingCenter.GetHashCode());
+
+            // Compute location attribute intensity at building center
+            float livingIntensity = _clusterDesc.GetAttributeIntensity(
+                buildingCenter + _clusterDesc.Pos,
+                ClusterDesc.LocationAttributes.Living);
+            float downstairsIntensity = _clusterDesc.GetAttributeIntensity(
+                buildingCenter + _clusterDesc.Pos,
+                ClusterDesc.LocationAttributes.Downtown);
+            float industrialIntensity = _clusterDesc.GetAttributeIntensity(
+                buildingCenter + _clusterDesc.Pos,
+                ClusterDesc.LocationAttributes.Industrial);
+
+            // Decision tree: which role(s) does this building fill?
+            var roles = new List<string>();
+
+            if (livingIntensity > 0.6f)
+                roles.Add("residential");
+
+            if (downstairsIntensity > 0.5f && livingIntensity < 0.7f)
+                roles.Add("office");
+
+            if (industrialIntensity > 0.4f)
+                roles.Add("warehouse");
+
+            // If no roles assigned, default to residential
+            if (roles.Count == 0)
+                roles.Add("residential");
+
+            return roles;
+        }
+
+
         private void _createBuildings(in Quarter quarter, in Estate estate)
         {
             var v2QuarterCenter = quarter.GetCenterPoint();
@@ -245,7 +281,14 @@ namespace engine.streets
             quarter.AddDebugTag("haveBuilding", "true");
             quarter.Attributes |= Quarter.QuarterAttributes.Building;
             estate.AddBuilding(building);
-            
+
+            // Assign building roles based on location attributes
+            var buildingRoles = _determineBuildingRoles(building);
+            foreach (var role in buildingRoles)
+            {
+                building.Tags.Add(role);
+            }
+
             /*
              * Generate buildings:
              * - (if non-industrial area or too corpo) shopfront 3m

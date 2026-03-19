@@ -165,9 +165,14 @@ public class SpatialModel
 
                     if (!hasShop)
                     {
-                        float distFromCenter = building.GetCenter().Length();
-                        float normalizedDist = distFromCenter / (cluster.Size / 2f);
-                        string type = normalizedDist > 0.4f ? "home" : "workplace";
+                        // Determine location type from building role tags
+                        string type = "home";  // default
+                        if (building.Tags.Contains("residential"))
+                            type = "home";
+                        else if (building.Tags.Contains("warehouse"))
+                            type = "warehouse";
+                        else if (building.Tags.Contains("office"))
+                            type = "office";
 
                         var buildingCenter = building.GetCenter() + cluster.Pos;
                         var entryPos = new Vector3(buildingCenter.X, streetHeight, buildingCenter.Z);

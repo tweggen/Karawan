@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Collections.Generic;
 using static engine.Logger;
+using engine.world;
 
 namespace engine.streets;
 
@@ -10,6 +11,8 @@ public class Building
     private object _lo = new();
 
     public required world.ClusterDesc ClusterDesc;
+
+    public Tags Tags { get; } = new();
 
     private List<ShopFront> _shopfronts = new();
     
