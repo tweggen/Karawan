@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using builtin;
 using engine;
 using engine.news;
 using engine.tale;
@@ -160,6 +161,7 @@ public class TaleModule : AModule
                 if (rolesNode is JsonArray rolesArray)
                 {
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    options.Converters.Add(new ValueTupleFloatFloatConverter());
                     foreach (JsonNode roleNode in rolesArray)
                     {
                         var def = JsonSerializer.Deserialize<RoleDefinition>(roleNode.ToJsonString(), options);

@@ -33,6 +33,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Metadata.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\MergePolicy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Matrix4x4JsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\ValueTupleFloatFloatConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\InvLuaBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\PickableDirectory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\PlayerWaypoint.cs" />
