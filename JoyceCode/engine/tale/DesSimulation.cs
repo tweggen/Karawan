@@ -181,7 +181,8 @@ public class DesSimulation
         npc.CurrentStart = startTime - TimeSpan.FromHours(8);
 
         var roleRegistry = I.Get<RoleRegistry>();
-        var roleDef = roleRegistry.Get(npc.Role.ToLowerInvariant()) ?? roleRegistry.Get("worker");
+        var roleName = npc.Role.ToLowerInvariant();
+        var roleDef = roleRegistry.Has(roleName) ? roleRegistry.Get(roleName) : null;
         float baseWakeHour = roleDef?.BaseWakeHour ?? 6f;
 
         float jitterMinutes = (npc.Seed % 60) - 30;

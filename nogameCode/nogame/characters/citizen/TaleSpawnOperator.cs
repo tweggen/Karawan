@@ -165,8 +165,16 @@ public class TaleSpawnOperator : ISpawnOperator
                 // Create character model deterministically from NPC seed
                 var npcRnd = new builtin.tools.RandomSource(cd.GetKey() + "-npc-" + schedule.NpcIndex + "-model");
 
-                // Look up the role's model pool (if defined)
-                var roleModels = I.Get<engine.tale.RoleRegistry>().Get(schedule.Role)?.Models;
+                // Look up the role's model pool (if defined). If registry not ready yet, abort and retry.
+                var roleRegistry = I.Get<engine.tale.RoleRegistry>();
+                if (!roleRegistry.Has(schedule.Role))
+                {
+                    Warning($"TALE SPAWN: Role '{schedule.Role}' not in registry for NPC {npcId}, will retry.");
+                    spawnStatus.InCreation--;
+                    _taleManager.SetDematerialized(npcId);
+                    return;
+                }
+                var roleModels = roleRegistry.Get(schedule.Role).Models;
                 var cmd = CharacterModelDescriptionFactory.CreateCitizen(npcRnd, roleModels);
 
                 // Create TALE strategy using the existing schedule
