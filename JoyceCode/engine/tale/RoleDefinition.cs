@@ -49,4 +49,11 @@ public class RoleDefinition
     /// Optional special interaction type when this role encounters others (e.g., "patrol_check" for Authority).
     /// </summary>
     public string SpecialInteractionType { get; set; }
+
+    /// <summary>
+    /// Optional list of FBX model filenames this role can use.
+    /// If null or empty, the default full model pool is used.
+    /// Examples: ["man_police_Rig.fbx", "woman_police_Rig.fbx"] for authority.
+    /// </summary>
+    public List<string> Models { get; set; }
 }

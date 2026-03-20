@@ -164,7 +164,10 @@ public class TaleSpawnOperator : ISpawnOperator
 
                 // Create character model deterministically from NPC seed
                 var npcRnd = new builtin.tools.RandomSource(cd.GetKey() + "-npc-" + schedule.NpcIndex + "-model");
-                var cmd = CharacterModelDescriptionFactory.CreateCitizen(npcRnd);
+
+                // Look up the role's model pool (if defined)
+                var roleModels = I.Get<engine.tale.RoleRegistry>().Get(schedule.Role)?.Models;
+                var cmd = CharacterModelDescriptionFactory.CreateCitizen(npcRnd, roleModels);
 
                 // Create TALE strategy using the existing schedule
                 if (!TaleEntityStrategy.TryCreate(schedule, _taleManager, pod, cmd, out var taleStrategy))

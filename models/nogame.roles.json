@@ -1,8 +1,8 @@
 [
     {
       "id": "worker",
-      "displayName": "Factory Worker",
-      "defaultWeight": 0.30,
+      "displayName": "Worker (Legacy)",
+      "defaultWeight": 0.04,
       "baseWakeHour": 6.0,
       "locationPreferences": {
         "home": ["home"],
@@ -21,12 +21,13 @@
         "argument"
       ],
       "groupClassificationMarker": null,
-      "specialInteractionType": null
+      "specialInteractionType": null,
+      "models": null
     },
     {
       "id": "merchant",
       "displayName": "Shop Owner",
-      "defaultWeight": 0.13,
+      "defaultWeight": 0.05,
       "baseWakeHour": 7.0,
       "locationPreferences": {
         "home": ["home", "shop"],
@@ -46,12 +47,13 @@
         "greeting"
       ],
       "groupClassificationMarker": null,
-      "specialInteractionType": null
+      "specialInteractionType": null,
+      "models": ["man_business_Rig.fbx", "woman_large_Rig.fbx"]
     },
     {
       "id": "socialite",
       "displayName": "Social Butterfly",
-      "defaultWeight": 0.15,
+      "defaultWeight": 0.06,
       "baseWakeHour": 9.0,
       "locationPreferences": {
         "home": ["home", "street_segment"],
@@ -70,12 +72,13 @@
         "argument"
       ],
       "groupClassificationMarker": null,
-      "specialInteractionType": null
+      "specialInteractionType": null,
+      "models": ["man_casual_Rig.fbx", "man_business_Rig.fbx", "woman_actionhero_Rig.fbx", "woman_race_car_driver_Rig.fbx"]
     },
     {
       "id": "drifter",
       "displayName": "Drifter",
-      "defaultWeight": 0.12,
+      "defaultWeight": 0.04,
       "baseWakeHour": 5.0,
       "locationPreferences": {
         "home": ["home", "street_segment"],
@@ -96,12 +99,13 @@
         "threat"
       ],
       "groupClassificationMarker": null,
-      "specialInteractionType": null
+      "specialInteractionType": null,
+      "models": null
     },
     {
       "id": "authority",
       "displayName": "Police Officer",
-      "defaultWeight": 0.10,
+      "defaultWeight": 0.02,
       "baseWakeHour": 6.0,
       "locationPreferences": {
         "home": ["home"],
@@ -118,7 +122,133 @@
         "crime_report"
       ],
       "groupClassificationMarker": "Authority",
-      "specialInteractionType": "patrol_check"
+      "specialInteractionType": "patrol_check",
+      "models": ["man_police_Rig.fbx", "woman_police_Rig.fbx"]
+    },
+    {
+      "id": "factory_worker",
+      "displayName": "Factory Worker (Day Shift)",
+      "defaultWeight": 0.10,
+      "baseWakeHour": 5.0,
+      "locationPreferences": {
+        "home": ["home"],
+        "workplace": ["warehouse"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.5, 0.8],
+        "wealth": [0.25, 0.5],
+        "reputation": [0.3, 0.7]
+      },
+      "fulfillableRequestTypes": [
+        "greeting",
+        "help_request",
+        "argument"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null,
+      "models": ["man_casual_Rig.fbx", "man_coat_winter_Rig.fbx", "woman_carpenter_Rig.fbx", "woman_mechanic_Rig.fbx"]
+    },
+    {
+      "id": "factory_worker_eve",
+      "displayName": "Factory Worker (Evening Shift)",
+      "defaultWeight": 0.10,
+      "baseWakeHour": 13.0,
+      "locationPreferences": {
+        "home": ["home"],
+        "workplace": ["warehouse"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.5, 0.8],
+        "wealth": [0.25, 0.5],
+        "reputation": [0.3, 0.7]
+      },
+      "fulfillableRequestTypes": [
+        "greeting",
+        "help_request",
+        "argument"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null,
+      "models": ["man_casual_Rig.fbx", "man_coat_winter_Rig.fbx", "woman_carpenter_Rig.fbx", "woman_mechanic_Rig.fbx"]
+    },
+    {
+      "id": "factory_worker_night",
+      "displayName": "Factory Worker (Night Shift)",
+      "defaultWeight": 0.10,
+      "baseWakeHour": 21.0,
+      "locationPreferences": {
+        "home": ["home"],
+        "workplace": ["warehouse"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.5, 0.8],
+        "wealth": [0.25, 0.5],
+        "reputation": [0.3, 0.7]
+      },
+      "fulfillableRequestTypes": [
+        "greeting",
+        "help_request",
+        "argument"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null,
+      "models": ["man_casual_Rig.fbx", "man_coat_winter_Rig.fbx", "woman_carpenter_Rig.fbx", "woman_mechanic_Rig.fbx"]
+    },
+    {
+      "id": "office_worker",
+      "displayName": "Office Worker",
+      "defaultWeight": 0.20,
+      "baseWakeHour": 7.5,
+      "locationPreferences": {
+        "home": ["home"],
+        "workplace": ["office"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.6, 0.8],
+        "wealth": [0.4, 0.8],
+        "reputation": [0.4, 0.8]
+      },
+      "fulfillableRequestTypes": [
+        "greeting",
+        "help_request",
+        "argument"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null,
+      "models": ["man_business_Rig.fbx", "man_scientist_Rig.fbx", "woman_doctor_Rig.fbx", "woman_actionhero_Rig.fbx"]
+    },
+    {
+      "id": "service_worker",
+      "displayName": "Service Worker",
+      "defaultWeight": 0.30,
+      "baseWakeHour": 9.0,
+      "locationPreferences": {
+        "home": ["home"],
+        "workplace": ["shop"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.5, 0.8],
+        "wealth": [0.3, 0.6],
+        "reputation": [0.3, 0.7]
+      },
+      "fulfillableRequestTypes": [
+        "greeting",
+        "help_request",
+        "argument"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null,
+      "models": ["man_casual_Rig.fbx", "man_coat_winter_Rig.fbx", "woman_carpenter_Rig.fbx", "woman_mechanic_Rig.fbx"]
     },
     {
       "id": "nightworker",
