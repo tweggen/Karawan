@@ -1,0 +1,77 @@
+[
+  {
+    "id": "work_factory_day",
+    "name": "Factory Work (Day Shift)",
+    "roles": ["factory_worker"],
+    "time_of_day": { "min": "06:00", "max": "14:00" },
+    "preconditions": { "fatigue": { "max": 0.85 } },
+    "postconditions": { "fatigue": "+0.30", "wealth": "+0.04" },
+    "location": "workplace",
+    "duration_minutes_min": 230,
+    "duration_minutes_max": 240,
+    "weight": 3.0,
+    "tags": ["routine", "economic", "work"]
+  },
+  {
+    "id": "factory_lunch_day",
+    "name": "Lunch Break (Day Shift)",
+    "roles": ["factory_worker"],
+    "time_of_day": { "min": "11:00", "max": "13:00" },
+    "preconditions": { "hunger": { "min": 0.3 } },
+    "postconditions": { "hunger": "-0.50", "wealth": "-0.02" },
+    "location": "nearest_shop_Eat",
+    "duration_minutes": 30,
+    "weight": 2.5,
+    "tags": ["routine", "eating"]
+  },
+  {
+    "id": "work_factory_eve",
+    "name": "Factory Work (Evening Shift)",
+    "roles": ["factory_worker_eve"],
+    "time_of_day": { "min": "14:00", "max": "22:00" },
+    "preconditions": { "fatigue": { "max": 0.85 } },
+    "postconditions": { "fatigue": "+0.30", "wealth": "+0.04" },
+    "location": "workplace",
+    "duration_minutes_min": 230,
+    "duration_minutes_max": 240,
+    "weight": 3.0,
+    "tags": ["routine", "economic", "work"]
+  },
+  {
+    "id": "factory_lunch_eve",
+    "name": "Dinner Break (Evening Shift)",
+    "roles": ["factory_worker_eve"],
+    "time_of_day": { "min": "17:00", "max": "19:00" },
+    "preconditions": { "hunger": { "min": 0.3 } },
+    "postconditions": { "hunger": "-0.50", "wealth": "-0.02" },
+    "location": "nearest_shop_Eat",
+    "duration_minutes": 30,
+    "weight": 2.5,
+    "tags": ["routine", "eating"]
+  },
+  {
+    "id": "work_factory_night",
+    "name": "Factory Work (Night Shift)",
+    "roles": ["factory_worker_night"],
+    "time_of_day": { "min": "22:00", "max": "06:00" },
+    "preconditions": { "fatigue": { "max": 0.85 } },
+    "postconditions": { "fatigue": "+0.30", "wealth": "+0.04" },
+    "location": "workplace",
+    "duration_minutes_min": 230,
+    "duration_minutes_max": 240,
+    "weight": 3.0,
+    "tags": ["routine", "economic", "work"]
+  },
+  {
+    "id": "factory_break_night",
+    "name": "Night Break",
+    "roles": ["factory_worker_night"],
+    "time_of_day": { "min": "02:00", "max": "04:00" },
+    "preconditions": { "hunger": { "min": 0.3 } },
+    "postconditions": { "hunger": "-0.50", "wealth": "-0.02" },
+    "location": "nearest_shop_Eat",
+    "duration_minutes": 30,
+    "weight": 2.5,
+    "tags": ["routine", "eating"]
+  }
+]

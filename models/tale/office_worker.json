@@ -1,0 +1,39 @@
+[
+  {
+    "id": "work_office_hours",
+    "name": "Office Work",
+    "roles": ["office_worker"],
+    "time_of_day": { "min": "08:30", "max": "18:00" },
+    "preconditions": { "fatigue": { "max": 0.85 } },
+    "postconditions": { "fatigue": "+0.15", "wealth": "+0.05" },
+    "location": "workplace",
+    "duration_minutes_min": 240,
+    "duration_minutes_max": 300,
+    "weight": 2.0,
+    "tags": ["routine", "economic", "work"]
+  },
+  {
+    "id": "office_lunch",
+    "name": "Lunch Break",
+    "roles": ["office_worker"],
+    "time_of_day": { "min": "12:00", "max": "14:00" },
+    "preconditions": { "hunger": { "min": 0.4 } },
+    "postconditions": { "hunger": "-0.55", "wealth": "-0.04" },
+    "location": "nearest_shop_Eat",
+    "duration_minutes": 45,
+    "weight": 2.5,
+    "tags": ["routine", "eating"]
+  },
+  {
+    "id": "office_break",
+    "name": "Coffee Break",
+    "roles": ["office_worker"],
+    "time_of_day": { "min": "15:00", "max": "16:30" },
+    "preconditions": { "fatigue": { "min": 0.4 } },
+    "postconditions": { "fatigue": "-0.15", "happiness": "+0.05" },
+    "location": "nearest_shop_Eat",
+    "duration_minutes": 15,
+    "weight": 1.5,
+    "tags": ["routine", "break"]
+  }
+]
