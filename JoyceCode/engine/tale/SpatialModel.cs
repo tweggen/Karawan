@@ -147,6 +147,7 @@ public class SpatialModel
                             };
 
                             var buildingCenter = building.GetCenter() + cluster.Pos;
+                            buildingCenter.Y = streetHeight;
                             var entryPos = ComputeShopEntryPosition(sf, cluster, streetHeight);
 
                             model.Locations.Add(new Location
@@ -200,6 +201,7 @@ public class SpatialModel
                             type = "office";
 
                         var buildingCenter = building.GetCenter() + cluster.Pos;
+                        buildingCenter.Y = streetHeight;
                         var entryPos = new Vector3(buildingCenter.X, streetHeight, buildingCenter.Z);
 
                         model.Locations.Add(new Location
