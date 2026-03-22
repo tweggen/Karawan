@@ -325,11 +325,9 @@ public class Scene : AModule, IScene, IInputPart
         //M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
 
         // TALE-driven NPC spawning (Phase 2)
-        var taleManager = I.TryGet<engine.tale.TaleManager>();
-        if (taleManager != null)
-        {
-            M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.TaleSpawnOperator(taleManager));
-        }
+        // TaleModule is a SharedModule dependency, so TaleManager is guaranteed to be activated.
+        M<SpawnController>().AddSpawnOperator(
+            new nogame.characters.citizen.TaleSpawnOperator(M<nogame.modules.tale.TaleModule>().TaleManager));
         
         Subscribe("nogame.modules.menu.save", _triggerSave);
         Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);

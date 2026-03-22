@@ -19,6 +19,7 @@ namespace nogame.modules.tale;
 public class TaleModule : AModule
 {
     private TaleManager _taleManager;
+    public TaleManager TaleManager => _taleManager;
     private ClusterList _clusterList;
 
 
@@ -239,6 +240,17 @@ public class TaleModule : AModule
 
             // Subscribe to cluster lifecycle
             Subscribe(ClusterCompletedEvent.EVENT_TYPE, _onClusterCompleted);
+
+            // Catch up on clusters that completed before we subscribed
+            foreach (var cd in _clusterList.GetClusterList())
+            {
+                if (cd.IsCompleted)
+                {
+                    Trace($"TALE: Catching up on already-completed cluster '{cd.Name}'.");
+                    var spatialModel = SpatialModel.ExtractFrom(cd);
+                    _taleManager.PopulateCluster(cd, spatialModel);
+                }
+            }
 
             // Subscribe to save/load for deviation persistence
             M<Saver>().OnBeforeSaveGame += _onBeforeSaveGame;

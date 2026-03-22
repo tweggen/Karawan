@@ -43,7 +43,8 @@ public class ClusterDesc
     };
 
     private ClusterState _clusterState = ClusterState.Created;
-    
+    public bool IsCompleted => _clusterState == ClusterState.Done;
+
     public string IdString
     {
         get => _strKey;
