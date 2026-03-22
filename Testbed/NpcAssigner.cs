@@ -11,7 +11,10 @@ public enum NpcRole
     Merchant,
     Socialite,
     Drifter,
-    Authority
+    Authority,
+    Nightworker,
+    Hustler,
+    Reveler
 }
 
 public class NpcAssignment
@@ -55,14 +58,17 @@ public static class NpcAssigner
             int npcSeed = rng.Next();
             var npcRng = new Random(npcSeed);
 
-            // Deterministic role from seed: 38% worker, 19% merchant, 19% socialite, 19% drifter, 5% authority
+            // Deterministic role from seed: 30% worker, 13% merchant, 15% socialite, 12% drifter, 10% authority, 8% nightworker, 7% hustler, 5% reveler
             NpcRole role = (NpcRole)(npcRng.Next(100) switch
             {
-                < 38 => (int)NpcRole.Worker,
-                < 57 => (int)NpcRole.Merchant,
-                < 76 => (int)NpcRole.Socialite,
-                < 95 => (int)NpcRole.Drifter,
-                _ => (int)NpcRole.Authority
+                < 30 => (int)NpcRole.Worker,
+                < 43 => (int)NpcRole.Merchant,
+                < 58 => (int)NpcRole.Socialite,
+                < 70 => (int)NpcRole.Drifter,
+                < 80 => (int)NpcRole.Authority,
+                < 88 => (int)NpcRole.Nightworker,
+                < 95 => (int)NpcRole.Hustler,
+                _ => (int)NpcRole.Reveler
             });
 
             // Pick home
@@ -97,6 +103,17 @@ public static class NpcAssigner
                 case NpcRole.Drifter:
                     // Drifters have no fixed workplace
                     break;
+                case NpcRole.Nightworker:
+                    if (workplaces.Count > 0)
+                        workplaceId = workplaces[npcRng.Next(workplaces.Count)].Id;
+                    break;
+                case NpcRole.Hustler:
+                    // Hustlers work the streets
+                    break;
+                case NpcRole.Reveler:
+                    if (socialVenues.Count > 0)
+                        workplaceId = socialVenues[npcRng.Next(socialVenues.Count)].Id;
+                    break;
             }
 
             // Pick 1-3 social venues
@@ -130,6 +147,9 @@ public static class NpcAssigner
                         NpcRole.Socialite => 0.3f + (float)(npcRng.NextDouble() * 0.5),
                         NpcRole.Drifter => (float)(npcRng.NextDouble() * 0.3),
                         NpcRole.Authority => 0.3f + (float)(npcRng.NextDouble() * 0.3),
+                        NpcRole.Nightworker => 0.2f + (float)(npcRng.NextDouble() * 0.3),
+                        NpcRole.Hustler => 0.2f + (float)(npcRng.NextDouble() * 0.4),
+                        NpcRole.Reveler => 0.3f + (float)(npcRng.NextDouble() * 0.4),
                         _ => 0.3f
                     }
                 },
@@ -137,6 +157,7 @@ public static class NpcAssigner
                     {
                         NpcRole.Authority => 0.6f + (float)(npcRng.NextDouble() * 0.3),
                         NpcRole.Drifter => 0.1f + (float)(npcRng.NextDouble() * 0.3),
+                        NpcRole.Hustler => 0.2f + (float)(npcRng.NextDouble() * 0.4),
                         _ => 0.3f + (float)(npcRng.NextDouble() * 0.4)
                     }
                 },
@@ -144,6 +165,9 @@ public static class NpcAssigner
                     {
                         NpcRole.Authority => 0.7f + (float)(npcRng.NextDouble() * 0.2),
                         NpcRole.Drifter => 0.4f + (float)(npcRng.NextDouble() * 0.3),
+                        NpcRole.Hustler => 0.2f + (float)(npcRng.NextDouble() * 0.4),
+                        NpcRole.Nightworker => 0.5f + (float)(npcRng.NextDouble() * 0.3),
+                        NpcRole.Reveler => 0.4f + (float)(npcRng.NextDouble() * 0.3),
                         _ => 0.6f + (float)(npcRng.NextDouble() * 0.2)
                     }
                 }

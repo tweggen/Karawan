@@ -1,0 +1,63 @@
+[
+  {
+    "id": "hawk_wares",
+    "name": "Hawk Wares",
+    "roles": ["hustler"],
+    "time_of_day": { "min": "18:00", "max": "02:00" },
+    "postconditions": { "wealth": "+0.03", "fatigue": "+0.1", "reputation": "+0.01" },
+    "location": "random_street",
+    "duration_minutes_min": 60,
+    "duration_minutes_max": 120,
+    "weight": 2.5,
+    "tags": ["routine", "economic", "night"]
+  },
+  {
+    "id": "broker_deals",
+    "name": "Broker Deals",
+    "roles": ["hustler"],
+    "time_of_day": { "min": "20:00", "max": "04:00" },
+    "preconditions": { "morality": { "max": 0.5 } },
+    "postconditions": { "wealth": "+0.05", "fatigue": "+0.08", "reputation": "-0.02" },
+    "location": "street_segment",
+    "duration_minutes_min": 30,
+    "duration_minutes_max": 90,
+    "weight": 1.5,
+    "tags": ["economic", "night", "shady"]
+  },
+  {
+    "id": "black_market",
+    "name": "Black Market Trade",
+    "roles": ["hustler"],
+    "time_of_day": { "min": "22:00", "max": "04:00" },
+    "preconditions": { "morality": { "max": 0.4 } },
+    "postconditions": { "wealth": "+0.08", "fatigue": "+0.1", "reputation": "-0.05" },
+    "location": "street_segment",
+    "duration_minutes_min": 30,
+    "duration_minutes_max": 60,
+    "weight": 1.0,
+    "tags": ["economic", "night", "illegal"]
+  },
+  {
+    "id": "loiter_night",
+    "name": "Loiter at Night",
+    "roles": ["hustler"],
+    "time_of_day": { "min": "18:00", "max": "04:00" },
+    "postconditions": { "fatigue": "+0.03" },
+    "location": "random_street",
+    "duration_minutes": 60,
+    "weight": 0.5,
+    "tags": ["routine", "fallback", "night"]
+  },
+  {
+    "id": "hustler_prep",
+    "name": "Prepare Goods",
+    "roles": ["hustler"],
+    "time_of_day": { "min": "16:00", "max": "18:00" },
+    "postconditions": { "fatigue": "+0.05" },
+    "location": "home",
+    "duration_minutes_min": 30,
+    "duration_minutes_max": 60,
+    "weight": 1.5,
+    "tags": ["routine", "economic"]
+  }
+]

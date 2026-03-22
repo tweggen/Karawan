@@ -1,0 +1,51 @@
+[
+  {
+    "id": "night_shift",
+    "name": "Night Shift",
+    "roles": ["nightworker"],
+    "time_of_day": { "min": "22:00", "max": "06:00" },
+    "preconditions": { "fatigue": { "max": 0.85 } },
+    "postconditions": { "fatigue": "+0.28", "wealth": "+0.04" },
+    "location": "workplace",
+    "duration_minutes_min": 240,
+    "duration_minutes_max": 300,
+    "weight": 3.0,
+    "tags": ["routine", "economic", "work"]
+  },
+  {
+    "id": "night_commute_to_work",
+    "name": "Commute to Work",
+    "roles": ["nightworker"],
+    "time_of_day": { "min": "20:00", "max": "22:00" },
+    "postconditions": { "fatigue": "+0.05" },
+    "location": "random_street",
+    "duration_minutes_min": 30,
+    "duration_minutes_max": 60,
+    "weight": 2.5,
+    "tags": ["routine", "commute"]
+  },
+  {
+    "id": "night_commute_home",
+    "name": "Commute Home",
+    "roles": ["nightworker"],
+    "time_of_day": { "min": "06:00", "max": "08:00" },
+    "postconditions": { "fatigue": "+0.05" },
+    "location": "random_street",
+    "duration_minutes_min": 30,
+    "duration_minutes_max": 60,
+    "weight": 2.5,
+    "tags": ["routine", "commute"]
+  },
+  {
+    "id": "night_meal",
+    "name": "Evening Meal",
+    "roles": ["nightworker"],
+    "time_of_day": { "min": "18:00", "max": "20:00" },
+    "preconditions": { "hunger": { "min": 0.4 } },
+    "postconditions": { "hunger": "-0.55", "wealth": "-0.03" },
+    "location": "nearest_shop_Eat",
+    "duration_minutes": 25,
+    "weight": 2.0,
+    "tags": ["routine", "eating"]
+  }
+]

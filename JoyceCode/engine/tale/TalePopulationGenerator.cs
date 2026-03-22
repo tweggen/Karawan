@@ -13,12 +13,12 @@ namespace engine.tale;
 /// </summary>
 public class TalePopulationGenerator
 {
-    private static readonly string[] Roles = { "worker", "merchant", "socialite", "drifter", "authority" };
+    private static readonly string[] Roles = { "worker", "merchant", "socialite", "drifter", "authority", "nightworker", "hustler", "reveler" };
 
     /// <summary>
-    /// Role distribution weights. Downtown-heavy clusters shift toward merchant/authority.
+    /// Role distribution weights. Downtown-heavy clusters shift toward merchant/authority/hustler.
     /// </summary>
-    private static readonly float[] DefaultRoleWeights = { 0.40f, 0.15f, 0.20f, 0.15f, 0.10f };
+    private static readonly float[] DefaultRoleWeights = { 0.30f, 0.13f, 0.15f, 0.12f, 0.10f, 0.08f, 0.07f, 0.05f };
 
     /// <summary>
     /// NPCs per street point. Legacy system used ~6 per street point per fragment;
@@ -200,6 +200,24 @@ public class TalePopulationGenerator
                               (preferredType == "social_venue" && (loc.Type == "social_venue" || loc.Type == "street_segment"));
                     break;
 
+                case "nightworker":
+                    matches = (preferredType == "workplace" && loc.Type == "workplace") ||
+                              (preferredType == "home" && loc.Type == "home") ||
+                              (preferredType == "social_venue" && loc.Type == "social_venue");
+                    break;
+
+                case "hustler":
+                    matches = (preferredType == "home" && loc.Type == "home") ||
+                              (preferredType == "workplace" && loc.Type == "street_segment") ||
+                              (preferredType == "social_venue" && (loc.Type == "social_venue" || loc.Type == "street_segment"));
+                    break;
+
+                case "reveler":
+                    matches = (preferredType == "home" && loc.Type == "home") ||
+                              (preferredType == "workplace" && loc.Type == "social_venue") ||
+                              (preferredType == "social_venue" && loc.Type == "social_venue");
+                    break;
+
                 default:
                     matches = loc.Type == preferredType;
                     break;
@@ -233,9 +251,11 @@ public class TalePopulationGenerator
         float[] weights = new float[Roles.Length];
         Array.Copy(DefaultRoleWeights, weights, Roles.Length);
 
-        // Downtown clusters: more merchants and authority, fewer drifters
+        // Downtown clusters: more merchants, authority, hustlers, revelers; fewer drifters
         weights[1] += downtown * 0.10f; // merchant
         weights[4] += downtown * 0.05f; // authority
+        weights[6] += downtown * 0.05f; // hustler
+        weights[7] += downtown * 0.03f; // reveler
         weights[3] -= downtown * 0.10f; // drifter
         if (weights[3] < 0.02f) weights[3] = 0.02f;
 
@@ -291,6 +311,18 @@ public class TalePopulationGenerator
             case "authority":
                 props["morality"] = 0.6f + rnd.GetFloat() * 0.3f;
                 props["wealth"] = 0.4f + rnd.GetFloat() * 0.2f;
+                break;
+            case "nightworker":
+                props["morality"] = 0.5f + rnd.GetFloat() * 0.3f;
+                props["wealth"] = 0.2f + rnd.GetFloat() * 0.3f;
+                break;
+            case "hustler":
+                props["morality"] = 0.2f + rnd.GetFloat() * 0.4f;
+                props["wealth"] = 0.2f + rnd.GetFloat() * 0.4f;
+                break;
+            case "reveler":
+                props["morality"] = 0.4f + rnd.GetFloat() * 0.3f;
+                props["wealth"] = 0.3f + rnd.GetFloat() * 0.4f;
                 break;
             default:
                 props["morality"] = 0.6f + rnd.GetFloat() * 0.2f;

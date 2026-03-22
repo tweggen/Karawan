@@ -60,6 +60,19 @@
     }
   },
   {
+    "id": "night_patrol",
+    "name": "Night Patrol",
+    "roles": ["authority"],
+    "time_of_day": { "min": "22:00", "max": "06:00" },
+    "preconditions": { "fatigue": { "max": 0.8 } },
+    "postconditions": { "fatigue": "+0.1" },
+    "location": "random_street",
+    "duration_minutes_min": 60,
+    "duration_minutes_max": 120,
+    "weight": 2.0,
+    "tags": ["routine", "authority", "night"]
+  },
+  {
     "id": "investigate_crime",
     "name": "Investigate Crime",
     "roles": ["authority"],

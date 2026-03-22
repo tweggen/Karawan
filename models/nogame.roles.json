@@ -2,7 +2,7 @@
     {
       "id": "worker",
       "displayName": "Factory Worker",
-      "defaultWeight": 0.40,
+      "defaultWeight": 0.30,
       "baseWakeHour": 6.0,
       "locationPreferences": {
         "home": ["home"],
@@ -26,7 +26,7 @@
     {
       "id": "merchant",
       "displayName": "Shop Owner",
-      "defaultWeight": 0.15,
+      "defaultWeight": 0.13,
       "baseWakeHour": 7.0,
       "locationPreferences": {
         "home": ["home", "shop"],
@@ -51,7 +51,7 @@
     {
       "id": "socialite",
       "displayName": "Social Butterfly",
-      "defaultWeight": 0.20,
+      "defaultWeight": 0.15,
       "baseWakeHour": 9.0,
       "locationPreferences": {
         "home": ["home", "street_segment"],
@@ -75,7 +75,7 @@
     {
       "id": "drifter",
       "displayName": "Drifter",
-      "defaultWeight": 0.15,
+      "defaultWeight": 0.12,
       "baseWakeHour": 5.0,
       "locationPreferences": {
         "home": ["home", "street_segment"],
@@ -119,5 +119,74 @@
       ],
       "groupClassificationMarker": "Authority",
       "specialInteractionType": "patrol_check"
+    },
+    {
+      "id": "nightworker",
+      "displayName": "Night Shift Worker",
+      "defaultWeight": 0.08,
+      "baseWakeHour": 18.0,
+      "locationPreferences": {
+        "home": ["home"],
+        "workplace": ["workplace"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.5, 0.8],
+        "wealth": [0.2, 0.5],
+        "reputation": [0.2, 0.5]
+      },
+      "fulfillableRequestTypes": [
+        "greeting",
+        "help_request"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null
+    },
+    {
+      "id": "hustler",
+      "displayName": "Street Hustler",
+      "defaultWeight": 0.07,
+      "baseWakeHour": 16.0,
+      "locationPreferences": {
+        "home": ["home"],
+        "workplace": ["street_segment"],
+        "social_venue": ["social_venue", "street_segment"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.2, 0.6],
+        "wealth": [0.2, 0.6],
+        "reputation": [0.2, 0.6]
+      },
+      "fulfillableRequestTypes": [
+        "trade_service",
+        "greeting"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null
+    },
+    {
+      "id": "reveler",
+      "displayName": "Night Owl",
+      "defaultWeight": 0.05,
+      "baseWakeHour": 14.0,
+      "locationPreferences": {
+        "home": ["home"],
+        "workplace": ["social_venue"],
+        "social_venue": ["social_venue"],
+        "eat_venue": ["social_venue"]
+      },
+      "propertyRanges": {
+        "morality": [0.4, 0.7],
+        "wealth": [0.3, 0.7],
+        "reputation": [0.2, 0.6]
+      },
+      "fulfillableRequestTypes": [
+        "greeting",
+        "argument"
+      ],
+      "groupClassificationMarker": null,
+      "specialInteractionType": null
     }
   ]

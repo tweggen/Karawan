@@ -30,11 +30,14 @@ public class TestRunnerMain
     {
         var registry = new engine.tale.RoleRegistry();
         // Populate with hardcoded defaults (game authors can override via config)
-        registry.Add("worker", new engine.tale.RoleDefinition { Id = "worker", DisplayName = "Worker", DefaultWeight = 0.4f });
-        registry.Add("merchant", new engine.tale.RoleDefinition { Id = "merchant", DisplayName = "Merchant", DefaultWeight = 0.15f });
+        registry.Add("worker", new engine.tale.RoleDefinition { Id = "worker", DisplayName = "Worker", DefaultWeight = 0.30f });
+        registry.Add("merchant", new engine.tale.RoleDefinition { Id = "merchant", DisplayName = "Merchant", DefaultWeight = 0.13f });
         registry.Add("socialite", new engine.tale.RoleDefinition { Id = "socialite", DisplayName = "Socialite", DefaultWeight = 0.15f });
-        registry.Add("drifter", new engine.tale.RoleDefinition { Id = "drifter", DisplayName = "Drifter", DefaultWeight = 0.2f });
+        registry.Add("drifter", new engine.tale.RoleDefinition { Id = "drifter", DisplayName = "Drifter", DefaultWeight = 0.12f });
         registry.Add("authority", new engine.tale.RoleDefinition { Id = "authority", DisplayName = "Authority", DefaultWeight = 0.1f });
+        registry.Add("nightworker", new engine.tale.RoleDefinition { Id = "nightworker", DisplayName = "Night Shift Worker", DefaultWeight = 0.08f });
+        registry.Add("hustler", new engine.tale.RoleDefinition { Id = "hustler", DisplayName = "Street Hustler", DefaultWeight = 0.07f });
+        registry.Add("reveler", new engine.tale.RoleDefinition { Id = "reveler", DisplayName = "Night Owl", DefaultWeight = 0.05f });
         return registry;
     }
 
@@ -233,7 +236,7 @@ public class TestRunnerMain
                 {
                     NpcId = i,
                     Seed = 1000 + i,
-                    Role = new[]{"merchant", "worker", "drifter", "socialite", "authority"}[i % 5],
+                    Role = new[]{"merchant", "worker", "drifter", "socialite", "authority", "nightworker", "hustler", "reveler"}[i % 8],
                     HomeLocationId = 0,
                     WorkplaceLocationId = 1,
                     SocialVenueIds = new System.Collections.Generic.List<int> { 2 },
@@ -359,7 +362,7 @@ public class TestRunnerMain
         int clusterIndex = 0;
         string clusterSeed = "cluster-clusters-testworld-0";
         var schedules = new System.Collections.Generic.List<engine.tale.NpcSchedule>();
-        string[] roles = { "worker", "merchant", "socialite", "drifter", "authority" };
+        string[] roles = { "worker", "merchant", "socialite", "drifter", "authority", "nightworker", "hustler", "reveler" };
 
         for (int i = 0; i < 10; i++)
         {
