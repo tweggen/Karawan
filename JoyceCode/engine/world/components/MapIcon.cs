@@ -12,7 +12,8 @@ public struct MapIcon
         Drink = 4,
         Target0 = 5,
         Taxi = 6,
-        TaxiTarget = 7
+        TaxiTarget = 7,
+        Citizen = 8
     }
     public IconCode Code;
 }

@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 using BepuPhysics;
 using builtin.tools;
 using engine;
+using engine.joyce;
 using engine.physics;
 using engine.streets;
 using engine.world;
+using engine.world.components;
 using OneOf.Types;
 using OneOf;
 using static engine.Logger;
@@ -38,6 +40,18 @@ public class CharacterCreator
         .ComputeInertia(CharacterCreator.PhysicsMass);
     
     
+    private const uint _mapCameraMask = 0x00800000;
+
+    public static void AddMapIcon(DefaultEcs.Entity ePerson)
+    {
+        var engine = I.Get<Engine>();
+        var eMapIcon = engine.CreateEntity($"citizen.map");
+        I.Get<HierarchyApi>().SetParent(eMapIcon, ePerson);
+        I.Get<TransformApi>().SetTransforms(eMapIcon, true, _mapCameraMask, Quaternion.Identity, Vector3.Zero);
+        eMapIcon.Set(new MapIcon() { Code = MapIcon.IconCode.Game2 });
+    }
+
+
     public static async Task<OneOf<None, Action<DefaultEcs.Entity>>> GenerateRandomCharacter(
         builtin.tools.RandomSource rnd,
         ClusterDesc clusterDesc,
@@ -58,7 +72,11 @@ public class CharacterCreator
             Fragment = worldFragment
         };
         var model = await creator.CreateAsync();
-        return (Action<DefaultEcs.Entity>)(eTarget => creator.CreateLogical(eTarget));
+        return (Action<DefaultEcs.Entity>)(eTarget =>
+        {
+            creator.CreateLogical(eTarget);
+            AddMapIcon(eTarget);
+        });
     }
 
 
@@ -81,6 +99,10 @@ public class CharacterCreator
             Fragment = pod.Fragment
         };
         await creator.CreateAsync();
-        return (Action<DefaultEcs.Entity>)(eTarget => creator.CreateLogical(eTarget));
+        return (Action<DefaultEcs.Entity>)(eTarget =>
+        {
+            creator.CreateLogical(eTarget);
+            AddMapIcon(eTarget);
+        });
     }
 }

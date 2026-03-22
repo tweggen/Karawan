@@ -191,6 +191,7 @@ public class TaleSpawnOperator : ISpawnOperator
                 _engine.QueueEntitySetupAction(CharacterCreator.EntityName, e =>
                 {
                     creator.CreateLogical(e);
+                    CharacterCreator.AddMapIcon(e);
 
                     I.Get<engine.joyce.TransformApi>().SetTransforms(
                         e,

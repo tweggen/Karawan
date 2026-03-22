@@ -31,7 +31,7 @@ public class RoleDefinition
     /// Property ranges for initial NPC generation. Each property maps to [min, max].
     /// Used in deterministic generation from seed.
     /// </summary>
-    public Dictionary<string, (float Min, float Max)> PropertyRanges { get; set; } = new();
+    public Dictionary<string, float[]> PropertyRanges { get; set; } = new();
 
     /// <summary>
     /// Request types this role can fulfill (e.g., ["food_delivery", "trade_service"]).
