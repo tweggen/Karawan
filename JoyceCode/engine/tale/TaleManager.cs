@@ -379,7 +379,10 @@ public class TaleManager
             _ => npc.CurrentLocationId
         };
 
-        if (resolved < 0) resolved = npc.CurrentLocationId;
+        if (resolved < 0)
+        {
+            resolved = npc.CurrentLocationId;
+        }
         return resolved;
     }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using static engine.Logger;
 
 namespace engine.tale;
 
@@ -69,6 +70,7 @@ public class NpcSchedule
             var loc = model.GetLocation(CurrentLocationId);
             if (loc != null)
                 return loc.EntryPosition != Vector3.Zero ? loc.EntryPosition : loc.Position;
+            Error($"No position found for time {gameTime} npc {NpcId}");
             return HomePosition;
         }
 
