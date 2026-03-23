@@ -10,11 +10,15 @@ using static engine.Logger;
 
 namespace builtin.modules.satnav;
 
+/**
+ * Generate car navigation mesh representing the street mesh.
+ */
 public class GenerateNavMapOperator : engine.world.IWorldOperator
 {
     /**
      * Create the content for the individual clusters below the top
-     * level cluster.
+     * level cluster. We create NavLanes directly from the strokes, NavJunctions
+     * directly from the StreetPoints.
      */
     private Task<NavClusterContent> _createClusterNavContentAsync(ClusterDesc clusterDesc, NavCluster ncTop)
     {
