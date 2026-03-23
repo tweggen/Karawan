@@ -42,13 +42,28 @@ public class CharacterCreator
     
     private const uint _mapCameraMask = 0x00800000;
 
-    public static void AddMapIcon(DefaultEcs.Entity ePerson)
+    public static void AddMapIcon(DefaultEcs.Entity ePerson, string role = null)
     {
         var engine = I.Get<Engine>();
         var eMapIcon = engine.CreateEntity($"citizen.map");
         I.Get<HierarchyApi>().SetParent(eMapIcon, ePerson);
         I.Get<TransformApi>().SetTransforms(eMapIcon, true, _mapCameraMask, Quaternion.Identity, Vector3.Zero);
-        eMapIcon.Set(new MapIcon() { Code = MapIcon.IconCode.Game2 });
+
+        // Map role to icon code for visual debugging
+        var iconCode = role switch
+        {
+            "worker" => MapIcon.IconCode.Game2,
+            "merchant" => MapIcon.IconCode.Eat,
+            "socialite" => MapIcon.IconCode.Drink,
+            "drifter" => MapIcon.IconCode.Citizen,
+            "authority" => MapIcon.IconCode.Target0,
+            "nightworker" => MapIcon.IconCode.Game2,
+            "hustler" => MapIcon.IconCode.Citizen,
+            "reveler" => MapIcon.IconCode.Drink,
+            _ => MapIcon.IconCode.Game2 // default
+        };
+
+        eMapIcon.Set(new MapIcon() { Code = iconCode });
     }
 
 
