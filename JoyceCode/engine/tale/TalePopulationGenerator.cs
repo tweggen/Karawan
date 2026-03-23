@@ -214,7 +214,7 @@ public class TalePopulationGenerator
 
                 case "worker":
                 case "authority":
-                    matches = (preferredType == "workplace" && loc.Type == "workplace") ||
+                    matches = (preferredType == "workplace" && (loc.Type == "office" || loc.Type == "warehouse")) ||
                               (preferredType == "home" && loc.Type == "home") ||
                               (preferredType == "social_venue" && loc.Type == "social_venue");
                     break;
@@ -232,7 +232,7 @@ public class TalePopulationGenerator
                     break;
 
                 case "nightworker":
-                    matches = (preferredType == "workplace" && loc.Type == "workplace") ||
+                    matches = (preferredType == "workplace" && (loc.Type == "office" || loc.Type == "warehouse")) ||
                               (preferredType == "home" && loc.Type == "home") ||
                               (preferredType == "social_venue" && loc.Type == "social_venue");
                     break;
