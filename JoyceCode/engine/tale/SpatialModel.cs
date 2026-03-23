@@ -270,6 +270,16 @@ public class SpatialModel
         }
 
         model.BuildIndex();
+
+        // Log location distribution for debugging
+        var homeCount = model.Locations.FindAll(l => l.Type == "home").Count;
+        var officeCount = model.Locations.FindAll(l => l.Type == "office").Count;
+        var warehouseCount = model.Locations.FindAll(l => l.Type == "warehouse").Count;
+        var shopCount = model.Locations.FindAll(l => l.Type == "shop").Count;
+        var socialVenueCount = model.Locations.FindAll(l => l.Type == "social_venue").Count;
+        var streetCount = model.Locations.FindAll(l => l.Type == "street_segment").Count;
+        Logger.Trace($"SPATIAL MODEL for cluster: {homeCount} homes, {officeCount} offices, {warehouseCount} warehouses, {shopCount} shops, {socialVenueCount} social_venues, {streetCount} streets. Total: {model.Locations.Count}");
+
         return model;
     }
 

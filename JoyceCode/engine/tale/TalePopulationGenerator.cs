@@ -164,6 +164,11 @@ public class TalePopulationGenerator
         // Generate initial properties with per-NPC variation
         var properties = GenerateProperties(rnd, role);
 
+        // Log location assignments for debugging
+        var homeLocDebug = spatialModel?.GetLocation(homeLocId);
+        var workLocDebug = spatialModel?.GetLocation(workLocId);
+        Trace($"TALE GEN NPC {npcId}: role={role} home={homeLocDebug?.Type}(id={homeLocId}) work={workLocDebug?.Type}(id={workLocId}) homePos=({homePos.X:F1},{homePos.Z:F1}) workPos=({workPos.X:F1},{workPos.Z:F1})");
+
         return new NpcSchedule
         {
             NpcId = npcId,
