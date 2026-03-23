@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using builtin.tools;
 using engine.world;
+using static engine.Logger;
 
 namespace engine.tale;
 
@@ -106,14 +107,37 @@ public class TalePopulationGenerator
             var workLoc = spatialModel.GetLocation(workLocId);
             homePos = homeLoc?.Position ?? Vector3.Zero;
             workPos = workLoc?.Position ?? Vector3.Zero;
+
+            // If location lookup failed, fall back to street points
+            if (homePos == Vector3.Zero && streetPoints.Count > 0)
+            {
+                homeLocId = rnd.GetInt(streetPoints.Count - 1);
+                homePos = streetPoints[homeLocId];
+            }
+            if (workPos == Vector3.Zero && streetPoints.Count > 0)
+            {
+                workLocId = rnd.GetInt(streetPoints.Count - 1);
+                workPos = streetPoints[workLocId];
+            }
         }
         else
         {
             // Fallback: use street points as before
-            homeLocId = rnd.GetInt(streetPoints.Count - 1);
-            workLocId = rnd.GetInt(streetPoints.Count - 1);
-            homePos = streetPoints[homeLocId];
-            workPos = streetPoints[workLocId];
+            if (streetPoints.Count > 0)
+            {
+                homeLocId = rnd.GetInt(streetPoints.Count - 1);
+                workLocId = rnd.GetInt(streetPoints.Count - 1);
+                homePos = streetPoints[homeLocId];
+                workPos = streetPoints[workLocId];
+            }
+            else
+            {
+                Warning($"TALE GEN: No spatial model or street points for cluster, NPCs may spawn at origin");
+                homeLocId = 0;
+                workLocId = 0;
+                homePos = clusterDesc.Pos + new Vector3(0, 5f, 0);
+                workPos = homePos;
+            }
         }
 
         // Assign social venue IDs (1-3 venues)

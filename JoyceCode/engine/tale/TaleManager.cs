@@ -75,9 +75,18 @@ public class TaleManager
         if (spatialModel != null)
         {
             _spatialModels[clusterIndex] = spatialModel;
-            Trace($"TALE MGR: Cluster {clusterIndex} spatial model: " +
-                  $"{spatialModel.Locations.Count} locations, {spatialModel.BuildingCount} buildings, " +
-                  $"{spatialModel.ShopCount} shops, {spatialModel.StreetPointCount} street points.");
+            if (spatialModel.Locations.Count == 0)
+            {
+                Warning($"TALE MGR: Cluster {clusterIndex} spatial model has ZERO locations! " +
+                        $"({spatialModel.BuildingCount} buildings, {spatialModel.ShopCount} shops, " +
+                        $"{spatialModel.StreetPointCount} street points). NPCs may spawn at Y=0.");
+            }
+            else
+            {
+                Trace($"TALE MGR: Cluster {clusterIndex} spatial model: " +
+                      $"{spatialModel.Locations.Count} locations, {spatialModel.BuildingCount} buildings, " +
+                      $"{spatialModel.ShopCount} shops, {spatialModel.StreetPointCount} street points.");
+            }
         }
         else
         {
