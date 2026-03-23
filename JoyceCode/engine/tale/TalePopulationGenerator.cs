@@ -111,11 +111,13 @@ public class TalePopulationGenerator
             // If location lookup failed, fall back to street points
             if (homePos == Vector3.Zero && streetPoints.Count > 0)
             {
+                Warning($"TALE GEN: Location {homeLocId} not found for NPC {npcId}, falling back to street point.");
                 homeLocId = rnd.GetInt(streetPoints.Count - 1);
                 homePos = streetPoints[homeLocId];
             }
             if (workPos == Vector3.Zero && streetPoints.Count > 0)
             {
+                Warning($"TALE GEN: Location {workLocId} not found for NPC {npcId}, falling back to street point.");
                 workLocId = rnd.GetInt(streetPoints.Count - 1);
                 workPos = streetPoints[workLocId];
             }

@@ -160,7 +160,7 @@ public class TaleSpawnOperator : ISpawnOperator
                     return;
                 }
 
-                var pod = new PositionDescription { Position = schedule.HomePosition };
+                var pod = new PositionDescription { Position = schedule.HomePosition, ClusterDesc = cd };
 
                 // Create character model deterministically from NPC seed
                 var npcRnd = new builtin.tools.RandomSource(cd.GetKey() + "-npc-" + schedule.NpcIndex + "-model");

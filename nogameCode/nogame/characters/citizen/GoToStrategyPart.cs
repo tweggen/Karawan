@@ -40,13 +40,21 @@ public class GoToStrategyPart : AEntityStrategyPart
          var startPos = CurrentPosition?.Position ?? Vector3.Zero;
         var endPos = Destination;
 
-        // Compute proper ground height based on cluster/quarter geometry
+        // Compute street-level Y from cluster geometry.
+        // PositionDescription.ClusterDesc must be set by the spawner; if it is null
+        // (e.g. a TALE pod without ClusterDesc), fall back to the incoming position Y.
+        // Never allow Y=0 as it puts NPCs below all terrain.
         float groundHeight = 0f;
         if (CurrentPosition?.ClusterDesc != null)
         {
             groundHeight = CurrentPosition.ClusterDesc.AverageHeight +
                           engine.world.MetaGen.ClusterStreetHeight +
                           engine.world.MetaGen.QuarterSidewalkOffset;
+        }
+        else if (startPos.Y != 0f)
+        {
+            // Position already has a valid Y — preserve it
+            groundHeight = startPos.Y;
         }
 
         // Apply proper Y coordinate to both route points
