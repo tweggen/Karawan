@@ -485,6 +485,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RelationshipTierRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupTypeDefinition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupTypeRegistry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\IRouteGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resources.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resource\ShaderSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ross\ImageSharpFramebuffer.cs" />

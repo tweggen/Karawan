@@ -78,7 +78,7 @@ public class TaleEntityStrategy : AOneOfStrategy
     }
 
 
-    private void _advanceAndTravel()
+    private async void _advanceAndTravel()
     {
         DateTime gameNow = DateTime.Now; // Will be overridden by daynite controller
         try
@@ -106,11 +106,28 @@ public class TaleEntityStrategy : AOneOfStrategy
         // Get world position for the destination location
         Vector3 destination = _taleManager.GetWorldPosition(_npcId, gameNow);
 
+        // Compute street route asynchronously before moving
+        // NPC stays in current state while pathfinding runs (typically < 100ms)
+        // If pathfinding returns null, GoToStrategyPart will use straight-line fallback
+        SegmentRoute route = null;
+        try
+        {
+            var routeGen = I.Get<engine.tale.IRouteGenerator>();
+            if (routeGen != null)
+            {
+                route = await routeGen.GetRouteAsync(_currentPosition.Position, destination, _currentPosition);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Trace($"_advanceAndTravel: Route generation failed: {e.Message}");
+            // null route = straight-line fallback
+        }
+
         // Set up go_to
         _goTo.Destination = destination;
         _goTo.CurrentPosition = _currentPosition;
-        // TODO Phase 7C: Async pathfinding can be added here if NavMap is exposed in I registry
-        _goTo.PrecomputedRoute = null;
+        _goTo.PrecomputedRoute = route;
 
         TriggerStrategy("travel");
     }

@@ -9,6 +9,9 @@
   "engine.LayerCatalogue": null,
   "engine.gongzuo.API": null,
   "builtin.modules.satnav.desc.NavMap": null,
+  "engine.tale.IRouteGenerator": {
+    "className": "nogame.characters.citizen.NavMeshRouteGenerator"
+  },
   "engine.Placer": null,
   "engine.behave.SpawnController": null,
   "nogame.config.Module": null,

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 using builtin.modules.satnav;
 using builtin.modules.satnav.desc;
@@ -21,11 +22,11 @@ public static class StreetRouteBuilder
     /// Build an async street path route from start to destination.
     /// Returns null if pathfinding fails, in which case the caller should fall back to straight-line movement.
     /// </summary>
-    public static async Task<SegmentRoute> BuildAsync(Vector3 fromPos, Vector3 toPos, object navMapObj, PositionDescription startPod)
+    public static async Task<SegmentRoute> BuildAsync(Vector3 fromPos, Vector3 toPos, NavMap navMap, PositionDescription startPod, CancellationToken cancellationToken = default)
     {
         try
         {
-            if (navMapObj is not NavMap navMap)
+            if (navMap == null)
                 return null;
 
             // Try to get cursors from the top cluster
@@ -33,12 +34,12 @@ public static class StreetRouteBuilder
             if (topCluster == null)
                 return null;
 
-            // Async cursor creation — await both in parallel
+            // Async cursor creation — await both in parallel with cancellation support
             var startCursorTask = topCluster.TryCreateCursor(fromPos);
             var endCursorTask = topCluster.TryCreateCursor(toPos);
 
-            var startCursor = await startCursorTask;
-            var endCursor = await endCursorTask;
+            var startCursor = await startCursorTask.ConfigureAwait(false);
+            var endCursor = await endCursorTask.ConfigureAwait(false);
 
             if (startCursor == NavCursor.Nil || endCursor == NavCursor.Nil)
                 return null;

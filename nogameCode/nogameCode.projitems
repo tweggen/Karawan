@@ -31,6 +31,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleSpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\WalkStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\StreetRouteBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\NavMeshRouteGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\CubeVanishBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\GenerateCharacterOperator.cs" />
