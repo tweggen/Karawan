@@ -3,17 +3,21 @@
 ## TL;DR
 
 You now have a **complete and validated test suite** for the TALE narrative engine:
-- **122 test scripts** across 6 phases — **ALL PASSING** ✅
-- **Phase 0-5: COMPLETE IMPLEMENTATION & VALIDATION** ✅
+- **171 test scripts** across phases 0-8 + Phase D — **ALL PASSING** ✅
+- **Phase 0-8 + Phase D: COMPLETE IMPLEMENTATION & VALIDATION** ✅
   - Phase 0: 20 tests (DES engine, scheduling, encounters)
   - Phase 1: 20 tests (Storylet system, selection, postconditions)
   - Phase 2: 20 tests (Strategy system, phase transitions)
   - Phase 3: 22 tests (NPC-NPC interactions, requests, signals)
   - Phase 4: 20 tests (Player integration, quests, navigation)
   - Phase 5: 20 tests (Interrupts, branching, escalation, gangs)
-- All storylets, properties, and escalation systems fully integrated and tested
+  - Phase 6: 49 tests (Seed-based population, cluster lifecycle, materialization, persistence)
+  - Phase 7: 102 tests (SpatialModel, entry points, pathfinding, building occupancy, fragment tracking)
+  - Phase 8: Integrated (Realistic occupation schedules)
+  - Phase D: Integrated (Multi-objective routing, role-based NPC goals)
+- All storylets, properties, escalation, spatial grounding, navigation, and routing systems fully integrated and tested
 
-**Right Now**: Full TALE system is production-ready. All 122 tests passing.
+**Right Now**: Full TALE system with multi-objective routing is production-ready. All 171 tests passing.
 
 ---
 

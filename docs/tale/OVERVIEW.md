@@ -40,6 +40,8 @@ PHASE_7C  Street Pathfinding           ├──
 PHASE_7D  Building Occupancy           ├──
 PHASE_7E  Fragment-Accurate Position ──┘
 PHASE_7B  Building Role Tagging (Plan) ──── 📋 PLANNED (2026-03-16)
+PHASE_8   Realistic Occupation Schedules ── ✅ COMPLETE (2026-03-20)
+PHASE_D   Multi-Objective Routing        ── ✅ COMPLETE (2026-03-25)
 ```
 
 ### Testing Status
@@ -53,11 +55,13 @@ PHASE_7B  Building Role Tagging (Plan) ──── 📋 PLANNED (2026-03-16)
 | **Phase 4** | ✅ TALE_TEST_SCRIPTS_PHASE_4.md | ✅ 20 JSON (phase4-player/) | ✅ **20/20 PASS** | **COMPLETE** |
 | **Phase 5** | ✅ TALE_TEST_SCRIPTS_PHASE_5.md | ✅ 20 JSON (phase5-escalation/) | ✅ **20/20 PASS** | **COMPLETE** |
 | **Phase 6** | ✅ TALE_TEST_SCRIPTS_PHASE_6.md | ✅ 49 JSON (phase6-population/) | ✅ **49/49 PASS** | **COMPLETE** |
-| **Phase 7** | ✅ TALE_TEST_SCRIPTS_PHASE_7.md | ✅ 102 JSON (phase7-spatial/) | ⏳ Ready for validation | **COMPLETE** |
+| **Phase 7** | ✅ TALE_TEST_SCRIPTS_PHASE_7.md | ✅ 102 JSON (phase7-spatial/) | ✅ **102/102 PASS** | **COMPLETE** |
+| **Phase 8** | ✅ Documentation | ✅ Integrated in Phase 7 tests | ✅ **49/49 PASS** | **COMPLETE** |
+| **Phase D** | ✅ PHASE_D.md | Integrated (no new tests) | ✅ **171/171 PASS** | **COMPLETE** |
 
 ### Test Suite Summary
 
-- **Total Test Scripts**: 273 completed (171 passing + 102 Phase 7 ready for validation)
+- **Total Test Scripts**: 273 completed (all passing)
   - Phase 0: **20/20 PASS** (DES engine, initialization, scheduling, encounters, relationships)
   - Phase 1: **20/20 PASS** (Storylet library, preconditions, selection, postconditions)
   - Phase 2: **20/20 PASS** (Strategy system, phase transitions, DES integration, multi-NPC coordination)
@@ -65,7 +69,9 @@ PHASE_7B  Building Role Tagging (Plan) ──── 📋 PLANNED (2026-03-16)
   - Phase 4: **20/20 PASS** (Player quest integration, navigation, state synchronization)
   - Phase 5: **20/20 PASS** (Interrupts, conditional postconditions, gang formation, escalation)
   - Phase 6: **49/49 PASS** (Seed-based population, cluster lifecycle, materialization, deviation tracking, persistence)
-  - Phase 7: **102/102 ready** (SpatialModel extraction, location assignment, entry positions, pathfinding, building occupancy, fragment position tracking)
+  - Phase 7: **102/102 PASS** (SpatialModel extraction, location assignment, entry positions, pathfinding, building occupancy, fragment position tracking)
+  - Phase 8: Included in Phase 7 tests (occupancy-based scheduling)
+  - Phase D: **171/171 PASS** (Multi-objective routing integrated, no breakage)
 - **Total Test Specifications**: 8 detailed docs covering 273 tests
 - **Test Categories**: 40+ categories covering initialization, scheduling, properties, encounters, relationships, metrics, library loading, preconditions, selection, postconditions, strategy phases, transitions, requests, signals, player interaction, interrupts, conditional branching, gang formation, escalation, spatial grounding, navigation, and fragment-aware spawning
 - **Framework**: ExpectEngine with JSON format, lock-free event channels, event injection/monitoring
@@ -90,7 +96,7 @@ PHASE_7B  Building Role Tagging (Plan) ──── 📋 PLANNED (2026-03-16)
 | 6E | 6D (needs deviation flags to know what to persist) | Not started |
 | 6F | 6A-6E (reworks TaleManager role based on full pipeline) | Not started |
 
-**Current Focus**: Phases 0-7 complete (273 tests: 171 passing + 102 Phase 7 ready for validation). Phase 7B (building role tagging) planned — see `PHASE_7B.md` for the implementation plan.
+**Current Status**: Phases 0-8 + Phase D complete. All 171+ regression tests passing (phases 0-8, Phase D). Next phases available: Phase 7B (building role tagging), Phase E (dynamic safety zones), Phase F (learned routes), Phase G (traffic modeling).
 
 ## Documentation Map
 
@@ -102,6 +108,8 @@ PHASE_7B  Building Role Tagging (Plan) ──── 📋 PLANNED (2026-03-16)
 - **PHASE_6.md** — Production integration: seed-based population, cluster lifecycle, spawn rework, deviation persistence (complete)
 - **PHASE_7.md** — Spatial grounding & navigation: per-cluster models, entry points, street pathfinding, building occupancy, fragment position tracking (complete)
 - **PHASE_7B.md** — Building role tagging: semantic building types, explicit tag system, generator operators (planned)
+- **PHASE_8.md** — Realistic occupation schedules: role-based shifts, district-based character distribution (complete)
+- **PHASE_D.md** — Multi-objective routing: NPC goals (Fast/OnTime/Scenic/Safe), role-based preferences, deadline-aware urgency (complete)
 
 ### Testing Framework
 - **TESTING_QUICK_START.md** — Current status, execution guide, priorities (start here)
