@@ -13,12 +13,14 @@ public class PipeController
     private PipeNetwork _network;
     private Dictionary<int, MovingEntity> _entities;
     private List<MovingEntity> _offPipeEntities;
+    private List<(Vector3 position, float radius, ITemporalConstraint duration)> _activeObstructions;
 
     public PipeController(PipeNetwork network)
     {
         _network = network;
         _entities = new Dictionary<int, MovingEntity>();
         _offPipeEntities = new List<MovingEntity>();
+        _activeObstructions = new List<(Vector3, float, ITemporalConstraint)>();
     }
 
     /// <summary>
@@ -26,6 +28,9 @@ public class PipeController
     /// </summary>
     public void UpdateFrame(float deltaTime, DateTime currentTime)
     {
+        // Check for expired obstructions
+        UpdateObstructions(currentTime);
+
         // Move entities in pipes
         foreach (var pipe in _network.Pipes)
         {
@@ -34,6 +39,61 @@ public class PipeController
 
         // Update off-pipe entities (physics, manual control)
         UpdateOffPipeEntities(deltaTime, currentTime);
+    }
+
+    /// <summary>
+    /// Register an obstruction on a pipe.
+    /// Automatically creates a subdivision with appropriate speed function.
+    /// </summary>
+    public void RegisterObstruction(
+        Vector3 position,
+        float radius,
+        ITemporalConstraint duration,
+        string reason = "Obstruction")
+    {
+        _activeObstructions.Add((position, radius, duration));
+
+        // Find affected pipe and add subdivision
+        var pipe = _network.FindPipeContaining(position);
+        if (pipe != null)
+        {
+            var speedFunc = SpeedFunctions.BrakingWave(
+                position,
+                DateTime.Now,
+                normalSpeed: 10.0f);
+
+            pipe.AddObstruction(position, radius, speedFunc, reason);
+        }
+    }
+
+    /// <summary>
+    /// Update obstruction states; remove expired ones.
+    /// </summary>
+    public void UpdateObstructions(DateTime currentTime)
+    {
+        var expired = new List<(Vector3, float, ITemporalConstraint)>();
+
+        foreach (var (position, radius, duration) in _activeObstructions)
+        {
+            var state = duration.Query(currentTime);
+            if (!state.CanAccess)
+            {
+                // Obstruction duration expired
+                expired.Add((position, radius, duration));
+
+                // Remove from all pipes
+                foreach (var pipe in _network.Pipes)
+                {
+                    pipe.RemoveObstruction(position);
+                }
+            }
+        }
+
+        // Remove expired obstructions from tracking
+        foreach (var obstruction in expired)
+        {
+            _activeObstructions.Remove(obstruction);
+        }
     }
 
     /// <summary>
@@ -117,12 +177,22 @@ public class PipeController
     /// </summary>
     public void RemoveEntityFromPipe(MovingEntity entity)
     {
-        if (entity.CurrentPipe != null)
+        if (entity.CurrentPipe == null)
+            return;
+
+        // Remove from pipe's queue carefully
+        if (entity.CurrentPipe.Entities.Contains(entity))
         {
-            entity.CurrentPipe.Entities.Dequeue();
-            entity.CurrentPipe = null;
+            var entities = entity.CurrentPipe.Entities.ToList();
+            entities.Remove(entity);
+            entity.CurrentPipe.Entities.Clear();
+            foreach (var e in entities)
+            {
+                entity.CurrentPipe.Entities.Enqueue(e);
+            }
         }
 
+        entity.CurrentPipe = null;
         _offPipeEntities.Add(entity);
     }
 
@@ -183,6 +253,14 @@ public class PipeController
     {
         _entities.TryGetValue(id, out var entity);
         return entity;
+    }
+
+    /// <summary>
+    /// Get all off-pipe entities.
+    /// </summary>
+    public IEnumerable<MovingEntity> GetOffPipeEntities()
+    {
+        return _offPipeEntities;
     }
 
     /// <summary>

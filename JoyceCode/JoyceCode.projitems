@@ -439,6 +439,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\CyclicConstraint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\MovingEntity.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\Pipe.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\PipeSubdivision.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\SpeedFunctions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\PipeNetwork.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\PipeController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\testing\JoyceTestEventSource.cs" />

@@ -70,6 +70,11 @@ public class Pipe
     public TransportationType SupportedType { get; set; }
 
     /// <summary>
+    /// Dynamic subdivisions (obstructions, slow zones, etc.).
+    /// </summary>
+    public List<PipeSubdivision>? Subdivisions { get; set; }
+
+    /// <summary>
     /// Calculate and set length based on NavLanes.
     /// </summary>
     public void ComputeLength()
@@ -78,24 +83,84 @@ public class Pipe
     }
 
     /// <summary>
+    /// Add an obstruction that creates a subdivision.
+    /// </summary>
+    public void AddObstruction(
+        Vector3 position,
+        float radius,
+        Func<Vector3, DateTime, float> speedFunction,
+        string reason = "Obstruction")
+    {
+        Subdivisions ??= new List<PipeSubdivision>();
+
+        var subdivision = new PipeSubdivision
+        {
+            StartPosition = position - new Vector3(radius, 0, radius),
+            EndPosition = position + new Vector3(radius, 0, radius),
+            LocalSpeedFunction = speedFunction,
+            Reason = reason,
+            CreatedAt = DateTime.Now
+        };
+
+        Subdivisions.Add(subdivision);
+    }
+
+    /// <summary>
+    /// Remove an obstruction by position.
+    /// </summary>
+    public void RemoveObstruction(Vector3 position, float tolerance = 1.0f)
+    {
+        if (Subdivisions == null)
+            return;
+
+        Subdivisions.RemoveAll(s =>
+            Vector3.Distance(s.StartPosition, position) < tolerance ||
+            Vector3.Distance(s.EndPosition, position) < tolerance);
+    }
+
+    /// <summary>
+    /// Check if pipe has active subdivisions.
+    /// </summary>
+    public bool HasSubdivisions => Subdivisions?.Count > 0;
+
+    /// <summary>
+    /// Clear all subdivisions (e.g., when obstruction clears).
+    /// </summary>
+    public void ClearSubdivisions()
+    {
+        Subdivisions?.Clear();
+    }
+
+    /// <summary>
     /// Get the movement speed at a specific position and time.
+    /// Takes into account global constraints (traffic lights, etc.) and subdivisions.
     /// </summary>
     public float GetSpeedAt(Vector3 position, DateTime currentTime)
     {
-        // Check global constraint
+        // Step 1: Check global constraint (e.g., traffic light)
         if (GlobalConstraint != null)
         {
             var state = GlobalConstraint.Query(currentTime);
             if (!state.CanAccess)
-                return 0.0f;  // Blocked
+                return 0.0f;  // Red light: stop completely
         }
 
-        // Apply speed function if present
+        // Step 2: Check local constraints (subdivisions)
+        var subdivision = FindSubdivisionAt(position);
+        if (subdivision != null)
+            return subdivision.GetSpeed(position, currentTime);
+
+        // Step 3: Apply pipe-wide speed function
         if (SpeedFunction != null)
             return SpeedFunction(position, currentTime);
 
-        // Default: return typical speed for this transport type
+        // Default: standard speed for this type
         return GetDefaultSpeedForType(SupportedType);
+    }
+
+    private PipeSubdivision? FindSubdivisionAt(Vector3 position)
+    {
+        return Subdivisions?.FirstOrDefault(s => s.ContainsPosition(position));
     }
 
     private float GetDefaultSpeedForType(TransportationType type)
