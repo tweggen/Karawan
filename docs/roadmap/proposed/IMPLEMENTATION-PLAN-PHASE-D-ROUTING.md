@@ -2,9 +2,10 @@
 
 **Phase:** D (Routing Integration)
 **Duration:** ~2-3 days
-**Status:** Ready for execution
-**Depends On:** Phase A complete; Phase B, C optional (works without flow system)
+**Status:** 📋 Planned (dependent on Phase A, optional Phase B/C)
+**Depends On:** Phase A ✅; Phase B ✅, Phase C (optional but recommended)
 **Enables:** Future phases (emergent behavior, detailed simulation)
+**Ready:** After Phase A + B (can proceed independently of Phase C)
 
 ---
 
