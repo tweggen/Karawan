@@ -4,7 +4,9 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using builtin;
+using builtin.modules.satnav.desc;
 using engine;
+using engine.navigation;
 using engine.news;
 using engine.tale;
 using engine.world;
@@ -22,6 +24,13 @@ public class TaleModule : AModule
     private TaleManager _taleManager;
     public TaleManager TaleManager => _taleManager;
     private ClusterList _clusterList;
+    private PipeNetwork _pedestrianNetwork;
+    private PipeController _pipeController;
+
+    /// <summary>
+    /// Get the pedestrian pipe controller for NPC movement.
+    /// </summary>
+    public PipeController GetPipeController() => _pipeController;
 
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
@@ -65,6 +74,61 @@ public class TaleModule : AModule
         Trace($"TALE: Populated cluster '{ev.Code}' (index {clusterDesc.Index}). " +
               $"Spatial: {spatialModel.BuildingCount} buildings, {spatialModel.ShopCount} shops, " +
               $"{spatialModel.StreetPointCount} street points.");
+    }
+
+
+    private void _initializePipeSystem()
+    {
+        try
+        {
+            // Get NavMap if available
+            var navMap = I.Get<NavMap>();
+            if (navMap == null)
+            {
+                Trace("TALE: NavMap not available, pipe system disabled for this session");
+                return;
+            }
+
+            // Create pedestrian pipe network from NavMap
+            // For Phase B5 (rest state): 1:1 NavLane-to-Pipe mapping
+            _pedestrianNetwork = new PipeNetwork
+            {
+                SupportedType = TransportationType.Pedestrian
+            };
+
+            int pipeId = 0;
+            if (navMap.AllLanes != null)
+            {
+                foreach (var lane in navMap.AllLanes)
+                {
+                    // Only add pedestrian-accessible lanes
+                    if (!lane.AllowedTypes.HasFlag(TransportationType.Pedestrian))
+                        continue;
+
+                    var pipe = new Pipe
+                    {
+                        Id = pipeId++,
+                        NavLanes = new List<builtin.modules.satnav.desc.NavLane> { lane },
+                        StartPosition = lane.Start.Position,
+                        EndPosition = lane.End.Position,
+                        SupportedType = TransportationType.Pedestrian,
+                        Length = lane.Length
+                    };
+
+                    _pedestrianNetwork.Pipes.Add(pipe);
+                }
+
+                // Create controller
+                _pipeController = new PipeController(_pedestrianNetwork);
+                I.Register<PipeController>(() => _pipeController);
+
+                Trace($"TALE: Pipe system initialized with {_pedestrianNetwork.Pipes.Count} pedestrian pipes");
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"TALE: Failed to initialize pipe system: {e.Message}");
+        }
     }
 
 
@@ -253,6 +317,9 @@ public class TaleModule : AModule
                     _taleManager.PopulateCluster(cd, spatialModel);
                 }
             }
+
+            // Initialize pipe system for NPC movement (Phase B5)
+            _initializePipeSystem();
 
             // Subscribe to save/load for deviation persistence
             M<Saver>().OnBeforeSaveGame += _onBeforeSaveGame;
