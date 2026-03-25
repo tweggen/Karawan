@@ -164,6 +164,9 @@ public class TalePopulationGenerator
         // Generate initial properties with per-NPC variation
         var properties = GenerateProperties(rnd, role);
 
+        // Assign role-based routing preferences for multi-objective pathfinding
+        var routingPreferences = GenerateRoutingPreferences(role, rnd);
+
         // Log location assignments for debugging
         var homeLocDebug = spatialModel?.GetLocation(homeLocId);
         var workLocDebug = spatialModel?.GetLocation(workLocId);
@@ -186,6 +189,7 @@ public class TalePopulationGenerator
             CurrentWorldPosition = homePos,
             Trust = new Dictionary<int, float>(),
             HasPlayerDeviation = false,
+            RoutingPreferences = routingPreferences,
         };
     }
 
@@ -362,6 +366,57 @@ public class TalePopulationGenerator
         }
 
         return props;
+    }
+
+
+    /// <summary>
+    /// Assign role-based routing preferences for multi-objective pathfinding.
+    /// Different roles favor different routing goals and behaviors.
+    /// </summary>
+    private RoutingPreferences GenerateRoutingPreferences(string role, RandomSource rnd)
+    {
+        var prefs = new RoutingPreferences();
+
+        switch (role)
+        {
+            // Time-conscious roles: prioritize on-time arrival (deadlines matter)
+            case "worker":
+            case "authority":
+            case "nightworker":
+                prefs.Goal = NpcGoal.OnTime;
+                prefs.SceneryWeight = 0.1f; // Minor preference for scenery
+                prefs.SafetyWeight = 0.2f;  // Moderate safety concern
+                break;
+
+            // Commerce-driven roles: prioritize speed (fast routes = more time for business)
+            case "merchant":
+            case "hustler":
+                prefs.Goal = NpcGoal.Fast;
+                prefs.SceneryWeight = 0.0f; // No time for sightseeing
+                prefs.SafetyWeight = 0.1f;  // Low safety priority (commercial districts)
+                break;
+
+            // Leisure-focused roles: prefer scenic routes (enjoy the journey)
+            case "socialite":
+            case "reveler":
+                prefs.Goal = NpcGoal.Scenic;
+                prefs.SceneryWeight = 0.8f; // High scenery preference
+                prefs.SafetyWeight = 0.3f;  // Moderate safety (public areas)
+                break;
+
+            // Cautious role: avoid dangerous areas
+            case "drifter":
+                prefs.Goal = NpcGoal.Safe;
+                prefs.SceneryWeight = 0.4f; // Moderate scenery (avoiding certain areas)
+                prefs.SafetyWeight = 0.9f;  // Very high safety priority
+                break;
+
+            default:
+                prefs.Goal = NpcGoal.Fast;
+                break;
+        }
+
+        return prefs;
     }
 
 

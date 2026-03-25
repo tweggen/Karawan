@@ -6,6 +6,7 @@ using builtin.modules.satnav.desc;
 using builtin.tools;
 using engine;
 using engine.joyce;
+using engine.navigation;
 using engine.tale;
 using engine.world;
 using static engine.Logger;
@@ -21,7 +22,9 @@ public class NavMeshRouteGenerator : IRouteGenerator
 {
     private const float TimeoutMs = 100f; // Max pathfinding time before giving up (allows fallback)
 
-    public async Task<SegmentRoute> GetRouteAsync(Vector3 fromPos, Vector3 toPos, PositionDescription startPod)
+    public async Task<SegmentRoute> GetRouteAsync(Vector3 fromPos, Vector3 toPos, PositionDescription startPod,
+        RoutingPreferences? preferences = null,
+        TransportationType transportType = TransportationType.Pedestrian)
     {
         try
         {
@@ -36,9 +39,8 @@ public class NavMeshRouteGenerator : IRouteGenerator
                 return null;
             }
 
-            // Run pathfinding with timeout
-            // Note: Using default TransportationType.Pedestrian for now. Phase D will support multi-objective routing.
-            var route = await StreetRouteBuilder.BuildAsync(fromPos, toPos, navMap, startPod, engine.navigation.TransportationType.Pedestrian, cts.Token);
+            // Run pathfinding with timeout, passing routing preferences for multi-objective routing
+            var route = await StreetRouteBuilder.BuildAsync(fromPos, toPos, navMap, startPod, transportType, preferences, cts.Token);
             return route; // null is fine here — GoToStrategyPart will use straight-line fallback
         }
         catch (OperationCanceledException)

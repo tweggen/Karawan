@@ -29,7 +29,6 @@ public class TaleEntityStrategy : AOneOfStrategy
     private readonly GoToStrategyPart _goTo;
     private readonly StayAtStrategyPart _stayAt;
     private RoutingPreferences _routingPreferences;
-    private DateTime _lastPreferenceUpdate;
 
     /// <summary>
     /// Seconds of real time per game day. Used to convert game-time
@@ -87,33 +86,25 @@ public class TaleEntityStrategy : AOneOfStrategy
 
 
     /// <summary>
-    /// Update routing preferences based on current schedule and state.
+    /// Update routing preferences urgency based on current schedule.
+    /// Role-based goals are set during NPC creation and persist.
+    /// Only urgency is updated dynamically based on deadline proximity.
     /// </summary>
     private void UpdateRoutingPreferences(DateTime currentTime)
     {
-        // Only update periodically (not every frame)
-        if ((currentTime - _lastPreferenceUpdate).TotalSeconds < 10.0)
-            return;
-
-        _lastPreferenceUpdate = currentTime;
-
         var schedule = _taleManager.GetSchedule(_npcId);
         if (schedule == null)
             return;
 
-        // Determine goal based on schedule
-        if (schedule.IsLate)
+        // Copy schedule's RoutingPreferences (includes role-based goal)
+        _routingPreferences = schedule.RoutingPreferences;
+
+        // Update deadline and urgency for on-time/safe routing
+        if (schedule.NextEventTime.HasValue)
         {
-            _routingPreferences.Goal = NpcGoal.OnTime;
             _routingPreferences.DeadlineTime = schedule.NextEventTime;
         }
-        else
-        {
-            // Default to fast (most NPCs)
-            _routingPreferences.Goal = NpcGoal.Fast;
-        }
 
-        // Update urgency level
         _routingPreferences.UpdateUrgency(currentTime);
     }
 
@@ -157,7 +148,9 @@ public class TaleEntityStrategy : AOneOfStrategy
             var routeGen = I.Get<engine.tale.IRouteGenerator>();
             if (routeGen != null)
             {
-                route = await routeGen.GetRouteAsync(_currentPosition.Position, destination, _currentPosition);
+                // Pass routing preferences for multi-objective pathfinding
+                route = await routeGen.GetRouteAsync(_currentPosition.Position, destination, _currentPosition,
+                    _routingPreferences, schedule.PreferredTransportationType);
             }
         }
         catch (Exception e)
@@ -238,8 +231,10 @@ public class TaleEntityStrategy : AOneOfStrategy
         _startPosition = startPosition;
         _currentPosition = startPosition;
         _characterState = characterState;
-        _routingPreferences = new RoutingPreferences();
-        _lastPreferenceUpdate = DateTime.MinValue;
+
+        // Initialize routing preferences from the NPC's schedule (set during generation)
+        var schedule = taleManager.GetSchedule(npcId);
+        _routingPreferences = schedule?.RoutingPreferences ?? new RoutingPreferences();
 
         _goTo = new GoToStrategyPart
         {

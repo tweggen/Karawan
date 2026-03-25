@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
 using builtin.modules.satnav.desc;
+using engine.navigation;
+using engine.tale;
 using static engine.Logger;
 
 namespace builtin.modules.satnav;
@@ -25,7 +27,9 @@ public class LocalPathfinder
 {
     public NavCursor Start;
     public NavCursor Target;
-    
+    private RoutingPreferences? _preferences;
+    private TransportationType _transportType = TransportationType.Pedestrian;
+
     private Dictionary<NavJunction, Node> _dictNodes = new();
     private SortedMultiValue<float, Node> _listNodes = new();
 
@@ -56,14 +60,29 @@ public class LocalPathfinder
 
     private Node _childNode(Node parent, NavLane nlToMe, NavJunction njNext)
     {
+        var baseCost = _realDistance(parent.Junction, njNext);
+        var adjustedCost = _applyPreferenceMultiplier(nlToMe, baseCost);
+
         return new Node()
         {
             Junction = njNext,
             LaneToMe = nlToMe,
             Parent = parent,
-            CostFromStart = parent.CostFromStart + _realDistance(parent.Junction, njNext),
+            CostFromStart = parent.CostFromStart + adjustedCost,
             EstimateToEnd = _realDistance(njNext, Target.Junction)
         };
+    }
+
+    /// <summary>
+    /// Apply routing preference multiplier to a lane's cost.
+    /// </summary>
+    private float _applyPreferenceMultiplier(NavLane lane, float baseCost)
+    {
+        if (_preferences == null)
+            return baseCost;
+
+        var multiplier = _preferences.ComputeCostMultiplier(lane, _transportType);
+        return baseCost * multiplier;
     }
 
 
@@ -195,9 +214,13 @@ public class LocalPathfinder
     }
 
 
-    public LocalPathfinder(NavCursor ncStart, NavCursor ncTarget)
+    public LocalPathfinder(NavCursor ncStart, NavCursor ncTarget,
+        RoutingPreferences? preferences = null,
+        TransportationType transportType = TransportationType.Pedestrian)
     {
         Start = ncStart;
         Target = ncTarget;
+        _preferences = preferences;
+        _transportType = transportType;
     }
 }

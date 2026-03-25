@@ -58,6 +58,11 @@ public class NpcSchedule
         TransportationType.Pedestrian;
 
     /// <summary>
+    /// Routing preferences for multi-objective pathfinding (goal, urgency, weights).
+    /// </summary>
+    public RoutingPreferences RoutingPreferences { get; set; } = new();
+
+    /// <summary>
     /// Next scheduled activity time.
     /// </summary>
     public DateTime? NextEventTime { get; set; }
