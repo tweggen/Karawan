@@ -119,7 +119,7 @@ public class TaleSpawnOperator : ISpawnOperator
         }
 
         int npcId = targetNpc.NpcId;
-        Trace($"TALE SPAWN: Spawning NPC {npcId} (role={targetNpc.Role}) at {targetNpc.HomePosition} in fragment {idxFragment}.");
+        Trace($"TALE SPAWN: Spawning NPC {npcId} (role={targetNpc.Role}) in fragment {idxFragment}.");
         _taleManager.SetMaterialized(npcId);
 
         SpawnStatus spawnStatus;
@@ -150,7 +150,7 @@ public class TaleSpawnOperator : ISpawnOperator
                     return;
                 }
 
-                // Use the NPC's home position from its schedule
+                // Get NPC schedule and compute time-appropriate spawn position
                 var schedule = _taleManager.GetSchedule(npcId);
                 if (schedule == null)
                 {
@@ -160,7 +160,25 @@ public class TaleSpawnOperator : ISpawnOperator
                     return;
                 }
 
-                var pod = new PositionDescription { Position = schedule.HomePosition, ClusterDesc = cd };
+                // Get current game time (prefer daynite controller if available)
+                DateTime gameTime = DateTime.Now;
+                try
+                {
+                    var dayNiteController = I.Get<nogame.modules.daynite.Controller>();
+                    if (dayNiteController != null)
+                        gameTime = dayNiteController.GameNow;
+                }
+                catch (Exception)
+                {
+                    // Fallback to DateTime.Now if daynite not available
+                }
+
+                // Compute spawn position based on NPC's schedule at current game time
+                var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
+                var spawnPosition = schedule.PositionAt(gameTime, spatialModel);
+                Trace($"TALE SPAWN: NPC {npcId} spawn position computed for game time {gameTime}: {spawnPosition}");
+
+                var pod = new PositionDescription { Position = spawnPosition, ClusterDesc = cd };
 
                 // Create character model deterministically from NPC seed
                 var npcRnd = new builtin.tools.RandomSource(cd.GetKey() + "-npc-" + schedule.NpcIndex + "-model");

@@ -202,7 +202,26 @@ public class SpatialModel
 
                         var buildingCenter = building.GetCenter() + cluster.Pos;
                         buildingCenter.Y = streetHeight;
-                        var entryPos = new Vector3(buildingCenter.X, streetHeight, buildingCenter.Z);
+
+                        // Compute entry position on building's edge (perimeter point)
+                        // If building has points, use the first point; otherwise fall back to center
+                        var buildingPoints = building.GetPoints();
+                        Vector3 entryPos;
+                        if (buildingPoints.Count > 0)
+                        {
+                            // Use first point on building perimeter, offset towards center slightly
+                            var perimeterPoint = buildingPoints[0] + cluster.Pos;
+                            perimeterPoint.Y = 0; // Reset Y to cluster local height
+                            var direction = Vector3.Normalize(buildingCenter - perimeterPoint);
+                            // Move a small distance from perimeter towards center to avoid exact edge
+                            var offset = direction * 2f; // 2 meter offset from edge
+                            entryPos = new Vector3(perimeterPoint.X + offset.X, streetHeight, perimeterPoint.Z + offset.Z);
+                        }
+                        else
+                        {
+                            // Fallback: use building center if no points available
+                            entryPos = buildingCenter;
+                        }
 
                         model.Locations.Add(new Location
                         {
