@@ -1,3 +1,4 @@
+using System;
 using engine.navigation;
 
 namespace builtin.modules.satnav.desc;
@@ -23,6 +24,12 @@ public class NavLane
     /// </summary>
     public TransportationTypeFlags AllowedTypes { get; set; } =
         new TransportationTypeFlags(TransportationType.Pedestrian);
+
+    /// <summary>
+    /// Temporal constraint on this lane (e.g., traffic light).
+    /// Null means no constraint (always accessible).
+    /// </summary>
+    public ITemporalConstraint? Constraint { get; set; }
 
     /// <summary>
     /// Get the movement cost for this lane for a specific transportation type.
@@ -51,5 +58,16 @@ public class NavLane
             return 0;
 
         return Length / baseSpeed;  // Time to traverse
+    }
+
+    /// <summary>
+    /// Query the constraint state at a specific time.
+    /// </summary>
+    public TemporalConstraintState QueryConstraint(DateTime currentTime)
+    {
+        if (Constraint == null)
+            return new TemporalConstraintState(true, TimeSpan.MaxValue);
+
+        return Constraint.Query(currentTime);
     }
 }

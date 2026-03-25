@@ -434,6 +434,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\TransportationType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\RoutingGraph.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\RoutingGraphBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\TemporalConstraintState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\ITemporalConstraint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\CyclicConstraint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\MovingEntity.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\Pipe.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\PipeNetwork.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\PipeController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\testing\JoyceTestEventSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\testing\JoyceTestEventSink.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\testing\TestDriverModule.cs" />
