@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using engine.navigation;
 using static engine.Logger;
 
 namespace builtin.modules.satnav.desc;
@@ -21,7 +24,7 @@ public class NavMap
             }
         }
 
-        
+
         set
         {
             lock (_lo)
@@ -35,7 +38,34 @@ public class NavMap
         }
     }
 
+    /// <summary>
+    /// All lanes in the navigation map.
+    /// </summary>
+    public List<NavLane> AllLanes { get; set; } = new();
+
+    /// <summary>
+    /// Builds type-specific routing graphs.
+    /// </summary>
+    private RoutingGraphBuilder _graphBuilder;
+
     public NavMap()
     {
+        _graphBuilder = new RoutingGraphBuilder(this);
+    }
+
+    /// <summary>
+    /// Get the routing graph for a specific transportation type.
+    /// </summary>
+    public RoutingGraph GetGraphFor(TransportationType type)
+    {
+        return _graphBuilder.BuildFor(type, AllLanes);
+    }
+
+    /// <summary>
+    /// Invalidate routing graph cache (call when lanes change).
+    /// </summary>
+    public void InvalidateGraphCache()
+    {
+        _graphBuilder.InvalidateCache();
     }
 }

@@ -37,7 +37,8 @@ public class NavMeshRouteGenerator : IRouteGenerator
             }
 
             // Run pathfinding with timeout
-            var route = await StreetRouteBuilder.BuildAsync(fromPos, toPos, navMap, startPod, cts.Token);
+            // Note: Using default TransportationType.Pedestrian for now. Phase D will support multi-objective routing.
+            var route = await StreetRouteBuilder.BuildAsync(fromPos, toPos, navMap, startPod, engine.navigation.TransportationType.Pedestrian, cts.Token);
             return route; // null is fine here — GoToStrategyPart will use straight-line fallback
         }
         catch (OperationCanceledException)

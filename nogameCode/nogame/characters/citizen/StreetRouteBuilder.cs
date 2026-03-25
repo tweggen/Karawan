@@ -7,6 +7,7 @@ using builtin.modules.satnav;
 using builtin.modules.satnav.desc;
 using builtin.tools;
 using engine;
+using engine.navigation;
 using static engine.Logger;
 
 namespace nogame.characters.citizen;
@@ -22,12 +23,16 @@ public static class StreetRouteBuilder
     /// Build an async street path route from start to destination.
     /// Returns null if pathfinding fails, in which case the caller should fall back to straight-line movement.
     /// </summary>
-    public static async Task<SegmentRoute> BuildAsync(Vector3 fromPos, Vector3 toPos, NavMap navMap, PositionDescription startPod, CancellationToken cancellationToken = default)
+    public static async Task<SegmentRoute> BuildAsync(Vector3 fromPos, Vector3 toPos, NavMap navMap, PositionDescription startPod, TransportationType transportType = TransportationType.Pedestrian, CancellationToken cancellationToken = default)
     {
         try
         {
             if (navMap == null)
                 return null;
+
+            // Note: transportType parameter is accepted for Phase D (multi-objective routing).
+            // For now, all pathfinding uses the unified graph regardless of type.
+            // Future: use navMap.GetGraphFor(transportType) to filter lanes by type.
 
             // Try to get cursors from the top cluster
             var topCluster = navMap.TopCluster;

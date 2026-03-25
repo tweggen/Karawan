@@ -331,7 +331,7 @@ public class TaleManager
         return next;
     }
 
-
+    
     /// <summary>
     /// Get the current storylet definition for an NPC without advancing.
     /// </summary>

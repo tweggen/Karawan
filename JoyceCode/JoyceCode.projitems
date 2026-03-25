@@ -431,6 +431,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationRunner.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\narration\NarrationManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\TransportationType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\RoutingGraph.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\navigation\RoutingGraphBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\testing\JoyceTestEventSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\testing\JoyceTestEventSink.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\testing\TestDriverModule.cs" />
