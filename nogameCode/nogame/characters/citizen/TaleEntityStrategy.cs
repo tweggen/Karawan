@@ -4,6 +4,7 @@ using builtin.tools;
 using engine;
 using engine.behave;
 using engine.behave.strategies;
+using engine.navigation;
 using engine.news;
 using engine.tale;
 using engine.world;
@@ -27,12 +28,19 @@ public class TaleEntityStrategy : AOneOfStrategy
 
     private readonly GoToStrategyPart _goTo;
     private readonly StayAtStrategyPart _stayAt;
+    private RoutingPreferences _routingPreferences;
+    private DateTime _lastPreferenceUpdate;
 
     /// <summary>
     /// Seconds of real time per game day. Used to convert game-time
     /// storylet durations to real-time StayAt durations.
     /// </summary>
     public float RealSecondsPerGameDay { get; set; } = 30f * 60f;
+
+    /// <summary>
+    /// Get current routing preferences for this NPC.
+    /// </summary>
+    public RoutingPreferences RoutingPreferences => _routingPreferences;
 
 
     private void _onCrashEvent(Event ev)
@@ -78,6 +86,37 @@ public class TaleEntityStrategy : AOneOfStrategy
     }
 
 
+    /// <summary>
+    /// Update routing preferences based on current schedule and state.
+    /// </summary>
+    private void UpdateRoutingPreferences(DateTime currentTime)
+    {
+        // Only update periodically (not every frame)
+        if ((currentTime - _lastPreferenceUpdate).TotalSeconds < 10.0)
+            return;
+
+        _lastPreferenceUpdate = currentTime;
+
+        var schedule = _taleManager.GetSchedule(_npcId);
+        if (schedule == null)
+            return;
+
+        // Determine goal based on schedule
+        if (schedule.IsLate)
+        {
+            _routingPreferences.Goal = NpcGoal.OnTime;
+            _routingPreferences.DeadlineTime = schedule.NextEventTime;
+        }
+        else
+        {
+            // Default to fast (most NPCs)
+            _routingPreferences.Goal = NpcGoal.Fast;
+        }
+
+        // Update urgency level
+        _routingPreferences.UpdateUrgency(currentTime);
+    }
+
     private async void _advanceAndTravel()
     {
         DateTime gameNow = DateTime.Now; // Will be overridden by daynite controller
@@ -102,6 +141,9 @@ public class TaleEntityStrategy : AOneOfStrategy
 
         var schedule = _taleManager.GetSchedule(_npcId);
         if (schedule == null) return;
+
+        // Update routing preferences before computing route
+        UpdateRoutingPreferences(gameNow);
 
         // Get world position for the destination location
         Vector3 destination = _taleManager.GetWorldPosition(_npcId, gameNow);
@@ -196,6 +238,8 @@ public class TaleEntityStrategy : AOneOfStrategy
         _startPosition = startPosition;
         _currentPosition = startPosition;
         _characterState = characterState;
+        _routingPreferences = new RoutingPreferences();
+        _lastPreferenceUpdate = DateTime.MinValue;
 
         _goTo = new GoToStrategyPart
         {

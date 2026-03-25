@@ -469,6 +469,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\ArcStack.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\EventQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\NpcSchedule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\NpcGoal.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RoutingPreferences.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\EncounterResolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\IEventLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\StoryletSelector.cs" />

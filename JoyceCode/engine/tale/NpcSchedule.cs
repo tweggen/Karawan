@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using engine.navigation;
 using static engine.Logger;
 
 namespace engine.tale;
@@ -48,6 +49,31 @@ public class NpcSchedule
 
     // Phase 6: Deviation tracking
     public bool HasPlayerDeviation;
+
+    // Phase D: Routing preferences
+    /// <summary>
+    /// Preferred transportation type for this NPC.
+    /// </summary>
+    public TransportationType PreferredTransportationType { get; set; } =
+        TransportationType.Pedestrian;
+
+    /// <summary>
+    /// Next scheduled activity time.
+    /// </summary>
+    public DateTime? NextEventTime { get; set; }
+
+    /// <summary>
+    /// Is this NPC late for its next scheduled activity?
+    /// </summary>
+    public bool IsLate
+    {
+        get
+        {
+            if (NextEventTime == null)
+                return false;
+            return DateTime.Now > NextEventTime.Value;
+        }
+    }
 
 
     /// <summary>
