@@ -185,6 +185,10 @@ public class TaleEntityStrategy : AOneOfStrategy
         var schedule = _taleManager.GetSchedule(_npcId);
         if (schedule == null) return;
 
+        // Debug: What location did we advance to?
+        var currentStorylet = _taleManager.GetCurrentStorylet(_npcId);
+        string locationName = currentStorylet?.LocationRef ?? "UNKNOWN";
+
         // Update routing preferences before computing route
         UpdateRoutingPreferences(gameNow);
 
@@ -192,7 +196,8 @@ public class TaleEntityStrategy : AOneOfStrategy
         Vector3 destination = _taleManager.GetWorldPosition(_npcId, gameNow);
 
         // Debug: Log schedule advancement and destination
-        Trace($"TALE ENTITY: NPC {_npcId} after AdvanceNpc: currentPos={_currentPosition.Position}, destination={destination}, distance={Vector3.Distance(_currentPosition.Position, destination):F2}m");
+        float distToDestination = Vector3.Distance(_currentPosition.Position, destination);
+        Trace($"TALE ENTITY: NPC {_npcId} advanced to location '{locationName}': currentPos={_currentPosition.Position}, destination={destination}, distance={distToDestination:F2}m");
 
         // Compute street route asynchronously before moving
         // NPC stays in current state while pathfinding runs (typically < 100ms)
