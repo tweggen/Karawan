@@ -293,7 +293,20 @@ public class TaleEntityStrategy : AOneOfStrategy
             if (loc != null && loc.Type != "street_segment")
             {
                 _stayAt.IsIndoorActivity = true;
+                Trace($"TALE ENTITY: NPC {_npcId} marked as indoor at location type '{loc.Type}'");
             }
+            else if (loc != null)
+            {
+                Trace($"TALE ENTITY: NPC {_npcId} marked as OUTDOOR at location type '{loc.Type}'");
+            }
+            else
+            {
+                Trace($"TALE ENTITY: NPC {_npcId} location {schedule.CurrentLocationId} NOT FOUND in spatial model!");
+            }
+        }
+        else
+        {
+            Trace($"TALE ENTITY: NPC {_npcId} spatial model NULL for cluster {schedule.ClusterIndex}!");
         }
 
         // Sync position now that we've arrived at destination

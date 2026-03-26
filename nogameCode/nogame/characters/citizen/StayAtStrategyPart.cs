@@ -58,6 +58,7 @@ public class StayAtStrategyPart : AEntityStrategyPart
         else
         {
             // Hide indoor NPCs (they're inside buildings)
+            Trace($"StayAtStrategyPart: Hiding entity (indoor activity)");
             var transformApi = I.Get<engine.joyce.TransformApi>();
             transformApi.SetVisible(_entity, false, false);
         }
