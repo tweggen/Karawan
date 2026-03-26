@@ -1,9 +1,33 @@
 # Phase D: Multi-Objective Routing - Progress Report
 
-**Date:** 2026-03-25
-**Status:** 🔄 IN PROGRESS (Infrastructure Complete, A* Integration Pending)
+**Date:** 2026-03-26 (Updated)
+**Status:** 🔄 IN PROGRESS (Infrastructure + NavMesh Fixed, A* Integration Ready)
 **Test Results:** 171/171 PASSED (100% success) — Zero regressions
-**Commits:** 1
+**Commits:** 2 (5acc475c, 4a2080a7)
+
+---
+
+## Phase 7C: NavMesh Routing Deadlock Fixed ✅ COMPLETE (2026-03-26)
+
+**Prerequisite for Phase D:** Phase 7C fixed three critical bugs that were preventing route generation:
+
+1. **Async deadlock in NavCluster.cs:94** — `_semCreate.Wait()` blocking the thread pool
+   - Fixed: Changed to `await _semCreate.WaitAsync()`
+   - Impact: Cursor content now loads asynchronously without deadlock
+
+2. **No timeout enforcement** — 100ms CancellationTokenSource created but never checked
+   - Fixed: Added cancellation token checks between cursor creation and pathfinding
+   - Impact: Timeouts now properly enforce (<100ms completion)
+
+3. **Silent failures with no diagnostics** — Impossible to debug why routes weren't being generated
+   - Fixed: Added 7 Trace logs covering all failure paths + success logging
+   - Impact: Full diagnostic visibility for future debugging
+
+4. **Indoor NPCs visible when they should be hidden**
+   - Fixed: StayAtStrategyPart now hides NPCs when IsIndoorActivity=true
+   - Impact: NPCs doing indoor activities (home, office) are no longer visible
+
+**Result:** NavMeshRouteGenerator now successfully generates routes on street networks. Phase D's multi-objective routing can now build on working pathfinding infrastructure.
 
 ---
 
@@ -29,15 +53,15 @@
   - IsLate detection works correctly
   - All 8 tests passing ✅
 
-### D2: Multi-Objective A* 🔄 PENDING
-- **Status:** Design complete, implementation deferred
+### D2: Multi-Objective A* 🔄 PENDING (Unblocked by Phase 7C)
+- **Status:** Design complete, implementation deferred (now unblocked by NavMesh fix)
 - **What's Needed:**
   - Update StreetRouteBuilder.BuildAsync() to accept RoutingPreferences
   - Modify LocalPathfinder to use preference multipliers in A* cost calculation
   - ComputeCost() to apply preference multiplier: `baseCost * preferences.ComputeCostMultiplier()`
   - Integration test comparing routes with different goals
 
-- **Note:** LocalPathfinder is substantial; full A* cost integration pending implementation
+- **Note:** LocalPathfinder is substantial; can now proceed with implementation (NavMesh deadlock resolved)
 
 ### D3: TaleEntityStrategy Integration ✅ PARTIAL COMPLETE
 - **Files Modified:** `nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs`
@@ -100,20 +124,23 @@
 
 | Commit | Message | Date |
 |--------|---------|------|
+| 4a2080a7 | Phase 7C: Fix NavMesh routing deadlock and add diagnostics | 2026-03-26 |
 | 5acc475c | Feature: Phase D - Multi-Objective Routing (Infrastructure) | 2026-03-25 |
 
 ---
 
 ## Current State: What NPCs Do Now
 
-With Phase D infrastructure in place:
+With Phase D infrastructure + Phase 7C fixes in place:
 - ✅ NPCs have RoutingPreferences (infrastructure only)
 - ✅ UpdateUrgency() computes time-based urgency
 - ✅ IsLate detection works correctly
-- ⏳ **But** preferences aren't used in pathfinding yet (awaiting D2 A* integration)
+- ✅ NavMeshRouteGenerator successfully generates routes (Phase 7C deadlock fixed)
+- ✅ NPCs walk on streets instead of through buildings (Phase 7C working)
+- ⏳ **But** preferences aren't applied to cost function yet (awaiting D2 A* integration)
 - ⏳ **But** different NPC types all have same preferences (awaiting D4 behavioral variety)
 
-**Result:** NPCs still navigate using straight-line fallback or basic pathfinding. Full multi-objective routing benefits require D2 & D4 completion.
+**Result:** NPCs now navigate streets via NavMesh pathfinding. Multi-objective routing (choosing different routes per NPC goal) requires D2 & D4 completion.
 
 ---
 
@@ -150,8 +177,10 @@ With Phase D infrastructure in place:
 
 ## Summary
 
-Phase D infrastructure is **foundation-complete** and **zero-regress-verified**. The system is ready for A* integration (D2) and behavioral variety (D4). Full multi-objective routing will activate in the next implementation phase.
+Phase D infrastructure is **foundation-complete** and **unblocked by Phase 7C NavMesh fix**. The system now has working street pathfinding and is ready for A* integration (D2) and behavioral variety (D4). Full multi-objective routing will activate in the next implementation phase.
 
 ✅ Infrastructure: Complete, tested, committed
-🔄 Pathfinding Integration: Ready for next phase
+✅ NavMesh Routing: Fixed (Phase 7C), working, tested, committed
+✅ Street pathfinding: NPCs now walk on streets, not through buildings
+🔄 Multi-objective A*: Ready for implementation (LocalPathfinder cost multiplier integration)
 🔄 Behavioral Variety: Designed, ready for implementation
