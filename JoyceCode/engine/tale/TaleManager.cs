@@ -110,14 +110,21 @@ public class TaleManager
         // Advance all newly generated schedules through a full day cycle before game start.
         // This ensures NPCs have traversed all conditions and edge cases in their storylet loops.
         // Advance from day 1 midnight to day 2 at 22:46 (24+ hours total).
+        // Add per-NPC time offsets (±45 minutes) so NPCs are desynchronized — some mid-travel,
+        // some mid-activity, avoiding all stationary at game start.
         DateTime baseTime = new DateTime(2000, 1, 1, 0, 0, 0); // day 1, midnight
         DateTime gameStartTime = baseTime.AddDays(1).AddHours(22).AddMinutes(46); // day 2, 22:46
 
         foreach (var schedule in schedules)
         {
-            AdvanceNpc(schedule.NpcId, gameStartTime);
-            Trace($"TALE MGR: Advanced NPC {schedule.NpcId} through full cycle (24+ hours) to 22:46, " +
-                  $"now at location {schedule.CurrentLocationId}");
+            // Deterministic per-NPC offset: seed RNG from NpcId
+            var offsetRng = new builtin.tools.RandomSource(schedule.NpcId.ToString());
+            int offsetMinutes = offsetRng.GetInt(-45, 45); // ±45 minutes
+            DateTime npcTime = gameStartTime.AddMinutes(offsetMinutes);
+
+            AdvanceNpc(schedule.NpcId, npcTime);
+            Trace($"TALE MGR: Advanced NPC {schedule.NpcId} through full cycle (24+ hours) to {npcTime:HH:mm} " +
+                  $"(offset {offsetMinutes:+0;-0} min), now at location {schedule.CurrentLocationId}");
         }
 
         // Diagnostic: show fragment distribution of generated NPCs
