@@ -55,6 +55,12 @@ public class StayAtStrategyPart : AEntityStrategyPart
 
             _entity.Set(new engine.behave.components.Behavior(_idleBehavior));
         }
+        else
+        {
+            // Hide indoor NPCs (they're inside buildings)
+            var transformApi = I.Get<engine.joyce.TransformApi>();
+            transformApi.SetVisible(_entity, false, false);
+        }
 
         int milliseconds = (int)(StayDurationSeconds * 1000f);
         if (milliseconds < 100) milliseconds = 100;
@@ -77,6 +83,13 @@ public class StayAtStrategyPart : AEntityStrategyPart
 
         if (_entity.IsAlive && _entity.Has<engine.behave.components.Behavior>())
             _entity.Remove<engine.behave.components.Behavior>();
+
+        // Restore visibility for indoor NPCs
+        if (IsIndoorActivity && _entity.IsAlive)
+        {
+            var transformApi = I.Get<engine.joyce.TransformApi>();
+            transformApi.SetVisible(_entity, true, false);
+        }
 
         _idleBehavior = null;
     }

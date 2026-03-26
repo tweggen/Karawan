@@ -33,28 +33,48 @@ public static class StreetRouteBuilder
         try
         {
             if (navMap == null)
+            {
+                Trace("StreetRouteBuilder: NavMap is null, using straight-line fallback");
                 return null;
+            }
 
             // Try to get cursors from the top cluster
             var topCluster = navMap.TopCluster;
             if (topCluster == null)
+            {
+                Trace("StreetRouteBuilder: TopCluster is null, using straight-line fallback");
                 return null;
+            }
 
             // Async cursor creation — await both in parallel with cancellation support
             var startCursorTask = topCluster.TryCreateCursor(fromPos);
             var endCursorTask = topCluster.TryCreateCursor(toPos);
 
             var startCursor = await startCursorTask.ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
             var endCursor = await endCursorTask.ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            if (startCursor == NavCursor.Nil || endCursor == NavCursor.Nil)
+            if (startCursor == NavCursor.Nil)
+            {
+                Trace($"StreetRouteBuilder: start cursor Nil for {fromPos}, using straight-line fallback");
                 return null;
+            }
+
+            if (endCursor == NavCursor.Nil)
+            {
+                Trace($"StreetRouteBuilder: end cursor Nil for {toPos}, using straight-line fallback");
+                return null;
+            }
 
             // Pathfind between cursors with optional routing preferences
             var pathfinder = new LocalPathfinder(startCursor, endCursor, preferences, transportType);
             var lanes = pathfinder.Pathfind();
             if (lanes == null || lanes.Count == 0)
+            {
+                Trace($"StreetRouteBuilder: no path found from {fromPos} to {toPos}, using straight-line fallback");
                 return null;
+            }
 
             // Convert lane path to SegmentRoute
             var route = new SegmentRoute();
@@ -117,6 +137,7 @@ public static class StreetRouteBuilder
                 Right = right
             });
 
+            Trace($"StreetRouteBuilder: route found from {fromPos} to {toPos} ({lanes.Count} lanes → {route.Segments.Count} segments)");
             return route;
         }
         catch (Exception ex)

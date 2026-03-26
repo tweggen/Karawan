@@ -91,7 +91,7 @@ public class NavCluster
             return await ncc.TryCreateCursor(v3Position);
         }
 
-        _semCreate.Wait();
+        await _semCreate.WaitAsync();
 
         lock (_lo)
         {
