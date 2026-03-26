@@ -204,7 +204,21 @@ public class TaleEntityStrategy : AOneOfStrategy
 
         // Debug: Log schedule advancement and destination
         float distToDestination = Vector3.Distance(_currentPosition.Position, destination);
-        Trace($"TALE ENTITY: NPC {_npcId} advanced to location '{locationName}': currentPos={_currentPosition.Position}, destination={destination}, distance={distToDestination:F2}m");
+
+        // DIAGNOSTIC: Check if destination location actually exists and has valid position
+        var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
+        var destLoc = spatialModel?.GetLocation(schedule.CurrentLocationId);
+        string destLocType = destLoc?.Type ?? "UNKNOWN";
+        Vector3 destLocPos = destLoc?.Position ?? Vector3.Zero;
+        Vector3 destLocEntry = destLoc?.EntryPosition ?? Vector3.Zero;
+
+        Trace($"TALE ENTITY: NPC {_npcId} advanced to location '{locationName}' (type={destLocType}): " +
+              $"currentPos={_currentPosition.Position}, " +
+              $"destination={destination}, " +
+              $"destLocPos={destLocPos}, " +
+              $"destLocEntry={destLocEntry}, " +
+              $"distance={distToDestination:F2}m, " +
+              $"isInTransit={schedule.IsInTransit}");
 
         // Compute street route asynchronously before moving
         // NPC stays in current state while pathfinding runs (typically < 100ms)
