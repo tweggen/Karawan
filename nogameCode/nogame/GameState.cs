@@ -8,7 +8,8 @@ namespace nogame;
 
 public class GameState
 {
-    static public DateTime GameT0 = new DateTime(1982, 3, 12, 22, 46, 0);
+    //static public DateTime GameT0 = new DateTime(1982, 3, 12, 22, 46, 0);
+    static public DateTime GameT0 = new DateTime(1982, 3, 12, 19, 0, 0);
     static public Vector3 PlayerPos0 = new Vector3(0f, 150f, 0f);
     static public Quaternion PlayerOrientation0 = Quaternion.CreateFromAxisAngle(Vector3.UnitY, Single.Pi);
 

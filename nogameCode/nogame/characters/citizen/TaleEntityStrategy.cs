@@ -203,10 +203,19 @@ public class TaleEntityStrategy : AOneOfStrategy
                 // Pass routing preferences for multi-objective pathfinding
                 route = await routeGen.GetRouteAsync(_currentPosition.Position, destination, _currentPosition,
                     _routingPreferences, schedule.PreferredTransportationType);
+                if (route != null)
+                    Trace($"TALE ENTITY: NPC {_npcId} got NavMesh route ({route.Segments.Count} segments)");
+                else
+                    Trace($"TALE ENTITY: NPC {_npcId} route generation returned null, using straight-line fallback");
+            }
+            else
+            {
+                Trace($"TALE ENTITY: NPC {_npcId} IRouteGenerator not registered, using straight-line fallback");
             }
         }
         catch (Exception e)
         {
+            Trace($"TALE ENTITY: NPC {_npcId} route generation exception: {e.Message}");
             Logger.Trace($"_advanceAndTravel: Route generation failed: {e.Message}");
             // null route = straight-line fallback
         }
