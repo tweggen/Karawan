@@ -67,9 +67,13 @@ public class GoToStrategyPart : AEntityStrategyPart
         {
             // Already at destination, signal immediately
             _arrived = true;
+            Trace($"GoToStrategyPart: Distance {_totalDistance:F2}m < 0.5m, already at destination, signaling completion");
             _engine.QueueEventHandler(() => Controller.GiveUpStrategy(this));
             return;
         }
+
+        string routeType = PrecomputedRoute != null ? "precomputed route" : "straight-line";
+        Trace($"GoToStrategyPart: Distance {_totalDistance:F2}m, will use {routeType}");
 
         var forward = Vector3.Normalize(endPos - startPos);
         if (float.IsNaN(forward.X)) forward = Vector3.UnitX;
