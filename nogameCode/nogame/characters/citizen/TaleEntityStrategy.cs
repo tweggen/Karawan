@@ -159,6 +159,13 @@ public class TaleEntityStrategy : AOneOfStrategy
 
     private async void _advanceAndTravel()
     {
+        // Update current position to where the NPC actually is now
+        if (_entity.IsAlive && _entity.Has<engine.joyce.components.Transform3ToWorld>())
+        {
+            var worldPos = _entity.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
+            _currentPosition.Position = worldPos;
+        }
+
         // Sync position before departing to destination
         _syncPositionToSchedule();
 
