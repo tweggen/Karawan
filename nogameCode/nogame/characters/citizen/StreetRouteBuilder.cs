@@ -64,13 +64,19 @@ public static class StreetRouteBuilder
 
             if (startCursor == NavCursor.Nil)
             {
-                Trace($"StreetRouteBuilder: start cursor Nil for {fromPos}, using straight-line fallback");
+                if (routeDistance < 1.0f)
+                    Trace($"StreetRouteBuilder: SHORT ROUTE start cursor Nil for {fromPos}");
+                else
+                    Trace($"StreetRouteBuilder: LONG ROUTE start cursor Nil for {fromPos}");
                 return null;
             }
 
             if (endCursor == NavCursor.Nil)
             {
-                Trace($"StreetRouteBuilder: end cursor Nil for {toPos}, using straight-line fallback");
+                if (routeDistance < 1.0f)
+                    Trace($"StreetRouteBuilder: SHORT ROUTE end cursor Nil for {toPos}");
+                else
+                    Trace($"StreetRouteBuilder: LONG ROUTE end cursor Nil for {toPos}");
                 return null;
             }
 
@@ -79,7 +85,10 @@ public static class StreetRouteBuilder
             var lanes = pathfinder.Pathfind();
             if (lanes == null || lanes.Count == 0)
             {
-                Trace($"StreetRouteBuilder: no path found from {fromPos} to {toPos}, using straight-line fallback");
+                if (routeDistance < 1.0f)
+                    Trace($"StreetRouteBuilder: SHORT ROUTE no path found from {fromPos} to {toPos}");
+                else
+                    Trace($"StreetRouteBuilder: LONG ROUTE no path found from {fromPos} to {toPos}");
                 return null;
             }
 
