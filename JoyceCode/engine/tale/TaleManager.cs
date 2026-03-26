@@ -127,7 +127,14 @@ public class TaleManager
                   $"(offset {offsetMinutes:+0;-0} min), now at location {schedule.CurrentLocationId}");
         }
 
-        // Diagnostic: show fragment distribution of generated NPCs
+        // Final advance to actual game start time so all transit phases align with spawn time
+        foreach (var schedule in schedules)
+        {
+            AdvanceNpc(schedule.NpcId, gameStartTime);
+        }
+
+        // Diagnostic: show transit distribution and fragment distribution of generated NPCs
+        var inTransit = new List<NpcSchedule>();
         var fragmentCounts = new Dictionary<string, int>();
         foreach (var schedule in schedules)
         {
@@ -136,17 +143,38 @@ public class TaleManager
             var frag = Fragment.PosToIndex3(pos);
             string key = $"({frag.I},{frag.K})";
             fragmentCounts[key] = fragmentCounts.GetValueOrDefault(key) + 1;
+
+            if (schedule.IsInTransit)
+                inTransit.Add(schedule);
         }
         string distrib = string.Join(", ", fragmentCounts.Select(kv => $"{kv.Key}={kv.Value}"));
         Trace($"TALE MGR: Populated cluster {clusterIndex} with {schedules.Count} NPCs. " +
               $"Total schedules now: {_schedules.Count}. Fragment distribution: {distrib}");
+        Trace($"TALE MGR: {inTransit.Count}/{schedules.Count} NPCs in transit at spawn time ({gameStartTime:HH:mm})");
+
+        // Show NPCs in transit for debugging
+        if (inTransit.Count > 0)
+        {
+            Trace($"TALE MGR: NPCs in transit:");
+            for (int i = 0; i < Math.Min(10, inTransit.Count); i++)
+            {
+                var s = inTransit[i];
+                var fromLoc = spatialModel?.GetLocation(s.TransitFromLocationId);
+                var toLoc = spatialModel?.GetLocation(s.TransitToLocationId);
+                string fromName = fromLoc?.Type ?? "unknown";
+                string toName = toLoc?.Type ?? "unknown";
+                float travelMinutes = (float)(s.TransitEnd - s.TransitStart).TotalMinutes;
+                Trace($"TALE MGR:   NPC {s.NpcId} ({s.Role}): {fromName} → {toName} " +
+                      $"({travelMinutes:F1} min, {s.TransitStart:HH:mm}-{s.TransitEnd:HH:mm})");
+            }
+        }
 
         // Show first few NPCs for debugging
         for (int i = 0; i < Math.Min(3, schedules.Count); i++)
         {
             var s = schedules[i];
             Trace($"TALE MGR:   NPC[{i}] id={s.NpcId} role={s.Role} home={s.HomePosition} " +
-                  $"worldPos={s.CurrentWorldPosition} homeLoc={s.HomeLocationId}");
+                  $"worldPos={s.CurrentWorldPosition} homeLoc={s.HomeLocationId} inTransit={s.IsInTransit}");
         }
 
         _populatedClusters.Add(clusterIndex);
