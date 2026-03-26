@@ -80,6 +80,12 @@ public class NpcSchedule
         }
     }
 
+    /// <summary>
+    /// Tier 2: Has this NPC been noticed (materialized as Tier 1) by the player?
+    /// Once true, persists for the session. NPCs keep map icons visible after dematerialization.
+    /// </summary>
+    public bool IsNoticedByPlayer { get; set; } = false;
+
 
     /// <summary>
     /// Encode cluster index + NPC index into a globally unique NPC ID.

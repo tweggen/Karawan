@@ -41,6 +41,12 @@ public class TaleManager
     private HashSet<int> _materializedNpcIds = new();
 
     /// <summary>
+    /// NPC IDs that are currently in Tier 2 (noticed but dematerialized, map icon visible).
+    /// These remain in _materializedNpcIds; strategy is frozen.
+    /// </summary>
+    private HashSet<int> _tier2NpcIds = new();
+
+    /// <summary>
     /// Reusable buffer for property deltas in ApplyPostconditions.
     /// </summary>
     private readonly Dictionary<string, float> _deltasBuffer = new();
@@ -270,6 +276,22 @@ public class TaleManager
     public void SetMaterialized(int npcId) => _materializedNpcIds.Add(npcId);
 
     public void SetDematerialized(int npcId) => _materializedNpcIds.Remove(npcId);
+
+
+    /// <summary>
+    /// Check if an NPC is currently in Tier 2 (noticed but with frozen strategy).
+    /// </summary>
+    public bool IsTier2(int npcId) => _tier2NpcIds.Contains(npcId);
+
+    /// <summary>
+    /// Demote an NPC to Tier 2: entity stays alive but strategy is frozen.
+    /// </summary>
+    public void SetTier2(int npcId) => _tier2NpcIds.Add(npcId);
+
+    /// <summary>
+    /// Clear Tier 2 flag when promoting back to Tier 1 or destroying.
+    /// </summary>
+    public void ClearTier2(int npcId) => _tier2NpcIds.Remove(npcId);
 
     #endregion
 

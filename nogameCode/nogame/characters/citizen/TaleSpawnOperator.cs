@@ -87,6 +87,10 @@ public class TaleSpawnOperator : ISpawnOperator
             var npcsInFragment = _taleManager.GetNpcsInFragment(idxFragment);
             foreach (var npc in npcsInFragment)
             {
+                // Clear Tier 2 flag if set (entity will be destroyed)
+                if (_taleManager.IsTier2(npc.NpcId))
+                    _taleManager.ClearTier2(npc.NpcId);
+
                 _taleManager.SetDematerialized(npc.NpcId);
             }
 
@@ -160,6 +164,9 @@ public class TaleSpawnOperator : ISpawnOperator
                     return;
                 }
 
+                // Mark this NPC as noticed by the player (will promote map icon visibility)
+                schedule.IsNoticedByPlayer = true;
+
                 // Get current game time (prefer daynite controller if available)
                 DateTime gameTime = DateTime.Now;
                 try
@@ -225,6 +232,10 @@ public class TaleSpawnOperator : ISpawnOperator
                     // Stamp entity with NPC ID for position sync during dematerialization
                     e.Set(new engine.tale.components.TaleNpcId { NpcId = npcId });
 
+                    // Set up behavior provider for Tier 2 ↔ Tier 1 transitions
+                    var taleEntityBehavior = new TaleEntityBehavior(taleStrategy);
+                    e.Set(new engine.behave.components.Behavior { Provider = taleEntityBehavior });
+
                     I.Get<engine.joyce.TransformApi>().SetTransforms(
                         e,
                         true,
@@ -249,6 +260,7 @@ public class TaleSpawnOperator : ISpawnOperator
     public void TerminateCharacters(List<(Index3, DefaultEcs.Entity)> listKills)
     {
         List<SpawnStatus> listSpawnStatus = new(listKills.Count);
+        List<(Index3 fragment, DefaultEcs.Entity entity)> listToDestroy = new();
 
         foreach (var kill in listKills)
         {
@@ -260,7 +272,7 @@ public class TaleSpawnOperator : ISpawnOperator
             }
         }
 
-        // Sync entity positions to schedule before destroying
+        // Sync entity positions to schedule before destroying / demoting
         foreach (var kill in listKills)
         {
             var entity = kill.Item2;
@@ -275,15 +287,35 @@ public class TaleSpawnOperator : ISpawnOperator
                 {
                     schedule.CurrentWorldPosition = worldPos;
                     Trace($"TALE SPAWN: Synced NPC {npcId} position to {worldPos} before dematerialization.");
+
+                    // Demote to Tier 2 if noticed: keep entity alive, freeze strategy
+                    if (schedule.IsNoticedByPlayer)
+                    {
+                        _taleManager.SetTier2(npcId);
+                        Trace($"TALE SPAWN: Demoting NPC {npcId} to Tier 2 (noticed). Map icon remains visible.");
+
+                        // Freeze strategy by entering Tier 2 mode
+                        if (entity.Has<engine.behave.components.Strategy>())
+                        {
+                            var strategy = entity.Get<engine.behave.components.Strategy>().EntityStrategy;
+                            if (strategy is TaleEntityStrategy tes)
+                                tes.EnterTier2Mode();
+                        }
+                        // Skip the destroy path for this entity
+                        continue;
+                    }
                 }
             }
+
+            // Entity was not noticed or schedule missing: queue for destruction
+            listToDestroy.Add(kill);
         }
 
         _engine.QueueCleanupAction(() =>
         {
-            foreach (var kill in listKills)
+            foreach (var kill in listToDestroy)
             {
-                var entity = kill.Item2;
+                var entity = kill.entity;
                 entity.Disable();
                 I.Get<HierarchyApi>().Delete(ref entity);
             }

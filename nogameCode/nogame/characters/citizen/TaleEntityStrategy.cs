@@ -34,6 +34,11 @@ public class TaleEntityStrategy : AOneOfStrategy
     private const float PositionSyncInterval = 2f; // seconds
 
     /// <summary>
+    /// Tier 2 mode: entity alive but strategy frozen (noticed but dematerialized).
+    /// </summary>
+    internal bool _isTier2 = false;
+
+    /// <summary>
     /// Seconds of real time per game day. Used to convert game-time
     /// storylet durations to real-time StayAt durations.
     /// </summary>
@@ -71,14 +76,38 @@ public class TaleEntityStrategy : AOneOfStrategy
         }
         else if (strategy == Strategies["activity"])
         {
-            // Activity complete → advance to next storylet
-            _advanceAndTravel();
+            // Activity complete → advance to next storylet (unless in Tier 2)
+            if (!_isTier2)
+                _advanceAndTravel();
         }
         else if (strategy == Strategies["flee"] || strategy == Strategies["recover"])
         {
             // After flee/recover → resume activity or travel
             TriggerStrategy("activity");
         }
+    }
+
+
+    /// <summary>
+    /// Enter Tier 2 mode: freeze strategy indefinitely (notice by player but far from render distance).
+    /// Map icon remains visible on its own camera layer.
+    /// </summary>
+    public void EnterTier2Mode()
+    {
+        _isTier2 = true;
+        _stayAt.StayDurationSeconds = float.MaxValue; // freeze indefinitely
+        TriggerStrategy("activity");
+        Trace($"TALE ENTITY: NPC {_npcId} entering Tier 2 mode (noticed, dematerialized).");
+    }
+
+    /// <summary>
+    /// Exit Tier 2 mode: resume normal schedule progression (back in render distance).
+    /// </summary>
+    public void ExitTier2Mode()
+    {
+        _isTier2 = false;
+        Trace($"TALE ENTITY: NPC {_npcId} exiting Tier 2 mode, resuming schedule.");
+        _advanceAndTravel();
     }
 
 
