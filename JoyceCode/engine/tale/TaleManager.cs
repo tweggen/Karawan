@@ -119,7 +119,7 @@ public class TaleManager
         {
             // Deterministic per-NPC offset: seed RNG from NpcId
             var offsetRng = new builtin.tools.RandomSource(schedule.NpcId.ToString());
-            int offsetMinutes = offsetRng.GetInt(-45, 45); // ±45 minutes
+            int offsetMinutes = offsetRng.GetInt(91) - 45; // ±45 minutes: 0-90 becomes -45 to 45
             DateTime npcTime = gameStartTime.AddMinutes(offsetMinutes);
 
             AdvanceNpc(schedule.NpcId, npcTime);
@@ -322,6 +322,9 @@ public class TaleManager
     /// Advance an NPC to its next storylet. Called when the entity strategy
     /// completes its current verb sequence, or when an NPC is first spawned
     /// and needs its current activity.
+    ///
+    /// Time randomization (±5 minutes per NPC per step) ensures workers don't all
+    /// arrive/depart at exact scheduled times — more realistic scheduling variation.
     /// </summary>
     public StoryletDefinition AdvanceNpc(int npcId, DateTime gameNow)
     {
@@ -356,11 +359,17 @@ public class TaleManager
         // Determine duration
         float durationMinutes = next.GetDuration(_rng);
 
+        // Time randomization: ±5 minutes per NPC per schedule step
+        // E.g., worker scheduled to arrive at 8:00 might arrive at 7:55-8:05
+        var timeRng = new builtin.tools.RandomSource(npc.NpcId.ToString() + "-time-" + npc.ScheduleStep);
+        int timeOffsetMinutes = timeRng.GetInt(11) - 5; // ±5 minutes: 0-10 becomes -5 to 5
+        DateTime actualStart = gameNow + TimeSpan.FromMinutes(travelMinutes + timeOffsetMinutes);
+
         // Update NPC state
         npc.CurrentStorylet = next.Id;
         npc.CurrentLocationId = destination;
-        npc.CurrentStart = gameNow + TimeSpan.FromMinutes(travelMinutes);
-        npc.CurrentEnd = npc.CurrentStart + TimeSpan.FromMinutes(durationMinutes);
+        npc.CurrentStart = actualStart;
+        npc.CurrentEnd = actualStart + TimeSpan.FromMinutes(durationMinutes);
 
         // Update current world position from location
         if (_spatialModels.TryGetValue(npc.ClusterIndex, out spatialModel) && spatialModel != null)
