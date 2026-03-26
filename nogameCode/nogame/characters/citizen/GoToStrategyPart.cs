@@ -82,9 +82,11 @@ public class GoToStrategyPart : AEntityStrategyPart
         if (PrecomputedRoute != null)
         {
             route = PrecomputedRoute;
+            Trace($"GoToStrategyPart: Using precomputed route with {route.Segments.Count} segments from {startPos} to {endPos}");
         }
         else
         {
+            Trace($"GoToStrategyPart: No precomputed route, using straight-line from {startPos} to {endPos}");
             route = new SegmentRoute();
             route.Segments.Add(new SegmentEnd
             {

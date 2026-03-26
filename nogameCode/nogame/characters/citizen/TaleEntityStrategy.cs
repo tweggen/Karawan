@@ -225,6 +225,11 @@ public class TaleEntityStrategy : AOneOfStrategy
         _goTo.CurrentPosition = _currentPosition;
         _goTo.PrecomputedRoute = route;
 
+        if (route == null)
+            Trace($"TALE ENTITY: NPC {_npcId} triggering travel with NULL route (will use straight-line fallback)");
+        else
+            Trace($"TALE ENTITY: NPC {_npcId} triggering travel with route ({route.Segments.Count} segments)");
+
         TriggerStrategy("travel");
     }
 

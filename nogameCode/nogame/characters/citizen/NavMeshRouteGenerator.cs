@@ -26,6 +26,7 @@ public class NavMeshRouteGenerator : IRouteGenerator
         RoutingPreferences? preferences = null,
         TransportationType transportType = TransportationType.Pedestrian)
     {
+        Trace($"NavMeshRouteGenerator: Computing route from {fromPos} to {toPos}");
         try
         {
             // Create cancellation token to prevent pathfinding from blocking NPC movement indefinitely
