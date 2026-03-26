@@ -180,6 +180,11 @@ public class TaleSpawnOperator : ISpawnOperator
                     // Fallback to DateTime.Now if daynite not available
                 }
 
+                // Re-advance NPC to current game time to refresh transit phases
+                // This ensures transit windows align with actual spawn time (not stale from population)
+                _taleManager.AdvanceNpc(npcId, gameTime);
+                schedule = _taleManager.GetSchedule(npcId); // Refresh schedule after re-advance
+
                 // Compute spawn position based on NPC's schedule at current game time
                 var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
                 var spawnPosition = schedule.PositionAt(gameTime, spatialModel);
