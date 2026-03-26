@@ -159,6 +159,13 @@ public class TaleEntityStrategy : AOneOfStrategy
 
     private async void _advanceAndTravel()
     {
+        // Diagnostic: show current location type before advancing
+        var tempSchedule = _taleManager.GetSchedule(_npcId);
+        var spatialModel = _taleManager.GetSpatialModel(tempSchedule?.ClusterIndex ?? -1);
+        var currentLoc = spatialModel?.GetLocation(tempSchedule?.CurrentLocationId ?? -1);
+        string currentLocType = currentLoc?.Type ?? "UNKNOWN";
+        Trace($"TALE ENTITY: NPC {_npcId} _advanceAndTravel called FROM location type '{currentLocType}'");
+
         // Update current position to where the NPC actually is now
         if (_entity.IsAlive && _entity.Has<engine.joyce.components.Transform3ToWorld>())
         {
@@ -200,7 +207,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         UpdateRoutingPreferences(gameNow);
 
         // Get destination location's actual position (not NPC's current position)
-        var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
+        spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
         var destLoc = spatialModel?.GetLocation(schedule.CurrentLocationId);
         string destLocType = destLoc?.Type ?? "UNKNOWN";
 
