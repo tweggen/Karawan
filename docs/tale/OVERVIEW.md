@@ -36,7 +36,7 @@ PHASE_6E  Deviation Persistence      ──── ✅ COMPLETE (2026-03-15)
 PHASE_6F  TaleManager Rework         ──── ✅ COMPLETE (2026-03-15)
 PHASE_7A  SpatialModel Wire-up        ──┐
 PHASE_7B  Entry Points                 ├── ✅ COMPLETE (2026-03-16)
-PHASE_7C  Street Pathfinding           ├──
+PHASE_7C  Street Pathfinding           ├── ✅ COMPLETE (2026-03-26)
 PHASE_7D  Building Occupancy           ├──
 PHASE_7E  Fragment-Accurate Position ──┘
 PHASE_7B  Building Role Tagging (Plan) ──── 📋 PLANNED (2026-03-16)
@@ -96,7 +96,7 @@ PHASE_D   Multi-Objective Routing        ── ✅ COMPLETE (2026-03-25)
 | 6E | 6D (needs deviation flags to know what to persist) | Not started |
 | 6F | 6A-6E (reworks TaleManager role based on full pipeline) | Not started |
 
-**Current Status**: Phases 0-8 + Phase D complete. All 171+ regression tests passing (phases 0-8, Phase D). Next phases available: Phase 7B (building role tagging), Phase E (dynamic safety zones), Phase F (learned routes), Phase G (traffic modeling).
+**Current Status**: Phases 0-8 + Phase D complete, Phase 7C (street pathfinding) complete. All 171+ regression tests passing (phases 0-8, Phase D). Phase 7C fix: identified and resolved critical _currentPosition tracking bug causing 0m distance calculations (commit f9b3a88d). Next phases available: Phase 7D (building occupancy), Phase 7B (building role tagging), Phase E (dynamic safety zones), Phase F (learned routes), Phase G (traffic modeling).
 
 ## Documentation Map
 
