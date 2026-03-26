@@ -46,6 +46,13 @@ public static class StreetRouteBuilder
                 return null;
             }
 
+            // Log route distance classification
+            float routeDistance = Vector3.Distance(fromPos, toPos);
+            if (routeDistance < 1.0f)
+            {
+                Trace($"StreetRouteBuilder: SHORT ROUTE ({routeDistance:F2}m) from {fromPos} to {toPos}");
+            }
+
             // Async cursor creation — await both in parallel with cancellation support
             var startCursorTask = topCluster.TryCreateCursor(fromPos);
             var endCursorTask = topCluster.TryCreateCursor(toPos);
@@ -137,7 +144,10 @@ public static class StreetRouteBuilder
                 Right = right
             });
 
-            Trace($"StreetRouteBuilder: route found from {fromPos} to {toPos} ({lanes.Count} lanes → {route.Segments.Count} segments)");
+            if (routeDistance >= 1.0f)
+                Trace($"StreetRouteBuilder: LONG ROUTE ({routeDistance:F2}m) found from {fromPos} to {toPos} ({lanes.Count} lanes → {route.Segments.Count} segments)");
+            else
+                Trace($"StreetRouteBuilder: SHORT ROUTE ({routeDistance:F2}m) route found from {fromPos} to {toPos} ({lanes.Count} lanes → {route.Segments.Count} segments)");
             return route;
         }
         catch (Exception ex)
