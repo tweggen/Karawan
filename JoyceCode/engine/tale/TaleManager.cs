@@ -508,8 +508,14 @@ public class TaleManager
         var spatialModel = _spatialModels.TryGetValue(npc.ClusterIndex, out var model) ? model : null;
         if (spatialModel != null)
         {
-            int streetId = spatialModel.FindNearestOfType(npc.CurrentLocationId, "street_segment");
-            if (streetId >= 0) return streetId;
+            // Pick a random street location instead of always nearest
+            // This spreads NPCs across the street network instead of clustering at one spot
+            var streetLocations = spatialModel.Locations.FindAll(l => l.Type == "street_segment");
+            if (streetLocations.Count > 0)
+            {
+                int randomIdx = _rng.Next(streetLocations.Count);
+                return streetLocations[randomIdx].Id;
+            }
         }
         return npc.CurrentLocationId;
     }

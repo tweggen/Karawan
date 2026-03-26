@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using engine.streets;
 using engine.world;
+using static engine.Logger;
 
 namespace engine.tale;
 
@@ -259,8 +260,10 @@ public class SpatialModel
                 QuarterIndex = -1,
                 EstateIndex = -1
             });
+            
+            Trace($"Street location {locId}: pos={pos}, entryPos={pos}");
         }
-
+        
         var strokes = strokeStore.GetStrokes();
         foreach (var stroke in strokes)
         {
