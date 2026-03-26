@@ -467,6 +467,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\ToLocation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\SpatialModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\ArcStack.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\components\TaleNpcId.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\EventQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\NpcSchedule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\NpcGoal.cs" />

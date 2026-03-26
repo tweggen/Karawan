@@ -222,6 +222,9 @@ public class TaleSpawnOperator : ISpawnOperator
                     creator.CreateLogical(e);
                     CharacterCreator.AddMapIcon(e, schedule.Role);
 
+                    // Stamp entity with NPC ID for position sync during dematerialization
+                    e.Set(new engine.tale.components.TaleNpcId { NpcId = npcId });
+
                     I.Get<engine.joyce.TransformApi>().SetTransforms(
                         e,
                         true,
@@ -254,6 +257,25 @@ public class TaleSpawnOperator : ISpawnOperator
                 _findSpawnStatus_nl(kill.Item1, out var spawnStatus);
                 listSpawnStatus.Add(spawnStatus);
                 spawnStatus.IsDying++;
+            }
+        }
+
+        // Sync entity positions to schedule before destroying
+        foreach (var kill in listKills)
+        {
+            var entity = kill.Item2;
+            if (entity.IsAlive
+                && entity.Has<engine.tale.components.TaleNpcId>()
+                && entity.Has<engine.joyce.components.Transform3ToWorld>())
+            {
+                int npcId = entity.Get<engine.tale.components.TaleNpcId>().NpcId;
+                var worldPos = entity.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
+                var schedule = _taleManager.GetSchedule(npcId);
+                if (schedule != null)
+                {
+                    schedule.CurrentWorldPosition = worldPos;
+                    Trace($"TALE SPAWN: Synced NPC {npcId} position to {worldPos} before dematerialization.");
+                }
             }
         }
 

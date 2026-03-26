@@ -30,6 +30,9 @@ public class TaleEntityStrategy : AOneOfStrategy
     private readonly StayAtStrategyPart _stayAt;
     private RoutingPreferences _routingPreferences;
 
+    private float _positionSyncTimer = 0f;
+    private const float PositionSyncInterval = 2f; // seconds
+
     /// <summary>
     /// Seconds of real time per game day. Used to convert game-time
     /// storylet durations to real-time StayAt durations.
@@ -108,8 +111,28 @@ public class TaleEntityStrategy : AOneOfStrategy
         _routingPreferences.UpdateUrgency(currentTime);
     }
 
+    /// <summary>
+    /// Sync current entity world position back to the NPC schedule.
+    /// This ensures position is preserved during dematerialization.
+    /// </summary>
+    private void _syncPositionToSchedule()
+    {
+        if (_entity.IsAlive && _entity.Has<engine.joyce.components.Transform3ToWorld>())
+        {
+            var worldPos = _entity.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
+            var schedule = _taleManager.GetSchedule(_npcId);
+            if (schedule != null)
+            {
+                schedule.CurrentWorldPosition = worldPos;
+            }
+        }
+    }
+
     private async void _advanceAndTravel()
     {
+        // Sync position before departing to destination
+        _syncPositionToSchedule();
+
         DateTime gameNow = DateTime.Now; // Will be overridden by daynite controller
         try
         {
@@ -193,6 +216,9 @@ public class TaleEntityStrategy : AOneOfStrategy
                 _stayAt.IsIndoorActivity = true;
             }
         }
+
+        // Sync position now that we've arrived at destination
+        _syncPositionToSchedule();
     }
 
 
