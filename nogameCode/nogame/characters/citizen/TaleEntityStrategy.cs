@@ -199,16 +199,20 @@ public class TaleEntityStrategy : AOneOfStrategy
         // Update routing preferences before computing route
         UpdateRoutingPreferences(gameNow);
 
-        // Get world position for the destination location
-        Vector3 destination = _taleManager.GetWorldPosition(_npcId, gameNow);
-
-        // Debug: Log schedule advancement and destination
-        float distToDestination = Vector3.Distance(_currentPosition.Position, destination);
-
-        // DIAGNOSTIC: Check if destination location actually exists and has valid position
+        // Get destination location's actual position (not NPC's current position)
         var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
         var destLoc = spatialModel?.GetLocation(schedule.CurrentLocationId);
         string destLocType = destLoc?.Type ?? "UNKNOWN";
+
+        // Use destination location's entry point if available, else fall back to position
+        Vector3 destination = destLoc != null
+            ? (destLoc.EntryPosition != Vector3.Zero ? destLoc.EntryPosition : destLoc.Position)
+            : Vector3.Zero;
+
+        // Calculate distance from NPC's current position to destination location
+        float distToDestination = Vector3.Distance(_currentPosition.Position, destination);
+
+        // Log for debugging
         Vector3 destLocPos = destLoc?.Position ?? Vector3.Zero;
         Vector3 destLocEntry = destLoc?.EntryPosition ?? Vector3.Zero;
 
