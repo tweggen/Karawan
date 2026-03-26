@@ -365,6 +365,20 @@ public class TaleManager
         int timeOffsetMinutes = timeRng.GetInt(11) - 5; // ±5 minutes: 0-10 becomes -5 to 5
         DateTime actualStart = gameNow + TimeSpan.FromMinutes(travelMinutes + timeOffsetMinutes);
 
+        // Populate transit phase if travel needed
+        if (travelMinutes > 0)
+        {
+            npc.IsInTransit = true;
+            npc.TransitFromLocationId = npc.CurrentLocationId; // capture BEFORE overwrite
+            npc.TransitToLocationId = destination;
+            npc.TransitStart = gameNow;
+            npc.TransitEnd = gameNow + TimeSpan.FromMinutes(travelMinutes);
+        }
+        else
+        {
+            npc.IsInTransit = false;
+        }
+
         // Update NPC state
         npc.CurrentStorylet = next.Id;
         npc.CurrentLocationId = destination;

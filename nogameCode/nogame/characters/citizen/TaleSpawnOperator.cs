@@ -185,6 +185,11 @@ public class TaleSpawnOperator : ISpawnOperator
                 var spawnPosition = schedule.PositionAt(gameTime, spatialModel);
                 Trace($"TALE SPAWN: NPC {npcId} spawn position computed for game time {gameTime}: {spawnPosition}");
 
+                // Detect if NPC is mid-transit at spawn time
+                bool spawnInTravel = schedule.IsInTransit
+                    && gameTime >= schedule.TransitStart
+                    && gameTime < schedule.TransitEnd;
+
                 var pod = new PositionDescription { Position = spawnPosition, ClusterDesc = cd };
 
                 // Create character model deterministically from NPC seed
@@ -243,6 +248,12 @@ public class TaleSpawnOperator : ISpawnOperator
                         Quaternion.Identity,
                         pod.Position
                     );
+
+                    // If NPC is mid-transit at spawn, enter travel state
+                    if (spawnInTravel)
+                    {
+                        taleStrategy.SpawnInTravel();
+                    }
 
                     spawnStatus.InCreation--;
                 });

@@ -225,6 +225,9 @@ public class TaleEntityStrategy : AOneOfStrategy
         var schedule = _taleManager.GetSchedule(_npcId);
         if (schedule == null) return;
 
+        // Clear transit phase on arrival at destination
+        schedule.IsInTransit = false;
+
         // Convert game-time duration to real-time seconds
         float gameMinutes = (float)(schedule.CurrentEnd - schedule.CurrentStart).TotalMinutes;
         float realSeconds = gameMinutes / (24f * 60f) * RealSecondsPerGameDay;
@@ -248,6 +251,27 @@ public class TaleEntityStrategy : AOneOfStrategy
 
         // Sync position now that we've arrived at destination
         _syncPositionToSchedule();
+    }
+
+
+    /// <summary>
+    /// Called when an NPC materializes mid-transit. Starts in travel state
+    /// heading to TransitToLocationId instead of entering activity first.
+    /// </summary>
+    public void SpawnInTravel()
+    {
+        var schedule = _taleManager.GetSchedule(_npcId);
+        if (schedule == null || !schedule.IsInTransit) return;
+
+        var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
+        var destLoc = spatialModel?.GetLocation(schedule.TransitToLocationId);
+        if (destLoc == null) return;
+
+        Vector3 dest = destLoc.EntryPosition != Vector3.Zero ? destLoc.EntryPosition : destLoc.Position;
+        _goTo.Destination = dest;
+        _goTo.CurrentPosition = _currentPosition;
+        // No precomputed route — NPC will walk straight to destination
+        TriggerStrategy("travel");
     }
 
 

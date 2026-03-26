@@ -86,6 +86,33 @@ public class NpcSchedule
     /// </summary>
     public bool IsNoticedByPlayer { get; set; } = false;
 
+    // Transit phase: NPC is walking between locations
+    /// <summary>
+    /// Is this NPC currently in transit (walking between locations)?
+    /// </summary>
+    public bool IsInTransit;
+
+    /// <summary>
+    /// Source location ID for current transit phase.
+    /// </summary>
+    public int TransitFromLocationId;
+
+    /// <summary>
+    /// Destination location ID for current transit phase.
+    /// </summary>
+    public int TransitToLocationId;
+
+    /// <summary>
+    /// When the transit phase started.
+    /// </summary>
+    public DateTime TransitStart;
+
+    /// <summary>
+    /// When the transit phase ends (NPC arrives at destination).
+    /// Conceptually equal to CurrentStart, but without time randomization jitter.
+    /// </summary>
+    public DateTime TransitEnd;
+
 
     /// <summary>
     /// Encode cluster index + NPC index into a globally unique NPC ID.
@@ -98,12 +125,31 @@ public class NpcSchedule
 
     /// <summary>
     /// Compute position as a pure function of schedule state.
-    /// For Tier 3, returns the current location's entry position (door/shop front).
+    /// If in transit, interpolates linearly between source and destination entry positions.
+    /// Otherwise, returns the current location's entry position (door/shop front).
     /// </summary>
     public Vector3 PositionAt(DateTime gameTime, SpatialModel model)
     {
         if (model != null)
         {
+            // Check if NPC is in transit and gameTime falls within transit window
+            if (IsInTransit && gameTime >= TransitStart && gameTime < TransitEnd
+                && (TransitEnd - TransitStart).TotalSeconds > 0)
+            {
+                // Interpolate position between transit source and destination
+                float t = (float)(gameTime - TransitStart).TotalSeconds
+                        / (float)(TransitEnd - TransitStart).TotalSeconds;
+                var fromLoc = model.GetLocation(TransitFromLocationId);
+                var toLoc = model.GetLocation(TransitToLocationId);
+                if (fromLoc != null && toLoc != null)
+                {
+                    var fromPos = fromLoc.EntryPosition != Vector3.Zero ? fromLoc.EntryPosition : fromLoc.Position;
+                    var toPos = toLoc.EntryPosition != Vector3.Zero ? toLoc.EntryPosition : toLoc.Position;
+                    return Vector3.Lerp(fromPos, toPos, Math.Clamp(t, 0f, 1f));
+                }
+            }
+
+            // Not in transit: return current location position
             var loc = model.GetLocation(CurrentLocationId);
             if (loc != null)
                 return loc.EntryPosition != Vector3.Zero ? loc.EntryPosition : loc.Position;
