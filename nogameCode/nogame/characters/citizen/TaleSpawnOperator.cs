@@ -190,6 +190,17 @@ public class TaleSpawnOperator : ISpawnOperator
                     && gameTime >= schedule.TransitStart
                     && gameTime < schedule.TransitEnd;
 
+                if (spawnInTravel)
+                {
+                    Trace($"TALE SPAWN: NPC {npcId} spawning in TRANSIT (game time {gameTime:HH:mm}, " +
+                          $"transit {schedule.TransitStart:HH:mm}-{schedule.TransitEnd:HH:mm})");
+                }
+                else if (schedule.IsInTransit)
+                {
+                    Trace($"TALE SPAWN: NPC {npcId} IS in transit but NOT in spawn window " +
+                          $"(game time {gameTime:HH:mm}, transit {schedule.TransitStart:HH:mm}-{schedule.TransitEnd:HH:mm})");
+                }
+
                 var pod = new PositionDescription { Position = spawnPosition, ClusterDesc = cd };
 
                 // Create character model deterministically from NPC seed

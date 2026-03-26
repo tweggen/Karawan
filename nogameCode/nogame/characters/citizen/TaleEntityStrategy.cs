@@ -261,15 +261,24 @@ public class TaleEntityStrategy : AOneOfStrategy
     public void SpawnInTravel()
     {
         var schedule = _taleManager.GetSchedule(_npcId);
-        if (schedule == null || !schedule.IsInTransit) return;
+        if (schedule == null || !schedule.IsInTransit)
+        {
+            Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel called but not in transit (schedule exists: {schedule != null})");
+            return;
+        }
 
         var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
         var destLoc = spatialModel?.GetLocation(schedule.TransitToLocationId);
-        if (destLoc == null) return;
+        if (destLoc == null)
+        {
+            Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel failed: destination location {schedule.TransitToLocationId} not found");
+            return;
+        }
 
         Vector3 dest = destLoc.EntryPosition != Vector3.Zero ? destLoc.EntryPosition : destLoc.Position;
         _goTo.Destination = dest;
         _goTo.CurrentPosition = _currentPosition;
+        Trace($"TALE ENTITY: NPC {_npcId} spawning in travel to {dest} (from {_currentPosition.Position})");
         // No precomputed route — NPC will walk straight to destination
         TriggerStrategy("travel");
     }
