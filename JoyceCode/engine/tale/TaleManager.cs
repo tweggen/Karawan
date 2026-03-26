@@ -107,6 +107,17 @@ public class TaleManager
             _schedules[schedule.NpcId] = schedule;
         }
 
+        // Advance all newly generated schedules to current game time so NPCs spawn
+        // at their correct activity location, not their default home location.
+        // Use DateTime.Now as fallback; daynite controller will be used during actual gameplay spawn.
+        DateTime gameNow = DateTime.Now;
+        foreach (var schedule in schedules)
+        {
+            AdvanceNpc(schedule.NpcId, gameNow);
+            Trace($"TALE MGR: Advanced NPC {schedule.NpcId} to game time {gameNow:yyyy-MM-dd HH:mm:ss}, " +
+                  $"now at {schedule.CurrentLocationId}");
+        }
+
         // Diagnostic: show fragment distribution of generated NPCs
         var fragmentCounts = new Dictionary<string, int>();
         foreach (var schedule in schedules)
