@@ -234,6 +234,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         if (locationName == "current")
         {
             Trace($"TALE ENTITY: NPC {_npcId} location is 'current' (stay in place), skipping travel and triggering activity");
+            _setupActivity();
             TriggerStrategy("activity");
             return;
         }
@@ -242,6 +243,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         if (distToDestination < 2.0f)
         {
             Trace($"TALE ENTITY: NPC {_npcId} already at destination (distance={distToDestination:F2}m < 2m threshold), skipping travel and triggering activity");
+            _setupActivity();
             TriggerStrategy("activity");
             return;
         }
@@ -281,6 +283,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         if (route == null && distToDestination > 10f)
         {
             Trace($"TALE ENTITY: NPC {_npcId} destination '{locationName}' unreachable (distance={distToDestination:F0}m but no path). Staying at current location instead.");
+            _setupActivity();
             TriggerStrategy("activity");
             return;
         }
