@@ -164,25 +164,31 @@ namespace engine.streets
         private void _reportOrphanedPoints()
         {
             trace($"\n{'='} GENERATION SAFEGUARD REPORT ======================");
-            trace($"Total StreetPoints created: {_createdStreetPointIds.Count}");
-            trace($"Total strokes validated: {_strokesWithMissingEndpoints.Count}");
 
-            if (_orphanedStreetPointIds.Count == 0 && _strokesWithMissingEndpoints.Count == 0)
+            // Check which created points actually made it into the final store
+            var actualStorePoints = new HashSet<int>(_strokeStore.GetStreetPoints().Select(p => p.Id));
+            var truelyOrphanedPoints = _createdStreetPointIds.Where(id => !actualStorePoints.Contains(id)).ToList();
+
+            trace($"Total StreetPoints created during generation: {_createdStreetPointIds.Count}");
+            trace($"Total StreetPoints in final store: {actualStorePoints.Count}");
+            trace($"⚠️  ORPHANED POINTS (created but not in final store): {truelyOrphanedPoints.Count}");
+            trace($"Total strokes with endpoint issues: {_strokesWithMissingEndpoints.Count}");
+
+            if (truelyOrphanedPoints.Count == 0 && _strokesWithMissingEndpoints.Count == 0)
             {
                 trace($"✅ No orphaned StreetPoints found - all created points were successfully added to store");
                 return;
             }
 
-            if (_orphanedStreetPointIds.Count > 0)
+            if (truelyOrphanedPoints.Count > 0)
             {
-                trace($"⚠️  ORPHANED STREETPOINTS: {_orphanedStreetPointIds.Count} points created but never added to store:");
-                foreach (var orphanId in _orphanedStreetPointIds.OrderBy(id => id).Take(20))
+                trace($"⚠️  DETAILS: {truelyOrphanedPoints.Count} orphaned points (sample):");
+                foreach (var orphanId in truelyOrphanedPoints.OrderBy(id => id).Take(20))
                 {
-                    string creator = _orphanedPointOrigins.ContainsKey(orphanId) ? _orphanedPointOrigins[orphanId] : "unknown";
-                    trace($"  StreetPoint {orphanId} (creator: {creator})");
+                    trace($"  StreetPoint {orphanId} was created but never added to final store");
                 }
-                if (_orphanedStreetPointIds.Count > 20)
-                    trace($"  ... and {_orphanedStreetPointIds.Count - 20} more");
+                if (truelyOrphanedPoints.Count > 20)
+                    trace($"  ... and {truelyOrphanedPoints.Count - 20} more orphaned points");
             }
 
             if (_strokesWithMissingEndpoints.Count > 0)
