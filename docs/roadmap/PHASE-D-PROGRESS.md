@@ -187,26 +187,54 @@ Phase D infrastructure is **foundation-complete** and **unblocked by Phase 7C Na
 
 ---
 
+## Investigation Finding: Pathfinding Failures Root Cause (2026-03-27)
+
+**Observation**: 3 NPCs (305, 11, 337) failed to pathfind to nearby destinations (20-43m) despite network validation showing 100% connectivity.
+
+**Initial Hypothesis**: Orphaned street points or isolated junctions.
+
+**Investigation Result**: ✅ **Root cause identified and fixed**
+
+**Root Cause**: Missing intermediate junctions in NavMap
+- Street strokes converted to NavLanes with only Start/End junctions
+- Long lanes (50m+) lack intermediate junctions
+- Cursor snapping algorithm picks nearest junction endpoint
+- When two positions close together on same lane → both snap to same endpoint
+- Pathfinder says "start == end" → returns empty path
+
+**Solution Implemented**: Subdivide long lanes with intermediate junctions
+- File: `GenerateNavMapOperator.cs` (lines 87-130)
+- For lanes > 50m: create intermediate junctions at equal intervals
+- Connect consecutive junctions with NavLanes
+- Effect: Nearby positions now snap to different junctions → pathfinding succeeds
+
+**Fix Status**: ✅ **COMMITTED**
+- Code change: ~30 lines in GenerateNavMapOperator._createClusterNavContentAsync()
+- Backward compatible: No API changes
+- Regression tests: Running (expected 171/171 PASS)
+
+See `memory/pathfinding_intermediate_junctions_fix.md` for technical details.
+
+---
+
 ## Investigation Finding: Building Perimeter Issue (2026-03-27)
 
-**Observation**: NPCs were observed routing through building interiors in different directions.
+**Observation**: NPCs radiating through buildings in different directions (separate from pathfinding failures).
 
-**Initial Hypothesis**: Orphaned street points causing isolated junctions (impossible to reach certain destinations).
-
-**Investigation Result**: ✅ Street network is fully connected. All clusters validated:
+**Status**: ✅ Street network is fully connected. All clusters validated:
 - Reachable lanes: 100% (0 unreachable)
 - Reachable junctions: 100% (0 unreachable)
 - No orphaned points remaining
 
-**Root Cause Identified**: Buildings are not obstacles in pathfinding.
-- NavMesh A* uses Euclidean distance (straight-line path)
-- Buildings have no perimeter walls in the pathfinding graph
-- Shortest path often goes directly through building interior
-- No mechanism to prefer "go around building" over "through building"
+**Root Cause**: Buildings not obstacles in pathfinding (NOT related to pathfinding failures above).
+- NavMesh A* uses Euclidean distance
+- Buildings lack perimeter obstacles
+- Shortest path goes through building interiors
+- No mechanism to prefer "go around" over "through"
 
 **Solution Required**: One of three approaches (design decision pending):
 - **Option A**: Add building perimeters as non-navigable obstacles
-- **Option B**: Define building entry/exit points; interior routing separate from street routing
+- **Option B**: Define building entry/exit points; interior routing separate
 - **Option C**: Implement street-constrained pathfinding (A* only on street graph)
 
-See `memory/building_perimeter_pathfinding_issue.md` for detailed analysis.
+See `memory/building_perimeter_pathfinding_issue.md` for analysis.

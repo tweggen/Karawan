@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Threading.Tasks;
 using builtin.modules.satnav.desc;
 using DefaultEcs;
@@ -74,26 +75,59 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
             try
             {
-                NavLane nlForth = new()
-                {
-                    Start = njA,
-                    End = njB,
-                    Length = stroke.Length
-                };
-                njA.StartingLanes.Add(nlForth);
-                njB.EndingLanes.Add(nlForth);
-                ncc.Lanes.Add(nlForth);
+                // Subdivide long lanes into shorter segments for proper pathfinding cursor snapping.
+                // When two positions snap to endpoints of a long lane, they may snap to the same endpoint.
+                // Intermediate junctions allow nearby positions to snap to different endpoints.
+                const float MaxLaneLength = 50f; // Create intermediate junctions for lanes longer than this
 
-                NavLane nlBack = new()
+                List<NavJunction> laneJunctions = new() { njA, njB };
+                if (stroke.Length > MaxLaneLength)
                 {
-                    Start = njB,
-                    End = njA,
-                    Length = stroke.Length
-                };
-                njA.EndingLanes.Add(nlBack);
-                njB.StartingLanes.Add(nlBack);
-                ncc.Lanes.Add(nlBack);
-                laneCount += 2;
+                    int segmentCount = (int)Single.Ceiling(stroke.Length / MaxLaneLength);
+                    for (int i = 1; i < segmentCount; i++)
+                    {
+                        float t = (float)i / segmentCount;
+                        Vector3 intermediatePos = Vector3.Lerp(njA.Position, njB.Position, t);
+
+                        NavJunction njIntermediate = new()
+                        {
+                            Position = intermediatePos,
+                            StartingLanes = new(),
+                            EndingLanes = new()
+                        };
+                        ncc.Junctions.Add(njIntermediate);
+                        laneJunctions.Insert(i, njIntermediate);
+                    }
+                }
+
+                // Create lanes connecting consecutive junctions
+                for (int i = 0; i < laneJunctions.Count - 1; i++)
+                {
+                    var njStart = laneJunctions[i];
+                    var njEnd = laneJunctions[i + 1];
+                    float segmentLength = Vector3.Distance(njStart.Position, njEnd.Position);
+
+                    NavLane nlForth = new()
+                    {
+                        Start = njStart,
+                        End = njEnd,
+                        Length = segmentLength
+                    };
+                    njStart.StartingLanes.Add(nlForth);
+                    njEnd.EndingLanes.Add(nlForth);
+                    ncc.Lanes.Add(nlForth);
+
+                    NavLane nlBack = new()
+                    {
+                        Start = njEnd,
+                        End = njStart,
+                        Length = segmentLength
+                    };
+                    njStart.EndingLanes.Add(nlBack);
+                    njEnd.StartingLanes.Add(nlBack);
+                    ncc.Lanes.Add(nlBack);
+                    laneCount += 2;
+                }
             }
             catch (Exception e)
             {
