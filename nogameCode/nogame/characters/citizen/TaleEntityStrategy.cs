@@ -276,6 +276,16 @@ public class TaleEntityStrategy : AOneOfStrategy
             // null route = straight-line fallback
         }
 
+        // Fallback: if route is null and destination is far away but unreachable,
+        // location is likely isolated (dead-end street or disconnected venue).
+        // Stay at current location instead of using straight-line fallback through buildings.
+        if (route == null && distToDestination > 10f)
+        {
+            Trace($"TALE ENTITY: NPC {_npcId} destination '{locationName}' unreachable (distance={distToDestination:F0}m but no path). Staying at current location instead.");
+            TriggerStrategy("activity");
+            return;
+        }
+
         // Set up go_to
         _goTo.Destination = destination;
         _goTo.CurrentPosition = _currentPosition;
