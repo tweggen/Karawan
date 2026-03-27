@@ -239,6 +239,14 @@ public class TaleEntityStrategy : AOneOfStrategy
             return;
         }
 
+        // Special case: Already at destination (within 2m) - do activity instead of travel
+        if (distToDestination < 2.0f)
+        {
+            Trace($"TALE ENTITY: NPC {_npcId} already at destination (distance={distToDestination:F2}m < 2m threshold), skipping travel and triggering activity");
+            TriggerStrategy("activity");
+            return;
+        }
+
         // Compute street route asynchronously before moving
         // NPC stays in current state while pathfinding runs (typically < 100ms)
         // If pathfinding returns null, GoToStrategyPart will use straight-line fallback

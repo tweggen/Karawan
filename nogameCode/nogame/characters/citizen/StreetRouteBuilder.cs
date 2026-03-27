@@ -48,10 +48,8 @@ public static class StreetRouteBuilder
 
             // Log route distance classification
             float routeDistance = Vector3.Distance(fromPos, toPos);
-            if (routeDistance < 1.0f)
-            {
-                Trace($"StreetRouteBuilder: SHORT ROUTE ({routeDistance:F2}m) from {fromPos} to {toPos}");
-            }
+            string routeClass = routeDistance < 1.0f ? "SHORT" : "LONG";
+            Trace($"StreetRouteBuilder: {routeClass} ROUTE ({routeDistance:F2}m) from {fromPos} to {toPos}");
 
             // Async cursor creation — await both in parallel with cancellation support
             var startCursorTask = topCluster.TryCreateCursor(fromPos);
@@ -64,19 +62,13 @@ public static class StreetRouteBuilder
 
             if (startCursor == NavCursor.Nil)
             {
-                if (routeDistance < 1.0f)
-                    Trace($"StreetRouteBuilder: SHORT ROUTE start cursor Nil for {fromPos}");
-                else
-                    Trace($"StreetRouteBuilder: LONG ROUTE start cursor Nil for {fromPos}");
+                Trace($"StreetRouteBuilder: {routeClass} ROUTE start cursor Nil (position {fromPos} not on NavMap)");
                 return null;
             }
 
             if (endCursor == NavCursor.Nil)
             {
-                if (routeDistance < 1.0f)
-                    Trace($"StreetRouteBuilder: SHORT ROUTE end cursor Nil for {toPos}");
-                else
-                    Trace($"StreetRouteBuilder: LONG ROUTE end cursor Nil for {toPos}");
+                Trace($"StreetRouteBuilder: {routeClass} ROUTE end cursor Nil (position {toPos} not on NavMap)");
                 return null;
             }
 
@@ -85,10 +77,7 @@ public static class StreetRouteBuilder
             var lanes = pathfinder.Pathfind();
             if (lanes == null || lanes.Count == 0)
             {
-                if (routeDistance < 1.0f)
-                    Trace($"StreetRouteBuilder: SHORT ROUTE no path found from {fromPos} to {toPos}");
-                else
-                    Trace($"StreetRouteBuilder: LONG ROUTE no path found from {fromPos} to {toPos}");
+                Trace($"StreetRouteBuilder: {routeClass} ROUTE no path found (start={fromPos}, end={toPos})");
                 return null;
             }
 
