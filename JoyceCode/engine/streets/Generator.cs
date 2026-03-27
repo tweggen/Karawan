@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using engine.world;
 using static engine.Logger;
@@ -24,6 +25,14 @@ namespace engine.streets
 
         private Vector2 _bl;
         private Vector2 _tr;
+
+        // Safeguard 1: Track created vs added StreetPoints
+        private HashSet<int> _createdStreetPointIds = new();
+        private HashSet<int> _orphanedStreetPointIds = new();
+        private Dictionary<int, string> _orphanedPointOrigins = new();  // ID -> creator info
+
+        // Safeguard 2: Track strokes with missing endpoints
+        private List<(int strokeId, int missingEndpointId, string missingEndpointCreator)> _strokesWithMissingEndpoints = new();
 
         public float minPointToCandPointDistance { get; set; } = 30f;
         public float minPointToCandStrokeDistance { get; set; } = 30f;
@@ -102,6 +111,92 @@ namespace engine.streets
         }
 
 
+        /// <summary>
+        /// Validate that all stroke endpoints exist in the stroke store.
+        /// Returns true if valid, false if endpoints are missing.
+        /// </summary>
+        private bool _validateStrokeEndpoints(in Stroke stroke)
+        {
+            // Check if both endpoints are in the store
+            bool aInStore = stroke.A.InStore;
+            bool bInStore = stroke.B.InStore;
+
+            if (!aInStore)
+            {
+                // Track the missing endpoint
+                int missingId = stroke.A.Id;
+                if (!_orphanedPointOrigins.ContainsKey(missingId))
+                {
+                    _orphanedPointOrigins[missingId] = stroke.A.Creator;
+                    _orphanedStreetPointIds.Add(missingId);
+                }
+                _strokesWithMissingEndpoints.Add((stroke.Sid, missingId, stroke.A.Creator));
+
+                if (_traceGenerator)
+                    trace($"Stroke {stroke.Sid} has missing endpoint A (ID {missingId}, creator: {stroke.A.Creator})");
+
+                return false;
+            }
+
+            if (!bInStore)
+            {
+                // Track the missing endpoint
+                int missingId = stroke.B.Id;
+                if (!_orphanedPointOrigins.ContainsKey(missingId))
+                {
+                    _orphanedPointOrigins[missingId] = stroke.B.Creator;
+                    _orphanedStreetPointIds.Add(missingId);
+                }
+                _strokesWithMissingEndpoints.Add((stroke.Sid, missingId, stroke.B.Creator));
+
+                if (_traceGenerator)
+                    trace($"Stroke {stroke.Sid} has missing endpoint B (ID {missingId}, creator: {stroke.B.Creator})");
+
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Report on any orphaned street points that were created but never added.
+        /// </summary>
+        private void _reportOrphanedPoints()
+        {
+            trace($"\n{'='} GENERATION SAFEGUARD REPORT ======================");
+            trace($"Total StreetPoints created: {_createdStreetPointIds.Count}");
+            trace($"Total strokes validated: {_strokesWithMissingEndpoints.Count}");
+
+            if (_orphanedStreetPointIds.Count == 0 && _strokesWithMissingEndpoints.Count == 0)
+            {
+                trace($"✅ No orphaned StreetPoints found - all created points were successfully added to store");
+                return;
+            }
+
+            if (_orphanedStreetPointIds.Count > 0)
+            {
+                trace($"⚠️  ORPHANED STREETPOINTS: {_orphanedStreetPointIds.Count} points created but never added to store:");
+                foreach (var orphanId in _orphanedStreetPointIds.OrderBy(id => id).Take(20))
+                {
+                    string creator = _orphanedPointOrigins.ContainsKey(orphanId) ? _orphanedPointOrigins[orphanId] : "unknown";
+                    trace($"  StreetPoint {orphanId} (creator: {creator})");
+                }
+                if (_orphanedStreetPointIds.Count > 20)
+                    trace($"  ... and {_orphanedStreetPointIds.Count - 20} more");
+            }
+
+            if (_strokesWithMissingEndpoints.Count > 0)
+            {
+                trace($"⚠️  STROKES WITH MISSING ENDPOINTS: {_strokesWithMissingEndpoints.Count} strokes reference non-existent endpoints:");
+                foreach (var (strokeId, missingId, creator) in _strokesWithMissingEndpoints.Take(20))
+                {
+                    trace($"  Stroke {strokeId} → missing endpoint {missingId} (creator: {creator})");
+                }
+                if (_strokesWithMissingEndpoints.Count > 20)
+                    trace($"  ... and {_strokesWithMissingEndpoints.Count - 20} more");
+            }
+        }
+
         /**
          * Iterate until the queue of strokes is empty again.
          */
@@ -115,12 +210,14 @@ namespace engine.streets
                 if (maxGenerations < _generationCounter)
                 {
                     Trace("Returning: max generations reached.");
+                    _reportOrphanedPoints();
                     return;
                 }
 
                 if (!_haveStrokesToDo())
                 {
                     Trace("Returning: no more streets to do.");
+                    _reportOrphanedPoints();
                     return;
                 }
 
@@ -394,6 +491,7 @@ namespace engine.streets
                          */
 
                         var intersectionStreetPoint = new StreetPoint() { ClusterId = _clusterDesc.Id };
+                        _createdStreetPointIds.Add(intersectionStreetPoint.Id);  // Track creation
                         var intersectingStroke = intersection.StrokeExists;
                         intersectionStreetPoint.SetPos( intersection.Pos );
                         intersectionStreetPoint.PushCreator("intersection");
@@ -532,7 +630,9 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                         // oldStrokeExists.weight = 6.0;
 
                         _strokeStore.AddStroke(newStrokeExists);
+                        _validateStrokeEndpoints(newStrokeExists);  // Validate endpoints
                         _strokeStore.AddStroke(oldStrokeExists);
+                        _validateStrokeEndpoints(oldStrokeExists);  // Validate endpoints
                         _generationCounter++;
 
                         /*
@@ -585,6 +685,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                  * pronably side streets.
                  */
                 _strokeStore.AddStroke(curr);
+                _validateStrokeEndpoints(curr);  // Validate endpoints
                 ++_generationCounter;
 
                 /*
@@ -651,6 +752,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                     if (doForward)
                     {
                         StreetPoint newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
+                        _createdStreetPointIds.Add(newB.Id);  // Track creation
                         var forward = Stroke.CreateByAngleFrom(
                             _clusterDesc,
                             curr.B,
@@ -667,6 +769,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
 
                     if (doRandomDirection) {
                         var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
+                        _createdStreetPointIds.Add(newB.Id);  // Track creation
                         var randStroke = Stroke.CreateByAngleFrom(
                             _clusterDesc,
                             curr.B,
@@ -699,6 +802,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
 
                     if( doRight ) {
                         var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
+                        _createdStreetPointIds.Add(newB.Id);  // Track creation
                         var right = Stroke.CreateByAngleFrom(
                             _clusterDesc,
                             curr.B,
@@ -714,6 +818,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                     }
                     if( doLeft ) {
                         var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
+                        _createdStreetPointIds.Add(newB.Id);  // Track creation
                         var left = Stroke.CreateByAngleFrom(
                             _clusterDesc,
                             curr.B,
@@ -762,6 +867,12 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
             _strokeStore = strokeStore;
             _clusterDesc = clusterDesc;
             _generationCounter = 0;
+
+            // Reset tracking structures
+            _createdStreetPointIds.Clear();
+            _orphanedStreetPointIds.Clear();
+            _orphanedPointOrigins.Clear();
+            _strokesWithMissingEndpoints.Clear();
         }
 
 

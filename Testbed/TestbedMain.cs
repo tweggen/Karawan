@@ -23,6 +23,7 @@ public class TestbedMain
     private static string _graphFile = "graph.json";
     private static string _targetsFile = "";
     private static bool _quiet;
+    private static bool _diagnoseStreets = false;
 
 
     private static string _determineResourcePath()
@@ -82,6 +83,8 @@ public class TestbedMain
                     _graphFile = args[++i]; break;
                 case "--targets" when i + 1 < args.Length:
                     _targetsFile = args[++i]; break;
+                case "--diagnose-streets":
+                    _diagnoseStreets = true; break;
                 case "--quiet":
                     _quiet = true; break;
                 default:
@@ -182,6 +185,21 @@ public class TestbedMain
             Log("Failed to generate cluster. Exiting.");
             e.Exit();
             Environment.Exit(1);
+        }
+
+        // If diagnose-streets flag is set, run diagnostics instead of simulation
+        if (_diagnoseStreets)
+        {
+            Log("\nRunning street generation diagnostics...");
+            e.TaskMainThread(() =>
+            {
+                var clusterList = I.Get<ClusterList>();
+                StreetGenerationDiagnostics.DiagnoseAllClusters();
+            }).Wait();
+
+            e.Exit();
+            Log("\nStreet diagnostics complete.");
+            Environment.Exit(0);
         }
 
         Log("\nExtracting spatial model...");
