@@ -25,6 +25,7 @@ public class TestbedMain
     private static bool _quiet;
     private static bool _diagnoseStreets = false;
     private static bool _validateStreets = false;
+    private static bool _testPathfinding = false;
 
 
     private static string _determineResourcePath()
@@ -88,6 +89,8 @@ public class TestbedMain
                     _diagnoseStreets = true; break;
                 case "--validate-streets":
                     _validateStreets = true; break;
+                case "--test-pathfinding":
+                    _testPathfinding = true; break;
                 case "--quiet":
                     _quiet = true; break;
                 default:
@@ -221,6 +224,25 @@ public class TestbedMain
 
             e.Exit();
             Log("\nStreet validation complete.");
+            Environment.Exit(0);
+        }
+
+        // If test-pathfinding flag is set, run pathfinding regression tests
+        if (_testPathfinding)
+        {
+            Log("\nRunning pathfinding regression tests...");
+            e.TaskMainThread(async () =>
+            {
+                var clusterList = I.Get<ClusterList>();
+                var clusters = clusterList.GetClusterList();
+                if (clusters.Count > 0)
+                {
+                    await PathfindingDiagnostics.TestPathfindingRoutes(clusters[0]);
+                }
+            }).Wait();
+
+            e.Exit();
+            Log("\nPathfinding tests complete.");
             Environment.Exit(0);
         }
 
