@@ -34,6 +34,11 @@ namespace engine.streets
         // Safeguard 2: Track strokes with missing endpoints
         private List<(int strokeId, int missingEndpointId, string missingEndpointCreator)> _strokesWithMissingEndpoints = new();
 
+        // Option B: Track new StreetPoints created for current stroke being processed
+        // If stroke fails validation, we'll mark these for cleanup
+        private List<int> _currentStrokeNewPoints = new();
+        private int _cleanedUpOrphanedPoints = 0;
+
         public float minPointToCandPointDistance { get; set; } = 30f;
         public float minPointToCandStrokeDistance { get; set; } = 30f;
         public float minPointToCandIntersectionDistance { get; set; } = 30f;
@@ -159,6 +164,71 @@ namespace engine.streets
         }
 
         /// <summary>
+        /// Option B: Mark current stroke's new points as candidates for cleanup if validation fails.
+        /// Call this BEFORE processing a stroke from the queue.
+        /// </summary>
+        /// <summary>
+        /// Option A: Quick validation of stroke endpoint before creating the StreetPoint.
+        /// Checks if endpoint position passes basic validity constraints (bounds, edge distance).
+        /// Returns true if endpoint appears valid, false if it would likely fail validation.
+        /// </summary>
+        private bool _willStrokeEndpointBeValid(in Stroke candidateStroke)
+        {
+            // Check if B endpoint (the new point) is in bounds
+            var b = candidateStroke.B.Pos;
+            if (b.X <= _bl.X || b.X >= _tr.X || b.Y <= _bl.Y || b.Y >= _tr.Y)
+            {
+                return false;  // Out of bounds
+            }
+
+            // Check if B is too close to cluster edges (would fail edge distance checks)
+            const float edgeBuffer = 15f;
+            float distToBoundary = MathF.Min(
+                MathF.Min(b.X - _bl.X, _tr.X - b.X),
+                MathF.Min(b.Y - _bl.Y, _tr.Y - b.Y)
+            );
+            if (distToBoundary < edgeBuffer)
+            {
+                return false;  // Too close to boundary
+            }
+
+            // Check if B is very close to A (minimum length constraint)
+            float lengthToB = Vector2.Distance(candidateStroke.A.Pos, b);
+            if (lengthToB < newStrokeMinimum * 0.8f)  // Conservative check
+            {
+                return false;  // Stroke too short
+            }
+
+            return true;  // Endpoint appears valid
+        }
+
+        private void _markNewPointsForStroke(in Stroke stroke)
+        {
+            _currentStrokeNewPoints.Clear();
+
+            // Mark endpoints that aren't in store yet (newly created)
+            if (!stroke.A.InStore)
+                _currentStrokeNewPoints.Add(stroke.A.Id);
+            if (!stroke.B.InStore)
+                _currentStrokeNewPoints.Add(stroke.B.Id);
+        }
+
+        /// <summary>
+        /// Option B: Clean up StreetPoints that were created for a stroke that failed validation.
+        /// Removes them from the created tracking set so they won't appear as orphaned.
+        /// </summary>
+        private void _cleanupFailedStrokePoints()
+        {
+            foreach (var pointId in _currentStrokeNewPoints)
+            {
+                // Remove from created set so it's not counted as orphaned later
+                _createdStreetPointIds.Remove(pointId);
+                _cleanedUpOrphanedPoints++;
+            }
+            _currentStrokeNewPoints.Clear();
+        }
+
+        /// <summary>
         /// Report on any orphaned street points that were created but never added.
         /// </summary>
         private void _reportOrphanedPoints()
@@ -170,13 +240,14 @@ namespace engine.streets
             var truelyOrphanedPoints = _createdStreetPointIds.Where(id => !actualStorePoints.Contains(id)).ToList();
 
             trace($"Total StreetPoints created during generation: {_createdStreetPointIds.Count}");
+            trace($"Total StreetPoints cleaned up (Option B): {_cleanedUpOrphanedPoints}");
             trace($"Total StreetPoints in final store: {actualStorePoints.Count}");
             trace($"⚠️  ORPHANED POINTS (created but not in final store): {truelyOrphanedPoints.Count}");
             trace($"Total strokes with endpoint issues: {_strokesWithMissingEndpoints.Count}");
 
             if (truelyOrphanedPoints.Count == 0 && _strokesWithMissingEndpoints.Count == 0)
             {
-                trace($"✅ No orphaned StreetPoints found - all created points were successfully added to store");
+                trace($"✅ No orphaned StreetPoints found - all created points successfully added or cleaned up");
                 return;
             }
 
@@ -230,6 +301,9 @@ namespace engine.streets
                 Stroke curr = _popStrokeToDo();
                 // trace( 'Generator: Starting new generation.' );
 
+                // Option B: Mark new points created for this stroke, in case validation fails
+                _markNewPointsForStroke(curr);
+
                 /*
                  * Check, wether this segment is valid.
                  */
@@ -243,6 +317,7 @@ namespace engine.streets
                     /*
                      * Out of range, so discard it.
                      */
+                    _cleanupFailedStrokePoints();  // Option B: Clean up points for failed stroke
                     continue;
                 }
 
@@ -282,6 +357,7 @@ namespace engine.streets
                         }
                         doAdd = false;
                         continueCheck = false;
+                        _cleanupFailedStrokePoints();  // Option B: Clean up points for failed stroke
                         continue;
                     }
 
@@ -683,6 +759,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
 
                 if( !doAdd ) {
                     // trace( 'Generator: Avoiding to add stroke.' );
+                    _cleanupFailedStrokePoints();  // Option B: Clean up points for any failed stroke
                     continue;
                 }
 
@@ -758,7 +835,6 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                     if (doForward)
                     {
                         StreetPoint newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        _createdStreetPointIds.Add(newB.Id);  // Track creation
                         var forward = Stroke.CreateByAngleFrom(
                             _clusterDesc,
                             curr.B,
@@ -768,14 +844,20 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                             curr.IsPrimary,
                             straightWeight
                         );
-                        forward.PushCreator("forward");
-                        newB.PushCreator("forward");
-                        _addStrokeToDo(forward);
+
+                        // Option A: Pre-validate endpoint before creating the point
+                        if (_willStrokeEndpointBeValid(forward))
+                        {
+                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
+                            forward.PushCreator("forward");
+                            newB.PushCreator("forward");
+                            _addStrokeToDo(forward);
+                        }
+                        // else: skip adding this stroke entirely - avoids creating orphan point
                     }
 
                     if (doRandomDirection) {
                         var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        _createdStreetPointIds.Add(newB.Id);  // Track creation
                         var randStroke = Stroke.CreateByAngleFrom(
                             _clusterDesc,
                             curr.B,
@@ -785,9 +867,16 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                             curr.IsPrimary,
                             straightWeight
                         );
-                        randStroke.PushCreator("randStroke");
-                        newB.PushCreator("randStroke");
-                        _addStrokeToDo(randStroke);
+
+                        // Option A: Pre-validate endpoint before creating the point
+                        if (_willStrokeEndpointBeValid(randStroke))
+                        {
+                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
+                            randStroke.PushCreator("randStroke");
+                            newB.PushCreator("randStroke");
+                            _addStrokeToDo(randStroke);
+                        }
+                        // else: skip adding this stroke entirely - avoids creating orphan point
                     }
                 }
 
@@ -808,7 +897,6 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
 
                     if( doRight ) {
                         var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        _createdStreetPointIds.Add(newB.Id);  // Track creation
                         var right = Stroke.CreateByAngleFrom(
                             _clusterDesc,
                             curr.B,
@@ -818,13 +906,19 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                             !curr.IsPrimary,
                             branchWeight
                         );
-                        right.PushCreator("right");
-                        newB.PushCreator("right");
-                        _addStrokeToDo(right);
+
+                        // Option A: Pre-validate endpoint before creating the point
+                        if (_willStrokeEndpointBeValid(right))
+                        {
+                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
+                            right.PushCreator("right");
+                            newB.PushCreator("right");
+                            _addStrokeToDo(right);
+                        }
+                        // else: skip adding this stroke entirely - avoids creating orphan point
                     }
                     if( doLeft ) {
                         var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        _createdStreetPointIds.Add(newB.Id);  // Track creation
                         var left = Stroke.CreateByAngleFrom(
                             _clusterDesc,
                             curr.B,
@@ -834,9 +928,16 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                             !curr.IsPrimary,
                             branchWeight
                         );
-                        left.PushCreator("left");
-                        newB.PushCreator("left");
-                        _addStrokeToDo(left);
+
+                        // Option A: Pre-validate endpoint before creating the point
+                        if (_willStrokeEndpointBeValid(left))
+                        {
+                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
+                            left.PushCreator("left");
+                            newB.PushCreator("left");
+                            _addStrokeToDo(left);
+                        }
+                        // else: skip adding this stroke entirely - avoids creating orphan point
                     }
                 }
             }
