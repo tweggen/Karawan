@@ -71,18 +71,23 @@ public class TaleEntityStrategy : AOneOfStrategy
         if (strategy == Strategies["travel"])
         {
             // Travel complete → start activity at destination
+            Trace($"TALE ENTITY: NPC {_npcId} travel complete, starting activity");
             _setupActivity();
             TriggerStrategy("activity");
         }
         else if (strategy == Strategies["activity"])
         {
             // Activity complete → advance to next storylet (unless in Tier 2)
+            Trace($"TALE ENTITY: NPC {_npcId} activity complete, advancing schedule");
             if (!_isTier2)
                 _advanceAndTravel();
+            else
+                Trace($"TALE ENTITY: NPC {_npcId} in Tier 2, not advancing");
         }
         else if (strategy == Strategies["flee"] || strategy == Strategies["recover"])
         {
             // After flee/recover → resume activity or travel
+            Trace($"TALE ENTITY: NPC {_npcId} flee/recover complete, resuming activity");
             TriggerStrategy("activity");
         }
     }
@@ -223,13 +228,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         Vector3 destLocPos = destLoc?.Position ?? Vector3.Zero;
         Vector3 destLocEntry = destLoc?.EntryPosition ?? Vector3.Zero;
 
-        Trace($"TALE ENTITY: NPC {_npcId} advanced to location '{locationName}' (type={destLocType}): " +
-              $"currentPos={_currentPosition.Position}, " +
-              $"destination={destination}, " +
-              $"destLocPos={destLocPos}, " +
-              $"destLocEntry={destLocEntry}, " +
-              $"distance={distToDestination:F2}m, " +
-              $"isInTransit={schedule.IsInTransit}");
+        Trace($"TALE ENTITY: NPC {_npcId} -> LocationId={schedule.CurrentLocationId} '{locationName}' (type={destLocType}, distance={distToDestination:F2}m)");
 
         // Special case: "current" location means stay in place and do activity, don't travel
         if (locationName == "current")
@@ -323,14 +322,17 @@ public class TaleEntityStrategy : AOneOfStrategy
         if (spatialModel != null)
         {
             var loc = spatialModel.GetLocation(schedule.CurrentLocationId);
-            if (loc != null && loc.Type != "street_segment")
+            if (loc != null)
             {
-                _stayAt.IsIndoorActivity = true;
-                Trace($"TALE ENTITY: NPC {_npcId} marked as indoor at location type '{loc.Type}'");
-            }
-            else if (loc != null)
-            {
-                Trace($"TALE ENTITY: NPC {_npcId} marked as OUTDOOR at location type '{loc.Type}'");
+                if (loc.Type != "street_segment")
+                {
+                    _stayAt.IsIndoorActivity = true;
+                    Trace($"TALE ENTITY: NPC {_npcId} marked as indoor at location type '{loc.Type}'");
+                }
+                else
+                {
+                    Trace($"TALE ENTITY: NPC {_npcId} marked as OUTDOOR at location type '{loc.Type}'");
+                }
             }
             else
             {
