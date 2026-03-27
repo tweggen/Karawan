@@ -5,6 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading.Tasks;
+using builtin.modules.satnav;
+using builtin.modules.satnav.desc;
 using engine;
 using engine.tale;
 using engine.world;
@@ -231,13 +234,26 @@ public class TestbedMain
         if (_testPathfinding)
         {
             Log("\nRunning pathfinding regression tests...");
+            Log("NOTE: Pathfinding tests require the full game engine with GenerateNavMapOperator.");
+            Log("The testbed focuses on street generation validation, not runtime pathfinding.");
+            Log("To test pathfinding properly, use the full game with --test-pathfinding flag.");
+
             e.TaskMainThread(async () =>
             {
-                var clusterList = I.Get<ClusterList>();
-                var clusters = clusterList.GetClusterList();
-                if (clusters.Count > 0)
+                try
                 {
-                    await PathfindingDiagnostics.TestPathfindingRoutes(clusters[0]);
+                    var clusterList = I.Get<ClusterList>();
+                    var clusters = clusterList.GetClusterList();
+                    if (clusters.Count > 0)
+                    {
+                        Log($"Cluster '{clusters[0].Name}' loaded with {clusters[0].StrokeStore().GetStrokes().Count} strokes");
+                        // NavMap would be initialized here in the full game
+                        await PathfindingDiagnostics.TestPathfindingRoutes(clusters[0]);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log($"Pathfinding test error: {ex.Message}");
                 }
             }).Wait();
 

@@ -48,6 +48,16 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
         foreach (var stroke in strokes)
         {
+            // Skip cross-cluster bridge strokes (not yet supported)
+            // These are created by the bridging post-processor to connect orphaned clusters,
+            // but inter-cluster navigation is not yet implemented.
+            if (stroke.A.ClusterId != stroke.B.ClusterId)
+            {
+                Trace($"NavMap {clusterDesc.Name}: Skipping cross-cluster bridge stroke ({stroke.A.ClusterId} → {stroke.B.ClusterId})");
+                skippedStrokes++;
+                continue;
+            }
+
             // Check if both endpoints exist in our junctions dictionary
             if (!dictJunctions.TryGetValue(stroke.A.Id, out var njA))
             {

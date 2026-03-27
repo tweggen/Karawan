@@ -56,7 +56,7 @@ public class NavCluster
     public async Task<NavCursor> TryCreateCursor(Vector3 v3Position)
     {
         NavClusterContent ncc = null;
-        
+
         lock (_lo)
         {
             if (!AABB.Contains(v3Position))
@@ -88,7 +88,16 @@ public class NavCluster
 
         if (ncc != null)
         {
-            return await ncc.TryCreateCursor(v3Position);
+            try
+            {
+                var cursorTask = ncc.TryCreateCursor(v3Position);
+                return await cursorTask;
+            }
+            catch (Exception e)
+            {
+                engine.Logger.Trace($"NavCluster: Exception creating cursor for {Id}: {e.Message}");
+                return NavCursor.Nil;
+            }
         }
 
         await _semCreate.WaitAsync();
@@ -124,7 +133,16 @@ public class NavCluster
 
         if (ncc != null)
         {
-            return await ncc.TryCreateCursor(v3Position);
+            try
+            {
+                var cursorTask = ncc.TryCreateCursor(v3Position);
+                return await cursorTask;
+            }
+            catch (Exception e)
+            {
+                engine.Logger.Trace($"NavCluster: Exception creating cursor for {Id}: {e.Message}");
+                return NavCursor.Nil;
+            }
         }
         else
         {

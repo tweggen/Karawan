@@ -87,9 +87,9 @@ public class NavClusterContent
     public async Task<NavCursor> TryCreateCursor(Vector3 v3Position)
     {
         List<NavCluster> matchingClusters = new();
-        
+
         /*
-         * Look, if we should forward this call to a child. 
+         * Look, if we should forward this call to a child.
          */
         foreach (var nc in Clusters)
         {
