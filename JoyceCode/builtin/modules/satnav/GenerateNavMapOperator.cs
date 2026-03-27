@@ -93,6 +93,31 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         }
         Trace($"NavMap cluster {clusterDesc.Name}: {dictJunctions.Count} junctions, {laneCount} lanes, {skippedStrokes}/{strokes.Count} strokes skipped");
 
+        // Connectivity check: how many junctions are reachable from junction 0?
+        if (ncc.Junctions.Count > 0)
+        {
+            var reachable = new HashSet<NavJunction>();
+            var queue = new Queue<NavJunction>();
+            queue.Enqueue(ncc.Junctions[0]);
+            reachable.Add(ncc.Junctions[0]);
+
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                foreach (var lane in current.StartingLanes ?? new())
+                {
+                    if (reachable.Add(lane.End))
+                        queue.Enqueue(lane.End);
+                }
+            }
+
+            Trace($"NavMap cluster {clusterDesc.Name}: {reachable.Count}/{ncc.Junctions.Count} junctions reachable from junction 0");
+            if (reachable.Count < ncc.Junctions.Count)
+            {
+                Trace($"  ⚠️ DISCONNECTED: {ncc.Junctions.Count - reachable.Count} junctions unreachable (isolated components)");
+            }
+        }
+
         return Task.FromResult(ncc);
     }
 
