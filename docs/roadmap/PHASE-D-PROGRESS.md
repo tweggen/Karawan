@@ -181,6 +181,32 @@ Phase D infrastructure is **foundation-complete** and **unblocked by Phase 7C Na
 
 ✅ Infrastructure: Complete, tested, committed
 ✅ NavMesh Routing: Fixed (Phase 7C), working, tested, committed
-✅ Street pathfinding: NPCs now walk on streets, not through buildings
+✅ Street Network Validation: All 70+ clusters have 100% lane/junction connectivity (2026-03-27)
 🔄 Multi-objective A*: Ready for implementation (LocalPathfinder cost multiplier integration)
 🔄 Behavioral Variety: Designed, ready for implementation
+
+---
+
+## Investigation Finding: Building Perimeter Issue (2026-03-27)
+
+**Observation**: NPCs were observed routing through building interiors in different directions.
+
+**Initial Hypothesis**: Orphaned street points causing isolated junctions (impossible to reach certain destinations).
+
+**Investigation Result**: ✅ Street network is fully connected. All clusters validated:
+- Reachable lanes: 100% (0 unreachable)
+- Reachable junctions: 100% (0 unreachable)
+- No orphaned points remaining
+
+**Root Cause Identified**: Buildings are not obstacles in pathfinding.
+- NavMesh A* uses Euclidean distance (straight-line path)
+- Buildings have no perimeter walls in the pathfinding graph
+- Shortest path often goes directly through building interior
+- No mechanism to prefer "go around building" over "through building"
+
+**Solution Required**: One of three approaches (design decision pending):
+- **Option A**: Add building perimeters as non-navigable obstacles
+- **Option B**: Define building entry/exit points; interior routing separate from street routing
+- **Option C**: Implement street-constrained pathfinding (A* only on street graph)
+
+See `memory/building_perimeter_pathfinding_issue.md` for detailed analysis.
