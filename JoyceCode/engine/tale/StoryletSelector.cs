@@ -55,6 +55,8 @@ public class StoryletSelector
 
         foreach (var def in pool)
         {
+            if (def == null)
+                continue;  // Skip null entries (defensive)
             if (!PassesPreconditions(def, npc, timeOfDay, desperation, morality))
                 continue;
             _candidates.Add(def);
@@ -110,19 +112,36 @@ public class StoryletSelector
 
     private static StoryletDefinition WeightedSelect(List<StoryletDefinition> candidates, Random rng)
     {
+        if (candidates == null || candidates.Count == 0)
+            return null;
+
         float totalWeight = 0f;
         for (int i = 0; i < candidates.Count; i++)
-            totalWeight += candidates[i].Weight;
+        {
+            if (candidates[i] != null)
+                totalWeight += candidates[i].Weight;
+        }
+
+        if (totalWeight <= 0f)
+            return null;
 
         float roll = (float)(rng.NextDouble() * totalWeight);
         float cumulative = 0f;
         for (int i = 0; i < candidates.Count; i++)
         {
+            if (candidates[i] == null)
+                continue;
             cumulative += candidates[i].Weight;
             if (roll < cumulative)
                 return candidates[i];
         }
-        return candidates[candidates.Count - 1];
+        // Return last non-null candidate
+        for (int i = candidates.Count - 1; i >= 0; i--)
+        {
+            if (candidates[i] != null)
+                return candidates[i];
+        }
+        return null;
     }
 
 
