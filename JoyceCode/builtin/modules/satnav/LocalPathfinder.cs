@@ -98,18 +98,30 @@ public class LocalPathfinder
         {
             return _listNodes.TakeFirst();
         }
-        
+
+        int nodesExplored = 0;
         while (true)
         {
             if (_listNodes.Count == 0)
             {
-                ErrorThrow<InvalidOperationException>($"No node found in A* list.");
+                ErrorThrow<InvalidOperationException>(
+                    $"No node found in A* list. Explored {nodesExplored} nodes. " +
+                    $"Start junction has {Start.Junction.StartingLanes?.Count ?? 0} starting lanes. " +
+                    $"Start pos={Start.Junction.Position}, Target pos={Target.Junction.Position}");
             }
-            
+
             Node n = _listNodes.TakeFirst();
             n.IsVisited = true;
+            nodesExplored++;
 
-            foreach (var nlChild in n.Junction.StartingLanes)
+            var startingLanes = n.Junction.StartingLanes;
+            if (startingLanes == null || startingLanes.Count == 0)
+            {
+                Trace($"LocalPathfinder: Junction at {n.Junction.Position} has no starting lanes (dead end)");
+                continue;  // Skip dead-end junctions
+            }
+
+            foreach (var nlChild in startingLanes)
             {
                 var njChild = nlChild.End;
                 Node nChild;
