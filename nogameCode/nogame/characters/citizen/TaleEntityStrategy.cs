@@ -231,6 +231,14 @@ public class TaleEntityStrategy : AOneOfStrategy
               $"distance={distToDestination:F2}m, " +
               $"isInTransit={schedule.IsInTransit}");
 
+        // Special case: "current" location means stay in place and do activity, don't travel
+        if (locationName == "current")
+        {
+            Trace($"TALE ENTITY: NPC {_npcId} location is 'current' (stay in place), skipping travel and triggering activity");
+            TriggerStrategy("activity");
+            return;
+        }
+
         // Compute street route asynchronously before moving
         // NPC stays in current state while pathfinding runs (typically < 100ms)
         // If pathfinding returns null, GoToStrategyPart will use straight-line fallback
