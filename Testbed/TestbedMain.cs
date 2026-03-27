@@ -24,6 +24,7 @@ public class TestbedMain
     private static string _targetsFile = "";
     private static bool _quiet;
     private static bool _diagnoseStreets = false;
+    private static bool _validateStreets = false;
 
 
     private static string _determineResourcePath()
@@ -85,6 +86,8 @@ public class TestbedMain
                     _targetsFile = args[++i]; break;
                 case "--diagnose-streets":
                     _diagnoseStreets = true; break;
+                case "--validate-streets":
+                    _validateStreets = true; break;
                 case "--quiet":
                     _quiet = true; break;
                 default:
@@ -199,6 +202,25 @@ public class TestbedMain
 
             e.Exit();
             Log("\nStreet diagnostics complete.");
+            Environment.Exit(0);
+        }
+
+        // If validate-streets flag is set, run street validation only
+        if (_validateStreets)
+        {
+            Log("\nValidating streets...");
+            e.TaskMainThread(() =>
+            {
+                var clusterList = I.Get<ClusterList>();
+                var clusters = clusterList.GetClusterList();
+                foreach (var cluster in clusters)
+                {
+                    StreetGenerationNavMapValidator.ValidateNavMapConnectivity(cluster);
+                }
+            }).Wait();
+
+            e.Exit();
+            Log("\nStreet validation complete.");
             Environment.Exit(0);
         }
 
