@@ -42,13 +42,28 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
             ncc.Junctions.Add(nj);
         }
 
-        foreach (var stroke in clusterDesc.StrokeStore().GetStrokes())
+        int laneCount = 0;
+        int skippedStrokes = 0;
+        var strokes = clusterDesc.StrokeStore().GetStrokes();
+
+        foreach (var stroke in strokes)
         {
+            // Check if both endpoints exist in our junctions dictionary
+            if (!dictJunctions.TryGetValue(stroke.A.Id, out var njA))
+            {
+                Trace($"NavMap {clusterDesc.Name}: Stroke missing start junction {stroke.A.Id}");
+                skippedStrokes++;
+                continue;
+            }
+            if (!dictJunctions.TryGetValue(stroke.B.Id, out var njB))
+            {
+                Trace($"NavMap {clusterDesc.Name}: Stroke missing end junction {stroke.B.Id}");
+                skippedStrokes++;
+                continue;
+            }
+
             try
             {
-                var njA = dictJunctions[stroke.A.Id];
-                var njB = dictJunctions[stroke.B.Id];
-
                 NavLane nlForth = new()
                 {
                     Start = njA,
@@ -68,12 +83,15 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 njA.EndingLanes.Add(nlBack);
                 njB.StartingLanes.Add(nlBack);
                 ncc.Lanes.Add(nlBack);
+                laneCount += 2;
             }
             catch (Exception e)
             {
-                Trace($"Exception adding navlane: {e}");
+                Trace($"Exception adding navlane in {clusterDesc.Name}: {e}");
+                skippedStrokes++;
             }
         }
+        Trace($"NavMap cluster {clusterDesc.Name}: {dictJunctions.Count} junctions, {laneCount} lanes, {skippedStrokes}/{strokes.Count} strokes skipped");
 
         return Task.FromResult(ncc);
     }

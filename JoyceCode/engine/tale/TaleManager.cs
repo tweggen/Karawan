@@ -508,8 +508,9 @@ public class TaleManager
         var spatialModel = _spatialModels.TryGetValue(npc.ClusterIndex, out var model) ? model : null;
         if (spatialModel != null)
         {
-            // Pick a random street location instead of always nearest
-            // This spreads NPCs across the street network instead of clustering at one spot
+            // CRITICAL: Only pick street locations from the SAME cluster as the NPC
+            // Street points are cluster-relative, so mixing clusters causes pathfinding to fail
+            // (NavCluster.TryCreateCursor checks AABB containment for both start and end positions)
             var streetLocations = spatialModel.Locations.FindAll(l => l.Type == "street_segment");
             if (streetLocations.Count > 0)
             {
