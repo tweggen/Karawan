@@ -104,10 +104,25 @@ public class LocalPathfinder
         {
             if (_listNodes.Count == 0)
             {
+                // Detailed analysis of why pathfinding failed
+                int visitedNodes = _dictNodes.Count(kvp => kvp.Value.IsVisited);
+                int unvisitedNodes = _dictNodes.Count(kvp => !kvp.Value.IsVisited);
+
+                var closestNode = _dictNodes.Values
+                    .Where(n => n.IsVisited)
+                    .OrderBy(n => n.EstimateToEnd)
+                    .FirstOrDefault();
+
+                string diagnosis = $"Disconnected networks: only reached {visitedNodes} junctions. " +
+                    (closestNode != null
+                        ? $"Closest reached: {closestNode.EstimateToEnd:F0}m from target"
+                        : "No junctions reached");
+
                 ErrorThrow<InvalidOperationException>(
                     $"No node found in A* list. Explored {nodesExplored} nodes. " +
                     $"Start junction has {Start.Junction.StartingLanes?.Count ?? 0} starting lanes. " +
-                    $"Start pos={Start.Junction.Position}, Target pos={Target.Junction.Position}");
+                    $"Start pos={Start.Junction.Position}, Target pos={Target.Junction.Position}. " +
+                    diagnosis);
             }
 
             Node n = _listNodes.TakeFirst();
