@@ -198,6 +198,9 @@ public class StreetGenerationDiagnostics
         // Stroke length analysis
         Trace($"\n{'='} STROKE LENGTH ANALYSIS =======================");
         AnalyzeStrokeLengths(strokes);
+
+        // NavMap connectivity validation (independent verification)
+        StreetGenerationNavMapValidator.ValidateNavMapConnectivity(clusterDesc);
     }
 
     /// <summary>
