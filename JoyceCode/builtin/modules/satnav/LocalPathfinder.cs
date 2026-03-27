@@ -94,8 +94,11 @@ public class LocalPathfinder
 
     private Node _pathFind()
     {
+        Trace($"LocalPathfinder: Starting A* from junction {Start.Junction.Position} to {Target.Junction.Position}");
+
         if (Start == Target || Start.Junction == Target.Junction || Start.Lane == Target.Lane)
         {
+            Trace($"LocalPathfinder: Start and target are the same, returning immediately");
             return _listNodes.TakeFirst();
         }
 
@@ -118,11 +121,13 @@ public class LocalPathfinder
                         ? $"Closest reached: {closestNode.EstimateToEnd:F0}m from target"
                         : "No junctions reached");
 
-                ErrorThrow<InvalidOperationException>(
-                    $"No node found in A* list. Explored {nodesExplored} nodes. " +
+                string failureMsg = $"No node found in A* list. Explored {nodesExplored} nodes. " +
                     $"Start junction has {Start.Junction.StartingLanes?.Count ?? 0} starting lanes. " +
                     $"Start pos={Start.Junction.Position}, Target pos={Target.Junction.Position}. " +
-                    diagnosis);
+                    diagnosis;
+
+                Trace($"LocalPathfinder: PATHFIND FAILURE: {failureMsg}");
+                ErrorThrow<InvalidOperationException>(failureMsg);
             }
 
             Node n = _listNodes.TakeFirst();
@@ -202,6 +207,7 @@ public class LocalPathfinder
 
                 if (njChild == Target.Junction)
                 {
+                    Trace($"LocalPathfinder: Found target junction after exploring {nodesExplored} nodes");
                     /*
                      * Maybe we reached the targvet junction but not the
                      * target lane yet.

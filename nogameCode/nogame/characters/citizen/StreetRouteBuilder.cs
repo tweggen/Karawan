@@ -52,6 +52,7 @@ public static class StreetRouteBuilder
             Trace($"StreetRouteBuilder: {routeClass} ROUTE ({routeDistance:F2}m) from {fromPos} to {toPos}");
 
             // Async cursor creation — await both in parallel with cancellation support
+            Trace($"StreetRouteBuilder: {routeClass} ROUTE creating cursors...");
             var startCursorTask = topCluster.TryCreateCursor(fromPos);
             var endCursorTask = topCluster.TryCreateCursor(toPos);
 
@@ -72,9 +73,13 @@ public static class StreetRouteBuilder
                 return null;
             }
 
+            Trace($"StreetRouteBuilder: {routeClass} ROUTE cursors created (start lane={startCursor.Lane.Start.Position}->{startCursor.Lane.End.Position}, end lane={endCursor.Lane.Start.Position}->{endCursor.Lane.End.Position})");
+
             // Pathfind between cursors with optional routing preferences
+            Trace($"StreetRouteBuilder: {routeClass} ROUTE pathfinding from start to end...");
             var pathfinder = new LocalPathfinder(startCursor, endCursor, preferences, transportType);
             var lanes = pathfinder.Pathfind();
+            Trace($"StreetRouteBuilder: {routeClass} ROUTE pathfind returned {lanes?.Count ?? 0} lanes");
             if (lanes == null || lanes.Count == 0)
             {
                 Trace($"StreetRouteBuilder: {routeClass} ROUTE no path found (start={fromPos}, end={toPos})");
