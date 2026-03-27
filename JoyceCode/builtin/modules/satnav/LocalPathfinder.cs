@@ -115,10 +115,32 @@ public class LocalPathfinder
             nodesExplored++;
 
             var startingLanes = n.Junction.StartingLanes;
+
+            // Handle dead-end junctions by allowing reverse traversal on the incoming lane
             if (startingLanes == null || startingLanes.Count == 0)
             {
-                Trace($"LocalPathfinder: Junction at {n.Junction.Position} has no starting lanes (dead end)");
-                continue;  // Skip dead-end junctions
+                if (n.LaneToMe != null && n.Parent != null)
+                {
+                    // We can reverse the lane we came from (dead-end street, can go back the way we came)
+                    Trace($"LocalPathfinder: Dead-end junction at {n.Junction.Position}, reversing incoming lane");
+                    var reverseTargetJunction = n.LaneToMe.Start;  // Go back to where we came from
+                    var costFromParent = _realDistance(n.Junction, reverseTargetJunction);
+                    var costNewFromStart = n.CostFromStart + costFromParent;
+
+                    Node nReverse;
+                    if (_dictNodes.TryGetValue(reverseTargetJunction, out nReverse))
+                    {
+                        if (!nReverse.IsVisited && costNewFromStart < nReverse.CostFromStart)
+                        {
+                            _listNodes.Remove(nReverse.TotalCost(), nReverse);
+                            nReverse.Parent = n;
+                            nReverse.LaneToMe = n.LaneToMe;  // Mark the reverse direction
+                            nReverse.CostFromStart = costNewFromStart;
+                            _listNodes.Add(nReverse.TotalCost(), nReverse);
+                        }
+                    }
+                }
+                continue;  // Move to next node in open list
             }
 
             foreach (var nlChild in startingLanes)
