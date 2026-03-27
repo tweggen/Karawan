@@ -283,7 +283,7 @@ namespace engine.streets
             var allPoints = _strokeStore.GetStreetPoints().ToList();
             if (allPoints.Count == 0) return;
 
-            // Find all connected components
+            // Find all connected components via BFS on stroke graph
             var components = _findConnectedComponents(allPoints);
             if (components.Count <= 1)
             {
@@ -291,7 +291,7 @@ namespace engine.streets
                 return;
             }
 
-            trace($"\n{'='} ORPHANED BUNDLE BRIDGING =======================");
+            trace($"\n= ORPHANED BUNDLE BRIDGING =======================");
             trace($"Found {components.Count} disconnected street bundles");
 
             // Get the largest component (main city)
@@ -423,14 +423,15 @@ namespace engine.streets
             {
                 // Long distance: create multi-stroke corridor
                 _createBridgeCorridor(bestOrphanPoint, bestMainPoint);
+                trace($"  Bridged (corridor) at distance {bridgeDistance:F1}m");
             }
             else
             {
                 // Short distance: single direct stroke
                 _createBridgeStroke(bestOrphanPoint, bestMainPoint);
+                trace($"  Bridged (direct) at distance {bridgeDistance:F1}m");
             }
 
-            trace($"  Bridged at distance {bridgeDistance:F1}m");
             return true;
         }
 
@@ -534,6 +535,7 @@ namespace engine.streets
                 {
                     Trace("Returning: max generations reached.");
                     _reportOrphanedPoints();
+                    _connectOrphanedBundles();  // Post-process: connect isolated clusters
                     return;
                 }
 
