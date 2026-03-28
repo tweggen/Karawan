@@ -80,10 +80,24 @@ public static class StreetRouteBuilder
             var pathfinder = new LocalPathfinder(startCursor, endCursor, preferences, transportType);
             var lanes = pathfinder.Pathfind();
             Trace($"StreetRouteBuilder: {routeClass} ROUTE pathfind returned {lanes?.Count ?? 0} lanes");
+
+            // If pathfinding returns 0 lanes, it may be because start and end snap to the same junction
+            // In this case, use the closest lanes from the cursors themselves
             if (lanes == null || lanes.Count == 0)
             {
-                Trace($"StreetRouteBuilder: {routeClass} ROUTE no path found (start={fromPos}, end={toPos})");
-                return null;
+                // Check if both cursors are on lanes (not at junctions)
+                if (startCursor.Lane != null && endCursor.Lane != null &&
+                    startCursor.Lane != endCursor.Lane)
+                {
+                    // Build a minimal route using the two closest lanes
+                    lanes = new List<NavLane> { startCursor.Lane, endCursor.Lane };
+                    Trace($"StreetRouteBuilder: {routeClass} ROUTE same junction detected, using closest lanes (start lane: {startCursor.Lane.Start.Position}->{startCursor.Lane.End.Position}, end lane: {endCursor.Lane.Start.Position}->{endCursor.Lane.End.Position})");
+                }
+                else
+                {
+                    Trace($"StreetRouteBuilder: {routeClass} ROUTE no path found (start={fromPos}, end={toPos})");
+                    return null;
+                }
             }
 
             // Convert lane path to SegmentRoute
