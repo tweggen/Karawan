@@ -390,9 +390,23 @@ public class StoryletLibrary
             }
         }
 
-        // Find fallbacks
+        // Find fallbacks - REQUIRED for safety
         _fallbackDay = _all.FirstOrDefault(s => s.Id == "wander");
         _fallbackNight = _all.FirstOrDefault(s => s.Id == "rest");
+
+        // Fatal error if fallbacks are missing
+        if (_fallbackDay == null || _fallbackNight == null)
+        {
+            var missing = new List<string>();
+            if (_fallbackDay == null) missing.Add("wander");
+            if (_fallbackNight == null) missing.Add("rest");
+
+            var loaded = string.Join(", ", _all.Select(s => s.Id).Take(20));
+            throw new InvalidOperationException(
+                $"FATAL: StoryletLibrary missing required fallback storylets: {string.Join(", ", missing)}. " +
+                $"Total loaded: {_all.Count}. " +
+                $"First 20 IDs: {loaded}");
+        }
     }
 
 
