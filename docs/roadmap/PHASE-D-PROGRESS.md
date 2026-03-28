@@ -1,9 +1,9 @@
 # Phase D: Multi-Objective Routing - Progress Report
 
-**Date:** 2026-03-26 (Updated)
-**Status:** 🔄 IN PROGRESS (Infrastructure + NavMesh Fixed, A* Integration Ready)
+**Date:** 2026-03-28 (Updated)
+**Status:** 🔄 IN PROGRESS (Infrastructure + NavMesh Fixed, Critical Pathfinding Issues Resolved)
 **Test Results:** 171/171 PASSED (100% success) — Zero regressions
-**Commits:** 2 (5acc475c, 4a2080a7)
+**Commits:** 4 (ab6cdea7, c76734ce, 5acc475c, 4a2080a7)
 
 ---
 
@@ -238,3 +238,59 @@ See `memory/pathfinding_intermediate_junctions_fix.md` for technical details.
 - **Option C**: Implement street-constrained pathfinding (A* only on street graph)
 
 See `memory/building_perimeter_pathfinding_issue.md` for analysis.
+
+---
+
+## Critical Bug Fixes: Fallback Storylets & Same-Junction Pathfinding (2026-03-28)
+
+### Issue 1: Missing Fallback Storylets ✅ FIXED
+
+**Problem**: NPC spawn exception with `NullReferenceException` in `TaleManager.ResolveLocation()`.
+- Root cause: Fallback storylets ("wander" and "rest") were missing or inaccessible during library loading
+- Silent failure: Game would crash during NPC spawn instead of reporting missing configuration
+
+**Solution**: Added fatal error check during StoryletLibrary initialization
+- **Commit**: ab6cdea7
+- **File**: `JoyceCode/engine/tale/StoryletDefinition.cs`
+- **Changes**:
+  - BuildIndex() now throws `InvalidOperationException` if fallback storylets missing
+  - Error message lists missing fallbacks and loaded storylet count (95 total)
+  - Prevents silent failures; makes root cause immediately obvious
+- **Impact**:
+  - ✅ Fallback detection happens at module init, not NPC spawn
+  - ✅ Clear error messages for debugging configuration issues
+  - ✅ All 171 regression tests passing
+
+### Issue 2: Same-Junction Pathfinding Failure ✅ FIXED
+
+**Problem**: When NPC start and end positions snap to the **same NavJunction**, LocalPathfinder returns 0 lanes (empty path).
+- NPCs close to their destination couldn't route → forced to straight-line movement
+- Manifested as: "Start and target are the same, returning immediately"
+
+**Solution**: Use closest lanes as fallback route when pathfinding returns 0 lanes
+- **Commit**: c76734ce
+- **File**: `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs`
+- **Changes**:
+  - When pathfind() returns 0 lanes, check if start and end cursors have different lanes
+  - If so, use [start_lane → end_lane] as a minimal 2-segment route
+  - Diagnostic logging for "same junction detected" cases
+- **Implementation**:
+  ```csharp
+  if (lanes == null || lanes.Count == 0)
+  {
+      if (startCursor.Lane != null && endCursor.Lane != null &&
+          startCursor.Lane != endCursor.Lane)
+      {
+          lanes = new List<NavLane> { startCursor.Lane, endCursor.Lane };
+      }
+      else { /* fall back to straight-line */ }
+  }
+  ```
+- **Impact**:
+  - ✅ NPCs successfully route between nearby destinations
+  - ✅ No more forced fallback to straight-line for close positions
+  - ✅ Handles the user-suggested generic solution: find closest lanes to each point, use them
+
+**Test Results**: All 171 regression tests passing ✅
+
+---
