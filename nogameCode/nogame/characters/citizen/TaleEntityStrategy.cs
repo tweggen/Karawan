@@ -356,7 +356,7 @@ public class TaleEntityStrategy : AOneOfStrategy
     /// Called when an NPC materializes mid-transit. Starts in travel state
     /// heading to TransitToLocationId instead of entering activity first.
     /// </summary>
-    public void SpawnInTravel()
+    public async void SpawnInTravel()
     {
         var schedule = _taleManager.GetSchedule(_npcId);
         if (schedule == null || !schedule.IsInTransit)
@@ -374,10 +374,41 @@ public class TaleEntityStrategy : AOneOfStrategy
         }
 
         Vector3 dest = destLoc.EntryPosition != Vector3.Zero ? destLoc.EntryPosition : destLoc.Position;
+        float distToDestination = Vector3.Distance(_currentPosition.Position, dest);
+
+        // Compute route using the same pathfinding as _advanceAndTravel
+        SegmentRoute route = null;
+        try
+        {
+            var routeGen = I.Get<engine.tale.IRouteGenerator>();
+            if (routeGen != null)
+            {
+                route = await routeGen.GetRouteAsync(_currentPosition.Position, dest, _currentPosition,
+                    _routingPreferences, schedule.PreferredTransportationType);
+                if (route != null)
+                    Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel got route ({route.Segments.Count} segments)");
+                else
+                    Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel route returned null");
+            }
+        }
+        catch (Exception e)
+        {
+            Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel route exception: {e.Message}");
+        }
+
+        // If no route and far away, stay in place rather than walking through buildings
+        if (route == null && distToDestination > 10f)
+        {
+            Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel destination unreachable (distance={distToDestination:F0}m, no path). Staying.");
+            _setupActivity();
+            TriggerStrategy("activity");
+            return;
+        }
+
         _goTo.Destination = dest;
         _goTo.CurrentPosition = _currentPosition;
-        Trace($"TALE ENTITY: NPC {_npcId} spawning in travel to {dest} (from {_currentPosition.Position})");
-        // No precomputed route — NPC will walk straight to destination
+        _goTo.PrecomputedRoute = route;
+        Trace($"TALE ENTITY: NPC {_npcId} spawning in travel to {dest} (from {_currentPosition.Position}, route={route?.Segments.Count ?? 0} segments)");
         TriggerStrategy("travel");
     }
 
