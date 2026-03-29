@@ -462,7 +462,8 @@ public class TaleManager
 
     private int ResolveLocation(NpcSchedule npc, StoryletDefinition storylet)
     {
-        int resolved = storylet.ResolveLocationType() switch
+        var locType = storylet.ResolveLocationType();
+        int resolved = locType switch
         {
             StoryletLocationType.Home => npc.HomeLocationId,
             StoryletLocationType.Workplace => npc.WorkplaceLocationId,
@@ -474,8 +475,22 @@ public class TaleManager
 
         if (resolved < 0)
         {
+            Warning($"TALE MGR: ResolveLocation fallback for npc={npc.NpcId} role={npc.Role} " +
+                    $"storylet={storylet.Id} locType={locType}: resolved={resolved}, using currentLoc={npc.CurrentLocationId}.");
             resolved = npc.CurrentLocationId;
         }
+
+        // Check if resolved location is a street_segment
+        if (_spatialModels.TryGetValue(npc.ClusterIndex, out var sm) && sm != null)
+        {
+            var loc = sm.GetLocation(resolved);
+            if (loc != null && loc.Type == "street_segment")
+            {
+                Warning($"TALE MGR: NPC {npc.NpcId} role={npc.Role} resolved to street_segment " +
+                        $"for locType={locType} storylet={storylet.Id} (locId={resolved}).");
+            }
+        }
+
         return resolved;
     }
 
@@ -483,7 +498,11 @@ public class TaleManager
     private int ResolveSocialVenue(NpcSchedule npc)
     {
         if (npc.SocialVenueIds == null || npc.SocialVenueIds.Count == 0)
+        {
+            Warning($"TALE MGR: ResolveSocialVenue fallback for npc={npc.NpcId} role={npc.Role}: " +
+                    $"no social venues assigned, using home={npc.HomeLocationId}.");
             return npc.HomeLocationId;
+        }
         int idx = npc.ScheduleStep % npc.SocialVenueIds.Count;
         return npc.SocialVenueIds[idx];
     }
@@ -496,9 +515,17 @@ public class TaleManager
         {
             int eatId = spatialModel.FindNearestOfType(npc.CurrentLocationId, "social_venue", "Eat");
             if (eatId >= 0) return eatId;
+            Warning($"TALE MGR: ResolveEatVenue fallback for npc={npc.NpcId} role={npc.Role}: " +
+                    $"no 'Eat' venue found near loc={npc.CurrentLocationId}.");
         }
         if (npc.SocialVenueIds != null && npc.SocialVenueIds.Count > 0)
+        {
+            Warning($"TALE MGR: ResolveEatVenue using first social venue={npc.SocialVenueIds[0]} " +
+                    $"for npc={npc.NpcId}.");
             return npc.SocialVenueIds[0];
+        }
+        Warning($"TALE MGR: ResolveEatVenue final fallback for npc={npc.NpcId} role={npc.Role}: " +
+                $"no venues at all, using home={npc.HomeLocationId}.");
         return npc.HomeLocationId;
     }
 

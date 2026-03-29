@@ -167,31 +167,6 @@ public class SpatialModel
 
                     if (!hasShop)
                     {
-                        // Ensure cached buildings have tags assigned
-                        // (buildings from cache may not have gone through QuarterGenerator._createBuildings())
-                        if (!building.Tags.Contains("residential") &&
-                            !building.Tags.Contains("office") &&
-                            !building.Tags.Contains("warehouse"))
-                        {
-                            // Assign tags based on location attributes if missing
-                            float livingIntensity = cluster.GetAttributeIntensity(
-                                building.GetCenter() + cluster.Pos,
-                                ClusterDesc.LocationAttributes.Living);
-                            float downstairsIntensity = cluster.GetAttributeIntensity(
-                                building.GetCenter() + cluster.Pos,
-                                ClusterDesc.LocationAttributes.Downtown);
-                            float industrialIntensity = cluster.GetAttributeIntensity(
-                                building.GetCenter() + cluster.Pos,
-                                ClusterDesc.LocationAttributes.Industrial);
-
-                            if (industrialIntensity > 0.4f)
-                                building.Tags.Add("warehouse");
-                            else if (downstairsIntensity > 0.5f && livingIntensity < 0.7f)
-                                building.Tags.Add("office");
-                            else
-                                building.Tags.Add("residential");
-                        }
-
                         // Determine location type from building role tags
                         string type = "home";  // default
                         if (building.Tags.Contains("residential"))

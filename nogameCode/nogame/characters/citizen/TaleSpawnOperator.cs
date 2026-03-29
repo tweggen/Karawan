@@ -46,6 +46,16 @@ public class TaleSpawnOperator : ISpawnOperator
     public Type BehaviorType => typeof(IdleBehavior);
 
 
+    private void _ensureClusterPopulated(ClusterDesc clusterDesc)
+    {
+        if (clusterDesc == null) return;
+        if (_taleManager.IsClusterPopulated(clusterDesc.Index)) return;
+
+        var spatialModel = SpatialModel.ExtractFrom(clusterDesc);
+        _taleManager.PopulateCluster(clusterDesc, spatialModel);
+    }
+
+
     private void _findSpawnStatus_nl(in Index3 idxFragment, out SpawnStatus spawnStatus)
     {
         if (!_mapFragmentStatus.TryGetValue(idxFragment, out spawnStatus))
@@ -54,18 +64,14 @@ public class TaleSpawnOperator : ISpawnOperator
             _mapFragmentStatus[idxFragment] = spawnStatus;
         }
 
-        // Always refresh NPC count — cluster population may arrive after the
-        // fragment first becomes visible (ClusterCompletedEvent race).
+        // Ensure cluster is populated on-demand (avoids race with ClusterCompletedEvent)
+        var cd = _clusterHeatMap.GetClusterDesc(idxFragment);
+        _ensureClusterPopulated(cd);
+
         var npcsInFragment = _taleManager.GetNpcsInFragment(idxFragment);
         int npcCount = npcsInFragment.Count;
         spawnStatus.MinCharacters = (ushort)npcCount;
         spawnStatus.MaxCharacters = (ushort)npcCount;
-
-        if (npcCount > 0)
-        {
-            //Trace($"TALE SPAWN: Fragment {idxFragment} has {npcCount} NPCs, " +
-            //s      $"inCreation={spawnStatus.InCreation}, isDying={spawnStatus.IsDying}");
-        }
     }
 
 
