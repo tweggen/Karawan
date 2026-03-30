@@ -93,7 +93,7 @@ public class SpatialModel
     }
 
 
-    public static SpatialModel ExtractFrom(ClusterDesc cluster)
+    public static SpatialModel ExtractFrom(ClusterDesc cluster, builtin.modules.satnav.desc.NavCluster navCluster = null)
     {
         var model = new SpatialModel();
         int locationId = 0;
@@ -224,19 +224,71 @@ public class SpatialModel
             var pos = sp.Pos3 + cluster.Pos;
             pos.Y = streetHeight;
 
+            // Try to find a point on a pedestrian NavLane near this street point
+            Vector3 entryPos = pos;  // Fallback: use street point itself
+            if (navCluster?.Content?.Lanes != null && navCluster.Content.Lanes.Count > 0)
+            {
+                // Find closest pedestrian lane to this street point
+                float minDist = float.MaxValue;
+                builtin.modules.satnav.desc.NavLane closestLane = null;
+                Vector3 closestLanePoint = pos;
+
+                foreach (var lane in navCluster.Content.Lanes)
+                {
+                    // Only consider pedestrian-accessible lanes
+                    if (!lane.AllowedTypes.HasFlag(engine.navigation.TransportationType.Pedestrian))
+                        continue;
+
+                    // Find closest point on this lane
+                    var laneStart = lane.Start.Position;
+                    var laneEnd = lane.End.Position;
+                    var laneVec = laneEnd - laneStart;
+                    float laneLen2 = Vector3.Dot(laneVec, laneVec);
+
+                    float t = 0f;
+                    if (laneLen2 > 0.0001f)
+                    {
+                        t = Vector3.Dot(pos - laneStart, laneVec) / laneLen2;
+                        t = Math.Clamp(t, 0f, 1f);
+                    }
+
+                    var lanePoint = laneStart + t * laneVec;
+                    float dist = Vector3.Distance(pos, lanePoint);
+
+                    if (dist < minDist)
+                    {
+                        minDist = dist;
+                        closestLane = lane;
+                        closestLanePoint = lanePoint;
+                    }
+                }
+
+                if (closestLane != null && minDist < 50f)  // Use lane point if within 50m
+                {
+                    entryPos = closestLanePoint;
+                    Trace($"Street location {locId}: pos={pos}, entryPos={entryPos} (on NavLane, dist={minDist:F1}m)");
+                }
+                else
+                {
+                    Trace($"Street location {locId}: pos={pos}, entryPos={pos} (no nearby pedestrian lane, dist to closest={minDist:F1}m)");
+                }
+            }
+            else
+            {
+                Trace($"Street location {locId}: pos={pos}, entryPos={pos} (no NavCluster available)");
+            }
+
             model.Locations.Add(new Location
             {
                 Id = locId,
                 Type = "street_segment",
                 Position = pos,
-                EntryPosition = pos,
+                EntryPosition = entryPos,
                 Capacity = 0,
                 ShopType = null,
                 QuarterIndex = -1,
                 EstateIndex = -1
             });
-            
-            Trace($"Street location {locId}: pos={pos}, entryPos={pos}");
         }
         
         var strokes = strokeStore.GetStrokes();

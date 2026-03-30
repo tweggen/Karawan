@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine.geom;
+using engine.navigation;
+using static engine.Logger;
 
 namespace builtin.modules.satnav.desc;
 
@@ -84,7 +87,7 @@ public class NavClusterContent
     }
     
 
-    public async Task<NavCursor> TryCreateCursor(Vector3 v3Position)
+    public async Task<NavCursor> TryCreateCursor(Vector3 v3Position, TransportationType transportType = TransportationType.Pedestrian)
     {
         List<NavCluster> matchingClusters = new();
 
@@ -103,7 +106,7 @@ public class NavClusterContent
         {
             foreach (var ncl in matchingClusters)
             {
-                var tCursor = await ncl.TryCreateCursor(v3Position);
+                var tCursor = await ncl.TryCreateCursor(v3Position, transportType);
                 if (!tCursor.IsNil())
                 {
                     return tCursor;
@@ -112,7 +115,7 @@ public class NavClusterContent
         }
 
         List<NavLane> tmpMatchList = new();
-        
+
         /*
          * TXWTODO: Workaround to look close to the plane we cover here.
          */
@@ -136,9 +139,20 @@ public class NavClusterContent
             return NavCursor.Nil;
         }
 
+        // Filter to only lanes this transport type can use
+        var typedCandidates = tmpMatchList
+            .Where(l => l.AllowedTypes.HasFlag(transportType))
+            .ToList();
+
+        if (typedCandidates.Count == 0)
+        {
+            Trace($"TryCreateCursor: No {transportType} lanes near {v3Position}, falling back to any lane");
+            typedCandidates = tmpMatchList;
+        }
+
         float distClosest = Single.MaxValue;
         NavLane? nlClosest = null;
-        foreach (var nl in tmpMatchList)
+        foreach (var nl in typedCandidates)
         {
             float dist = engine.geom.Line.Distance(nl.Start.Position, nl.End.Position, v3Position);
             if (dist < distClosest)
@@ -159,7 +173,7 @@ public class NavClusterContent
         float dist2End = (nlClosest.End.Position - v3Position).LengthSquared();
 
         njClosest = (dist2Start <= dist2End) ? nlClosest.Start : nlClosest.End;
-        
+
         return new NavCursor(Cluster)
         {
             Lane = nlClosest,

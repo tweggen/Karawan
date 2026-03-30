@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using engine.geom;
+using engine.navigation;
 using static engine.Logger;
 
 namespace builtin.modules.satnav.desc;
@@ -53,7 +54,7 @@ public class NavCluster
     public List<NavJunction> ProxyJunctions = new();
 
 
-    public async Task<NavCursor> TryCreateCursor(Vector3 v3Position)
+    public async Task<NavCursor> TryCreateCursor(Vector3 v3Position, TransportationType transportType = TransportationType.Pedestrian)
     {
         NavClusterContent ncc = null;
 
@@ -90,7 +91,7 @@ public class NavCluster
         {
             try
             {
-                var cursorTask = ncc.TryCreateCursor(v3Position);
+                var cursorTask = ncc.TryCreateCursor(v3Position, transportType);
                 return await cursorTask;
             }
             catch (Exception e)
@@ -135,7 +136,7 @@ public class NavCluster
         {
             try
             {
-                var cursorTask = ncc.TryCreateCursor(v3Position);
+                var cursorTask = ncc.TryCreateCursor(v3Position, transportType);
                 return await cursorTask;
             }
             catch (Exception e)

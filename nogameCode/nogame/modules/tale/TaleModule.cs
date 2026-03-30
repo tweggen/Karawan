@@ -68,21 +68,31 @@ public class TaleModule : AModule
             return;
         }
 
-        // Extract spatial model for location assignment
-        var spatialModel = SpatialModel.ExtractFrom(clusterDesc);
-
-        // Validate that all location entry points are reachable via NavMap (Phase 1 stuck NPC fix)
+        // Find NavCluster for this cluster (if NavMap available)
+        builtin.modules.satnav.desc.NavCluster navClusterForCluster = null;
         try
         {
             var navMap = I.Get<NavMap>();
             if (navMap?.TopCluster?.Content != null)
             {
-                // Find the NavCluster for this cluster in the TopCluster's sub-clusters
-                var navClusterForCluster = navMap.TopCluster.Content.Clusters.FirstOrDefault(nc => nc.Id == clusterDesc.IdString);
-                if (navClusterForCluster != null)
-                {
-                    spatialModel.ValidateReachability(navClusterForCluster, clusterDesc);
-                }
+                navClusterForCluster = navMap.TopCluster.Content.Clusters.FirstOrDefault(nc => nc.Id == clusterDesc.IdString);
+            }
+        }
+        catch (Exception e)
+        {
+            Trace($"TALE: Failed to find NavCluster: {e.Message}");
+        }
+
+        // Extract spatial model for location assignment
+        // Pass NavCluster so street_segment NPCs get positioned on pedestrian NavLanes
+        var spatialModel = SpatialModel.ExtractFrom(clusterDesc, navClusterForCluster);
+
+        // Validate that all location entry points are reachable via NavMap (Phase 1 stuck NPC fix)
+        try
+        {
+            if (navClusterForCluster != null)
+            {
+                spatialModel.ValidateReachability(navClusterForCluster, clusterDesc);
             }
         }
         catch (Exception e)
@@ -329,12 +339,18 @@ public class TaleModule : AModule
             Subscribe(ClusterCompletedEvent.EVENT_TYPE, _onClusterCompleted);
 
             // Catch up on clusters that completed before we subscribed
+            var navMap = I.Get<NavMap>();
             foreach (var cd in _clusterList.GetClusterList())
             {
                 if (cd.IsCompleted)
                 {
                     Trace($"TALE: Catching up on already-completed cluster '{cd.Name}'.");
-                    var spatialModel = SpatialModel.ExtractFrom(cd);
+                    builtin.modules.satnav.desc.NavCluster navClusterForCluster = null;
+                    if (navMap?.TopCluster?.Content != null)
+                    {
+                        navClusterForCluster = navMap.TopCluster.Content.Clusters.FirstOrDefault(nc => nc.Id == cd.IdString);
+                    }
+                    var spatialModel = SpatialModel.ExtractFrom(cd, navClusterForCluster);
                     _taleManager.PopulateCluster(cd, spatialModel);
                 }
             }

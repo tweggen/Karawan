@@ -165,9 +165,13 @@ public class LocalPathfinder
 
             foreach (var nlChild in startingLanes)
             {
+                // Skip lanes not accessible to this transport type
+                if (!nlChild.AllowedTypes.HasFlag(_transportType))
+                    continue;
+
                 var njChild = nlChild.End;
                 Node nChild;
-                
+
                 var costFromParent = _realDistance(n.Junction, njChild);
                 var costNewFromStart = n.CostFromStart + costFromParent;
                 

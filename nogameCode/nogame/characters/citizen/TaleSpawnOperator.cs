@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using engine;
 using engine.behave;
 using engine.joyce;
 using engine.tale;
 using engine.world;
+using builtin.modules.satnav.desc;
 using static engine.Logger;
 
 namespace nogame.characters.citizen;
@@ -51,7 +53,22 @@ public class TaleSpawnOperator : ISpawnOperator
         if (clusterDesc == null) return;
         if (_taleManager.IsClusterPopulated(clusterDesc.Index)) return;
 
-        var spatialModel = SpatialModel.ExtractFrom(clusterDesc);
+        // Get NavCluster if available for proper street_segment positioning
+        builtin.modules.satnav.desc.NavCluster navClusterForCluster = null;
+        try
+        {
+            var navMap = I.Get<NavMap>();
+            if (navMap?.TopCluster?.Content != null)
+            {
+                navClusterForCluster = navMap.TopCluster.Content.Clusters.FirstOrDefault(nc => nc.Id == clusterDesc.IdString);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Trace($"TALE: Failed to find NavCluster for spawn operator: {e.Message}");
+        }
+
+        var spatialModel = SpatialModel.ExtractFrom(clusterDesc, navClusterForCluster);
         _taleManager.PopulateCluster(clusterDesc, spatialModel);
     }
 

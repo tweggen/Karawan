@@ -53,8 +53,8 @@ public static class StreetRouteBuilder
 
             // Async cursor creation — await both in parallel with cancellation support
             Trace($"StreetRouteBuilder: {routeClass} ROUTE creating cursors...");
-            var startCursorTask = topCluster.TryCreateCursor(fromPos);
-            var endCursorTask = topCluster.TryCreateCursor(toPos);
+            var startCursorTask = topCluster.TryCreateCursor(fromPos, transportType);
+            var endCursorTask = topCluster.TryCreateCursor(toPos, transportType);
 
             var startCursor = await startCursorTask.ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
