@@ -75,9 +75,10 @@ public class TaleModule : AModule
         try
         {
             var navMap = I.Get<NavMap>();
-            if (navMap?.TopCluster != null)
+            if (navMap?.TopCluster?.Content != null)
             {
-                var navClusterForCluster = navMap.TopCluster.SubClusters.FirstOrDefault(nc => nc.Id == clusterDesc.IdString);
+                // Find the NavCluster for this cluster in the TopCluster's sub-clusters
+                var navClusterForCluster = navMap.TopCluster.Content.Clusters.FirstOrDefault(nc => nc.Id == clusterDesc.IdString);
                 if (navClusterForCluster != null)
                 {
                     spatialModel.ValidateReachability(navClusterForCluster, clusterDesc);
