@@ -42,7 +42,7 @@ public class TaleEntityStrategy : AOneOfStrategy
     /// Seconds of real time per game day. Used to convert game-time
     /// storylet durations to real-time StayAt durations.
     /// </summary>
-    public float RealSecondsPerGameDay { get; set; } = 30f * 60f;
+    public float RealSecondsPerGameDay { get; set; } = 60f * 60f;
 
     /// <summary>
     /// Get current routing preferences for this NPC.
