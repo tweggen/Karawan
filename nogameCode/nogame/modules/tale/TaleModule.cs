@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using builtin;
@@ -69,6 +70,25 @@ public class TaleModule : AModule
 
         // Extract spatial model for location assignment
         var spatialModel = SpatialModel.ExtractFrom(clusterDesc);
+
+        // Validate that all location entry points are reachable via NavMap (Phase 1 stuck NPC fix)
+        try
+        {
+            var navMap = I.Get<NavMap>();
+            if (navMap?.TopCluster != null)
+            {
+                var navClusterForCluster = navMap.TopCluster.SubClusters.FirstOrDefault(nc => nc.Id == clusterDesc.IdString);
+                if (navClusterForCluster != null)
+                {
+                    spatialModel.ValidateReachability(navClusterForCluster, clusterDesc);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Trace($"TALE: Reachability validation failed: {e.Message}");
+        }
+
         _taleManager.PopulateCluster(clusterDesc, spatialModel);
 
         Trace($"TALE: Populated cluster '{ev.Code}' (index {clusterDesc.Index}). " +

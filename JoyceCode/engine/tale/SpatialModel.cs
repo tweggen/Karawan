@@ -304,4 +304,70 @@ public class SpatialModel
         entry.Y = streetHeight;
         return entry;
     }
+
+
+    /// <summary>
+    /// Validate that all location entry points are reachable via the NavMap.
+    /// Logs warnings for unreachable locations (entry point has no nearby NavJunctions).
+    /// This helps identify stuck NPC issues early.
+    /// </summary>
+    public void ValidateReachability(builtin.modules.satnav.desc.NavCluster navCluster, ClusterDesc clusterDesc)
+    {
+        if (navCluster == null)
+        {
+            Trace($"⚠️ ValidateReachability: NavCluster null for cluster '{clusterDesc.Name}', skipping validation");
+            return;
+        }
+
+        const float ReachabilityRadius = 10f; // Search radius for nearby NavJunctions
+
+        int unreachableCount = 0;
+        foreach (var loc in Locations)
+        {
+            if (loc.EntryPosition == Vector3.Zero)
+            {
+                Trace($"⚠️ UNREACHABLE_LOCATION: Cluster '{clusterDesc.Name}' Location {loc.Id} ({loc.Type}) has zero entry point");
+                unreachableCount++;
+                continue;
+            }
+
+            // Find NavJunctions near this entry point
+            bool hasNearbyJunction = _hasNearbyNavJunction(navCluster, loc.EntryPosition, ReachabilityRadius);
+
+            if (!hasNearbyJunction)
+            {
+                Trace($"⚠️ UNREACHABLE_LOCATION: Cluster '{clusterDesc.Name}' Location {loc.Id} ({loc.Type}) " +
+                     $"entry point {loc.EntryPosition} has no NavJunctions within {ReachabilityRadius}m. " +
+                     $"NPCs may become stuck trying to reach this location.");
+                unreachableCount++;
+            }
+        }
+
+        if (unreachableCount > 0)
+        {
+            Trace($"⚠️ ValidateReachability: {unreachableCount}/{Locations.Count} locations unreachable in cluster '{clusterDesc.Name}'");
+        }
+        else
+        {
+            Trace($"✓ ValidateReachability: All {Locations.Count} locations reachable in cluster '{clusterDesc.Name}'");
+        }
+    }
+
+
+    /// <summary>
+    /// Check if there's a NavJunction within radius of the given position.
+    /// </summary>
+    private static bool _hasNearbyNavJunction(builtin.modules.satnav.desc.NavCluster navCluster, Vector3 position, float radius)
+    {
+        if (navCluster?.Content?.Junctions == null)
+            return true; // Assume reachable if NavCluster not loaded
+
+        foreach (var junction in navCluster.Content.Junctions)
+        {
+            if (Vector3.Distance(position, junction.Position) <= radius)
+                return true;
+        }
+
+        return false;
+    }
 }
