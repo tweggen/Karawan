@@ -7,6 +7,7 @@ using builtin.modules.satnav.desc;
 using DefaultEcs;
 using engine;
 using engine.navigation;
+using engine.streets;
 using engine.world;
 using static engine.Logger;
 
@@ -173,6 +174,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
         // Track which StreetPoint each sidewalk junction belongs to (for crossing generation).
         Dictionary<int, List<NavJunction>> junctionsByStreetPoint = new();
+        Dictionary<int, StreetPoint> streetPointById = new();
 
         foreach (var quarter in clusterDesc.QuarterStore().GetQuarters())
         {
@@ -213,6 +215,9 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 {
                     list.Add(nj);
                 }
+
+                // Store the StreetPoint for later access (idempotent write to dict)
+                streetPointById[spId] = delim.StreetPoint;
             }
 
             // Create sidewalk lanes along each quarter edge (wrapping last→first)
@@ -227,17 +232,57 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         }
 
         /*
-         * === Pedestrian Crossing Lanes (connect sidewalks across streets) ===
+         * === Pedestrian Crossing Lanes ===
+         * Create one crossing per arm at each junction:
+         *   - Skip 2-arm junctions (straight roads, no crossing needed)
+         *   - For 1-arm (dead-end): connect all sidewalk corners across the tip
+         *   - For 3+ arms: one perpendicular crossing per arm, using the two
+         *     section points that flank the arm (from StreetPoint.GetSectionPointByStroke)
          */
         foreach (var (spId, junctions) in junctionsByStreetPoint)
         {
-            for (int i = 0; i < junctions.Count; i++)
+            var sp = streetPointById[spId];
+            var arms = sp.GetAngleArray();
+            int n = arms.Count;
+
+            if (n == 0) continue;
+
+            // Req 1: skip 2-arm (straight road), no crossing
+            if (n == 2) continue;
+
+            // 1-arm dead-end: just connect all sidewalk corners (usually 2)
+            if (n == 1)
             {
-                for (int j = i + 1; j < junctions.Count; j++)
-                {
-                    crossingLaneCount += _createBidirectionalLanes(
-                        junctions[i], junctions[j], TransportationType.Pedestrian, ncc);
-                }
+                for (int i = 0; i < junctions.Count; i++)
+                    for (int j = i + 1; j < junctions.Count; j++)
+                        crossingLaneCount += _createBidirectionalLanes(
+                            junctions[i], junctions[j], TransportationType.Pedestrian, ncc);
+                continue;
+            }
+
+            // 3+ arms: one perpendicular crossing per arm
+            for (int i = 0; i < n; i++)
+            {
+                var curr = arms[i];
+                var prev = arms[(i - 1 + n) % n];
+                var next = arms[(i + 1) % n];
+
+                // Section points flanking this arm
+                var ptA = sp.GetSectionPointByStroke(curr, prev);   // right side of arm
+                var ptB = sp.GetSectionPointByStroke(next, curr);   // left side of arm
+
+                if (ptA == null || ptB == null) continue;
+
+                // Look up the pre-built NavJunctions via the position-keyed dictionary
+                var keyA = ((int)(ptA.Value.X * 10), (int)(ptA.Value.Y * 10));
+                var keyB = ((int)(ptB.Value.X * 10), (int)(ptB.Value.Y * 10));
+
+                if (!sidewalkJunctions.TryGetValue(keyA, out var njA)) continue;
+                if (!sidewalkJunctions.TryGetValue(keyB, out var njB)) continue;
+                if (njA == njB) continue;  // degenerate (collinear arms)
+
+                crossingLaneCount += _createBidirectionalLanes(
+                    njA, njB, TransportationType.Pedestrian, ncc);
             }
         }
 
