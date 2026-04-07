@@ -145,16 +145,22 @@ Phase 6 (Population Management):
 
 ## Development Workflow
 
-### Local Development (Rapid Iteration)
+### RECOMMENDED: Local Development (Rapid Iteration)
 ```bash
-# Quick sanity check
+# Quick sanity check during development
 ./run_tests.sh smoke
 # → 1 minute
 
-# Before commit
+# BEFORE COMMITTING (pre-commit hook / manual)
+./run_tests.sh smoke
+# → 1 minute — catches 95% of issues with rapid feedback
+
+# After commit, before pushing to shared branch
 ./run_tests.sh standard
 # → 5 minutes
 ```
+
+**Note:** Smoke tests are recommended as the **standard pre-commit validation**. This workflow is documented in `PROCESS.md`.
 
 ### Pre-Push Validation
 ```bash

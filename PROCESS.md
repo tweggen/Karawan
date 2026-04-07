@@ -91,10 +91,25 @@ After implementation completes:
 
 ### 4. Testing Phase
 
-- **Regression Tests**: `./run_tests.sh all` — Must pass before commit
-- **Affected Phase**: `./run_tests.sh phaseN` — Verify no regressions
-- **Recalibration** (if parameter changes): `./run_recalibration_tests.sh phaseN`
-- **Document results** if metrics change
+**Pre-Commit (Quick Validation)**:
+- **Smoke Tests**: `./run_tests.sh smoke` (~1 minute) — Run before committing locally
+  - 10 critical tests validating core initialization and state machines
+  - Catches most catastrophic failures with rapid feedback
+
+**Before Pushing to Shared Branch**:
+- **Standard Regression**: `./run_tests.sh standard` or `./run_tests.sh all` (~5 minutes)
+  - All 171 tests with 60-day simulations
+  - Full functional validation, must pass before pushing
+- **Affected Phase** (optional): `./run_tests.sh phaseN` — Quick focus on changed system
+
+**Before Merge/Release**:
+- **Full Regression**: `./run_tests.sh full` (~15-20 minutes)
+  - All 171 tests with 120-day simulations
+  - Deeper behavior coverage, recommended pre-merge
+- **Recalibration** (if parameter changes): `./run_recalibration_tests.sh phaseN` (~30 min-2 hours)
+  - Long-term equilibrium validation for parameter tuning
+
+See `docs/TESTING_TIERS_PROPOSAL.md` for full multi-tier testing strategy.
 
 ### 5. Commit & Cleanup
 
@@ -227,8 +242,9 @@ Before committing changes, verify:
 - [ ] `docs/tale/TEST_DOCUMENTATION_STRATEGY.md` updated (if applicable)
 - [ ] Other affected documentation updated (search for references)
 - [ ] Plan file moved from proposed/ to done/ (if applicable)
-- [ ] All regression tests passing: `./run_tests.sh all`
-- [ ] Affected phase tests passing: `./run_tests.sh phaseN`
+- [ ] Smoke tests passing: `./run_tests.sh smoke` (~1 min)
+- [ ] Standard regression tests passing: `./run_tests.sh all` (~5 min)
+- [ ] Affected phase tests passing: `./run_tests.sh phaseN` (optional)
 - [ ] No debug code, console logs, or commented-out code
 - [ ] No unnecessary files created
 - [ ] `git status` shows only expected changes
