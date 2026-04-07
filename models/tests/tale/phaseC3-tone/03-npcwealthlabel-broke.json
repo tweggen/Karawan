@@ -1,0 +1,10 @@
+{
+  "name": "func.npcWealthLabel() returns 'broke' for wealth < 0.15",
+  "description": "Merchant NPC with wealth 0.1: func.npcWealthLabel() evaluates to 'broke' in dialogue text",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } },
+    { "code": "dialogue_started", "count": { "min": 1 } }
+  ]
+}

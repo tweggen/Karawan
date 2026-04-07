@@ -1,0 +1,10 @@
+{
+  "name": "Role fallback - worker role-specific script",
+  "description": "Worker NPC at generic storylet falls back to tale.role.worker script, speaks worker-typical line",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } },
+    { "code": "dialogue_started", "count": { "min": 1 } }
+  ]
+}

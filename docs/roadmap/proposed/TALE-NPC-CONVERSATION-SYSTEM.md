@@ -83,6 +83,42 @@ Player presses E near TALE NPC
 | `models/tale/*.json` | C2 | Add `conversation_script` to relevant storylets |
 | `nogameCode/nogame/modules/tale/TaleNarrationBindings.cs` | C3/C4 | Add mood functions, trust logic, memory event handler |
 
+## Test Cases
+
+Comprehensive test suite defined in `models/tests/tale/phaseC*/` and documented in `docs/tale/TALE_TEST_SCRIPTS_PHASE_C.md`.
+
+### Phase C1: Infrastructure & Generic Dialogue (8 tests)
+- Behavior attachment to outdoor NPCs
+- Generic dialogue property branching (hunger, anger, fatigue, default)
+- Role-specific fallback (worker, merchant)
+- Indoor NPC exclusion
+
+### Phase C2: Storylet-Specific Dialogue (6 tests)
+- ConversationScript field override
+- Tag-based fallback (routine, eating)
+- Precedence order (script > tag > role)
+- Wealth-gated branches (lunch_break example)
+
+### Phase C3: Property-Reactive Tone (6 tests)
+- func.npcMood() descriptor evaluation
+- func.npcWealthLabel() label rendering
+- func.npcRole() speaker interpolation
+- Text interpolation with {func.*} placeholders
+
+### Phase C4: Trust, Memory & Quest Hooks (9 tests)
+- First conversation trust initialization
+- Trust increment per conversation (+0.02)
+- Trust-gated dialogue branches (< 0.65 vs > 0.65)
+- met_player flag persistence
+- tale.npc.remember memory event
+- quest.trigger from dialogue
+- Conversation cooldown (30s)
+- Multi-NPC independent trust accumulation
+
+**Total: 29 test cases across 4 phases**
+
+---
+
 ## Future Phases (not in this plan)
 
 - **C5 — Ambient NPC-NPC Dialogue**: Overheard lines emitted during TALE encounters; spatial audio/floating text; no player interaction required.

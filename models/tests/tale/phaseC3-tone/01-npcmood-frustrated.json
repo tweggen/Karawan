@@ -1,0 +1,10 @@
+{
+  "name": "func.npcMood() returns 'frustrated' for anger > 0.7",
+  "description": "NPC with anger > 0.7 and lower other properties: func.npcMood() evaluates to 'frustrated' in script text",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } },
+    { "code": "dialogue_started", "count": { "min": 1 } }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Generic dialogue - hunger branch (> 0.7)",
+  "description": "NPC with hunger > 0.7 triggers generic dialogue script that selects hungry branch, speaks food-related line",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } },
+    { "code": "dialogue_started", "count": { "min": 1 } }
+  ]
+}

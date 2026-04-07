@@ -1,0 +1,10 @@
+{
+  "name": "Trust > 0.65 gates dialogue to trusted branch",
+  "description": "Authority NPC with trust > 0.65: dialogue uses 'trusted' branch ('Between you and me...'), not acquaintance",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } },
+    { "code": "dialogue_started", "count": { "min": 1 } }
+  ]
+}

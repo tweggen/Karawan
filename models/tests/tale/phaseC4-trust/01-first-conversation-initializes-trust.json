@@ -1,0 +1,10 @@
+{
+  "name": "First conversation initializes player-NPC trust",
+  "description": "First conversation with NPC sets schedule.Trust[-1] = 0.5 (default initial), npc.met_player injected as 'true'",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } },
+    { "code": "dialogue_started", "count": { "min": 1 } }
+  ]
+}

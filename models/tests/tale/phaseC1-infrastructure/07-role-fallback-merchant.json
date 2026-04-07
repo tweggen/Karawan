@@ -1,0 +1,10 @@
+{
+  "name": "Role fallback - merchant role-specific script",
+  "description": "Merchant NPC at generic storylet falls back to tale.role.merchant script, speaks business-focused line",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } },
+    { "code": "dialogue_started", "count": { "min": 1 } }
+  ]
+}

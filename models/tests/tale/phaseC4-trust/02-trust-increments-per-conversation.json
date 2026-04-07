@@ -1,0 +1,10 @@
+{
+  "name": "Trust increments by +0.02 after each conversation",
+  "description": "Multiple conversations with same NPC: trust increases from 0.5 → 0.52 → 0.54 → ... (capped at 1.0)",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } },
+    { "code": "dialogue_started", "count": { "min": 3 } }
+  ]
+}

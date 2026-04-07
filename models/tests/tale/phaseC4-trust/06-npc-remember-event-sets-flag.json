@@ -1,0 +1,10 @@
+{
+  "name": "tale.npc.remember event sets memory fact on NPC",
+  "description": "Dialogue script fires { \"type\": \"tale.npc.remember\", \"fact\": \"gave_quest_hint\" }, persists in schedule.Properties[\"player_fact.gave_quest_hint\"]",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } },
+    { "code": "dialogue_started", "count": { "min": 1 } }
+  ]
+}

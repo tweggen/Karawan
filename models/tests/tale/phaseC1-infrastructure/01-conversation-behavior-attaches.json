@@ -1,0 +1,9 @@
+{
+  "name": "TaleConversationBehavior attaches to outdoor NPCs",
+  "description": "Outdoor NPC in activity phase has Behavior component set to TaleConversationBehavior; E-prompt visible at 12m",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } }
+  ]
+}

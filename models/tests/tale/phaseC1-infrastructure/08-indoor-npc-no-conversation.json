@@ -1,0 +1,9 @@
+{
+  "name": "Indoor NPCs excluded from conversation",
+  "description": "NPC with IsIndoorActivity=true at StayAtStrategyPart does not have TaleConversationBehavior attached, no E-prompt visible",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Speaker label with {func.npcRole()} interpolation",
+  "description": "Dialogue speaker field '{func.npcRole()}' renders as actual role name (e.g., 'merchant', 'worker') in conversation UI",
+  "globalTimeout": 60,
+  "expected": [
+    { "code": "npc_created", "count": 11 },
+    { "code": "node_arrival", "count": { "min": 10 } },
+    { "code": "dialogue_started", "count": { "min": 1 } }
+  ]
+}
