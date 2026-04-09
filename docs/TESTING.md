@@ -12,7 +12,7 @@ This separation allows rapid feedback during development while maintaining compr
 
 **Purpose**: Quick functional validation of core systems
 **Simulation Duration**: 60 days (fast feedback)
-**Run Time**: ~5 minutes for all 177 tests
+**Run Time**: ~5 minutes for all 183 tests
 **When to Run**: After code changes, CI/CD pipeline
 
 ### Usage
@@ -31,6 +31,7 @@ This separation allows rapid feedback during development while maintaining compr
 ./run_tests.sh phase6           # Population Management
 ./run_tests.sh phaseC1          # Conversation Infrastructure
 ./run_tests.sh phaseC2          # Storylet-Specific Dialogue
+./run_tests.sh phaseC3          # Mood/Tone Branches
 
 # Run specific test
 ./run_tests.sh 01-initialization.json
@@ -49,8 +50,9 @@ This separation allows rapid feedback during development while maintaining compr
 | 6 | Population Management | 49 | Generation, deviance, persistence | 60 days |
 | C1 | Conversation Infrastructure | 8 | Behavior attachment, generic/role/tag fallback, indoor NPCs | 60 days |
 | C2 | Storylet-Specific Dialogue | 6 | Explicit override, tag fallback, precedence, wealth gating | 60 days |
+| C3 | Mood/Tone Branches | 6 | NPC mood functions, wealth labels, tone-aware dialogue | 60 days |
 
-**Total**: 177 regression tests
+**Total**: 183 regression tests
 
 ## Recalibration Tests (`run_recalibration_tests.sh`)
 

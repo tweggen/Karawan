@@ -314,5 +314,33 @@ public static class NarrationBindings
 
             return "";
         });
+
+        // Phase C3: NPC mood/state helper functions
+        manager.RegisterFunction("npcMood", (args) =>
+        {
+            var anger   = (float)(object)Props.Get("npc.anger",   0.5f);
+            var hunger  = (float)(object)Props.Get("npc.hunger",  0.5f);
+            var fatigue = (float)(object)Props.Get("npc.fatigue", 0.5f);
+            var wealth  = (float)(object)Props.Get("npc.wealth",  0.5f);
+
+            if (anger > 0.7f)                          return "frustrated";
+            if (hunger > 0.7f || wealth < 0.2f)        return "desperate";
+            if (fatigue > 0.7f)                        return "tired";
+            return "neutral";
+        });
+
+        manager.RegisterFunction("npcWealthLabel", (args) =>
+        {
+            var wealth = (float)(object)Props.Get("npc.wealth", 0.5f);
+            if (wealth < 0.15f) return "broke";
+            if (wealth < 0.35f) return "struggling";
+            if (wealth <= 0.65f) return "comfortable";
+            return "wealthy";
+        });
+
+        manager.RegisterFunction("npcRole", (args) =>
+        {
+            return Props.Get("npc.role", "unknown")?.ToString() ?? "unknown";
+        });
     }
 }

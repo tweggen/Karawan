@@ -4,6 +4,48 @@
     "entry": {
       "flow": [
         {
+          "goto": [
+            { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
+            { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
+            { "if": "func.npcMood() == 'tired'", "goto": "tired" },
+            { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "frustrated": {
+      "flow": [
+        {
+          "texts": [
+            "This job is killing me.",
+            "Can't catch a break today."
+          ]
+        }
+      ]
+    },
+    "desperate": {
+      "flow": [
+        {
+          "texts": [
+            "Times are tough. Really tough.",
+            "Not sure how much longer I can keep this up."
+          ]
+        }
+      ]
+    },
+    "tired": {
+      "flow": [
+        {
+          "texts": [
+            "Running on empty.",
+            "Need a real day off."
+          ]
+        }
+      ]
+    },
+    "default": {
+      "flow": [
+        {
           "texts": [
             "Just trying to get through the day.",
             "Work's been steady, I guess.",

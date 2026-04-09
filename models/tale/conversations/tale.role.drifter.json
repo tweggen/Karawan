@@ -4,10 +4,52 @@
     "entry": {
       "flow": [
         {
+          "goto": [
+            { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
+            { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
+            { "if": "func.npcMood() == 'tired'", "goto": "tired" },
+            { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "frustrated": {
+      "flow": [
+        {
+          "texts": [
+            "Everything's against me.",
+            "Can't get a lucky break."
+          ]
+        }
+      ]
+    },
+    "desperate": {
+      "flow": [
+        {
+          "texts": [
+            "I'm {func.npcWealthLabel()} right now, and it's not getting better.",
+            "Survival mode. Every day."
+          ]
+        }
+      ]
+    },
+    "tired": {
+      "flow": [
+        {
+          "texts": [
+            "Exhausted. Always exhausted.",
+            "Don't know how much longer I can do this."
+          ]
+        }
+      ]
+    },
+    "default": {
+      "flow": [
+        {
           "texts": [
             "Taking it day by day.",
             "No complaints. Well, some.",
-            "Just keeping my head above water."
+            "Just keeping my head above water. Feeling {func.npcMood()} today, if I'm honest."
           ]
         }
       ]

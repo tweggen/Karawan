@@ -4,6 +4,48 @@
     "entry": {
       "flow": [
         {
+          "goto": [
+            { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
+            { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
+            { "if": "func.npcMood() == 'tired'", "goto": "tired" },
+            { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "frustrated": {
+      "flow": [
+        {
+          "texts": [
+            "This market is impossible.",
+            "Everyone's trying to squeeze me."
+          ]
+        }
+      ]
+    },
+    "desperate": {
+      "flow": [
+        {
+          "texts": [
+            "I can't keep the shelves stocked. Money's too tight.",
+            "Business has been rough. Really rough."
+          ]
+        }
+      ]
+    },
+    "tired": {
+      "flow": [
+        {
+          "texts": [
+            "Long days lately.",
+            "Need to close early today."
+          ]
+        }
+      ]
+    },
+    "default": {
+      "flow": [
+        {
           "texts": [
             "Business is business.",
             "Things are moving, slowly.",

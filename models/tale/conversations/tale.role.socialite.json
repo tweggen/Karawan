@@ -4,6 +4,48 @@
     "entry": {
       "flow": [
         {
+          "goto": [
+            { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
+            { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
+            { "if": "func.npcMood() == 'tired'", "goto": "tired" },
+            { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "frustrated": {
+      "flow": [
+        {
+          "texts": [
+            "People are getting on my nerves.",
+            "Even the party scene feels exhausting today."
+          ]
+        }
+      ]
+    },
+    "desperate": {
+      "flow": [
+        {
+          "texts": [
+            "The lifestyle's catching up with me.",
+            "Can't afford the scene anymore."
+          ]
+        }
+      ]
+    },
+    "tired": {
+      "flow": [
+        {
+          "texts": [
+            "Too many late nights.",
+            "I need sleep. Or a vacation."
+          ]
+        }
+      ]
+    },
+    "default": {
+      "flow": [
+        {
           "texts": [
             "Always something happening.",
             "Life's too short to be bored.",

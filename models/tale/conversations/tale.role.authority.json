@@ -2,6 +2,49 @@
   "start": "entry",
   "nodes": {
     "entry": {
+      "speaker": "The {func.npcRole()}",
+      "flow": [
+        {
+          "goto": [
+            { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
+            { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
+            { "if": "func.npcMood() == 'tired'", "goto": "tired" },
+            { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "frustrated": {
+      "flow": [
+        {
+          "texts": [
+            "Listen. I don't have time for this.",
+            "Clear the area. Now."
+          ]
+        }
+      ]
+    },
+    "desperate": {
+      "flow": [
+        {
+          "texts": [
+            "Budget's been slashed again.",
+            "Barely holding things together."
+          ]
+        }
+      ]
+    },
+    "tired": {
+      "flow": [
+        {
+          "texts": [
+            "Long shift.",
+            "Don't make it longer."
+          ]
+        }
+      ]
+    },
+    "default": {
       "flow": [
         {
           "texts": [
