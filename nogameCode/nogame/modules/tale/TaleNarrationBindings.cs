@@ -103,13 +103,12 @@ public static class TaleNarrationBindings
     }
 
     /// <summary>
-    /// Resolve conversation script using 4-level fallback:
-    /// 1. tale.{storyletId} (auto-named by id)
-    /// 2. First matching tale.tag.{tag} (from storylet tags)
-    /// 3. tale.role.{role} (role-specific fallback)
-    /// 4. tale.generic (unconditional catch-all)
-    ///
-    /// Note: Phase C2 will add level 0 (explicit ConversationScript field)
+    /// Resolve conversation script using 5-level fallback:
+    /// 1. storylet.ConversationScript (explicit override)
+    /// 2. tale.{storyletId} (auto-named by id)
+    /// 3. First matching tale.tag.{tag} (from storylet tags)
+    /// 4. tale.role.{role} (role-specific fallback)
+    /// 5. tale.generic (unconditional catch-all)
     /// </summary>
     public static string ResolveScript(StoryletDefinition storylet, string role)
     {
@@ -119,7 +118,14 @@ public static class TaleNarrationBindings
             return "tale.generic";
         }
 
-        // Level 1: Auto-named by storylet ID
+        // Level 1: Explicit conversation script override
+        if (!string.IsNullOrEmpty(storylet.ConversationScript))
+        {
+            Trace($"TALE NARRATION BINDINGS: Resolved script via explicit override: {storylet.ConversationScript}");
+            return storylet.ConversationScript;
+        }
+
+        // Level 2: Auto-named by storylet ID
         string idScript = $"tale.{storylet.Id}";
         if (ScriptExists(idScript))
         {
@@ -127,7 +133,7 @@ public static class TaleNarrationBindings
             return idScript;
         }
 
-        // Level 2: First matching tag
+        // Level 3: First matching tag
         if (storylet.Tags != null && storylet.Tags.Length > 0)
         {
             foreach (var tag in storylet.Tags)
@@ -141,7 +147,7 @@ public static class TaleNarrationBindings
             }
         }
 
-        // Level 3: Role fallback
+        // Level 4: Role fallback
         if (!string.IsNullOrEmpty(role))
         {
             string roleScript = $"tale.role.{role}";
@@ -152,7 +158,7 @@ public static class TaleNarrationBindings
             }
         }
 
-        // Level 4: Generic catch-all
+        // Level 5: Generic catch-all
         Trace("TALE NARRATION BINDINGS: Resolved script via generic fallback");
         return "tale.generic";
     }

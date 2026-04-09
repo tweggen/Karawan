@@ -84,6 +84,9 @@ public class StoryletDefinition
     public List<ConditionalBranch>? PostconditionsIf;
     public int InterruptPriority = 1;   // 1=routine, 5+=escalation trigger, 10=max
 
+    // Phase C2: Storylet-specific conversation script override
+    public string? ConversationScript { get; set; }
+
     public float GetDuration(Random rng)
     {
         if (Math.Abs(DurationMinutesMax - DurationMinutesMin) < 0.1f)
@@ -297,6 +300,10 @@ public class StoryletLibrary
         // Phase 5: Interrupt priority
         if (elem.TryGetProperty("interrupt_priority", out var ip))
             def.InterruptPriority = ip.GetInt32();
+
+        // Phase C2: Explicit conversation script override
+        if (elem.TryGetProperty("conversation_script", out var cs))
+            def.ConversationScript = cs.GetString();
 
         return def;
     }

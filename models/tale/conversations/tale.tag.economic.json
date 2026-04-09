@@ -1,0 +1,17 @@
+{
+  "start": "entry",
+  "nodes": {
+    "entry": {
+      "flow": [
+        {
+          "texts": [
+            "Work's been good.",
+            "Making a living.",
+            "Trying to get by.",
+            "Business is business."
+          ]
+        }
+      ]
+    }
+  }
+}

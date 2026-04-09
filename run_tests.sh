@@ -49,8 +49,12 @@ elif [ "$FILTER" = "phase5" ]; then
     PHASES=("phase5-escalation")
 elif [ "$FILTER" = "phase6" ]; then
     PHASES=("phase6-population")
+elif [ "$FILTER" = "phaseC1" ]; then
+    PHASES=("phaseC1-infrastructure")
+elif [ "$FILTER" = "phaseC2" ]; then
+    PHASES=("phaseC2-storylet")
 elif [ "$FILTER" = "all" ]; then
-    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population")
+    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet")
 else
     # Assume it's a specific test file
     PHASES=()

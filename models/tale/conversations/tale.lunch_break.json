@@ -1,0 +1,35 @@
+{
+  "start": "entry",
+  "nodes": {
+    "entry": {
+      "flow": [
+        {
+          "goto": [
+            { "if": "props.npc.wealth < 0.2", "goto": "poor_lunch" },
+            { "else": "normal_lunch" }
+          ]
+        }
+      ]
+    },
+    "poor_lunch": {
+      "flow": [
+        {
+          "texts": [
+            "I bring my own food now. Lunch costs too much.",
+            "Can't afford to eat out anymore."
+          ]
+        }
+      ]
+    },
+    "normal_lunch": {
+      "flow": [
+        {
+          "texts": [
+            "Just grabbing something to eat. Break's almost over.",
+            "Lunch break is always too short."
+          ]
+        }
+      ]
+    }
+  }
+}

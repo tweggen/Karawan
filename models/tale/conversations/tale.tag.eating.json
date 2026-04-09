@@ -1,0 +1,17 @@
+{
+  "start": "entry",
+  "nodes": {
+    "entry": {
+      "flow": [
+        {
+          "texts": [
+            "Something to eat sounds good.",
+            "Lunch time already?",
+            "Gonna grab a bite.",
+            "I'm starving."
+          ]
+        }
+      ]
+    }
+  }
+}

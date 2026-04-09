@@ -35,7 +35,8 @@
     "location": "nearest_shop_Eat",
     "duration_minutes": 25,
     "weight": 2.5,
-    "tags": ["routine", "eating"]
+    "tags": ["routine", "eating"],
+    "conversation_script": "tale.lunch_break"
   },
   {
     "id": "order_food",

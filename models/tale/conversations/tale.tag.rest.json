@@ -1,0 +1,17 @@
+{
+  "start": "entry",
+  "nodes": {
+    "entry": {
+      "flow": [
+        {
+          "texts": [
+            "Need some rest.",
+            "Getting some sleep.",
+            "I'm beat.",
+            "Time to turn in."
+          ]
+        }
+      ]
+    }
+  }
+}
