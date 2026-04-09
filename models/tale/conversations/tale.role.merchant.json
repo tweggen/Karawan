@@ -5,10 +5,21 @@
       "flow": [
         {
           "goto": [
+            { "if": "props.npc.met_player == 'true' && props.npc.trust_player > 0.55", "goto": "returning" },
             { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
             { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
             { "if": "func.npcMood() == 'tired'", "goto": "tired" },
             { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "returning": {
+      "flow": [
+        {
+          "texts": [
+            "Good to see you again.",
+            "Hey, you're back. Anything I can help with?"
           ]
         }
       ]

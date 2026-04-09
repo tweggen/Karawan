@@ -57,11 +57,11 @@ if [ "$FILTER" = "smoke" ]; then
     TALE_SIM_DAYS=10
 elif [ "$FILTER" = "standard" ] || [ "$FILTER" = "all" ]; then
     # Standard tier: all tests, 60-day simulations
-    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet" "phaseC3-tone")
+    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet" "phaseC3-tone" "phaseC4-trust")
     TALE_SIM_DAYS=60
 elif [ "$FILTER" = "full" ]; then
     # Full tier: all tests, 120-day simulations
-    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet" "phaseC3-tone")
+    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet" "phaseC3-tone" "phaseC4-trust")
     TALE_SIM_DAYS=120
 elif [ "$FILTER" = "phase0" ]; then
     PHASES=("phase0-des")
@@ -83,6 +83,8 @@ elif [ "$FILTER" = "phaseC2" ]; then
     PHASES=("phaseC2-storylet")
 elif [ "$FILTER" = "phaseC3" ]; then
     PHASES=("phaseC3-tone")
+elif [ "$FILTER" = "phaseC4" ]; then
+    PHASES=("phaseC4-trust")
 else
     # Assume it's a specific test file
     PHASES=()

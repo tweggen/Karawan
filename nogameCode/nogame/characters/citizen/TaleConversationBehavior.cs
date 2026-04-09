@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using builtin.tools;
 using DefaultEcs;
 using engine;
@@ -23,6 +24,10 @@ public class TaleConversationBehavior : ANearbyBehavior
     private Narration _narration;
     private int _npcId;
 
+    // Phase C4: Cooldown to suppress repeated conversations with the same NPC
+    private static readonly Dictionary<int, DateTime> _lastConversationTime = new();
+    private const int CooldownSeconds = 30;
+
     public override string Prompt => "E to Talk";
 
     public override string Name => "TaleConversation";
@@ -38,6 +43,15 @@ public class TaleConversationBehavior : ANearbyBehavior
     {
         try
         {
+            // Phase C4: Cooldown - suppress repeated conversations with the same NPC
+            if (_lastConversationTime.TryGetValue(_npcId, out var lastTime)
+                && (DateTime.UtcNow - lastTime).TotalSeconds < CooldownSeconds)
+            {
+                Trace($"TALE CONVERSATION: NPC {_npcId} on cooldown");
+                return;
+            }
+            _lastConversationTime[_npcId] = DateTime.UtcNow;
+
             _taleManager = I.Get<TaleManager>();
             _narration = I.Get<Narration>();
 

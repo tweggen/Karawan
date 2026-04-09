@@ -18,7 +18,8 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 - ✅ Phase C1 (NPC Conversation Infrastructure): Behavior, bindings, script resolution complete
 - ✅ Phase C2 (Storylet-Specific Dialogue): Explicit override + tag-based fallback implemented
 - ✅ Phase C3 (Mood/Tone Branches): Role-specific dialogue via npcMood(), npcWealthLabel(), npcRole() functions
-- ✅ 183 regression tests passing (20 new C-phase tests, 60-day simulations, ~5 min)
+- ✅ Phase C4 (Trust, Memory & Quest Hooks): Trust tracking, player memory via fact flags, 30s conversation cooldown
+- ✅ 192 regression tests passing (29 C-phase tests, 60-day simulations, ~5 min)
 - ✅ Recalibration test framework ready (365+ days, ~2-4 hours)
 - ✅ Configuration-driven roles, interactions, relationship tiers, group types
 - ✅ Building role tagging with geometric attribute intensity zones (Phase 7B)

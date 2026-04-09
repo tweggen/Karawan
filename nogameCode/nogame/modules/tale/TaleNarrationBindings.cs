@@ -15,14 +15,33 @@ namespace nogame.modules.tale;
 public static class TaleNarrationBindings
 {
     private static readonly List<string> _injectedKeys = new();
+    private static NpcSchedule? _currentSchedule;
 
     /// <summary>
     /// Placeholder for future narration event wiring.
-    /// Currently unused but kept for forward compatibility.
+    /// Event subscription is handled directly in TaleModule.OnModuleActivate().
     /// </summary>
     public static void Register()
     {
         Trace("TALE NARRATION BINDINGS: Registered");
+    }
+
+    /// <summary>
+    /// Get the current NPC schedule being conversed with.
+    /// Phase C4: Used by TaleModule to access schedule during post-conversation updates.
+    /// </summary>
+    public static NpcSchedule? GetCurrentSchedule()
+    {
+        return _currentSchedule;
+    }
+
+    /// <summary>
+    /// Set the current NPC schedule (called during conversation setup).
+    /// Phase C4: Internal-only via InjectNpcProps().
+    /// </summary>
+    internal static void SetCurrentSchedule(NpcSchedule? schedule)
+    {
+        _currentSchedule = schedule;
     }
 
     /// <summary>
@@ -55,11 +74,22 @@ public static class TaleNarrationBindings
             Props.Set("npc.fear", schedule.Properties.GetValueOrDefault("fear", 0.5f));
             Props.Set("npc.role", schedule.Role ?? "unknown");
 
+            // Phase C4: track current NPC schedule for post-conversation update
+            SetCurrentSchedule(schedule);
+
+            // Trust / relationship props
+            schedule.Trust ??= new Dictionary<int, float>();
+            bool hasMetPlayer = schedule.Trust.ContainsKey(-1);
+            float trustForPlayer = schedule.Trust.GetValueOrDefault(-1, 0.5f);
+            Props.Set("npc.met_player", hasMetPlayer ? "true" : "false");
+            Props.Set("npc.trust_player", trustForPlayer);
+            Props.Set("npc.group_id", (float)schedule.GroupId);
+
             // Track injected keys for cleanup
             _injectedKeys.AddRange(new[] {
                 "npc.hunger", "npc.anger", "npc.fatigue", "npc.health",
                 "npc.wealth", "npc.happiness", "npc.reputation", "npc.morality", "npc.fear",
-                "npc.role"
+                "npc.role", "npc.met_player", "npc.trust_player", "npc.group_id"
             });
 
             Trace($"TALE NARRATION BINDINGS: Injected props for NPC {schedule.NpcId}");
@@ -94,6 +124,7 @@ public static class TaleNarrationBindings
             }
 
             _injectedKeys.Clear();
+            SetCurrentSchedule(null);
             Trace("TALE NARRATION BINDINGS: Cleared NPC props");
         }
         catch (Exception e)

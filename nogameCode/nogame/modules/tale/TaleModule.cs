@@ -4,9 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using builtin;
 using builtin.modules.satnav.desc;
 using engine;
+using engine.narration;
 using engine.navigation;
 using engine.news;
 using engine.tale;
@@ -252,6 +254,26 @@ public class TaleModule : AModule
             try
             {
                 TaleNarrationBindings.Register();
+
+                // Phase C4: Subscribe to ScriptEndedEvent for trust increment
+                Subscribe(engine.narration.ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
+
+                // Phase C4: Register tale.npc.remember event handler for memory facts
+                var narrationMgr = I.Get<NarrationManager>();
+                if (narrationMgr != null)
+                {
+                    narrationMgr.RegisterEventHandler("tale.npc.remember", async desc =>
+                    {
+                        var currentSchedule = TaleNarrationBindings.GetCurrentSchedule();
+                        if (currentSchedule != null && desc.Params.TryGetValue("fact", out var factObj))
+                        {
+                            currentSchedule.Properties[$"player_fact.{factObj}"] = 1f;
+                            currentSchedule.HasPlayerDeviation = true;
+                            Trace($"TALE: NPC {currentSchedule.NpcId} remembered fact '{factObj}'");
+                        }
+                        await Task.CompletedTask;
+                    });
+                }
             }
             catch (Exception e)
             {
@@ -522,4 +544,30 @@ public class TaleModule : AModule
     }
 
     #endregion
+
+
+    /// <summary>
+    /// Handle ScriptEndedEvent: increment Trust[-1] for the current NPC.
+    /// Phase C4: Trust tracking via conversation count.
+    /// </summary>
+    private void _onScriptEnded(engine.news.Event ev)
+    {
+        try
+        {
+            var currentSchedule = TaleNarrationBindings.GetCurrentSchedule();
+            if (currentSchedule != null)
+            {
+                currentSchedule.Trust ??= new Dictionary<int, float>();
+                float current = currentSchedule.Trust.GetValueOrDefault(-1, 0.5f);
+                currentSchedule.Trust[-1] = Math.Min(1f, current + 0.02f);
+                currentSchedule.HasPlayerDeviation = true;
+                Trace($"TALE: Trust incremented for NPC {currentSchedule.NpcId} (now {currentSchedule.Trust[-1]:F2})");
+            }
+            TaleNarrationBindings.ClearNpcProps();
+        }
+        catch (Exception e)
+        {
+            Error($"TALE: Exception in _onScriptEnded: {e.Message}");
+        }
+    }
 }

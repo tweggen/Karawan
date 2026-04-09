@@ -6,51 +6,39 @@
       "flow": [
         {
           "goto": [
-            { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
-            { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
-            { "if": "func.npcMood() == 'tired'", "goto": "tired" },
-            { "else": "default" }
+            { "if": "props.npc.met_player == 'false'", "goto": "first_meeting" },
+            { "if": "props.npc.trust_player > 0.65", "goto": "trusted" },
+            { "else": "acquaintance" }
           ]
         }
       ]
     },
-    "frustrated": {
+    "first_meeting": {
       "flow": [
         {
           "texts": [
-            "Listen. I don't have time for this.",
-            "Clear the area. Now."
+            "Move along. Nothing here for you.",
+            "Keep walking. This area is monitored."
           ]
         }
       ]
     },
-    "desperate": {
+    "acquaintance": {
       "flow": [
         {
           "texts": [
-            "Budget's been slashed again.",
-            "Barely holding things together."
+            "You again. What is it?",
+            "I remember you. Make it quick."
           ]
         }
       ]
     },
-    "tired": {
+    "trusted": {
       "flow": [
         {
           "texts": [
-            "Long shift.",
-            "Don't make it longer."
-          ]
-        }
-      ]
-    },
-    "default": {
-      "flow": [
-        {
-          "texts": [
-            "Keep moving.",
-            "This area is monitored.",
-            "Nothing to see here."
+            "Quiet night. For now.",
+            "Between you and me, there's been activity two blocks east."
           ]
         }
       ]
