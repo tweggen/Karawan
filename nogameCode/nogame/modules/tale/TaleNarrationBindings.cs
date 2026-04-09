@@ -2,37 +2,27 @@ using System;
 using System.Collections.Generic;
 using builtin.tools;
 using engine;
-using engine.narration;
 using engine.tale;
-using nogame.modules.story;
 using static engine.Logger;
 
 namespace nogame.modules.tale;
 
 /// <summary>
 /// Handles injection of TALE NPC properties into narration Props system.
-/// Provides script resolution fallback and cleanup handlers.
-/// Called during TaleModule activation to wire up conversation system.
+/// Provides script resolution fallback.
+/// Called from TaleConversationBehavior to manage NPC state during conversations.
 /// </summary>
 public static class TaleNarrationBindings
 {
+    private static readonly List<string> _injectedKeys = new();
+
     /// <summary>
-    /// Register bindings with narration system.
-    /// Called once from TaleModule.OnModuleActivate().
+    /// Placeholder for future narration event wiring.
+    /// Currently unused but kept for forward compatibility.
     /// </summary>
-    public static void Register(Narration narration)
+    public static void Register()
     {
-        if (narration == null)
-        {
-            Warning("TALE NARRATION BINDINGS: Narration manager is null, cannot register");
-            return;
-        }
-
-        // Subscribe to script ended event to clean up injected props
-        narration.Subscribe(engine.narration.Narration.ScriptEndedEvent.EVENT_TYPE,
-            (sender, args) => ClearNpcProps());
-
-        Trace("TALE NARRATION BINDINGS: Registered with narration manager");
+        Trace("TALE NARRATION BINDINGS: Registered");
     }
 
     /// <summary>
@@ -50,6 +40,9 @@ public static class TaleNarrationBindings
 
         try
         {
+            // Clear previously injected keys
+            _injectedKeys.Clear();
+
             // Core properties always injected
             Props.Set("npc.hunger", schedule.Properties.GetValueOrDefault("hunger", 0.5f));
             Props.Set("npc.anger", schedule.Properties.GetValueOrDefault("anger", 0.5f));
@@ -60,9 +53,14 @@ public static class TaleNarrationBindings
             Props.Set("npc.reputation", schedule.Properties.GetValueOrDefault("reputation", 0.5f));
             Props.Set("npc.morality", schedule.Properties.GetValueOrDefault("morality", 0.5f));
             Props.Set("npc.fear", schedule.Properties.GetValueOrDefault("fear", 0.5f));
-
-            // Role and context
             Props.Set("npc.role", schedule.Role ?? "unknown");
+
+            // Track injected keys for cleanup
+            _injectedKeys.AddRange(new[] {
+                "npc.hunger", "npc.anger", "npc.fatigue", "npc.health",
+                "npc.wealth", "npc.happiness", "npc.reputation", "npc.morality", "npc.fear",
+                "npc.role"
+            });
 
             Trace($"TALE NARRATION BINDINGS: Injected props for NPC {schedule.NpcId}");
         }
@@ -73,25 +71,29 @@ public static class TaleNarrationBindings
     }
 
     /// <summary>
-    /// Clear all injected NPC properties from narration Props system.
-    /// Called on ScriptEndedEvent.
+    /// Clear all injected NPC properties by resetting them to defaults.
+    /// Called after conversation script ends.
+    /// Note: Props system doesn't support removal, so we reset to neutral values.
     /// </summary>
     public static void ClearNpcProps()
     {
         try
         {
-            string[] keysToRemove = new[]
+            // Reset injected properties to neutral/default values
+            // This prevents old NPC state from leaking into subsequent conversations
+            foreach (var key in _injectedKeys)
             {
-                "npc.hunger", "npc.anger", "npc.fatigue", "npc.health",
-                "npc.wealth", "npc.happiness", "npc.reputation", "npc.morality", "npc.fear",
-                "npc.role"
-            };
-
-            foreach (var key in keysToRemove)
-            {
-                Props.Remove(key);
+                if (key == "npc.role")
+                {
+                    Props.Set(key, "unknown");
+                }
+                else
+                {
+                    Props.Set(key, 0.5f); // Neutral value for numeric props
+                }
             }
 
+            _injectedKeys.Clear();
             Trace("TALE NARRATION BINDINGS: Cleared NPC props");
         }
         catch (Exception e)
@@ -126,7 +128,7 @@ public static class TaleNarrationBindings
         }
 
         // Level 2: First matching tag
-        if (storylet.Tags != null && storylet.Tags.Count > 0)
+        if (storylet.Tags != null && storylet.Tags.Length > 0)
         {
             foreach (var tag in storylet.Tags)
             {

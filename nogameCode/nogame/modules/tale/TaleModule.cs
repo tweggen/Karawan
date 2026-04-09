@@ -251,11 +251,7 @@ public class TaleModule : AModule
             // Register narration bindings for NPC conversations
             try
             {
-                var narration = I.Get<nogame.modules.story.Narration>();
-                if (narration != null)
-                {
-                    TaleNarrationBindings.Register(narration);
-                }
+                TaleNarrationBindings.Register();
             }
             catch (Exception e)
             {
