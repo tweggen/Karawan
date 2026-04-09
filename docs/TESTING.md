@@ -12,7 +12,7 @@ This separation allows rapid feedback during development while maintaining compr
 
 **Purpose**: Quick functional validation of core systems
 **Simulation Duration**: 60 days (fast feedback)
-**Run Time**: ~5 minutes for all 171 tests
+**Run Time**: ~5 minutes for all 177 tests
 **When to Run**: After code changes, CI/CD pipeline
 
 ### Usage
@@ -29,6 +29,8 @@ This separation allows rapid feedback during development while maintaining compr
 ./run_tests.sh phase4           # Quest/Player System
 ./run_tests.sh phase5           # Escalation/Interrupts
 ./run_tests.sh phase6           # Population Management
+./run_tests.sh phaseC1          # Conversation Infrastructure
+./run_tests.sh phaseC2          # Storylet-Specific Dialogue
 
 # Run specific test
 ./run_tests.sh 01-initialization.json
@@ -45,8 +47,10 @@ This separation allows rapid feedback during development while maintaining compr
 | 4 | Quest/Player System | 20 | Quest mechanics, satnav, follow/unfollow | 60 days |
 | 5 | Escalation/Interrupts | 20 | Interrupt scopes, conditional branches | 60 days |
 | 6 | Population Management | 49 | Generation, deviance, persistence | 60 days |
+| C1 | Conversation Infrastructure | 8 | Behavior attachment, generic/role/tag fallback, indoor NPCs | 60 days |
+| C2 | Storylet-Specific Dialogue | 6 | Explicit override, tag fallback, precedence, wealth gating | 60 days |
 
-**Total**: 171 regression tests
+**Total**: 177 regression tests
 
 ## Recalibration Tests (`run_recalibration_tests.sh`)
 

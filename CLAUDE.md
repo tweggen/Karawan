@@ -13,10 +13,11 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 2. `docs/TESTING.md` — Testing infrastructure and how to run tests
 3. `docs/tale/TEST_DOCUMENTATION_STRATEGY.md` — Test spec maintenance
 
-**Current Status (as of March 28, 2026):**
+**Current Status (as of April 9, 2026):**
 - ✅ Phase 0-7 + Phase 7B + Phase 8 TALE systems fully implemented
-- ✅ Phase D infrastructure (Multi-Objective Routing): Goal definitions, preference system, NPC integration ready
-- ✅ 171 regression tests passing (60-day simulations, ~5 min)
+- ✅ Phase C1 (NPC Conversation Infrastructure): Behavior, bindings, script resolution complete
+- ✅ Phase C2 (Storylet-Specific Dialogue): Explicit override + tag-based fallback implemented
+- ✅ 177 regression tests passing (14 new C-phase tests, 60-day simulations, ~5 min)
 - ✅ Recalibration test framework ready (365+ days, ~2-4 hours)
 - ✅ Configuration-driven roles, interactions, relationship tiers, group types
 - ✅ Building role tagging with geometric attribute intensity zones (Phase 7B)
