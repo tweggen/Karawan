@@ -1,0 +1,16 @@
+{
+  "start": "entry",
+  "nodes": {
+    "entry": {
+      "flow": [
+        {
+          "texts": [
+            "Just trying to get through the day.",
+            "Work's been steady, I guess.",
+            "Not complaining. Yet."
+          ]
+        }
+      ]
+    }
+  }
+}

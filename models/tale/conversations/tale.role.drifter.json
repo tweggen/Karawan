@@ -1,0 +1,16 @@
+{
+  "start": "entry",
+  "nodes": {
+    "entry": {
+      "flow": [
+        {
+          "texts": [
+            "Taking it day by day.",
+            "No complaints. Well, some.",
+            "Just keeping my head above water."
+          ]
+        }
+      ]
+    }
+  }
+}

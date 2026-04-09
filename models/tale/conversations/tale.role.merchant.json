@@ -1,0 +1,16 @@
+{
+  "start": "entry",
+  "nodes": {
+    "entry": {
+      "flow": [
+        {
+          "texts": [
+            "Business is business.",
+            "Things are moving, slowly.",
+            "You buying or just looking?"
+          ]
+        }
+      ]
+    }
+  }
+}

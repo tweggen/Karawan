@@ -1,0 +1,58 @@
+{
+  "start": "entry",
+  "nodes": {
+    "entry": {
+      "flow": [
+        {
+          "goto": [
+            { "if": "props.npc.hunger > 0.7", "goto": "hungry" },
+            { "if": "props.npc.anger > 0.7", "goto": "angry" },
+            { "if": "props.npc.fatigue > 0.7", "goto": "tired" },
+            { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "hungry": {
+      "flow": [
+        {
+          "texts": [
+            "I could really use something to eat.",
+            "Haven't eaten properly in a while."
+          ]
+        }
+      ]
+    },
+    "angry": {
+      "flow": [
+        {
+          "texts": [
+            "Not now.",
+            "What do you want."
+          ]
+        }
+      ]
+    },
+    "tired": {
+      "flow": [
+        {
+          "texts": [
+            "I'm exhausted. Can we make this quick?",
+            "Haven't slept properly in days."
+          ]
+        }
+      ]
+    },
+    "default": {
+      "flow": [
+        {
+          "texts": [
+            "Hey.",
+            "Nice enough day.",
+            "You heading somewhere?"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -11,6 +11,7 @@ using engine.navigation;
 using engine.news;
 using engine.tale;
 using engine.world;
+using nogame.modules.story;
 using static engine.Logger;
 
 namespace nogame.modules.tale;
@@ -246,6 +247,20 @@ public class TaleModule : AModule
 
             I.Register<TaleManager>(() => _taleManager);
             Trace("TALE: TaleManager registered.");
+
+            // Register narration bindings for NPC conversations
+            try
+            {
+                var narration = I.Get<nogame.modules.story.Narration>();
+                if (narration != null)
+                {
+                    TaleNarrationBindings.Register(narration);
+                }
+            }
+            catch (Exception e)
+            {
+                Warning($"TALE: Failed to register narration bindings: {e.Message}");
+            }
 
             // Load roles and interaction types from config
             var loader = I.Get<engine.casette.Loader>();

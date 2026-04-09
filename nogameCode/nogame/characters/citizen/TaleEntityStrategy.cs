@@ -9,6 +9,7 @@ using engine.news;
 using engine.tale;
 using engine.world;
 using static engine.Logger;
+using Behavior = engine.behave.components.Behavior;
 
 namespace nogame.characters.citizen;
 
@@ -170,6 +171,17 @@ public class TaleEntityStrategy : AOneOfStrategy
         var currentLoc = spatialModel?.GetLocation(tempSchedule?.CurrentLocationId ?? -1);
         string currentLocType = currentLoc?.Type ?? "UNKNOWN";
         Trace($"TALE ENTITY: NPC {_npcId} _advanceAndTravel called FROM location type '{currentLocType}'");
+
+        // Remove conversation behavior when leaving activity phase
+        if (_entity.IsAlive && _entity.Has<Behavior>())
+        {
+            var behavior = _entity.Get<Behavior>();
+            if (behavior is TaleConversationBehavior)
+            {
+                _entity.Remove<Behavior>();
+                Trace($"TALE ENTITY: NPC {_npcId} conversation behavior detached");
+            }
+        }
 
         // Update current position to where the NPC actually is now
         if (_entity.IsAlive && _entity.Has<engine.joyce.components.Transform3ToWorld>())
@@ -345,6 +357,21 @@ public class TaleEntityStrategy : AOneOfStrategy
         else
         {
             Trace($"TALE ENTITY: NPC {_npcId} spatial model NULL for cluster {schedule.ClusterIndex}!");
+        }
+
+        // Attach conversation behavior to outdoor NPCs only
+        if (!_stayAt.IsIndoorActivity)
+        {
+            try
+            {
+                var conversationBehavior = new TaleConversationBehavior(_npcId);
+                _entity.Set(new Behavior(conversationBehavior));
+                Trace($"TALE ENTITY: NPC {_npcId} conversation behavior attached");
+            }
+            catch (Exception e)
+            {
+                Trace($"TALE ENTITY: NPC {_npcId} failed to attach conversation behavior: {e.Message}");
+            }
         }
 
         // Sync position now that we've arrived at destination

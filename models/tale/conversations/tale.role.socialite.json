@@ -1,0 +1,16 @@
+{
+  "start": "entry",
+  "nodes": {
+    "entry": {
+      "flow": [
+        {
+          "texts": [
+            "Always something happening.",
+            "Life's too short to be bored.",
+            "You should come by the spot sometime."
+          ]
+        }
+      ]
+    }
+  }
+}

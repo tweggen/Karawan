@@ -6,6 +6,7 @@
     "interact.niceguy": { "script": "niceguy", "mode": "conversation" }
   },
   "scripts": {
+    "__include__": "tale/conversations/",
     "main": {
       "start": "intro",
       "nodes": {

@@ -28,6 +28,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\IdleBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\StayAtStrategyPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleEntityStrategy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleConversationBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleEntityBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleSpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\WalkStrategy.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\NarrationBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\PersonSpeakingEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\tale\TaleModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\tale\TaleNarrationBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\World.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\CharacterModelDescriptionFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\CharacterState.cs" />
