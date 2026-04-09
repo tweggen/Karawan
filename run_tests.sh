@@ -1,14 +1,17 @@
 #!/bin/bash
 
-# TALE Regression Test Runner - Fast functional validation (60-day simulations)
+# TALE Regression Test Runner - Multi-tier testing strategy
 # For long-running recalibration tests (365+ days), use: ./run_recalibration_tests.sh
 #
-# Usage: ./run_tests.sh [phase|script]
-# Examples:
-#   ./run_tests.sh all             # Run all regression tests (~5 minutes)
+# Usage: ./run_tests.sh [tier|phase|script]
+# Tiers:
+#   ./run_tests.sh smoke           # Smoke tests (~1 minute, 10-day sims)
+#   ./run_tests.sh standard        # Standard regression (~5 minutes, 60-day sims)
+#   ./run_tests.sh full            # Full regression (~15-20 minutes, 120-day sims)
+#   ./run_tests.sh all             # Same as 'standard'
+# Phases:
 #   ./run_tests.sh phase0          # Run all Phase 0 tests
 #   ./run_tests.sh phase1          # Run all Phase 1 tests
-#   ./run_tests.sh phase3          # Run all Phase 3 tests
 #   ./run_tests.sh 01-initialization.json  # Run specific test
 
 set -e
@@ -34,8 +37,33 @@ fi
 # Parse arguments
 FILTER="${1:-all}"
 
+# Default simulation days (can be overridden by tier)
+TALE_SIM_DAYS="${TALE_SIM_DAYS:-60}"
+
 # Determine which tests to run
-if [ "$FILTER" = "phase0" ]; then
+if [ "$FILTER" = "smoke" ]; then
+    # Smoke tier: 10 critical tests, 10-day simulations
+    SMOKE_MANIFEST="$TEST_BASE/.smoke-tests"
+    if [ ! -f "$SMOKE_MANIFEST" ]; then
+        echo -e "${RED}Error: Smoke test manifest not found at $SMOKE_MANIFEST${NC}"
+        exit 1
+    fi
+    PHASES=()
+    SPECIFIC_TESTS=()
+    while IFS= read -r test_path; do
+        [ -z "$test_path" ] && continue
+        SPECIFIC_TESTS+=("$test_path")
+    done < "$SMOKE_MANIFEST"
+    TALE_SIM_DAYS=10
+elif [ "$FILTER" = "standard" ] || [ "$FILTER" = "all" ]; then
+    # Standard tier: all tests, 60-day simulations
+    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet")
+    TALE_SIM_DAYS=60
+elif [ "$FILTER" = "full" ]; then
+    # Full tier: all tests, 120-day simulations
+    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet")
+    TALE_SIM_DAYS=120
+elif [ "$FILTER" = "phase0" ]; then
     PHASES=("phase0-des")
 elif [ "$FILTER" = "phase1" ]; then
     PHASES=("phase1-storylets")
@@ -53,8 +81,6 @@ elif [ "$FILTER" = "phaseC1" ]; then
     PHASES=("phaseC1-infrastructure")
 elif [ "$FILTER" = "phaseC2" ]; then
     PHASES=("phaseC2-storylet")
-elif [ "$FILTER" = "all" ]; then
-    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet")
 else
     # Assume it's a specific test file
     PHASES=()
@@ -75,7 +101,7 @@ run_test() {
     echo -n "  [$phase] $test_name ... "
 
     # Run test with timeout (uses bash background/kill on macOS if timeout not available)
-    ( JOYCE_TEST_SCRIPT="tests/tale/${phase}/${test_name}" dotnet "$TESTRUNNER_DLL" > /tmp/test_output.log 2>&1 ) &
+    ( JOYCE_TEST_SCRIPT="tests/tale/${phase}/${test_name}" TALE_SIM_DAYS="$TALE_SIM_DAYS" dotnet "$TESTRUNNER_DLL" > /tmp/test_output.log 2>&1 ) &
     local test_pid=$!
     local count=0
     while kill -0 $test_pid 2>/dev/null && [ $count -lt 65 ]; do
@@ -138,7 +164,7 @@ echo -e "${YELLOW}=== TALE Test Suite ===${NC}"
 echo "Started: $(date)"
 echo ""
 
-# Run specific test if given
+# Run specific test(s) if given
 if [ -n "$SPECIFIC_TEST" ]; then
     # Find the test file
     FOUND_TEST=$(find "$TEST_BASE" -name "*$SPECIFIC_TEST" -type f | head -1)
@@ -148,6 +174,19 @@ if [ -n "$SPECIFIC_TEST" ]; then
     fi
     echo "Running: $(basename "$FOUND_TEST")"
     run_test "$FOUND_TEST"
+elif [ ${#SPECIFIC_TESTS[@]:-0} -gt 0 ]; then
+    # Run smoke tests from manifest
+    echo -e "${YELLOW}Tier: smoke (10-day simulations)${NC}"
+    for test_path in "${SPECIFIC_TESTS[@]}"; do
+        full_test_path="$TEST_BASE/$test_path"
+        if [ -f "$full_test_path" ]; then
+            run_test "$full_test_path"
+        else
+            echo -e "${RED}  Test not found: $test_path${NC}"
+            ((FAILED++))
+        fi
+    done
+    echo ""
 else
     # Run all tests in phases
     for phase in "${PHASES[@]}"; do

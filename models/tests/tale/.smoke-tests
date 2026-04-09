@@ -1,0 +1,10 @@
+phase0-des/01-initialization.json
+phase0-des/02-npc-creation.json
+phase1-storylets/01-library-loading.json
+phase1-storylets/03-fallback-selection.json
+phase2-strategies/01-strategy-creation.json
+phase3-interactions/01-request-postcondition-emission.json
+phase4-player/01-player-quest-trigger.json
+phase5-escalation/01-interrupt-nest-scope.json
+phase6-population/01-deterministic-generation.json
+phaseC1-infrastructure/01-conversation-behavior-attaches.json
