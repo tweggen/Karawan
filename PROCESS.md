@@ -1,6 +1,8 @@
 # Development Process Guide
 
-This document defines the standard process for making changes to the Karawan TALE system, ensuring documentation stays synchronized with implementation and enabling efficient handoff between Claude Code instances.
+This document defines the standard process for making changes to Karawan, ensuring documentation stays synchronized with implementation and enabling efficient handoff between Claude Code instances.
+
+**Note:** This is the generic process for any Karawan subsystem (Joyce engine, rendering, audio, TALE, etc.). For TALE-specific paths and test organization, see `PROCESS_TALE.md`.
 
 ---
 
@@ -44,43 +46,31 @@ After implementation completes:
 - Architecture or major design decisions
 - Build/test commands
 - Project phases or completion status
-- Key systems (DES, storylets, interactions, etc.)
+- Key systems or subsystems
 - Configuration system or registries
 
-#### b) **docs/TESTING.md** — If changes affect:
-- Test runner scripts (`run_tests.sh`, `run_recalibration_tests.sh`)
-- Test framework or assertion types
-- Simulation configuration (TALE_SIM_DAYS, timeouts, etc.)
-- Phase test counts or organization
+#### b) **Subsystem-specific documentation** — Update design/spec docs for the affected area:
+- If modifying **TALE narrative system**: See `PROCESS_TALE.md` for paths
+- If modifying **Joyce engine core**: Update `docs/engine/*.md` if they exist
+- If modifying **rendering/audio/physics**: Update subsystem-specific docs
+- Principle: Keep design docs synchronized with code
+
+#### c) **Testing documentation** — If changes affect:
+- Test organization or structure
+- Test runner behavior
+- Test configuration or timeouts
+- Test counts or categories
 - Performance metrics or benchmarks
 
-#### c) **docs/TESTBED_PLAN.md** — If changes affect:
-- Overall testing strategy or tiers
-- Headless simulation infrastructure
-- Performance expectations
-- Integration with testing workflow
+**Rule of thumb:** If you created/modified tests, update the corresponding test documentation. If you changed test infrastructure, update testing strategy docs.
 
-#### d) **docs/tale/TEST_DOCUMENTATION_STRATEGY.md** — If changes affect:
-- How tests are specified (JSON format, examples)
-- Documentation maintenance process
-- Cross-reference patterns
-- Quarterly audit cycle
+#### d) **Roadmap documentation**:
+- Move plan file from `docs/roadmap/proposed/` → `docs/roadmap/done/` when complete
+- Update `docs/roadmap/planned/` if scheduling changes
 
-#### e) **docs/tale/PHASE_N.md** — If changes affect:
-- Phase design or architecture
-- Key classes, methods, or data structures
-- Test coverage for the phase
-- Known limitations or future work
-
-#### f) **docs/tale/TALE_TEST_SCRIPTS_PHASE_N.md** — If changes affect:
-- Test specifications (preconditions, expected outcomes)
-- New test categories or significant additions
-- **Note**: Keep quaternary update cycle; don't update for every test addition
-
-#### g) **Other docs** — Update any referenced documentation:
-- `docs/tale/TESTING_QUICK_START.md` if quick-start commands change
-- `models/tests/tale/phaseN-*/README.md` if test organization changes
-- Inline code comments (sparingly, only where logic isn't obvious)
+#### e) **Inline code comments** (sparingly):
+- Only where logic isn't self-evident
+- Don't add comments just to restate the code
 
 **Documentation Update Checklist**:
 - [ ] Searched for all references to changed systems/files
@@ -91,25 +81,19 @@ After implementation completes:
 
 ### 4. Testing Phase
 
-**Pre-Commit (Quick Validation)**:
-- **Smoke Tests**: `./run_tests.sh smoke` (~1 minute) — Run before committing locally
-  - 10 critical tests validating core initialization and state machines
-  - Catches most catastrophic failures with rapid feedback
+The testing strategy varies by subsystem. For your area:
 
-**Before Pushing to Shared Branch**:
-- **Standard Regression**: `./run_tests.sh standard` or `./run_tests.sh all` (~5 minutes)
-  - All 171 tests with 60-day simulations
-  - Full functional validation, must pass before pushing
-- **Affected Phase** (optional): `./run_tests.sh phaseN` — Quick focus on changed system
+**TALE Narrative System**: See `PROCESS_TALE.md` for test commands and tier structure.
 
-**Before Merge/Release**:
-- **Full Regression**: `./run_tests.sh full` (~15-20 minutes)
-  - All 171 tests with 120-day simulations
-  - Deeper behavior coverage, recommended pre-merge
-- **Recalibration** (if parameter changes): `./run_recalibration_tests.sh phaseN` (~30 min-2 hours)
-  - Long-term equilibrium validation for parameter tuning
+**Other Subsystems**:
+- Run the test suite for the area you modified
+- If no test suite exists, verify your changes don't break existing tests
+- Update test documentation if you added/modified tests
 
-See `docs/TESTING_TIERS_PROPOSAL.md` for full multi-tier testing strategy.
+**General Principle**:
+- Before committing: Run tests for the area you changed
+- Before pushing: Run the full test suite if available
+- If tests fail, fix the issue (never ignore failures)
 
 ### 5. Commit & Cleanup
 
@@ -146,9 +130,9 @@ When all changes and documentation are complete:
 **Out-of-date documentation is worse than no documentation.**
 
 - Documentation updates are **MANDATORY**, not optional
-- Keep PROCESS.md synchronized if workflow changes
-- Quarterly audit: Run `docs/tale/TEST_DOCUMENTATION_STRATEGY.md` consistency checks
+- Keep documentation synchronized with code changes
 - When in doubt about what to update, update more rather than less
+- Search for references when changing systems (use Grep tool)
 
 ### Testing Discipline
 
@@ -188,19 +172,19 @@ When all changes and documentation are complete:
 - Update directly affected documentation only
 
 ### Weekly (If Multiple Changes)
-- Update `docs/tale/PHASE_*.md` for design changes
-- Update `docs/TESTING.md` if test infrastructure changes
+- Update subsystem design docs for changes
+- Update testing docs if test infrastructure changes
 - Verify commit messages reference doc updates
 
 ### Monthly (Quick Review)
-- Scan `docs/TESTING.md` for outdated commands
-- Check `docs/tale/TEST_DOCUMENTATION_STRATEGY.md` for drift
+- Scan documentation for outdated commands
+- Check design docs for drift from implementation
 - Update metrics if they've changed significantly
 
 ### Quarterly (Major Audit)
-- Full audit of `docs/tale/TALE_TEST_SCRIPTS_PHASE_*.md` against actual tests
+- Audit test documentation against actual tests
 - Verify cross-references between design/spec/implementation
-- Update test counts, categories, examples
+- Update test counts and categories
 - Review `docs/roadmap/done/` for any outdated files
 - Check `PROCESS.md` itself — update if workflow has changed
 
@@ -237,14 +221,12 @@ Before committing changes, verify:
 - [ ] All requested features implemented and tested
 - [ ] Code follows existing patterns and style
 - [ ] `CLAUDE.md` updated (if applicable)
-- [ ] `docs/TESTING.md` updated (if applicable)
-- [ ] `docs/tale/PHASE_*.md` updated (if applicable)
-- [ ] `docs/tale/TEST_DOCUMENTATION_STRATEGY.md` updated (if applicable)
+- [ ] Subsystem design/spec docs updated (if applicable)
+- [ ] Test documentation updated (if tests changed)
 - [ ] Other affected documentation updated (search for references)
 - [ ] Plan file moved from proposed/ to done/ (if applicable)
-- [ ] Smoke tests passing: `./run_tests.sh smoke` (~1 min)
-- [ ] Standard regression tests passing: `./run_tests.sh all` (~5 min)
-- [ ] Affected phase tests passing: `./run_tests.sh phaseN` (optional)
+- [ ] Tests passing for affected subsystem
+- [ ] Full test suite passing (if available)
 - [ ] No debug code, console logs, or commented-out code
 - [ ] No unnecessary files created
 - [ ] `git status` shows only expected changes
@@ -255,38 +237,36 @@ Before committing changes, verify:
 
 ## Common Scenarios
 
-### Adding a New Test
+### Adding a Test
 
 ```
-1. Create JSON in models/tests/tale/phaseN-*/NN-name.json
-2. Update docs/tale/PHASE_N.md (add to design section)
-3. Run: ./run_tests.sh phaseN
-4. Commit: "Add test PhaseN: Description"
-5. (Quarterly) Update docs/tale/TALE_TEST_SCRIPTS_PHASE_N.md
+1. Create test file in appropriate test directory for your subsystem
+2. Update test documentation (count, description)
+3. Run tests for the affected subsystem
+4. Commit: "Add test: Description"
+5. Update comprehensive docs (quarterly cycle)
 ```
 
 ### Modifying Test Infrastructure
 
 ```
-1. Update run_tests.sh or TestRunner code
-2. Update docs/TESTING.md (usage, configuration)
-3. Run: ./run_tests.sh all
-4. Update docs/TESTBED_PLAN.md if architecture changes
+1. Update test script or test framework code
+2. Update testing documentation
+3. Run full test suite
+4. Update docs if architecture changes
 5. Commit: "Update: Test infrastructure changes"
 ```
 
-### Implementing a New Phase
+### Implementing a New Feature/System
 
 ```
-1. EnterPlanMode: Create docs/roadmap/proposed/PHASE-N-*.md
-2. Create docs/tale/PHASE_N.md (design)
-3. Create models/tests/tale/phaseN-*/
-4. Create docs/tale/TALE_TEST_SCRIPTS_PHASE_N.md (detailed specs)
-5. Implement code + tests
-6. Update docs/TESTING.md (add phase to summary)
-7. Update CLAUDE.md (project status)
-8. Move plan: proposed/ → done/
-9. Commit: "Implement Phase N: ..."
+1. EnterPlanMode: Create docs/roadmap/proposed/FEATURE-NAME.md
+2. Create/update design documentation
+3. Implement code + tests
+4. Update CLAUDE.md (project status)
+5. Update testing documentation (if new tests added)
+6. Move plan: proposed/ → done/
+7. Commit: "Implement: Feature description"
 ```
 
 ### Updating Documentation Only
@@ -305,20 +285,20 @@ Before committing changes, verify:
 
 1. **Process**: This document (PROCESS.md) — defines mandatory steps
 2. **Discipline**: Documentation updates in commit message — makes intent explicit
-3. **Audit**: Quarterly review cycle in TEST_DOCUMENTATION_STRATEGY.md — catches drift
-4. **Automation**: Scripts in TEST_DOCUMENTATION_STRATEGY.md — verify consistency
+3. **Audit**: Quarterly review cycle — catches drift across subsystems
+4. **Visibility**: Commit history shows when docs were last updated
 
 **When documentation gets out of sync**:
 
-- Quarterly audit catches it (TEST_DOCUMENTATION_STRATEGY.md)
-- Consistency checks can be automated (verify test counts, cross-references)
+- Quarterly audit catches it (for TALE: see TEST_DOCUMENTATION_STRATEGY.md)
 - Clear process means next developer knows what to fix
 - Commit history shows when docs were last updated
+- Search for references when changing systems (catches missed docs)
 
 **Rule of Thumb**:
 - If you're unsure whether to update a doc, **do update it**
 - Better to have redundant info than missing updates
-- Errors in docs get caught in quarterly audits
+- Errors in docs get caught in audits
 - Errors in code get caught in tests
 
 ---
@@ -327,35 +307,35 @@ Before committing changes, verify:
 
 ### Good Commit Message
 ```
-Implement Phase 8: Reputation System
+Implement Phase C4: Trust, Memory & Quest Hooks
 
-- Added RepuationTracker registry for configurable reputation decay
-- Integrated with encounter postconditions
-- Created 20 new test scripts for Phase 8
-- Updated docs/tale/PHASE_8.md with design
+- Added Trust[-1] tracking for player-NPC relationships
+- Injected npc.met_player, npc.trust_player into narration Props
+- Added conversation cooldown (30s)
+- Created 9 new test scripts for Phase C4
 - Updated docs/TESTING.md with phase summary
-- All 191 regression tests passing
+- All 192 regression tests passing
 
-See docs/roadmap/done/PHASE-8-REPUTATION-SYSTEM.md
+See docs/roadmap/done/PHASE-C4-TRUST-MEMORY.md
 ```
 
 ### Good Documentation Update
 ```
-1. Code change: Add new parameter to RoleDefinition
-2. Update: JoyceCode/engine/tale/RoleDefinition.cs (code)
-3. Update: docs/tale/PHASE_1.md (add to class docs)
+1. Code change: Add new property to NpcSchedule
+2. Update: JoyceCode/engine/tale/NpcSchedule.cs (code)
+3. Update: docs/tale/PHASE_C.md (add to class docs)
 4. Update: docs/TESTING.md (if affects tests)
 5. Update: CLAUDE.md (if architectural)
-6. Commit: "Feature: Add parameter to RoleDefinition"
+6. Commit: "Feature: Add property to NpcSchedule"
 ```
 
-### Good Quarterly Audit
+### Good Quarterly Audit (TALE-specific)
 
 ```
 - Check: Test counts in TALE_TEST_SCRIPTS_PHASE_*.md match models/tests/tale/
 - Check: Cross-references between PHASE_*.md and test specs are valid
 - Check: TESTING.md commands are accurate (run examples)
-- Check: TESTBED_PLAN.md reflects current testing strategy
+- Check: TEST_DOCUMENTATION_STRATEGY.md reflects current strategy
 - Fix: Update any outdated sections
 - Commit: "Docs: Quarterly audit and updates"
 ```
