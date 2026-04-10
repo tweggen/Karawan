@@ -27,7 +27,7 @@ Run tests at different levels depending on your change:
 ./run_tests.sh all    # ~5 minutes (same as 'standard')
 # All 192 tests with 60-day simulations
 # Currently: Phase 0-6 (183) + C1-C4 (29) = 212 total test files
-# See docs/TESTING.md for full list
+# See docs/TESTING/TESTING_STRATEGY.md for full list
 ```
 
 **Pre-Merge (Full Regression)**:
@@ -100,10 +100,10 @@ docs/tale/
 
 | Change | File(s) to Update |
 |--------|-------------------|
-| New TALE phase | Create `PHASE_N.md` |
-| Phase design/architecture changes | Update `PHASE_N.md` |
-| New test cases | Update `PHASE_N.md` + (quarterly) `TALE_TEST_SCRIPTS_PHASE_N.md` |
-| Test infrastructure changes | Update `docs/TESTING.md` + TEST_DOCUMENTATION_STRATEGY.md |
+| New TALE phase | Create `docs/tale/phases/PHASE_N.md` |
+| Phase design/architecture changes | Update `docs/tale/phases/PHASE_N.md` |
+| New test cases | Update `docs/tale/phases/PHASE_N.md` + (quarterly) `docs/tale/tests/PHASE_N.md` |
+| Test infrastructure changes | Update `docs/TESTING/TESTING_STRATEGY.md` + `docs/tale/tests/STRATEGY.md` |
 | Overall TALE status | Update `CLAUDE.md` section on TALE phases |
 
 ---
@@ -114,21 +114,21 @@ docs/tale/
 
 ```bash
 1. Create: models/tests/tale/phaseN-*/NN-descriptive-name.json
-2. Update: docs/tale/PHASE_N.md (add test to "Test Coverage" section)
+2. Update: docs/tale/phases/PHASE_N.md (add test to "Test Coverage" section)
 3. Run: ./run_tests.sh phaseN
 4. Commit: "Add test Phase N: Description"
-5. (Quarterly) Update: docs/tale/TALE_TEST_SCRIPTS_PHASE_N.md (detailed spec)
+5. (Quarterly) Update: docs/tale/tests/PHASE_N.md (detailed spec)
 ```
 
 ### Implementing a New TALE Phase
 
 ```bash
 1. EnterPlanMode: Create docs/roadmap/proposed/PHASE-N-NAME.md
-2. Create: docs/tale/PHASE_N.md (design document)
+2. Create: docs/tale/phases/PHASE_N.md (design document)
 3. Create: models/tests/tale/phaseN-*/  (test directory)
-4. Create: docs/tale/TALE_TEST_SCRIPTS_PHASE_N.md (test specifications)
+4. Create: docs/tale/tests/PHASE_N.md (test specifications)
 5. Implement code + tests
-6. Update: docs/TESTING.md (add phase to test phases table)
+6. Update: docs/TESTING/TESTING_STRATEGY.md (add phase to test phases table)
 7. Update: CLAUDE.md (update phase status)
 8. Move: docs/roadmap/proposed/ → docs/roadmap/done/
 9. Commit: "Implement Phase N: Description"
@@ -138,10 +138,10 @@ docs/tale/
 
 ```bash
 1. Make code changes
-2. Update: docs/tale/PHASE_N.md (if design changed)
+2. Update: docs/tale/phases/PHASE_N.md (if design changed)
 3. Add/modify tests in: models/tests/tale/phaseN-*/
 4. Run: ./run_tests.sh phaseN
-5. Update: docs/TESTING.md (if test counts changed)
+5. Update: docs/TESTING/TESTING_STRATEGY.md (if test counts changed)
 6. Commit: "Update Phase N: Description"
 ```
 
@@ -171,7 +171,7 @@ Default timeout: 60 seconds per test (60-day simulation)
 
 ## Documentation Audit Cycle (Quarterly)
 
-The TALE system maintains detailed test documentation that needs periodic refresh. See `docs/tale/TEST_DOCUMENTATION_STRATEGY.md` for:
+The TALE system maintains detailed test documentation that needs periodic refresh. See `docs/tale/tests/STRATEGY.md` for:
 
 - How to verify test counts match actual files
 - Cross-reference validation
@@ -197,7 +197,7 @@ The TALE system maintains detailed test documentation that needs periodic refres
 | `run_tests.sh` | Bash script that invokes TestRunner |
 | `models/tests/tale/` | All test specifications (JSON) |
 | `docs/TESTING.md` | Generic testing strategy (all subsystems) |
-| `docs/tale/TEST_DOCUMENTATION_STRATEGY.md` | TALE-specific test maintenance |
+| `docs/tale/tests/STRATEGY.md` | TALE-specific test maintenance |
 
 ---
 

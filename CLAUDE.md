@@ -9,9 +9,10 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 ## Quick Start (For New Instances)
 
 **First, read these in order:**
-1. `PROCESS.md` — Development workflow, mandatory documentation updates
-2. `docs/TESTING.md` — Testing infrastructure and how to run tests
-3. `docs/tale/TEST_DOCUMENTATION_STRATEGY.md` — Test spec maintenance
+1. `PROCESS.md` — Generic development workflow, mandatory documentation updates
+2. `PROCESS_TALE.md` — TALE-specific workflow and test commands
+3. `docs/TESTING/` — Testing infrastructure (see `TESTING_STRATEGY.md`)
+4. `PROCESS_DOCS.md` — Documentation organization guidelines
 
 **Current Status (as of April 9, 2026):**
 - ✅ Phase 0-7 + Phase 7B + Phase 8 TALE systems fully implemented
