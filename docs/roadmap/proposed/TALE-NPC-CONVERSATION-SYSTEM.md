@@ -1,6 +1,6 @@
 # Plan: TALE NPC Conversation System (Phases C1–C4)
 
-**Status**: 📋 Proposed
+**Status**: ✅ Complete (as of 2026-04-10)
 
 ## Context
 
