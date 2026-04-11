@@ -5,6 +5,7 @@ using builtin.tools;
 using DefaultEcs;
 using engine;
 using engine.joyce.components;
+using engine.narration;
 using engine.news;
 using engine.physics;
 using engine.tale;
@@ -19,7 +20,7 @@ namespace nogame.characters.citizen;
 /// Walking behavior for TALE NPCs that also shows "E to Talk" prompt.
 /// Extends ANearbyBehavior for proximity/interaction, and delegates to
 /// a SegmentNavigator for walking. When the player presses E, the NPC
-/// stops walking, triggers a conversation, then resumes when it ends.
+/// stops walking, triggers a conversation, then resumes when ScriptEndedEvent fires.
 /// </summary>
 public class TaleWalkBehavior : ANearbyBehavior
 {
@@ -27,7 +28,6 @@ public class TaleWalkBehavior : ANearbyBehavior
     private TaleEntityStrategy _strategy;
     private bool _isPaused = false;
     private float _savedSpeed;
-    private DateTime _pauseStartTime;
     private float _previousSpeed = float.MinValue;
     private Quaternion _prevRotation = Quaternion.Identity;
 
@@ -60,6 +60,12 @@ public class TaleWalkBehavior : ANearbyBehavior
         }
     }
 
+    public override void OnDetach(in Entity entity)
+    {
+        _unsubscribeScriptEnded();
+        base.OnDetach(entity);
+    }
+
     public override void InRange(in Engine engine0, in Entity entity)
     {
         // Handle Tier 2 → Tier 1 promotion
@@ -77,16 +83,6 @@ public class TaleWalkBehavior : ANearbyBehavior
     public override void Behave(in Entity entity, float dt)
     {
         if (!entity.IsAlive) return;
-
-        // Resume walking when conversation ends.
-        // Minimum 0.5s pause gives the async TriggerConversation time to start.
-        // Then check IsIdle (no active script) rather than MayConverse.
-        if (_isPaused
-            && (DateTime.UtcNow - _pauseStartTime).TotalSeconds >= 0.5
-            && I.Get<engine.narration.NarrationManager>().IsIdle())
-        {
-            _resumeWalking();
-        }
 
         // Navigate (speed=0 when paused → no movement)
         Navigator.NavigatorBehave(dt);
@@ -169,7 +165,7 @@ public class TaleWalkBehavior : ANearbyBehavior
             var currentStorylet = taleManager.GetCurrentStorylet(_npcId);
             if (currentStorylet == null) return;
 
-            // Stop walking
+            // Stop walking and subscribe to script-ended event
             _pauseWalking();
 
             // Inject NPC props and resolve script
@@ -182,7 +178,19 @@ public class TaleWalkBehavior : ANearbyBehavior
         catch (Exception e)
         {
             Error($"TALE WALK: Exception in OnAction: {e.Message}\n{e.StackTrace}");
+            // On error, resume walking so the NPC isn't stuck
+            if (_isPaused) _resumeWalking();
         }
+    }
+
+    /// <summary>
+    /// Called when the narration script ends. This is the signal to resume walking.
+    /// </summary>
+    private void _onScriptEnded(Event ev)
+    {
+        if (!_isPaused) return;
+        Trace($"TALE WALK: NPC {_npcId} conversation ended, resuming walk");
+        _resumeWalking();
     }
 
     private void _pauseWalking()
@@ -190,15 +198,25 @@ public class TaleWalkBehavior : ANearbyBehavior
         _savedSpeed = Navigator.Speed;
         Navigator.Speed = 0;
         _isPaused = true;
-        _pauseStartTime = DateTime.UtcNow;
         _previousSpeed = float.MinValue; // force animation update to idle
+
+        // Subscribe to script-ended event to know when to resume
+        I.Get<SubscriptionManager>().Subscribe(ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
     }
 
     private void _resumeWalking()
     {
+        _unsubscribeScriptEnded();
         Navigator.Speed = _savedSpeed;
         _isPaused = false;
         _previousSpeed = float.MinValue; // force animation update back to walk
-        Trace($"TALE WALK: NPC {_npcId} resuming walk");
+    }
+
+    private void _unsubscribeScriptEnded()
+    {
+        if (_isPaused)
+        {
+            I.Get<SubscriptionManager>().Unsubscribe(ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
+        }
     }
 }
