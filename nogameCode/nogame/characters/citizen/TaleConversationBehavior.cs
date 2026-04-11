@@ -48,17 +48,17 @@ public class TaleConversationBehavior : ANearbyBehavior
 
     public override void InRange(in engine.Engine engine0, in Entity entity)
     {
-        Trace($"TALE CONVERSATION: NPC {_npcId} InRange called (isTier2={_strategy?._isTier2})");
-
         // Handle Tier 2 → Tier 1 promotion (replaces TaleEntityBehavior)
         if (_strategy != null && _strategy._isTier2)
         {
+            Trace($"TALE CONVERSATION: NPC {_npcId} InRange: promoting Tier 2 → Tier 1");
             _strategy.ExitTier2Mode();
             I.Get<TaleManager>().ClearTier2(_npcId);
-            Trace($"TALE CONVERSATION: NPC {_npcId} promoted from Tier 2 to Tier 1.");
             return;
         }
 
+        bool mayConverse = I.Get<Narration>().MayConverse();
+        Trace($"TALE CONVERSATION: NPC {_npcId} InRange: mayConverse={mayConverse}");
         base.InRange(engine0, entity);
     }
 
