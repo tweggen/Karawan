@@ -72,6 +72,9 @@ public static class BehaviorBugfixTests
         failures += RunTest("BugA: Without ActivityBehavior, IdleBehavior is used (regression)",
             () => TestBugA_DefaultIdleBehaviorWithoutActivityBehavior(engine));
 
+        failures += RunTest("BugA: TaleConversationBehavior set on initial spawn",
+            () => TestBugA_ConversationBehaviorOnInitialSpawn(engine));
+
         failures += RunTest("BugA: TaleConversationBehavior set after travel completion",
             () => TestBugA_ConversationBehaviorAfterTravelCompletion(engine));
 
@@ -193,6 +196,52 @@ public static class BehaviorBugfixTests
     }
 
     /// <summary>
+    /// Bug A critical: On initial spawn, OnEnter calls _setupActivity before base.OnEnter,
+    /// so the very first activity phase already has TaleConversationBehavior.
+    /// Without this, NPC only gets conversation behavior after its first travel completes.
+    /// </summary>
+    private static bool TestBugA_ConversationBehaviorOnInitialSpawn(Engine engine)
+    {
+        var world = engine.GetEcsWorldAnyThread();
+        var entity = world.CreateEntity();
+
+        try
+        {
+            var taleManager = new TaleManager();
+            taleManager.Initialize(new StoryletLibrary(), 42);
+
+            var schedule = _createTestSchedule(50);
+            taleManager.RegisterNpc(schedule);
+
+            var cmd = _createTestCmd();
+            var pod = new PositionDescription { Position = new Vector3(5, 2, 5) };
+
+            if (!TaleEntityStrategy.TryCreate(schedule, taleManager, pod, cmd, out var strategy))
+                return false;
+
+            strategy.OnAttach(engine, entity);
+            strategy.OnEnter(); // initial spawn — must already have TaleConversationBehavior
+
+            if (!entity.Has<Behavior>())
+            {
+                Console.Write("(no Behavior on initial spawn) ");
+                return false;
+            }
+
+            var behavior = entity.Get<Behavior>();
+            if (behavior.Provider is TaleConversationBehavior)
+                return true;
+
+            Console.Write($"(got {behavior.Provider?.GetType().Name} on initial spawn) ");
+            return false;
+        }
+        finally
+        {
+            if (entity.IsAlive) entity.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Bug A integration: After the travel→activity transition (which calls _setupActivity),
     /// the entity's behavior should be TaleConversationBehavior, not IdleBehavior.
     ///
@@ -220,12 +269,12 @@ public static class BehaviorBugfixTests
                 return false;
 
             strategy.OnAttach(engine, entity);
-            strategy.OnEnter(); // enters initial "activity" (no _setupActivity yet)
+            strategy.OnEnter(); // enters initial "activity" with _setupActivity
 
-            // Initial state should be IdleBehavior (no _setupActivity called yet)
-            if (!entity.Has<Behavior>() || !(entity.Get<Behavior>().Provider is IdleBehavior))
+            // Initial state should now be TaleConversationBehavior (OnEnter calls _setupActivity)
+            if (!entity.Has<Behavior>() || !(entity.Get<Behavior>().Provider is TaleConversationBehavior))
             {
-                Console.Write("(initial state not IdleBehavior) ");
+                Console.Write("(initial state not TaleConversationBehavior) ");
                 return false;
             }
 

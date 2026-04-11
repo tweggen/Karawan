@@ -462,6 +462,9 @@ public class TaleEntityStrategy : AOneOfStrategy
 
     public override void OnEnter()
     {
+        // Configure initial activity BEFORE base.OnEnter triggers the start strategy,
+        // so StayAtStrategyPart.OnEnter has ActivityBehavior (TaleConversationBehavior) set.
+        _setupActivity();
         base.OnEnter();
         var sm = I.Get<SubscriptionManager>();
         sm.Subscribe(EntityStrategy.CrashEventPath(_entity), _onCrashEvent);
