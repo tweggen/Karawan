@@ -26,6 +26,7 @@ public class TaleConversationBehavior : ANearbyBehavior
     private Narration _narration;
     private int _npcId;
     private bool _animationSet = false;
+    private TaleEntityStrategy _strategy;
 
     public CharacterModelDescription CharacterModelDescription;
 
@@ -39,9 +40,24 @@ public class TaleConversationBehavior : ANearbyBehavior
 
     public override float Distance { get; set; } = 12f;
 
-    public TaleConversationBehavior(int npcId)
+    public TaleConversationBehavior(int npcId, TaleEntityStrategy strategy = null)
     {
         _npcId = npcId;
+        _strategy = strategy;
+    }
+
+    public override void InRange(in engine.Engine engine0, in Entity entity)
+    {
+        // Handle Tier 2 → Tier 1 promotion (replaces TaleEntityBehavior)
+        if (_strategy != null && _strategy._isTier2)
+        {
+            _strategy.ExitTier2Mode();
+            I.Get<TaleManager>().ClearTier2(_npcId);
+            Trace($"TALE CONVERSATION: NPC {_npcId} promoted from Tier 2 to Tier 1.");
+            return;
+        }
+
+        base.InRange(engine0, entity);
     }
 
     public override void OnAttach(in engine.Engine engine0, in Entity entity0)

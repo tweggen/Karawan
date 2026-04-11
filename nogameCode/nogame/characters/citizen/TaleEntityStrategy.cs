@@ -365,7 +365,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         {
             try
             {
-                var conversationBehavior = new TaleConversationBehavior(_npcId)
+                var conversationBehavior = new TaleConversationBehavior(_npcId, this)
                 {
                     CharacterModelDescription = _cmd
                 };

@@ -276,9 +276,8 @@ public class TaleSpawnOperator : ISpawnOperator
                     // Stamp entity with NPC ID for position sync during dematerialization
                     e.Set(new engine.tale.components.TaleNpcId { NpcId = npcId });
 
-                    // Set up behavior provider for Tier 2 ↔ Tier 1 transitions
-                    var taleEntityBehavior = new TaleEntityBehavior(taleStrategy);
-                    e.Set(new engine.behave.components.Behavior { Provider = taleEntityBehavior });
+                    // Behavior component is already set by the strategy's OnEnter
+                    // (TaleConversationBehavior handles both "E to Talk" and Tier 2→1 promotion)
 
                     I.Get<engine.joyce.TransformApi>().SetTransforms(
                         e,
