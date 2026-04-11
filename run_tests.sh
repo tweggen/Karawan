@@ -85,6 +85,17 @@ elif [ "$FILTER" = "phaseC3" ]; then
     PHASES=("phaseC3-tone")
 elif [ "$FILTER" = "phaseC4" ]; then
     PHASES=("phaseC4-trust")
+elif [ "$FILTER" = "bugfix" ]; then
+    # Entity-level behavior bugfix tests (not DES simulation)
+    echo -e "${YELLOW}=== Entity Behavior Bugfix Tests ===${NC}"
+    ( JOYCE_TEST_SCRIPT="entity-behavior-tests" dotnet "$TESTRUNNER_DLL" 2>&1 ) | tee /tmp/test_output.log
+    if grep -q "\[TEST\].*PASS" /tmp/test_output.log; then
+        echo -e "${GREEN}All bugfix tests passed!${NC}"
+        exit 0
+    else
+        echo -e "${RED}Bugfix tests failed!${NC}"
+        exit 1
+    fi
 else
     # Assume it's a specific test file
     PHASES=()

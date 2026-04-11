@@ -167,6 +167,15 @@ public class TestRunnerMain
             Console.Error.WriteLine($"Error activating TestDriverModule: {ex.Message}");
         }
 
+        // Entity-level behavior tests (not DES simulation)
+        if (testScript == "entity-behavior-tests")
+        {
+            Console.WriteLine("Running entity-level behavior bugfix tests...");
+            int failures = BehaviorBugfixTests.RunAll(e);
+            Console.WriteLine(failures == 0 ? "[TEST] PASS" : "[TEST] FAIL");
+            Environment.Exit(failures == 0 ? 0 : 1);
+        }
+
         Console.WriteLine("Starting test execution...");
 
         bool isPhase6 = testScript.Contains("phase6");
