@@ -142,6 +142,8 @@ public class TaleWalkBehavior : ANearbyBehavior
 
     protected override void OnAction(Event ev)
     {
+        ev.IsHandled = true;
+
         try
         {
             // Reuse TaleConversationBehavior's cooldown

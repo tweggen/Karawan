@@ -129,6 +129,8 @@ public class TaleConversationBehavior : ANearbyBehavior
 
     protected override void OnAction(Event ev)
     {
+        ev.IsHandled = true;
+
         try
         {
             // Phase C4: Cooldown - suppress repeated conversations with the same NPC
