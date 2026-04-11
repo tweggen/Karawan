@@ -467,7 +467,10 @@ public class NarrationManager : AModule
             case State.Conversation:
                 return true; // Conversations are interruptible
             case State.Narration:
-                return newState is State.Narration or State.ScriptedScene;
+                // Narrations can be interrupted by conversations (player talks to NPC)
+                // or return to idle (script ends). Only ScriptedScene is non-interruptible.
+                return newState is State.Narration or State.ScriptedScene
+                    or State.Conversation or State.Idle;
             case State.ScriptedScene:
                 return newState == State.ScriptedScene;
             default:
@@ -482,7 +485,10 @@ public class NarrationManager : AModule
 
         _currentState = newState;
 
-        _mayConverse = newState is State.Idle or State.Conversation;
+        // Only ScriptedScene (cutscenes) blocks NPC conversations.
+        // Narration state allows "E to Talk" — quest narrations shouldn't
+        // prevent the player from talking to NPCs in the world.
+        _mayConverse = newState is not State.ScriptedScene;
         _shallBeInteractive = newState is not State.ScriptedScene;
 
         _pushEvent(new NarrationStateEvent(_mayConverse, _shallBeInteractive));
