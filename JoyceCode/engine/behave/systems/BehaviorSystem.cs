@@ -153,6 +153,7 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
     protected override void PostUpdate(float dt)
     {
         base.PostUpdate(dt);
+        _engine.OnBehaviorPostUpdate?.Invoke(dt);
     }
 
 

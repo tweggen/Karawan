@@ -1,3 +1,4 @@
+using System.Numerics;
 using engine;
 using engine.joyce.components;
 
@@ -15,9 +16,12 @@ public class UpdateEmissionContext : AController
             }
         }
         {
-            if (_engine.Camera.TryGet(out var eCamera))
+            if (_engine.Camera.TryGet(out var eCamera) && eCamera.Has<Transform3ToWorld>())
             {
-                ectx.CameraPos = eCamera.Get<Transform3ToWorld>().Matrix.Translation;
+                var camMatrix = eCamera.Get<Transform3ToWorld>().Matrix;
+                ectx.CameraPos = camMatrix.Translation;
+                // Row 3 of the transform matrix is the forward (-Z) direction
+                ectx.CameraForward = -new Vector3(camMatrix.M31, camMatrix.M32, camMatrix.M33);
             }
         }
         I.Get<engine.news.EmissionContext>()?.UpdateFrom(ectx);

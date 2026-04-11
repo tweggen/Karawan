@@ -110,6 +110,12 @@ public class Engine
     public event EventHandler<float> OnLogicalFrame;
     public event EventHandler<float> OnAfterPhysics;
 
+    /// <summary>
+    /// Invoked after BehaviorSystem processes all entities each frame.
+    /// Used by game layer for best-candidate interactable selection.
+    /// </summary>
+    public Action<float> OnBehaviorPostUpdate;
+
     public event EventHandler<float> OnImGuiRender;
 
     private CameraInfo? _cameraInfo;

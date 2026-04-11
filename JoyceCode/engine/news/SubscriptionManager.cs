@@ -16,11 +16,13 @@ public class EmissionContext
 {
     public Vector3 PlayerPos;
     public Vector3 CameraPos;
+    public Vector3 CameraForward;
 
     public void UpdateFrom(EmissionContext o)
     {
         PlayerPos = o.PlayerPos;
         CameraPos = o.CameraPos;
+        CameraForward = o.CameraForward;
     }
 }
 
