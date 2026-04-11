@@ -121,6 +121,12 @@ public class Narration : AModule, IInputPart
     }
 
 
+    public void CancelConversation()
+    {
+        M<NarrationManager>().CancelScript();
+    }
+
+
     #region Display
 
     private void _prepareSentence()

@@ -445,6 +445,17 @@ public class NarrationManager : AModule
     }
 
 
+    /// <summary>
+    /// Cancel the currently active script, returning to Idle.
+    /// Used when an external event (e.g., NPC hit by car) makes
+    /// continuing the conversation nonsensical.
+    /// </summary>
+    public void CancelScript()
+    {
+        _endScript();
+    }
+
+
     private void _pushEvent(Event ev)
     {
         try

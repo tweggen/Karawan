@@ -130,11 +130,13 @@ public class TaleWalkBehavior : ANearbyBehavior
         {
             if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyWeapon))
             {
+                if (_isPaused) _cancelConversation("hit");
                 I.Get<engine.news.EventQueue>().Push(
                     new Event(EntityStrategy.HitEventPath(me.Entity), ""));
             }
             if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyVehicle))
             {
+                if (_isPaused) _cancelConversation("crash");
                 I.Get<engine.news.EventQueue>().Push(
                     new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
             }
@@ -191,6 +193,16 @@ public class TaleWalkBehavior : ANearbyBehavior
         if (!_isPaused) return;
         Trace($"TALE WALK: NPC {_npcId} conversation ended, resuming walk");
         _resumeWalking();
+    }
+
+    /// <summary>
+    /// Cancel the active conversation (e.g., NPC was hit by a car mid-dialog).
+    /// </summary>
+    private void _cancelConversation(string reason)
+    {
+        Trace($"TALE WALK: NPC {_npcId} conversation cancelled ({reason})");
+        I.Get<Narration>().CancelConversation();
+        // _onScriptEnded will fire from the cancel → resumes walking
     }
 
     private void _pauseWalking()

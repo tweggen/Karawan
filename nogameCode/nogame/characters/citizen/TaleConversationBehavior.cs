@@ -116,14 +116,26 @@ public class TaleConversationBehavior : ANearbyBehavior
         {
             if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyWeapon))
             {
+                _cancelIfConversing("hit");
                 I.Get<engine.news.EventQueue>().Push(
                     new engine.news.Event(EntityStrategy.HitEventPath(me.Entity), ""));
             }
             if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyVehicle))
             {
+                _cancelIfConversing("crash");
                 I.Get<engine.news.EventQueue>().Push(
                     new engine.news.Event(EntityStrategy.CrashEventPath(me.Entity), ""));
             }
+        }
+    }
+
+    private void _cancelIfConversing(string reason)
+    {
+        var narration = I.Get<Narration>();
+        if (narration != null && !narration.MayConverse())
+        {
+            Trace($"TALE CONVERSATION: NPC {_npcId} conversation cancelled ({reason})");
+            narration.CancelConversation();
         }
     }
 
