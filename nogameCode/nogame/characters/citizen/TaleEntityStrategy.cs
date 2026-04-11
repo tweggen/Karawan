@@ -464,7 +464,9 @@ public class TaleEntityStrategy : AOneOfStrategy
     {
         // Configure initial activity BEFORE base.OnEnter triggers the start strategy,
         // so StayAtStrategyPart.OnEnter has ActivityBehavior (TaleConversationBehavior) set.
+        Trace($"TALE ENTITY: NPC {_npcId} OnEnter: calling _setupActivity before base.OnEnter");
         _setupActivity();
+        Trace($"TALE ENTITY: NPC {_npcId} OnEnter: ActivityBehavior={_stayAt.ActivityBehavior?.GetType().Name ?? "null"}");
         base.OnEnter();
         var sm = I.Get<SubscriptionManager>();
         sm.Subscribe(EntityStrategy.CrashEventPath(_entity), _onCrashEvent);

@@ -48,6 +48,8 @@ public class TaleConversationBehavior : ANearbyBehavior
 
     public override void InRange(in engine.Engine engine0, in Entity entity)
     {
+        Trace($"TALE CONVERSATION: NPC {_npcId} InRange called (isTier2={_strategy?._isTier2})");
+
         // Handle Tier 2 → Tier 1 promotion (replaces TaleEntityBehavior)
         if (_strategy != null && _strategy._isTier2)
         {
@@ -65,6 +67,7 @@ public class TaleConversationBehavior : ANearbyBehavior
         base.OnAttach(engine0, entity0);
         EPOI = entity0;
         _animationSet = false;
+        Trace($"TALE CONVERSATION: NPC {_npcId} TaleConversationBehavior.OnAttach called");
 
         if (entity0.Has<engine.physics.components.Body>())
         {

@@ -56,10 +56,12 @@ public class StayAtStrategyPart : AEntityStrategyPart
         {
             if (ActivityBehavior != null)
             {
+                Trace($"StayAtStrategyPart: Using ActivityBehavior ({ActivityBehavior.GetType().Name})");
                 _entity.Set(new engine.behave.components.Behavior(ActivityBehavior));
             }
             else
             {
+                Trace($"StayAtStrategyPart: Using default IdleBehavior");
                 _idleBehavior = new IdleBehavior
                 {
                     CharacterModelDescription = CharacterModelDescription
