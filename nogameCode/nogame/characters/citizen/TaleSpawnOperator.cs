@@ -279,6 +279,20 @@ public class TaleSpawnOperator : ISpawnOperator
                     // Behavior component is already set by the strategy's OnEnter
                     // (TaleConversationBehavior handles both "E to Talk" and Tier 2→1 promotion)
 
+                    // Post-spawn health check: verify conversation behavior survived setup
+                    if (e.Has<engine.behave.components.Behavior>())
+                    {
+                        var beh = e.Get<engine.behave.components.Behavior>();
+                        if (beh.Provider is not nogame.tools.ANearbyBehavior)
+                        {
+                            Warning($"TALE SPAWN: NPC {npcId} behavior is {beh.Provider?.GetType().Name ?? "null"}, expected ANearbyBehavior! E-to-Talk will not work.");
+                        }
+                    }
+                    else if (!spawnInTravel)
+                    {
+                        Warning($"TALE SPAWN: NPC {npcId} has no Behavior component after setup!");
+                    }
+
                     I.Get<engine.joyce.TransformApi>().SetTransforms(
                         e,
                         true,

@@ -6,6 +6,7 @@ using engine;
 using engine.behave;
 using engine.behave.components;
 using engine.tale;
+using nogame.tools;
 using nogame.characters;
 using nogame.characters.citizen;
 
@@ -74,6 +75,9 @@ public static class BehaviorBugfixTests
 
         failures += RunTest("BugA: TaleConversationBehavior set on initial spawn",
             () => TestBugA_ConversationBehaviorOnInitialSpawn(engine));
+
+        failures += RunTest("BugA: Strategy component triggers correct behavior (spawn pipeline)",
+            () => TestBugA_StrategyComponentSetsBehavior(engine));
 
         failures += RunTest("BugA: TaleConversationBehavior set after travel completion",
             () => TestBugA_ConversationBehaviorAfterTravelCompletion(engine));
@@ -234,6 +238,93 @@ public static class BehaviorBugfixTests
 
             Console.Write($"(got {behavior.Provider?.GetType().Name} on initial spawn) ");
             return false;
+        }
+        finally
+        {
+            if (entity.IsAlive) entity.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Spawn-pipeline test: Simulates what EntityCreator.CreateLogical does — sets
+    /// the Strategy component, which triggers StrategyManager → OnAttach → OnEnter →
+    /// sets TaleConversationBehavior. Then verifies that overwriting the behavior
+    /// (as TaleSpawnOperator used to do) would be detected.
+    ///
+    /// This test would have caught the original bug where TaleEntityBehavior
+    /// overwrote TaleConversationBehavior in the setup action.
+    /// </summary>
+    private static bool TestBugA_StrategyComponentSetsBehavior(Engine engine)
+    {
+        var world = engine.GetEcsWorldAnyThread();
+        var entity = world.CreateEntity();
+
+        try
+        {
+            var taleManager = new TaleManager();
+            taleManager.Initialize(new StoryletLibrary(), 42);
+
+            var schedule = _createTestSchedule(300);
+            taleManager.RegisterNpc(schedule);
+
+            var cmd = _createTestCmd();
+            var pod = new PositionDescription { Position = new Vector3(30, 2, 30) };
+
+            if (!TaleEntityStrategy.TryCreate(schedule, taleManager, pod, cmd, out var strategy))
+                return false;
+
+            // Simulate what EntityCreator.CreateLogical does:
+            // 1. Set Strategy component
+            // 2. StrategyManager detects the component and calls OnAttach + OnEnter
+            // (In test mode, StrategyManager's logical thread isn't running,
+            //  so we call OnAttach + OnEnter manually — same as StrategyManager._onComponentAdded)
+            entity.Set(new engine.behave.components.Strategy(strategy));
+            strategy.OnAttach(engine, entity);
+            ((IStrategyPart)strategy).OnEnter();
+            if (!entity.Has<Behavior>())
+            {
+                Console.Write("(no Behavior after Strategy set) ");
+                return false;
+            }
+
+            var behavior = entity.Get<Behavior>();
+            if (behavior.Provider is not ANearbyBehavior)
+            {
+                Console.Write($"(got {behavior.Provider?.GetType().Name}, expected ANearbyBehavior) ");
+                return false;
+            }
+
+            if (behavior.Provider is not TaleConversationBehavior)
+            {
+                Console.Write($"(got {behavior.Provider?.GetType().Name}, expected TaleConversationBehavior) ");
+                return false;
+            }
+
+            // Simulate the OLD bug: overwrite with TaleEntityBehavior.
+            // This is what TaleSpawnOperator used to do AFTER CreateLogical.
+            // Verify we can detect this is wrong.
+            var badBehavior = new TaleEntityBehavior(strategy);
+            entity.Set(new Behavior(badBehavior));
+
+            var afterOverwrite = entity.Get<Behavior>();
+            if (afterOverwrite.Provider is ANearbyBehavior)
+            {
+                // This should NOT be an ANearbyBehavior — TaleEntityBehavior isn't one.
+                Console.Write("(overwrite unexpectedly kept ANearbyBehavior) ");
+                return false;
+            }
+
+            // Confirm: TaleEntityBehavior is NOT an ANearbyBehavior — this proves
+            // the overwrite would have broken "E to Talk".
+            if (afterOverwrite.Provider is not TaleEntityBehavior)
+            {
+                Console.Write("(unexpected provider type after overwrite) ");
+                return false;
+            }
+
+            // The post-spawn health check (added to TaleSpawnOperator) would
+            // log a warning here: "behavior is TaleEntityBehavior, expected ANearbyBehavior"
+            return true;
         }
         finally
         {

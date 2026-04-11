@@ -39,6 +39,10 @@ public class BehaviorManager : AComponentWatcher<components.Behavior>
         }
         else
         {
+            string oldName = oldProvider?.GetType().Name ?? "null";
+            string newName = newProvider?.GetType().Name ?? "null";
+            Trace($"Behavior changed: {oldName} → {newName}");
+
             if (null != oldProvider)
             {
                 oldProvider.OnDetach(entity);
