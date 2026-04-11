@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using builtin.tools;
 using DefaultEcs;
@@ -26,6 +27,14 @@ public class GoToStrategyPart : AEntityStrategyPart
 
     /// <summary>Optional pre-computed route (from StreetRouteBuilder). If null, uses straight-line.</summary>
     public SegmentRoute PrecomputedRoute { get; set; }
+
+    /// <summary>
+    /// Optional factory to create a custom behavior wrapping the walk navigator.
+    /// If set, receives the SegmentNavigator and returns the behavior to use
+    /// instead of the default WalkBehavior. Used by TaleEntityStrategy to create
+    /// TaleWalkBehavior with conversation support.
+    /// </summary>
+    public Func<SegmentNavigator, engine.behave.IBehavior> TravelBehaviorFactory { get; set; } = null;
 
     private SegmentNavigator _navigator;
     private WalkBehavior _walkBehavior;
@@ -114,13 +123,20 @@ public class GoToStrategyPart : AEntityStrategyPart
         };
         _navigator.Speed = CharacterState.BasicSpeed;
 
-        _walkBehavior = new WalkBehavior
+        if (TravelBehaviorFactory != null)
         {
-            CharacterModelDescription = CharacterModelDescription,
-            Navigator = _navigator
-        };
-
-        _entity.Set(new engine.behave.components.Behavior(_walkBehavior));
+            var customBehavior = TravelBehaviorFactory(_navigator);
+            _entity.Set(new engine.behave.components.Behavior(customBehavior));
+        }
+        else
+        {
+            _walkBehavior = new WalkBehavior
+            {
+                CharacterModelDescription = CharacterModelDescription,
+                Navigator = _navigator
+            };
+            _entity.Set(new engine.behave.components.Behavior(_walkBehavior));
+        }
     }
 
 

@@ -311,6 +311,13 @@ public class TaleEntityStrategy : AOneOfStrategy
         else
             Trace($"TALE ENTITY: NPC {_npcId} triggering travel with route ({route.Segments.Count} segments)");
 
+        // Enable "E to Talk" during travel for TALE NPCs
+        _goTo.TravelBehaviorFactory = (navigator) => new TaleWalkBehavior(_npcId, this)
+        {
+            CharacterModelDescription = _cmd,
+            Navigator = navigator
+        };
+
         TriggerStrategy("travel");
     }
 
@@ -444,6 +451,13 @@ public class TaleEntityStrategy : AOneOfStrategy
         _goTo.Destination = dest;
         _goTo.CurrentPosition = _currentPosition;
         _goTo.PrecomputedRoute = route;
+        // Enable "E to Talk" during travel for TALE NPCs
+        _goTo.TravelBehaviorFactory = (navigator) => new TaleWalkBehavior(_npcId, this)
+        {
+            CharacterModelDescription = _cmd,
+            Navigator = navigator
+        };
+
         Trace($"TALE ENTITY: NPC {_npcId} spawning in travel to {dest} (from {_currentPosition.Position}, route={route?.Segments.Count ?? 0} segments)");
         TriggerStrategy("travel");
     }

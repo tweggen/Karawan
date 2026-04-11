@@ -31,8 +31,20 @@ public class TaleConversationBehavior : ANearbyBehavior
     public CharacterModelDescription CharacterModelDescription;
 
     // Phase C4: Cooldown to suppress repeated conversations with the same NPC
+    // Shared with TaleWalkBehavior via static accessors
     private static readonly Dictionary<int, DateTime> _lastConversationTime = new();
     private const int CooldownSeconds = 30;
+
+    public static bool IsOnCooldown(int npcId)
+    {
+        return _lastConversationTime.TryGetValue(npcId, out var lastTime)
+            && (DateTime.UtcNow - lastTime).TotalSeconds < CooldownSeconds;
+    }
+
+    public static void SetCooldown(int npcId)
+    {
+        _lastConversationTime[npcId] = DateTime.UtcNow;
+    }
 
     public override string Prompt => "E to Talk";
 

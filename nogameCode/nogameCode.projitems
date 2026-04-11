@@ -30,6 +30,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleEntityStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleConversationBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleEntityBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleWalkBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleSpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\WalkStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\StreetRouteBuilder.cs" />
