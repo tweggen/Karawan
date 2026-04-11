@@ -87,8 +87,9 @@ public class TaleEntityStrategy : AOneOfStrategy
         }
         else if (strategy == Strategies["flee"] || strategy == Strategies["recover"])
         {
-            // After flee/recover → resume activity or travel
+            // After flee/recover → resume activity with fresh schedule state
             Trace($"TALE ENTITY: NPC {_npcId} flee/recover complete, resuming activity");
+            _setupActivity();
             TriggerStrategy("activity");
         }
     }
@@ -176,7 +177,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         if (_entity.IsAlive && _entity.Has<Behavior>())
         {
             var behavior = _entity.Get<Behavior>();
-            if (behavior is TaleConversationBehavior)
+            if (behavior.Provider is TaleConversationBehavior)
             {
                 _entity.Remove<Behavior>();
                 Trace($"TALE ENTITY: NPC {_npcId} conversation behavior detached");
@@ -359,19 +360,27 @@ public class TaleEntityStrategy : AOneOfStrategy
             Trace($"TALE ENTITY: NPC {_npcId} spatial model NULL for cluster {schedule.ClusterIndex}!");
         }
 
-        // Attach conversation behavior to outdoor NPCs only
+        // Set conversation behavior for outdoor NPCs (used by StayAtStrategyPart.OnEnter)
         if (!_stayAt.IsIndoorActivity)
         {
             try
             {
-                var conversationBehavior = new TaleConversationBehavior(_npcId);
-                _entity.Set(new Behavior(conversationBehavior));
-                Trace($"TALE ENTITY: NPC {_npcId} conversation behavior attached");
+                var conversationBehavior = new TaleConversationBehavior(_npcId)
+                {
+                    CharacterModelDescription = _cmd
+                };
+                _stayAt.ActivityBehavior = conversationBehavior;
+                Trace($"TALE ENTITY: NPC {_npcId} conversation behavior prepared");
             }
             catch (Exception e)
             {
-                Trace($"TALE ENTITY: NPC {_npcId} failed to attach conversation behavior: {e.Message}");
+                _stayAt.ActivityBehavior = null;
+                Trace($"TALE ENTITY: NPC {_npcId} failed to prepare conversation behavior: {e.Message}");
             }
+        }
+        else
+        {
+            _stayAt.ActivityBehavior = null;
         }
 
         // Sync position now that we've arrived at destination

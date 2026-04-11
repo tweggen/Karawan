@@ -31,6 +31,12 @@ public class StayAtStrategyPart : AEntityStrategyPart
     /// </summary>
     public bool IsIndoorActivity { get; set; } = false;
 
+    /// <summary>
+    /// Optional custom behavior to use instead of IdleBehavior during outdoor activity.
+    /// Set by TaleEntityStrategy._setupActivity() for TALE NPCs (e.g. TaleConversationBehavior).
+    /// </summary>
+    public IBehavior ActivityBehavior { get; set; } = null;
+
     private IdleBehavior _idleBehavior;
     private Timer _stayTimer;
     private int _timerGeneration = 0;
@@ -48,12 +54,19 @@ public class StayAtStrategyPart : AEntityStrategyPart
         // Only set up idle behavior if this is an outdoor activity
         if (!IsIndoorActivity)
         {
-            _idleBehavior = new IdleBehavior
+            if (ActivityBehavior != null)
             {
-                CharacterModelDescription = CharacterModelDescription
-            };
+                _entity.Set(new engine.behave.components.Behavior(ActivityBehavior));
+            }
+            else
+            {
+                _idleBehavior = new IdleBehavior
+                {
+                    CharacterModelDescription = CharacterModelDescription
+                };
 
-            _entity.Set(new engine.behave.components.Behavior(_idleBehavior));
+                _entity.Set(new engine.behave.components.Behavior(_idleBehavior));
+            }
         }
         else
         {

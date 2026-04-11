@@ -4,7 +4,9 @@ using builtin.tools;
 using DefaultEcs;
 using engine;
 using engine.behave.components;
+using engine.joyce.components;
 using engine.news;
+using engine.physics;
 using engine.tale;
 using nogame.modules.story;
 using nogame.modules.tale;
@@ -23,6 +25,9 @@ public class TaleConversationBehavior : ANearbyBehavior
     private TaleManager _taleManager;
     private Narration _narration;
     private int _npcId;
+    private bool _animationSet = false;
+
+    public CharacterModelDescription CharacterModelDescription;
 
     // Phase C4: Cooldown to suppress repeated conversations with the same NPC
     private static readonly Dictionary<int, DateTime> _lastConversationTime = new();
@@ -37,6 +42,58 @@ public class TaleConversationBehavior : ANearbyBehavior
     public TaleConversationBehavior(int npcId)
     {
         _npcId = npcId;
+    }
+
+    public override void OnAttach(in engine.Engine engine0, in Entity entity0)
+    {
+        base.OnAttach(engine0, entity0);
+        EPOI = entity0;
+        _animationSet = false;
+
+        if (entity0.Has<engine.physics.components.Body>())
+        {
+            ref var cBody = ref entity0.Get<engine.physics.components.Body>();
+            cBody.PhysicsObject?.MakeKinematic(ref cBody.Reference);
+        }
+    }
+
+    public override void Behave(in Entity entity, float dt)
+    {
+        if (!entity.IsAlive) return;
+
+        if (!_animationSet)
+        {
+            _animationSet = true;
+            if (entity.Has<GPUAnimationState>() && entity.Has<FromModel>())
+            {
+                ref var cGpuAnimationState = ref entity.Get<GPUAnimationState>();
+                ref var cFromModel = ref entity.Get<FromModel>();
+                ref var model = ref cFromModel.Model;
+                cGpuAnimationState.AnimationState?.SetAnimation(
+                    model, CharacterModelDescription.IdleAnimName, 0);
+            }
+        }
+    }
+
+    public override void OnCollision(ContactEvent cev)
+    {
+        base.OnCollision(cev);
+        var me = cev.ContactInfo.PropertiesA;
+        var other = cev.ContactInfo.PropertiesB;
+
+        if (other != null)
+        {
+            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyWeapon))
+            {
+                I.Get<engine.news.EventQueue>().Push(
+                    new engine.news.Event(EntityStrategy.HitEventPath(me.Entity), ""));
+            }
+            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyVehicle))
+            {
+                I.Get<engine.news.EventQueue>().Push(
+                    new engine.news.Event(EntityStrategy.CrashEventPath(me.Entity), ""));
+            }
+        }
     }
 
     protected override void OnAction(Event ev)

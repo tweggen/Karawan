@@ -122,7 +122,8 @@ public class RecoverBehavior : ABehavior
     public override void OnAttach(in engine.Engine engine0, in Entity entity0)
     {
         base.OnAttach(engine0, entity0);
-        
+        _deathAnimationTriggered = false;
+
         /*
          * Do not make the thing dynamic, just let it fall.
          */
