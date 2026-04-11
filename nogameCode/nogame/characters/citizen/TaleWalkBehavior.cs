@@ -27,6 +27,7 @@ public class TaleWalkBehavior : ANearbyBehavior
     private TaleEntityStrategy _strategy;
     private bool _isPaused = false;
     private float _savedSpeed;
+    private DateTime _pauseStartTime;
     private float _previousSpeed = float.MinValue;
     private Quaternion _prevRotation = Quaternion.Identity;
 
@@ -77,8 +78,12 @@ public class TaleWalkBehavior : ANearbyBehavior
     {
         if (!entity.IsAlive) return;
 
-        // Resume walking when conversation ends
-        if (_isPaused && I.Get<Narration>().MayConverse())
+        // Resume walking when conversation ends.
+        // Minimum 0.5s pause gives the async TriggerConversation time to start.
+        // Then check IsIdle (no active script) rather than MayConverse.
+        if (_isPaused
+            && (DateTime.UtcNow - _pauseStartTime).TotalSeconds >= 0.5
+            && I.Get<engine.narration.NarrationManager>().IsIdle())
         {
             _resumeWalking();
         }
@@ -185,6 +190,7 @@ public class TaleWalkBehavior : ANearbyBehavior
         _savedSpeed = Navigator.Speed;
         Navigator.Speed = 0;
         _isPaused = true;
+        _pauseStartTime = DateTime.UtcNow;
         _previousSpeed = float.MinValue; // force animation update to idle
     }
 
