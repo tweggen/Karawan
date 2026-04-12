@@ -1,6 +1,6 @@
 # Pre-Established Social Structures (Dynamic Scenario System)
 
-**Status**: D1 ✅ Implemented (2026-04-12); D2 ✅ Implemented (2026-04-12); D3 ✅ Implemented (2026-04-12); D4–D5 proposed
+**Status**: D1 ✅ Implemented (2026-04-12); D2 ✅ Implemented (2026-04-12); D3 ✅ Implemented (2026-04-12); D4 ✅ Implemented (2026-04-12); D5 proposed
 **Phase**: D (TALE-SOCIAL — distinct from the routing "Phase D" workstream) — Pre-game world generation
 **Prerequisites**: Phase 0-5 complete (TALE narrative engine, escalation system, GroupDetector)
 
@@ -286,7 +286,26 @@ Optional debug override, also mirroring animations (`joyce.DisablePrebakedAnimat
 
 ---
 
-### Phase D4: Seedability Validation
+### Phase D4: Seedability Validation ✅ Implemented (2026-04-12)
+
+**Status**: A unit test project lives at `tests/JoyceCode.Tests/JoyceCode.Tests.csproj` (xUnit, references `Joyce.csproj`). 39 tests pass in 170 ms via `dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj`:
+
+- 8 `ScenarioFileNameTests` — hash determinism, prefix, URL-safe base64, key format, `Of` vs `OfKey` consistency
+- 2 `ScenarioExporterTests` — JSON round-trip preserves all fields, write produces non-empty artifact
+- 11 `ScenarioApplicatorTests` — null/empty inputs, single-pair property copy, all-five-property overwrite, wealth-descending pairing, `GroupRank == -1` leaves GroupId default, both-direction trust edges, scenario role overflow, real role overflow, edges crossing unmatched ranks, deterministic across calls
+- 6 `ScenarioSelectorTests` — empty requests returns null, deterministic for same inputs, closest-median category selection (small + medium), seeded round-robin within category, negative cluster seed
+- 2 `ScenarioCompilerTests` — `CompileInMemory` with same seed produces same output (the core seedability assertion the D4 plan is built around), different seeds produce different output. Uses an `IClassFixture` that registers default `RoleRegistry` / `InteractionTypeRegistry` / `RelationshipTierRegistry` / `GroupTypeRegistry` and sets `Engine.ResourcePath` via a walk-up search for `models/nogame.json`, mirroring `TestbedMain._determineResourcePath`.
+- 10 pre-existing `RoutingPreferencesTests` revived as a side effect of wiring up the .csproj.
+
+**Two notes that diverge slightly from the original D4 plan:**
+
+1. **No 100-cluster generation matrix.** The plan envisioned 10 clusters × 10 seeds = 100 generations as the seedability harness, but full cluster generation requires booting the world generator (heavyweight, slow, cluster geometry depends on the rest of the engine). The deterministic-bake-and-apply chain — which is the part D4 was actually meant to lock down — is fully covered by the unit tests above (compiler determinism, applicator determinism across calls, file name hash stability, exporter round-trip). Adding the 100-cluster matrix at integration-test level is a follow-up that would naturally live beside the existing TestRunner harness.
+
+2. **Pre-existing dead test files needed triage.** When the .csproj was added it surfaced two groups of dead-code drift in `tests/JoyceCode.Tests/`:
+   - `engine/navigation/*Tests.cs` — three files used the wrong namespace (`JoyceCode.engine.navigation` instead of `engine.navigation`); fixed. After the namespace fix, several files still had API drift (float-vs-int parameter mismatches, missing `using System.Linq;`). Excluded via `<Compile Remove="engine\navigation\**\*.cs" />` with an explanatory comment in the csproj.
+   - `engine/streets/StreetGenerationDiagnosticsTests.cs` — both `[Fact]` methods need `engine.streets.ClusterStorage` registered in the `I` container, which only happens in a full engine boot. They are integration tests, not unit tests; excluded via the same mechanism.
+   
+   Both groups are preserved on disk as scaffolding for whoever revives them later. The D4 csproj comment lists the exact reasons.
 
 **Goal**: Guarantee deterministic world generation.
 

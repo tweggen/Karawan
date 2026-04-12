@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>JoyceCode.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Joyce\Joyce.csproj" />
+  </ItemGroup>
+
+  <!--
+    Pre-existing navigation test files were written against an older NavLane /
+    Pipe / TemporalConstraint API and have substantial drift (float-vs-int
+    parameter mismatches, missing `using System.Linq;`). They have never
+    actually been compiled — there was no .csproj here until TALE-SOCIAL D4
+    wired one up. Excluded for now; revive when someone updates them against
+    the current navigation API.
+
+    StreetGenerationDiagnosticsTests both need ClusterStorage registered in
+    the I container, which only happens in a full engine boot. They are
+    integration tests rather than unit tests; excluded so the project stays
+    a self-contained, fast-running unit test suite.
+
+    The engine/tale/RoutingPreferencesTests.cs file is clean and runs as
+    part of the suite (10 passing tests), as do the new TALE-SOCIAL D4
+    bake tests in engine/tale/bake/.
+  -->
+  <ItemGroup>
+    <Compile Remove="engine\navigation\**\*.cs" />
+    <Compile Remove="engine\streets\**\*.cs" />
+  </ItemGroup>
+
+</Project>

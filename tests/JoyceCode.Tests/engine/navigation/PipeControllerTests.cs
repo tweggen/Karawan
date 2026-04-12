@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Xunit;
-using JoyceCode.engine.navigation;
+using engine.navigation;
 using builtin.modules.satnav.desc;
 
 namespace JoyceCode.Tests.engine.navigation;

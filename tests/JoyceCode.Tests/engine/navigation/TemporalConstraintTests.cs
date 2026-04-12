@@ -1,6 +1,6 @@
 using System;
 using Xunit;
-using JoyceCode.engine.navigation;
+using engine.navigation;
 
 namespace JoyceCode.Tests.engine.navigation;
 
