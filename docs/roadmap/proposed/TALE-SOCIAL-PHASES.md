@@ -1,6 +1,6 @@
 # Pre-Established Social Structures (Dynamic Scenario System)
 
-**Status**: D1 ✅ Implemented (2026-04-12); D2 ✅ Implemented (2026-04-12); D3–D5 proposed
+**Status**: D1 ✅ Implemented (2026-04-12); D2 ✅ Implemented (2026-04-12); D3 ✅ Implemented (2026-04-12); D4–D5 proposed
 **Phase**: D (TALE-SOCIAL — distinct from the routing "Phase D" workstream) — Pre-game world generation
 **Prerequisites**: Phase 0-5 complete (TALE narrative engine, escalation system, GroupDetector)
 
@@ -225,7 +225,12 @@ Optional debug override, also mirroring animations (`joyce.DisablePrebakedAnimat
 
 ---
 
-### Phase D3: Scenario Application (Runtime Injection)
+### Phase D3: Scenario Application (Runtime Injection) ✅ Implemented (2026-04-12)
+
+**Status**: Working. `engine.tale.bake.ScenarioApplicator.Apply(scenario, realNpcs)` returns an `ApplyResult` carrying matched/unmatched counts and per-role pair tallies; the call site in `TaleManager.PopulateCluster` logs them on every cluster activation. Two implementation notes that diverge slightly from the original plan:
+
+1. **No `RelationshipTracker` dependency** — at runtime TaleManager stores trust per-NPC inside `NpcSchedule.Trust = Dictionary<int, float>`, so the applicator writes both directions of each scenario edge directly into the matched NPCs' Trust dicts. The plan's `out GroupDetectionResult appliedGroups` parameter was dropped in favor of the simpler `ApplyResult` stats object — the runtime `GroupDetector` validation step is conceptually a D4 seedability concern.
+2. **Insertion point** — applicator runs *after* both warmup `AdvanceNpc` loops in `PopulateCluster`, not before them. The first loop desynchronizes schedule positions through 24+ hours of in-game time and the second aligns transit phases with spawn time; both mutate properties via storylet postconditions. Running the applicator afterwards lets the warmup do its desynchronization work and then snaps everyone into the scenario's settled state, which is what we actually want. Property overwrites are limited to the social-meaningful subset (`morality, wealth, fear, anger, reputation`) so the warmup's `hunger / fatigue / health / happiness / trust` adjustments survive.
 
 **Goal**: Apply pre-computed relationships to real in-game NPCs.
 

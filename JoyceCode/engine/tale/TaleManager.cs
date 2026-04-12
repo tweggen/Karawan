@@ -133,6 +133,50 @@ public class TaleManager
             AdvanceNpc(schedule.NpcId, gameStartTime);
         }
 
+        // TALE-SOCIAL Phase D3: re-attach a baked scenario's groups, trust edges
+        // and post-365-day property snapshot onto the real cluster NPCs. Runs
+        // AFTER both warmup advance loops on purpose: the warmup desynchronizes
+        // schedule positions but its property drift is then overwritten by the
+        // scenario's settled state, so the cluster starts with realistic
+        // post-simulation social structure but staggered storylet timing.
+        // Skipped silently if no scenarios are configured (selector returns null).
+        try
+        {
+            var selector = I.Get<engine.tale.bake.ScenarioSelector>();
+            var library = I.Get<engine.tale.bake.ScenarioLibrary>();
+            var applicator = I.Get<engine.tale.bake.ScenarioApplicator>();
+            if (selector != null && library != null && applicator != null && schedules.Count > 0)
+            {
+                var bakeRequest = selector.Pick(schedules.Count, clusterIndex);
+                if (bakeRequest != null)
+                {
+                    var scenario = library.GetOrLoad(bakeRequest);
+                    if (scenario != null)
+                    {
+                        var stats = applicator.Apply(scenario, schedules);
+                        Trace($"TALE MGR: Applied scenario {bakeRequest.CategoryName}/{bakeRequest.Index} " +
+                              $"to cluster {clusterIndex}: matched {stats.MatchedNpcCount}/{schedules.Count} npcs " +
+                              $"(unmatched scenario={stats.UnmatchedScenarioRanks}, real={stats.UnmatchedRealNpcs}), " +
+                              $"applied {stats.RelationshipsApplied} trust edges (skipped {stats.RelationshipsSkipped}), " +
+                              $"touched {stats.GroupsTouched} groups. " +
+                              $"Per-role: {string.Join(", ", stats.MatchedByRole.Select(kv => $"{kv.Key}={kv.Value}"))}");
+                    }
+                    else
+                    {
+                        Trace($"TALE MGR: ScenarioLibrary returned null for {bakeRequest.CategoryName}/{bakeRequest.Index}; skipping scenario application.");
+                    }
+                }
+                else
+                {
+                    Trace($"TALE MGR: No scenario available for cluster {clusterIndex} ({schedules.Count} npcs); skipping scenario application.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Warning($"TALE MGR: Scenario application failed for cluster {clusterIndex}: {ex.Message}");
+        }
+
         // Diagnostic: show transit distribution and fragment distribution of generated NPCs
         var inTransit = new List<NpcSchedule>();
         var fragmentCounts = new Dictionary<string, int>();

@@ -491,6 +491,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\bake\ScenarioCompiler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\bake\ScenarioLibrary.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\bake\ScenarioSelector.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\bake\ScenarioApplicator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RoleDefinition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RoleRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionTypeDefinition.cs" />

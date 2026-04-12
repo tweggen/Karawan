@@ -251,7 +251,10 @@ public class TaleModule : AModule
             // InterpretConfig ran during engine setup.
             I.Register<engine.tale.bake.ScenarioLibrary>(() => new engine.tale.bake.ScenarioLibrary());
             I.Register<engine.tale.bake.ScenarioSelector>(() => new engine.tale.bake.ScenarioSelector());
-            Trace("TALE: ScenarioLibrary and ScenarioSelector registered.");
+            // TALE-SOCIAL Phase D3: applicator that re-attaches scenario state
+            // onto real cluster NPCs. Stateless; called from TaleManager.PopulateCluster.
+            I.Register<engine.tale.bake.ScenarioApplicator>(() => new engine.tale.bake.ScenarioApplicator());
+            Trace("TALE: ScenarioLibrary, ScenarioSelector and ScenarioApplicator registered.");
 
             // Create and register TaleManager
             _taleManager = new TaleManager();
