@@ -243,6 +243,16 @@ public class TaleModule : AModule
             I.Register<GroupTypeRegistry>(() => new GroupTypeRegistry());
             Trace("TALE: RoleRegistry, InteractionTypeRegistry, RelationshipTierRegistry, and GroupTypeRegistry registered.");
 
+            // TALE-SOCIAL Phase D2: register the runtime scenario library + selector.
+            // These are lazy singletons; the library only touches disk when something
+            // actually asks for a scenario, and falls through to in-process baking
+            // if the file is missing or unparsable. The asset implementation has
+            // already populated AvailableScenarios at this point because
+            // InterpretConfig ran during engine setup.
+            I.Register<engine.tale.bake.ScenarioLibrary>(() => new engine.tale.bake.ScenarioLibrary());
+            I.Register<engine.tale.bake.ScenarioSelector>(() => new engine.tale.bake.ScenarioSelector());
+            Trace("TALE: ScenarioLibrary and ScenarioSelector registered.");
+
             // Create and register TaleManager
             _taleManager = new TaleManager();
             _taleManager.Initialize(library);

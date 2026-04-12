@@ -75,6 +75,21 @@ public sealed class Assets
     }
 
 
+    /// <summary>
+    /// Returns the currently registered asset implementation, or null if none
+    /// has been set yet. Callers that need access to extension surface beyond
+    /// IAssetImplementation (e.g. AAssetImplementation.AvailableScenarios for
+    /// the TALE-SOCIAL bake pipeline) can downcast as appropriate.
+    /// </summary>
+    public static IAssetImplementation GetAssetImplementation()
+    {
+        lock (_staticlock)
+        {
+            return _implementation;
+        }
+    }
+
+
     public static IReadOnlyDictionary<string, string> GetAssets()
     {
         lock (_staticlock)

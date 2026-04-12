@@ -20,7 +20,8 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 - ✅ Phase C2 (Storylet-Specific Dialogue): Explicit override + tag-based fallback implemented
 - ✅ Phase C3 (Mood/Tone Branches): Role-specific dialogue via npcMood(), npcWealthLabel(), npcRole() functions
 - ✅ Phase C4 (Trust, Memory & Quest Hooks): Trust tracking, player memory via fact flags, 30s conversation cooldown
-- ✅ TALE-SOCIAL Phase D1 (Scenario Pre-Computation): Chushi bakes 25 `sc-{hash}` social-structure files into `nogame/generated/`, listed in `AndroidResources.xml` / `InnoResources.iss` alongside `ac-{hash}` animations. Engine-side `engine.tale.bake.ScenarioCompiler` is reusable from the planned D2 runtime fallback. See `docs/roadmap/proposed/TALE-SOCIAL-PHASES.md`.
+- ✅ TALE-SOCIAL Phase D1 (Scenario Pre-Computation): Chushi bakes 25 `sc-{hash}` social-structure files into `nogame/generated/`, listed in `AndroidResources.xml` / `InnoResources.iss` alongside `ac-{hash}` animations.
+- ✅ TALE-SOCIAL Phase D2 (Scenario Library + Selector): `engine.tale.bake.ScenarioLibrary` is registered in `TaleModule` as a lazy singleton; `TryGet(category, index)` probes the baked file via `engine.Assets.Open` and falls through to `ScenarioCompiler.CompileInMemory()` on miss / parse error / `joyce.DisablePrebakedScenarios=true` — exact mirror of `Model.BakeAnimations` at `JoyceCode/engine/joyce/Model.cs:207-237`. `ScenarioSelector.Pick(npcCount, clusterSeed)` picks (category, index) by closest median NPC count + seeded round-robin. Both are lazy: nothing is loaded until the first `I.Get<>` request. See `docs/roadmap/proposed/TALE-SOCIAL-PHASES.md`.
 - ✅ 192 regression tests passing (29 C-phase tests, 60-day simulations, ~5 min)
 - ✅ Recalibration test framework ready (365+ days, ~2-4 hours)
 - ✅ Configuration-driven roles, interactions, relationship tiers, group types
@@ -33,8 +34,8 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 - ✅ PROCESS.md and documentation audit cycle in place
 - 🔄 Routing Phase D D2: Multi-objective A* integration pending
 - 🔄 Routing Phase D D4: Behavioral variety (role-based preferences) pending
-- 🔄 TALE-SOCIAL Phase D2 (Scenario Library + on-demand fallback) pending
-- 🔄 TALE-SOCIAL Phase D3-D5 (Applicator, seedability tests, tuning) pending
+- 🔄 TALE-SOCIAL Phase D3 (Applicator: re-attach scenarios to real cluster NPCs) pending
+- 🔄 TALE-SOCIAL Phase D4-D5 (seedability tests + tuning) pending
 - ⚠️ Note: "Phase D" is overloaded — routing Phase D and TALE-SOCIAL Phase D are separate workstreams
 - ⚠️ Watch for JSON deserialization issues (case-sensitive, see TaleModule.cs)
 

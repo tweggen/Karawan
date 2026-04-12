@@ -1,6 +1,6 @@
 # Pre-Established Social Structures (Dynamic Scenario System)
 
-**Status**: D1 ✅ Implemented (2026-04-12); D2–D5 proposed
+**Status**: D1 ✅ Implemented (2026-04-12); D2 ✅ Implemented (2026-04-12); D3–D5 proposed
 **Phase**: D (TALE-SOCIAL — distinct from the routing "Phase D" workstream) — Pre-game world generation
 **Prerequisites**: Phase 0-5 complete (TALE narrative engine, escalation system, GroupDetector)
 
@@ -189,7 +189,9 @@ Optional debug override, also mirroring animations (`joyce.DisablePrebakedAnimat
 
 ---
 
-### Phase D2: Scenario Selection & Caching
+### Phase D2: Scenario Selection & Caching ✅ Implemented (2026-04-12)
+
+**Status**: Working. `engine.tale.bake.ScenarioLibrary` and `ScenarioSelector` are registered as lazy singletons in `nogameCode/nogame/modules/tale/TaleModule.cs:OnModuleActivate` next to the existing `RoleRegistry`/`InteractionTypeRegistry`/etc registrations. The library reads `AAssetImplementation.AvailableScenarios` (populated by `_whenLoadedScenarios` during config interpretation) via the new `engine.Assets.GetAssetImplementation()` accessor, and the `TryGet` / `GetOrLoad` flow does try-disk-then-fall-back-to-`ScenarioCompiler.CompileInMemory()`. The on-disk reader is exercised against the already-baked Phase D1 artifacts; round-trip correctness was verified by inspecting the JSON shape against the DTO field names. The runtime fallback is exercised when the user toggles `joyce.DisablePrebakedScenarios=true` (mirrors `joyce.DisablePrebakedAnimations` at `Model.cs:164`).
 
 **Goal**: Load scenarios at runtime, select based on cluster size.
 
