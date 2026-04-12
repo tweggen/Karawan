@@ -19,8 +19,30 @@ public abstract class AAssetImplementation : IAssetImplementation
     
     public SortedSet<string> AvailableAnimations = new();
 
-    
-    
+    /// <summary>
+    /// Scenarios that should be baked at build time. Populated by
+    /// _whenLoadedScenarios from the /scenarios/categories tree in the game
+    /// config. Chushi reads this list to drive its scenario bake loop, the same
+    /// way it iterates AvailableAnimations to drive animation baking.
+    /// </summary>
+    public readonly List<ScenarioBakeRequest> AvailableScenarios = new();
+
+
+    /// <summary>
+    /// One scenario the build pipeline should produce. Carries everything the
+    /// engine-side ScenarioCompiler needs (category, index, NPC count, seed),
+    /// without forcing Chushi to re-parse the JSON config.
+    /// </summary>
+    public sealed class ScenarioBakeRequest
+    {
+        public string CategoryName { get; init; }
+        public int Index { get; init; }
+        public int NpcCount { get; init; }
+        public int Seed { get; init; }
+        public int SimulationDays { get; init; }
+    }
+
+
     private void _whenLoadedResources(string path, JsonNode? node)
     {
         Trace("Loading resources...");
@@ -260,11 +282,94 @@ public abstract class AAssetImplementation : IAssetImplementation
     }
 
     
+    private void _whenLoadedScenarios(string path, JsonNode? node)
+    {
+        Trace("Loading scenario categories...");
+        if (null == node) return;
+        try
+        {
+            if (node is not JsonArray arr) return;
+            int simulationDays = 365; // Could be overridden via a sibling node; left fixed for now.
+
+            foreach (var catNode in arr)
+            {
+                string? name = catNode?["name"]?.GetValue<string>();
+                if (string.IsNullOrEmpty(name))
+                {
+                    Trace("Warning: scenario category without 'name' skipped.");
+                    continue;
+                }
+                int count = catNode?["count"]?.GetValue<int>() ?? 0;
+                int baseSeed = catNode?["baseSeed"]?.GetValue<int>() ?? 0;
+                int npcMin = 0, npcMax = 0;
+                if (catNode?["npcCountRange"] is JsonArray rangeArr && rangeArr.Count == 2)
+                {
+                    npcMin = rangeArr[0]?.GetValue<int>() ?? 0;
+                    npcMax = rangeArr[1]?.GetValue<int>() ?? 0;
+                }
+                if (count <= 0 || npcMin <= 0 || npcMax < npcMin)
+                {
+                    Trace($"Warning: scenario category '{name}' has invalid count={count} or range=[{npcMin},{npcMax}]; skipped.");
+                    continue;
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    // Linearly interpolate NPC count across the range so each
+                    // scenario in a category covers a different population size
+                    // deterministically.
+                    int npcCount = (count == 1)
+                        ? (npcMin + npcMax) / 2
+                        : npcMin + (i * (npcMax - npcMin)) / (count - 1);
+                    int seed = baseSeed + i;
+
+                    AvailableScenarios.Add(new ScenarioBakeRequest
+                    {
+                        CategoryName = name,
+                        Index = i,
+                        NpcCount = npcCount,
+                        Seed = seed,
+                        SimulationDays = simulationDays
+                    });
+
+                    string fileName = engine.tale.bake.ScenarioFileName.Of(name, i, seed);
+
+                    // Mirrors _whenLoadedAnimations: in CompileMode (Chushi) the
+                    // file does not yet exist, so we skip the probe and skip the
+                    // association. At runtime we probe and warn if missing —
+                    // Phase D2's ScenarioLibrary will fall back to in-process
+                    // baking exactly the way Model.BakeAnimations does for
+                    // missing animation collections.
+                    if (GlobalSettings.Get("joyce.CompileMode") != "true")
+                    {
+                        string uriBaked = Path.Combine(
+                            GlobalSettings.Get("Engine.GeneratedResourcePath"),
+                            fileName);
+                        string probeBaked = Path.Combine(
+                            GlobalSettings.Get("Engine.ResourcePath"),
+                            uriBaked);
+                        if (!File.Exists(probeBaked))
+                        {
+                            Trace($"Warning: scenario file for {probeBaked} does not exist.");
+                        }
+                        this.AddAssociation(fileName, uriBaked);
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Trace($"Error loading scenarios: {e}");
+        }
+    }
+
+
     public void WithLoader()
     {
         I.Get<engine.casette.Loader>().WhenLoaded("/resources/list", _whenLoadedResources);
         I.Get<engine.casette.Loader>().WhenLoaded("/animations/list", _whenLoadedAnimations);
         I.Get<engine.casette.Loader>().WhenLoaded("/textures", _whenLoadedTextures);
+        I.Get<engine.casette.Loader>().WhenLoaded("/scenarios/categories", _whenLoadedScenarios);
     }
 
     

@@ -111,6 +111,18 @@ public class ConsoleMain
         });
         var iassetDesktop = new Chushi.AssetImplementation();
         iassetDesktop.WithLoader();
+
+        /*
+         * Register TALE registries with default content. ScenarioCompiler runs
+         * the DES inside Chushi and DesSimulation.SeedNpc fetches RoleRegistry
+         * via I.Get<>(), so the singletons must exist before any scenario task
+         * fires. Mirrors TestRunner/TestRunnerMain.cs.
+         */
+        I.Register<engine.tale.RoleRegistry>(_CreateDefaultRoleRegistry);
+        I.Register<engine.tale.InteractionTypeRegistry>(_CreateDefaultInteractionTypeRegistry);
+        I.Register<engine.tale.RelationshipTierRegistry>(_CreateDefaultRelationshipTierRegistry);
+        I.Register<engine.tale.GroupTypeRegistry>(() => new engine.tale.GroupTypeRegistry());
+
         I.Get<engine.casette.Loader>().InterpretConfig();
 
 
@@ -158,13 +170,93 @@ public class ConsoleMain
 
             listTasks.Add(Task.Run(() => comp.Compile()));
         }
-        
-        Task.WaitAll(listTasks);
+
+        /*
+         * Scenario compilation loop. Mirrors the animation loop above: one task
+         * per (category, index) pair, dispatched to the same Task.Run pool, all
+         * writing into the same nogame/generated/ directory. Files are named
+         * sc-{hash} so they sit alongside ac-{hash} animation collections.
+         */
+        string scenarioOutputDirectory = Path.Combine(
+            cwd,
+            GlobalSettings.Get("Engine.ResourcePath"),
+            "generated");
+        if (args.Length >= 4)
+        {
+            scenarioOutputDirectory = Path.Combine(args[3], args[2]);
+        }
+        var availableScenarios = iassetDesktop.AvailableScenarios;
+        Trace($"Found {availableScenarios.Count} scenarios to bake.");
+        foreach (var req in availableScenarios)
+        {
+            // Capture-by-value for the closure.
+            var captured = req;
+            var scenarioComp = new engine.tale.bake.ScenarioCompiler
+            {
+                CategoryName = captured.CategoryName,
+                Index = captured.Index,
+                NpcCount = captured.NpcCount,
+                Seed = captured.Seed,
+                SimulationDays = captured.SimulationDays,
+                OutputDirectory = scenarioOutputDirectory
+            };
+            listTasks.Add(Task.Run(() => scenarioComp.Compile()));
+        }
+
+        Task.WaitAll(listTasks.ToArray());
         Trace($"Done running compilation tasks.");
         Trace($"Stopping engine...");
         e.Exit();
         Trace($"Engine stopped.");
-        
+
         System.Environment.Exit(0);
+    }
+
+
+    /*
+     * Default TALE registry factories. These mirror TestRunner/TestRunnerMain.cs
+     * (intentional duplication: Chushi must remain a self-contained build tool
+     * and pulling in TestRunner as a dependency would invert the layering).
+     * Game authors override these via the JSON config; the defaults exist so
+     * Chushi can run before that override path is wired in.
+     */
+
+    private static engine.tale.RoleRegistry _CreateDefaultRoleRegistry()
+    {
+        var r = new engine.tale.RoleRegistry();
+        r.Add("worker",      new engine.tale.RoleDefinition { Id = "worker",      DisplayName = "Worker",             DefaultWeight = 0.30f });
+        r.Add("merchant",    new engine.tale.RoleDefinition { Id = "merchant",    DisplayName = "Merchant",           DefaultWeight = 0.13f });
+        r.Add("socialite",   new engine.tale.RoleDefinition { Id = "socialite",   DisplayName = "Socialite",          DefaultWeight = 0.15f });
+        r.Add("drifter",     new engine.tale.RoleDefinition { Id = "drifter",     DisplayName = "Drifter",            DefaultWeight = 0.12f });
+        r.Add("authority",   new engine.tale.RoleDefinition { Id = "authority",   DisplayName = "Authority",          DefaultWeight = 0.10f });
+        r.Add("nightworker", new engine.tale.RoleDefinition { Id = "nightworker", DisplayName = "Night Shift Worker", DefaultWeight = 0.08f });
+        r.Add("hustler",     new engine.tale.RoleDefinition { Id = "hustler",     DisplayName = "Street Hustler",     DefaultWeight = 0.07f });
+        r.Add("reveler",     new engine.tale.RoleDefinition { Id = "reveler",     DisplayName = "Night Owl",          DefaultWeight = 0.05f });
+        return r;
+    }
+
+    private static engine.tale.InteractionTypeRegistry _CreateDefaultInteractionTypeRegistry()
+    {
+        var r = new engine.tale.InteractionTypeRegistry();
+        r.Add("greet",      new engine.tale.InteractionTypeDefinition { Id = "greet",      DisplayName = "Greeting",   TrustDelta =  0.04f });
+        r.Add("chat",       new engine.tale.InteractionTypeDefinition { Id = "chat",       DisplayName = "Chat",       TrustDelta =  0.06f });
+        r.Add("trade",      new engine.tale.InteractionTypeDefinition { Id = "trade",      DisplayName = "Trade",      TrustDelta =  0.05f });
+        r.Add("help",       new engine.tale.InteractionTypeDefinition { Id = "help",       DisplayName = "Help",       TrustDelta =  0.10f });
+        r.Add("argue",      new engine.tale.InteractionTypeDefinition { Id = "argue",      DisplayName = "Argue",      TrustDelta = -0.08f });
+        r.Add("intimidate", new engine.tale.InteractionTypeDefinition { Id = "intimidate", DisplayName = "Intimidate", TrustDelta = -0.20f });
+        r.Add("rob",        new engine.tale.InteractionTypeDefinition { Id = "rob",        DisplayName = "Rob",        TrustDelta = -0.30f });
+        r.Add("recruit",    new engine.tale.InteractionTypeDefinition { Id = "recruit",    DisplayName = "Recruit",    TrustDelta =  0.16f });
+        r.FinalizeOrder();
+        return r;
+    }
+
+    private static engine.tale.RelationshipTierRegistry _CreateDefaultRelationshipTierRegistry()
+    {
+        var r = new engine.tale.RelationshipTierRegistry();
+        r.Add("stranger",     new engine.tale.RelationshipTierDefinition { Id = "stranger",     DisplayName = "Stranger",     MinTrust = 0.0f, MaxTrust = 0.15f });
+        r.Add("acquaintance", new engine.tale.RelationshipTierDefinition { Id = "acquaintance", DisplayName = "Acquaintance", MinTrust = 0.15f, MaxTrust = 0.4f });
+        r.Add("friend",       new engine.tale.RelationshipTierDefinition { Id = "friend",       DisplayName = "Friend",       MinTrust = 0.4f, MaxTrust = 0.7f });
+        r.Add("ally",         new engine.tale.RelationshipTierDefinition { Id = "ally",         DisplayName = "Ally",         MinTrust = 0.7f, MaxTrust = 1.0f });
+        return r;
     }
 }

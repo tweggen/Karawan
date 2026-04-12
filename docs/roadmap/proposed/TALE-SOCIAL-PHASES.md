@@ -1,7 +1,7 @@
 # Pre-Established Social Structures (Dynamic Scenario System)
 
-**Status**: Proposed
-**Phase**: D (Discovery & Enhancement) — Pre-game world generation
+**Status**: D1 ✅ Implemented (2026-04-12); D2–D5 proposed
+**Phase**: D (TALE-SOCIAL — distinct from the routing "Phase D" workstream) — Pre-game world generation
 **Prerequisites**: Phase 0-5 complete (TALE narrative engine, escalation system, GroupDetector)
 
 ---
@@ -47,55 +47,145 @@ All deterministic → same seed = identical social + spatial world
 
 ## Phases
 
-### Phase D1: Scenario Pre-Computation Engine
+### Phase D1: Scenario Pre-Computation Engine ✅ Implemented (2026-04-12)
 
-**Goal**: Build off-game tool to generate relationship scenarios.
+**Status**: Working end-to-end. `dotnet build nogame/nogame.csproj` produces 25 `sc-{hash}` files (5 small + 8 medium + 12 large) in `nogame/generated/`, listed in both `AndroidResources.xml` and `InnoResources.iss`. Re-builds are deterministic (identical output bytes for the same seed) and add about 0–2 seconds of wall time on top of the existing animation bake.
+
+**Goal**: Build a **build-time bake step** that generates relationship scenarios the same way animation baking generates `ac-{hash}` collections. Scenarios become deterministic build artifacts shipped alongside the rest of `nogame/generated/`.
+
+**Integration model — parallel to animation baking**:
+
+Animation baking today follows this chain (see `nogame/nogame.csproj`):
+```
+EnsureGeneratedDirectory          // MakeDir ../nogame/generated
+  └→ CompileAssetsHost            // invokes Chushi — runs Mazu.AnimationCompiler per (model,anims)
+  └→ GatherTexturesHost           // joycecmd pack-textures
+  └→ GatherResources              // Res2TargetTask → AndroidResources.xml + InnoResources.iss
+  └→ Compile                      // normal C# build; generated files are picked up by MSBuild
+```
+
+Scenario baking plugs into this same chain. **No new MSBuild target is added**; instead `CompileAssetsHost` (already Chushi) grows a second compiler pass, and `GatherResources` (already `Res2TargetTask`) grows a second resource category. That way generated scenario files flow through the same `AndroidResources.xml` / `InnoResources.iss` manifests and are listed automatically for inclusion into Wuka / Karawan / Windows installers.
 
 **Deliverables**:
-1. **ScenarioGenerator.cs** — Configurable DES runner
-   - Input: Config with NPC count, role distribution, morality/wealth seeds
-   - Runs 365-day simulation
-   - Output: DetectedGroup[] + RelationshipTracker snapshot
-2. **ScenarioExporter.cs** — Serialize scenario to JSON
-   - Format: `{ groups: [...], relationships: [...], properties_histogram: {...} }`
-   - Compact schema (store only summary stats + group structure)
-3. **Tool integration**: Add console tool or IDE button to generate scenarios
-4. **Config file**: `models/tale/scenarios.json`
-   ```json
-   {
-     "size_categories": [
-       { "name": "small", "npc_count_range": [40, 80], "scenario_count": 5 },
-       { "name": "medium", "npc_count_range": [150, 250], "scenario_count": 8 },
-       { "name": "large", "npc_count_range": [400, 600], "scenario_count": 12 }
-     ]
-   }
+
+1. **`engine.tale.bake.ScenarioCompiler`** (new, in `JoyceCode/engine/tale/bake/`)
+   - Mirrors `Mazu.AnimationCompiler`
+   - Inputs: `SizeCategory` (name, NPC count range, seed), `ScenarioIndex` (0..N-1), `OutputDirectory`
+   - `Compile()`:
+     - Spin up a DES with `TalePopulationGenerator` for the configured NPC count
+     - Run 365-day simulation (reusing `DesSimulation` + `GroupDetector` + `RelationshipTracker`)
+     - Serialize result via `ScenarioExporter`
+     - Write to `{OutputDirectory}/sc-{hash}` (hash = SHA256 of `"{categoryName};{scenarioIndex};{configSeed}"`, base64-encoded like `ac-{hash}`)
+
+2. **`engine.tale.bake.ScenarioExporter`** (new)
+   - Serializes a scenario to compact JSON:
+     ```json
+     {
+       "version": 1,
+       "category": "medium",
+       "index": 3,
+       "seed": 12345,
+       "groups":       [ { "id": ..., "type": ..., "memberRoles": [...] }, ... ],
+       "relationships":[ { "fromRole": ..., "fromRank": ..., "toRole": ..., "toRank": ..., "trust": ... }, ... ],
+       "histograms":   { "morality": {...}, "wealth": {...}, "fear": {...}, "anger": {...}, "reputation": {...} }
+     }
+     ```
+   - Roles/ranks are used instead of raw NPC IDs so Phase D3 can remap onto real NPCs deterministically.
+   - `ScenarioImporter` (runtime counterpart) is introduced in Phase D2.
+
+3. **Chushi integration** (`Chushi/ConsoleMain.cs`)
+   - After the existing `AnimationCompiler` loop (line ~127) add a **Scenario compiler loop** driven by a new `Chushi.AssetImplementation.AvailableScenarios` property (parallel to `AvailableAnimations`).
+   - Each entry: `"{categoryName};{scenarioIndex};{configSeed}"`.
+   - Runs in parallel via `Task.Run`, same pattern as animations.
+   - Output directory resolved identically (`args[3]/args[2]` when invoked by MSBuild, else `./generated`).
+
+4. **Scenario config in `models/`** — declare scenarios just like animations:
+   - New satellite file `models/nogame.scenarios.json` (loaded via existing `__include__` mechanism from `nogame.json`):
+     ```json
+     {
+       "scenarios": {
+         "categories": [
+           { "name": "small",  "npcCountRange": [40, 80],   "count": 5,  "baseSeed": 10000 },
+           { "name": "medium", "npcCountRange": [150, 250], "count": 8,  "baseSeed": 20000 },
+           { "name": "large",  "npcCountRange": [400, 600], "count": 12, "baseSeed": 30000 }
+         ],
+         "simulationDays": 365
+       }
+     }
+     ```
+   - Total bake: 25 scenarios (5 + 8 + 12).
+
+5. **Resource registration for the build manifest** (`Tooling/Cmdline/GameConfig.cs`)
+   - Add `LoadScenario(string categoryName, int index, int baseSeed)` mirroring `LoadAnimation()` (lines 95-140)
+   - Add `LoadScenarioList(JsonNode root)` mirroring `LoadAnimationList()` (lines 171-196); reads `/scenarios/categories` and iterates `count` entries per category
+   - Filename scheme: `sc-{Base64(SHA256(key))}` where `key = "{category};{index};{seed}"`
+   - Each entry becomes a `Resource { Tag = "sc-{hash}", Uri = "{DestinationPath}/sc-{hash}", Type = "taleScenario" }` in `MapResources`
+   - Hook into `LoadGameConfig()` next to the existing animation call
+   - **Effect**: `Res2TargetTask` automatically emits `<AndroidAsset Include="...sc-{hash}" LogicalName="sc-{hash}" />` into `AndroidResources.xml`, and the matching `InnoResources.iss` line for Windows installers — no new manifest file needed.
+
+6. **Runtime loader plumbing** (`JoyceCode/engine/AAssetImplementation.cs`)
+   - Add `_whenLoadedScenarios()` callback mirroring `_whenLoadedAnimations()` (lines 73-148).
+   - Register it in `WithLoader()` for JSON path `/scenarios/categories`.
+   - Compute the same `sc-{hash}` filename (shared helper in `engine.tale.bake.ScenarioFileName` so Chushi + runtime + GameConfig agree on one algorithm).
+   - Call `AddAssociation(scenarioTag, uriBaked)` so loaded `.json` content can be retrieved by tag at runtime (`scenario:small:0`, etc.).
+   - Note: Runtime **consumption** of these files (ScenarioLibrary, selection, application) is covered in D2/D3. D1 only guarantees the files exist on disk and are visible to the asset system.
+
+7. **Output layout**:
    ```
-5. **Output directory**: `models/tale/scenarios/` with structure:
+   nogame/generated/
+   ├── ac-{hash}              (existing baked animations)
+   ├── atlas-albedo.json      (existing)
+   ├── sc-{hash}              ← new: 25 files, one per scenario
+   ├── AndroidResources.xml   (existing, now also lists sc-* entries)
+   └── InnoResources.iss      (existing, now also lists sc-* entries)
    ```
-   models/tale/scenarios/
-   ├── small/
-   │   ├── scenario_1.json
-   │   ├── scenario_2.json
-   │   └── ... (5 scenarios)
-   ├── medium/
-   │   └── ... (8 scenarios)
-   └── large/
-       └── ... (12 scenarios)
-   ```
+   No new subdirectory; scenarios live alongside animations as flat hashed artifacts, matching the established convention.
 
 **Files to create**:
-- `JoyceCode/engine/tale/ScenarioGenerator.cs`
-- `JoyceCode/engine/tale/ScenarioExporter.cs`
-- `nogameCode/nogame/tools/ScenarioGeneratorTool.cs` (CLI or IDE hook)
-- `models/tale/scenarios.json` (config)
+- `JoyceCode/engine/tale/bake/ScenarioCompiler.cs`
+- `JoyceCode/engine/tale/bake/ScenarioExporter.cs`
+- `JoyceCode/engine/tale/bake/ScenarioFileName.cs` (shared hash helper)
+- `models/nogame.scenarios.json`
+
+**Files to modify**:
+- `Chushi/ConsoleMain.cs` — add scenario compiler loop after the animation loop
+- `Chushi/AssetImplementation.cs` — expose `AvailableScenarios` (reads from `/scenarios/categories`)
+- `Tooling/Cmdline/GameConfig.cs` — `LoadScenario` / `LoadScenarioList` + call site in `LoadGameConfig()`
+- `Tooling/Cmdline/Resource.cs` — accept `"taleScenario"` type (if a switch exists)
+- `JoyceCode/engine/AAssetImplementation.cs` — `_whenLoadedScenarios` + `WithLoader` registration
+- `models/nogame.json` — add `__include__` reference to `nogame.scenarios.json`
+
+**Files NOT touched** (intentionally):
+- `nogame/nogame.csproj` — no new MSBuild target; existing `CompileAssetsHost` + `GatherResources` already do the work once Chushi and `Res2TargetTask` know about scenarios.
+- `Wuka.csproj` / `Karawan.csproj` — continue importing `AndroidResources.xml` / Content items; no changes needed.
 
 **Tests**:
-- Verify 365-day DES produces valid scenario
-- Verify JSON round-trips without data loss
-- Verify scenario groups are detected correctly
-- Run 10 scenarios per size category, validate statistics
+- `dotnet build` produces 25 `sc-*` files in `nogame/generated/`
+- `AndroidResources.xml` contains 25 new `<AndroidAsset>` entries with `sc-` tags
+- `InnoResources.iss` contains matching entries
+- Re-running build with unchanged config produces byte-identical files (seeded determinism)
+- `ScenarioExporter` round-trip: export → import → compare group count, relationship count, histogram bins
+- `GroupDetector` run against a deserialized scenario reproduces the same groups it originally detected
+- Running Chushi directly (`dotnet run --project Chushi`) from a clean `generated/` regenerates scenarios without rebuilding the whole solution
 
-**Time estimate**: ~20% effort (mostly reusing DesSimulation, GroupDetector)
+**Layering & on-demand fallback (mirrors animation baking)**:
+
+Animation baking uses a two-layer pattern that D1 must preserve for scenarios:
+
+| Layer | Animation | Scenario (D1) |
+|-------|-----------|---------------|
+| **Shared bake core** (engine-side, reusable) | `AnimationCollection.BakeAnimations()` — computes per-frame bone matrices from loaded model data | `ScenarioCompiler.Compile()` — runs 365-day DES and produces a scenario graph |
+| **Build-time entry** (Chushi) | `Mazu.AnimationCompiler.Compile()` → writes MessagePack to `generated/ac-{hash}` | `Chushi.ConsoleMain` scenario loop → writes JSON to `generated/sc-{hash}` |
+| **Asset registration** (warn-only) | `AAssetImplementation._whenLoadedAnimations` — probes, warns if missing | `AAssetImplementation._whenLoadedScenarios` — same behaviour, same warning |
+| **Runtime try-load-then-bake** | `Model.TryLoadModelAnimationCollection()` → falls through to in-process `AnimationCollection.BakeAnimations()` (see `Model.cs:207-237`) | `ScenarioLibrary.TryGetScenario()` → falls through to in-process `ScenarioCompiler.Compile()` (introduced in D2) |
+
+**Implication for D1 file placement**: `ScenarioCompiler` and `ScenarioExporter` must live engine-side in `JoyceCode/engine/tale/bake/` (not in Chushi), because both the build-time Chushi pass **and** the runtime `ScenarioLibrary` fallback call into the exact same class. Chushi is just one of two entry points; `ScenarioLibrary` is the other.
+
+This means D1 does **not** need to decide the "missing file" policy — `_whenLoadedScenarios` simply warns, identical to animations, and the fallback is transparent because D2's `ScenarioLibrary.TryGetScenario` will in-process regenerate on demand. If `sc-{hash}` is missing at runtime the user just gets a short stall (seconds per scenario) instead of a hard failure, with trace `"Manually generated scenario for {category}/{index}"` mirroring `"Manually baked animations for {ModelUrl} {AnimationUrls}"` at `Model.cs:231`.
+
+Optional debug override, also mirroring animations (`joyce.DisablePrebakedAnimations` at `Model.cs:164`): add `joyce.DisablePrebakedScenarios` that forces `ScenarioLibrary` to skip the file probe and always bake in-process — useful for iterating on `ScenarioCompiler` without rebuilding Chushi.
+
+**Time estimate**: ~20% effort. Heavy reuse of `DesSimulation` + `GroupDetector` + existing Chushi/`Res2TargetTask` plumbing. Main novelty is the Chushi loop and the `GameConfig` resource entries.
 
 ---
 
@@ -104,9 +194,11 @@ All deterministic → same seed = identical social + spatial world
 **Goal**: Load scenarios at runtime, select based on cluster size.
 
 **Deliverables**:
-1. **ScenarioLibrary.cs** — Load all scenarios into memory at startup
+1. **ScenarioLibrary.cs** — Load all scenarios into memory lazily
    - Maps: size → List<Scenario>
-   - Lazy-loads JSON from `models/tale/scenarios/`
+   - `TryGetScenario(category, index)` mirrors `Model.BakeAnimations` / `TryLoadModelAnimationCollection` (`JoyceCode/engine/joyce/Model.cs:207-237`): first probes `sc-{hash}` via `engine.Assets.Open(...)`, and on any failure (missing file, parse error, or `joyce.DisablePrebakedScenarios == "true"`) falls through to `ScenarioCompiler.Compile()` in-process
+   - Any in-process regeneration is cached in memory for the process lifetime; it is NOT written back to `generated/` (that would diverge from the seeded build artifact)
+   - Logs `"Manually generated scenario for {category}/{index}"` on fallback (mirrors `"Manually baked animations for ..."`)
 2. **ScenarioSelector.cs** — Pick scenario by cluster size
    - Input: NPC count in generated cluster
    - Output: Scenario with matching size category
@@ -114,7 +206,7 @@ All deterministic → same seed = identical social + spatial world
 3. **ScenarioCache.cs** — Cache loaded scenarios (LRU if needed)
 4. **Integration point**: TaleManager initialization
    - `TaleManager.InitializeCluster(clusterIndex, spatialModel, npcPool)`
-   - Calls `ScenarioSelector.PickScenario(npcPool.Count)` → loads JSON
+   - Calls `ScenarioSelector.PickScenario(npcPool.Count)` → `ScenarioLibrary.TryGetScenario(...)`
 
 **Files to modify/create**:
 - `JoyceCode/engine/tale/ScenarioLibrary.cs` (new)

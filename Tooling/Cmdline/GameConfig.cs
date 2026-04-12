@@ -38,8 +38,8 @@ namespace CmdLine
             {
                 strModelAnims = $"{localUrlModel}";
             }
-        
-            string strHash = 
+
+            string strHash =
                 Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(strModelAnims)))
                     .Replace('+', '-')
                     .Replace('/', '_')
@@ -47,6 +47,26 @@ namespace CmdLine
             Console.Error.WriteLine($"Returning hash {strHash} for {strModelAnims}");
 
             return  $"ac-{strHash}";;
+        }
+
+
+        /// <summary>
+        /// Compute the bake filename for a scenario identity. Mirrors
+        /// engine.tale.bake.ScenarioFileName.Of() — duplicated here because
+        /// Tooling/Cmdline cannot reference JoyceCode (same convention as
+        /// ModelAnimationCollectionFileName above). Drift between the two
+        /// copies will manifest as missing-resource warnings, so any change to
+        /// the hashing scheme MUST be applied to both files.
+        /// </summary>
+        public static string ScenarioFileName(string categoryName, int index, int seed)
+        {
+            string key = $"{categoryName};{index};{seed}";
+            string strHash =
+                Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(key)))
+                    .Replace('+', '-')
+                    .Replace('/', '_')
+                    .Replace('=', '~');
+            return $"sc-{strHash}";
         }
 
 
@@ -192,6 +212,75 @@ namespace CmdLine
             catch (Exception e)
             {
                 Trace($"Error loading resource: {e}");
+            }
+        }
+
+
+        /// <summary>
+        /// Build a Resource entry for a single baked TALE scenario. The Tag is
+        /// the bake filename (sc-{hash}); Res2TargetTask emits this as an
+        /// AndroidAsset/InnoSetup line so the file ships with the game the same
+        /// way ac-{hash} animation collections do.
+        /// </summary>
+        public Resource LoadScenario(string categoryName, int index, int seed)
+        {
+            string strFilename = ScenarioFileName(categoryName, index, seed);
+            return new Resource
+            {
+                Type = "taleScenario",
+                Uri = Path.Combine(DestinationPath + "/", strFilename),
+                Tag = strFilename
+            };
+        }
+
+
+        /// <summary>
+        /// Walk the /scenarios/categories tree from nogame.scenarios.json and
+        /// emit one Resource per (category, index) pair. The expansion logic
+        /// (count, seed schedule) MUST stay in lock-step with
+        /// AAssetImplementation._whenLoadedScenarios on the engine side, so the
+        /// runtime asset loader and the build-time manifest agree on file names.
+        /// </summary>
+        public void LoadScenarioList(JsonNode node)
+        {
+            Trace($"LoadScenarioList()");
+            try
+            {
+                if (node is null)
+                {
+                    throw new ArgumentNullException(nameof(node));
+                }
+
+                var arr = node.AsArray();
+
+                foreach (var catNode in arr)
+                {
+                    string name = catNode?["name"]?.GetValue<string>();
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        Trace("LoadScenarioList: skipping category without 'name'.");
+                        continue;
+                    }
+                    int count = catNode?["count"]?.GetValue<int>() ?? 0;
+                    int baseSeed = catNode?["baseSeed"]?.GetValue<int>() ?? 0;
+                    if (count <= 0)
+                    {
+                        Trace($"LoadScenarioList: category '{name}' has count={count}; skipped.");
+                        continue;
+                    }
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        int seed = baseSeed + i;
+                        Resource resource = LoadScenario(name, i, seed);
+                        MapResources[resource.Tag] = resource;
+                        Trace($"GameConfig: Added Scenario Resource \"{resource.Tag}\" ({name}/{i}).");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Trace($"Error loading scenarios: {e}");
             }
         }
 
@@ -392,6 +481,7 @@ namespace CmdLine
             _mix.GetTree("/resources/list", LoadResourceList);
             _mix.GetTree("/animations/list", LoadAnimationList);
             _mix.GetTree("/textures", LoadTextureSection);
+            _mix.GetTree("/scenarios/categories", LoadScenarioList);
         }
 
 

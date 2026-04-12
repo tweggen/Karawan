@@ -14,24 +14,28 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 3. `docs/TESTING/` — Testing infrastructure (see `TESTING_STRATEGY.md`)
 4. `PROCESS_DOCS.md` — Documentation organization guidelines
 
-**Current Status (as of April 9, 2026):**
+**Current Status (as of April 12, 2026):**
 - ✅ Phase 0-7 + Phase 7B + Phase 8 TALE systems fully implemented
 - ✅ Phase C1 (NPC Conversation Infrastructure): Behavior, bindings, script resolution complete
 - ✅ Phase C2 (Storylet-Specific Dialogue): Explicit override + tag-based fallback implemented
 - ✅ Phase C3 (Mood/Tone Branches): Role-specific dialogue via npcMood(), npcWealthLabel(), npcRole() functions
 - ✅ Phase C4 (Trust, Memory & Quest Hooks): Trust tracking, player memory via fact flags, 30s conversation cooldown
+- ✅ TALE-SOCIAL Phase D1 (Scenario Pre-Computation): Chushi bakes 25 `sc-{hash}` social-structure files into `nogame/generated/`, listed in `AndroidResources.xml` / `InnoResources.iss` alongside `ac-{hash}` animations. Engine-side `engine.tale.bake.ScenarioCompiler` is reusable from the planned D2 runtime fallback. See `docs/roadmap/proposed/TALE-SOCIAL-PHASES.md`.
 - ✅ 192 regression tests passing (29 C-phase tests, 60-day simulations, ~5 min)
 - ✅ Recalibration test framework ready (365+ days, ~2-4 hours)
 - ✅ Configuration-driven roles, interactions, relationship tiers, group types
 - ✅ Building role tagging with geometric attribute intensity zones (Phase 7B)
 - ✅ Occupation-based character model assignment (Phase 8): roles define curated model pools in JSON config
-- ✅ NavMesh street pathfinding working (Phase 7C deadlock fixed, Phase D routing fixes in place)
+- ✅ NavMesh street pathfinding working (Phase 7C deadlock fixed, routing Phase D fixes in place)
 - ✅ Critical pathfinding bugs fixed:
   - Fallback storylet safety check (2026-03-28)
   - Same-junction pathfinding fallback using closest lanes (2026-03-28)
 - ✅ PROCESS.md and documentation audit cycle in place
-- 🔄 Multi-objective A* integration pending (Phase D D2)
-- 🔄 Behavioral variety (role-based preferences) pending (Phase D D4)
+- 🔄 Routing Phase D D2: Multi-objective A* integration pending
+- 🔄 Routing Phase D D4: Behavioral variety (role-based preferences) pending
+- 🔄 TALE-SOCIAL Phase D2 (Scenario Library + on-demand fallback) pending
+- 🔄 TALE-SOCIAL Phase D3-D5 (Applicator, seedability tests, tuning) pending
+- ⚠️ Note: "Phase D" is overloaded — routing Phase D and TALE-SOCIAL Phase D are separate workstreams
 - ⚠️ Watch for JSON deserialization issues (case-sensitive, see TaleModule.cs)
 
 **Common First Tasks:**

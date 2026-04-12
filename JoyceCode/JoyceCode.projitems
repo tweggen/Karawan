@@ -486,6 +486,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionSignal.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionPool.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TalePopulationGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\bake\ScenarioFileName.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\bake\ScenarioExporter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\bake\ScenarioCompiler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RoleDefinition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RoleRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionTypeDefinition.cs" />
