@@ -205,6 +205,59 @@ public class ConsoleMain
 
         Task.WaitAll(listTasks.ToArray());
         Trace($"Done running compilation tasks.");
+
+        /*
+         * TALE-SOCIAL Phase D5: walk the just-written sc-{hash} files, compute
+         * per-scenario statistics, aggregate by category, and emit
+         * scenario-statistics.json next to the bake artifacts. Cheap (each
+         * read is a small JSON parse) and runs serially after Task.WaitAll
+         * so it sees a complete bake. Failures here log a warning instead of
+         * breaking the build — the statistics are observability, not part of
+         * the runtime contract.
+         */
+        try
+        {
+            var perScenario = new List<engine.tale.bake.PerScenarioStats>();
+            foreach (var req in availableScenarios)
+            {
+                string fileName = engine.tale.bake.ScenarioFileName.Of(req.CategoryName, req.Index, req.Seed);
+                string filePath = System.IO.Path.Combine(scenarioOutputDirectory, fileName);
+                if (!System.IO.File.Exists(filePath))
+                {
+                    Trace($"Statistics: skipping {req.CategoryName}/{req.Index} — bake file missing at {filePath}.");
+                    continue;
+                }
+                try
+                {
+                    using var fs = System.IO.File.OpenRead(filePath);
+                    var scenario = engine.tale.bake.ScenarioExporter.ReadFromStream(fs);
+                    if (scenario != null)
+                    {
+                        perScenario.Add(engine.tale.bake.ScenarioStatisticsBuilder.From(scenario));
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Trace($"Statistics: failed to read {filePath}: {ex.Message}");
+                }
+            }
+            if (perScenario.Count > 0)
+            {
+                var report = engine.tale.bake.ScenarioStatisticsBuilder.BuildReport(perScenario);
+                string statsPath = System.IO.Path.Combine(scenarioOutputDirectory, "scenario-statistics.json");
+                engine.tale.bake.ScenarioStatisticsBuilder.WriteReport(report, statsPath);
+                Trace($"Statistics: wrote {statsPath} ({perScenario.Count} scenarios across {report.Categories.Count} categories).");
+            }
+            else
+            {
+                Trace("Statistics: no scenarios to summarize; skipping scenario-statistics.json.");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Trace($"Statistics: report generation failed (non-fatal): {ex}");
+        }
+
         Trace($"Stopping engine...");
         e.Exit();
         Trace($"Engine stopped.");
