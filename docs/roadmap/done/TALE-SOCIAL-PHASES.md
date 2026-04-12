@@ -1,6 +1,6 @@
 # Pre-Established Social Structures (Dynamic Scenario System)
 
-**Status**: D1 ✅ Implemented (2026-04-12); D2 ✅ Implemented (2026-04-12); D3 ✅ Implemented (2026-04-12); D4 ✅ Implemented (2026-04-12); D5 proposed
+**Status**: ✅ Complete — D1-D5 all implemented 2026-04-12. Canonical reference: [`docs/tale/phases/PHASE_D_SOCIAL.md`](../../tale/phases/PHASE_D_SOCIAL.md). This file is the historical plan and stays as a record of how the work was scoped.
 **Phase**: D (TALE-SOCIAL — distinct from the routing "Phase D" workstream) — Pre-game world generation
 **Prerequisites**: Phase 0-5 complete (TALE narrative engine, escalation system, GroupDetector)
 
@@ -344,7 +344,19 @@ Optional debug override, also mirroring animations (`joyce.DisablePrebakedAnimat
 
 ---
 
-### Phase D5: Tuning & Variation
+### Phase D5: Tuning & Variation ✅ Implemented (2026-04-12)
+
+**Status**: A `engine.tale.bake.ScenarioStatistics` builder + a `Chushi/ConsoleMain.cs` pass after the bake loop now emit `nogame/generated/scenario-statistics.json` (~55 KB) on every build. The report carries per-scenario stats (group counts/types/sizes, relationship density, role distribution, per-property mean/stdev/floor/ceiling fractions) and per-category aggregates. Seven new `ScenarioStatisticsTests` cover the builder.
+
+**Five concrete tuning concerns surfaced** (NOT auto-fixed — each is a judgment call):
+
+1. **`GroupDetector.MaxCliques = 500` is binding for the large category.** All 12 large scenarios hit *exactly* 500 groups (zero stdev). The detector is finding many more cliques than the cap allows and truncating at 500. Large-scenario group counts are not meaningful as currently configured.
+2. **Group membership ratio is unrealistically high.** Every NPC in a small scenario is in at least one clique (1.00).
+3. **Relationship density is extreme for small clusters.** 91% of all possible NPC pairs in a 40-NPC scenario have a recorded relationship — synthetic spatial model probably packs everyone into too few shared venues over 365 days.
+4. **Properties saturate to extremes**: morality has 87% of NPCs at floor (≤0.05), 8% at ceiling. Wealth: 55%/20%. Reputation: 67%/16%. The 365-day sim is long enough to drive everyone to one extreme.
+5. **Fear is dead across all 25 scenarios** (`mean=0.000, fractionAtFloor=1.00`). System-level observation, not a bake bug — `TalePopulationGenerator` initializes fear at 0 and storylet postconditions don't appear to raise it.
+
+These are documented in `docs/tale/phases/PHASE_D_SOCIAL.md` for follow-up. Gameplay tuning ("do pre-established groups feel natural?") and the design doc work were both addressed by writing `PHASE_D_SOCIAL.md` as a fresh canonical reference.
 
 **Goal**: Validate scenarios feel natural, offer enough variety.
 
