@@ -141,14 +141,11 @@ public abstract class AAssetImplementation : IAssetImplementation
                      */
                     if (GlobalSettings.Get("joyce.CompileMode") != "true") {
                         uriBaked = Path.Combine(
-                            GlobalSettings.Get("Engine.GeneratedResourcePath"), 
+                            GlobalSettings.Get("Engine.GeneratedResourcePath"),
                             strFileName);
-                        string probeBaked = Path.Combine(
-                            GlobalSettings.Get("Engine.ResourcePath"),
-                            uriBaked);
-                        if (!File.Exists(probeBaked))
+                        if (!File.Exists(uriBaked))
                         {
-                            Trace($"Warning: resource file for {probeBaked} does not exist.");
+                            Trace($"Warning: resource file for {uriBaked} does not exist.");
                         }
                     }
 
