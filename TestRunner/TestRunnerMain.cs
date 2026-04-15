@@ -26,6 +26,24 @@ public class TestRunnerMain
         return "./models/";
     }
 
+    private static string _determineGeneratedResourcePath()
+    {
+        string dir = System.IO.Directory.GetCurrentDirectory();
+        for (int i = 0; i < 8; i++)
+        {
+            string candidate = System.IO.Path.Combine(dir, "nogame", "generated");
+            if (System.IO.Directory.Exists(candidate))
+                return System.IO.Path.Combine(dir, "nogame", "generated") + System.IO.Path.DirectorySeparatorChar;
+            string parent = System.IO.Path.GetDirectoryName(dir);
+            if (parent == null || parent == dir) break;
+            dir = parent;
+        }
+        // Fallback
+        if (System.IO.Directory.Exists("assets"))
+            return "./";
+        return "../nogame/generated/";
+    }
+
     private static engine.tale.RoleRegistry _CreateDefaultRoleRegistry()
     {
         var registry = new engine.tale.RoleRegistry();
@@ -109,8 +127,9 @@ public class TestRunnerMain
 
         var launchConfig = LaunchConfig.LoadFromStandardLocations(resourcePath);
 
-        string generatedPath = System.IO.Directory.Exists("assets") ? "./" : "../nogame/generated";
+        string generatedPath = _determineGeneratedResourcePath();
         GlobalSettings.Set("Engine.GeneratedResourcePath", generatedPath);
+        Console.WriteLine($"Generated resource path: {System.IO.Path.GetFullPath(generatedPath)}");
         launchConfig.ApplyToGlobalSettings();
 
         I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());

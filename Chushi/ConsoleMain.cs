@@ -186,7 +186,11 @@ public class ConsoleMain
             scenarioOutputDirectory = Path.Combine(args[3], args[2]);
         }
         var availableScenarios = iassetDesktop.AvailableScenarios;
-        Trace($"Found {availableScenarios.Count} scenarios to bake.");
+        Trace($"Scenario compilation: Found {availableScenarios.Count} scenarios to bake.");
+        foreach (var scenario in availableScenarios)
+        {
+            Trace($"  - Scenario: {scenario.CategoryName}/{scenario.Index} (seed={scenario.Seed}, npcCount={scenario.NpcCount}, simulationDays={scenario.SimulationDays})");
+        }
         foreach (var req in availableScenarios)
         {
             // Capture-by-value for the closure.

@@ -481,7 +481,9 @@ namespace CmdLine
             _mix.GetTree("/resources/list", LoadResourceList);
             _mix.GetTree("/animations/list", LoadAnimationList);
             _mix.GetTree("/textures", LoadTextureSection);
+            Trace($"About to load scenarios from /scenarios/categories...");
             _mix.GetTree("/scenarios/categories", LoadScenarioList);
+            Trace($"Completed LoadGameConfig(); total resources in map: {MapResources.Count}");
         }
 
 

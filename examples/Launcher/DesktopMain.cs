@@ -61,8 +61,45 @@ public class DesktopMain
     }
 
     /// <summary>
+    /// Determine the generated resource path (animations, scenarios, etc.) by checking standard locations.
+    /// Mirrors _determineResourcePath but looks for nogame/generated instead of models/.
+    /// </summary>
+    private static string _determineGeneratedResourcePath()
+    {
+        string cwd = Directory.GetCurrentDirectory();
+        string exeDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
+
+        // Build list of base directories to search
+        var searchBases = new System.Collections.Generic.List<string>();
+
+        // 1. Check CWD
+        string cwdProjectRoot = _tryGetProjectRootFromBuildDir(cwd);
+        if (cwdProjectRoot != null)
+        {
+            searchBases.Add(cwdProjectRoot);
+        }
+        else
+        {
+            searchBases.Add(cwd);
+        }
+
+        // 2. Search for nogame/generated
+        foreach (var baseDir in searchBases)
+        {
+            string candidate = Path.Combine(baseDir, "nogame", "generated");
+            if (Directory.Exists(candidate))
+            {
+                return Path.GetFullPath(candidate) + Path.DirectorySeparatorChar;
+            }
+        }
+
+        // Fallback
+        return Path.GetFullPath(Path.Combine(cwd, "nogame", "generated")) + Path.DirectorySeparatorChar;
+    }
+
+    /// <summary>
     /// Determine the resource path by checking standard locations.
-    /// 
+    ///
     /// Priority:
     /// 1. CWD (if not a build dir) -> models/ or ./
     /// 2. CWD project root (if CWD is a build dir) -> models/ or ./
@@ -285,10 +322,13 @@ public class DesktopMain
         // 1. Setup platform graphics
         _setupPlatformGraphics();
 
-        // 2. Determine resource path
+        // 2. Determine resource and generated resource paths
         string resourcePath = _determineResourcePath();
         GlobalSettings.Set("Engine.ResourcePath", resourcePath);
-        GlobalSettings.Set("Engine.GeneratedResourcePath", resourcePath);
+        string generatedPath = _determineGeneratedResourcePath();
+        GlobalSettings.Set("Engine.GeneratedResourcePath", generatedPath);
+        Console.WriteLine($"Resource path: {resourcePath}");
+        Console.WriteLine($"Generated resource path: {generatedPath}");
 
         // 3. Load launch configuration from the resource path
         string launchConfigPath = Path.Combine(resourcePath, "game.launch.json");

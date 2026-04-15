@@ -94,6 +94,28 @@ public class DesktopMain
     }
 
     /// <summary>
+    /// Determine the generated resource path (animations, scenarios, textures, etc.)
+    /// based on the current environment. Mirrors _determineResourcePath logic.
+    /// </summary>
+    private static string _determineGeneratedResourcePath()
+    {
+        if (Directory.Exists("assets"))
+        {
+            // Installed/shipped mode: generated assets are in assets/ along with others
+            return "./assets/";
+        }
+
+        if (File.Exists("./models/game.launch.json") || File.Exists("./models/nogame.json"))
+        {
+            // Jetbrains Rider / direct run from project root
+            return "./nogame/generated/";
+        }
+
+        // Running from bin/Debug or similar
+        return "../../../../nogame/generated/";
+    }
+
+    /// <summary>
     /// Setup platform-specific graphics API settings.
     /// </summary>
     private static void _setupPlatformGraphics()
@@ -128,19 +150,10 @@ public class DesktopMain
         // 3. Load launch configuration (game-agnostic mechanism)
         var launchConfig = LaunchConfig.LoadFromStandardLocations(resourcePath);
 
-        // 4. Determine generated resource path
-        string generatedPath;
-        if (Directory.Exists("assets"))
-        {
-            // Installed mode - generated resources are in assets folder
-            generatedPath = "./";
-        }
-        else
-        {
-            // Development mode - generated resources are in nogame/generated
-            generatedPath = "../nogame/generated";
-        }
+        // 4. Determine generated resource path (animations, scenarios, texture atlases, etc.)
+        string generatedPath = _determineGeneratedResourcePath();
         GlobalSettings.Set("Engine.GeneratedResourcePath", generatedPath);
+        Console.WriteLine($"Generated resource path: {Path.GetFullPath(generatedPath)}");
 
         // 5. Apply game-specific settings from launch config
         launchConfig.ApplyToGlobalSettings();

@@ -48,6 +48,25 @@ public class TestbedMain
         return "./models/";
     }
 
+    private static string _determineGeneratedResourcePath()
+    {
+        // Walk up from working directory to find the nogame/generated/ folder
+        string dir = Directory.GetCurrentDirectory();
+        for (int i = 0; i < 8; i++)
+        {
+            string candidate = Path.Combine(dir, "nogame", "generated");
+            if (Directory.Exists(candidate))
+                return Path.Combine(dir, "nogame", "generated") + Path.DirectorySeparatorChar;
+            string parent = Path.GetDirectoryName(dir);
+            if (parent == null || parent == dir) break;
+            dir = parent;
+        }
+        // Fallback
+        if (Directory.Exists("assets"))
+            return "./";
+        return "../nogame/generated/";
+    }
+
 
     private static void _setupPlatformGraphics()
     {
@@ -124,8 +143,9 @@ public class TestbedMain
 
         var launchConfig = LaunchConfig.LoadFromStandardLocations(resourcePath);
 
-        string generatedPath = Directory.Exists("assets") ? "./" : "../nogame/generated";
+        string generatedPath = _determineGeneratedResourcePath();
         GlobalSettings.Set("Engine.GeneratedResourcePath", generatedPath);
+        Log($"Generated resource path: {Path.GetFullPath(generatedPath)}");
         launchConfig.ApplyToGlobalSettings();
 
         I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());

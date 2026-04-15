@@ -284,11 +284,19 @@ public abstract class AAssetImplementation : IAssetImplementation
     
     private void _whenLoadedScenarios(string path, JsonNode? node)
     {
-        Trace("Loading scenario categories...");
-        if (null == node) return;
+        Trace($"Loading scenario categories from path '{path}'...");
+        if (null == node)
+        {
+            Trace("_whenLoadedScenarios: node is null");
+            return;
+        }
         try
         {
-            if (node is not JsonArray arr) return;
+            if (node is not JsonArray arr)
+            {
+                Trace($"_whenLoadedScenarios: node is not array, it's {node.GetType().Name}");
+                return;
+            }
             int simulationDays = 365; // Could be overridden via a sibling node; left fixed for now.
 
             foreach (var catNode in arr)
@@ -356,6 +364,7 @@ public abstract class AAssetImplementation : IAssetImplementation
                     }
                 }
             }
+            Trace($"_whenLoadedScenarios: successfully registered {AvailableScenarios.Count} scenarios total.");
         }
         catch (Exception e)
         {
@@ -366,10 +375,15 @@ public abstract class AAssetImplementation : IAssetImplementation
 
     public void WithLoader()
     {
+        Trace("AAssetImplementation.WithLoader(): Registering JSON callbacks...");
         I.Get<engine.casette.Loader>().WhenLoaded("/resources/list", _whenLoadedResources);
+        Trace("  - Registered /resources/list");
         I.Get<engine.casette.Loader>().WhenLoaded("/animations/list", _whenLoadedAnimations);
+        Trace("  - Registered /animations/list");
         I.Get<engine.casette.Loader>().WhenLoaded("/textures", _whenLoadedTextures);
+        Trace("  - Registered /textures");
         I.Get<engine.casette.Loader>().WhenLoaded("/scenarios/categories", _whenLoadedScenarios);
+        Trace("  - Registered /scenarios/categories");
     }
 
     
