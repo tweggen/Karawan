@@ -161,6 +161,17 @@ public class ConsoleMain
             {
                 outputDirectory = Path.Combine(args[3],args[2]);
             }
+
+            // Check if animation is already up-to-date (makefile-style incremental build).
+            string fileName = builtin.baking.ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
+                Path.GetFileName(uriModel), uriAnimations);
+            string filePath = Path.Combine(outputDirectory, fileName);
+            if (_IsAnimationUpToDate(filePath, uriModel, uriAnimations, strResourcePath))
+            {
+                Trace($"AnimationCompiler: skipping {fileName} — output is up-to-date.");
+                continue;
+            }
+
             AnimationCompiler comp = new()
             {
                 ModelUrl = uriModel,
@@ -193,6 +204,16 @@ public class ConsoleMain
         }
         foreach (var req in availableScenarios)
         {
+            // Check if scenario is already up-to-date (makefile-style incremental build).
+            // Skip compilation if output exists and all sources are older.
+            string fileName = engine.tale.bake.ScenarioFileName.Of(req.CategoryName, req.Index, req.Seed);
+            string filePath = Path.Combine(scenarioOutputDirectory, fileName);
+            if (_IsScenarioUpToDate(filePath, strResourcePath))
+            {
+                Trace($"ScenarioCompiler: skipping {req.CategoryName}/{req.Index} — output is up-to-date.");
+                continue;
+            }
+
             // Capture-by-value for the closure.
             var captured = req;
             var scenarioComp = new engine.tale.bake.ScenarioCompiler
@@ -269,6 +290,115 @@ public class ConsoleMain
         System.Environment.Exit(0);
     }
 
+
+    /// <summary>
+    /// Check if a pre-baked animation file is up-to-date (makefile-style incremental build).
+    /// Returns true if the output file exists and is newer than the model and animation source files.
+    /// </summary>
+    private static bool _IsAnimationUpToDate(string outputPath, string modelUrl, string animationUrls, string resourcePath)
+    {
+        if (!File.Exists(outputPath))
+        {
+            return false;  // Output missing, needs compilation
+        }
+
+        var outputTime = File.GetLastWriteTimeUtc(outputPath);
+
+        // Check model file modification time
+        string modelPath = Path.Combine(resourcePath, modelUrl);
+        if (File.Exists(modelPath))
+        {
+            var modelTime = File.GetLastWriteTimeUtc(modelPath);
+            if (modelTime > outputTime)
+            {
+                return false;  // Model is newer, needs recompilation
+            }
+        }
+
+        // Check animation files modification time (semicolon-separated list)
+        if (!string.IsNullOrWhiteSpace(animationUrls))
+        {
+            var animFiles = animationUrls.Split(';');
+            foreach (var animFile in animFiles)
+            {
+                if (string.IsNullOrWhiteSpace(animFile))
+                    continue;
+                string animPath = Path.Combine(resourcePath, animFile.Trim());
+                if (File.Exists(animPath))
+                {
+                    var animTime = File.GetLastWriteTimeUtc(animPath);
+                    if (animTime > outputTime)
+                    {
+                        return false;  // Animation file is newer, needs recompilation
+                    }
+                }
+            }
+        }
+
+        // Check animation config file
+        string animConfigPath = Path.Combine(resourcePath, "nogame.animations.json");
+        if (File.Exists(animConfigPath))
+        {
+            var configTime = File.GetLastWriteTimeUtc(animConfigPath);
+            if (configTime > outputTime)
+            {
+                return false;  // Config is newer, needs recompilation
+            }
+        }
+
+        return true;  // All sources are older or missing, output is up-to-date
+    }
+
+    /// <summary>
+    /// Check if a pre-baked scenario file is up-to-date (makefile-style incremental build).
+    /// Returns true if the output file exists and is newer than all source files
+    /// (game config and TALE definitions).
+    /// </summary>
+    private static bool _IsScenarioUpToDate(string outputPath, string resourcePath)
+    {
+        if (!File.Exists(outputPath))
+        {
+            return false;  // Output missing, needs compilation
+        }
+
+        var outputTime = File.GetLastWriteTimeUtc(outputPath);
+
+        // Check modification time of main config files
+        var configFiles = new[]
+        {
+            Path.Combine(resourcePath, "nogame.json"),
+            Path.Combine(resourcePath, "nogame.scenarios.json"),
+        };
+
+        foreach (var configFile in configFiles)
+        {
+            if (File.Exists(configFile))
+            {
+                var configTime = File.GetLastWriteTimeUtc(configFile);
+                if (configTime > outputTime)
+                {
+                    return false;  // Config is newer, needs recompilation
+                }
+            }
+        }
+
+        // Check modification time of all TALE definition files
+        string taleDir = Path.Combine(resourcePath, "tale");
+        if (Directory.Exists(taleDir))
+        {
+            var taleFiles = Directory.GetFiles(taleDir, "*.json", SearchOption.AllDirectories);
+            foreach (var taleFile in taleFiles)
+            {
+                var taleTime = File.GetLastWriteTimeUtc(taleFile);
+                if (taleTime > outputTime)
+                {
+                    return false;  // TALE definition is newer, needs recompilation
+                }
+            }
+        }
+
+        return true;  // All sources are older or missing, output is up-to-date
+    }
 
     /*
      * Default TALE registry factories. These mirror TestRunner/TestRunnerMain.cs
