@@ -96,23 +96,24 @@ public class DesktopMain
     /// <summary>
     /// Determine the generated resource path (animations, scenarios, textures, etc.)
     /// based on the current environment. Mirrors _determineResourcePath logic.
+    /// Returns an absolute path to avoid path concatenation issues.
     /// </summary>
     private static string _determineGeneratedResourcePath()
     {
         if (Directory.Exists("assets"))
         {
             // Installed/shipped mode: generated assets are in assets/ along with others
-            return "./assets/";
+            return Path.GetFullPath("./assets/") + Path.DirectorySeparatorChar;
         }
 
         if (File.Exists("./models/game.launch.json") || File.Exists("./models/nogame.json"))
         {
             // Jetbrains Rider / direct run from project root
-            return "./nogame/generated/";
+            return Path.GetFullPath("./nogame/generated/") + Path.DirectorySeparatorChar;
         }
 
         // Running from bin/Debug or similar
-        return "../../../../nogame/generated/";
+        return Path.GetFullPath("../../../../nogame/generated/") + Path.DirectorySeparatorChar;
     }
 
     /// <summary>
