@@ -86,7 +86,11 @@ public class AssetImplementation : AAssetImplementation
 
         if (uri != null)
         {
-            stream = System.IO.File.OpenRead(resourcePath + uri);
+            // If uri is an absolute path, use it directly; otherwise concatenate with resourcePath.
+            // This supports both relative URIs (e.g. from resources/) and absolute paths
+            // (e.g. from Engine.GeneratedResourcePath for pre-baked scenarios).
+            string uriPath = System.IO.Path.IsPathRooted(uri) ? uri : (resourcePath + uri);
+            stream = System.IO.File.OpenRead(uriPath);
         }
 
         return stream;

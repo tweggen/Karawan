@@ -350,17 +350,14 @@ public abstract class AAssetImplementation : IAssetImplementation
                     // missing animation collections.
                     if (GlobalSettings.Get("joyce.CompileMode") != "true")
                     {
-                        string uriBaked = Path.Combine(
+                        string probeBaked = Path.Combine(
                             GlobalSettings.Get("Engine.GeneratedResourcePath"),
                             fileName);
-                        string probeBaked = Path.Combine(
-                            GlobalSettings.Get("Engine.ResourcePath"),
-                            uriBaked);
                         if (!File.Exists(probeBaked))
                         {
                             Trace($"Warning: scenario file for {probeBaked} does not exist.");
                         }
-                        this.AddAssociation(fileName, uriBaked);
+                        this.AddAssociation(fileName, probeBaked);
                     }
                 }
             }
