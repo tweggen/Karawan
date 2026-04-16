@@ -21,8 +21,6 @@ public enum StoryletLocationType
 public class StoryletSelector
 {
     private readonly StoryletLibrary _library;
-    // Reusable candidate buffer to avoid allocation per selection
-    private readonly List<StoryletDefinition> _candidates = new();
 
     /// <summary>Background hunger accumulation rate per hour awake.</summary>
     public float HungerPerHour = 0.04f;
@@ -46,12 +44,12 @@ public class StoryletSelector
 
     public StoryletDefinition SelectNext(NpcSchedule npc, DateTime currentTime)
     {
-        _candidates.Clear();
         var timeOfDay = currentTime.TimeOfDay;
         float desperation = ComputeDesperation(npc);
         float morality = npc.Properties.GetValueOrDefault("morality", 0.7f);
 
         var pool = _library.GetCandidates(npc.Role);
+        var candidates = new List<StoryletDefinition>();
 
         foreach (var def in pool)
         {
@@ -59,10 +57,10 @@ public class StoryletSelector
                 continue;  // Skip null entries (defensive)
             if (!PassesPreconditions(def, npc, timeOfDay, desperation, morality))
                 continue;
-            _candidates.Add(def);
+            candidates.Add(def);
         }
 
-        if (_candidates.Count == 0)
+        if (candidates.Count == 0)
         {
             var fallback = _library.GetFallback(timeOfDay);
             if (fallback != null)
@@ -73,12 +71,12 @@ public class StoryletSelector
 
         // Weighted random selection with seed determinism
         var rng = new Random(npc.Seed + npc.ScheduleStep * 7919);
-        var selected = WeightedSelect(_candidates, rng);
+        var selected = WeightedSelect(candidates, rng);
 
         // If WeightedSelect fails (all weights zero), use first candidate
-        if (selected == null && _candidates.Count > 0)
+        if (selected == null && candidates.Count > 0)
         {
-            selected = _candidates[0];
+            selected = candidates[0];
         }
 
         return selected;

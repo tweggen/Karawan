@@ -415,7 +415,25 @@ public class TaleManager
         }
 
         // Select next storylet
-        var next = _selector.SelectNext(npc, gameNow);
+        StoryletDefinition next;
+        try
+        {
+            next = _selector.SelectNext(npc, gameNow);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Warning($"TALE MGR: StoryletSelector failed for npc={npc.NpcId} role={npc.Role}: {ex.Message}. " +
+                    $"Using fallback stay at current location.");
+            return null; // Can't advance this NPC
+        }
+
+        if (next == null)
+        {
+            Warning($"TALE MGR: SelectNext returned null for npc={npc.NpcId} role={npc.Role}. " +
+                    $"Using fallback stay at current location.");
+            return null; // Can't advance this NPC
+        }
+
         npc.ScheduleStep++;
 
         // Resolve destination
