@@ -506,6 +506,14 @@ public class TaleManager
 
     private int ResolveLocation(NpcSchedule npc, StoryletDefinition storylet)
     {
+        // Null safety: if no storylet selected, use current location
+        if (storylet == null)
+        {
+            Warning($"TALE MGR: ResolveLocation received null storylet for npc={npc.NpcId} role={npc.Role}, " +
+                    $"using currentLoc={npc.CurrentLocationId}.");
+            return npc.CurrentLocationId;
+        }
+
         var locType = storylet.ResolveLocationType();
         int resolved = locType switch
         {

@@ -63,11 +63,25 @@ public class StoryletSelector
         }
 
         if (_candidates.Count == 0)
-            return _library.GetFallback(timeOfDay);
+        {
+            var fallback = _library.GetFallback(timeOfDay);
+            if (fallback != null)
+                return fallback;
+            // If fallback is also null, this is a critical configuration error
+            throw new InvalidOperationException($"StoryletSelector: no candidates and no fallback for role={npc.Role} at time {timeOfDay}. Check your storylet configuration.");
+        }
 
         // Weighted random selection with seed determinism
         var rng = new Random(npc.Seed + npc.ScheduleStep * 7919);
-        return WeightedSelect(_candidates, rng);
+        var selected = WeightedSelect(_candidates, rng);
+
+        // If WeightedSelect fails (all weights zero), use first candidate
+        if (selected == null && _candidates.Count > 0)
+        {
+            selected = _candidates[0];
+        }
+
+        return selected;
     }
 
 
@@ -115,33 +129,37 @@ public class StoryletSelector
         if (candidates == null || candidates.Count == 0)
             return null;
 
-        float totalWeight = 0f;
-        for (int i = 0; i < candidates.Count; i++)
+        // Make a local snapshot to avoid concurrent modification issues during long selection
+        var snapshot = new List<StoryletDefinition>(candidates.Count);
+        foreach (var c in candidates)
         {
-            if (candidates[i] != null)
-                totalWeight += candidates[i].Weight;
+            if (c != null)
+                snapshot.Add(c);
+        }
+
+        if (snapshot.Count == 0)
+            return null;
+
+        float totalWeight = 0f;
+        foreach (var def in snapshot)
+        {
+            totalWeight += def.Weight;
         }
 
         if (totalWeight <= 0f)
-            return null;
+            return snapshot.Count > 0 ? snapshot[0] : null;  // Default to first if all weights are zero
 
         float roll = (float)(rng.NextDouble() * totalWeight);
         float cumulative = 0f;
-        for (int i = 0; i < candidates.Count; i++)
+        foreach (var def in snapshot)
         {
-            if (candidates[i] == null)
-                continue;
-            cumulative += candidates[i].Weight;
+            cumulative += def.Weight;
             if (roll < cumulative)
-                return candidates[i];
+                return def;
         }
-        // Return last non-null candidate
-        for (int i = candidates.Count - 1; i >= 0; i--)
-        {
-            if (candidates[i] != null)
-                return candidates[i];
-        }
-        return null;
+
+        // Return last candidate
+        return snapshot.Count > 0 ? snapshot[snapshot.Count - 1] : null;
     }
 
 
