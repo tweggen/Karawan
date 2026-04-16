@@ -165,8 +165,8 @@ public class ConsoleMain
             // Check if animation is already up-to-date (makefile-style incremental build).
             string fileName = builtin.baking.ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
                 Path.GetFileName(uriModel), uriAnimations);
-            string filePath = Path.Combine(outputDirectory, fileName);
-            if (_IsAnimationUpToDate(filePath, uriModel, uriAnimations, strResourcePath))
+            string filePath = Path.GetFullPath(Path.Combine(outputDirectory, fileName));
+            if (_IsAnimationUpToDate(filePath, uriModel, uriAnimations, Path.GetFullPath(strResourcePath)))
             {
                 Trace($"AnimationCompiler: skipping {fileName} — output is up-to-date.");
                 continue;
@@ -207,8 +207,8 @@ public class ConsoleMain
             // Check if scenario is already up-to-date (makefile-style incremental build).
             // Skip compilation if output exists and all sources are older.
             string fileName = engine.tale.bake.ScenarioFileName.Of(req.CategoryName, req.Index, req.Seed);
-            string filePath = Path.Combine(scenarioOutputDirectory, fileName);
-            if (_IsScenarioUpToDate(filePath, strResourcePath))
+            string filePath = Path.GetFullPath(Path.Combine(scenarioOutputDirectory, fileName));
+            if (_IsScenarioUpToDate(filePath, Path.GetFullPath(strResourcePath)))
             {
                 Trace($"ScenarioCompiler: skipping {req.CategoryName}/{req.Index} — output is up-to-date.");
                 continue;
