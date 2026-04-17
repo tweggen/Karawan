@@ -25,10 +25,33 @@ public class StoryletSelector
     /// <summary>Background hunger accumulation rate per hour awake.</summary>
     public float HungerPerHour = 0.04f;
 
+    /// <summary>Default properties all NPCs should have (for postcondition safety).</summary>
+    private static readonly string[] DefaultPropertyKeys =
+    {
+        "hunger", "health", "fatigue", "anger", "fear", "trust", "happiness", "reputation", "morality", "wealth"
+    };
+
 
     public StoryletSelector(StoryletLibrary library)
     {
         _library = library;
+    }
+
+
+    /// <summary>
+    /// Ensure NPC has all expected properties initialized (backfill missing ones with defaults).
+    /// Fixes issues where NPCs loaded from older saves are missing properties added later.
+    /// </summary>
+    public static void EnsurePropertiesInitialized(NpcSchedule npc)
+    {
+        if (npc?.Properties == null)
+            npc.Properties = new Dictionary<string, float>();
+
+        foreach (var key in DefaultPropertyKeys)
+        {
+            if (!npc.Properties.ContainsKey(key))
+                npc.Properties[key] = 0.5f;  // Default to neutral
+        }
     }
 
 
@@ -170,6 +193,9 @@ public class StoryletSelector
     {
         deltasBuffer.Clear();
 
+        // Ensure all expected properties exist (fixes missing keys from older saves)
+        EnsurePropertiesInitialized(npc);
+
         // Apply storylet postconditions
         foreach (var (prop, expr) in storylet.Postconditions)
         {
@@ -204,6 +230,10 @@ public class StoryletSelector
         float durationMinutes, Dictionary<string, float> deltasBuffer)
     {
         deltasBuffer.Clear();
+
+        // Ensure all expected properties exist (fixes missing keys from older saves)
+        EnsurePropertiesInitialized(npc);
+
         // Just apply hunger tick as fallback
         float hoursAwake = durationMinutes / 60f;
         RecordDelta(npc, "hunger", HungerPerHour * hoursAwake, deltasBuffer);
@@ -244,6 +274,11 @@ public class StoryletSelector
     {
         if (def?.PostconditionsIf == null || def.PostconditionsIf.Count == 0)
             return null;
+
+        // Ensure all expected properties exist (fixes missing keys from older saves)
+        EnsurePropertiesInitialized(self);
+        if (target != null)
+            EnsurePropertiesInitialized(target);
 
         var deltasBuf = new Dictionary<string, float>();
 

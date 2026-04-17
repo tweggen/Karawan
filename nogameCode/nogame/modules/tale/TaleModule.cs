@@ -530,6 +530,9 @@ public class TaleModule : AModule
             }
         }
 
+        // Ensure all expected properties are initialized (backfill any missing from older saves)
+        StoryletSelector.EnsurePropertiesInitialized(npc);
+
         // Trust
         npc.Trust = new System.Collections.Generic.Dictionary<int, float>();
         if (jo["trust"] is JsonObject jTrust)
