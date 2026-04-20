@@ -14,7 +14,7 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 3. `docs/TESTING/` — Testing infrastructure (see `TESTING_STRATEGY.md`)
 4. `PROCESS_DOCS.md` — Documentation organization guidelines
 
-**Current Status (as of April 12, 2026):**
+**Current Status (as of April 20, 2026):**
 - ✅ Phase 0-7 + Phase 7B + Phase 8 TALE systems fully implemented
 - ✅ Phase C1 (NPC Conversation Infrastructure): Behavior, bindings, script resolution complete
 - ✅ Phase C2 (Storylet-Specific Dialogue): Explicit override + tag-based fallback implemented
@@ -35,6 +35,7 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
   - Fallback storylet safety check (2026-03-28)
   - Same-junction pathfinding fallback using closest lanes (2026-03-28)
 - ✅ PROCESS.md and documentation audit cycle in place
+- 🔄 **Debug Filter Migration (Developer Infrastructure)**: Category-based selective debug output system. 307/571 (~54%) logger calls migrated across 40+ files. Implemented `DebugFilter` static class with 21 categories (Dc enum), `InterpolatedStringHandler` for zero-overhead when disabled. Per-file pattern: `private static readonly engine.Dc _dc = engine.Dc.{Category}` + `Trace(_dc, $"...")` calls. Remaining: ~264 calls across Tools, scattered utilities, testing/world/quest systems. Build verified: 0 errors.
 - 🔄 Routing Phase D D2: Multi-objective A* integration pending
 - 🔄 Routing Phase D D4: Behavioral variety (role-based preferences) pending
 - 🔄 TALE-SOCIAL Phase D follow-up: act on the five D5 tuning concerns documented in `docs/tale/phases/PHASE_D_SOCIAL.md` (MaxCliques cap, group membership ratio, relationship density, property saturation, fear=0)
@@ -52,6 +53,7 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 - Always run `./run_tests.sh all` before commit
 - Search for all references when changing systems
 - Keep JSON config case-insensitive in mind (use `PropertyNameCaseInsensitive = true`)
+- **Debug output pattern (mandatory)**: All debug/trace calls must use category-based filtering: add `private static readonly engine.Dc _dc = engine.Dc.{Category};` to class, then use `Trace(_dc, $"...")` instead of plain `Trace($"...")`
 
 ## Build & Run
 
