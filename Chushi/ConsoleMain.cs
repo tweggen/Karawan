@@ -225,12 +225,30 @@ public class ConsoleMain
                 SimulationDays = captured.SimulationDays,
                 OutputDirectory = scenarioOutputDirectory
             };
-            listTasks.Add(Task.Run(() => scenarioComp.Compile()));
+            listTasks.Add(Task.Run(() =>
+            {
+                try
+                {
+                    scenarioComp.Compile();
+                }
+                catch (Exception ex)
+                {
+                    Trace($"ScenarioCompiler ERROR: {captured.CategoryName}/{captured.Index} failed: {ex.GetType().Name}: {ex.Message}");
+                    throw;  // Re-throw so Task.WaitAll catches it
+                }
+            }));
         }
 
         try
         {
-            Task.WaitAll(listTasks.ToArray());
+            // Wait with a 5-minute timeout per scenario (~125 min total for 25 scenarios).
+            // Large scenarios (600 NPCs, 365 days) can take 3-4 minutes each; this prevents
+            // scenarios from hanging indefinitely and consuming all system resources.
+            bool completed = Task.WaitAll(listTasks.ToArray(), TimeSpan.FromMinutes(5 * listTasks.Count));
+            if (!completed)
+            {
+                throw new TimeoutException($"Scenario compilation timeout: not all {listTasks.Count} tasks completed within {5 * listTasks.Count} minutes");
+            }
             Trace($"Done running compilation tasks.");
         }
         catch (AggregateException ex)
