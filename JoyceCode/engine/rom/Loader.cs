@@ -10,6 +10,8 @@ namespace engine.rom;
 
 public class Loader
 {
+    private static readonly engine.Dc _dc = engine.Dc.AssetLoading;
+
     static private SortedDictionary<string, Assembly> _mapAlreadyLoaded = new SortedDictionary<string, Assembly>();
     static private SortedSet<string> _setLoadFailed = new SortedSet<string>();
     static private SortedDictionary<string, Assembly> _preRegistered = new SortedDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
@@ -131,7 +133,7 @@ public class Loader
             }
             catch (Exception e)
             {
-                Trace($"Unable to load dll from absolute path {dllPath}: {e}");
+                Trace(_dc,$"Unable to load dll from absolute path {dllPath}: {e}");
                 ErrorThrow<InvalidOperationException>($"Unable to load dll {dllPath}: {e}");
                 return null;
             }
@@ -152,7 +154,7 @@ public class Loader
                 }
                 catch (Exception e)
                 {
-                    Trace($"Unable to load dll {dllPath} from {fullPath}: {e}");
+                    Trace(_dc,$"Unable to load dll {dllPath} from {fullPath}: {e}");
                     // Continue searching in other paths
                 }
             }
@@ -168,7 +170,7 @@ public class Loader
         }
         catch (Exception e)
         {
-            Trace($"Unable to load dll {dllPath}: {e}");
+            Trace(_dc,$"Unable to load dll {dllPath}: {e}");
             ErrorThrow<InvalidOperationException>($"Unable to load dll {dllPath}: {e}");
         }
 
@@ -206,7 +208,7 @@ public class Loader
             }
             catch (Exception e)
             {
-                Trace($"Unable to load the given assembly {dllPath} into the desired context: {e}");
+                Trace(_dc,$"Unable to load the given assembly {dllPath} into the desired context: {e}");
             }
 
             /*
@@ -285,7 +287,7 @@ public class Loader
                         }
                         catch (Exception ex)
                         {
-                            Trace($"Failed to load {anRef.Name}: {ex}");
+                            Trace(_dc,$"Failed to load {anRef.Name}: {ex}");
                             _setLoadFailed.Add(anRef.Name);
                         }
                     }
@@ -303,7 +305,7 @@ public class Loader
         }
         catch (Exception e)
         {
-            Trace($"Exception {e}");
+            Trace(_dc,$"Exception {e}");
         }
 
         // .. Fallback
@@ -335,7 +337,7 @@ public class Loader
             }
             catch (Exception e)
             {
-                Trace($"Error with dll loading, falling back to scanning all assemblies. ({dllPath}: {e})");
+                Trace(_dc,$"Error with dll loading, falling back to scanning all assemblies. ({dllPath}: {e})");
             }
 
             if (null == type)

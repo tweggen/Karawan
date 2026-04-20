@@ -24,6 +24,8 @@ namespace engine.joyce;
  */
 public class Model
 {
+    private static readonly engine.Dc _dc = engine.Dc.Animation;
+
     public string Name = "";
     public string ModelUrl = "";
     public string? AnimationUrls = null;
@@ -163,7 +165,7 @@ public class Model
          */
         if (engine.GlobalSettings.Get("joyce.DisablePrebakedAnimations") == "true")
         {
-            Trace($"Pre-baked animations disabled via joyce.DisablePrebakedAnimations setting.");
+            Trace(_dc,$"Pre-baked animations disabled via joyce.DisablePrebakedAnimations setting.");
             return false;
         }
 
@@ -188,12 +190,12 @@ public class Model
 
         if (null == animcoll)
         {
-            Trace($"Cannot use baked for {ModelUrl} {AnimationUrls}");
+            Trace(_dc,$"Cannot use baked for {ModelUrl} {AnimationUrls}");
             return false;
         }
         else
         {
-            Trace($"Loaded baked animations for {ModelUrl} {AnimationUrls}");
+            Trace(_dc,$"Loaded baked animations for {ModelUrl} {AnimationUrls}");
             return true;
         }
     }
@@ -228,11 +230,11 @@ public class Model
         if (!haveBaked)
         {
             AnimationCollection.BakeAnimations(strModelBaseBone, cpuNodes);
-            Trace($"Manually baked animations for {ModelUrl} {AnimationUrls}");
+            Trace(_dc,$"Manually baked animations for {ModelUrl} {AnimationUrls}");
         }
         else
         {
-            Trace($"Used baked animations for {ModelUrl} {AnimationUrls}");
+            Trace(_dc,$"Used baked animations for {ModelUrl} {AnimationUrls}");
         }
     }
 

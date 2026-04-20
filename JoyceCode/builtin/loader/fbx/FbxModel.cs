@@ -21,6 +21,8 @@ namespace builtin.loader.fbx;
 
 public class FbxModel : IDisposable
 {
+    private static readonly engine.Dc _dc = engine.Dc.AssetLoading;
+
     static  private Assimp _assimp;
     private List<Texture> _texturesLoaded = new List<Texture>();
     public string Directory { get; protected set; } = string.Empty;
@@ -139,7 +141,7 @@ public class FbxModel : IDisposable
         float dot = Quaternion.Dot(q, rest);
         if (verbose)
         {
-            Trace($"Dot product was {dot}");
+            Trace(_dc, $"Dot product was {dot}");
         }
 
         
@@ -377,7 +379,7 @@ public class FbxModel : IDisposable
             }
             
 
-            Trace( $"Detected rest frame @{timeRestFrame} in animation {ma.Name} with {maxCount} votes.");
+            Trace(_dc, $"Detected rest frame @{timeRestFrame} in animation {ma.Name} with {maxCount} votes.");
             
             for (int j = 0; j < nChannels; ++j)
             {
@@ -695,7 +697,7 @@ public class FbxModel : IDisposable
         if (node->MMetaData != null && node->MMetaData->MNumProperties > 0)
         {
             Metadata metaNode = new(node->MMetaData);
-            Trace($"Node {mn.Name} has metadata:");
+            Trace(_dc, $"Node {mn.Name} has metadata:");
             metaNode.Dump();
         }
         #endif
@@ -1198,7 +1200,7 @@ public class FbxModel : IDisposable
             pFileIO,
             properties
         );
-        Trace($"Loaded \"{path}\"");
+        Trace(_dc, $"Loaded \"{path}\"");
         _metadata = new(_scene->MMetaData);
         if (_traceFbxMetadata)
         {
@@ -1240,8 +1242,8 @@ public class FbxModel : IDisposable
 
         if (_traceFbxTree)
         {
-            Trace("Pose model:");
-            Trace(model.ModelNodeTree.RootNode.DumpNode());
+            Trace(_dc, $"Pose model:");
+            Trace(_dc, $"{model.ModelNodeTree.RootNode.DumpNode()}");
         }
 
         /*
@@ -1292,7 +1294,7 @@ public class FbxModel : IDisposable
                 {
                     try
                     {
-                        Trace($"Import additional animation data from {url}...");
+                        Trace(_dc, $"Import additional animation data from {url}...");
                         var additionalScene = _assimp.ImportFileExWithProperties(
                             url,
                             (uint)PostProcessSteps.Triangulate,
@@ -1334,9 +1336,9 @@ public class FbxModel : IDisposable
                         _applyScalingToRootNode(mnNewRoot, additionalMetadata, scale);
                         if (_traceFbxTree)
                         {
-                            Trace($"Anim {url} model:");
-                            Trace($"Model has {additionalScene->MAnimations[0]->MNumChannels} channels.");
-                            Trace(mnNewRoot.DumpNode());
+                            Trace(_dc, $"Anim {url} model:");
+                            Trace(_dc, $"Model has {additionalScene->MAnimations[0]->MNumChannels} channels.");
+                            Trace(_dc, $"{mnNewRoot.DumpNode()}");
                         }
 
                         string strFallbackName = url;
@@ -1356,11 +1358,11 @@ public class FbxModel : IDisposable
                         }
 
                         _loadAnimations(strFallbackName, additionalScene, mnNewRoot);
-                        Trace($"Done importing additional animation data from {url}.");
+                        Trace(_dc, $"Done importing additional animation data from {url}.");
                     }
                     catch (Exception e)
                     {
-                        Error($"Exception while loading additional animation data: {e}");
+                        Error(_dc, $"Exception while loading additional animation data: {e}");
                     }
                 }
             }
@@ -1392,7 +1394,7 @@ public class FbxModel : IDisposable
             }
             catch (Exception e)
             {
-                Trace($"Caught exception: {e}");
+                Trace(_dc, $"Caught exception: {e}");
             }
         }
     }

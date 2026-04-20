@@ -21,6 +21,8 @@ namespace builtin.loader;
 
 public class GlTF
 {
+    private static readonly engine.Dc _dc = engine.Dc.AssetLoading;
+
     private Model _jModel;
     private Gltf _gltfModel;
     private byte[] _gltfBinary;
@@ -576,7 +578,7 @@ public class GlTF
         */
         if (gltfNode.Mesh != null)
         {
-            Trace("Reading a mesh.");
+            Trace(_dc, $"Reading a mesh.");
             _readMesh(mn, _gltfModel.Meshes[gltfNode.Mesh.Value], out MatMesh matMesh);
             var id = InstanceDesc.CreateFromMatMesh(matMesh, 200f);
             mn.InstanceDesc = id;
@@ -661,7 +663,7 @@ public class GlTF
             {
                 Warning("Encountered a skin without a mesh");
             }
-            Trace("Reading a skin.");
+            Trace(_dc, $"Reading a skin.");
             _readSkin(mn, _gltfModel.Skins[gltfNode.Skin.Value]);
         }
 

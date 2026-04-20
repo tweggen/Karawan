@@ -12,6 +12,8 @@ namespace engine;
 
 public abstract class AAssetImplementation : IAssetImplementation
 {
+    private static readonly engine.Dc _dc = engine.Dc.AssetLoading;
+
     private bool _traceLoadingResources = true;
     private bool _traceLoadingAnimations = false;
     private bool _traceLoadingTextures = false;
@@ -45,7 +47,7 @@ public abstract class AAssetImplementation : IAssetImplementation
 
     private void _whenLoadedResources(string path, JsonNode? node)
     {
-        Trace("Loading resources...");
+        Trace(_dc, $"Loading resources...");
         if (null == node) return;
         try
         {
@@ -74,12 +76,12 @@ public abstract class AAssetImplementation : IAssetImplementation
                     }
 
                     if (_traceLoadingResources)
-                        Trace($"LoadResourcesTo: Added Resource \"{tag}\" from {uri}.");
+                        Trace(_dc,$"LoadResourcesTo: Added Resource \"{tag}\" from {uri}.");
 
                     string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uri);
                     if (!File.Exists(pathProbe))
                     {
-                        Trace($"Warning: resource file for {pathProbe} does not exist.");
+                        Trace(_dc,$"Warning: resource file for {pathProbe} does not exist.");
                     }
                     this.AddAssociation(tag!, uri);
                 }
@@ -87,14 +89,14 @@ public abstract class AAssetImplementation : IAssetImplementation
         }
         catch (Exception e)
         {
-            Trace($"Error loading resource: {e}");
+            Trace(_dc,$"Error loading resource: {e}");
         }
     }
 
     
     private void _whenLoadedAnimations(string path, JsonNode? node)
     {
-        Trace("Loading animations...");
+        Trace(_dc, $"Loading animations...");
         if (null == node) return;
         
         string pathProbe;
@@ -117,12 +119,12 @@ public abstract class AAssetImplementation : IAssetImplementation
                     }
 
                     if (_traceLoadingAnimations)
-                        Trace($"LoadAnimationsTo: Added Animation \"{uriModel}\" from {uriModel}.");
+                        Trace(_dc,$"LoadAnimationsTo: Added Animation \"{uriModel}\" from {uriModel}.");
 
                     string probeModel = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel);
                     if (!File.Exists(probeModel))
                     {
-                        Trace($"Warning: animation file for {probeModel} does not exist.");
+                        Trace(_dc,$"Warning: animation file for {probeModel} does not exist.");
                     }
 
                     AvailableAnimations.Add($"{uriModel};{uriAnimations}");
@@ -134,7 +136,7 @@ public abstract class AAssetImplementation : IAssetImplementation
                             uriAnimations);
 
                     if (_traceLoadingAnimations)
-                        Trace($"LoadAnimationsTo: Added Animation {uriModel} with {uriAnimations} at {strFileName}.");
+                        Trace(_dc,$"LoadAnimationsTo: Added Animation {uriModel} with {uriAnimations} at {strFileName}.");
 
                     /*
                      * If we are not compiling, probe for the baked animation file.
@@ -145,7 +147,7 @@ public abstract class AAssetImplementation : IAssetImplementation
                             strFileName);
                         if (!File.Exists(uriBaked))
                         {
-                            Trace($"Warning: resource file for {uriBaked} does not exist.");
+                            Trace(_dc,$"Warning: resource file for {uriBaked} does not exist.");
                         }
                     }
 
@@ -155,21 +157,21 @@ public abstract class AAssetImplementation : IAssetImplementation
                     }
                     else
                     {
-                        Trace($"Warning: Unable to bake animations for {strFileName}.");
+                        Trace(_dc,$"Warning: Unable to bake animations for {strFileName}.");
                     }
                 }
             }
         }
         catch (Exception e)
         {
-            Trace($"Error loading animation: {e}");
+            Trace(_dc,$"Error loading animation: {e}");
         }
     }
 
     
     private void _loadTextureAtlas(JsonNode? nodeAtlas)
     {
-        Trace("Loading texture atlas...");
+        Trace(_dc, $"Loading texture atlas...");
         var tc = I.Get<TextureCatalogue>();
 
         string? atlasTag = nodeAtlas?["tag"]?.GetValue<string>();
@@ -182,12 +184,12 @@ public abstract class AAssetImplementation : IAssetImplementation
         }
 
         if (_traceLoadingResources)
-            Trace($"LoadTextureAtlas: Added Resource \"{atlasTag}\" from {atlasUri}.");
+            Trace(_dc,$"LoadTextureAtlas: Added Resource \"{atlasTag}\" from {atlasUri}.");
 
         string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), atlasUri);
         if (!File.Exists(pathProbe))
         {
-            Trace($"Warning: resource file for {pathProbe} does not exist.");
+            Trace(_dc,$"Warning: resource file for {pathProbe} does not exist.");
         }
         this.AddAssociation(atlasTag, atlasUri);
 
@@ -229,7 +231,7 @@ public abstract class AAssetImplementation : IAssetImplementation
      */
     private void _whenLoadedTextures(string path, JsonNode? nodeTextures)
     {
-        Trace("Loading textures...");
+        Trace(_dc, $"Loading textures...");
         if (null == nodeTextures) return;
         
         try
@@ -281,17 +283,17 @@ public abstract class AAssetImplementation : IAssetImplementation
     
     private void _whenLoadedScenarios(string path, JsonNode? node)
     {
-        Trace($"Loading scenario categories from path '{path}'...");
+        Trace(_dc,$"Loading scenario categories from path '{path}'...");
         if (null == node)
         {
-            Trace("_whenLoadedScenarios: node is null");
+            Trace(_dc, $"_whenLoadedScenarios: node is null");
             return;
         }
         try
         {
             if (node is not JsonArray arr)
             {
-                Trace($"_whenLoadedScenarios: node is not array, it's {node.GetType().Name}");
+                Trace(_dc,$"_whenLoadedScenarios: node is not array, it's {node.GetType().Name}");
                 return;
             }
             int simulationDays = 365; // Could be overridden via a sibling node; left fixed for now.
@@ -301,7 +303,7 @@ public abstract class AAssetImplementation : IAssetImplementation
                 string? name = catNode?["name"]?.GetValue<string>();
                 if (string.IsNullOrEmpty(name))
                 {
-                    Trace("Warning: scenario category without 'name' skipped.");
+                    Trace(_dc, $"Warning: scenario category without 'name' skipped.");
                     continue;
                 }
                 int count = catNode?["count"]?.GetValue<int>() ?? 0;
@@ -314,7 +316,7 @@ public abstract class AAssetImplementation : IAssetImplementation
                 }
                 if (count <= 0 || npcMin <= 0 || npcMax < npcMin)
                 {
-                    Trace($"Warning: scenario category '{name}' has invalid count={count} or range=[{npcMin},{npcMax}]; skipped.");
+                    Trace(_dc,$"Warning: scenario category '{name}' has invalid count={count} or range=[{npcMin},{npcMax}]; skipped.");
                     continue;
                 }
 
@@ -352,32 +354,32 @@ public abstract class AAssetImplementation : IAssetImplementation
                             fileName);
                         if (!File.Exists(probeBaked))
                         {
-                            Trace($"Warning: scenario file for {probeBaked} does not exist.");
+                            Trace(_dc,$"Warning: scenario file for {probeBaked} does not exist.");
                         }
                         this.AddAssociation(fileName, probeBaked);
                     }
                 }
             }
-            Trace($"_whenLoadedScenarios: successfully registered {AvailableScenarios.Count} scenarios total.");
+            Trace(_dc,$"_whenLoadedScenarios: successfully registered {AvailableScenarios.Count} scenarios total.");
         }
         catch (Exception e)
         {
-            Trace($"Error loading scenarios: {e}");
+            Trace(_dc,$"Error loading scenarios: {e}");
         }
     }
 
 
     public void WithLoader()
     {
-        Trace("AAssetImplementation.WithLoader(): Registering JSON callbacks...");
+        Trace(_dc, $"AAssetImplementation.WithLoader(): Registering JSON callbacks...");
         I.Get<engine.casette.Loader>().WhenLoaded("/resources/list", _whenLoadedResources);
-        Trace("  - Registered /resources/list");
+        Trace(_dc, $"  - Registered /resources/list");
         I.Get<engine.casette.Loader>().WhenLoaded("/animations/list", _whenLoadedAnimations);
-        Trace("  - Registered /animations/list");
+        Trace(_dc, $"  - Registered /animations/list");
         I.Get<engine.casette.Loader>().WhenLoaded("/textures", _whenLoadedTextures);
-        Trace("  - Registered /textures");
+        Trace(_dc, $"  - Registered /textures");
         I.Get<engine.casette.Loader>().WhenLoaded("/scenarios/categories", _whenLoadedScenarios);
-        Trace("  - Registered /scenarios/categories");
+        Trace(_dc, $"  - Registered /scenarios/categories");
     }
 
     

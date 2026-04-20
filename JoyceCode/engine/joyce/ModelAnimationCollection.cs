@@ -16,6 +16,8 @@ namespace engine.joyce;
 [MessagePackObject(AllowPrivate = true)]
 public partial class ModelAnimationCollection
 {
+    private static readonly engine.Dc _dc = engine.Dc.Animation;
+
     [IgnoreMember]
     private Model _model;
     [Key(2)]
@@ -231,10 +233,10 @@ public partial class ModelAnimationCollection
 
             if (_traceAnim && frameno == 0)
             {
-                Trace($"Anim.Matrix {m4LocalAnim}");
-                Trace($"Rest Transform.Matrix {mnRestPose.Transform.Matrix}");
-                Trace($"Inverse global w/o instance: {_model.InverseFirstInstanceDescTransformWoInstance}");
-                Trace($"GlobalTransform: {m4MyBoneSpaceToRestPose}");
+                Trace(_dc,$"Anim.Matrix {m4LocalAnim}");
+                Trace(_dc,$"Rest Transform.Matrix {mnRestPose.Transform.Matrix}");
+                Trace(_dc,$"Inverse global w/o instance: {_model.InverseFirstInstanceDescTransformWoInstance}");
+                Trace(_dc,$"GlobalTransform: {m4MyBoneSpaceToRestPose}");
             }
         }
         else
@@ -318,7 +320,7 @@ public partial class ModelAnimationCollection
                 if (mnModelPose == null)
                 {
                     int a = 1;
-                    Trace($"Warning: Baking a pose without an inverse global transform.");
+                    Trace(_dc,$"Warning: Baking a pose without an inverse global transform.");
                 }
                 var arr = ma.BakedFrames[frameno].BoneTransformations;
                 if (boneIndex < arr.Length)
@@ -326,7 +328,7 @@ public partial class ModelAnimationCollection
                     arr[boneIndex] = m4Baked;
                     if (_traceAnim && frameno == 0)
                     {
-                        Trace($"Baked \"{mnRestPose.Name}\": {m4Baked}");
+                        Trace(_dc,$"Baked \"{mnRestPose.Name}\": {m4Baked}");
                     }
                 }
                 else
@@ -464,7 +466,7 @@ public partial class ModelAnimationCollection
         {
             return;
         }
-        Trace($"Baking animations for {_model.Name}");
+        Trace(_dc,$"Baking animations for {_model.Name}");
 
 
         var skeleton = _model.FindSkeleton();
@@ -482,7 +484,7 @@ public partial class ModelAnimationCollection
                 /*
                  * Well, if there is no instancedesc, there is no need to bake anything.
                  */
-                Trace($"No instance desc for animation");
+                Trace(_dc,$"No instance desc for animation");
                 return;
             }
 
@@ -511,7 +513,7 @@ public partial class ModelAnimationCollection
         foreach (var kvp in MapAnimations)
         {
             ModelAnimation ma = kvp.Value;
-            Trace($"Loading animation {kvp.Key}");
+            Trace(_dc,$"Loading animation {kvp.Key}");
             if (cpuNodes != null)
             {
                 foreach (var cpuNode in cpuNodes)

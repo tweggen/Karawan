@@ -21,6 +21,8 @@ namespace engine.joyce;
 
 public class ModelCache
 {
+    private static readonly engine.Dc _dc = engine.Dc.Animation;
+
     private engine.Engine _engine = I.Get<engine.Engine>();
 
 
@@ -197,7 +199,7 @@ public class ModelCache
         }
         catch (Exception exception)
         {
-            Error($"Unable to load model {mcp}: {exception}.");
+            Error(_dc, $"Unable to load model {mcp}: {exception}.");
             lock (mce.LockObject)
             {
                 mce.State = ModelCacheEntry.EntryState.Error;
