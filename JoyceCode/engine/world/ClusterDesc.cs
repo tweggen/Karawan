@@ -16,6 +16,8 @@ namespace engine.world;
  */
 public class ClusterDesc
 {
+    private static readonly engine.Dc _dc = engine.Dc.MetaGen;
+
     [Flags]
     public enum LocationAttributes {
         Downtown = 0x00000001,
@@ -417,11 +419,11 @@ public class ClusterDesc
                 /*
                  * Nothing to do here yet.
                  */
-                Trace($"Loaded streets for {this.Name} from cache.");
+                Trace(_dc, $"Loaded streets for {this.Name} from cache.");
             }
             else
             {
-                Trace($"Generating streets for {this.Name}.");
+                Trace(_dc, $"Generating streets for {this.Name}.");
                 _generateStrokes();
                 I.Get<ClusterStorage>().StoreClusterStreetPoints(this);
                 I.Get<ClusterStorage>().StoreClusterStrokes(this);
@@ -468,7 +470,7 @@ public class ClusterDesc
         _clusterState = ClusterState.Computing;
         
         _nStreetsTriggered++;
-        Trace($"Cluster {Name} triggering street generation #{_nStreetsTriggered}");
+        Trace(_dc, $"Cluster {Name} triggering street generation #{_nStreetsTriggered}");
         /*
          * First, generate the actual streets.
          */
@@ -480,7 +482,7 @@ public class ClusterDesc
         _processStrokes();
         _findQuarters();
 
-        Trace(
+        Trace(_dc,
             $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments. Now calling cluster operators..."
         );
 
@@ -490,7 +492,7 @@ public class ClusterDesc
 
         _clusterState = ClusterState.Done;
 
-        Trace($"TALE DIAG: Pushing ClusterCompletedEvent for cluster '{Name}' (index {Index}).");
+        Trace(_dc, $"TALE DIAG: Pushing ClusterCompletedEvent for cluster '{Name}' (index {Index}).");
         I.Get<engine.news.EventQueue>().Push(new ClusterCompletedEvent(Name));
     }
 

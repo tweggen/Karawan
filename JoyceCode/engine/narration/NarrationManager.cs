@@ -34,6 +34,8 @@ public class NarrationSaveState
 /// </summary>
 public class NarrationManager : AModule
 {
+    private static readonly engine.Dc _dc = engine.Dc.Narration;
+
     public enum State
     {
         Idle,
@@ -116,14 +118,14 @@ public class NarrationManager : AModule
     {
         if (!_scripts.TryGetValue(scriptName, out var script))
         {
-            Warning($"NarrationManager: script '{scriptName}' not found.");
+            Warning(_dc, $"script '{scriptName}' not found.");
             return null;
         }
 
         State newState = _parseMode(mode);
         if (!_mayTransition(newState))
         {
-            Trace($"NarrationManager: cannot transition from {_currentState} to {newState}.");
+            Trace(_dc, $"cannot transition from {_currentState} to {newState}.");
             return null;
         }
 
@@ -187,7 +189,7 @@ public class NarrationManager : AModule
             return await TriggerScript(trigger.ScriptName, trigger.Mode, "");
         }
 
-        Warning($"NarrationManager: no trigger found for tag '{tag}'.");
+        Warning(_dc, $"no trigger found for tag '{tag}'.");
         return null;
     }
 
@@ -200,7 +202,7 @@ public class NarrationManager : AModule
     {
         if (!string.IsNullOrEmpty(_startupScript) && _currentState == State.Idle)
         {
-            Trace($"NarrationManager: triggering startup script '{_startupScript}'.");
+            Trace(_dc, $"triggering startup script '{_startupScript}'.");
             return await TriggerScript(_startupScript, "narration", "");
         }
 
@@ -248,7 +250,7 @@ public class NarrationManager : AModule
     {
         if (!_scripts.TryGetValue(scriptName, out var script))
         {
-            Warning($"NarrationManager: script '{scriptName}' not found for restore.");
+            Warning(_dc, $"script '{scriptName}' not found for restore.");
             return null;
         }
 
@@ -359,7 +361,7 @@ public class NarrationManager : AModule
             _startupScript = sv.GetValue<string>();
         }
 
-        Trace($"NarrationManager: loaded {_scripts.Count} scripts, {_triggers.Count} triggers, startup='{_startupScript}'.");
+        Trace(_dc, $"loaded {_scripts.Count} scripts, {_triggers.Count} triggers, startup='{_startupScript}'.");
     }
 
 
@@ -382,7 +384,7 @@ public class NarrationManager : AModule
                 }
                 catch (Exception e)
                 {
-                    Warning($"NarrationManager: event handler for '{eventDesc.Type}' threw: {e.Message}");
+                    Warning(_dc, $"event handler for '{eventDesc.Type}' threw: {e.Message}");
                 }
             }
             else

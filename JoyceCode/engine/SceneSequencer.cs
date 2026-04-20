@@ -10,6 +10,8 @@ namespace engine;
 
 public class SceneSequencer : IDisposable
 {
+    private static readonly engine.Dc _dc = engine.Dc.Engine;
+
     private readonly object _lo = new();
     private readonly Engine _engine;
 
@@ -187,7 +189,7 @@ public class SceneSequencer : IDisposable
 
             if (_nameNewSceneRequest == name)
             {
-                Error($"Trying to activate scene that already is activated.");
+                Error(_dc, $"Trying to activate scene that already is activated.");
                 return;
             }
             _nameNewSceneRequest = name;
@@ -236,7 +238,7 @@ public class SceneSequencer : IDisposable
                         var className = classDescNode?["className"]?.GetValue<string>();
                         if (string.IsNullOrWhiteSpace(className))
                         {
-                            Warning($"Encountered null classname for {sceneName}.");
+                            Warning(_dc, $"Encountered null classname for {sceneName}.");
                         }
 
                         try
@@ -247,7 +249,7 @@ public class SceneSequencer : IDisposable
                         }
                         catch (Exception e)
                         {
-                            Warning($"Unable to load scene {sceneName}: {e}");
+                            Warning(_dc, $"Unable to load scene {sceneName}: {e}");
                         }
 
                         return null;
@@ -259,7 +261,7 @@ public class SceneSequencer : IDisposable
         }
         catch (Exception e)
         {
-            Warning($"No scenes found to add or error in declaration: {e}");
+            Warning(_dc, $"No scenes found to add or error in declaration: {e}");
         }
     }
     

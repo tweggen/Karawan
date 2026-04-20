@@ -43,6 +43,8 @@ public class EngineAssetFileProvider : IMixFileProvider
  */
 public class Mix
 {
+    private static readonly engine.Dc _dc = engine.Dc.Casette;
+
     private View _view = new();
 
     public string Directory = "";
@@ -96,7 +98,7 @@ public class Mix
         while (queue.Count > 0)
         {
             var (currentPath, currentElement) = queue.Dequeue();
-            Trace("Analysing path "+currentPath);
+            Trace(_dc, $"Analysing path {currentPath}");
 
             if (currentElement.ValueKind == JsonValueKind.Object)
             {
@@ -104,7 +106,7 @@ public class Mix
                 if (currentElement.TryGetProperty("__include__", out var includeProp) &&
                     includeProp.ValueKind == JsonValueKind.String)
                 {
-                    Trace("have include property");
+                    Trace(_dc, $"have include property");
                     var includePath = includeProp.GetString();
                     if (!string.IsNullOrEmpty(includePath))
                     {
@@ -123,7 +125,7 @@ public class Mix
                          */
                         if (!File.Exists(pathProbe))
                         {
-                            Trace($"Warning: include file for {pathProbe} does not exist.");
+                            Trace(_dc, $"Warning: include file for {pathProbe} does not exist.");
                         }
                         else
                         {
@@ -140,7 +142,7 @@ public class Mix
                          * Currently, we only accept an open call with the file name only
                          */
                         string fileNameOnly = Path.GetFileName(includePath);
-                        Trace($"Trying to open file name {fileNameOnly}");
+                        Trace(_dc, $"Trying to open file name {fileNameOnly}");
                         
                         if (FileProvider.Exists(fileNameOnly))
                         {
@@ -151,13 +153,13 @@ public class Mix
                                 fs = FileProvider.Open(fileNameOnly);
                                 AdditionalFiles.Add(jsonCompletePath);
                                 doc = JsonDocument.Parse(fs);
-                                Trace("Adding include file "+includePath+ " at "+ jsonCompletePath);
+                                Trace(_dc, $"Adding include file {includePath} at {jsonCompletePath}");
                                 // Upsert the loaded fragment over the current path
                                 _view.Upsert(currentPath, doc.RootElement, priority);
                             }
                             catch (Exception _)
                             {
-                                Trace("Unable to open include file "+fileNameOnly+" at "+jsonCompletePath);
+                                Trace(_dc, $"Unable to open include file {fileNameOnly} at {jsonCompletePath}");
                             }
                             finally
                             {
@@ -165,10 +167,10 @@ public class Mix
                                 doc?.Dispose();
                             }
                         } else {
-                            Trace("include path does not exist "+fileNameOnly);     
+                            Trace(_dc, $"include path does not exist {fileNameOnly}");     
                         }                       
                     } else {
-                        Trace("include property null.");                            
+                        Trace(_dc, $"include property null.");                            
                     }
                 }
 

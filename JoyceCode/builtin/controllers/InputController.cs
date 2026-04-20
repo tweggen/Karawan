@@ -16,9 +16,11 @@ namespace builtin.controllers;
  */
 public class InputController : engine.AController, engine.IInputPart
 {
+    private static readonly engine.Dc _dc = engine.Dc.Input;
+
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<InputEventPipeline>()    
+        new SharedModule<InputEventPipeline>()
     };
 
     private object _lo = new();
@@ -373,7 +375,7 @@ public class InputController : engine.AController, engine.IInputPart
             _isMouseButtonClicked = false;
             if (strButton != null)
             {
-                Trace($"Sending {strButton} released event");
+                Trace(_dc, $"Sending {strButton} released event");
                 I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_BUTTON_RELEASED, strButton));
                 ev.IsHandled = true;
             }
@@ -494,7 +496,7 @@ public class InputController : engine.AController, engine.IInputPart
             _lastTouchPosition = ev.PhysicalPosition;
             if (strButton != null)
             {
-                Trace($"Sending {strButton} pressed event");
+                Trace(_dc, $"Sending {strButton} pressed event");
                 I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_BUTTON_PRESSED, strButton));
                 ev.IsHandled = true;
             }
@@ -690,7 +692,7 @@ public class InputController : engine.AController, engine.IInputPart
 
     public void _onButtonPressed(Event ev)
     {
-        Trace($"Button {ev.Code} pressed");
+        Trace(_dc, $"Button {ev.Code} pressed");
 
         switch (ev.Code)
         {
@@ -714,7 +716,7 @@ public class InputController : engine.AController, engine.IInputPart
 
     public void _onButtonReleased(Event ev)
     {
-        Trace($"Button {ev.Code} released");
+        Trace(_dc, $"Button {ev.Code} released");
         
         switch (ev.Code)
         {
@@ -740,7 +742,7 @@ public class InputController : engine.AController, engine.IInputPart
     
     public void _onGamepadButtonPressed(Event ev)
     {
-        Trace($"Button {ev.Code} pressed");
+        Trace(_dc, $"Button {ev.Code} pressed");
 
         switch (ev.Code)
         {
@@ -755,7 +757,7 @@ public class InputController : engine.AController, engine.IInputPart
 
     public void _onGamepadButtonReleased(Event ev)
     {
-        Trace($"Button {ev.Code} released");
+        Trace(_dc, $"Button {ev.Code} released");
         
         switch (ev.Code)
         {

@@ -20,6 +20,8 @@ namespace engine.physics;
 public class API
     : physics.IContactEventHandler
 {
+    private static readonly engine.Dc _dc = engine.Dc.Physics;
+
     private object _lo = new();
 
     private uint _frameId = 0;
@@ -234,8 +236,8 @@ public class API
                         _engine.PLog?.Dump();
                         
                         BodyReference prefBody = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-                        Trace($"Found problem with physics object of entity {po.Entity} bodyhandle {po.IntHandle}.");
-                        Trace("Body's constraints:");
+                        Trace(_dc, $"Found problem with physics object of entity {po.Entity} bodyhandle {po.IntHandle}.");
+                        Trace(_dc, $"Body's constraints:");
                         int nConstraintsOfBody = prefBody.Constraints.Count;
                         for (int i = 0; i < nConstraintsOfBody; ++i)
                         {
@@ -243,21 +245,21 @@ public class API
                             var conHandle = cref.ConnectingConstraintHandle;
                             ref var con = ref _engine.Simulation.Solver.HandleToConstraint[conHandle.Value];
                             var biMy = cref.BodyIndexInConstraint;
-                            Trace($"Body is in constraint {conHandle} at index {biMy}");
-                            Trace($"Con SetIndex {con.SetIndex}, BatchIndex {con.BatchIndex}, TypeId {con.TypeId}, IndexInTypeBatch {con.IndexInTypeBatch}");
+                            Trace(_dc, $"Body is in constraint {conHandle} at index {biMy}");
+                            Trace(_dc, $"Con SetIndex {con.SetIndex}, BatchIndex {con.BatchIndex}, TypeId {con.TypeId}, IndexInTypeBatch {con.IndexInTypeBatch}");
                         }
-                        Trace("Known constraints:" );
+                        Trace(_dc, $"Known constraints:" );
                         ref var kincons  = ref _engine.Simulation.Solver.ConstrainedKinematicHandles;
                         int nConstrainedKinematics = kincons.Count;
                         for (int i = 0; i < nConstrainedKinematics; ++i)
                         {
                             ref var cref = ref kincons[i];
-                            Trace($"Kinematic Handle {cref}");
+                            Trace(_dc, $"Kinematic Handle {cref}");
                         }
 
                         prefBody.GetDescription(out var desc);
                         System.Threading.Thread.Sleep(200);
-                        Trace($"body #{prefBody.Handle}, exists={prefBody.Exists}, isAwake={prefBody.Awake}, Velocity={prefBody.Velocity.Linear}, Pos={prefBody.Pose.Position}, MotionState={prefBody.MotionState}, , Collidable={prefBody.Collidable}, NConstraints={prefBody.Constraints.Count}, description={desc.ToString()}");
+                        Trace(_dc, $"body #{prefBody.Handle}, exists={prefBody.Exists}, isAwake={prefBody.Awake}, Velocity={prefBody.Velocity.Linear}, Pos={prefBody.Pose.Position}, MotionState={prefBody.MotionState}, , Collidable={prefBody.Collidable}, NConstraints={prefBody.Constraints.Count}, description={desc.ToString()}");
                     }
                 }
                 // Trace($"Exception during physics step: {e}");
@@ -285,7 +287,7 @@ public class API
             }
             catch (Exception e)
             {
-                Error($"Caught exception while raycasting for camera: {e}"); 
+                Error(_dc, $"Caught exception while raycasting for camera: {e}"); 
                 _engine.PLog?.Dump();
             }
         }
