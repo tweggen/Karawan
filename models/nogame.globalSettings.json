@@ -10,5 +10,17 @@
   "debug.option.mouseEnabled": "false",
   "debug.option.autoLogin": "false",
   "joyce.DisablePrebakedAnimations": "false",
-  "test.script": ""
+  "test.script": "",
+  "debug.category.pathfinding": "false",
+  "debug.category.talemanager": "false",
+  "debug.category.spatialmodel": "false",
+  "debug.category.metagen": "false",
+  "debug.category.spawncontroller": "false",
+  "debug.category.streetgen": "false",
+  "debug.category.navmap": "false",
+  "debug.category.physics": "false",
+  "debug.category.assetloading": "false",
+  "debug.category.casette": "false",
+  "debug.category.animation": "false",
+  "debug.category.clickmodule": "false"
 }

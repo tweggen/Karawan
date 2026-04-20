@@ -411,6 +411,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TransformApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\DebugCategories.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\DebugInterpolatedStringHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\DebugFilter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecApplyParallelNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecDesc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\AExecNode.cs" />

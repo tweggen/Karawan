@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 /*
  * plent-o-matic: your job is our business
@@ -106,25 +107,51 @@ namespace engine
         {
             Log(Level.Trace, _createLogEntry(Level.Trace, msg));
         }
-        
+
+        /// <summary>
+        /// Filtered Trace: string is NEVER built when the category is disabled.
+        /// Usage: Trace(Dc.Pathfinding, $"...{expr}...");
+        /// </summary>
+        public static void Trace(engine.Dc category,
+            [InterpolatedStringHandlerArgument("category")]
+            ref engine.DebugInterpolatedStringHandler message)
+        {
+            if (message.IsEnabled) Trace(message.ToStringAndClear());
+        }
 
         public static void Wonder(in string msg)
         {
-           
+
             Log(Level.Wonder, _createLogEntry(Level.Wonder, msg));
+        }
+
+        public static void Wonder(engine.Dc category,
+            [InterpolatedStringHandlerArgument("category")]
+            ref engine.DebugInterpolatedStringHandler message)
+        {
+            if (message.IsEnabled) Wonder(message.ToStringAndClear());
         }
 
         public static void Warning(in string msg)
         {
             Log(Level.Warning, _createLogEntry(Level.Warning, msg));
         }
-        
+
+        public static void Warning(engine.Dc category,
+            [InterpolatedStringHandlerArgument("category")]
+            ref engine.DebugInterpolatedStringHandler message)
+        {
+            if (message.IsEnabled) Warning(message.ToStringAndClear());
+        }
 
         public static void Error(in string msg)
         {
             Log(Level.Error, _createLogEntry(Level.Error, msg));
         }
 
+        /// <summary>Forwarding accessor so Is(Dc.X) works without extra using directive.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Is(engine.Dc category) => engine.DebugFilter.Is(category);
 
         [DoesNotReturn]
         public static void ErrorThrow(in string msg, Func<string, SystemException> excFunc )

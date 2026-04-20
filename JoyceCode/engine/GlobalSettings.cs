@@ -119,6 +119,7 @@ public class GlobalSettings
         {
             _loadGlobalSettings(jn);
         }
+        DebugFilter.ApplyFromSettings();
     }
 
 
