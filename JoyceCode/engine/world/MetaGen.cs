@@ -49,6 +49,8 @@ public class MList<T>
 
 public class MetaGen
 {
+    private static readonly engine.Dc _dc = engine.Dc.MetaGen;
+
     public static float FragmentSize = 400f;
     public static Vector3 FragmentSize3 = new(FragmentSize, FragmentSize, FragmentSize);
     public static Vector2 FragmentSize2 = new(FragmentSize, FragmentSize);
@@ -168,7 +170,7 @@ public class MetaGen
 
     private void _setEdRoot(meta.ExecDesc edRoot)
     {
-        Trace("Setting new execdescription.");
+        Trace(_dc, $"Setting new execdescription.");
 
         lock (_lo)
         {
@@ -195,7 +197,7 @@ public class MetaGen
             throw new System.ArgumentException($"WorldMetaGen.applyClusterOperators(): clusterDesc is null.");
         }
 
-        if (TRACE_CLUSTER_OPEARTORS) Trace($"WorldMetaGen: Calling cluster operators for {clusterDesc.Name}...");
+        if (TRACE_CLUSTER_OPEARTORS) Trace(_dc,$"WorldMetaGen: Calling cluster operators for {clusterDesc.Name}...");
 
         var e = I.Get<Engine>();
 
@@ -226,7 +228,7 @@ public class MetaGen
             throw new System.ArgumentException($"WorldMetaGen.applyFragmentOperators(): fragment is null.");
         }
 
-        if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
+        if (TRACE_FRAGMENT_OPEARTORS) Trace(_dc,$"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
         
         var e = fragment.Engine;
 
@@ -250,7 +252,7 @@ public class MetaGen
                             return null;
                         }
 
-                        if (TRACE_FRAGMENT_OPEARTORS) Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
+                        if (TRACE_FRAGMENT_OPEARTORS) Trace(_dc,$"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
 
                         return e.Run(() =>
                         {
@@ -260,7 +262,7 @@ public class MetaGen
                             }
                             catch (Exception e)
                             {
-                                Trace($"Exception calling fragment operator: {e}.");
+                                Trace(_dc,$"Exception calling fragment operator: {e}.");
                             }
                             return Task.CompletedTask;
                         });
@@ -284,7 +286,7 @@ public class MetaGen
      */
     private void _applyWorldOperators(MList<IWorldOperator> operators)
     {
-        Trace("WorldMetaGen: Calling operators...");
+        Trace(_dc, $"WorldMetaGen: Calling operators...");
         Task applyTask = new Task(async () =>
         {
             foreach (var o in operators.List())
@@ -292,7 +294,7 @@ public class MetaGen
                 try
                 {
                     var oppath = o.WorldOperatorGetPath();
-                    Trace($"WorldMetaGen.applyWorldOperators(): Applying operator '{oppath}'...");
+                    Trace(_dc,$"WorldMetaGen.applyWorldOperators(): Applying operator '{oppath}'...");
                     // var t0 = Sys.time();
                     await o.WorldOperatorApply()();
                     // var dt = Sys.time() - t0;
@@ -306,7 +308,7 @@ public class MetaGen
         });
         applyTask.RunSynchronously();
 
-        Trace("WorldMetaGen: Done calling world operators.");
+        Trace(_dc, $"WorldMetaGen: Done calling world operators.");
     }
     
 

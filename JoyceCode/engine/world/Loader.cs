@@ -16,8 +16,10 @@ namespace engine.world
      */
     public class Loader
     {
+        private static readonly engine.Dc _dc = engine.Dc.MetaGen;
+
         private object _lo = new();
-        
+
         private Engine _engine;
 
         private int _lastLoadedIteration = 0;
@@ -77,7 +79,7 @@ namespace engine.world
                     {
                         if (world.MetaGen.TRACE_WORLD_LOADER)
                         {
-                            Trace($"Discarding fragment {frag.GetId()}");
+                            Trace(_dc,$"Discarding fragment {frag.GetId()}");
                         }
 
                         fragList.Add(frag);
@@ -162,7 +164,7 @@ namespace engine.world
                     // Mark as used.
                     if (world.MetaGen.TRACE_WORLD_LOADER)
                     {
-                        // Trace($"Using existing version of {visib}");
+                        // Trace(_dc,$"Using existing version of {visib}");
                     }
 
                     fragment.LastIteration = _lastLoadedIteration;
@@ -174,7 +176,7 @@ namespace engine.world
 
                 if (world.MetaGen.TRACE_WORLD_LOADER)
                 {
-                    Trace($"Creating fragment {visib}");
+                    Trace(_dc,$"Creating fragment {visib}");
                 }
 
                 /*
@@ -208,7 +210,7 @@ namespace engine.world
             }
             catch (Exception e)
             {
-                Trace($"Exception calling applyFragmentOperators(): {e}");
+                Trace(_dc,$"Exception calling applyFragmentOperators(): {e}");
             }
         }
 
@@ -297,7 +299,7 @@ namespace engine.world
                          */
                         if (frag.LastIteration < _lastLoadedIteration)
                         {
-                            if (_traceLoad) Trace($"Purging fragment {frag.Visibility}");
+                            if (_traceLoad) Trace(_dc,$"Purging fragment {frag.Visibility}");
                             eraseList.Add(kvp.Key);
                         }
                     }
@@ -315,7 +317,7 @@ namespace engine.world
                  * And because the entities in addition have their FragmentId set, they would be
                  * deleted even if they currently are somewhere else.
                  */
-                Trace($"Purging behaviors outside of fragment {aabb.ToString()}.");
+                Trace(_dc,$"Purging behaviors outside of fragment {aabb.ToString()}.");
                 _engine.QueueCleanupAction(() => _wiperSystem.Update(aabb));
 
                 /*

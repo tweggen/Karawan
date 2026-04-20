@@ -12,6 +12,8 @@ namespace engine.world;
 
 public class GenerateClustersOperator : world.IWorldOperator
 {
+    private static readonly engine.Dc _dc = engine.Dc.MetaGen;
+
     private string _strKey;
     private builtin.tools.RandomSource _rnd;
     private tools.NameGenerator _nameGenerator;
@@ -53,11 +55,11 @@ public class GenerateClustersOperator : world.IWorldOperator
          * Remember the cities might become merged.
          */
         int nMaxClusters = (int)((world.MetaGen.MaxWidth / 1000f) * (world.MetaGen.MaxHeight / 1000f) / 5f);
-        Trace($"Generating a maximum of {nMaxClusters} cluster.");
+        Trace(_dc, $"Generating a maximum of {nMaxClusters} cluster.");
 
 
         int idxCluster = 0;
-        Trace("GenerateClustersOperator: Generating cluster list...");
+        Trace(_dc, $"GenerateClustersOperator: Generating cluster list...");
 
         {
             var clusterDesc = new ClusterDesc() { IdString = "cluster-" + _strKey + "-" + idxCluster};
@@ -235,7 +237,7 @@ public class GenerateClustersOperator : world.IWorldOperator
         }
         nClusters = acd.Count;
         
-        Trace("GenerateClustersOperator: Merged " + nMerges + " clusters to " + (nClusters - nMerges * 2));
+        Trace(_dc, $"GenerateClustersOperator: Merged {nMerges} clusters to {nClusters - nMerges * 2}");
     }
     
 
@@ -246,7 +248,7 @@ public class GenerateClustersOperator : world.IWorldOperator
     private void _fillClusters(MetaGen worldMetaGen, IList<ClusterDesc> acd)
     {
         int nClusters = acd.Count;
-        Trace($"Filling {nClusters} clusters.");
+        Trace(_dc, $"Filling {nClusters} clusters.");
         
         /*
          * Now generate per cluster info.
@@ -332,7 +334,7 @@ public class GenerateClustersOperator : world.IWorldOperator
             }
             else
             {
-                Trace("Retrieved previously generated clusters.");
+                Trace(_dc, $"Retrieved previously generated clusters.");
                 clusterList = new List<ClusterDesc>(enumClusterDesc);
             }
         }
@@ -342,7 +344,7 @@ public class GenerateClustersOperator : world.IWorldOperator
 
         if (null == clusterList)
         {
-            Trace("Newly generating clusters.");
+            Trace(_dc, $"Newly generating clusters.");
             _generateClusterList(worldMetaGen, out clusterList);
         }
     }
@@ -368,7 +370,7 @@ public class GenerateClustersOperator : world.IWorldOperator
         _fillClusters(worldMetaGen, acd);
         _useClusters(worldMetaGen, acd);
         _saveClusters(acd);
-        Trace("GenerateClustersOperator: Done.");
+        Trace(_dc, $"GenerateClustersOperator: Done.");
         I.Get<engine.news.EventQueue>().Push(new ClustersGeneratedEvent(acd.Count));
     });
     

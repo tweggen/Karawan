@@ -9,6 +9,8 @@ namespace engine.world;
 
 public class MetaGenLoader
 {
+    private static readonly engine.Dc _dc = engine.Dc.MetaGen;
+
     private MetaGen _metaGen;
     
     private ExecDesc _loadExecDesc(JsonNode node)
@@ -86,7 +88,7 @@ public class MetaGenLoader
         }
         catch (Exception e)
         {
-            Warning($"Error reading fragment operators: {e}.");
+            Warning(_dc, $"Error reading fragment operators: {e}.");
         }
 
         return new ExecDesc();
@@ -110,14 +112,14 @@ public class MetaGenLoader
                     }
                     catch (Exception e)
                     {
-                        Warning($"Unable to instantiate world building operator {className}: {e}");
+                        Warning(_dc, $"Unable to instantiate world building operator {className}: {e}");
                     }
                 }
             }
         }
         catch (Exception e)
         {
-            Warning($"Error reading implementations: {e}");
+            Warning(_dc, $"Error reading implementations: {e}");
         }
     }
 
@@ -139,14 +141,14 @@ public class MetaGenLoader
                     }
                     catch (Exception e)
                     {
-                        Warning($"Unable to instantiate cluster operator {className}: {e}");
+                        Warning(_dc, $"Unable to instantiate cluster operator {className}: {e}");
                     }
                 }
             }
         }
         catch (Exception e)
         {
-            Warning($"Error reading implementations: {e}");
+            Warning(_dc, $"Error reading implementations: {e}");
         }
     }
 
@@ -168,14 +170,14 @@ public class MetaGenLoader
                     }
                     catch (Exception e)
                     {
-                        Warning($"Unable to instantiate world populating operator {className}: {e}");
+                        Warning(_dc, $"Unable to instantiate world populating operator {className}: {e}");
                     }
                 }
             }
         }
         catch (Exception e)
         {
-            Warning($"Error reading implementations: {e}");
+            Warning(_dc, $"Error reading implementations: {e}");
         }
     }
 
@@ -206,7 +208,7 @@ public class MetaGenLoader
         }
         catch (Exception e)
         {
-            Warning($"Unable to setup metagen: {e}");
+            Warning(_dc, $"Unable to setup metagen: {e}");
         }
     }
 
