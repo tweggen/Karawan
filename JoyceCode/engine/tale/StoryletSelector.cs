@@ -244,6 +244,10 @@ public class StoryletSelector
     private static void RecordDelta(NpcSchedule npc, string prop, float delta,
         Dictionary<string, float> deltas)
     {
+        // Defensive: ensure Properties dict exists (shouldn't be necessary after EnsurePropertiesInitialized, but safe)
+        if (npc?.Properties == null)
+            npc.Properties = new Dictionary<string, float>();
+
         float old = npc.Properties.GetValueOrDefault(prop, 0.5f);
         float val = Math.Clamp(old + delta, 0f, 1f);
         npc.Properties[prop] = val;
@@ -258,6 +262,10 @@ public class StoryletSelector
     private static void RecordSet(NpcSchedule npc, string prop, float value,
         Dictionary<string, float> deltas)
     {
+        // Defensive: ensure Properties dict exists (shouldn't be necessary after EnsurePropertiesInitialized, but safe)
+        if (npc?.Properties == null)
+            npc.Properties = new Dictionary<string, float>();
+
         float old = npc.Properties.GetValueOrDefault(prop, 0.5f);
         npc.Properties[prop] = Math.Clamp(value, 0f, 1f);
         deltas[prop] = npc.Properties[prop] - old;
