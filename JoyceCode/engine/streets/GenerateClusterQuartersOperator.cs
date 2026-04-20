@@ -14,6 +14,8 @@ namespace engine.streets;
  */
 public class GenerateClusterQuartersOperator : world.IFragmentOperator
 {
+    private static readonly engine.Dc _dc = engine.Dc.StreetGen;
+
     static private object _lock = new();
     private world.ClusterDesc _clusterDesc;
     private builtin.tools.RandomSource _rnd;
@@ -66,7 +68,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
 
         if (n < 3)
         {
-            Trace("No delims found");
+            Trace(_dc, $"No delims found");
             return false;
         }
 
@@ -79,7 +81,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         }
         catch (Exception e)
         {
-            Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+            Trace(_dc, $"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
         }
 
         CollisionProperties props = new(){
@@ -97,7 +99,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         }
         catch (Exception e)
         {
-            Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+            Trace(_dc, $"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
         }
 
         return true;
@@ -147,7 +149,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
             }
         }
 
-        if (_traceQuarters) Trace($"Cluster '{_clusterDesc.Name}' ({_clusterDesc.IdString}) in range");
+        if (_traceQuarters) Trace(_dc, $"Cluster '{_clusterDesc.Name}' ({_clusterDesc.IdString}) in range");
 
         MatMesh matmesh = new();
         List<Func<IList<StaticHandle>, Action>> listCreatePhysics = new();
@@ -175,7 +177,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
             }
             catch (Exception e)
             {
-                Warning($"Unknown exception: {e}");
+                Warning(_dc, $"Unknown exception: {e}");
             }
 
             _generateQuarterFloor(worldFragment, matmesh, quarter, cx, cz, listCreatePhysics);
@@ -183,7 +185,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
 
         if (matmesh.IsEmpty())
         {
-            if (_traceQuarters) Trace($"Nothing to add at all.");
+            if (_traceQuarters) Trace(_dc, $"Nothing to add at all.");
             return;
         }
 
@@ -196,7 +198,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         }
         catch (Exception e)
         {
-            Trace($"Unknown exception: {e}");
+            Trace(_dc, $"Unknown exception: {e}");
         }
 
     });

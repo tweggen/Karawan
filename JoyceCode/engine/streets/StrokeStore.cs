@@ -11,6 +11,8 @@ namespace engine.streets;
 
 public class StrokeStore
 {
+    private static readonly engine.Dc _dc = engine.Dc.StreetGen;
+
     private List<Stroke> _listStrokes = new();
     private List<StreetPoint> _listPoints = new();
 
@@ -202,7 +204,7 @@ public class StrokeStore
 
         List<Stroke> strokesToIterate = _tmpStrokeList;
         _tmpStrokeList = new();
-        if (_traceStrokes) Trace($"Testing point {sp.Pos.ToString()}");
+        if (_traceStrokes) Trace(_dc, $"Testing point {sp.Pos.ToString()}");
         float closestDist = 100000f; // 100km
         Stroke closestStroke = null;
 
@@ -214,7 +216,7 @@ public class StrokeStore
              */
             if (sp == stroke.A || sp == stroke.B)
             {
-                if (_traceStrokes) Trace($"Skipping stroke {stroke.ToString()}, because point is part of stroke.");
+                if (_traceStrokes) Trace(_dc, $"Skipping stroke {stroke.ToString()}, because point is part of stroke.");
                 continue;
             }
 
@@ -236,7 +238,7 @@ public class StrokeStore
                 scaleExists: closestDist
             );
             if (_traceStrokes)
-                Trace(
+                Trace(_dc,
                     $"Stroke in range for {si.Pos.X}, {si.Pos.Y}, length {closestStroke.Length} distance {closestDist}");
             return si;
         }
@@ -265,7 +267,7 @@ public class StrokeStore
 
         List<StreetPoint> pointsToSearch = _tmpListNearby;
         _tmpListNearby = new();
-        if (_traceStrokes) Trace($"Testing stroke {stroke.ToString()}");
+        if (_traceStrokes) Trace(_dc, $"Testing stroke {stroke.ToString()}");
         float closestDist = 100000f; // 100km
         StreetPoint? closestPoint = null;
 
@@ -277,7 +279,7 @@ public class StrokeStore
              */
             if (sp0 == stroke.A || sp0 == stroke.B)
             {
-                if (_traceStrokes) Trace($"Skipping point {sp0.Pos.X}, {sp0.Pos.Y}, because its part of this stroke.");
+                if (_traceStrokes) Trace(_dc, $"Skipping point {sp0.Pos.X}, {sp0.Pos.Y}, because its part of this stroke.");
                 continue;
             }
 
@@ -299,7 +301,7 @@ public class StrokeStore
                 scaleExists: closestDist
             );
             if (_traceStrokes)
-                Trace($"Stroke in range for {si.Pos.X}, ${si.Pos.Y}, length {stroke.Length} distance $closestDist");
+                Trace(_dc, $"Stroke in range for {si.Pos.X}, {si.Pos.Y}, length {stroke.Length} distance {closestDist}");
             return si;
         }
         else
@@ -346,7 +348,7 @@ public class StrokeStore
                 m => new InvalidOperationException(m));
         }
 
-        if (_traceStrokes) Trace($"Adding point {sp}.");
+        if (_traceStrokes) Trace(_dc, $"Adding point {sp}.");
 
 #if DEBUG
         /*
@@ -374,7 +376,7 @@ public class StrokeStore
 
     public void AddStroke(in Stroke stroke)
     {
-        if (_traceStrokes) Trace($"Adding stroke {stroke}");
+        if (_traceStrokes) Trace(_dc, $"Adding stroke {stroke}");
 
         if (stroke.Store != null)
         {

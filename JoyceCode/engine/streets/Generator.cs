@@ -9,11 +9,13 @@ namespace engine.streets
 {
     public class Generator
     {
+        private static readonly engine.Dc _dc = engine.Dc.StreetGen;
+
         private void trace(string message)
         {
-            Trace($"{_annotation}: {message}");
+            Trace(_dc, $"{_annotation}: {message}");
         }
-        
+
         private List<Stroke> _listStrokesToDo;
         private StrokeStore _strokeStore;
         private bool _traceGenerator = false;
@@ -533,7 +535,7 @@ namespace engine.streets
 
                 if (maxGenerations < _generationCounter)
                 {
-                    Trace("Returning: max generations reached.");
+                    Trace(_dc, $"Returning: max generations reached.");
                     _reportOrphanedPoints();
                     _connectOrphanedBundles();  // Post-process: connect isolated clusters
                     return;
@@ -541,7 +543,7 @@ namespace engine.streets
 
                 if (!_haveStrokesToDo())
                 {
-                    Trace("Returning: no more streets to do.");
+                    Trace(_dc, $"Returning: no more streets to do.");
                     _reportOrphanedPoints();
                     _connectOrphanedBundles();  // Post-process: connect isolated clusters
                     return;
@@ -562,7 +564,7 @@ namespace engine.streets
                  */
                 if (!_inBounds(curr))
                 {
-                    if (_traceGenerator) Trace($"curr is out of bounds: {curr.ToString()}");
+                    if (_traceGenerator) Trace(_dc, $"curr is out of bounds: {curr.ToString()}");
                     /*
                      * Out of range, so discard it.
                      */
@@ -594,7 +596,7 @@ namespace engine.streets
                     {
                         if (_traceGenerator)
                         {
-                            Trace("Discarding candidate: is too short. $curr");
+                            Trace(_dc, $"Discarding candidate: is too short. {curr}");
                         }
                         /*
                          * Test: If both are in store, we have an invalid entry in the store.
@@ -626,7 +628,7 @@ namespace engine.streets
                         {
                             if (_traceGenerator)
                             {
-                                Trace($"StreetPoint A ({curr.A}) too close to StreetPoint ({tooClose}).");
+                                Trace(_dc, $"StreetPoint A ({curr.A}) too close to StreetPoint ({tooClose}).");
                             }
 
                             /*
@@ -655,7 +657,7 @@ namespace engine.streets
 
                         if( null != tooClose ) {
                             if( _traceGenerator ) {
-                                Trace($"StreetPoint B (${curr.B}) too close to StreetPoint ({tooClose}).");
+                                Trace(_dc, $"StreetPoint B ({curr.B}) too close to StreetPoint ({tooClose}).");
                             }
 
                             /*
@@ -702,7 +704,7 @@ namespace engine.streets
                             }
                         }
                         if( closestAngle < (AngleMinStrokes*(float)Math.PI/180f) ) {
-                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToStringSP(curr.A)}, angle too close {closestAngle}" );
+                            if( _traceGenerator ) Trace(_dc, $"Discarding stroke {curr.ToStringSP(curr.A)}, angle too close {closestAngle}" );
                             doAdd = false;
                             continueCheck = false;
                             break;
@@ -725,7 +727,7 @@ namespace engine.streets
                             }
                         }
                         if( closestAngle < (AngleMinStrokes*(float) Math.PI/180f) ) {
-                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToStringSP(curr.B)}, angle too close {closestAngle}" );
+                            if( _traceGenerator ) Trace(_dc, $"Discarding stroke {curr.ToStringSP(curr.B)}, angle too close {closestAngle}" );
                             doAdd = false;
                             continueCheck = false;
                             break;
@@ -739,7 +741,7 @@ namespace engine.streets
                     {
                         var si = _strokeStore.GetClosestPoint(curr, minPointToCandStrokeDistance);
                         if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
-                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
+                            if( _traceGenerator ) Trace(_dc, $"Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
 
                             if (curr.B.InStore)
                             {
@@ -778,7 +780,7 @@ namespace engine.streets
                             float angleVersa = Single.Abs(geom.Angles.Snorm(Single.Pi+angleVice));
                             if (true ||angleVice<(Single.Pi/4f) || angleVersa<(Single.Pi/4f)) {
                                 if (_traceGenerator)
-                                    Trace(
+                                    Trace(_dc,
                                         $"Discarding stroke {curr.ToString()}, point b too close to stroke: {si.StrokeExists}");
 
                                 /*
