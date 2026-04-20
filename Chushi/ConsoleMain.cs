@@ -241,10 +241,13 @@ public class ConsoleMain
 
         try
         {
-            // Wait with a 5-minute timeout per scenario (~125 min total for 25 scenarios).
-            // Large scenarios (600 NPCs, 365 days) can take 3-4 minutes each; this prevents
-            // scenarios from hanging indefinitely and consuming all system resources.
-            bool completed = Task.WaitAll(listTasks.ToArray(), TimeSpan.FromMinutes(5 * listTasks.Count));
+            // Wait with dynamic timeout based on number of scenarios:
+            // - Small (40-80 NPCs): ~10 seconds each
+            // - Medium (150-250 NPCs): ~30-60 seconds each
+            // - Large (400-600 NPCs, 365 days): 3-8 minutes each
+            // Total: ~60 minutes for first build, then incremental builds skip already-compiled scenarios
+            int timeoutMinutesPerScenario = listTasks.Count <= 10 ? 5 : 8;  // More time for large batches
+            bool completed = Task.WaitAll(listTasks.ToArray(), TimeSpan.FromMinutes(timeoutMinutesPerScenario * listTasks.Count));
             if (!completed)
             {
                 throw new TimeoutException($"Scenario compilation timeout: not all {listTasks.Count} tasks completed within {5 * listTasks.Count} minutes");
