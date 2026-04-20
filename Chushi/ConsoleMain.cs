@@ -236,12 +236,12 @@ public class ConsoleMain
         catch (AggregateException ex)
         {
             Trace($"Error: {listTasks.Count} tasks started, but some failed:");
-            foreach (var e in ex.InnerExceptions)
+            foreach (var innerEx in ex.InnerExceptions)
             {
-                Trace($"  - {e.GetType().Name}: {e.Message}");
-                if (e.InnerException != null)
+                Trace($"  - {innerEx.GetType().Name}: {innerEx.Message}");
+                if (innerEx.InnerException != null)
                 {
-                    Trace($"    Inner: {e.InnerException.Message}");
+                    Trace($"    Inner: {innerEx.InnerException.Message}");
                 }
             }
             throw;
@@ -372,6 +372,9 @@ public class ConsoleMain
     /// </summary>
     private static bool _IsScenarioUpToDate(string outputPath, string resourcePath)
     {
+        // Conservative check: only skip if we're 100% sure output is up-to-date.
+        // If anything is in doubt, recompile to ensure we don't miss files.
+
         if (!File.Exists(outputPath))
         {
             return false;  // Output missing, needs compilation
@@ -379,22 +382,26 @@ public class ConsoleMain
 
         var outputTime = File.GetLastWriteTimeUtc(outputPath);
 
-        // Check modification time of main config files
-        var configFiles = new[]
+        // CRITICAL: Check that config files exist. If they don't, we can't determine
+        // if the output is truly up-to-date, so we must recompile.
+        var mainConfigFiles = new[]
         {
             Path.Combine(resourcePath, "nogame.json"),
             Path.Combine(resourcePath, "nogame.scenarios.json"),
         };
 
-        foreach (var configFile in configFiles)
+        foreach (var configFile in mainConfigFiles)
         {
-            if (File.Exists(configFile))
+            if (!File.Exists(configFile))
             {
-                var configTime = File.GetLastWriteTimeUtc(configFile);
-                if (configTime > outputTime)
-                {
-                    return false;  // Config is newer, needs recompilation
-                }
+                // Config file missing - we can't verify up-to-date status, must recompile
+                return false;
+            }
+
+            var configTime = File.GetLastWriteTimeUtc(configFile);
+            if (configTime > outputTime)
+            {
+                return false;  // Config is newer, needs recompilation
             }
         }
 
@@ -403,6 +410,12 @@ public class ConsoleMain
         if (Directory.Exists(taleDir))
         {
             var taleFiles = Directory.GetFiles(taleDir, "*.json", SearchOption.AllDirectories);
+            if (taleFiles.Length == 0)
+            {
+                // No TALE files found - uncertain state, must recompile
+                return false;
+            }
+
             foreach (var taleFile in taleFiles)
             {
                 var taleTime = File.GetLastWriteTimeUtc(taleFile);
@@ -412,8 +425,14 @@ public class ConsoleMain
                 }
             }
         }
+        else
+        {
+            // Tale directory missing - uncertain state, must recompile
+            return false;
+        }
 
-        return true;  // All sources are older or missing, output is up-to-date
+        // All checks passed - output appears to be up-to-date
+        return true;
     }
 
     /*
