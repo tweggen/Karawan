@@ -33,6 +33,8 @@ internal class Artefact
  */
 public class GenerateClusterStreetsOperator : world.IFragmentOperator
 {
+    private static readonly engine.Dc _dc = engine.Dc.StreetGen;
+
     static private object _lo = new();
 
     private ClusterDesc _clusterDesc;
@@ -146,7 +148,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     {
         if (uv.X < 0f || uv.X > 1f || uv.Y < 0f || uv.Y > 1f)
         {
-            Trace($"uv out of range: {uv}.");
+            Trace(_dc, $"uv out of range: {uv}.");
             return false;
         }
 
@@ -161,17 +163,17 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         result = result && _checkUV(uvc);
         if ( (uvb-uva).LengthSquared()<0.00001f )
         {
-            Trace($"uvb {uvb} too close to uva {uva}.");
+            Trace(_dc, $"uvb {uvb} too close to uva {uva}.");
             result = false;
         }
         if ( (uvc-uvb).LengthSquared()<0.000001f )
         {
-            Trace($"uvc {uvc} too close to uvb {uvb}.");
+            Trace(_dc, $"uvc {uvc} too close to uvb {uvb}.");
             result = false;
         }
         if ( (uva-uvc).LengthSquared()<0.000001f )
         {
-            Trace($"uva {uva} too close to uvc {uvc}.");
+            Trace(_dc, $"uva {uva} too close to uvc {uvc}.");
             result = false;
         }
 
@@ -304,7 +306,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         Vector3 am, bm;
 
         am = v3Cluster + new Vector3(spA.Pos.X, 0f, spA.Pos.Y);
-        if (_traceStreets) Trace($"am = ({am});");
+        if (_traceStreets) Trace(_dc, $"am = ({am});");
         if (angArrA.Count > 1)
         {
             var idxA = angArrA.IndexOf(stroke);
@@ -353,7 +355,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
         bm = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y);
 
-        if (_traceStreets) Trace($"bm = ({bm});");
+        if (_traceStreets) Trace(_dc, $"bm = ({bm});");
         if (angArrB.Count > 1)
         {
             var idxB = angArrB.IndexOf(stroke);
@@ -469,7 +471,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             dbmax = dbl;
         }
 
-        if (_traceStreets) Trace($"d[ab][min/max]: {damin}; {damax}; {dbmin}; {dbmax};");
+        if (_traceStreets) Trace(_dc, $"d[ab][min/max]: {damin}; {damax}; {dbmin}; {dbmax};");
 
         /*
          * Handle special case of a and b ends overlapping
@@ -545,7 +547,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              */
             int nVertexRows = 0;
 
-            if (_traceStreets) Trace($"New rect list.");
+            if (_traceStreets) Trace(_dc, $"New rect list.");
 
             /*
              * We start at damax.
@@ -597,12 +599,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uv0 = uvp.GetUV(new Vector3(elx, h, ely), 0f, vStart);
                 var uv1 = uvp.GetUV(new Vector3(erx, h, ery), 0f, vStart);
                 if (_traceStreets)
-                    Trace(
+                    Trace(_dc,
                         $"#$nVertexRows: el = ({elx}; {ely}); uv = ({uv0.X}; {uv0.Y}); er = ($erx; $ery); uv = ({uv1.X}; {uv1.Y})");
 
                 if (Math.Abs(uv0.Y - 1.0) < 0.00000001)
                 {
-                    if (_traceStreets) Trace("Too close");
+                    if (_traceStreets) Trace(_dc, $"Too close");
                 }
 
                 g.p(elx, h, ely); g.N(Vector3.UnitY);
@@ -653,7 +655,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uv2 = uvp.GetUV(new Vector3(flx, h, fly), 0f, vStart);
                 var uv3 = uvp.GetUV(new Vector3(frx, h, fry), 0f, vStart);
                 if (_traceStreets)
-                    Trace(
+                    Trace(_dc,
                         $"#{nVertexRows}: fl = ({flx}; {fly}); uv = ({uv2.X}; {uv2.Y}); fr = ({frx}; {fry}); uv = ({uv3.X}; {uv3.Y})");
 
                 g.p(flx, h, fly); g.N(Vector3.UnitY);
@@ -703,13 +705,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
-        if (_traceStreets) Trace("Obtaining streets.");
+        if (_traceStreets) Trace(_dc, $"Obtaining streets.");
         var strokeStore = _clusterDesc.StrokeStore();
-        if (_traceStreets) Trace("Have streets.");
+        if (_traceStreets) Trace(_dc, $"Have streets.");
 
         if (_traceStreets)
         {
-            Trace($"In terrain '{worldFragment.GetId()}' operator. "
+            Trace(_dc, $"In terrain '{worldFragment.GetId()}' operator. "
                   + $"Fragment @{worldFragment.Position}. "
                   + $"Cluster '{_clusterDesc.IdString}' @{cx}, {cz}, R:{_clusterDesc.Size}.");
         }
@@ -759,11 +761,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             }
         }
 
-        if (_traceStreets) Trace($"Created {nGeneratedStreets} strokes, discarded {nIgnoredStrokes}.");
+        if (_traceStreets) Trace(_dc, $"Created {nGeneratedStreets} strokes, discarded {nIgnoredStrokes}.");
 
         if (artefact.g.IsEmpty())
         {
-            if (_traceStreets) Trace($"Nothing to add at all.");
+            if (_traceStreets) Trace(_dc, $"Nothing to add at all.");
             return;
         }
 
@@ -901,13 +903,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                     || (cz + csh) < (-fsh)
                 )
                 {
-                    if (_traceStreets) Trace("Too far away: x=" + _clusterDesc.Pos.X + ", z=" + _clusterDesc.Pos.Z);
+                    if (_traceStreets) Trace(_dc, $"Too far away: x={_clusterDesc.Pos.X}, z={_clusterDesc.Pos.Z}");
                     return;
                 }
             }
         }
 
-        if (_traceStreets) Trace($"cluster '{_clusterDesc.Name}' ({_clusterDesc.IdString}) in range");
+        if (_traceStreets) Trace(_dc, $"cluster '{_clusterDesc.Name}' ({_clusterDesc.IdString}) in range");
 
 
         /*

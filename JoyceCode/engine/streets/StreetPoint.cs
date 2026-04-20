@@ -14,6 +14,8 @@ namespace engine.streets;
 
 public class StreetPoint
 {
+    private static readonly engine.Dc _dc = engine.Dc.StreetGen;
+
     private static object _classLo = new();
     static private int _nextId = 1;
 
@@ -221,11 +223,11 @@ public class StreetPoint
 
     private void _traceAnglesNoLock()
     {
-        Trace("angles:");
+        Trace(_dc, $"angles:");
         foreach (var stroke in _angleArray)
         {
             var angle = geom.Angles.Snorm(stroke.GetAngleSP(this));
-            Trace($"getAngleArray(): angle={angle} ({angle * 180.0 / Math.PI})");
+            Trace(_dc, $"getAngleArray(): angle={angle} ({angle * 180.0 / Math.PI})");
         }
     }
 
@@ -289,7 +291,7 @@ public class StreetPoint
                             strStart = "";
                         }
 
-                        Trace(
+                        Trace(_dc,
                             $"getNextAngle({Pos}, {myAngle}, {stroke.B.Pos.X}): OUT {strStart} {currAngle} diffAngle {diffAngle}");
                     }
 
@@ -344,7 +346,7 @@ public class StreetPoint
                             strStart = "";
                         }
 
-                        Trace(
+                        Trace(_dc,
                             $"getNextAngle({Pos}, {myAngle}, {stroke.A.Pos.X}): IN {strStart} {currAngle} diffAngle {diffAngle}");
                     }
 
@@ -628,7 +630,7 @@ public class StreetPoint
             bool doUseSide = false;
             if (null == i0)
             {
-                if (myVerbose) Trace("no intersect");
+                if (myVerbose) Trace(_dc, $"no intersect");
                 doUseSide = true;
                 // Please the compiler and assign newI a value that later is overridden.
                 newI.X = newI.Y = 0;
@@ -646,7 +648,7 @@ public class StreetPoint
                 float dist2 = dx * dx + dy * dy;
                 if (dist2 > 4000f)
                 {
-                    if (myVerbose) Trace("farout intersect");
+                    if (myVerbose) Trace(_dc, $"farout intersect");
                     /*
                      * If this intersection is too far away, we use the point offset by the 
                      * average of both normals.
@@ -658,7 +660,7 @@ public class StreetPoint
                 }
                 else
                 {
-                    if (myVerbose) Trace("close intersect");
+                    if (myVerbose) Trace(_dc, $"close intersect");
                     newI = i;
                 }
             }
@@ -678,7 +680,7 @@ public class StreetPoint
 
             if (myVerbose)
             {
-                Trace($"Adding point $newI");
+                Trace(_dc, $"Adding point $newI");
             }
 
             _sectionArray.Add(newI);
