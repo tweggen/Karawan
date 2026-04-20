@@ -37,13 +37,12 @@ public static class DebugFilter
         => Volatile.Write(ref _enabled[(int)category], enabled);
 
     /// <summary>
-    /// Scan the GlobalSettings dictionary and apply all "debug.category.*" entries.
-    /// Called once from GlobalSettings._whenLoaded() or from DebugFilter.StartLoading().
+    /// Scan the Props dictionary and apply all "debug.category.*" entries.
+    /// Called once from Props._whenLoaded() after the properties system is initialized.
     /// </summary>
-    public static void ApplyFromSettings()
+    public static void ApplyFromProperties()
     {
-        // Iterate all known categories by name to avoid a dependency on
-        // GlobalSettings.Dictionary implementation details.
+        // Iterate all known categories by name
         var names = Enum.GetNames<Dc>();
         foreach (var name in names)
         {
@@ -51,12 +50,11 @@ public static class DebugFilter
 
             // Key convention: "debug.category.pathfinding" (lowercase name)
             string key = $"debug.category.{name.ToLowerInvariant()}";
-            string val = GlobalSettings.Get(key);
-            if (!string.IsNullOrEmpty(val))
+            object val = Props.Find(key, false);
+            if (val is bool enabled)
             {
                 if (Enum.TryParse<Dc>(name, out var dc))
                 {
-                    bool enabled = val.Equals("true", StringComparison.OrdinalIgnoreCase);
                     Volatile.Write(ref _enabled[(int)dc], enabled);
                 }
             }

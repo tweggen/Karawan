@@ -15,5 +15,17 @@
     "nogame.characters.tram.maxDistance": 1600.0,
     "nogame.CutCollision": false,
     "nogame.musicVolume": 1.0,
-    "nogame.volume": 1.0
+    "nogame.volume": 1.0,
+    "debug.category.pathfinding": false,
+    "debug.category.talemanager": false,
+    "debug.category.spatialmodel": false,
+    "debug.category.metagen": false,
+    "debug.category.spawncontroller": false,
+    "debug.category.streetgen": false,
+    "debug.category.navmap": false,
+    "debug.category.physics": false,
+    "debug.category.assetloading": false,
+    "debug.category.casette": false,
+    "debug.category.animation": false,
+    "debug.category.clickmodule": false
   }

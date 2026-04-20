@@ -216,6 +216,7 @@ public class Props
         {
             _loadProperties(jn);
         }
+        DebugFilter.ApplyFromProperties();
     }
     
     private Props()
