@@ -149,6 +149,24 @@ namespace engine
             Log(Level.Error, _createLogEntry(Level.Error, msg));
         }
 
+        /// <summary>
+        /// Warning with category prefix. Always emits (not filtered).
+        /// Useful for subsystem-specific warning categorization in logs.
+        /// </summary>
+        public static void Warning(engine.Dc category, in string message)
+        {
+            Warning($"[{category}] {message}");
+        }
+
+        /// <summary>
+        /// Error with category prefix. Always emits (not filtered).
+        /// Useful for subsystem-specific error categorization in logs.
+        /// </summary>
+        public static void Error(engine.Dc category, in string message)
+        {
+            Error($"[{category}] {message}");
+        }
+
         /// <summary>Forwarding accessor so Is(Dc.X) works without extra using directive.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Is(engine.Dc category) => engine.DebugFilter.Is(category);

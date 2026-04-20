@@ -85,7 +85,7 @@ public class TaleManager
             _spatialModels[clusterIndex] = spatialModel;
             if (spatialModel.Locations.Count == 0)
             {
-                Warning($"TALE MGR: Cluster {clusterIndex} spatial model has ZERO locations! " +
+                Warning(_dc, $"Cluster {clusterIndex} spatial model has ZERO locations! " +
                         $"({spatialModel.BuildingCount} buildings, {spatialModel.ShopCount} shops, " +
                         $"{spatialModel.StreetPointCount} street points). NPCs may spawn at Y=0.");
             }
@@ -98,7 +98,7 @@ public class TaleManager
         }
         else
         {
-            Warning($"TALE MGR: Cluster {clusterIndex} has NO spatial model!");
+            Warning(_dc, $"Cluster {clusterIndex} has NO spatial model!");
         }
 
         _deviationSkipMasks.TryGetValue(clusterIndex, out var skipMask);
@@ -176,7 +176,7 @@ public class TaleManager
         }
         catch (Exception ex)
         {
-            Warning($"TALE MGR: Scenario application failed for cluster {clusterIndex}: {ex.Message}");
+            Warning(_dc, $"Scenario application failed for cluster {clusterIndex}: {ex.Message}");
         }
 
         // Diagnostic: show transit distribution and fragment distribution of generated NPCs
@@ -424,14 +424,14 @@ public class TaleManager
         }
         catch (InvalidOperationException ex)
         {
-            Warning($"TALE MGR: StoryletSelector failed for npc={npc.NpcId} role={npc.Role}: {ex.Message}. " +
+            Warning(_dc, $"StoryletSelector failed for npc={npc.NpcId} role={npc.Role}: {ex.Message}. " +
                     $"Using fallback stay at current location.");
             return null; // Can't advance this NPC
         }
 
         if (next == null)
         {
-            Warning($"TALE MGR: SelectNext returned null for npc={npc.NpcId} role={npc.Role}. " +
+            Warning(_dc, $"SelectNext returned null for npc={npc.NpcId} role={npc.Role}. " +
                     $"Using fallback stay at current location.");
             return null; // Can't advance this NPC
         }
@@ -529,7 +529,7 @@ public class TaleManager
         // Null safety: if no storylet selected, use current location
         if (storylet == null)
         {
-            Warning($"TALE MGR: ResolveLocation received null storylet for npc={npc.NpcId} role={npc.Role}, " +
+            Warning(_dc, $"ResolveLocation received null storylet for npc={npc.NpcId} role={npc.Role}, " +
                     $"using currentLoc={npc.CurrentLocationId}.");
             return npc.CurrentLocationId;
         }
@@ -547,7 +547,7 @@ public class TaleManager
 
         if (resolved < 0)
         {
-            Warning($"TALE MGR: ResolveLocation fallback for npc={npc.NpcId} role={npc.Role} " +
+            Warning(_dc, $"ResolveLocation fallback for npc={npc.NpcId} role={npc.Role} " +
                     $"storylet={storylet.Id} locType={locType}: resolved={resolved}, using currentLoc={npc.CurrentLocationId}.");
             resolved = npc.CurrentLocationId;
         }
@@ -558,7 +558,7 @@ public class TaleManager
             var loc = sm.GetLocation(resolved);
             if (loc != null && loc.Type == "street_segment")
             {
-                Warning($"TALE MGR: NPC {npc.NpcId} role={npc.Role} resolved to street_segment " +
+                Warning(_dc, $"NPC {npc.NpcId} role={npc.Role} resolved to street_segment " +
                         $"for locType={locType} storylet={storylet.Id} (locId={resolved}).");
             }
         }
@@ -571,7 +571,7 @@ public class TaleManager
     {
         if (npc.SocialVenueIds == null || npc.SocialVenueIds.Count == 0)
         {
-            Warning($"TALE MGR: ResolveSocialVenue fallback for npc={npc.NpcId} role={npc.Role}: " +
+            Warning(_dc, $"ResolveSocialVenue fallback for npc={npc.NpcId} role={npc.Role}: " +
                     $"no social venues assigned, using home={npc.HomeLocationId}.");
             return npc.HomeLocationId;
         }
@@ -587,16 +587,16 @@ public class TaleManager
         {
             int eatId = spatialModel.FindNearestOfType(npc.CurrentLocationId, "social_venue", "Eat");
             if (eatId >= 0) return eatId;
-            Warning($"TALE MGR: ResolveEatVenue fallback for npc={npc.NpcId} role={npc.Role}: " +
+            Warning(_dc, $"ResolveEatVenue fallback for npc={npc.NpcId} role={npc.Role}: " +
                     $"no 'Eat' venue found near loc={npc.CurrentLocationId}.");
         }
         if (npc.SocialVenueIds != null && npc.SocialVenueIds.Count > 0)
         {
-            Warning($"TALE MGR: ResolveEatVenue using first social venue={npc.SocialVenueIds[0]} " +
+            Warning(_dc, $"ResolveEatVenue using first social venue={npc.SocialVenueIds[0]} " +
                     $"for npc={npc.NpcId}.");
             return npc.SocialVenueIds[0];
         }
-        Warning($"TALE MGR: ResolveEatVenue final fallback for npc={npc.NpcId} role={npc.Role}: " +
+        Warning(_dc, $"ResolveEatVenue final fallback for npc={npc.NpcId} role={npc.Role}: " +
                 $"no venues at all, using home={npc.HomeLocationId}.");
         return npc.HomeLocationId;
     }
