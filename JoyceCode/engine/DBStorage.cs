@@ -13,6 +13,7 @@ namespace engine;
 
 public class DBStorage : engine.AModule
 {
+    private static readonly engine.Dc _dc = engine.Dc.Database;
 
     private Dictionary<string, LiteDatabase> _mapDBs = new();
 
@@ -119,7 +120,7 @@ public class DBStorage : engine.AModule
             var col = db.GetCollection<ObjType>();
             if (0 == col.Count())
             {
-                Trace($"No collection found for {typeof(ObjType)}");
+                Trace(_dc, $"No collection found for {typeof(ObjType)}");
                 return false;
             }
 
@@ -264,7 +265,7 @@ public class DBStorage : engine.AModule
         }
         catch (Exception e)
         {
-            Trace($"Unable to use collection {typeof(ObjType).Name}, exception {e}, dropping and re-creating");
+            Trace(_dc, $"Unable to use collection {typeof(ObjType).Name}, exception {e}, dropping and re-creating");
             db.DropCollection(typeof(ObjType).Name);
             db.Commit();
             try

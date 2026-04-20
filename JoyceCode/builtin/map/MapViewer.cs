@@ -17,6 +17,8 @@ namespace builtin.map;
  */
 public class MapViewer : AModule, IViewer
 {
+    private static readonly engine.Dc _dc = engine.Dc.Map;
+
     private engine.geom.AABB _aabbMap = new();
 
     private object _lo = new();

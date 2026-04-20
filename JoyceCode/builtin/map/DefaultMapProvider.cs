@@ -11,6 +11,8 @@ namespace builtin.map;
 
 public class DefaultMapProvider : IMapProvider
 {
+    private static readonly engine.Dc _dc = engine.Dc.Map;
+
     private readonly object _lo = new();
     private readonly SortedDictionary<string, IWorldMapProvider> _worldMapLayers = new();
     private bool _haveWorldEntities = false;
@@ -131,7 +133,7 @@ public class DefaultMapProvider : IMapProvider
                     var className = pair.Value?["className"]?.GetValue<string>();
                     if (string.IsNullOrWhiteSpace(className))
                     {
-                        Warning($"Encountered null classname for {pair.Key}.");
+                        Warning(_dc, $"Encountered null classname for {pair.Key}.");
                     }
                     else
                     {
@@ -144,19 +146,19 @@ public class DefaultMapProvider : IMapProvider
                         }
                         catch (Exception e)
                         {
-                            Warning($"Unable to load world map layer {pair.Key}: {e}");
+                            Warning(_dc, $"Unable to load world map layer {pair.Key}: {e}");
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    Warning($"Error setting map provider {pair.Key}: {e}");
+                    Warning(_dc, $"Error setting map provider {pair.Key}: {e}");
                 }
             }
         }
         catch (Exception e)
         {
-            Warning($"Error reading map provider: {e}");
+            Warning(_dc, $"Error reading map provider: {e}");
         }
     }
 
