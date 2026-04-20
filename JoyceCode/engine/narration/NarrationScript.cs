@@ -54,6 +54,8 @@ public class NarrationEventDescriptor
 /// </summary>
 public class NarrationGoto
 {
+    private static readonly engine.Dc _dc = engine.Dc.Narration;
+
     public enum Kind
     {
         None,
@@ -171,7 +173,7 @@ public class NarrationGoto
             }
         }
 
-        Warning($"NarrationGoto: unable to parse goto node: {node.ToJsonString()}");
+        Warning(_dc, $"unable to parse goto node: {node.ToJsonString()}");
         return new NarrationGoto { GotoKind = Kind.None };
     }
 }
@@ -218,6 +220,8 @@ public class NarrationChoice
 /// </summary>
 public class NarrationStatement
 {
+    private static readonly engine.Dc _dc = engine.Dc.Narration;
+
     public enum Kind { Text, Choices, Events, Speaker, Goto }
 
     public Kind StatementKind { get; set; }
@@ -310,7 +314,7 @@ public class NarrationStatement
             return stmt;
         }
 
-        Warning($"NarrationStatement: unable to parse statement: {node.ToJsonString()}");
+        Warning(_dc, $"unable to parse statement: {node.ToJsonString()}");
         return null;
     }
 }

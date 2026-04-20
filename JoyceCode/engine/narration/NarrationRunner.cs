@@ -12,6 +12,7 @@ namespace engine.narration;
 /// </summary>
 public class NarrationRunner
 {
+    private static readonly engine.Dc _dc = engine.Dc.Narration;
     private static readonly Random _rng = new();
 
     private NarrationScript _script;
@@ -99,7 +100,7 @@ public class NarrationRunner
                 var visibleChoices = _getVisibleChoices(stmt.Choices);
                 if (choiceIndex < 0 || choiceIndex >= visibleChoices.Count)
                 {
-                    Warning($"NarrationRunner: choice index {choiceIndex} out of range (0..{visibleChoices.Count - 1})");
+                    Warning(_dc, $"choice index {choiceIndex} out of range (0..{visibleChoices.Count - 1})");
                     return null;
                 }
 
@@ -145,7 +146,7 @@ public class NarrationRunner
     {
         if (!_script.Nodes.TryGetValue(nodeId, out var node))
         {
-            Warning($"NarrationRunner: node '{nodeId}' not found in script '{_script.Name}'");
+            Warning(_dc, $"node '{nodeId}' not found in script '{_script.Name}'");
             IsFinished = true;
             return null;
         }

@@ -19,6 +19,8 @@ namespace engine.narration;
 /// </summary>
 public class NarrationInterpolator
 {
+    private static readonly engine.Dc _dc = engine.Dc.Narration;
+
     private readonly Dictionary<string, Func<string[], string>> _syncFunctions = new();
     private readonly Dictionary<string, Func<string[], Task<string>>> _asyncFunctions = new();
     private readonly Dictionary<string, string> _bindings = new();
@@ -147,7 +149,7 @@ public class NarrationInterpolator
                 }
                 catch (Exception e)
                 {
-                    Warning($"NarrationInterpolator: async func '{funcName}' threw: {e.Message}");
+                    Warning(_dc, $"async func '{funcName}' threw: {e.Message}");
                     return $"[?{token}?]";
                 }
             }
@@ -160,12 +162,12 @@ public class NarrationInterpolator
                 }
                 catch (Exception e)
                 {
-                    Warning($"NarrationInterpolator: func '{funcName}' threw: {e.Message}");
+                    Warning(_dc, $"func '{funcName}' threw: {e.Message}");
                     return $"[?{token}?]";
                 }
             }
 
-            Warning($"NarrationInterpolator: unknown function '{funcName}'");
+            Warning(_dc, $"unknown function '{funcName}'");
             return $"[?{token}?]";
         }
 

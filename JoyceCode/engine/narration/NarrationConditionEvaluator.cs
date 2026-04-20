@@ -19,6 +19,8 @@ namespace engine.narration;
 /// </summary>
 public class NarrationConditionEvaluator
 {
+    private static readonly engine.Dc _dc = engine.Dc.Narration;
+
     private readonly Dictionary<string, Func<string[], string>> _functions = new();
 
 
@@ -46,7 +48,7 @@ public class NarrationConditionEvaluator
         }
         catch (Exception e)
         {
-            Warning($"NarrationConditionEvaluator: error evaluating '{condition}': {e.Message}");
+            Warning(_dc, $"error evaluating '{condition}': {e.Message}");
             return false;
         }
     }
@@ -141,7 +143,7 @@ public class NarrationConditionEvaluator
                     return fn(args);
                 }
 
-                Warning($"NarrationConditionEvaluator: unknown function '{funcName}'");
+                Warning(_dc, $"unknown function '{funcName}'");
                 return null;
             }
             else
@@ -152,7 +154,7 @@ public class NarrationConditionEvaluator
                     return fn(Array.Empty<string>());
                 }
 
-                Warning($"NarrationConditionEvaluator: unknown function '{funcExpr}'");
+                Warning(_dc, $"unknown function '{funcExpr}'");
                 return null;
             }
         }
