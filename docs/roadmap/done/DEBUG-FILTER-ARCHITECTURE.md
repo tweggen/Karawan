@@ -81,16 +81,17 @@ To add a new category:
 
 ### Startup
 
-1. `GlobalSettings` loads `nogame.globalSettings.json` containing:
+1. `Props` loads `nogame.properties.json` containing:
    ```json
-   "debug.category.pathfinding": "false",
-   "debug.category.talemanager": "false",
+   "debug.category.pathfinding": false,
+   "debug.category.talemanager": false,
    ...
    ```
+   (boolean values, since properties are runtime-mutable)
 
-2. `GlobalSettings._whenLoaded()` fires, calls `DebugFilter.ApplyFromSettings()`
+2. `Props._whenLoaded()` fires, calls `DebugFilter.ApplyFromProperties()`
 
-3. `DebugFilter.ApplyFromSettings()` scans all `debug.category.*` keys and populates the bool array
+3. `DebugFilter.ApplyFromProperties()` scans all `debug.category.*` keys from Props and populates the bool array
 
 ### Runtime Modification
 
@@ -100,6 +101,22 @@ DebugFilter.SetCategory(Dc.Pathfinding, true);  // Enable A* tracing live
 ```
 
 Uses `Volatile.Write` to ensure visibility across threads.
+
+### Why Properties, Not GlobalSettings?
+
+**GlobalSettings** (`nogame.globalSettings.json`):
+- Intended for **static** engine configuration
+- String-based values
+- No subscription/change notifications
+- Use case: build options, display modes, fixed features
+
+**Properties** (`nogame.properties.json`):
+- Intended for **runtime-mutable** game state
+- Typed values (bool, float, string, object)
+- Support subscriptions via `OnPropertyChanged` events
+- Use case: audio volume, debug flags, runtime toggles
+
+Debug categories fit the Properties design perfectly: they change at runtime via `DebugFilter.SetCategory()` and should have the semantics of a mutable property, not a static setting.
 
 ---
 
@@ -213,8 +230,8 @@ Improvement: ~40% due to zero allocation overhead when disabled
 - `JoyceCode/engine/DebugInterpolatedStringHandler.cs` — Handler ref struct
 - `JoyceCode/engine/DebugFilter.cs` — Core filtering logic
 - `JoyceCode/engine/Logger.cs` — New overloads + delegation
-- `JoyceCode/engine/GlobalSettings.cs` — Startup wiring
-- `models/nogame.globalSettings.json` — 12 category config entries
+- `JoyceCode/engine/Props.cs` — Startup wiring via `_whenLoaded`
+- `models/nogame.properties.json` — 12 category config entries as boolean properties
 
 ---
 
