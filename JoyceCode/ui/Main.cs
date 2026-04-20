@@ -10,6 +10,8 @@ namespace joyce.ui;
 
 public class Main
 {
+    private static readonly engine.Dc _dc = engine.Dc.UI;
+
     private object _lo = new();
     private Engine _engine;
 
@@ -71,7 +73,7 @@ public class Main
 
                 if (wasSelected)
                 {
-                    Trace($"selected file {picker.SelectedFile}");
+                    Trace(_dc, $"selected file {picker.SelectedFile}");
                     doClose = true;
                 }
                 if (doClose)

@@ -10,6 +10,7 @@ namespace joyce.ui;
 
 public class Property
 {
+    private static readonly engine.Dc _dc = engine.Dc.UI;
     public static string DisplayType(Type type)
     {
         string typeString = type.ToString();
@@ -93,7 +94,7 @@ public class Property
             {
                 if (value != (bool)currValue)
                 {
-                    Trace($"new Value {value}");
+                    Trace(_dc, $"new Value {value}");
                     setFunction(key, value);
                 }
             }
@@ -108,7 +109,7 @@ public class Property
             {
                 if (currentInput != (float)currValue)
                 {
-                    Trace($"new Value {currentInput}");
+                    Trace(_dc, $"new Value {currentInput}");
                     setFunction(key, currentInput);
                 }
             }
@@ -122,7 +123,7 @@ public class Property
             {
                 if (currentInput != (int)currValue)
                 {
-                    Trace($"new Value {currentInput}");
+                    Trace(_dc, $"new Value {currentInput}");
                     setFunction(key, currentInput);
                 }
             }
@@ -136,7 +137,7 @@ public class Property
             {
                 if (currentInput != (int)(uint)currValue)
                 {
-                    Trace($"new Value {currentInput}");
+                    Trace(_dc, $"new Value {currentInput}");
                     setFunction(key, currentInput);
                 }
             }
@@ -149,7 +150,7 @@ public class Property
             {
                 if (currentInput != (string)currValue)
                 {
-                    Trace($"new Value {currentInput}");
+                    Trace(_dc, $"new Value {currentInput}");
                     setFunction(key, currentInput);
                 }
             }
@@ -163,7 +164,7 @@ public class Property
             {
                 if (currentInput != newValue)
                 {
-                    Trace($"new Value {currentInput}");
+                    Trace(_dc, $"new Value {currentInput}");
                     setFunction(key, currentInput);
                 }
             }
@@ -177,7 +178,7 @@ public class Property
             {
                 if (currentInput != newValue)
                 {
-                    Trace($"new Value {currentInput}");
+                    Trace(_dc, $"new Value {currentInput}");
                     setFunction(key, currentInput);
                 }
             }
@@ -192,7 +193,7 @@ public class Property
             {
                 if (currentInputVec != newValue)
                 {
-                    Trace($"new Value {currentInputVec}");
+                    Trace(_dc, $"new Value {currentInputVec}");
                     Quaternion newQuat = new(currentInputVec.X, currentInputVec.Y, currentInputVec.Z, currentInputVec.W);
                     setFunction(key, newQuat);
                 }
@@ -218,7 +219,7 @@ public class Property
                         {
                             if (value != currentInput[row,column])
                             {
-                                Trace($"new Value {value}");
+                                Trace(_dc, $"new Value {value}");
                                 setFunction(key, currentInput);
                             }
                         }

@@ -9,6 +9,8 @@ namespace joyce.ui;
 
 public class FileDialog
 {
+	private static readonly engine.Dc _dc = engine.Dc.UI;
+
 	static readonly Dictionary<object, FileDialog> _FileDialogs = new();
 
 	public string RootFolder;
@@ -121,7 +123,7 @@ public class FileDialog
 		{
 			if (ImGui.InputText("filename", ref EnteredFile, 1024))
 			{
-				Trace($"new Value {EnteredFile}");
+				Trace(_dc, $"new Value {EnteredFile}");
 			}
 		}
 		
