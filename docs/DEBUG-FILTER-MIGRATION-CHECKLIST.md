@@ -1,8 +1,11 @@
 # Debug Filter Migration Checklist
 
-**Status**: Execution Phase 1 Complete (Audit & Categorization)  
-**Remaining**: 547 calls (95.8%)  
-**Already Migrated**: 24 calls (TaleManager.cs)
+**Status**: Phase 1 Complete ✅ | Phase 2 IN PROGRESS (Priority 0 + Priority 1 Week 3)  
+**Migrated**: 33 calls (5.8%)  
+**Remaining**: 538 calls (94.2%)
+- Priority 0: ✅ 7 calls (hot paths)
+- Priority 1 W3: 26/102 calls (streets & world gen)
+- TaleManager: 24 calls (earlier session)
 
 ---
 
@@ -34,11 +37,16 @@
 **Target**: Cluster generation, world generation, spawning.  
 **Total Calls**: 145  
 **Timeline**: 2 weeks
+**Status**: 🔄 IN PROGRESS (26/145 calls, 18%)
 
 ### Week 3: Street & World Generation
 
-- [ ] `engine/streets/GenerateClusterStreetsOperator.cs` — 18 calls → `Dc.StreetGen`
-- [ ] `engine/streets/StreetPoint.cs` — 14 calls → `Dc.StreetGen`
+**Completed:**
+- [x] `engine/streets/GenerateClusterStreetsOperator.cs` — 18 calls → `Dc.StreetGen` ✅ (2026-04-20)
+- [x] `engine/streets/StreetPoint.cs` — 8 actual calls → `Dc.StreetGen` ✅ (2026-04-20)
+  - Note: Audit counted 14, only 8 active in codebase
+
+**Pending:**
 - [ ] `engine/streets/Generator.cs` — 12 calls → `Dc.StreetGen`
 - [ ] `engine/streets/StrokeStore.cs` — 10 calls → `Dc.StreetGen`
 - [ ] `engine/streets/GenerateClusterQuartersOperator.cs` — 7 calls → `Dc.StreetGen`
@@ -47,7 +55,7 @@
 - [ ] `engine/world/MetaGenLoader.cs` — 8 calls → `Dc.MetaGen`
 - [ ] `engine/world/Loader.cs` — 7 calls → `Dc.MetaGen`
 
-**Week 3 Total**: 102 calls  
+**Week 3 Status**: 26/102 calls migrated (25%)  
 **Milestone**: All street & world gen migrated, regression tests pass
 
 ### Week 4: TALE & Spatial & Spawn
@@ -234,16 +242,16 @@ But prefer moving logging outside loops when possible.
 
 ## Timeline Summary
 
-| Week | Priority | Files | Calls | Deliverable |
-|------|----------|-------|-------|-------------|
-| W1 | Audit | 135 | 571 | ✅ Complete (this document) |
-| W2 | P0 | 3 | 7/12 | ✅ Hot paths migrated (2026-04-20), profiler validation pending |
-| W3 | P1 | 9 | 102 | Streets & world gen migrated |
-| W4 | P1 | 6 | 43 | TALE, Spatial, Spawn migrated, 192 tests pass |
-| W5 | P2 | 7 | 106 | Asset loaders migrated, startup verified |
-| W6 | P2 | 6 | 43 | Config, physics, narration migrated |
-| W7 | P3 | ~15 | 111 | Remaining subsystems migrated |
-| W8+ | — | — | — | Code review enforcement, CLAUDE.md updates |
+| Week | Priority | Files | Calls | Status | Deliverable |
+|------|----------|-------|-------|--------|-------------|
+| W1 | Audit | 135 | 571 | ✅ | Complete (this document) |
+| W2 | P0 | 3 | 7/12 | ✅ | Hot paths migrated (2026-04-20), profiler pending |
+| W3 | P1 | 9 | 26/102 | 🔄 | 2/9 files done (streets initial), continuing |
+| W4 | P1 | 6 | 43 | ⏳ | TALE, Spatial, Spawn migrated, 192 tests pass |
+| W5 | P2 | 7 | 106 | ⏳ | Asset loaders migrated, startup verified |
+| W6 | P2 | 6 | 43 | ⏳ | Config, physics, narration migrated |
+| W7 | P3 | ~15 | 111 | ⏳ | Remaining subsystems migrated |
+| W8+ | — | — | — | ⏳ | Code review enforcement, CLAUDE.md updates |
 
 ---
 
