@@ -26,6 +26,8 @@ namespace engine.tale.bake;
 /// </summary>
 public class ScenarioLibrary
 {
+    private static readonly engine.Dc _dc = engine.Dc.TaleManager;
+
     private readonly Dictionary<(string, int), Scenario> _cache = new();
     private readonly object _lock = new();
 
@@ -72,7 +74,7 @@ public class ScenarioLibrary
         }
         if (req == null)
         {
-            Trace($"ScenarioLibrary: no bake request declared for {category}/{index}.");
+            Trace(_dc, $"ScenarioLibrary: no bake request declared for {category}/{index}.");
             scenario = null;
             return false;
         }
@@ -126,13 +128,13 @@ public class ScenarioLibrary
             var fromDisk = TryLoadFromDisk(req);
             if (fromDisk != null)
             {
-                Trace($"ScenarioLibrary: loaded baked {req.CategoryName}/{req.Index} from disk.");
+                Trace(_dc, $"ScenarioLibrary: loaded baked {req.CategoryName}/{req.Index} from disk.");
                 return fromDisk;
             }
         }
         else
         {
-            Trace($"ScenarioLibrary: prebaked scenarios disabled via joyce.DisablePrebakedScenarios; baking {req.CategoryName}/{req.Index} in-process.");
+            Trace(_dc, $"ScenarioLibrary: prebaked scenarios disabled via joyce.DisablePrebakedScenarios; baking {req.CategoryName}/{req.Index} in-process.");
         }
 
         // Step 2: in-process bake. Mirrors AnimationCollection.BakeAnimations
@@ -149,7 +151,7 @@ public class ScenarioLibrary
                 OutputDirectory = "" // not used by CompileInMemory
             };
             var baked = compiler.CompileInMemory();
-            Trace($"ScenarioLibrary: manually generated scenario for {req.CategoryName}/{req.Index} ({baked.NpcCount} npcs, {baked.Groups.Count} groups, {baked.Relationships.Count} relationships).");
+            Trace(_dc, $"ScenarioLibrary: manually generated scenario for {req.CategoryName}/{req.Index} ({baked.NpcCount} npcs, {baked.Groups.Count} groups, {baked.Relationships.Count} relationships).");
             return baked;
         }
         catch (Exception e)
@@ -176,7 +178,7 @@ public class ScenarioLibrary
         }
         catch (Exception e)
         {
-            Trace($"ScenarioLibrary: could not read baked scenario file {fileName}: {e.Message}");
+            Trace(_dc, $"ScenarioLibrary: could not read baked scenario file {fileName}: {e.Message}");
             return null;
         }
         finally

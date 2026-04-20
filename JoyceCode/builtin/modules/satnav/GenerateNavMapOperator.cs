@@ -22,6 +22,8 @@ namespace builtin.modules.satnav;
  */
 public class GenerateNavMapOperator : engine.world.IWorldOperator
 {
+    private static readonly engine.Dc _dc = engine.Dc.NavMap;
+
     private const float MaxLaneLength = 50f;
 
 
@@ -100,7 +102,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
      */
     private Task<NavClusterContent> _createClusterNavContentAsync(ClusterDesc clusterDesc, NavCluster ncTop)
     {
-        Trace($"Loading cluster {clusterDesc.Name}");
+        Trace(_dc, $"Loading cluster {clusterDesc.Name}");
 
         NavClusterContent ncc = new NavClusterContent()
         {
@@ -133,20 +135,20 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         {
             if (stroke.A.ClusterId != stroke.B.ClusterId)
             {
-                Trace($"NavMap {clusterDesc.Name}: Skipping cross-cluster bridge stroke ({stroke.A.ClusterId} → {stroke.B.ClusterId})");
+                Trace(_dc, $"NavMap {clusterDesc.Name}: Skipping cross-cluster bridge stroke ({stroke.A.ClusterId} → {stroke.B.ClusterId})");
                 skippedStrokes++;
                 continue;
             }
 
             if (!dictJunctions.TryGetValue(stroke.A.Id, out var njA))
             {
-                Trace($"NavMap {clusterDesc.Name}: Stroke missing start junction {stroke.A.Id}");
+                Trace(_dc, $"NavMap {clusterDesc.Name}: Stroke missing start junction {stroke.A.Id}");
                 skippedStrokes++;
                 continue;
             }
             if (!dictJunctions.TryGetValue(stroke.B.Id, out var njB))
             {
-                Trace($"NavMap {clusterDesc.Name}: Stroke missing end junction {stroke.B.Id}");
+                Trace(_dc, $"NavMap {clusterDesc.Name}: Stroke missing end junction {stroke.B.Id}");
                 skippedStrokes++;
                 continue;
             }
@@ -157,7 +159,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
             }
             catch (Exception e)
             {
-                Trace($"Exception adding car navlane in {clusterDesc.Name}: {e}");
+                Trace(_dc, $"Exception adding car navlane in {clusterDesc.Name}: {e}");
                 skippedStrokes++;
             }
         }
@@ -286,7 +288,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
             }
         }
 
-        Trace($"NavMap cluster {clusterDesc.Name}: " +
+        Trace(_dc, $"NavMap cluster {clusterDesc.Name}: " +
               $"{dictJunctions.Count} car junctions, {carLaneCount} car lanes, {skippedStrokes}/{strokes.Count} strokes skipped, " +
               $"{sidewalkJunctions.Count} sidewalk junctions, {pedestrianLaneCount} sidewalk lanes, {crossingLaneCount} crossing lanes");
 
@@ -308,10 +310,10 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 }
             }
 
-            Trace($"NavMap cluster {clusterDesc.Name}: {reachable.Count}/{ncc.Junctions.Count} junctions reachable from junction 0");
+            Trace(_dc, $"NavMap cluster {clusterDesc.Name}: {reachable.Count}/{ncc.Junctions.Count} junctions reachable from junction 0");
             if (reachable.Count < ncc.Junctions.Count)
             {
-                Trace($"  ⚠️ DISCONNECTED: {ncc.Junctions.Count - reachable.Count} junctions unreachable (isolated components)");
+                Trace(_dc, $"  ⚠️ DISCONNECTED: {ncc.Junctions.Count - reachable.Count} junctions unreachable (isolated components)");
             }
         }
 
@@ -325,7 +327,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
      */
     private Task<NavClusterContent> _createTopClusterContentAsync(NavCluster ncTop)
     {
-        Trace($"Loading top level cluster");
+        Trace(_dc, $"Loading top level cluster");
 
         NavClusterContent ncc = new NavClusterContent()
         {

@@ -29,6 +29,8 @@ public class Route
 
 public class SpatialModel
 {
+    private static readonly engine.Dc _dc = engine.Dc.SpatialModel;
+
     public List<Location> Locations = new();
     public List<Route> Routes = new();
 
@@ -266,16 +268,16 @@ public class SpatialModel
                 if (closestLane != null && minDist < 50f)  // Use lane point if within 50m
                 {
                     entryPos = closestLanePoint;
-                    Trace($"Street location {locId}: pos={pos}, entryPos={entryPos} (on NavLane, dist={minDist:F1}m)");
+                    Trace(_dc, $"Street location {locId}: pos={pos}, entryPos={entryPos} (on NavLane, dist={minDist:F1}m)");
                 }
                 else
                 {
-                    Trace($"Street location {locId}: pos={pos}, entryPos={pos} (no nearby pedestrian lane, dist to closest={minDist:F1}m)");
+                    Trace(_dc, $"Street location {locId}: pos={pos}, entryPos={pos} (no nearby pedestrian lane, dist to closest={minDist:F1}m)");
                 }
             }
             else
             {
-                Trace($"Street location {locId}: pos={pos}, entryPos={pos} (no NavCluster available)");
+                Trace(_dc, $"Street location {locId}: pos={pos}, entryPos={pos} (no NavCluster available)");
             }
 
             model.Locations.Add(new Location
@@ -367,7 +369,7 @@ public class SpatialModel
     {
         if (navCluster == null)
         {
-            Trace($"⚠️ ValidateReachability: NavCluster null for cluster '{clusterDesc.Name}', skipping validation");
+            Trace(_dc, $"⚠️ ValidateReachability: NavCluster null for cluster '{clusterDesc.Name}', skipping validation");
             return;
         }
 
@@ -378,7 +380,7 @@ public class SpatialModel
         {
             if (loc.EntryPosition == Vector3.Zero)
             {
-                Trace($"⚠️ UNREACHABLE_LOCATION: Cluster '{clusterDesc.Name}' Location {loc.Id} ({loc.Type}) has zero entry point");
+                Trace(_dc, $"⚠️ UNREACHABLE_LOCATION: Cluster '{clusterDesc.Name}' Location {loc.Id} ({loc.Type}) has zero entry point");
                 unreachableCount++;
                 continue;
             }
@@ -388,7 +390,7 @@ public class SpatialModel
 
             if (!hasNearbyJunction)
             {
-                Trace($"⚠️ UNREACHABLE_LOCATION: Cluster '{clusterDesc.Name}' Location {loc.Id} ({loc.Type}) " +
+                Trace(_dc, $"⚠️ UNREACHABLE_LOCATION: Cluster '{clusterDesc.Name}' Location {loc.Id} ({loc.Type}) " +
                      $"entry point {loc.EntryPosition} has no NavJunctions within {ReachabilityRadius}m. " +
                      $"NPCs may become stuck trying to reach this location.");
                 unreachableCount++;
@@ -397,11 +399,11 @@ public class SpatialModel
 
         if (unreachableCount > 0)
         {
-            Trace($"⚠️ ValidateReachability: {unreachableCount}/{Locations.Count} locations unreachable in cluster '{clusterDesc.Name}'");
+            Trace(_dc, $"⚠️ ValidateReachability: {unreachableCount}/{Locations.Count} locations unreachable in cluster '{clusterDesc.Name}'");
         }
         else
         {
-            Trace($"✓ ValidateReachability: All {Locations.Count} locations reachable in cluster '{clusterDesc.Name}'");
+            Trace(_dc, $"✓ ValidateReachability: All {Locations.Count} locations reachable in cluster '{clusterDesc.Name}'");
         }
     }
 

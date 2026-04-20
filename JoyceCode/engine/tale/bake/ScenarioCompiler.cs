@@ -35,6 +35,8 @@ public class ScenarioCompiler
     public int SimulationDays = 365;
     public required string OutputDirectory;
 
+    private static readonly engine.Dc _dc = engine.Dc.TaleManager;
+
     private static readonly string[] Roles =
     {
         "worker", "merchant", "socialite", "drifter",
@@ -52,12 +54,12 @@ public class ScenarioCompiler
     /// </summary>
     public void Compile()
     {
-        Trace($"ScenarioCompiler: baking {CategoryName}/{Index} (npcCount={NpcCount}, seed={Seed}).");
+        Trace(_dc, $"ScenarioCompiler: baking {CategoryName}/{Index} (npcCount={NpcCount}, seed={Seed}).");
         var scenario = CompileInMemory();
         string fileName = ScenarioFileName.Of(CategoryName, Index, Seed);
         string filePath = Path.Combine(OutputDirectory, fileName);
         ScenarioExporter.WriteToFile(scenario, filePath);
-        Trace($"ScenarioCompiler: wrote {filePath} ({scenario.NpcCount} npcs, {scenario.Groups.Count} groups, {scenario.Relationships.Count} relationships).");
+        Trace(_dc, $"ScenarioCompiler: wrote {filePath} ({scenario.NpcCount} npcs, {scenario.Groups.Count} groups, {scenario.Relationships.Count} relationships).");
     }
 
 
@@ -101,11 +103,11 @@ public class ScenarioCompiler
         if (Directory.Exists(talePath))
         {
             library.LoadFromDirectory(talePath);
-            Trace($"ScenarioCompiler: loaded {library.All.Count} storylet definitions from {talePath}.");
+            Trace(_dc, $"ScenarioCompiler: loaded {library.All.Count} storylet definitions from {talePath}.");
         }
         else
         {
-            Trace($"ScenarioCompiler: tale directory not found at {talePath}; library will be empty.");
+            Trace(_dc, $"ScenarioCompiler: tale directory not found at {talePath}; library will be empty.");
         }
         return library;
     }
@@ -213,7 +215,7 @@ public class ScenarioCompiler
         }
 
         model.BuildIndex();
-        Trace($"ScenarioCompiler: synthetic spatial model — {homeCount} homes, {officeCount} offices, {warehouseCount} warehouses, {shopCount} shops, {socialVenueCount} social, {streetCount} streets ({model.Locations.Count} total).");
+        Trace(_dc, $"ScenarioCompiler: synthetic spatial model — {homeCount} homes, {officeCount} offices, {warehouseCount} warehouses, {shopCount} shops, {socialVenueCount} social, {streetCount} streets ({model.Locations.Count} total).");
         return model;
     }
 

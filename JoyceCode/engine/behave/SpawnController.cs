@@ -18,6 +18,8 @@ namespace engine.behave;
  */
 public class SpawnController : AController
 {
+    private static readonly engine.Dc _dc = engine.Dc.SpawnController;
+
     private SpawnSystem _spawnSystem = new();
     private MetaGen _metaGen = I.Get<world.MetaGen>();
 
@@ -162,7 +164,7 @@ public class SpawnController : AController
                     var needCharacters = opStatus.MinCharacters - nHopingCharacters;
                     if (_trace)
                     {
-                        Trace($"@{kvpFrag.Key}: id {opStatus.Id} add {needCharacters} type {kvpBehavior.Key.FullName} "
+                        Trace(_dc, $"@{kvpFrag.Key}: id {opStatus.Id} add {needCharacters} type {kvpBehavior.Key.FullName} "
                               + $"found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} "
                               + $"dead {opStatus.Dead} min {opStatus.MinCharacters}");
                     }
@@ -201,7 +203,7 @@ public class SpawnController : AController
 
                     if (_trace)
                     {
-                        Trace($"@{kvpFrag.Key}: id {opStatus.Id} basicallyTooMuch {basicallyTooMuch} type {kvpBehavior.Key.FullName} "
+                        Trace(_dc, $"@{kvpFrag.Key}: id {opStatus.Id} basicallyTooMuch {basicallyTooMuch} type {kvpBehavior.Key.FullName} "
                               + $"found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} "
                               + $"dead {opStatus.Dead} min {opStatus.MinCharacters}");
                     }

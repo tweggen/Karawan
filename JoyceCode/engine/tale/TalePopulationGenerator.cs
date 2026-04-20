@@ -14,6 +14,8 @@ namespace engine.tale;
 /// </summary>
 public class TalePopulationGenerator
 {
+    private static readonly engine.Dc _dc = engine.Dc.TaleManager;
+
     private static readonly string[] Roles = { "worker", "merchant", "socialite", "drifter", "authority", "nightworker", "hustler", "reveler" };
 
     /// <summary>
@@ -170,7 +172,7 @@ public class TalePopulationGenerator
         // Log location assignments for debugging
         var homeLocDebug = spatialModel?.GetLocation(homeLocId);
         var workLocDebug = spatialModel?.GetLocation(workLocId);
-        Trace($"TALE GEN NPC {npcId}: role={role} home={homeLocDebug?.Type}(id={homeLocId}) work={workLocDebug?.Type}(id={workLocId}) homePos=({homePos.X:F1},{homePos.Z:F1}) workPos=({workPos.X:F1},{workPos.Z:F1})");
+        Trace(_dc, $"TALE GEN NPC {npcId}: role={role} home={homeLocDebug?.Type}(id={homeLocId}) work={workLocDebug?.Type}(id={workLocId}) homePos=({homePos.X:F1},{homePos.Z:F1}) workPos=({workPos.X:F1},{workPos.Z:F1})");
 
         return new NpcSchedule
         {
