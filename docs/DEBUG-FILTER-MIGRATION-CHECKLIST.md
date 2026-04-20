@@ -11,20 +11,21 @@
 **Target**: Per-frame systems, zero-overhead critical.  
 **Total Calls**: 12  
 **Expected Performance**: ~3-5% frame time improvement when disabled
+**Status**: ✅ COMPLETE (2026-04-20)
 
-- [ ] `builtin/modules/satnav/LocalPathfinder.cs` — 5 calls → `Dc.Pathfinding`
-  - A* inner loops (lines: 97, 101, 129, 145, 214)
-  - Pattern: Wrap with `Trace(_dc, $"...")`
+- [x] `builtin/modules/satnav/LocalPathfinder.cs` — 5 calls → `Dc.Pathfinding`
+  - A* inner loops (lines: 97, 101, 129, 145, 214) — ✅ MIGRATED
+  - Removed hardcoded "LocalPathfinder: " prefixes
 
-- [ ] `engine/physics/systems/MoveKineticsSystem.cs` — 4 calls → `Dc.Physics`
-  - Per-frame kinetics sync
-  - Pattern: Wrap with `Trace(_dc, $"...")`
+- [x] `engine/physics/systems/MoveKineticsSystem.cs` — 1 active call → `Dc.Physics`
+  - Per-frame kinetics sync (line 114) — ✅ MIGRATED
+  - Note: Audit counted 4 calls, only 1 active in current codebase
 
-- [ ] `engine/joyce/systems/AnimationSystem.cs` — 3 calls → `Dc.Animation`
-  - Per-frame animation updates
-  - Pattern: Wrap with `Trace(_dc, $"...")`
+- [x] `engine/joyce/systems/AnimationSystem.cs` — 1 active call → `Dc.Animation`
+  - Per-frame animation updates (line 33) — ✅ MIGRATED
+  - Note: Audit counted 3 calls, only 1 active in current codebase
 
-**Milestone**: All P0 migrated, profiler validation passed
+**Milestone**: ✅ All P0 migrated (7 calls actual vs 12 audited)
 
 ---
 
@@ -135,9 +136,17 @@
 
 ## Verification Checkpoints
 
-### After Each Priority Level
+### After Priority 0 ✅
 
-- [ ] Build succeeds: `dotnet build Joyce.csproj -c Release`
+- [x] Build succeeds: `dotnet build Joyce/Joyce.csproj -c Release` — ✅ (591 warnings, 0 errors)
+- [x] No new warnings introduced (591 baseline) — ✅ CONFIRMED
+- [x] All migrated files follow pattern: `private static readonly Dc _dc = Dc.Category;` — ✅ 3/3 files
+- [x] No hardcoded prefixes remain in P0 files — ✅ CONFIRMED
+- [x] Category in all messages: `Trace(_dc, $"...")`, `Error(_dc, $"...")` — ✅ CONFIRMED
+
+### After Each Priority Level (Ongoing)
+
+- [ ] Build succeeds: `dotnet build Joyce/Joyce.csproj -c Release`
 - [ ] No new warnings introduced (591 baseline)
 - [ ] All migrated files follow pattern: `private static readonly Dc _dc = Dc.Category;`
 - [ ] No hardcoded prefixes remain ("TALE MGR:", "STR GEN:", etc.)
@@ -228,7 +237,7 @@ But prefer moving logging outside loops when possible.
 | Week | Priority | Files | Calls | Deliverable |
 |------|----------|-------|-------|-------------|
 | W1 | Audit | 135 | 571 | ✅ Complete (this document) |
-| W2 | P0 | 3 | 12 | Hot paths migrated, profiler validated |
+| W2 | P0 | 3 | 7/12 | ✅ Hot paths migrated (2026-04-20), profiler validation pending |
 | W3 | P1 | 9 | 102 | Streets & world gen migrated |
 | W4 | P1 | 6 | 43 | TALE, Spatial, Spawn migrated, 192 tests pass |
 | W5 | P2 | 7 | 106 | Asset loaders migrated, startup verified |
@@ -243,7 +252,11 @@ But prefer moving logging outside loops when possible.
 1. ✅ Phase 1.1: Codebase audit completed → `DEBUG-FILTER-AUDIT.md`
 2. ✅ Phase 1.2: Dc enum expanded (12 → 21 categories)
 3. ✅ Phase 1.3: nogame.properties.json updated with all categories
-4. 📋 Phase 1.4: This checklist created → `DEBUG-FILTER-MIGRATION-CHECKLIST.md`
-5. ⏭️ **Next**: Commit Phase 1 changes, then begin Priority 0 migration (Week 2)
+4. ✅ Phase 1.4: This checklist created → `DEBUG-FILTER-MIGRATION-CHECKLIST.md`
+5. ✅ Phase 2.1: Priority 0 migration complete (LocalPathfinder, Physics, Animation) — commit b238d772
+6. ⏭️ **Next**: Priority 1 migration (Week 3) — Streets & World Generation (102 calls)
+   - Begin with `engine/streets/GenerateClusterStreetsOperator.cs` (18 calls)
+   - Continue through Week 3 street generation batch
+   - Week 4: TALE, Spatial, Spawn systems
 
-**Ready to proceed with Priority 0 (LocalPathfinder)?** ✓
+**Status**: On track. Priority 0 complete, moving to Priority 1.
