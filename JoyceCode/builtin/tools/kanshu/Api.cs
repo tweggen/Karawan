@@ -7,6 +7,8 @@ namespace builtin.tools.kanshu;
 
 public class Api
 {
+    private static readonly engine.Dc _dc = engine.Dc.Tools;
+
     public static void ApplyRuleset(
         Graph graph, 
         List<Rule> rules)
@@ -19,7 +21,7 @@ public class Api
             var matchResult = gm.FindMatch();
             if (null != matchResult)
             {
-                Trace($"rule matched with match {JsonSerializer.Serialize(matchResult)}");
+                Trace(_dc, $"rule matched with match {JsonSerializer.Serialize(matchResult)}");
                 listMatchingResults.Add(matchResult);
             }
         }
@@ -36,7 +38,7 @@ public class Api
             Graph? newGraph = matchingResult.Rule.Replacement(graph, matchingResult);
             if (newGraph != null)
             {
-                Trace($"resulting graph is {JsonSerializer.Serialize(newGraph)}");
+                Trace(_dc, $"resulting graph is {JsonSerializer.Serialize(newGraph)}");
             }
         }
     }

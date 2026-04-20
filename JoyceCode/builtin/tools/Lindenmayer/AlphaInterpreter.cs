@@ -53,6 +53,7 @@ internal class AlphaResources
 
 public class AlphaInterpreter
 {
+    private static readonly engine.Dc _dc = engine.Dc.Tools;
 
     private Instance _instance;
 
@@ -240,7 +241,7 @@ public class AlphaInterpreter
                         }
                         catch (Exception e)
                         {
-                            Trace($"Unknown exception creating extrusion physics: {e}");
+                            Trace(_dc, $"Unknown exception creating extrusion physics: {e}");
                         }
                     }
 

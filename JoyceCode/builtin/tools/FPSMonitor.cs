@@ -5,6 +5,8 @@ namespace builtin.tools;
 
 public class FPSMonitor
 {
+    private static readonly engine.Dc _dc = engine.Dc.Tools;
+
     private object _lo = new();
 
     private string _name;

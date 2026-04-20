@@ -27,8 +27,10 @@ public class CameraEntry
  */
 public class CameraWatcher : AModule
 {
+    private static readonly engine.Dc _dc = engine.Dc.Tools;
+
     /**
-     * We are keep are keeping the subscriptions for the camera objects in our class. 
+     * We are keep are keeping the subscriptions for the camera objects in our class.
      */
     private IDisposable? _subscriptions;
 
@@ -160,7 +162,7 @@ public class CameraWatcher : AModule
                 /*
                  * Already existing camera entry? ignore it.
                  */
-                Error($"Already have a camera for mask {cNewCamera.CameraMask}");
+                Error(_dc, $"Already have a camera for mask {cNewCamera.CameraMask}");
                 return;
             }
 

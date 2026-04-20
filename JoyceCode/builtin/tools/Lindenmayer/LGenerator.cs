@@ -6,6 +6,8 @@ namespace builtin.tools.Lindenmayer;
 
 public class LGenerator
 {
+    private static readonly engine.Dc _dc = engine.Dc.Tools;
+
     private System _system;
     private RandomSource _rnd;
 
@@ -47,7 +49,7 @@ public class LGenerator
                         continue;
                     }
                 }
-                if( DebugRules ) Trace($"Matched rule {rule.Name}.");
+                if( DebugRules ) Trace(_dc, $"Matched rule {rule.Name}.");
                 matchingRules.Add( rule );
                 totalProbab += rule.Probability;
             }

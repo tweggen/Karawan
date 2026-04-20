@@ -14,6 +14,8 @@ namespace builtin.tools
 {
     public class ExtrudePoly
     {
+        private static readonly engine.Dc _dc = engine.Dc.Tools;
+
         private readonly List<Vector3> _poly;
         private readonly List<Vector3> _path;
         private readonly int _physIndex;
@@ -417,7 +419,7 @@ namespace builtin.tools
             float vhLength2 = vh.LengthSquared();
             if (SkipSmall && vhLength2 < 0.015f)
             {
-                if (TraceArea) Warning($"Very small polygon.");
+                if (TraceArea) Warning(_dc, $"Very small polygon.");
                 return _emptyCreate;
             }
             
@@ -453,7 +455,7 @@ namespace builtin.tools
                         int nPoints = 2 * convexPoly.Count;
                         if (nPoints <= 4)
                         {
-                            if (TraceArea) Error($"Invalid number of points in complex polygon.");
+                            if (TraceArea) Error(_dc, $"Invalid number of points in complex polygon.");
                             /*
                            * Do not add this as a complex hull.
                            */
@@ -494,14 +496,14 @@ namespace builtin.tools
                             for (int i = 1; i < l - 1; ++i)
                             {
                                 var localArea = Vector3.Cross(convexPoly[i] - p0, convexPoly[i + 1] - p0).Length() / 2f;
-                                if (TraceArea) Trace($"localArea = {localArea}");
+                                if (TraceArea) Trace(_dc, $"localArea = {localArea}");
                                 area += localArea;
                             }
                             listAreas.Add(area);
 
                             if (area < 10f)
                             {
-                                if (TraceArea) Warning($"Suspiciosly small area {area}");
+                                if (TraceArea) Warning(_dc, $"Suspiciosly small area {area}");
                                 continue;
                             }
                         }
@@ -522,7 +524,7 @@ namespace builtin.tools
 
                         if (SkipSmall && aabbVolumeTest.Radius < 0.1f)
                         {
-                            if (TraceArea) Warning($"Warning: Suspiciously small convex hull.");
+                            if (TraceArea) Warning(_dc, $"Warning: Suspiciously small convex hull.");
                             /*
                             * Do not add this as a complex hull. 
                             */
@@ -541,7 +543,7 @@ namespace builtin.tools
                         var shapeIndex = builder.Shapes.Add(pshapeConvexHull);
                         builder.AddForKinematic(shapeIndex,
                             new BepuPhysics.RigidPose { Position = vCenter, Orientation = Quaternion.Identity }, 1f);
-                        if (TraceArea) Trace($"shapeConvexHull {shapeIndex}");
+                        if (TraceArea) Trace(_dc, $"shapeConvexHull {shapeIndex}");
 
                         nConvex++;
                     }
@@ -561,7 +563,7 @@ namespace builtin.tools
                             _aPhysics.AddCollisionEntry(staticHandle, collisionProperties);
                         }
 
-                        if (TraceArea) Trace($"vCompoundCenter = {vCompoundCenter} staticHandle = {staticHandle}");
+                        if (TraceArea) Trace(_dc, $"vCompoundCenter = {vCompoundCenter} staticHandle = {staticHandle}");
 
                         foreach (var v3Break in listBreak)
                         {
