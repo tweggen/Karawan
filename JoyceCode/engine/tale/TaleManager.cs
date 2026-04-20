@@ -15,6 +15,8 @@ namespace engine.tale;
 /// </summary>
 public class TaleManager
 {
+    private static readonly engine.Dc _dc = engine.Dc.TaleManager;
+
     private StoryletLibrary _library;
     private StoryletSelector _selector;
     private Dictionary<int, SpatialModel> _spatialModels = new();
@@ -74,7 +76,7 @@ public class TaleManager
 
         if (_populatedClusters.Contains(clusterIndex))
         {
-            Trace($"TALE MGR: Cluster {clusterIndex} already populated, skipping.");
+            Trace(_dc, $"Cluster {clusterIndex} already populated, skipping.");
             return;
         }
 
@@ -89,7 +91,7 @@ public class TaleManager
             }
             else
             {
-                Trace($"TALE MGR: Cluster {clusterIndex} spatial model: " +
+                Trace(_dc, $"Cluster {clusterIndex} spatial model: " +
                       $"{spatialModel.Locations.Count} locations, {spatialModel.BuildingCount} buildings, " +
                       $"{spatialModel.ShopCount} shops, {spatialModel.StreetPointCount} street points.");
             }
@@ -123,7 +125,7 @@ public class TaleManager
             DateTime npcTime = gameStartTime.AddMinutes(offsetMinutes);
 
             AdvanceNpc(schedule.NpcId, npcTime);
-            Trace($"TALE MGR: Advanced NPC {schedule.NpcId} through full cycle (24+ hours) to {npcTime:HH:mm} " +
+            Trace(_dc, $"Advanced NPC {schedule.NpcId} through full cycle (24+ hours) to {npcTime:HH:mm} " +
                   $"(offset {offsetMinutes:+0;-0} min), now at location {schedule.CurrentLocationId}");
         }
 
@@ -154,7 +156,7 @@ public class TaleManager
                     if (scenario != null)
                     {
                         var stats = applicator.Apply(scenario, schedules);
-                        Trace($"TALE MGR: Applied scenario {bakeRequest.CategoryName}/{bakeRequest.Index} " +
+                        Trace(_dc, $"Applied scenario {bakeRequest.CategoryName}/{bakeRequest.Index} " +
                               $"to cluster {clusterIndex}: matched {stats.MatchedNpcCount}/{schedules.Count} npcs " +
                               $"(unmatched scenario={stats.UnmatchedScenarioRanks}, real={stats.UnmatchedRealNpcs}), " +
                               $"applied {stats.RelationshipsApplied} trust edges (skipped {stats.RelationshipsSkipped}), " +
@@ -163,12 +165,12 @@ public class TaleManager
                     }
                     else
                     {
-                        Trace($"TALE MGR: ScenarioLibrary returned null for {bakeRequest.CategoryName}/{bakeRequest.Index}; skipping scenario application.");
+                        Trace(_dc, $"ScenarioLibrary returned null for {bakeRequest.CategoryName}/{bakeRequest.Index}; skipping scenario application.");
                     }
                 }
                 else
                 {
-                    Trace($"TALE MGR: No scenario available for cluster {clusterIndex} ({schedules.Count} npcs); skipping scenario application.");
+                    Trace(_dc, $"No scenario available for cluster {clusterIndex} ({schedules.Count} npcs); skipping scenario application.");
                 }
             }
         }
@@ -192,14 +194,14 @@ public class TaleManager
                 inTransit.Add(schedule);
         }
         string distrib = string.Join(", ", fragmentCounts.Select(kv => $"{kv.Key}={kv.Value}"));
-        Trace($"TALE MGR: Populated cluster {clusterIndex} with {schedules.Count} NPCs. " +
+        Trace(_dc, $"Populated cluster {clusterIndex} with {schedules.Count} NPCs. " +
               $"Total schedules now: {_schedules.Count}. Fragment distribution: {distrib}");
-        Trace($"TALE MGR: {inTransit.Count}/{schedules.Count} NPCs in transit at spawn time ({gameStartTime:HH:mm})");
+        Trace(_dc, $"{inTransit.Count}/{schedules.Count} NPCs in transit at spawn time ({gameStartTime:HH:mm})");
 
         // Show NPCs in transit for debugging
         if (inTransit.Count > 0)
         {
-            Trace($"TALE MGR: NPCs in transit:");
+            Trace(_dc, $"NPCs in transit:");
             for (int i = 0; i < Math.Min(10, inTransit.Count); i++)
             {
                 var s = inTransit[i];
@@ -208,7 +210,7 @@ public class TaleManager
                 string fromName = fromLoc?.Type ?? "unknown";
                 string toName = toLoc?.Type ?? "unknown";
                 float travelMinutes = (float)(s.TransitEnd - s.TransitStart).TotalMinutes;
-                Trace($"TALE MGR:   NPC {s.NpcId} ({s.Role}): {fromName} → {toName} " +
+                Trace(_dc, $"  NPC {s.NpcId} ({s.Role}): {fromName} → {toName} " +
                       $"({travelMinutes:F1} min, {s.TransitStart:HH:mm}-{s.TransitEnd:HH:mm})");
             }
         }
@@ -217,7 +219,7 @@ public class TaleManager
         for (int i = 0; i < Math.Min(3, schedules.Count); i++)
         {
             var s = schedules[i];
-            Trace($"TALE MGR:   NPC[{i}] id={s.NpcId} role={s.Role} home={s.HomePosition} " +
+            Trace(_dc, $"  NPC[{i}] id={s.NpcId} role={s.Role} home={s.HomePosition} " +
                   $"worldPos={s.CurrentWorldPosition} homeLoc={s.HomeLocationId} inTransit={s.IsInTransit}");
         }
 
