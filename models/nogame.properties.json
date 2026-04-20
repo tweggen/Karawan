@@ -27,5 +27,14 @@
     "debug.category.assetloading": false,
     "debug.category.casette": false,
     "debug.category.animation": false,
-    "debug.category.clickmodule": false
+    "debug.category.clickmodule": false,
+    "debug.category.narration": false,
+    "debug.category.database": false,
+    "debug.category.ui": false,
+    "debug.category.input": false,
+    "debug.category.tools": false,
+    "debug.category.map": false,
+    "debug.category.world": false,
+    "debug.category.engine": false,
+    "debug.category.framework": false
   }

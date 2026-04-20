@@ -11,6 +11,8 @@ namespace engine.physics.systems;
 [DefaultEcs.System.With(typeof(engine.physics.components.Body))]
 internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
 {
+    private static readonly engine.Dc _dc = engine.Dc.Physics;
+
     private engine.Engine _engine;
 
     private DefaultEcs.Entity _ePlayer;
@@ -111,7 +113,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                         }
                         else
                         {
-                            Error($"Avoiding to move body {bodyReference.Handle} while constraints apply.");
+                            Error(_dc, $"Avoiding to move body {bodyReference.Handle} while constraints apply.");
                         }
                     }
                     else

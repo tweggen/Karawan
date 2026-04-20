@@ -21,6 +21,15 @@ public enum Dc : int
     Casette         = 9,
     Animation       = 10,
     ClickModule     = 11,
+    Narration       = 12,
+    Database        = 13,
+    UI              = 14,
+    Input           = 15,
+    Tools           = 16,
+    Map             = 17,
+    World           = 18,
+    Engine          = 19,
+    Framework       = 20,
 
-    _Count          = 12   // Keep last — drives array size
+    _Count          = 21   // Keep last — drives array size
 }

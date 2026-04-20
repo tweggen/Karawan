@@ -13,6 +13,8 @@ namespace engine.joyce.systems;
 [DefaultEcs.System.With(typeof(GPUAnimationState))]
 public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
 {
+    private static readonly engine.Dc _dc = engine.Dc.Animation;
+
     private engine.Engine _engine;
 
     private float _error = 0f; 
@@ -30,7 +32,7 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
         {
             if (!entity.IsEnabled())
             {
-                Error($"Did not expect an entity that is not enabled.");
+                Error(_dc, $"Did not expect an entity that is not enabled.");
                 continue;
             }
 

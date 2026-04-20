@@ -25,6 +25,8 @@ internal class Node
 
 public class LocalPathfinder
 {
+    private static readonly engine.Dc _dc = engine.Dc.Pathfinding;
+
     public NavCursor Start;
     public NavCursor Target;
     private RoutingPreferences? _preferences;
@@ -94,11 +96,11 @@ public class LocalPathfinder
 
     private Node _pathFind()
     {
-        Trace($"LocalPathfinder: Starting A* from junction {Start.Junction.Position} to {Target.Junction.Position}");
+        Trace(_dc, $"Starting A* from junction {Start.Junction.Position} to {Target.Junction.Position}");
 
         if (Start == Target || Start.Junction == Target.Junction || Start.Lane == Target.Lane)
         {
-            Trace($"LocalPathfinder: Start and target are the same, returning immediately");
+            Trace(_dc, $"Start and target are the same, returning immediately");
             return _listNodes.TakeFirst();
         }
 
@@ -126,7 +128,7 @@ public class LocalPathfinder
                     $"Start pos={Start.Junction.Position}, Target pos={Target.Junction.Position}. " +
                     diagnosis;
 
-                Trace($"LocalPathfinder: PATHFIND FAILURE: {failureMsg}");
+                Trace(_dc, $"PATHFIND FAILURE: {failureMsg}");
                 ErrorThrow<InvalidOperationException>(failureMsg);
             }
 
@@ -142,7 +144,7 @@ public class LocalPathfinder
                 if (n.LaneToMe != null && n.Parent != null)
                 {
                     // We can reverse the lane we came from (dead-end street, can go back the way we came)
-                    Trace($"LocalPathfinder: Dead-end junction at {n.Junction.Position}, reversing incoming lane");
+                    Trace(_dc, $"Dead-end junction at {n.Junction.Position}, reversing incoming lane");
                     var reverseTargetJunction = n.LaneToMe.Start;  // Go back to where we came from
                     var costFromParent = _realDistance(n.Junction, reverseTargetJunction);
                     var costNewFromStart = n.CostFromStart + costFromParent;
@@ -211,7 +213,7 @@ public class LocalPathfinder
 
                 if (njChild == Target.Junction)
                 {
-                    Trace($"LocalPathfinder: Found target junction after exploring {nodesExplored} nodes");
+                    Trace(_dc, $"Found target junction after exploring {nodesExplored} nodes");
                     /*
                      * Maybe we reached the targvet junction but not the
                      * target lane yet.
