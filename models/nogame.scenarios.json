@@ -2,7 +2,13 @@
   "categories": [
     { "name": "small",  "npcCountRange": [40, 80],   "count": 5,  "baseSeed": 10000 },
     { "name": "medium", "npcCountRange": [150, 250], "count": 8,  "baseSeed": 20000 },
-    { "name": "large",  "npcCountRange": [400, 600], "count": 12, "baseSeed": 30000 }
+    {
+      "name": "large",
+      "npcCountRange": [400, 600],
+      "count": 0,
+      "baseSeed": 30000,
+      "_comment": "DISABLED for development: 600 NPC × 365-day simulations are too expensive (8-10 min each). Enable by changing count to 12 when preparing release builds. Runtime fallback will compile if needed."
+    }
   ],
   "simulationDays": 365
 }
