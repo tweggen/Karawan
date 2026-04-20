@@ -228,8 +228,24 @@ public class ConsoleMain
             listTasks.Add(Task.Run(() => scenarioComp.Compile()));
         }
 
-        Task.WaitAll(listTasks.ToArray());
-        Trace($"Done running compilation tasks.");
+        try
+        {
+            Task.WaitAll(listTasks.ToArray());
+            Trace($"Done running compilation tasks.");
+        }
+        catch (AggregateException ex)
+        {
+            Trace($"Error: {listTasks.Count} tasks started, but some failed:");
+            foreach (var e in ex.InnerExceptions)
+            {
+                Trace($"  - {e.GetType().Name}: {e.Message}");
+                if (e.InnerException != null)
+                {
+                    Trace($"    Inner: {e.InnerException.Message}");
+                }
+            }
+            throw;
+        }
 
         /*
          * TALE-SOCIAL Phase D5: walk the just-written sc-{hash} files, compute

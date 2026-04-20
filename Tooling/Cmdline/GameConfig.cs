@@ -459,7 +459,12 @@ namespace CmdLine
                     {
                         LoadChannels(ts, kvp.Value);
                     }
-                    else
+                    else if (kvp.Key.StartsWith("__"))
+                    {
+                        // Skip Mix system nodes like __include__
+                        continue;
+                    }
+                    else if (kvp.Value?.GetValueKind() == System.Text.Json.Nodes.JsonValueKind.Array)
                     {
                         LoadAtlas(kvp.Key, kvp.Value);
                     }
