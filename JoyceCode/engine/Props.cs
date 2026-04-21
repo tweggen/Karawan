@@ -223,6 +223,14 @@ public class Props
     {
         _dictConfigParams = new Dictionary<string, object>();
         _rodictConfigParams = new ReadOnlyDictionary<string, object>(_dictConfigParams);
+
+        // Set _instance early to prevent re-entrancy if Loader.WhenLoaded() calls
+        // the callback synchronously (before constructor completes)
+        lock (_staticLo)
+        {
+            _instance = this;
+        }
+
         I.Get<engine.casette.Loader>().WhenLoaded("/properties", _whenLoaded);
     }
     
