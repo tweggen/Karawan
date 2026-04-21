@@ -18,6 +18,8 @@ namespace nogame.characters.citizen;
 /// </summary>
 public class TaleSpawnOperator : ISpawnOperator
 {
+    private static readonly engine.Dc _dc = engine.Dc.TaleSpawn;
+
     private object _lo = new();
     private engine.geom.AABB _aabb = new(Vector3.Zero, MetaGen.MaxWidth);
     private ClusterHeatMap _clusterHeatMap = I.Get<ClusterHeatMap>();
@@ -65,7 +67,7 @@ public class TaleSpawnOperator : ISpawnOperator
         }
         catch (Exception e)
         {
-            Logger.Trace($"TALE: Failed to find NavCluster for spawn operator: {e.Message}");
+            Logger.Trace(_dc, $"Failed to find NavCluster for spawn operator: {e.Message}");
         }
 
         var spatialModel = SpatialModel.ExtractFrom(clusterDesc, navClusterForCluster);
@@ -146,7 +148,7 @@ public class TaleSpawnOperator : ISpawnOperator
         }
 
         int npcId = targetNpc.NpcId;
-        Trace($"TALE SPAWN: Spawning NPC {npcId} (role={targetNpc.Role}) in fragment {idxFragment}.");
+        Trace(_dc, $"Spawning NPC {npcId} (role={targetNpc.Role}) in fragment {idxFragment}.");
         _taleManager.SetMaterialized(npcId);
 
         SpawnStatus spawnStatus;
@@ -163,7 +165,7 @@ public class TaleSpawnOperator : ISpawnOperator
                 ClusterDesc cd = _clusterHeatMap.GetClusterDesc(idxFragment);
                 if (cd == null)
                 {
-                    Warning($"TALE SPAWN: No ClusterDesc for fragment {idxFragment}, aborting NPC {npcId}.");
+                    Warning(_dc, $"No ClusterDesc for fragment {idxFragment}, aborting NPC {npcId}.");
                     spawnStatus.InCreation--;
                     _taleManager.SetDematerialized(npcId);
                     return;
@@ -171,7 +173,7 @@ public class TaleSpawnOperator : ISpawnOperator
 
                 if (!_loader.TryGetFragment(idxFragment, out var worldFragment))
                 {
-                    Warning($"TALE SPAWN: No WorldFragment for {idxFragment}, aborting NPC {npcId}.");
+                    Warning(_dc, $"No WorldFragment for {idxFragment}, aborting NPC {npcId}.");
                     spawnStatus.InCreation--;
                     _taleManager.SetDematerialized(npcId);
                     return;
@@ -181,7 +183,7 @@ public class TaleSpawnOperator : ISpawnOperator
                 var schedule = _taleManager.GetSchedule(npcId);
                 if (schedule == null)
                 {
-                    Warning($"TALE SPAWN: Schedule disappeared for NPC {npcId}, aborting.");
+                    Warning(_dc, $"Schedule disappeared for NPC {npcId}, aborting.");
                     spawnStatus.InCreation--;
                     _taleManager.SetDematerialized(npcId);
                     return;
@@ -211,7 +213,7 @@ public class TaleSpawnOperator : ISpawnOperator
                 // Compute spawn position based on NPC's schedule at current game time
                 var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
                 var spawnPosition = schedule.PositionAt(gameTime, spatialModel);
-                Trace($"TALE SPAWN: NPC {npcId} spawn position computed for game time {gameTime}: {spawnPosition}");
+                Trace(_dc, $"NPC {npcId} spawn position computed for game time {gameTime}: {spawnPosition}");
 
                 // Detect if NPC is mid-transit at spawn time
                 bool spawnInTravel = schedule.IsInTransit
@@ -220,12 +222,12 @@ public class TaleSpawnOperator : ISpawnOperator
 
                 if (spawnInTravel)
                 {
-                    Trace($"TALE SPAWN: NPC {npcId} spawning in TRANSIT (game time {gameTime:HH:mm}, " +
+                    Trace(_dc, $"NPC {npcId} spawning in TRANSIT (game time {gameTime:HH:mm}, " +
                           $"transit {schedule.TransitStart:HH:mm}-{schedule.TransitEnd:HH:mm})");
                 }
                 else if (schedule.IsInTransit)
                 {
-                    Trace($"TALE SPAWN: NPC {npcId} IS in transit but NOT in spawn window " +
+                    Trace(_dc, $"NPC {npcId} IS in transit but NOT in spawn window " +
                           $"(game time {gameTime:HH:mm}, transit {schedule.TransitStart:HH:mm}-{schedule.TransitEnd:HH:mm})");
                 }
 
@@ -238,7 +240,7 @@ public class TaleSpawnOperator : ISpawnOperator
                 var roleRegistry = I.Get<engine.tale.RoleRegistry>();
                 if (!roleRegistry.Has(schedule.Role))
                 {
-                    Warning($"TALE SPAWN: Role '{schedule.Role}' not in registry for NPC {npcId}, will retry.");
+                    Warning(_dc, $"Role '{schedule.Role}' not in registry for NPC {npcId}, will retry.");
                     spawnStatus.InCreation--;
                     _taleManager.SetDematerialized(npcId);
                     return;
@@ -249,13 +251,13 @@ public class TaleSpawnOperator : ISpawnOperator
                 // Create TALE strategy using the existing schedule
                 if (!TaleEntityStrategy.TryCreate(schedule, _taleManager, pod, cmd, out var taleStrategy))
                 {
-                    Warning($"TALE SPAWN: TaleEntityStrategy.TryCreate failed for NPC {npcId}.");
+                    Warning(_dc, $"TaleEntityStrategy.TryCreate failed for NPC {npcId}.");
                     spawnStatus.InCreation--;
                     _taleManager.SetDematerialized(npcId);
                     return;
                 }
 
-                Trace($"TALE SPAWN: Creating entity for NPC {npcId} at {pod.Position}.");
+                Trace(_dc, $"Creating entity for NPC {npcId} at {pod.Position}.");
 
                 // Create entity
                 EntityCreator creator = new()
@@ -285,12 +287,12 @@ public class TaleSpawnOperator : ISpawnOperator
                         var beh = e.Get<engine.behave.components.Behavior>();
                         if (beh.Provider is not nogame.tools.ANearbyBehavior)
                         {
-                            Warning($"TALE SPAWN: NPC {npcId} behavior is {beh.Provider?.GetType().Name ?? "null"}, expected ANearbyBehavior! E-to-Talk will not work.");
+                            Warning(_dc, $"NPC {npcId} behavior is {beh.Provider?.GetType().Name ?? "null"}, expected ANearbyBehavior! E-to-Talk will not work.");
                         }
                     }
                     else if (!spawnInTravel)
                     {
-                        Warning($"TALE SPAWN: NPC {npcId} has no Behavior component after setup!");
+                        Warning(_dc, $"NPC {npcId} has no Behavior component after setup!");
                     }
 
                     I.Get<engine.joyce.TransformApi>().SetTransforms(
@@ -314,7 +316,7 @@ public class TaleSpawnOperator : ISpawnOperator
             {
                 spawnStatus.InCreation--;
                 _taleManager.SetDematerialized(npcId);
-                Error($"Exception spawning TALE character: {e}");
+                Error(_dc, $"Exception spawning character: {e}");
             }
         };
     }
@@ -349,13 +351,13 @@ public class TaleSpawnOperator : ISpawnOperator
                 if (schedule != null)
                 {
                     schedule.CurrentWorldPosition = worldPos;
-                    Trace($"TALE SPAWN: Synced NPC {npcId} position to {worldPos} before dematerialization.");
+                    Trace(_dc, $"Synced NPC {npcId} position to {worldPos} before dematerialization.");
 
                     // Demote to Tier 2 if noticed: keep entity alive, freeze strategy
                     if (schedule.IsNoticedByPlayer)
                     {
                         _taleManager.SetTier2(npcId);
-                        Trace($"TALE SPAWN: Demoting NPC {npcId} to Tier 2 (noticed). Map icon remains visible.");
+                        Trace(_dc, $"Demoting NPC {npcId} to Tier 2 (noticed). Map icon remains visible.");
 
                         // Freeze strategy by entering Tier 2 mode
                         if (entity.Has<engine.behave.components.Strategy>())

@@ -30,6 +30,7 @@ public enum Dc : int
     World           = 18,
     Engine          = 19,
     Framework       = 20,
+    TaleSpawn       = 21,
 
-    _Count          = 21   // Keep last — drives array size
+    _Count          = 22   // Keep last — drives array size
 }
