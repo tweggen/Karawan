@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -50,8 +51,9 @@ public class TaleManager
 
     /// <summary>
     /// Reusable buffer for property deltas in ApplyPostconditions.
+    /// Uses ConcurrentDictionary for thread-safe concurrent NPC spawning.
     /// </summary>
-    private readonly Dictionary<string, float> _deltasBuffer = new();
+    private readonly ConcurrentDictionary<string, float> _deltasBuffer = new();
 
     private readonly TalePopulationGenerator _generator = new();
 

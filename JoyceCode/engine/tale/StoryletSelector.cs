@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 
@@ -189,7 +190,7 @@ public class StoryletSelector
     /// Returns a dictionary of property deltas for logging.
     /// </summary>
     public Dictionary<string, float> ApplyPostconditions(NpcSchedule npc,
-        StoryletDefinition storylet, float durationMinutes, Dictionary<string, float> deltasBuffer)
+        StoryletDefinition storylet, float durationMinutes, ConcurrentDictionary<string, float> deltasBuffer)
     {
         deltasBuffer.Clear();
 
@@ -227,7 +228,7 @@ public class StoryletSelector
     /// Falls back to hunger tick only when storylet definition is not found.
     /// </summary>
     public Dictionary<string, float> ApplyPostconditions(NpcSchedule npc, string storyletId,
-        float durationMinutes, Dictionary<string, float> deltasBuffer)
+        float durationMinutes, ConcurrentDictionary<string, float> deltasBuffer)
     {
         deltasBuffer.Clear();
 
@@ -242,7 +243,7 @@ public class StoryletSelector
 
 
     private static void RecordDelta(NpcSchedule npc, string prop, float delta,
-        Dictionary<string, float> deltas)
+        ConcurrentDictionary<string, float> deltas)
     {
         // Defensive: ensure Properties dict exists (shouldn't be necessary after EnsurePropertiesInitialized, but safe)
         if (npc?.Properties == null)
@@ -252,15 +253,13 @@ public class StoryletSelector
         float val = Math.Clamp(old + delta, 0f, 1f);
         npc.Properties[prop] = val;
         float actualDelta = val - old;
-        if (deltas.ContainsKey(prop))
-            deltas[prop] += actualDelta;
-        else
-            deltas[prop] = actualDelta;
+        // Atomic update: add new or update existing with thread-safe accumulation
+        deltas.AddOrUpdate(prop, actualDelta, (k, existing) => existing + actualDelta);
     }
 
 
     private static void RecordSet(NpcSchedule npc, string prop, float value,
-        Dictionary<string, float> deltas)
+        ConcurrentDictionary<string, float> deltas)
     {
         // Defensive: ensure Properties dict exists (shouldn't be necessary after EnsurePropertiesInitialized, but safe)
         if (npc?.Properties == null)
@@ -268,7 +267,8 @@ public class StoryletSelector
 
         float old = npc.Properties.GetValueOrDefault(prop, 0.5f);
         npc.Properties[prop] = Math.Clamp(value, 0f, 1f);
-        deltas[prop] = npc.Properties[prop] - old;
+        // Atomic update: set the value directly (overwriting any prior delta for this property)
+        deltas.AddOrUpdate(prop, npc.Properties[prop] - old, (k, existing) => npc.Properties[prop] - old);
     }
 
 
