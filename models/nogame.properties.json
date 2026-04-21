@@ -37,5 +37,6 @@
     "debug.category.world": false,
     "debug.category.engine": false,
     "debug.category.framework": false,
-    "debug.category.talespawn": false
+    "debug.category.talespawn": false,
+    "debug.category.taleentity": false
   }

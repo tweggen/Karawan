@@ -20,6 +20,8 @@ namespace nogame.characters.citizen;
 /// </summary>
 public class TaleEntityStrategy : AOneOfStrategy
 {
+    private static readonly engine.Dc _dc = engine.Dc.TaleEntity;
+
     private readonly int _npcId;
     private readonly TaleManager _taleManager;
     private readonly CharacterModelDescription _cmd;
@@ -72,23 +74,23 @@ public class TaleEntityStrategy : AOneOfStrategy
         if (strategy == Strategies["travel"])
         {
             // Travel complete → start activity at destination
-            Trace($"TALE ENTITY: NPC {_npcId} travel complete, starting activity");
+            Trace(_dc, $"NPC {_npcId} travel complete, starting activity");
             _setupActivity();
             TriggerStrategy("activity");
         }
         else if (strategy == Strategies["activity"])
         {
             // Activity complete → advance to next storylet (unless in Tier 2)
-            Trace($"TALE ENTITY: NPC {_npcId} activity complete, advancing schedule");
+            Trace(_dc, $"NPC {_npcId} activity complete, advancing schedule");
             if (!_isTier2)
                 _advanceAndTravel();
             else
-                Trace($"TALE ENTITY: NPC {_npcId} in Tier 2, not advancing");
+                Trace(_dc, $"NPC {_npcId} in Tier 2, not advancing");
         }
         else if (strategy == Strategies["flee"] || strategy == Strategies["recover"])
         {
             // After flee/recover → resume activity with fresh schedule state
-            Trace($"TALE ENTITY: NPC {_npcId} flee/recover complete, resuming activity");
+            Trace(_dc, $"NPC {_npcId} flee/recover complete, resuming activity");
             _setupActivity();
             TriggerStrategy("activity");
         }
@@ -104,7 +106,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         _isTier2 = true;
         _stayAt.StayDurationSeconds = float.MaxValue; // freeze indefinitely
         TriggerStrategy("activity");
-        Trace($"TALE ENTITY: NPC {_npcId} entering Tier 2 mode (noticed, dematerialized).");
+        Trace(_dc, $"NPC {_npcId} entering Tier 2 mode (noticed, dematerialized).");
     }
 
     /// <summary>
@@ -113,7 +115,7 @@ public class TaleEntityStrategy : AOneOfStrategy
     public void ExitTier2Mode()
     {
         _isTier2 = false;
-        Trace($"TALE ENTITY: NPC {_npcId} exiting Tier 2 mode, resuming schedule.");
+        Trace(_dc, $"NPC {_npcId} exiting Tier 2 mode, resuming schedule.");
         _advanceAndTravel();
     }
 
@@ -171,7 +173,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         var spatialModel = _taleManager.GetSpatialModel(tempSchedule?.ClusterIndex ?? -1);
         var currentLoc = spatialModel?.GetLocation(tempSchedule?.CurrentLocationId ?? -1);
         string currentLocType = currentLoc?.Type ?? "UNKNOWN";
-        Trace($"TALE ENTITY: NPC {_npcId} _advanceAndTravel called FROM location type '{currentLocType}'");
+        Trace(_dc, $"NPC {_npcId} _advanceAndTravel called FROM location type '{currentLocType}'");
 
         // Remove conversation behavior when leaving activity phase
         if (_entity.IsAlive && _entity.Has<Behavior>())
@@ -180,7 +182,7 @@ public class TaleEntityStrategy : AOneOfStrategy
             if (behavior.Provider is TaleConversationBehavior)
             {
                 _entity.Remove<Behavior>();
-                Trace($"TALE ENTITY: NPC {_npcId} conversation behavior detached");
+                Trace(_dc, $"NPC {_npcId} conversation behavior detached");
             }
         }
 
@@ -241,12 +243,12 @@ public class TaleEntityStrategy : AOneOfStrategy
         Vector3 destLocPos = destLoc?.Position ?? Vector3.Zero;
         Vector3 destLocEntry = destLoc?.EntryPosition ?? Vector3.Zero;
 
-        Trace($"TALE ENTITY: NPC {_npcId} -> LocationId={schedule.CurrentLocationId} '{locationName}' (type={destLocType}, distance={distToDestination:F2}m)");
+        Trace(_dc, $"NPC {_npcId} -> LocationId={schedule.CurrentLocationId} '{locationName}' (type={destLocType}, distance={distToDestination:F2}m)");
 
         // Special case: "current" location means stay in place and do activity, don't travel
         if (locationName == "current")
         {
-            Trace($"TALE ENTITY: NPC {_npcId} location is 'current' (stay in place), skipping travel and triggering activity");
+            Trace(_dc, $"NPC {_npcId} location is 'current' (stay in place), skipping travel and triggering activity");
             _setupActivity();
             TriggerStrategy("activity");
             return;
@@ -255,7 +257,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         // Special case: Already at destination (within 2m) - do activity instead of travel
         if (distToDestination < 2.0f)
         {
-            Trace($"TALE ENTITY: NPC {_npcId} already at destination (distance={distToDestination:F2}m < 2m threshold), skipping travel and triggering activity");
+            Trace(_dc, $"NPC {_npcId} already at destination (distance={distToDestination:F2}m < 2m threshold), skipping travel and triggering activity");
             _setupActivity();
             TriggerStrategy("activity");
             return;
@@ -274,19 +276,19 @@ public class TaleEntityStrategy : AOneOfStrategy
                 route = await routeGen.GetRouteAsync(_currentPosition.Position, destination, _currentPosition,
                     _routingPreferences, schedule.PreferredTransportationType);
                 if (route != null)
-                    Trace($"TALE ENTITY: NPC {_npcId} got NavMesh route ({route.Segments.Count} segments)");
+                    Trace(_dc, $"NPC {_npcId} got NavMesh route ({route.Segments.Count} segments)");
                 else
-                    Trace($"TALE ENTITY: NPC {_npcId} route generation returned null, using straight-line fallback");
+                    Trace(_dc, $"NPC {_npcId} route generation returned null, using straight-line fallback");
             }
             else
             {
-                Trace($"TALE ENTITY: NPC {_npcId} IRouteGenerator not registered, using straight-line fallback");
+                Trace(_dc, $"NPC {_npcId} IRouteGenerator not registered, using straight-line fallback");
             }
         }
         catch (Exception e)
         {
-            Trace($"TALE ENTITY: NPC {_npcId} route generation exception: {e.Message}");
-            Logger.Trace($"_advanceAndTravel: Route generation failed: {e.Message}");
+            Trace(_dc, $"NPC {_npcId} route generation exception: {e.Message}");
+            Logger.Trace(_dc, $"Route generation failed: {e.Message}");
             // null route = straight-line fallback
         }
 
@@ -295,7 +297,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         // Stay at current location instead of using straight-line fallback through buildings.
         if (route == null && distToDestination > 10f)
         {
-            Trace($"TALE ENTITY: NPC {_npcId} destination '{locationName}' unreachable (distance={distToDestination:F0}m but no path). Staying at current location instead.");
+            Trace(_dc, $"NPC {_npcId} destination '{locationName}' unreachable (distance={distToDestination:F0}m but no path). Staying at current location instead.");
             _setupActivity();
             TriggerStrategy("activity");
             return;
@@ -307,9 +309,9 @@ public class TaleEntityStrategy : AOneOfStrategy
         _goTo.PrecomputedRoute = route;
 
         if (route == null)
-            Trace($"TALE ENTITY: NPC {_npcId} triggering travel with NULL route (will use straight-line fallback)");
+            Trace(_dc, $"NPC {_npcId} triggering travel with NULL route (will use straight-line fallback)");
         else
-            Trace($"TALE ENTITY: NPC {_npcId} triggering travel with route ({route.Segments.Count} segments)");
+            Trace(_dc, $"NPC {_npcId} triggering travel with route ({route.Segments.Count} segments)");
 
         // Enable "E to Talk" during travel for TALE NPCs
         _goTo.TravelBehaviorFactory = (navigator) => new TaleWalkBehavior(_npcId, this)
@@ -350,21 +352,21 @@ public class TaleEntityStrategy : AOneOfStrategy
                 if (loc.Type != "street_segment")
                 {
                     _stayAt.IsIndoorActivity = true;
-                    Trace($"TALE ENTITY: NPC {_npcId} marked as indoor at location type '{loc.Type}'");
+                    Trace(_dc, $"NPC {_npcId} marked as indoor at location type '{loc.Type}'");
                 }
                 else
                 {
-                    Trace($"TALE ENTITY: NPC {_npcId} marked as OUTDOOR at location type '{loc.Type}'");
+                    Trace(_dc, $"NPC {_npcId} marked as OUTDOOR at location type '{loc.Type}'");
                 }
             }
             else
             {
-                Trace($"TALE ENTITY: NPC {_npcId} location {schedule.CurrentLocationId} NOT FOUND in spatial model!");
+                Trace(_dc, $"NPC {_npcId} location {schedule.CurrentLocationId} NOT FOUND in spatial model!");
             }
         }
         else
         {
-            Trace($"TALE ENTITY: NPC {_npcId} spatial model NULL for cluster {schedule.ClusterIndex}!");
+            Trace(_dc, $"NPC {_npcId} spatial model NULL for cluster {schedule.ClusterIndex}!");
         }
 
         // Set conversation behavior for outdoor NPCs (used by StayAtStrategyPart.OnEnter)
@@ -377,12 +379,12 @@ public class TaleEntityStrategy : AOneOfStrategy
                     CharacterModelDescription = _cmd
                 };
                 _stayAt.ActivityBehavior = conversationBehavior;
-                Trace($"TALE ENTITY: NPC {_npcId} conversation behavior prepared");
+                Trace(_dc, $"NPC {_npcId} conversation behavior prepared");
             }
             catch (Exception e)
             {
                 _stayAt.ActivityBehavior = null;
-                Trace($"TALE ENTITY: NPC {_npcId} failed to prepare conversation behavior: {e.Message}");
+                Trace(_dc, $"NPC {_npcId} failed to prepare conversation behavior: {e.Message}");
             }
         }
         else
@@ -404,7 +406,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         var schedule = _taleManager.GetSchedule(_npcId);
         if (schedule == null || !schedule.IsInTransit)
         {
-            Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel called but not in transit (schedule exists: {schedule != null})");
+            Trace(_dc, $"NPC {_npcId} SpawnInTravel called but not in transit (schedule exists: {schedule != null})");
             return;
         }
 
@@ -412,7 +414,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         var destLoc = spatialModel?.GetLocation(schedule.TransitToLocationId);
         if (destLoc == null)
         {
-            Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel failed: destination location {schedule.TransitToLocationId} not found");
+            Trace(_dc, $"NPC {_npcId} SpawnInTravel failed: destination location {schedule.TransitToLocationId} not found");
             return;
         }
 
@@ -429,20 +431,20 @@ public class TaleEntityStrategy : AOneOfStrategy
                 route = await routeGen.GetRouteAsync(_currentPosition.Position, dest, _currentPosition,
                     _routingPreferences, schedule.PreferredTransportationType);
                 if (route != null)
-                    Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel got route ({route.Segments.Count} segments)");
+                    Trace(_dc, $"NPC {_npcId} SpawnInTravel got route ({route.Segments.Count} segments)");
                 else
-                    Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel route returned null");
+                    Trace(_dc, $"NPC {_npcId} SpawnInTravel route returned null");
             }
         }
         catch (Exception e)
         {
-            Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel route exception: {e.Message}");
+            Trace(_dc, $"NPC {_npcId} SpawnInTravel route exception: {e.Message}");
         }
 
         // If no route and far away, stay in place rather than walking through buildings
         if (route == null && distToDestination > 10f)
         {
-            Trace($"TALE ENTITY: NPC {_npcId} SpawnInTravel destination unreachable (distance={distToDestination:F0}m, no path). Staying.");
+            Trace(_dc, $"NPC {_npcId} SpawnInTravel destination unreachable (distance={distToDestination:F0}m, no path). Staying.");
             _setupActivity();
             TriggerStrategy("activity");
             return;
@@ -458,7 +460,7 @@ public class TaleEntityStrategy : AOneOfStrategy
             Navigator = navigator
         };
 
-        Trace($"TALE ENTITY: NPC {_npcId} spawning in travel to {dest} (from {_currentPosition.Position}, route={route?.Segments.Count ?? 0} segments)");
+        Trace(_dc, $"NPC {_npcId} spawning in travel to {dest} (from {_currentPosition.Position}, route={route?.Segments.Count ?? 0} segments)");
         TriggerStrategy("travel");
     }
 
@@ -478,9 +480,9 @@ public class TaleEntityStrategy : AOneOfStrategy
     {
         // Configure initial activity BEFORE base.OnEnter triggers the start strategy,
         // so StayAtStrategyPart.OnEnter has ActivityBehavior (TaleConversationBehavior) set.
-        Trace($"TALE ENTITY: NPC {_npcId} OnEnter: calling _setupActivity before base.OnEnter");
+        Trace(_dc, $"NPC {_npcId} OnEnter: calling _setupActivity before base.OnEnter");
         _setupActivity();
-        Trace($"TALE ENTITY: NPC {_npcId} OnEnter: ActivityBehavior={_stayAt.ActivityBehavior?.GetType().Name ?? "null"}");
+        Trace(_dc, $"NPC {_npcId} OnEnter: ActivityBehavior={_stayAt.ActivityBehavior?.GetType().Name ?? "null"}");
         base.OnEnter();
         var sm = I.Get<SubscriptionManager>();
         sm.Subscribe(EntityStrategy.CrashEventPath(_entity), _onCrashEvent);

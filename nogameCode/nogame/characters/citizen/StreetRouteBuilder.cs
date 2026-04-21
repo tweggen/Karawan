@@ -20,6 +20,8 @@ namespace nogame.characters.citizen;
 /// </summary>
 public static class StreetRouteBuilder
 {
+    private static readonly engine.Dc _dc = engine.Dc.Pathfinding;
+
     /// <summary>
     /// Build an async street path route from start to destination.
     /// Optionally uses routing preferences for multi-objective pathfinding.
@@ -34,7 +36,7 @@ public static class StreetRouteBuilder
         {
             if (navMap == null)
             {
-                Trace("StreetRouteBuilder: NavMap is null, using straight-line fallback");
+                Trace(_dc, "NavMap is null, using straight-line fallback");
                 return null;
             }
 
@@ -42,17 +44,17 @@ public static class StreetRouteBuilder
             var topCluster = navMap.TopCluster;
             if (topCluster == null)
             {
-                Trace("StreetRouteBuilder: TopCluster is null, using straight-line fallback");
+                Trace(_dc, "TopCluster is null, using straight-line fallback");
                 return null;
             }
 
             // Log route distance classification
             float routeDistance = Vector3.Distance(fromPos, toPos);
             string routeClass = routeDistance < 1.0f ? "SHORT" : "LONG";
-            Trace($"StreetRouteBuilder: {routeClass} ROUTE ({routeDistance:F2}m) from {fromPos} to {toPos}");
+            Trace(_dc, $"{routeClass} ROUTE ({routeDistance:F2}m) from {fromPos} to {toPos}");
 
             // Async cursor creation — await both in parallel with cancellation support
-            Trace($"StreetRouteBuilder: {routeClass} ROUTE creating cursors...");
+            Trace(_dc, $"{routeClass} ROUTE creating cursors...");
             var startCursorTask = topCluster.TryCreateCursor(fromPos, transportType);
             var endCursorTask = topCluster.TryCreateCursor(toPos, transportType);
 
@@ -63,23 +65,23 @@ public static class StreetRouteBuilder
 
             if (startCursor == NavCursor.Nil)
             {
-                Trace($"StreetRouteBuilder: {routeClass} ROUTE start cursor Nil (position {fromPos} not on NavMap)");
+                Trace(_dc, $"{routeClass} ROUTE start cursor Nil (position {fromPos} not on NavMap)");
                 return null;
             }
 
             if (endCursor == NavCursor.Nil)
             {
-                Trace($"StreetRouteBuilder: {routeClass} ROUTE end cursor Nil (position {toPos} not on NavMap)");
+                Trace(_dc, $"{routeClass} ROUTE end cursor Nil (position {toPos} not on NavMap)");
                 return null;
             }
 
-            Trace($"StreetRouteBuilder: {routeClass} ROUTE cursors created (start lane={startCursor.Lane.Start.Position}->{startCursor.Lane.End.Position}, end lane={endCursor.Lane.Start.Position}->{endCursor.Lane.End.Position})");
+            Trace(_dc, $"{routeClass} ROUTE cursors created (start lane={startCursor.Lane.Start.Position}->{startCursor.Lane.End.Position}, end lane={endCursor.Lane.Start.Position}->{endCursor.Lane.End.Position})");
 
             // Pathfind between cursors with optional routing preferences
-            Trace($"StreetRouteBuilder: {routeClass} ROUTE pathfinding from start to end...");
+            Trace(_dc, $"{routeClass} ROUTE pathfinding from start to end...");
             var pathfinder = new LocalPathfinder(startCursor, endCursor, preferences, transportType);
             var lanes = pathfinder.Pathfind();
-            Trace($"StreetRouteBuilder: {routeClass} ROUTE pathfind returned {lanes?.Count ?? 0} lanes");
+            Trace(_dc, $"{routeClass} ROUTE pathfind returned {lanes?.Count ?? 0} lanes");
 
             // If pathfinding returns 0 lanes, it may be because start and end snap to the same junction
             // In this case, use the closest lanes from the cursors themselves
@@ -91,11 +93,11 @@ public static class StreetRouteBuilder
                 {
                     // Build a minimal route using the two closest lanes
                     lanes = new List<NavLane> { startCursor.Lane, endCursor.Lane };
-                    Trace($"StreetRouteBuilder: {routeClass} ROUTE same junction detected, using closest lanes (start lane: {startCursor.Lane.Start.Position}->{startCursor.Lane.End.Position}, end lane: {endCursor.Lane.Start.Position}->{endCursor.Lane.End.Position})");
+                    Trace(_dc, $"{routeClass} ROUTE same junction detected, using closest lanes (start lane:{startCursor.Lane.Start.Position}->{startCursor.Lane.End.Position}, end lane: {endCursor.Lane.Start.Position}->{endCursor.Lane.End.Position})");
                 }
                 else
                 {
-                    Trace($"StreetRouteBuilder: {routeClass} ROUTE no path found (start={fromPos}, end={toPos})");
+                    Trace(_dc, $"{routeClass} ROUTE no path found (start={fromPos}, end={toPos})");
                     return null;
                 }
             }
@@ -162,14 +164,14 @@ public static class StreetRouteBuilder
             });
 
             if (routeDistance >= 1.0f)
-                Trace($"StreetRouteBuilder: LONG ROUTE ({routeDistance:F2}m) found from {fromPos} to {toPos} ({lanes.Count} lanes → {route.Segments.Count} segments)");
+                Trace(_dc, $"LONG ROUTE ({routeDistance:F2}m) found from {fromPos} to {toPos} ({lanes.Count} lanes → {route.Segments.Count} segments)");
             else
-                Trace($"StreetRouteBuilder: SHORT ROUTE ({routeDistance:F2}m) route found from {fromPos} to {toPos} ({lanes.Count} lanes → {route.Segments.Count} segments)");
+                Trace(_dc, $"SHORT ROUTE ({routeDistance:F2}m) route found from {fromPos} to {toPos} ({lanes.Count} lanes → {route.Segments.Count} segments)");
             return route;
         }
         catch (Exception ex)
         {
-            Trace($"StreetRouteBuilder: Pathfinding unavailable ({ex.Message}), using straight-line fallback.");
+            Trace(_dc, $"Pathfinding unavailable ({ex.Message}), using straight-line fallback.");
             return null;
         }
     }

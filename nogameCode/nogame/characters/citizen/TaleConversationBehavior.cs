@@ -22,6 +22,8 @@ namespace nogame.characters.citizen;
 /// </summary>
 public class TaleConversationBehavior : ANearbyBehavior
 {
+    private static readonly engine.Dc _dc = engine.Dc.TaleEntity;
+
     private TaleManager _taleManager;
     private Narration _narration;
     private int _npcId;
@@ -63,14 +65,14 @@ public class TaleConversationBehavior : ANearbyBehavior
         // Handle Tier 2 → Tier 1 promotion (replaces TaleEntityBehavior)
         if (_strategy != null && _strategy._isTier2)
         {
-            Trace($"TALE CONVERSATION: NPC {_npcId} InRange: promoting Tier 2 → Tier 1");
+            Trace(_dc, $"NPC {_npcId} InRange: promoting Tier 2 → Tier 1");
             _strategy.ExitTier2Mode();
             I.Get<TaleManager>().ClearTier2(_npcId);
             return;
         }
 
         bool mayConverse = I.Get<Narration>().MayConverse();
-        Trace($"TALE CONVERSATION: NPC {_npcId} InRange: mayConverse={mayConverse}");
+        Trace(_dc, $"NPC {_npcId} InRange: mayConverse={mayConverse}");
         base.InRange(engine0, entity);
     }
 
@@ -79,7 +81,7 @@ public class TaleConversationBehavior : ANearbyBehavior
         base.OnAttach(engine0, entity0);
         EPOI = entity0;
         _animationSet = false;
-        Trace($"TALE CONVERSATION: NPC {_npcId} TaleConversationBehavior.OnAttach called");
+        Trace(_dc, $"NPC {_npcId} TaleConversationBehavior.OnAttach called");
 
         if (entity0.Has<engine.physics.components.Body>())
         {
@@ -134,7 +136,7 @@ public class TaleConversationBehavior : ANearbyBehavior
         var narration = I.Get<Narration>();
         if (narration != null && !narration.MayConverse())
         {
-            Trace($"TALE CONVERSATION: NPC {_npcId} conversation cancelled ({reason})");
+            Trace(_dc, $"NPC {_npcId} conversation cancelled ({reason})");
             narration.CancelConversation();
         }
     }
@@ -149,7 +151,7 @@ public class TaleConversationBehavior : ANearbyBehavior
             if (_lastConversationTime.TryGetValue(_npcId, out var lastTime)
                 && (DateTime.UtcNow - lastTime).TotalSeconds < CooldownSeconds)
             {
-                Trace($"TALE CONVERSATION: NPC {_npcId} on cooldown");
+                Trace(_dc, $"NPC {_npcId} on cooldown");
                 return;
             }
             _lastConversationTime[_npcId] = DateTime.UtcNow;
@@ -159,14 +161,14 @@ public class TaleConversationBehavior : ANearbyBehavior
 
             if (_taleManager == null || _narration == null)
             {
-                Trace($"TALE CONVERSATION: TaleManager or Narration not available");
+                Trace(_dc, "TaleManager or Narration not available");
                 return;
             }
 
             var schedule = _taleManager.GetSchedule(_npcId);
             if (schedule == null)
             {
-                Trace($"TALE CONVERSATION: NPC {_npcId} schedule not found");
+                Trace(_dc, $"NPC {_npcId} schedule not found");
                 return;
             }
 
@@ -174,7 +176,7 @@ public class TaleConversationBehavior : ANearbyBehavior
             var currentStorylet = _taleManager.GetCurrentStorylet(_npcId);
             if (currentStorylet == null)
             {
-                Trace($"TALE CONVERSATION: NPC {_npcId} has no current storylet");
+                Trace(_dc, $"NPC {_npcId} has no current storylet");
                 return;
             }
 
@@ -184,7 +186,7 @@ public class TaleConversationBehavior : ANearbyBehavior
             // Resolve conversation script using 5-level fallback
             string scriptName = TaleNarrationBindings.ResolveScript(currentStorylet, schedule.Role);
 
-            Trace($"TALE CONVERSATION: NPC {_npcId} ({schedule.Role}) triggered conversation, using script '{scriptName}'");
+            Trace(_dc, $"NPC {_npcId} ({schedule.Role}) triggered conversation, using script '{scriptName}'");
 
             // Trigger conversation in narration system
             _narration.TriggerConversation(scriptName, _npcId.ToString());

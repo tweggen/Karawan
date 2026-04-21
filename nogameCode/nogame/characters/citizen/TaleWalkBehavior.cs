@@ -24,6 +24,8 @@ namespace nogame.characters.citizen;
 /// </summary>
 public class TaleWalkBehavior : ANearbyBehavior
 {
+    private static readonly engine.Dc _dc = engine.Dc.TaleEntity;
+
     private int _npcId;
     private TaleEntityStrategy _strategy;
     private bool _isPaused = false;
@@ -71,7 +73,7 @@ public class TaleWalkBehavior : ANearbyBehavior
         // Handle Tier 2 → Tier 1 promotion
         if (_strategy != null && _strategy._isTier2)
         {
-            Trace($"TALE WALK: NPC {_npcId} InRange: promoting Tier 2 → Tier 1");
+            Trace(_dc, $"NPC {_npcId} InRange: promoting Tier 2 → Tier 1");
             _strategy.ExitTier2Mode();
             I.Get<TaleManager>().ClearTier2(_npcId);
             return;
@@ -152,7 +154,7 @@ public class TaleWalkBehavior : ANearbyBehavior
             // Reuse TaleConversationBehavior's cooldown
             if (TaleConversationBehavior.IsOnCooldown(_npcId))
             {
-                Trace($"TALE WALK: NPC {_npcId} on cooldown");
+                Trace(_dc, $"NPC {_npcId} on cooldown");
                 return;
             }
             TaleConversationBehavior.SetCooldown(_npcId);
@@ -174,7 +176,7 @@ public class TaleWalkBehavior : ANearbyBehavior
             TaleNarrationBindings.InjectNpcProps(schedule);
             string scriptName = TaleNarrationBindings.ResolveScript(currentStorylet, schedule.Role);
 
-            Trace($"TALE WALK: NPC {_npcId} paused for conversation, script '{scriptName}'");
+            Trace(_dc, $"NPC {_npcId} paused for conversation, script '{scriptName}'");
             narration.TriggerConversation(scriptName, _npcId.ToString());
         }
         catch (Exception e)
@@ -191,7 +193,7 @@ public class TaleWalkBehavior : ANearbyBehavior
     private void _onScriptEnded(Event ev)
     {
         if (!_isPaused) return;
-        Trace($"TALE WALK: NPC {_npcId} conversation ended, resuming walk");
+        Trace(_dc, $"NPC {_npcId} conversation ended, resuming walk");
         _resumeWalking();
     }
 
@@ -200,7 +202,7 @@ public class TaleWalkBehavior : ANearbyBehavior
     /// </summary>
     private void _cancelConversation(string reason)
     {
-        Trace($"TALE WALK: NPC {_npcId} conversation cancelled ({reason})");
+        Trace(_dc, $"NPC {_npcId} conversation cancelled ({reason})");
         I.Get<Narration>().CancelConversation();
         // _onScriptEnded will fire from the cancel → resumes walking
     }
