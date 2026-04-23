@@ -7,6 +7,7 @@ namespace builtin.modules.satnav;
 
 public class EntityWaypoint : IWaypoint
 {
+    private static readonly engine.Dc _dc = engine.Dc.Satnav;
     private DefaultEcs.Entity _eCarrot;
     private Vector3 _v3LastPosition;
     // private DateTime _timestampLastPosition;
@@ -40,26 +41,26 @@ public class EntityWaypoint : IWaypoint
     {
         if (_eCarrot == default)
         {
-            Error("Asked an entity waypoint with unset entity for its position.");
+            Error(_dc, $"Asked an entity waypoint with unset entity for its position.");
             return _v3LastPosition;
         }
         if (!_eCarrot.IsAlive) 
         {
-            Error("Asked an entity waypoint which is not alive.");
+            Error(_dc, $"Asked an entity waypoint which is not alive.");
             return _v3LastPosition;
         }
 
         if (!_eCarrot.IsEnabled())
         {
             
-            Error("Asked an entity waypoint which is not enabled.");
+            Error(_dc, $"Asked an entity waypoint which is not enabled.");
             return _v3LastPosition;
         }
 
         if (!_eCarrot.Has<Transform3ToWorld>())
         {
             // TXWTODO: We reach this with an entity that has NewParent and Transform.
-            Error("Asked an entity waypoint which has no transform to world.");
+            Error(_dc, $"Asked an entity waypoint which has no transform to world.");
             return _v3LastPosition;
         }
         

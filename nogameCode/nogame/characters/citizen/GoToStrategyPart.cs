@@ -16,6 +16,8 @@ namespace nogame.characters.citizen;
 /// </summary>
 public class GoToStrategyPart : AEntityStrategyPart
 {
+    private static readonly engine.Dc _dc = engine.Dc.CitizenStrategy;
+
     public required CharacterModelDescription CharacterModelDescription { get; init; }
     public required CharacterState CharacterState { get; init; }
 
@@ -76,13 +78,13 @@ public class GoToStrategyPart : AEntityStrategyPart
         {
             // Already at destination, signal immediately
             _arrived = true;
-            Trace($"GoToStrategyPart: Distance {_totalDistance:F2}m < 0.5m, already at destination, signaling completion");
+            Trace(_dc, $"GoToStrategyPart: Distance {_totalDistance:F2}m < 0.5m, already at destination, signaling completion");
             _engine.QueueEventHandler(() => Controller.GiveUpStrategy(this));
             return;
         }
 
         string routeType = PrecomputedRoute != null ? "precomputed route" : "straight-line";
-        Trace($"GoToStrategyPart: Distance {_totalDistance:F2}m, will use {routeType}");
+        Trace(_dc, $"GoToStrategyPart: Distance {_totalDistance:F2}m, will use {routeType}");
 
         var forward = Vector3.Normalize(endPos - startPos);
         if (float.IsNaN(forward.X)) forward = Vector3.UnitX;
@@ -95,11 +97,11 @@ public class GoToStrategyPart : AEntityStrategyPart
         if (PrecomputedRoute != null)
         {
             route = PrecomputedRoute;
-            Trace($"GoToStrategyPart: Using precomputed route with {route.Segments.Count} segments from {startPos} to {endPos}");
+            Trace(_dc, $"GoToStrategyPart: Using precomputed route with {route.Segments.Count} segments from {startPos} to {endPos}");
         }
         else
         {
-            Trace($"GoToStrategyPart: No precomputed route, using straight-line from {startPos} to {endPos}");
+            Trace(_dc, $"GoToStrategyPart: No precomputed route, using straight-line from {startPos} to {endPos}");
             route = new SegmentRoute();
             route.Segments.Add(new SegmentEnd
             {

@@ -25,7 +25,7 @@ internal class Node
 
 public class LocalPathfinder
 {
-    private static readonly engine.Dc _dc = engine.Dc.Pathfinding;
+    private static readonly engine.Dc _dc = engine.Dc.Satnav;
 
     public NavCursor Start;
     public NavCursor Target;

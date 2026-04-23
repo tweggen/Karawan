@@ -32,6 +32,9 @@ public enum Dc : int
     Framework       = 20,
     TaleSpawn       = 21,
     TaleEntity      = 22,
+    CitizenStrategy = 23,
+    CitizenNavigation = 24,
+    Satnav          = 25,
 
-    _Count          = 23   // Keep last — drives array size
+    _Count          = 26   // Keep last — drives array size
 }

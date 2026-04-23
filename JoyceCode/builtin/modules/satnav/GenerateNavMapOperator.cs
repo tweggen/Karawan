@@ -22,7 +22,7 @@ namespace builtin.modules.satnav;
  */
 public class GenerateNavMapOperator : engine.world.IWorldOperator
 {
-    private static readonly engine.Dc _dc = engine.Dc.NavMap;
+    private static readonly engine.Dc _dc = engine.Dc.Satnav;
 
     private const float MaxLaneLength = 50f;
 
@@ -372,7 +372,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         I.Get<NavMap>().TopCluster = ncTop;
         
 
-        Trace("GenerateNavMapOperator: Done.");
+        Trace(_dc, $"GenerateNavMapOperator: Done.");
     });
     
 

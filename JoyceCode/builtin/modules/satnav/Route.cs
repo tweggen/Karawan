@@ -12,8 +12,9 @@ namespace builtin.modules.satnav;
 
 public class Route : IDisposable
 {
+    private static readonly engine.Dc _dc = engine.Dc.Satnav;
     private Engine _engine;
-    
+
     public NavMap NavMap { get; }
 
     private IWaypoint _a;
@@ -131,7 +132,7 @@ public class Route : IDisposable
             }
             catch (Exception e)
             {
-                Error($"Exception tracing path: {e}");
+                Error(_dc, $"Exception tracing path: {e}");
             }
 
         });

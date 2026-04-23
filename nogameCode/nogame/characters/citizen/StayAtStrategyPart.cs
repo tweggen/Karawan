@@ -15,6 +15,8 @@ namespace nogame.characters.citizen;
 /// </summary>
 public class StayAtStrategyPart : AEntityStrategyPart
 {
+    private static readonly engine.Dc _dc = engine.Dc.CitizenStrategy;
+
     public required CharacterModelDescription CharacterModelDescription { get; init; }
     public required CharacterState CharacterState { get; init; }
 
@@ -56,12 +58,12 @@ public class StayAtStrategyPart : AEntityStrategyPart
         {
             if (ActivityBehavior != null)
             {
-                Trace($"StayAtStrategyPart: Using ActivityBehavior ({ActivityBehavior.GetType().Name})");
+                Trace(_dc, $"StayAtStrategyPart: Using ActivityBehavior ({ActivityBehavior.GetType().Name})");
                 _entity.Set(new engine.behave.components.Behavior(ActivityBehavior));
             }
             else
             {
-                Trace($"StayAtStrategyPart: Using default IdleBehavior");
+                Trace(_dc, $"StayAtStrategyPart: Using default IdleBehavior");
                 _idleBehavior = new IdleBehavior
                 {
                     CharacterModelDescription = CharacterModelDescription
@@ -73,7 +75,7 @@ public class StayAtStrategyPart : AEntityStrategyPart
         else
         {
             // Hide indoor NPCs (they're inside buildings)
-            Trace($"StayAtStrategyPart: Hiding entity (indoor activity)");
+            Trace(_dc, $"StayAtStrategyPart: Hiding entity (indoor activity)");
             var transformApi = I.Get<engine.joyce.TransformApi>();
             transformApi.SetVisible(_entity, false, false);
         }

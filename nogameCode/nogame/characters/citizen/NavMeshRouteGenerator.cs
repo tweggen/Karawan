@@ -20,13 +20,14 @@ namespace nogame.characters.citizen;
 /// </summary>
 public class NavMeshRouteGenerator : IRouteGenerator
 {
+    private static readonly engine.Dc _dc = engine.Dc.CitizenNavigation;
     private const float TimeoutMs = 100f; // Max pathfinding time before giving up (allows fallback)
 
     public async Task<SegmentRoute> GetRouteAsync(Vector3 fromPos, Vector3 toPos, PositionDescription startPod,
         RoutingPreferences? preferences = null,
         TransportationType transportType = TransportationType.Pedestrian)
     {
-        Trace($"NavMeshRouteGenerator: Computing route from {fromPos} to {toPos}");
+        Trace(_dc, $"NavMeshRouteGenerator: Computing route from {fromPos} to {toPos}");
         try
         {
             // Create cancellation token to prevent pathfinding from blocking NPC movement indefinitely
@@ -36,7 +37,7 @@ public class NavMeshRouteGenerator : IRouteGenerator
             var navMap = I.Get<NavMap>();
             if (navMap == null)
             {
-                Trace("NavMeshRouteGenerator: NavMap not available, using straight-line fallback");
+                Trace(_dc, $"NavMeshRouteGenerator: NavMap not available, using straight-line fallback");
                 return null;
             }
 
@@ -46,12 +47,12 @@ public class NavMeshRouteGenerator : IRouteGenerator
         }
         catch (OperationCanceledException)
         {
-            Trace("NavMeshRouteGenerator: pathfinding timeout, using straight-line fallback");
+            Trace(_dc, $"NavMeshRouteGenerator: pathfinding timeout, using straight-line fallback");
             return null;
         }
         catch (Exception e)
         {
-            Warning($"NavMeshRouteGenerator: pathfinding failed: {e.Message}");
+            Warning(_dc, $"NavMeshRouteGenerator: pathfinding failed: {e.Message}");
             return null;
         }
     }

@@ -38,5 +38,8 @@
     "debug.category.engine": false,
     "debug.category.framework": false,
     "debug.category.talespawn": false,
-    "debug.category.taleentity": false
+    "debug.category.taleentity": false,
+    "debug.category.citizenstrategy": false,
+    "debug.category.citizennavigation": false,
+    "debug.category.satnav": false
   }
