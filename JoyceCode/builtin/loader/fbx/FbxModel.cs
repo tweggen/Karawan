@@ -883,7 +883,22 @@ public class FbxModel : IDisposable
                     var aiBone = mesh->MBones[i];
 
                     var jBone = skeleton.FindBone(aiBone->MName.ToString());
-                    jBone.Model2Bone = _axi.ToJoyce(_fbxTranspose(aiBone->MOffsetMatrix));
+                    var offsetMatrix = _fbxTranspose(aiBone->MOffsetMatrix);
+
+                    /*
+                     * ASSIMP VERSION COMPENSATION (Commit ce0a50e):
+                     * Assimp 5.4.1 (Silk.NET 2.22.0): NeedsComplexTransformationChain() incorrectly includes
+                     *   PreRotation/PostRotation, causing incorrect offset matrix calculation.
+                     * Assimp 6.0.2 (Silk.NET 2.23.0): Fixed to exclude PreRotation/PostRotation.
+                     *
+                     * The offset matrices differ between versions. For now, we use the matrix as-is
+                     * from Assimp. Profiling (Phase 3) will determine if compensation is needed.
+                     */
+                    // TODO: Enable version detection after fixing AssimpVersionDetector compilation
+                    // var assimpVersion = builtin.loader.fbx.AssimpVersionDetector.GetVersion();
+                    // Trace(_dc, $"Loading bone '{jBone.Name}' with Assimp {assimpVersion}");
+
+                    jBone.Model2Bone = _axi.ToJoyce(offsetMatrix);
                     jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
 
                     var nBoneVertices = aiBone->MNumWeights;

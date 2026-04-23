@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using builtin.extensions;
+using builtin.loader.fbx;
 using static engine.Logger;
 
 namespace engine.joyce;
@@ -467,8 +468,9 @@ public partial class ModelAnimationCollection
             return;
         }
 
-        var assimpVersion = builtin.loader.fbx.AssimpVersionDetector.GetVersion();
-        Trace(_dc,$"Baking animations for {_model.Name}, Skeleton has {_model.Skeleton.NBones} bones (Assimp: {assimpVersion})");
+        // TODO: Enable after fixing AssimpVersionDetector compilation
+        // var assimpVersion = builtin.loader.fbx.AssimpVersionDetector.GetVersion();
+        Trace(_dc, $"Baking animations for {_model.Name}, Skeleton has {_model.Skeleton.NBones} bones");
 
 
         var skeleton = _model.FindSkeleton();
@@ -515,19 +517,29 @@ public partial class ModelAnimationCollection
         {
             ModelAnimation ma = kvp.Value;
             float duration = ma.Duration;
+
+            /*
+             * ASSIMP VERSION INVESTIGATION (Phase 3):
+             * Frame count calculation: nFrames = duration * 60 FPS
+             *
+             * Question: Does Duration differ between Assimp 5.4.1 and 6.0.2?
+             * - ma.Duration = MDuration / MTicksPerSecond (set in FbxModel.cs:243)
+             * - If the transformation chain changes (ce0a50e), could this affect animation duration?
+             * - Unlikely, but profiling will confirm.
+             *
+             * For now, we use the same 60 FPS multiplier for both versions.
+             * If profiles show different NFrames, we may need version-aware scaling.
+             */
             uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
             ma.NFrames = nFrames;
             ma.FirstFrame = currentFrameOffset;  // Set correct offset for this animation
-            Trace(_dc, $"Animation '{kvp.Key}': Duration={duration}, NFrames={nFrames}, FirstFrame={currentFrameOffset}");
+            Trace(_dc, $"Animation '{kvp.Key}': Duration={duration}s, TicksPerSecond={ma.TicksPerSecond}, NFrames={nFrames}, FirstFrame={currentFrameOffset}");
             currentFrameOffset += nFrames;
             PushAnimFrames(nFrames);  // Update global frame counter for AllBakedMatrices indexing
         }
         Trace(_dc, $"Total animation frames: {_nextAnimFrame}, AllBakedMatrices will be size {_nextAnimFrame * skeleton.NBones}");
 
-        // Dump detailed statistics for debugging Assimp version differences
-        DumpAnimationStatistics(assimpVersion);
-
-        // Now allocate AllBakedMatrices with correct total size
+        // AllBakedMatrices allocation
         AllBakedMatrices = new Matrix4x4[_nextAnimFrame * skeleton.NBones];
         for (int i = 0; i < AllBakedMatrices.Length; ++i) AllBakedMatrices[i] = Matrix4x4.Identity;
 
@@ -591,30 +603,6 @@ public partial class ModelAnimationCollection
     }
 
 
-    private void DumpAnimationStatistics(engine.joyce.AssimpVersion assimpVersion)
-    {
-        Trace(_dc, $"=== Animation Statistics (Assimp {assimpVersion}) ===");
-        Trace(_dc, $"Model: {_model.Name}");
-        Trace(_dc, $"Skeleton bones: {_model.Skeleton.NBones}");
-        Trace(_dc, $"Total animations: {MapAnimations.Count}");
-        Trace(_dc, $"Total frames: {_nextAnimFrame}");
-        Trace(_dc, $"AllBakedMatrices size: {AllBakedMatrices?.Length ?? 0}");
-        Trace(_dc, $"Expected size: {_nextAnimFrame * _model.Skeleton.NBones}");
-
-        foreach (var kvp in MapAnimations)
-        {
-            var ma = kvp.Value;
-            Trace(_dc, $"  Animation '{kvp.Key}':");
-            Trace(_dc, $"    Index: {ma.Index}");
-            Trace(_dc, $"    Duration: {ma.Duration}");
-            Trace(_dc, $"    TicksPerSecond: {ma.TicksPerSecond}");
-            Trace(_dc, $"    NTicks: {ma.NTicks}");
-            Trace(_dc, $"    NFrames: {ma.NFrames}");
-            Trace(_dc, $"    FirstFrame: {ma.FirstFrame}");
-            Trace(_dc, $"    LastFrame: {ma.FirstFrame + ma.NFrames - 1}");
-            Trace(_dc, $"    MatrixRange: [{ma.FirstFrame * _model.Skeleton.NBones}..{(ma.FirstFrame + ma.NFrames) * _model.Skeleton.NBones - 1}]");
-        }
-    }
 
     public void Polish(Model model, string? strModelBaseBone)
     {
