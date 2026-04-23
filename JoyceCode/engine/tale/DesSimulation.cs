@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -28,7 +29,7 @@ public class DesSimulation
     private int _lastGroupDetectionDay;
 
     // Reusable buffer for property deltas
-    private readonly Dictionary<string, float> _deltasBuffer = new();
+    private readonly ConcurrentDictionary<string, float> _deltasBuffer = new();
 
     public int EventsProcessed { get; private set; }
     public EncounterResolver Encounters => _encounters;

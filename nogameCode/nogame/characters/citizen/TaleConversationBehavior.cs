@@ -161,7 +161,7 @@ public class TaleConversationBehavior : ANearbyBehavior
 
             if (_taleManager == null || _narration == null)
             {
-                Trace(_dc, "TaleManager or Narration not available");
+                Trace(_dc, $"TaleManager or Narration not available");
                 return;
             }
 

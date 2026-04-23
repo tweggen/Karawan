@@ -36,7 +36,7 @@ public static class StreetRouteBuilder
         {
             if (navMap == null)
             {
-                Trace(_dc, "NavMap is null, using straight-line fallback");
+                Trace(_dc, $"NavMap is null, using straight-line fallback");
                 return null;
             }
 
@@ -44,7 +44,7 @@ public static class StreetRouteBuilder
             var topCluster = navMap.TopCluster;
             if (topCluster == null)
             {
-                Trace(_dc, "TopCluster is null, using straight-line fallback");
+                Trace(_dc, $"TopCluster is null, using straight-line fallback");
                 return null;
             }
 

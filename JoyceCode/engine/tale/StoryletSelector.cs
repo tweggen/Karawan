@@ -189,7 +189,7 @@ public class StoryletSelector
     /// Apply postconditions from a completed storylet.
     /// Returns a dictionary of property deltas for logging.
     /// </summary>
-    public Dictionary<string, float> ApplyPostconditions(NpcSchedule npc,
+    public ConcurrentDictionary<string, float> ApplyPostconditions(NpcSchedule npc,
         StoryletDefinition storylet, float durationMinutes, ConcurrentDictionary<string, float> deltasBuffer)
     {
         deltasBuffer.Clear();
@@ -227,7 +227,7 @@ public class StoryletSelector
     /// Legacy overload for compatibility with DesSimulation which passes storylet ID string.
     /// Falls back to hunger tick only when storylet definition is not found.
     /// </summary>
-    public Dictionary<string, float> ApplyPostconditions(NpcSchedule npc, string storyletId,
+    public ConcurrentDictionary<string, float> ApplyPostconditions(NpcSchedule npc, string storyletId,
         float durationMinutes, ConcurrentDictionary<string, float> deltasBuffer)
     {
         deltasBuffer.Clear();
@@ -288,7 +288,7 @@ public class StoryletSelector
         if (target != null)
             EnsurePropertiesInitialized(target);
 
-        var deltasBuf = new Dictionary<string, float>();
+        var deltasBuf = new ConcurrentDictionary<string, float>();
 
         foreach (var branch in def.PostconditionsIf)
         {
