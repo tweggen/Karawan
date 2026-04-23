@@ -466,7 +466,9 @@ public partial class ModelAnimationCollection
         {
             return;
         }
-        Trace(_dc,$"Baking animations for {_model.Name}");
+
+        var assimpVersion = builtin.loader.fbx.AssimpVersionDetector.GetVersion();
+        Trace(_dc,$"Baking animations for {_model.Name}, Skeleton has {_model.Skeleton.NBones} bones (Assimp: {assimpVersion})");
 
 
         var skeleton = _model.FindSkeleton();
@@ -516,9 +518,14 @@ public partial class ModelAnimationCollection
             uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
             ma.NFrames = nFrames;
             ma.FirstFrame = currentFrameOffset;  // Set correct offset for this animation
+            Trace(_dc, $"Animation '{kvp.Key}': Duration={duration}, NFrames={nFrames}, FirstFrame={currentFrameOffset}");
             currentFrameOffset += nFrames;
             PushAnimFrames(nFrames);  // Update global frame counter for AllBakedMatrices indexing
         }
+        Trace(_dc, $"Total animation frames: {_nextAnimFrame}, AllBakedMatrices will be size {_nextAnimFrame * skeleton.NBones}");
+
+        // Dump detailed statistics for debugging Assimp version differences
+        DumpAnimationStatistics(assimpVersion);
 
         // Now allocate AllBakedMatrices with correct total size
         AllBakedMatrices = new Matrix4x4[_nextAnimFrame * skeleton.NBones];
@@ -530,7 +537,7 @@ public partial class ModelAnimationCollection
         foreach (var kvp in MapAnimations)
         {
             ModelAnimation ma = kvp.Value;
-            Trace(_dc,$"Loading animation {kvp.Key}");
+            Trace(_dc,$"Baking animation '{kvp.Key}': FirstFrame={ma.FirstFrame}, NFrames={ma.NFrames}, will write to indices {ma.FirstFrame * skeleton.NBones} to {(ma.FirstFrame + ma.NFrames - 1) * skeleton.NBones + skeleton.NBones - 1}");
             if (cpuNodes != null)
             {
                 foreach (var cpuNode in cpuNodes)
@@ -583,6 +590,31 @@ public partial class ModelAnimationCollection
         }
     }
 
+
+    private void DumpAnimationStatistics(engine.joyce.AssimpVersion assimpVersion)
+    {
+        Trace(_dc, $"=== Animation Statistics (Assimp {assimpVersion}) ===");
+        Trace(_dc, $"Model: {_model.Name}");
+        Trace(_dc, $"Skeleton bones: {_model.Skeleton.NBones}");
+        Trace(_dc, $"Total animations: {MapAnimations.Count}");
+        Trace(_dc, $"Total frames: {_nextAnimFrame}");
+        Trace(_dc, $"AllBakedMatrices size: {AllBakedMatrices?.Length ?? 0}");
+        Trace(_dc, $"Expected size: {_nextAnimFrame * _model.Skeleton.NBones}");
+
+        foreach (var kvp in MapAnimations)
+        {
+            var ma = kvp.Value;
+            Trace(_dc, $"  Animation '{kvp.Key}':");
+            Trace(_dc, $"    Index: {ma.Index}");
+            Trace(_dc, $"    Duration: {ma.Duration}");
+            Trace(_dc, $"    TicksPerSecond: {ma.TicksPerSecond}");
+            Trace(_dc, $"    NTicks: {ma.NTicks}");
+            Trace(_dc, $"    NFrames: {ma.NFrames}");
+            Trace(_dc, $"    FirstFrame: {ma.FirstFrame}");
+            Trace(_dc, $"    LastFrame: {ma.FirstFrame + ma.NFrames - 1}");
+            Trace(_dc, $"    MatrixRange: [{ma.FirstFrame * _model.Skeleton.NBones}..{(ma.FirstFrame + ma.NFrames) * _model.Skeleton.NBones - 1}]");
+        }
+    }
 
     public void Polish(Model model, string? strModelBaseBone)
     {
