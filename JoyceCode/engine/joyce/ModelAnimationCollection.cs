@@ -492,11 +492,7 @@ public partial class ModelAnimationCollection
         }
         
         Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
-        
-        AllBakedMatrices = new Matrix4x4[_nextAnimFrame * skeleton.NBones];
-        for (int i = 0; i < AllBakedMatrices.Length; ++i) AllBakedMatrices[i] = Matrix4x4.Identity;
 
-        
         /*
          * setup cpu nodes
          */
@@ -505,10 +501,26 @@ public partial class ModelAnimationCollection
         {
             setCPUNodes.Add(cpuNode);
         }
-        
+
         /*
-         * First, for all animations, create the arrays of matrices for
-         * each bone per frame.,
+         * First pass: calculate all animation frame counts and update frame tracking.
+         * This determines the total size needed for AllBakedMatrices.
+         */
+        foreach (var kvp in MapAnimations)
+        {
+            ModelAnimation ma = kvp.Value;
+            float duration = ma.Duration;
+            uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
+            ma.NFrames = nFrames;
+            PushAnimFrames(nFrames);  // Update global frame counter for AllBakedMatrices indexing
+        }
+
+        // Now allocate AllBakedMatrices with correct total size
+        AllBakedMatrices = new Matrix4x4[_nextAnimFrame * skeleton.NBones];
+        for (int i = 0; i < AllBakedMatrices.Length; ++i) AllBakedMatrices[i] = Matrix4x4.Identity;
+
+        /*
+         * Second pass: Create baked frame arrays and bake animation data.
          */
         foreach (var kvp in MapAnimations)
         {
@@ -522,12 +534,6 @@ public partial class ModelAnimationCollection
                 }
             }
 
-            /*
-             * How many real frames does this animation have?
-             */
-            float duration = ma.Duration;
-            uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
-            ma.NFrames = nFrames;
             ma.BakedFrames = new ModelBakedFrame[ma.NFrames];
 
             if (_model.Skeleton.NBones >= engine.joyce.Constants.MaxBones)
