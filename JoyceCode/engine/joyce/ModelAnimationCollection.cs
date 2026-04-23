@@ -505,13 +505,17 @@ public partial class ModelAnimationCollection
         /*
          * First pass: calculate all animation frame counts and update frame tracking.
          * This determines the total size needed for AllBakedMatrices.
+         * Also update FirstFrame to reflect the correct offset in the global AllBakedMatrices array.
          */
+        uint currentFrameOffset = 0;
         foreach (var kvp in MapAnimations)
         {
             ModelAnimation ma = kvp.Value;
             float duration = ma.Duration;
             uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
             ma.NFrames = nFrames;
+            ma.FirstFrame = currentFrameOffset;  // Set correct offset for this animation
+            currentFrameOffset += nFrames;
             PushAnimFrames(nFrames);  // Update global frame counter for AllBakedMatrices indexing
         }
 
