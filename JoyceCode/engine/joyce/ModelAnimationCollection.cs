@@ -541,7 +541,7 @@ public partial class ModelAnimationCollection
                 int a = 1;
             }
             
-            for (int frameno = 0; frameno < nFrames; ++frameno)
+            for (int frameno = 0; frameno < ma.NFrames; ++frameno)
             {
                 ModelBakedFrame bakedFrame = new()
                 {
