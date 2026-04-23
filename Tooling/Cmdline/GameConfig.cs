@@ -451,6 +451,12 @@ namespace CmdLine
 
                 foreach (var kvp in obj)
                 {
+                    // Always skip Mix system nodes first (e.g., __include__, __priority__)
+                    if (kvp.Key.StartsWith("__"))
+                    {
+                        continue;
+                    }
+
                     if (kvp.Key == "textures")
                     {
                         LoadTextures(ts, kvp.Value);
@@ -458,11 +464,6 @@ namespace CmdLine
                     else if (kvp.Key == "channels")
                     {
                         LoadChannels(ts, kvp.Value);
-                    }
-                    else if (kvp.Key.StartsWith("__"))
-                    {
-                        // Skip Mix system nodes like __include__
-                        continue;
                     }
                     else if (kvp.Value?.GetValueKind() == JsonValueKind.Array)
                     {

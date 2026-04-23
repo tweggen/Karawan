@@ -11,6 +11,8 @@ namespace builtin.baking;
 
 public class ModelAnimationCollectionReader
 {
+    private static readonly engine.Dc _dc = engine.Dc.Animation;
+    
     private static object _clo = new();
     private static SHA256 _sha256 = SHA256.Create();
     public static string ModelAnimationCollectionFileName(string urlModel, string? urlAnimations)
@@ -33,7 +35,7 @@ public class ModelAnimationCollectionReader
                     .Replace('/', '_')
                     .Replace('=', '~');
             ;
-            Trace($"Returning hash {strHash} for {strModelAnims}");
+            Trace(_dc, $"Returning hash {strHash} for {strModelAnims}");
             return $"ac-{strHash}";
             ;
         }
