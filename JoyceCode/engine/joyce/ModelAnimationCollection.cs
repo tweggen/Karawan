@@ -507,6 +507,7 @@ public partial class ModelAnimationCollection
          * This determines the total size needed for AllBakedMatrices.
          * Also update FirstFrame to reflect the correct offset in the global AllBakedMatrices array.
          */
+        _nextAnimFrame = 0;  // Reset frame counter for clean baking
         uint currentFrameOffset = 0;
         foreach (var kvp in MapAnimations)
         {
