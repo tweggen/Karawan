@@ -21,6 +21,8 @@ namespace nogame.modules.playerhover;
  */
 public class WalkController : AController, IInputPart
 {
+    private static readonly engine.Dc _dc = engine.Dc.Input;
+
     public static float MY_Z_ORDER = 25f;
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
@@ -250,7 +252,7 @@ public class WalkController : AController, IInputPart
                           + controllerState.WASDVert;
         if ((_engine.FrameNumber & 0x7) == 0)
         {
-            Trace(
+            Trace(_dc,
                 $"AnalogLeftStickVert = {controllerState.AnalogLeftStickVert}, TouchLeftVert = {controllerState.TouchLeftStickVert}");
         }
 

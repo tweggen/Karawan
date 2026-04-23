@@ -11,6 +11,8 @@ namespace engine.physics;
 
 public class Object : IDisposable
 {
+    private static readonly engine.Dc _dc = engine.Dc.Physics;
+
     /*
      * Still not happy with the design. All of the
      * following is instance specific.
@@ -201,7 +203,7 @@ public class Object : IDisposable
                     BodyReference prefBody = Engine.Simulation.Bodies.GetBodyReference(bh);
                     if (prefBody.Constraints.Count > 0)
                     {
-                        Error(
+                        Error(_dc,
                             $"Rejecting to remove body {IntHandle} from entity {Entity}");
                     }
                 }

@@ -15,6 +15,8 @@ namespace nogame.modules.playerhover;
 
 internal class HoverController : AController
 {
+    private static readonly engine.Dc _dc = engine.Dc.Input;
+
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.AutoSave>()
@@ -150,7 +152,7 @@ internal class HoverController : AController
                 + controllerState.TouchLeftStickVert;
             if (_traceControllers && (_engine.FrameNumber & 0x7) == 0)
             {
-                Trace(
+                Trace(_dc,
                     $"BumpersMotion = {controllerState.BumpersMotion}, TouchLeftVert = {controllerState.TouchLeftStickVert}");
             }
 

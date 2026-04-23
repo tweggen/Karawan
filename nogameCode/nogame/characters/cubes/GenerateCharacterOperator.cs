@@ -16,6 +16,8 @@ namespace nogame.characters.cubes;
 
 internal class GenerateCharacterOperator : engine.world.IFragmentOperator
 {
+    private static readonly engine.Dc _dc = engine.Dc.MetaGen;
+
     private class Context
     {
         public builtin.tools.RandomSource Rnd;
@@ -119,7 +121,7 @@ internal class GenerateCharacterOperator : engine.world.IFragmentOperator
 
                     if (_trace)
                     {
-                        Trace(
+                        Trace(_dc,
                             $"GenerateCubeCharacterOperator(): Starting on streetpoint {idxPoint} {chosenStreetPoint.Pos}.");
                     }
 

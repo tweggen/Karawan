@@ -21,6 +21,8 @@ namespace builtin;
 
 public class EntitySaver : AModule
 {
+    private static readonly engine.Dc _dc = engine.Dc.Engine;
+
     private readonly Dictionary<string, Type> _typeCache = new();
 
     private Type ResolveType(string typeName)
@@ -232,7 +234,7 @@ public class EntitySaver : AModule
                         }
                         catch (Exception exception)
                         {
-                            Error(
+                            Error(_dc,
                                 $"Unable to deserialize entity component {strComponentName} from {jeComponent.GetRawText()}: {exception}");
                             continue;
                         }

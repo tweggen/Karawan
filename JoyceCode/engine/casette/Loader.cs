@@ -22,6 +22,8 @@ namespace engine.casette;
  */
 public class Loader
 {
+    private static readonly engine.Dc _dc = engine.Dc.Casette;
+
     private object _lo = new();
     private Engine _engine;
     
@@ -43,7 +45,7 @@ public class Loader
         var iSerializable = target as ISerializable;
         if (iSerializable == null)
         {
-            Error(
+            Error(_dc,
                 $"Trying to load config to object of type {target.GetType().Name} failed, not ISerializable.");
             return;
         }

@@ -16,6 +16,8 @@ namespace builtin.controllers;
 
 public class FollowCameraController : AController, IInputPart
 {
+    private static readonly engine.Dc _dc = engine.Dc.Engine;
+
     private object _lo = new();
 
     DefaultEcs.Entity _eTarget;
@@ -883,7 +885,7 @@ public class FollowCameraController : AController, IInputPart
 
         if (_traceControllers && (_engine.FrameNumber & 7) == 0)
         {
-            Trace(
+            Trace(_dc,
                 $"_v2RightTouchMove = {_v2RightTouchMove}, _v2MouseMove = {_v2MouseMove}, _v2MouseOffseting = {_v2MouseOffseting}");
         }
 
