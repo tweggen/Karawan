@@ -79,15 +79,25 @@ public class FbxModel : IDisposable
     {
         Matrix4x4 chainProduct = Matrix4x4.Identity;
         Node* current = meshNode;
+        int depth = 0;
         while (current != null && current != _scene->MRootNode)
         {
+            var name = current->MName.ToString();
+            var det = current->MTransformation.GetDeterminant();
+            System.Console.WriteLine($"[ChainProduct] depth={depth} node='{name}' det={det:F6} isIdentity={current->MTransformation.IsIdentity}");
             /*
              * Pre-multiply: walking up from mesh to root, each parent
              * goes on the left (assimp V*M convention).
              */
             chainProduct = current->MTransformation * chainProduct;
             current = current->MParent;
+            depth++;
         }
+        if (current != null)
+        {
+            System.Console.WriteLine($"[ChainProduct] stopped at root='{current->MName}' det={current->MTransformation.GetDeterminant():F6}");
+        }
+        System.Console.WriteLine($"[ChainProduct] final chainProduct det={chainProduct.GetDeterminant():F6}");
         return chainProduct;
     }
 
@@ -942,7 +952,17 @@ public class FbxModel : IDisposable
                     Matrix4x4 rawOffset = aiBone->MOffsetMatrix;
                     if (AssimpVersionDetector.IsAssimp6OrNewer())
                     {
-                        rawOffset = rawOffset * _chainCorrectionInverse;
+                        Matrix4x4 corrected = rawOffset * _chainCorrectionInverse;
+                        if (i == 0)
+                        {
+                            System.Console.WriteLine($"[BoneOffset] bone='{jBone.Name}'");
+                            System.Console.WriteLine($"[BoneOffset]   original det={rawOffset.GetDeterminant():F6}");
+                            System.Console.WriteLine($"[BoneOffset]   corrected det={corrected.GetDeterminant():F6}");
+                            System.Console.WriteLine($"[BoneOffset]   correction inv det={_chainCorrectionInverse.GetDeterminant():F6}");
+                            System.Console.WriteLine($"[BoneOffset]   original M41,M42,M43={rawOffset.M41:F4},{rawOffset.M42:F4},{rawOffset.M43:F4}");
+                            System.Console.WriteLine($"[BoneOffset]   corrected M41,M42,M43={corrected.M41:F4},{corrected.M42:F4},{corrected.M43:F4}");
+                        }
+                        rawOffset = corrected;
                     }
                     var offsetMatrix = _fbxTranspose(rawOffset);
 
