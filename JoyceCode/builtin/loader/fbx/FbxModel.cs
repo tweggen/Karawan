@@ -259,6 +259,20 @@ public class FbxModel : IDisposable
     /**
      * Load all animations found in this assimp scene.
      */
+    private unsafe void _dumpNodeTransforms(Node* node, int depth, int maxDepth)
+    {
+        if (depth > maxDepth) return;
+        string indent = new string(' ', depth * 2);
+        string name = node->MName.ToString();
+        var t = node->MTransformation;
+        bool isId = t.IsIdentity;
+        System.Console.WriteLine($"[NodeTree]{indent}{name}: isIdentity={isId} det={t.GetDeterminant():F4} M41,M42,M43=({t.M41:F2},{t.M42:F2},{t.M43:F2})");
+        for (uint c = 0; c < node->MNumChildren; c++)
+        {
+            _dumpNodeTransforms(node->MChildren[c], depth + 1, maxDepth);
+        }
+    }
+
     private unsafe void _loadAnimations(string strFallbackName, Scene* scene, ModelNode mnRestPose)
     {
         if (scene->MAnimations == null)
@@ -267,6 +281,10 @@ public class FbxModel : IDisposable
         uint nAnimations = scene->MNumAnimations;
         if (nAnimations == 0)
             return;
+
+        System.Console.WriteLine($"[AnimDiag] === Loading {nAnimations} animation(s) from '{strFallbackName}' ===");
+        System.Console.WriteLine($"[AnimDiag] Scene node tree (first 4 levels):");
+        _dumpNodeTransforms(scene->MRootNode, 0, 4);
 
         for (int i = 0; i < nAnimations; ++i)
         {
@@ -285,6 +303,8 @@ public class FbxModel : IDisposable
             ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
             ma.NTicks = (uint)aiAnim->MDuration;
             ma.MapChannels = new();
+
+            System.Console.WriteLine($"[AnimDiag] Animation '{ma.Name}': Duration={ma.Duration:F4}s, TicksPerSec={ma.TicksPerSecond:F1}, NTicks={ma.NTicks}, Channels={nChannels}");
 
             uint nFrames = UInt32.Max((uint)(ma.Duration * 60f), 1);
             ma.NFrames = nFrames;
@@ -444,6 +464,28 @@ public class FbxModel : IDisposable
                 uint nPositionKeys = aiChannel->MNumPositionKeys;
                 uint nScalingKeys  = aiChannel->MNumScalingKeys;
                 uint nRotationKeys = aiChannel->MNumRotationKeys;
+
+                if (j < 3)
+                {
+                    System.Console.WriteLine($"[AnimDiag]   Ch[{j}] '{channelNodeName}': posKeys={nPositionKeys}, rotKeys={nRotationKeys}, scaleKeys={nScalingKeys}");
+                    if (nRotationKeys > 0)
+                    {
+                        var rk0 = aiChannel->MRotationKeys[0];
+                        System.Console.WriteLine($"[AnimDiag]     rot[0] t={rk0.MTime:F2} q=({rk0.MValue.X:F4},{rk0.MValue.Y:F4},{rk0.MValue.Z:F4},{rk0.MValue.W:F4})");
+                        if (nRotationKeys > 1)
+                        {
+                            var rk1 = aiChannel->MRotationKeys[1];
+                            System.Console.WriteLine($"[AnimDiag]     rot[1] t={rk1.MTime:F2} q=({rk1.MValue.X:F4},{rk1.MValue.Y:F4},{rk1.MValue.Z:F4},{rk1.MValue.W:F4})");
+                        }
+                        var rkLast = aiChannel->MRotationKeys[nRotationKeys - 1];
+                        System.Console.WriteLine($"[AnimDiag]     rot[last] t={rkLast.MTime:F2} q=({rkLast.MValue.X:F4},{rkLast.MValue.Y:F4},{rkLast.MValue.Z:F4},{rkLast.MValue.W:F4})");
+                    }
+                    if (nPositionKeys > 0)
+                    {
+                        var pk0 = aiChannel->MPositionKeys[0];
+                        System.Console.WriteLine($"[AnimDiag]     pos[0] t={pk0.MTime:F2} v=({pk0.MValue.X:F4},{pk0.MValue.Y:F4},{pk0.MValue.Z:F4})");
+                    }
+                }
 
                 if (nPositionKeys == 0 && nScalingKeys == 0 && nRotationKeys == 0)
                 {
