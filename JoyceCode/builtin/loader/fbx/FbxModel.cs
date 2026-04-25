@@ -441,7 +441,9 @@ public class FbxModel : IDisposable
             
 
             Trace(_dc, $"Detected rest frame @{timeRestFrame} in animation {ma.Name} with {maxCount} votes.");
-            
+
+            int nMatchedChannels = 0;
+            int nSkippedChannels = 0;
             for (int j = 0; j < nChannels; ++j)
             {
                 var aiChannel = aiAnim->MChannels[j];
@@ -450,9 +452,22 @@ public class FbxModel : IDisposable
 
                 string channelNodeName = aiChannel->MNodeName.ToString();
 
-                if (!_model.Skeleton.MapBones.ContainsKey(channelNodeName) ||
-                    !_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
+                bool hasBone = _model.Skeleton.MapBones.ContainsKey(channelNodeName);
+                bool hasNode = _model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName);
+                if (j < 5 || (!hasBone || !hasNode))
+                {
+                    if (nSkippedChannels < 10)
+                    {
+                        System.Console.WriteLine($"[AnimDiag]   Ch[{j}] name='{channelNodeName}' hasBone={hasBone} hasNode={hasNode} {(hasBone && hasNode ? "MATCH" : "SKIP")}");
+                    }
+                }
+
+                if (!hasBone || !hasNode)
+                {
+                    nSkippedChannels++;
                     continue;
+                }
+                nMatchedChannels++;
 
                 ModelNode channelNode = _model.ModelNodeTree.MapNodes[channelNodeName];
 
@@ -578,6 +593,8 @@ public class FbxModel : IDisposable
             {
                 int a = 1;
             }
+
+            System.Console.WriteLine($"[AnimDiag] Animation '{ma.Name}': {nMatchedChannels} matched, {nSkippedChannels} skipped out of {nChannels} channels");
 
             _model.AnimationCollection.MapAnimations[ma.Name] = ma;
         }
