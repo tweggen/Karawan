@@ -273,6 +273,24 @@ public class FbxModel : IDisposable
         }
     }
 
+    /**
+     * Strip the $AssimpFbx$ pivot suffix from a channel node name.
+     * Assimp 6.0.2 creates separate Translation/Rotation/Scaling channels
+     * with names like "BoneName_$AssimpFbx$_Rotation". Returns the base bone
+     * name and the pivot type (or null if no suffix).
+     */
+    private static string _stripAssimpPivotSuffix(string channelName, out string pivotType)
+    {
+        int marker = channelName.IndexOf("_$AssimpFbx$_");
+        if (marker >= 0)
+        {
+            pivotType = channelName.Substring(marker + "_$AssimpFbx$_".Length);
+            return channelName.Substring(0, marker);
+        }
+        pivotType = null;
+        return channelName;
+    }
+
     private unsafe void _loadAnimations(string strFallbackName, Scene* scene, ModelNode mnRestPose)
     {
         if (scene->MAnimations == null)
@@ -322,7 +340,8 @@ public class FbxModel : IDisposable
                 if (aiChannel == null)
                     continue;
 
-                string channelNodeName = aiChannel->MNodeName.ToString();
+                string channelNodeName = _stripAssimpPivotSuffix(
+                    aiChannel->MNodeName.ToString(), out _);
 
                 if (!_model.Skeleton.MapBones.ContainsKey(channelNodeName) ||
                     !_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
@@ -362,7 +381,15 @@ public class FbxModel : IDisposable
                 if (aiChannel == null)
                     continue;
 
-                string channelNodeName = aiChannel->MNodeName.ToString();
+                string channelNodeName = _stripAssimpPivotSuffix(
+                    aiChannel->MNodeName.ToString(), out var restPivotType);
+
+                /*
+                 * Only consider Rotation pivot channels (or non-pivot channels)
+                 * for rest frame detection.
+                 */
+                if (restPivotType != null && restPivotType != "Rotation")
+                    continue;
 
                 if (!_model.Skeleton.MapBones.ContainsKey(channelNodeName) ||
                     !_model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName))
@@ -444,6 +471,7 @@ public class FbxModel : IDisposable
 
             int nMatchedChannels = 0;
             int nSkippedChannels = 0;
+            int nPivotMergedChannels = 0;
             for (int j = 0; j < nChannels; ++j)
             {
                 var aiChannel = aiAnim->MChannels[j];
@@ -452,99 +480,137 @@ public class FbxModel : IDisposable
 
                 string channelNodeName = aiChannel->MNodeName.ToString();
 
-                bool hasBone = _model.Skeleton.MapBones.ContainsKey(channelNodeName);
-                bool hasNode = _model.ModelNodeTree.MapNodes.ContainsKey(channelNodeName);
-                if (j < 5 || (!hasBone || !hasNode))
-                {
-                    if (nSkippedChannels < 10)
-                    {
-                        System.Console.WriteLine($"[AnimDiag]   Ch[{j}] name='{channelNodeName}' hasBone={hasBone} hasNode={hasNode} {(hasBone && hasNode ? "MATCH" : "SKIP")}");
-                    }
-                }
+                /*
+                 * Assimp 6.0.2 pivot channel merging:
+                 * When AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS creates complex transformation
+                 * chains, animation channels get split into separate Translation/Rotation/Scaling
+                 * channels with $AssimpFbx$ suffixed names. We strip the suffix to recover
+                 * the base bone name, then merge the channels back together.
+                 */
+                string baseBoneName = _stripAssimpPivotSuffix(channelNodeName, out string pivotType);
+
+                bool hasBone = _model.Skeleton.MapBones.ContainsKey(baseBoneName);
+                bool hasNode = _model.ModelNodeTree.MapNodes.ContainsKey(baseBoneName);
 
                 if (!hasBone || !hasNode)
                 {
+                    if (nSkippedChannels < 5)
+                    {
+                        System.Console.WriteLine($"[AnimDiag]   Ch[{j}] name='{channelNodeName}' base='{baseBoneName}' hasBone={hasBone} hasNode={hasNode} SKIP");
+                    }
                     nSkippedChannels++;
                     continue;
                 }
                 nMatchedChannels++;
 
-                ModelNode channelNode = _model.ModelNodeTree.MapNodes[channelNodeName];
-
-                if (ma.MapChannels.ContainsKey(channelNode))
-                {
-                    continue;
-                }
+                ModelNode channelNode = _model.ModelNodeTree.MapNodes[baseBoneName];
 
                 uint nPositionKeys = aiChannel->MNumPositionKeys;
                 uint nScalingKeys  = aiChannel->MNumScalingKeys;
                 uint nRotationKeys = aiChannel->MNumRotationKeys;
-
-                if (j < 3)
-                {
-                    System.Console.WriteLine($"[AnimDiag]   Ch[{j}] '{channelNodeName}': posKeys={nPositionKeys}, rotKeys={nRotationKeys}, scaleKeys={nScalingKeys}");
-                    if (nRotationKeys > 0)
-                    {
-                        var rk0 = aiChannel->MRotationKeys[0];
-                        System.Console.WriteLine($"[AnimDiag]     rot[0] t={rk0.MTime:F2} q=({rk0.MValue.X:F4},{rk0.MValue.Y:F4},{rk0.MValue.Z:F4},{rk0.MValue.W:F4})");
-                        if (nRotationKeys > 1)
-                        {
-                            var rk1 = aiChannel->MRotationKeys[1];
-                            System.Console.WriteLine($"[AnimDiag]     rot[1] t={rk1.MTime:F2} q=({rk1.MValue.X:F4},{rk1.MValue.Y:F4},{rk1.MValue.Z:F4},{rk1.MValue.W:F4})");
-                        }
-                        var rkLast = aiChannel->MRotationKeys[nRotationKeys - 1];
-                        System.Console.WriteLine($"[AnimDiag]     rot[last] t={rkLast.MTime:F2} q=({rkLast.MValue.X:F4},{rkLast.MValue.Y:F4},{rkLast.MValue.Z:F4},{rkLast.MValue.W:F4})");
-                    }
-                    if (nPositionKeys > 0)
-                    {
-                        var pk0 = aiChannel->MPositionKeys[0];
-                        System.Console.WriteLine($"[AnimDiag]     pos[0] t={pk0.MTime:F2} v=({pk0.MValue.X:F4},{pk0.MValue.Y:F4},{pk0.MValue.Z:F4})");
-                    }
-                }
 
                 if (nPositionKeys == 0 && nScalingKeys == 0 && nRotationKeys == 0)
                 {
                     continue;
                 }
 
-                ModelAnimChannel mac = ma.CreateChannel(
-                    channelNode,
-                    nPositionKeys != 0 ? new KeyFrame<Vector3>[nPositionKeys]     : null,
-                    nRotationKeys != 0 ? new KeyFrame<Quaternion>[nRotationKeys] : null,
-                    nScalingKeys  != 0 ? new KeyFrame<Vector3>[nScalingKeys]      : null
-                );
+                /*
+                 * Find or create the ModelAnimChannel for this bone.
+                 * For pivot channels, multiple assimp channels merge into one ModelAnimChannel.
+                 */
+                ModelAnimChannel mac;
+                if (ma.MapChannels.TryGetValue(channelNode, out mac))
+                {
+                    /*
+                     * Channel already exists (from a previous pivot channel for the same bone).
+                     * We'll merge additional keyframe data into it below.
+                     */
+                    nPivotMergedChannels++;
+                }
+                else
+                {
+                    /*
+                     * Create new channel. For pivot channels, only allocate arrays for the
+                     * keyframe type this specific pivot carries. For non-pivot channels
+                     * (direct bone match), allocate all arrays as before.
+                     */
+                    if (pivotType != null)
+                    {
+                        mac = ma.CreateChannel(
+                            channelNode,
+                            pivotType == "Translation" ? new KeyFrame<Vector3>[nPositionKeys] : null,
+                            pivotType == "Rotation"    ? new KeyFrame<Quaternion>[nRotationKeys] : null,
+                            pivotType == "Scaling"     ? new KeyFrame<Vector3>[nScalingKeys] : null
+                        );
+                    }
+                    else
+                    {
+                        mac = ma.CreateChannel(
+                            channelNode,
+                            nPositionKeys != 0 ? new KeyFrame<Vector3>[nPositionKeys]     : null,
+                            nRotationKeys != 0 ? new KeyFrame<Quaternion>[nRotationKeys] : null,
+                            nScalingKeys  != 0 ? new KeyFrame<Vector3>[nScalingKeys]      : null
+                        );
+                    }
+                    ma.MapChannels[channelNode] = mac;
+                    mac.Target = channelNode;
+                }
 
                 float duration = ma.Duration;
 
-                // Load raw keyframes
-                for (int l = 0; l < nPositionKeys; ++l)
+                /*
+                 * Load keyframes. For pivot channels, only load the relevant type.
+                 * For non-pivot channels, load all types.
+                 */
+                if (pivotType == null || pivotType == "Translation")
                 {
-                    mac.Positions![l] = new KeyFrame<Vector3>
+                    if (mac.Positions == null && nPositionKeys > 0)
                     {
-                        Time  = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
-                        OrgTime = (float)aiChannel->MPositionKeys[l].MTime,
-                        Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
-                    };
+                        mac.Positions = new KeyFrame<Vector3>[nPositionKeys];
+                    }
+                    for (int l = 0; l < nPositionKeys && mac.Positions != null; ++l)
+                    {
+                        mac.Positions[l] = new KeyFrame<Vector3>
+                        {
+                            Time  = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
+                            OrgTime = (float)aiChannel->MPositionKeys[l].MTime,
+                            Value = _baxi.ToJoyce(aiChannel->MPositionKeys[l].MValue)
+                        };
+                    }
                 }
 
-                for (int l = 0; l < nScalingKeys; ++l)
+                if (pivotType == null || pivotType == "Scaling")
                 {
-                    mac.Scalings![l] = new KeyFrame<Vector3>
+                    if (mac.Scalings == null && nScalingKeys > 0)
                     {
-                        Time  = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
-                        OrgTime = (float)aiChannel->MPositionKeys[l].MTime,
-                        Value = _baxi.ToJoyceScale(aiChannel->MScalingKeys[l].MValue)
-                    };
+                        mac.Scalings = new KeyFrame<Vector3>[nScalingKeys];
+                    }
+                    for (int l = 0; l < nScalingKeys && mac.Scalings != null; ++l)
+                    {
+                        mac.Scalings[l] = new KeyFrame<Vector3>
+                        {
+                            Time  = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
+                            OrgTime = (float)aiChannel->MScalingKeys[l].MTime,
+                            Value = _baxi.ToJoyceScale(aiChannel->MScalingKeys[l].MValue)
+                        };
+                    }
                 }
 
-                for (int l = 0; l < nRotationKeys; ++l)
+                if (pivotType == null || pivotType == "Rotation")
                 {
-                    mac.Rotations![l] = new KeyFrame<Quaternion>
+                    if (mac.Rotations == null && nRotationKeys > 0)
                     {
-                        Time  = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
-                        OrgTime = (float)aiChannel->MPositionKeys[l].MTime,
-                        Value = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
-                    };
+                        mac.Rotations = new KeyFrame<Quaternion>[nRotationKeys];
+                    }
+                    for (int l = 0; l < nRotationKeys && mac.Rotations != null; ++l)
+                    {
+                        mac.Rotations[l] = new KeyFrame<Quaternion>
+                        {
+                            Time  = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
+                            OrgTime = (float)aiChannel->MRotationKeys[l].MTime,
+                            Value = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
+                        };
+                    }
                 }
 
                 #if false
@@ -556,37 +622,39 @@ public class FbxModel : IDisposable
                 #endif
 
                 /*
-                 * Remove rest frame at thje given time position.
+                 * Remove rest frame at the given time position.
+                 * Null-safe: pivot channels may have null arrays for types they don't carry.
                  */
                 if (timeRestFrame != Double.MinValue)
                 {
-                    var tmpPositions = mac.Positions.ToList();
-                    tmpPositions.RemoveAll(kf => kf.OrgTime == timeRestFrame);
-                    mac.Positions = tmpPositions.ToArray();
-                    
-                    var tmpRotations = mac.Rotations.ToList();
-                    tmpRotations.RemoveAll(kf => kf.OrgTime == timeRestFrame);
-                    mac.Rotations = tmpRotations.ToArray();
-                    
-                    var tmpScalings = mac.Scalings.ToList();
-                    tmpScalings.RemoveAll(kf => kf.OrgTime == timeRestFrame);
-                    mac.Scalings = tmpScalings.ToArray();
+                    if (mac.Positions != null)
+                    {
+                        var tmpPositions = mac.Positions.ToList();
+                        tmpPositions.RemoveAll(kf => kf.OrgTime == timeRestFrame);
+                        mac.Positions = tmpPositions.ToArray();
+                    }
+
+                    if (mac.Rotations != null)
+                    {
+                        var tmpRotations = mac.Rotations.ToList();
+                        tmpRotations.RemoveAll(kf => kf.OrgTime == timeRestFrame);
+                        mac.Rotations = tmpRotations.ToArray();
+                    }
+
+                    if (mac.Scalings != null)
+                    {
+                        var tmpScalings = mac.Scalings.ToList();
+                        tmpScalings.RemoveAll(kf => kf.OrgTime == timeRestFrame);
+                        mac.Scalings = tmpScalings.ToArray();
+                    }
                 }
-                
-                if (ma.Name.StartsWith("Walk_InPlace_Female"))
-                {
-                    int a = 1;
-                }
-                
+
                 /*
                  * Normalize times into [0, duration) and sort
                  */
                 NormalizeTimes(ref mac.Positions, duration);
                 NormalizeTimes(ref mac.Scalings,  duration);
                 NormalizeTimes(ref mac.Rotations, duration);
-
-                ma.MapChannels[channelNode] = mac;
-                mac.Target = channelNode;
             }
             
             if (ma.Name.StartsWith("Run_InPlace"))
