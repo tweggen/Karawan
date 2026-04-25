@@ -274,6 +274,45 @@ public class FbxModel : IDisposable
     }
 
     /**
+     * Scan the assimp scene tree and collect the static PreRotation transforms
+     * for each bone. When assimp creates pivot channels, the PreRotation is
+     * stored as a static node transform rather than baked into the rotation
+     * keyframes. We need to re-apply it to reconstruct the full rotation.
+     */
+    private unsafe Dictionary<string, Quaternion> _collectPreRotations(Node* node)
+    {
+        var result = new Dictionary<string, Quaternion>();
+        _collectPreRotationsRecursive(node, result);
+        return result;
+    }
+
+    private unsafe void _collectPreRotationsRecursive(Node* node, Dictionary<string, Quaternion> result)
+    {
+        string name = node->MName.ToString();
+        if (name.EndsWith("_$AssimpFbx$_PreRotation"))
+        {
+            string baseName = name.Substring(0, name.Length - "_$AssimpFbx$_PreRotation".Length);
+            var m = node->MTransformation;
+            if (!m.IsIdentity)
+            {
+                /*
+                 * Extract the rotation quaternion from the PreRotation node's transform.
+                 * This is in assimp's raw coordinate space (before transpose/axis conversion).
+                 * We apply the animation axis interpreter (_baxi) to match how rotation
+                 * keyframes are converted.
+                 */
+                var preRotQuat = Quaternion.CreateFromRotationMatrix(_fbxTranspose(m));
+                preRotQuat = _baxi.ToJoyce(preRotQuat);
+                result[baseName] = preRotQuat;
+            }
+        }
+        for (uint c = 0; c < node->MNumChildren; c++)
+        {
+            _collectPreRotationsRecursive(node->MChildren[c], result);
+        }
+    }
+
+    /**
      * Strip the $AssimpFbx$ pivot suffix from a channel node name.
      * Assimp 6.0.2 creates separate Translation/Rotation/Scaling channels
      * with names like "BoneName_$AssimpFbx$_Rotation". Returns the base bone
@@ -303,6 +342,13 @@ public class FbxModel : IDisposable
         System.Console.WriteLine($"[AnimDiag] === Loading {nAnimations} animation(s) from '{strFallbackName}' ===");
         System.Console.WriteLine($"[AnimDiag] Scene node tree (first 4 levels):");
         _dumpNodeTransforms(scene->MRootNode, 0, 4);
+
+        /*
+         * Collect PreRotation transforms from the scene tree.
+         * These are needed to reconstruct the full rotation from pivot channels.
+         */
+        var preRotations = _collectPreRotations(scene->MRootNode);
+        System.Console.WriteLine($"[AnimDiag] Collected {preRotations.Count} PreRotation transforms");
 
         for (int i = 0; i < nAnimations; ++i)
         {
@@ -602,13 +648,31 @@ public class FbxModel : IDisposable
                     {
                         mac.Rotations = new KeyFrame<Quaternion>[nRotationKeys];
                     }
+
+                    /*
+                     * For pivot _Rotation channels, pre-multiply by the bone's
+                     * PreRotation to reconstruct the full rotation that old assimp
+                     * (single-channel) provided. Without this, the rotation is just
+                     * the animated component, missing the static orientation.
+                     */
+                    Quaternion qPreRot = Quaternion.Identity;
+                    if (pivotType == "Rotation")
+                    {
+                        preRotations.TryGetValue(baseBoneName, out qPreRot);
+                    }
+
                     for (int l = 0; l < nRotationKeys && mac.Rotations != null; ++l)
                     {
+                        var qRot = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue);
+                        if (pivotType == "Rotation" && qPreRot != Quaternion.Identity)
+                        {
+                            qRot = qPreRot * qRot;
+                        }
                         mac.Rotations[l] = new KeyFrame<Quaternion>
                         {
                             Time  = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
                             OrgTime = (float)aiChannel->MRotationKeys[l].MTime,
-                            Value = _baxi.ToJoyce(aiChannel->MRotationKeys[l].MValue)
+                            Value = qRot
                         };
                     }
                 }
