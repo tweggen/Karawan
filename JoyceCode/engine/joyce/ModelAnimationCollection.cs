@@ -186,30 +186,12 @@ public partial class ModelAnimationCollection
              *
              * Assimp computes: mOffsetMatrix = inverse(TransformLink) * absolute_transform
              *
-             * Assimp 5.4.1: absolute_transform did NOT accumulate the intermediate pivot
-             *   node transforms ($AssimpFbx$ chain nodes), so it only contained the parent's
-             *   local transform. The formula InverseWoInstance * Model2Bone worked.
-             *
-             * Assimp 6.0.2 (commit f81ea69): absolute_transform now correctly accumulates
-             *   all chain node transforms up to the mesh/model node level, so:
-             *     Model2Bone_new = Model2Bone_old * mesh_local_chain
-             *   where mesh_local_chain = inverse(WoInstance) * WithInstance.
-             *   To recover the old working result, we strip the extra chain:
-             *     InverseWoInstance * Model2Bone_new * inverse(mesh_local_chain)
-             *   = InverseWoInstance * Model2Bone_new * InverseWithInstance * WoInstance
-             *   = InverseWoInstance * Model2Bone_old  (same as the 5.4.1 formula)
+             * The version-specific correction is now applied at load time in FbxModel.cs,
+             * where the raw assimp offset matrix is adjusted in assimp's native convention
+             * (before transpose and axis conversion). This avoids multiplication-order
+             * issues caused by the transpose that reverses matrix products.
              */
-            if (AssimpVersionDetector.IsAssimp6OrNewer())
-            {
-                m4MyModelPoseToBonePose = _model.InverseFirstInstanceDescTransformWoInstance
-                    * bone.Model2Bone
-                    * _model.InverseFirstInstanceDescTransformWithInstance
-                    * _model.FirstInstanceDescTransformWoInstance;
-            }
-            else
-            {
-                m4MyModelPoseToBonePose = _model.InverseFirstInstanceDescTransformWoInstance * bone.Model2Bone;
-            }
+            m4MyModelPoseToBonePose = _model.InverseFirstInstanceDescTransformWoInstance * bone.Model2Bone;
         }
         else
         {

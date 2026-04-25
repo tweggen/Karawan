@@ -56,9 +56,40 @@ public class FbxModel : IDisposable
         #endif
         );
 
+    /**
+     * For Assimp 6.0.2+: the inverse of the chain product from root's child
+     * down to (and including) the mesh node, in assimp's native V*M convention
+     * (before transpose/axis conversion). Used to correct mOffsetMatrix back to
+     * the behavior of Assimp 5.4.1 where absolute_transform only contained
+     * the root node's local transform.
+     */
+    private Matrix4x4 _chainCorrectionInverse = Matrix4x4.Identity;
+
     private static object _slo = new();
-    
+
     private Matrix4x4 _fbxTranspose(in Matrix4x4 m) => Matrix4x4.Transpose(m);
+
+    /**
+     * Compute the product of all node transforms from root's child down to
+     * (and including) the given node, in assimp's native convention.
+     * This is what assimp 6.0.2's new_abs_transform accumulates beyond
+     * the root's own transform.
+     */
+    private unsafe Matrix4x4 _computeChainProduct(Node* meshNode)
+    {
+        Matrix4x4 chainProduct = Matrix4x4.Identity;
+        Node* current = meshNode;
+        while (current != null && current != _scene->MRootNode)
+        {
+            /*
+             * Pre-multiply: walking up from mesh to root, each parent
+             * goes on the left (assimp V*M convention).
+             */
+            chainProduct = current->MTransformation * chainProduct;
+            current = current->MParent;
+        }
+        return chainProduct;
+    }
 
     private bool _traceFbxTree = false;
     private bool _traceFbxMetadata = false;
@@ -641,7 +672,19 @@ public class FbxModel : IDisposable
             {
                 ErrorThrow<InvalidOperationException>($"Node {mn.Name} already contained meshes. Mesh extension not supported.");
             }
-            
+
+            /*
+             * Assimp 6.0.2 version compensation: compute the chain product
+             * (all transforms from root's child to this mesh node) so we can
+             * undo it from mOffsetMatrix in _processMesh.
+             */
+            if (AssimpVersionDetector.IsAssimp6OrNewer())
+            {
+                var chainProduct = _computeChainProduct(node);
+                Matrix4x4.Invert(chainProduct, out _chainCorrectionInverse);
+                Trace(_dc, $"Assimp 6.0.2 chain correction for node '{strName}': det={chainProduct.GetDeterminant()}");
+            }
+
             engine.joyce.MatMesh matMesh = new();
             for (var i = 0; i < node->MNumMeshes; i++)
             {
@@ -883,21 +926,27 @@ public class FbxModel : IDisposable
                     var aiBone = mesh->MBones[i];
 
                     var jBone = skeleton.FindBone(aiBone->MName.ToString());
-                    var offsetMatrix = _fbxTranspose(aiBone->MOffsetMatrix);
 
                     /*
                      * ASSIMP VERSION COMPENSATION (Commit f81ea69):
-                     * Assimp 5.4.1: mOffsetMatrix = inverse(TransformLink) * parent_local_only
-                     *   (absolute_transform did not accumulate chain node transforms)
-                     * Assimp 6.0.2: mOffsetMatrix = inverse(TransformLink) * full_absolute_transform
-                     *   (chain node transforms correctly accumulated)
+                     * In assimp's native V*M convention (before transpose/axis conversion):
+                     *   mOffsetMatrix = inverse(TransformLink) * absolute_transform
                      *
-                     * The offset matrix is used as-is from Assimp. The version-specific
-                     * compensation is applied in ModelAnimationCollection._bakeRecursiveNew
-                     * when computing m4MyModelPoseToBonePose.
+                     * Assimp 5.4.1: absolute_transform = root.mTransformation only
+                     * Assimp 6.0.2: absolute_transform = root * chain_1 * ... * meshNode
+                     *
+                     * To make 6.0.2 produce the same offset as 5.4.1, we post-multiply
+                     * by the inverse of the chain product (in assimp's convention, BEFORE
+                     * transpose), stripping the extra transforms.
                      */
-                    var assimpVersion = AssimpVersionDetector.GetVersion();
-                    Trace(_dc, $"Loading bone '{jBone.Name}' with Assimp {assimpVersion}");
+                    Matrix4x4 rawOffset = aiBone->MOffsetMatrix;
+                    if (AssimpVersionDetector.IsAssimp6OrNewer())
+                    {
+                        rawOffset = rawOffset * _chainCorrectionInverse;
+                    }
+                    var offsetMatrix = _fbxTranspose(rawOffset);
+
+                    Trace(_dc, $"Loading bone '{jBone.Name}' with Assimp {AssimpVersionDetector.GetVersion()}");
 
                     jBone.Model2Bone = _axi.ToJoyce(offsetMatrix);
                     jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
