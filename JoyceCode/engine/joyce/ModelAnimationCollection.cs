@@ -188,18 +188,23 @@ public partial class ModelAnimationCollection
              *
              * Assimp 5.4.1: absolute_transform did NOT accumulate the intermediate pivot
              *   node transforms ($AssimpFbx$ chain nodes), so it only contained the parent's
-             *   local transform. Our InverseFirstInstanceDescTransformWoInstance (which IS
-             *   the parent's global transform, computed from the merged node tree) compensated
-             *   for this by accident.
+             *   local transform. The formula InverseWoInstance * Model2Bone worked.
              *
              * Assimp 6.0.2 (commit f81ea69): absolute_transform now correctly accumulates
-             *   all chain node transforms, so it extends to the mesh/model node level.
-             *   Using InverseFirstInstanceDescTransformWoInstance would double-count the
-             *   pivot transforms. Use InverseFirstInstanceDescTransformWithInstance instead.
+             *   all chain node transforms up to the mesh/model node level, so:
+             *     Model2Bone_new = Model2Bone_old * mesh_local_chain
+             *   where mesh_local_chain = inverse(WoInstance) * WithInstance.
+             *   To recover the old working result, we strip the extra chain:
+             *     InverseWoInstance * Model2Bone_new * inverse(mesh_local_chain)
+             *   = InverseWoInstance * Model2Bone_new * InverseWithInstance * WoInstance
+             *   = InverseWoInstance * Model2Bone_old  (same as the 5.4.1 formula)
              */
             if (AssimpVersionDetector.IsAssimp6OrNewer())
             {
-                m4MyModelPoseToBonePose = _model.InverseFirstInstanceDescTransformWithInstance * bone.Model2Bone;
+                m4MyModelPoseToBonePose = _model.InverseFirstInstanceDescTransformWoInstance
+                    * bone.Model2Bone
+                    * _model.InverseFirstInstanceDescTransformWithInstance
+                    * _model.FirstInstanceDescTransformWoInstance;
             }
             else
             {
