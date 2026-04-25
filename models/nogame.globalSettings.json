@@ -9,6 +9,6 @@
   "debug.option.forceTouchInterface": "false",
   "debug.option.mouseEnabled": "false",
   "debug.option.autoLogin": "false",
-  "joyce.DisablePrebakedAnimations": "true",
+  "joyce.DisablePrebakedAnimations": "false",
   "test.script": ""
 }
