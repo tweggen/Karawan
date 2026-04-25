@@ -182,11 +182,29 @@ public partial class ModelAnimationCollection
         if (bone != null)
         {
             /*
-             * TXWTODO: The inverse has a magnitude of 1, model2bone 0,1. Root node is 0.01 setup by me, first instancedesc node is 100 setup by assimp.
-             * This does not match for this model, assimp root is considered twice.
-             * TXWTODO: Sure this still is true?
+             * Assimp version compensation for bone offset matrix (mOffsetMatrix).
+             *
+             * Assimp computes: mOffsetMatrix = inverse(TransformLink) * absolute_transform
+             *
+             * Assimp 5.4.1: absolute_transform did NOT accumulate the intermediate pivot
+             *   node transforms ($AssimpFbx$ chain nodes), so it only contained the parent's
+             *   local transform. Our InverseFirstInstanceDescTransformWoInstance (which IS
+             *   the parent's global transform, computed from the merged node tree) compensated
+             *   for this by accident.
+             *
+             * Assimp 6.0.2 (commit f81ea69): absolute_transform now correctly accumulates
+             *   all chain node transforms, so it extends to the mesh/model node level.
+             *   Using InverseFirstInstanceDescTransformWoInstance would double-count the
+             *   pivot transforms. Use InverseFirstInstanceDescTransformWithInstance instead.
              */
-            m4MyModelPoseToBonePose = _model.InverseFirstInstanceDescTransformWoInstance * bone.Model2Bone;
+            if (AssimpVersionDetector.IsAssimp6OrNewer())
+            {
+                m4MyModelPoseToBonePose = _model.InverseFirstInstanceDescTransformWithInstance * bone.Model2Bone;
+            }
+            else
+            {
+                m4MyModelPoseToBonePose = _model.InverseFirstInstanceDescTransformWoInstance * bone.Model2Bone;
+            }
         }
         else
         {
@@ -468,9 +486,8 @@ public partial class ModelAnimationCollection
             return;
         }
 
-        // TODO: Enable after fixing AssimpVersionDetector compilation
-        // var assimpVersion = builtin.loader.fbx.AssimpVersionDetector.GetVersion();
-        Trace(_dc, $"Baking animations for {_model.Name}, Skeleton has {_model.Skeleton.NBones} bones");
+        var assimpVersion = AssimpVersionDetector.GetVersion();
+        Trace(_dc, $"Baking animations for {_model.Name}, Skeleton has {_model.Skeleton.NBones} bones, Assimp version: {assimpVersion}");
 
 
         var skeleton = _model.FindSkeleton();

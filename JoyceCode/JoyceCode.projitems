@@ -142,6 +142,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Assets.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\AssimpFile.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\CustomAssimpLibraryNameContainer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\AssimpVersionDetector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\FbxModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Mesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Texture.cs" />
@@ -376,6 +377,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Parent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AnyShader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Index3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AssimpVersion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Model.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelNode.cs" />

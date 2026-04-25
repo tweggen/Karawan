@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using engine.joyce;
 using static engine.Logger;
@@ -49,12 +50,12 @@ public static class AssimpVersionDetector
             {
                 if (version.Minor <= 22)
                 {
-                    Trace(_dc, "Mapped to Assimp 5.4.1");
+                    Trace(_dc, $"Mapped to Assimp 5.4.1");
                     _cachedVersion = AssimpVersion.Assimp5_4_1;
                 }
                 else
                 {
-                    Trace(_dc, "Mapped to Assimp 6.0.2");
+                    Trace(_dc, $"Mapped to Assimp 6.0.2");
                     _cachedVersion = AssimpVersion.Assimp6_0_2;
                 }
             }

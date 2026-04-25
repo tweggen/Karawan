@@ -886,17 +886,18 @@ public class FbxModel : IDisposable
                     var offsetMatrix = _fbxTranspose(aiBone->MOffsetMatrix);
 
                     /*
-                     * ASSIMP VERSION COMPENSATION (Commit ce0a50e):
-                     * Assimp 5.4.1 (Silk.NET 2.22.0): NeedsComplexTransformationChain() incorrectly includes
-                     *   PreRotation/PostRotation, causing incorrect offset matrix calculation.
-                     * Assimp 6.0.2 (Silk.NET 2.23.0): Fixed to exclude PreRotation/PostRotation.
+                     * ASSIMP VERSION COMPENSATION (Commit f81ea69):
+                     * Assimp 5.4.1: mOffsetMatrix = inverse(TransformLink) * parent_local_only
+                     *   (absolute_transform did not accumulate chain node transforms)
+                     * Assimp 6.0.2: mOffsetMatrix = inverse(TransformLink) * full_absolute_transform
+                     *   (chain node transforms correctly accumulated)
                      *
-                     * The offset matrices differ between versions. For now, we use the matrix as-is
-                     * from Assimp. Profiling (Phase 3) will determine if compensation is needed.
+                     * The offset matrix is used as-is from Assimp. The version-specific
+                     * compensation is applied in ModelAnimationCollection._bakeRecursiveNew
+                     * when computing m4MyModelPoseToBonePose.
                      */
-                    // TODO: Enable version detection after fixing AssimpVersionDetector compilation
-                    // var assimpVersion = builtin.loader.fbx.AssimpVersionDetector.GetVersion();
-                    // Trace(_dc, $"Loading bone '{jBone.Name}' with Assimp {assimpVersion}");
+                    var assimpVersion = AssimpVersionDetector.GetVersion();
+                    Trace(_dc, $"Loading bone '{jBone.Name}' with Assimp {assimpVersion}");
 
                     jBone.Model2Bone = _axi.ToJoyce(offsetMatrix);
                     jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
