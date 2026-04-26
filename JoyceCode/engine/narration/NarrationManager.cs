@@ -74,6 +74,8 @@ public class NarrationManager : AModule
     public NarrationConditionEvaluator ConditionEvaluator => _conditionEvaluator;
     public bool AreScriptsLoaded => _scripts.Count > 0;
 
+    public bool HasScript(string scriptName) => _scripts.ContainsKey(scriptName);
+
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {

@@ -41,8 +41,9 @@ public static class CharacterModelDescriptionFactory
         {
             WalkAnimName = isMale?"Walk_Male":"Walk_InPlace_Female",
             RunAnimName = "Run_InPlace",
+            IdleAnimName = "Idle_Generic",
             DeathAnimName = "Death_FallForwards",
-            AnimationUrls = $"Run_InPlace.fbx;{(isMale?"Walk_Male.fbx":"Walk_InPlace_Female.fbx")};Death_FallForwards.fbx",
+            AnimationUrls = $"Idle_Generic.fbx;Run_InPlace.fbx;{(isMale?"Walk_Male.fbx":"Walk_InPlace_Female.fbx")};Death_FallForwards.fbx",
             ModelBaseBone = "Root_M",
             ModelUrl = strModel,
             Scale = "1",

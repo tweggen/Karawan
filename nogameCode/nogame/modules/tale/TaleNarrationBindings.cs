@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using builtin.tools;
 using engine;
+using engine.narration;
 using engine.tale;
 using static engine.Logger;
 
@@ -194,14 +195,15 @@ public static class TaleNarrationBindings
         return "tale.generic";
     }
 
-    /// <summary>
-    /// Check if a script exists in the narration system.
-    /// (Placeholder - optimistically assumes scripts exist if they follow pattern)
-    /// </summary>
     private static bool ScriptExists(string scriptName)
     {
-        // TODO: Implement actual script existence check via narration system
-        // For now, scripts are assumed to exist if loaded via __include__
-        return true;
+        try
+        {
+            return I.Get<NarrationManager>().HasScript(scriptName);
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

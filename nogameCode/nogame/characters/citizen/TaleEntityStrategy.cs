@@ -42,6 +42,12 @@ public class TaleEntityStrategy : AOneOfStrategy
     internal bool _isTier2 = false;
 
     /// <summary>
+    /// Strategy that was active before a hit/crash interrupted with flee/recover.
+    /// Used to resume the right state when flee/recover finishes.
+    /// </summary>
+    private string _preInterruptStrategyName = null;
+
+    /// <summary>
     /// Seconds of real time per game day. Used to convert game-time
     /// storylet durations to real-time StayAt durations.
     /// </summary>
@@ -55,6 +61,7 @@ public class TaleEntityStrategy : AOneOfStrategy
 
     private void _onCrashEvent(Event ev)
     {
+        _capturePreInterruptStrategy();
         TriggerStrategy("recover");
     }
 
@@ -64,8 +71,26 @@ public class TaleEntityStrategy : AOneOfStrategy
         var active = GetActiveStrategy();
         if (active != Strategies["recover"])
         {
+            _capturePreInterruptStrategy();
             TriggerStrategy("flee");
         }
+    }
+
+
+    private void _capturePreInterruptStrategy()
+    {
+        var active = GetActiveStrategy();
+        // Don't overwrite if already in flee/recover (e.g., hit again during recovery)
+        if (active == Strategies["flee"] || active == Strategies["recover"]) return;
+        foreach (var kvp in Strategies)
+        {
+            if (kvp.Value == active)
+            {
+                _preInterruptStrategyName = kvp.Key;
+                return;
+            }
+        }
+        _preInterruptStrategyName = null;
     }
 
 
@@ -89,10 +114,20 @@ public class TaleEntityStrategy : AOneOfStrategy
         }
         else if (strategy == Strategies["flee"] || strategy == Strategies["recover"])
         {
-            // After flee/recover → resume activity with fresh schedule state
-            Trace(_dc, $"NPC {_npcId} flee/recover complete, resuming activity");
-            _setupActivity();
-            TriggerStrategy("activity");
+            string prior = _preInterruptStrategyName;
+            _preInterruptStrategyName = null;
+
+            if (prior == "travel")
+            {
+                Trace(_dc, $"NPC {_npcId} flee/recover complete, resuming travel");
+                _resumeTravel();
+            }
+            else
+            {
+                Trace(_dc, $"NPC {_npcId} flee/recover complete, resuming activity");
+                _setupActivity();
+                TriggerStrategy("activity");
+            }
         }
     }
 
@@ -166,6 +201,19 @@ public class TaleEntityStrategy : AOneOfStrategy
         }
     }
 
+    private DateTime _getGameNow()
+    {
+        try
+        {
+            return I.Get<nogame.modules.daynite.Controller>().GameNow;
+        }
+        catch (Exception)
+        {
+            return DateTime.Now;
+        }
+    }
+
+
     private async void _advanceAndTravel()
     {
         // Diagnostic: show current location type before advancing
@@ -196,16 +244,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         // Sync position before departing to destination
         _syncPositionToSchedule();
 
-        DateTime gameNow = DateTime.Now; // Will be overridden by daynite controller
-        try
-        {
-            var controller = I.Get<nogame.modules.daynite.Controller>();
-            gameNow = controller.GameNow;
-        }
-        catch (Exception)
-        {
-            // Fallback if daynite not available
-        }
+        DateTime gameNow = _getGameNow();
 
         var storylet = _taleManager.AdvanceNpc(_npcId, gameNow);
         if (storylet == null)
@@ -215,37 +254,58 @@ public class TaleEntityStrategy : AOneOfStrategy
             TriggerStrategy("activity");
             return;
         }
-            
+
+        await _travelToCurrentDestination(gameNow);
+    }
+
+
+    /// <summary>
+    /// Resume travel to the schedule's existing CurrentLocationId without advancing
+    /// the storylet. Used after flee/recover when the NPC was in transit.
+    /// </summary>
+    private async void _resumeTravel()
+    {
+        Trace(_dc, $"NPC {_npcId} _resumeTravel called");
+
+        // Update current position from where the NPC actually ended up after the collapse
+        if (_entity.IsAlive && _entity.Has<engine.joyce.components.Transform3ToWorld>())
+        {
+            var worldPos = _entity.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
+            _currentPosition.Position = worldPos;
+        }
+        _syncPositionToSchedule();
+
+        await _travelToCurrentDestination(_getGameNow());
+    }
+
+
+    /// <summary>
+    /// Compute a route to the schedule's current CurrentLocationId and trigger travel.
+    /// Falls through to activity if the destination is "current", already reached,
+    /// or unreachable.
+    /// </summary>
+    private async System.Threading.Tasks.Task _travelToCurrentDestination(DateTime gameNow)
+    {
         var schedule = _taleManager.GetSchedule(_npcId);
         if (schedule == null) return;
 
-        // Debug: What location did we advance to?
         var currentStorylet = _taleManager.GetCurrentStorylet(_npcId);
         string locationName = currentStorylet?.LocationRef ?? "UNKNOWN";
 
-        // Update routing preferences before computing route
         UpdateRoutingPreferences(gameNow);
 
-        // Get destination location's actual position (not NPC's current position)
-        spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
+        var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
         var destLoc = spatialModel?.GetLocation(schedule.CurrentLocationId);
         string destLocType = destLoc?.Type ?? "UNKNOWN";
 
-        // Use destination location's entry point if available, else fall back to position
         Vector3 destination = destLoc != null
             ? (destLoc.EntryPosition != Vector3.Zero ? destLoc.EntryPosition : destLoc.Position)
             : Vector3.Zero;
 
-        // Calculate distance from NPC's current position to destination location
         float distToDestination = Vector3.Distance(_currentPosition.Position, destination);
-
-        // Log for debugging
-        Vector3 destLocPos = destLoc?.Position ?? Vector3.Zero;
-        Vector3 destLocEntry = destLoc?.EntryPosition ?? Vector3.Zero;
 
         Trace(_dc, $"NPC {_npcId} -> LocationId={schedule.CurrentLocationId} '{locationName}' (type={destLocType}, distance={distToDestination:F2}m)");
 
-        // Special case: "current" location means stay in place and do activity, don't travel
         if (locationName == "current")
         {
             Trace(_dc, $"NPC {_npcId} location is 'current' (stay in place), skipping travel and triggering activity");
@@ -254,7 +314,6 @@ public class TaleEntityStrategy : AOneOfStrategy
             return;
         }
 
-        // Special case: Already at destination (within 2m) - do activity instead of travel
         if (distToDestination < 2.0f)
         {
             Trace(_dc, $"NPC {_npcId} already at destination (distance={distToDestination:F2}m < 2m threshold), skipping travel and triggering activity");
@@ -263,16 +322,12 @@ public class TaleEntityStrategy : AOneOfStrategy
             return;
         }
 
-        // Compute street route asynchronously before moving
-        // NPC stays in current state while pathfinding runs (typically < 100ms)
-        // If pathfinding returns null, GoToStrategyPart will use straight-line fallback
         SegmentRoute route = null;
         try
         {
             var routeGen = I.Get<engine.tale.IRouteGenerator>();
             if (routeGen != null)
             {
-                // Pass routing preferences for multi-objective pathfinding
                 route = await routeGen.GetRouteAsync(_currentPosition.Position, destination, _currentPosition,
                     _routingPreferences, schedule.PreferredTransportationType);
                 if (route != null)
@@ -289,12 +344,8 @@ public class TaleEntityStrategy : AOneOfStrategy
         {
             Trace(_dc, $"NPC {_npcId} route generation exception: {e.Message}");
             Logger.Trace(_dc, $"Route generation failed: {e.Message}");
-            // null route = straight-line fallback
         }
 
-        // Fallback: if route is null and destination is far away but unreachable,
-        // location is likely isolated (dead-end street or disconnected venue).
-        // Stay at current location instead of using straight-line fallback through buildings.
         if (route == null && distToDestination > 10f)
         {
             Trace(_dc, $"NPC {_npcId} destination '{locationName}' unreachable (distance={distToDestination:F0}m but no path). Staying at current location instead.");
@@ -303,7 +354,6 @@ public class TaleEntityStrategy : AOneOfStrategy
             return;
         }
 
-        // Set up go_to
         _goTo.Destination = destination;
         _goTo.CurrentPosition = _currentPosition;
         _goTo.PrecomputedRoute = route;
@@ -313,7 +363,6 @@ public class TaleEntityStrategy : AOneOfStrategy
         else
             Trace(_dc, $"NPC {_npcId} triggering travel with route ({route.Segments.Count} segments)");
 
-        // Enable "E to Talk" during travel for TALE NPCs
         _goTo.TravelBehaviorFactory = (navigator) => new TaleWalkBehavior(_npcId, this)
         {
             CharacterModelDescription = _cmd,
