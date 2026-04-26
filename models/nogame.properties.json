@@ -28,7 +28,7 @@
     "debug.category.casette": false,
     "debug.category.animation": false,
     "debug.category.clickmodule": false,
-    "debug.category.narration": false,
+    "debug.category.narration": true,
     "debug.category.database": false,
     "debug.category.ui": false,
     "debug.category.input": false,
