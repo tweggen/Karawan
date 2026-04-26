@@ -6,7 +6,17 @@
     "interact.niceguy": { "script": "niceguy", "mode": "conversation" }
   },
   "scripts": {
-    "__include__": "tale/conversations/",
+    "tale.generic":        { "__include__": "tale/conversations/tale.generic.json" },
+    "tale.lunch_break":    { "__include__": "tale/conversations/tale.lunch_break.json" },
+    "tale.role.authority": { "__include__": "tale/conversations/tale.role.authority.json" },
+    "tale.role.drifter":   { "__include__": "tale/conversations/tale.role.drifter.json" },
+    "tale.role.merchant":  { "__include__": "tale/conversations/tale.role.merchant.json" },
+    "tale.role.socialite": { "__include__": "tale/conversations/tale.role.socialite.json" },
+    "tale.role.worker":    { "__include__": "tale/conversations/tale.role.worker.json" },
+    "tale.tag.eating":     { "__include__": "tale/conversations/tale.tag.eating.json" },
+    "tale.tag.economic":   { "__include__": "tale/conversations/tale.tag.economic.json" },
+    "tale.tag.rest":       { "__include__": "tale/conversations/tale.tag.rest.json" },
+    "tale.tag.routine":    { "__include__": "tale/conversations/tale.tag.routine.json" },
     "main": {
       "start": "intro",
       "nodes": {

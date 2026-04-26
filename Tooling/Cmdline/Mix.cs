@@ -76,6 +76,10 @@ namespace CmdLine
                                     Trace("Adding include file "+includePath+ " at "+ jsonCompletePath);
                                     // Upsert the loaded fragment over the current path
                                     _view.Upsert(currentPath, doc.RootElement, priority);
+                                    // Re-enqueue the loaded fragment so any __include__ inside it
+                                    // gets resolved too. Without this, nested includes are silently
+                                    // ignored (the BFS would otherwise only see the placeholder).
+                                    queue.Enqueue((currentPath, doc.RootElement.Clone()));
                                 }
                                 catch (Exception _)
                                 {

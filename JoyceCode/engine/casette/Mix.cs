@@ -121,6 +121,16 @@ public class Mix
                         string pathProbe = FileProvider.ResolvePath(jsonCompletePath);
                         
                         /*
+                         * Currently, we only accept an open call with the file name only,
+                         * so register the association under the basename (matches the
+                         * subsequent Exists/Open lookups). Without this, includes whose
+                         * path contains a slash (e.g. "tale/conversations/foo.json") would
+                         * register under the full path but get looked up by basename only,
+                         * which silently fails.
+                         */
+                        string fileNameOnly = Path.GetFileName(includePath);
+
+                        /*
                          * Sneak if the resource exists?
                          */
                         if (!File.Exists(pathProbe))
@@ -134,14 +144,8 @@ public class Mix
                              * TXWTODO: We need  this on platforms that do not read a pre-compiled list of
                              * assets.
                              */
-                            FileProvider.AddAssociation(includePath, jsonCompletePath);
-                        
+                            FileProvider.AddAssociation(fileNameOnly, jsonCompletePath);
                         }
-                        
-                        /*
-                         * Currently, we only accept an open call with the file name only
-                         */
-                        string fileNameOnly = Path.GetFileName(includePath);
                         Trace(_dc, $"Trying to open file name {fileNameOnly}");
                         
                         if (FileProvider.Exists(fileNameOnly))
@@ -156,6 +160,10 @@ public class Mix
                                 Trace(_dc, $"Adding include file {includePath} at {jsonCompletePath}");
                                 // Upsert the loaded fragment over the current path
                                 _view.Upsert(currentPath, doc.RootElement, priority);
+                                // Re-enqueue the loaded fragment so any __include__ inside it
+                                // gets resolved too. Without this, nested includes are silently
+                                // ignored (the BFS would otherwise only see the placeholder).
+                                queue.Enqueue((currentPath, doc.RootElement.Clone()));
                             }
                             catch (Exception _)
                             {
