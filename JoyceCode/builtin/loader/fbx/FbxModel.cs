@@ -21,7 +21,7 @@ namespace builtin.loader.fbx;
 
 public class FbxModel : IDisposable
 {
-    private static readonly engine.Dc _dc = engine.Dc.AssetLoading;
+    private static readonly engine.Dc _dc = engine.Dc.FbxModel;
 
     static  private Assimp _assimp;
     private List<Texture> _texturesLoaded = new List<Texture>();
@@ -84,7 +84,7 @@ public class FbxModel : IDisposable
         {
             var name = current->MName.ToString();
             var det = current->MTransformation.GetDeterminant();
-            System.Console.WriteLine($"[ChainProduct] depth={depth} node='{name}' det={det:F6} isIdentity={current->MTransformation.IsIdentity}");
+            Trace(_dc, $"[ChainProduct] depth={depth} node='{name}' det={det:F6} isIdentity={current->MTransformation.IsIdentity}");
             /*
              * Pre-multiply: walking up from mesh to root, each parent
              * goes on the left (assimp V*M convention).
@@ -95,9 +95,9 @@ public class FbxModel : IDisposable
         }
         if (current != null)
         {
-            System.Console.WriteLine($"[ChainProduct] stopped at root='{current->MName}' det={current->MTransformation.GetDeterminant():F6}");
+            Trace(_dc, $"[ChainProduct] stopped at root='{current->MName}' det={current->MTransformation.GetDeterminant():F6}");
         }
-        System.Console.WriteLine($"[ChainProduct] final chainProduct det={chainProduct.GetDeterminant():F6}");
+        Trace(_dc, $"[ChainProduct] final chainProduct det={chainProduct.GetDeterminant():F6}");
         return chainProduct;
     }
 
@@ -113,17 +113,17 @@ public class FbxModel : IDisposable
 
                 if (null == _assimp)
                 {
-                    System.Console.WriteLine("Loading assimp...");
+                    Trace(_dc, $"Loading assimp...");
                     _assimp = Assimp.GetApi();
                 }
                 else
                 {
-                    System.Console.WriteLine("Assimp previously had been loaded...");
+                    Trace(_dc, $"Assimp previously had been loaded...");
                 }
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("Exception instantiating assimp: "+e);
+                Trace(_dc, $"Exception instantiating assimp: {e}");
             }
 
         }
@@ -266,7 +266,7 @@ public class FbxModel : IDisposable
         string name = node->MName.ToString();
         var t = node->MTransformation;
         bool isId = t.IsIdentity;
-        System.Console.WriteLine($"[NodeTree]{indent}{name}: isIdentity={isId} det={t.GetDeterminant():F4} M41,M42,M43=({t.M41:F2},{t.M42:F2},{t.M43:F2})");
+        Trace(_dc, $"[NodeTree]{indent}{name}: isIdentity={isId} det={t.GetDeterminant():F4} M41,M42,M43=({t.M41:F2},{t.M42:F2},{t.M43:F2})");
         for (uint c = 0; c < node->MNumChildren; c++)
         {
             _dumpNodeTransforms(node->MChildren[c], depth + 1, maxDepth);
@@ -339,8 +339,8 @@ public class FbxModel : IDisposable
         if (nAnimations == 0)
             return;
 
-        System.Console.WriteLine($"[AnimDiag] === Loading {nAnimations} animation(s) from '{strFallbackName}' ===");
-        System.Console.WriteLine($"[AnimDiag] Scene node tree (first 4 levels):");
+        Trace(_dc, $"[AnimDiag] === Loading {nAnimations} animation(s) from '{strFallbackName}' ===");
+        Trace(_dc, $"[AnimDiag] Scene node tree (first 4 levels):");
         _dumpNodeTransforms(scene->MRootNode, 0, 4);
 
         /*
@@ -348,7 +348,7 @@ public class FbxModel : IDisposable
          * These are needed to reconstruct the full rotation from pivot channels.
          */
         var preRotations = _collectPreRotations(scene->MRootNode);
-        System.Console.WriteLine($"[AnimDiag] Collected {preRotations.Count} PreRotation transforms");
+        Trace(_dc, $"[AnimDiag] Collected {preRotations.Count} PreRotation transforms");
 
         for (int i = 0; i < nAnimations; ++i)
         {
@@ -368,7 +368,7 @@ public class FbxModel : IDisposable
             ma.NTicks = (uint)aiAnim->MDuration;
             ma.MapChannels = new();
 
-            System.Console.WriteLine($"[AnimDiag] Animation '{ma.Name}': Duration={ma.Duration:F4}s, TicksPerSec={ma.TicksPerSecond:F1}, NTicks={ma.NTicks}, Channels={nChannels}");
+            Trace(_dc, $"[AnimDiag] Animation '{ma.Name}': Duration={ma.Duration:F4}s, TicksPerSec={ma.TicksPerSecond:F1}, NTicks={ma.NTicks}, Channels={nChannels}");
 
             uint nFrames = UInt32.Max((uint)(ma.Duration * 60f), 1);
             ma.NFrames = nFrames;
@@ -542,7 +542,7 @@ public class FbxModel : IDisposable
                 {
                     if (nSkippedChannels < 5)
                     {
-                        System.Console.WriteLine($"[AnimDiag]   Ch[{j}] name='{channelNodeName}' base='{baseBoneName}' hasBone={hasBone} hasNode={hasNode} SKIP");
+                        Trace(_dc, $"[AnimDiag]   Ch[{j}] name='{channelNodeName}' base='{baseBoneName}' hasBone={hasBone} hasNode={hasNode} SKIP");
                     }
                     nSkippedChannels++;
                     continue;
@@ -726,7 +726,7 @@ public class FbxModel : IDisposable
                 int a = 1;
             }
 
-            System.Console.WriteLine($"[AnimDiag] Animation '{ma.Name}': {nMatchedChannels} matched, {nSkippedChannels} skipped out of {nChannels} channels");
+            Trace(_dc, $"[AnimDiag] Animation '{ma.Name}': {nMatchedChannels} matched, {nSkippedChannels} skipped out of {nChannels} channels");
 
             _model.AnimationCollection.MapAnimations[ma.Name] = ma;
         }
@@ -1146,12 +1146,12 @@ public class FbxModel : IDisposable
                         Matrix4x4 corrected = rawOffset * _chainCorrectionInverse;
                         if (i == 0)
                         {
-                            System.Console.WriteLine($"[BoneOffset] bone='{jBone.Name}'");
-                            System.Console.WriteLine($"[BoneOffset]   original det={rawOffset.GetDeterminant():F6}");
-                            System.Console.WriteLine($"[BoneOffset]   corrected det={corrected.GetDeterminant():F6}");
-                            System.Console.WriteLine($"[BoneOffset]   correction inv det={_chainCorrectionInverse.GetDeterminant():F6}");
-                            System.Console.WriteLine($"[BoneOffset]   original M41,M42,M43={rawOffset.M41:F4},{rawOffset.M42:F4},{rawOffset.M43:F4}");
-                            System.Console.WriteLine($"[BoneOffset]   corrected M41,M42,M43={corrected.M41:F4},{corrected.M42:F4},{corrected.M43:F4}");
+                            Trace(_dc, $"[BoneOffset] bone='{jBone.Name}'");
+                            Trace(_dc, $"[BoneOffset]   original det={rawOffset.GetDeterminant():F6}");
+                            Trace(_dc, $"[BoneOffset]   corrected det={corrected.GetDeterminant():F6}");
+                            Trace(_dc, $"[BoneOffset]   correction inv det={_chainCorrectionInverse.GetDeterminant():F6}");
+                            Trace(_dc, $"[BoneOffset]   original M41,M42,M43={rawOffset.M41:F4},{rawOffset.M42:F4},{rawOffset.M43:F4}");
+                            Trace(_dc, $"[BoneOffset]   corrected M41,M42,M43={corrected.M41:F4},{corrected.M42:F4},{corrected.M43:F4}");
                         }
                         rawOffset = corrected;
                     }

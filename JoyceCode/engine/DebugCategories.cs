@@ -35,6 +35,7 @@ public enum Dc : int
     CitizenStrategy = 23,
     CitizenNavigation = 24,
     Satnav          = 25,
+    FbxModel        = 26,
 
-    _Count          = 26   // Keep last — drives array size
+    _Count          = 27   // Keep last — drives array size
 }
