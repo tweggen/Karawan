@@ -14,10 +14,12 @@ public static class AssimpVersionDetector
 {
     private static readonly engine.Dc _dc = engine.Dc.AssetLoading;
     private static AssimpVersion? _cachedVersion = null;
+    private static readonly object _lock = new();
 
     /// <summary>
     /// Get the Assimp version currently loaded.
     /// Result is cached after first call.
+    /// Thread-safe; only one thread performs detection.
     /// </summary>
     public static AssimpVersion GetVersion()
     {
@@ -26,53 +28,62 @@ public static class AssimpVersionDetector
             return _cachedVersion.Value;
         }
 
-        try
+        lock (_lock)
         {
-            // Try to find Silk.NET.Assimp assembly
-            var silkAssimpAssembly = AppDomain.CurrentDomain
-                .GetAssemblies()
-                .FirstOrDefault(a => a.GetName().Name == "Silk.NET.Assimp");
-
-            if (silkAssimpAssembly == null)
+            // Double-check after acquiring lock
+            if (_cachedVersion.HasValue)
             {
-                Warning(_dc, "Silk.NET.Assimp assembly not found, defaulting to Assimp6_0_2");
-                _cachedVersion = AssimpVersion.Assimp6_0_2;
                 return _cachedVersion.Value;
             }
 
-            var version = silkAssimpAssembly.GetName().Version;
-            Trace(_dc, $"Detected Silk.NET.Assimp version: {version}");
-
-            // Map Silk.NET versions to Assimp versions
-            // Silk.NET 2.22.0 -> Assimp 5.4.1
-            // Silk.NET 2.23.0 -> Assimp 6.0.2
-            if (version.Major == 2)
+            try
             {
-                if (version.Minor <= 22)
+                // Try to find Silk.NET.Assimp assembly
+                var silkAssimpAssembly = AppDomain.CurrentDomain
+                    .GetAssemblies()
+                    .FirstOrDefault(a => a.GetName().Name == "Silk.NET.Assimp");
+
+                if (silkAssimpAssembly == null)
                 {
-                    Trace(_dc, $"Mapped to Assimp 5.4.1");
-                    _cachedVersion = AssimpVersion.Assimp5_4_1;
+                    Warning(_dc, "Silk.NET.Assimp assembly not found, defaulting to Assimp6_0_2");
+                    _cachedVersion = AssimpVersion.Assimp6_0_2;
+                    return _cachedVersion.Value;
+                }
+
+                var version = silkAssimpAssembly.GetName().Version;
+                Trace(_dc, $"Detected Silk.NET.Assimp version: {version}");
+
+                // Map Silk.NET versions to Assimp versions
+                // Silk.NET 2.22.0 -> Assimp 5.4.1
+                // Silk.NET 2.23.0 -> Assimp 6.0.2
+                if (version.Major == 2)
+                {
+                    if (version.Minor <= 22)
+                    {
+                        Trace(_dc, $"Mapped to Assimp 5.4.1");
+                        _cachedVersion = AssimpVersion.Assimp5_4_1;
+                    }
+                    else
+                    {
+                        Trace(_dc, $"Mapped to Assimp 6.0.2");
+                        _cachedVersion = AssimpVersion.Assimp6_0_2;
+                    }
                 }
                 else
                 {
-                    Trace(_dc, $"Mapped to Assimp 6.0.2");
+                    // Unknown version, default to 6.0.2
+                    Warning(_dc, $"Unknown Silk.NET version {version}, defaulting to Assimp6_0_2");
                     _cachedVersion = AssimpVersion.Assimp6_0_2;
                 }
             }
-            else
+            catch (Exception e)
             {
-                // Unknown version, default to 6.0.2
-                Warning(_dc, $"Unknown Silk.NET version {version}, defaulting to Assimp6_0_2");
+                Warning(_dc, $"Exception while detecting Assimp version: {e}");
                 _cachedVersion = AssimpVersion.Assimp6_0_2;
             }
-        }
-        catch (Exception e)
-        {
-            Warning(_dc, $"Exception while detecting Assimp version: {e}");
-            _cachedVersion = AssimpVersion.Assimp6_0_2;
-        }
 
-        return _cachedVersion.Value;
+            return _cachedVersion.Value;
+        }
     }
 
     /// <summary>
