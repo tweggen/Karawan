@@ -14,7 +14,6 @@ public static class AssimpVersionDetector
 {
     private static readonly engine.Dc _dc = engine.Dc.AssetLoading;
     private static AssimpVersion? _cachedNativeVersion = null;
-    private static AssimpVersion? _cachedWrapperVersion = null;
     private static readonly object _lock = new();
 
     /// <summary>
@@ -62,9 +61,8 @@ public static class AssimpVersionDetector
     }
 
     /// <summary>
-    /// Get the Assimp version currently loaded (native binary, or wrapper if native not yet detected).
-    /// Result is cached after first call.
-    /// Thread-safe; only one thread performs detection.
+    /// Get the Assimp version currently loaded (native binary version).
+    /// Must be called after SetNativeVersion() has been called from FbxModel._needAssimp().
     /// </summary>
     public static AssimpVersion GetVersion()
     {
@@ -73,72 +71,8 @@ public static class AssimpVersionDetector
             return _cachedNativeVersion.Value;
         }
 
-        if (_cachedWrapperVersion.HasValue)
-        {
-            return _cachedWrapperVersion.Value;
-        }
-
-        lock (_lock)
-        {
-            // Double-check after acquiring lock
-            if (_cachedNativeVersion.HasValue)
-            {
-                return _cachedNativeVersion.Value;
-            }
-
-            if (_cachedWrapperVersion.HasValue)
-            {
-                return _cachedWrapperVersion.Value;
-            }
-
-            try
-            {
-                // Try to find Silk.NET.Assimp assembly
-                var silkAssimpAssembly = AppDomain.CurrentDomain
-                    .GetAssemblies()
-                    .FirstOrDefault(a => a.GetName().Name == "Silk.NET.Assimp");
-
-                if (silkAssimpAssembly == null)
-                {
-                    Warning(_dc, "Silk.NET.Assimp assembly not found, defaulting to Assimp6_0_2");
-                    _cachedWrapperVersion = AssimpVersion.Assimp6_0_2;
-                    return _cachedWrapperVersion.Value;
-                }
-
-                var version = silkAssimpAssembly.GetName().Version;
-                Trace(_dc, $"Detected Silk.NET.Assimp wrapper version: {version}");
-
-                // Map Silk.NET versions to Assimp versions
-                // Silk.NET 2.22.0 -> Assimp 5.4.1
-                // Silk.NET 2.23.0 -> Assimp 6.0.2
-                if (version.Major == 2)
-                {
-                    if (version.Minor <= 22)
-                    {
-                        Trace(_dc, $"Wrapper mapped to Assimp 5.4.1");
-                        _cachedWrapperVersion = AssimpVersion.Assimp5_4_1;
-                    }
-                    else
-                    {
-                        Trace(_dc, $"Wrapper mapped to Assimp 6.0.2");
-                        _cachedWrapperVersion = AssimpVersion.Assimp6_0_2;
-                    }
-                }
-                else
-                {
-                    // Unknown version, default to 6.0.2
-                    Warning(_dc, $"Unknown Silk.NET wrapper version {version}, defaulting to Assimp6_0_2");
-                    _cachedWrapperVersion = AssimpVersion.Assimp6_0_2;
-                }
-            }
-            catch (Exception e)
-            {
-                Warning(_dc, $"Exception while detecting wrapper Assimp version: {e}");
-                _cachedWrapperVersion = AssimpVersion.Assimp6_0_2;
-            }
-
-            return _cachedWrapperVersion.Value;
-        }
+        Warning(_dc, "GetVersion() called before SetNativeVersion() - Assimp not yet loaded?");
+        return AssimpVersion.Assimp6_0_2;
     }
 
     /// <summary>
