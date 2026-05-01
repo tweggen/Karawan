@@ -24,9 +24,9 @@
     "debug.category.streetgen": false,
     "debug.category.navmap": false,
     "debug.category.physics": false,
-    "debug.category.assetloading": false,
+    "debug.category.assetloading": true,
     "debug.category.casette": false,
-    "debug.category.animation": false,
+    "debug.category.animation": true,
     "debug.category.clickmodule": false,
     "debug.category.narration": true,
     "debug.category.database": false,
@@ -41,5 +41,6 @@
     "debug.category.taleentity": false,
     "debug.category.citizenstrategy": false,
     "debug.category.citizennavigation": false,
-    "debug.category.satnav": false
+    "debug.category.satnav": false,
+    "debug.category.fbxmodel": true
   }
