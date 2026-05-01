@@ -110,4 +110,24 @@ public static class AssimpVersionDetector
     {
         return GetVersion() >= AssimpVersion.Assimp6_0_2;
     }
+
+    /// <summary>
+    /// Get the native Assimp library version (from the actual binary loaded).
+    /// This may differ from the Silk.NET wrapper version if different binaries are shipped per-platform.
+    /// </summary>
+    public static unsafe string GetNativeAssimpVersion(Silk.NET.Assimp.Assimp assimp)
+    {
+        try
+        {
+            uint major = assimp.GetVersionMajor();
+            uint minor = assimp.GetVersionMinor();
+            uint patch = assimp.GetVersionPatch();
+            return $"{major}.{minor}.{patch}";
+        }
+        catch (Exception e)
+        {
+            Warning(_dc, $"Exception while getting native Assimp version: {e}");
+            return "unknown";
+        }
+    }
 }

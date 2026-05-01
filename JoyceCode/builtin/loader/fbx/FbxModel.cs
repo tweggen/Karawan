@@ -115,6 +115,8 @@ public class FbxModel : IDisposable
                 {
                     Trace(_dc, $"Loading assimp...");
                     _assimp = Assimp.GetApi();
+                    var nativeVersion = AssimpVersionDetector.GetNativeAssimpVersion(_assimp);
+                    Trace(_dc, $"Native Assimp library version: {nativeVersion}");
                 }
                 else
                 {
