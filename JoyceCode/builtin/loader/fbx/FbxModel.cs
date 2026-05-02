@@ -103,23 +103,6 @@ public class FbxModel : IDisposable
 
     private bool _traceFbxTree = false;
     private bool _traceFbxMetadata = false;
-
-    private static bool _isSilkNetAssimp223OnMacOS()
-    {
-        if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX))
-            return false;
-
-        try
-        {
-            var assimpAssembly = typeof(Silk.NET.Assimp.Assimp).Assembly;
-            var version = assimpAssembly.GetName().Version;
-            return version.Major >= 2 && version.Minor >= 23;
-        }
-        catch
-        {
-            return false;
-        }
-    }
     
     private static void _needAssimp()
     {
@@ -1172,13 +1155,7 @@ public class FbxModel : IDisposable
                         Trace(_dc, $"[BoneOffset]   chainCorrectionInverse.IsIdentity={_chainCorrectionInverse.IsIdentity}");
                     }
 
-                    // Apply compensation based on actual behavior, not version number.
-                    // If the chain product is non-identity, extra transforms are present
-                    // (Assimp 6.0.2 behavior), requiring compensation.
-                    // Also apply for Silk.NET.Assimp 2.23 on macOS, which exhibits same symptoms
-                    // as uncompensated 6.0.2 (wild scaling at animation end) despite reporting 5.4.1.
-                    bool shouldCompensate = !_chainCorrectionInverse.IsIdentity || _isSilkNetAssimp223OnMacOS();
-                    if (shouldCompensate)
+                    if (AssimpVersionDetector.IsAssimp6OrNewer())
                     {
                         Matrix4x4 corrected = rawOffset * _chainCorrectionInverse;
                         if (i == 0)
