@@ -35,6 +35,9 @@ public static class AssimpVersionDetector
             {
                 uint major = assimp.GetVersionMajor();
                 uint minor = assimp.GetVersionMinor();
+                uint patch = assimp.GetVersionPatch();
+
+                Trace(_dc, $"SetNativeVersion raw values: major={major}, minor={minor}, patch={patch}");
 
                 if (major == 5)
                 {
@@ -111,7 +114,9 @@ public static class AssimpVersionDetector
             uint major = assimp.GetVersionMajor();
             uint minor = assimp.GetVersionMinor();
             uint patch = assimp.GetVersionPatch();
-            return $"{major}.{minor}.{patch}";
+            string version = $"{major}.{minor}.{patch}";
+            Trace(_dc, $"GetNativeAssimpVersion detailed: major={major}, minor={minor}, patch={patch} → {version}");
+            return version;
         }
         catch (Exception e)
         {

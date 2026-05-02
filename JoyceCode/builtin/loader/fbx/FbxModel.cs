@@ -1149,6 +1149,7 @@ public class FbxModel : IDisposable
                         Matrix4x4 corrected = rawOffset * _chainCorrectionInverse;
                         if (i == 0)
                         {
+                            Trace(_dc, $"[BoneOffset] APPLYING COMPENSATION (Assimp {AssimpVersionDetector.GetVersion()})");
                             Trace(_dc, $"[BoneOffset] bone='{jBone.Name}'");
                             Trace(_dc, $"[BoneOffset]   original det={rawOffset.GetDeterminant():F6}");
                             Trace(_dc, $"[BoneOffset]   corrected det={corrected.GetDeterminant():F6}");
@@ -1157,6 +1158,10 @@ public class FbxModel : IDisposable
                             Trace(_dc, $"[BoneOffset]   corrected M41,M42,M43={corrected.M41:F4},{corrected.M42:F4},{corrected.M43:F4}");
                         }
                         rawOffset = corrected;
+                    }
+                    else if (i == 0)
+                    {
+                        Trace(_dc, $"[BoneOffset] SKIPPING COMPENSATION (Assimp {AssimpVersionDetector.GetVersion()} < 6.0)");
                     }
                     var offsetMatrix = _fbxTranspose(rawOffset);
 
