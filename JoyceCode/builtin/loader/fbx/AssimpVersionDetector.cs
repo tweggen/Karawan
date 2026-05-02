@@ -48,13 +48,13 @@ public static class AssimpVersionDetector
                 }
                 else
                 {
-                    Warning(_dc, $"Unknown native Assimp major version: {major}, defaulting to 6.0.2");
+                    Error(_dc, $"Unknown native Assimp major version: {major}, defaulting to 6.0.2");
                     _cachedNativeVersion = AssimpVersion.Assimp6_0_2;
                 }
             }
             catch (Exception e)
             {
-                Warning(_dc, $"Exception while detecting native Assimp version: {e}");
+                Error(_dc, $"Exception while detecting native Assimp version: {e}");
                 _cachedNativeVersion = AssimpVersion.Assimp6_0_2;
             }
         }
