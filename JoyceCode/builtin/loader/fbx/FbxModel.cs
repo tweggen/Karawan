@@ -1144,18 +1144,24 @@ public class FbxModel : IDisposable
                      * transpose), stripping the extra transforms.
                      */
                     Matrix4x4 rawOffset = aiBone->MOffsetMatrix;
+                    if (i == 0)
+                    {
+                        Trace(_dc, $"[BoneOffset] First bone '{jBone.Name}' (Assimp {AssimpVersionDetector.GetVersion()})");
+                        Trace(_dc, $"[BoneOffset]   M11-M44: {rawOffset.M11:F4},{rawOffset.M12:F4},{rawOffset.M13:F4},{rawOffset.M14:F4}");
+                        Trace(_dc, $"[BoneOffset]          {rawOffset.M21:F4},{rawOffset.M22:F4},{rawOffset.M23:F4},{rawOffset.M24:F4}");
+                        Trace(_dc, $"[BoneOffset]          {rawOffset.M31:F4},{rawOffset.M32:F4},{rawOffset.M33:F4},{rawOffset.M34:F4}");
+                        Trace(_dc, $"[BoneOffset]          {rawOffset.M41:F4},{rawOffset.M42:F4},{rawOffset.M43:F4},{rawOffset.M44:F4}");
+                        Trace(_dc, $"[BoneOffset]   det={rawOffset.GetDeterminant():F6}");
+                    }
+                    
                     if (AssimpVersionDetector.IsAssimp6OrNewer())
                     {
                         Matrix4x4 corrected = rawOffset * _chainCorrectionInverse;
                         if (i == 0)
                         {
-                            Trace(_dc, $"[BoneOffset] APPLYING COMPENSATION (Assimp {AssimpVersionDetector.GetVersion()})");
-                            Trace(_dc, $"[BoneOffset] bone='{jBone.Name}'");
-                            Trace(_dc, $"[BoneOffset]   original det={rawOffset.GetDeterminant():F6}");
-                            Trace(_dc, $"[BoneOffset]   corrected det={corrected.GetDeterminant():F6}");
-                            Trace(_dc, $"[BoneOffset]   correction inv det={_chainCorrectionInverse.GetDeterminant():F6}");
-                            Trace(_dc, $"[BoneOffset]   original M41,M42,M43={rawOffset.M41:F4},{rawOffset.M42:F4},{rawOffset.M43:F4}");
+                            Trace(_dc, $"[BoneOffset] APPLYING COMPENSATION");
                             Trace(_dc, $"[BoneOffset]   corrected M41,M42,M43={corrected.M41:F4},{corrected.M42:F4},{corrected.M43:F4}");
+                            Trace(_dc, $"[BoneOffset]   correction inv det={_chainCorrectionInverse.GetDeterminant():F6}");
                         }
                         rawOffset = corrected;
                     }
@@ -1469,81 +1475,83 @@ public class FbxModel : IDisposable
         
         Directory = path;
         _needAssimp();
-        
-        FileIO fileIO = fbx.Assets.Get();
-        FileIO* pFileIO = &fileIO;
-        PropertyStore *properties = _assimp.CreatePropertyStore();
-        // TXWTODO: Does not work.
-        _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS", 0);
-        _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_REMOVE_EMPTY_BONES", 0);
-        _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_FBX_IGNORE_UP_DIRECTION", 1);
-        _assimp.ReleaseImport(_scene);
-        _scene = _assimp.ImportFileExWithProperties(
-            path,
-            (uint)PostProcessSteps.Triangulate,
-            pFileIO,
-            properties
-        );
-        Trace(_dc, $"Loaded \"{path}\"");
-        _metadata = new(_scene->MMetaData);
-        if (_traceFbxMetadata)
-        {
-            _metadata.Dump();
-        }
-
-        if (axisInterpreter != null)
-        {
-            _axi = axisInterpreter;
-            _baxi = axisInterpreter;
-        }
-
-        if (animAxisInterpreter != null)
-        {
-            _baxi = animAxisInterpreter;
-        }
-        
-        
-        if (_scene == null || _scene->MFlags == Assimp.SceneFlagsIncomplete || _scene->MRootNode == null)
-        {
-            var error = _assimp.GetErrorStringS();
-            throw new Exception(error);
-        }
-
-        ModelNode? mnPoseRoot = _processNode(null, _scene->MRootNode,
-            new MergePolicy()
-            {
-                LoadMainNodes = loadMainNodes,
-                LoadMeshes = true
-            },
-            out var _); 
-        /*
-         * Remove transformations of pivots in case assimp did not merge it.
-         */
-        _mergeAssimpPivotsRecursively(mnPoseRoot);
-        model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
-        _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
-        _applyScalingToModel(model, _metadata, scale);
-
-        if (_traceFbxTree)
-        {
-            Trace(_dc, $"Pose model:");
-            Trace(_dc, $"{model.ModelNodeTree.RootNode.DumpNode()}");
-        }
-
-        /*
-         * Now load all the animations. First the ones from the main file.
-         */
-
-        if (loadMainAnimations)
-        {
-            /*
-             * Note, that if we load the main animations, we also already had loaded the main nodes,
-             * i.e. the bones.
-             */
-            _loadAnimations("", _scene, null);
-        }
 
         bool haveLoadedBakedAnimations = false;
+
+        lock (_slo)
+        {
+            FileIO fileIO = fbx.Assets.Get();
+            FileIO* pFileIO = &fileIO;
+            PropertyStore *properties = _assimp.CreatePropertyStore();
+            // TXWTODO: Does not work.
+            _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS", 0);
+            _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_REMOVE_EMPTY_BONES", 0);
+            _assimp.SetImportPropertyInteger(properties, "AI_CONFIG_IMPORT_FBX_IGNORE_UP_DIRECTION", 1);
+            _assimp.ReleaseImport(_scene);
+            _scene = _assimp.ImportFileExWithProperties(
+                path,
+                (uint)PostProcessSteps.Triangulate,
+                pFileIO,
+                properties
+            );
+            Trace(_dc, $"Loaded \"{path}\"");
+            _metadata = new(_scene->MMetaData);
+            if (_traceFbxMetadata)
+            {
+                _metadata.Dump();
+            }
+
+            if (axisInterpreter != null)
+            {
+                _axi = axisInterpreter;
+                _baxi = axisInterpreter;
+            }
+
+            if (animAxisInterpreter != null)
+            {
+                _baxi = animAxisInterpreter;
+            }
+
+
+            if (_scene == null || _scene->MFlags == Assimp.SceneFlagsIncomplete || _scene->MRootNode == null)
+            {
+                var error = _assimp.GetErrorStringS();
+                throw new Exception(error);
+            }
+
+            ModelNode? mnPoseRoot = _processNode(null, _scene->MRootNode,
+                new MergePolicy()
+                {
+                    LoadMainNodes = loadMainNodes,
+                    LoadMeshes = true
+                },
+                out var _);
+            /*
+             * Remove transformations of pivots in case assimp did not merge it.
+             */
+            _mergeAssimpPivotsRecursively(mnPoseRoot);
+            model.ModelNodeTree.SetRootNode(mnPoseRoot, model.FindSkeleton());
+            _applyScalingToRootNode(model.ModelNodeTree.RootNode, _metadata, scale);
+            _applyScalingToModel(model, _metadata, scale);
+
+            if (_traceFbxTree)
+            {
+                Trace(_dc, $"Pose model:");
+                Trace(_dc, $"{model.ModelNodeTree.RootNode.DumpNode()}");
+            }
+
+            /*
+             * Now load all the animations. First the ones from the main file.
+             */
+
+            if (loadMainAnimations)
+            {
+                /*
+                 * Note, that if we load the main animations, we also already had loaded the main nodes,
+                 * i.e. the bones.
+                 */
+                _loadAnimations("", _scene, null);
+            }
 
         /*
          * Now go through the extra fbx files and load the animations from
@@ -1651,7 +1659,8 @@ public class FbxModel : IDisposable
                 }
             }
         }
-        _assimp.ReleasePropertyStore(properties);
+            _assimp.ReleasePropertyStore(properties);
+        }
 
         if (_metadata.GetString("CustomFrameRate", "-1") == "24")
         {
