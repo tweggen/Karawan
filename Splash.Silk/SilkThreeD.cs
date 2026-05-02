@@ -336,6 +336,7 @@ public class SilkThreeD : IThreeD
          */
         _locInstanceMatrices = shader.GetAttrib("instanceTransform");
 
+        //Trace($"Anim Strategy is {AnimStrategy}");
         switch (AnimStrategy)
         {
             case Flags.GLAnimBuffers.AnimSSBO:

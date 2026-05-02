@@ -117,6 +117,60 @@ public class DesktopMain
     }
 
     /// <summary>
+    /// Force explicit Assimp library version on macOS with Silk.NET 2.23+.
+    /// Silk.NET 2.23 ships both libassimp.5.dylib and libassimp.6.dylib on macOS.
+    /// Without explicit loading, symbol interposition causes GetVersionMajor() to report 5
+    /// while ImportFileEx uses 6.0.2's behavior. Force load 6.dylib globally to ensure consistency.
+    /// </summary>
+    private static void _forceAssimpLibraryVersion()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            return;
+
+        try
+        {
+            var assimpAssembly = typeof(Silk.NET.Assimp.Assimp).Assembly;
+            var version = assimpAssembly.GetName().Version;
+
+            // Only apply on Silk.NET 2.23+
+            if (version.Major < 2 || (version.Major == 2 && version.Minor < 23))
+                return;
+
+            // Find the native library in the output directory
+            // Structure: bin/Debug/net9.0/osx-arm64/libassimp.6.dylib
+            string arch = RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "arm64" : "x64";
+            string libPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "osx-" + arch, "libassimp.6.dylib");
+            libPath = Path.GetFullPath(libPath);
+
+            if (!File.Exists(libPath))
+            {
+                Console.WriteLine($"[Assimp] Warning: libassimp.6.dylib not found at: {libPath}");
+                return;
+            }
+
+            const int RTLD_GLOBAL = 0x00008;
+            const int RTLD_FIRST = 0x00100;
+
+            var handle = dlopen(libPath, RTLD_GLOBAL | RTLD_FIRST);
+            if (handle != IntPtr.Zero)
+            {
+                Console.WriteLine($"[Assimp] Preloaded libassimp.6.dylib globally from: {libPath}");
+            }
+            else
+            {
+                Console.WriteLine($"[Assimp] Warning: dlopen failed for: {libPath}");
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[Assimp] Warning: Exception preloading libassimp.6.dylib: {e.Message}");
+        }
+    }
+
+    [DllImport("libSystem.dylib", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr dlopen(string filename, int flags);
+
+    /// <summary>
     /// Setup platform-specific graphics API settings.
     /// </summary>
     private static void _setupPlatformGraphics()
@@ -140,6 +194,9 @@ public class DesktopMain
     {
         var cwd = Directory.GetCurrentDirectory();
         Console.WriteLine($"CWD is {cwd}");
+
+        // 0. Force Assimp library version (macOS symbol interposition fix)
+        //_forceAssimpLibraryVersion();
 
         // 1. Setup platform graphics (platform-specific, not game-specific)
         _setupPlatformGraphics();
