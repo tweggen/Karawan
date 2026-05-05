@@ -32,6 +32,11 @@ Platform-specific features and concerns
 
 - [ANDROID.md](PLATFORMS/ANDROID.md) — Android/MAUI specific (keyboard, input)
 
+### 🔧 **Build** — [BUILD/](BUILD/)
+Build pipeline, asset manifest, MSBuild task topology
+
+- [PIPELINE.md](BUILD/PIPELINE.md) — `__include__` resolution, AndroidResources.xml/InnoResources.iss generation, dual Mix.cs implementations, common stale-binary failure modes
+
 ## See Also
 
 - [../ARCHITECTURE/](../ARCHITECTURE/) — Core system architectures (rendering, physics, audio, input)
@@ -40,4 +45,4 @@ Platform-specific features and concerns
 
 ---
 
-**Last Updated:** 2026-04-10
+**Last Updated:** 2026-05-05
