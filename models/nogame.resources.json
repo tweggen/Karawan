@@ -64,18 +64,6 @@
       { "uri": "../models/menu/menu.xml" },
       { "uri": "../models/menu/shop.xml" },
 
-      { "uri": "../models/tale/conversations/tale.generic.json" },
-      { "uri": "../models/tale/conversations/tale.lunch_break.json" },
-      { "uri": "../models/tale/conversations/tale.role.authority.json" },
-      { "uri": "../models/tale/conversations/tale.role.drifter.json" },
-      { "uri": "../models/tale/conversations/tale.role.merchant.json" },
-      { "uri": "../models/tale/conversations/tale.role.socialite.json" },
-      { "uri": "../models/tale/conversations/tale.role.worker.json" },
-      { "uri": "../models/tale/conversations/tale.tag.eating.json" },
-      { "uri": "../models/tale/conversations/tale.tag.economic.json" },
-      { "uri": "../models/tale/conversations/tale.tag.rest.json" },
-      { "uri": "../models/tale/conversations/tale.tag.routine.json" },
-
       { "uri": "../models/models/people/polyperfect/man_business_Rig.fbx" },
       { "uri": "../models/models/people/polyperfect/man_casual_Rig.fbx" },
       { "uri": "../models/models/people/polyperfect/man_coat_winter_Rig.fbx" },
