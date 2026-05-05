@@ -81,9 +81,9 @@ namespace CmdLine
                                     // ignored (the BFS would otherwise only see the placeholder).
                                     queue.Enqueue((currentPath, doc.RootElement.Clone()));
                                 }
-                                catch (Exception _)
+                                catch (Exception e)
                                 {
-                                    Trace("Unable to open include file "+includePath+" at "+jsonCompletePath);
+                                    Trace("WARNING: Unable to open include file "+includePath+" at "+jsonCompletePath+": "+e.Message);
                                 }
                                 finally
                                 {
@@ -91,10 +91,10 @@ namespace CmdLine
                                     doc?.Dispose();
                                 }
                             } else {
-                                Trace("include path does not exist "+jsonCompletePath);     
-                            }                       
+                                Trace("WARNING: include path does not exist "+jsonCompletePath+" (include directive '"+includePath+"' at "+currentPath+")");
+                            }
                         } else {
-                            Trace("include property null.");                            
+                            Trace("WARNING: include property is empty at "+currentPath);
                         }
                     }
 

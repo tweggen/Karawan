@@ -165,9 +165,9 @@ public class Mix
                                 // ignored (the BFS would otherwise only see the placeholder).
                                 queue.Enqueue((currentPath, doc.RootElement.Clone()));
                             }
-                            catch (Exception _)
+                            catch (Exception e)
                             {
-                                Trace(_dc, $"Unable to open include file {fileNameOnly} at {jsonCompletePath}");
+                                Warning(_dc, $"Unable to open include file {fileNameOnly} at {jsonCompletePath}: {e.Message}");
                             }
                             finally
                             {
@@ -175,10 +175,10 @@ public class Mix
                                 doc?.Dispose();
                             }
                         } else {
-                            Trace(_dc, $"include path does not exist {fileNameOnly}");     
-                        }                       
+                            Warning(_dc, $"include path does not exist: {fileNameOnly} (include directive '{includePath}' at {currentPath})");
+                        }
                     } else {
-                        Trace(_dc, $"include property null.");                            
+                        Warning(_dc, $"include property is empty at {currentPath}");
                     }
                 }
 
