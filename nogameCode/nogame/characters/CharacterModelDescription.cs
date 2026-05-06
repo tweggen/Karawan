@@ -14,6 +14,11 @@ public class CharacterModelDescription
     public string PunchRightAnim { get; set; } //= "Punch_RightHand";
     public string PunchLeftAnim { get; set; } //= "Punch_LeftHand";
     
+    // Preferred: pack name resolved via AnimationPackRegistry (e.g. "locomotion", "full").
+    // When set, EntityCreator resolves this to the actual animation URLs via the registry.
+    // AnimationUrls is the legacy fallback when no pack name is given.
+    public string AnimationPackName { get; set; }
+
     public string AnimationUrls { get; set; } //= "Idle_Generic.fbx;Run_InPlace.fbx;Walk_Male.fbx;Running_Jump.fbx;Standing_Jump.fbx;Punch_LeftHand.fbx;Punch_RightHand.fbx;Death_FallForwards.fbx";
 
     public string CPUNodes { get; set; } //= "MiddleFinger2_R;MiddleFinger2_L";

@@ -336,12 +336,32 @@ public class EntityCreator
             };
             if (CharacterModelDescription.CPUNodes != null)
             {
-                ModelCacheParams.Properties.Properties.Add("CPUNodes", CharacterModelDescription.CPUNodes);    
+                ModelCacheParams.Properties.Properties.Add("CPUNodes", CharacterModelDescription.CPUNodes);
             }
 
-            if (CharacterModelDescription.AnimationUrls != null)
+            // Resolve AnimationPackName → animation URLs via the registry.
+            // Fallback: use AnimationUrls directly if no pack name or if pack lookup fails.
+            string? animationUrls = null;
+            if (!string.IsNullOrEmpty(CharacterModelDescription.AnimationPackName))
             {
-                ModelCacheParams.Properties.Properties.Add("AnimationUrls", CharacterModelDescription.AnimationUrls);    
+                animationUrls = I.Get<engine.joyce.AnimationPackRegistry>().GetPackAnimationUrls(
+                    CharacterModelDescription.ModelUrl,
+                    CharacterModelDescription.AnimationPackName);
+                if (animationUrls == null)
+                {
+                    Warning($"Animation pack '{CharacterModelDescription.AnimationPackName}' not found for " +
+                            $"model '{CharacterModelDescription.ModelUrl}'; falling back to AnimationUrls.");
+                    animationUrls = CharacterModelDescription.AnimationUrls;
+                }
+            }
+            else
+            {
+                animationUrls = CharacterModelDescription.AnimationUrls;
+            }
+
+            if (animationUrls != null)
+            {
+                ModelCacheParams.Properties.Properties.Add("AnimationUrls", animationUrls);
             }
 
             if (CharacterModelDescription.ModelBaseBone != null)

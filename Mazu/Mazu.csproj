@@ -10,4 +10,8 @@
       <ProjectReference Include="..\Joyce\Joyce.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Ultz.Native.Assimp" Version="5.4.1" />
+    </ItemGroup>
+
 </Project>

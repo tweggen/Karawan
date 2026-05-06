@@ -43,7 +43,7 @@ public static class CharacterModelDescriptionFactory
             RunAnimName = "Run_InPlace",
             IdleAnimName = "Idle_Generic",
             DeathAnimName = "Death_FallForwards",
-            AnimationUrls = $"Idle_Generic.fbx;Run_InPlace.fbx;{(isMale?"Walk_Male.fbx":"Walk_InPlace_Female.fbx")};Death_FallForwards.fbx",
+            AnimationPackName = "locomotion",
             ModelBaseBone = "Root_M",
             ModelUrl = strModel,
             Scale = "1",

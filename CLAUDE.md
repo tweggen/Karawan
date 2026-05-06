@@ -14,7 +14,8 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 3. `docs/TESTING/` — Testing infrastructure (see `TESTING_STRATEGY.md`)
 4. `PROCESS_DOCS.md` — Documentation organization guidelines
 
-**Current Status (as of April 20, 2026):**
+**Current Status (as of May 6, 2026):**
+- ✅ **Animation Packs System**: Callers now request animations by pack name ("locomotion", "full", "locomotion_hardday") rather than hardcoding animation URLs. Pack registry (`AnimationPackRegistry`) resolves pack names to URLs at runtime. Enables cache sharing: player and citizen NPCs using the same model now share one baked animation file, one `Model` object, and one GPU SSBO. JSON format changed: `animations.json` now uses `packs` dict per model instead of flat `animationUrls`. Baking pipeline unchanged — one `ac-{hash}` per pack. All 46 tests passing.
 - ✅ Phase 0-7 + Phase 7B + Phase 8 TALE systems fully implemented
 - ✅ Phase C1 (NPC Conversation Infrastructure): Behavior, bindings, script resolution complete
 - ✅ Phase C2 (Storylet-Specific Dialogue): Explicit override + tag-based fallback implemented

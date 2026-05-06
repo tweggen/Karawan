@@ -94,12 +94,35 @@ public abstract class AAssetImplementation : IAssetImplementation
     }
 
     
+    private void _registerAnimationEntry(string uriModel, string packName, string uriAnimations)
+    {
+        I.Get<engine.joyce.AnimationPackRegistry>().RegisterPack(uriModel, packName, uriAnimations);
+
+        AvailableAnimations.Add($"{uriModel};{uriAnimations}");
+
+        var strFileName = ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
+            Path.GetFileName(uriModel), uriAnimations);
+
+        if (_traceLoadingAnimations)
+            Trace(_dc, $"LoadAnimationsTo: pack '{packName}' for {uriModel} → {strFileName}.");
+
+        if (GlobalSettings.Get("joyce.CompileMode") != "true")
+        {
+            string uriBaked = Path.Combine(
+                GlobalSettings.Get("Engine.GeneratedResourcePath"),
+                strFileName);
+            if (!File.Exists(uriBaked))
+                Trace(_dc, $"Warning: resource file for {uriBaked} does not exist.");
+            this.AddAssociation(strFileName, uriBaked);
+        }
+    }
+
+
     private void _whenLoadedAnimations(string path, JsonNode? node)
     {
         Trace(_dc, $"Loading animations...");
         if (null == node) return;
-        
-        string pathProbe;
+
         try
         {
             if (node is JsonArray arr)
@@ -108,63 +131,45 @@ public abstract class AAssetImplementation : IAssetImplementation
                 {
                     string? uriModel = resNode?["modelUrl"]?.GetValue<string>();
                     if (uriModel is null)
-                    {
                         throw new InvalidDataException("no modelUrl specified in resource.");
-                    }
-
-                    string? uriAnimations = resNode?["animationUrls"]?.GetValue<string>();
-                    if (uriAnimations is null)
-                    {
-                        throw new InvalidDataException("no animationsUrl specified in resource.");
-                    }
 
                     if (_traceLoadingAnimations)
-                        Trace(_dc,$"LoadAnimationsTo: Added Animation \"{uriModel}\" from {uriModel}.");
+                        Trace(_dc, $"LoadAnimationsTo: Processing model \"{uriModel}\".");
 
-                    string probeModel = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel);
+                    string probeModel = Path.Combine(
+                        engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel);
                     if (!File.Exists(probeModel))
+                        Trace(_dc, $"Warning: model file {probeModel} does not exist.");
+
+                    var packsNode = resNode?["packs"];
+                    if (packsNode is JsonObject packsObj)
                     {
-                        Trace(_dc,$"Warning: animation file for {probeModel} does not exist.");
-                    }
-
-                    AvailableAnimations.Add($"{uriModel};{uriAnimations}");
-
-                    string? uriBaked = null;
-                    var strFileName =
-                        ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
-                            Path.GetFileName(uriModel),
-                            uriAnimations);
-
-                    if (_traceLoadingAnimations)
-                        Trace(_dc,$"LoadAnimationsTo: Added Animation {uriModel} with {uriAnimations} at {strFileName}.");
-
-                    /*
-                     * If we are not compiling, probe for the baked animation file.
-                     */
-                    if (GlobalSettings.Get("joyce.CompileMode") != "true") {
-                        uriBaked = Path.Combine(
-                            GlobalSettings.Get("Engine.GeneratedResourcePath"),
-                            strFileName);
-                        if (!File.Exists(uriBaked))
+                        foreach (var packKvp in packsObj)
                         {
-                            Trace(_dc,$"Warning: resource file for {uriBaked} does not exist.");
+                            string? uriAnimations = packKvp.Value?.GetValue<string>();
+                            if (string.IsNullOrEmpty(uriAnimations))
+                            {
+                                Trace(_dc, $"Warning: pack '{packKvp.Key}' for '{uriModel}' is empty; skipped.");
+                                continue;
+                            }
+                            _registerAnimationEntry(uriModel, packKvp.Key, uriAnimations);
                         }
-                    }
-
-                    if (uriBaked != null)
-                    {
-                        this.AddAssociation(strFileName, uriBaked);
                     }
                     else
                     {
-                        Trace(_dc,$"Warning: Unable to bake animations for {strFileName}.");
+                        // Backward-compatible: old single animationUrls field.
+                        string? uriAnimations = resNode?["animationUrls"]?.GetValue<string>();
+                        if (uriAnimations is null)
+                            throw new InvalidDataException(
+                                $"model '{uriModel}' has neither 'packs' nor 'animationUrls'.");
+                        _registerAnimationEntry(uriModel, "default", uriAnimations);
                     }
                 }
             }
         }
         catch (Exception e)
         {
-            Trace(_dc,$"Error loading animation: {e}");
+            Trace(_dc, $"Error loading animation: {e}");
         }
     }
 

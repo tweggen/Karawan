@@ -14,7 +14,7 @@ public static class CharacterModelDescriptionFactory
             JumpAnimName = "Standing_Jump",
             PunchRightAnim = "Punch_RightHand",
             PunchLeftAnim = "Punch_LeftHand",
-            AnimationUrls = "Idle_Generic.fbx;Run_InPlace.fbx;Walk_Male.fbx;Running_Jump.fbx;Standing_Jump.fbx;Punch_LeftHand.fbx;Punch_RightHand.fbx;Death_FallForwards.fbx",
+            AnimationPackName = "full",
             CPUNodes = "MiddleFinger2_R;MiddleFinger2_L",
             ModelBaseBone = "Root_M",
             ModelUrl = "man_casual_Rig.fbx",

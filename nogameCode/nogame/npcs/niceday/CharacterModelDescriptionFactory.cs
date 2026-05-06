@@ -25,7 +25,7 @@ public static class CharacterModelDescriptionFactory
         return new()
         {
             IdleAnimName = "Idle_HardDay",
-            AnimationUrls = $"Idle_HardDay.fbx;Run_InPlace.fbx;{(isMale?"Walk_Male.fbx":"Walk_InPlace_Female.fbx")};Death_FallForwards.fbx",
+            AnimationPackName = "locomotion_hardday",
             ModelBaseBone = "Root_M",
             ModelUrl = strModel,
             Scale = "1",
