@@ -293,8 +293,13 @@ public sealed class View
 
     private void InvalidateCachesForPath(string path)
     {
-        // Invalidate exactly the path and all descendant paths
-        var toInvalidate = _mergeCache.Keys.Where(k => IsAncestorOrEqual(path, k)).ToList();
+        // Invalidate the path itself, its descendants (they pull `path` as Ancestor in
+        // ComputeMergedSubtree) AND its ancestors (they pull `path` as Descendant). Missing
+        // the ancestor case caused stale `/narration` etc. when nested __include__ partials
+        // were added during Mix._upsertIncludes after a parent cache had already been populated.
+        var toInvalidate = _mergeCache.Keys
+            .Where(k => IsAncestorOrEqual(path, k) || IsAncestorOrEqual(k, path))
+            .ToList();
         foreach (var k in toInvalidate)
             _mergeCache.Remove(k);
     }
