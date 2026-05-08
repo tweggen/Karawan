@@ -1323,8 +1323,7 @@ public class Engine
         I.Register<System.Net.Http.HttpClient>(() => new System.Net.Http.HttpClient());
 
         I.Register<BakedAnimationCatalogue>(() => new BakedAnimationCatalogue());
-        I.Register<engine.joyce.AnimationPackRegistry>(() => new engine.joyce.AnimationPackRegistry());
-        
+
         // World generation infrastructure
         I.Register<engine.world.ClusterList>(() => new world.ClusterList());
         I.Register<engine.world.MetaGen>(() => new world.MetaGen());

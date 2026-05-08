@@ -95,6 +95,6 @@ public class LayerCatalogue : AModule
 
     public LayerCatalogue()
     {
-        I.Get<engine.casette.Loader>().WhenLoaded("/layers", _whenLoaded);
+        I.Get<engine.casette.Loader>().WhenLoaded("/layers", _whenLoaded, 100);
     }
 }

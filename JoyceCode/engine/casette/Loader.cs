@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
@@ -360,7 +361,7 @@ public class Loader
         ImmutableList<LoaderSubscription> whenLoadedList;
         lock (_lo)
         {
-            whenLoadedList = _whenLoadedList.ToImmutableList();
+            whenLoadedList = _whenLoadedList.OrderBy(s => s.Priority).ToImmutableList();
             _whenLoadedList = null;
         }
 
@@ -371,7 +372,7 @@ public class Loader
     }
     
 
-    public void WhenLoaded(string path, Action<string, JsonNode?> whenLoaded)
+    public void WhenLoaded(string path, Action<string, JsonNode?> whenLoaded, int priority = 100)
     {
         bool callNow = false;
         lock (_lo)
@@ -382,7 +383,7 @@ public class Loader
             }
             else
             {
-                _whenLoadedList.Add(new LoaderSubscription() { Path = path, OnTreeData = whenLoaded });
+                _whenLoadedList.Add(new LoaderSubscription() { Path = path, OnTreeData = whenLoaded, Priority = priority });
 
             }
         }

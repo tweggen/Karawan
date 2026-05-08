@@ -7,4 +7,5 @@ public class LoaderSubscription
 {
     public string Path;
     public Action<string, JsonNode?> OnTreeData;
+    public int Priority;
 }

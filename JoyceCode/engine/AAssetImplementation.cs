@@ -96,12 +96,17 @@ public abstract class AAssetImplementation : IAssetImplementation
     
     private void _registerAnimationEntry(string uriModel, string packName, string uriAnimations)
     {
+        string modelFileName = Path.GetFileName(uriModel);
+        Trace(_dc, $"_registerAnimationEntry: uriModel={uriModel} → fileName={modelFileName}, pack={packName}");
+
         I.Get<engine.joyce.AnimationPackRegistry>().RegisterPack(uriModel, packName, uriAnimations);
+        Trace(_dc, $"_registerAnimationEntry: RegisterPack called for {modelFileName}/{packName}");
 
         AvailableAnimations.Add($"{uriModel};{uriAnimations}");
 
         var strFileName = ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
-            Path.GetFileName(uriModel), uriAnimations);
+            modelFileName, uriAnimations);
+        Trace(_dc, $"_registerAnimationEntry: generated baked filename {strFileName}");
 
         if (_traceLoadingAnimations)
             Trace(_dc, $"LoadAnimationsTo: pack '{packName}' for {uriModel} → {strFileName}.");
@@ -120,21 +125,30 @@ public abstract class AAssetImplementation : IAssetImplementation
 
     private void _whenLoadedAnimations(string path, JsonNode? node)
     {
-        Trace(_dc, $"Loading animations...");
-        if (null == node) return;
+        Trace(_dc, $"_whenLoadedAnimations called for path: {path}");
+        if (null == node)
+        {
+            Trace(_dc, $"_whenLoadedAnimations: node is null, returning early");
+            return;
+        }
+
+        Trace(_dc, $"_whenLoadedAnimations: node type = {node.GetType().Name}");
+        int modelCount = 0;
+        int packCount = 0;
 
         try
         {
             if (node is JsonArray arr)
             {
+                Trace(_dc, $"_whenLoadedAnimations: processing JsonArray with {arr.Count} entries");
                 foreach (var resNode in arr)
                 {
                     string? uriModel = resNode?["modelUrl"]?.GetValue<string>();
                     if (uriModel is null)
                         throw new InvalidDataException("no modelUrl specified in resource.");
 
-                    if (_traceLoadingAnimations)
-                        Trace(_dc, $"LoadAnimationsTo: Processing model \"{uriModel}\".");
+                    modelCount++;
+                    Trace(_dc, $"_whenLoadedAnimations: [{modelCount}] Processing model \"{uriModel}\"");
 
                     string probeModel = Path.Combine(
                         engine.GlobalSettings.Get("Engine.ResourcePath"), uriModel);
@@ -144,6 +158,7 @@ public abstract class AAssetImplementation : IAssetImplementation
                     var packsNode = resNode?["packs"];
                     if (packsNode is JsonObject packsObj)
                     {
+                        Trace(_dc, $"_whenLoadedAnimations: [{modelCount}] model has {packsObj.Count} packs");
                         foreach (var packKvp in packsObj)
                         {
                             string? uriAnimations = packKvp.Value?.GetValue<string>();
@@ -152,6 +167,8 @@ public abstract class AAssetImplementation : IAssetImplementation
                                 Trace(_dc, $"Warning: pack '{packKvp.Key}' for '{uriModel}' is empty; skipped.");
                                 continue;
                             }
+                            packCount++;
+                            Trace(_dc, $"_whenLoadedAnimations: [{modelCount}] registering pack '{packKvp.Key}' → {packCount} total packs");
                             _registerAnimationEntry(uriModel, packKvp.Key, uriAnimations);
                         }
                     }
@@ -162,9 +179,16 @@ public abstract class AAssetImplementation : IAssetImplementation
                         if (uriAnimations is null)
                             throw new InvalidDataException(
                                 $"model '{uriModel}' has neither 'packs' nor 'animationUrls'.");
+                        packCount++;
+                        Trace(_dc, $"_whenLoadedAnimations: [{modelCount}] using legacy animationUrls (pack 'default')");
                         _registerAnimationEntry(uriModel, "default", uriAnimations);
                     }
                 }
+                Trace(_dc, $"_whenLoadedAnimations COMPLETE: {modelCount} models, {packCount} packs registered");
+            }
+            else
+            {
+                Trace(_dc, $"_whenLoadedAnimations ERROR: node is not a JsonArray, it is {node.GetType().Name}");
             }
         }
         catch (Exception e)
@@ -377,13 +401,13 @@ public abstract class AAssetImplementation : IAssetImplementation
     public void WithLoader()
     {
         Trace(_dc, $"AAssetImplementation.WithLoader(): Registering JSON callbacks...");
-        I.Get<engine.casette.Loader>().WhenLoaded("/resources/list", _whenLoadedResources);
+        I.Get<engine.casette.Loader>().WhenLoaded("/resources/list", _whenLoadedResources, 100);
         Trace(_dc, $"  - Registered /resources/list");
-        I.Get<engine.casette.Loader>().WhenLoaded("/animations/list", _whenLoadedAnimations);
+        I.Get<engine.casette.Loader>().WhenLoaded("/animations/list", _whenLoadedAnimations, 100);
         Trace(_dc, $"  - Registered /animations/list");
-        I.Get<engine.casette.Loader>().WhenLoaded("/textures", _whenLoadedTextures);
+        I.Get<engine.casette.Loader>().WhenLoaded("/textures", _whenLoadedTextures, 100);
         Trace(_dc, $"  - Registered /textures");
-        I.Get<engine.casette.Loader>().WhenLoaded("/scenarios/categories", _whenLoadedScenarios);
+        I.Get<engine.casette.Loader>().WhenLoaded("/scenarios/categories", _whenLoadedScenarios, 100);
         Trace(_dc, $"  - Registered /scenarios/categories");
     }
 

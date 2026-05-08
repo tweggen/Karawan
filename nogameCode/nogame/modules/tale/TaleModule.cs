@@ -315,7 +315,7 @@ public class TaleModule : AModule
                 }
                 else
                     Warning($"TALE: /roles is not a JsonArray, got {rolesNode?.GetType().Name ?? "null"}");
-            });
+            }, 100);
 
             loader.WhenLoaded("/interactions", (path, interactionsNode) =>
             {
@@ -336,7 +336,7 @@ public class TaleModule : AModule
                 }
                 else
                     Warning($"TALE: /interactions is not a JsonArray, got {interactionsNode?.GetType().Name ?? "null"}");
-            });
+            }, 100);
 
             loader.WhenLoaded("/relationships/tiers", (path, tiersNode) =>
             {
@@ -356,7 +356,7 @@ public class TaleModule : AModule
                 }
                 else
                     Warning($"TALE: /relationships/tiers is not a JsonArray, got {tiersNode?.GetType().Name ?? "null"}");
-            });
+            }, 100);
 
             loader.WhenLoaded("/groups/types", (path, typesNode) =>
             {
@@ -376,7 +376,7 @@ public class TaleModule : AModule
                 }
                 else
                     Warning($"TALE: /groups/types is not a JsonArray, got {typesNode?.GetType().Name ?? "null"}");
-            });
+            }, 100);
 
             // Get cluster list for lifecycle events
             _clusterList = I.Get<ClusterList>();

@@ -330,7 +330,7 @@ public class SceneSequencer : IDisposable
         {
             _engine.OnLogicalFrame += _onLogicalFrame;
 
-            I.Get<engine.casette.Loader>().WhenLoaded("/scenes", _whenLoaded);
+            I.Get<engine.casette.Loader>().WhenLoaded("/scenes", _whenLoaded, 100);
         }
     }
 }

@@ -224,6 +224,6 @@ public class MetaGenLoader
     public MetaGenLoader(MetaGen metaGen)
     {
         _metaGen = metaGen;
-        I.Get<engine.casette.Loader>().WhenLoaded("/metaGen", _whenLoaded);
+        I.Get<engine.casette.Loader>().WhenLoaded("/metaGen", _whenLoaded, 100);
     }
 }

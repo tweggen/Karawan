@@ -231,7 +231,7 @@ public class Props
             _instance = this;
         }
 
-        I.Get<engine.casette.Loader>().WhenLoaded("/properties", _whenLoaded);
+        I.Get<engine.casette.Loader>().WhenLoaded("/properties", _whenLoaded, 100);
     }
     
 

@@ -17,6 +17,8 @@ namespace nogame.characters;
 
 public class EntityCreator
 {
+    private static readonly engine.Dc _dc = engine.Dc.Animation;
+
     public required CharacterModelDescription CharacterModelDescription;
     public Vector3 Position = Vector3.Zero;
     public Quaternion Orientation = Quaternion.Identity;
@@ -344,6 +346,7 @@ public class EntityCreator
             string? animationUrls = null;
             if (!string.IsNullOrEmpty(CharacterModelDescription.AnimationPackName))
             {
+                Trace(_dc, $"EntityCreator: Looking up animation pack '{CharacterModelDescription.AnimationPackName}' for model '{CharacterModelDescription.ModelUrl}'");
                 animationUrls = I.Get<engine.joyce.AnimationPackRegistry>().GetPackAnimationUrls(
                     CharacterModelDescription.ModelUrl,
                     CharacterModelDescription.AnimationPackName);
@@ -351,12 +354,19 @@ public class EntityCreator
                 {
                     Warning($"Animation pack '{CharacterModelDescription.AnimationPackName}' not found for " +
                             $"model '{CharacterModelDescription.ModelUrl}'; falling back to AnimationUrls.");
+                    I.Get<engine.joyce.AnimationPackRegistry>().LogAllRegisteredPacks();
                     animationUrls = CharacterModelDescription.AnimationUrls;
+                    Trace(_dc, $"EntityCreator: Fallback AnimationUrls = {animationUrls ?? "(null)"}");
+                }
+                else
+                {
+                    Trace(_dc, $"EntityCreator: Found animation pack, URLs = {animationUrls}");
                 }
             }
             else
             {
                 animationUrls = CharacterModelDescription.AnimationUrls;
+                Trace(_dc, $"EntityCreator: No AnimationPackName set, using AnimationUrls = {animationUrls ?? "(null)"}");
             }
 
             if (animationUrls != null)

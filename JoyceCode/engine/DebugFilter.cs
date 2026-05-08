@@ -20,8 +20,21 @@ namespace engine;
 /// </summary>
 public static class DebugFilter
 {
+
+    private static bool[] _initializeArray()
+    {
+        var arr = new bool[(int)Dc._Count];
+        
+        /*
+         * Hard coded debugging helpers
+         */
+        arr[(int)Dc.AssetLoading] = true;
+
+        return arr;
+    }
+    
     // The single backing array. Plain bool[] — reads are atomic by ECMA spec §I.12.6.6.
-    private static readonly bool[] _enabled = new bool[(int)Dc._Count];
+    private static readonly bool[] _enabled = _initializeArray();
 
     /// <summary>
     /// Hot-path check. Inlined by JIT. Single array-bounds-check + load.

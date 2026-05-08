@@ -25,4 +25,18 @@ public class AnimationPackRegistry
             return urls;
         return null;
     }
+
+    // Diagnostic: log all registered packs
+    public void LogAllRegisteredPacks()
+    {
+        System.Console.WriteLine($"=== AnimationPackRegistry Contents ({_packs.Count} models) ===");
+        foreach (var modelKvp in _packs)
+        {
+            System.Console.WriteLine($"  Model: {modelKvp.Key} ({modelKvp.Value.Count} packs)");
+            foreach (var packKvp in modelKvp.Value)
+            {
+                System.Console.WriteLine($"    - {packKvp.Key}: {packKvp.Value}");
+            }
+        }
+    }
 }

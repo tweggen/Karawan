@@ -165,6 +165,6 @@ public class DefaultMapProvider : IMapProvider
 
     public DefaultMapProvider()
     {
-        I.Get<engine.casette.Loader>().WhenLoaded("/mapProviders", _whenLoaded);
+        I.Get<engine.casette.Loader>().WhenLoaded("/mapProviders", _whenLoaded, 100);
     }
 }

@@ -64,7 +64,7 @@ public class ImplementationLoader
     {
         if (engine.GlobalSettings.Get("joyce.CompileMode") != "true")
         {
-            I.Get<engine.casette.Loader>().WhenLoaded("/implementations", _whenLoaded);
+            I.Get<engine.casette.Loader>().WhenLoaded("/implementations", _whenLoaded, 0);
         }
     }
 }

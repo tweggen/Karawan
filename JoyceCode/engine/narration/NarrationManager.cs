@@ -278,7 +278,7 @@ public class NarrationManager : AModule
 
     protected override void OnModuleActivate()
     {
-        I.Get<casette.Loader>().WhenLoaded("/narration", _onNarrationLoaded);
+        I.Get<casette.Loader>().WhenLoaded("/narration", _onNarrationLoaded, 100);
 
         M<Saver>().OnBeforeSaveGame += _onBeforeSaveGame;
         M<Saver>().OnAfterLoadGame += _onAfterLoadGame;
