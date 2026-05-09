@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using builtin.tools;
 using DefaultEcs;
 using engine;
@@ -31,22 +30,6 @@ public class TaleConversationBehavior : ANearbyBehavior
     private TaleEntityStrategy _strategy;
 
     public CharacterModelDescription CharacterModelDescription;
-
-    // Phase C4: Cooldown to suppress repeated conversations with the same NPC
-    // Shared with TaleWalkBehavior via static accessors
-    private static readonly Dictionary<int, DateTime> _lastConversationTime = new();
-    private const int CooldownSeconds = 30;
-
-    public static bool IsOnCooldown(int npcId)
-    {
-        return _lastConversationTime.TryGetValue(npcId, out var lastTime)
-            && (DateTime.UtcNow - lastTime).TotalSeconds < CooldownSeconds;
-    }
-
-    public static void SetCooldown(int npcId)
-    {
-        _lastConversationTime[npcId] = DateTime.UtcNow;
-    }
 
     public override string Prompt => "E to Talk";
 
@@ -147,15 +130,6 @@ public class TaleConversationBehavior : ANearbyBehavior
 
         try
         {
-            // Phase C4: Cooldown - suppress repeated conversations with the same NPC
-            if (_lastConversationTime.TryGetValue(_npcId, out var lastTime)
-                && (DateTime.UtcNow - lastTime).TotalSeconds < CooldownSeconds)
-            {
-                Trace(_dc, $"NPC {_npcId} on cooldown");
-                return;
-            }
-            _lastConversationTime[_npcId] = DateTime.UtcNow;
-
             _taleManager = I.Get<TaleManager>();
             _narration = I.Get<Narration>();
 
@@ -164,6 +138,12 @@ public class TaleConversationBehavior : ANearbyBehavior
                 Trace(_dc, $"TaleManager or Narration not available");
                 return;
             }
+
+            // Stamp NpcSchedule.LastConversationTime. No longer a cooldown gate —
+            // the timestamp is a memory signal for future persistence logic
+            // (deciding which NPCs survive dematerialization vs. become forgettable).
+            // Re-engagement is now bounded only by Narration.MayConverse().
+            _taleManager.RecordConversation(_npcId);
 
             var schedule = _taleManager.GetSchedule(_npcId);
             if (schedule == null)

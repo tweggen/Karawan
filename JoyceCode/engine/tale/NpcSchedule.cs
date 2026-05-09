@@ -81,10 +81,19 @@ public class NpcSchedule
     }
 
     /// <summary>
-    /// Tier 2: Has this NPC been noticed (materialized as Tier 1) by the player?
-    /// Once true, persists for the session. NPCs keep map icons visible after dematerialization.
+    /// UTC timestamp of the last time the player initiated a conversation with this NPC.
+    /// DateTime.MinValue = never talked to.
+    ///
+    /// Drives the dematerialization decay rule: at TerminateCharacters time, an NPC
+    /// is preserved as Tier-2 only if HasPlayerDeviation is set AND this timestamp
+    /// is within TaleManager.ConversationMemorySeconds. Otherwise the schedule is
+    /// dropped via TaleManager.ForgetSchedule and the slot becomes re-randomizable.
+    ///
+    /// NOT a cooldown — conversations are not gated on this. Stamped by
+    /// TaleManager.RecordConversation (called from Tale*Behavior.OnAction). On
+    /// load, set to UtcNow so saved deviated NPCs aren't immediately aged out.
     /// </summary>
-    public bool IsNoticedByPlayer { get; set; } = false;
+    public DateTime LastConversationTime = DateTime.MinValue;
 
     // Transit phase: NPC is walking between locations
     /// <summary>

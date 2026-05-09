@@ -93,6 +93,19 @@ public static class TaleNarrationBindings
                 "npc.role", "npc.met_player", "npc.trust_player", "npc.group_id"
             });
 
+            // Memory flags written by the tale.npc.remember event handler. Exposed to
+            // narration scripts as props.npc.player_fact.{factName} == 1.
+            if (schedule.Properties != null)
+            {
+                foreach (var kvp in schedule.Properties)
+                {
+                    if (!kvp.Key.StartsWith("player_fact.")) continue;
+                    string propKey = "npc." + kvp.Key;
+                    Props.Set(propKey, kvp.Value);
+                    _injectedKeys.Add(propKey);
+                }
+            }
+
             Trace($"TALE NARRATION BINDINGS: Injected props for NPC {schedule.NpcId}");
         }
         catch (Exception e)
@@ -117,6 +130,10 @@ public static class TaleNarrationBindings
                 if (key == "npc.role")
                 {
                     Props.Set(key, "unknown");
+                }
+                else if (key.StartsWith("npc.player_fact."))
+                {
+                    Props.Set(key, 0f); // Memory flags are 0/1, not normalized stats
                 }
                 else
                 {

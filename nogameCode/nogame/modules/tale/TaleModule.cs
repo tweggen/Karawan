@@ -504,6 +504,9 @@ public class TaleModule : AModule
             WorkplaceLocationId = jo["workplaceLocationId"]?.GetValue<int>() ?? 0,
             GroupId = jo["groupId"]?.GetValue<int>() ?? -1,
             HasPlayerDeviation = true,
+            // Treat load as a touch so saved deviated NPCs aren't immediately
+            // aged out by the dematerialization decay path on first traversal.
+            LastConversationTime = DateTime.UtcNow,
         };
 
         // Positions

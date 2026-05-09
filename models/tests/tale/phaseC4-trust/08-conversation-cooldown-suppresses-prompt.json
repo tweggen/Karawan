@@ -1,6 +1,6 @@
 {
-  "name": "30-second cooldown suppresses 'E to Talk' prompt after conversation",
-  "description": "After completing conversation, same NPC's prompt is hidden for 30 real seconds (cooldown stored in _lastConversationTime dict)",
+  "name": "Conversation timestamp is recorded for memory/persistence",
+  "description": "Player conversation stamps NpcSchedule.LastConversationTime via TaleManager.RecordConversation. There is no longer a 30s anti-spam gate — the timestamp exists purely as a memory signal for future persistence logic (which NPCs survive dematerialization vs. become forgettable). The historical filename references the removed cooldown.",
   "globalTimeout": 60,
   "expected": [
     { "code": "npc_created", "count": 11 },

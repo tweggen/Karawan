@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Numerics;
 using builtin.tools;
 using DefaultEcs;
@@ -151,17 +150,15 @@ public class TaleWalkBehavior : ANearbyBehavior
 
         try
         {
-            // Reuse TaleConversationBehavior's cooldown
-            if (TaleConversationBehavior.IsOnCooldown(_npcId))
-            {
-                Trace(_dc, $"NPC {_npcId} on cooldown");
-                return;
-            }
-            TaleConversationBehavior.SetCooldown(_npcId);
-
             var taleManager = I.Get<TaleManager>();
             var narration = I.Get<Narration>();
             if (taleManager == null || narration == null) return;
+
+            // Stamp NpcSchedule.LastConversationTime. No longer a cooldown gate —
+            // the timestamp is a memory signal for future persistence logic
+            // (deciding which NPCs survive dematerialization vs. become forgettable).
+            // Re-engagement is now bounded only by Narration.MayConverse().
+            taleManager.RecordConversation(_npcId);
 
             var schedule = taleManager.GetSchedule(_npcId);
             if (schedule == null) return;

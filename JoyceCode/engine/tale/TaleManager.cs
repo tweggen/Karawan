@@ -389,6 +389,64 @@ public class TaleManager
     /// </summary>
     public void ClearTier2(int npcId) => _tier2NpcIds.Remove(npcId);
 
+    /// <summary>
+    /// True iff a schedule with this id is still tracked. Cheap guard for callers
+    /// (e.g. quest steps) that hold an NpcId across time and need to know whether
+    /// the NPC has been forgotten / re-randomized.
+    /// </summary>
+    public bool IsScheduleAlive(int npcId) => _schedules.ContainsKey(npcId);
+
+    /// <summary>
+    /// Drop an NPC's schedule entirely. Called by the dematerialization decay path
+    /// (TaleSpawnOperator.TerminateCharacters) when an NPC is no longer "remembered"
+    /// (HasPlayerDeviation cleared, or never set, AND no recent conversation).
+    /// The NPC's slot can be re-randomized by future cluster repopulation.
+    /// </summary>
+    public void ForgetSchedule(int npcId)
+    {
+        _schedules.Remove(npcId);
+        _tier2NpcIds.Remove(npcId);
+    }
+
+
+    /// <summary>
+    /// Default wall-clock window used by the decay path in TaleSpawnOperator
+    /// to decide whether an NPC is still "remembered" at dematerialization time.
+    /// 1800 s = 30 minutes. Other call sites are free to pass their own window
+    /// to <see cref="HasRecentConversation"/>.
+    /// </summary>
+    public const double ConversationMemorySeconds = 1800.0;
+
+    /// <summary>
+    /// Stamp <see cref="NpcSchedule.LastConversationTime"/> to UtcNow.
+    /// Called from the Tale*Behavior.OnAction methods every time the player
+    /// initiates a conversation. No-op if NPC unknown.
+    ///
+    /// This used to double as an anti-spam cooldown; that gate has been removed.
+    /// The timestamp is a memory signal: the dematerialization decay path
+    /// (TaleSpawnOperator.TerminateCharacters) checks it to decide whether to
+    /// preserve the NPC as Tier-2 or drop the schedule as forgettable.
+    /// </summary>
+    public void RecordConversation(int npcId)
+    {
+        if (_schedules.TryGetValue(npcId, out var schedule))
+            schedule.LastConversationTime = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Returns true if the player has talked to this NPC within the last
+    /// <paramref name="withinSeconds"/> real seconds. The window is per-callsite
+    /// policy; the canonical default is <see cref="ConversationMemorySeconds"/>.
+    /// Returns false for unknown NPCs and for NPCs that have never been talked to.
+    /// </summary>
+    public bool HasRecentConversation(int npcId, double withinSeconds)
+    {
+        if (!_schedules.TryGetValue(npcId, out var schedule)) return false;
+        if (schedule.LastConversationTime == DateTime.MinValue) return false;
+        return (DateTime.UtcNow - schedule.LastConversationTime).TotalSeconds
+               < withinSeconds;
+    }
+
     #endregion
 
 

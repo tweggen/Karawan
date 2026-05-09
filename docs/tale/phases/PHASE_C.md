@@ -428,7 +428,17 @@ schedule.Trust[-1] = Math.Min(1f, current + 0.02f);
 schedule.HasPlayerDeviation = true;  // Persists NPC on save
 ```
 
-**Cooldown:** Suppress "E to Talk" prompt if same NPC was talked to < 30 real-seconds ago, stored in `Dictionary<int, DateTime> _lastConversationTime`.
+**Conversation memory + decay (no cooldown):** The 30 s anti-spam cooldown was removed. `TaleConversationBehavior.OnAction` and `TaleWalkBehavior.OnAction` no longer block on a timer; re-engagement is bounded only by `Narration.MayConverse()`.
+
+`NpcSchedule.LastConversationTime` (DateTime, MinValue = never) is stamped via `TaleManager.RecordConversation(npcId)` on every conversation. It drives the **dematerialization decay rule** in `TaleSpawnOperator.TerminateCharacters`:
+
+- An NPC is preserved as **Tier-2** iff `HasPlayerDeviation && HasRecentConversation(npcId, ConversationMemorySeconds)` (default window: 1800 s wall-clock).
+- An NPC the player engaged with but hasn't talked to within the window is **forgotten**: `TaleManager.ForgetSchedule(npcId)` drops the schedule, freeing the slot for future re-randomization.
+- An NPC the player never engaged with (`HasPlayerDeviation == false`) is destroyed without preservation, as before — non-deviated schedules are removed by `DepopulateCluster` on cluster unload.
+
+`IsNoticedByPlayer` was retired: simply rendering an NPC no longer locks them into session-long preservation; only conversation (or `tale.npc.remember`) does. On save load, `LastConversationTime` is set to `UtcNow` so saved deviated NPCs aren't aged out before the player's first re-traversal.
+
+`TaleManager.IsScheduleAlive(npcId)` returns whether a schedule is still tracked. Future quest code that holds an `NpcId` across time should guard with this before assuming the NPC still exists.
 
 ### Trust-Gated Dialogue Example
 
@@ -504,7 +514,13 @@ manager.RegisterEventHandler("tale.npc.remember", async desc =>
 });
 ```
 
-These flags can later be read as storylet preconditions or drive different script branches.
+**Reading the flags:** `TaleNarrationBindings.InjectNpcProps` copies every `schedule.Properties["player_fact.*"]` entry into the narration namespace as `npc.player_fact.{factName}`. Conversation scripts can branch on them:
+
+```json
+{ "if": "props.npc.player_fact.gave_quest_hint == 1", "goto": "rewarded" }
+```
+
+Storylet preconditions can do the same once they read from `Props`. The keys are 0/1 flags; `ClearNpcProps` resets them to `0f` after each conversation to prevent leakage across NPCs.
 
 ### Quest Trigger
 

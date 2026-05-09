@@ -189,9 +189,6 @@ public class TaleSpawnOperator : ISpawnOperator
                     return;
                 }
 
-                // Mark this NPC as noticed by the player (will promote map icon visibility)
-                schedule.IsNoticedByPlayer = true;
-
                 // Get current game time (prefer daynite controller if available)
                 DateTime gameTime = DateTime.Now;
                 try
@@ -353,11 +350,18 @@ public class TaleSpawnOperator : ISpawnOperator
                     schedule.CurrentWorldPosition = worldPos;
                     Trace(_dc, $"Synced NPC {npcId} position to {worldPos} before dematerialization.");
 
-                    // Demote to Tier 2 if noticed: keep entity alive, freeze strategy
-                    if (schedule.IsNoticedByPlayer)
+                    // Decay-based persistence: only NPCs the player has actually engaged with
+                    // (HasPlayerDeviation set by conversation end or tale.npc.remember) AND
+                    // talked to recently (within ConversationMemorySeconds) survive as Tier-2.
+                    // Older "remembered" NPCs and never-engaged NPCs are dropped — their slot
+                    // can be re-randomized by future cluster repopulation.
+                    bool isRemembered = schedule.HasPlayerDeviation
+                        && _taleManager.HasRecentConversation(npcId, TaleManager.ConversationMemorySeconds);
+
+                    if (isRemembered)
                     {
                         _taleManager.SetTier2(npcId);
-                        Trace(_dc, $"Demoting NPC {npcId} to Tier 2 (noticed). Map icon remains visible.");
+                        Trace(_dc, $"Demoting NPC {npcId} to Tier 2 (recent conversation).");
 
                         // Freeze strategy by entering Tier 2 mode
                         if (entity.Has<engine.behave.components.Strategy>())
@@ -369,10 +373,19 @@ public class TaleSpawnOperator : ISpawnOperator
                         // Skip the destroy path for this entity
                         continue;
                     }
+
+                    // Forgettable: drop the schedule so the slot can be re-randomized.
+                    // Only do this if the schedule was previously deviated; non-deviated
+                    // schedules are removed by DepopulateCluster on cluster unload.
+                    if (schedule.HasPlayerDeviation)
+                    {
+                        Trace(_dc, $"NPC {npcId} aged out (no recent conversation), forgetting schedule.");
+                        _taleManager.ForgetSchedule(npcId);
+                    }
                 }
             }
 
-            // Entity was not noticed or schedule missing: queue for destruction
+            // Schedule was missing, never deviated, or aged out: queue for entity destruction
             listToDestroy.Add(kill);
         }
 
