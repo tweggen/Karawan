@@ -103,10 +103,14 @@ namespace CmdLine
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 
-                var exited = process.WaitForExit(1000 * 10);     // (optional) wait up to 10 seconds
-                Console.WriteLine($"exit {exited}");
+                process.WaitForExit();
+                if (process.ExitCode != 0)
+                {
+                    Log.LogError($"Texture packer exited with code {process.ExitCode}.");
+                    return false;
+                }
             }
-            
+
             return true;
         }
     }

@@ -5,6 +5,12 @@
         <TargetFrameworks>net9.0;netstandard2.0</TargetFrameworks>
         <SelfContained>True</SelfContained>
         <PublishSingleFile>true</PublishSingleFile>
+        <!-- Bundle native NuGet assets (libSkiaSharp.dll etc.) inside the
+             single-file exe so they're extracted to a temp dir at runtime
+             and become discoverable by [DllImport]. Without this,
+             PublishSingleFile drops native deps from the bundle and
+             SkiaSharp fails with DllNotFoundException at first use. -->
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     </PropertyGroup>
 
     <PropertyGroup>

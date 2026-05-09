@@ -107,14 +107,19 @@ namespace CmdLine
                     process.Start();
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
-                    var exited = process.WaitForExit(1000 * 10);     // (optional) wait up to 10 seconds
-                    Console.WriteLine($"exit {exited}");
+                    process.WaitForExit();
+                    if (process.ExitCode != 0)
+                    {
+                        Log.LogError($"Asset compiler exited with code {process.ExitCode}.");
+                        return false;
+                    }
                 }
             } catch (System.Exception e)
             {
-                Log.LogMessage("Exception starting compiler: "+e.ToString());
+                Log.LogError("Exception starting compiler: "+e.ToString());
+                return false;
             }
-            
+
             return true;
         }
 

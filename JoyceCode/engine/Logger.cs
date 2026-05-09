@@ -111,12 +111,18 @@ namespace engine
         /// <summary>
         /// Filtered Trace: string is NEVER built when the category is disabled.
         /// Usage: Trace(Dc.Pathfinding, $"...{expr}...");
+        ///
+        /// Calls _createLogEntry/Log directly (not via Trace(string)) so the
+        /// stack depth matches _createLogEntry's skip-2 contract — otherwise
+        /// the file/line/type/method in every filtered log entry resolves to
+        /// this wrapper instead of the real caller.
         /// </summary>
         public static void Trace(engine.Dc category,
             [InterpolatedStringHandlerArgument("category")]
             ref engine.DebugInterpolatedStringHandler message)
         {
-            if (message.IsEnabled) Trace(message.ToStringAndClear());
+            if (message.IsEnabled)
+                Log(Level.Trace, _createLogEntry(Level.Trace, message.ToStringAndClear()));
         }
 
         public static void Wonder(in string msg)
@@ -129,7 +135,8 @@ namespace engine
             [InterpolatedStringHandlerArgument("category")]
             ref engine.DebugInterpolatedStringHandler message)
         {
-            if (message.IsEnabled) Wonder(message.ToStringAndClear());
+            if (message.IsEnabled)
+                Log(Level.Wonder, _createLogEntry(Level.Wonder, message.ToStringAndClear()));
         }
 
         public static void Warning(in string msg)
@@ -141,7 +148,8 @@ namespace engine
             [InterpolatedStringHandlerArgument("category")]
             ref engine.DebugInterpolatedStringHandler message)
         {
-            if (message.IsEnabled) Warning(message.ToStringAndClear());
+            if (message.IsEnabled)
+                Log(Level.Warning, _createLogEntry(Level.Warning, message.ToStringAndClear()));
         }
 
         public static void Error(in string msg)
