@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 using engine;
 using engine.draw;
@@ -47,7 +48,15 @@ public class Narration : AModule, IInputPart
     public uint ChoiceColor { get; set; } = 0xffbbdddd;
     public uint ChoiceFill { get; set; } = 0x00000000;
 
+    /// <summary>
+    /// Maximum seconds to wait for the player to dismiss a text-only narration step
+    /// before auto-advancing. Steps presenting choices are never auto-advanced.
+    /// Set to 0 or negative to disable.
+    /// </summary>
+    public float AutoAdvanceSeconds { get; set; } = 2.0f;
+
     private NarrationRunner.NodeResult _currentResult;
+    private CancellationTokenSource _autoAdvanceCts;
 
     private bool _startupTriggered = false;
 
@@ -213,11 +222,53 @@ public class Narration : AModule, IInputPart
 
     private void _dismissDisplay()
     {
+        _cancelAutoAdvance();
         _dismissSentence();
         _dismissChoices();
         _currentResult = null;
         _currentNChoices = 0;
         _chosenOption = 0;
+    }
+
+
+    private void _scheduleAutoAdvance()
+    {
+        _cancelAutoAdvance();
+        if (AutoAdvanceSeconds <= 0f) return;
+
+        var cts = new CancellationTokenSource();
+        _autoAdvanceCts = cts;
+        var token = cts.Token;
+        int delayMs = (int)(AutoAdvanceSeconds * 1000f);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(delayMs, token);
+            }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+            _engine.QueueMainThreadAction(() =>
+            {
+                if (token.IsCancellationRequested) return;
+                _doAdvance();
+            });
+        });
+    }
+
+
+    private void _cancelAutoAdvance()
+    {
+        var cts = _autoAdvanceCts;
+        _autoAdvanceCts = null;
+        if (cts != null)
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
     }
 
 
@@ -291,6 +342,15 @@ public class Narration : AModule, IInputPart
         }
 
         _updateOptions();
+
+        if (_currentNChoices == 0)
+        {
+            _scheduleAutoAdvance();
+        }
+        else
+        {
+            _cancelAutoAdvance();
+        }
     }
 
     #endregion
@@ -383,6 +443,7 @@ public class Narration : AModule, IInputPart
 
     private void _doAdvance()
     {
+        _cancelAutoAdvance();
         _engine.QueueMainThreadAction(async () =>
         {
             var result = await M<NarrationManager>().Advance();
@@ -393,6 +454,7 @@ public class Narration : AModule, IInputPart
 
     private void _doChoose(int number)
     {
+        _cancelAutoAdvance();
         _engine.QueueMainThreadAction(async () =>
         {
             var result = await M<NarrationManager>().Choose(number - 1);
@@ -653,6 +715,7 @@ public class Narration : AModule, IInputPart
 
     protected override void OnModuleDeactivate()
     {
+        _cancelAutoAdvance();
         M<InputEventPipeline>().RemoveInputPart(this);
         M<Saver>().OnBeforeSaveGame -= _onBeforeSaveGame;
         M<Saver>().OnAfterLoadGame -= _onAfterLoadGame;
