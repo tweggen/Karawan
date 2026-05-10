@@ -207,6 +207,10 @@ public class TalePopulationGenerator
         // Role-based location preference filtering
         foreach (var loc in spatialModel.Locations)
         {
+            // Skip locations that have no pedestrian access — NPCs walking to them
+            // would fail pathfinding and fall back to straight-line motion through buildings.
+            if (!loc.IsPedestrianReachable) continue;
+
             bool matches = false;
 
             switch (role)
@@ -264,11 +268,14 @@ public class TalePopulationGenerator
                 candidates.Add(loc.Id);
         }
 
-        // If no candidates for preferred type, fall back to any location
+        // If no candidates for preferred type, fall back to any reachable location
         if (candidates.Count == 0)
         {
             foreach (var loc in spatialModel.Locations)
+            {
+                if (!loc.IsPedestrianReachable) continue;
                 candidates.Add(loc.Id);
+            }
         }
 
         // Pick random candidate

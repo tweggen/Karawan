@@ -17,6 +17,12 @@ public class Location
     public string ShopType; // null if not a shop, else "Eat", "Drink", "Game2"
     public int QuarterIndex;
     public int EstateIndex;
+
+    // True when EntryPosition has a pedestrian NavLane within reach. Defaults to true
+    // so call sites without a NavCluster (bake, testbed) don't accidentally filter the
+    // location out. Set to false in ExtractFrom / ValidateReachability when navigation
+    // info is available and the entry point can't be reached on foot.
+    public bool IsPedestrianReachable = true;
 }
 
 public class Route
@@ -152,17 +158,19 @@ public class SpatialModel
                             var buildingCenter = building.GetCenter() + cluster.Pos;
                             buildingCenter.Y = streetHeight;
                             var entryPos = ComputeShopEntryPosition(sf, cluster, streetHeight);
+                            var (snappedEntry, isReachable) = _snapToPedestrianLane(navCluster, entryPos);
 
                             model.Locations.Add(new Location
                             {
                                 Id = locationId++,
                                 Type = locationType,
                                 Position = buildingCenter,
-                                EntryPosition = entryPos,
+                                EntryPosition = snappedEntry,
                                 Capacity = (int)MathF.Max(1, building.GetHeight() / 3f),
                                 ShopType = shopType,
                                 QuarterIndex = qi,
-                                EstateIndex = ei
+                                EstateIndex = ei,
+                                IsPedestrianReachable = isReachable
                             });
                         }
                     }
@@ -201,16 +209,19 @@ public class SpatialModel
                             entryPos = buildingCenter;
                         }
 
+                        var (snappedEntry, isReachable) = _snapToPedestrianLane(navCluster, entryPos);
+
                         model.Locations.Add(new Location
                         {
                             Id = locationId++,
                             Type = type,
                             Position = buildingCenter,
-                            EntryPosition = entryPos,
+                            EntryPosition = snappedEntry,
                             Capacity = (int)MathF.Max(1, building.GetHeight() / 3f),
                             ShopType = null,
                             QuarterIndex = qi,
-                            EstateIndex = ei
+                            EstateIndex = ei,
+                            IsPedestrianReachable = isReachable
                         });
                     }
                 }
@@ -226,59 +237,7 @@ public class SpatialModel
             var pos = sp.Pos3 + cluster.Pos;
             pos.Y = streetHeight;
 
-            // Try to find a point on a pedestrian NavLane near this street point
-            Vector3 entryPos = pos;  // Fallback: use street point itself
-            if (navCluster?.Content?.Lanes != null && navCluster.Content.Lanes.Count > 0)
-            {
-                // Find closest pedestrian lane to this street point
-                float minDist = float.MaxValue;
-                builtin.modules.satnav.desc.NavLane closestLane = null;
-                Vector3 closestLanePoint = pos;
-
-                foreach (var lane in navCluster.Content.Lanes)
-                {
-                    // Only consider pedestrian-accessible lanes
-                    if (!lane.AllowedTypes.HasFlag(engine.navigation.TransportationType.Pedestrian))
-                        continue;
-
-                    // Find closest point on this lane
-                    var laneStart = lane.Start.Position;
-                    var laneEnd = lane.End.Position;
-                    var laneVec = laneEnd - laneStart;
-                    float laneLen2 = Vector3.Dot(laneVec, laneVec);
-
-                    float t = 0f;
-                    if (laneLen2 > 0.0001f)
-                    {
-                        t = Vector3.Dot(pos - laneStart, laneVec) / laneLen2;
-                        t = Math.Clamp(t, 0f, 1f);
-                    }
-
-                    var lanePoint = laneStart + t * laneVec;
-                    float dist = Vector3.Distance(pos, lanePoint);
-
-                    if (dist < minDist)
-                    {
-                        minDist = dist;
-                        closestLane = lane;
-                        closestLanePoint = lanePoint;
-                    }
-                }
-
-                if (closestLane != null && minDist < 50f)  // Use lane point if within 50m
-                {
-                    entryPos = closestLanePoint;
-                    Trace(_dc, $"Street location {locId}: pos={pos}, entryPos={entryPos} (on NavLane, dist={minDist:F1}m)");
-                }
-                else
-                {
-                    Trace(_dc, $"Street location {locId}: pos={pos}, entryPos={pos} (no nearby pedestrian lane, dist to closest={minDist:F1}m)");
-                }
-            }
-            else
-            {
-                Trace(_dc, $"Street location {locId}: pos={pos}, entryPos={pos} (no NavCluster available)");
-            }
+            var (entryPos, isReachable) = _snapToPedestrianLane(navCluster, pos);
 
             model.Locations.Add(new Location
             {
@@ -289,7 +248,8 @@ public class SpatialModel
                 Capacity = 0,
                 ShopType = null,
                 QuarterIndex = -1,
-                EstateIndex = -1
+                EstateIndex = -1,
+                IsPedestrianReachable = isReachable
             });
         }
         
@@ -335,6 +295,59 @@ public class SpatialModel
     }
 
 
+    /// <summary>
+    /// Snap a position to the closest point on the nearest pedestrian-accessible NavLane.
+    /// Returns the snapped point and a flag indicating whether snapping succeeded
+    /// (i.e. a pedestrian lane was found within <paramref name="snapRadius"/>).
+    /// When <paramref name="navCluster"/> is null (bake / testbed paths) or no pedestrian
+    /// lane is in range, returns the original position and reports it as reachable so the
+    /// caller doesn't accidentally drop locations in environments without nav data.
+    /// </summary>
+    private static (Vector3 snapped, bool isReachable) _snapToPedestrianLane(
+        builtin.modules.satnav.desc.NavCluster navCluster,
+        Vector3 position,
+        float snapRadius = 50f)
+    {
+        if (navCluster?.Content?.Lanes == null || navCluster.Content.Lanes.Count == 0)
+            return (position, true);
+
+        float minDist = float.MaxValue;
+        Vector3 closestLanePoint = position;
+
+        foreach (var lane in navCluster.Content.Lanes)
+        {
+            if (!lane.AllowedTypes.HasFlag(engine.navigation.TransportationType.Pedestrian))
+                continue;
+
+            var laneStart = lane.Start.Position;
+            var laneEnd = lane.End.Position;
+            var laneVec = laneEnd - laneStart;
+            float laneLen2 = Vector3.Dot(laneVec, laneVec);
+
+            float t = 0f;
+            if (laneLen2 > 0.0001f)
+            {
+                t = Vector3.Dot(position - laneStart, laneVec) / laneLen2;
+                t = Math.Clamp(t, 0f, 1f);
+            }
+
+            var lanePoint = laneStart + t * laneVec;
+            float dist = Vector3.Distance(position, lanePoint);
+
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closestLanePoint = lanePoint;
+            }
+        }
+
+        if (minDist <= snapRadius)
+            return (closestLanePoint, true);
+
+        return (position, false);
+    }
+
+
     private static Vector3 ComputeShopEntryPosition(ShopFront shopFront, ClusterDesc cluster, float streetHeight)
     {
         var points = shopFront.GetPoints();
@@ -361,9 +374,9 @@ public class SpatialModel
 
 
     /// <summary>
-    /// Validate that all location entry points are reachable via the NavMap.
-    /// Logs warnings for unreachable locations (entry point has no nearby NavJunctions).
-    /// This helps identify stuck NPC issues early.
+    /// Re-check pedestrian reachability for every location and update <see cref="Location.IsPedestrianReachable"/>.
+    /// ExtractFrom already does this when a NavCluster is supplied; this pass is the safety net for
+    /// locations built without nav info, and also surfaces a per-cluster summary for diagnostics.
     /// </summary>
     public void ValidateReachability(builtin.modules.satnav.desc.NavCluster navCluster, ClusterDesc clusterDesc)
     {
@@ -373,26 +386,24 @@ public class SpatialModel
             return;
         }
 
-        const float ReachabilityRadius = 10f; // Search radius for nearby NavJunctions
-
         int unreachableCount = 0;
         foreach (var loc in Locations)
         {
             if (loc.EntryPosition == Vector3.Zero)
             {
                 Trace(_dc, $"⚠️ UNREACHABLE_LOCATION: Cluster '{clusterDesc.Name}' Location {loc.Id} ({loc.Type}) has zero entry point");
+                loc.IsPedestrianReachable = false;
                 unreachableCount++;
                 continue;
             }
 
-            // Find NavJunctions near this entry point
-            bool hasNearbyJunction = _hasNearbyNavJunction(navCluster, loc.EntryPosition, ReachabilityRadius);
+            var (_, isReachable) = _snapToPedestrianLane(navCluster, loc.EntryPosition);
+            loc.IsPedestrianReachable = isReachable;
 
-            if (!hasNearbyJunction)
+            if (!isReachable)
             {
                 Trace(_dc, $"⚠️ UNREACHABLE_LOCATION: Cluster '{clusterDesc.Name}' Location {loc.Id} ({loc.Type}) " +
-                     $"entry point {loc.EntryPosition} has no NavJunctions within {ReachabilityRadius}m. " +
-                     $"NPCs may become stuck trying to reach this location.");
+                     $"entry point {loc.EntryPosition} has no pedestrian NavLane within reach.");
                 unreachableCount++;
             }
         }
@@ -405,23 +416,5 @@ public class SpatialModel
         {
             Trace(_dc, $"✓ ValidateReachability: All {Locations.Count} locations reachable in cluster '{clusterDesc.Name}'");
         }
-    }
-
-
-    /// <summary>
-    /// Check if there's a NavJunction within radius of the given position.
-    /// </summary>
-    private static bool _hasNearbyNavJunction(builtin.modules.satnav.desc.NavCluster navCluster, Vector3 position, float radius)
-    {
-        if (navCluster?.Content?.Junctions == null)
-            return true; // Assume reachable if NavCluster not loaded
-
-        foreach (var junction in navCluster.Content.Junctions)
-        {
-            if (Vector3.Distance(position, junction.Position) <= radius)
-                return true;
-        }
-
-        return false;
     }
 }

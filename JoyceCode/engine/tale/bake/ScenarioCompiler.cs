@@ -242,9 +242,14 @@ public class ScenarioCompiler
         var schedules = new List<NpcSchedule>(npcCount);
 
         // Pre-bucket locations by type for fast role-aware assignment.
+        // Skip locations the pedestrian network can't reach so NPCs don't get scheduled
+        // into pathfind-failure spots. (No-op at bake time — synthetic spatial models
+        // have no NavCluster, so IsPedestrianReachable defaults to true.)
         var byType = new Dictionary<string, List<int>>();
         foreach (var loc in spatial.Locations)
         {
+            if (!loc.IsPedestrianReachable) continue;
+
             if (!byType.TryGetValue(loc.Type, out var list))
             {
                 list = new List<int>();
