@@ -148,18 +148,11 @@ class GenerateShopsOperator : IClusterOperator
                     continue;
                 }
 
-                /*
-                 * Tag the new shop.
-                 */
-                // TXWTODO: This is a wrong tag, and no meaningful set of tags either.
-                string tagShop = $"shop {iconCode}";
-                myShopFront.Tags.Add(tagShop);
-
-                // TXWTODO:Remove the actual creation of  entities from this.
+                // Reject up-front (before any side effects) so we never end up
+                // with a shopfront tagged but no POI created.
                 var myShopFrontPoints = myShopFront.GetPoints();
                 if (null == myShopFrontPoints || myShopFrontPoints.Count < 2)
                 {
-                    // no bad try.
                     if (TraceDetail) Trace($"Discarding shop {t} because no shop front points.");
                     continue;
                 }
@@ -171,13 +164,26 @@ class GenerateShopsOperator : IClusterOperator
 
                 if (setPositions.Contains(v3ShopLocal))
                 {
-                    // no bad try.
                     if (TraceDetail) Trace($"Discarding shop at {v3ShopLocal} because it already exists.");
                     continue;
                 }
 
+                if (!_hasPedestrianAccess(v3ShopLocal, quarter))
+                {
+                    if (TraceDetail) Trace($"Discarding shop at {v3ShopLocal} because shopfront does not face a sidewalk.");
+                    continue;
+                }
+
+                /*
+                 * Tag the new shop.
+                 */
+                // TXWTODO: This is a wrong tag, and no meaningful set of tags either.
+                string tagShop = $"shop {iconCode}";
+                myShopFront.Tags.Add(tagShop);
+
                 setPositions.Add(v3ShopLocal);
 
+                // TXWTODO:Remove the actual creation of  entities from this.
                 // TXWTODO: We shouldn't create POIs right here, should we?
                 /*
                  * Create POI right in the middle.
@@ -214,7 +220,49 @@ class GenerateShopsOperator : IClusterOperator
             // We placed a shop if isBadTry==false
         }
     }
-    
+
+
+    /// <summary>
+    /// Check if a shopfront midpoint sits next to a sidewalk. Sidewalks run along
+    /// the perimeter of each quarter (built by GenerateNavMapOperator from delim
+    /// segments), so a shopfront facing the quarter interior or wedged between
+    /// neighbouring buildings has no pedestrian NavLane in front of it. Reusing
+    /// the navmap's source data (quarter delims) avoids a sync wait on
+    /// NavCluster.Content, which is built lazily and async.
+    ///
+    /// Mirrors the validity rule in GenerateNavMapOperator: a quarter with fewer
+    /// than 3 delims gets no sidewalks at all.
+    /// </summary>
+    private static bool _hasPedestrianAccess(Vector3 v3ShopLocal, engine.streets.Quarter quarter)
+    {
+        const float SidewalkRadiusSq = 5f * 5f;
+
+        var delims = quarter.GetDelims();
+        if (delims.Count < 3) return false;
+
+        var v2Shop = new Vector2(v3ShopLocal.X, v3ShopLocal.Z);
+
+        for (int i = 0; i < delims.Count; i++)
+        {
+            var a = delims[i].StartPoint;
+            var b = delims[(i + 1) % delims.Count].StartPoint;
+
+            var ab = b - a;
+            float lenSq = Vector2.Dot(ab, ab);
+            if (lenSq < 0.0001f) continue;
+
+            var ap = v2Shop - a;
+            float t = Math.Clamp(Vector2.Dot(ap, ab) / lenSq, 0f, 1f);
+            var proj = a + t * ab;
+            var d = v2Shop - proj;
+
+            if (Vector2.Dot(d, d) <= SidewalkRadiusSq)
+                return true;
+        }
+
+        return false;
+    }
+
 
     public void ClusterOperatorApply(ClusterDesc clusterDesc)
     {
