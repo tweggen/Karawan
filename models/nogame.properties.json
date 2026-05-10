@@ -24,11 +24,11 @@
     "debug.category.streetgen": false,
     "debug.category.navmap": false,
     "debug.category.physics": false,
-    "debug.category.assetloading": true,
+    "debug.category.assetloading": false,
     "debug.category.casette": false,
-    "debug.category.animation": true,
+    "debug.category.animation": false,
     "debug.category.clickmodule": false,
-    "debug.category.narration": true,
+    "debug.category.narration": false,
     "debug.category.database": false,
     "debug.category.ui": false,
     "debug.category.input": false,
@@ -42,5 +42,5 @@
     "debug.category.citizenstrategy": false,
     "debug.category.citizennavigation": false,
     "debug.category.satnav": false,
-    "debug.category.fbxmodel": true
+    "debug.category.fbxmodel": false
   }

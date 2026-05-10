@@ -91,7 +91,7 @@ public class ConsoleMain
 
         I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
         I.Register<engine.joyce.ModelCache>(() => new engine.joyce.ModelCache());
-
+        I.Register<engine.joyce.AnimationPackRegistry>(() => new engine.joyce.AnimationPackRegistry());
 
         /*
          * Bootstrap game by directly reading game config, setting up

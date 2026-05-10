@@ -53,23 +53,23 @@ public abstract class ANearbyBehavior : ABehavior
     /// Compute a direction-weighted distance score for this behavior.
     /// Lower is better. Combines squared distance with camera-facing penalty.
     /// </summary>
-    private float _computeScore(Vector3 cameraPos, Vector3 cameraForward)
+    private float _computeScore(EmissionContext ectx)
     {
         if (!_mayConverse) return Single.MaxValue;
         if (!EPOI.IsAlive || !EPOI.Has<Transform3ToWorld>()) return Single.MaxValue;
 
         Vector3 npcPos = EPOI.Get<Transform3ToWorld>().Matrix.Translation;
-        Vector3 toNpc = npcPos - cameraPos;
+        Vector3 toNpc = npcPos - ectx.PlayerPos;
         float distSq = toNpc.LengthSquared();
 
         if (distSq < 0.0001f) return 0f;
 
         // If camera forward is not available, fall back to pure distance
-        if (cameraForward.LengthSquared() < 0.001f)
+        if (ectx.CameraForward.LengthSquared() < 0.001f)
             return distSq;
 
         Vector3 toNpcDir = Vector3.Normalize(toNpc);
-        Vector3 camFwd = Vector3.Normalize(cameraForward);
+        Vector3 camFwd = Vector3.Normalize(ectx.CameraForward);
         float dot = Vector3.Dot(camFwd, toNpcDir); // 1=in front, -1=behind
 
         // Multiplier range: 0.5 (directly ahead) to 2.0 (behind)
@@ -96,7 +96,7 @@ public abstract class ANearbyBehavior : ABehavior
 
             foreach (var behavior in _inRangeSet)
             {
-                float score = behavior._computeScore(ectx.CameraPos, ectx.CameraForward);
+                float score = behavior._computeScore(ectx);
                 if (score < bestScore)
                 {
                     bestScore = score;
@@ -143,7 +143,7 @@ public abstract class ANearbyBehavior : ABehavior
             return Single.MaxValue;
         }
 
-        return _computeScore(ectx.CameraPos, ectx.CameraForward);
+        return _computeScore(ectx);
     }
 
 
