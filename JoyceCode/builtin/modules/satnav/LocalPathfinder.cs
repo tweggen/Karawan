@@ -128,8 +128,12 @@ public class LocalPathfinder
                     $"Start pos={Start.Junction.Position}, Target pos={Target.Junction.Position}. " +
                     diagnosis;
 
+                // No path found is a recoverable condition (callers fall back to
+                // straight-line motion). Trace, don't ErrorThrow — the failure
+                // mode is normal when start/target sit on disconnected subgraphs
+                // of the pedestrian network.
                 Trace(_dc, $"PATHFIND FAILURE: {failureMsg}");
-                ErrorThrow<InvalidOperationException>(failureMsg);
+                return null;
             }
 
             Node n = _listNodes.TakeFirst();
@@ -238,7 +242,7 @@ public class LocalPathfinder
     
     public List<NavLane>? Pathfind()
     {
-        if (Start == null || Target == null)
+        if (Start == null || Target == null || Start.IsNil() || Target.IsNil())
         {
             return null;
         }
@@ -257,7 +261,16 @@ public class LocalPathfinder
          * but not including start and end.
          */
         var lastNode = _pathFind();
-        
+
+        // Distinguish "no path found" (null) from "start == target" (empty list).
+        // StreetRouteBuilder's same-junction fallback only makes sense for the
+        // latter; conflating the two would synthesize a fake 2-segment route
+        // through start/end lanes that aren't actually connected.
+        if (lastNode == null)
+        {
+            return null;
+        }
+
         List<NavLane> listLanes = new();
         while (lastNode != null)
         {

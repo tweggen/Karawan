@@ -139,15 +139,19 @@ public class NavClusterContent
             return NavCursor.Nil;
         }
 
-        // Filter to only lanes this transport type can use
+        // Filter to only lanes this transport type can use. If none are nearby,
+        // return Nil rather than falling back to a wrong-type lane — callers
+        // (StreetRouteBuilder, satnav Route) treat Nil as "no path possible
+        // from/to this point" and use a straight-line fallback. Returning a
+        // vehicle cursor for a pedestrian request used to make the pedestrian
+        // A* exhaust its subgraph and log Error spam for every NPC route.
         var typedCandidates = tmpMatchList
             .Where(l => l.AllowedTypes.HasFlag(transportType))
             .ToList();
 
         if (typedCandidates.Count == 0)
         {
-            Trace($"TryCreateCursor: No {transportType} lanes near {v3Position}, falling back to any lane");
-            typedCandidates = tmpMatchList;
+            return NavCursor.Nil;
         }
 
         float distClosest = Single.MaxValue;
