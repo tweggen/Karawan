@@ -71,7 +71,14 @@ public class TaleSpawnOperator : ISpawnOperator
         }
 
         var spatialModel = SpatialModel.ExtractFrom(clusterDesc, navClusterForCluster);
-        _taleManager.PopulateCluster(clusterDesc, spatialModel);
+        _taleManager.PopulateCluster(clusterDesc, spatialModel, _tryGetGameNow());
+    }
+
+
+    private static DateTime? _tryGetGameNow()
+    {
+        try { return I.Get<nogame.modules.daynite.Controller>().GameNow; }
+        catch { return null; }
     }
 
 
@@ -190,22 +197,19 @@ public class TaleSpawnOperator : ISpawnOperator
                 }
 
                 // Get current game time (prefer daynite controller if available)
-                DateTime gameTime = DateTime.Now;
-                try
-                {
-                    var dayNiteController = I.Get<nogame.modules.daynite.Controller>();
-                    if (dayNiteController != null)
-                        gameTime = dayNiteController.GameNow;
-                }
-                catch (Exception)
-                {
-                    // Fallback to DateTime.Now if daynite not available
-                }
+                DateTime gameTime = _tryGetGameNow() ?? DateTime.Now;
 
-                // Re-advance NPC to current game time to refresh transit phases
-                // This ensures transit windows align with actual spawn time (not stale from population)
-                _taleManager.AdvanceNpc(npcId, gameTime);
-                schedule = _taleManager.GetSchedule(npcId); // Refresh schedule after re-advance
+                // The warmup in PopulateCluster anchored schedules at the daynite clock,
+                // so most NPCs are still inside their current storylet's window. Only
+                // advance when the current storylet has actually ended — otherwise we'd
+                // overshoot the transit/activity the warmup set up and snap the NPC to
+                // its destination's discrete entry position. When still in-window,
+                // PositionAt will interpolate or return the right discrete position.
+                if (gameTime >= schedule.CurrentEnd)
+                {
+                    _taleManager.AdvanceNpc(npcId, gameTime);
+                    schedule = _taleManager.GetSchedule(npcId);
+                }
 
                 // Compute spawn position based on NPC's schedule at current game time
                 var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);

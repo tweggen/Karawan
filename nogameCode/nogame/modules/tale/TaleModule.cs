@@ -37,6 +37,13 @@ public class TaleModule : AModule
     public PipeController GetPipeController() => _pipeController;
 
 
+    private DateTime? _tryGetGameNow()
+    {
+        try { return M<modules.daynite.Controller>().GameNow; }
+        catch { return null; }
+    }
+
+
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<modules.daynite.Controller>(),
@@ -103,7 +110,7 @@ public class TaleModule : AModule
             Trace($"TALE: Reachability validation failed: {e.Message}");
         }
 
-        _taleManager.PopulateCluster(clusterDesc, spatialModel);
+        _taleManager.PopulateCluster(clusterDesc, spatialModel, _tryGetGameNow());
 
         Trace($"TALE: Populated cluster '{ev.Code}' (index {clusterDesc.Index}). " +
               $"Spatial: {spatialModel.BuildingCount} buildings, {spatialModel.ShopCount} shops, " +
@@ -397,7 +404,7 @@ public class TaleModule : AModule
                         navClusterForCluster = navMap.TopCluster.Content.Clusters.FirstOrDefault(nc => nc.Id == cd.IdString);
                     }
                     var spatialModel = SpatialModel.ExtractFrom(cd, navClusterForCluster);
-                    _taleManager.PopulateCluster(cd, spatialModel);
+                    _taleManager.PopulateCluster(cd, spatialModel, _tryGetGameNow());
                 }
             }
 

@@ -71,8 +71,12 @@ public class TaleManager
     /// <summary>
     /// Populate a cluster: generate NPC schedules from seed, skipping deviated indices.
     /// Called on ClusterCompletedEvent. SpatialModel is used for location assignment.
+    /// gameNow anchors the warmup at the live game clock so the resulting transit
+    /// windows align with the time TaleSpawnOperator will materialize NPCs at.
+    /// When null, falls back to a deterministic constant (engine-layer callers
+    /// without a daynite clock, e.g. tests).
     /// </summary>
-    public void PopulateCluster(ClusterDesc clusterDesc, SpatialModel spatialModel)
+    public void PopulateCluster(ClusterDesc clusterDesc, SpatialModel spatialModel, DateTime? gameNow = null)
     {
         int clusterIndex = clusterDesc.Index;
 
@@ -111,13 +115,14 @@ public class TaleManager
             _schedules[schedule.NpcId] = schedule;
         }
 
-        // Advance all newly generated schedules through a full day cycle before game start.
-        // This ensures NPCs have traversed all conditions and edge cases in their storylet loops.
-        // Advance from day 1 midnight to day 2 at 22:46 (24+ hours total).
-        // Add per-NPC time offsets (±45 minutes) so NPCs are desynchronized — some mid-travel,
-        // some mid-activity, avoiding all stationary at game start.
-        DateTime baseTime = new DateTime(2000, 1, 1, 0, 0, 0); // day 1, midnight
-        DateTime gameStartTime = baseTime.AddDays(1).AddHours(22).AddMinutes(46); // day 2, 22:46
+        // Warm up newly generated schedules so NPCs are mid-storylet when the player
+        // first encounters them, instead of all parked at their home location. Anchor
+        // the warmup at the live game clock when supplied so the resulting transit
+        // windows align with the time TaleSpawnOperator and PositionAt will use moments
+        // later. The ±45-minute per-NPC offset desynchronizes schedule positions; the
+        // second pass re-aligns everyone so some transits straddle gameStartTime.
+        DateTime gameStartTime = gameNow ?? new DateTime(2000, 1, 1, 0, 0, 0)
+            .AddDays(1).AddHours(22).AddMinutes(46);
 
         foreach (var schedule in schedules)
         {
