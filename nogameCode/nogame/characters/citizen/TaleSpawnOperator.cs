@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
+using builtin.tools;
 using engine;
 using engine.behave;
 using engine.joyce;
@@ -79,6 +81,67 @@ public class TaleSpawnOperator : ISpawnOperator
     {
         try { return I.Get<nogame.modules.daynite.Controller>().GameNow; }
         catch { return null; }
+    }
+
+
+    private static async Task<Vector3?> _tryComputeRoadAwarePosition(
+        NpcSchedule schedule, SpatialModel spatialModel, DateTime gameTime, ClusterDesc cd)
+    {
+        if (spatialModel == null) return null;
+        if ((schedule.TransitEnd - schedule.TransitStart).TotalSeconds <= 0) return null;
+
+        var fromLoc = spatialModel.GetLocation(schedule.TransitFromLocationId);
+        var toLoc = spatialModel.GetLocation(schedule.TransitToLocationId);
+        if (fromLoc == null || toLoc == null) return null;
+
+        var fromPos = fromLoc.EntryPosition != Vector3.Zero ? fromLoc.EntryPosition : fromLoc.Position;
+        var toPos = toLoc.EntryPosition != Vector3.Zero ? toLoc.EntryPosition : toLoc.Position;
+
+        NavMap navMap;
+        try { navMap = I.Get<NavMap>(); }
+        catch { return null; }
+        if (navMap == null) return null;
+
+        var startPod = new PositionDescription { Position = fromPos, ClusterDesc = cd };
+        SegmentRoute route;
+        try
+        {
+            route = await StreetRouteBuilder.BuildAsync(fromPos, toPos, navMap, startPod);
+        }
+        catch { return null; }
+        if (route == null || route.Segments.Count < 2) return null;
+
+        float t = (float)((gameTime - schedule.TransitStart).TotalSeconds
+                          / (schedule.TransitEnd - schedule.TransitStart).TotalSeconds);
+        t = Math.Clamp(t, 0f, 1f);
+
+        return _sampleRouteAt(route, t);
+    }
+
+
+    private static Vector3 _sampleRouteAt(SegmentRoute route, float t)
+    {
+        float total = 0f;
+        for (int i = 1; i < route.Segments.Count; i++)
+            total += Vector3.Distance(route.Segments[i - 1].Position, route.Segments[i].Position);
+
+        if (total <= 0f) return route.Segments[0].Position;
+
+        float target = total * t;
+        float traveled = 0f;
+        for (int i = 1; i < route.Segments.Count; i++)
+        {
+            var a = route.Segments[i - 1].Position;
+            var b = route.Segments[i].Position;
+            float segLen = Vector3.Distance(a, b);
+            if (traveled + segLen >= target)
+            {
+                float u = segLen > 0f ? (target - traveled) / segLen : 0f;
+                return Vector3.Lerp(a, b, u);
+            }
+            traveled += segLen;
+        }
+        return route.Segments[^1].Position;
     }
 
 
@@ -225,6 +288,17 @@ public class TaleSpawnOperator : ISpawnOperator
                 {
                     Trace(_dc, $"NPC {npcId} spawning in TRANSIT (game time {gameTime:HH:mm}, " +
                           $"transit {schedule.TransitStart:HH:mm}-{schedule.TransitEnd:HH:mm})");
+
+                    // Replace the chord-lerp position from PositionAt with a point sampled
+                    // along an actual road path, so mid-transit NPCs appear on a sidewalk
+                    // rather than along a straight line through buildings. Falls back to
+                    // the chord position if pathfinding is unavailable.
+                    var roadPos = await _tryComputeRoadAwarePosition(schedule, spatialModel, gameTime, cd);
+                    if (roadPos.HasValue)
+                    {
+                        spawnPosition = roadPos.Value;
+                        Trace(_dc, $"NPC {npcId} placed on road path at {spawnPosition}");
+                    }
                 }
                 else if (schedule.IsInTransit)
                 {
