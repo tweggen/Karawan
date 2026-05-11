@@ -81,7 +81,7 @@ No test suite exists in this repository.
 
 **Build notes:**
 - The `nogame/generated/` directory is auto-created by an `EnsureGeneratedDirectory` MSBuild target before asset compilation. If you see build errors about missing generated files, verify this target runs first.
-- Build pipeline order in `nogame.csproj`: `EnsureGeneratedDirectory` → `CompileAssetsHost` (Chushi) → `GatherTexturesHost` (texture packer) → `GatherResources` (resource compiler) → `Compile`
+- Build pipeline order in `nogame.csproj`: `EnsureGeneratedDirectory` → `GatherTexturesHost` (texture packer) → `CompileAssetsHost` (Chushi) → `GatherResources` (resource compiler) → `Compile`. Chushi reads the packed atlas JSON files (`atlas-*.json`) during its texture-loading pass, so the texture packer must run first; this is enforced by `CompileAssetsHost`'s `DependsOnTargets="GatherTexturesHost"`. Without it, a fresh clone fails because Chushi has no atlas to open.
 
 ## Architecture
 

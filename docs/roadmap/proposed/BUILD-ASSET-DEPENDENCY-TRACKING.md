@@ -5,15 +5,18 @@
 The `nogame.csproj` build chains three custom MSBuild targets before `Compile`:
 
 ```
-EnsureGeneratedDirectory → CompileAssetsHost (Chushi)
-                        → GatherTexturesHost (texture packer)
-                        → GatherResources (resource compiler)
+EnsureGeneratedDirectory → GatherTexturesHost  (texture packer)
+                        → CompileAssetsHost   (Chushi)
+                        → GatherResources     (resource compiler)
                         → Compile
 ```
 
-`CompileAssetsHost` invokes Chushi to bake `ac-{hash}` animation collections and
-`sc-{hash}` scenarios into `nogame/generated/`. `GatherTexturesHost` runs the
-texture packer.
+`GatherTexturesHost` runs the texture packer, producing `atlas-*.json` /
+`atlas-*.png` in `nogame/generated/`. `CompileAssetsHost` then invokes Chushi
+to bake `ac-{hash}` animation collections and `sc-{hash}` scenarios into the
+same directory; Chushi opens the packed atlases during its texture-loading
+pass, so the texture-packer ordering is enforced by
+`DependsOnTargets="GatherTexturesHost"` on `CompileAssetsHost`.
 
 Two recent issues exposed weakness in this pipeline:
 

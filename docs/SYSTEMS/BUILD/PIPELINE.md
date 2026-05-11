@@ -1,7 +1,7 @@
 # Build Pipeline & Asset Manifest
 
 **Status**: Reference  
-**Last Updated**: 2026-05-05
+**Last Updated**: 2026-05-11
 
 How the Karawan/Joyce build turns `models/*.json` and friends into shippable assets, how those assets are registered for runtime lookup, and the failure modes that aren't obvious from reading the code.
 
@@ -14,9 +14,9 @@ Four MSBuild targets run, strictly sequenced:
 ```
 EnsureGeneratedDirectory
         ↓
-CompileAssetsHost   (Chushi)        — bakes animation collections (ac-{hash}) and TALE scenarios (sc-{hash})
-        ↓
 GatherTexturesHost  (Cmdline)       — packs texture atlases (atlas-*.json + atlas-*.png)
+        ↓
+CompileAssetsHost   (Chushi)        — bakes animation collections (ac-{hash}) and TALE scenarios (sc-{hash})
         ↓
 GatherResources     (Cmdline)       — emits AndroidResources.xml + InnoResources.iss
         ↓
@@ -24,6 +24,8 @@ Compile             (csc)
 ```
 
 All three pre-`Compile` targets write into `nogame/generated/`. **That directory is NOT tracked in git** — every dev builds their own copy. Stale `nogame/generated/` is the most common cause of "I added a file but the engine can't find it" symptoms.
+
+The ordering between `GatherTexturesHost` and `CompileAssetsHost` is **load-bearing** and enforced via `DependsOnTargets="GatherTexturesHost"` on `CompileAssetsHost`. Chushi opens the packed `atlas-*.json` files during its texture-loading pass (`AAssetImplementation._whenLoadedTextures`), so the texture packer must finish first. Without the explicit dependency, MSBuild runs same-`BeforeTargets` targets in declaration order, and a fresh clone fails (no atlas present on first build); an existing clone happens to succeed because the previous build's atlases are still on disk.
 
 ---
 
