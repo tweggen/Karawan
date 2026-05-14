@@ -448,6 +448,20 @@ public class TaleModule : AModule
             ["groupId"] = npc.GroupId,
         };
 
+        // Activity timing
+        jo["currentStartTicks"] = npc.CurrentStart.Ticks;
+        jo["currentEndTicks"] = npc.CurrentEnd.Ticks;
+
+        // Transit state (critical for resuming walks on load)
+        jo["isInTransit"] = npc.IsInTransit;
+        if (npc.IsInTransit)
+        {
+            jo["transitFromLocationId"] = npc.TransitFromLocationId;
+            jo["transitToLocationId"] = npc.TransitToLocationId;
+            jo["transitStartTicks"] = npc.TransitStart.Ticks;
+            jo["transitEndTicks"] = npc.TransitEnd.Ticks;
+        }
+
         // Home/workplace positions
         jo["homePositionX"] = npc.HomePosition.X;
         jo["homePositionY"] = npc.HomePosition.Y;
@@ -515,6 +529,20 @@ public class TaleModule : AModule
             // aged out by the dematerialization decay path on first traversal.
             LastConversationTime = DateTime.UtcNow,
         };
+
+        // Activity timing
+        npc.CurrentStart = new DateTime(jo["currentStartTicks"]?.GetValue<long>() ?? 0);
+        npc.CurrentEnd = new DateTime(jo["currentEndTicks"]?.GetValue<long>() ?? 0);
+
+        // Transit state (restore for walking NPCs)
+        npc.IsInTransit = jo["isInTransit"]?.GetValue<bool>() ?? false;
+        if (npc.IsInTransit)
+        {
+            npc.TransitFromLocationId = jo["transitFromLocationId"]?.GetValue<int>() ?? 0;
+            npc.TransitToLocationId = jo["transitToLocationId"]?.GetValue<int>() ?? 0;
+            npc.TransitStart = new DateTime(jo["transitStartTicks"]?.GetValue<long>() ?? 0);
+            npc.TransitEnd = new DateTime(jo["transitEndTicks"]?.GetValue<long>() ?? 0);
+        }
 
         // Positions
         npc.HomePosition = new System.Numerics.Vector3(
