@@ -44,16 +44,6 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
 
             ushort frameno = animationState.ModelAnimationFrame;
             ushort nframes = (ushort) modelAnimation.NFrames;
-
-            // Defensive: clamp frameno to [0, nframes-1] in case animation changed between
-            // reads (race condition). This prevents out-of-range access if another thread
-            // switched animations between reading frameno and nframes.
-            if (nframes > 0 && frameno >= nframes)
-            {
-                frameno = (ushort)(frameno % nframes);
-                animationState.ModelAnimationFrame = frameno;
-            }
-
             if ((animationState.Flags & AnimationState.IsOneShot) == 0)
             {
                 frameno += advanceNow;

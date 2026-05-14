@@ -18,6 +18,14 @@ public class AnimationBatch
     public AnimationState? AnimationState;
 
     /**
+     * Snapshot of ModelAnimation captured at batch creation time.
+     * Used during rendering to avoid reading from potentially-stale live reference.
+     * Prevents race conditions where the logical thread changes the animation
+     * between batch creation and rendering.
+     */
+    public engine.joyce.ModelAnimation? SnapshotModelAnimation;
+
+    /**
      * The animation frame numbers of the models to render.
      */
     public readonly List<uint> FrameNos = new();

@@ -218,29 +218,19 @@ public class CameraOutput
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
                         Span<uint> spanFramenos = meshItem.Value.Framenos.ToArray();
 #endif
-                        AnimationState? animState = animationItem.AnimationState;
-                        uint frameno;
-                        ModelAnimation? modelAnimation;
-                        if (animState != null && animState.ModelAnimation != null)
+                        // Use snapshotted values to avoid race conditions with the logical thread
+                        // potentially changing ModelAnimation between batch creation and rendering
+                        ModelAnimation? modelAnimation = animationItem.SnapshotModelAnimation;
+                        uint frameno = 0;
+
+                        if (modelAnimation != null && animationItem.FrameNos.Count > 0)
                         {
-                            frameno = animState.ModelAnimationFrame;
-                            modelAnimation = animState.ModelAnimation;
-                            // TXWTODO: Add bounds check for AllBakedFrames
-                            #if false
-                            uint availframes = (uint)animState.ModelAnimation.BakedFrames.Count();
-                            if (frameno >= availframes)
-                            {
-                                Error($"Frame number out of bounds: {frameno} > {availframes}");
-                                frameno = 0;
-                            }
-                            #endif
+                            // Use the first snapshotted frame number from the batch
+                            // (all instances in this batch share the same animation)
+                            frameno = animationItem.FrameNos[0];
                         }
-                        else
-                        {
-                            frameno = 0;
-                            modelAnimation = null;
-                        }
-                        threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, animationItem.AAnimationsEntry, 
+
+                        threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, animationItem.AAnimationsEntry,
                             spanMatrices, spanFramenos, nMatrices, modelAnimation, frameno);
                         _frameStats.NTriangles += nMatrices * jMesh.Indices.Count / 3;
                     }

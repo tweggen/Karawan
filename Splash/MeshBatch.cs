@@ -118,7 +118,8 @@ public class MeshBatch
         {
             animationBatch = new AnimationBatch(aAnimationsEntry)
             {
-                AnimationState = animState 
+                AnimationState = animState,
+                SnapshotModelAnimation = animState?.ModelAnimation
             };
             AnimationBatches.Add(key, animationBatch);
             frameStats.NAnimations++;
