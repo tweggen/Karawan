@@ -28,6 +28,7 @@ public class TaleConversationBehavior : ANearbyBehavior
     private int _npcId;
     private bool _animationSet = false;
     private TaleEntityStrategy _strategy;
+    private ConversationTimeout _conversationTimeout;
 
     public CharacterModelDescription CharacterModelDescription;
 
@@ -57,6 +58,22 @@ public class TaleConversationBehavior : ANearbyBehavior
         bool mayConverse = I.Get<Narration>().MayConverse();
         Trace(_dc, $"NPC {_npcId} InRange: mayConverse={mayConverse}");
         base.InRange(engine0, entity);
+    }
+
+    public override void OutOfRange(in engine.Engine engine0, in Entity entity)
+    {
+        if (_conversationTimeout != null)
+        {
+            Trace(_dc, $"NPC {_npcId} player walked away, ending conversation");
+            _conversationTimeout.CancelNow();
+        }
+        base.OutOfRange(engine0, entity);
+    }
+
+    public override void OnDetach(in Entity entity)
+    {
+        _disposeConversationTimeout();
+        base.OnDetach(entity);
     }
 
     public override void OnAttach(in engine.Engine engine0, in Entity entity0)
@@ -120,8 +137,27 @@ public class TaleConversationBehavior : ANearbyBehavior
         if (narration != null && !narration.MayConverse())
         {
             Trace(_dc, $"NPC {_npcId} conversation cancelled ({reason})");
-            narration.CancelConversation();
+            if (_conversationTimeout != null)
+            {
+                _conversationTimeout.CancelNow();
+            }
+            else
+            {
+                narration.CancelConversation();
+            }
         }
+    }
+
+    private void _onConversationEnded()
+    {
+        _conversationTimeout = null;
+    }
+
+    private void _disposeConversationTimeout()
+    {
+        var w = _conversationTimeout;
+        _conversationTimeout = null;
+        w?.Dispose();
     }
 
     protected override void OnAction(Event ev)
@@ -167,6 +203,10 @@ public class TaleConversationBehavior : ANearbyBehavior
             string scriptName = TaleNarrationBindings.ResolveScript(currentStorylet, schedule.Role);
 
             Trace(_dc, $"NPC {_npcId} ({schedule.Role}) triggered conversation, using script '{scriptName}'");
+
+            // Arm timeout watcher BEFORE triggering so we catch the first NodeReached.
+            _disposeConversationTimeout();
+            _conversationTimeout = new ConversationTimeout(_engine, scriptName, _onConversationEnded);
 
             // Trigger conversation in narration system
             _narration.TriggerConversation(scriptName, _npcId.ToString());

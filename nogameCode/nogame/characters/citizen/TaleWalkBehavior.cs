@@ -31,6 +31,7 @@ public class TaleWalkBehavior : ANearbyBehavior
     private float _savedSpeed;
     private float _previousSpeed = float.MinValue;
     private Quaternion _prevRotation = Quaternion.Identity;
+    private ConversationTimeout _conversationTimeout;
 
     public CharacterModelDescription CharacterModelDescription;
     public SegmentNavigator Navigator;
@@ -63,7 +64,7 @@ public class TaleWalkBehavior : ANearbyBehavior
 
     public override void OnDetach(in Entity entity)
     {
-        _unsubscribeScriptEnded();
+        _disposeConversationTimeout();
         base.OnDetach(entity);
     }
 
@@ -79,6 +80,16 @@ public class TaleWalkBehavior : ANearbyBehavior
         }
 
         base.InRange(engine0, entity);
+    }
+
+    public override void OutOfRange(in Engine engine0, in Entity entity)
+    {
+        if (_isPaused && _conversationTimeout != null)
+        {
+            Trace(_dc, $"NPC {_npcId} player walked away, ending conversation");
+            _conversationTimeout.CancelNow();
+        }
+        base.OutOfRange(engine0, entity);
     }
 
     public override void Behave(in Entity entity, float dt)
@@ -166,12 +177,12 @@ public class TaleWalkBehavior : ANearbyBehavior
             var currentStorylet = taleManager.GetCurrentStorylet(_npcId);
             if (currentStorylet == null) return;
 
-            // Stop walking and subscribe to script-ended event
-            _pauseWalking();
-
             // Inject NPC props and resolve script
             TaleNarrationBindings.InjectNpcProps(schedule);
             string scriptName = TaleNarrationBindings.ResolveScript(currentStorylet, schedule.Role);
+
+            // Stop walking; arm timeout watcher BEFORE triggering so we catch the first NodeReached.
+            _pauseWalking(scriptName);
 
             Trace(_dc, $"NPC {_npcId} paused for conversation, script '{scriptName}'");
             narration.TriggerConversation(scriptName, _npcId.ToString());
@@ -185,10 +196,12 @@ public class TaleWalkBehavior : ANearbyBehavior
     }
 
     /// <summary>
-    /// Called when the narration script ends. This is the signal to resume walking.
+    /// Called when the watched conversation terminates (player advanced through,
+    /// player walked away, terminal-node timeout, or external cancel).
     /// </summary>
-    private void _onScriptEnded(Event ev)
+    private void _onConversationEnded()
     {
+        _conversationTimeout = null;
         if (!_isPaused) return;
         Trace(_dc, $"NPC {_npcId} conversation ended, resuming walk");
         _resumeWalking();
@@ -200,34 +213,39 @@ public class TaleWalkBehavior : ANearbyBehavior
     private void _cancelConversation(string reason)
     {
         Trace(_dc, $"NPC {_npcId} conversation cancelled ({reason})");
-        I.Get<Narration>().CancelConversation();
-        // _onScriptEnded will fire from the cancel → resumes walking
+        if (_conversationTimeout != null)
+        {
+            _conversationTimeout.CancelNow();
+        }
+        else
+        {
+            I.Get<Narration>().CancelConversation();
+        }
     }
 
-    private void _pauseWalking()
+    private void _pauseWalking(string scriptName)
     {
         _savedSpeed = Navigator.Speed;
         Navigator.Speed = 0;
         _isPaused = true;
         _previousSpeed = float.MinValue; // force animation update to idle
 
-        // Subscribe to script-ended event to know when to resume
-        I.Get<SubscriptionManager>().Subscribe(ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
+        _disposeConversationTimeout();
+        _conversationTimeout = new ConversationTimeout(_engine, scriptName, _onConversationEnded);
     }
 
     private void _resumeWalking()
     {
-        _unsubscribeScriptEnded();
+        _disposeConversationTimeout();
         Navigator.Speed = _savedSpeed;
         _isPaused = false;
         _previousSpeed = float.MinValue; // force animation update back to walk
     }
 
-    private void _unsubscribeScriptEnded()
+    private void _disposeConversationTimeout()
     {
-        if (_isPaused)
-        {
-            I.Get<SubscriptionManager>().Unsubscribe(ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
-        }
+        var w = _conversationTimeout;
+        _conversationTimeout = null;
+        w?.Dispose();
     }
 }

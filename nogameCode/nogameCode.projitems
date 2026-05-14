@@ -146,6 +146,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\PlaceDebrisOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapFragmentProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\tools\ANearbyBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\tools\ConversationTimeout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\world\DropCoinModule.cs" />
   </ItemGroup>
   <ItemGroup>
