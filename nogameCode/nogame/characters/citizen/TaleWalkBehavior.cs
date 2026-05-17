@@ -60,12 +60,23 @@ public class TaleWalkBehavior : ANearbyBehavior
             ref var cBody = ref entity0.Get<engine.physics.components.Body>();
             cBody.PhysicsObject?.MakeKinematic(ref cBody.Reference);
         }
+
+        I.Get<SubscriptionManager>().Subscribe(
+            EntityStrategy.BumpEventPath(entity0), _onBumpEvent);
     }
 
     public override void OnDetach(in Entity entity)
     {
+        I.Get<SubscriptionManager>().Unsubscribe(
+            EntityStrategy.BumpEventPath(entity), _onBumpEvent);
         _disposeConversationTimeout();
         base.OnDetach(entity);
+    }
+
+    private void _onBumpEvent(Event ev)
+    {
+        if (ev is not BumpEvent be) return;
+        Navigator?.ApplyLateralBump(be.Direction, 0.4f, 0.4f);
     }
 
     public override void InRange(in Engine engine0, in Entity entity)
@@ -135,24 +146,16 @@ public class TaleWalkBehavior : ANearbyBehavior
     public override void OnCollision(ContactEvent cev)
     {
         base.OnCollision(cev);
-        var me = cev.ContactInfo.PropertiesA;
         var other = cev.ContactInfo.PropertiesB;
 
-        if (other != null)
+        if (_isPaused && other != null)
         {
-            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyWeapon))
-            {
-                if (_isPaused) _cancelConversation("hit");
-                I.Get<engine.news.EventQueue>().Push(
-                    new Event(EntityStrategy.HitEventPath(me.Entity), ""));
-            }
-            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyVehicle))
-            {
-                if (_isPaused) _cancelConversation("crash");
-                I.Get<engine.news.EventQueue>().Push(
-                    new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
-            }
+            if (CitizenCollisionRouter.IsWeapon(other)) _cancelConversation("hit");
+            else if (CitizenCollisionRouter.IsVehicle(other)) _cancelConversation("crash");
         }
+
+        CitizenCollisionRouter.Dispatch(
+            cev.ContactInfo.PropertiesA, other, cev.ContactInfo.ContactNormal);
     }
 
     protected override void OnAction(Event ev)

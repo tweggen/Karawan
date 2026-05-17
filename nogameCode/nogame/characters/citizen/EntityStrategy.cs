@@ -32,9 +32,17 @@ public class EntityStrategy : AOneOfStrategy
      */
     static public string CrashEventPath(in DefaultEcs.Entity e) =>
         $"@{e.ToString()}/nogame.characters.citizen.onCrash";
-    
+
     static public string HitEventPath(in DefaultEcs.Entity e) =>
         $"@{e.ToString()}/nogame.characters.citizen.onHit";
+
+    /**
+     * Soft push: the player's body contacted the NPC. Subscribed by
+     * walking behaviors to apply a brief lateral offset to their navigator.
+     * Does not trigger a strategy transition.
+     */
+    static public string BumpEventPath(in DefaultEcs.Entity e) =>
+        $"@{e.ToString()}/nogame.characters.citizen.onBump";
 
 
     /**

@@ -38,22 +38,10 @@ public class IdleBehavior : ABehavior
     public override void OnCollision(ContactEvent cev)
     {
         base.OnCollision(cev);
-        var me = cev.ContactInfo.PropertiesA;
-        var other = cev.ContactInfo.PropertiesB;
-
-        if (other != null)
-        {
-            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyWeapon))
-            {
-                I.Get<engine.news.EventQueue>().Push(
-                    new engine.news.Event(EntityStrategy.HitEventPath(me.Entity), ""));
-            }
-            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyVehicle))
-            {
-                I.Get<engine.news.EventQueue>().Push(
-                    new engine.news.Event(EntityStrategy.CrashEventPath(me.Entity), ""));
-            }
-        }
+        CitizenCollisionRouter.Dispatch(
+            cev.ContactInfo.PropertiesA,
+            cev.ContactInfo.PropertiesB,
+            cev.ContactInfo.ContactNormal);
     }
 
 

@@ -1,11 +1,37 @@
 # Plan C: Push-Aside Reaction on Player Body Contact
 
-**Status:** Proposed
+**Status:** ✅ Done (2026-05-17) — Phases 1 + 2 landed in one commit. Phase 3 (tuning) deferred until manual in-game review.
 **Created:** 2026-05-17
 **Complexity:** Medium (new event type + handler in 5 behaviors + light strategy work)
 **Risk:** Medium (touches all citizen `OnCollision` sites; navigator deviation needs tuning)
-**Depends on:** Plan A (`PLAYER-NPC-COLLISION-A-LAYER-FIX.md`) merged first.
-**Related:** Plan B (`PLAYER-NPC-COLLISION-B-HAND-ARM-TOGGLE.md`)
+**Depends on:** Plan A (`PLAYER-NPC-COLLISION-A-LAYER-FIX.md`, done)
+**Related:** Plan B (`PLAYER-NPC-COLLISION-B-HAND-ARM-TOGGLE.md`, done)
+
+## Implementation Note (2026-05-17)
+
+Implemented largely as designed. Two deviations:
+
+1. **Bump handler lives at the behavior level, not the strategy level.** TaleEntityStrategy has no central navigator (each travel sequence creates a fresh one inside `GoToStrategyPart`), so reaching the active navigator from a strategy-level event handler would have required new component plumbing. Instead, the two walking behaviors that *own* their navigator (`WalkBehavior` and `TaleWalkBehavior`) subscribe to `BumpEventPath` directly in `OnAttach` / unsubscribe in `OnDetach`, and call `Navigator.ApplyLateralBump`. Idle / conversation / recover behaviors never subscribe — bumping them is a no-op, the NPC blocks the player. Consistent with the original plan's stance that stationary NPCs are acceptable as roadblocks.
+
+2. **Router exposes classification helpers, not just a single Dispatch.** TALE sites have custom `_cancelConversation` side effects per flag. Rather than passing pre-hook callbacks into `Dispatch`, the router exposes `IsWeapon(other)` / `IsVehicle(other)` / `IsPlayerCharacter(other)` classifiers. TALE sites run their side effect using these, then call `Dispatch` for the event push. Citizen sites with no side effects call `Dispatch` directly.
+
+`SegmentNavigator.ApplyLateralBump(direction, magnitude=0.4 m, durationSeconds=0.4 s)` applies a transient world-space offset. The offset decays linearly to zero over the duration. Successive bumps refresh the timer and add to the running offset (capped at 0.6 m total magnitude). Y is zeroed and the direction is renormalized inside the navigator, so callers can pass the raw contact normal.
+
+The bump direction passed in is `cev.ContactInfo.ContactNormal`. If manual testing shows the NPC moves *toward* the player rather than away, flip the sign at the dispatch site (one-line tuning, Phase 3).
+
+Phase 3 deferred — tuning (magnitude, duration, decay shape, speed scaling, sign of contact normal) should follow manual in-game observation.
+
+Files actually touched:
+- New: `nogameCode/nogame/characters/citizen/CitizenCollisionRouter.cs`
+- New: `nogameCode/nogame/characters/citizen/BumpEvent.cs`
+- Modified: `nogameCode/nogame/characters/citizen/EntityStrategy.cs` — added `BumpEventPath`.
+- Modified: 5 OnCollision sites (`WalkBehavior`, `IdleBehavior`, `RecoverBehavior`, `TaleWalkBehavior`, `TaleConversationBehavior`).
+- Modified: `nogameCode/nogame/characters/citizen/WalkBehavior.cs` + `TaleWalkBehavior.cs` — subscribe `_onBumpEvent` in OnAttach, unsubscribe in OnDetach, forward to navigator.
+- Modified: `JoyceCode/builtin/tools/SegmentNavigator.cs` — `ApplyLateralBump` + decay tick in `NavigatorBehave`.
+- Modified: `nogameCode/nogameCode.projitems` — register the two new files.
+- Modified: `CLAUDE.md` — added "Citizen Collision Routing" subsection.
+
+Desktop build: 0 errors. JoyceCode.Tests: 46/46 passing. Manual in-game verification still pending.
 
 ---
 

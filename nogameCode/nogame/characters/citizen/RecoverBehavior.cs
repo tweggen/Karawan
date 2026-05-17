@@ -22,28 +22,10 @@ public class RecoverBehavior : ABehavior
     public override void OnCollision(ContactEvent cev)
     {
         base.OnCollision(cev);
-        
-        /*
-         * Notify the owning strategy about the collision.
-         */
-        var me = cev.ContactInfo.PropertiesA;
-        var other = cev.ContactInfo.PropertiesB;
-        /*
-         * Only notify if collided with the player or anything that collides which each
-         * other or the player (0x07) or is hit by the player (0x0010)
-         */
-        if (other != null)
-        {
-            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyWeapon))
-            {
-                I.Get<EventQueue>().Push(new Event(EntityStrategy.HitEventPath(me.Entity), ""));
-            }
-
-            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyVehicle))
-            {
-                I.Get<EventQueue>().Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
-            }
-        }
+        CitizenCollisionRouter.Dispatch(
+            cev.ContactInfo.PropertiesA,
+            cev.ContactInfo.PropertiesB,
+            cev.ContactInfo.ContactNormal);
     }
     
     

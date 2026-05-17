@@ -168,6 +168,14 @@ Key classes:
 - Calls `ISpawnOperator.SpawnCharacterAt(Vector3)` (default interface method)
 - Citizen implementation finds cluster/quarter/streetpoint, builds `PositionDescription`, creates entity with full Walk→Flee→Recover strategy
 
+### Citizen Collision Routing
+NPC `OnCollision` is routed through `nogame.characters.citizen.CitizenCollisionRouter` — a single static dispatcher used by `WalkBehavior`, `IdleBehavior`, `RecoverBehavior`, `TaleWalkBehavior`, `TaleConversationBehavior`. The router classifies the contact by `SolidLayerMask` and publishes one of three events on the NPC entity's event path:
+- `EntityStrategy.HitEventPath` — `AnyWeapon` contact (player melee or NPC weapon) → `FleeStrategy`.
+- `EntityStrategy.CrashEventPath` — `AnyVehicle` contact → `RecoverStrategy` (death animation).
+- `EntityStrategy.BumpEventPath` — pure `PlayerCharacter` body contact (no weapon, no vehicle) → walking behaviors apply a transient lateral offset on `SegmentNavigator.ApplyLateralBump` (0.4 m, 400 ms linear decay, capped at 0.6 m accumulated) so the NPC steps out of the player's way without flee or collapse. Only the two walking behaviors subscribe to bump; idle/conversation/recover NPCs simply block the player.
+
+TALE sites (`TaleWalkBehavior`, `TaleConversationBehavior`) keep their custom conversation-cancel side effect inline before calling `Dispatch`, using the router's `IsWeapon` / `IsVehicle` helpers for the classification.
+
 ### Aihao Editor IDE
 
 Aihao is an Avalonia 11-based game editor built with **CommunityToolkit.Mvvm** and **Dock.Avalonia** for a dockable panel layout.

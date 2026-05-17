@@ -15,8 +15,16 @@ namespace nogame.characters.citizen;
 public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
 {
     public required CharacterModelDescription CharacterModelDescription;
-    
+
     public float _previousSpeed = Single.MinValue;
+
+    private DefaultEcs.Entity _eEntity;
+
+    private void _onBumpEvent(Event ev)
+    {
+        if (ev is not BumpEvent be) return;
+        (Navigator as SegmentNavigator)?.ApplyLateralBump(be.Direction, 0.4f, 0.4f);
+    }
 
     /**
      * Verify that the animation of the character matches the behavior.
@@ -65,25 +73,10 @@ public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
     public override void OnCollision(ContactEvent cev)
     {
         base.OnCollision(cev);
-        
-        /*
-         * Notify the owning strategy about the collision.
-         */
-        var me = cev.ContactInfo.PropertiesA;
-        var other = cev.ContactInfo.PropertiesB;
-
-        if (other != null)
-        {
-            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyWeapon))
-            {
-                I.Get<EventQueue>().Push(new Event(EntityStrategy.HitEventPath(me.Entity), ""));
-            }
-
-            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyVehicle))
-            {
-                I.Get<EventQueue>().Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
-            }
-        }
+        CitizenCollisionRouter.Dispatch(
+            cev.ContactInfo.PropertiesA,
+            cev.ContactInfo.PropertiesB,
+            cev.ContactInfo.ContactNormal);
     }
 
 
@@ -102,11 +95,27 @@ public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
          * When attaching, we need to invalid the previously cached values.
          */
         _previousSpeed = Single.MinValue;
-        
+
         /*
          * Make me a dynamic object to respond to the collision.
          */
         ref engine.physics.components.Body cCitizenBody = ref entity0.Get<engine.physics.components.Body>();
         cCitizenBody.PhysicsObject?.MakeKinematic(ref cCitizenBody.Reference);
+
+        _eEntity = entity0;
+        I.Get<SubscriptionManager>().Subscribe(
+            EntityStrategy.BumpEventPath(_eEntity), _onBumpEvent);
+    }
+
+
+    public override void OnDetach(in Entity entity)
+    {
+        if (_eEntity != default)
+        {
+            I.Get<SubscriptionManager>().Unsubscribe(
+                EntityStrategy.BumpEventPath(_eEntity), _onBumpEvent);
+            _eEntity = default;
+        }
+        base.OnDetach(entity);
     }
 }

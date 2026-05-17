@@ -99,6 +99,56 @@ public class SegmentNavigator : INavigator
     }
 
 
+    /*
+     * Transient lateral push applied to the computed segment position. Used
+     * to make NPCs step out of the player's way without leaving the route.
+     * Decays linearly to zero over its lifetime.
+     */
+    private Vector3 _lateralOffsetDirection = Vector3.Zero;
+    private float _lateralOffsetMagnitude = 0f;
+    private float _lateralOffsetRemainingSeconds = 0f;
+    private float _lateralOffsetTotalSeconds = 0f;
+    private const float _maxLateralOffsetMagnitude = 0.6f;
+
+
+    /**
+     * Apply a transient lateral offset to the navigator. New bumps refresh
+     * the timer and add to the current offset; total magnitude is capped at
+     * 0.6 m so the NPC cannot be pushed arbitrarily far off-route.
+     */
+    public void ApplyLateralBump(Vector3 direction, float magnitude, float durationSeconds)
+    {
+        if (durationSeconds <= 0f) return;
+        direction.Y = 0f;
+        float dirLen = direction.Length();
+        if (dirLen < 0.0001f) return;
+        direction /= dirLen;
+
+        lock (_lo)
+        {
+            float remainingFactor = _lateralOffsetTotalSeconds > 0f
+                ? Single.Max(0f, _lateralOffsetRemainingSeconds / _lateralOffsetTotalSeconds)
+                : 0f;
+            Vector3 carryover = _lateralOffsetDirection * _lateralOffsetMagnitude * remainingFactor;
+            Vector3 combined = carryover + direction * magnitude;
+            float combinedLen = combined.Length();
+            if (combinedLen > _maxLateralOffsetMagnitude)
+            {
+                combined = combined / combinedLen * _maxLateralOffsetMagnitude;
+                combinedLen = _maxLateralOffsetMagnitude;
+            }
+
+            if (combinedLen > 0.0001f)
+            {
+                _lateralOffsetDirection = combined / combinedLen;
+                _lateralOffsetMagnitude = combinedLen;
+            }
+            _lateralOffsetTotalSeconds = durationSeconds;
+            _lateralOffsetRemainingSeconds = durationSeconds;
+        }
+    }
+
+
     public void NavigatorGetTransformation(out System.Numerics.Vector3 position, out Quaternion orientation)
     {
         position = _vPosition;
@@ -252,9 +302,25 @@ public class SegmentNavigator : INavigator
         _vPosition = _a.Position + (_b.Position - _a.Position) * relativePos;
         _qOrientation = Quaternion.CreateFromRotationMatrix(
             Matrix4x4.CreateWorld(
-                Vector3.Zero, 
-                _vuForward, 
+                Vector3.Zero,
+                _vuForward,
                 new Vector3(0f, 1f, 0f)));
+
+        /*
+         * Apply transient lateral offset, decaying linearly to zero.
+         */
+        lock (_lo)
+        {
+            if (_lateralOffsetRemainingSeconds > 0f)
+            {
+                _lateralOffsetRemainingSeconds = Single.Max(
+                    0f, _lateralOffsetRemainingSeconds - dt);
+                float factor = _lateralOffsetTotalSeconds > 0f
+                    ? _lateralOffsetRemainingSeconds / _lateralOffsetTotalSeconds
+                    : 0f;
+                _vPosition += _lateralOffsetDirection * _lateralOffsetMagnitude * factor;
+            }
+        }
         
         /*
          * Update semantic position

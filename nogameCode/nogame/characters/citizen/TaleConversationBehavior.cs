@@ -111,24 +111,16 @@ public class TaleConversationBehavior : ANearbyBehavior
     public override void OnCollision(ContactEvent cev)
     {
         base.OnCollision(cev);
-        var me = cev.ContactInfo.PropertiesA;
         var other = cev.ContactInfo.PropertiesB;
 
         if (other != null)
         {
-            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyWeapon))
-            {
-                _cancelIfConversing("hit");
-                I.Get<engine.news.EventQueue>().Push(
-                    new engine.news.Event(EntityStrategy.HitEventPath(me.Entity), ""));
-            }
-            if (0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyVehicle))
-            {
-                _cancelIfConversing("crash");
-                I.Get<engine.news.EventQueue>().Push(
-                    new engine.news.Event(EntityStrategy.CrashEventPath(me.Entity), ""));
-            }
+            if (CitizenCollisionRouter.IsWeapon(other)) _cancelIfConversing("hit");
+            else if (CitizenCollisionRouter.IsVehicle(other)) _cancelIfConversing("crash");
         }
+
+        CitizenCollisionRouter.Dispatch(
+            cev.ContactInfo.PropertiesA, other, cev.ContactInfo.ContactNormal);
     }
 
     private void _cancelIfConversing(string reason)
