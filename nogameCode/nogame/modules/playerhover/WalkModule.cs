@@ -123,7 +123,7 @@ public class WalkModule : AModule, IInputPart
                         | CollisionProperties.CollisionFlags.IsDetectable
                         | CollisionProperties.CollisionFlags.TriggersCallbacks,
                     Name = PhysicsName,
-                    SolidLayerMask = CollisionProperties.Layers.Player,
+                    SolidLayerMask = CollisionProperties.Layers.PlayerCharacter,
                     SensitiveLayerMask = CollisionProperties.Layers.PlayerSensitive,
                 },
                 InstantiateModelParams = new()
