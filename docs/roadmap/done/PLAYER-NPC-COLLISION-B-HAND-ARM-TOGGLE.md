@@ -1,10 +1,24 @@
 # Plan B: Arm Right-Hand Collider Only During Punch
 
-**Status:** Proposed
+**Status:** ✅ Done (2026-05-17)
 **Created:** 2026-05-17
 **Complexity:** Small (single file change + plumbing)
 **Risk:** Low–Medium (timing of layer toggle relative to swing arc)
-**Related:** Plan A (`PLAYER-NPC-COLLISION-A-LAYER-FIX.md`), Plan C (`PLAYER-NPC-COLLISION-C-PUSH-ASIDE.md`)
+**Related:** Plan A (`PLAYER-NPC-COLLISION-A-LAYER-FIX.md`, done), Plan C (`PLAYER-NPC-COLLISION-C-PUSH-ASIDE.md`, proposed)
+
+## Implementation Note (2026-05-17)
+
+Implemented with one deviation from the plan as drafted. `BehaviorManager._onComponentAdded` (`JoyceCode/engine/behave/BehaviorManager.cs:70`) calls `IBehavior.OnAttach` synchronously when the Behavior component is added — and inside `EntityCreator._createLogical`, the Behavior is set (line 226) *before* the right-hand block runs (line 237+). So `WalkController` is constructed before the hand exists. Plumbing the hand via `WalkController` constructor / init-only property does not work.
+
+**Resolution:** the hand is plumbed via a settable-property forwarder. `WalkBehavior.RightHandEntity` (playerhover) is a settable property whose setter writes through to `_controllerWalkController.RightHandEntity` if the controller exists. After `creator.CreateLogical()` returns, `WalkModule._setupPlayer` reads `creator.RightHandEntity` and assigns it to `createdBehavior.RightHandEntity` (captured by closure from the `BehaviorFactory` lambda). The forwarder then pushes it into the live controller. No reorder of `_createLogical` was needed.
+
+Files actually touched:
+- `nogameCode/nogame/characters/EntityCreator.cs` — `public Entity RightHandEntity { get; private set; }` output, assigned at end of the `CreateRightHand` block. Initial `SolidLayerMask` for the hand changed from `PlayerMelee` → `0`.
+- `nogameCode/nogame/modules/playerhover/WalkBehavior.cs` — settable `RightHandEntity` property that forwards to the controller. `OnAttach` initializes the controller's `RightHandEntity` from the current value (handles the case where the field is set before `OnAttach`, though in practice it's set after).
+- `nogameCode/nogame/modules/playerhover/WalkController.cs` — `RightHandEntity` property, `_setHandArmed(bool)` helper, calls at the two `_attackState` transitions plus `OnModuleActivate` (where `_attackState` is also defensively reset to `Peaceful`).
+- `nogameCode/nogame/modules/playerhover/WalkModule.cs` — closure-captured `createdBehavior`; after `CreateLogical()` returns, hand is forwarded to the behavior. Also assigns the previously-dead `_eRightHand` field.
+
+Desktop build verified: 0 errors. In-game manual verification still pending.
 
 ---
 

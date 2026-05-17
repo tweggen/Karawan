@@ -26,6 +26,26 @@ public class WalkBehavior : ABehavior
 
     public required float MassTarget { get; init; }
     public CharacterModelDescription CharacterModelDescription { get; init; }
+
+    private DefaultEcs.Entity _rightHandEntity;
+
+    /**
+     * Settable after construction. Forwards to the underlying WalkController
+     * once it exists, so callers can wire up the hand even after OnAttach
+     * has already created the controller.
+     */
+    public DefaultEcs.Entity RightHandEntity
+    {
+        get => _rightHandEntity;
+        set
+        {
+            _rightHandEntity = value;
+            if (_controllerWalkController != null)
+            {
+                _controllerWalkController.RightHandEntity = value;
+            }
+        }
+    }
     
     
     public override void OnCollision(ContactEvent cev)
@@ -89,7 +109,8 @@ public class WalkBehavior : ABehavior
             Target = _eTarget,
             MassTarget = MassTarget,
             CharacterModelDescription = CharacterModelDescription,
-            CameraMask = 0x0000ffff
+            CameraMask = 0x0000ffff,
+            RightHandEntity = _rightHandEntity
         };
         _controllerWalkController.ModuleActivate();
     }

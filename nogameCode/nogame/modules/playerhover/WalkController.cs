@@ -53,7 +53,14 @@ public class WalkController : AController, IInputPart
     public Quaternion StartOrientation { get; set; }
     
     public required uint CameraMask { get; set; }
-    
+
+    /**
+     * The right-hand entity carrying the punch collider. May be default if
+     * the player was created without CreateRightHand, in which case the
+     * arm-toggle code does nothing.
+     */
+    public DefaultEcs.Entity RightHandEntity { get; set; }
+
     private DefaultEcs.Entity _eCamera = default;
 
     enum CharacterAnimState
@@ -115,6 +122,22 @@ public class WalkController : AController, IInputPart
                 isChanged = true;
             }
         }
+    }
+
+
+    /**
+     * Toggle the right-hand collider's solid layer mask. Armed = PlayerMelee
+     * (NPCs read this as AnyWeapon and flee). Disarmed = 0 (no solid layer
+     * presence; NPC OnCollision filters ignore it).
+     */
+    private void _setHandArmed(bool armed)
+    {
+        if (RightHandEntity == default || !RightHandEntity.IsAlive) return;
+        if (!RightHandEntity.Has<engine.physics.components.Body>()) return;
+        var po = RightHandEntity.Get<engine.physics.components.Body>().PhysicsObject;
+        if (po?.CollisionProperties == null) return;
+        po.CollisionProperties.SolidLayerMask =
+            armed ? CollisionProperties.Layers.PlayerMelee : 0;
     }
     
     public CharacterModelDescription CharacterModelDescription { get; set; }
@@ -313,6 +336,7 @@ public class WalkController : AController, IInputPart
             if ((currentFrame - _lastAttackFrame) > 23)
             {
                 _attackState = AttackState.Peaceful;
+                _setHandArmed(false);
             }
         }
 
@@ -424,6 +448,7 @@ public class WalkController : AController, IInputPart
             forceFrameZero = 15;
             _lastAttackFrame = currentFrame;
             _attackState = AttackState.Attacking;
+            _setHandArmed(true);
         }
 
         if (forceFrameZero>=0 || newAnimState != _characterAnimState)
@@ -821,9 +846,11 @@ public class WalkController : AController, IInputPart
     {
         Debug.Assert(_eTarget != default);
         Debug.Assert(_massTarget != 0f);
-        
+
         _characterAnimState = CharacterAnimState.Unset;
-        
+        _attackState = AttackState.Peaceful;
+        _setHandArmed(false);
+
         _eCamera = _engine.Camera.Value;
         _engine.Camera.AddNowOnChange(_onCameraEntityChanged);
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);

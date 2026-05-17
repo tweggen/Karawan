@@ -53,6 +53,13 @@ public class EntityCreator
      */
     public Entity EntityAnimations;
 
+    /**
+     * Output member valid after CreateLogical when CreateRightHand is true.
+     * The hand entity is a child of the player entity with a kinematic
+     * sphere collider that follows the right-hand bone of the animated model.
+     */
+    public Entity RightHandEntity { get; private set; }
+
 
     private Entity _createLogical()
     {
@@ -261,7 +268,9 @@ public class EntityCreator
                                 | CollisionProperties.CollisionFlags.IsDetectable
                                 | CollisionProperties.CollisionFlags.TriggersCallbacks,
                             Name = $"{PhysicsName}.RightHand",
-                            SolidLayerMask = CollisionProperties.Layers.PlayerMelee,
+                            // Initial layer mask is 0 (inert). WalkController toggles it
+                            // to PlayerMelee only during the punch window.
+                            SolidLayerMask = 0,
                             SensitiveLayerMask = 0
                         };
                     engine.physics.Object po;
@@ -285,6 +294,8 @@ public class EntityCreator
                     {
                     }));
                 }
+
+                RightHandEntity = _eRightHand;
             }
             return _ePerson;
         }

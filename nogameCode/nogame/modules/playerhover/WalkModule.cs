@@ -103,6 +103,7 @@ public class WalkModule : AModule, IInputPart
              */
             M<PlayerPosition>().GetPlayerPosition(out var v3Person, out var qPerson);
 
+            WalkBehavior createdBehavior = null;
             EntityCreator creator = new()
             {
                 CharacterModelDescription = CharacterModelDescription,
@@ -110,10 +111,14 @@ public class WalkModule : AModule, IInputPart
                 Orientation = qPerson,
                 PhysicsName = PhysicsName,
                 CreateRightHand = true,
-                BehaviorFactory = entity => new WalkBehavior()
+                BehaviorFactory = entity =>
                 {
-                    MassTarget = 200f,
-                    CharacterModelDescription = CharacterModelDescription
+                    createdBehavior = new WalkBehavior()
+                    {
+                        MassTarget = 200f,
+                        CharacterModelDescription = CharacterModelDescription
+                    };
+                    return createdBehavior;
                 },
                 CollisionPropertiesFactory = entity => new engine.physics.CollisionProperties
                 {
@@ -138,7 +143,18 @@ public class WalkModule : AModule, IInputPart
             _engine.QueueMainThreadAction(() =>
             {
                 _ePerson = creator.CreateLogical();
-                
+                _eRightHand = creator.RightHandEntity;
+
+                /*
+                 * The behavior has already attached (synchronously) inside
+                 * CreateLogical, so its WalkController exists. Forward the
+                 * hand entity now — the setter propagates to the controller.
+                 */
+                if (createdBehavior != null)
+                {
+                    createdBehavior.RightHandEntity = _eRightHand;
+                }
+
                 /*
                  * Now add an entity as a child that will display in the map
                  */
