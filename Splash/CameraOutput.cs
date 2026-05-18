@@ -281,7 +281,7 @@ public class CameraOutput
         
         var meshBatch = materialBatch.Add(aMeshEntry, AnimBatching, _frameStats);
 
-        uint globalFrameno = 0;
+        uint localFrameno = 0;
         AnimationState? animState = cGpuAnimationState.AnimationState;
         if (null == aAnimationsEntry || null == animState || null == animState.ModelAnimation)
         {
@@ -289,11 +289,10 @@ public class CameraOutput
         }
         else
         {
-            ModelAnimation ma = animState.ModelAnimation;
-            globalFrameno = ma.FirstFrame + cGpuAnimationState.AnimationState.ModelAnimationFrame;
+            localFrameno = cGpuAnimationState.AnimationState.ModelAnimationFrame;
         }
-        
-        meshBatch.Add(aAnimationsEntry, animState, globalFrameno, matrix, _frameStats);
+
+        meshBatch.Add(aAnimationsEntry, animState, localFrameno, matrix, _frameStats);
 
         /*
          * In particular when rendering transparency, we need to have average

@@ -81,21 +81,20 @@ public class MeshBatch
 
 
     public void Add(
-        in AAnimationsEntry? aAnimationsEntry, 
-        AnimationState? animState, 
-        uint globalFrameno,
+        in AAnimationsEntry? aAnimationsEntry,
+        AnimationState? animState,
+        uint localFrameno,
         in Matrix4x4 matrix,
         in FrameStats frameStats)
     {
-        // TXWTODO: There is a misalignment of frame number here.
         AnimationBatch animationBatch;
         ModelAnimation? ma;
-        ushort localFrameno;
+        ushort batchFrameno;
         if (animState != null)
         {
             ma = animState.ModelAnimation;
-            localFrameno = animState.ModelAnimationFrame;
-            
+            batchFrameno = animState.ModelAnimationFrame;
+
             if ((_animBatching & Flags.AnimBatching.ByAnimation) == 0)
             {
                 ma = null;
@@ -103,16 +102,16 @@ public class MeshBatch
 
             if ((_animBatching & Flags.AnimBatching.ByFrameno) == 0)
             {
-                localFrameno = 0;
+                batchFrameno = 0;
             }
         }
         else
         {
             ma = null;
-            localFrameno = 0;
+            batchFrameno = 0;
         }
-        
-        AnimationsBatchKey key = new(aAnimationsEntry, ma, localFrameno);
+
+        AnimationsBatchKey key = new(aAnimationsEntry, ma, batchFrameno);
         AnimationBatches.TryGetValue(key, out animationBatch);
         if (null == animationBatch)
         {
@@ -124,12 +123,12 @@ public class MeshBatch
             AnimationBatches.Add(key, animationBatch);
             frameStats.NAnimations++;
         }
-        
+
         /*
          * Now we can add our matrix to the list of matrices.
          */
         animationBatch.Matrices.Add(matrix);
-        animationBatch.FrameNos.Add(globalFrameno);
+        animationBatch.FrameNos.Add(localFrameno);
     }
     
     
