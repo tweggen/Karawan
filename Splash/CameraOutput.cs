@@ -282,6 +282,7 @@ public class CameraOutput
         var meshBatch = materialBatch.Add(aMeshEntry, AnimBatching, _frameStats);
 
         uint localFrameno = 0;
+        ModelAnimation? snapshotAnimation = null;
         AnimationState? animState = cGpuAnimationState.AnimationState;
         if (null == aAnimationsEntry || null == animState || null == animState.ModelAnimation)
         {
@@ -289,10 +290,13 @@ public class CameraOutput
         }
         else
         {
-            localFrameno = cGpuAnimationState.AnimationState.ModelAnimationFrame;
+            // Snapshot both animation and frame together to prevent race condition where animation
+            // changes between reading the two fields from the live AnimationState.
+            snapshotAnimation = animState.ModelAnimation;
+            localFrameno = animState.ModelAnimationFrame;
         }
 
-        meshBatch.Add(aAnimationsEntry, animState, localFrameno, matrix, _frameStats);
+        meshBatch.Add(aAnimationsEntry, animState, localFrameno, snapshotAnimation, matrix, _frameStats);
 
         /*
          * In particular when rendering transparency, we need to have average

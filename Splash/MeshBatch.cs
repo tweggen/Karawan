@@ -84,6 +84,7 @@ public class MeshBatch
         in AAnimationsEntry? aAnimationsEntry,
         AnimationState? animState,
         uint localFrameno,
+        ModelAnimation? snapshotAnimation,
         in Matrix4x4 matrix,
         in FrameStats frameStats)
     {
@@ -92,8 +93,10 @@ public class MeshBatch
         ushort batchFrameno;
         if (animState != null)
         {
-            ma = animState.ModelAnimation;
-            batchFrameno = animState.ModelAnimationFrame;
+            // Use the snapshotted animation if provided (preferred, as it prevents race conditions)
+            // Otherwise fall back to reading from the live animState
+            ma = snapshotAnimation ?? animState.ModelAnimation;
+            batchFrameno = (ushort)localFrameno;
 
             if ((_animBatching & Flags.AnimBatching.ByAnimation) == 0)
             {
@@ -118,7 +121,7 @@ public class MeshBatch
             animationBatch = new AnimationBatch(aAnimationsEntry)
             {
                 AnimationState = animState,
-                SnapshotModelAnimation = animState?.ModelAnimation
+                SnapshotModelAnimation = snapshotAnimation ?? animState?.ModelAnimation
             };
             AnimationBatches.Add(key, animationBatch);
             frameStats.NAnimations++;
