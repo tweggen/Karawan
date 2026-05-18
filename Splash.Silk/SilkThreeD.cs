@@ -499,13 +499,6 @@ public class SilkThreeD : IThreeD
                              * If we are supposed to load bone animations, let's do that.
                              */
                             int nBones = model.Skeleton!.NBones;
-
-                            // Defensive: clamp frameno to valid range for this animation
-                            uint validFrameno = frameno;
-                            if (validFrameno >= modelAnimation.NFrames)
-                            {
-                                validFrameno = (uint)(modelAnimation.NFrames - 1);
-                            }
 #if false
                             Span<float> span =
                                 MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
@@ -514,7 +507,7 @@ public class SilkThreeD : IThreeD
                                 MemoryMarshal.Cast<Matrix4x4, float>(
                                     model.AnimationCollection.AllBakedMatrices
                                 ).Slice(
-                                    16 * (int)(modelAnimation.FirstFrame + validFrameno) * nBones,
+                                    16 * (int)(modelAnimation.FirstFrame + frameno) * nBones,
                                     16 * nBones);
 #endif
                             _gl.UniformMatrix4((int)_locBoneMatrices,

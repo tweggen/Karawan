@@ -62,19 +62,10 @@ public class SilkRenderState
             
             if (modelAnimation != null)
             {
-                // Defensive: clamp frameno to valid range for this animation.
-                // Should not happen with proper batching, but guards against race conditions
-                // or stale frame numbers.
-                uint validFrameno = frameno;
-                if (validFrameno >= modelAnimation.NFrames)
-                {
-                    validFrameno = (uint)(modelAnimation.NFrames - 1);
-                }
-
                 Span<Matrix4x4> span =
                     model.AnimationCollection.AllBakedMatrices.AsSpan()
                     .Slice(
-                        (int)(modelAnimation.FirstFrame + validFrameno) * nBones,
+                        (int)(modelAnimation.FirstFrame + frameno) * nBones,
                         nBones);
 
                 // Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);

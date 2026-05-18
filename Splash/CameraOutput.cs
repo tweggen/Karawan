@@ -294,14 +294,6 @@ public class CameraOutput
             // changes between reading the two fields from the live AnimationState.
             snapshotAnimation = animState.ModelAnimation;
             localFrameno = animState.ModelAnimationFrame;
-
-            // Validate frame number is within bounds for the snapshotted animation.
-            // If animation has not advanced its frame counter properly or there's a stale
-            // frame number, clamp it to valid range [0, NFrames-1].
-            if (snapshotAnimation != null && localFrameno >= snapshotAnimation.NFrames)
-            {
-                localFrameno = (uint)(snapshotAnimation.NFrames - 1);
-            }
         }
 
         meshBatch.Add(aAnimationsEntry, animState, localFrameno, snapshotAnimation, matrix, _frameStats);
