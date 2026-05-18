@@ -499,24 +499,18 @@ public class WalkController : AController, IInputPart
                         ref GPUAnimationState cGpuAnimationState = ref CharacterModelDescription.EntityAnimations.Get<GPUAnimationState>();
 
                         AnimationState animState = CharacterModelDescription.AnimationState;
-                        animState.ModelAnimation = animation;
 
-                        /*
-                         * This is just a nice way of saying, dont be negative, after force casting this from int to ushort..
-                         */
-                        if ((forceFrameZero & 0x8000)==0)
+                        // Determine the frame to use
+                        ushort frameToUse = 0;
+                        if ((forceFrameZero & 0x8000) == 0)
                         {
-                            animState.ModelAnimationFrame = (ushort) forceFrameZero;
+                            frameToUse = (ushort) forceFrameZero;
                         }
 
-                        if (isOneShot)
-                        {
-                            animState.Flags |= AnimationState.IsOneShot;
-                        }
-                        else
-                        {
-                            animState.Flags &= unchecked((ushort)~AnimationState.IsOneShot);
-                        }
+                        // Use SetAnimation to ensure frame is validated against the new animation.
+                        // This prevents race conditions where frame counters from previous animations
+                        // could be out of bounds for the new animation.
+                        animState.SetAnimation(jModel, strAnimation, frameToUse, isOneShot);
                     }
                     else
                     {
