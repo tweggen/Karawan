@@ -350,7 +350,7 @@ public class WalkController : AController, IInputPart
             float speed;
             if (_isRunPressed)
             {
-                speed = 15f;
+                speed = 22f;
             }
             else
             {
