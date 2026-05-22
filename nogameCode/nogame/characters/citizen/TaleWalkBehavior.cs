@@ -184,6 +184,15 @@ public class TaleWalkBehavior : ANearbyBehavior
             TaleNarrationBindings.InjectNpcProps(schedule);
             string scriptName = TaleNarrationBindings.ResolveScript(currentStorylet, schedule.Role);
 
+            // If already paused in a conversation, cancel it first before starting a new one.
+            // This prevents the old ConversationTimeout from being orphaned while waiting
+            // for a new script that never starts.
+            if (_isPaused && _conversationTimeout != null)
+            {
+                Trace(_dc, $"NPC {_npcId} cancelling old conversation to start new one");
+                _conversationTimeout.CancelNow();
+            }
+
             // Stop walking; arm timeout watcher BEFORE triggering so we catch the first NodeReached.
             _pauseWalking(scriptName);
 
