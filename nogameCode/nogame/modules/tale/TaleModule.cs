@@ -187,7 +187,7 @@ public class TaleModule : AModule
         }
 
         var autoSave = M<nogame.modules.AutoSave>();
-        autoSave.GameState.TaleDeviations = jArray.ToJsonString();
+        autoSave?.GameState?.TaleDeviations = jArray.ToJsonString();
 
         Trace($"TALE: Saved {deviated.Count} deviated NPCs.");
     }
