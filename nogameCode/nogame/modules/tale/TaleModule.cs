@@ -194,22 +194,42 @@ public class TaleModule : AModule
     {
         if (_taleManager == null) return;
 
-        var deviated = _taleManager.GetAllDeviatedNpcs();
-        if (deviated.Count == 0) return;
-
-        var jArray = new JsonArray();
-        foreach (var npc in deviated)
-        {
-            jArray.Add(SerializeNpcSchedule(npc));
-        }
-
         var autoSave = M<nogame.modules.AutoSave>();
-        if (autoSave != null && autoSave.GameState != null && autoSave.GameState.TaleDeviations != null)
+
+        var deviated = _taleManager.GetAllDeviatedNpcs();
+        if (deviated.Count > 0)
         {
-            autoSave.GameState.TaleDeviations = jArray.ToJsonString();
+            var jArray = new JsonArray();
+            foreach (var npc in deviated)
+            {
+                jArray.Add(SerializeNpcSchedule(npc));
+            }
+
+            if (autoSave != null && autoSave.GameState != null && autoSave.GameState.TaleDeviations != null)
+            {
+                autoSave.GameState.TaleDeviations = jArray.ToJsonString();
+            }
+
+            Trace($"TALE: Saved {deviated.Count} deviated NPCs.");
         }
 
-        Trace($"TALE: Saved {deviated.Count} deviated NPCs.");
+        // TALE-SOCIAL Phase E6: persist the per-cluster social fabric. Snapshot
+        // the currently populated clusters first so the save carries their live
+        // evolved state, not just previously-departed clusters'.
+        _taleManager.SnapshotPopulatedClusters();
+        var socialStates = _taleManager.GetAllSocialStates();
+        if (socialStates.Count > 0 && autoSave?.GameState != null)
+        {
+            var jStates = new JsonArray();
+            foreach (var social in socialStates.OrderBy(s => s.ClusterIndex))
+            {
+                jStates.Add(social.ToJson());
+            }
+            autoSave.GameState.TaleSocialState = jStates.ToJsonString();
+            Trace(_dcSocial, $"Saved social state for {socialStates.Count} clusters " +
+                  $"({socialStates.Sum(s => s.Groups.Count)} groups, " +
+                  $"{socialStates.Sum(s => s.Snapshots.Count)} NPC snapshots).");
+        }
     }
 
 
@@ -217,32 +237,67 @@ public class TaleModule : AModule
     {
         if (_taleManager == null) return;
         if (objGameState is not GameState gs) return;
-        if (string.IsNullOrEmpty(gs.TaleDeviations)) return;
 
-        try
+        if (!string.IsNullOrEmpty(gs.TaleDeviations))
         {
-            var jArray = JsonNode.Parse(gs.TaleDeviations)?.AsArray();
-            if (jArray == null) return;
-
-            int count = 0;
-            foreach (var jNode in jArray)
+            try
             {
-                var schedule = DeserializeNpcSchedule(jNode);
-                if (schedule != null)
+                var jArray = JsonNode.Parse(gs.TaleDeviations)?.AsArray();
+                if (jArray != null)
                 {
-                    schedule.HasPlayerDeviation = true;
-                    _taleManager.RegisterNpc(schedule);
-                    count++;
+                    int count = 0;
+                    foreach (var jNode in jArray)
+                    {
+                        var schedule = DeserializeNpcSchedule(jNode);
+                        if (schedule != null)
+                        {
+                            schedule.HasPlayerDeviation = true;
+                            _taleManager.RegisterNpc(schedule);
+                            count++;
+                        }
+                    }
+
+                    Trace($"TALE: Loaded {count} deviated NPCs from save.");
                 }
             }
-
-            Trace($"TALE: Loaded {count} deviated NPCs from save.");
+            catch (Exception e)
+            {
+                Warning($"TALE: Failed to load deviated NPCs: {e.Message}");
+            }
         }
-        catch (Exception e)
+
+        // TALE-SOCIAL Phase E6: restore per-cluster social states. The next
+        // PopulateCluster of each cluster overlays the contained snapshots
+        // onto its regenerated schedules (snapshot wins over the baked
+        // scenario). Old saves have an empty string here — skipped.
+        if (!string.IsNullOrEmpty(gs.TaleSocialState))
         {
-            Warning($"TALE: Failed to load deviated NPCs: {e.Message}");
+            try
+            {
+                var jStates = JsonNode.Parse(gs.TaleSocialState)?.AsArray();
+                if (jStates != null)
+                {
+                    int count = 0;
+                    foreach (var jNode in jStates)
+                    {
+                        var social = ClusterSocialState.FromJson(jNode);
+                        if (social != null)
+                        {
+                            _taleManager.ReplaceSocialState(social);
+                            count++;
+                        }
+                    }
+                    Trace(_dcSocial, $"Loaded social state for {count} clusters from save.");
+                }
+            }
+            catch (Exception e)
+            {
+                Warning($"TALE: Failed to load social state: {e.Message}");
+            }
         }
     }
+
+
 
 
     protected override void OnModuleActivate()

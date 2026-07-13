@@ -80,8 +80,13 @@ Bake shape before → after: 56–500 overlapping cliques, 100% membership → *
 - Co-location: `TaleManager.ResolveSocialVenue` sends grouped NPCs to their group's hangout — `GetGroupHangout` computes it lazily as the modal first social venue among members (tie → lowest venue id), cached on `RuntimeGroup.HangoutLocationId`. Applies to social-venue storylets only, so work/home schedules keep NPCs dispersed. The player sees a gang at its bar in the evening.
 - `TaleManager.GetOrCreateSocialState` added (used by tests now, E6 save-restore later).
 
-### E6 — Save-game persistence (pending)
-In-session persistence landed with E2 (snapshots). Save layer: additive `GameState.TaleSocialState` JSON string serializing each `ClusterSocialState`.
+### E6 — Save-game persistence (commit 7)
+In-session persistence landed with E2 (snapshots); this adds the durable layer:
+- `GameState.TaleSocialState` — additive optional JSON string; old saves deserialize with the empty default and re-derive social state from the bake.
+- `ClusterSocialState.ToJson()` / `FromJson()` (engine layer, deterministic ordering) serialize the group table + NPC snapshots including player trust (`Trust[-1]`).
+- `TaleModule._onBeforeSaveGame`: `TaleManager.SnapshotPopulatedClusters()` first (so the CURRENT clusters' live evolved state lands in the save, not just previously-departed ones), then serializes `GetAllSocialStates()`.
+- `TaleModule._onAfterLoadGame`: `ClusterSocialState.FromJson` per entry → `TaleManager.ReplaceSocialState`; the next `PopulateCluster` overlay restores snapshots onto regenerated schedules (snapshot wins over bake).
+- Caveat: snapshots key on NpcId (deterministic per cluster+index); if world-gen changes alter a cluster's NPC count, out-of-range snapshot entries are simply never matched — harmless staleness.
 
 ---
 

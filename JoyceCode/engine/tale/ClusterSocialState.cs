@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Nodes;
 
 namespace engine.tale;
 
@@ -119,5 +121,125 @@ public class ClusterSocialState
         npc.Properties ??= new Dictionary<string, float>();
         foreach (var (key, v) in snap.SocialProps) npc.Properties[key] = v;
         return true;
+    }
+
+
+    /// <summary>
+    /// Save-game serialization (Phase E6). Deterministic ordering so saves
+    /// diff cleanly.
+    /// </summary>
+    public JsonObject ToJson()
+    {
+        var jGroups = new JsonArray();
+        foreach (var g in Groups.Values.OrderBy(g => g.GroupId))
+        {
+            var jMembers = new JsonArray();
+            foreach (int id in g.MemberIds) jMembers.Add(id);
+            jGroups.Add(new JsonObject
+            {
+                ["id"] = g.GroupId,
+                ["type"] = g.Type,
+                ["name"] = g.Name,
+                ["hangout"] = g.HangoutLocationId,
+                ["authored"] = g.Authored,
+                ["members"] = jMembers
+            });
+        }
+
+        var jSnapshots = new JsonArray();
+        foreach (var (npcId, snap) in Snapshots.OrderBy(kv => kv.Key))
+        {
+            var jTrust = new JsonObject();
+            foreach (var (id, t) in snap.Trust) jTrust[id.ToString()] = t;
+            var jProps = new JsonObject();
+            foreach (var (key, v) in snap.SocialProps) jProps[key] = v;
+            jSnapshots.Add(new JsonObject
+            {
+                ["npcId"] = npcId,
+                ["groupId"] = snap.GroupId,
+                ["trust"] = jTrust,
+                ["props"] = jProps
+            });
+        }
+
+        return new JsonObject
+        {
+            ["clusterIndex"] = ClusterIndex,
+            ["nextGroupId"] = NextGroupId,
+            ["groups"] = jGroups,
+            ["snapshots"] = jSnapshots
+        };
+    }
+
+
+    /// <summary>
+    /// Inverse of <see cref="ToJson"/>. Returns null on malformed input.
+    /// </summary>
+    public static ClusterSocialState FromJson(JsonNode jNode)
+    {
+        if (jNode is not JsonObject jo) return null;
+
+        var social = new ClusterSocialState
+        {
+            ClusterIndex = jo["clusterIndex"]?.GetValue<int>() ?? -1,
+            NextGroupId = jo["nextGroupId"]?.GetValue<int>() ?? 1
+        };
+        if (social.ClusterIndex < 0) return null;
+
+        if (jo["groups"] is JsonArray jGroups)
+        {
+            foreach (var jg in jGroups)
+            {
+                if (jg is not JsonObject go) continue;
+                var group = new RuntimeGroup
+                {
+                    GroupId = go["id"]?.GetValue<int>() ?? -1,
+                    Type = go["type"]?.GetValue<string>() ?? "social",
+                    Name = go["name"]?.GetValue<string>() ?? "",
+                    HangoutLocationId = go["hangout"]?.GetValue<int>() ?? -1,
+                    Authored = go["authored"]?.GetValue<bool>() ?? false
+                };
+                if (group.GroupId < 0) continue;
+                if (go["members"] is JsonArray jMembers)
+                {
+                    foreach (var jm in jMembers)
+                        group.MemberIds.Add(jm.GetValue<int>());
+                }
+                social.Groups[group.GroupId] = group;
+            }
+        }
+
+        if (jo["snapshots"] is JsonArray jSnapshots)
+        {
+            foreach (var js in jSnapshots)
+            {
+                if (js is not JsonObject so) continue;
+                int npcId = so["npcId"]?.GetValue<int>() ?? -1;
+                if (npcId < 0) continue;
+                var snap = new NpcSocialSnapshot
+                {
+                    GroupId = so["groupId"]?.GetValue<int>() ?? -1
+                };
+                if (so["trust"] is JsonObject jTrust)
+                {
+                    foreach (var (key, value) in jTrust)
+                    {
+                        if (int.TryParse(key, out int otherId) && value != null)
+                            snap.Trust[otherId] = value.GetValue<float>();
+                    }
+                }
+                if (so["props"] is JsonObject jProps)
+                {
+                    foreach (var (key, value) in jProps)
+                    {
+                        if (value != null)
+                            snap.SocialProps[key] = value.GetValue<float>();
+                    }
+                }
+                social.Snapshots[npcId] = snap;
+            }
+        }
+
+        return social;
     }
 }

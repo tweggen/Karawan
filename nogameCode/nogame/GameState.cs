@@ -61,6 +61,14 @@ public class GameState
     /// </summary>
     public string TaleDeviations { get; set; } = "";
 
+    /// <summary>
+    /// TALE-SOCIAL Phase E6: serialized per-cluster social state (group
+    /// tables + per-NPC social snapshots). Additive and optional — old saves
+    /// deserialize with the empty default and simply re-derive social state
+    /// from the baked scenarios.
+    /// </summary>
+    public string TaleSocialState { get; set; } = "";
+
     public string Entities { get; set; } = "";
     
     private DateTime _gameNow = GameT0;

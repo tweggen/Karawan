@@ -439,6 +439,59 @@ public class TaleManager
 
 
     /// <summary>
+    /// All social states, for save-game serialization (Phase E6).
+    /// </summary>
+    public List<ClusterSocialState> GetAllSocialStates()
+    {
+        lock (_loSocial)
+        {
+            return _socialStates.Values.ToList();
+        }
+    }
+
+
+    /// <summary>
+    /// Snapshot every schedule of every populated cluster into its cluster's
+    /// social state. Called before saving so the CURRENT clusters' evolved
+    /// social fabric lands in the save, not just previously-departed ones.
+    /// </summary>
+    public void SnapshotPopulatedClusters()
+    {
+        lock (_loSocial)
+        {
+            foreach (int clusterIndex in _populatedClusters)
+            {
+                if (!_socialStates.TryGetValue(clusterIndex, out var social))
+                {
+                    social = new ClusterSocialState { ClusterIndex = clusterIndex };
+                    _socialStates[clusterIndex] = social;
+                }
+                foreach (var kvp in _schedules)
+                {
+                    if (kvp.Value.ClusterIndex == clusterIndex)
+                        social.SnapshotNpc(kvp.Value);
+                }
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Install a social state loaded from a save, replacing any state derived
+    /// so far for that cluster (Phase E6). The next PopulateCluster overlay
+    /// then restores the saved snapshots onto regenerated schedules.
+    /// </summary>
+    public void ReplaceSocialState(ClusterSocialState social)
+    {
+        if (social == null) return;
+        lock (_loSocial)
+        {
+            _socialStates[social.ClusterIndex] = social;
+        }
+    }
+
+
+    /// <summary>
     /// Look up a runtime group, or null. groupId -1 (ungrouped) yields null.
     /// </summary>
     public RuntimeGroup GetGroup(int clusterIndex, int groupId)
