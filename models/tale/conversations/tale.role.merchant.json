@@ -5,11 +5,23 @@
       "flow": [
         {
           "goto": [
+            { "if": "func.npcGroupType() == 'trade'", "goto": "consortium" },
             { "if": "props.npc.met_player == 'true' && props.npc.trust_player > 0.55", "goto": "returning" },
             { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
             { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
             { "if": "func.npcMood() == 'tired'", "goto": "tired" },
             { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "consortium": {
+      "flow": [
+        {
+          "texts": [
+            "{func.npcGroupName()} can get you anything — for a price.",
+            "I trade under {func.npcGroupName()} now. Better prices, better connections.",
+            "Talk to anyone from {func.npcGroupName()}. We honor each other's deals."
           ]
         }
       ]

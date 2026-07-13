@@ -342,5 +342,17 @@ public static class NarrationBindings
         {
             return Props.Get("npc.role", "unknown")?.ToString() ?? "unknown";
         });
+
+        // Phase E5: faction helpers. Type is "none" for ungrouped NPCs, so
+        // scripts can route on func.npcGroupType() directly.
+        manager.RegisterFunction("npcGroupType", (args) =>
+        {
+            return Props.Get("npc.group_type", "none")?.ToString() ?? "none";
+        });
+
+        manager.RegisterFunction("npcGroupName", (args) =>
+        {
+            return Props.Get("npc.group_name", "")?.ToString() ?? "";
+        });
     }
 }

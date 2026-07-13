@@ -86,11 +86,41 @@ public static class TaleNarrationBindings
             Props.Set("npc.trust_player", trustForPlayer);
             Props.Set("npc.group_id", (float)schedule.GroupId);
 
+            // Phase E5: faction props from the runtime group table, so
+            // dialogue can reference the NPC's group by name and type.
+            bool hasGroup = false;
+            string groupType = "none";
+            string groupName = "";
+            float groupSize = 0f;
+            if (schedule.GroupId >= 0)
+            {
+                try
+                {
+                    var group = I.Get<TaleManager>().GetGroup(schedule.ClusterIndex, schedule.GroupId);
+                    if (group != null)
+                    {
+                        hasGroup = true;
+                        groupType = group.Type ?? "social";
+                        groupName = group.Name ?? "";
+                        groupSize = group.MemberIds?.Count ?? 0;
+                    }
+                }
+                catch
+                {
+                    // TaleManager unavailable: leave the ungrouped defaults.
+                }
+            }
+            Props.Set("npc.has_group", hasGroup ? "true" : "false");
+            Props.Set("npc.group_type", groupType);
+            Props.Set("npc.group_name", groupName);
+            Props.Set("npc.group_size", groupSize);
+
             // Track injected keys for cleanup
             _injectedKeys.AddRange(new[] {
                 "npc.hunger", "npc.anger", "npc.fatigue", "npc.health",
                 "npc.wealth", "npc.happiness", "npc.reputation", "npc.morality", "npc.fear",
-                "npc.role", "npc.met_player", "npc.trust_player", "npc.group_id"
+                "npc.role", "npc.met_player", "npc.trust_player", "npc.group_id",
+                "npc.has_group", "npc.group_type", "npc.group_name", "npc.group_size"
             });
 
             // Memory flags written by the tale.npc.remember event handler. Exposed to
@@ -130,6 +160,22 @@ public static class TaleNarrationBindings
                 if (key == "npc.role")
                 {
                     Props.Set(key, "unknown");
+                }
+                else if (key == "npc.has_group")
+                {
+                    Props.Set(key, "false");
+                }
+                else if (key == "npc.group_type")
+                {
+                    Props.Set(key, "none");
+                }
+                else if (key == "npc.group_name")
+                {
+                    Props.Set(key, "");
+                }
+                else if (key == "npc.group_size" || key == "npc.group_id")
+                {
+                    Props.Set(key, key == "npc.group_id" ? -1f : 0f);
                 }
                 else if (key.StartsWith("npc.player_fact."))
                 {

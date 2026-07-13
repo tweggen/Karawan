@@ -8,7 +8,19 @@
             { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
             { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
             { "if": "func.npcMood() == 'tired'", "goto": "tired" },
+            { "if": "func.npcGroupType() == 'social'", "goto": "circle" },
             { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "circle": {
+      "flow": [
+        {
+          "texts": [
+            "Meeting the others from {func.npcGroupName()} after shift.",
+            "{func.npcGroupName()} — that's my crowd. Keeps the week bearable.",
+            "A few of us look out for each other. {func.npcGroupName()}, they call us."
           ]
         }
       ]

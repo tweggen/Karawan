@@ -6,9 +6,21 @@
       "flow": [
         {
           "goto": [
+            { "if": "func.npcGroupType() == 'patrol_unit'", "goto": "patrol" },
             { "if": "props.npc.met_player == 'false'", "goto": "first_meeting" },
             { "if": "props.npc.trust_player > 0.65", "goto": "trusted" },
             { "else": "acquaintance" }
+          ]
+        }
+      ]
+    },
+    "patrol": {
+      "flow": [
+        {
+          "texts": [
+            "{func.npcGroupName()}. This is our beat. State your business.",
+            "You're talking to {func.npcGroupName()}. Everything in order?",
+            "{func.npcGroupName()} keeps this district quiet. Let's keep it that way."
           ]
         }
       ]

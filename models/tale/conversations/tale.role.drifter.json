@@ -5,10 +5,22 @@
       "flow": [
         {
           "goto": [
+            { "if": "func.npcGroupType() == 'criminal'", "goto": "gang" },
             { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
             { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
             { "if": "func.npcMood() == 'tired'", "goto": "tired" },
             { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "gang": {
+      "flow": [
+        {
+          "texts": [
+            "You don't want trouble with {func.npcGroupName()}. Trust me.",
+            "I run with {func.npcGroupName()} now. Things are different.",
+            "Around here, {func.npcGroupName()} looks after its own. Keep walking."
           ]
         }
       ]

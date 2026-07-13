@@ -421,6 +421,24 @@ public class TaleManager
 
 
     /// <summary>
+    /// The cluster's social state, created on demand. Used by save-game
+    /// restore and tests; regular runtime paths create states lazily anyway.
+    /// </summary>
+    public ClusterSocialState GetOrCreateSocialState(int clusterIndex)
+    {
+        lock (_loSocial)
+        {
+            if (!_socialStates.TryGetValue(clusterIndex, out var social))
+            {
+                social = new ClusterSocialState { ClusterIndex = clusterIndex };
+                _socialStates[clusterIndex] = social;
+            }
+            return social;
+        }
+    }
+
+
+    /// <summary>
     /// Look up a runtime group, or null. groupId -1 (ungrouped) yields null.
     /// </summary>
     public RuntimeGroup GetGroup(int clusterIndex, int groupId)
@@ -851,8 +869,61 @@ public class TaleManager
                     $"no social venues assigned, using home={npc.HomeLocationId}.");
             return npc.HomeLocationId;
         }
+
+        // TALE-SOCIAL Phase E5: groupmates share a hangout, so factions are
+        // SEEN together. Applies only to social-venue storylets — work/home
+        // schedules keep NPCs dispersed, no runaway convergence.
+        if (npc.GroupId >= 0)
+        {
+            int hangout = GetGroupHangout(npc.ClusterIndex, npc.GroupId);
+            if (hangout >= 0) return hangout;
+        }
+
         int idx = npc.ScheduleStep % npc.SocialVenueIds.Count;
         return npc.SocialVenueIds[idx];
+    }
+
+
+    /// <summary>
+    /// The group's hangout venue, computed lazily on first request: the
+    /// modal first social venue among members (ties broken by lowest venue
+    /// id) — deterministic, and by construction a real venue in the cluster.
+    /// Cached on the RuntimeGroup; re-detection creating a new group yields
+    /// a fresh computation.
+    /// </summary>
+    public int GetGroupHangout(int clusterIndex, int groupId)
+    {
+        lock (_loSocial)
+        {
+            if (!_socialStates.TryGetValue(clusterIndex, out var social)) return -1;
+            if (!social.Groups.TryGetValue(groupId, out var group)) return -1;
+            if (group.HangoutLocationId >= 0) return group.HangoutLocationId;
+
+            var counts = new Dictionary<int, int>();
+            foreach (int memberId in group.MemberIds)
+            {
+                if (!_schedules.TryGetValue(memberId, out var member)) continue;
+                if (member.SocialVenueIds == null || member.SocialVenueIds.Count == 0) continue;
+                int venue = member.SocialVenueIds[0];
+                counts.TryGetValue(venue, out int c);
+                counts[venue] = c + 1;
+            }
+            if (counts.Count == 0) return -1;
+
+            int best = -1, bestCount = 0;
+            foreach (var (venue, count) in counts)
+            {
+                if (count > bestCount || (count == bestCount && venue < best))
+                {
+                    best = venue;
+                    bestCount = count;
+                }
+            }
+            group.HangoutLocationId = best;
+            Trace(engine.Dc.TaleSocial, $"Group {groupId} (cluster {clusterIndex}) hangout: " +
+                  $"venue {best} ({bestCount}/{group.MemberIds.Count} members' first choice).");
+            return best;
+        }
     }
 
 

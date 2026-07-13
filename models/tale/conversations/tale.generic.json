@@ -8,7 +8,18 @@
             { "if": "props.npc.hunger > 0.7", "goto": "hungry" },
             { "if": "props.npc.anger > 0.7", "goto": "angry" },
             { "if": "props.npc.fatigue > 0.7", "goto": "tired" },
+            { "if": "props.npc.has_group == 'true'", "goto": "grouped" },
             { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "grouped": {
+      "flow": [
+        {
+          "texts": [
+            "I keep to my own people. {func.npcGroupName()}, mostly.",
+            "Around here you stick with your crowd. Mine's {func.npcGroupName()}."
           ]
         }
       ]

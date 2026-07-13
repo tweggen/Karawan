@@ -73,8 +73,12 @@ Bake shape before → after: 56–500 overlapping cliques, 100% membership → *
 - Call sites: `TaleManager.AdvanceNpc` (via `_applyGroupVerb`, under `_loSocial`) and `DesSimulation.ProcessNodeArrival` (sim-local `ClusterSocialState`, `NextGroupId` from 100000 to avoid detector-id collisions; the 30-day detection pass may reorganize verb-formed memberships — DES gangs need trust maintenance).
 - Content: `form_gang` fixed (`in_group` → `not_in_group`, `"group": "form"`); new `leave_gang` (morality ≥ 0.5) gives factions churn. This unblocks the whole drifter escalation chain (`demand_protection` → `collect_protection` / `threaten_harder`), whose `target_fear` postconditions are the organic path for fear.
 
-### E5 — Player-visible factions (pending)
-Narration props (`npc.has_group/group_type/group_name/group_size`), `npcGroupType()`/`npcGroupName()` functions, faction dialogue branches in `models/tale/conversations/`, groupmate hangout bias in `TaleManager.ResolveSocialVenue`.
+### E5 — Player-visible factions (commit 6)
+- Narration props (`TaleNarrationBindings.InjectNpcProps`): `npc.has_group` ("true"/"false"), `npc.group_type`, `npc.group_name`, `npc.group_size` — from `TaleManager.GetGroup`; string-safe resets in `ClearNpcProps`.
+- Narration functions (`NarrationBindings`): `npcGroupType()` (returns "none" when ungrouped — scripts route on it directly), `npcGroupName()`.
+- Dialogue (`models/tale/conversations/`): faction router branches — drifter/authority/merchant route criminal/patrol_unit/trade **before** the mood router (faction identity is the defining trait); worker/socialite route `social` **after** the mood branches (distress still wins); `tale.generic` gets a `has_group` line. Example: *"You don't want trouble with {func.npcGroupName()}. Trust me."*
+- Co-location: `TaleManager.ResolveSocialVenue` sends grouped NPCs to their group's hangout — `GetGroupHangout` computes it lazily as the modal first social venue among members (tie → lowest venue id), cached on `RuntimeGroup.HangoutLocationId`. Applies to social-venue storylets only, so work/home schedules keep NPCs dispersed. The player sees a gang at its bar in the evening.
+- `TaleManager.GetOrCreateSocialState` added (used by tests now, E6 save-restore later).
 
 ### E6 — Save-game persistence (pending)
 In-session persistence landed with E2 (snapshots). Save layer: additive `GameState.TaleSocialState` JSON string serializing each `ClusterSocialState`.
