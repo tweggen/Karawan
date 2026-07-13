@@ -125,15 +125,18 @@ public class StoryletSelector
         // Property range preconditions
         foreach (var (prop, range) in def.PropertyPreconditions)
         {
-            if (prop == "in_group") continue;  // Handle in_group separately below
+            if (prop == "in_group" || prop == "not_in_group")
+                continue;  // Group membership gates handled separately below
 
             float value = npc.Properties.GetValueOrDefault(prop, 0.5f);
             if (range.Min.HasValue && value < range.Min.Value) return false;
             if (range.Max.HasValue && value > range.Max.Value) return false;
         }
 
-        // in_group precondition
+        // in_group / not_in_group preconditions
         if (def.PropertyPreconditions.ContainsKey("in_group") && npc.GroupId == -1)
+            return false;
+        if (def.PropertyPreconditions.ContainsKey("not_in_group") && npc.GroupId != -1)
             return false;
 
         // Location feasibility: skip if NPC can't reach the location

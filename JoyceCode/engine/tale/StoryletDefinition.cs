@@ -69,6 +69,15 @@ public class StoryletDefinition
     public float? DesperationMin;
     public float? MoralityMax;
     public Dictionary<string, string> Postconditions;
+
+    /// <summary>
+    /// TALE-SOCIAL Phase E4: group verb fired when this storylet completes.
+    /// "form" | "join" | "leave" (null = none). Authored in JSON as
+    /// <c>"postconditions": { "group": "form" }</c> but extracted at parse
+    /// time so ApplyPostconditions never sees a non-numeric value.
+    /// </summary>
+    public string GroupAction;
+
     public float DurationMinutesMin;
     public float DurationMinutesMax;
     public string LocationRef; // where to go: "workplace", "home", "nearest_shop_Eat", etc.
@@ -133,8 +142,12 @@ public class StoryletLibrary
 
     public void LoadFromFile(string filePath)
     {
-        string json = File.ReadAllText(filePath);
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        LoadFromString(File.ReadAllText(filePath));
+    }
+
+
+    public void LoadFromString(string json)
+    {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
@@ -233,7 +246,14 @@ public class StoryletLibrary
             {
                 // Skip nested objects (request, signal) - those are handled in Phase 3 sections
                 if (prop.Value.ValueKind == JsonValueKind.String)
-                    def.Postconditions[prop.Name] = prop.Value.GetString();
+                {
+                    // Phase E4 group verb: not a numeric property delta —
+                    // extract it so ApplyPostconditions never float.Parses it.
+                    if (prop.Name == "group")
+                        def.GroupAction = prop.Value.GetString();
+                    else
+                        def.Postconditions[prop.Name] = prop.Value.GetString();
+                }
             }
         }
 

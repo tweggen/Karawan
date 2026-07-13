@@ -22,6 +22,15 @@ public class DesSimulation
     private RelationshipTracker _relationships;
     private MetricsCollector _metrics;
     private CommunityDetector _groupDetector;
+
+    /// <summary>
+    /// TALE-SOCIAL Phase E4: sim-local group table for storylet group verbs.
+    /// NextGroupId starts far above CommunityDetector's id sequence so
+    /// verb-formed and detected group ids never collide. Note the 30-day
+    /// detection pass may still reorganize verb-formed memberships from the
+    /// trust graph — gangs need trust maintenance to survive in the DES.
+    /// </summary>
+    private ClusterSocialState _simSocial;
     private InteractionPool _interactionPool;
     private DateTime _clock;
     private DateTime _startTime;
@@ -80,6 +89,7 @@ public class DesSimulation
         _relationships = new RelationshipTracker();
         _metrics = new MetricsCollector();
         _groupDetector = new CommunityDetector();
+        _simSocial = new ClusterSocialState { NextGroupId = 100000 };
         _interactionPool = new InteractionPool();
         _lastGroupDetectionDay = 0;
 
@@ -214,6 +224,13 @@ public class DesSimulation
         var deltas = prevDef != null
             ? _storylets.ApplyPostconditions(npc, prevDef, previousDuration, _deltasBuffer)
             : _storylets.ApplyPostconditions(npc, previousStorylet, previousDuration, _deltasBuffer);
+
+        // 1b. TALE-SOCIAL Phase E4: fire the completed storylet's group verb.
+        // This is what finally emits gang_formed events (form_gang founding a
+        // group from the NPC's highest-trust ungrouped neighbors).
+        if (prevDef?.GroupAction != null)
+            GroupActions.Apply(prevDef.GroupAction, npc, _npcs, _simSocial,
+                nameProvider: null, _logger, day, _clock);
 
         // Track property changes for metrics
         foreach (var kvp in npc.Properties)

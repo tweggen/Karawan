@@ -435,6 +435,34 @@ public class TaleManager
 
 
     /// <summary>
+    /// TALE-SOCIAL Phase E4: execute a storylet group verb for an NPC.
+    /// Runs under _loSocial because AdvanceNpc is called concurrently during
+    /// spawn catch-up.
+    /// </summary>
+    private void _applyGroupVerb(NpcSchedule npc, string action, DateTime gameNow)
+    {
+        lock (_loSocial)
+        {
+            if (!_socialStates.TryGetValue(npc.ClusterIndex, out var social))
+            {
+                social = new ClusterSocialState { ClusterIndex = npc.ClusterIndex };
+                _socialStates[npc.ClusterIndex] = social;
+            }
+
+            var byId = new Dictionary<int, NpcSchedule>();
+            foreach (var kvp in _schedules)
+            {
+                if (kvp.Value.ClusterIndex == npc.ClusterIndex)
+                    byId[kvp.Key] = kvp.Value;
+            }
+
+            GroupActions.Apply(action, npc, byId, social, GroupNameProvider,
+                logger: null, day: 0, gameTime: gameNow);
+        }
+    }
+
+
+    /// <summary>
     /// The NPC's groupmates (excluding the NPC itself); empty when ungrouped
     /// or unknown.
     /// </summary>
@@ -657,6 +685,11 @@ public class TaleManager
                 _selector.ApplyPostconditions(npc, prevDef, previousDuration, _deltasBuffer);
             else
                 _selector.ApplyPostconditions(npc, previousStorylet, previousDuration, _deltasBuffer);
+
+            // TALE-SOCIAL Phase E4: fire the completed storylet's group verb
+            // (form/join/leave), e.g. form_gang founding a criminal group.
+            if (prevDef?.GroupAction != null)
+                _applyGroupVerb(npc, prevDef.GroupAction, gameNow);
         }
 
         // Select next storylet

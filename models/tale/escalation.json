@@ -146,7 +146,7 @@
     "name": "Form Criminal Group",
     "roles": ["drifter", "worker"],
     "preconditions": {
-      "in_group": {},
+      "not_in_group": {},
       "morality": { "max": 0.4 },
       "wealth": { "max": 0.3 }
     },
@@ -156,7 +156,26 @@
     "interrupt_priority": 6,
     "postconditions": {
       "reputation": "-0.1",
-      "morality": "-0.15"
+      "morality": "-0.15",
+      "group": "form"
+    }
+  },
+  {
+    "id": "leave_gang",
+    "name": "Walk Away From the Group",
+    "roles": ["drifter", "worker"],
+    "preconditions": {
+      "in_group": {},
+      "morality": { "min": 0.5 }
+    },
+    "weight": 0.8,
+    "duration_minutes": 45,
+    "location": "current",
+    "interrupt_priority": 4,
+    "postconditions": {
+      "fear": "+0.1",
+      "reputation": "+0.05",
+      "group": "leave"
     }
   },
   {
