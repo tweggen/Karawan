@@ -121,7 +121,7 @@ public class ConsoleMain
         I.Register<engine.tale.RoleRegistry>(_CreateDefaultRoleRegistry);
         I.Register<engine.tale.InteractionTypeRegistry>(_CreateDefaultInteractionTypeRegistry);
         I.Register<engine.tale.RelationshipTierRegistry>(_CreateDefaultRelationshipTierRegistry);
-        I.Register<engine.tale.GroupTypeRegistry>(() => new engine.tale.GroupTypeRegistry());
+        I.Register<engine.tale.GroupTypeRegistry>(_CreateDefaultGroupTypeRegistry);
 
         I.Get<engine.casette.Loader>().InterpretConfig();
 
@@ -500,6 +500,38 @@ public class ConsoleMain
         r.Add("acquaintance", new engine.tale.RelationshipTierDefinition { Id = "acquaintance", DisplayName = "Acquaintance", MinTrust = 0.15f, MaxTrust = 0.4f });
         r.Add("friend",       new engine.tale.RelationshipTierDefinition { Id = "friend",       DisplayName = "Friend",       MinTrust = 0.4f, MaxTrust = 0.7f });
         r.Add("ally",         new engine.tale.RelationshipTierDefinition { Id = "ally",         DisplayName = "Ally",         MinTrust = 0.7f, MaxTrust = 1.0f });
+        return r;
+    }
+
+    private static engine.tale.GroupTypeRegistry _CreateDefaultGroupTypeRegistry()
+    {
+        // Mirrors models/nogame.group-types.json. An empty registry would make
+        // GroupTypeRegistry.ClassifyGroup fall through to "social" for every
+        // group, which is what all baked scenarios shipped with before this
+        // factory existed.
+        var r = new engine.tale.GroupTypeRegistry();
+        r.Add("patrol_unit", new engine.tale.GroupTypeDefinition
+        {
+            Id = "patrol_unit", DisplayName = "Patrol Unit", Priority = 100,
+            Rules = { new engine.tale.GroupClassificationRule
+                { Type = "authority_threshold", Parameters = { ["minimum_ratio"] = 0.5f } } }
+        });
+        r.Add("criminal", new engine.tale.GroupTypeDefinition
+        {
+            Id = "criminal", DisplayName = "Criminal Syndicate", Priority = 90,
+            Rules = { new engine.tale.GroupClassificationRule
+                { Type = "combined_threshold", Parameters = { ["wealth_max"] = 0.3f, ["morality_max"] = 0.4f } } }
+        });
+        r.Add("trade", new engine.tale.GroupTypeDefinition
+        {
+            Id = "trade", DisplayName = "Trading Partnership", Priority = 80,
+            Rules = { new engine.tale.GroupClassificationRule
+                { Type = "combined_threshold", Parameters = { ["wealth_min"] = 0.5f, ["reputation_min"] = 0.5f } } }
+        });
+        r.Add("social", new engine.tale.GroupTypeDefinition
+        {
+            Id = "social", DisplayName = "Social Circle", Priority = 0
+        });
         return r;
     }
 }

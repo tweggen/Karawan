@@ -87,8 +87,32 @@ public class TestRunnerMain
 
     private static engine.tale.GroupTypeRegistry _CreateDefaultGroupTypeRegistry()
     {
-        // For now, return an empty registry - group classification will use fallback logic
-        return new engine.tale.GroupTypeRegistry();
+        // Mirrors models/nogame.group-types.json (and Chushi/ConsoleMain.cs).
+        // An empty registry makes ClassifyGroup return "social" for every group.
+        var registry = new engine.tale.GroupTypeRegistry();
+        registry.Add("patrol_unit", new engine.tale.GroupTypeDefinition
+        {
+            Id = "patrol_unit", DisplayName = "Patrol Unit", Priority = 100,
+            Rules = { new engine.tale.GroupClassificationRule
+                { Type = "authority_threshold", Parameters = { ["minimum_ratio"] = 0.5f } } }
+        });
+        registry.Add("criminal", new engine.tale.GroupTypeDefinition
+        {
+            Id = "criminal", DisplayName = "Criminal Syndicate", Priority = 90,
+            Rules = { new engine.tale.GroupClassificationRule
+                { Type = "combined_threshold", Parameters = { ["wealth_max"] = 0.3f, ["morality_max"] = 0.4f } } }
+        });
+        registry.Add("trade", new engine.tale.GroupTypeDefinition
+        {
+            Id = "trade", DisplayName = "Trading Partnership", Priority = 80,
+            Rules = { new engine.tale.GroupClassificationRule
+                { Type = "combined_threshold", Parameters = { ["wealth_min"] = 0.5f, ["reputation_min"] = 0.5f } } }
+        });
+        registry.Add("social", new engine.tale.GroupTypeDefinition
+        {
+            Id = "social", DisplayName = "Social Circle", Priority = 0
+        });
+        return registry;
     }
 
     private static void _setupPlatformGraphics()

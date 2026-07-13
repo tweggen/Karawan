@@ -183,6 +183,10 @@ Five concrete tuning concerns this surfaces — recorded here as findings, **not
 
 5. **Fear is dead across all 25 scenarios**: `mean=0.000, stdev=0.000, fractionAtFloor=1.00`. No NPC has any fear. This is a system-level observation, not a bake bug — `TalePopulationGenerator` initializes fear at 0 and the storylet postconditions don't appear to raise it from there. Worth investigating whether this is intentional.
 
+**Follow-up (2026-07-13, TALE-SOCIAL Phase E commit 1)** — a sixth concern was found and fixed: **every baked group classified as "social"** regardless of member properties. Root cause: `Chushi/ConsoleMain.cs` registered an *empty* `GroupTypeRegistry` (the `/groups/types` config load only runs in `TaleModule.OnModuleActivate`, never in Chushi), so `GroupTypeRegistry.ClassifyGroup` skipped all zero-rule types and fell through to the `"social"` fallback. Fixed by adding `_CreateDefaultGroupTypeRegistry()` mirroring `models/nogame.group-types.json` in both Chushi and TestRunner. After re-bake, group *counts* are byte-identical (determinism preserved) but types now split into criminal / patrol_unit / trade / social — criminal dominates (concern #4's property saturation drives group averages below the criminal thresholds), which the Phase E community-detection and tuning work addresses. Two operational gotchas discovered: the bake runs the *published* Chushi binary (`Chushi/bin/Debug/net9.0/{rid}/publish/`), so Chushi code changes need `dotnet publish -c Debug -r {rid}` first; and `_IsScenarioUpToDate` does not watch Chushi code, so `nogame/generated/sc-*` must be deleted manually to force a re-bake.
+
+Also a factual correction to the numbers above: the **large category is disabled** in `models/nogame.scenarios.json` (`count: 0`, dev-build cost) — the current bake produces **13** scenarios (5 small + 8 medium), not 25. The large-column numbers date from an earlier bake with the category enabled.
+
 **Key files**:
 - `JoyceCode/engine/tale/bake/ScenarioStatistics.cs`
 - `Chushi/ConsoleMain.cs` — statistics pass after the bake loop
