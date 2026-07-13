@@ -53,6 +53,22 @@ public class ScenarioApplicator
         public int RelationshipsSkipped;
         public int GroupsTouched;
         public Dictionary<string, int> MatchedByRole = new();
+
+        /// <summary>
+        /// The scenario's groups translated to real NpcIds, for the caller to
+        /// seed its runtime group table (Phase E2). Groups whose real
+        /// membership shrank below 2 (members unmatched) are dropped.
+        /// </summary>
+        public List<AppliedGroup> Groups = new();
+    }
+
+
+    public sealed class AppliedGroup
+    {
+        /// <summary>Scenario group rank == the GroupId written onto members.</summary>
+        public int GroupRank;
+        public string Type = "social";
+        public List<int> RealMemberIds = new();
     }
 
 
@@ -184,6 +200,31 @@ public class ScenarioApplicator
             }
         }
         result.GroupsTouched = groupsTouched.Count;
+
+        // Translate the scenario's group rosters to real NpcIds so the caller
+        // can build its runtime group table. MemberRanks that didn't match a
+        // real NPC are dropped; groups reduced below 2 real members are not
+        // worth carrying over.
+        if (scenario.Groups != null)
+        {
+            foreach (var sg in scenario.Groups)
+            {
+                var realMembers = new List<int>(sg.MemberRanks.Count);
+                foreach (int rank in sg.MemberRanks)
+                {
+                    if (rankToRealId.TryGetValue(rank, out int realId))
+                        realMembers.Add(realId);
+                }
+                if (realMembers.Count < 2) continue;
+                realMembers.Sort();
+                result.Groups.Add(new AppliedGroup
+                {
+                    GroupRank = sg.Rank,
+                    Type = string.IsNullOrEmpty(sg.Type) ? "social" : sg.Type,
+                    RealMemberIds = realMembers
+                });
+            }
+        }
 
         // Relationships: rewrite both directions of each scenario edge into the
         // per-NPC Trust dictionaries.

@@ -161,6 +161,66 @@ public class ScenarioApplicatorTests
     }
 
     [Fact]
+    public void Apply_ReturnsGroupsWithRealMemberIds()
+    {
+        // Phase E2: the applicator must translate scenario group rosters to
+        // real NpcIds so TaleManager can seed its runtime group table.
+        var scenario = new Scenario
+        {
+            Category = "test", Index = 0, NpcCount = 3,
+            Npcs =
+            {
+                MakeScenarioNpc(0, "worker", wealth: 0.9f, morality: 0.5f, groupRank: 0),
+                MakeScenarioNpc(1, "worker", wealth: 0.5f, morality: 0.5f, groupRank: 0),
+                MakeScenarioNpc(2, "worker", wealth: 0.1f, morality: 0.5f, groupRank: 0)
+            },
+            Groups =
+            {
+                new ScenarioGroup { Rank = 0, Type = "criminal", MemberRanks = { 0, 1, 2 } }
+            }
+        };
+        var realNpcs = new List<NpcSchedule>
+        {
+            MakeNpc(100, "worker", wealth: 0.9f, morality: 0.5f),
+            MakeNpc(101, "worker", wealth: 0.5f, morality: 0.5f),
+            MakeNpc(102, "worker", wealth: 0.1f, morality: 0.5f)
+        };
+
+        var result = new ScenarioApplicator().Apply(scenario, realNpcs);
+
+        var group = Assert.Single(result.Groups);
+        Assert.Equal(0, group.GroupRank);
+        Assert.Equal("criminal", group.Type);
+        Assert.Equal(new List<int> { 100, 101, 102 }, group.RealMemberIds);
+    }
+
+    [Fact]
+    public void Apply_DropsGroupsShrunkBelowTwoRealMembers()
+    {
+        // Scenario has a 3-member group but only one member's role exists in
+        // the real cluster: the group must not be carried over.
+        var scenario = new Scenario
+        {
+            Category = "test", Index = 0, NpcCount = 3,
+            Npcs =
+            {
+                MakeScenarioNpc(0, "worker", 0.5f, 0.5f, groupRank: 0),
+                MakeScenarioNpc(1, "drifter", 0.5f, 0.5f, groupRank: 0),
+                MakeScenarioNpc(2, "drifter", 0.4f, 0.5f, groupRank: 0)
+            },
+            Groups =
+            {
+                new ScenarioGroup { Rank = 0, Type = "social", MemberRanks = { 0, 1, 2 } }
+            }
+        };
+        var realNpcs = new List<NpcSchedule> { MakeNpc(100, "worker", 0.5f, 0.5f) };
+
+        var result = new ScenarioApplicator().Apply(scenario, realNpcs);
+
+        Assert.Empty(result.Groups);
+    }
+
+    [Fact]
     public void Apply_GroupRankMinusOne_LeavesGroupIdUnset()
     {
         var scenario = new Scenario

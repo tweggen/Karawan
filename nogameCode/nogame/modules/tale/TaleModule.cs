@@ -270,6 +270,10 @@ public class TaleModule : AModule
             _taleManager = new TaleManager();
             _taleManager.Initialize(library);
 
+            // TALE-SOCIAL Phase E2: deterministic faction naming for the
+            // runtime group table (game-layer flavor, engine stays content-free).
+            _taleManager.GroupNameProvider = GroupNameGenerator.Generate;
+
             I.Register<TaleManager>(() => _taleManager);
             Trace("TALE: TaleManager registered.");
 

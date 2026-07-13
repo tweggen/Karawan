@@ -57,6 +57,22 @@ public class TaleManager
 
     private readonly TalePopulationGenerator _generator = new();
 
+    /// <summary>
+    /// Per-cluster social state (group table + depopulation snapshots).
+    /// Deliberately NOT cleared on DepopulateCluster — the snapshots carry
+    /// evolved trust/groups across populate cycles within a session.
+    /// Guarded by _loSocial: AdvanceNpc runs concurrently during spawn
+    /// catch-up (see _deltasBuffer) and later phases mutate the table there.
+    /// </summary>
+    private readonly Dictionary<int, ClusterSocialState> _socialStates = new();
+    private readonly object _loSocial = new();
+
+    /// <summary>
+    /// Hook for game-layer group naming (flavor text is game content, not
+    /// engine). Args: clusterIndex, groupId, groupType. Null → empty names.
+    /// </summary>
+    public Func<int, int, string, string> GroupNameProvider;
+
 
     public void Initialize(StoryletLibrary library, int seed = 42)
     {
@@ -163,6 +179,7 @@ public class TaleManager
                     if (scenario != null)
                     {
                         var stats = applicator.Apply(scenario, schedules);
+                        _buildGroupTable(clusterIndex, stats.Groups);
                         Trace(_dc, $"Applied scenario {bakeRequest.CategoryName}/{bakeRequest.Index} " +
                               $"to cluster {clusterIndex}: matched {stats.MatchedNpcCount}/{schedules.Count} npcs " +
                               $"(unmatched scenario={stats.UnmatchedScenarioRanks}, real={stats.UnmatchedRealNpcs}), " +
@@ -184,6 +201,22 @@ public class TaleManager
         catch (Exception ex)
         {
             Warning(_dc, $"Scenario application failed for cluster {clusterIndex}: {ex.Message}");
+        }
+
+        // Phase E2: overlay depopulation snapshots AFTER scenario application —
+        // evolved social state from a previous visit trumps the static bake.
+        lock (_loSocial)
+        {
+            if (_socialStates.TryGetValue(clusterIndex, out var social) && social.Snapshots.Count > 0)
+            {
+                int restored = 0;
+                foreach (var schedule in schedules)
+                {
+                    if (social.RestoreNpc(schedule)) restored++;
+                }
+                Trace(engine.Dc.TaleSocial, $"Cluster {clusterIndex}: restored social snapshots " +
+                      $"for {restored}/{schedules.Count} NPCs ({social.Groups.Count} groups in table).");
+            }
         }
 
         // Diagnostic: show transit distribution and fragment distribution of generated NPCs
@@ -253,6 +286,31 @@ public class TaleManager
             }
         }
 
+        // Phase E2: snapshot the cluster's social state (groups, trust, social
+        // props) before the schedules are thrown away, so the evolved fabric
+        // survives the player leaving and returning. Deviated NPCs are
+        // snapshotted too — RestoreNpc only touches regenerated schedules, and
+        // a stale entry is overwritten on the next depopulate.
+        lock (_loSocial)
+        {
+            if (!_socialStates.TryGetValue(clusterIndex, out var social))
+            {
+                social = new ClusterSocialState { ClusterIndex = clusterIndex };
+                _socialStates[clusterIndex] = social;
+            }
+            int snapshotted = 0;
+            foreach (var kvp in _schedules)
+            {
+                if (kvp.Value.ClusterIndex == clusterIndex)
+                {
+                    social.SnapshotNpc(kvp.Value);
+                    snapshotted++;
+                }
+            }
+            Trace(engine.Dc.TaleSocial, $"Cluster {clusterIndex}: snapshotted social state " +
+                  $"for {snapshotted} NPCs on depopulate.");
+        }
+
         foreach (var npcId in toRemove)
         {
             _schedules.Remove(npcId);
@@ -268,6 +326,98 @@ public class TaleManager
     /// Check if a cluster is currently populated.
     /// </summary>
     public bool IsClusterPopulated(int clusterIndex) => _populatedClusters.Contains(clusterIndex);
+
+    #endregion
+
+
+    #region Social State (Phase E2)
+
+    /// <summary>
+    /// Seed the runtime group table from the applied scenario's groups.
+    /// Existing table entries (from a previous visit's snapshots) win: the
+    /// bake only fills a table that evolution hasn't already shaped.
+    /// </summary>
+    private void _buildGroupTable(int clusterIndex, IReadOnlyList<bake.ScenarioApplicator.AppliedGroup> appliedGroups)
+    {
+        lock (_loSocial)
+        {
+            if (!_socialStates.TryGetValue(clusterIndex, out var social))
+            {
+                social = new ClusterSocialState { ClusterIndex = clusterIndex };
+                _socialStates[clusterIndex] = social;
+            }
+
+            if (social.Groups.Count > 0)
+            {
+                Trace(engine.Dc.TaleSocial, $"Cluster {clusterIndex}: group table already has " +
+                      $"{social.Groups.Count} groups (evolved state); not reseeding from bake.");
+                return;
+            }
+
+            int maxId = 0;
+            foreach (var ag in appliedGroups)
+            {
+                social.Groups[ag.GroupRank] = new RuntimeGroup
+                {
+                    GroupId = ag.GroupRank,
+                    Type = ag.Type,
+                    Name = GroupNameProvider?.Invoke(clusterIndex, ag.GroupRank, ag.Type) ?? "",
+                    MemberIds = new List<int>(ag.RealMemberIds)
+                };
+                if (ag.GroupRank > maxId) maxId = ag.GroupRank;
+            }
+            social.NextGroupId = maxId + 1;
+
+            if (social.Groups.Count > 0)
+            {
+                var byType = social.Groups.Values
+                    .GroupBy(g => g.Type)
+                    .Select(g => $"{g.Key}={g.Count()}");
+                Trace(engine.Dc.TaleSocial, $"Cluster {clusterIndex}: group table seeded with " +
+                      $"{social.Groups.Count} groups ({string.Join(", ", byType)}).");
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// The cluster's social state, or null if the cluster was never populated.
+    /// </summary>
+    public ClusterSocialState GetSocialState(int clusterIndex)
+    {
+        lock (_loSocial)
+        {
+            return _socialStates.TryGetValue(clusterIndex, out var social) ? social : null;
+        }
+    }
+
+
+    /// <summary>
+    /// Look up a runtime group, or null. groupId -1 (ungrouped) yields null.
+    /// </summary>
+    public RuntimeGroup GetGroup(int clusterIndex, int groupId)
+    {
+        if (groupId < 0) return null;
+        lock (_loSocial)
+        {
+            if (!_socialStates.TryGetValue(clusterIndex, out var social)) return null;
+            return social.Groups.TryGetValue(groupId, out var group) ? group : null;
+        }
+    }
+
+
+    /// <summary>
+    /// The NPC's groupmates (excluding the NPC itself); empty when ungrouped
+    /// or unknown.
+    /// </summary>
+    public IReadOnlyList<int> GetGroupmates(int npcId)
+    {
+        var npc = GetSchedule(npcId);
+        if (npc == null || npc.GroupId < 0) return Array.Empty<int>();
+        var group = GetGroup(npc.ClusterIndex, npc.GroupId);
+        if (group == null) return Array.Empty<int>();
+        return group.MemberIds.Where(id => id != npcId).ToList();
+    }
 
     #endregion
 

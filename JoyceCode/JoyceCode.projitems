@@ -485,6 +485,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RelationshipTracker.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\SimMetrics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\StoryletDefinition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\ClusterSocialState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\CommunityDetector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupDetector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleManager.cs" />
