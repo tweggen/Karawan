@@ -21,7 +21,7 @@ public class DesSimulation
     private IEventLogger _logger;
     private RelationshipTracker _relationships;
     private MetricsCollector _metrics;
-    private GroupDetector _groupDetector;
+    private CommunityDetector _groupDetector;
     private InteractionPool _interactionPool;
     private DateTime _clock;
     private DateTime _startTime;
@@ -79,7 +79,7 @@ public class DesSimulation
         _storylets = new StoryletSelector(library);
         _relationships = new RelationshipTracker();
         _metrics = new MetricsCollector();
-        _groupDetector = new GroupDetector();
+        _groupDetector = new CommunityDetector();
         _interactionPool = new InteractionPool();
         _lastGroupDetectionDay = 0;
 

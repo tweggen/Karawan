@@ -187,6 +187,13 @@ Five concrete tuning concerns this surfaces — recorded here as findings, **not
 
 Also a factual correction to the numbers above: the **large category is disabled** in `models/nogame.scenarios.json` (`count: 0`, dev-build cost) — the current bake produces **13** scenarios (5 small + 8 medium), not 25. The large-column numbers date from an earlier bake with the category enabled.
 
+**Follow-up (2026-07-13, TALE-SOCIAL Phase E commit 2)** — concerns #1 (MaxCliques cap) and #2 (100% membership) are resolved, #5 (fear) is bootstrapped:
+
+- `engine.tale.CommunityDetector` replaces `GroupDetector` in `DesSimulation`: deterministic label propagation (no RNG; ascending-NpcId sweep, tie-break by summed edge weight then lowest label) over the trust graph, with **mutual top-K sparsification** (`MaxEdgesPerNode = 6` — an edge survives only if both endpoints rank it among their 6 strongest ties; without this the near-complete 365-day trust graph collapses into one giant community). `TrustThreshold = 0.6`, `MinCommunitySize = 3`, no group cap needed (O(E·iterations), no combinatorial blowup). Communities are **disjoint** and stale `GroupId`s are cleared on each detection — both fixes to clique-era artifacts. `GroupDetector` remains in the tree but is no longer referenced by the pipeline.
+- Post-change bake numbers: **1–14 groups per scenario** (was 56–500 overlapping cliques), largest community 17–86 members, membership ratio **0.74–0.80** (was 1.00) — isolated NPCs exist again. Types split criminal/social; criminal dominance is concern #4 (property saturation) surfacing through classification, and patrol_unit/trade are rare because a large mixed community seldom averages past their thresholds — both expected to improve when saturation is tuned.
+- `fear` is now initialized per role (drifter/hustler 0.10–0.20, authority 0.02–0.05, others 0.05–0.10) in both `TalePopulationGenerator.GenerateProperties` and `ScenarioCompiler.GenerateProperties`. The draw is appended AFTER the existing morality/wealth draws so every previously-generated property keeps its exact per-seed value. Concern #5's real activation path (the `target_fear` postconditions behind `in_group`-gated storylets) lands with the Phase E group verbs.
+- Still open: #3 (relationship density) and #4 (property saturation).
+
 **Key files**:
 - `JoyceCode/engine/tale/bake/ScenarioStatistics.cs`
 - `Chushi/ConsoleMain.cs` — statistics pass after the bake loop

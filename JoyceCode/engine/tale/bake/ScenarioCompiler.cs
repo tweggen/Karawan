@@ -405,6 +405,16 @@ public class ScenarioCompiler
                 props["wealth"] = 0.3f + (float)rng.NextDouble() * 0.4f;
                 break;
         }
+
+        // Fear bootstrap (drawn last so the draws above keep their values for
+        // a given seed). Mirrors TalePopulationGenerator.GenerateProperties.
+        props["fear"] = role switch
+        {
+            "drifter" or "hustler" => 0.10f + (float)rng.NextDouble() * 0.10f,
+            "authority" => 0.02f + (float)rng.NextDouble() * 0.03f,
+            _ => 0.05f + (float)rng.NextDouble() * 0.05f
+        };
+
         return props;
     }
 }

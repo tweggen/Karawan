@@ -374,6 +374,16 @@ public class TalePopulationGenerator
                 break;
         }
 
+        // Fear bootstrap (drawn last so the draws above keep their values for
+        // a given seed). Precarious street roles start warier; authority
+        // starts near-fearless. Mirrored in ScenarioCompiler.GenerateProperties.
+        props["fear"] = role switch
+        {
+            "drifter" or "hustler" => 0.10f + rnd.GetFloat() * 0.10f,
+            "authority" => 0.02f + rnd.GetFloat() * 0.03f,
+            _ => 0.05f + rnd.GetFloat() * 0.05f
+        };
+
         return props;
     }
 
