@@ -226,7 +226,6 @@ Before committing changes, verify:
 - [ ] Other affected documentation updated (search for references)
 - [ ] Plan file moved from proposed/ to done/ (if applicable)
 - [ ] Tests passing for affected subsystem
-- [ ] Full test suite passing (if available)
 - [ ] No debug code, console logs, or commented-out code
 - [ ] No unnecessary files created
 - [ ] `git status` shows only expected changes
