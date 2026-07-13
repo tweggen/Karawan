@@ -58,6 +58,7 @@ public class SpatialModel
 
     public Location GetLocation(int id)
     {
+        if (_locationsById == null) BuildIndex();
         return _locationsById.TryGetValue(id, out var loc) ? loc : null;
     }
 

@@ -25,11 +25,28 @@ namespace nogame.modules.tale;
 /// </summary>
 public class TaleModule : AModule
 {
+    private static readonly engine.Dc _dcSocial = engine.Dc.TaleSocial;
+
     private TaleManager _taleManager;
     public TaleManager TaleManager => _taleManager;
     private ClusterList _clusterList;
     private PipeNetwork _pedestrianNetwork;
     private PipeController _pipeController;
+
+    /*
+     * TALE-SOCIAL Phase E3: runtime social evolution. Every
+     * SocialTickGameMinutes of game time, one populated cluster (round-robin)
+     * gets an encounter tick; every RedetectGameHours per cluster the
+     * community structure is re-detected from the evolved trust graph.
+     * All of it runs on the logical-frame thread.
+     */
+    private readonly RuntimeSocialEvolver _socialEvolver = new();
+    private DateTime _lastSocialTickGameTime = DateTime.MinValue;
+    private readonly Dictionary<int, DateTime> _lastRedetectGameTime = new();
+    private int _socialTickRoundRobin;
+
+    public double SocialTickGameMinutes = 10.0;
+    public double RedetectGameHours = 2.0;
 
     /// <summary>
     /// Get the pedestrian pipe controller for NPC movement.
@@ -421,6 +438,9 @@ public class TaleModule : AModule
             // Subscribe to save/load for deviation persistence
             M<Saver>().OnBeforeSaveGame += _onBeforeSaveGame;
             M<Saver>().OnAfterLoadGame += _onAfterLoadGame;
+
+            // TALE-SOCIAL Phase E3: start the runtime social evolution tick.
+            _engine.OnLogicalFrame += _onSocialFrame;
         }
         catch (Exception e)
         {
@@ -431,8 +451,62 @@ public class TaleModule : AModule
 
     protected override void OnModuleDeactivate()
     {
+        _engine.OnLogicalFrame -= _onSocialFrame;
         M<Saver>().OnBeforeSaveGame -= _onBeforeSaveGame;
         M<Saver>().OnAfterLoadGame -= _onAfterLoadGame;
+    }
+
+
+    /// <summary>
+    /// TALE-SOCIAL Phase E3: periodic social evolution. Cheap early-outs on
+    /// every logical frame; real work only once per SocialTickGameMinutes of
+    /// game time (12.5 real seconds at the default 30-min game day), for one
+    /// cluster at a time.
+    /// </summary>
+    private void _onSocialFrame(object sender, float dt)
+    {
+        var maybeNow = _tryGetGameNow();
+        if (maybeNow == null || _taleManager == null) return;
+        DateTime gameNow = maybeNow.Value;
+
+        if (_lastSocialTickGameTime == DateTime.MinValue)
+        {
+            _lastSocialTickGameTime = gameNow;
+            return;
+        }
+        if ((gameNow - _lastSocialTickGameTime).TotalMinutes < SocialTickGameMinutes) return;
+        _lastSocialTickGameTime = gameNow;
+
+        var clusters = _taleManager.GetPopulatedClusters();
+        if (clusters.Count == 0) return;
+        int clusterIndex = clusters[_socialTickRoundRobin++ % clusters.Count];
+
+        var npcs = _taleManager.GetNpcsInCluster(clusterIndex);
+        if (npcs.Count == 0) return;
+        var spatial = _taleManager.GetSpatialModel(clusterIndex);
+
+        var stats = _socialEvolver.TickEncounters(clusterIndex, npcs, spatial, gameNow);
+        if (stats.Encounters > 0 || stats.PairsSampled > 0)
+        {
+            Trace(_dcSocial, $"Cluster {clusterIndex} tick @{gameNow:HH:mm}: " +
+                  $"{stats.NpcsPresent} present, {stats.LocationsWithCompany} shared locations, " +
+                  $"{stats.PairsSampled} pairs sampled, {stats.Encounters} encounters.");
+        }
+
+        _lastRedetectGameTime.TryGetValue(clusterIndex, out var lastRedetect);
+        if ((gameNow - lastRedetect).TotalHours < RedetectGameHours) return;
+        _lastRedetectGameTime[clusterIndex] = gameNow;
+
+        var social = _taleManager.GetSocialState(clusterIndex);
+        if (social == null) return;
+
+        var byId = npcs.ToDictionary(n => n.NpcId);
+        var rstats = _socialEvolver.Redetect(clusterIndex, social, byId, GroupNameGenerator.Generate);
+        string groupSummary = string.Join(", ", social.Groups.Values.Select(
+            g => $"\"{g.Name}\" [{g.Type}] x{g.MemberIds.Count}"));
+        Trace(_dcSocial, $"Cluster {clusterIndex} re-detect @{gameNow:HH:mm}: " +
+              $"{rstats.Communities} communities ({rstats.KeptIdentity} kept identity, " +
+              $"{rstats.Created} new, {rstats.Dissolved} dissolved). Groups: {groupSummary}");
     }
 
 

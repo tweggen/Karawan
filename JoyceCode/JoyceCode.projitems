@@ -487,6 +487,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\StoryletDefinition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\ClusterSocialState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\CommunityDetector.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RuntimeSocialEvolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupDetector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\JsonlEventLogger.cs" />

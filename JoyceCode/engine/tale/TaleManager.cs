@@ -327,6 +327,34 @@ public class TaleManager
     /// </summary>
     public bool IsClusterPopulated(int clusterIndex) => _populatedClusters.Contains(clusterIndex);
 
+
+    /// <summary>
+    /// Currently populated cluster indices, sorted (Phase E3 social tick
+    /// iterates these round-robin).
+    /// </summary>
+    public List<int> GetPopulatedClusters()
+    {
+        var list = _populatedClusters.ToList();
+        list.Sort();
+        return list;
+    }
+
+
+    /// <summary>
+    /// All schedules belonging to a cluster.
+    /// </summary>
+    public List<NpcSchedule> GetNpcsInCluster(int clusterIndex)
+    {
+        var result = new List<NpcSchedule>();
+        foreach (var kvp in _schedules)
+        {
+            if (kvp.Value.ClusterIndex == clusterIndex)
+                result.Add(kvp.Value);
+        }
+        return result;
+    }
+
+
     #endregion
 
 
