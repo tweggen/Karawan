@@ -1566,13 +1566,18 @@ public class FbxModel : IDisposable
              */
             try
             {
-                haveLoadedBakedAnimations = model.TryLoadModelAnimationCollection(out var animcoll);
-                if (haveLoadedBakedAnimations && animcoll != null)
+                /*
+                 * Only claim the baked animations if we actually adopted them. Otherwise
+                 * we would skip both the additional animation files below and the manual
+                 * bake further down, leaving the model with no animations at all.
+                 */
+                haveLoadedBakedAnimations = false;
+                if (model.TryLoadModelAnimationCollection(out var animcoll)
+                    && animcoll != null
+                    && model.AnimationCollection.TestBakedAnimationsFrom(animcoll))
                 {
-                    if (model.AnimationCollection.TestBakedAnimationsFrom(animcoll))
-                    {
-                        model.AnimationCollection.UseBakedAnimationsFrom(animcoll);
-                    }
+                    model.AnimationCollection.UseBakedAnimationsFrom(animcoll);
+                    haveLoadedBakedAnimations = true;
                 }
             }
             catch (Exception e)
@@ -1690,6 +1695,16 @@ public class FbxModel : IDisposable
             {
                 Trace(_dc, $"Caught exception: {e}");
             }
+        }
+        else
+        {
+            /*
+             * Model.BakeAnimations validates this on the routes it owns; this route
+             * adopted the baked collection directly, so check it here too.
+             */
+            model.AnimationCollection.ValidateBakedLayout(
+                $"{model.ModelUrl} [{model.AnimationUrls}] (prebaked, loader)",
+                model.Skeleton?.NBones ?? 0);
         }
     }
         

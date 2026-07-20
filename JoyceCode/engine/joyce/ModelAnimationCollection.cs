@@ -1,6 +1,7 @@
 using MessagePack;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using builtin.extensions;
 using builtin.loader.fbx;
@@ -424,21 +425,91 @@ public partial class ModelAnimationCollection
             ErrorThrow<InvalidOperationException>($"Incompatible model animation collections found.");
         }
         AllBakedMatrices = o.AllBakedMatrices;
+
+        /*
+         * Adopt the baked ModelAnimation objects wholesale rather than keeping locally
+         * loaded ones: FirstFrame/NFrames are indices into the AllBakedMatrices we just
+         * took from the very same file, so the offsets must come from there too. A
+         * locally loaded animation still carries its load-time FirstFrame (0 - frame
+         * offsets are only assigned during baking), and pairing those with the baked
+         * matrix array makes every clip read from the start of the array, i.e. play
+         * whichever animation sorts first by name.
+         */
         foreach (var key in o.MapAnimations.Keys)
         {
-            ModelAnimation ma;
             var oma = o.MapAnimations[key];
-            if (!MapAnimations.ContainsKey(key))
+            if (MapAnimations.TryGetValue(key, out var maLocal))
             {
-                MapAnimations.Add(key, oma);
-                ma = oma;
+                /*
+                 * Carry over anything the local copy holds that the baked file does not
+                 * describe, then let the baked geometry win.
+                 */
+                oma.RestPose ??= maLocal.RestPose;
+                oma.MapChannels ??= maLocal.MapChannels;
             }
-            else
-            {
-                ma = MapAnimations[key];
-                ma.UseBakedAnimationsFrom(oma);
-            }
+
+            MapAnimations[key] = oma;
         }
+
+        _nextAnimIndex = o._nextAnimIndex;
+        _nextAnimFrame = o._nextAnimFrame;
+    }
+
+
+    /**
+     * Verify that the animations' frame offsets tile AllBakedMatrices exactly.
+     *
+     * Every ModelAnimation indexes into one flat matrix array via FirstFrame. If those
+     * offsets disagree with the array - because matrices and offsets came from different
+     * sources, or because offsets were never assigned - then asking for animation A
+     * renders some other animation's pose, with no error anywhere along the way. This is
+     * cheap and runs once per model load, so it is always on.
+     */
+    public bool ValidateBakedLayout(string strModelName, int nBones)
+    {
+        if (null == MapAnimations || 0 == MapAnimations.Count || null == AllBakedMatrices)
+        {
+            return true;
+        }
+
+        if (nBones <= 0)
+        {
+            return true;
+        }
+
+        bool isValid = true;
+        uint expectedFirstFrame = 0;
+        foreach (var ma in MapAnimations.Values.OrderBy(ma => ma.FirstFrame))
+        {
+            if (ma.FirstFrame != expectedFirstFrame)
+            {
+                Error(_dc,
+                    $"Model '{strModelName}': animation '{ma.Name}' starts at baked frame "
+                    + $"{ma.FirstFrame}, expected {expectedFirstFrame}. The baked frame offsets do "
+                    + "not match AllBakedMatrices - animations will render the wrong pose.");
+                isValid = false;
+            }
+
+            expectedFirstFrame += ma.NFrames;
+        }
+
+        long needed = (long)expectedFirstFrame * nBones;
+        if (needed > AllBakedMatrices.Length)
+        {
+            Error(_dc,
+                $"Model '{strModelName}': animations need {needed} baked matrices but "
+                + $"AllBakedMatrices only holds {AllBakedMatrices.Length}.");
+            isValid = false;
+        }
+
+        if (isValid)
+        {
+            Trace(_dc,
+                $"Model '{strModelName}': baked layout valid, {MapAnimations.Count} animations, "
+                + $"{expectedFirstFrame} frames, {nBones} bones.");
+        }
+
+        return isValid;
     }
     
     

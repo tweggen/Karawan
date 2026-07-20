@@ -236,6 +236,16 @@ public class Model
         {
             Trace(_dc,$"Used baked animations for {ModelUrl} {AnimationUrls}");
         }
+
+        /*
+         * Whichever route we took, the frame offsets and the matrix array must describe
+         * the same layout. If they do not, every animation lookup silently renders a
+         * foreign pose, so say so loudly here rather than let it show up as a mystery
+         * on screen.
+         */
+        AnimationCollection.ValidateBakedLayout(
+            $"{ModelUrl} [{AnimationUrls}] ({(haveBaked ? "prebaked" : "manual")})",
+            Skeleton?.NBones ?? 0);
     }
 
     public void DumpNodes()

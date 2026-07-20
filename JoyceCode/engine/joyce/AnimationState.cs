@@ -29,14 +29,14 @@ public class AnimationState
         // Prevents race condition where animation changes while AnimationSystem is
         // wrapping frame numbers, which could leave the frame counter in an invalid
         // state relative to the new animation.
-        //ushort validatedFrame = frame;
-        //if (validatedFrame >= ma.NFrames)
-        //{
-        //    validatedFrame = (ushort)(ma.NFrames - 1);
-        //}
+        ushort validatedFrame = frame;
+        if (ma.NFrames > 0 && validatedFrame >= ma.NFrames)
+        {
+            validatedFrame = (ushort)(ma.NFrames - 1);
+        }
 
         Flags = (ushort)(((uint)Flags & ~(uint)AnimationState.IsOneShot) | (isOneShot?(uint)AnimationState.IsOneShot:0));
         ModelAnimation = ma;
-        ModelAnimationFrame = frame; // Use frame directly without validation
+        ModelAnimationFrame = validatedFrame;
     }
 }

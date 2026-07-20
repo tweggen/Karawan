@@ -1,5 +1,28 @@
 # Frame Number Inconsistency Investigation
 
+> **SUPERSEDED (2026-07-20).** The analysis below is sound but its survey of consumers is
+> incomplete, and the fix it recommends (Option A, implemented as commit `c3f40eeb`) caused a
+> regression: walking characters played the fall animation, and idle alternated between falling
+> and standing.
+>
+> **What it missed:** `FrameNos` is not consumed only by `SilkThreeD`'s uniform path. It is
+> *also* uploaded verbatim as the `instanceFrameno` vertex attribute under the **SSBO** strategy,
+> where `models/shaders/LIghtingVS.vert` computes `instanceFrameno * nBones + boneId` with **no
+> `FirstFrame` term**. The SSBO strategy is the live one on OpenGL ≥ 4.3 — i.e. on most desktops —
+> so switching `FrameNos` to local frame numbers made every clip read from the start of
+> `AllBakedMatrices`, which holds whichever animation sorts first by name (`Death_FallForwards`).
+> The double-add it fixed was real, but only on a path that platform never takes.
+>
+> **Resolution: Option B was the correct one.** `FrameNos` now always carries the **global** baked
+> frame number, produced by `ModelAnimation.GetGlobalFrame(localFrameno)` in `MeshBatch.Add`, and
+> the uniform/UBO paths no longer add `FirstFrame` a second time. All three strategies now agree
+> on a single meaning for the value. See `ModelAnimation.cs` and `MeshBatch.cs` for the contract.
+>
+> **Lesson for future edits here:** before changing what `FrameNos` means, enumerate *every*
+> consumer — the two CPU-side slice sites in `SilkThreeD`/`SilkRenderState` **and** the GLSL that
+> reads the vertex attribute — and check which strategy the target platform actually selects
+> (`SilkThreeD`'s constructor, mirrored in `ShaderSource`).
+
 ## Problem Summary
 
 There is an inconsistency in how frame numbers are interpreted in the rendering pipeline, causing array out-of-bounds exceptions in `SilkThreeD.cs:510`.
@@ -71,7 +94,11 @@ index = FirstFrame + (FirstFrame + LocalFrameNumber)  ← WRONG (double-adds Fir
 
 ## The Fix: Two Options
 
-### **Option A: Store Local Frame Numbers (IMPLEMENTED ✓)**
+### **Option A: Store Local Frame Numbers (IMPLEMENTED, THEN REVERTED ✗)**
+
+> Implemented as `c3f40eeb`, reverted 2026-07-20 — see the note at the top of this file.
+> This option is incorrect: it breaks the SSBO strategy, which reads `FrameNos` raw.
+
 
 Changed `CameraOutput.cs:284-296`:
 
@@ -100,7 +127,7 @@ Also updated `MeshBatch.cs`:
 - ✓ `SilkThreeD.cs:510` works correctly with the snapshot values
 - ✓ Race condition protection via snapshots remains intact
 
-### **Option B: Use Global Indices (Less Efficient)**
+### **Option B: Use Global Indices (CORRECT — IMPLEMENTED 2026-07-20 ✓)**
 Change `SilkThreeD.cs:510` to expect pre-computed global indices:
 
 ```csharp

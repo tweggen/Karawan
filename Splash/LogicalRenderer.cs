@@ -95,18 +95,19 @@ public class LogicalRenderer
                 renderPartTransform3ToWorld.Matrix,
                 renderPartCamera3, renderFrame.FrameStats);
 
-            // TXWTODO: Replace this by a feature flag
-            {
-                string api = engine.GlobalSettings.Get("platform.threeD.API");
-                if (api != "OpenGL")
-                {
-                    cameraOutput.AnimBatching = Flags.AnimBatching.ByAnimation|Flags.AnimBatching.ByFrameno;
-                }
-                else
-                {
-                    cameraOutput.AnimBatching = 0;
-                }
-            }
+            /*
+             * A renderer that gives every instance its own frame number can batch
+             * freely. One that uploads a single bone pose per draw call cannot: merging
+             * instances that differ in animation or frame would render all of them with
+             * one arbitrary member's pose.
+             *
+             * This has to follow the renderer's actual animation strategy, not the
+             * graphics API - OpenGL below 4.3 (macOS) uses the UBO strategy and needs
+             * the split just as much as OpenGLES does.
+             */
+            cameraOutput.AnimBatching = _threeD.HasPerInstanceAnimationFrames
+                ? 0
+                : Flags.AnimBatching.ByAnimation | Flags.AnimBatching.ByFrameno;
 
             renderPart.CameraOutput = cameraOutput;
             
