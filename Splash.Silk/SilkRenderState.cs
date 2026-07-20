@@ -52,21 +52,29 @@ public class SilkRenderState
          */
         if (_modelAnimation != modelAnimation || _frameno != frameno)
         {
-            if (_bufferBakedFrame != null)
+            var allBakedMatrices = model.AnimationCollection.AllBakedMatrices;
+
+            /*
+             * Resolve the offset before touching the currently bound buffer: if the
+             * frame cannot be addressed we keep rendering the previous pose rather
+             * than reading a foreign clip or throwing out of the render loop.
+             *
+             * frameno is already the global baked frame (see MeshBatch.Add), so it
+             * must not be offset by FirstFrame a second time here.
+             */
+            if (modelAnimation != null
+                && allBakedMatrices != null
+                && ModelAnimation.TryGetBakedFrameOffset(
+                    frameno, nBones, allBakedMatrices.Length, out int offset))
             {
-                // TXWTODO: Add to frame disposals.
-                _bufferBakedFrame.Dispose();
-                _bufferBakedFrame = null;
-                _isBoundModelBakedFrame = false;
-            }
-            
-            if (modelAnimation != null)
-            {
-                Span<Matrix4x4> span =
-                    model.AnimationCollection.AllBakedMatrices.AsSpan()
-                    .Slice(
-                        (int)(modelAnimation.FirstFrame + frameno) * nBones,
-                        nBones);
+                if (_bufferBakedFrame != null)
+                {
+                    // TXWTODO: Add to frame disposals.
+                    _bufferBakedFrame.Dispose();
+                    _bufferBakedFrame = null;
+                }
+
+                Span<Matrix4x4> span = allBakedMatrices.AsSpan().Slice(offset, nBones);
 
                 // Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
                 _bufferBakedFrame = new BufferObject<Matrix4x4>(_gl, span, BufferTargetARB.UniformBuffer);
@@ -75,11 +83,11 @@ public class SilkRenderState
                 _isBoundModelBakedFrame = false;
             }
         }
-        
+
         /*
          * Bind buffer object if not done yet.
          */
-        if (!_isBoundModelBakedFrame)
+        if (!_isBoundModelBakedFrame && _bufferBakedFrame != null)
         {
             if (-1 == _uboAnimIndex)
             {

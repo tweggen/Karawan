@@ -63,6 +63,60 @@ public class ModelAnimation
     public SortedDictionary<string, Matrix4x4[]> CpuFrames;
 
 
+    /**
+     * Translate a frame number counted within this animation into the frame number
+     * used by the model's flat AllBakedMatrices array, where every animation's
+     * frames are laid out end to end.
+     *
+     * localFrameno is clamped into this animation's own range: callers snapshot the
+     * animation and the frame number as two separate reads, so a frame belonging to
+     * a previously played, longer clip can arrive here.
+     *
+     * Everything downstream of the batch - the SSBO vertex attribute, the UBO slice,
+     * the uniform slice - expects this global number. Handing any of them a local
+     * one makes the clip read from the start of the array, i.e. play whichever
+     * animation sorts first by name.
+     */
+    public uint GetGlobalFrame(uint localFrameno)
+    {
+        if (0 == NFrames)
+        {
+            return FirstFrame;
+        }
+
+        if (localFrameno >= NFrames)
+        {
+            localFrameno = NFrames - 1;
+        }
+
+        return FirstFrame + localFrameno;
+    }
+
+
+    /**
+     * Compute the index of the first bone matrix of the given global frame, returning
+     * false if it does not fit inside the supplied matrix array.
+     */
+    public static bool TryGetBakedFrameOffset(
+        uint globalFrameno, int nBones, int bufferLength, out int offset)
+    {
+        offset = 0;
+        if (nBones <= 0)
+        {
+            return false;
+        }
+
+        long index = (long)globalFrameno * nBones;
+        if (index < 0 || index + nBones > bufferLength)
+        {
+            return false;
+        }
+
+        offset = (int)index;
+        return true;
+    }
+
+
     public void UseBakedAnimationsFrom(ModelAnimation o)
     {
         if (Index != o.Index || Duration != o.Duration || TicksPerSecond != o.TicksPerSecond ||

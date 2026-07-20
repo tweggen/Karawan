@@ -24,7 +24,16 @@ public static class CharacterModelDescriptionFactory
         
         return new()
         {
+            /*
+             * These must name clips actually contained in the locomotion_hardday pack
+             * (see models/nogame.animations.json). Leaving them null makes the walking
+             * behaviours call SetAnimation(model, null), which clears the animation and
+             * renders the NPC in bind pose.
+             */
             IdleAnimName = "Idle_HardDay",
+            WalkAnimName = isMale ? "Walk_Male" : "Walk_InPlace_Female",
+            RunAnimName = "Run_InPlace",
+            DeathAnimName = "Death_FallForwards",
             AnimationPackName = "locomotion_hardday",
             ModelBaseBone = "Root_M",
             ModelUrl = strModel,

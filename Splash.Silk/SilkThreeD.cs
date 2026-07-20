@@ -71,6 +71,13 @@ public class SilkThreeD : IThreeD
 
 
     Flags.GLAnimBuffers AnimStrategy = Flags.GLAnimBuffers.AnimUniform;
+
+    /**
+     * Only the SSBO strategy carries a per-instance frame number (the instanceFrameno
+     * vertex attribute). The UBO and uniform strategies upload a single bone pose per
+     * draw call, so their batches must not mix animations or frames.
+     */
+    public bool HasPerInstanceAnimationFrames => AnimStrategy == Flags.GLAnimBuffers.AnimSSBO;
     
     
     /**
@@ -503,12 +510,32 @@ public class SilkThreeD : IThreeD
                             Span<float> span =
                                 MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
 #else
+                            var allBakedMatrices = model.AnimationCollection.AllBakedMatrices;
+
+                            /*
+                             * Skip the upload rather than read a foreign clip (or run off the
+                             * end of the array) if the frame is not addressable for this
+                             * animation - see ModelAnimation.TryGetBakedFrameOffset.
+                             */
+                            /*
+                             * frameno is already the global baked frame (see MeshBatch.Add),
+                             * so it must not be offset by FirstFrame a second time here.
+                             */
+                            if (null == allBakedMatrices
+                                || !ModelAnimation.TryGetBakedFrameOffset(
+                                    frameno, nBones, allBakedMatrices.Length, out int frameOffset))
+                            {
+                                /*
+                                 * Fall back to unanimated rendering, otherwise the shader
+                                 * would skin against whatever is left in the uniform.
+                                 */
+                                vertexFlags = 4;
+                                break;
+                            }
+
                             Span<float> span =
-                                MemoryMarshal.Cast<Matrix4x4, float>(
-                                    model.AnimationCollection.AllBakedMatrices
-                                ).Slice(
-                                    16 * (int)(modelAnimation.FirstFrame + frameno) * nBones,
-                                    16 * nBones);
+                                MemoryMarshal.Cast<Matrix4x4, float>(allBakedMatrices)
+                                    .Slice(16 * frameOffset, 16 * nBones);
 #endif
                             _gl.UniformMatrix4((int)_locBoneMatrices,
                                 (uint)nBones,

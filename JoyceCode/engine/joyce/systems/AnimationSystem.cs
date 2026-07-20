@@ -47,10 +47,12 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
 
             // Safety check: If animation changed while we held the reference, frame counter
             // might be out of sync. Wrap it to ensure it's valid for the current animation.
-            //if (frameno >= nframes)
-            //{
-            //    frameno = (ushort)(frameno % nframes);
-            //}
+            if (0 == nframes) continue;
+            if (frameno >= nframes)
+            {
+                frameno = (ushort)(frameno % nframes);
+                animationState.ModelAnimationFrame = frameno;
+            }
 
             if ((animationState.Flags & AnimationState.IsOneShot) == 0)
             {

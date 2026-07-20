@@ -129,9 +129,16 @@ public class MeshBatch
 
         /*
          * Now we can add our matrix to the list of matrices.
+         *
+         * FrameNos always carries the frame number as indexed into the model's flat
+         * AllBakedMatrices array, never the frame counted within its own animation.
+         * The SSBO strategy feeds these straight to the shader as a per-instance
+         * vertex attribute, and the UBO/uniform strategies slice with FrameNos[0];
+         * none of them knows the animation, so the offset has to be baked in here.
          */
+        ModelAnimation? maInstance = snapshotAnimation ?? animState?.ModelAnimation;
         animationBatch.Matrices.Add(matrix);
-        animationBatch.FrameNos.Add(localFrameno);
+        animationBatch.FrameNos.Add(maInstance?.GetGlobalFrame(localFrameno) ?? 0);
     }
     
     

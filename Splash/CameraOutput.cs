@@ -14,6 +14,8 @@ namespace Splash;
 
 public class CameraOutput
 {
+    private static readonly engine.Dc _dc = engine.Dc.Animation;
+
     private object _lo = new();
 
     private engine.joyce.components.Camera3 _camera3;
@@ -230,6 +232,50 @@ public class CameraOutput
                             frameno = animationItem.FrameNos[0];
                         }
 
+                        /*
+                         * FrameNos carries global baked frame numbers. Report when one falls
+                         * outside the animation it is supposed to belong to - that means the
+                         * instance renders a foreign clip's pose. When the renderer cannot
+                         * feed per-instance frames, also report a batch that mixes frames,
+                         * since only FrameNos[0] would survive the draw call.
+                         */
+                        if (modelAnimation != null && engine.DebugFilter.Is(_dc))
+                        {
+                            uint firstFrame = modelAnimation.FirstFrame;
+                            uint lastFrame = firstFrame + (modelAnimation.NFrames > 0
+                                ? modelAnimation.NFrames - 1
+                                : 0);
+
+                            bool frameOutOfRange = false;
+                            bool batchNotUniform = false;
+                            for (int i = 0; i < animationItem.FrameNos.Count; ++i)
+                            {
+                                uint f = animationItem.FrameNos[i];
+                                if (f < firstFrame || f > lastFrame)
+                                {
+                                    frameOutOfRange = true;
+                                }
+
+                                if (f != frameno && !threeD.HasPerInstanceAnimationFrames)
+                                {
+                                    batchNotUniform = true;
+                                }
+                            }
+
+                            if (frameOutOfRange || batchNotUniform)
+                            {
+                                var allBaked = animationItem.AAnimationsEntry?.Model?
+                                    .AnimationCollection.AllBakedMatrices;
+                                int nBones = animationItem.AAnimationsEntry?.Model?.Skeleton?.NBones ?? 0;
+                                Trace(_dc,
+                                    $"[AnimDiag] anim='{modelAnimation.Name}' frames=[{firstFrame}..{lastFrame}] "
+                                    + $"frameno={frameno} "
+                                    + $"outOfRange={frameOutOfRange} nonUniformBatch={batchNotUniform} "
+                                    + $"nInstances={animationItem.FrameNos.Count} "
+                                    + $"bufferFrames={((allBaked != null && nBones > 0) ? allBaked.Length / nBones : -1)}");
+                            }
+                        }
+
                         threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, animationItem.AAnimationsEntry,
                             spanMatrices, spanFramenos, nMatrices, modelAnimation, frameno);
                         _frameStats.NTriangles += nMatrices * jMesh.Indices.Count / 3;
@@ -290,10 +336,26 @@ public class CameraOutput
         }
         else
         {
-            // Snapshot both animation and frame together to prevent race condition where animation
-            // changes between reading the two fields from the live AnimationState.
+            /*
+             * Snapshot both animation and frame together to prevent a race condition where
+             * the animation changes between reading the two fields from the live
+             * AnimationState. Re-read the animation afterwards: if it moved on, the frame
+             * we just read belongs to the previous clip, so start the new one at zero
+             * rather than carry a frame number that is meaningless (and possibly out of
+             * range) for it.
+             */
             snapshotAnimation = animState.ModelAnimation;
             localFrameno = animState.ModelAnimationFrame;
+            if (!ReferenceEquals(snapshotAnimation, animState.ModelAnimation))
+            {
+                snapshotAnimation = animState.ModelAnimation;
+                localFrameno = 0;
+            }
+
+            if (null == snapshotAnimation)
+            {
+                aAnimationsEntry = NullAnimationsEntry.Instance();
+            }
         }
 
         meshBatch.Add(aAnimationsEntry, animState, localFrameno, snapshotAnimation, matrix, _frameStats);
