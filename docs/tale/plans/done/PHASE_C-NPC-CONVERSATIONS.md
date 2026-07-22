@@ -1,5 +1,8 @@
 # TALE Phase C: NPC Conversation System
 
+> **Status:** implemented - **Implemented as:** `nogameCode/nogame/characters/citizen/TaleConversationBehavior.cs:22`, `nogameCode/nogame/modules/tale/TaleNarrationBindings.cs:25,208`, `JoyceCode/engine/tale/StoryletDefinition.cs:97`, `nogameCode/nogame/modules/story/NarrationBindings.cs:319,332,341` - **Verified:** 2026-07-21
+
+
 **Status:** 📋 Proposed
 
 **Overview:** Dialogue-driven personality for TALE NPCs. Players can approach any outdoor NPC and trigger contextual conversations shaped by the NPC's simulation state (role, hunger, anger, wealth, etc.). Conversations accumulate trust and can trigger quests, laying groundwork for deep storyline integration in future phases.

@@ -1,5 +1,8 @@
 # Phase 7B: Building Role Tagging
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/streets/QuarterGenerator.cs:82-116,285-289`, `JoyceCode/engine/world/ClusterDesc.cs:22-27,587`, `JoyceCode/engine/streets/Building.cs:15`, `JoyceCode/engine/tale/TalePopulationGenerator.cs:203` - **Verified:** 2026-07-21
+
+
 **Status**: Plan drafted (2026-03-16), pending implementation
 
 **Prerequisites**: Phase 7 (spatial model wire-up, entry points, pathfinding infrastructure)

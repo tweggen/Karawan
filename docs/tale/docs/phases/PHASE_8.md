@@ -1,5 +1,8 @@
 # TALE Phase 8: Occupation-Based Character Model Assignment
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/RoleDefinition.cs:58`, `models/nogame.roles.json:126`, `nogameCode/nogame/characters/citizen/CharacterModelDescriptionFactory.cs:30`, `nogameCode/nogame/characters/citizen/TaleSpawnOperator.cs:315-324` - **Verified:** 2026-07-21
+
+
 **Status:** ✅ Implementation Complete (2026-03-20)
 
 ## Overview

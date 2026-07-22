@@ -1,5 +1,8 @@
 # Debug Filter Architecture
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/DebugFilter.cs:21,50`, `DebugCategories.cs:10`, `DebugInterpolatedStringHandler.cs:11`, `models/nogame.properties.json:19-45`, `JoyceCode/engine/Props.cs:219` - **Verified:** 2026-07-21
+
+
 **Date**: 2026-04-20  
 **Status**: ✅ Complete (Commit 484b4473)  
 **Scope**: Zero-overhead, runtime-configurable selective debug output categories

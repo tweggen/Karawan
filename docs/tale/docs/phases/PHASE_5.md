@@ -1,5 +1,8 @@
 # Phase 5 — Branching, Interrupts & Escalation
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/ArcStack.cs:21-44`, `JoyceCode/engine/tale/StoryletDefinition.cs:94` (InterruptPriority), `models/tale/escalation.json`, `models/tests/tale/phase5-escalation/` - **Verified:** 2026-07-21
+
+
 **Status**: ✅ **IMPLEMENTATION COMPLETE** (2026-03-14)
 - ArcStack interrupt system implemented
 - Conditional postconditions engine active

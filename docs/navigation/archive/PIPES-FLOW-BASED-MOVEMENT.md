@@ -1,5 +1,8 @@
 # Pipes: Flow-Based Entity Movement Model
 
+> **Status:** superseded - **Implemented as:** `JoyceCode/engine/navigation/Pipe.cs:13,23,43,49`, `MovingEntity.cs:11`, `PipeController.cs:11`, `TemporalConstraintState.cs:8`; executed via `docs/navigation/plans/done/PHASE-B-FLOW.md` - **Verified:** 2026-07-21
+
+
 **Status:** Proposed (Design Phase)
 **Date:** 2026-03-24
 **Related:** NavMap, Temporal Constraints, Transportation Graphs

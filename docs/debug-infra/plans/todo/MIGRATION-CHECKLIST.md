@@ -1,5 +1,8 @@
 # Debug Filter Migration Checklist
 
+> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/DebugFilter.cs:21`, `DebugCategories.cs:10-42`, `models/nogame.properties.json:19-45`; ~486 of 571 call sites migrated, remainder outstanding - **Verified:** 2026-07-21
+
+
 **Status**: Phase 1 Complete ✅ | Phase 2 IN PROGRESS (Priority 0 + 1 complete, 2 pending)  
 **Migrated**: 101 calls (17.7%)  
 **Remaining**: 470 calls (82.3%)

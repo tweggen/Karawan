@@ -1,5 +1,8 @@
 # Role Abstraction Proposal
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/RoleRegistry.cs`, `JoyceCode/engine/tale/RoleDefinition.cs:58`, `models/nogame.roles.json` - **Verified:** 2026-07-21
+
+
 ## Current State: Hardcoded Roles
 
 The TALE system currently hardcodes 5 roles: **Worker**, **Merchant**, **Socialite**, **Drifter**, **Authority**. Role properties are scattered across the codebase with logic duplicated in multiple switch statements.

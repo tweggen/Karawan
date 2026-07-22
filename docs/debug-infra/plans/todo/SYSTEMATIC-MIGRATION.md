@@ -1,5 +1,8 @@
 # Systematic Debug Filter Migration Across Engine
 
+> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/DebugFilter.cs:21`, `DebugInterpolatedStringHandler.cs:11`, `DebugCategories.cs:10-42` (28 categories), `JoyceCode/engine/tale/TaleManager.cs:19`, `models/nogame.properties.json:19-44` - **Verified:** 2026-07-21
+
+
 **Status**: Planned  
 **Date Created**: 2026-04-20  
 **Related**: `docs/roadmap/done/DEBUG-FILTER-ARCHITECTURE.md`  

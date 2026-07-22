@@ -1,5 +1,8 @@
 # Plan A: Player Body Collision Layer Fix
 
+> **Status:** implemented - **Implemented as:** `nogameCode/nogame/modules/playerhover/WalkModule.cs:123-133`, `JoyceCode/engine/physics/CollisionProperties.cs:25,27`, `nogameCode/nogame/characters/citizen/CitizenCollisionRouter.cs:37` - **Verified:** 2026-07-21
+
+
 **Status:** ✅ Done (2026-05-17)
 **Created:** 2026-05-17
 **Complexity:** Trivial (1-2 lines of code)

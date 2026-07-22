@@ -1,5 +1,8 @@
 # Phase D: Multi-Objective Routing - Progress Report
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/NpcGoal.cs:6`, `RoutingPreferences.cs:10`, `JoyceCode/builtin/modules/satnav/LocalPathfinder.cs:66,81-88`, `JoyceCode/engine/tale/TalePopulationGenerator.cs:395-439`, `nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs:34,169-184` - **Verified:** 2026-07-21
+
+
 **Date:** 2026-03-28 (Updated)
 **Status:** 🔄 IN PROGRESS (Infrastructure + NavMesh Fixed, Critical Pathfinding Issues Resolved)
 **Test Results:** 171/171 PASSED (100% success) — Zero regressions

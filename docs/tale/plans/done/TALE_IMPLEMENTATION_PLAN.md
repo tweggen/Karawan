@@ -1,4 +1,7 @@
 # TALE Implementation Plan
+
+> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/tale/EventQueue.cs`, `JoyceCode/engine/tale/DesSimulation.cs`, `JoyceCode/engine/tale/StoryletDefinition.cs:122` (StoryletLibrary), `Testbed/TestbedMain.cs:17`; Phase 4 (Player) scaffolding only - **Verified:** 2026-07-21
+
 *Agile phases — story generation through emergent NPC interaction*
 
 ---
@@ -138,7 +141,7 @@ Claude Code can execute this loop autonomously. See [PHASE_0C_OUTPUT.md](tale/PH
 For architectural context and rationale behind the plan:
 - [NPC_STORIES_DESIGN.md](NPC_STORIES_DESIGN.md) — NPC-centric narrative vision, social capital, simulation tiers, transport tubes
 - [TESTBED_PLAN.md](TESTBED_PLAN.md) — Testbed architecture, DES design, spatial model, encounter probability model
-- [TALE_CONCEPT.md](TALE_CONCEPT.md) — Storylet templates, emotional arcs, graph rewriting
+- [TALE_CONCEPT.md](../../docs/CONCEPT.md) — Storylet templates, emotional arcs, graph rewriting
 
 ## Phase Dependencies
 

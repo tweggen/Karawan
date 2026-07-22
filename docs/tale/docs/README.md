@@ -7,7 +7,7 @@ The TALE system is a comprehensive narrative simulation engine that powers NPC b
 ### For New Developers
 1. Start with [OVERVIEW.md](OVERVIEW.md) — System overview
 2. Read [ARCHITECTURE.md](ARCHITECTURE.md) — System design and components
-3. See [../PROCESS_TALE.md](../PROCESS_TALE.md) for development workflow
+3. See [../PROCESS_TALE.md](PROCESS_TALE.md) for development workflow
 
 ### By Category
 
@@ -17,7 +17,7 @@ Implementation roadmap across 19 phases (0-8, C1-C4, D)
 - [PHASE_0.md](phases/PHASE_0.md) — DES Engine (testbed infrastructure)
 - [PHASE_1.md](phases/PHASE_1.md) — Storylet System
 - [PHASE_2.md](phases/PHASE_2.md) — Strategies
-- [PHASE_C.md](phases/PHASE_C.md) — NPC Conversations
+- [PHASE_C.md](../plans/done/PHASE_C-NPC-CONVERSATIONS.md) — NPC Conversations
 - [Full phase list](phases/)
 
 #### 🧪 **Test Documentation** — [tests/](tests/)
@@ -39,8 +39,8 @@ Problem analysis, design solutions, and implementation challenges
 Foundational, theoretical, and architectural concepts
 
 - [NARRATION.md](concepts/NARRATION.md) — Narration system concept
-- [ROLES.md](concepts/ROLES.md) — Role abstraction
-- [INTERACTIONS.md](concepts/INTERACTIONS.md) — Interaction types
+- [ROLES.md](../plans/done/ROLE-REGISTRY.md) — Role abstraction
+- [INTERACTIONS.md](../plans/done/INTERACTION-TYPE-REGISTRY.md) — Interaction types
 - [Full concepts](concepts/)
 
 ## Key Documents
@@ -54,7 +54,7 @@ Foundational, theoretical, and architectural concepts
 ## Development Workflow
 
 **To implement a new feature:**
-1. Read [../PROCESS_TALE.md](../PROCESS_TALE.md) for TALE-specific process
+1. Read [../PROCESS_TALE.md](PROCESS_TALE.md) for TALE-specific process
 2. Check relevant [PHASE_*.md](phases/) design doc
 3. Review [tests/PHASE_*.md](tests/) for test specifications
 4. Add/modify tests in `models/tests/tale/phaseN-*/`

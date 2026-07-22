@@ -1,5 +1,8 @@
 # Phase C Implementation Plan: Dynamics — Temporal Constraints & Subdivisions
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/PipeSubdivision.cs:11`, `SpeedFunctions.cs:10`, `Pipe.cs:75,88`, `PipeController.cs:16,48,72`, `ITemporalConstraint.cs:9`; no `PipeObstruction` type - **Verified:** 2026-07-21
+
+
 **Phase:** C (Dynamics)
 **Duration:** ~4-5 days
 **Status:** 🔄 Ready for Implementation (as of 2026-03-25)

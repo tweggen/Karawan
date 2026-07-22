@@ -1,5 +1,8 @@
 # Phase 6: Production Integration — Seed-Based Population & Cluster Lifecycle
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/TalePopulationGenerator.cs:15`, `JoyceCode/engine/tale/TaleManager.cs:95` (PopulateCluster), `:275` (DepopulateCluster), `nogameCode/nogame/modules/tale/TaleModule.cs:471` - **Verified:** 2026-07-21
+
+
 Phase 6 bridges the TALE simulation (Phases 0-5) with the live game engine. It replaces the placeholder `TaleSpawnOperator` wiring with the full Tier 3 → Tier 2 → Tier 1 pipeline: deterministic NPC population per cluster, schedule-aware spawning, and deviation-only persistence.
 
 ## Design Principles

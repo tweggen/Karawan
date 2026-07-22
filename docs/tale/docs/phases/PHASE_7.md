@@ -1,5 +1,8 @@
 # Phase 7: Spatial Grounding & Navigation
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/SpatialModel.cs:105`, `JoyceCode/engine/tale/TaleManager.cs:23`, `JoyceCode/engine/tale/NpcSchedule.cs:34,140`, `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs:21` - **Verified:** 2026-07-21
+
+
 Phase 7 bridges the TALE simulation's logical locations (from `SpatialModel`) with precise world coordinates and NPC visibility. NPCs now materialize at exact entry points, occupy buildings indoors (invisible to players), and compute street routes dynamically.
 
 **Status**: ✅ **IMPLEMENTATION COMPLETE** (2026-03-16)

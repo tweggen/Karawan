@@ -1,5 +1,8 @@
 # Phase B Implementation Plan: Flow — Pipes & Basic Movement
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/TemporalConstraintState.cs:8`, `ITemporalConstraint.cs:9`, `Pipe.cs:13`, `PipeNetwork.cs:11`, `PipeController.cs:11`, `CyclicConstraint.cs:8` - **Verified:** 2026-07-21
+
+
 **Phase:** B (Flow)
 **Duration:** ~3-4 days (actual: 1 day)
 **Status:** ✅ COMPLETE (2026-03-25)

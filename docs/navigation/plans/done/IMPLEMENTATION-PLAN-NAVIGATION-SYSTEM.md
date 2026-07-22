@@ -1,5 +1,8 @@
 # Implementation Plan: Next-Generation Navigation System
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/TransportationType.cs:9-17,22`, `RoutingGraphBuilder.cs:12-85`, `PipeController.cs:11`, `JoyceCode/builtin/modules/satnav/desc/NavLane.cs:25`, `LocalPathfinder.cs:26,99`, `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs:30` - **Verified:** 2026-07-21
+
+
 **Status:** ✅ All Phases Complete
 **Last Updated:** 2026-03-29
 **Original Date:** 2026-03-24

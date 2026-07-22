@@ -1,5 +1,8 @@
 # Phase C6: Storyline Conversation Trees
 
+> **Status:** not-started - **Implemented as:** - (prerequisite narration branching exists at `JoyceCode/engine/narration/NarrationScript.cs:55-213,509-536`) - **Verified:** 2026-07-21
+
+
 **Status**: 📋 Proposed
 **Created**: 2026-04-10
 **Dependency**: Phase C4 (complete ✅), Phase C5 (proposed)

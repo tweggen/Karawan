@@ -1,5 +1,8 @@
 # Interaction Type Abstraction Proposal
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/InteractionTypeRegistry.cs:10`, `JoyceCode/engine/tale/InteractionTypeDefinition.cs:10`, `JoyceCode/engine/tale/IInteractionCondition.cs:10`, `JoyceCode/engine/tale/RelationshipTracker.cs:56`, `models/nogame.interactions.json` - **Verified:** 2026-07-21
+
+
 ## Current State: Hardcoded Interaction Types
 
 The TALE system has 12+ hardcoded interaction types scattered across the codebase with duplicated logic and hardcoded parameters.

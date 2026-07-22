@@ -1,5 +1,8 @@
 # Phase D: Multi-Objective Routing (NPCs Take Different Routes)
 
+> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/tale/NpcGoal.cs:6-37`, `RoutingPreferences.cs:10,45-69`, `JoyceCode/builtin/modules/satnav/LocalPathfinder.cs:32,63-88`, `JoyceCode/engine/tale/TalePopulationGenerator.cs:395-439`; Scenic/Safe multipliers are placeholders returning 1.0f (`RoutingPreferences.cs:99-125`) - **Verified:** 2026-07-21
+
+
 **Status**: IMPLEMENTATION COMPLETE (2026-03-25)
 
 **Prerequisite**: Phase C (Dynamic flow modeling via pipe system, A* pathfinding infrastructure)

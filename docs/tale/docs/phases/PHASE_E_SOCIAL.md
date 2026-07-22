@@ -1,5 +1,8 @@
 # TALE-SOCIAL Phase E: Living Factions
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/CommunityDetector.cs:23`, `ClusterSocialState.cs:14,64`, `RuntimeSocialEvolver.cs:36,94`, `GroupActions.cs:23`, `TaleManager.cs:414,497,540`, `nogameCode/nogame/modules/tale/GroupNameGenerator.cs:12` - **Verified:** 2026-07-21
+
+
 **Status:** In progress (E1–E4 implemented; E5 narration/co-location and E6 save-game persistence pending)
 **Plan:** `docs/roadmap/proposed/IMPLEMENTATION-PLAN-TALE-SOCIAL-PHASE-E.md`
 **Predecessor:** `PHASE_D_SOCIAL.md` (scenario pre-computation)

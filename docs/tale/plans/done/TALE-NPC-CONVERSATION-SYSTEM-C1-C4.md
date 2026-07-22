@@ -1,5 +1,8 @@
 # Plan: TALE NPC Conversation System (Phases C1–C4)
 
+> **Status:** implemented - **Implemented as:** `nogameCode/nogame/characters/citizen/TaleConversationBehavior.cs:22`, `nogameCode/nogame/modules/tale/TaleNarrationBindings.cs:16,53,208`, `nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs:376,426`, `nogameCode/nogame/modules/tale/TaleModule.cs:752`, `models/tale/conversations/tale.role.*.json` - **Verified:** 2026-07-21
+
+
 **Status**: ✅ Complete (as of 2026-04-10)
 
 ## Context

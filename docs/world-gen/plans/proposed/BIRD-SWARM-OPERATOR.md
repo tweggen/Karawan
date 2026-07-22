@@ -1,5 +1,8 @@
 # Bird Swarm Over Non-Cluster Fragments — Implementation Plan
 
+> **Status:** not-started - **Implemented as:** - (only the imitated pattern exists: `nogameCode/nogame/terrain/PlaceDebrisOperator.cs:12`) - **Verified:** 2026-07-21
+
+
 ## Goal
 
 A swarm of ~40 flying birds (tetrahedron geometry) over **non-cluster** (void) fragments, with **10% chance** per such fragment. The swarm is **owned by the fragment** and **unloaded** when the fragment unloads. Implemented as a **FragmentOperator**, with the option to use a particle-style or per-entity approach.

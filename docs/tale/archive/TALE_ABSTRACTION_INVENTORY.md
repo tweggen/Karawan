@@ -1,5 +1,8 @@
 # TALE Abstraction Inventory
 
+> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/tale/RoleRegistry.cs`, `JoyceCode/engine/tale/InteractionTypeRegistry.cs:10`, `models/nogame.interactions.json`, `models/nogame.roles.json` - **Verified:** 2026-07-21
+
+
 Comprehensive analysis of all hardcoded TALE properties that could be abstracted into configuration.
 
 ---

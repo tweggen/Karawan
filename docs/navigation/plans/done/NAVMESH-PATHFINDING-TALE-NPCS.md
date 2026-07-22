@@ -1,5 +1,8 @@
 # Plan: NavMesh Pathfinding for TALE NPCs via IRouteGenerator
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/IRouteGenerator.cs:9,17`, `nogameCode/nogame/characters/citizen/NavMeshRouteGenerator.cs:21`, `StreetRouteBuilder.cs:30`, `GoToStrategyPart.cs:31`, `JoyceCode/builtin/modules/satnav/desc/NavCluster.cs:104`, `models/nogame.implementations.json:12-13` - **Verified:** 2026-07-21
+
+
 **Status**: ✅ COMPLETE (2026-03-26, Commit 4a2080a7)
 
 ## Context

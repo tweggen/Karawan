@@ -1,6 +1,9 @@
 # Pre-Established Social Structures (Dynamic Scenario System)
 
-**Status**: ✅ Complete — D1-D5 all implemented 2026-04-12. Canonical reference: [`docs/tale/phases/PHASE_D_SOCIAL.md`](../../tale/phases/PHASE_D_SOCIAL.md). This file is the historical plan and stays as a record of how the work was scoped.
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/bake/ScenarioCompiler.cs:29`, `ScenarioExporter.cs:77`, `ScenarioLibrary.cs:27`, `ScenarioSelector.cs:34`, `ScenarioApplicator.cs:83`; 13 (not 25) scenarios configured in `models/nogame.scenarios.json` - **Verified:** 2026-07-21
+
+
+**Status**: ✅ Complete — D1-D5 all implemented 2026-04-12. Canonical reference: [`docs/tale/phases/PHASE_D_SOCIAL.md`](../../docs/phases/PHASE_D_SOCIAL.md). This file is the historical plan and stays as a record of how the work was scoped.
 **Phase**: D (TALE-SOCIAL — distinct from the routing "Phase D" workstream) — Pre-game world generation
 **Prerequisites**: Phase 0-5 complete (TALE narrative engine, escalation system, GroupDetector)
 

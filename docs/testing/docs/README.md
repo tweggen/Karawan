@@ -10,7 +10,7 @@ Overall testing approach, simulation duration, test tiers, when to run tests
 ### 🏗️ **Testbed** — [TESTBED.md](TESTBED.md)
 Headless simulation infrastructure, how tests work
 
-### 📊 **Testing Tiers** — [TIERS.md](TIERS.md)
+### 📊 **Testing Tiers** — [TIERS.md](../plans/done/TIERS.md)
 Multi-tier testing strategy proposal (smoke, standard, full, recalibration)
 
 ## For TALE-Specific Testing
@@ -50,7 +50,7 @@ See [../tale/tests/](../tale/tests/) for:
 ## See Also
 
 - [../tale/](../tale/) — TALE narrative system & phases
-- [PROCESS_TALE.md](../PROCESS_TALE.md) — TALE development process (includes test commands)
+- [PROCESS_TALE.md](../../tale/docs/PROCESS_TALE.md) — TALE development process (includes test commands)
 - [PROCESS.md](../PROCESS.md) — Generic development process
 
 ---

@@ -1,5 +1,8 @@
 # Plan: Data-Driven L-System Editor for Aihao IDE
 
+> **Status:** partially-implemented - **Implemented as:** `JoyceCode/builtin/tools/Lindenmayer/Expressions/{ExpressionLexer,ExpressionParser,ExpressionEvaluator,LuaExpressionEvaluator}.cs`, `LSystemLoader.cs`, `Aihao/Aihao/Views/LSystemEditor.axaml`; Phase 5 node-graph UI not built (tree+form editor instead) - **Verified:** 2026-07-21
+
+
 ## Summary
 
 Replace C# lambda-based L-system definitions with a JSON-based format that can be edited visually in the Aihao IDE using a node graph editor. Support simple expressions for most cases with optional Lua for complex logic.

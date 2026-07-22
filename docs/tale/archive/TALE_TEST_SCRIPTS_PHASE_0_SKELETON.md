@@ -1,5 +1,8 @@
 # TALE Phase 0 Test Scripts — DES Engine (SKELETON)
 
+> **Status:** superseded - **Implemented as:** `models/tests/tale/phase0-des/` (20 tests); spec now `docs/tale/docs/tests/PHASE_0.md` - **Verified:** 2026-07-21
+
+
 ## Overview
 
 Phase 0 validates the **discrete event simulation engine**, the foundation for all TALE phases.

@@ -106,7 +106,7 @@ When all changes and documentation are complete:
 
   - Specific change 1
   - Specific change 2
-  - Updated docs/TESTING/TESTING_STRATEGY.md, docs/tale/phases/PHASE_N.md
+  - Updated docs/testing/docs/TESTING_STRATEGY.md, docs/tale/phases/PHASE_N.md
   - All 171 regression tests passing
   - Moved plan: proposed/ → done/
 
@@ -312,7 +312,7 @@ Implement Phase C4: Trust, Memory & Quest Hooks
 - Injected npc.met_player, npc.trust_player into narration Props
 - Added conversation cooldown (30s)
 - Created 9 new test scripts for Phase C4
-- Updated docs/TESTING/TESTING_STRATEGY.md with phase summary
+- Updated docs/testing/docs/TESTING_STRATEGY.md with phase summary
 - All 192 regression tests passing
 
 See docs/roadmap/done/PHASE-C4-TRUST-MEMORY.md
@@ -322,8 +322,8 @@ See docs/roadmap/done/PHASE-C4-TRUST-MEMORY.md
 ```
 1. Code change: Add new property to NpcSchedule
 2. Update: JoyceCode/engine/tale/NpcSchedule.cs (code)
-3. Update: docs/tale/phases/PHASE_C.md (add to class docs)
-4. Update: docs/TESTING/TESTING_STRATEGY.md (if affects tests)
+3. Update: docs/tale/plans/done/PHASE_C-NPC-CONVERSATIONS.md (add to class docs)
+4. Update: docs/testing/docs/TESTING_STRATEGY.md (if affects tests)
 5. Update: CLAUDE.md (if architectural)
 6. Commit: "Feature: Add property to NpcSchedule"
 ```

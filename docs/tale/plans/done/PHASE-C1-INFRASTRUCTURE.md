@@ -1,5 +1,8 @@
 # Plan: Phase C1 - NPC Conversation Infrastructure
 
+> **Status:** implemented - **Implemented as:** `nogameCode/nogame/characters/citizen/TaleConversationBehavior.cs:22`, `nogameCode/nogame/modules/tale/TaleNarrationBindings.cs:16,53,208-259`, `nogameCode/nogame/tools/ANearbyBehavior.cs:15`, `models/tale/conversations/tale.generic.json` - **Verified:** 2026-07-21
+
+
 **Status:** 📋 Ready for Implementation
 **Created:** 2026-04-07
 **Estimated Effort:** 2-3 hours

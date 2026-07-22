@@ -1,5 +1,8 @@
 # Debug Filter Codebase Audit
 
+> **Status:** superseded - **Implemented as:** survey consumed by `docs/debug-infra/plans/todo/MIGRATION-CHECKLIST.md`; system at `JoyceCode/engine/DebugFilter.cs:21` - **Verified:** 2026-07-21
+
+
 **Date**: 2026-04-20  
 **Total Files with Logger Calls**: 135  
 **Total Logger Calls**: 571  

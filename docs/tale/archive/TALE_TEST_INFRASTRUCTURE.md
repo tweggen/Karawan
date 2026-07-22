@@ -1,5 +1,8 @@
 # TALE Test Infrastructure - Completion Manifest
 
+> **Status:** implemented - **Implemented as:** `models/tests/tale/phase0-des/` (20), `phase1-storylets/` (20), `phase3-interactions/` (22), `TestRunner/TestRunnerMain.cs`, `run_tests.sh` - **Verified:** 2026-07-21
+
+
 ## Overview
 This document summarizes the complete test infrastructure for TALE (Temporal Agent Lifecycle Engine) narrative system, including 62 test scripts (Phases 0, 1, 3) and the TestRunner harness for execution.
 

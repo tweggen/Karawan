@@ -1,5 +1,8 @@
 # Plan C: Push-Aside Reaction on Player Body Contact
 
+> **Status:** implemented - **Implemented as:** `nogameCode/nogame/characters/citizen/CitizenCollisionRouter.cs:25`, `BumpEvent.cs:13`, `EntityStrategy.cs:44`, `JoyceCode/builtin/tools/SegmentNavigator.cs:111,119`, `WalkBehavior.cs:26,107`, `TaleWalkBehavior.cs:65,79` - **Verified:** 2026-07-21
+
+
 **Status:** ✅ Done (2026-05-17) — Phases 1 + 2 landed in one commit. Phase 3 (tuning) deferred until manual in-game review.
 **Created:** 2026-05-17
 **Complexity:** Medium (new event type + handler in 5 behaviors + light strategy work)

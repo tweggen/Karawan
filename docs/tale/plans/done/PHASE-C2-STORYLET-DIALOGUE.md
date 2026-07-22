@@ -1,5 +1,8 @@
 # Plan: Phase C2 - Storylet-Specific Dialogue
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/StoryletDefinition.cs:97,326`, `nogameCode/nogame/modules/tale/TaleNarrationBindings.cs:208`, `models/tale/conversations/tale.tag.routine.json`, `tale.tag.eating.json`, `tale.lunch_break.json` - **Verified:** 2026-07-21
+
+
 **Status:** 📋 Ready for Implementation
 **Created:** 2026-04-07
 **Estimated Effort:** 1-2 hours

@@ -1,5 +1,8 @@
 # Multi-Tier Testing Strategy Proposal
 
+> **Status:** partially-implemented - **Implemented as:** `run_tests.sh:8-11,44-57`, `models/tests/tale/.smoke-tests`, `run_recalibration_tests.sh`; no CI (`.github/workflows/test.yml` never created) - **Verified:** 2026-07-21
+
+
 **Status:** 📋 Proposed
 **Created:** 2026-04-07
 **Purpose:** Enable rapid feedback cycles during development while maintaining comprehensive validation

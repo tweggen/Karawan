@@ -1,5 +1,8 @@
 # Phase C5: Ambient NPC-NPC Dialogue
 
+> **Status:** not-started - **Implemented as:** - - **Verified:** 2026-07-21
+
+
 **Status**: 📋 Proposed
 **Created**: 2026-04-10
 **Dependency**: Phase C4 (complete ✅)

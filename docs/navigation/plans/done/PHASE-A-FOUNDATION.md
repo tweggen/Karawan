@@ -1,5 +1,8 @@
 # Phase A Implementation Plan: Foundation — Transportation Types & Routing Graphs
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/TransportationType.cs:9-17,22-69`, `JoyceCode/builtin/modules/satnav/desc/NavLane.cs:25-26,38-61`, `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs:21-178`, `LocalPathfinder.cs:175-176`; `RoutingGraphBuilder.cs:12-85` built but uncalled - **Verified:** 2026-07-21
+
+
 **Phase:** A (Foundation)
 **Duration:** ~2-3 days (actual: 1 day)
 **Status:** ✅ COMPLETE (2026-03-24)

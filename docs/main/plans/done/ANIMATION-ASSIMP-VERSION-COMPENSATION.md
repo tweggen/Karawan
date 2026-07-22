@@ -1,5 +1,8 @@
 # Animation Assimp Version Compensation Plan
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/joyce/AssimpVersion.cs:7`, `JoyceCode/builtin/loader/fbx/AssimpVersionDetector.cs:13,70`, `FbxModel.cs:880-890,1149,1158,1175`, `ModelAnimationCollection.cs:547`; no `NeedsComplexTransformationChain()` (inline), no `BakedAnimationData` - **Verified:** 2026-07-21
+
+
 **Status:** Planning phase  
 **Date Created:** 2026-04-23  
 **Context:** Assimp 5.4.1 → 6.0.2 upgrade broke FBX animation loading. Implementing version-specific compensation code to support both versions.

@@ -1,5 +1,8 @@
 # Plan B: Arm Right-Hand Collider Only During Punch
 
+> **Status:** implemented - **Implemented as:** `nogameCode/nogame/characters/EntityCreator.cs:61,298`, `nogameCode/nogame/modules/playerhover/WalkBehavior.cs:37,45,113`, `WalkController.cs:62,133,339,451,846`, `WalkModule.cs:92,146,155` - **Verified:** 2026-07-21
+
+
 **Status:** ✅ Done (2026-05-17)
 **Created:** 2026-05-17
 **Complexity:** Small (single file change + plumbing)

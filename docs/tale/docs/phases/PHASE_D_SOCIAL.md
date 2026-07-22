@@ -1,5 +1,8 @@
 # TALE-SOCIAL Phase D: Pre-Established Social Structures
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/bake/ScenarioCompiler.cs:29,55`, `ScenarioSelector.cs:34`, `ScenarioApplicator.cs:83`, `ScenarioExporter.cs:220`, `nogameCode/nogame/modules/tale/TaleModule.cs:334`, `nogame/generated/scenario-statistics.json` - **Verified:** 2026-07-21
+
+
 **Status**: IMPLEMENTATION COMPLETE — D1 ✅, D2 ✅, D3 ✅, D4 ✅, D5 ✅ (all 2026-04-12)
 
 **Prerequisites**: Phases 0-5 (TALE narrative engine, escalation system, GroupDetector, RelationshipTracker)

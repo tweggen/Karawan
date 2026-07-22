@@ -1,5 +1,8 @@
 # NavMap: Transportation-Type-Specific Routing Graphs
 
+> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/navigation/TransportationType.cs:22-69`, `RoutingGraphBuilder.cs:12-85`, `RoutingGraph.cs:11`, `JoyceCode/builtin/modules/satnav/desc/NavLane.cs:25-26,38-61`; `NavMap.GetGraphFor` (`NavMap.cs:49-69`) has no callers - **Verified:** 2026-07-21
+
+
 **Status:** Proposed
 **Date:** 2026-03-24
 **Related:** Phase 7C (NavMesh pathfinding via IRouteGenerator)

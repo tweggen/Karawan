@@ -1,5 +1,8 @@
 # Phase C: Dynamics - Completion Report
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/PipeSubdivision.cs:1-70`, `SpeedFunctions.cs:16-118`, `PipeController.cs:16,48,72,178,202`, `Pipe.cs:75`; navigation unit tests excluded at `tests/JoyceCode.Tests/JoyceCode.Tests.csproj:41` - **Verified:** 2026-07-21
+
+
 **Date:** 2026-03-25
 **Status:** ✅ COMPLETE AND VERIFIED
 **Test Results:** 171/171 PASSED (100% success)

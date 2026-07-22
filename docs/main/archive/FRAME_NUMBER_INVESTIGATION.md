@@ -1,5 +1,8 @@
 # Frame Number Inconsistency Investigation
 
+> **Status:** superseded - **Implemented as:** Option B fix, `ModelAnimation.GetGlobalFrame` + `MeshBatch.Add`; consumed at `Splash.Silk/SilkThreeD.cs:510` and `models/shaders/LIghtingVS.vert:136` - **Verified:** 2026-07-21
+
+
 > **SUPERSEDED (2026-07-20).** The analysis below is sound but its survey of consumers is
 > incomplete, and the fix it recommends (Option A, implemented as commit `c3f40eeb`) caused a
 > regression: walking characters played the fall animation, and idle alternated between falling

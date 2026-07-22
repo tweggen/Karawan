@@ -1,5 +1,8 @@
 # TALE Phase 1, 2, 4, 5 Test Scripts — SKELETON
 
+> **Status:** superseded - **Implemented as:** `models/tests/tale/phase1-storylets/`, `phase2-strategies/`, `phase4-player/`, `phase5-escalation/` - **Verified:** 2026-07-21
+
+
 This document outlines test categories and script structure for remaining phases. Each phase follows the same pattern:
 - **20+ JSON test scripts** in `models/tests/tale/phaseX-name/`
 - Same metadata, step types, and execution model as Phase 0 & 3

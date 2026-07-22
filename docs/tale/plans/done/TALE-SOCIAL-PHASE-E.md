@@ -1,5 +1,8 @@
 # TALE-SOCIAL Phase E: Living Factions
 
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/CommunityDetector.cs:23`, `ClusterSocialState.cs:14,47`, `RuntimeSocialEvolver.cs:94`, `GroupActions.cs:23,57-59`, `StoryletDefinition.cs:79,253` - **Verified:** 2026-07-21
+
+
 **Status:** Proposed
 **Date:** 2026-07-13
 **Companion design doc (to be created during implementation):** `docs/tale/phases/PHASE_E_SOCIAL.md`
