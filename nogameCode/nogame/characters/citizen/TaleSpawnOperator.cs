@@ -94,8 +94,10 @@ public class TaleSpawnOperator : ISpawnOperator
         var toLoc = spatialModel.GetLocation(schedule.TransitToLocationId);
         if (fromLoc == null || toLoc == null) return null;
 
-        var fromPos = fromLoc.EntryPosition != Vector3.Zero ? fromLoc.EntryPosition : fromLoc.Position;
-        var toPos = toLoc.EntryPosition != Vector3.Zero ? toLoc.EntryPosition : toLoc.Position;
+        // Same per-NPC corner choice as NpcSchedule.PositionAt, so the road-aware
+        // sample and the chord fallback aim at the same points.
+        var fromPos = fromLoc.EntryPositionFor(schedule.NpcId);
+        var toPos = toLoc.EntryPositionFor(schedule.NpcId);
 
         NavMap navMap;
         try { navMap = I.Get<NavMap>(); }

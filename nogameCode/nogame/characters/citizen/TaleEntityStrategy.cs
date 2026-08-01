@@ -298,8 +298,10 @@ public class TaleEntityStrategy : AOneOfStrategy
         var destLoc = spatialModel?.GetLocation(schedule.CurrentLocationId);
         string destLocType = destLoc?.Type ?? "UNKNOWN";
 
+        // EntryPositionFor spreads NPCs heading to the same junction across
+        // its sidewalk corners instead of stacking them on one point.
         Vector3 destination = destLoc != null
-            ? (destLoc.EntryPosition != Vector3.Zero ? destLoc.EntryPosition : destLoc.Position)
+            ? destLoc.EntryPositionFor(_npcId)
             : Vector3.Zero;
 
         float distToDestination = Vector3.Distance(_currentPosition.Position, destination);
@@ -467,7 +469,7 @@ public class TaleEntityStrategy : AOneOfStrategy
             return;
         }
 
-        Vector3 dest = destLoc.EntryPosition != Vector3.Zero ? destLoc.EntryPosition : destLoc.Position;
+        Vector3 dest = destLoc.EntryPositionFor(_npcId);
         float distToDestination = Vector3.Distance(_currentPosition.Position, dest);
 
         // Compute route using the same pathfinding as _advanceAndTravel

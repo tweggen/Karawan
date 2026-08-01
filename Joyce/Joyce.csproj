@@ -32,6 +32,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Let the unit test suite reach internal helpers (e.g. SpatialModel street entry snapping). -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>JoyceCode.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Mono.Android">
       <HintPath>..\..\..\..\..\..\Program Files\dotnet\packs\Microsoft.Android.Ref.34\34.0.79\ref\net8.0\Mono.Android.dll</HintPath>
     </Reference>

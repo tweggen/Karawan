@@ -87,6 +87,35 @@ public class NavClusterContent
     }
     
 
+    /**
+     * Collect all lanes that could have points within radius of the given position
+     * into results. The list is cleared first, so it can safely be reused across
+     * calls. Uses the lane octree built by Recompile(); before Recompile has
+     * run (e.g. hand-built content in tests), returns all lanes so callers still
+     * see a correct superset.
+     */
+    public void GetLanesNear(Vector3 v3Position, float radius, List<NavLane> results)
+    {
+        results.Clear();
+
+        var octree = _octreeLanes;
+        if (octree == null)
+        {
+            results.AddRange(Lanes);
+            return;
+        }
+
+        /*
+         * TXWTODO: Workaround to look close to the plane we cover here.
+         */
+        v3Position.Y = _aabb.Center.Y;
+
+        octree.GetCollidingNonAlloc(
+            results,
+            new Octree.BoundingBox(v3Position, 2f * radius * Vector3.One));
+    }
+
+
     public async Task<NavCursor> TryCreateCursor(Vector3 v3Position, TransportationType transportType = TransportationType.Pedestrian)
     {
         List<NavCluster> matchingClusters = new();

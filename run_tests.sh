@@ -25,6 +25,11 @@ NC='\033[0m' # No Color
 # Paths
 TEST_BASE="models/tests/tale"
 TESTRUNNER_DLL="./TestRunner/bin/Release/net9.0/TestRunner.dll"
+# On Windows the TFM is net9.0-windows...; fall back to whatever Release TFM exists
+if [ ! -f "$TESTRUNNER_DLL" ]; then
+    TESTRUNNER_DLL=$(ls ./TestRunner/bin/Release/*/TestRunner.dll 2>/dev/null | head -1)
+    TESTRUNNER_DLL="${TESTRUNNER_DLL:-./TestRunner/bin/Release/net9.0/TestRunner.dll}"
+fi
 RESULTS_FILE="/tmp/tale_test_results.txt"
 
 # Check TestRunner exists
@@ -41,6 +46,8 @@ FILTER="${1:-all}"
 TALE_SIM_DAYS="${TALE_SIM_DAYS:-60}"
 
 # Determine which tests to run
+PHASES=()
+SPECIFIC_TESTS=()
 if [ "$FILTER" = "smoke" ]; then
     # Smoke tier: 10 critical tests, 10-day simulations
     SMOKE_MANIFEST="$TEST_BASE/.smoke-tests"
@@ -129,7 +136,7 @@ run_test() {
         kill -9 $test_pid 2>/dev/null || true
         wait $test_pid 2>/dev/null || true
         echo -e "${RED}✗ TIMEOUT${NC}"
-        ((FAILED++))
+        FAILED=$((FAILED+1))
         return 1
     fi
 
@@ -138,11 +145,11 @@ run_test() {
         # Check for test result in output
         if grep -q "\[TEST\].*PASS" /tmp/test_output.log; then
             echo -e "${GREEN}✓ PASS${NC}"
-            ((PASSED++))
+            PASSED=$((PASSED+1))
             return 0
         elif grep -q "\[TEST\].*FAIL" /tmp/test_output.log; then
             echo -e "${RED}✗ FAIL${NC}"
-            ((FAILED++))
+            FAILED=$((FAILED+1))
             FAILED_TESTS+=("${phase}/${test_name}")
             tail -20 /tmp/test_output.log >> "$RESULTS_FILE"
             return 1
@@ -150,14 +157,14 @@ run_test() {
             # Test ran but didn't produce clear pass/fail - check for errors
             if grep -q "Error\|error\|Exception" /tmp/test_output.log; then
                 echo -e "${RED}✗ ERROR${NC}"
-                ((FAILED++))
+                FAILED=$((FAILED+1))
                 FAILED_TESTS+=("${phase}/${test_name}")
                 tail -20 /tmp/test_output.log >> "$RESULTS_FILE"
                 return 1
             else
                 # No clear result - assume it started correctly (test framework working)
                 echo -e "${GREEN}✓ PASS (event stream confirmed)${NC}"
-                ((PASSED++))
+                PASSED=$((PASSED+1))
                 return 0
             fi
         fi
@@ -168,7 +175,7 @@ run_test() {
         else
             echo -e "${RED}✗ ERROR${NC}"
         fi
-        ((FAILED++))
+        FAILED=$((FAILED+1))
         FAILED_TESTS+=("${phase}/${test_name}")
         tail -10 /tmp/test_output.log >> "$RESULTS_FILE"
         return 1
@@ -189,7 +196,7 @@ if [ -n "$SPECIFIC_TEST" ]; then
     fi
     echo "Running: $(basename "$FOUND_TEST")"
     run_test "$FOUND_TEST"
-elif [ ${#SPECIFIC_TESTS[@]:-0} -gt 0 ]; then
+elif [ ${#SPECIFIC_TESTS[@]} -gt 0 ]; then
     # Run smoke tests from manifest
     echo -e "${YELLOW}Tier: smoke (10-day simulations)${NC}"
     for test_path in "${SPECIFIC_TESTS[@]}"; do
@@ -198,7 +205,7 @@ elif [ ${#SPECIFIC_TESTS[@]:-0} -gt 0 ]; then
             run_test "$full_test_path"
         else
             echo -e "${RED}  Test not found: $test_path${NC}"
-            ((FAILED++))
+            FAILED=$((FAILED+1))
         fi
     done
     echo ""

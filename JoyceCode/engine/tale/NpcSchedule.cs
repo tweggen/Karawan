@@ -152,8 +152,10 @@ public class NpcSchedule
                 var toLoc = model.GetLocation(TransitToLocationId);
                 if (fromLoc != null && toLoc != null)
                 {
-                    var fromPos = fromLoc.EntryPosition != Vector3.Zero ? fromLoc.EntryPosition : fromLoc.Position;
-                    var toPos = toLoc.EntryPosition != Vector3.Zero ? toLoc.EntryPosition : toLoc.Position;
+                    // EntryPositionFor spreads NPCs bound to the same junction
+                    // across its sidewalk corners instead of stacking them.
+                    var fromPos = fromLoc.EntryPositionFor(NpcId);
+                    var toPos = toLoc.EntryPositionFor(NpcId);
                     return Vector3.Lerp(fromPos, toPos, Math.Clamp(t, 0f, 1f));
                 }
             }
@@ -161,7 +163,7 @@ public class NpcSchedule
             // Not in transit: return current location position
             var loc = model.GetLocation(CurrentLocationId);
             if (loc != null)
-                return loc.EntryPosition != Vector3.Zero ? loc.EntryPosition : loc.Position;
+                return loc.EntryPositionFor(NpcId);
             Error($"No position found for time {gameTime} npc {NpcId}");
             return HomePosition;
         }

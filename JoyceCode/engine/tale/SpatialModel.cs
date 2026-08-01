@@ -23,6 +23,27 @@ public class Location
     // location out. Set to false in ExtractFrom / ValidateReachability when navigation
     // info is available and the entry point can't be reached on foot.
     public bool IsPedestrianReachable = true;
+
+    // For street (junction) locations: all sidewalk corners around the junction.
+    // EntryPosition is always EntryCandidates[0]. Null/empty for building locations
+    // (single entry). Lets multiple NPCs bound to the same junction spread across
+    // its corners instead of stacking on one point — pick with EntryPositionFor.
+    public List<Vector3> EntryCandidates;
+
+    /// <summary>
+    /// The entry position an individual NPC should stand at. Distributes NPCs
+    /// deterministically across EntryCandidates (sidewalk corners) when the
+    /// location has several; otherwise behaves exactly like EntryPosition.
+    /// </summary>
+    public Vector3 EntryPositionFor(int npcId)
+    {
+        if (EntryCandidates != null && EntryCandidates.Count > 0)
+        {
+            int n = EntryCandidates.Count;
+            return EntryCandidates[((npcId % n) + n) % n];
+        }
+        return EntryPosition != Vector3.Zero ? EntryPosition : Position;
+    }
 }
 
 public class Route
@@ -46,6 +67,10 @@ public class SpatialModel
 
     private Dictionary<int, Location> _locationsById;
     private const float WalkingSpeedMetersPerMinute = 75f; // ~4.5 km/h
+
+    // Single source of truth for "a pedestrian lane counts as within reach".
+    // Used by entry-point snapping, street corner collection and ValidateReachability.
+    private const float PedestrianSnapRadius = 50f;
 
 
     public void BuildIndex()
@@ -238,14 +263,21 @@ public class SpatialModel
             var pos = sp.Pos3 + cluster.Pos;
             pos.Y = streetHeight;
 
-            var (entryPos, isReachable) = _snapToPedestrianLane(navCluster, pos);
+            // The street point itself is the junction center — the middle of the
+            // roadway. NPCs standing there (street storylets, drifter homes, ...)
+            // must be moved to a sidewalk corner instead. Note that
+            // _snapToPedestrianLane is NOT suitable here: the nearest pedestrian
+            // lane to a junction center is usually a crossing, whose interior is
+            // also in the roadway.
+            var (entryCandidates, isReachable) = _computeStreetEntryCandidates(navCluster, sp, cluster.Pos, pos);
 
             model.Locations.Add(new Location
             {
                 Id = locId,
                 Type = "street_segment",
                 Position = pos,
-                EntryPosition = entryPos,
+                EntryPosition = entryCandidates[0],
+                EntryCandidates = entryCandidates,
                 Capacity = 0,
                 ShopType = null,
                 QuarterIndex = -1,
@@ -307,7 +339,7 @@ public class SpatialModel
     private static (Vector3 snapped, bool isReachable) _snapToPedestrianLane(
         builtin.modules.satnav.desc.NavCluster navCluster,
         Vector3 position,
-        float snapRadius = 50f)
+        float snapRadius = PedestrianSnapRadius)
     {
         if (navCluster?.Content?.Lanes == null || navCluster.Content.Lanes.Count == 0)
             return (position, true);
@@ -315,7 +347,11 @@ public class SpatialModel
         float minDist = float.MaxValue;
         Vector3 closestLanePoint = position;
 
-        foreach (var lane in navCluster.Content.Lanes)
+        // Only scan lanes near the position (octree-backed once Recompile ran).
+        var nearbyLanes = new List<builtin.modules.satnav.desc.NavLane>();
+        navCluster.Content.GetLanesNear(position, snapRadius, nearbyLanes);
+
+        foreach (var lane in nearbyLanes)
         {
             if (!lane.AllowedTypes.HasFlag(engine.navigation.TransportationType.Pedestrian))
                 continue;
@@ -346,6 +382,157 @@ public class SpatialModel
             return (closestLanePoint, true);
 
         return (position, false);
+    }
+
+
+    // Nav-based street corners: keep every corner no farther than the nearest
+    // one plus this tolerance, so all corners of the same junction qualify but
+    // corners of the next junction down the street usually don't.
+    private const float CornerSpreadTolerance = 15f;
+    private const int MaxEntryCandidates = 6;
+
+    /// <summary>
+    /// Compute the entry (standing) positions for a street point (junction)
+    /// location. A junction center is in the middle of the roadway, so NPCs must
+    /// never be placed there. Preference order:
+    /// 1. Pedestrian NavLane *endpoints* (sidewalk corners) around the junction.
+    ///    Endpoints are used instead of lane projections because the lane nearest
+    ///    to a junction center is typically a crossing, whose interior crosses
+    ///    the roadway. All corners within CornerSpreadTolerance of the nearest
+    ///    are returned (nearest first) so NPCs can spread across the junction.
+    /// 2. Without nav data: the street point's section array — the geometric
+    ///    sidewalk corner points, already offset by half the street width —
+    ///    each nudged 1 m further away from the junction center.
+    /// 3. The raw junction center only if neither is available.
+    /// The returned list is never empty; index 0 is the canonical EntryPosition.
+    /// Reachability semantics mirror _snapToPedestrianLane: reachable defaults to
+    /// true when no nav data exists so bake/testbed callers don't drop locations.
+    /// </summary>
+    internal static (List<Vector3> candidates, bool isReachable) _computeStreetEntryCandidates(
+        builtin.modules.satnav.desc.NavCluster navCluster,
+        StreetPoint sp,
+        Vector3 clusterPos,
+        Vector3 junctionCenter,
+        float snapRadius = PedestrianSnapRadius)
+    {
+        bool haveNav = navCluster?.Content?.Lanes != null && navCluster.Content.Lanes.Count > 0;
+
+        if (haveNav)
+        {
+            var corners = _pedestrianCornersNear(navCluster, junctionCenter, snapRadius);
+            if (corners.Count > 0)
+            {
+                for (int i = 0; i < corners.Count; i++)
+                {
+                    var c = corners[i];
+                    c.Y = junctionCenter.Y;
+                    corners[i] = c;
+                }
+                return (corners, true);
+            }
+
+            // Nav data exists but no pedestrian corner in range: geometrically
+            // computed corners, flagged unreachable so role assignment skips it.
+            return (_sectionCornersOrCenter(sp, clusterPos, junctionCenter), false);
+        }
+
+        return (_sectionCornersOrCenter(sp, clusterPos, junctionCenter), true);
+    }
+
+
+    /// <summary>
+    /// Distinct pedestrian lane endpoints within snapRadius of the position,
+    /// nearest first, trimmed to the nearest-corner distance plus
+    /// CornerSpreadTolerance and capped at MaxEntryCandidates. Empty when no
+    /// pedestrian endpoint is in range.
+    /// </summary>
+    private static List<Vector3> _pedestrianCornersNear(
+        builtin.modules.satnav.desc.NavCluster navCluster,
+        Vector3 position,
+        float snapRadius)
+    {
+        var nearbyLanes = new List<builtin.modules.satnav.desc.NavLane>();
+        navCluster.Content.GetLanesNear(position, snapRadius, nearbyLanes);
+
+        // Dedupe endpoints by ~0.5 m X/Z grid cell — sidewalk corners are shared
+        // by several lanes (sidewalk + crossing) and must only be counted once.
+        // (Cell-based, so this merges coincident corners, not a true distance
+        // threshold — good enough for real 8-16 m junction geometry.)
+        var seen = new HashSet<(int, int)>();
+        var corners = new List<(Vector3 pos, float dist)>();
+
+        void addEndpoint(Vector3 p)
+        {
+            float dist = Vector3.Distance(position, p);
+            if (dist > snapRadius) return;
+            var key = ((int)MathF.Round(p.X * 2f), (int)MathF.Round(p.Z * 2f));
+            if (!seen.Add(key)) return;
+            corners.Add((p, dist));
+        }
+
+        foreach (var lane in nearbyLanes)
+        {
+            if (!lane.AllowedTypes.HasFlag(engine.navigation.TransportationType.Pedestrian))
+                continue;
+            addEndpoint(lane.Start.Position);
+            addEndpoint(lane.End.Position);
+        }
+
+        if (corners.Count == 0)
+            return new List<Vector3>();
+
+        corners.Sort((a, b) => a.dist.CompareTo(b.dist));
+        float maxDist = corners[0].dist + CornerSpreadTolerance;
+
+        var result = new List<Vector3>();
+        foreach (var (p, dist) in corners)
+        {
+            if (dist > maxDist) break;
+            result.Add(p);
+            if (result.Count >= MaxEntryCandidates) break;
+        }
+        return result;
+    }
+
+
+    /// <summary>
+    /// The sidewalk corners from the street point's section array (offset by
+    /// half street width during street generation), each nudged 1 m further
+    /// outward. Falls back to the junction center for degenerate street points.
+    /// Never returns an empty list.
+    /// </summary>
+    private static List<Vector3> _sectionCornersOrCenter(StreetPoint sp, Vector3 clusterPos, Vector3 junctionCenter)
+    {
+        List<Vector2> sections;
+        try
+        {
+            sections = sp.GetSectionArray();
+        }
+        catch (Exception e)
+        {
+            // Degenerate street point (e.g. no strokes attached). Falls back to the
+            // junction center — trace it, so a regression to mid-junction NPCs is visible.
+            Trace(_dc, $"Street point {sp.Id}: GetSectionArray failed ({e.Message}), entry stays at junction center.");
+            return new List<Vector3> { junctionCenter };
+        }
+        if (sections == null || sections.Count == 0)
+            return new List<Vector3> { junctionCenter };
+
+        var result = new List<Vector3>(sections.Count);
+        foreach (var s in sections)
+        {
+            var corner = new Vector3(s.X, 0f, s.Y) + clusterPos;
+            corner.Y = junctionCenter.Y;
+
+            var outward = corner - junctionCenter;
+            outward.Y = 0f;
+            if (outward.LengthSquared() > 0.01f)
+                corner += Vector3.Normalize(outward) * 1f;
+
+            result.Add(corner);
+            if (result.Count >= MaxEntryCandidates) break;
+        }
+        return result;
     }
 
 
@@ -398,7 +585,19 @@ public class SpatialModel
                 continue;
             }
 
-            var (_, isReachable) = _snapToPedestrianLane(navCluster, loc.EntryPosition);
+            // Street (junction) locations are validated with the same endpoint-based
+            // check ExtractFrom used — the projection-based _snapToPedestrianLane
+            // would flip "unreachable" street corners back to reachable whenever a
+            // crossing lane's interior passes within range of the geometric corner.
+            bool isReachable;
+            if (loc.Type == "street_segment")
+            {
+                isReachable = _pedestrianCornersNear(navCluster, loc.EntryPosition, PedestrianSnapRadius).Count > 0;
+            }
+            else
+            {
+                (_, isReachable) = _snapToPedestrianLane(navCluster, loc.EntryPosition);
+            }
             loc.IsPedestrianReachable = isReachable;
 
             if (!isReachable)
