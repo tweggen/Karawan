@@ -70,7 +70,7 @@ namespace Splash.Silk
                 var cCameraParams = renderPart.CameraOutput.Camera3;
                 if (cCameraParams.Fog != default)
                 {
-                    _silkThreeD.SetFogColor(new Vector3(cCameraParams.Fog.X, cCameraParams.Fog.Y, cCameraParams.Fog.Z));
+                    _silkThreeD.SetFogColor(cCameraParams.Fog);
                 }
 
                 Renderbuffer renderbuffer = renderPart.PfRenderbuffer.Renderbuffer;

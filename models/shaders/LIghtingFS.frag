@@ -19,7 +19,7 @@ uniform vec4 col4Diffuse;
 uniform vec4 col4Emissive;
 uniform vec4 col4EmissiveFactors;
 uniform vec4 col4Ambient;
-uniform vec3 col3Fog;
+uniform vec4 col4Fog;
 
 uniform float fogDistance;
 
@@ -411,8 +411,8 @@ void main()
         vec3 col3Unfogged = vec3(col4Unfogged.xyz);
         float distance = length(v3RelFragPosition);
         float fogIntensity = clamp(distance, 0.0, fogDistance) / (fogDistance);
-        fogIntensity = pow(fogIntensity, 0.5);
-        vec3 col3FoggedColor = (1.0-fogIntensity) * col3Unfogged + fogIntensity * col3Fog;
+        fogIntensity = pow(fogIntensity, 0.5) * col4Fog.w;
+        vec3 col3FoggedColor = (1.0-fogIntensity) * col3Unfogged + fogIntensity * col4Fog.xyz;
 
         finalColor = vec4(col3FoggedColor.xyz, col4Unfogged.w);
     }
