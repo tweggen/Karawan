@@ -1,0 +1,1126 @@
+{
+ "generated": "2026-07-21",
+ "source": "workflow wf_b159a0cd-6b4 (75 agents, 96 docs classified, 43 evidence-verified)",
+ "domains": [
+  {
+   "name": "tale",
+   "rationale": "The TALE narrative system (storylets, DES simulation, population, conversations, social/factions) dominates the tree: 53 docs including ~12 plans. Absorbs the free-text labels tale, tale-social, tale-testing, narration, and simulation — narration docs describe TALE dialogue scripts, and TIMING_RECOMMENDATIONS/ANALYSIS_NPCs are TALE-behavior investigations. tale-social stays inside tale rather than splitting: its phase labels (D_SOCIAL, E_SOCIAL) are already self-disambiguating once routing's Phase D leaves for the navigation domain.",
+   "docCount": 53
+  },
+  {
+   "name": "navigation",
+   "rationale": "Merges the near-synonyms navigation / routing / pathfinding into one label: transportation types, pipes/flow, temporal constraints, NavMesh routing, multi-objective A*. 13 docs, 8 of them plans. This split is what resolves the 'Phase D' collision — routing Phase D lands here and is renamed to MULTI-OBJECTIVE-ROUTING.md, leaving PHASE_D_SOCIAL.md unambiguous in tale. The three PHASE-x-COMPLETION reports come along so the pipes workstream is documented in one place.",
+   "docCount": 13
+  },
+  {
+   "name": "testing",
+   "rationale": "Test infrastructure that is not TALE-content-specific: the ExpectEngine harness, the tier model, the testbed architecture, and the runner guides. 7 docs with one plan (TIERS). Pulls EXPECT_ENGINE/EXPECT_IMPLEMENTATION out of SYSTEMS/NARRATION/ where they were misfiled — they describe a test harness, not narration. TALE per-phase test specs deliberately stay in tale/docs/tests/ because they are specs of TALE behavior, not of the harness.",
+   "docCount": 7
+  },
+  {
+   "name": "debug-infra",
+   "rationale": "Developer tooling: the DebugFilter/Dc category system and its multi-month migration. 4 docs, of which 2 are live plans (checklist + systematic migration) and one is shipped architecture. Meets the >=3 docs + >=1 plan bar and is the only domain with genuinely in-flight work, so it earns its own plans/todo.",
+   "docCount": 4
+  },
+  {
+   "name": "world-gen",
+   "rationale": "Procedural world generation: L-system engine, its Aihao editor, and fragment operators. 3 docs with 1 plan (bird swarm operator) — exactly at the bar. Kept separate from main because L-systems have their own expression language, JSON schema, and editor surface that nothing else in main touches.",
+   "docCount": 3
+  },
+  {
+   "name": "main",
+   "rationale": "Everything that did not clear the >=3 docs + >=1 plan bar, folded together: rendering (2 docs, 0 plans), animation (1), engine-core index (1), build (2), persistence (1), platforms (1), quest (1), documentation process (1). Also absorbs character-collision: it technically clears the numeric bar (3 docs, 3 plans) but is a single closed three-part fix with zero living reference material, so a standalone domain would be a folder of nothing but done plans.",
+   "docCount": 14
+  }
+ ],
+ "assignments": [
+  {
+   "path": "docs/tale/README.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/README.md",
+   "status": "n/a",
+   "confidence": 0.85,
+   "reasoning": "Navigation hub for the TALE docs. Living reference. Its internal links (phases/, tests/, ../PROCESS_TALE.md) all break under this reorg and its counts (212 tests) are stale against the 302 JSON files on disk — needs a link/count pass after the move, but that is a rewrite, not a filing question."
+  },
+  {
+   "path": "docs/tale/OVERVIEW.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/OVERVIEW.md",
+   "status": "n/a",
+   "confidence": 0.75,
+   "reasoning": "Complementary to README (README links to it as the system overview) rather than a duplicate, so it stays as living reference. But it points at TESTING_QUICK_START.md and TALE_TEST_SCRIPTS_PHASE_X.md — names that no longer exist — and claims 273 tests where README claims 212 and disk has 302. Filed as docs; flagged cross-cutting for a count reconciliation."
+  },
+  {
+   "path": "docs/tale/REFERENCE.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/REFERENCE.md",
+   "status": "n/a",
+   "confidence": 0.9,
+   "reasoning": "Shared concept/data-structure reference (properties, roles, spatial verbs, simulation tiers, relationship tiers) cited across every TALE phase. Textbook living reference."
+  },
+  {
+   "path": "docs/tale/TALE_CONCEPT.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/CONCEPT.md",
+   "status": "n/a",
+   "confidence": 0.88,
+   "reasoning": "Foundational conceptual vocabulary (storylets, arcs, motifs, seed determinism). Not a plan — it commits to no work — so docs, not plans/proposed, despite one classifier pass labelling it not-started."
+  },
+  {
+   "path": "docs/tale/TALE_ARCHITECTURE.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/ARCHITECTURE.md",
+   "status": "n/a",
+   "confidence": 0.8,
+   "reasoning": "The system-design reference for TALE, so it belongs in docs. Filed with a suspicious flag: half its named subsystems (World State Graph, Graph Rewriting Engine) have no counterpart in code under any name, and two more exist only under different names (Selection Engine = StoryletSelector, Runtime Orchestrator = TaleManager)."
+  },
+  {
+   "path": "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "domain": "tale",
+   "bucket": "plans/done",
+   "targetPath": "docs/tale/plans/done/TALE_IMPLEMENTATION_PLAN.md",
+   "status": "partially-implemented",
+   "confidence": 0.72,
+   "reasoning": "The master phase roadmap, and phases 0-8 plus C and D-social all shipped (EventQueue.cs, DesSimulation.cs, StoryletLibrary, Testbed/TestbedMain.cs all confirmed). Filed done rather than todo because the plan was executed. Not 'implemented' outright: its own Phase 4 (Player) row says not-started and the evidence agrees — phase4-player's 20 JSON tests are placeholders reusing generic DES events, with no social_capital/overhear code anywhere.",
+   "statusHeader": "> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/tale/EventQueue.cs`, `JoyceCode/engine/tale/DesSimulation.cs`, `JoyceCode/engine/tale/StoryletDefinition.cs:122` (StoryletLibrary), `Testbed/TestbedMain.cs:17`; Phase 4 (Player) scaffolding only - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/TALE_ABSTRACTION_INVENTORY.md",
+   "domain": "tale",
+   "bucket": "archive",
+   "targetPath": "docs/tale/archive/TALE_ABSTRACTION_INVENTORY.md",
+   "status": "partially-implemented",
+   "confidence": 0.75,
+   "reasoning": "A one-off audit of hardcoded TALE properties that has since been largely acted on — RoleRegistry, InteractionTypeRegistry and GroupTypeRegistry all exist and are config-driven. Archive rather than docs because it is a point-in-time survey, not a maintained reference, and its 'Proposed' markers are now historical.",
+   "statusHeader": "> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/tale/RoleRegistry.cs`, `JoyceCode/engine/tale/InteractionTypeRegistry.cs:10`, `models/nogame.interactions.json`, `models/nogame.roles.json` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/TALE_TESTING_FRAMEWORK.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/FRAMEWORK.md",
+   "status": "n/a",
+   "confidence": 0.75,
+   "reasoning": "Index/orientation page for TALE testing. Kept as living reference inside tale (not the testing domain) because it indexes TALE phase test specs. Points at TALE_TEST_SCRIPTS_PHASE_3.md, which does not exist — link rot to fix after the move."
+  },
+  {
+   "path": "docs/tale/TALE_TEST_PLAN.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/TEST_PLAN.md",
+   "status": "n/a",
+   "confidence": 0.82,
+   "reasoning": "Master test strategy across the TALE phases; the per-phase spec files under tests/ elaborate it. Living reference, filed alongside them."
+  },
+  {
+   "path": "docs/tale/TALE_TEST_SCRIPTS_PHASE_0_SKELETON.md",
+   "domain": "tale",
+   "bucket": "archive",
+   "targetPath": "docs/tale/archive/TALE_TEST_SCRIPTS_PHASE_0_SKELETON.md",
+   "status": "superseded",
+   "confidence": 0.8,
+   "reasoning": "Pre-implementation skeleton for the Phase 0 test scripts. The 20 real JSON tests exist at models/tests/tale/phase0-des/ and docs/tale/tests/PHASE_0.md is the maintained spec, so the skeleton is history.",
+   "statusHeader": "> **Status:** superseded - **Implemented as:** `models/tests/tale/phase0-des/` (20 tests); spec now `docs/tale/docs/tests/PHASE_0.md` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/TALE_TEST_SCRIPTS_PHASES_1_2_4_5_SKELETON.md",
+   "domain": "tale",
+   "bucket": "archive",
+   "targetPath": "docs/tale/archive/TALE_TEST_SCRIPTS_PHASES_1_2_4_5_SKELETON.md",
+   "status": "superseded",
+   "confidence": 0.8,
+   "reasoning": "Same as the Phase 0 skeleton: the phase1/2/4/5 test directories all exist with real JSON and per-phase spec docs. Superseded scaffolding.",
+   "statusHeader": "> **Status:** superseded - **Implemented as:** `models/tests/tale/phase1-storylets/`, `phase2-strategies/`, `phase4-player/`, `phase5-escalation/` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/concepts/INTERACTIONS.md",
+   "domain": "tale",
+   "bucket": "plans/done",
+   "targetPath": "docs/tale/plans/done/INTERACTION-TYPE-REGISTRY.md",
+   "status": "implemented",
+   "confidence": 0.85,
+   "reasoning": "Labelled a 4-phase migration proposal with claimedStatus not-started, but every proposed artifact shipped: InteractionTypeDefinition, IInteractionCondition, InteractionTypeRegistry (as ObjectRegistry subclass, exactly as proposed), nogame.interactions.json wired into models/nogame.json, and RelationshipTracker.DetermineInteractionType refactored to call EvaluateConditions. A plan that was executed — filing was wrong, not the work.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/InteractionTypeRegistry.cs:10`, `JoyceCode/engine/tale/InteractionTypeDefinition.cs:10`, `JoyceCode/engine/tale/IInteractionCondition.cs:10`, `JoyceCode/engine/tale/RelationshipTracker.cs:56`, `models/nogame.interactions.json` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/concepts/ROLES.md",
+   "domain": "tale",
+   "bucket": "plans/done",
+   "targetPath": "docs/tale/plans/done/ROLE-REGISTRY.md",
+   "status": "implemented",
+   "confidence": 0.82,
+   "reasoning": "Read directly: it is titled 'Role Abstraction Proposal' and argues for extracting hardcoded roles into a RoleRegistry backed by nogame.roles.json. Both exist (JoyceCode/engine/tale/RoleRegistry.cs, RoleDefinition.cs, models/nogame.roles.json with per-role model pools). Same shape as INTERACTIONS.md — an executed proposal misfiled as a concept reference.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/RoleRegistry.cs`, `JoyceCode/engine/tale/RoleDefinition.cs:58`, `models/nogame.roles.json` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/concepts/NARRATION.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/concepts/NARRATION.md",
+   "status": "n/a",
+   "confidence": 0.85,
+   "reasoning": "Reference for the narration JSON format, node/statement types and triggers — the format TALE conversation scripts are authored in. Folded into tale rather than standing up a narration domain (1 doc, 0 plans)."
+  },
+  {
+   "path": "docs/tale/design/NPC_COMMUTING.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/design/NPC_COMMUTING.md",
+   "status": "n/a",
+   "confidence": 0.75,
+   "reasoning": "Design note on NPC commuting behavior; sits in the existing design/ set alongside NPC_STORIES and STRATEGY_ARCHITECTURE. No per-file evidence pass was run on it, so filed by document type and directory convention as living design reference."
+  },
+  {
+   "path": "docs/tale/design/NPC_STORIES.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/design/NPC_STORIES.md",
+   "status": "n/a",
+   "confidence": 0.75,
+   "reasoning": "Design reference for NPC story shapes; same treatment as its design/ siblings. No evidence pass run, but nothing in it commits to a discrete work item."
+  },
+  {
+   "path": "docs/tale/design/STRATEGY_ARCHITECTURE.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/design/STRATEGY_ARCHITECTURE.md",
+   "status": "n/a",
+   "confidence": 0.75,
+   "reasoning": "Architecture of the strategy/AOneOfStrategy composition used by TALE and quests. Living reference."
+  },
+  {
+   "path": "docs/tale/phases/PHASE_0A.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_0A.md",
+   "status": "implemented",
+   "confidence": 0.78,
+   "reasoning": "Phase design doc for testbed infrastructure. The TALE_IMPLEMENTATION_PLAN evidence pass confirmed every artifact it describes exists (Testbed/TestbedMain.cs, ClusterViewer.cs, SpatialModel.cs, NpcAssigner.cs, plus extra diagnostics). Phase docs are the maintained per-subsystem design reference, so docs rather than plans/done."
+  },
+  {
+   "path": "docs/tale/phases/PHASE_0B.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_0B.md",
+   "status": "implemented",
+   "confidence": 0.72,
+   "reasoning": "DES-engine phase design; the DES core (EventQueue.cs, DesSimulation.cs) and its 20 phase0 tests are confirmed present. Filed as reference by directory convention — no dedicated evidence pass was run on this specific file."
+  },
+  {
+   "path": "docs/tale/phases/PHASE_0C.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_0C.md",
+   "status": "implemented",
+   "confidence": 0.72,
+   "reasoning": "Third DES sub-phase design doc, same series as 0A/0B, same disposition. No dedicated evidence pass; status inferred from the shipped DES stack."
+  },
+  {
+   "path": "docs/tale/phases/PHASE_1.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_1.md",
+   "status": "implemented",
+   "confidence": 0.75,
+   "reasoning": "Storylet-system design. StoryletLibrary/StoryletSelector and the 20 phase1 tests are confirmed present via adjacent evidence passes."
+  },
+  {
+   "path": "docs/tale/phases/PHASE_2.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_2.md",
+   "status": "implemented",
+   "confidence": 0.75,
+   "reasoning": "Strategy-system design (AOneOfStrategy, phase transitions). Confirmed shipped via the quest/strategy evidence and 20 phase2 tests."
+  },
+  {
+   "path": "docs/tale/phases/PHASE_2_STRATEGIES.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_2_STRATEGIES.md",
+   "status": "implemented",
+   "confidence": 0.7,
+   "reasoning": "Companion detail doc to PHASE_2. Kept adjacent to it; the pair may want merging, which is why confidence is only at the bar."
+  },
+  {
+   "path": "docs/tale/phases/PHASE_3.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_3.md",
+   "status": "implemented",
+   "confidence": 0.75,
+   "reasoning": "NPC-NPC interaction phase design; InteractionPool/request lifecycle confirmed by the 22 phase3 tests on disk."
+  },
+  {
+   "path": "docs/tale/phases/PHASE_4.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_4.md",
+   "status": "partially-implemented",
+   "confidence": 0.7,
+   "reasoning": "Player-integration phase design. The quest/satnav infrastructure it depends on exists, but the evidence pass on TALE_IMPLEMENTATION_PLAN found the phase4-player tests are shallow placeholders with no phase-specific code paths, so the phase itself is scaffolding. Kept as design reference."
+  },
+  {
+   "path": "docs/tale/phases/PHASE_5.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_5.md",
+   "status": "implemented",
+   "confidence": 0.8,
+   "reasoning": "Branching/interrupt/escalation design, and the mechanism shipped: ArcStack, PausedStorylet, escalation.json, 20 phase5 tests. Reference bucket. Flagged suspicious because the API names it publishes are wrong (PushInterrupt/PopAndResume do not exist; the real methods are SetInterrupt/ClearInterrupt/TryPop), InterruptCandidate does not exist at all, and the storylet count is 17 not 15.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/ArcStack.cs:21-44`, `JoyceCode/engine/tale/StoryletDefinition.cs:94` (InterruptPriority), `models/tale/escalation.json`, `models/tests/tale/phase5-escalation/` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_6.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_6.md",
+   "status": "implemented",
+   "confidence": 0.85,
+   "reasoning": "Seed-based population and cluster lifecycle — all six sub-phases shipped. Only drift is a rename (RegisterCluster/UnregisterCluster are now PopulateCluster/DepopulateCluster), which is a doc refresh, not a status change.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/TalePopulationGenerator.cs:15`, `JoyceCode/engine/tale/TaleManager.cs:95` (PopulateCluster), `:275` (DepopulateCluster), `nogameCode/nogame/modules/tale/TaleModule.cs:471` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_7.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_7.md",
+   "status": "implemented",
+   "confidence": 0.85,
+   "reasoning": "Spatial grounding shipped: SpatialModel.ExtractFrom, per-cluster model dictionary, CurrentWorldPosition, StreetRouteBuilder, 102 phase7 tests. One misattribution (PositionAt lives on NpcSchedule, not TalePopulationGenerator) — cosmetic.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/SpatialModel.cs:105`, `JoyceCode/engine/tale/TaleManager.cs:23`, `JoyceCode/engine/tale/NpcSchedule.cs:34,140`, `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs:21` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_7B.md",
+   "domain": "tale",
+   "bucket": "plans/done",
+   "targetPath": "docs/tale/plans/done/PHASE_7B-BUILDING-ROLE-TAGGING.md",
+   "status": "implemented",
+   "confidence": 0.8,
+   "reasoning": "docType is plan and it claims not-started, but building role tagging shipped: Living/Industrial intensity zones, Building.Tags, AssignLocationByRole, and the role decision tree. The one named artifact that does not exist (GenerateBuildingRolesOperator) was implemented inline as QuarterGenerator._determineBuildingRoles instead — a shape change, not a gap. Executed plan.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/streets/QuarterGenerator.cs:82-116,285-289`, `JoyceCode/engine/world/ClusterDesc.cs:22-27,587`, `JoyceCode/engine/streets/Building.cs:15`, `JoyceCode/engine/tale/TalePopulationGenerator.cs:203` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_8.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_8.md",
+   "status": "implemented",
+   "confidence": 0.85,
+   "reasoning": "Occupation-based model assignment shipped end to end (RoleDefinition.Models, per-role pools in JSON, CreateCitizen overload, spawn-time lookup). Only defect is a stale line-number citation for the TaleSpawnOperator lookup (315-324, not 166-169).",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/RoleDefinition.cs:58`, `models/nogame.roles.json:126`, `nogameCode/nogame/characters/citizen/CharacterModelDescriptionFactory.cs:30`, `nogameCode/nogame/characters/citizen/TaleSpawnOperator.cs:315-324` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_C.md",
+   "domain": "tale",
+   "bucket": "plans/done",
+   "targetPath": "docs/tale/plans/done/PHASE_C-NPC-CONVERSATIONS.md",
+   "status": "implemented",
+   "confidence": 0.85,
+   "reasoning": "docType plan, claimedStatus not-started — contradicted by every artifact: TaleConversationBehavior, TaleNarrationBindings.Register/ResolveScript, StoryletDefinition.ConversationScript, the conversation scripts, the three narration functions, and 28 phaseC1-C4 JSON tests. Executed plan filed as an unstarted phase doc.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `nogameCode/nogame/characters/citizen/TaleConversationBehavior.cs:22`, `nogameCode/nogame/modules/tale/TaleNarrationBindings.cs:25,208`, `JoyceCode/engine/tale/StoryletDefinition.cs:97`, `nogameCode/nogame/modules/story/NarrationBindings.cs:319,332,341` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_D_SOCIAL.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_D_SOCIAL.md",
+   "status": "implemented",
+   "confidence": 0.88,
+   "reasoning": "Pre-computed social scenarios: compiler, exporter, lazy library singleton, selector, applicator and scenario-statistics.json all confirmed, with 38 passing bake tests. Stays as design reference in tale. The Phase D name collision is resolved by routing's Phase D leaving this directory for the navigation domain — after the move, no two 'Phase D' docs share a folder.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/bake/ScenarioCompiler.cs:29,55`, `ScenarioSelector.cs:34`, `ScenarioApplicator.cs:83`, `ScenarioExporter.cs:220`, `nogameCode/nogame/modules/tale/TaleModule.cs:334`, `nogame/generated/scenario-statistics.json` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_E_SOCIAL.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/phases/PHASE_E_SOCIAL.md",
+   "status": "implemented",
+   "confidence": 0.85,
+   "reasoning": "Living factions. All six named artifacts exist with xUnit coverage (44 tests passing across the six Phase E test files), and the tracking notes record all seven commits landed. Doc still says in-progress — status corrected here to implemented; flagged suspicious.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/CommunityDetector.cs:23`, `ClusterSocialState.cs:14,64`, `RuntimeSocialEvolver.cs:36,94`, `GroupActions.cs:23`, `TaleManager.cs:414,497,540`, `nogameCode/nogame/modules/tale/GroupNameGenerator.cs:12` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/tests/PHASE_0.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/PHASE_0.md",
+   "status": "n/a",
+   "confidence": 0.88,
+   "reasoning": "Per-phase test specification (20 DES tests, 6 groups) matching models/tests/tale/phase0-des/ exactly. Test specs are living reference by the target layout's own definition."
+  },
+  {
+   "path": "docs/tale/tests/PHASE_1.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/PHASE_1.md",
+   "status": "n/a",
+   "confidence": 0.88,
+   "reasoning": "Storylet test spec; 20 tests confirmed on disk at models/tests/tale/phase1-storylets/. Living reference."
+  },
+  {
+   "path": "docs/tale/tests/PHASE_2.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/PHASE_2.md",
+   "status": "n/a",
+   "confidence": 0.88,
+   "reasoning": "Strategy-system test spec backed by models/tests/tale/phase2-strategies/. Living reference."
+  },
+  {
+   "path": "docs/tale/tests/PHASE_3.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/PHASE_3.md",
+   "status": "n/a",
+   "confidence": 0.88,
+   "reasoning": "Interaction test spec; 22 tests confirmed at models/tests/tale/phase3-interactions/. Living reference."
+  },
+  {
+   "path": "docs/tale/tests/PHASE_4.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/PHASE_4.md",
+   "status": "n/a",
+   "confidence": 0.8,
+   "reasoning": "Player-integration test spec. Kept as reference, but note the evidence that the 20 phase4 JSON files behind it assert only generic DES events — the spec describes more than the tests actually check."
+  },
+  {
+   "path": "docs/tale/tests/PHASE_5.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/PHASE_5.md",
+   "status": "n/a",
+   "confidence": 0.88,
+   "reasoning": "Escalation test spec; all 20 named files exist and this doc carries the correct ArcStack API names that the PHASE_5 design doc gets wrong. Living reference."
+  },
+  {
+   "path": "docs/tale/tests/PHASE_6.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/PHASE_6.md",
+   "status": "n/a",
+   "confidence": 0.88,
+   "reasoning": "Population/persistence test spec; 49 tests confirmed at models/tests/tale/phase6-population/. Living reference."
+  },
+  {
+   "path": "docs/tale/tests/PHASE_7.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/PHASE_7.md",
+   "status": "n/a",
+   "confidence": 0.88,
+   "reasoning": "Spatial test spec; 102 tests confirmed at models/tests/tale/phase7-spatial/. Living reference."
+  },
+  {
+   "path": "docs/tale/tests/PHASE_C.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/PHASE_C.md",
+   "status": "n/a",
+   "confidence": 0.85,
+   "reasoning": "Conversation-phase test spec covering the 28 phaseC1-C4 JSON tests confirmed on disk. Living reference."
+  },
+  {
+   "path": "docs/tale/tests/QUICK_START.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/QUICK_START.md",
+   "status": "n/a",
+   "confidence": 0.78,
+   "reasoning": "Practical entry point to running the TALE suite. Stays as reference; its '171 test scripts' figure is a stale snapshot (302 JSON files exist today, 200 in the standard tier) and is flagged cross-cutting alongside the other three conflicting counts."
+  },
+  {
+   "path": "docs/tale/tests/STRATEGY.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/tests/STRATEGY.md",
+   "status": "n/a",
+   "confidence": 0.75,
+   "reasoning": "Process guidance for keeping prose test specs in sync with the JSON. Reference material, but every path it cites (docs/tale/TALE_TEST_SCRIPTS_PHASE_*.md, docs/tale/PHASE_*.md) is rewritten by this reorg — needs a path refresh immediately after the move."
+  },
+  {
+   "path": "docs/PROCESS_TALE.md",
+   "domain": "tale",
+   "bucket": "docs",
+   "targetPath": "docs/tale/docs/PROCESS_TALE.md",
+   "status": "n/a",
+   "confidence": 0.85,
+   "reasoning": "TALE-specific development workflow and test commands, referenced from CLAUDE.md as required reading. Living process reference; belongs with the domain it governs rather than at docs root."
+  },
+  {
+   "path": "docs/TALE_TEST_INFRASTRUCTURE.md",
+   "domain": "tale",
+   "bucket": "archive",
+   "targetPath": "docs/tale/archive/TALE_TEST_INFRASTRUCTURE.md",
+   "status": "implemented",
+   "confidence": 0.75,
+   "reasoning": "A completion manifest for the original 62-test infrastructure (phases 0/1/3), all of which verifies exactly. It is a point-in-time report, not a maintained reference — the suite has since grown to 302 files — so archive per the target layout's 'completion reports' rule.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `models/tests/tale/phase0-des/` (20), `phase1-storylets/` (20), `phase3-interactions/` (22), `TestRunner/TestRunnerMain.cs`, `run_tests.sh` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/ANALYSIS_NPCs_STUCK_AND_TIMING.md",
+   "domain": "tale",
+   "bucket": "archive",
+   "targetPath": "docs/tale/archive/ANALYSIS_NPCs_STUCK_AND_TIMING.md",
+   "status": "n/a",
+   "confidence": 0.82,
+   "reasoning": "One-off investigation into NPC pathfinding failures and game-time scaling, dated 2026-03-30 with a single commit. Archive is exactly the bucket for one-off investigations; the conclusions that mattered were absorbed into the routing fixes."
+  },
+  {
+   "path": "docs/TIMING_RECOMMENDATIONS.md",
+   "domain": "tale",
+   "bucket": "archive",
+   "targetPath": "docs/tale/archive/TIMING_RECOMMENDATIONS.md",
+   "status": "n/a",
+   "confidence": 0.72,
+   "reasoning": "Recommendation memo on RealSecondsPerGameDay and activity durations — the sibling analysis to ANALYSIS_NPCs_STUCK_AND_TIMING and sourced from models/tale/*.json, hence tale rather than a standalone 'simulation' domain (1 doc, 0 plans). Archived as a one-off analysis; whether the recommendation was adopted is not recorded anywhere."
+  },
+  {
+   "path": "docs/roadmap/done/IMPLEMENTATION-PLAN-TALE-SOCIAL-PHASE-E.md",
+   "domain": "tale",
+   "bucket": "plans/done",
+   "targetPath": "docs/tale/plans/done/TALE-SOCIAL-PHASE-E.md",
+   "status": "implemented",
+   "confidence": 0.95,
+   "reasoning": "Strongest evidence in the set: all six named artifacts exist and the six Phase E test files run 44/44 green. Already correctly filed under done — only the domain path changes.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/CommunityDetector.cs:23`, `ClusterSocialState.cs:14,47`, `RuntimeSocialEvolver.cs:94`, `GroupActions.cs:23,57-59`, `StoryletDefinition.cs:79,253` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/done/TALE-SOCIAL-PHASES.md",
+   "domain": "tale",
+   "bucket": "plans/done",
+   "targetPath": "docs/tale/plans/done/TALE-SOCIAL-PHASE-D-SCENARIOS.md",
+   "status": "implemented",
+   "confidence": 0.82,
+   "reasoning": "The Phase D social-scenario plan; compiler, exporter, library, selector and applicator all confirmed with 38 passing tests. Renamed on move to say 'Phase D scenarios' explicitly so the filename cannot be read as the routing Phase D. Kept 'implemented' despite the 25-file claim failing (config ships 5+8 with large disabled, and nogame/generated/ is git-ignored) — that is a count error in a satellite claim, not a missing mechanism.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/bake/ScenarioCompiler.cs:29`, `ScenarioExporter.cs:77`, `ScenarioLibrary.cs:27`, `ScenarioSelector.cs:34`, `ScenarioApplicator.cs:83`; 13 (not 25) scenarios configured in `models/nogame.scenarios.json` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/done/PHASE-C2-STORYLET-DIALOGUE.md",
+   "domain": "tale",
+   "bucket": "plans/done",
+   "targetPath": "docs/tale/plans/done/PHASE-C2-STORYLET-DIALOGUE.md",
+   "status": "implemented",
+   "confidence": 0.9,
+   "reasoning": "Every artifact verified — ConversationScript field, the 5-level ResolveScript fallback, all three named conversation JSONs — plus six dedicated phaseC2 tests whose names match the plan's scenarios. Already in done; only the path changes. Body still says not-started, which is why it appears in suspicious.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/StoryletDefinition.cs:97,326`, `nogameCode/nogame/modules/tale/TaleNarrationBindings.cs:208`, `models/tale/conversations/tale.tag.routine.json`, `tale.tag.eating.json`, `tale.lunch_break.json` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/proposed/PHASE-C1-INFRASTRUCTURE.md",
+   "domain": "tale",
+   "bucket": "plans/done",
+   "targetPath": "docs/tale/plans/done/PHASE-C1-INFRASTRUCTURE.md",
+   "status": "implemented",
+   "confidence": 0.9,
+   "reasoning": "Sitting in roadmap/proposed while all six artifacts exist and eight phaseC1 tests run against them; the C2 plan (already in done) treats ResolveScript as pre-existing, so C1 demonstrably predates it. Textbook case of correct work, wrong folder.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `nogameCode/nogame/characters/citizen/TaleConversationBehavior.cs:22`, `nogameCode/nogame/modules/tale/TaleNarrationBindings.cs:16,53,208-259`, `nogameCode/nogame/tools/ANearbyBehavior.cs:15`, `models/tale/conversations/tale.generic.json` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/proposed/TALE-NPC-CONVERSATION-SYSTEM.md",
+   "domain": "tale",
+   "bucket": "plans/done",
+   "targetPath": "docs/tale/plans/done/TALE-NPC-CONVERSATION-SYSTEM-C1-C4.md",
+   "status": "implemented",
+   "confidence": 0.88,
+   "reasoning": "The umbrella C1-C4 plan; all artifacts confirmed including the Trust[-1] player-trust convention, backed by 29 tests across four phaseC directories. In proposed/ but self-declares complete and the evidence agrees. Overlaps heavily with PHASE-C1/C2 and phases/PHASE_C.md — flagged cross-cutting for consolidation.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `nogameCode/nogame/characters/citizen/TaleConversationBehavior.cs:22`, `nogameCode/nogame/modules/tale/TaleNarrationBindings.cs:16,53,208`, `nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs:376,426`, `nogameCode/nogame/modules/tale/TaleModule.cs:752`, `models/tale/conversations/tale.role.*.json` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/proposed/PHASE-C5-AMBIENT-NPC-DIALOGUE.md",
+   "domain": "tale",
+   "bucket": "plans/proposed",
+   "targetPath": "docs/tale/plans/proposed/PHASE-C5-AMBIENT-NPC-DIALOGUE.md",
+   "status": "not-started",
+   "confidence": 0.9,
+   "reasoning": "Zero artifacts exist — no AmbientDialoguePool, no tale.ambient.* scripts, no phaseC5 test directory, not even the word 'ambient' anywhere in the source tree. The doc calls itself 'Proposed Phase C5'. Genuinely proposed, not agreed-and-pending.",
+   "statusHeader": "> **Status:** not-started - **Implemented as:** - - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/proposed/PHASE-C6-STORYLINE-CONVERSATION-TREES.md",
+   "domain": "tale",
+   "bucket": "plans/proposed",
+   "targetPath": "docs/tale/plans/proposed/PHASE-C6-STORYLINE-CONVERSATION-TREES.md",
+   "status": "not-started",
+   "confidence": 0.82,
+   "reasoning": "The evidence pass found matches for every generic capability (NarrationScript trees, NarrationGoto branching, choices, trust-gated variants) but all of it is pre-existing narration-engine and Phase C4 work, not this proposal. The actual C6 deliverable — multi-turn per-NPC backstory arcs — has no artifact and no test; 'backstory' appears nowhere in the code. Remains proposed.",
+   "statusHeader": "> **Status:** not-started - **Implemented as:** - (prerequisite narration branching exists at `JoyceCode/engine/narration/NarrationScript.cs:55-213,509-536`) - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/PHASE-B-COMPLETION.md",
+   "domain": "navigation",
+   "bucket": "archive",
+   "targetPath": "docs/navigation/archive/PHASE-B-COMPLETION.md",
+   "status": "implemented",
+   "confidence": 0.88,
+   "reasoning": "A completion report, which the target layout sends to archive by definition. Every code artifact verifies (TemporalConstraintState, ITemporalConstraint, CyclicConstraint, Pipe, PipeNetwork, PipeController, NavLane.Constraint, TaleModule wiring). Its 171/171 figure is the unrelated TALE JSON suite, not proof of pipe correctness.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/{TemporalConstraintState,ITemporalConstraint,CyclicConstraint,MovingEntity,Pipe,PipeNetwork,PipeController}.cs`, `JoyceCode/builtin/modules/satnav/desc/NavLane.cs:32,66`, `nogameCode/nogame/modules/tale/TaleModule.cs:33-34,152,176,180-181` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/PHASE-C-COMPLETION.md",
+   "domain": "navigation",
+   "bucket": "archive",
+   "targetPath": "docs/navigation/archive/PHASE-C-COMPLETION.md",
+   "status": "implemented",
+   "confidence": 0.85,
+   "reasoning": "Completion report → archive. The code is real (PipeSubdivision, all five SpeedFunctions, obstruction registration, remove/re-enter). Status stays implemented, but this doc is the worst offender in the set for test evidence: its 171/171 table is copied verbatim from the Phase B report, and the navigation tests it credits are compile-excluded and, per the csproj comment, 'have never actually been compiled'.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/PipeSubdivision.cs:1-70`, `SpeedFunctions.cs:16-118`, `PipeController.cs:16,48,72,178,202`, `Pipe.cs:75`; navigation unit tests excluded at `tests/JoyceCode.Tests/JoyceCode.Tests.csproj:41` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/PHASE-D-PROGRESS.md",
+   "domain": "navigation",
+   "bucket": "archive",
+   "targetPath": "docs/navigation/archive/PHASE-D-PROGRESS.md",
+   "status": "implemented",
+   "confidence": 0.75,
+   "reasoning": "A progress tracker frozen at 2026-03-28 and overtaken by events: the D2 cost-multiplier is live in LocalPathfinder._childNode and D4 role-based goals are live in TalePopulationGenerator.GenerateRoutingPreferences, both of which this doc lists as pending. Archive as superseded status reporting; the maintained record is the routing design doc. Confidence held at 0.75 because CLAUDE.md still repeats the stale 'pending' claims, so someone may believe them.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/NpcGoal.cs:6`, `RoutingPreferences.cs:10`, `JoyceCode/builtin/modules/satnav/LocalPathfinder.cs:66,81-88`, `JoyceCode/engine/tale/TalePopulationGenerator.cs:395-439`, `nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs:34,169-184` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_D.md",
+   "domain": "navigation",
+   "bucket": "docs",
+   "targetPath": "docs/navigation/docs/MULTI-OBJECTIVE-ROUTING.md",
+   "status": "partially-implemented",
+   "confidence": 0.8,
+   "reasoning": "This is the doc that creates the 'Phase D' collision — it lives in docs/tale/phases/ next to PHASE_D_SOCIAL.md but describes routing. Moving it to the navigation domain AND renaming it to its subject retires the phase label entirely, which is the point of the split. Status is partially-implemented, not implemented: NpcGoal, RoutingPreferences, the A* multiplier and role-based goal assignment are all real, but ComputeScenicMultiplier and ComputeSafetyMultiplier are stubs that return 1.0f, so two of the four goals are inert — and the tests assert that inertness as expected behavior.",
+   "statusHeader": "> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/tale/NpcGoal.cs:6-37`, `RoutingPreferences.cs:10,45-69`, `JoyceCode/builtin/modules/satnav/LocalPathfinder.cs:32,63-88`, `JoyceCode/engine/tale/TalePopulationGenerator.cs:395-439`; Scenic/Safe multipliers are placeholders returning 1.0f (`RoutingPreferences.cs:99-125`) - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/done/IMPLEMENTATION-PLAN-NAVIGATION-SYSTEM.md",
+   "domain": "navigation",
+   "bucket": "plans/done",
+   "targetPath": "docs/navigation/plans/done/IMPLEMENTATION-PLAN-NAVIGATION-SYSTEM.md",
+   "status": "implemented",
+   "confidence": 0.85,
+   "reasoning": "The four-phase umbrella plan; all six named artifacts exist and phases A-D each have their own confirmed landing. Already in done — only the domain path changes. Note the 'multi-objective A*' framing is generous: it is single-scalar cost with a preference multiplier.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/TransportationType.cs:9-17,22`, `RoutingGraphBuilder.cs:12-85`, `PipeController.cs:11`, `JoyceCode/builtin/modules/satnav/desc/NavLane.cs:25`, `LocalPathfinder.cs:26,99`, `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs:30` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/proposed/IMPLEMENTATION-PLAN-PHASE-A-FOUNDATION.md",
+   "domain": "navigation",
+   "bucket": "plans/done",
+   "targetPath": "docs/navigation/plans/done/PHASE-A-FOUNDATION.md",
+   "status": "implemented",
+   "confidence": 0.78,
+   "reasoning": "In proposed/ with unchecked boxes, but the whole foundation shipped: TransportationType, TransportationTypeFlags, NavLane.AllowedTypes/GetCost, and type-aware A*. Filed done. Caveat recorded rather than downgraded: RoutingGraphBuilder exists and is unit-tested but has no caller outside NavMap.GetGraphFor — LocalPathfinder filters lanes inline instead — so the A3 abstraction is orphaned even though A3's outcome is achieved.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/TransportationType.cs:9-17,22-69`, `JoyceCode/builtin/modules/satnav/desc/NavLane.cs:25-26,38-61`, `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs:21-178`, `LocalPathfinder.cs:175-176`; `RoutingGraphBuilder.cs:12-85` built but uncalled - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/proposed/IMPLEMENTATION-PLAN-PHASE-B-FLOW.md",
+   "domain": "navigation",
+   "bucket": "plans/done",
+   "targetPath": "docs/navigation/plans/done/PHASE-B-FLOW.md",
+   "status": "implemented",
+   "confidence": 0.9,
+   "reasoning": "All six named types exist with matching shapes and line counts, and a completion report for the same phase already sits in roadmap/. A done plan sitting in proposed/ — filing error, corrected.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/TemporalConstraintState.cs:8`, `ITemporalConstraint.cs:9`, `Pipe.cs:13`, `PipeNetwork.cs:11`, `PipeController.cs:11`, `CyclicConstraint.cs:8` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/proposed/IMPLEMENTATION-PLAN-PHASE-C-DYNAMICS.md",
+   "domain": "navigation",
+   "bucket": "plans/done",
+   "targetPath": "docs/navigation/plans/done/PHASE-C-DYNAMICS.md",
+   "status": "implemented",
+   "confidence": 0.82,
+   "reasoning": "PipeSubdivision, SpeedFunctions and ITemporalConstraint all shipped. The one miss, PipeObstruction, was never a class — obstructions became a Pipe.AddObstruction method plus an untyped tuple list on PipeController — a shape change, not a gap. Done, moved out of proposed/. Its test suite is compile-excluded, which is a testing debt tracked in cross-cutting.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/navigation/PipeSubdivision.cs:11`, `SpeedFunctions.cs:10`, `Pipe.cs:75,88`, `PipeController.cs:16,48,72`, `ITemporalConstraint.cs:9`; no `PipeObstruction` type - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/proposed/NAVMESH-PATHFINDING-TALE-NPCS.md",
+   "domain": "navigation",
+   "bucket": "plans/done",
+   "targetPath": "docs/navigation/plans/done/NAVMESH-PATHFINDING-TALE-NPCS.md",
+   "status": "implemented",
+   "confidence": 0.9,
+   "reasoning": "Every artifact confirmed including the NavCluster deadlock fix, which git history ties to a specific commit (Wait() → await WaitAsync()) with only line drift since. IRouteGenerator is DI-registered and NavMeshRouteGenerator is bound in nogame.implementations.json. Executed plan, wrong folder.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/IRouteGenerator.cs:9,17`, `nogameCode/nogame/characters/citizen/NavMeshRouteGenerator.cs:21`, `StreetRouteBuilder.cs:30`, `GoToStrategyPart.cs:31`, `JoyceCode/builtin/modules/satnav/desc/NavCluster.cs:104`, `models/nogame.implementations.json:12-13` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/proposed/NAVMAP-TRANSPORTATION-GRAPHS.md",
+   "domain": "navigation",
+   "bucket": "plans/done",
+   "targetPath": "docs/navigation/plans/done/NAVMAP-TRANSPORTATION-GRAPHS.md",
+   "status": "partially-implemented",
+   "confidence": 0.75,
+   "reasoning": "The design landed in generalized form: TransportationTypeFlags, NavLane.AllowedTypes/GetCost and RoutingGraphBuilder all exist; the per-type CarGraph/PedestrianGraph classes were replaced by one parameterized RoutingGraph, which is a fine substitution. Partially-implemented rather than implemented because the graph layer itself is dead code — nothing calls NavMap.GetGraphFor, the live pathfinder filters lanes inline, and the builder's tests are compile-excluded, so the doc's central artifact ships without a consumer.",
+   "statusHeader": "> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/navigation/TransportationType.cs:22-69`, `RoutingGraphBuilder.cs:12-85`, `RoutingGraph.cs:11`, `JoyceCode/builtin/modules/satnav/desc/NavLane.cs:25-26,38-61`; `NavMap.GetGraphFor` (`NavMap.cs:49-69`) has no callers - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/proposed/PIPES-FLOW-BASED-MOVEMENT.md",
+   "domain": "navigation",
+   "bucket": "archive",
+   "targetPath": "docs/navigation/archive/PIPES-FLOW-BASED-MOVEMENT.md",
+   "status": "superseded",
+   "confidence": 0.72,
+   "reasoning": "The original pipes design sketch. All five of its claims verify, but it was superseded by IMPLEMENTATION-PLAN-PHASE-B-FLOW, which turned the same design into the executed plan — so archive as a superseded predecessor rather than duplicating a second 'done' entry for the same work. Confidence at 0.72 because plans/done is a defensible alternative reading.",
+   "statusHeader": "> **Status:** superseded - **Implemented as:** `JoyceCode/engine/navigation/Pipe.cs:13,23,43,49`, `MovingEntity.cs:11`, `PipeController.cs:11`, `TemporalConstraintState.cs:8`; executed via `docs/navigation/plans/done/PHASE-B-FLOW.md` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/TESTING/README.md",
+   "domain": "testing",
+   "bucket": "docs",
+   "targetPath": "docs/testing/docs/README.md",
+   "status": "n/a",
+   "confidence": 0.9,
+   "reasoning": "Directory index and quick reference for the testing infrastructure. Living reference. Its '192 tests' figure matches neither the 200 the standard tier runs nor the 302 on disk — flagged cross-cutting."
+  },
+  {
+   "path": "docs/TESTING/TESTING_STRATEGY.md",
+   "domain": "testing",
+   "bucket": "docs",
+   "targetPath": "docs/testing/docs/TESTING_STRATEGY.md",
+   "status": "n/a",
+   "confidence": 0.9,
+   "reasoning": "The operational workflow doc CLAUDE.md points new instances at (regression vs recalibration, per-phase commands). Living reference, unambiguous."
+  },
+  {
+   "path": "docs/TESTING/TESTBED.md",
+   "domain": "testing",
+   "bucket": "docs",
+   "targetPath": "docs/testing/docs/TESTBED.md",
+   "status": "n/a",
+   "confidence": 0.85,
+   "reasoning": "The 46 KB architecture reference for the headless cluster testbed and DES mode — the largest doc in the tree and clearly living reference despite an in-progress marker. Test-count claims inside it are stale."
+  },
+  {
+   "path": "docs/TESTING/TIERS.md",
+   "domain": "testing",
+   "bucket": "plans/done",
+   "targetPath": "docs/testing/plans/done/TIERS.md",
+   "status": "partially-implemented",
+   "confidence": 0.78,
+   "reasoning": "Proposed a four-tier pyramid and three of four tiers shipped essentially as specified in run_tests.sh (smoke via a .smoke-tests manifest, standard, full), with the fourth renamed 'recalibration' in a separate script. Filed done because the substance was built. Partially, not fully: the CI/CD half never happened — there is no .github directory anywhere in the repo — and one named smoke test (phase6-population/02-tier1-persistence.json) does not exist under any name.",
+   "statusHeader": "> **Status:** partially-implemented - **Implemented as:** `run_tests.sh:8-11,44-57`, `models/tests/tale/.smoke-tests`, `run_recalibration_tests.sh`; no CI (`.github/workflows/test.yml` never created) - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/SYSTEMS/NARRATION/EXPECT_ENGINE.md",
+   "domain": "testing",
+   "bucket": "docs",
+   "targetPath": "docs/testing/docs/EXPECT_ENGINE.md",
+   "status": "n/a",
+   "confidence": 0.8,
+   "reasoning": "Architecture of the ExpectEngine test harness — misfiled under SYSTEMS/NARRATION today; it has nothing to do with narration. Moves to testing as living reference. Minor drift to fix on a later pass: TestEvent is a sealed class not a record, there is no Complete() method (Dispose + CreateResult), no TaskCompletionSource, and it is an in-solution project rather than a NuGet package."
+  },
+  {
+   "path": "docs/SYSTEMS/NARRATION/EXPECT_IMPLEMENTATION.md",
+   "domain": "testing",
+   "bucket": "docs",
+   "targetPath": "docs/testing/docs/EXPECT_IMPLEMENTATION.md",
+   "status": "n/a",
+   "confidence": 0.78,
+   "reasoning": "The implementation-side companion to EXPECT_ENGINE, also misfiled under NARRATION. Both move to testing/docs; whether they should be one document is flagged cross-cutting rather than decided here."
+  },
+  {
+   "path": "docs/RUN_TESTS_GUIDE.md",
+   "domain": "testing",
+   "bucket": "docs",
+   "targetPath": "docs/testing/docs/RUN_TESTS_GUIDE.md",
+   "status": "n/a",
+   "confidence": 0.72,
+   "reasoning": "Practical how-to for the test runner — living reference, and it belongs with TESTING_STRATEGY rather than at docs root. Confidence held down because it is badly stale (62 tests across three phases, phase0/1/3 only) and overlaps TESTING_STRATEGY; a merge is plausible."
+  },
+  {
+   "path": "docs/DEBUG-FILTER-MIGRATION-CHECKLIST.md",
+   "domain": "debug-infra",
+   "bucket": "plans/todo",
+   "targetPath": "docs/debug-infra/plans/todo/MIGRATION-CHECKLIST.md",
+   "status": "partially-implemented",
+   "confidence": 0.8,
+   "reasoning": "The live tracker for genuinely unfinished work — the only plan in the whole tree that clearly belongs in todo rather than done or proposed. Priority 0 and 1 are verifiably migrated (~486 Trace(_dc,...) call sites across ~65 files) but hundreds of plain Trace($\"...\") calls remain across ~180 files.",
+   "statusHeader": "> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/DebugFilter.cs:21`, `DebugCategories.cs:10-42`, `models/nogame.properties.json:19-45`; ~486 of 571 call sites migrated, remainder outstanding - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/planned/SYSTEMATIC-DEBUG-FILTER-MIGRATION.md",
+   "domain": "debug-infra",
+   "bucket": "plans/todo",
+   "targetPath": "docs/debug-infra/plans/todo/SYSTEMATIC-MIGRATION.md",
+   "status": "partially-implemented",
+   "confidence": 0.78,
+   "reasoning": "The 7-week systematic plan, and it is being executed — the infrastructure exists and migration is well past its stated 307/571 baseline. Todo (not done) because it is explicitly incomplete, and not proposed because work is visibly underway with a commit trail. Overlaps the checklist; flagged cross-cutting.",
+   "statusHeader": "> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/DebugFilter.cs:21`, `DebugInterpolatedStringHandler.cs:11`, `DebugCategories.cs:10-42` (28 categories), `JoyceCode/engine/tale/TaleManager.cs:19`, `models/nogame.properties.json:19-44` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/done/DEBUG-FILTER-ARCHITECTURE.md",
+   "domain": "debug-infra",
+   "bucket": "docs",
+   "targetPath": "docs/debug-infra/docs/ARCHITECTURE.md",
+   "status": "implemented",
+   "confidence": 0.75,
+   "reasoning": "Filed under roadmap/done today, but it is the design reference for a shipped, actively-extended system — exactly what docs/ is for, and the migration plans need something to point at. Every artifact verifies. Two stale details to fix: it says 12 categories (there are 27) and names nogame.globalSettings.json as the config home when the debug.category.* keys actually live in nogame.properties.json.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/DebugFilter.cs:21,50`, `DebugCategories.cs:10`, `DebugInterpolatedStringHandler.cs:11`, `models/nogame.properties.json:19-45`, `JoyceCode/engine/Props.cs:219` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/DEBUG-FILTER-AUDIT.md",
+   "domain": "debug-infra",
+   "bucket": "archive",
+   "targetPath": "docs/debug-infra/archive/DEBUG-FILTER-AUDIT.md",
+   "status": "superseded",
+   "confidence": 0.7,
+   "reasoning": "The one-time survey (571 calls across 135 files) that seeded the migration. Archived as superseded by the checklist, which carries the same data plus live progress. Confidence exactly at the bar: it still holds the only per-file prioritization matrix, so an argument exists for keeping it in docs/ until the migration finishes.",
+   "statusHeader": "> **Status:** superseded - **Implemented as:** survey consumed by `docs/debug-infra/plans/todo/MIGRATION-CHECKLIST.md`; system at `JoyceCode/engine/DebugFilter.cs:21` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/SYSTEMS/WORLD_GEN/LSYSTEM.md",
+   "domain": "world-gen",
+   "bucket": "docs",
+   "targetPath": "docs/world-gen/docs/LSYSTEM.md",
+   "status": "n/a",
+   "confidence": 0.88,
+   "reasoning": "Reference for the L-system expression language, JSON schema, Lua escape syntax and generators — all of which are confirmed present (ExpressionLexer/Parser/Evaluator, LSystemLoader, LuaExpressionEvaluator, TreeInstanceGenerator). Living reference."
+  },
+  {
+   "path": "docs/SYSTEMS/WORLD_GEN/LSYSTEM_EDITOR.md",
+   "domain": "world-gen",
+   "bucket": "archive",
+   "targetPath": "docs/world-gen/archive/LSYSTEM_EDITOR.md",
+   "status": "partially-implemented",
+   "confidence": 0.78,
+   "reasoning": "A phase-by-phase completion report → archive. Phases 1-4 verify solidly. Phase 5 does not: the doc's headline is a visual node-graph editor, but what exists is a three-pane ListBox-plus-form editor with none of the named files (LSystemNodeViewModel, LSystemConnectionViewModel, LSystemNodeView.axaml) and no canvas, node or connection code at all — so 'All Phases Complete!' overstates the load-bearing deliverable.",
+   "statusHeader": "> **Status:** partially-implemented - **Implemented as:** `JoyceCode/builtin/tools/Lindenmayer/Expressions/{ExpressionLexer,ExpressionParser,ExpressionEvaluator,LuaExpressionEvaluator}.cs`, `LSystemLoader.cs`, `Aihao/Aihao/Views/LSystemEditor.axaml`; Phase 5 node-graph UI not built (tree+form editor instead) - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/SYSTEMS/WORLD_GEN/FRAGMENT_OPERATORS.md",
+   "domain": "world-gen",
+   "bucket": "plans/proposed",
+   "targetPath": "docs/world-gen/plans/proposed/BIRD-SWARM-OPERATOR.md",
+   "status": "not-started",
+   "confidence": 0.8,
+   "reasoning": "A fully-specified implementation plan for a bird-swarm fragment operator with literally nothing built — no CreateTetrahedronMesh, no PlaceBirdSwarmOperator, no bird component, no metaGen entry; the words 'bird' and 'swarm' appear nowhere outside this file. Proposed rather than todo: it is an ambient-polish feature with no commitment signal. Renamed on move because 'FRAGMENT_OPERATORS' reads like a reference doc for the operator system, which it is not.",
+   "statusHeader": "> **Status:** not-started - **Implemented as:** - (only the imitated pattern exists: `nogameCode/nogame/terrain/PlaceDebrisOperator.cs:12`) - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/ARCHITECTURE/README.md",
+   "domain": "main",
+   "bucket": "docs",
+   "targetPath": "docs/main/docs/architecture/README.md",
+   "status": "n/a",
+   "confidence": 0.82,
+   "reasoning": "Index for engine architecture docs. Folded into main because engine-core is 1 doc with 0 plans. Flagged suspicious: it indexes PHYSICS.md, AUDIO.md, INPUT.md and ENGINE.md, none of which exist — it is a table of contents for a directory that was never written."
+  },
+  {
+   "path": "docs/ARCHITECTURE/RENDERING.md",
+   "domain": "main",
+   "bucket": "docs",
+   "targetPath": "docs/main/docs/architecture/RENDERING.md",
+   "status": "n/a",
+   "confidence": 0.85,
+   "reasoning": "The one architecture doc that actually exists (pipeline, cameras, materials, composition). Living reference. Rendering does not stand alone as a domain: 2 docs, 0 plans."
+  },
+  {
+   "path": "docs/FRAME_NUMBER_INVESTIGATION.md",
+   "domain": "main",
+   "bucket": "archive",
+   "targetPath": "docs/main/archive/FRAME_NUMBER_INVESTIGATION.md",
+   "status": "superseded",
+   "confidence": 0.9,
+   "reasoning": "Self-declared superseded: it documents an Option A analysis that shipped as commit c3f40eeb, caused the walking-plays-fall-animation regression, and was replaced by Option B on 2026-07-20. A one-off investigation with a known-wrong conclusion — archive, and worth keeping precisely as the record of the wrong turn.",
+   "statusHeader": "> **Status:** superseded - **Implemented as:** Option B fix, `ModelAnimation.GetGlobalFrame` + `MeshBatch.Add`; consumed at `Splash.Silk/SilkThreeD.cs:510` and `models/shaders/LIghtingVS.vert:136` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/ANIMATION_ASSIMP_VERSION_COMPENSATION.md",
+   "domain": "main",
+   "bucket": "plans/done",
+   "targetPath": "docs/main/plans/done/ANIMATION-ASSIMP-VERSION-COMPENSATION.md",
+   "status": "implemented",
+   "confidence": 0.75,
+   "reasoning": "Claims not-started, but the load-bearing mechanism is in the tree: AssimpVersion enum, a full AssimpVersionDetector with native version probing, and a version-gated transformation-chain branch in FbxModel. The two 'missing' claims are naming artifacts — NeedsComplexTransformationChain exists as an inline IsAssimp6OrNewer() check plus _computeChainProduct, and BakedAnimationData matches no type under any spelling. Done, with the caveat that no test covers version-specific behavior.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `JoyceCode/engine/joyce/AssimpVersion.cs:7`, `JoyceCode/builtin/loader/fbx/AssimpVersionDetector.cs:13,70`, `FbxModel.cs:880-890,1149,1158,1175`, `ModelAnimationCollection.cs:547`; no `NeedsComplexTransformationChain()` (inline), no `BakedAnimationData` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/PROCESS_DOCS.md",
+   "domain": "main",
+   "bucket": "docs",
+   "targetPath": "docs/main/docs/PROCESS_DOCS.md",
+   "status": "n/a",
+   "confidence": 0.78,
+   "reasoning": "The documentation-organization standard, referenced from CLAUDE.md — living process reference, folded into main since 'documentation' is 1 doc with 0 plans. Important caveat: it prescribes the exact layout this reorg replaces (docs/ARCHITECTURE/, docs/SYSTEMS/, docs/tale/phases/), so it is the single document that must be rewritten before the move is coherent. Flagged cross-cutting."
+  },
+  {
+   "path": "docs/SYSTEMS/BUILD/PIPELINE.md",
+   "domain": "main",
+   "bucket": "docs",
+   "targetPath": "docs/main/docs/build/PIPELINE.md",
+   "status": "n/a",
+   "confidence": 0.82,
+   "reasoning": "Build pipeline reference (target order, MSBuild tasks, failure modes), corroborated by nogame.csproj and reflected in CLAUDE.md. Living reference. Build does not stand alone: 2 docs, 1 plan — below the doc threshold."
+  },
+  {
+   "path": "docs/SYSTEMS/PERSISTENCE/LITEDB.md",
+   "domain": "main",
+   "bucket": "docs",
+   "targetPath": "docs/main/docs/persistence/LITEDB.md",
+   "status": "n/a",
+   "confidence": 0.82,
+   "reasoning": "Reference for the LiteDB save/config/world-cache layer. Sole persistence doc, no plans — folds into main."
+  },
+  {
+   "path": "docs/SYSTEMS/PLATFORMS/ANDROID.md",
+   "domain": "main",
+   "bucket": "docs",
+   "targetPath": "docs/main/docs/platforms/ANDROID.md",
+   "status": "n/a",
+   "confidence": 0.82,
+   "reasoning": "Android IME/keyboard input reference. Sole platforms doc, no plans — folds into main."
+  },
+  {
+   "path": "docs/SYSTEMS/QUEST/QUEST_SYSTEM.md",
+   "domain": "main",
+   "bucket": "docs",
+   "targetPath": "docs/main/docs/quest/QUEST_SYSTEM.md",
+   "status": "n/a",
+   "confidence": 0.82,
+   "reasoning": "Reference for the ECS quest system (QuestInfo, QuestFactory, AOneOfStrategy, SatnavService) — a shipped system per CLAUDE.md's Phase 5-7 notes. One doc, no plans; folds into main rather than a quest domain."
+  },
+  {
+   "path": "docs/roadmap/done/PLAYER-NPC-COLLISION-A-LAYER-FIX.md",
+   "domain": "main",
+   "bucket": "plans/done",
+   "targetPath": "docs/main/plans/done/PLAYER-NPC-COLLISION-A-LAYER-FIX.md",
+   "status": "implemented",
+   "confidence": 0.88,
+   "reasoning": "Verified: WalkModule sets SolidLayerMask to PlayerCharacter, the Layers.Player alias survives untouched, and WalkModule was the only SolidLayerMask consumer of it — exactly the surgical change described. Only drift is a line number (126 → 131). Part of the closed three-part collision workstream folded into main.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `nogameCode/nogame/modules/playerhover/WalkModule.cs:123-133`, `JoyceCode/engine/physics/CollisionProperties.cs:25,27`, `nogameCode/nogame/characters/citizen/CitizenCollisionRouter.cs:37` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/done/PLAYER-NPC-COLLISION-B-HAND-ARM-TOGGLE.md",
+   "domain": "main",
+   "bucket": "plans/done",
+   "targetPath": "docs/main/plans/done/PLAYER-NPC-COLLISION-B-HAND-ARM-TOGGLE.md",
+   "status": "implemented",
+   "confidence": 0.88,
+   "reasoning": "All four artifacts verified, including the three _setHandArmed call sites the doc predicts (two attack transitions plus module activate). No automated test, but the change is a two-state layer toggle.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `nogameCode/nogame/characters/EntityCreator.cs:61,298`, `nogameCode/nogame/modules/playerhover/WalkBehavior.cs:37,45,113`, `WalkController.cs:62,133,339,451,846`, `WalkModule.cs:92,146,155` - **Verified:** 2026-07-21"
+  },
+  {
+   "path": "docs/roadmap/done/PLAYER-NPC-COLLISION-C-PUSH-ASIDE.md",
+   "domain": "main",
+   "bucket": "plans/done",
+   "targetPath": "docs/main/plans/done/PLAYER-NPC-COLLISION-C-PUSH-ASIDE.md",
+   "status": "implemented",
+   "confidence": 0.88,
+   "reasoning": "Router, BumpEvent, BumpEventPath and ApplyLateralBump all exist with the exact tuning constants the doc states (0.4 m / 0.4 s, 0.6 m cap), and the doc is honest that its verification was manual. Completes the collision trio in main/plans/done.",
+   "statusHeader": "> **Status:** implemented - **Implemented as:** `nogameCode/nogame/characters/citizen/CitizenCollisionRouter.cs:25`, `BumpEvent.cs:13`, `EntityStrategy.cs:44`, `JoyceCode/builtin/tools/SegmentNavigator.cs:111,119`, `WalkBehavior.cs:26,107`, `TaleWalkBehavior.cs:65,79` - **Verified:** 2026-07-21"
+  }
+ ],
+ "gated": [
+  {
+   "path": "docs/roadmap/proposed/BUILD-ASSET-DEPENDENCY-TRACKING.md",
+   "question": "plans/todo or plans/proposed? Nothing from it is built (no UpToDateCheckInput items, no stamp files, no Target Inputs/Outputs anywhere), so status is unambiguously not-started — but it fixes a real correctness bug (JSON/FBX edits do not trigger a re-bake), which reads more like agreed-and-queued work than an idea. It also sits at odds with itself: the WaitForExit timeout removal it argues for is already in both MSBuild tasks, so part of it may have quietly shipped.",
+   "options": [
+    "docs/main/plans/todo/BUILD-ASSET-DEPENDENCY-TRACKING.md (treat the stale-asset bug as committed work)",
+    "docs/main/plans/proposed/BUILD-ASSET-DEPENDENCY-TRACKING.md (keep as-filed; nothing signals commitment)"
+   ]
+  },
+  {
+   "path": "docs/roadmap/proposed/TRAFFIC-LIGHTS-SYSTEM.md",
+   "question": "plans/todo or plans/proposed? The substrate shipped as part of navigation Phase B — ITemporalConstraint, CyclicConstraint with a 60 s default cycle, NavLane.Constraint/QueryConstraint, and routing-cost penalties for constrained lanes — but the feature itself did not: no constraint is ever attached to a lane in world generation, no movement executor stops an NPC at a red light, and the elevator/transit extensions have no implementation. Is this queued work whose foundation is deliberately in place, or a design sketch that happened to donate its data model to Phase B?",
+   "options": [
+    "docs/navigation/plans/todo/TRAFFIC-LIGHTS-SYSTEM.md, status partially-implemented",
+    "docs/navigation/plans/proposed/TRAFFIC-LIGHTS-SYSTEM.md, status partially-implemented",
+    "docs/navigation/docs/TEMPORAL-CONSTRAINTS.md — reframe as reference for the shipped constraint model and drop the unbuilt traffic-light framing"
+   ]
+  },
+  {
+   "path": "docs/roadmap/proposed/IMPLEMENTATION-PLAN-PHASE-D-ROUTING.md",
+   "question": "plans/done or plans/todo? NpcGoal, RoutingPreferences, the A* cost multiplier and role-based goal assignment are all live, and RoutingPreferencesTests passes 10/10. But two of the four goals are inert: ComputeScenicMultiplier and ComputeSafetyMultiplier are placeholders returning 1.0f, and the tests assert that neutrality as expected. Since 'NPCs take visibly different routes by personality' is the plan's entire point, the missing pieces are arguably load-bearing. Three sources also disagree on this plan's status (PHASE_D.md says complete, PHASE-D-PROGRESS.md says in-progress, CLAUDE.md lists D2/D4 as pending while both are in code).",
+   "options": [
+    "docs/navigation/plans/done/PHASE-D-ROUTING.md, status partially-implemented",
+    "docs/navigation/plans/todo/PHASE-D-ROUTING.md, status partially-implemented (scenic/safety scoring is the outstanding work)"
+   ]
+  },
+  {
+   "path": "docs/SYSTEMS/README.md",
+   "question": "Where does the systems index go once its subject is split across five domains? It indexes NARRATION (→ tale + testing), WORLD_GEN (→ its own domain), QUEST/PERSISTENCE/PLATFORMS/BUILD (→ main). Any single destination leaves it pointing across domain boundaries, and it may be better deleted and replaced by a top-level docs/README.md listing the new domain roster.",
+   "options": [
+    "docs/main/docs/SYSTEMS_OVERVIEW.md, rewritten to cover only main's subsystems",
+    "docs/README.md as the new cross-domain landing page",
+    "docs/main/archive/SYSTEMS_README.md — retire it; the domain folders are self-describing"
+   ]
+  }
+ ],
+ "suspicious": [
+  {
+   "path": "docs/roadmap/PHASE-C-COMPLETION.md",
+   "contradiction": "Reports 'Test Results: 171/171 PASSED (100% success)' as validation of the pipe dynamics work. That table is verbatim identical (same date, same per-phase breakdown) to the one in PHASE-B-COMPLETION.md and refers to the TALE narrative JSON suite, which exercises none of this code. The tests that would actually validate Phase C — PipeSubdivisionTests, SpeedFunctionsTests, PipeControllerTests — are excluded from compilation at JoyceCode.Tests.csproj:41, whose own comment says they 'have never actually been compiled'. Worse, the csproj that could have run them did not exist until 2026-04-12, nearly three weeks after this report was written, so no version of the claim was ever true.",
+   "severity": "high"
+  },
+  {
+   "path": "docs/SYSTEMS/WORLD_GEN/LSYSTEM_EDITOR.md",
+   "contradiction": "Declares 'All Phases Complete!' with Phase 5 being a visual node-graph editor, and includes an ASCII diagram of draggable Seed/Rule/Macro nodes with connection lines. What shipped is a three-pane ListBox-plus-form editor: none of the named files exist (LSystemNodeViewModel.cs, LSystemConnectionViewModel.cs, LSystemNodeView.axaml), and grepping the Aihao ViewModels/Views for 'Canvas', 'NodeView' and 'Connection' returns nothing. The document's own progress log for Phase 5 describes the tree+form UI, so its heading and its body disagree with each other as well as with the code.",
+   "severity": "high"
+  },
+  {
+   "path": "docs/roadmap/PHASE-D-PROGRESS.md",
+   "contradiction": "Tracks D2 (multi-objective A* integration) and D4 (role-based behavioral variety) as outstanding, but both are in the tree: LocalPathfinder._childNode multiplies RoutingPreferences.ComputeCostMultiplier into A* edge cost (LocalPathfinder.cs:66,81-88) and TalePopulationGenerator.GenerateRoutingPreferences assigns goals per role (TalePopulationGenerator.cs:395-439). The contradiction has propagated: CLAUDE.md still lists both as pending, while docs/tale/phases/PHASE_D.md states 'IMPLEMENTATION COMPLETE' for the same work.",
+   "severity": "high"
+  },
+  {
+   "path": "docs/tale/TALE_ARCHITECTURE.md",
+   "contradiction": "Presents six subsystems as the TALE architecture; two have no counterpart in code under any name or shape. There is no World State Graph — per-NPC state is a flat Dictionary<string,float> property bag plus trust dictionaries. There is no Graph Rewriting Engine — 'rewriting' is StoryletSelector.ApplyPostconditions doing scalar +/-/= mutations on that dictionary. Two more exist only under other names (Selection Engine = StoryletSelector, Runtime Orchestrator = TaleManager), and 'Arc Rewrite Engine' is really ArcStack, an interrupt/resume stack that rewrites nothing. As the primary architecture reference for the largest system in the repo, this misleads about the fundamental data model.",
+   "severity": "high"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_C.md",
+   "contradiction": "Carries claimedStatus not-started while all five named artifacts exist and 28 JSON tests across phaseC1-C4 exercise them. The same work is separately documented as complete in docs/roadmap/proposed/TALE-NPC-CONVERSATION-SYSTEM.md and in CLAUDE.md's status block. A reader taking this phase doc at face value would rebuild a shipped system.",
+   "severity": "medium"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_7B.md",
+   "contradiction": "Claims not-started while building role tagging is live (ClusterDesc.GetAttributeIntensity, Building.Tags, TalePopulationGenerator.AssignLocationByRole). It also specifies a GenerateBuildingRolesOperator cluster operator that was never written — the logic went inline into QuarterGenerator._determineBuildingRoles instead — so anyone searching for the operator will conclude nothing was built.",
+   "severity": "medium"
+  },
+  {
+   "path": "docs/ANIMATION_ASSIMP_VERSION_COMPENSATION.md",
+   "contradiction": "Reads as an unstarted proposal, but AssimpVersion, AssimpVersionDetector and the version-gated chain correction in FbxModel are all present and wired. Two artifacts it names cannot be found under any spelling (NeedsComplexTransformationChain, BakedAnimationData), suggesting the doc was never reconciled with what was actually built. Separately, AssimpVersionDetector's own class comment claims reflection-based assembly-version detection while the implementation calls native GetVersionMajor/Minor/Patch.",
+   "severity": "medium"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_E_SOCIAL.md",
+   "contradiction": "States in-progress, but all six named artifacts exist, 44 xUnit tests pass across the six Phase E test files, and the commit log shows all seven planned commits landed including save-game persistence (E6). The corresponding plan is already filed in roadmap/done. The phase is complete; only this doc says otherwise.",
+   "severity": "medium"
+  },
+  {
+   "path": "docs/roadmap/done/TALE-SOCIAL-PHASES.md",
+   "contradiction": "States 25 baked sc-{hash} scenarios (5 small + 8 medium + 12 large). models/nogame.scenarios.json configures 13, with the large category explicitly set to count=0 and commented as disabled because 600-NPC/365-day simulations are too expensive; the 13 files present locally match that config. The same 25 figure is repeated in CLAUDE.md and in docs/tale/phases/PHASE_D_SOCIAL.md, so the error is replicated three times. Note also that nogame/generated/ is git-ignored, so no scenario file count is a property of the repo at all.",
+   "severity": "medium"
+  },
+  {
+   "path": "docs/tale/phases/PHASE_5.md",
+   "contradiction": "Publishes an ArcStack API that does not exist: PushInterrupt and PopAndResume return zero matches repo-wide, while the real methods are SetInterrupt/ClearInterrupt/Push/TryPop. InterruptCandidate does not exist at all — priority lives as an int field on StoryletDefinition with comparison logic inline in DesSimulation. It also states escalation.json has 15 storylets; it has 17. The sibling test doc docs/tale/tests/PHASE_5.md documents the correct method names, so the two disagree.",
+   "severity": "medium"
+  },
+  {
+   "path": "docs/TESTING/TIERS.md",
+   "contradiction": "Names phase6-population/02-tier1-persistence.json as a smoke test; no file of that name exists anywhere, and the real smoke manifest picks 01-deterministic-generation.json for phase6. It also proposes a .github/workflows/test.yml CI integration — there is no .github directory in the repository and no CI of any kind, yet the doc reads as though the tier structure it describes is fully realized.",
+   "severity": "medium"
+  },
+  {
+   "path": "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "contradiction": "Lists Phase 4 (Player) as 'Not started' while CLAUDE.md declares Phase 0-8 fully implemented. The evidence sides with this doc rather than CLAUDE.md — no PHASE_4_PLAYER design doc, no social_capital or overhear code, and the 20 phase4-player tests assert only generic DES events — so the contradiction is worth resolving in the other direction: CLAUDE.md's blanket 'Phase 0-8 complete' claim is the inaccurate one.",
+   "severity": "medium"
+  },
+  {
+   "path": "docs/ARCHITECTURE/README.md",
+   "contradiction": "Indexes RENDERING.md, PHYSICS.md, AUDIO.md, INPUT.md and ENGINE.md as the architecture documentation set. Only RENDERING.md exists — four of five entries are links to documents that were never written, making the index read as a claim of coverage the tree does not have.",
+   "severity": "low"
+  },
+  {
+   "path": "docs/tale/tests/QUICK_START.md",
+   "contradiction": "Headlines '171 test scripts total' and gives a per-phase breakdown. 171 was accurate before phaseC1-C4 (29) and phase7-spatial (102) were added; disk now holds 302 JSON files, the standard tier runs 200, and docs/TESTING/README.md says 192. Four numbers, none matching, across docs that are meant to be read together.",
+   "severity": "low"
+  },
+  {
+   "path": "docs/roadmap/done/DEBUG-FILTER-ARCHITECTURE.md",
+   "contradiction": "Describes 12 predefined Dc categories; DebugCategories.cs defines 27 plus a sentinel. It also locates the debug.category.* settings in nogame.globalSettings.json — that file exists but contains none of them; all 27 keys live in nogame.properties.json. DebugFilter.cs's own doc comment repeats the wrong filename, so the error is mirrored in the source.",
+   "severity": "low"
+  }
+ ],
+ "crossCutting": [
+  {
+   "issue": "'Phase D' names two unrelated workstreams and both currently live in docs/tale/phases/. PHASE_D.md is multi-objective routing; PHASE_D_SOCIAL.md is pre-computed social scenarios. They share a directory, a prefix, and a completion date range, and CLAUDE.md carries an explicit warning about the ambiguity. The domain split alone does not fix this — the routing doc must both move to navigation AND lose the phase label, which is why it is retargeted to docs/navigation/docs/MULTI-OBJECTIVE-ROUTING.md and the social plan to TALE-SOCIAL-PHASE-D-SCENARIOS.md.",
+   "paths": [
+    "docs/tale/phases/PHASE_D.md",
+    "docs/tale/phases/PHASE_D_SOCIAL.md",
+    "docs/roadmap/PHASE-D-PROGRESS.md",
+    "docs/roadmap/proposed/IMPLEMENTATION-PLAN-PHASE-D-ROUTING.md",
+    "docs/roadmap/done/TALE-SOCIAL-PHASES.md"
+   ],
+   "recommendation": "Retire the 'Phase D' label on the routing side entirely: routing docs move to docs/navigation/ and are renamed by subject; social scenario docs keep a D_SOCIAL/PHASE-D-SCENARIOS name inside docs/tale/. After the move, no directory contains two 'Phase D' documents."
+  },
+  {
+   "issue": "The Phase B and Phase C navigation work is each documented twice: once as an implementation plan in roadmap/proposed/ and once as a completion report in roadmap/. A third doc, PIPES-FLOW-BASED-MOVEMENT.md, is the original design for the same pipes system. Three documents, one body of work, with the plans filed as 'proposed' despite the completion reports next door.",
+   "paths": [
+    "docs/roadmap/proposed/IMPLEMENTATION-PLAN-PHASE-B-FLOW.md",
+    "docs/roadmap/PHASE-B-COMPLETION.md",
+    "docs/roadmap/proposed/IMPLEMENTATION-PLAN-PHASE-C-DYNAMICS.md",
+    "docs/roadmap/PHASE-C-COMPLETION.md",
+    "docs/roadmap/proposed/PIPES-FLOW-BASED-MOVEMENT.md"
+   ],
+   "recommendation": "Keep the plans as the durable record in navigation/plans/done/, put the completion reports in navigation/archive/, and archive PIPES-FLOW-BASED-MOVEMENT as the superseded predecessor. Consider folding each completion report's verified-artifact list into its plan and deleting the report."
+  },
+  {
+   "issue": "The TALE conversation system (C1-C4) is documented in five places with conflicting status: an umbrella plan in proposed/ claiming complete, a C1 plan in proposed/ that is actually shipped, a C2 plan in done/ whose body says not-started, a phase doc claiming not-started, and a test spec. All describe the same TaleConversationBehavior/TaleNarrationBindings implementation.",
+   "paths": [
+    "docs/roadmap/proposed/TALE-NPC-CONVERSATION-SYSTEM.md",
+    "docs/roadmap/proposed/PHASE-C1-INFRASTRUCTURE.md",
+    "docs/roadmap/done/PHASE-C2-STORYLET-DIALOGUE.md",
+    "docs/tale/phases/PHASE_C.md",
+    "docs/tale/tests/PHASE_C.md"
+   ],
+   "recommendation": "All four plan-shaped docs move to docs/tale/plans/done/ so the status question disappears, and the test spec stays in docs/tale/docs/tests/. Then collapse the umbrella plan and the two sub-plans into one C1-C4 record, keeping PHASE_C as the design reference."
+  },
+  {
+   "issue": "Four different current test counts circulate across the docs: 171 (QUICK_START, TIERS, both navigation completion reports), 192 (TESTING/README, CLAUDE.md), 200 (what run_tests.sh's standard tier actually runs), 302 (JSON files on disk), plus 62 in RUN_TESTS_GUIDE and TALE_TEST_INFRASTRUCTURE and 273/212 in the two tale index docs. 171 is a genuine historical count (the seven pre-C phases summed exactly), so these are accreted snapshots rather than errors — but no reader can tell which is current.",
+   "paths": [
+    "docs/tale/tests/QUICK_START.md",
+    "docs/TESTING/TIERS.md",
+    "docs/TESTING/README.md",
+    "docs/RUN_TESTS_GUIDE.md",
+    "docs/TALE_TEST_INFRASTRUCTURE.md",
+    "docs/tale/OVERVIEW.md",
+    "docs/tale/README.md",
+    "docs/roadmap/PHASE-B-COMPLETION.md",
+    "docs/roadmap/PHASE-C-COMPLETION.md"
+   ],
+   "recommendation": "Stop quoting totals in prose. Have run_tests.sh print the count it discovers, cite that one number in TESTING_STRATEGY only, and strip counts from every other doc. Note that phase7-spatial (102 tests) is excluded from the standard tier, which is the main reason the numbers diverge."
+  },
+  {
+   "issue": "The debug-filter effort has two overlapping live trackers plus a stale survey: DEBUG-FILTER-MIGRATION-CHECKLIST (per-priority progress), SYSTEMATIC-DEBUG-FILTER-MIGRATION (a 7-week plan filed under roadmap/planned), and DEBUG-FILTER-AUDIT (the original 571-call survey). All three carry different progress figures (101/571, 307/571, ~486/571 measured now) and none is authoritative.",
+   "paths": [
+    "docs/DEBUG-FILTER-MIGRATION-CHECKLIST.md",
+    "docs/roadmap/planned/SYSTEMATIC-DEBUG-FILTER-MIGRATION.md",
+    "docs/DEBUG-FILTER-AUDIT.md",
+    "docs/roadmap/done/DEBUG-FILTER-ARCHITECTURE.md"
+   ],
+   "recommendation": "Keep one tracker in debug-infra/plans/todo/ (merge the systematic plan's sequencing into the checklist), archive the audit, and keep ARCHITECTURE as the docs/ reference. Recompute the migrated/remaining split once rather than maintaining three counts."
+  },
+  {
+   "issue": "Navigation unit tests exist on disk but are excluded from compilation (JoyceCode.Tests.csproj:41 removes engine/navigation/**), with a comment stating they have never been compiled and have drifted against the current API. Four separate documents cite these tests as passing evidence for shipped work.",
+   "paths": [
+    "docs/roadmap/PHASE-B-COMPLETION.md",
+    "docs/roadmap/PHASE-C-COMPLETION.md",
+    "docs/roadmap/proposed/IMPLEMENTATION-PLAN-PHASE-C-DYNAMICS.md",
+    "docs/roadmap/proposed/NAVMAP-TRANSPORTATION-GRAPHS.md",
+    "docs/roadmap/proposed/TRAFFIC-LIGHTS-SYSTEM.md"
+   ],
+   "recommendation": "Not a filing problem — track it as engineering debt: either revive engine/navigation tests against the current API or delete them, because right now the pipes/constraints/graph subsystem has documentation asserting test coverage that cannot run."
+  },
+  {
+   "issue": "PROCESS_DOCS.md is the standard that prescribes the current docs layout (docs/ARCHITECTURE/, docs/SYSTEMS/, docs/tale/phases|tests|design/). This reorganization invalidates every path it specifies, and CLAUDE.md's Quick Start points new instances at it as required reading. docs/tale/tests/STRATEGY.md has the same problem at smaller scale.",
+   "paths": [
+    "docs/PROCESS_DOCS.md",
+    "docs/tale/tests/STRATEGY.md",
+    "docs/tale/README.md",
+    "docs/tale/OVERVIEW.md",
+    "docs/SYSTEMS/README.md"
+   ],
+   "recommendation": "Rewrite PROCESS_DOCS.md to describe the domain/bucket layout as part of the same change that runs the moves, and refresh the four index/nav docs plus CLAUDE.md's Quick Start paths. Moving files without this leaves the repo's own documentation standard describing a tree that no longer exists."
+  },
+  {
+   "issue": "Two documents describe ExpectEngine — an architecture/design doc and an implementation doc — and both are filed under docs/SYSTEMS/NARRATION/ despite having nothing to do with narration. They overlap substantially in content.",
+   "paths": [
+    "docs/SYSTEMS/NARRATION/EXPECT_ENGINE.md",
+    "docs/SYSTEMS/NARRATION/EXPECT_IMPLEMENTATION.md"
+   ],
+   "recommendation": "Both move to docs/testing/docs/. Evaluate merging them; if kept separate, correct the drift in EXPECT_ENGINE (TestEvent is a sealed class not a record, no Complete() method, no TaskCompletionSource, in-solution project not a NuGet package)."
+  },
+  {
+   "issue": "Two plan documents were filed by outcome rather than by state: PHASE-C1-INFRASTRUCTURE and TALE-NPC-CONVERSATION-SYSTEM sit in roadmap/proposed/ with every artifact shipped and tested, while SYSTEMATIC-DEBUG-FILTER-MIGRATION sits in roadmap/planned/ with substantial work already done. Meanwhile PHASE-C2 sits correctly in done/ but its body reads not-started. The proposed/planned/done folders have stopped tracking reality.",
+   "paths": [
+    "docs/roadmap/proposed/PHASE-C1-INFRASTRUCTURE.md",
+    "docs/roadmap/proposed/TALE-NPC-CONVERSATION-SYSTEM.md",
+    "docs/roadmap/proposed/IMPLEMENTATION-PLAN-PHASE-A-FOUNDATION.md",
+    "docs/roadmap/proposed/IMPLEMENTATION-PLAN-PHASE-B-FLOW.md",
+    "docs/roadmap/proposed/NAVMESH-PATHFINDING-TALE-NPCS.md",
+    "docs/roadmap/planned/SYSTEMATIC-DEBUG-FILTER-MIGRATION.md"
+   ],
+   "recommendation": "The per-plan status header this pass prepends is the fix: state is asserted in the document with a verification date and file:line evidence, so folder location becomes a filing convenience rather than the source of truth. Re-verify headers whenever a plan is touched."
+  }
+ ]
+}

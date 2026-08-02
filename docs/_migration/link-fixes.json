@@ -1,0 +1,228 @@
+{
+ "relative": [
+  [
+   "docs/testing/docs/README.md",
+   "../PROCESS_TALE.md",
+   "../../tale/docs/PROCESS_TALE.md"
+  ],
+  [
+   "docs/testing/docs/README.md",
+   "TIERS.md",
+   "../plans/done/TIERS.md"
+  ],
+  [
+   "docs/tale/plans/done/TALE-SOCIAL-PHASE-D-SCENARIOS.md",
+   "../../tale/phases/PHASE_D_SOCIAL.md",
+   "../../docs/phases/PHASE_D_SOCIAL.md"
+  ],
+  [
+   "docs/tale/docs/README.md",
+   "../PROCESS_TALE.md",
+   "PROCESS_TALE.md"
+  ],
+  [
+   "docs/tale/docs/README.md",
+   "concepts/INTERACTIONS.md",
+   "../plans/done/INTERACTION-TYPE-REGISTRY.md"
+  ],
+  [
+   "docs/tale/docs/README.md",
+   "concepts/ROLES.md",
+   "../plans/done/ROLE-REGISTRY.md"
+  ],
+  [
+   "docs/tale/docs/README.md",
+   "phases/PHASE_C.md",
+   "../plans/done/PHASE_C-NPC-CONVERSATIONS.md"
+  ],
+  [
+   "docs/tale/plans/done/TALE_IMPLEMENTATION_PLAN.md",
+   "TALE_CONCEPT.md",
+   "../../docs/CONCEPT.md"
+  ]
+ ],
+ "absolute": [
+  [
+   "CLAUDE.md",
+   "docs/tale/phases/PHASE_D_SOCIAL.md",
+   "docs/tale/docs/phases/PHASE_D_SOCIAL.md"
+  ],
+  [
+   "CLAUDE.md",
+   "docs/tale/phases/PHASE_D_SOCIAL.md",
+   "docs/tale/docs/phases/PHASE_D_SOCIAL.md"
+  ],
+  [
+   "PROCESS.md",
+   "docs/TESTING/TESTING_STRATEGY.md",
+   "docs/testing/docs/TESTING_STRATEGY.md"
+  ],
+  [
+   "PROCESS.md",
+   "docs/TESTING/TESTING_STRATEGY.md",
+   "docs/testing/docs/TESTING_STRATEGY.md"
+  ],
+  [
+   "PROCESS.md",
+   "docs/TESTING/TESTING_STRATEGY.md",
+   "docs/testing/docs/TESTING_STRATEGY.md"
+  ],
+  [
+   "PROCESS.md",
+   "docs/tale/phases/PHASE_C.md",
+   "docs/tale/plans/done/PHASE_C-NPC-CONVERSATIONS.md"
+  ]
+ ],
+ "unresolved": [
+  [
+   "docs/ARCHITECTURE/README.md",
+   "../../CLAUDE.md",
+   "CLAUDE.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/ARCHITECTURE/README.md",
+   "../PROCESS.md",
+   "docs/PROCESS.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/ARCHITECTURE/README.md",
+   "AUDIO.md",
+   "docs/ARCHITECTURE/AUDIO.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/ARCHITECTURE/README.md",
+   "ENGINE.md",
+   "docs/ARCHITECTURE/ENGINE.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/ARCHITECTURE/README.md",
+   "INPUT.md",
+   "docs/ARCHITECTURE/INPUT.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/ARCHITECTURE/README.md",
+   "PHYSICS.md",
+   "docs/ARCHITECTURE/PHYSICS.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/PROCESS_DOCS.md",
+   "../PROCESS_TALE.md",
+   "PROCESS_TALE.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/PROCESS_DOCS.md",
+   "ARCHITECTURE.md",
+   "docs/ARCHITECTURE.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/PROCESS_DOCS.md",
+   "OVERVIEW.md",
+   "docs/OVERVIEW.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/PROCESS_DOCS.md",
+   "phases/PHASE_0.md",
+   "docs/phases/PHASE_0.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/TESTING/README.md",
+   "../PROCESS.md",
+   "docs/PROCESS.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/README.md",
+   "ARCHITECTURE.md",
+   "docs/tale/ARCHITECTURE.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/README.md",
+   "phases/PHASE_0.md",
+   "docs/tale/phases/PHASE_0.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "NPC_STORIES_DESIGN.md",
+   "docs/tale/NPC_STORIES_DESIGN.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "TESTBED_PLAN.md",
+   "docs/tale/TESTBED_PLAN.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "tale/OVERVIEW.md",
+   "docs/tale/tale/OVERVIEW.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "tale/PHASE_0A_TESTBED_INFRA.md",
+   "docs/tale/tale/PHASE_0A_TESTBED_INFRA.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "tale/PHASE_0B_DES_ENGINE.md",
+   "docs/tale/tale/PHASE_0B_DES_ENGINE.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "tale/PHASE_0C_OUTPUT.md",
+   "docs/tale/tale/PHASE_0C_OUTPUT.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "tale/PHASE_1_STORIES.md",
+   "docs/tale/tale/PHASE_1_STORIES.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "tale/PHASE_2_STRATEGIES.md",
+   "docs/tale/tale/PHASE_2_STRATEGIES.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "tale/PHASE_3_INTERACTIONS.md",
+   "docs/tale/tale/PHASE_3_INTERACTIONS.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "tale/PHASE_4_PLAYER.md",
+   "docs/tale/tale/PHASE_4_PLAYER.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "tale/PHASE_5_ESCALATION.md",
+   "docs/tale/tale/PHASE_5_ESCALATION.md",
+   "target does not exist (link rot)"
+  ],
+  [
+   "docs/tale/TALE_IMPLEMENTATION_PLAN.md",
+   "tale/REFERENCE.md",
+   "docs/tale/tale/REFERENCE.md",
+   "target does not exist (link rot)"
+  ]
+ ]
+}
