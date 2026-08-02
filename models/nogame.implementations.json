@@ -92,6 +92,7 @@
   "nogame.modules.World": null,
   "nogame.modules.daynite.Controller": null,
   "nogame.modules.playerhover.PlayerPosition": null,
+  "builtin.modules.ClusterWatch": null,
   "engine.behave.ClusterHeatMap": null,
   "builtin.loader.Obj": null,
   "engine.joyce.ModelCache": null,

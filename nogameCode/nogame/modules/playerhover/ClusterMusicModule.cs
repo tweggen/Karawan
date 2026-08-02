@@ -1,13 +1,20 @@
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
+using builtin.modules;
 using engine;
 using engine.draw;
-using engine.joyce.components;
 using engine.world;
 
 namespace nogame.modules.playerhover;
 
-public class ClusterMusicModule : AController
+public class ClusterMusicModule : AModule
 {
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<builtin.modules.ClusterWatch>()
+    };
+    
     /**
      * Display the current cluster name.
      */
@@ -15,10 +22,7 @@ public class ClusterMusicModule : AController
 
     private ClusterDesc _currentCluster = null;
 
-    private DefaultEcs.Entity _ePlayer;
-    private Vector3 _v3Player;
-
-
+    
     private string _getClusterSound(ClusterDesc clusterDesc)
     {
         if (null == clusterDesc)
@@ -39,71 +43,15 @@ public class ClusterMusicModule : AController
     }
 
 
-    private void _onPlayerEntityChanged(DefaultEcs.Entity entity)
+    private void _onClusterChanged(engine.news.Event ev)
     {
-        bool isChanged = false;
-        lock (_lo)
-        {
-            if (_ePlayer != entity)
-            {
-                _ePlayer = entity;
-                isChanged = true;
-            }
-        }
-    }
-    
-    
-    protected override void OnLogicalFrame(object? sender, float dt)
-    {
-        if (_ePlayer == default)
-        {
-            return;
-        }
+        ClusterWatchEvent cwe = ev as ClusterWatchEvent;
+        Debug.Assert(cwe != null);
 
-        if (_ePlayer.Has<Transform3ToWorld>())
+        if (_currentCluster != cwe.CurrentCluster)
         {
-            ref var cTransform3ToWorld = ref _ePlayer.Get<Transform3ToWorld>();
-            _v3Player = cTransform3ToWorld.Matrix.Translation;
-            
-            
-            Vector3 posShip = _v3Player;
-            
-            /*
-             * Look up the zone we are in.
-             */
-            bool newZone = false;
-            ClusterDesc foundCluster = I.Get<ClusterList>().GetClusterAt(posShip);
-            if (foundCluster != null)
-            {
-                if (_currentCluster != foundCluster)
-                {
-                    /*
-                     * We entered a new cluster. Trigger cluster song.
-                     */
-    
-                    /*
-                     * Remember new cluster.
-                     */
-                    _currentCluster = foundCluster;
-                    newZone = true;
-                }
-            }
-            else
-            {
-                if (_currentCluster != null)
-                {
-                    /*
-                     * We just left a cluster. Trigger void music.
-                     */
-    
-                    /*
-                     * Remember we are outside.
-                     */
-                    _currentCluster = null;
-                    newZone = true;
-                }
-            }
-    
+            _currentCluster = cwe.CurrentCluster;
+
             string displayName;
             if (_currentCluster != null)
             {
@@ -114,32 +62,26 @@ public class ClusterMusicModule : AController
                 displayName = "void";
             }
     
-            if (newZone)
+            if (_eClusterDisplay != default)
             {
-                if (_eClusterDisplay != default)
-                {
-                    _eClusterDisplay.Set(new engine.draw.components.OSDText(
-                        new Vector2(768f / 2f - 64f - 48f - 96f, 48f),
-                        new Vector2(96f, 18f),
-                        $"{displayName}",
-                        10,
-                        0xff448822,
-                        0x00000000,
-                        HAlign.Right));
-                }
-
-                I.Get<Boom.Jukebox>().LoadThenPlaySong(
-                    _getClusterSound(_currentCluster), 0.05f, true, () => { }, () => { });
+                _eClusterDisplay.Set(new engine.draw.components.OSDText(
+                    new Vector2(768f / 2f - 64f - 48f - 96f, 48f),
+                    new Vector2(96f, 18f),
+                    $"{displayName}",
+                    10,
+                    0xff448822,
+                    0x00000000,
+                    HAlign.Right));
             }
-            
+
+            I.Get<Boom.Jukebox>().LoadThenPlaySong(
+                _getClusterSound(_currentCluster), 0.05f, true, () => { }, () => { });
         }
     }
-
+    
     
     protected override void OnModuleDeactivate()
     {
-        _engine.Player.RemoveOnChange(_onPlayerEntityChanged);
-
         var eClusterDisplay = _eClusterDisplay;
         _eClusterDisplay = default;
         _engine.QueueCleanupAction(() =>
@@ -152,10 +94,9 @@ public class ClusterMusicModule : AController
 
     protected override void OnModuleActivate()
     {
-        _ePlayer = _engine.Player.Value;
-        _engine.Player.AddNowOnChange(_onPlayerEntityChanged);
-        
         _engine.QueueEntitySetupAction("OsdClusterDisplay", e => { _eClusterDisplay = e; });
+        
+        Subscribe(ClusterWatchEvent.CLUSTER_CHANGED, _onClusterChanged);
    }
 
 }
