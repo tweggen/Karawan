@@ -112,7 +112,17 @@ namespace CmdLine
         }
         
         
-        public Resource LoadAnimation(JsonNode nodeRes)
+        /// <summary>
+        /// Build the Resource entries for one entry of the /animations list. One
+        /// baked ac-{hash} file exists per (model, animation pack) pair, so an
+        /// entry with several packs yields several resources.
+        ///
+        /// The pack expansion MUST stay in lock-step with
+        /// AAssetImplementation._whenLoadedAnimations on the engine side (including
+        /// the legacy flat "animationUrls" fallback), otherwise the manifests list
+        /// file names the bake never produces.
+        /// </summary>
+        public List<Resource> LoadAnimation(JsonNode nodeRes)
         {
             if (nodeRes is null)
             {
@@ -126,9 +136,6 @@ namespace CmdLine
             {
                 throw new InvalidDataException("no uri specified in resource.");
             }
-
-            // null animationUrls are perfectly ok
-            string animationUrls = obj["animationUrls"]?.GetValue<string>();
 
             string tag = obj["tag"]?.GetValue<string>();
             if (tag is null)
@@ -144,11 +151,42 @@ namespace CmdLine
                 }
             }
 
-            Trace($"GameConfig: Generating Animation Resource \"{tag}\" from {modelUrl} animations \"{animationUrls}\".");
             if (!File.Exists(Path.Combine(CurrentPath, modelUrl)))
             {
                 Trace($"Warning: resource file for {modelUrl} does not exist.");
             }
+
+            var listResources = new List<Resource>();
+
+            if (obj["packs"] is JsonObject objPacks)
+            {
+                foreach (var kvpPack in objPacks)
+                {
+                    string animationUrls = kvpPack.Value?.GetValue<string>();
+                    if (String.IsNullOrEmpty(animationUrls))
+                    {
+                        Trace($"Warning: animation pack \"{kvpPack.Key}\" for \"{modelUrl}\" is empty; skipped.");
+                        continue;
+                    }
+
+                    listResources.Add(_animationResource(tag, modelUrl, kvpPack.Key, animationUrls));
+                }
+            }
+            else
+            {
+                // Backward compatible: old single animationUrls field.
+                // null animationUrls are perfectly ok
+                string animationUrls = obj["animationUrls"]?.GetValue<string>();
+                listResources.Add(_animationResource(tag, modelUrl, "default", animationUrls));
+            }
+
+            return listResources;
+        }
+
+
+        private Resource _animationResource(string tag, string modelUrl, string packName, string animationUrls)
+        {
+            Trace($"GameConfig: Generating Animation Resource \"{tag}\" pack \"{packName}\" from {modelUrl} animations \"{animationUrls}\".");
 
             string strFilename = ModelAnimationCollectionFileName(tag, animationUrls);
             return new Resource
@@ -202,11 +240,13 @@ namespace CmdLine
 
                 foreach (var nodeRes in arr)
                 {
-                    // assumes you already adapted LoadAnimation(JsonNode?) similarly
-                    Resource resource = LoadAnimation(nodeRes);
-                    string tag = resource.Tag;
-                    MapResources[tag] = resource;
-                    Trace($"GameConfig: Added Resource \"{tag}\".");
+                    // One resource per (model, animation pack) pair.
+                    foreach (var resource in LoadAnimation(nodeRes))
+                    {
+                        string tag = resource.Tag;
+                        MapResources[tag] = resource;
+                        Trace($"GameConfig: Added Resource \"{tag}\".");
+                    }
                 }
             }
             catch (Exception e)

@@ -99,6 +99,31 @@ models/nogame.narration.json
 
 **Recursive include discovery does work.** If level-2 (or deeper) includes are missing from the manifest, suspect a stale `nogame/generated/` or stale published binary, not a BFS bug.
 
+### Generated-file names must be derived identically on both sides
+
+Some manifest entries are not files that exist in the source tree — they name files the bake *will* produce (`ac-{hash}` animation collections, `sc-{hash}` TALE scenarios). Their names are hashes, and the hash is computed **twice** from independent copies of the code, because `Tooling/Cmdline` cannot reference `JoyceCode`:
+
+| Artifact | Build-time (manifest) | Runtime / bake |
+|---|---|---|
+| `ac-{hash}` | `GameConfig.ModelAnimationCollectionFileName` + `GameConfig.LoadAnimation` | `ModelAnimationCollectionReader.ModelAnimationCollectionFileName` + `AAssetImplementation._whenLoadedAnimations` |
+| `sc-{hash}` | `GameConfig.ScenarioFileName` + `LoadScenarioList` | `engine.tale.bake.ScenarioFileName.Of` + `AAssetImplementation._whenLoadedScenarios` |
+
+Drift between the copies is invisible on desktop (the game just re-bakes on demand) but **breaks the Android build**, where every manifest entry becomes an `<AndroidAsset Include="…"/>` that MSBuild must find on disk:
+
+```
+Quelldatei "../nogame/generated/ac-…~" wurde nicht gefunden.   (source file not found)
+```
+
+Note the hash inputs are **not just the hash function** — the JSON shape feeding it counts too. The animation-packs change (`animations.json` moved from a flat `animationUrls` string to a `packs` dict, one baked file per (model, pack) pair) updated `_whenLoadedAnimations` but not `LoadAnimation`, which kept reading the now-absent `animationUrls`. The manifest then listed one `ac-` per *model*, hashed from the model name alone, while the bake wrote one per *(model, pack)* — 12 phantom entries against 14 real files, none overlapping. Fixed 2026-08-02 by teaching `LoadAnimation` the `packs` format (returns a `List<Resource>`; legacy `animationUrls` still handled).
+
+**Rule: any change to the shape of `/animations` or `/scenarios`, or to a hash input, must be applied to both columns in the same commit.** To verify without a full Android build:
+
+```bash
+dotnet build nogame/nogame.csproj
+diff <(grep -o 'ac-[A-Za-z0-9_~-]*' nogame/generated/AndroidResources.xml | sort -u) \
+     <(ls nogame/generated/ | grep '^ac-' | sort)
+```
+
 ---
 
 ## Runtime asset lookup (desktop)
