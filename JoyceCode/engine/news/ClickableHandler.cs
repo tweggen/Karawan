@@ -31,6 +31,8 @@ class ClickResult
  */
 public class ClickableHandler
 {
+    private static readonly engine.Dc _dc = engine.Dc.ClickModule;
+
     private engine.Engine _engine;
     private Camera3 _cCamera3;
     private joyce.components.Transform3ToWorld _cCamTransform;
@@ -125,7 +127,11 @@ public class ClickableHandler
              * Is it within the bounds of the AABB?
              * Then out and done!
              */
-            if (v2EvPos.X >= ul.X && v2EvPos.X < lr.X && v2EvPos.Y >= ul.Y && v2EvPos.Y < lr.Y)
+            bool isHit = v2EvPos.X >= ul.X && v2EvPos.X < lr.X && v2EvPos.Y >= ul.Y && v2EvPos.Y < lr.Y;
+            Trace(_dc,
+                $"candidate {entity} camMask={cTransform.CameraMask:X8} ul={ul} lr={lr} evPos={v2EvPos} -> {(isHit ? "HIT" : "miss")}");
+
+            if (isHit)
             {
                 /*
                  * Now look, if we already found something that is closer.
@@ -240,6 +246,10 @@ public class ClickableHandler
              *
              * This method assumes, the v2EvSize matches the possible screen size.
              */
+            Trace(_dc,
+                $"camera {eCamera} camMask={_cCamera3.CameraMask:X8} angle={_cCamera3.Angle} viewSize={_vViewSize} "
+                + $"evPos={v2EvPos} evSize={v2EvSize} contains={_cCamera3.ContainsScreenPosition(v2EvSize, v2EvPos)}");
+
             if (!_cCamera3.ContainsScreenPosition(v2EvSize, v2EvPos))
             {
                 continue;
