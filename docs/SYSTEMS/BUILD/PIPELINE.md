@@ -168,6 +168,31 @@ The runtime `Mix.Directory == ""` is a latent footgun: `pathProbe = ResourcePath
 
 After commit `1dd86134`, all three Mix include-resolution failure paths emit `Warning` (or `WARNING:` in Cmdline) instead of `Trace`. Watch the log when a conversation looks empty.
 
+### Symptom: a subsystem works from source but is silently absent on Android / in the installer
+
+The subsystem reads its data with `Directory.GetFiles` / `Directory.Exists` instead of `engine.Assets.Open`. A from-source desktop run has `Engine.ResourcePath = ./models/`, so the directory is really there and everything works; on Android the model tree only exists inside the APK, reachable through `AssetManager` and nothing else (`Wuka/Platforms/Android/AssetImplementation.cs`), and an installed Windows build has a flat `assets/` directory with no subdirectories at all. `Directory.Exists` returns `false` in both, and a subsystem that treats that as "feature not configured" disables itself without an error.
+
+That is what happened to the TALE storylets (fixed 2026-08-03). `StoryletLibrary.LoadFromDirectory` enumerated `models/tale/*.json`, so nothing ever declared those files as resources and the manifests carried **zero** of them — only the 11 `tale/conversations/*.json` narration scripts, which are packaged because `nogame.narration.json` `__include__`s them. `TaleModule.OnModuleActivate` hit `!Directory.Exists(talePath)`, returned before creating `TaleManager`, and left `TaleModule.TaleManager` null while still reporting the module as active. `Scene.cs` then handed that null to `TaleSpawnOperator`, which crashed on the first per-fragment spawn poll.
+
+**Rule: game-runtime code loads data through `engine.Assets`, never through `Directory`/`File`.** `Directory`-based loading is fine in the build tools and test harnesses (`ScenarioCompiler`, `Testbed`, `TestRunner`) — they always run on a desktop with a real model tree.
+
+Two ways to make files reachable that way, both of which also get them into the manifests:
+
+| Mechanism | Use when | Discovery |
+|---|---|---|
+| `__include__` in a parent config | The content belongs in the merged config tree (narration scripts, roles, interactions) | Automatic via `Mix.AdditionalFiles` |
+| An entry in `models/nogame.resources.json` | The file is opened as a standalone document at runtime (storylets) | Explicit `uri`, optional `type` |
+
+The storylets use the second: 14 entries tagged `"type": "taleStorylet"`. That one declaration does double duty — the resource compiler ships the files, and `TaleModule._collectStoryletTags` filters `/resources/list` on that same type to learn what to open, so what ships and what loads cannot drift apart. `tests/JoyceCode.Tests/engine/tale/TaleStoryletResourceTests.cs` fails the build if a file in `models/tale/` is missing from the list, if a declared file doesn't exist, or if a basename collides with another resource (Android flattens every asset to its basename).
+
+### Symptom: a manifest entry is regenerated but the APK still lacks the file
+
+`Wuka.csproj` line 91 does `<Import Project="../nogame/generated/AndroidResources.xml" />`. MSBuild evaluates `Import` at **project-evaluation time**, before any target in that build runs — so a build that regenerates the manifest is still using the copy that existed when it started. The first build after adding an asset updates the manifest; the **second** build stages it into `Wuka/obj/…/assets/`. Verify with:
+
+```bash
+ls Wuka/obj/Debug/net9.0-android36.0/assets/ | wc -l
+```
+
 ### Symptom: build-task A behaves differently from build-task B in the same build
 
 A and B almost certainly run from different binaries. `Res2TargetTask` runs the netstandard2.0 task DLL in-process; `PackTexturesTask` and `CompileAssetsTask` spawn a published net9.0 executable child process. After editing Cmdline source, refresh **both** outputs.
@@ -204,6 +229,8 @@ Workflow:
 4. Run the game.
 
 You should **not** need to add the file to `models/nogame.resources.json` explicitly. The auto-discovery in `Mix._upsertIncludes` handles arbitrary nesting depth. (An earlier commit, `61995e76`, did exactly this for `tale/conversations/*.json` and was reverted in `7b2f5cfd` once we confirmed the auto-discovery was correct — the problem had been a stale manifest, not a BFS bug.)
+
+This applies only to files that are genuinely part of the config tree. A file the runtime opens as a standalone document — it is not `__include__`d anywhere, so the BFS never sees it — must be listed in `models/nogame.resources.json`, or it ships nowhere. See the "works from source but absent on Android" failure mode above.
 
 If a manifest entry is missing after a rebuild, treat it as a real bug — promote the include warning, look at the trace, and follow the BFS dequeue order to find where it stopped.
 
