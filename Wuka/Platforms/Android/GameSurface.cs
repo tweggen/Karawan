@@ -166,25 +166,30 @@ public class GameSurface : SDLSurface
 
     public override IInputConnection OnCreateInputConnection(EditorInfo outAttrs)
     {
-        var ic = base.OnCreateInputConnection(outAttrs);
+        /*
+         * Note we deliberately do NOT call base.OnCreateInputConnection(): SDLSurface
+         * is a plain SurfaceView and does not implement it, so View.onCreateInputConnection()
+         * returns null by contract. Any connection we hand out has to stand on its own —
+         * KarawanInputConnection derives from BaseInputConnection for exactly that reason.
+         *
+         * This method is called by the IME framework whenever it binds to the focused
+         * view, which on Android 14+ already happens on the first window focus gain,
+         * long before the engine exists. It must therefore be safe to call at any time.
+         */
 
         // Prevent fullscreen/extract mode keyboard in landscape
         outAttrs.ImeOptions |= ImeFlags.NoFullscreen;
 
         /*
-         * Select input type and connection based on the current keyboard input type.
-         * On "email"/"password"/"number", we disable composition entirely so each
-         * character commits immediately. On "text", we use a custom InputConnection
-         * that properly handles IME composition by emitting INPUT_TEXT_REPLACE events.
+         * Select the input type based on the current keyboard input type.
+         * On "email"/"password"/"number", composition is disabled by the input type
+         * flags so each character commits immediately. On "text", the IME may compose;
+         * KarawanInputConnection turns that into INPUT_TEXT_REPLACE events.
          */
         string inputType = "text";
         try
         {
-            var engine = I.Get<engine.Engine>();
-            if (engine != null)
-            {
-                inputType = engine.KeyboardInputType;
-            }
+            inputType = I.TryGet<engine.Engine>()?.KeyboardInputType ?? "text";
         }
         catch (Exception)
         {
@@ -195,20 +200,22 @@ public class GameSurface : SDLSurface
         {
             case "email":
                 outAttrs.InputType = InputTypes.ClassText | InputTypes.TextVariationEmailAddress;
-                return ic;
+                break;
 
             case "password":
                 outAttrs.InputType = InputTypes.ClassText | InputTypes.TextVariationVisiblePassword;
-                return ic;
+                break;
 
             case "number":
                 outAttrs.InputType = InputTypes.ClassNumber;
-                return ic;
+                break;
 
             default:
                 outAttrs.InputType = InputTypes.ClassText | InputTypes.TextFlagNoSuggestions;
-                return new KarawanInputConnection(ic);
+                break;
         }
+
+        return new KarawanInputConnection(this);
     }
 
 

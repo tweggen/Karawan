@@ -1,33 +1,53 @@
-using Android.Text;
+using Android.Runtime;
 using Android.Views;
 using Android.Views.InputMethods;
 using engine;
 using engine.news;
 using Java.Lang;
+using View = Android.Views.View;
 
 namespace Wuka;
 
 /**
- * Custom InputConnection that wraps SDL's InputConnection to properly handle
- * Android IME composition. Instead of letting SDL translate IME operations into
- * backspace + character sequences (which corrupts our InputWidget's cursor position),
- * we intercept commitText/setComposingText and emit INPUT_TEXT_REPLACE events.
+ * Custom InputConnection handling Android IME composition for the game surface.
+ *
+ * Instead of letting the IME translate composition into backspace + character
+ * sequences (which corrupts our InputWidget's cursor position), we intercept
+ * commitText/setComposingText and emit INPUT_TEXT_REPLACE events.
+ *
+ * Note this must NOT wrap a connection obtained from SDLSurface: SDLSurface is a
+ * plain SurfaceView and does not implement onCreateInputConnection, so
+ * View.onCreateInputConnection() returns null by contract (SDL routes its own IME
+ * through the separate DummyEdit view). We therefore derive from BaseInputConnection,
+ * which supplies working default behaviour for every method we do not override —
+ * including sendKeyEvent(), which dispatches the key event to the target view and
+ * hence into SDL's key handling, exactly as before.
  */
-public class KarawanInputConnection : Java.Lang.Object, IInputConnection
+public class KarawanInputConnection : BaseInputConnection
 {
-    private IInputConnection _sdlConnection;
     private int _composingLength = 0;
 
 
-    public KarawanInputConnection(IInputConnection sdlConnection)
+    public KarawanInputConnection(View targetView)
+        : base(targetView, /* fullEditor: */ false)
     {
-        _sdlConnection = sdlConnection;
     }
 
 
-    public bool CommitText(ICharSequence text, int newCursorPosition)
+    protected KarawanInputConnection(System.IntPtr javaReference, JniHandleOwnership transfer)
+        : base(javaReference, transfer)
     {
-        var eq = I.Get<EventQueue>();
+    }
+
+
+    public override bool CommitText(ICharSequence text, int newCursorPosition)
+    {
+        /*
+         * The event queue only exists once the engine is up. Until then we have
+         * nowhere to deliver text to, so silently drop it rather than throwing
+         * across the JNI boundary.
+         */
+        var eq = I.TryGet<EventQueue>();
         if (eq != null)
         {
             /*
@@ -44,7 +64,7 @@ public class KarawanInputConnection : Java.Lang.Object, IInputConnection
     }
 
 
-    public bool SetComposingText(ICharSequence text, int newCursorPosition)
+    public override bool SetComposingText(ICharSequence text, int newCursorPosition)
     {
         /*
          * No composition preview — just track the composing length.
@@ -55,27 +75,27 @@ public class KarawanInputConnection : Java.Lang.Object, IInputConnection
     }
 
 
-    public bool FinishComposingText()
+    public override bool FinishComposingText()
     {
         _composingLength = 0;
         return true;
     }
 
 
-    public bool SetComposingRegion(int start, int end)
+    public override bool SetComposingRegion(int start, int end)
     {
         _composingLength = System.Math.Max(0, end - start);
         return true;
     }
 
 
-    public bool DeleteSurroundingText(int beforeLength, int afterLength)
+    public override bool DeleteSurroundingText(int beforeLength, int afterLength)
     {
         /*
          * This is a real text deletion (not composing region management).
          * Emit backspace events for characters before cursor.
          */
-        var eq = I.Get<EventQueue>();
+        var eq = I.TryGet<EventQueue>();
         if (eq != null)
         {
             for (int i = 0; i < beforeLength; i++)
@@ -93,39 +113,4 @@ public class KarawanInputConnection : Java.Lang.Object, IInputConnection
 
         return true;
     }
-
-
-    public bool SendKeyEvent(KeyEvent e)
-    {
-        /*
-         * Forward physical key events to SDL's connection which will
-         * translate them into Silk.NET keyboard events.
-         */
-        return _sdlConnection.SendKeyEvent(e);
-    }
-
-
-    /*
-     * Delegate remaining IInputConnection methods to SDL's connection.
-     */
-    public bool BeginBatchEdit() => _sdlConnection.BeginBatchEdit();
-    public bool EndBatchEdit() => _sdlConnection.EndBatchEdit();
-    public bool ClearMetaKeyStates(MetaKeyStates states) => _sdlConnection.ClearMetaKeyStates(states);
-    public bool CommitCompletion(CompletionInfo text) => _sdlConnection.CommitCompletion(text);
-    public bool CommitCorrection(CorrectionInfo correctionInfo) => _sdlConnection.CommitCorrection(correctionInfo);
-    public ICharSequence GetSelectedTextFormatted(GetTextFlags flags) => _sdlConnection.GetSelectedTextFormatted(flags);
-    public ICharSequence GetTextAfterCursorFormatted(int length, GetTextFlags flags) => _sdlConnection.GetTextAfterCursorFormatted(length, flags);
-    public ICharSequence GetTextBeforeCursorFormatted(int length, GetTextFlags flags) => _sdlConnection.GetTextBeforeCursorFormatted(length, flags);
-    public ExtractedText GetExtractedText(ExtractedTextRequest request, GetTextFlags flags) => _sdlConnection.GetExtractedText(request, flags);
-    public CapitalizationMode GetCursorCapsMode(CapitalizationMode reqModes) => _sdlConnection.GetCursorCapsMode(reqModes);
-    public bool PerformEditorAction(ImeAction actionCode) => _sdlConnection.PerformEditorAction(actionCode);
-    public bool PerformContextMenuAction(int id) => _sdlConnection.PerformContextMenuAction(id);
-    public bool PerformPrivateCommand(string action, Android.OS.Bundle data) => _sdlConnection.PerformPrivateCommand(action, data);
-    public bool SetSelection(int start, int end) => _sdlConnection.SetSelection(start, end);
-    public bool ReportFullscreenMode(bool enabled) => _sdlConnection.ReportFullscreenMode(enabled);
-    public bool RequestCursorUpdates(int cursorUpdateMode) => _sdlConnection.RequestCursorUpdates(cursorUpdateMode);
-    public Android.OS.Handler Handler => _sdlConnection.Handler;
-    public void CloseConnection() => _sdlConnection.CloseConnection();
-    public bool CommitContent(InputContentInfo inputContentInfo, InputContentFlags flags, Android.OS.Bundle opts) => _sdlConnection.CommitContent(inputContentInfo, flags, opts);
-    public bool DeleteSurroundingTextInCodePoints(int beforeLength, int afterLength) => _sdlConnection.DeleteSurroundingTextInCodePoints(beforeLength, afterLength);
 }
