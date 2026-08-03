@@ -304,19 +304,34 @@ public class TaleModule : AModule
     {
         try
         {
-            // Load storylet library from models/tale/
-            string resourcePath = GlobalSettings.Get("Engine.ResourcePath") ?? "./models/";
-            string talePath = Path.Combine(resourcePath, "tale");
-
-            if (!Directory.Exists(talePath))
+            // Load the storylet library through the asset system rather than off
+            // the filesystem: on Android the model tree lives inside the APK and
+            // there is no models/tale directory to enumerate. The files ship
+            // because /resources/list names them; that same list tells us which
+            // tags to open, so declaration and loading cannot drift apart.
+            var storyletTags = StoryletLibrary.CollectDeclaredTags();
+            if (storyletTags.Count == 0)
             {
-                Trace($"TALE: No tale directory at {talePath}, module inactive.");
+                Error($"TALE: no storylet resources declared (expected entries of type "
+                      + $"'{StoryletLibrary.ResourceType}' in /resources/list). TALE stays disabled.");
                 return;
             }
 
             var library = new StoryletLibrary();
-            library.LoadFromDirectory(talePath);
-            Trace($"TALE: Loaded {library.GetCandidates("worker").Count} storylets.");
+            int nLoaded = library.LoadFromAssets(storyletTags, out var failedTags);
+            if (failedTags.Count > 0)
+                Warning($"TALE: {failedTags.Count} storylet resource(s) could not be read: "
+                        + string.Join(", ", failedTags));
+
+            if (nLoaded == 0)
+            {
+                Error($"TALE: none of the {storyletTags.Count} declared storylet resources "
+                      + "could be loaded. TALE stays disabled.");
+                return;
+            }
+
+            Trace($"TALE: Loaded {library.All.Count} storylets from {nLoaded} resource(s) "
+                  + $"({library.GetCandidates("worker").Count} candidates for role 'worker').");
 
             // Create and register Role and Interaction registries
             I.Register<RoleRegistry>(() => new RoleRegistry());

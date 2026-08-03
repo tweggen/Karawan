@@ -86,29 +86,47 @@ public class ScenarioCompiler
 
 
     /// <summary>
-    /// Load the storylet library from the engine's resource path. Storylet
-    /// definitions live next to the rest of the game data so the bake step
-    /// reads from the same source the runtime does.
+    /// Load the storylet library for a bake.
+    ///
+    /// Prefers the directory, because that is where the bake normally runs —
+    /// Chushi and TestRunner on a desktop with the real model tree — and reading
+    /// the files in the same order keeps previously baked scenarios reproducible.
+    /// Falls back to the asset system, which is the only thing that works when
+    /// this runs as ScenarioLibrary's runtime miss path on Android or in an
+    /// installed build, where models/tale exists only inside the package.
     /// </summary>
     private static StoryletLibrary LoadStoryletLibrary()
     {
         var library = new StoryletLibrary();
+
         string resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
-        if (string.IsNullOrEmpty(resourcePath))
-        {
-            Trace("ScenarioCompiler: Engine.ResourcePath not set; storylet library will be empty.");
-            return library;
-        }
-        string talePath = Path.Combine(resourcePath, "tale");
-        if (Directory.Exists(talePath))
+        string talePath = string.IsNullOrEmpty(resourcePath)
+            ? null
+            : Path.Combine(resourcePath, "tale");
+
+        if (talePath != null && Directory.Exists(talePath))
         {
             library.LoadFromDirectory(talePath);
             Trace(_dc, $"ScenarioCompiler: loaded {library.All.Count} storylet definitions from {talePath}.");
+            return library;
         }
-        else
+
+        var tags = StoryletLibrary.CollectDeclaredTags();
+        if (tags.Count == 0)
         {
-            Trace(_dc, $"ScenarioCompiler: tale directory not found at {talePath}; library will be empty.");
+            string where = talePath ?? "<unset resource path>";
+            Trace(_dc, $"ScenarioCompiler: no tale directory at '{where}' and no storylet resources declared; library will be empty.");
+            return library;
         }
+
+        int nLoaded = library.LoadFromAssets(tags, out var failedTags);
+        if (failedTags.Count > 0)
+        {
+            string failed = string.Join(", ", failedTags);
+            Trace(_dc, $"ScenarioCompiler: {failedTags.Count} storylet resource(s) unreadable: {failed}");
+        }
+        Trace(_dc, $"ScenarioCompiler: loaded {library.All.Count} storylet definitions from {nLoaded} declared resource(s).");
+
         return library;
     }
 

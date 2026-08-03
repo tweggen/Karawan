@@ -36,7 +36,12 @@ public class TaleSpawnOperator : ISpawnOperator
 
     public TaleSpawnOperator(TaleManager taleManager)
     {
-        _taleManager = taleManager;
+        // Every method here dereferences the manager, and the first one runs from
+        // the spawn controller's per-fragment poll, far away from this call site.
+        // Fail here, where the caller can still be identified.
+        _taleManager = taleManager
+                       ?? throw new ArgumentNullException(nameof(taleManager),
+                           "TaleSpawnOperator requires a TaleManager; TaleModule likely failed to activate.");
     }
 
 

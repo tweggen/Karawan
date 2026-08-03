@@ -89,6 +89,21 @@
       { "uri": "../models/models/people/polyperfect/Standing_Jump.fbx" },
       { "uri": "../models/models/people/polyperfect/Walk_Male.fbx" },
       { "uri": "../models/models/people/polyperfect/Walk_InPlace_Female.fbx" },
-      { "uri": "../models/models/people/polyperfect/Death_FallForwards.fbx" }
+      { "uri": "../models/models/people/polyperfect/Death_FallForwards.fbx" },
+
+      { "uri": "../models/tale/authority.json",      "type": "taleStorylet" },
+      { "uri": "../models/tale/desperation.json",    "type": "taleStorylet" },
+      { "uri": "../models/tale/drifter.json",        "type": "taleStorylet" },
+      { "uri": "../models/tale/escalation.json",     "type": "taleStorylet" },
+      { "uri": "../models/tale/factory_worker.json", "type": "taleStorylet" },
+      { "uri": "../models/tale/hustler.json",        "type": "taleStorylet" },
+      { "uri": "../models/tale/merchant.json",       "type": "taleStorylet" },
+      { "uri": "../models/tale/nightworker.json",    "type": "taleStorylet" },
+      { "uri": "../models/tale/office_worker.json",  "type": "taleStorylet" },
+      { "uri": "../models/tale/reveler.json",        "type": "taleStorylet" },
+      { "uri": "../models/tale/service_worker.json", "type": "taleStorylet" },
+      { "uri": "../models/tale/socialite.json",      "type": "taleStorylet" },
+      { "uri": "../models/tale/universal.json",      "type": "taleStorylet" },
+      { "uri": "../models/tale/worker.json",         "type": "taleStorylet" }
     ]
   }

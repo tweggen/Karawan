@@ -324,10 +324,21 @@ public class Scene : AModule, IScene, IInputPart
         M<SpawnController>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         //M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
 
-        // TALE-driven NPC spawning (Phase 2)
-        // TaleModule is a SharedModule dependency, so TaleManager is guaranteed to be activated.
-        M<SpawnController>().AddSpawnOperator(
-            new nogame.characters.citizen.TaleSpawnOperator(M<nogame.modules.tale.TaleModule>().TaleManager));
+        // TALE-driven NPC spawning (Phase 2). TaleModule is a SharedModule
+        // dependency, so it is activated — but activation still bails out when the
+        // storylet resources are missing, leaving TaleManager null. Registering a
+        // spawn operator on a null manager crashes on the first fragment query, so
+        // run without TALE NPCs instead and say why.
+        var taleManager = M<nogame.modules.tale.TaleModule>()?.TaleManager;
+        if (taleManager != null)
+        {
+            M<SpawnController>().AddSpawnOperator(
+                new nogame.characters.citizen.TaleSpawnOperator(taleManager));
+        }
+        else
+        {
+            Warning("TaleManager unavailable, TALE NPC spawning disabled for this scene.");
+        }
         
         Subscribe("nogame.modules.menu.save", _triggerSave);
         Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);

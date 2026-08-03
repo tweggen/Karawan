@@ -131,12 +131,110 @@ public class StoryletLibrary
     public IReadOnlyList<StoryletDefinition> All => _all;
 
 
+    /// <summary>
+    /// Load every *.json in a directory straight off the filesystem. Only valid
+    /// where the model tree exists as real files — the build tools (Chushi's
+    /// ScenarioCompiler), Testbed and TestRunner. The game runtime must use
+    /// <see cref="LoadFromAssets"/> instead: on Android the storylets live inside
+    /// the APK and there is no directory to enumerate.
+    /// </summary>
     public void LoadFromDirectory(string path)
     {
         if (!Directory.Exists(path)) return;
         foreach (var file in Directory.GetFiles(path, "*.json"))
             LoadFromFile(file);
         BuildIndex();
+    }
+
+
+    /// <summary>
+    /// Load storylets through the asset system, by resource tag. Works on every
+    /// platform: desktop resolves the tag via the association registered from
+    /// /resources/list, Android reads it out of the APK by its flat logical name.
+    /// Returns the number of files successfully read; a tag that cannot be opened
+    /// or parsed is skipped and counted in <paramref name="failedTags"/> rather
+    /// than aborting the whole library.
+    /// </summary>
+    /// <summary>
+    /// The resource type that marks a storylet library in /resources/list.
+    /// One declaration serves two consumers: the resource compiler ships the
+    /// file, and <see cref="CollectDeclaredTags"/> discovers it at runtime — so
+    /// what is packaged and what is loaded cannot drift apart.
+    /// </summary>
+    public const string ResourceType = "taleStorylet";
+
+
+    /// <summary>
+    /// Asset tags of every storylet library declared in /resources/list. The tag
+    /// is the entry's explicit "tag" or, as everywhere else in the resource
+    /// system, the last path component of its uri — which is also the flat
+    /// LogicalName the file carries inside the APK.
+    ///
+    /// Returns an empty list where no config is loaded at all (bare unit-test
+    /// fixtures); callers that can fall back to the filesystem should.
+    /// </summary>
+    public static List<string> CollectDeclaredTags()
+    {
+        var tags = new List<string>();
+
+        casette.Loader loader;
+        try { loader = I.Get<casette.Loader>(); }
+        catch (Exception) { return tags; }
+
+        // Config is interpreted before modules activate, so this callback runs
+        // synchronously; WhenLoaded still keeps us correct if it is not.
+        loader.WhenLoaded("/resources/list", (path, node) =>
+        {
+            if (node is not System.Text.Json.Nodes.JsonArray arr) return;
+
+            foreach (var resNode in arr)
+            {
+                if (resNode?["type"]?.GetValue<string>() != ResourceType) continue;
+
+                string tag = resNode?["tag"]?.GetValue<string>();
+                if (string.IsNullOrEmpty(tag))
+                {
+                    string uri = resNode?["uri"]?.GetValue<string>();
+                    if (string.IsNullOrEmpty(uri)) continue;
+                    tag = Path.GetFileName(uri);
+                }
+
+                if (!string.IsNullOrEmpty(tag)) tags.Add(tag);
+            }
+        }, 100);
+
+        return tags;
+    }
+
+
+    public int LoadFromAssets(IEnumerable<string> tags, out List<string> failedTags)
+    {
+        failedTags = new List<string>();
+        int loaded = 0;
+
+        foreach (var tag in tags)
+        {
+            try
+            {
+                using var stream = engine.Assets.Open(tag);
+                if (stream == null)
+                {
+                    failedTags.Add(tag);
+                    continue;
+                }
+
+                using var reader = new StreamReader(stream);
+                LoadFromString(reader.ReadToEnd());
+                loaded++;
+            }
+            catch (Exception)
+            {
+                failedTags.Add(tag);
+            }
+        }
+
+        BuildIndex();
+        return loaded;
     }
 
 
