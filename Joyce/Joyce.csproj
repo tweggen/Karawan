@@ -22,12 +22,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\github\BepuPhysics2\BepuPhysics\BepuPhysics.csproj" />
-    <ProjectReference Include="..\..\..\github\BepuPhysics2\BepuUtilities\BepuUtilities.csproj" />
-    <ProjectReference Include="..\..\DefaultEcs\source\DefaultEcs\DefaultEcs.csproj" />
-    <ProjectReference Include="..\..\glTF-CSharp-Loader\glTFLoader\glTFLoader.csproj" />
-    <ProjectReference Include="..\..\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj" />
-    <ProjectReference Include="..\..\FbxSharp\FbxSharp.csproj" />
+    <!-- Siblings of this repository. $(SiblingRoot) is resolved in Directory.Build.props. -->
+    <ProjectReference Include="$(SiblingRoot)/BepuPhysics2/BepuPhysics/BepuPhysics.csproj" />
+    <ProjectReference Include="$(SiblingRoot)/BepuPhysics2/BepuUtilities/BepuUtilities.csproj" />
+    <ProjectReference Include="$(SiblingRoot)/DefaultEcs/source/DefaultEcs/DefaultEcs.csproj" />
+    <ProjectReference Include="$(SiblingRoot)/glTF-CSharp-Loader/glTFLoader/glTFLoader.csproj" />
+    <ProjectReference Include="$(SiblingRoot)/ObjLoader/source/CjClutter.ObjLoader.Loader/CjClutter.ObjLoader.Loader.csproj" />
+    <ProjectReference Include="$(SiblingRoot)/FbxSharp/FbxSharp.csproj" />
     <ProjectReference Include="..\ExpectEngine\ExpectEngine.csproj" />
   </ItemGroup>
 

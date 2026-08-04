@@ -1,0 +1,48 @@
+<Project>
+
+  <!--
+    Where the sibling repositories live.
+
+    BepuPhysics2, DefaultEcs, ObjLoader, FbxSharp and glTF-CSharp-Loader are checked out
+    NEXT TO this repository rather than vendored into it (see the prerequisites in
+    CLAUDE.md), so every project referencing them has to spell out where "next to" is.
+
+    Doing that with literal ../.. chains in the .csproj files breaks the moment the
+    repository root sits at a different depth than a plain clone. The concrete case is a
+    git worktree under .claude/worktrees/<name>, which is three directories deeper: the
+    references then resolve to .claude/worktrees/DefaultEcs and .claude/github/... and the
+    build dies with a screenful of MSB3202 / CS0246. Resolving the root once, here, keeps
+    the depth assumption in a single place instead of in every reference.
+
+    Detection order:
+      1. An externally supplied value wins. Both of these work, and are the escape hatch
+         when the siblings live somewhere unrelated:
+             dotnet build -p:SiblingRoot=/path/to/checkouts
+             SiblingRoot=/path/to/checkouts dotnet build
+      2. A normal clone:  <siblings>/Karawan
+      3. A git worktree:  <siblings>/Karawan/.claude/worktrees/<name>
+
+    DefaultEcs is used as the probe because it is the one sibling every configuration
+    needs. Paths use forward slashes, which MSBuild accepts on Windows as well as on
+    macOS and Linux.
+  -->
+  <PropertyGroup>
+    <_SiblingProbe>DefaultEcs/source/DefaultEcs/DefaultEcs.csproj</_SiblingProbe>
+
+    <!-- 2. Normal clone: repository root is one level below the sibling root. -->
+    <SiblingRoot Condition="'$(SiblingRoot)' == '' And Exists('$(MSBuildThisFileDirectory)../$(_SiblingProbe)')"
+                 >$(MSBuildThisFileDirectory)..</SiblingRoot>
+
+    <!-- 3. Worktree: <siblings>/Karawan/.claude/worktrees/<name> is four levels below. -->
+    <SiblingRoot Condition="'$(SiblingRoot)' == '' And Exists('$(MSBuildThisFileDirectory)../../../../$(_SiblingProbe)')"
+                 >$(MSBuildThisFileDirectory)../../../..</SiblingRoot>
+
+    <!--
+      Nothing matched. Fall back to the normal-clone layout on purpose: the resulting
+      MSB3202 names the path it actually looked in, which points straight at a missing
+      sibling checkout rather than at this file.
+    -->
+    <SiblingRoot Condition="'$(SiblingRoot)' == ''">$(MSBuildThisFileDirectory)..</SiblingRoot>
+  </PropertyGroup>
+
+</Project>
