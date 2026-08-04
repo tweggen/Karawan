@@ -19,6 +19,9 @@ Input pipeline, event handling, controller mapping
 ### 🎮 **Engine Core** — [ENGINE.md](ENGINE.md)
 Joyce engine foundation: ECS, scene management, modules
 
+### 🧵 **Threading** — [THREADING.md](THREADING.md)
+Thread roles (logical/platform/worker pool), capped scheduler, managed-blocker protocol
+
 ## Implementation References
 
 For implementation details of specific engine components, see:

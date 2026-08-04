@@ -29,6 +29,27 @@ public sealed class ModuleFactory
 
     private Dictionary<Type, Entry> _mapImplementations = new();
 
+    /*
+     * The engine is only used to run our blocking waits through the task
+     * scheduler's managed blocker protocol (see Engine.WaitBlocking). It is
+     * resolved lazily: this factory is registered with I inside the Engine
+     * constructor, so by the time anybody can ask us for a module, an engine
+     * instance always exists.
+     */
+    private Engine _engine = null;
+
+
+    /**
+     * Acquire the given semaphore, releasing our task scheduler concurrency
+     * slot while we are blocked. Module creation happens under this lock and
+     * can take arbitrarily long, so this one really needs the managed blocker.
+     */
+    private void _waitBlocking(SemaphoreSlim keyLock)
+    {
+        Engine e = _engine ??= I.Get<Engine>();
+        e.WaitBlocking(() => keyLock.Wait());
+    }
+
 
     public IModule FindModule<T>(bool shallActivate) => FindModule(typeof(T), shallActivate);
 
@@ -36,7 +57,7 @@ public sealed class ModuleFactory
     {
         // Trace($"Trying to find module {type.ToString()}");
         var keyLock = _keyLocks.GetOrAdd(type, x => new SemaphoreSlim(1));
-        keyLock.Wait();
+        _waitBlocking(keyLock);
 
         Entry entry;
         bool pleaseCreateInstance = false;
