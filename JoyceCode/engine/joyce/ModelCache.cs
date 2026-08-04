@@ -221,6 +221,12 @@ public class ModelCache
         ModelCacheEntry modelCacheEntry;
 
         var keyLock = _sem(hash);
+        /*
+         * Deliberately a plain, unmanaged wait: this semaphore only guards the
+         * cache dictionary lookup below - microseconds, and never held across
+         * anything that waits for queued tasks - so it cannot take part in a
+         * scheduler starvation cycle. The long waits in this class are async.
+         */
         keyLock.Wait();
         try
         {

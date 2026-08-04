@@ -1272,15 +1272,80 @@ public class Engine
     }
 
 
+    private LimitedConcurrencyLevelTaskScheduler _limitedScheduler;
     private TaskScheduler _taskScheduler;
     public TaskScheduler TaskScheduler { get => _taskScheduler; }
-    
+
     private TaskFactory _taskFactory;
     public TaskFactory TF { get => _taskFactory; }
     
     public Task Run(Action action) => _taskFactory.StartNew(action, CancellationToken.None, TaskCreationOptions.DenyChildAttach, _taskScheduler );
     public Task<TResult> Run<TResult>(Func<TResult> function) => _taskFactory.StartNew(function, CancellationToken.None, TaskCreationOptions.DenyChildAttach, _taskScheduler );
     public Task Run(Func<System.Threading.Tasks.Task?> function) => _taskFactory.StartNew(function, CancellationToken.None, TaskCreationOptions.DenyChildAttach, _taskScheduler ).Unwrap();
+
+
+    /**
+     * Perform a synchronously blocking wait without starving the task scheduler.
+     *
+     * If the caller runs on one of the scheduler's workers, its concurrency slot
+     * is handed back for the duration of the wait, so that queued tasks - possibly
+     * the very tasks that will end the wait - can still be executed. See
+     * LimitedConcurrencyLevelTaskScheduler for the protocol.
+     *
+     * Safe to call from any thread except the logical thread, which must never block.
+     */
+    public void WaitBlocking(Action blockingWait)
+    {
+#if DEBUG
+        if (Thread.CurrentThread == _logicalThread)
+        {
+            /*
+             * Not fatal - BeginBlocking simply is a no-op off the scheduler's
+             * workers - but the logical thread stalls the whole frame while it
+             * waits, so this is worth knowing about.
+             */
+            Warning($"Blocking wait on the logical thread is discouraged.");
+        }
+#endif
+        bool released = _limitedScheduler.BeginBlocking();
+        try
+        {
+            blockingWait();
+        }
+        finally
+        {
+            _limitedScheduler.EndBlocking(released);
+        }
+    }
+
+
+    /**
+     * Perform a synchronously blocking wait returning a result without starving
+     * the task scheduler. See WaitBlocking(Action).
+     */
+    public T WaitBlocking<T>(Func<T> blockingWait)
+    {
+#if DEBUG
+        if (Thread.CurrentThread == _logicalThread)
+        {
+            /*
+             * Not fatal - BeginBlocking simply is a no-op off the scheduler's
+             * workers - but the logical thread stalls the whole frame while it
+             * waits, so this is worth knowing about.
+             */
+            Warning($"Blocking wait on the logical thread is discouraged.");
+        }
+#endif
+        bool released = _limitedScheduler.BeginBlocking();
+        try
+        {
+            return blockingWait();
+        }
+        finally
+        {
+            _limitedScheduler.EndBlocking(released);
+        }
+    }
 
 
     public Engine(engine.IPlatform platform)
@@ -1290,7 +1355,8 @@ public class Engine
 #if DEBUG
             nCpus += 2;
 #endif
-            _taskScheduler = new LimitedConcurrencyLevelTaskScheduler(nCpus);
+            _limitedScheduler = new LimitedConcurrencyLevelTaskScheduler(nCpus);
+            _taskScheduler = _limitedScheduler;
         }
 
         
