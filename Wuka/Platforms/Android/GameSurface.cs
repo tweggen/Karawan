@@ -72,10 +72,6 @@ public class GameSurface : SDLSurface
                     p = 1.0f;
                 }
                 
-                engine.Logger.Trace(engine.Dc.ClickModule,
-                    $"OnTouch down: raw=({e.GetX(i)},{e.GetY(i)}) surface=({Width}x{Height}) "
-                    + $"norm={v2Physical} finger={pointerFingerId}");
-
                 _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_PRESSED, "")
                 {
                     PhysicalPosition = v2Physical,
@@ -84,7 +80,7 @@ public class GameSurface : SDLSurface
                     Data1 = (uint) touchDevId,
                     Data2 = (uint) pointerFingerId
                 });
-
+                
                 break;
             
             case MotionEventActions.Up:

@@ -21,7 +21,7 @@ public class ClickModule : AModule, engine.IInputPart
         new SharedModule<InputEventPipeline>()    
     };
     
-    private static readonly engine.Dc _dc = engine.Dc.ClickModule;
+    private bool _trace = false;
     private float MY_Z_ORDER = 20f;
     
     private object _lo = new();
@@ -31,7 +31,7 @@ public class ClickModule : AModule, engine.IInputPart
     
     private void _handleClickEvent(Event ev)
     {
-        Trace(_dc, $"press: pos={ev.PhysicalPosition} size={ev.PhysicalSize} finger={ev.Data2}");
+        if (_trace) Trace($"Handling {ev}");
 
         var logicalEv = new Event(Event.INPUT_LOGICAL_PRESSED, ev.Code)
         {
@@ -52,7 +52,7 @@ public class ClickModule : AModule, engine.IInputPart
 
     private void _handleReleaseEvent(Event ev)
     {
-        Trace(_dc, $"release: pos={ev.PhysicalPosition} size={ev.PhysicalSize} finger={ev.Data2}");
+        if (_trace) Trace($"Handling {ev}");
 
         var logicalEv = new Event(Event.INPUT_LOGICAL_RELEASED, ev.Code)
         {
