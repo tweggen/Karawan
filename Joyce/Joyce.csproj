@@ -39,11 +39,17 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="Mono.Android">
-      <HintPath>..\..\..\..\..\..\Program Files\dotnet\packs\Microsoft.Android.Ref.34\34.0.79\ref\net8.0\Mono.Android.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+  <!--
+    No Mono.Android reference here on purpose. Joyce targets plain net9.0 and none of the
+    shared JoyceCode sources touch the Android API; the Android bindings reach the app
+    through Wuka, whose net9.0-android target framework supplies them automatically.
+
+    A hard-coded <Reference Include="Mono.Android"> used to sit here pointing six levels
+    up into "Program Files\dotnet\packs\Microsoft.Android.Ref.34\34.0.79\ref\net8.0" -
+    Windows-only, tied to the machine's directory depth, and pinned to an SDK and target
+    framework the repository has since moved off. It resolved on nobody's machine and
+    only produced an MSB3245 on every single build.
+  -->
 
   <Import Project="..\JoyceCode\JoyceCode.projitems" Label="Shared" />
 
