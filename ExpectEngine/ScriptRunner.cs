@@ -12,6 +12,34 @@ public sealed class ScriptRunner
     public string ScriptName { get; private set; }
     public int GlobalTimeoutSeconds { get; private set; } = 120;
 
+    /*
+     * Multiplier for all wall-clock timeouts in the script. Lets an
+     * orchestrator stretch timeouts when many tests share a saturated
+     * machine (JOYCE_TEST_TIMEOUT_SCALE, e.g. "2.0").
+     */
+    private static readonly float _timeoutScale = _readScale("JOYCE_TEST_TIMEOUT_SCALE");
+
+    /*
+     * Multiplier for "sleep" steps. Scripts written against real-time hosts
+     * sleep to let background work progress; when the event producer runs at
+     * CPU speed (headless DES runs) these sleeps can be shortened
+     * (JOYCE_TEST_SLEEP_SCALE, e.g. "0.1").
+     */
+    private static readonly float _sleepScale = _readScale("JOYCE_TEST_SLEEP_SCALE");
+
+    private static float _readScale(string envVar)
+    {
+        string s = Environment.GetEnvironmentVariable(envVar);
+        if (!string.IsNullOrEmpty(s)
+            && float.TryParse(s, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float scale)
+            && scale > 0f)
+        {
+            return scale;
+        }
+        return 1f;
+    }
+
     private readonly List<JsonObject> _steps = new();
 
     public static ScriptRunner LoadFromStream(Stream stream)
@@ -45,7 +73,7 @@ public sealed class ScriptRunner
     public async Task<TestResult> RunAsync(TestSession session)
     {
         using var globalCts = new CancellationTokenSource(
-            TimeSpan.FromSeconds(GlobalTimeoutSeconds));
+            TimeSpan.FromSeconds(GlobalTimeoutSeconds * _timeoutScale));
 
         for (int i = 0; i < _steps.Count; i++)
         {
@@ -104,7 +132,8 @@ public sealed class ScriptRunner
             return true;
         };
 
-        await session.FishForEvent(predicate, TimeSpan.FromSeconds(timeoutSec), comment);
+        await session.FishForEvent(
+            predicate, TimeSpan.FromSeconds(timeoutSec * _timeoutScale), comment);
     }
 
     private async Task _executeInject(TestSession session, JsonObject step)
@@ -118,7 +147,7 @@ public sealed class ScriptRunner
     private async Task _executeSleep(JsonObject step)
     {
         int ms = step["sleep"].GetValue<int>();
-        await Task.Delay(ms);
+        await Task.Delay((int)(ms * _sleepScale));
     }
 
     private TestResult _executeAction(TestSession session, JsonObject step, int idx)

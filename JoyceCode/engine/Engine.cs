@@ -1021,6 +1021,11 @@ public class Engine
         float toWait = 0f;
         int nSleeps = 0;
 
+        /*
+         * Turbo mode: run logical frames back-to-back with a fixed dt,
+         * unthrottled by wall-clock time. Used by headless test runs.
+         */
+        bool turbo = GlobalSettings.Get("engine.Turbo") == "true";
 
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
@@ -1028,6 +1033,28 @@ public class Engine
         while (_isRunning && (_platform == null || _platform.IsRunning()))
         {
             EngineState engineState;
+
+            if (turbo)
+            {
+                lock (_lo)
+                {
+                    engineState = State;
+                }
+
+                if (engineState <= EngineState.Running && (_isCompiling || _platformIsAvailable))
+                {
+                    _onLogicalFrame(invFps, invFps);
+                }
+                else
+                {
+                    System.Threading.Thread.Sleep(1);
+                }
+
+                _fpsPhysicalMonitor.Update();
+                _fpsLogicalMonitor.Update();
+                _checkUpdateEntityArray();
+                continue;
+            }
 
             if (toWait > 0f && stopWatch.Elapsed.TotalSeconds < toWait)
             {

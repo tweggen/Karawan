@@ -18,6 +18,21 @@ public sealed class TestDriverModule : AModule
     private JoyceTestEventSource _eventSource;
     private Task _testTask;
 
+    /// <summary>
+    /// Signaled once the test session is subscribed to the engine's event
+    /// stream. Hosts that generate test events (e.g. the DES simulation
+    /// thread in TestRunner) can wait on this instead of sleeping.
+    /// </summary>
+    public static readonly System.Threading.ManualResetEventSlim SessionReady = new(false);
+
+    /// <summary>
+    /// Signaled once a test result has been reported; ExitCode carries it.
+    /// Hosts can wait on this instead of a fixed timeout sleep.
+    /// </summary>
+    public static readonly System.Threading.ManualResetEventSlim Completed = new(false);
+
+    public static int? ExitCode { get; private set; }
+
     public override IEnumerable<IModuleDependency> ModuleDepends()
         => new List<IModuleDependency>();
 
@@ -34,13 +49,18 @@ public sealed class TestDriverModule : AModule
         _eventSource = new JoyceTestEventSource();
         var eventSink = new JoyceTestEventSink();
 
+        /*
+         * The session's constructor subscribes to the event source. Doing this
+         * synchronously before signalling SessionReady guarantees that no event
+         * generated after the signal can be missed.
+         */
+        var session = new TestSession(_eventSource, eventSink);
+        SessionReady.Set();
+
         _testTask = Task.Run(async () =>
         {
             try
             {
-                // Small delay to let the engine initialize
-                await Task.Delay(500);
-
                 using var stream = engine.Assets.Open(scriptPath);
                 if (stream == null)
                 {
@@ -53,7 +73,6 @@ public sealed class TestDriverModule : AModule
 
                 var script = ScriptRunner.LoadFromStream(stream);
 
-                using var session = new TestSession(_eventSource, eventSink);
                 session.Log($"Running test: {script.ScriptName}");
 
                 var result = await script.RunAsync(session);
@@ -65,6 +84,10 @@ public sealed class TestDriverModule : AModule
                 _reportResult(new TestResult(
                     TestOutcome.Error, ex.ToString(), -1,
                     TimeSpan.Zero, new List<string>()));
+            }
+            finally
+            {
+                session.Dispose();
             }
         });
     }
@@ -102,6 +125,13 @@ public sealed class TestDriverModule : AModule
             _engine.Exit();
         });
 
+        ExitCode = result.ExitCode;
+        Completed.Set();
+
+        /*
+         * Fallback for hosts that do not wait on Completed: exit after the
+         * engine had a moment to wind down.
+         */
         Task.Delay(2000).ContinueWith(_ =>
         {
             Environment.Exit(result.ExitCode);

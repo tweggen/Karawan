@@ -14,6 +14,37 @@
 
 ---
 
+## Parallel Runner (2026-07-14)
+
+`./run_tests_parallel.sh` accepts the same tier/phase/script filters as
+`run_tests.sh` but fans TestRunner processes out across all CPU cores
+(worker: `tools/run_one_tale_test.sh`). Each test is an independent process,
+so no engine-side isolation is required. Measured on a 10-core machine:
+smoke 12s → 4s, standard ~5min → ~28s, identical pass sets.
+
+Environment knobs:
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `JOYCE_TEST_JOBS` | `hw.ncpu` | Concurrent test processes |
+| `TEST_TIMEOUT` | 60 | Per-test timeout (s), forwarded as `JOYCE_TEST_TIMEOUT` to TestRunner |
+| `JOYCE_TEST_TIMEOUT_SCALE` | 1.0 | Stretches in-script expect timeouts on saturated machines |
+| `JOYCE_TEST_SLEEP_SCALE` | 0.1 | Multiplier for in-script `"sleep"` steps (the DES sim runs at CPU speed; sleeps only delay reading buffered events). Set 1.0 for original pacing |
+| `JOYCE_TURBO` | unset | `1` = engine logical thread free-runs with fixed dt=1/60 instead of wall-clock 60 Hz. Opt-in; only useful for frame-driven tests, pins one core per process |
+
+Results land in a per-run `mktemp -d /tmp/tale_tests.XXXXXX` directory:
+one `.log` + `.status` per test, failing log tails in `failures.txt`.
+
+Supporting changes (all backward compatible; `run_tests.sh` still works):
+- `TestDriverModule` exposes `SessionReady` / `Completed` + `ExitCode` events;
+  TestRunner waits on those instead of `Thread.Sleep(500)` / `Sleep(60000)`
+  (~2.5 s fixed overhead removed per test).
+- `ScriptRunner` honors `JOYCE_TEST_TIMEOUT_SCALE` / `JOYCE_TEST_SLEEP_SCALE`.
+- `Engine._logicalThreadFunction` has an opt-in turbo branch
+  (`engine.Turbo=true` GlobalSetting).
+
+---
+
 ## Proposed Multi-Tier Testing Pyramid
 
 ```

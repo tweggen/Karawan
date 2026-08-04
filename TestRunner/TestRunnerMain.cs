@@ -127,7 +127,10 @@ public class TestRunnerMain
             GlobalSettings.Set("platform.threeD.API", "OpenGL");
             GlobalSettings.Set("platform.threeD.API.version", "430");
         }
-        GlobalSettings.Set("engine.NailLogicalFPS", "true");
+        if (Environment.GetEnvironmentVariable("JOYCE_TURBO") == "1")
+        {
+            GlobalSettings.Set("engine.Turbo", "true");
+        }
     }
 
     public static void Main(string[] args)
@@ -227,7 +230,8 @@ public class TestRunnerMain
         // This generates DES events that tests will validate
         System.Threading.Thread simThread = new System.Threading.Thread(() =>
         {
-            System.Threading.Thread.Sleep(500);  // Give test framework time to initialize
+            // Wait until the test session is subscribed to the event stream.
+            engine.testing.TestDriverModule.SessionReady.Wait(TimeSpan.FromSeconds(10));
 
             if (isPhase6)
             {
@@ -364,13 +368,25 @@ public class TestRunnerMain
         e.ExecuteLogicalThreadOnly();
         e.CallOnPlatformAvailable();
 
-        // Wait for test completion (60 second timeout)
-        // TestDriverModule._reportResult() calls e.Exit() and Environment.Exit()
-        // The logical thread processes the exit action via its scheduler loop
-        System.Threading.Thread.Sleep(60000);
+        // Wait for test completion; timeout configurable via JOYCE_TEST_TIMEOUT.
+        // TestDriverModule._reportResult() calls e.Exit() and signals Completed.
+        int timeoutSeconds = 60;
+        string timeoutStr = Environment.GetEnvironmentVariable("JOYCE_TEST_TIMEOUT");
+        if (!string.IsNullOrEmpty(timeoutStr)
+            && int.TryParse(timeoutStr, out int timeoutValue) && timeoutValue > 0)
+        {
+            timeoutSeconds = timeoutValue;
+        }
 
-        Console.WriteLine("Test execution timeout or completed after 60 seconds.");
-        Environment.Exit(1); // If we reach here, test timed out
+        if (engine.testing.TestDriverModule.Completed.Wait(TimeSpan.FromSeconds(timeoutSeconds)))
+        {
+            // Give the queued engine Exit action a moment to drain.
+            System.Threading.Thread.Sleep(200);
+            Environment.Exit(engine.testing.TestDriverModule.ExitCode ?? 1);
+        }
+
+        Console.WriteLine($"Test execution timed out after {timeoutSeconds} seconds.");
+        Environment.Exit(1);
     }
 
 
