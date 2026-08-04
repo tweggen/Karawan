@@ -703,10 +703,7 @@ public class Platform : engine.IPlatform
         _renderSingleFrameStopwatch.Start();
         double msGotFrame = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
-        if (_iView.FramebufferSize.X != 0 && _iView.FramebufferSize.Y != 0)
-        {
-            _renderer.SetDimension(_iView.FramebufferSize.X, _iView.FramebufferSize.Y);
-        }
+        _applyFramebufferSize(_iView.FramebufferSize);
 
         _renderer.RenderFrame(renderFrame);
         double msRendered = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
@@ -764,24 +761,43 @@ public class Platform : engine.IPlatform
     }
 
 
+    private Vector2D<int> _v2LastFramebufferSize = new(0, 0);
+
+    /**
+     * Publish the current framebuffer size to everybody deriving geometry from it.
+     *
+     * This must stay the single place where the view size is announced. The renderer
+     * builds its projection from _renderer.SetDimension(), while everything doing the
+     * inverse transformation (Camera3.GetViewSize() for click/touch hit testing,
+     * InputController, the map module) reads the "view.size" global setting. If only
+     * one of the two is updated, rendered geometry and hit rectangles use different
+     * aspect ratios and drift apart the further you get from the center of the screen.
+     *
+     * Called per rendered frame rather than from the resize event alone: on Android the
+     * SDL window is created at its final size, so IView.Resize never fires and the
+     * announcement would otherwise never happen.
+     */
+    private void _applyFramebufferSize(in Vector2D<int> fbSize)
+    {
+        if (fbSize.X == 0 || fbSize.Y == 0) return;
+        if (fbSize == _v2LastFramebufferSize) return;
+        _v2LastFramebufferSize = fbSize;
+
+        // TXWTODO: We are abusing the global settings as global variables.
+        _renderer.SetDimension(fbSize.X, fbSize.Y);
+        engine.GlobalSettings.Set("view.size", $"{fbSize.X}x{fbSize.Y}");
+        I.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
+        {
+            PhysicalPosition = new(fbSize.X, fbSize.Y)
+        });
+    }
+
+
     private void _windowOnResize(Vector2D<int> size)
     {
         if (size.X != 0 && size.Y != 0)
         {
-            /*
-             * Read the logical size.
-             */
-            var fbSize = _iView.FramebufferSize;
-            float scaleX = (float)fbSize.X / (float)size.X;
-            float scaleY = (float)fbSize.Y / (float)size.Y;
-            
-            // TXWTODO: We are abusing the global settings as global variables.
-            _renderer.SetDimension(fbSize.X, fbSize.Y);
-            engine.GlobalSettings.Set("view.size", $"{fbSize.X}x{fbSize.Y}");
-            I.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
-            {
-                PhysicalPosition = new(fbSize.X, fbSize.Y)
-            });
+            _applyFramebufferSize(_iView.FramebufferSize);
         }
     }
 

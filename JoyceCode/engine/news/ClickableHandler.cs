@@ -277,6 +277,17 @@ public class ClickableHandler
                     break;
                 }
             }
+
+            /*
+             * Once a clickable consumed the press, we are done. Carrying on to the next
+             * camera would call OnFingerPressed again for the very same finger id, which
+             * evicts the state we just registered and synthesizes a release for it - the
+             * clickable would see press immediately followed by release.
+             */
+            if (ev.IsHandled)
+            {
+                break;
+            }
         }
 
         /*
