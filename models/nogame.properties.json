@@ -27,7 +27,7 @@
     "debug.category.assetloading": false,
     "debug.category.casette": false,
     "debug.category.animation": false,
-    "debug.category.clickmodule": true,
+    "debug.category.clickmodule": false,
     "debug.category.narration": false,
     "debug.category.database": false,
     "debug.category.ui": false,
