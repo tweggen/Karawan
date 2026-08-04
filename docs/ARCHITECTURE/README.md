@@ -22,6 +22,13 @@ Joyce engine foundation: ECS, scene management, modules
 ### 🧵 **Threading** — [THREADING.md](THREADING.md)
 Thread roles (logical/platform/worker pool), capped scheduler, managed-blocker protocol
 
+## Decisions
+
+### 🔌 **Platform backend** — [PLATFORM_BACKEND.md](PLATFORM_BACKEND.md)
+ADR (**proposal, not decided**): windowing, GL/audio bindings and model import. Proposes moving off
+Silk.NET to SDL3 plus self-generated bindings, and baking FBX out of the runtime. §9 lists its
+load-bearing claims by evidence class so it can be attacked directly.
+
 ## Implementation References
 
 For implementation details of specific engine components, see:
@@ -35,7 +42,7 @@ For implementation details of specific engine components, see:
 
 - [../SYSTEMS/](../SYSTEMS/) — Game systems (quests, persistence, world generation, narration)
 - [../tale/](../tale/) — TALE narrative simulation
-- [PROCESS.md](../PROCESS.md) — Generic development process
+- [PROCESS.md](../../PROCESS.md) — Generic development process
 - [CLAUDE.md](../../CLAUDE.md) — Project overview
 
 ---
