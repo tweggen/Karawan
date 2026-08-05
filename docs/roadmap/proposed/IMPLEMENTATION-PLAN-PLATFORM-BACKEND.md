@@ -230,12 +230,24 @@ Legend: `[HUMAN]` = human gate, not agent-checkable. `⟂` = independent, may ru
 |---|---|---|---|
 | AC-0.0.1 | SDL2 AAR alignment measured | `readelf -lW <aar>/jni/arm64-v8a/libSDL2.so \| grep LOAD` | alignment recorded in the report |
 | AC-0.0.2 | Repack attempted, outcome recorded | — | written finding: repack works / does not work, with the blocker if not |
-| AC-0.0.3 | SDL3 AAR alignment measured | `readelf -lW <sdl3-aar>/jni/arm64-v8a/libSDL3.so \| grep LOAD` | `0x4000` (16 KB) or the actual value |
+| AC-0.0.3 | SDL3 AAR alignment measured | `llvm-readelf -lW <sdl3-aar>/prefab/modules/SDL3-shared/libs/android.arm64-v8a/libSDL3.so \| grep LOAD` | `0x4000` (16 KB) or the actual value |
 | AC-0.0.4 | Report written | — | `docs/roadmap/proposed/WP-0.0-FINDINGS.md` |
+
+> **Path corrected 2026-08-05.** The SDL3 AAR uses the **prefab** layout, not `jni/<abi>/`.
+> The originally-specified `<sdl3-aar>/jni/arm64-v8a/libSDL3.so` does not exist. This is not
+> cosmetic — consuming a prefab AAR from .NET Android differs from consuming Silk's
+> `jni/`-layout AAR, and **WP-2.1 must budget for it**.
 
 **Output:** a findings doc. **Escalate to the human before dispatching any WP in Phase 1 or later.**
 WP-0.1/0.2/0.3 are guardrails that are correct under either outcome and **may run concurrently with
 WP-0.0** (subject to the §2.2d conflict list).
+
+> ### ✅ WP-0.0 COMPLETE — 2026-08-05 — **claim #6 FALSIFIED**
+>
+> See [`WP-0.0-FINDINGS.md`](WP-0.0-FINDINGS.md). Silk's SDL2 AAR **can** be rebuilt 16 KB-aligned
+> and repacked locally (SDL 2.30.8 + NDK r27c, ~15 min); SDL3's AAR **is** 16 KB-aligned on both
+> 64-bit ABIs. Per §4 and §5c the programme is **halted pending a human re-plan** — do not dispatch
+> any Phase 1+ work package. State ledger: [`PLATFORM-BACKEND-STATUS.md`](PLATFORM-BACKEND-STATUS.md).
 
 ---
 
@@ -478,15 +490,21 @@ Last, deliberately: least urgent (GL is spec-frozen) and most mechanical.
 
 ## 5b. Execution environment (verify before claiming any PASS)
 
-The plan assumes tooling that is **not currently present** on the owner's Mac. Confirmed 2026-08-04:
+> **Corrected 2026-08-05 (WP-0.0).** The table below originally described the owner's **Mac**.
+> Work is actually happening on **Windows 11**, where the situation is close to inverted: the
+> ELF tooling and NDK *are* present, and `gh` — which §2.1 needs for every single PR — is *not*.
+> Re-verify on any new machine rather than trusting this table.
 
-| Need | Status | Used by |
+| Need | Status (Windows 11, verified 2026-08-05) | Used by |
 |---|---|---|
-| `readelf` / `llvm-readelf` (ELF, for Android `.so`) | ❌ **absent** — `brew install llvm` or use the NDK's copy. `objdump` exists but `otool` is Mach-O only and will not read Android `.so`s | AC-0.0.1, 0.0.3, 1.2, 1.4, 2.2 |
-| Android NDK | ❌ not at `~/Library/Android/sdk/ndk` | WP-0.0, 1.2, 1.3 |
-| `gh` authenticated | ✅ | AC-1.1, all PR operations |
+| `readelf` / `llvm-readelf` (ELF, for Android `.so`) | ✅ **present** via the NDK: `C:\Program Files (x86)\Android\AndroidNDK\android-ndk-r27c\toolchains\llvm\prebuilt\windows-x86_64\bin\llvm-readelf.exe` (also `llvm-objdump.exe`). Not on `PATH` — invoke by full path. | AC-0.0.1, 0.0.3, 1.2, 1.4, 2.2 |
+| Android NDK | ✅ **present** — `C:\Program Files (x86)\Android\AndroidNDK\{android-ndk-r23c, android-ndk-r27c}` | WP-0.0, 1.2, 1.3 |
+| `gh` authenticated | ❌ **ABSENT** — not installed. **Blocks §2.1 entirely** (every WP must open a PR) and AC-1.1. Install before dispatching any WP. | AC-1.1, all PR operations |
+| `cmake` | ✅ 4.3.3 — note it rejects `cmake_minimum_required` < 3.5; needs `-DCMAKE_POLICY_VERSION_MINIMUM=3.5` for older sources | WP-1.2, 1.3 |
+| `ninja` | ❌ absent — standalone `ninja.exe` works; pin it in CI (WP-1.1) | WP-1.2, 1.3 |
+| `java` | ❌ absent — only needed if an AAR's Java side must be rebuilt | WP-1.3, 2.x |
 | Physical Android device | human | GATE-A |
-| Windows machine | human | GATE-C, GATE-D |
+| Windows machine | ✅ this **is** the Windows machine — GATE-C/D still need a human to *look* at it | GATE-C, GATE-D |
 | Linux machine | human | GATE-C, GATE-E |
 | Play Console access | human | GATE-B |
 
@@ -542,4 +560,5 @@ Ranked by likelihood, for the orchestrator to watch for.
 | Date | Change |
 |---|---|
 | 2026-08-04 | Created from `docs/ARCHITECTURE/PLATFORM_BACKEND.md` rev 3 |
+| 2026-08-05 | **WP-0.0 executed — ADR claim #6 falsified, claim #7 confirmed.** Programme halted for re-plan per §4/§5c. Added `PLATFORM-BACKEND-STATUS.md` (the §2.2b ledger, previously missing). Corrected §5b (described macOS; work is on Windows 11 — ELF tooling and NDK are present, `gh` is **not**). Corrected AC-0.0.3's SDL3 AAR path (prefab layout, not `jni/`). |
 | 2026-08-04 | Revised after orchestrator review. Fixed: WP-0.3 vs AC-GLOBAL-1 contradiction (promotion deferred to WP-1.6); WP-0.1 scope 6→13 csprojs; AC-3.1 and AC-5.1 expected values (were unachievable); AC-1.1/1.5/4.2/4.4/5.0 made measurable; GATE-D moved to WP-0.1; TestRunner added (not in `.sln`). Added: §2.2b state ledger, §2.2c PR-rejected path, §2.2d conflict sets, §2.2e gates-are-pre-merge, §2.5 re-run exemptions, §5b environment, §5c off-the-rails thresholds and the bank-the-wins exit. **N4 relaxed** — Phase 5's approach is now open pending S2b costing (WP-5.0b). |
