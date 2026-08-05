@@ -1,9 +1,49 @@
 # Build Pipeline & Asset Manifest
 
 **Status**: Reference  
-**Last Updated**: 2026-05-11
+**Last Updated**: 2026-08-05
 
 How the Karawan/Joyce build turns `models/*.json` and friends into shippable assets, how those assets are registered for runtime lookup, and the failure modes that aren't obvious from reading the code.
+
+---
+
+## NuGet versions: Central Package Management
+
+Since WP-0.1 (2026-08-05) **every NuGet version lives in `Directory.Packages.props` at the
+repository root**. A `csproj` carries `<PackageReference Include="X" />` with **no** `Version`
+attribute; the version comes from a matching `<PackageVersion>` entry.
+
+Adding or changing a package therefore means editing **two** files, not one.
+
+Three things about this setup are not obvious and will bite:
+
+1. **`Silk.NET.Assimp` is pinned to 2.22.0 on purpose.** Bumping it is what corrupted model
+   loading. See non-negotiables N5/N8 in
+   `docs/roadmap/proposed/IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`.
+
+2. **Two packages are legitimately referenced at two different versions**, and CPM allows only
+   one central version each. The odd one out uses `VersionOverride` at its call site:
+   | Package | Central | Override |
+   |---|---|---|
+   | `SixLabors.ImageSharp` | 3.1.10 (`Karawan`, `examples/Launcher`) | `Splash.Silk` → 3.0.1 |
+   | `SkiaSharp.NativeAssets.Linux` | 2.88.7 (`Karawan`, `examples/Launcher`) | `Tooling/Cmdline` → 3.119.1 |
+   Unifying either one would change what resolves. Don't "tidy" them without deciding that
+   deliberately.
+
+3. **CPM silently disables MAUI's implicit package references.**
+   `Microsoft.Maui.Sdk`'s `BundledVersions.targets` sets
+   `DisableMauiImplicitPackageReferences=true` whenever `ManagePackageVersionsCentrally` is
+   `true`. So `<UseMaui>true</UseMaui>` in `Wuka.csproj` **stops pulling in
+   `Microsoft.Maui.Controls` at all** — with no warning and no error; the package simply
+   vanishes from `dotnet list package`. `Wuka.csproj` therefore declares it explicitly. If a
+   future MAUI package goes missing after a workload update, this is the first thing to check.
+
+`Aihao.old/` is dead code and opts out entirely via its own `Aihao.old/Directory.Packages.props`
+setting `ManagePackageVersionsCentrally=false` — NuGet resolves the *nearest* such file walking
+up, so the root one never applies there.
+
+To verify a package change didn't move anything else, diff `dotnet list <proj> package` across
+all twelve managed projects before and after; that is exactly what WP-0.1's AC-0.1.3 did.
 
 ---
 

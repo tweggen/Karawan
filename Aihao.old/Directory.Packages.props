@@ -1,0 +1,19 @@
+<Project>
+
+  <!--
+    Aihao.old is dead code, superseded by Aihao/. WP-0.1 deliberately does NOT migrate
+    it to Central Package Management (implementation plan §5, WP-0.1: "Exclude
+    Aihao.old (dead code) - exclude it from the glob rather than migrating it").
+
+    NuGet resolves Directory.Packages.props by walking up to the NEAREST one, so this
+    file stops the repository-root Directory.Packages.props from applying here and
+    lets Aihao.old keep its inline Version attributes.
+
+    If Aihao.old is ever deleted, delete this file with it.
+  -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+</Project>
