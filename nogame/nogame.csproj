@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- Default to Windows -->
     <OSPlatform Condition=" '$(OS)' == 'Windows_NT' ">Windows</OSPlatform>
@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />
+    <PackageReference Include="System.Threading.Tasks" />
   </ItemGroup>
 
   <Import Project="..\nogameCode\nogameCode.projitems" Label="Shared" />

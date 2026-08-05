@@ -19,13 +19,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Build.Framework" Version="17.9.5" />
-      <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.9.5" />
-      <PackageReference Include="SkiaSharp" Version="3.119.1" />
-      <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
-      <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
-      <PackageReference Include="System.Text.Json" Version="9.0.10" />
-		<!-- PackageReference Include="UkooLabs.FbxSharpie" Version="1.0.99" /-->
+      <PackageReference Include="Microsoft.Build.Framework" />
+      <PackageReference Include="Microsoft.Build.Utilities.Core" />
+      <PackageReference Include="SkiaSharp" />
+      <PackageReference Include="SkiaSharp.NativeAssets.Linux" VersionOverride="3.119.1" />
+      <PackageReference Include="SkiaSharp.NativeAssets.Win32" />
+      <PackageReference Include="System.Text.Json" />
     </ItemGroup>
 
 </Project>

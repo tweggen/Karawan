@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net9.0-android36.0</TargetFrameworks>
@@ -122,14 +122,23 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Silk.NET.Assimp" Version="2.22.0" />
-		<PackageReference Include="Silk.NET.Input.Sdl" Version="2.23.0" />
-		<PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1" ExcludeAssets="native" PrivateAssets="all" />
-		<PackageReference Include="Silk.NET.SDL" Version="2.23.0" />
-		<PackageReference Include="Silk.NET.Windowing" Version="2.23.0" />
-		<PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.23.0" />
+		<!--
+			Explicit because Central Package Management (WP-0.1) turns MAUI's implicit
+			references off: Microsoft.Maui.Sdk's BundledVersions.targets sets
+			DisableMauiImplicitPackageReferences=true whenever
+			ManagePackageVersionsCentrally is true. Without this line, UseMaui=true no
+			longer pulls in Microsoft.Maui.Controls at all. Version lives in
+			Directory.Packages.props.
+		-->
+		<PackageReference Include="Microsoft.Maui.Controls" />
+		<PackageReference Include="Silk.NET.Assimp" />
+		<PackageReference Include="Silk.NET.Input.Sdl" />
+		<PackageReference Include="Silk.NET.OpenAL.Soft.Native" ExcludeAssets="native" PrivateAssets="all" />
+		<PackageReference Include="Silk.NET.SDL" />
+		<PackageReference Include="Silk.NET.Windowing" />
+		<PackageReference Include="Silk.NET.Windowing.Sdl" />
 		<!-- Transitive dep of Silk.NET.SDL; exclude Linux linux-arm64 .so from bleeding into Android APK -->
-		<PackageReference Include="Ultz.Native.SDL" Version="2.32.10" ExcludeAssets="native" PrivateAssets="all" />
+		<PackageReference Include="Ultz.Native.SDL" ExcludeAssets="native" PrivateAssets="all" />
 	</ItemGroup>
 
 	<ItemGroup>

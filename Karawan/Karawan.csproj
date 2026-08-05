@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
     <TargetFramework>net9.0</TargetFramework>
@@ -61,11 +61,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Silk.NET.Core" Version="2.23.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.10" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.7" />
+    <PackageReference Include="Silk.NET.Core" />
+    <PackageReference Include="SixLabors.ImageSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
     <!-- pin to Ultz.Native.Assimp 5.1.4 due to animation artifacts in 2.22/5.4.1 on mac os -->
-    <PackageReference Include="Ultz.Native.Assimp" Version="5.4.1"/>
+    <PackageReference Include="Ultz.Native.Assimp"/>
   </ItemGroup>
 
 </Project>

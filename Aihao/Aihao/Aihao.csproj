@@ -17,20 +17,20 @@
 
   <ItemGroup>
     <!-- Avalonia UI -->
-    <PackageReference Include="Avalonia" Version="11.3.8" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.8" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.8" />
-    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.8" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.8" Condition="'$(Configuration)' == 'Debug'" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" />
+    <PackageReference Include="Avalonia.Diagnostics" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
 
     <!-- Docking library for IDE-like layout -->
-    <PackageReference Include="Dock.Avalonia" Version="11.3.8" />
-    <PackageReference Include="Dock.Avalonia.Themes.Fluent" Version="11.3.8" />
-    <PackageReference Include="Dock.Model" Version="11.3.8" />
-    <PackageReference Include="Dock.Model.Mvvm" Version="11.3.8" />
+    <PackageReference Include="Dock.Avalonia" />
+    <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
+    <PackageReference Include="Dock.Model" />
+    <PackageReference Include="Dock.Model.Mvvm" />
   </ItemGroup>
 
   <ItemGroup>

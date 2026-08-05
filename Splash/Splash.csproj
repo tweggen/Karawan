@@ -23,8 +23,11 @@
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- PackageReference Include="Silk.NET.OpenGL" Version="2.20.0" / -->
-  </ItemGroup>
+  <!--
+    Splash is the platform-agnostic renderer abstraction and deliberately has no
+    package references. A commented-out Silk.NET.OpenGL reference was removed in
+    WP-0.1 so that AC-0.1.2 ("no stray Version= in any csproj") is verifiable by
+    grep; the reference had been inert for its entire life.
+  -->
 
 </Project>
