@@ -38,6 +38,11 @@ env:
   ANDROID_NDK_VERSION: 27.2.12479018
   # Minimum API must match Wuka's SupportedOSPlatformVersion.
   ANDROID_MIN_API: 26
+  # MSVC toolset, selected via vcvarsall -vcvars_ver. 14.44 is the toolset behind
+  # compiler 19.44.35228 (VS 2022 17.14), which is what windows-2022 resolved to on
+  # the first run of this workflow. Pinned so a runner-image refresh that ships a newer
+  # toolset fails loudly here instead of silently changing the artifacts.
+  MSVC_TOOLSET: "14.44"
 
 jobs:
   build:
