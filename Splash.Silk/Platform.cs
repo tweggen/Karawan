@@ -984,7 +984,15 @@ public class Platform : engine.IPlatform
     }
 
 
-    public void SetExternalGL(GL gl)
+    /**
+     * Hand an externally-created GL context to the renderer.
+     *
+     * Internal on purpose (WP-0.2): this is the only entry point that puts a Silk.NET type in
+     * Platform's API surface, and its sole caller is PreviewHelper in this same project.
+     * Embedding hosts (Aihao) go through PreviewHelper.Initialize, which takes a
+     * Func<string, nint> and never lets a GL object cross the assembly boundary.
+     */
+    internal void SetExternalGL(GL gl)
     {
         _silkThreeD.SetGL(gl);
         gl.ClearDepth(1f);

@@ -17,7 +17,7 @@ public class SkAnimationsEntry : AAnimationsEntry
 
     private bool _traceAnimations = false;
 
-    public Flags.GLAnimBuffers AnimStrategy;
+    public GLAnimBuffers AnimStrategy;
 
 
     /**
@@ -30,7 +30,7 @@ public class SkAnimationsEntry : AAnimationsEntry
          */
         switch (AnimStrategy)
         {
-            case Flags.GLAnimBuffers.AnimSSBO:
+            case GLAnimBuffers.AnimSSBO:
                 if (Model != null)
                 {
                     Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(Model.AnimationCollection.AllBakedMatrices);
@@ -61,7 +61,7 @@ public class SkAnimationsEntry : AAnimationsEntry
         if (Model != null)
         {
             if (_traceAnimations) Trace($"Releasing Animations");
-            if (AnimStrategy == Flags.GLAnimBuffers.AnimSSBO)
+            if (AnimStrategy == GLAnimBuffers.AnimSSBO)
             {
                 SSBOAnimations!.Dispose();
                 SSBOAnimations = null;
@@ -98,7 +98,7 @@ public class SkAnimationsEntry : AAnimationsEntry
     }
 
 
-    public SkAnimationsEntry(GL gl, engine.joyce.Model? jModel, Flags.GLAnimBuffers animStrategy)
+    public SkAnimationsEntry(GL gl, engine.joyce.Model? jModel, GLAnimBuffers animStrategy)
         : base(jModel)
     {
         _gl = gl;

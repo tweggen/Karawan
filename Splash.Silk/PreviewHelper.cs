@@ -2,6 +2,7 @@ using System;
 using engine;
 using Silk.NET.OpenGL;
 using Splash;
+using static engine.Logger;
 
 namespace Splash.Silk;
 
@@ -36,6 +37,53 @@ public sealed class PreviewHelper
             }
             return _instance;
         }
+    }
+
+    /// <summary>
+    /// Detect the graphics API and version behind <paramref name="getProcAddress"/> and record
+    /// it in GlobalSettings as platform.threeD.API / platform.threeD.API.version. Must be
+    /// called from the GL thread, before Initialize.
+    /// </summary>
+    /// <remarks>
+    /// Lives here rather than in the caller so that hosts embedding the renderer (Aihao) never
+    /// have to name a Silk.NET type just to ask what context they were handed - see WP-0.2.
+    /// The delegate is the whole contract: no GL object crosses the boundary.
+    /// </remarks>
+    public static void DetectAndSetGlVersion(Func<string, nint> getProcAddress)
+    {
+        using var ctx = new DelegateProcContext(getProcAddress);
+        var gl = GL.GetApi(ctx);
+        string versionStr = gl.GetStringS(StringName.Version) ?? "";
+        Trace($"GL version string: \"{versionStr}\"");
+
+        string api;
+        string version;
+
+        if (versionStr.StartsWith("OpenGL ES", StringComparison.OrdinalIgnoreCase))
+        {
+            // e.g. "OpenGL ES 3.0" or "OpenGL ES 3.1 ..."
+            api = "OpenGLES";
+            var parts = versionStr.Split(' ');
+            // parts[2] should be "3.0" or "3.1"
+            var verParts = (parts.Length >= 3 ? parts[2] : "3.0").Split('.');
+            int major = int.TryParse(verParts[0], out var m) ? m : 3;
+            int minor = int.TryParse(verParts.Length > 1 ? verParts[1] : "0", out var n) ? n : 0;
+            version = $"{major}{minor}0";
+        }
+        else
+        {
+            // e.g. "4.6.0 NVIDIA 546.33" or "3.3 Mesa 23.1"
+            api = "OpenGL";
+            var verPart = versionStr.Split(' ')[0]; // "4.6.0" or "3.3"
+            var parts = verPart.Split('.');
+            int major = int.TryParse(parts[0], out var m) ? m : 3;
+            int minor = int.TryParse(parts.Length > 1 ? parts[1] : "3", out var n) ? n : 3;
+            version = $"{major}{minor}0";
+        }
+
+        Trace($"Detected API={api}, version={version}");
+        engine.GlobalSettings.Set("platform.threeD.API", api);
+        engine.GlobalSettings.Set("platform.threeD.API.version", version);
     }
 
     /// <summary>
