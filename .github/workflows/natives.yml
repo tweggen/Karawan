@@ -172,12 +172,21 @@ jobs:
           set -euo pipefail
           bash recipes/build-openal.sh --target "${{ matrix.target }}" --out "$PWD/out/openal"
 
+      - name: Build SDL3 (unix)
+        if: matrix.kind != 'windows'
+        shell: bash
+        env:
+          ANDROID_MIN_API: ${{ env.ANDROID_MIN_API }}
+        run: |
+          set -euo pipefail
+          bash recipes/build-sdl3.sh --target "${{ matrix.target }}" --out "$PWD/out/sdl3"
+
       # vswhere + vcvarsall rather than a third-party setup-msvc action: it is the
       # documented way to select an exact toolset (-vcvars_ver), it removes a
       # supply-chain dependency, and the point of this programme is to depend on
       # things that do not rot. The MSVC environment is inherited by bash, so the
       # same recipe script runs here as everywhere else.
-      - name: Build openal-soft (windows)
+      - name: Build natives (windows)
         if: matrix.kind == 'windows'
         shell: cmd
         run: |
@@ -190,6 +199,7 @@ jobs:
           echo vs_install=%VSPATH%>> toolchain.txt
           cl 2>&1 | findstr /C:"Compiler Version" >> toolchain.txt
           bash recipes/build-openal.sh --target win-x64 --out "%CD%/out/openal" || exit /b 1
+          bash recipes/build-sdl3.sh --target win-x64 --out "%CD%/out/sdl3" || exit /b 1
 
       - name: Show what was produced
         shell: bash
