@@ -73,6 +73,22 @@ public class SilkThreeD : IThreeD
     Flags.GLAnimBuffers AnimStrategy = Flags.GLAnimBuffers.AnimUniform;
 
     /**
+     * True when the context is desktop OpenGL 4.3 or newer.
+     *
+     * GL_DEBUG_OUTPUT, GL_DEBUG_OUTPUT_SYNCHRONOUS and GL_MAX_ELEMENT_INDEX are all
+     * OpenGL 4.3 features. macOS caps out at 4.1, so issuing any of them there raises
+     * GL_INVALID_ENUM. That is not harmless: the GL error flag is sticky, so the error
+     * sat in the queue from startup until the first DrawMeshInstanced drained it and
+     * reported it as "pre-existing" - on every single run. Real errors were then
+     * indistinguishable from that startup noise.
+     *
+     * Set conservatively to false for OpenGL ES. GL_MAX_ELEMENT_INDEX does exist in
+     * ES 3.0, but it is only read for a trace here, so there is nothing to gain by
+     * probing it and a silent GL_INVALID_ENUM to lose on older ES contexts.
+     */
+    private readonly bool _hasGL43;
+
+    /**
      * Only the SSBO strategy carries a per-instance frame number (the instanceFrameno
      * vertex attribute). The UBO and uniform strategies upload a single bone pose per
      * draw call, so their batches must not mix animations or frames.
@@ -1099,8 +1115,15 @@ public class SilkThreeD : IThreeD
         _gl.Enable(EnableCap.CullFace);
         _gl.CullFace(TriangleFace.Back);
         _gl.FrontFace(FrontFaceDirection.Ccw);
-        _gl.Enable(EnableCap.DebugOutput);
-        _gl.Disable(EnableCap.DebugOutputSynchronous);
+        if (_hasGL43)
+        {
+            /*
+             * KHR_debug, core since 4.3. Note nothing calls DebugMessageCallback, so this
+             * currently only populates the (unread) debug message log.
+             */
+            _gl.Enable(EnableCap.DebugOutput);
+            _gl.Disable(EnableCap.DebugOutputSynchronous);
+        }
         _gl.Enable(EnableCap.DepthClamp);
         _gl.Enable(EnableCap.DepthTest);
         _gl.Disable(EnableCap.ScissorTest);
@@ -1108,8 +1131,30 @@ public class SilkThreeD : IThreeD
 
         _gl.GetInteger(GetPName.MaxElementsVertices, out var maxVertices);
         _gl.GetInteger(GetPName.MaxElementsIndices, out var maxIndices);
-        _gl.GetInteger(GetPName.MaxElementIndex, out var maxElementIndex);
-        Trace($"On this platform GL_MAX_ELEMENTS_VERTICES == {maxVertices}, GL_MAX_ELEMENTS_INDICES == {maxIndices}, GL_MAX_ELEMENT_INDEX = {maxElementIndex}");
+        if (_hasGL43)
+        {
+            _gl.GetInteger(GetPName.MaxElementIndex, out var maxElementIndex);
+            Trace($"On this platform GL_MAX_ELEMENTS_VERTICES == {maxVertices}, GL_MAX_ELEMENTS_INDICES == {maxIndices}, GL_MAX_ELEMENT_INDEX = {maxElementIndex}");
+        }
+        else
+        {
+            Trace($"On this platform GL_MAX_ELEMENTS_VERTICES == {maxVertices}, GL_MAX_ELEMENTS_INDICES == {maxIndices}, GL_MAX_ELEMENT_INDEX = n/a (needs GL 4.3)");
+        }
+
+        /*
+         * Report anything the setup above raised, here, rather than leaving it in the
+         * queue for the first DrawMeshInstanced to find and blame on "pre-existing"
+         * state. An error surfacing here means one of the calls above is unsupported on
+         * this context.
+         */
+        {
+            GLEnum setupErr;
+            while ((setupErr = _gl.GetError()) != GLEnum.NoError)
+            {
+                Error($"GL error during SetGL on {engine.GlobalSettings.Get("platform.threeD.API")} "
+                      + $"{engine.GlobalSettings.Get("platform.threeD.API.version")}: {setupErr}");
+            }
+        }
 
         _silkRenderState = new(_gl);
     }
@@ -1143,19 +1188,28 @@ public class SilkThreeD : IThreeD
         _listShaderUseCases.Add(new LightShaderUseCase());
         string api = engine.GlobalSettings.Get("platform.threeD.API");
         string version = engine.GlobalSettings.Get("platform.threeD.API.version");
+
+        /*
+         * Parse numerically. The previous String.Compare(version, "430") happens to be
+         * right for equal-length values like "410", but is an ordinal string compare:
+         * it would rank any shorter or longer version string by character order rather
+         * than by magnitude.
+         */
+        if (!int.TryParse(version, out var versionNumber))
+        {
+            Warning($"Unparseable \"platform.threeD.API.version\": \"{version}\". "
+                    + "Assuming the lowest capability level.");
+            versionNumber = 0;
+        }
+
         if (api == "OpenGL")
         {
-            if (String.Compare(version, "430") < 0)
-            {
-                AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
-            }
-            else
-            {
-                AnimStrategy = Flags.GLAnimBuffers.AnimSSBO;
-            }
+            _hasGL43 = versionNumber >= 430;
+            AnimStrategy = _hasGL43 ? Flags.GLAnimBuffers.AnimSSBO : Flags.GLAnimBuffers.AnimUBO;
         }
         else if (api == "OpenGLES")
         {
+            _hasGL43 = false;
             AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
         }
         else
