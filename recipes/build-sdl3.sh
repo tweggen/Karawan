@@ -110,6 +110,17 @@ case "${KIND}" in
             info "OK: libSDL3.so links the shared C++ runtime"
         else
             strip --strip-unneeded "${OUT_DIR}/libSDL3.so" 2>/dev/null || true
+
+            # SDL3 errors out at configure time without X11/Wayland headers, so reaching
+            # here should mean a video driver was compiled in - but assert it anyway,
+            # for the same reason openal asserts its audio backend: the expensive
+            # failure is the one that builds successfully and does nothing. SDL3
+            # dlopen()s these, so they are strings rather than NEEDED entries.
+            if ! grep -qE 'libX11\.so|libwayland-client\.so' "${OUT_DIR}/libSDL3.so"; then
+                die "${OUT_DIR}/libSDL3.so has neither an X11 nor a Wayland video driver -
+it could not open a window. Install the windowing development headers and rebuild."
+            fi
+            info "OK: libSDL3.so carries a real Linux video driver"
         fi
         describe_artifact "${OUT_DIR}/libSDL3.so"
         ;;

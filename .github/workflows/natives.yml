@@ -2,10 +2,9 @@
 #
 # WP-1.1 of docs/roadmap/proposed/IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md.
 #
-# This is the SKELETON. It establishes and proves the toolchain matrix; it does not yet
-# build openal-soft (WP-1.2) or SDL3 (WP-1.3). Each target compiles a tiny smoke-test
-# library instead, so that when the real recipes land they land on a toolchain that has
-# already been shown to work and to produce correctly-formatted output.
+# Builds openal-soft (WP-1.2) and SDL3 (WP-1.3) for six targets from pinned upstream
+# tags. The recipes live in recipes/ and are the same code path a developer runs
+# locally; this file only supplies the toolchain and the matrix.
 #
 # Everything that can drift is pinned. AC-1.5 requires byte-identical artifacts across
 # reruns, and floating labels ("macos-latest", "ubuntu-latest") actively prevent that:
@@ -153,6 +152,25 @@ jobs:
             echo "apt_libasound2-dev=$(dpkg-query -W -f='${Version}' libasound2-dev)"
             echo "apt_libpulse-dev=$(dpkg-query -W -f='${Version}' libpulse-dev)"
             echo "apt_libpipewire-0.3-dev=$(dpkg-query -W -f='${Version}' libpipewire-0.3-dev)"
+          } >> toolchain.txt
+
+      # SDL3 refuses to configure at all without X11 or Wayland development headers,
+      # on the grounds that an SDL which cannot open a window is almost never what you
+      # meant. It is right. As with the audio headers these are build-time only - SDL3
+      # dlopen()s the windowing libraries at runtime.
+      - name: Install Linux windowing development headers
+        if: matrix.kind == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -qq --no-install-recommends \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev \
+            libxfixes-dev libxss-dev libxkbcommon-dev \
+            libwayland-dev wayland-protocols libdecor-0-dev \
+            libudev-dev libdbus-1-dev
+          {
+            echo "apt_libx11-dev=$(dpkg-query -W -f='${Version}' libx11-dev)"
+            echo "apt_libwayland-dev=$(dpkg-query -W -f='${Version}' libwayland-dev)"
           } >> toolchain.txt
 
       - name: Load pinned upstream versions
