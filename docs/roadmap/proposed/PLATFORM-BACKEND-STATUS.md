@@ -36,10 +36,10 @@ Consequences carried forward:
 
 | WP | Status | Branch | PR | Iter | AC results | Gates | Notes |
 |---|---|---|---|---|---|---|---|
-| **WP-0.0** | **PR-OPEN** | `platform/wp-0.0` | [#8](https://github.com/tweggen/Karawan/pull/8) | 1 | AC-0.0.1 ✅ · 0.0.2 ✅ · 0.0.3 ✅ · 0.0.4 ✅ | none apply | **Claim #6 FALSIFIED, claim #7 confirmed.** Repack demonstrated working; artifact never executed. |
-| **WP-0.1** | **PR-OPEN** | `platform/wp-0.1` | [#9](https://github.com/tweggen/Karawan/pull/9) | 1 | AC-0.1.1 ✅ · 0.1.2 ✅ · 0.1.3 ✅ (59/59 identical) · 0.1.4 ✅ · GLOBAL-1 ✅ · 1b ✅ · 2 ✅ · 3 ✅ · 4 ✅ (168/168) | **GATE-D outstanding — do not merge (§2.2e)** | CPM across 12 csprojs; `Aihao.old` excluded. Two version conflicts kept exact via `VersionOverride`. **CPM silently disabled MAUI's implicit `Microsoft.Maui.Controls`** — now declared explicitly in `Wuka.csproj`. |
-| WP-0.2 | NOT-STARTED | — | — | 0 | — | GATE-D adj. | `IThreeD` seam leaks. Independent, safe to dispatch now. |
-| WP-0.3 | NOT-STARTED | — | — | 0 | — | — | Inventory XA0141/XA4301 only. **Conflicts with WP-0.1 on `Wuka.csproj`** — must wait for #9 to merge, or rebase. |
+| **WP-0.0** | ✅ **MERGED** | `platform/wp-0.0` | [#8](https://github.com/tweggen/Karawan/pull/8) | 1 | AC-0.0.1 ✅ · 0.0.2 ✅ · 0.0.3 ✅ · 0.0.4 ✅ | none apply | **Claim #6 FALSIFIED, claim #7 confirmed.** Repack demonstrated working; artifact never executed. |
+| **WP-0.1** | ✅ **MERGED** | `platform/wp-0.1` | [#9](https://github.com/tweggen/Karawan/pull/9) | 1 | AC-0.1.1 ✅ · 0.1.2 ✅ · 0.1.3 ✅ (59/59 identical) · 0.1.4 ✅ · GLOBAL-1 ✅ · 1b ✅ · 2 ✅ · 3 ✅ · 4 ✅ (168/168) | **GATE-D ✅ passed** (Windows + macOS Debug, 2026-08-06) | CPM across 12 csprojs; `Aihao.old` excluded. Two version conflicts kept exact via `VersionOverride`. **CPM silently disabled MAUI's implicit `Microsoft.Maui.Controls`** — now declared explicitly in `Wuka.csproj`. |
+| WP-0.2 | NOT-STARTED | — | — | 0 | — | GATE-D adj. | `IThreeD` seam leaks. Its `SilkThreeD.cs` conflict with #11 is gone now that #11 is merged. **Next to dispatch.** |
+| **WP-0.3** | **PR-OPEN** | `platform/wp-0.3` | — | 1 | AC-0.3.1 ✅ · 0.3.2 ✅ · GLOBAL-2 ✅ · GLOBAL-3 ✅ | none apply | Inventory only, `Wuka.csproj` untouched. **Found a gap in the plan: `libcimgui.so` (ImGui.NET) is also not 16 KB-aligned, so the Silk exit alone does not achieve compliance.** See `WP-0.3-WARNINGS.md` §4. |
 | WP-1.1 – 1.6 | NOT-STARTED | — | — | 0 | — | — | Unblocked by the 2026-08-05 decision. `gh` now installed + authenticated. Decide at dispatch whether Phase 1 also builds SDL2-for-Android. |
 | WP-2.1 – 2.3 | NOT-STARTED | — | — | 0 | — | GATE-A, GATE-B | Proceeds, but no longer release-critical. ⚠ AC-2.2/AC-0.0.3 AAR path was wrong — SDL3 uses **prefab** layout. |
 | WP-3.1 – 3.5 | BLOCKED | — | — | 0 | — | GATE-C, GATE-E | Blocked on GATE-A + GATE-B per plan. |
@@ -59,9 +59,20 @@ Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MER
 | GATE-A | SDL3 spike on physical Android device (multi-touch, **IME**, rotation, resume) | not reached |
 | GATE-B | Play Console upload, no "Memory page size" warning | not reached — **now reachable much earlier via the WP-0.0 repack route** |
 | GATE-C | Windows + Linux desktop | not reached |
-| GATE-D | Animation correct on macOS + Windows | not reached |
-| GATE-E | ImGui renders + takes input (incl. Linux Fn-key case) | not reached |
+| GATE-D | Animation correct on macOS + Windows | ✅ **PASSED 2026-08-06** — Windows confirmed, macOS confirmed on a **Debug** build (Release does not currently start, see known issue KI-1) |
+| GATE-E | ImGui renders + takes input (incl. Linux Fn-key case) | not reached. Note WP-0.3 found `libcimgui.so` is a **linux-x64** binary shipped into the APK — settle that before this gate |
 | GATE-F | Pixel-compare before/after GL swap | not reached. ⚠ **Baseline must be captured before WP-5.2 merges** or it is unrunnable forever |
+
+---
+
+## Known issues (found in passing, not part of any WP)
+
+| id | Issue | Status |
+|---|---|---|
+| **KI-1** | **Release builds do not start.** `Karawan/DesktopMain.cs:196-202` starts fullscreen when `#if DEBUG` is false. On macOS the fullscreen window switches display mode but never activates — it ends up minimised behind the IDE, the main thread parks in `LogicalRenderer.WaitNextRenderFrame`'s untimed `Monitor.Wait`, and the app appears hung while still alive. Debug builds are windowed and run fine on both platforms. **Untested on Windows Release.** Also note fullscreen is applied at `DesktopMain.cs:218`, *before* `iWindow.Initialize()` at :220. | **postponed by owner 2026-08-06** — no Windows machine available to complete the 2×2. Pre-existing; not caused by any WP. |
+| **KI-2** | `I.RegisterFactory: Error: Already registered engine.news.EmissionContext` on every run, both platforms. Something registers that factory twice. | open, unowned, benign so far |
+| **KI-3** | `ink` is listed as a required sibling checkout in `README.md` and `CLAUDE.md`, but no csproj references it via `$(SiblingRoot)`. Possibly a second dead prerequisite (cf. FbxSharp, PR #10). | open, unverified |
+| **KI-4** | An unbounded `Monitor.Wait` in `LogicalRenderer.WaitNextRenderFrame` runs on the thread macOS requires for event pumping, so *any* logical-thread fault presents as a frozen app rather than an error. A timeout that logs and returns null would make this class of failure diagnosable. | open — deliberately not "fixed", since it would mask causes |
 
 ---
 
@@ -71,7 +82,7 @@ Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MER
 |---|---|---|
 | Phase 2 worker dispatches | 10 | 0 |
 | Programme-wide re-dispatches | 25 | 0 |
-| Calendar: Phases 0–2 complete | 3 months from 2026-08-04 | day 1 |
+| Calendar: Phases 0–2 complete | 3 months from 2026-08-04 | day 2 |
 | ADR §9 "assumed" claims falsified | any → escalate | **1 (claim #6)** — escalated 2026-08-05, resolved: continue as planned |
 
 ---
