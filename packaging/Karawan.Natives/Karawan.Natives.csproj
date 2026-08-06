@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Packaging-only project (WP-1.4). It compiles nothing: it exists so that `dotnet pack`
+    can turn the CI matrix's native artifacts into a versioned NuGet package.
+
+    Content is taken from a staging directory produced by recipes/pack-natives.sh, not
+    from the repository, so this project never carries binaries in git.
+
+    Deliberately NOT part of Karawan.sln - it has no source, and adding it would put a
+    packaging step into every developer's build.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <IsPackable>true</IsPackable>
+
+    <PackageId>Karawan.Natives</PackageId>
+    <Version Condition="'$(Version)' == ''">0.0.0-local</Version>
+    <Authors>nassau records</Authors>
+    <Description>
+      Native libraries (openal-soft, SDL3) built by Karawan's own pinned CI matrix for
+      linux-x64, win-x64, osx-arm64, osx-x64 and Android arm64-v8a/armeabi-v7a.
+      Android binaries are 16 KB page aligned. See build-manifest.json in the package for
+      the exact upstream tags, commits and toolchains each binary was produced from.
+    </Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/tweggen/Karawan</RepositoryUrl>
+    <PackageTags>native;openal;sdl3;android</PackageTags>
+
+    <!-- Staging directory produced by recipes/pack-natives.sh. -->
+    <NativesStage Condition="'$(NativesStage)' == ''">$(MSBuildThisFileDirectory)../../artifacts/stage</NativesStage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      A package with no lib/ assembly is reported as incompatible with every framework.
+      The conventional _._ placeholder says "there is deliberately nothing to reference
+      here"; the payload is all runtimes/ and the Android .aar.
+    -->
+    <None Include="$(MSBuildThisFileDirectory)_._" Pack="true" PackagePath="lib/netstandard2.0/_._" />
+
+    <!-- Desktop natives, resolved per-RID by the .NET host at run time. -->
+    <None Include="$(NativesStage)/runtimes/**/*"
+          Pack="true"
+          PackagePath="runtimes" />
+
+    <!--
+      Android. .NET Android extracts jni/<abi>/ from an .aar found under lib/<tfm>/.
+      android34.0 rather than the app's android36.0: NuGet picks the highest compatible
+      lower TFM, so this stays consumable if the app's target moves.
+    -->
+    <None Include="$(NativesStage)/aar-out/*.aar"
+          Pack="true"
+          PackagePath="lib/net9.0-android34.0" />
+
+    <!-- Provenance travels inside the package, not only in CI logs. -->
+    <None Include="$(NativesStage)/manifest/build-manifest.json"
+          Pack="true"
+          PackagePath="build-manifest.json" />
+  </ItemGroup>
+
+</Project>

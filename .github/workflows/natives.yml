@@ -18,11 +18,22 @@ on:
     paths:
       - '.github/workflows/natives.yml'
       - 'recipes/**'
+      - 'packaging/**'
   pull_request:
     paths:
       - '.github/workflows/natives.yml'
       - 'recipes/**'
+      - 'packaging/**'
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish the package to GitHub Packages. IRREVERSIBLE - a NuGet version can never be re-published.'
+        type: boolean
+        default: false
+      version:
+        description: 'Package version to publish (e.g. 0.1.0). Ignored unless publish is true.'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -294,3 +305,104 @@ jobs:
         run: |
           echo "One or more matrix targets failed: ${{ needs.build.result }}"
           exit 1
+
+  # --------------------------------------------------------------------------
+  # Package the matrix output into a single versioned NuGet (WP-1.4).
+  #
+  # This job always runs and always uploads the .nupkg as a workflow artifact, so the
+  # package can be inspected before anyone commits to a version number. Publishing is
+  # a SEPARATE, opt-in job - see below.
+  # --------------------------------------------------------------------------
+  package:
+    name: package
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download every target's artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: artifacts
+
+      - name: Determine version
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          . recipes/versions.env
+          if [ -n "${{ inputs.version }}" ]; then
+            V="${{ inputs.version }}"
+          else
+            # Every non-manual build gets a unique prerelease version, so nothing can
+            # collide with a release and nothing is ever accidentally reusable.
+            V="${NATIVES_PACKAGE_VERSION}-ci.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "version=${V}" >> "$GITHUB_OUTPUT"
+          echo "Package version: ${V}"
+
+      - name: Stage the package layout and build manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends zip
+          bash recipes/pack-natives.sh \
+            --artifacts artifacts \
+            --stage "$PWD/artifacts/stage" \
+            --version "${{ steps.ver.outputs.version }}" \
+            --run "${GITHUB_RUN_ID}" \
+            --commit "${GITHUB_SHA}"
+
+      - name: dotnet pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet pack packaging/Karawan.Natives/Karawan.Natives.csproj \
+            -c Release \
+            -p:Version="${{ steps.ver.outputs.version }}" \
+            -p:NativesStage="$PWD/artifacts/stage" \
+            -o "$PWD/artifacts/nupkg"
+          echo "--- package contents ---"
+          cd artifacts/nupkg
+          for p in *.nupkg; do echo "== $p =="; unzip -l "$p"; done
+
+      - name: Upload the package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nupkg
+          path: artifacts/nupkg/*.nupkg
+          if-no-files-found: error
+          retention-days: 14
+
+  # --------------------------------------------------------------------------
+  # Publishing is IRREVERSIBLE - a NuGet version can never be re-published, which is
+  # exactly why the implementation plan (section 2.5) exempts it from independent
+  # re-run. It therefore never happens on a push: only on an explicit manual dispatch
+  # with publish=true.
+  # --------------------------------------------------------------------------
+  publish:
+    name: publish
+    runs-on: ubuntu-24.04
+    needs: package
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download the package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: nupkg
+          path: nupkg
+
+      - name: Push to GitHub Packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -l nupkg
+          dotnet nuget push "nupkg/*.nupkg" \
+            --source "https://nuget.pkg.github.com/${GITHUB_REPOSITORY_OWNER}/index.json" \
+            --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --skip-duplicate
