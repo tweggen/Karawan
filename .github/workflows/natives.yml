@@ -1,0 +1,299 @@
+# Native library build matrix.
+#
+# WP-1.1 of docs/roadmap/proposed/IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md.
+#
+# This is the SKELETON. It establishes and proves the toolchain matrix; it does not yet
+# build openal-soft (WP-1.2) or SDL3 (WP-1.3). Each target compiles a tiny smoke-test
+# library instead, so that when the real recipes land they land on a toolchain that has
+# already been shown to work and to produce correctly-formatted output.
+#
+# Everything that can drift is pinned. AC-1.5 requires byte-identical artifacts across
+# reruns, and floating labels ("macos-latest", "ubuntu-latest") actively prevent that:
+# GitHub rotates what they point at. Anything not pinned outright is recorded in the
+# build manifest so drift is at least visible in the artifact.
+
+name: natives
+
+on:
+  push:
+    paths:
+      - '.github/workflows/natives.yml'
+      - 'recipes/**'
+  pull_request:
+    paths:
+      - '.github/workflows/natives.yml'
+      - 'recipes/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: natives-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Android NDK. r27+ is required for 16 KB page alignment to be the default
+  # (recipes/BUILD_NOTES.md). This exact revision is what WP-0.0 measured with.
+  ANDROID_NDK_VERSION: 27.2.12479018
+  # Minimum API must match Wuka's SupportedOSPlatformVersion.
+  ANDROID_MIN_API: 26
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      # One broken target must not hide the state of the other five.
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-24.04
+            kind: linux
+          - target: android-arm64-v8a
+            runner: ubuntu-24.04
+            kind: android
+            abi: arm64-v8a
+          - target: android-armeabi-v7a
+            runner: ubuntu-24.04
+            kind: android
+            abi: armeabi-v7a
+          - target: win-x64
+            runner: windows-2022
+            kind: windows
+          - target: osx-arm64
+            runner: macos-15
+            kind: macos
+            arch: arm64
+          - target: osx-x64
+            runner: macos-15
+            kind: macos
+            arch: x86_64
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # ------------------------------------------------------------------
+      # Toolchain setup
+      # ------------------------------------------------------------------
+
+      - name: Install the pinned Android NDK
+        if: matrix.kind == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" \
+            --install "ndk;${ANDROID_NDK_VERSION}" > /dev/null
+          NDK="${ANDROID_SDK_ROOT}/ndk/${ANDROID_NDK_VERSION}"
+          test -d "${NDK}" || { echo "NDK not found at ${NDK}"; exit 1; }
+          echo "ANDROID_NDK_HOME=${NDK}" >> "$GITHUB_ENV"
+          echo "Installed NDK: ${NDK}"
+
+      # ------------------------------------------------------------------
+      # Record the toolchain. Anything not pinned outright must at least be
+      # visible in the artifact, so a reproducibility failure (AC-1.5) can be
+      # explained rather than guessed at.
+      # ------------------------------------------------------------------
+
+      - name: Record toolchain
+        id: toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "target=${{ matrix.target }}"
+            echo "runner_image=${{ matrix.runner }}"
+            echo "runner_arch=$(uname -m 2>/dev/null || echo unknown)"
+            echo "commit=${GITHUB_SHA}"
+            echo "workflow_run=${GITHUB_RUN_ID}"
+            echo "cmake=$(cmake --version | head -1)"
+          } > toolchain.txt
+          if [ "${{ matrix.kind }}" = "android" ]; then
+            echo "ndk=${ANDROID_NDK_VERSION}" >> toolchain.txt
+            "${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" --version \
+              | head -1 | sed 's/^/ndk_clang=/' >> toolchain.txt
+          elif [ "${{ matrix.kind }}" = "windows" ]; then
+            echo "msvc_toolset_pin=${MSVC_TOOLSET:-<unpinned>}" >> toolchain.txt
+          else
+            cc --version | head -1 | sed 's/^/cc=/' >> toolchain.txt
+          fi
+          echo "--- toolchain ---"
+          cat toolchain.txt
+
+      # ------------------------------------------------------------------
+      # Smoke build. Proves the toolchain produces a loadable shared library
+      # of the right format for the target. Replaced by the real recipes in
+      # WP-1.2 (openal-soft) and WP-1.3 (SDL3).
+      # ------------------------------------------------------------------
+
+      - name: Write the smoke-test source
+        shell: bash
+        run: |
+          mkdir -p smoke
+          cat > smoke/smoke.c <<'EOF'
+          /* WP-1.1 toolchain smoke test - deliberately trivial. */
+          int karawan_natives_smoke(int x) { return x + 1; }
+          EOF
+
+      - name: Build (Android)
+        if: matrix.kind == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          case "${{ matrix.abi }}" in
+            arm64-v8a)   TRIPLE=aarch64-linux-android ;;
+            armeabi-v7a) TRIPLE=armv7a-linux-androideabi ;;
+            *) echo "unhandled abi"; exit 1 ;;
+          esac
+          mkdir -p out
+          "${BIN}/clang" --target=${TRIPLE}${ANDROID_MIN_API} \
+            -shared -fPIC -O2 \
+            -Wl,-soname,libsmoke.so \
+            -Wl,-z,max-page-size=16384 \
+            -Wl,-z,common-page-size=16384 \
+            -o out/libsmoke.so smoke/smoke.c
+
+      - name: Build (Linux)
+        if: matrix.kind == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          cc -shared -fPIC -O2 -Wl,-soname,libsmoke.so -o out/libsmoke.so smoke/smoke.c
+
+      - name: Build (macOS)
+        if: matrix.kind == 'macos'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          cc -arch ${{ matrix.arch }} -dynamiclib -O2 -o out/libsmoke.dylib smoke/smoke.c
+
+      # vswhere + vcvarsall rather than a third-party setup-msvc action: it is the
+      # documented way to select an exact toolset (-vcvars_ver), it removes a supply-chain
+      # dependency, and the whole point of this programme is to depend on things that do
+      # not rot. MSVC_TOOLSET is unset on the first run so the actual version gets recorded;
+      # see the note in docs/roadmap/proposed/WP-1.1-CI.md.
+      - name: Build (Windows)
+        if: matrix.kind == 'windows'
+        shell: cmd
+        run: |
+          @echo off
+          set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+          for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSPATH=%%i"
+          if not defined VSPATH ( echo ERROR: no MSVC installation found & exit /b 1 )
+          echo Visual Studio: %VSPATH%
+          if defined MSVC_TOOLSET (
+            call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" x64 -vcvars_ver=%MSVC_TOOLSET% || exit /b 1
+          ) else (
+            call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" x64 || exit /b 1
+          )
+          mkdir out
+          cl /nologo /O2 /LD smoke\smoke.c /Fe:out\smoke.dll || exit /b 1
+          cl 2>&1 | findstr /C:"Compiler Version" >> toolchain.txt
+          echo vs_install=%VSPATH%>> toolchain.txt
+          type toolchain.txt
+
+      # ------------------------------------------------------------------
+      # Verify. A build that emits the wrong ABI or a 4 KB-aligned Android
+      # library is worse than a failed build, because it ships.
+      # ------------------------------------------------------------------
+
+      - name: Verify (Android - format and 16 KB alignment)
+        if: matrix.kind == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          READELF="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
+          echo "--- program headers ---"
+          "${READELF}" -lW out/libsmoke.so | grep LOAD
+
+          # Google's 16 KB requirement applies to the 64-bit ABIs. 32-bit devices
+          # have no 16 KB page sizes, so armeabi-v7a is exempt (WP-0.0-FINDINGS.md).
+          if [ "${{ matrix.abi }}" = "arm64-v8a" ]; then
+            BAD=$("${READELF}" -lW out/libsmoke.so | awk '/LOAD/ && $NF != "0x4000"' | wc -l)
+            if [ "${BAD}" -ne 0 ]; then
+              echo "FAIL: ${{ matrix.abi }} has LOAD segments that are not 16 KB aligned"
+              exit 1
+            fi
+            echo "OK: all LOAD segments 16 KB aligned"
+          else
+            echo "SKIP: ${{ matrix.abi }} is a 32-bit ABI, not covered by the 16 KB rule"
+          fi
+
+      - name: Verify (Linux)
+        if: matrix.kind == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          file out/libsmoke.so
+          readelf -h out/libsmoke.so | grep -E 'Class|Machine'
+
+      - name: Verify (macOS)
+        if: matrix.kind == 'macos'
+        shell: bash
+        run: |
+          set -euo pipefail
+          file out/libsmoke.dylib
+          lipo -info out/libsmoke.dylib
+
+      - name: Verify (Windows)
+        if: matrix.kind == 'windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -l out/
+          test -f out/smoke.dll
+
+      # ------------------------------------------------------------------
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: natives-${{ matrix.target }}
+          path: |
+            out/
+            toolchain.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  manifest:
+    name: manifest
+    runs-on: ubuntu-24.04
+    needs: build
+    if: always()
+    steps:
+      - name: Collect toolchain records
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: artifacts
+
+      - name: Summarise
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## natives build manifest"
+            echo
+            echo "Commit \`${GITHUB_SHA}\`, run \`${GITHUB_RUN_ID}\`."
+            echo
+            for f in artifacts/*/toolchain.txt; do
+              [ -f "$f" ] || continue
+              echo "<details><summary>$(basename "$(dirname "$f")")</summary>"
+              echo
+              echo '```'
+              cat "$f"
+              echo '```'
+              echo
+              echo "</details>"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail if any target failed
+        if: needs.build.result != 'success'
+        run: |
+          echo "One or more matrix targets failed: ${{ needs.build.result }}"
+          exit 1
