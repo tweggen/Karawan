@@ -163,11 +163,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # SDL3's documented Linux build dependencies, installed as a set rather than
+          # discovered one CI failure at a time. SDL checks each X11 extension
+          # individually and hard-errors on the first one missing (XTEST was the one
+          # that bit), so a partial list just moves the failure along by one package.
+          # https://wiki.libsdl.org/SDL3/README-linux#build-dependencies
           sudo apt-get install -y -qq --no-install-recommends \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev \
-            libxfixes-dev libxss-dev libxkbcommon-dev \
+            libxfixes-dev libxss-dev libxtst-dev libxinerama-dev libxxf86vm-dev \
+            libxkbcommon-dev \
             libwayland-dev wayland-protocols libdecor-0-dev \
-            libudev-dev libdbus-1-dev
+            libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+            libudev-dev libdbus-1-dev libibus-1.0-dev
           {
             echo "apt_libx11-dev=$(dpkg-query -W -f='${Version}' libx11-dev)"
             echo "apt_libwayland-dev=$(dpkg-query -W -f='${Version}' libwayland-dev)"
