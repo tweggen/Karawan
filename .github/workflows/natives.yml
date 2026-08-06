@@ -128,61 +128,56 @@ jobs:
           cat toolchain.txt
 
       # ------------------------------------------------------------------
-      # Smoke build. Proves the toolchain produces a loadable shared library
-      # of the right format for the target. Replaced by the real recipes in
-      # WP-1.2 (openal-soft) and WP-1.3 (SDL3).
+      # Build the natives. One recipe script per library, driven by --target, so
+      # CI and a developer's machine run exactly the same code path.
+      #
+      # Pins live in recipes/versions.env and are exported here so the Windows
+      # cmd step sees them too. Each recipe re-checks that the upstream tag still
+      # resolves to the pinned commit and refuses to build if it does not.
       # ------------------------------------------------------------------
 
-      - name: Write the smoke-test source
-        shell: bash
-        run: |
-          mkdir -p smoke
-          cat > smoke/smoke.c <<'EOF'
-          /* WP-1.1 toolchain smoke test - deliberately trivial. */
-          int karawan_natives_smoke(int x) { return x + 1; }
-          EOF
-
-      - name: Build (Android)
-        if: matrix.kind == 'android'
-        shell: bash
-        run: |
-          set -euo pipefail
-          BIN="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          case "${{ matrix.abi }}" in
-            arm64-v8a)   TRIPLE=aarch64-linux-android ;;
-            armeabi-v7a) TRIPLE=armv7a-linux-androideabi ;;
-            *) echo "unhandled abi"; exit 1 ;;
-          esac
-          mkdir -p out
-          "${BIN}/clang" --target=${TRIPLE}${ANDROID_MIN_API} \
-            -shared -fPIC -O2 \
-            -Wl,-soname,libsmoke.so \
-            -Wl,-z,max-page-size=16384 \
-            -Wl,-z,common-page-size=16384 \
-            -o out/libsmoke.so smoke/smoke.c
-
-      - name: Build (Linux)
+      # The runner image has no audio development headers, and openal-soft only
+      # compiles the backends whose headers it finds at configure time. Without these
+      # it builds happily with OSS/WaveFile/Null only - a library that links, loads,
+      # and is silent on any modern Linux desktop. The .so does not link these at
+      # runtime (openal dlopen()s them); they are build-time headers only.
+      - name: Install Linux audio development headers
         if: matrix.kind == 'linux'
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p out
-          cc -shared -fPIC -O2 -Wl,-soname,libsmoke.so -o out/libsmoke.so smoke/smoke.c
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            libasound2-dev libpulse-dev libpipewire-0.3-dev libjack-jackd2-dev
+          {
+            echo "apt_libasound2-dev=$(dpkg-query -W -f='${Version}' libasound2-dev)"
+            echo "apt_libpulse-dev=$(dpkg-query -W -f='${Version}' libpulse-dev)"
+            echo "apt_libpipewire-0.3-dev=$(dpkg-query -W -f='${Version}' libpipewire-0.3-dev)"
+          } >> toolchain.txt
 
-      - name: Build (macOS)
-        if: matrix.kind == 'macos'
+      - name: Load pinned upstream versions
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p out
-          cc -arch ${{ matrix.arch }} -dynamiclib -O2 -o out/libsmoke.dylib smoke/smoke.c
+          grep -E '^[A-Z0-9_]+=' recipes/versions.env >> "$GITHUB_ENV"
+          echo "--- pinned sources ---"
+          grep -E '^[A-Z0-9_]+=' recipes/versions.env
+
+      - name: Build openal-soft (unix)
+        if: matrix.kind != 'windows'
+        shell: bash
+        env:
+          ANDROID_MIN_API: ${{ env.ANDROID_MIN_API }}
+        run: |
+          set -euo pipefail
+          bash recipes/build-openal.sh --target "${{ matrix.target }}" --out "$PWD/out/openal"
 
       # vswhere + vcvarsall rather than a third-party setup-msvc action: it is the
-      # documented way to select an exact toolset (-vcvars_ver), it removes a supply-chain
-      # dependency, and the whole point of this programme is to depend on things that do
-      # not rot. MSVC_TOOLSET is unset on the first run so the actual version gets recorded;
-      # see the note in docs/roadmap/proposed/WP-1.1-CI.md.
-      - name: Build (Windows)
+      # documented way to select an exact toolset (-vcvars_ver), it removes a
+      # supply-chain dependency, and the point of this programme is to depend on
+      # things that do not rot. The MSVC environment is inherited by bash, so the
+      # same recipe script runs here as everywhere else.
+      - name: Build openal-soft (windows)
         if: matrix.kind == 'windows'
         shell: cmd
         run: |
@@ -191,67 +186,18 @@ jobs:
           for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSPATH=%%i"
           if not defined VSPATH ( echo ERROR: no MSVC installation found & exit /b 1 )
           echo Visual Studio: %VSPATH%
-          if defined MSVC_TOOLSET (
-            call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" x64 -vcvars_ver=%MSVC_TOOLSET% || exit /b 1
-          ) else (
-            call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" x64 || exit /b 1
-          )
-          mkdir out
-          cl /nologo /O2 /LD smoke\smoke.c /Fe:out\smoke.dll || exit /b 1
-          cl 2>&1 | findstr /C:"Compiler Version" >> toolchain.txt
+          call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" x64 -vcvars_ver=%MSVC_TOOLSET% || exit /b 1
           echo vs_install=%VSPATH%>> toolchain.txt
-          type toolchain.txt
+          cl 2>&1 | findstr /C:"Compiler Version" >> toolchain.txt
+          bash recipes/build-openal.sh --target win-x64 --out "%CD%/out/openal" || exit /b 1
 
-      # ------------------------------------------------------------------
-      # Verify. A build that emits the wrong ABI or a 4 KB-aligned Android
-      # library is worse than a failed build, because it ships.
-      # ------------------------------------------------------------------
-
-      - name: Verify (Android - format and 16 KB alignment)
-        if: matrix.kind == 'android'
+      - name: Show what was produced
         shell: bash
         run: |
           set -euo pipefail
-          READELF="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
-          echo "--- program headers ---"
-          "${READELF}" -lW out/libsmoke.so | grep LOAD
-
-          # Google's 16 KB requirement applies to the 64-bit ABIs. 32-bit devices
-          # have no 16 KB page sizes, so armeabi-v7a is exempt (WP-0.0-FINDINGS.md).
-          if [ "${{ matrix.abi }}" = "arm64-v8a" ]; then
-            BAD=$("${READELF}" -lW out/libsmoke.so | awk '/LOAD/ && $NF != "0x4000"' | wc -l)
-            if [ "${BAD}" -ne 0 ]; then
-              echo "FAIL: ${{ matrix.abi }} has LOAD segments that are not 16 KB aligned"
-              exit 1
-            fi
-            echo "OK: all LOAD segments 16 KB aligned"
-          else
-            echo "SKIP: ${{ matrix.abi }} is a 32-bit ABI, not covered by the 16 KB rule"
-          fi
-
-      - name: Verify (Linux)
-        if: matrix.kind == 'linux'
-        shell: bash
-        run: |
-          set -euo pipefail
-          file out/libsmoke.so
-          readelf -h out/libsmoke.so | grep -E 'Class|Machine'
-
-      - name: Verify (macOS)
-        if: matrix.kind == 'macos'
-        shell: bash
-        run: |
-          set -euo pipefail
-          file out/libsmoke.dylib
-          lipo -info out/libsmoke.dylib
-
-      - name: Verify (Windows)
-        if: matrix.kind == 'windows'
-        shell: bash
-        run: |
-          set -euo pipefail
-          ls -l out/
-          test -f out/smoke.dll
+          find out -type f | sort
+          echo "--- toolchain ---"
+          cat toolchain.txt
 
       # ------------------------------------------------------------------
 
@@ -271,6 +217,9 @@ jobs:
     needs: build
     if: always()
     steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Collect toolchain records
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -284,6 +233,14 @@ jobs:
             echo "## natives build manifest"
             echo
             echo "Commit \`${GITHUB_SHA}\`, run \`${GITHUB_RUN_ID}\`."
+            echo
+            echo "### Pinned upstream sources"
+            echo
+            echo '```'
+            grep -E '^[A-Z0-9_]+=' recipes/versions.env
+            echo '```'
+            echo
+            echo "### Per-target toolchains"
             echo
             for f in artifacts/*/toolchain.txt; do
               [ -f "$f" ] || continue
