@@ -17,7 +17,17 @@ linux-x64   win-x64   osx-arm64   osx-x64   android-arm64-v8a   android-armeabi-
 | Script | Library | Upstream | Targets |
 |--------|---------|----------|---------|
 | `build-openal.sh` | `libopenal.so` / `.dylib` / `OpenAL32.dll` | [kcat/openal-soft](https://github.com/kcat/openal-soft) | all six |
+| `build-sdl3.sh` | `libSDL3.so` / `.dylib` / `SDL3.dll` | [libsdl-org/SDL](https://github.com/libsdl-org/SDL) | all six |
 | `build-assimp-android.sh` | `libassimp.so` + `libc++_shared.so` | [assimp/assimp](https://github.com/assimp/assimp) | android only — **do not touch**, see below |
+
+### Why SDL3 is built rather than taken from the official AAR
+
+SDL ships an Android AAR and it *is* 16 KB-aligned ([`WP-0.0-FINDINGS.md`](../docs/roadmap/proposed/WP-0.0-FINDINGS.md) §4),
+so it would work. Building from a pinned tag instead keeps SDL3 on the same footing as
+openal-soft: one recipe, one NDK revision, one file to change a version in. It also keeps
+the C++ runtime consistent across every native, which matters because only one
+`libc++_shared.so` ships in the APK. The AAR additionally uses the **prefab** layout, which
+is a different consumption path from the `jni/`-layout AAR the project uses today.
 
 `lib/common.sh` holds the shared logic (target parsing, pinned checkout, CMake driver,
 alignment verification). It is sourced, not executed.
