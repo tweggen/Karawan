@@ -146,6 +146,20 @@ case "${KIND}" in
             fi
         else
             strip --strip-unneeded "${SO}" 2>/dev/null || true
+
+            # openal-soft compiles only the backends whose headers exist at configure
+            # time, and reports success either way. Without ALSA/Pulse/PipeWire you get
+            # a library with OSS/WaveFile/Null only: it links, it loads, and it is
+            # silent on any modern desktop. Assert a real backend is present rather
+            # than reading the configure summary and hoping.
+            #
+            # openal dlopen()s these, so they appear as strings, not as NEEDED entries.
+            if ! grep -qE 'libasound\.so|libpulse\.so|libpipewire' "${SO}"; then
+                die "${SO} has no ALSA/PulseAudio/PipeWire backend - it would be silent.
+Install the audio development headers (libasound2-dev libpulse-dev libpipewire-0.3-dev)
+and rebuild."
+            fi
+            info "OK: libopenal.so carries a real Linux audio backend"
         fi
         describe_artifact "${SO}"
         ;;

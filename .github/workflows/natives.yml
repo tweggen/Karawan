@@ -136,6 +136,25 @@ jobs:
       # resolves to the pinned commit and refuses to build if it does not.
       # ------------------------------------------------------------------
 
+      # The runner image has no audio development headers, and openal-soft only
+      # compiles the backends whose headers it finds at configure time. Without these
+      # it builds happily with OSS/WaveFile/Null only - a library that links, loads,
+      # and is silent on any modern Linux desktop. The .so does not link these at
+      # runtime (openal dlopen()s them); they are build-time headers only.
+      - name: Install Linux audio development headers
+        if: matrix.kind == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            libasound2-dev libpulse-dev libpipewire-0.3-dev libjack-jackd2-dev
+          {
+            echo "apt_libasound2-dev=$(dpkg-query -W -f='${Version}' libasound2-dev)"
+            echo "apt_libpulse-dev=$(dpkg-query -W -f='${Version}' libpulse-dev)"
+            echo "apt_libpipewire-0.3-dev=$(dpkg-query -W -f='${Version}' libpipewire-0.3-dev)"
+          } >> toolchain.txt
+
       - name: Load pinned upstream versions
         shell: bash
         run: |
