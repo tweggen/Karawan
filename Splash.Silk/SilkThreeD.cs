@@ -70,7 +70,7 @@ public class SilkThreeD : IThreeD
     private SilkRenderState _silkRenderState;
 
 
-    Flags.GLAnimBuffers AnimStrategy = Flags.GLAnimBuffers.AnimUniform;
+    GLAnimBuffers AnimStrategy = GLAnimBuffers.AnimUniform;
 
     /**
      * True when the context is desktop OpenGL 4.3 or newer.
@@ -93,7 +93,7 @@ public class SilkThreeD : IThreeD
      * vertex attribute). The UBO and uniform strategies upload a single bone pose per
      * draw call, so their batches must not mix animations or frames.
      */
-    public bool HasPerInstanceAnimationFrames => AnimStrategy == Flags.GLAnimBuffers.AnimSSBO;
+    public bool HasPerInstanceAnimationFrames => AnimStrategy == GLAnimBuffers.AnimSSBO;
     
     
     /**
@@ -362,14 +362,14 @@ public class SilkThreeD : IThreeD
         //Trace($"Anim Strategy is {AnimStrategy}");
         switch (AnimStrategy)
         {
-            case Flags.GLAnimBuffers.AnimSSBO:
+            case GLAnimBuffers.AnimSSBO:
                 _locFrameno = shader.GetAttrib("instanceFrameno");
                 _locNBones = shader.GetUniform("nBones");
                 break;
-            case Flags.GLAnimBuffers.AnimUBO:
+            case GLAnimBuffers.AnimUBO:
                 _locNBones = shader.GetUniform("nBones");
                 break;
-            case Flags.GLAnimBuffers.AnimUniform:
+            case GLAnimBuffers.AnimUniform:
                 _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
                 break;
             default:
@@ -499,7 +499,7 @@ public class SilkThreeD : IThreeD
                  */
                 switch (skAnimationsEntry.AnimStrategy)
                 {
-                    case Flags.GLAnimBuffers.AnimSSBO:
+                    case GLAnimBuffers.AnimSSBO:
                     {
                         /*
                          * SSBO: We just use the ssbo previously uploaded.
@@ -508,7 +508,7 @@ public class SilkThreeD : IThreeD
                         _silkRenderState.UseBoneMatricesSSBO(skAnimationsEntry.SSBOAnimations);
                     }
                         break;
-                    case Flags.GLAnimBuffers.AnimUniform:
+                    case GLAnimBuffers.AnimUniform:
                     {
                         var model = skAnimationsEntry.Model;
                         if (model != null && modelAnimation != null)
@@ -559,7 +559,7 @@ public class SilkThreeD : IThreeD
                         }
                     }
                         break;
-                    case Flags.GLAnimBuffers.AnimUBO:
+                    case GLAnimBuffers.AnimUBO:
                     {
 
                         var model = skAnimationsEntry.Model;
@@ -622,7 +622,7 @@ public class SilkThreeD : IThreeD
                 }
             }
 
-            if (AnimStrategy == Flags.GLAnimBuffers.AnimSSBO)
+            if (AnimStrategy == GLAnimBuffers.AnimSSBO)
             {
                 if (spanFramenos != null)
                 {
@@ -1159,7 +1159,12 @@ public class SilkThreeD : IThreeD
         _silkRenderState = new(_gl);
     }
 
-    public GL GetGL()
+    /**
+     * Internal on purpose (WP-0.2): returning a Silk.NET GL keeps a graphics-API type out of
+     * anything Splash/ or an embedding host can reach. The only caller is
+     * Platform.RenderExternalFrame, in this same project.
+     */
+    internal GL GetGL()
     {
         return _getGL();
     }
@@ -1205,12 +1210,12 @@ public class SilkThreeD : IThreeD
         if (api == "OpenGL")
         {
             _hasGL43 = versionNumber >= 430;
-            AnimStrategy = _hasGL43 ? Flags.GLAnimBuffers.AnimSSBO : Flags.GLAnimBuffers.AnimUBO;
+            AnimStrategy = _hasGL43 ? GLAnimBuffers.AnimSSBO : GLAnimBuffers.AnimUBO;
         }
         else if (api == "OpenGLES")
         {
             _hasGL43 = false;
-            AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
+            AnimStrategy = GLAnimBuffers.AnimUBO;
         }
         else
         {

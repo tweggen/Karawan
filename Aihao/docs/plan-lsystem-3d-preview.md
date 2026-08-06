@@ -1,5 +1,19 @@
 # Plan: L-System 3D Preview in Aihao Editor
 
+> **⚠ Partially superseded by WP-0.2 (2026-08-06).** This document records the design as
+> originally implemented and is kept for that history. The Silk.NET-facing details below are no
+> longer accurate:
+>
+> - `AvaloniaNativeContext` **no longer exists** in Aihao. It has been deleted; `PreviewHelper`
+>   has its own equivalent `INativeContext` adapter inside `Splash.Silk`.
+> - `EnginePreviewService` no longer creates a `Silk.NET.OpenGL.GL`, and has no
+>   `SetGL(Silk.NET.OpenGL.GL)`. GL-version detection moved to
+>   `Splash.Silk.PreviewHelper.DetectAndSetGlVersion(Func<string, nint>)`.
+> - `Platform.SetExternalGL` is now `internal`.
+>
+> The boundary Aihao actually uses today is a `Func<string, nint>` GetProcAddress delegate — no
+> graphics-API type crosses into Aihao. See `docs/ARCHITECTURE/PLATFORM_BACKEND.md` §5.
+
 ## Context
 
 Aihao is the Avalonia 11.3.8 IDE for Karawan. It has an L-System editor but no way to visualize results without running the full game. The Joyce engine uses singletons (`I` service locator), which is acceptable since the preview is also a singleton display.
