@@ -139,6 +139,31 @@
 		<PackageReference Include="Silk.NET.Windowing.Sdl" />
 		<!-- Transitive dep of Silk.NET.SDL; exclude Linux linux-arm64 .so from bleeding into Android APK -->
 		<PackageReference Include="Ultz.Native.SDL" ExcludeAssets="native" PrivateAssets="all" />
+		<!--
+			Transitive dep of Joyce. ImGui.NET has no Android native, so RID fallback was
+			packaging its runtimes/linux-x64/native/libcimgui.so into lib/x86_64/ of the APK
+			(1.7 MB) - a glibc-linked binary that cannot load on bionic, and one of only five
+			libraries in the APK that are not 16 KB page aligned (WP-0.3-WARNINGS.md).
+
+			Excluding the native is safe today because ImGui is the in-game debugger and is
+			switched off on Android: models/game.launch.android.json sets "createUI": "false",
+			so Platform.cs never constructs the ImGui controller and nothing ever P/Invokes
+			into cimgui.
+
+			TO RE-ENABLE the in-game debugger on Android, this exclusion is not enough on its
+			own - there is no Android build of cimgui in the ImGui.NET package at all. A real
+			arm64-v8a libcimgui.so has to be built and shipped (the same problem Phase 1 solves
+			for openal-soft and SDL), and only then does flipping "createUI" back to "true"
+			do anything.
+
+			NOTE: no PrivateAssets="all" here, unlike the two entries above. Those packages are
+			native-only, but ImGui.NET also carries the managed ImGui.NET.dll that Joyce's UI
+			code compiles against. Adding PrivateAssets="all" drops that assembly from the
+			Android output entirely (verified: ImGui.NET.dll disappears from
+			obj/.../android/assets/<abi>/), which would turn any accidental touch of a
+			joyce.ui type into a runtime assembly-load failure the build cannot catch.
+		-->
+		<PackageReference Include="ImGui.NET" ExcludeAssets="native" />
 	</ItemGroup>
 
 	<ItemGroup>
