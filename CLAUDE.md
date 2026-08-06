@@ -68,7 +68,6 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 - `BepuPhysics2` (github.com/TimosForks/bepuphysics2)
 - `DefaultEcs` (github.com/TimosForks/DefaultEcs)
 - `ObjLoader` (github.com/TimosForks/ObjLoader)
-- `FbxSharp` (github.com/TimosForks/FbxSharp)
 - `glTF-CSharp-Loader` (github.com/KhronosGroup/glTF-CSharp-Loader)
 - `ink` (github.com/TimosForks/ink)
 

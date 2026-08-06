@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using engine.behave;
 using engine.joyce;
 using engine.joyce.components;
-using FbxSharp;
 using static engine.Logger;
 
 namespace engine.behave;

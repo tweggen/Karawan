@@ -3,7 +3,7 @@
   <!--
     Where the sibling repositories live.
 
-    BepuPhysics2, DefaultEcs, ObjLoader, FbxSharp and glTF-CSharp-Loader are checked out
+    BepuPhysics2, DefaultEcs, ObjLoader and glTF-CSharp-Loader are checked out
     NEXT TO this repository rather than vendored into it (see the prerequisites in
     CLAUDE.md), so every project referencing them has to spell out where "next to" is.
 
