@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using builtin.modules.inventory.components;
 using engine;
 using engine.joyce.components;
-using FbxSharp;
 
 namespace builtin.modules.inventory;
 

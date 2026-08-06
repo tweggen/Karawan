@@ -1,7 +1,6 @@
 using ImGuiNET;
 using engine;
 using engine.editor.components;
-using ImGuiNET;
 namespace joyce.ui;
 
 public class EntityState

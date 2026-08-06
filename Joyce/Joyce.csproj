@@ -28,7 +28,6 @@
     <ProjectReference Include="$(SiblingRoot)/DefaultEcs/source/DefaultEcs/DefaultEcs.csproj" />
     <ProjectReference Include="$(SiblingRoot)/glTF-CSharp-Loader/glTFLoader/glTFLoader.csproj" />
     <ProjectReference Include="$(SiblingRoot)/ObjLoader/source/CjClutter.ObjLoader.Loader/CjClutter.ObjLoader.Loader.csproj" />
-    <ProjectReference Include="$(SiblingRoot)/FbxSharp/FbxSharp.csproj" />
     <ProjectReference Include="..\ExpectEngine\ExpectEngine.csproj" />
   </ItemGroup>
 

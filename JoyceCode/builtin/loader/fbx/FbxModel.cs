@@ -9,7 +9,6 @@ using engine;
 using engine.elevation;
 using engine.joyce;
 using engine.joyce.components;
-using FbxSharp;
 using Silk.NET.Assimp;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 using Material = Silk.NET.Assimp.Material;

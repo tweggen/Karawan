@@ -10,7 +10,6 @@ using builtin.baking;
 using builtin.extensions;
 using builtin.loader;
 using engine.joyce.components;
-using FbxSharp;
 using static engine.Logger;
 
 namespace engine.joyce;
