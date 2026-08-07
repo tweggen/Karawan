@@ -5,7 +5,7 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-08-07
 
 ---
 
@@ -44,14 +44,15 @@ Consequences carried forward:
 | **WP-1.2** | ✅ **MERGED** | `platform/wp-1.2` | [#16](https://github.com/tweggen/Karawan/pull/16) | 1 | AC-1.1 ✅ · 1.6 ✅ · GLOBAL-2/3 ✅ | none apply | openal-soft, all six targets, pinned by tag **and** commit. Caught: static-libc++ clash with assimp, and a Linux build with **no audio backend** that CI had already passed. Both now build-time assertions. |
 | **WP-1.3** | ✅ **MERGED** | `platform/wp-1.3` | [#17](https://github.com/tweggen/Karawan/pull/17) → [#18](https://github.com/tweggen/Karawan/pull/18) | 1 | AC-1.1 ✅ · 1.2 ✅ (asserted in-build) · 1.6 ✅ | none apply | SDL3, all six targets. ⚠ Merged into `platform/wp-1.2` rather than master; **#18 was needed to land it** — see §Merge-ordering below. |
 | **WP-1.4** | ✅ **MERGED** | `platform/wp-1.4` | [#19](https://github.com/tweggen/Karawan/pull/19) → [#20](https://github.com/tweggen/Karawan/pull/20) | 1 | AC-1.1 ✅ · GLOBAL-2/3 ✅ | **publish 🔒 not done** | `Karawan.Natives` NuGet: `runtimes/<rid>/native/` + Android `.aar` + `build-manifest.json` with per-file sha256. AAR built deterministically (python, fixed timestamps) — byte-identical across runs. ⚠ Same merge-ordering trap as #17; **#20 was needed to land it**. |
-| WP-1.5 | **BLOCKED-ON-HUMAN** | — | — | 0 | — | — | Consumes the package and drops `Silk.NET.OpenAL.Soft.Native`. **Blocked until `Karawan.Natives` is published** — an irreversible, human-authorised step (plan §2.5). |
-| WP-1.6 | NOT-STARTED | — | — | 0 | — | — | Promote XA0141/XA4301 to errors. Note WP-0.3 found **XA4301 does not currently fire**; promoting it guards, it does not fix. XA0141 still fires for Silk's `libSDL2.so`/`libmain.so`. |
+| **WP-1.5** | ✅ **MERGED** | `platform/wp-1.5` | [#26](https://github.com/tweggen/Karawan/pull/26) | 1 | AC-GLOBAL-1 ✅ · 2/3 ✅ · 4 ✅ (168/168) · AC-1.6 ✅ | **desktop audio confirmed by owner** (Windows) | `Karawan.Natives` replaces `Silk.NET.OpenAL.Soft.Native`. Windows file name differs (`OpenAL32.dll` vs `soft_oal.dll`); Silk falls back across name candidates — verified by forcing **real** native calls, since `GetApi()` alone binds lazily and proves nothing. **Android deliberately unchanged** (duplicate `.so` + libc++ ABI vs assimp); revisit at Phase 4. |
+| **WP-1.6** | ⚠ **PARTIAL — PR-OPEN** | `platform/wp-1.6` | [#27](https://github.com/tweggen/Karawan/pull/27) | 1 | **AC-1.7 ⚠ half** — XA4301 ✅ promoted, **XA0141 ⛔ deferred** | none apply | XA4301: 0 occurrences, promoted, build green. XA0141: promoted → **4 errors, all `Silk.NET.Windowing.Sdl`'s `libSDL2.so`/`libmain.so` @ `0x1000`**. Every native we own is `0x4000` (verified independently of the SDK). **Not satisfiable in Phase 1** — only removing Silk's SDL2 fixes it, which is Phase 2/3. See §AC-1.7 below. |
 | WP-2.1 – 2.3 | NOT-STARTED | — | — | 0 | — | GATE-A, GATE-B | Proceeds, but no longer release-critical. ⚠ AC-2.2/AC-0.0.3 AAR path was wrong — SDL3 uses **prefab** layout. |
 | WP-3.1 – 3.5 | BLOCKED | — | — | 0 | — | GATE-C, GATE-E | Blocked on GATE-A + GATE-B per plan. |
 | WP-4.1 – 4.4 | NOT-STARTED | — | — | 0 | — | GATE-D | Independent of Phases 2–3; Phase 0 has landed, so this is dispatchable now. |
 | **WP-5.0** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0 ✅ exactly 0 changed lines** | none apply | Generated from `gl.xml`; baseline and candidate both compile the identical sample. **Caveat: 4 hand-written overloads for 5 entry points** — `gl.xml` cannot describe Silk's overload policy. |
 | **WP-5.0b** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0b ✅** costed side by side | none apply | OpenTK 5: **37 % of code lines** ≈ 83 of 225 sites. `GL` is static vs Silk's instance → all 225 change receiver. Also `pre.16` ships **net10.0 only**, dropping our net9.0. |
-| WP-5.1 – 5.4 | **BLOCKED-ON-HUMAN** | — | — | 0 | — | GATE-E, GATE-F | Plan §5: nothing starts until the human **chooses** between S2a and S2b. Both are now costed (#22). Recommendation there: S2a in its narrow form. Also legitimate: don't do Phase 5 at all (§5c). |
+| **WP-5.1** | ✅ **MERGED** | `platform/wp-5.1` | [#25](https://github.com/tweggen/Karawan/pull/25) | 1 | generated surface compiles standalone ✅ | none apply | `Splash.GL/generated/GL.g.cs` generated from Khronos `gl.xml`, no package references. Surface resolved by **Roslyn** (339 call sites / 81 distinct entry points), not regex — an earlier MSBuildWorkspace attempt silently reported **zero**, indistinguishable from "uses no GL". |
+| WP-5.2 – 5.4 | **BLOCKED-ON-HUMAN** | — | — | 0 | — | GATE-E, GATE-F | Owner chose **S2a, narrow form** (2026-08-06). Remaining blocker: GATE-F reference frames, plus `Silk.NET.OpenGL.Extensions.ImGui` entanglement — it takes Silk's `GL` type in its public API, so swapping the GL binding drags ImGui with it. |
 
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
 
@@ -59,7 +60,55 @@ Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MER
 
 | PR | What | State |
 |---|---|---|
-| [#21](https://github.com/tweggen/Karawan/pull/21) | AC-1.4 rewritten as build-time assertions | ✅ CI green (run 31116752667, all 9 jobs); ready to merge |
+| [#27](https://github.com/tweggen/Karawan/pull/27) | WP-1.6 — promote `XA4301`; `XA0141` deferred with reasons | open; all ACs re-run green |
+
+### ⛔ AC-1.7 is only half-satisfiable, and not for the reason the plan expected
+
+The plan (§Phase 1) says of WP-1.6: *"With correct natives in place this should pass; if it does
+not, the natives are not actually fixed and Phase 1 is not done."* **That inference does not hold
+here**, so it is recorded rather than acted on.
+
+Measured on `platform/wp-1.6`, promoting both codes:
+
+| Code | Occurrences | Verdict |
+|---|---|---|
+| `XA4301` (duplicate native lib in APK) | 0 | ✅ **promoted**, build stays green |
+| `XA0141` (no 16 KB page size) | 4 | ⛔ **deferred** |
+
+All four `XA0141` errors name the same two libraries, from a package we do not build:
+
+```
+libSDL2.so, libmain.so   <-  Silk.NET.Windowing.Sdl 2.23.0 (.aar)   p_align = 0x1000
+```
+
+Every native this repository *is* responsible for already passes. Checked directly from the ELF
+program headers, independently of the Android SDK (no NDK on the verifying machine), and the same
+checker was confirmed to flag Silk's two — so this is not a checker that says OK to everything:
+
+```
+OK    libassimp.so       elf64  0x4000
+OK    libc++_shared.so   elf64  0x4000
+OK    libopenal.so       elf64  0x4000
+FAIL  libSDL2.so         elf64  0x1000     <- Silk
+FAIL  libmain.so         elf64  0x1000     <- Silk
+```
+
+So Phase 1 **is** done by its own scope (N5: openal-soft and SDL3 only). `XA0141` cannot be
+cleared by fixing our natives; it clears when Silk's SDL2 leaves the APK, which is Phase 2/3.
+Promoting it now would red-line master for every work package in between, which is precisely the
+situation WP-0.3 deferred promotion to avoid.
+
+Three ways out, for the record:
+
+1. **Wait for Phase 2/3** (default, chosen). Master stays green; the criterion stays visibly open.
+2. **Repack Silk's AAR at 16 KB.** Already proven feasible in WP-0.0 (claim #6 falsified). Clears
+   the warning without waiting, but adds a build step whose only job is to patch a dependency we
+   are in the middle of deleting.
+3. **Promote anyway and accept red master.** Honest signal, no practical benefit — the fact is
+   already recorded here and in a comment at the promotion site.
+
+**Re-run when Silk.NET.Windowing.Sdl is removed:** add `XA0141` to `MSBuildWarningsAsErrors` in
+`Wuka/Wuka.csproj` and rebuild. That is the whole remaining task for AC-1.7.
 
 ### ⚠ Merge-ordering trap — hit twice, now structurally closed
 

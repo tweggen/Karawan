@@ -11,6 +11,29 @@
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 
+		<!--
+			WP-1.6 (deferred from WP-0.3). XA4301 = duplicate native library in the APK.
+			Zero occurrences today, so promoting it is free, and it is exactly the
+			regression that adding a natives package could reintroduce silently.
+
+			XA0141 (shared library without a 16 KB page size) is NOT here, and that is a
+			measured decision rather than an oversight. Promoted, it produces 4 errors,
+			all of them naming libraries we do not build:
+
+			  libSDL2.so, libmain.so  <-  Silk.NET.Windowing.Sdl 2.23.0's .aar
+
+			Every native this repository is responsible for already passes: libopenal.so,
+			libc++_shared.so and libassimp.so are all 16 KB aligned (asserted at build
+			time in recipes/build-openal.sh). So the criterion cannot be met by fixing
+			our natives - only by removing Silk's SDL2, which is Phase 2/3, not Phase 1.
+
+			Promoting it now would red-line master for every work package in between.
+			Tracked as an open acceptance criterion (AC-1.7) in
+			docs/roadmap/proposed/PLATFORM-BACKEND-STATUS.md rather than silently dropped;
+			add XA0141 to the line below the moment Silk.NET.Windowing.Sdl is gone.
+		-->
+		<MSBuildWarningsAsErrors>$(MSBuildWarningsAsErrors);XA4301</MSBuildWarningsAsErrors>
+
 		<!-- Display name -->
 		<ApplicationTitle>Wuka</ApplicationTitle>
 

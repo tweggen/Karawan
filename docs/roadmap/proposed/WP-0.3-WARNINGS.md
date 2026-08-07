@@ -9,6 +9,20 @@ Promotion of `XA0141` / `XA4301` to errors is **deferred to WP-1.6** by design: 
 `Karawan.sln`, so promoting them now would make AC-GLOBAL-1 fail on master for every subsequent
 work package until the natives are fixed in Phase 1.
 
+> ## ⏩ Follow-up (2026-08-07, WP-1.6) — what became of this inventory
+>
+> - **`XA4301` is now promoted to an error** in `Wuka.csproj`. Still zero occurrences, so it is a
+>   regression guard exactly as §2 predicted.
+> - **`XA0141` is NOT promoted**, and cannot be within Phase 1. Re-measured on `platform/wp-1.6`:
+>   **8 warnings / 2 distinct libraries**, down from the 10 / 3 below — `libcimgui.so` is gone,
+>   because §4.2's suggested fix was applied (`ExcludeAssets="native"` on `ImGui.NET`, with the
+>   caveat that `PrivateAssets="all"` must **not** be added or the managed assembly disappears too).
+>   **§4.1 and §4.2 are therefore resolved.** What remains is `libSDL2.so` / `libmain.so` from
+>   `Silk.NET.Windowing.Sdl`, which clears only when Silk's SDL2 leaves the APK — Phase 2/3.
+> - Full reasoning and the three options: `PLATFORM-BACKEND-STATUS.md` §AC-1.7.
+>
+> §3's "re-confirm against a Release/AAB build before GATE-B" is **still open**.
+
 Build: `dotnet build Wuka/Wuka.csproj` (Debug, `net9.0-android36.0`) at `1b432fba`.
 Result: **exit 0, 974 warnings, 0 errors.** `Wuka.csproj` contains no `NoWarn`,
 `WarningsAsErrors` or `TreatWarningsAsErrors` — these are simply at default severity and lost
