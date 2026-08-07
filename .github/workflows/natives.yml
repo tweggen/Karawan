@@ -27,11 +27,15 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: 'Publish the package to GitHub Packages. IRREVERSIBLE - a NuGet version can never be re-published.'
+        description: 'Publish to GitHub Packages. IRREVERSIBLE - a NuGet version can never be re-published.'
+        type: boolean
+        default: false
+      publish_nuget_org:
+        description: 'Publish to nuget.org. MORE irreversible: the package ID is claimed globally and forever, and versions can be unlisted but never deleted. Uses Trusted Publishing (OIDC) - no stored key.'
         type: boolean
         default: false
       version:
-        description: 'Package version to publish (e.g. 0.1.0). Ignored unless publish is true.'
+        description: 'Package version to publish (e.g. 0.1.0). Ignored unless one of the publish flags is true.'
         type: string
         default: ''
 
@@ -405,4 +409,78 @@ jobs:
           dotnet nuget push "nupkg/*.nupkg" \
             --source "https://nuget.pkg.github.com/${GITHUB_REPOSITORY_OWNER}/index.json" \
             --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --skip-duplicate
+
+  # --------------------------------------------------------------------------
+  # nuget.org. Separate from the GitHub Packages job on purpose: it is a strictly
+  # larger commitment.
+  #
+  # GitHub Packages NuGet requires authentication even for a PUBLIC package -
+  # anonymous restore returns 401, verified - so consuming it would force every
+  # contributor and every fork's CI to hold a PAT with read:packages, when today
+  # the build needs no credentials at all. nuget.org restores anonymously, which
+  # is why the package goes to both.
+  #
+  # More irreversible than GitHub Packages: the package ID is claimed globally and
+  # permanently, and a published version can be unlisted but never deleted.
+  # Consequently this has its own opt-in flag, and never runs on a push.
+  #
+  # Authentication is Trusted Publishing (OIDC), not a stored API key. nuget.org
+  # now discourages API keys for automated publishing. NuGet/login exchanges this
+  # workflow's short-lived GitHub OIDC token for a short-lived NuGet key, so there
+  # is no long-lived secret to leak, rotate, or forget to scope - which is the same
+  # class of problem as the PAT already sitting in this repository's remote URL.
+  # --------------------------------------------------------------------------
+  publish-nuget-org:
+    name: publish (nuget.org)
+    runs-on: ubuntu-24.04
+    needs: package
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_nuget_org
+    permissions:
+      contents: read
+      # Required for Trusted Publishing: lets the job mint an OIDC token that
+      # nuget.org can verify came from this repository and workflow.
+      id-token: write
+    steps:
+      - name: Require the nuget.org account name
+        shell: bash
+        env:
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NUGET_USER}" ]; then
+            echo "The NUGET_USER repository variable is not set."
+            echo
+            echo "It is a VARIABLE, not a secret - it is only an account name."
+            echo "  Settings > Secrets and variables > Actions > Variables > New"
+            echo "  name: NUGET_USER   value: <your nuget.org username>"
+            echo
+            echo "A Trusted Publishing policy for this repository must also exist on"
+            echo "nuget.org: https://learn.microsoft.com/nuget/nuget-org/trusted-publishing"
+            exit 1
+          fi
+          echo "Publishing as nuget.org user: ${NUGET_USER}"
+
+      - name: Download the package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: nupkg
+          path: nupkg
+
+      # Exchanges the GitHub OIDC token for a short-lived nuget.org API key.
+      # Pinned to a commit like every other action here.
+      - name: NuGet login (Trusted Publishing)
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Push to nuget.org
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -l nupkg
+          dotnet nuget push "nupkg/*.nupkg" \
+            --source "https://api.nuget.org/v3/index.json" \
+            --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" \
             --skip-duplicate
