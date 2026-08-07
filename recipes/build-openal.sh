@@ -128,6 +128,26 @@ case "${KIND}" in
             fi
             info "OK: libopenal.so links the shared C++ runtime"
 
+            # AC-1.4, expressed as assertions rather than as a one-off gate command.
+            #
+            # The plan originally asked for libOpenSLES.so in NEEDED. No correct build
+            # produces that: openal-soft dlopen()s OpenSLES, so it appears as a string
+            # and a symbol reference, never as a NEEDED entry. The criterion's intent -
+            # this is a real Android build and it can actually make sound - is right, so
+            # it is tested here in the two ways that are actually true of a good build.
+            if "$(ndk_bin)/llvm-readelf" -d -W "${SO}" | grep -qE 'libc\.so\.6|ld-linux'; then
+                die "${SO} links glibc - this is a Linux binary, not an Android one.
+Android needs Bionic (libc.so) and would fail to load this at runtime."
+            fi
+            info "OK: libopenal.so links Bionic, not glibc"
+
+            if ! grep -q 'libOpenSLES.so' "${SO}" || ! grep -q 'slCreateEngine' "${SO}"; then
+                die "${SO} has no OpenSL ES backend - it would be silent on Android.
+openal dlopen()s OpenSLES, so both the library name and slCreateEngine must appear
+in the binary. Check that alc/backends/opensl.cpp was compiled in."
+            fi
+            info "OK: libopenal.so carries the OpenSL ES audio backend"
+
             # Ship the matching runtime from the SAME NDK. Mixing NDK revisions between
             # libassimp.so and libopenal.so breaks the shared runtime's ABI.
             ABI_DIR="$(ndk_root)/toolchains/llvm/prebuilt/$(basename "$(dirname "$(ndk_bin)")")/sysroot/usr/lib"

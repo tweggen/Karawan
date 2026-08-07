@@ -329,16 +329,43 @@ Depends on: WP-0.0 findings. **N5 applies: openal-soft and SDL3 only. Not Assimp
 | AC-1.1 | CI green | `gh run list --workflow=natives.yml --limit 1 --json conclusion` | `"success"` |
 | AC-1.2 | Every Android `.so` 16 KB-aligned | `llvm-readelf -lW <artifact>/*.so \| grep LOAD` | `0x4000` throughout |
 | AC-1.3 | No Linux natives in the APK | unzip APK; list `lib/arm64-v8a/` | no `libSDL2-2.0.so`; no glibc-linked `libopenal.so` |
-| AC-1.4 | Correct OpenAL | `llvm-readelf -d libopenal.so \| grep NEEDED` | `libOpenSLES.so`, **not** `libc.so.6` |
+| AC-1.4 | Correct OpenAL | asserted in `recipes/build-openal.sh` on every Android build; look for the four `OK:` lines in the job log | Bionic not glibc · OpenSL ES backend present · shared C++ runtime · 16 KB aligned |
 | AC-1.5 | Reproducible | re-run workflow; `sha256sum` both artifact sets | hashes identical (**no "or documented reason" escape** — if they differ, the WP fails) |
 | AC-1.6 | Assimp untouched (N5) | `git diff master -- recipes/build-assimp-android.sh` | empty |
 | AC-1.7 | WP-1.6 promotion holds | `dotnet build Wuka/Wuka.csproj` | exit 0 with XA0141/XA4301 as errors |
 
-> **AC-1.2/1.4 need ELF tooling that is not installed** — see §8. Android `.so`s are ELF; `otool` is
-> Mach-O only and will not work. Install `llvm` (`brew install llvm`) or use the NDK's
-> `llvm-readelf` before running these. Verify the tool exists before claiming a PASS.
+> **AC-1.2/1.4 need ELF tooling** — Android `.so`s are ELF; `otool` is Mach-O only and will not
+> work. Use the NDK's bundled `llvm-readelf` (present on every machine that has the NDK). The
+> recipes already do this, so a local build needs nothing extra installed.
 >
 > **AC-1.5 is expensive** (a full CI matrix re-run). It is on the §2.5 evidence-based exemption list.
+
+> ### AC-1.4 was rewritten 2026-08-06, and why it matters beyond this one row
+>
+> It originally read: `llvm-readelf -d libopenal.so | grep NEEDED` → `libOpenSLES.so`, **not**
+> `libc.so.6`.
+>
+> **No correct build satisfies that.** openal-soft `dlopen()`s OpenSL ES, so it appears in the
+> binary as a string and a symbol reference and *never* as a `NEEDED` entry — confirmed against both
+> the library shipped in the APK today and a fresh build (WP-1.2). As written, the criterion failed
+> good builds and would have pushed someone toward "fixing" a non-problem.
+>
+> The **intent** was right — *this is a real Android build and it can actually make sound* — so it is
+> now tested the two ways that are true of a good build (no glibc; OpenSL ES backend present),
+> alongside the shared-C++-runtime and 16 KB checks.
+>
+> The change worth generalising is *where* it lives. **A criterion that can be a build-time assertion
+> should be one.** A gate checked once at Phase-1 sign-off protects nothing in month six; an
+> assertion in the recipe fails the build the day it regresses. Two defects in Phase 1 were caught
+> exactly this way and neither would have failed a build otherwise:
+>
+> - `libopenal.so` linked libc++ **statically** while `libassimp.so` used the shared runtime — links
+>   and runs fine alone, breaks only in combination.
+> - The Linux `libopenal.so` shipped with **no real audio backend** (OSS/WaveFile/Null only) and was
+>   silent. CI reported success.
+>
+> Prefer assertions in `recipes/` over commands in this table wherever the check can be made from the
+> build's own output.
 
 ---
 
@@ -560,5 +587,6 @@ Ranked by likelihood, for the orchestrator to watch for.
 | Date | Change |
 |---|---|
 | 2026-08-04 | Created from `docs/ARCHITECTURE/PLATFORM_BACKEND.md` rev 3 |
+| 2026-08-06 | **AC-1.4 rewritten.** It required `libOpenSLES.so` in `NEEDED`, which no correct build produces — openal `dlopen()`s it. Replaced by four assertions that live in `recipes/build-openal.sh` and run on every Android build. Establishes the general preference: a criterion that can be a build-time assertion should be one. Also corrected the §8 note about ELF tooling, which assumed a Mac. |
 | 2026-08-05 | **WP-0.0 executed — ADR claim #6 falsified, claim #7 confirmed.** Programme halted for re-plan per §4/§5c. Added `PLATFORM-BACKEND-STATUS.md` (the §2.2b ledger, previously missing). Corrected §5b (described macOS; work is on Windows 11 — ELF tooling and NDK are present, `gh` is **not**). Corrected AC-0.0.3's SDL3 AAR path (prefab layout, not `jni/`). |
 | 2026-08-04 | Revised after orchestrator review. Fixed: WP-0.3 vs AC-GLOBAL-1 contradiction (promotion deferred to WP-1.6); WP-0.1 scope 6→13 csprojs; AC-3.1 and AC-5.1 expected values (were unachievable); AC-1.1/1.5/4.2/4.4/5.0 made measurable; GATE-D moved to WP-0.1; TestRunner added (not in `.sln`). Added: §2.2b state ledger, §2.2c PR-rejected path, §2.2d conflict sets, §2.2e gates-are-pre-merge, §2.5 re-run exemptions, §5b environment, §5c off-the-rails thresholds and the bank-the-wins exit. **N4 relaxed** — Phase 5's approach is now open pending S2b costing (WP-5.0b). |
