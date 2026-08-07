@@ -87,14 +87,32 @@ Publishing is manual and opt-in, via `workflow_dispatch` on `natives.yml`:
 
 | input | effect |
 |---|---|
-| `publish` | push to GitHub Packages |
-| `publish_nuget_org` | push to nuget.org — needs the `NUGET_API_KEY` secret |
+| `publish` | push to GitHub Packages (uses the run's own `GITHUB_TOKEN`) |
+| `publish_nuget_org` | push to nuget.org via **Trusted Publishing** |
 | `version` | the version to publish, e.g. `0.1.0` |
 
 Neither ever runs on a push or a pull request. A NuGet version **can never be re-published**;
 on nuget.org the package ID is additionally claimed globally and permanently, and versions can
 be unlisted but never deleted. Non-manual builds get `<version>-ci.<run_number>` so a CI build
 can never collide with a release.
+
+### Trusted Publishing, not an API key
+
+nuget.org now discourages API keys for automated publishing. The workflow uses
+[`NuGet/login`](https://github.com/NuGet/login) to exchange this run's short-lived GitHub OIDC
+token for a short-lived nuget.org key, so **there is no long-lived publish secret** in the
+repository to leak, rotate or mis-scope.
+
+Two pieces of one-time setup, neither of them a secret:
+
+1. A **Trusted Publishing policy** on nuget.org naming this repository and workflow —
+   see [the NuGet docs](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing).
+2. A repository **variable** (not a secret) `NUGET_USER`, holding the nuget.org account name.
+   Settings → Secrets and variables → Actions → *Variables*.
+
+The job fails fast with these instructions if `NUGET_USER` is missing, rather than failing
+obscurely inside `dotnet nuget push`. It also needs `id-token: write`, which is granted on that
+job alone rather than workflow-wide.
 
 ## Why Karawan builds these itself
 
