@@ -5,7 +5,7 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-05
+**Last updated:** 2026-08-06
 
 ---
 
@@ -38,17 +38,39 @@ Consequences carried forward:
 |---|---|---|---|---|---|---|---|
 | **WP-0.0** | ✅ **MERGED** | `platform/wp-0.0` | [#8](https://github.com/tweggen/Karawan/pull/8) | 1 | AC-0.0.1 ✅ · 0.0.2 ✅ · 0.0.3 ✅ · 0.0.4 ✅ | none apply | **Claim #6 FALSIFIED, claim #7 confirmed.** Repack demonstrated working; artifact never executed. |
 | **WP-0.1** | ✅ **MERGED** | `platform/wp-0.1` | [#9](https://github.com/tweggen/Karawan/pull/9) | 1 | AC-0.1.1 ✅ · 0.1.2 ✅ · 0.1.3 ✅ (59/59 identical) · 0.1.4 ✅ · GLOBAL-1 ✅ · 1b ✅ · 2 ✅ · 3 ✅ · 4 ✅ (168/168) | **GATE-D ✅ passed** (Windows + macOS Debug, 2026-08-06) | CPM across 12 csprojs; `Aihao.old` excluded. Two version conflicts kept exact via `VersionOverride`. **CPM silently disabled MAUI's implicit `Microsoft.Maui.Controls`** — now declared explicitly in `Wuka.csproj`. |
-| WP-0.2 | NOT-STARTED | — | — | 0 | — | GATE-D adj. | `IThreeD` seam leaks. Its `SilkThreeD.cs` conflict with #11 is gone now that #11 is merged. **Next to dispatch.** |
-| **WP-0.3** | **PR-OPEN** | `platform/wp-0.3` | — | 1 | AC-0.3.1 ✅ · 0.3.2 ✅ · GLOBAL-2 ✅ · GLOBAL-3 ✅ | none apply | Inventory only, `Wuka.csproj` untouched. **Found a gap in the plan: `libcimgui.so` (ImGui.NET) is also not 16 KB-aligned, so the Silk exit alone does not achieve compliance.** See `WP-0.3-WARNINGS.md` §4. |
-| WP-1.1 – 1.6 | NOT-STARTED | — | — | 0 | — | — | Unblocked by the 2026-08-05 decision. `gh` now installed + authenticated. Decide at dispatch whether Phase 1 also builds SDL2-for-Android. |
+| **WP-0.2** | ✅ **MERGED** | `platform/wp-0.2` | [#14](https://github.com/tweggen/Karawan/pull/14) | 1 | AC-0.2.1 ✅ · 0.2.2 ✅ (source clean) · 0.2.3 ✅ · GLOBAL-1/1b/2/3/4 ✅ | **AC-0.2.4 ✅** Aihao preview confirmed rendering | `GLAnimBuffers` → `Splash.Silk`; GL-version detection moved into `PreviewHelper`, so **Aihao has zero Silk references in source**. `AvaloniaNativeContext` deleted; `SetExternalGL`/`GetGL` now `internal`. |
+| **WP-0.3** | ✅ **MERGED** | `platform/wp-0.3` | [#12](https://github.com/tweggen/Karawan/pull/12) | 1 | AC-0.3.1 ✅ · 0.3.2 ✅ · GLOBAL-2/3 ✅ | none apply | Inventory only. **Found a gap in the plan: `libcimgui.so` (ImGui.NET) is also not 16 KB-aligned**, so the Silk exit alone would not achieve compliance. Fixed separately in [#13](https://github.com/tweggen/Karawan/pull/13). |
+| **WP-1.1** | ✅ **MERGED** | `platform/wp-1.1` | [#15](https://github.com/tweggen/Karawan/pull/15) | 1 | **AC-1.1 ✅** CI green, 6 targets | none apply | First workflow in the repo. Pinned runner images (all three, not just macOS — flagged deviation), NDK `27.2.12479018`, MSVC toolset `14.44`, all Actions by SHA. No third-party actions. |
+| **WP-1.2** | ✅ **MERGED** | `platform/wp-1.2` | [#16](https://github.com/tweggen/Karawan/pull/16) | 1 | AC-1.1 ✅ · 1.6 ✅ · GLOBAL-2/3 ✅ | none apply | openal-soft, all six targets, pinned by tag **and** commit. Caught: static-libc++ clash with assimp, and a Linux build with **no audio backend** that CI had already passed. Both now build-time assertions. |
+| **WP-1.3** | ✅ **MERGED** | `platform/wp-1.3` | [#17](https://github.com/tweggen/Karawan/pull/17) → [#18](https://github.com/tweggen/Karawan/pull/18) | 1 | AC-1.1 ✅ · 1.2 ✅ (asserted in-build) · 1.6 ✅ | none apply | SDL3, all six targets. ⚠ Merged into `platform/wp-1.2` rather than master; **#18 was needed to land it** — see §Merge-ordering below. |
+| **WP-1.4** | ✅ **MERGED** | `platform/wp-1.4` | [#19](https://github.com/tweggen/Karawan/pull/19) → [#20](https://github.com/tweggen/Karawan/pull/20) | 1 | AC-1.1 ✅ · GLOBAL-2/3 ✅ | **publish 🔒 not done** | `Karawan.Natives` NuGet: `runtimes/<rid>/native/` + Android `.aar` + `build-manifest.json` with per-file sha256. AAR built deterministically (python, fixed timestamps) — byte-identical across runs. ⚠ Same merge-ordering trap as #17; **#20 was needed to land it**. |
+| WP-1.5 | **BLOCKED-ON-HUMAN** | — | — | 0 | — | — | Consumes the package and drops `Silk.NET.OpenAL.Soft.Native`. **Blocked until `Karawan.Natives` is published** — an irreversible, human-authorised step (plan §2.5). |
+| WP-1.6 | NOT-STARTED | — | — | 0 | — | — | Promote XA0141/XA4301 to errors. Note WP-0.3 found **XA4301 does not currently fire**; promoting it guards, it does not fix. XA0141 still fires for Silk's `libSDL2.so`/`libmain.so`. |
 | WP-2.1 – 2.3 | NOT-STARTED | — | — | 0 | — | GATE-A, GATE-B | Proceeds, but no longer release-critical. ⚠ AC-2.2/AC-0.0.3 AAR path was wrong — SDL3 uses **prefab** layout. |
 | WP-3.1 – 3.5 | BLOCKED | — | — | 0 | — | GATE-C, GATE-E | Blocked on GATE-A + GATE-B per plan. |
-| WP-4.1 – 4.4 | NOT-STARTED | — | — | 0 | — | GATE-D | Independent of Phases 2–3; may start once Phase 0 lands. |
-| WP-5.0 | NOT-STARTED | — | — | 0 | — | — | Cheap, independent, plan says run EARLY. Not blocked by the WP-0.0 outcome. |
-| WP-5.0b | NOT-STARTED | — | — | 0 | — | — | Cost S2b. Plan §5: **neither WP-5.1 nor any Phase 5 work starts until 5.0 and 5.0b are both reported and the human has chosen.** |
-| WP-5.1 – 5.4 | BLOCKED | — | — | 0 | — | GATE-E, GATE-F | Approach still open (N4 relaxed). |
+| WP-4.1 – 4.4 | NOT-STARTED | — | — | 0 | — | GATE-D | Independent of Phases 2–3; Phase 0 has landed, so this is dispatchable now. |
+| **WP-5.0** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0 ✅ exactly 0 changed lines** | none apply | Generated from `gl.xml`; baseline and candidate both compile the identical sample. **Caveat: 4 hand-written overloads for 5 entry points** — `gl.xml` cannot describe Silk's overload policy. |
+| **WP-5.0b** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0b ✅** costed side by side | none apply | OpenTK 5: **37 % of code lines** ≈ 83 of 225 sites. `GL` is static vs Silk's instance → all 225 change receiver. Also `pre.16` ships **net10.0 only**, dropping our net9.0. |
+| WP-5.1 – 5.4 | **BLOCKED-ON-HUMAN** | — | — | 0 | — | GATE-E, GATE-F | Plan §5: nothing starts until the human **chooses** between S2a and S2b. Both are now costed (#22). Recommendation there: S2a in its narrow form. Also legitimate: don't do Phase 5 at all (§5c). |
 
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
+
+### Open PRs
+
+| PR | What | State |
+|---|---|---|
+| [#21](https://github.com/tweggen/Karawan/pull/21) | AC-1.4 rewritten as build-time assertions | ✅ CI green (run 31116752667, all 9 jobs); ready to merge |
+
+### ⚠ Merge-ordering trap — hit twice, now structurally closed
+
+Both #17 and #19 were **stacked PRs based on `platform/wp-1.2`**. In each case the base branch
+was merged to master *seconds before* the stacked PR landed on it, so GitHub reported MERGED —
+truthfully, but into `platform/wp-1.2`, not master. Master silently lacked SDL3 (#17) and then
+the packaging (#19). Recovery PRs #18 and #20 carried them across.
+
+**All merged WP branches have since been deleted**, so nothing can be stacked onto them again.
+**Future work packages branch from master directly**, even when that costs a rebase; the ordering
+hazard is not worth the tidiness of stacking.
 
 ---
 
@@ -60,7 +82,8 @@ Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MER
 | GATE-B | Play Console upload, no "Memory page size" warning | not reached — **now reachable much earlier via the WP-0.0 repack route** |
 | GATE-C | Windows + Linux desktop | not reached |
 | GATE-D | Animation correct on macOS + Windows | ✅ **PASSED 2026-08-06** — Windows confirmed, macOS confirmed on a **Debug** build (Release does not currently start, see known issue KI-1) |
-| GATE-E | ImGui renders + takes input (incl. Linux Fn-key case) | not reached. Note WP-0.3 found `libcimgui.so` is a **linux-x64** binary shipped into the APK — settle that before this gate |
+| GATE-E | ImGui renders + takes input (incl. Linux Fn-key case) | not reached. **Android is now out of scope for this gate**: [#13](https://github.com/tweggen/Karawan/pull/13) excluded the ImGui native, and there is no Android build of cimgui at all — re-enabling it needs a real arm64 `libcimgui.so` built and shipped, not just flipping `createUI`. Desktop still applies. |
+| — | *(AC-0.2.4, gate-adjacent)* Aihao L-System preview renders | ✅ **PASSED 2026-08-06** — confirmed after the GL-context seam was re-expressed in WP-0.2 |
 | GATE-F | Pixel-compare before/after GL swap | not reached. ⚠ **Baseline must be captured before WP-5.2 merges** or it is unrunnable forever |
 
 ---
@@ -82,8 +105,12 @@ Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MER
 |---|---|---|
 | Phase 2 worker dispatches | 10 | 0 |
 | Programme-wide re-dispatches | 25 | 0 |
-| Calendar: Phases 0–2 complete | 3 months from 2026-08-04 | day 2 |
+| Calendar: Phases 0–2 complete | 3 months from 2026-08-04 | day 3 — **Phase 0 and Phase 1 (except 1.5/1.6) complete** |
 | ADR §9 "assumed" claims falsified | any → escalate | **1 (claim #6)** — escalated 2026-08-05, resolved: continue as planned |
+
+Nothing has tripped. Worth noting the programme is well inside every threshold: no work package
+has needed a second iteration, and the two recovery PRs (#18, #20) were merge-ordering fixes
+carrying already-reviewed commits, not re-dispatches.
 
 ---
 
@@ -94,7 +121,8 @@ Tracked here because they gate whole phases. Full detail in `WP-0.0-FINDINGS.md`
 | Blocker | Impact | Status |
 |---|---|---|
 | `gh` not installed | **blocked §2.1 entirely** — every WP must open a PR — and AC-1.1 | ✅ **resolved 2026-08-05** — `gh` 2.97.0 installed via winget to `C:\Program Files\GitHub CLI`, authenticated as `tweggen` |
-| Plan §5b describes macOS; work is on Windows 11 | misleads every future worker | ✅ fixed in this PR |
+| Plan §5b describes macOS; work is on Windows 11 | misleads every future worker | ✅ fixed 2026-08-05 (#8) |
+| PAT lacks the `workflow` scope | GitHub **refuses any push touching `.github/workflows/`**, so no workflow change can be pushed with it | ⚠ **open** — worked around by pushing with the `gh` credential, which does have the scope. Will recur on every workflow change. Fixing the PAT (below) fixes this too. |
 | `Karawan.sln` would not restore at worktree depth | `.sln` hardcodes `..\DefaultEcs` etc., which don't resolve under `.claude/worktrees/<name>/` | ✅ **resolved 2026-08-05** — directory junctions for the five sibling repos placed in `.claude/worktrees/`, and that path added to `.git/info/exclude` (local only). The whole solution now builds from a worktree. |
 | PAT embedded in the `origin` remote URL | plaintext in `.git/config`; leaks on any `git remote -v` | ⚠ **open — recommend rotating.** Surfaced during WP-0.0. Move to a credential helper. |
 | `ninja` not installed | needed for any native build recipe | workaround: standalone `ninja.exe`; should be pinned in CI (WP-1.1) |
