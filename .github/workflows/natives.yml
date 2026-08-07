@@ -27,11 +27,15 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: 'Publish the package to GitHub Packages. IRREVERSIBLE - a NuGet version can never be re-published.'
+        description: 'Publish to GitHub Packages. IRREVERSIBLE - a NuGet version can never be re-published.'
+        type: boolean
+        default: false
+      publish_nuget_org:
+        description: 'Publish to nuget.org. MORE irreversible: the package ID is claimed globally and forever, and versions can be unlisted but never deleted. Requires the NUGET_API_KEY secret.'
         type: boolean
         default: false
       version:
-        description: 'Package version to publish (e.g. 0.1.0). Ignored unless publish is true.'
+        description: 'Package version to publish (e.g. 0.1.0). Ignored unless one of the publish flags is true.'
         type: string
         default: ''
 
@@ -405,4 +409,58 @@ jobs:
           dotnet nuget push "nupkg/*.nupkg" \
             --source "https://nuget.pkg.github.com/${GITHUB_REPOSITORY_OWNER}/index.json" \
             --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --skip-duplicate
+
+  # --------------------------------------------------------------------------
+  # nuget.org. Separate from the GitHub Packages job on purpose: it is a strictly
+  # larger commitment.
+  #
+  # GitHub Packages NuGet requires authentication even for a PUBLIC package -
+  # anonymous restore returns 401, verified - so consuming it would force every
+  # contributor and every fork's CI to hold a PAT with read:packages, when today
+  # the build needs no credentials at all. nuget.org restores anonymously, which
+  # is why the package goes to both.
+  #
+  # More irreversible than GitHub Packages: the package ID is claimed globally and
+  # permanently, and a published version can be unlisted but never deleted.
+  # Consequently this has its own opt-in flag, and never runs on a push.
+  # --------------------------------------------------------------------------
+  publish-nuget-org:
+    name: publish (nuget.org)
+    runs-on: ubuntu-24.04
+    needs: package
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_nuget_org
+    permissions:
+      contents: read
+    steps:
+      - name: Require the API key
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NUGET_API_KEY}" ]; then
+            echo "NUGET_API_KEY secret is not set."
+            echo "Create it under Settings > Secrets and variables > Actions, from a"
+            echo "nuget.org API key scoped to push Karawan.Natives."
+            exit 1
+          fi
+          echo "NUGET_API_KEY is present."
+
+      - name: Download the package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: nupkg
+          path: nupkg
+
+      - name: Push to nuget.org
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+          ls -l nupkg
+          dotnet nuget push "nupkg/*.nupkg" \
+            --source "https://api.nuget.org/v3/index.json" \
+            --api-key "${NUGET_API_KEY}" \
             --skip-duplicate

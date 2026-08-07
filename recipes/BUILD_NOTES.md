@@ -64,6 +64,38 @@ ERROR: pin mismatch for https://github.com/kcat/openal-soft.git 1.24.3:
 
 If you see that, find out *why* the tag moved before changing the SHA.
 
+## Distribution: `Karawan.Natives`
+
+CI packages the matrix output as a versioned NuGet — `runtimes/<rid>/native/` for desktop,
+an `.aar` for Android, and `build-manifest.json` recording the upstream tag, commit,
+toolchain and a sha256 per binary.
+
+It is published to **two** feeds, and the reason is not redundancy:
+
+| feed | anonymous restore | role |
+|---|---|---|
+| GitHub Packages | ❌ **no — 401** | artifact of record, tied to the run that built it |
+| nuget.org | ✅ yes | what the build actually consumes |
+
+**GitHub Packages NuGet requires authentication even for a public package.** Verified: an
+anonymous `dotnet restore` against `https://nuget.pkg.github.com/tweggen/index.json` returns
+`401 Unauthorized`. Consuming from there would mean every contributor — and every fork's CI —
+needed a PAT with `read:packages` simply to build Karawan, when today the build needs no
+credentials at all. That is why the package also goes to nuget.org.
+
+Publishing is manual and opt-in, via `workflow_dispatch` on `natives.yml`:
+
+| input | effect |
+|---|---|
+| `publish` | push to GitHub Packages |
+| `publish_nuget_org` | push to nuget.org — needs the `NUGET_API_KEY` secret |
+| `version` | the version to publish, e.g. `0.1.0` |
+
+Neither ever runs on a push or a pull request. A NuGet version **can never be re-published**;
+on nuget.org the package ID is additionally claimed globally and permanently, and versions can
+be unlisted but never deleted. Non-manual builds get `<version>-ci.<run_number>` so a CI build
+can never collide with a release.
+
 ## Why Karawan builds these itself
 
 - **Silk.NET.OpenAL.Soft.Native** ships desktop binaries only, and its `linux-arm64` build
