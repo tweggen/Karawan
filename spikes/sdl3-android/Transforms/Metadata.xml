@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+
+  <!--
+    Java-binding transforms for the vendored org.libsdl.app sources.
+
+    THE PROBLEM
+    ===========
+    Java allows several top-level classes per file, but only one may be public.
+    SDLActivity.java and SDLControllerManager.java each declare public classes plus
+    several package-private helpers (SDLClipboardHandler, SDLGenericMotionListener_API14,
+    SDLHapticHandler, SDLJoystickHandler).
+
+    The binding generator does not emit bindings for package-private types - correctly,
+    they are not API - but it DOES emit the protected static fields whose type they are.
+    The result is generated C# that references types it never generated:
+
+        error CS0234: The type or namespace name 'SDLClipboardHandler' does not exist
+
+    THE FIX
+    =======
+    Remove those four fields from the binding. They are internal plumbing that SDL's own
+    Java code uses; nothing on the C# side has any business touching them, and the Java
+    fields themselves are untouched - only the C# projection is trimmed.
+
+    The XPaths are not guesswork: the generator writes the exact path for every member
+    into the generated source as a comment, and these were copied from there.
+
+    IF SDL IS UPDATED and new package-private helpers appear, this file is where the
+    resulting CS0234 is fixed. See java/PROVENANCE.md for the update procedure.
+  -->
+
+  <remove-node path="/api/package[@name='org.libsdl.app']/class[@name='SDLActivity']/field[@name='mClipboardHandler']" />
+  <remove-node path="/api/package[@name='org.libsdl.app']/class[@name='SDLActivity']/field[@name='mMotionListener']" />
+  <remove-node path="/api/package[@name='org.libsdl.app']/class[@name='SDLControllerManager']/field[@name='mHapticHandler']" />
+  <remove-node path="/api/package[@name='org.libsdl.app']/class[@name='SDLControllerManager']/field[@name='mJoystickHandler']" />
+
+</metadata>

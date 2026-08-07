@@ -1,0 +1,157 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    WP-2.1 - the Android SDL3 spike.
+
+    DELIBERATELY NOT IN Karawan.sln. The plan calls this "timeboxed" and says the
+    deliverable is an answer, not a feature. Keeping it out of the solution means it
+    can never break AC-GLOBAL-1 for an unrelated work package, and it can be deleted
+    in one `rm -rf` once GATE-A has given its answer.
+
+    It is also NOT a MAUI app, unlike Wuka. MAUI is irrelevant to the question being
+    asked (does SDL3 give us a GL context, input and IME on a real device?) and its
+    shell/activity indirection is exactly the sort of thing that turns "the spike
+    failed" into "something in the spike failed". Plain .NET Android, one activity.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <ApplicationId>de.nassau_records.sdl3spike</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+
+    <!--
+      64-bit is what Google Play's 16 KB rule applies to; armeabi-v7a is carried
+      because Karawan.Natives ships it and leaving it out would make the APK's ABI set
+      differ from Wuka's, which is the thing this spike stands in for.
+
+      RuntimeIdentifiers, NOT AndroidSupportedAbis. The latter is what a search will
+      suggest and it is silently ineffective on .NET 9 - it only emits
+      "warning XA0036: the AndroidSupportedAbis MSBuild property is no longer
+      supported", then builds the DEFAULT abi set (arm64-v8a + x86_64). The first
+      version of this file used it, and the resulting APK shipped x86_64 instead of the
+      armeabi-v7a it asked for.
+    -->
+    <RuntimeIdentifiers>android-arm64;android-arm</RuntimeIdentifiers>
+
+    <!--
+      The spike must fail loudly on exactly the two defects Phase 1 was about, so a
+      green build here means something. WP-1.6 promoted XA4301 in Wuka for the same
+      reason; XA0141 could NOT be promoted there because Silk's libSDL2.so is 4 KB.
+      Here there is no Silk at all, so XA0141 is promoted too - and that is the
+      single most informative assertion in this project.
+    -->
+    <MSBuildWarningsAsErrors>$(MSBuildWarningsAsErrors);XA4301;XA0141</MSBuildWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The C# bindings. Source-only; the native comes from Karawan.Natives. -->
+    <ProjectReference Include="..\..\Platform.SDL3\Platform.SDL3.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      libSDL3.so (+ libc++_shared.so) for both ABIs, from our own pinned CI build.
+      Karawan.Natives' .aar uses the jni/<abi>/ layout .NET Android expects, so no
+      per-file wiring is needed here - referencing the package is enough.
+
+      ExcludeAssets="native" IS REQUIRED, and this build proved it rather than assumed
+      it. Without it, RID fallback packages the package's runtimes/linux-x64/native/
+      libSDL3.so and libopenal.so into the APK - glibc-linked x64 binaries that cannot
+      load on Android, and neither of them 16 KB aligned. Promoting XA0141 in this
+      project turned that into two build errors instead of two warnings nobody reads:
+
+        error XA0141: ... 'libSDL3.so' ... contains 'runtimes/linux-x64/native/libSDL3.so'
+        error XA0141: ... 'libopenal.so' ... contains 'runtimes/linux-x64/native/libopenal.so'
+
+      This is the SAME defect class WP-0.3 found in ImGui.NET (a linux-x64 libcimgui.so
+      landing in lib/x86_64/) and exactly what plan AC-1.3 forbids. "native" excludes
+      runtimes/<rid>/native/ but NOT lib/<tfm>/*.aar, so the Android payload still
+      arrives - which is why this one attribute is enough.
+
+      FOLLOW-UP for WP-1.4/2.2: better to fix this in the package than in every consumer.
+      Recorded in the WP-2.1 PR.
+
+      ExcludeAssets="all" + an explicit AndroidLibrary below, rather than just letting
+      the PackageReference deliver the .aar, because KARAWAN.NATIVES 0.1.0's ANDROID
+      PAYLOAD IS NOT CONSUMABLE AS PACKAGED. NuGet resolves this package to
+      lib/netstandard2.0/_._ for a net9.0-android project and never selects
+      lib/net9.0-android34.0/Karawan.Natives.Android.aar:
+
+        warning NU1701: Package 'Karawan.Natives 0.1.0' was restored using
+        '.NETFramework,Version=v4.6.1, ...' instead of the project target framework
+        'net9.0-android35.0'.
+
+        project.assets.json:  compile -> lib/netstandard2.0/_._
+                              runtime -> lib/netstandard2.0/_._
+
+      The cause is visible by diffing against a package whose .aar delivery works:
+      Silk.NET.Windowing.Sdl ships lib/net7.0-android33.0/{...aar, ...dll} - an
+      ASSEMBLY ALONGSIDE THE AAR. Ours ships the .aar alone, so NuGet does not count
+      net9.0-android34.0 among the package's supported frameworks and falls back.
+
+      This build is what caught it. WP-1.5 could not have: it excludes the package's
+      Android assets outright for unrelated reasons, so the defect sat behind an
+      exclusion nobody had cause to lift.
+
+      Fixing it properly means republishing the package (an irreversible, human-gated
+      step under plan 2.5), so the spike points straight at the .aar file instead. That
+      is a WORKAROUND, not the fix - see the WP-2.1 PR for the WP-1.4 follow-up.
+    -->
+    <PackageReference Include="Karawan.Natives" ExcludeAssets="all" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      SDL's Java glue, vendored from the SAME SDL commit as libSDL3.so (see
+      java/PROVENANCE.md). It is NOT in Karawan.Natives yet - that package ships
+      only .so files - and shipping the two halves from one pin is the right
+      long-term fix, recorded in the WP-2.1 PR as follow-up for WP-2.2.
+
+      Bind="true" generates the C# binding, which is what lets SdlSpikeActivity
+      derive from org.libsdl.app.SDLActivity.
+    -->
+    <AndroidJavaSource Include="java\**\*.java" Bind="true" />
+
+    <!-- Trims four unbindable fields out of the generated binding; see the file. -->
+    <TransformFile Include="Transforms\Metadata.xml" />
+
+    <!--
+      The Android half of Karawan.Natives, referenced as a FILE because the package
+      cannot deliver it (see the PackageReference above). $(PkgKarawan_Natives) comes
+      from GeneratePathProperty="true". .NET Android extracts jni/<abi>/*.so from an
+      AndroidLibrary .aar, which is how libSDL3.so and libc++_shared.so reach the APK.
+    -->
+    <AndroidLibrary Include="$(PkgKarawan_Natives)\lib\net9.0-android34.0\Karawan.Natives.Android.aar" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      libmain.so: the SDL_main <-> managed bridge. SDL's Java glue calls
+      nativeRunMain("libmain.so", "SDL_main", ...), and libSDL3.so does not export
+      SDL_main. Built by recipes/build-mainshim.sh; see that script for the full
+      explanation and for why these binaries are checked in for the spike rather
+      than pulled from a package.
+
+      THERE IS DELIBERATELY NO <AndroidNativeLibrary Include=...> HERE. The .NET Android
+      SDK already globs **/*.so into AndroidNativeLibrary by default and infers the ABI
+      from the parent directory name, so natives/arm64-v8a/libmain.so is picked up on
+      its own. Adding an explicit item as well includes each library TWICE, which the
+      XA4301 promoted above turns into a build error:
+
+        error XA4301: APK already contains the item lib/arm64-v8a/libmain.so; ignoring.
+
+      Verified with `dotnet msbuild -getItem:AndroidNativeLibrary`, which showed each
+      path listed twice. Worth knowing before WP-2.2 touches Wuka.csproj, which DOES
+      list its natives explicitly - under Platforms/Android/android/<abi>/, a path the
+      default glob also matches.
+    -->
+  </ItemGroup>
+
+</Project>

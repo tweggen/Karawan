@@ -46,7 +46,8 @@ Consequences carried forward:
 | **WP-1.4** | ✅ **MERGED** | `platform/wp-1.4` | [#19](https://github.com/tweggen/Karawan/pull/19) → [#20](https://github.com/tweggen/Karawan/pull/20) | 1 | AC-1.1 ✅ · GLOBAL-2/3 ✅ | **publish 🔒 not done** | `Karawan.Natives` NuGet: `runtimes/<rid>/native/` + Android `.aar` + `build-manifest.json` with per-file sha256. AAR built deterministically (python, fixed timestamps) — byte-identical across runs. ⚠ Same merge-ordering trap as #17; **#20 was needed to land it**. |
 | **WP-1.5** | ✅ **MERGED** | `platform/wp-1.5` | [#26](https://github.com/tweggen/Karawan/pull/26) | 1 | AC-GLOBAL-1 ✅ · 2/3 ✅ · 4 ✅ (168/168) · AC-1.6 ✅ | **desktop audio confirmed by owner** (Windows) | `Karawan.Natives` replaces `Silk.NET.OpenAL.Soft.Native`. Windows file name differs (`OpenAL32.dll` vs `soft_oal.dll`); Silk falls back across name candidates — verified by forcing **real** native calls, since `GetApi()` alone binds lazily and proves nothing. **Android deliberately unchanged** (duplicate `.so` + libc++ ABI vs assimp); revisit at Phase 4. |
 | **WP-1.6** | ⚠ **PARTIAL — PR-OPEN** | `platform/wp-1.6` | [#27](https://github.com/tweggen/Karawan/pull/27) | 1 | **AC-1.7 ⚠ half** — XA4301 ✅ promoted, **XA0141 ⛔ deferred** | none apply | XA4301: 0 occurrences, promoted, build green. XA0141: promoted → **4 errors, all `Silk.NET.Windowing.Sdl`'s `libSDL2.so`/`libmain.so` @ `0x1000`**. Every native we own is `0x4000` (verified independently of the SDK). **Not satisfiable in Phase 1** — only removing Silk's SDL2 fixes it, which is Phase 2/3. See §AC-1.7 below. |
-| WP-2.1 – 2.3 | NOT-STARTED | — | — | 0 | — | GATE-A, GATE-B | Proceeds, but no longer release-critical. ⚠ AC-2.2/AC-0.0.3 AAR path was wrong — SDL3 uses **prefab** layout. |
+| **WP-2.1** | ⏳ **PR-OPEN — blocked on GATE-A** | `platform/wp-2.1` | [#28](https://github.com/tweggen/Karawan/pull/28) | 1 | AC-2.1 ✅ · **2.2 ✅** · 2.3 ✅ · GLOBAL-1/2/3/4 ✅ | **GATE-A 🔒 human+device** | Spike builds and packages; **every `.so` in the APK is 16 KB aligned**, a first. Found 3 defects listed below. `Platform.SDL3` + `recipes/build-mainshim.sh` are permanent; `spikes/` is disposable. |
+| WP-2.2 – 2.3 | BLOCKED | — | — | 0 | — | GATE-A, GATE-B | Blocked on GATE-A. ⚠ AC-2.2/AC-0.0.3 AAR path warning was **wrong for our own package** — `Karawan.Natives` uses `jni/<abi>/`, not prefab. |
 | WP-3.1 – 3.5 | BLOCKED | — | — | 0 | — | GATE-C, GATE-E | Blocked on GATE-A + GATE-B per plan. |
 | WP-4.1 – 4.4 | NOT-STARTED | — | — | 0 | — | GATE-D | Independent of Phases 2–3; Phase 0 has landed, so this is dispatchable now. |
 | **WP-5.0** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0 ✅ exactly 0 changed lines** | none apply | Generated from `gl.xml`; baseline and candidate both compile the identical sample. **Caveat: 4 hand-written overloads for 5 entry points** — `gl.xml` cannot describe Silk's overload policy. |
@@ -60,7 +61,46 @@ Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MER
 
 | PR | What | State |
 |---|---|---|
-| [#27](https://github.com/tweggen/Karawan/pull/27) | WP-1.6 — promote `XA4301`; `XA0141` deferred with reasons | open; all ACs re-run green |
+| [#28](https://github.com/tweggen/Karawan/pull/28) | WP-2.1 — Android SDL3 spike | open; buildable ACs green, **GATE-A needs a device** |
+
+### 🔴 KI-5 — `Karawan.Natives` 0.1.0's Android payload is not consumable (found by WP-2.1)
+
+NuGet resolves the package to `lib/netstandard2.0/_._` for a `net9.0-android` project and **never
+selects** `lib/net9.0-android34.0/Karawan.Natives.Android.aar`:
+
+```
+warning NU1701: Package 'Karawan.Natives 0.1.0' was restored using '.NETFramework,Version=v4.6.1,
+  ...' instead of the project target framework 'net9.0-android35.0'.
+project.assets.json:  compile -> lib/netstandard2.0/_._
+                      runtime -> lib/netstandard2.0/_._
+```
+
+**Cause**, by diff against a package whose `.aar` delivery works: `Silk.NET.Windowing.Sdl` ships
+`lib/net7.0-android33.0/{aar, dll}` — an **assembly beside the aar**. Ours ships the `.aar` alone,
+so NuGet does not count `net9.0-android34.0` among the package's supported frameworks.
+
+**Why it went unnoticed:** WP-1.5 excludes the package's Android assets outright for unrelated
+reasons (duplicate `.so`, libc++ ABI vs assimp), so the defect sat behind an exclusion nobody had
+cause to lift. AC-1.1 (CI green) and AC-1.2 (alignment) both passed — the package *contains* the
+right bytes, it just cannot hand them to a consumer.
+
+**Workaround in WP-2.1:** reference the `.aar` by path via `GeneratePathProperty`. **Real fix:**
+add a placeholder/assembly to that lib folder in `packaging/Karawan.Natives`, republish. Republish
+is human-gated (§2.5), so it is not bundled into WP-2.1.
+
+### 🟠 KI-6 — `Karawan.Natives` leaks **linux-x64** natives into Android APKs
+
+Referencing the package from an Android project without `ExcludeAssets="native"` RID-falls-back
+`runtimes/linux-x64/native/{libSDL3.so, libopenal.so}` into the APK — glibc x64 binaries that
+cannot load on Bionic, neither 16 KB aligned. Same defect class as `ImGui.NET`'s `libcimgui.so`
+in WP-0.3 §4.2, and exactly what plan **AC-1.3** forbids. Caught only because WP-2.1 promotes
+`XA0141` to an error. Fix belongs in the package alongside KI-5.
+
+### 🟡 KI-7 — `AndroidSupportedAbis` is silently ineffective on .NET 9
+
+It emits `warning XA0036` and then builds the **default** ABI set. WP-2.1's first APK shipped
+`x86_64` while the project asked for `armeabi-v7a`. Use `RuntimeIdentifiers`. Relevant to WP-2.2,
+since a wrong ABI set is invisible unless someone lists the APK.
 
 ### ⛔ AC-1.7 is only half-satisfiable, and not for the reason the plan expected
 
@@ -127,7 +167,7 @@ hazard is not worth the tidiness of stacking.
 
 | Gate | What | Status |
 |---|---|---|
-| GATE-A | SDL3 spike on physical Android device (multi-touch, **IME**, rotation, resume) | not reached |
+| GATE-A | SDL3 spike on physical Android device (multi-touch, **IME**, rotation, resume) | ⏳ **READY TO RUN** — WP-2.1 [#28](https://github.com/tweggen/Karawan/pull/28) builds an installable APK; `dotnet build spikes/sdl3-android/Sdl3Spike.csproj -t:Run` + `adb logcat -s SDL3SPIKE:V`. ⚠ **The IME half cannot be answered by this spike**: SDL3 made `SDL_StartTextInput` per-window and the spike does not call it, so a missing `TEXT_INPUT` means nothing. Real IME validation is WP-2.3. See `spikes/sdl3-android/README.md`. |
 | GATE-B | Play Console upload, no "Memory page size" warning | not reached — **now reachable much earlier via the WP-0.0 repack route** |
 | GATE-C | Windows + Linux desktop | not reached |
 | GATE-D | Animation correct on macOS + Windows | ✅ **PASSED 2026-08-06** — Windows confirmed, macOS confirmed on a **Debug** build (Release does not currently start, see known issue KI-1) |
