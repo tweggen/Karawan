@@ -94,8 +94,35 @@ SDL3SPIKE first frame presented
   cycle exists in the spike precisely so this is answerable by looking rather than by trusting the
   absence of errors.
 
-**What it does NOT establish** — AC-2.4 has four more requirements, none of them exercised yet:
-multi-touch, rotation, resume-from-background, and IME. GATE-A stays 🟡, not ✅.
+**Also confirmed on device (2026-08-07):** **multi-touch** ✅ (distinct `FINGER_DOWN` ids) and
+**rotation** ✅ (`RESIZED` with swapped dimensions). **Resume** ✅ behaviourally — rendering
+continues after home-and-back — but see KI-8: the log lines were missing because the spike was
+watching for them the wrong way.
+
+**Still not established:** **IME**, which this spike cannot answer at all. GATE-A stays 🟡.
+
+### 🔴 KI-8 — app-lifecycle events need `SDL_AddEventWatch`; `SDL_PollEvent` never sees them
+
+Found by GATE-A: resume worked and rendering continued, but `WILL_ENTER_BACKGROUND` /
+`DID_ENTER_FOREGROUND` never logged. The obvious reading — "the events aren't firing" — is wrong.
+`SDL_events.h` says of **all six** app-lifecycle events (`TERMINATING`, `LOW_MEMORY`,
+`WILL_`/`DID_ENTER_BACKGROUND`, `WILL_`/`DID_ENTER_FOREGROUND`):
+
+> *This event must be handled in a callback set with `SDL_AddEventWatch()`.*
+
+A timing constraint, not a style preference: on Android they fire inside `onPause()`/`onResume()`
+on the **UI thread**, and SDL blocks its own main thread while backgrounded, so a polling loop may
+never get another turn before the process is frozen or killed.
+
+> **⚠ This is a hard constraint on WP-3.2.** `Wuka`'s `GameActivity.OnStop` saves the game
+> (`I.Get<engine.Saver>()?.Save("OnStop")`). Once SDL3 owns the activity that hook **must** hang
+> off an event watch. Ported as a polled event it would silently never run, and the failure mode
+> is *"the game quietly stopped saving"* — no crash, no error, noticed days later. The callback
+> also runs on the **UI thread, not the SDL thread**: state snapshots are fine there, GL calls are
+> not.
+
+Spike fixed (`SpikeRenderer.LifecycleWatch`, lines prefixed `WATCH:`); needs one more device run
+to confirm the lines now appear.
 
 > The spike ran **portrait** (1260×2800) because it does not pin an orientation; `Wuka`'s
 > `GameActivity` sets `ScreenOrientation.Landscape`. Irrelevant to the spike, relevant to WP-2.2.
