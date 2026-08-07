@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The .NET Android SDK does NOT require this file - if neither Properties\AndroidManifest.xml nor
+  AndroidManifest.xml exists, the $(AndroidManifest) property stays empty and the SDK synthesises a
+  manifest from the [Activity] attributes and MSBuild properties. `dotnet build` is perfectly happy
+  without it.
+
+  Rider is not: it reports a missing AndroidManifest.xml and refuses to build. So this file exists
+  for the IDE, and it is deliberately MINIMAL - everything that was in the synthesised manifest and
+  is still derived automatically (the activity element, its intent-filter, MonoRuntimeProvider, the
+  package name from $(ApplicationId), versionCode/versionName) is left to the SDK to inject, so
+  there are not two sources of truth.
+
+  hardwareAccelerated is stated explicitly rather than relied on. It defaults to true for
+  targetSdk >= 14, but SDL's GL surface depends on it and an accidental future change to a shared
+  manifest would surface as "the spike renders nothing", which is exactly the ambiguous failure
+  GATE-A must not have.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
+
+  <application
+      android:label="SDL3 Spike"
+      android:hardwareAccelerated="true" />
+
+</manifest>

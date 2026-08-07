@@ -24,6 +24,9 @@ dotnet build spikes/sdl3-android/Sdl3Spike.csproj -t:Run     # build, install, l
 adb logcat -s SDL3SPIKE:V SDL:V                              # the spike's output
 ```
 
+Rider and Visual Studio work too — open `Karawan.sln`, then add this project, or open the
+`.csproj` directly. The spike is deliberately not in the solution (see the end of this file).
+
 If `-t:Run` picks the wrong device, `adb devices` then
 `-p:AdbTarget=-s\ <serial>`.
 
