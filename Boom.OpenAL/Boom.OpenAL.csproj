@@ -11,7 +11,18 @@
     <PackageReference Include="NVorbis" />
     <PackageReference Include="Silk.NET.OpenAL.Extensions.Enumeration" />
     <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" />
-    <PackageReference Include="Silk.NET.OpenAL.Soft.Native" />
+    <!--
+      The openal-soft binaries now come from Karawan.Natives, built by our own pinned CI
+      (WP-1.2) rather than from Silk.NET.OpenAL.Soft.Native. Silk's managed bindings stay;
+      only the native source changes.
+
+      Verified on win-x64 that this satisfies Silk: with only Karawan.Natives present,
+      ALContext.GetApi(true) opens a real device and AL.GetApi().GetError() returns, and the
+      loaded module is our openal32.dll from the app directory - there is no system
+      OpenAL32.dll on the test machine to mask it. Silk falls back across its soft_oal.dll /
+      openal32.dll name candidates, so the differing Windows file name is not a problem.
+    -->
+    <PackageReference Include="Karawan.Natives" />
   </ItemGroup>
 
   <ItemGroup>

@@ -133,7 +133,32 @@
 		<PackageReference Include="Microsoft.Maui.Controls" />
 		<PackageReference Include="Silk.NET.Assimp" />
 		<PackageReference Include="Silk.NET.Input.Sdl" />
-		<PackageReference Include="Silk.NET.OpenAL.Soft.Native" ExcludeAssets="native" PrivateAssets="all" />
+		<!--
+			WP-1.5 replaced Silk.NET.OpenAL.Soft.Native with Karawan.Natives in
+			Boom.OpenAL, from where it arrives here transitively. On DESKTOP that is the
+			whole change and it is verified working.
+
+			ANDROID deliberately keeps using the checked-in libraries under
+			Platforms/Android/android/<abi>/, and the package's payload is excluded here,
+			for two concrete reasons:
+
+			  1. Duplicates. The package's .aar carries jni/<abi>/libopenal.so and
+			     libc++_shared.so, both of which are already supplied as
+			     AndroidNativeLibrary items below. Two copies of the same .so is exactly
+			     the XA4301 that WP-0.3 inventoried.
+			  2. C++ runtime ABI. libassimp.so was built against a different NDK than the
+			     one that produced the package's libc++_shared.so, and only ONE
+			     libc++_shared.so ships in an APK (recipes/BUILD_NOTES.md). Swapping it
+			     underneath assimp risks a mismatch that no build check would catch -
+			     it would surface as a crash on a device.
+
+			It would also drag in libSDL3.so, ~2.2 MB per ABI, which nothing loads until
+			Phase 2/3 moves windowing onto SDL3.
+
+			Phase 4 removes Assimp from the runtime entirely, which dissolves reason 2.
+			Revisit then, and drop the checked-in natives in favour of the package.
+		-->
+		<PackageReference Include="Karawan.Natives" ExcludeAssets="all" PrivateAssets="all" />
 		<PackageReference Include="Silk.NET.SDL" />
 		<PackageReference Include="Silk.NET.Windowing" />
 		<PackageReference Include="Silk.NET.Windowing.Sdl" />
