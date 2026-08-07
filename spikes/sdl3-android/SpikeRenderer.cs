@@ -30,6 +30,52 @@ internal static class SpikeRenderer
 
     private const int SDL_GL_CONTEXT_PROFILE_ES = 0x0004;
 
+    // Held in a static field for the process lifetime. SDL stores the raw function
+    // pointer; if the GC collected the delegate the next lifecycle transition would
+    // jump into freed memory - a crash on resume, long after the cause.
+    private static SDL_EventFilter s_lifecycleWatch;
+
+    /// <summary>
+    /// The Android/iOS app-lifecycle events <b>cannot be observed through
+    /// <c>SDL_PollEvent</c></b>. SDL_events.h says of every one of them: "This event must
+    /// be handled in a callback set with SDL_AddEventWatch()."
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The reason is timing, not style. On Android these fire inside <c>onPause()</c> /
+    /// <c>onResume()</c> on the UI thread, and SDL blocks its own main thread while the
+    /// app is backgrounded - so by the time the render loop could poll, the process may
+    /// already be frozen or killed. A watch callback runs synchronously at the moment the
+    /// event is pushed.
+    /// </para>
+    /// <para>
+    /// <b>This is a direct constraint on WP-3.2.</b> <c>Wuka</c>'s
+    /// <c>GameActivity.OnStop</c> saves the game (<c>I.Get&lt;engine.Saver&gt;()?.Save</c>).
+    /// Once SDL3 owns the activity, that hook has to hang off an event watch - a polled
+    /// event loop would silently never run it, and the failure mode is "the game stopped
+    /// saving", noticed days later.
+    /// </para>
+    /// <para>
+    /// The callback runs on the <b>UI thread, not the SDL thread</b>. Logging is safe;
+    /// GL calls are not.
+    /// </para>
+    /// </remarks>
+    private static unsafe bool LifecycleWatch(IntPtr userdata, SDL_Event* evt, Action<string> log)
+    {
+        switch ((SDL_EventType)evt->type)
+        {
+            case SDL_EventType.SDL_EVENT_WILL_ENTER_BACKGROUND: log("WATCH: WILL_ENTER_BACKGROUND"); break;
+            case SDL_EventType.SDL_EVENT_DID_ENTER_BACKGROUND:  log("WATCH: DID_ENTER_BACKGROUND"); break;
+            case SDL_EventType.SDL_EVENT_WILL_ENTER_FOREGROUND: log("WATCH: WILL_ENTER_FOREGROUND"); break;
+            case SDL_EventType.SDL_EVENT_DID_ENTER_FOREGROUND:  log("WATCH: DID_ENTER_FOREGROUND"); break;
+            case SDL_EventType.SDL_EVENT_TERMINATING:           log("WATCH: TERMINATING"); break;
+            case SDL_EventType.SDL_EVENT_LOW_MEMORY:            log("WATCH: LOW_MEMORY"); break;
+        }
+
+        // true = keep the event in the queue. A watch must not swallow events.
+        return true;
+    }
+
     // unsafe: SDL_Event's text payload is a raw byte*.
     public static unsafe void Run(Action<string> log)
     {
@@ -37,6 +83,14 @@ internal static class SpikeRenderer
         if (!SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_EVENTS))
         {
             throw new InvalidOperationException($"SDL_Init failed: {SDL_GetError()}");
+        }
+
+        // Registered immediately after SDL_Init, before the window exists, so no
+        // lifecycle transition can slip past during startup.
+        s_lifecycleWatch = (userdata, evt) => LifecycleWatch(userdata, evt, log);
+        if (!SDL_AddEventWatch(s_lifecycleWatch, IntPtr.Zero))
+        {
+            throw new InvalidOperationException($"SDL_AddEventWatch failed: {SDL_GetError()}");
         }
 
         // GLES 3.0 must be requested BEFORE the window is created; SDL bakes the
@@ -114,12 +168,9 @@ internal static class SpikeRenderer
                         glViewport(0, 0, pw, ph);
                         log($"RESIZED      {pw}x{ph}");
                         break;
-                    case SDL_EventType.SDL_EVENT_WILL_ENTER_BACKGROUND:
-                        log("WILL_ENTER_BACKGROUND");
-                        break;
-                    case SDL_EventType.SDL_EVENT_DID_ENTER_FOREGROUND:
-                        log("DID_ENTER_FOREGROUND");
-                        break;
+                        // NOTE: the app lifecycle events (WILL_ENTER_BACKGROUND,
+                        // DID_ENTER_FOREGROUND, TERMINATING, LOW_MEMORY) are deliberately
+                        // NOT handled here. They cannot be - see _lifecycleWatch below.
                 }
             }
 
