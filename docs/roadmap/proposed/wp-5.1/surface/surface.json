@@ -1,0 +1,689 @@
+{
+  "callSites": 339,
+  "members": {
+    "GL.ActiveTexture": {
+      "sites": 8,
+      "signatures": [
+        "void ActiveTexture(GLEnum)",
+        "void ActiveTexture(TextureUnit)"
+      ]
+    },
+    "GL.AttachShader": {
+      "sites": 3,
+      "signatures": [
+        "void AttachShader(uint, uint)"
+      ]
+    },
+    "GL.BindBuffer": {
+      "sites": 9,
+      "signatures": [
+        "void BindBuffer(BufferTargetARB, uint)",
+        "void BindBuffer(GLEnum, uint)"
+      ]
+    },
+    "GL.BindBufferBase": {
+      "sites": 1,
+      "signatures": [
+        "void BindBufferBase(BufferTargetARB, uint, uint)"
+      ]
+    },
+    "GL.BindFramebuffer": {
+      "sites": 6,
+      "signatures": [
+        "void BindFramebuffer(GLEnum, uint)"
+      ]
+    },
+    "GL.BindRenderbuffer": {
+      "sites": 1,
+      "signatures": [
+        "void BindRenderbuffer(GLEnum, uint)"
+      ]
+    },
+    "GL.BindSampler": {
+      "sites": 3,
+      "signatures": [
+        "void BindSampler(uint, uint)"
+      ]
+    },
+    "GL.BindTexture": {
+      "sites": 10,
+      "signatures": [
+        "void BindTexture(GLEnum, uint)",
+        "void BindTexture(TextureTarget, uint)"
+      ]
+    },
+    "GL.BindVertexArray": {
+      "sites": 6,
+      "signatures": [
+        "void BindVertexArray(uint)"
+      ]
+    },
+    "GL.BlendEquation": {
+      "sites": 2,
+      "signatures": [
+        "void BlendEquation(BlendEquationModeEXT)",
+        "void BlendEquation(GLEnum)"
+      ]
+    },
+    "GL.BlendEquationSeparate": {
+      "sites": 2,
+      "signatures": [
+        "void BlendEquationSeparate(GLEnum, GLEnum)"
+      ]
+    },
+    "GL.BlendFuncSeparate": {
+      "sites": 4,
+      "signatures": [
+        "void BlendFuncSeparate(BlendingFactor, BlendingFactor, BlendingFactor, BlendingFactor)",
+        "void BlendFuncSeparate(GLEnum, GLEnum, GLEnum, GLEnum)"
+      ]
+    },
+    "GL.BufferData": {
+      "sites": 3,
+      "signatures": [
+        "void BufferData(BufferTargetARB, nuint, void*, BufferUsageARB)",
+        "void BufferData(GLEnum, nuint, void*, GLEnum)"
+      ]
+    },
+    "GL.CheckFramebufferStatus": {
+      "sites": 1,
+      "signatures": [
+        "GLEnum CheckFramebufferStatus(GLEnum)"
+      ]
+    },
+    "GL.Clear": {
+      "sites": 2,
+      "signatures": [
+        "void Clear(ClearBufferMask)",
+        "void Clear(uint)"
+      ]
+    },
+    "GL.ClearColor": {
+      "sites": 2,
+      "signatures": [
+        "void ClearColor(float, float, float, float)"
+      ]
+    },
+    "GL.ClearDepth": {
+      "sites": 3,
+      "signatures": [
+        "void ClearDepth(float)"
+      ]
+    },
+    "GL.CompileShader": {
+      "sites": 2,
+      "signatures": [
+        "void CompileShader(uint)"
+      ]
+    },
+    "GL.CreateProgram": {
+      "sites": 2,
+      "signatures": [
+        "uint CreateProgram()"
+      ]
+    },
+    "GL.CreateShader": {
+      "sites": 2,
+      "signatures": [
+        "uint CreateShader(ShaderType)"
+      ]
+    },
+    "GL.CullFace": {
+      "sites": 3,
+      "signatures": [
+        "void CullFace(TriangleFace)"
+      ]
+    },
+    "GL.DeleteBuffer": {
+      "sites": 3,
+      "signatures": [
+        "void DeleteBuffer(uint)"
+      ]
+    },
+    "GL.DeleteProgram": {
+      "sites": 1,
+      "signatures": [
+        "void DeleteProgram(uint)"
+      ]
+    },
+    "GL.DeleteShader": {
+      "sites": 2,
+      "signatures": [
+        "void DeleteShader(uint)"
+      ]
+    },
+    "GL.DeleteTexture": {
+      "sites": 3,
+      "signatures": [
+        "void DeleteTexture(uint)"
+      ]
+    },
+    "GL.DeleteVertexArray": {
+      "sites": 3,
+      "signatures": [
+        "void DeleteVertexArray(uint)"
+      ]
+    },
+    "GL.DepthFunc": {
+      "sites": 2,
+      "signatures": [
+        "void DepthFunc(DepthFunction)"
+      ]
+    },
+    "GL.DepthMask": {
+      "sites": 2,
+      "signatures": [
+        "void DepthMask(bool)"
+      ]
+    },
+    "GL.DetachShader": {
+      "sites": 3,
+      "signatures": [
+        "void DetachShader(uint, uint)"
+      ]
+    },
+    "GL.Disable": {
+      "sites": 18,
+      "signatures": [
+        "void Disable(EnableCap)",
+        "void Disable(GLEnum)"
+      ]
+    },
+    "GL.DrawBuffers": {
+      "sites": 1,
+      "signatures": [
+        "void DrawBuffers(uint, DrawBufferMode*)"
+      ]
+    },
+    "GL.DrawElements": {
+      "sites": 1,
+      "signatures": [
+        "void DrawElements(PrimitiveType, uint, DrawElementsType, void*)"
+      ]
+    },
+    "GL.DrawElementsBaseVertex": {
+      "sites": 1,
+      "signatures": [
+        "void DrawElementsBaseVertex(GLEnum, uint, GLEnum, void*, int)"
+      ]
+    },
+    "GL.DrawElementsInstanced": {
+      "sites": 1,
+      "signatures": [
+        "void DrawElementsInstanced(PrimitiveType, uint, GLEnum, void*, uint)"
+      ]
+    },
+    "GL.Enable": {
+      "sites": 17,
+      "signatures": [
+        "void Enable(EnableCap)",
+        "void Enable(GLEnum)"
+      ]
+    },
+    "GL.EnableVertexAttribArray": {
+      "sites": 11,
+      "signatures": [
+        "void EnableVertexAttribArray(uint)"
+      ]
+    },
+    "GL.FramebufferRenderbuffer": {
+      "sites": 1,
+      "signatures": [
+        "void FramebufferRenderbuffer(GLEnum, GLEnum, GLEnum, uint)"
+      ]
+    },
+    "GL.FramebufferTexture": {
+      "sites": 1,
+      "signatures": [
+        "void FramebufferTexture(GLEnum, GLEnum, uint, int)"
+      ]
+    },
+    "GL.FrontFace": {
+      "sites": 3,
+      "signatures": [
+        "void FrontFace(FrontFaceDirection)"
+      ]
+    },
+    "GL.GenBuffer": {
+      "sites": 3,
+      "signatures": [
+        "uint GenBuffer()"
+      ]
+    },
+    "GL.GenFramebuffers": {
+      "sites": 1,
+      "signatures": [
+        "void GenFramebuffers(uint, uint*)"
+      ]
+    },
+    "GL.GenRenderbuffers": {
+      "sites": 1,
+      "signatures": [
+        "void GenRenderbuffers(uint, uint*)"
+      ]
+    },
+    "GL.GenTexture": {
+      "sites": 2,
+      "signatures": [
+        "uint GenTexture()"
+      ]
+    },
+    "GL.GenVertexArray": {
+      "sites": 2,
+      "signatures": [
+        "uint GenVertexArray()"
+      ]
+    },
+    "GL.GenerateMipmap": {
+      "sites": 1,
+      "signatures": [
+        "void GenerateMipmap(TextureTarget)"
+      ]
+    },
+    "GL.GetApi": {
+      "sites": 3,
+      "signatures": [
+        "GL GetApi(IGLContextSource)",
+        "GL GetApi(INativeContext)"
+      ]
+    },
+    "GL.GetAttribLocation": {
+      "sites": 2,
+      "signatures": [
+        "int GetAttribLocation(uint, string)"
+      ]
+    },
+    "GL.GetBoolean": {
+      "sites": 1,
+      "signatures": [
+        "void GetBoolean(GLEnum, out bool)"
+      ]
+    },
+    "GL.GetError": {
+      "sites": 28,
+      "signatures": [
+        "GLEnum GetError()"
+      ]
+    },
+    "GL.GetFloat": {
+      "sites": 1,
+      "signatures": [
+        "float GetFloat(GLEnum)"
+      ]
+    },
+    "GL.GetInteger": {
+      "sites": 36,
+      "signatures": [
+        "void GetInteger(GLEnum, out int)",
+        "void GetInteger(GetPName, out int)"
+      ]
+    },
+    "GL.GetProgram": {
+      "sites": 2,
+      "signatures": [
+        "void GetProgram(uint, GLEnum, out int)"
+      ]
+    },
+    "GL.GetProgramInfoLog": {
+      "sites": 2,
+      "signatures": [
+        "string GetProgramInfoLog(uint)"
+      ]
+    },
+    "GL.GetShader": {
+      "sites": 1,
+      "signatures": [
+        "void GetShader(uint, ShaderParameterName, out int)"
+      ]
+    },
+    "GL.GetShaderInfoLog": {
+      "sites": 2,
+      "signatures": [
+        "string GetShaderInfoLog(uint)"
+      ]
+    },
+    "GL.GetStringS": {
+      "sites": 1,
+      "signatures": [
+        "string GetStringS(StringName)"
+      ]
+    },
+    "GL.GetUniformBlockIndex": {
+      "sites": 1,
+      "signatures": [
+        "uint GetUniformBlockIndex(uint, string)"
+      ]
+    },
+    "GL.GetUniformLocation": {
+      "sites": 7,
+      "signatures": [
+        "int GetUniformLocation(uint, string)"
+      ]
+    },
+    "GL.IsEnabled": {
+      "sites": 11,
+      "signatures": [
+        "bool IsEnabled(GLEnum)"
+      ]
+    },
+    "GL.LinkProgram": {
+      "sites": 2,
+      "signatures": [
+        "void LinkProgram(uint)"
+      ]
+    },
+    "GL.PixelStore": {
+      "sites": 1,
+      "signatures": [
+        "void PixelStore(PixelStoreParameter, int)"
+      ]
+    },
+    "GL.PolygonMode": {
+      "sites": 2,
+      "signatures": [
+        "void PolygonMode(GLEnum, GLEnum)"
+      ]
+    },
+    "GL.RenderbufferStorage": {
+      "sites": 1,
+      "signatures": [
+        "void RenderbufferStorage(GLEnum, GLEnum, uint, uint)"
+      ]
+    },
+    "GL.Scissor": {
+      "sites": 3,
+      "signatures": [
+        "void Scissor(int, int, uint, uint)"
+      ]
+    },
+    "GL.ShaderSource": {
+      "sites": 2,
+      "signatures": [
+        "void ShaderSource(uint, string)"
+      ]
+    },
+    "GL.TexImage2D": {
+      "sites": 5,
+      "signatures": [
+        "void TexImage2D(TextureTarget, int, InternalFormat, uint, uint, int, PixelFormat, PixelType, void*)",
+        "void TexImage2D(TextureTarget, int, int, uint, uint, int, PixelFormat, PixelType, void*)"
+      ]
+    },
+    "GL.TexParameter": {
+      "sites": 15,
+      "signatures": [
+        "void TexParameter(GLEnum, GLEnum, float)",
+        "void TexParameter(TextureTarget, TextureParameterName, int)"
+      ]
+    },
+    "GL.TexParameterI": {
+      "sites": 7,
+      "signatures": [
+        "void TexParameterI(GLEnum, TextureParameterName, int)",
+        "void TexParameterI(GLEnum, TextureParameterName, uint)"
+      ]
+    },
+    "GL.TexStorage2D": {
+      "sites": 1,
+      "signatures": [
+        "void TexStorage2D(GLEnum, uint, SizedInternalFormat, uint, uint)"
+      ]
+    },
+    "GL.TexSubImage2D": {
+      "sites": 3,
+      "signatures": [
+        "void TexSubImage2D(GLEnum, int, int, int, uint, uint, PixelFormat, PixelType, void*)",
+        "void TexSubImage2D(TextureTarget, int, int, int, uint, uint, PixelFormat, PixelType, void*)"
+      ]
+    },
+    "GL.Uniform1": {
+      "sites": 6,
+      "signatures": [
+        "void Uniform1(int, float)",
+        "void Uniform1(int, int)",
+        "void Uniform1(int, uint)"
+      ]
+    },
+    "GL.Uniform3": {
+      "sites": 2,
+      "signatures": [
+        "void Uniform3(int, float, float, float)"
+      ]
+    },
+    "GL.Uniform4": {
+      "sites": 2,
+      "signatures": [
+        "void Uniform4(int, float, float, float, float)"
+      ]
+    },
+    "GL.UniformMatrix4": {
+      "sites": 2,
+      "signatures": [
+        "void UniformMatrix4(int, uint, bool, float*)"
+      ]
+    },
+    "GL.UseProgram": {
+      "sites": 5,
+      "signatures": [
+        "void UseProgram(uint)"
+      ]
+    },
+    "GL.VertexAttribDivisor": {
+      "sites": 2,
+      "signatures": [
+        "void VertexAttribDivisor(uint, uint)"
+      ]
+    },
+    "GL.VertexAttribIPointer": {
+      "sites": 2,
+      "signatures": [
+        "void VertexAttribIPointer(uint, int, VertexAttribIType, uint, void*)"
+      ]
+    },
+    "GL.VertexAttribPointer": {
+      "sites": 9,
+      "signatures": [
+        "void VertexAttribPointer(uint, int, GLEnum, bool, uint, void*)",
+        "void VertexAttribPointer(uint, int, VertexAttribPointerType, bool, uint, void*)"
+      ]
+    },
+    "GL.Viewport": {
+      "sites": 3,
+      "signatures": [
+        "void Viewport(int, int, uint, uint)"
+      ]
+    },
+    "GLOverloads.GetInteger": {
+      "sites": 5,
+      "signatures": [
+        "void GetInteger(GLEnum, Span\u003Cint\u003E)"
+      ]
+    },
+    "GLOverloads.UniformMatrix4": {
+      "sites": 2,
+      "signatures": [
+        "void UniformMatrix4(int, uint, bool, ReadOnlySpan\u003Cfloat\u003E)"
+      ]
+    }
+  },
+  "enums": {
+    "BlendEquationModeEXT": [
+      "FuncAdd"
+    ],
+    "BlendingFactor": [
+      "OneMinusSrcAlpha",
+      "SrcAlpha"
+    ],
+    "BufferTargetARB": [
+      "ArrayBuffer",
+      "ElementArrayBuffer",
+      "ShaderStorageBuffer",
+      "UniformBuffer"
+    ],
+    "BufferUsageARB": [
+      "DynamicDraw"
+    ],
+    "ClearBufferMask": [
+      "ColorBufferBit",
+      "DepthBufferBit"
+    ],
+    "DepthFunction": [
+      "Lequal",
+      "Less"
+    ],
+    "DrawBufferMode": [
+      "ColorAttachment0"
+    ],
+    "DrawElementsType": [
+      "UnsignedShort"
+    ],
+    "EnableCap": [
+      "Blend",
+      "CullFace",
+      "DebugOutput",
+      "DebugOutputSynchronous",
+      "DepthClamp",
+      "DepthTest",
+      "ScissorTest",
+      "StencilTest"
+    ],
+    "FrontFaceDirection": [
+      "Ccw"
+    ],
+    "GLEnum": [
+      "ActiveTexture",
+      "ArrayBuffer",
+      "ArrayBufferBinding",
+      "Blend",
+      "BlendDstAlpha",
+      "BlendDstRgb",
+      "BlendEquationAlpha",
+      "BlendEquationRgb",
+      "BlendSrcAlpha",
+      "BlendSrcRgb",
+      "ClampToEdge",
+      "ColorAttachment0",
+      "CullFace",
+      "CullFaceMode",
+      "CurrentProgram",
+      "DepthAttachment",
+      "DepthComponent24",
+      "DepthTest",
+      "DepthWritemask",
+      "ElementArrayBuffer",
+      "Fill",
+      "Float",
+      "Framebuffer",
+      "FramebufferBinding",
+      "FramebufferComplete",
+      "FrontAndBack",
+      "FrontFace",
+      "FuncAdd",
+      "Linear",
+      "LinearMipmapLinear",
+      "LinkStatus",
+      "Nearest",
+      "NearestMipmapNearest",
+      "NoError",
+      "One",
+      "OneMinusSrcAlpha",
+      "PolygonMode",
+      "PrimitiveRestart",
+      "Renderbuffer",
+      "Rgb32f",
+      "SamplerBinding",
+      "ScissorBox",
+      "ScissorTest",
+      "SrcAlpha",
+      "Srgb8Alpha8",
+      "StencilTest",
+      "StreamDraw",
+      "Texture0",
+      "Texture2D",
+      "TextureBinding2D",
+      "Triangles",
+      "UnsignedByte",
+      "UnsignedShort",
+      "VertexArrayBinding",
+      "Viewport"
+    ],
+    "GetPName": [
+      "MaxElementIndex",
+      "MaxElementsIndices",
+      "MaxElementsVertices"
+    ],
+    "InternalFormat": [
+      "Rgba",
+      "Rgba8"
+    ],
+    "PixelFormat": [
+      "Bgra",
+      "Rgba"
+    ],
+    "PixelStoreParameter": [
+      "PackRowLength"
+    ],
+    "PixelType": [
+      "UnsignedByte"
+    ],
+    "PrimitiveType": [
+      "Triangles"
+    ],
+    "ShaderParameterName": [
+      "CompileStatus"
+    ],
+    "ShaderType": [
+      "FragmentShader",
+      "VertexShader"
+    ],
+    "SizedInternalFormat": [
+      "Rgba8"
+    ],
+    "StringName": [
+      "Version"
+    ],
+    "TextureMagFilter": [
+      "Linear"
+    ],
+    "TextureMinFilter": [
+      "Linear"
+    ],
+    "TextureParameterName": [
+      "TextureBaseLevel",
+      "TextureLodBias",
+      "TextureMagFilter",
+      "TextureMaxLevel",
+      "TextureMaxLod",
+      "TextureMinFilter",
+      "TextureMinLod",
+      "TextureWrapR",
+      "TextureWrapS",
+      "TextureWrapT"
+    ],
+    "TextureTarget": [
+      "Texture2D"
+    ],
+    "TextureUnit": [
+      "Texture0",
+      "Texture2",
+      "Texture3"
+    ],
+    "TextureWrapMode": [
+      "Repeat"
+    ],
+    "TriangleFace": [
+      "Back"
+    ],
+    "VertexAttribIType": [
+      "Int",
+      "UnsignedInt"
+    ],
+    "VertexAttribPointerType": [
+      "Float"
+    ]
+  },
+  "otherTypes": [
+    "GL",
+    "Shader"
+  ]
+}
