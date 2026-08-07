@@ -140,6 +140,27 @@ Both assimp and the Android openal build use `ANDROID_STL=c++_shared`, and only 
 `libc++_shared.so` ships in the APK. Both must therefore be built with the **same NDK
 revision** or the shared C++ runtime is ABI-mismatched. CI pins the NDK to `27.2.12479018`.
 
+## Running the Android recipes locally
+
+`recipes/build-mainshim.sh` (WP-2.1) needs `ANDROID_NDK_HOME`. CI exports it; locally you set it
+yourself, and **the NDK is often not where a search suggests**. It is *not* necessarily under
+`%LOCALAPPDATA%\Android\Sdk\ndk\` — the standalone Windows NDK installer puts it at:
+
+```bash
+export ANDROID_NDK_HOME="/c/Program Files (x86)/Android/AndroidNDK/android-ndk-r27c"
+bash recipes/build-mainshim.sh /tmp/mainshim
+```
+
+The tools the recipes and the plan's acceptance criteria rely on (`llvm-readelf`, `llvm-strip`,
+`llvm-strings`, the `*-clang` wrappers) all live in
+`$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/<host-tag>/bin/`.
+
+> **`llvm-readelf` is the right tool for Android `.so` files** — they are ELF, and `otool` is
+> Mach-O only. If no NDK is installed at all, `p_align` can still be read straight out of the ELF
+> program headers; WP-1.6 did exactly that to verify 16 KB compliance on a machine without one.
+> Note that a symbol lookup must **strip the `@@SDL3_0.0.0` version suffix** first, or an exact
+> match silently finds nothing and looks like a missing symbol.
+
 ## `build-assimp-android.sh` is deliberately untouched
 
 Non-negotiable **N5** of the platform-backend plan: Phase 4 removes Assimp from the runtime
