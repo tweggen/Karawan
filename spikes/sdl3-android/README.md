@@ -14,7 +14,7 @@ something only a human with a physical device can complete.
 | AC-2.1 APK builds | ✅ `dotnet build spikes/sdl3-android/Sdl3Spike.csproj` → exit 0 |
 | AC-2.2 SDL3 16 KB aligned in the APK | ✅ all four `LOAD` segments `0x4000` — and so is **every other** `.so` in the APK |
 | AC-2.3 no Silk | ✅ no Silk assemblies in the APK; no Silk code anywhere in the spike |
-| **AC-2.4 GATE-A** | 🔒 **human, physical device** — see below |
+| **AC-2.4 GATE-A** | 🟡 **rendering confirmed on device 2026-08-07** (Adreno 825, `OpenGL ES 3.2`, first frame presented). Multi-touch / rotation / resume **not yet run**; IME **not answerable here** — see below. |
 | **AC-2.5 GATE-B** | 🔒 **human, Play Console** |
 
 ## Running it (GATE-A)
@@ -47,7 +47,7 @@ Then exercise each of AC-2.4's four requirements and watch for the matching line
 
 | AC-2.4 requirement | What to do | Expected log |
 |---|---|---|
-| clear screen | look at it | colours cycle |
+| clear screen ✅ | look at it | colours cycle — **confirmed 2026-08-07** |
 | multi-touch | two fingers at once | two `FINGER_DOWN` with **different** `id` |
 | **IME text entry** | see below | `TEXT_INPUT '<char>'` |
 | rotation | rotate the device | `RESIZED <w>x<h>` with swapped dimensions |
