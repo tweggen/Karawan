@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Generated OpenGL bindings (WP-5.1). Nothing here is written by hand: regenerate with
+    docs/roadmap/proposed/wp-5.1/gen.py. See
+    docs/roadmap/proposed/WP-5.1-GENERATED-BINDINGS.md.
+
+    Deliberately has NO package references. That is the whole point of the exercise: the
+    bindings depend on the Khronos registry, which is a versioned specification, rather
+    than on a wrapper that can be abandoned.
+
+    Nothing references this project yet - WP-5.2 performs the swap, gated on GATE-F.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

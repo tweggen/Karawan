@@ -1,6 +1,6 @@
 # WP-5.1 — Generated GL bindings
 
-**Status:** 🔄 In progress — **step 1 of 2 complete** (required surface resolved; generator not yet written)
+**Status:** ✅ Generator written, output compiles, completeness verified — **not yet swapped in (WP-5.2)**
 **Date:** 2026-08-07
 **Branch:** `platform/wp-5.1`
 **Decision this implements:** S2a in its *narrow* form — generate only the surface actually
@@ -97,21 +97,102 @@ reference list (`dotnet msbuild -t:ResolveReferences -getItem:ReferencePath`, 20
 **0 diagnostics**) and **exits non-zero if it resolves zero call sites**, so the failure cannot
 be mistaken for a result again.
 
-## 6. What is NOT done
+## 6. The generator
 
-**The generator itself.** This document records the target; it does not yet emit anything.
-Remaining for WP-5.1:
+[`wp-5.1/gen.py`](wp-5.1/gen.py) → `Splash.GL/generated/GL.g.cs` (1,138 lines), namespace
+`Karawan.Graphics.OpenGL`.
 
-1. Emit the 99 signatures and 30 enum types from `gl.xml` + `surface.json`, in namespace
-   `Karawan.Graphics.OpenGL`, matching Silk's names.
-2. Provide the `GetApi` factory and context abstraction (§4).
-3. Prove it by compiling `Splash.Silk` against the generated bindings — which is WP-5.2's swap,
-   but a compile is the only real check that the surface is complete.
+Where each input is authoritative — this split is the point of the exercise:
 
-And, unchanged from WP-5.0 §5: **nothing has been executed against a real GL context.** A
-binding that compiles but dispatches to the wrong entry point looks identical to a correct one
-at this stage. That is GATE-F's job, and the plan's warning stands — **capture the reference
-frames before WP-5.2 merges**, or the comparison is unrunnable forever.
+| input | role |
+|---|---|
+| **`gl.xml`** | the **specification**. Every emitted enum value is checked against it; the support entry points are parsed from it. A versioned, regenerable artifact. |
+| **`surface.json`** | the **mapping**, extracted from Silk *once*: which C# name and shape corresponds to which native entry point. `gl.xml` cannot express this. Checked in, so **Silk is not needed to regenerate**. |
+| **`CONVENIENCES`** in `gen.py` | the 14 signatures with **no native counterpart** — hand-written, because they are pure API policy. |
+
+Output composition:
+
+```
+30 enum types, 114 members     values from Silk, all 114 verified against gl.xml
+85 native entry points         emitted from the recorded NativeApi EntryPoint
+14 support entry points        parsed from gl.xml; needed by the conveniences,
+                               but used by no call site directly
+14 conveniences                hand-written: Gen*/Delete* singular wrappers,
+                               string marshalling, Span forms, GetApi
+```
+
+`Splash.GL.csproj` has **no package references at all**. That is the deliverable: the bindings
+depend on a specification, not on a wrapper.
+
+### Silk's entry points are recorded in metadata
+
+Silk tags every method `[NativeApi(EntryPoint = "glBindBuffer")]`. The probe reads it, so the
+generator never guesses a native name from a C# one — which matters, because the mapping is not
+mechanical:
+
+```
+GetInteger      -> glGetIntegerv        (rename)
+TexParameter    -> glTexParameterf      (merge: one C# name, several native ones)
+GetStringS      -> glGetString          (rename)
+```
+
+**85 of 99 signatures carried an entry point; 14 did not.** Those 14 are Silk conveniences with
+no 1:1 native call. That is the overload-expansion cost from ADR §11c, finally enumerated
+exactly rather than estimated.
+
+## 7. Verification
+
+[`wp-5.1/verify`](wp-5.1/verify) reflects over the compiled bindings and checks them against
+`surface.json`. Compiling only proves the output is valid C#; this proves it is *complete*.
+
+```
+SIGNATURE COMPLETENESS
+required                    : 97
+present (drop-in)           : 97
+differ by design (WP-5.2)   : 2
+UNEXPECTEDLY MISSING        : 0
+
+ENUM COMPLETENESS      114 / 114
+ENUM VALUES vs SILK    114 matching, 0 differing
+RESULT: complete
+```
+
+### The 2 deliberate differences — and the churn they imply
+
+`GetApi(INativeContext)` and `GetApi(IGLContextSource)` take **`Silk.NET.Core`** types.
+Accepting them would preserve exactly the dependency this work removes, so the generated
+bindings offer `GetApi(Func<string, IntPtr>)` and `GetApi(IGLProcAddress)` instead.
+
+**So call-site churn is not literally zero.** It is **3 call sites of 339** — all of them the
+context plumbing at the seam WP-0.2 already isolated. WP-5.0 measured 0 churn on a sample that
+did not include `GetApi`; this is the corrected figure, and it is still ~1 % against OpenTK's
+~83 sites.
+
+## 8. What is NOT done
+
+- **The swap.** Nothing references `Splash.GL` yet. `Splash.Silk` still compiles against Silk,
+  and WP-5.2 is where that changes. Note the swap is entangled with
+  `Silk.NET.OpenGL.Extensions.ImGui`, which consumes Silk's `GL` type directly — that
+  dependency has to be resolved before or during WP-5.2, and it is not addressed here.
+- **Anything at runtime.** Unchanged from WP-5.0 §5: **nothing has been executed against a real
+  GL context.** A binding that compiles, verifies complete, and dispatches to the wrong entry
+  point looks identical to a correct one at this stage. Every `glGetProcAddress` lookup in
+  `GL.g.cs` is unexercised.
+
+  This is precisely why the plan names `GlStateSaver` and `SilkRenderState` as failing
+  *silently*, and why **GATE-F reference frames must be captured before WP-5.2 merges** — after
+  the swap the comparison is unrunnable forever.
+
+## 9. Reproducing
+
+```bash
+dotnet build Splash.Silk/Splash.Silk.csproj
+dotnet msbuild Splash.Silk/Splash.Silk.csproj -t:ResolveReferences -getItem:ReferencePath -v:q > refs.json
+dotnet run --project docs/roadmap/proposed/wp-5.1/surface -- Splash.Silk refs.json surface.json
+python docs/roadmap/proposed/wp-5.1/gen.py surface.json gl.xml Splash.GL/generated/GL.g.cs
+dotnet build Splash.GL/Splash.GL.csproj
+dotnet run --project docs/roadmap/proposed/wp-5.1/verify -- <Splash.GL.dll> surface.json
+```
 
 ## 7. Reproducing
 

@@ -67,8 +67,13 @@ static class Program
         foreach (var e in errs.Take(3)) Console.WriteLine("   " + e);
 
         var methods = new SortedDictionary<string, SortedSet<string>>(StringComparer.Ordinal);
+        var shapes = new SortedDictionary<string, Shape>(StringComparer.Ordinal);
         var sites = new SortedDictionary<string, int>(StringComparer.Ordinal);
         var enums = new SortedDictionary<string, SortedSet<string>>(StringComparer.Ordinal);
+        // member -> numeric value, so the generator does not have to reverse PascalCase
+        // back into GL_UPPER_SNAKE to look the value up. Values are cross-checked against
+        // gl.xml by the generator; Silk is only the mapping, never the authority.
+        var enumValues = new SortedDictionary<string, string>(StringComparer.Ordinal);
         var otherTypes = new SortedSet<string>(StringComparer.Ordinal);
         int total = 0;
 
@@ -85,8 +90,10 @@ static class Program
                 total++;
                 string key = $"{ct.Name}.{m.Name}";
                 if (!methods.TryGetValue(key, out var set)) methods[key] = set = new(StringComparer.Ordinal);
-                set.Add(Signature(m));
+                string sg = Signature(m);
+                set.Add(sg);
                 sites[key] = sites.GetValueOrDefault(key) + 1;
+                shapes[key + "|" + sg] = Describe(m);
             }
 
             foreach (var node in root.DescendantNodes())
@@ -99,6 +106,8 @@ static class Program
                     if (!enums.TryGetValue(f.ContainingType.Name, out var ms))
                         enums[f.ContainingType.Name] = ms = new(StringComparer.Ordinal);
                     ms.Add(f.Name);
+                    if (f.HasConstantValue && f.ConstantValue != null)
+                        enumValues[$"{f.ContainingType.Name}.{f.Name}"] = Convert.ToUInt64(f.ConstantValue).ToString();
                 }
                 else if (sym is INamedTypeSymbol nt
                          && nt.ContainingNamespace?.ToDisplayString() == GlNamespace
@@ -140,11 +149,38 @@ static class Program
         {
             callSites = total,
             members = methods.ToDictionary(kv => kv.Key, kv => new { sites = sites[kv.Key], signatures = kv.Value.ToList() }),
+            shapes = shapes.ToDictionary(kv => kv.Key, kv => kv.Value),
             enums = enums.ToDictionary(kv => kv.Key, kv => kv.Value.ToList()),
+            enumValues = enumValues,
             otherTypes = otherTypes.ToList(),
         }, new JsonSerializerOptions { WriteIndented = true }));
         Console.WriteLine($"\nwritten: {outPath}");
         return 0;
+    }
+
+    public record Param(string Name, string Type, string RefKind, bool IsEnum, bool IsPointer);
+    public record Shape(string Member, string EntryPoint, string ReturnType, bool ReturnIsEnum, List<Param> Parameters);
+
+    // Silk tags every method with [NativeApi(EntryPoint = "glXxx")]. That mapping is the one
+    // thing gl.xml cannot supply - Silk renames (GetInteger -> glGetIntegerv) and merges
+    // (TexParameter -> glTexParameterf) - so capture it here, once, rather than guessing from
+    // the C# name later.
+    static Shape Describe(IMethodSymbol m)
+    {
+        string entry = m.GetAttributes()
+            .FirstOrDefault(a => a.AttributeClass?.Name == "NativeApiAttribute")
+            ?.NamedArguments.FirstOrDefault(na => na.Key == "EntryPoint").Value.Value as string;
+
+        var f = SymbolDisplayFormat.MinimallyQualifiedFormat;
+        var ps = m.Parameters.Select(p => new Param(
+            p.Name,
+            p.Type.ToDisplayString(f),
+            p.RefKind switch { RefKind.Ref => "ref", RefKind.Out => "out", RefKind.In => "in", _ => "" },
+            p.Type.TypeKind == TypeKind.Enum,
+            p.Type.TypeKind == TypeKind.Pointer)).ToList();
+
+        return new Shape(m.Name, entry ?? "", m.ReturnType.ToDisplayString(f),
+                         m.ReturnType.TypeKind == TypeKind.Enum, ps);
     }
 
     static string Signature(IMethodSymbol m)
