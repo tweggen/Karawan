@@ -48,7 +48,6 @@
     <PackageVersion Include="Silk.NET.Input.Sdl" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.OpenAL.Extensions.Enumeration" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1" />
     <PackageVersion Include="Silk.NET.OpenGL" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.OpenGL.Extensions.EXT" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.23.0" />
@@ -57,6 +56,19 @@
     <PackageVersion Include="Silk.NET.Windowing.Sdl" Version="2.23.0" />
     <PackageVersion Include="Ultz.Native.Assimp" Version="5.4.1" />
     <PackageVersion Include="Ultz.Native.SDL" Version="2.32.10" />
+  </ItemGroup>
+
+  <ItemGroup Label="Natives built by our own CI">
+    <!--
+      openal-soft and SDL3, built by .github/workflows/natives.yml from pinned upstream
+      tags and published by an explicit manual dispatch. Replaces
+      Silk.NET.OpenAL.Soft.Native as the native source (WP-1.5).
+
+      Comes from nuget.org rather than GitHub Packages: GitHub Packages NuGet requires
+      authentication even for public packages, which would have made a PAT a prerequisite
+      for building this repository at all. See recipes/BUILD_NOTES.md.
+    -->
+    <PackageVersion Include="Karawan.Natives" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup Label="Engine">
