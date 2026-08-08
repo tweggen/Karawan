@@ -53,6 +53,93 @@ internal class HoverController : AController
     private bool _traceControllers;
 
 
+    /**
+     * How far past the normal limits the body may get before the emergency clamp intervenes.
+     * Generous on purpose: the proportional limiters own the normal range, and this must not
+     * interfere with them or with any deliberate overspeed the game arranges.
+     */
+    public float EmergencyVelocityFactor { get; set; } = 20f;
+
+
+    /**
+     * Bound the body's velocity in place. Caller must hold the simulation lock.
+     *
+     * Rescaling rather than correcting: a correction is proportional and can overshoot, which is
+     * exactly how a 0.8 rad/s limit ended up being exceeded by twenty-one orders of magnitude.
+     * Setting the magnitude directly has no gain and therefore no feedback loop.
+     *
+     * Every comparison is negated (`!(x <= limit)`) so that NaN and Infinity take the clamp branch
+     * instead of slipping past it, and each axis is checked component-wise BEFORE taking a length,
+     * because squaring a component near 1E+21 overflows a float and turns the length into Infinity
+     * while the components still look finite.
+     */
+    private void _clampBodyVelocity()
+    {
+        float maxLinear = MaxLinearVelocity * EmergencyVelocityFactor;
+        float maxAngular = MaxAngularVelocity * EmergencyVelocityFactor;
+
+        Vector3 vLinear = _prefTarget.Velocity.Linear;
+        Vector3 vAngular = _prefTarget.Velocity.Angular;
+
+        if (!_isWithin(vLinear, maxLinear))
+        {
+            Error($"Emergency clamp: linear velocity {vLinear} exceeds {maxLinear}; resetting to zero.");
+            _prefTarget.Velocity.Linear = Vector3.Zero;
+        }
+
+        if (!_isWithin(vAngular, maxAngular))
+        {
+            Error($"Emergency clamp: angular velocity {vAngular} exceeds {maxAngular}; resetting to zero.");
+            _prefTarget.Velocity.Angular = Vector3.Zero;
+        }
+
+        /*
+         * The pose can already be non-finite by the time we get here, and unlike velocity it cannot
+         * be recovered by scaling - there is no "slightly wrong" NaN position. Put the body back on
+         * the last pose we were willing to persist, which is by construction a finite one.
+         */
+        Vector3 vPosition = _prefTarget.Pose.Position;
+        Quaternion qOrientation = _prefTarget.Pose.Orientation;
+
+        if (!_isFinite(vPosition) || !_isFinite(qOrientation))
+        {
+            var gameState = M<AutoSave>().GameState;
+            Error($"Emergency clamp: pose position {vPosition} orientation {qOrientation} is not "
+                  + $"finite; restoring the last persisted pose {gameState.PlayerPosition} "
+                  + $"{gameState.PlayerOrientation}.");
+
+            _prefTarget.Pose.Position = gameState.PlayerPosition;
+            _prefTarget.Pose.Orientation = builtin.tools.SafeOrientation.Sanitize(
+                gameState.PlayerOrientation, "HoverController._clampBodyVelocity");
+            _prefTarget.Velocity.Linear = Vector3.Zero;
+            _prefTarget.Velocity.Angular = Vector3.Zero;
+        }
+    }
+
+
+    private static bool _isFinite(Vector3 v)
+        => Single.IsFinite(v.X) && Single.IsFinite(v.Y) && Single.IsFinite(v.Z);
+
+
+    private static bool _isFinite(Quaternion q)
+        => Single.IsFinite(q.X) && Single.IsFinite(q.Y) && Single.IsFinite(q.Z) && Single.IsFinite(q.W);
+
+
+    /**
+     * Component-wise first, so a component large enough to overflow when squared is caught before
+     * the length is ever computed.
+     */
+    private static bool _isWithin(Vector3 v, float limit)
+    {
+        if (!(Single.Abs(v.X) <= limit) || !(Single.Abs(v.Y) <= limit) || !(Single.Abs(v.Z) <= limit))
+        {
+            return false;
+        }
+
+        return v.Length() <= limit;
+    }
+
+
     protected override void OnLogicalFrame(object sender, float dt)
     {
         Vector3 vTotalImpulse = new Vector3(0f, 9.81f, 0f);
@@ -317,17 +404,24 @@ internal class HoverController : AController
          * Negated comparisons deliberately: `!(x <= mass)` is true for NaN, `x > mass` is false.
          * If a value has already gone non-finite, that is exactly when you want to hear about it.
          */
+        /*
+         * Warning, not Trace(_dc, ...). #45 moved these behind the Dc.Input category, and the
+         * consequence showed up immediately: a device log with a full angular runaway in it
+         * contained no "Too fast" line at all, because that category was not enabled. An impulse
+         * exceeding its sane bound is an abnormal condition, not routine chatter, and the whole
+         * value of these two lines is being there when nobody thought to switch anything on.
+         */
         var mass = 500f;
         if (!(vTotalImpulse.Length() <= mass))
         {
-            Trace(_dc, $"Too fast, LINEAR impulse {vTotalImpulse} (magnitude "
-                       + $"{vTotalImpulse.Length()}, limit {mass}).");
+            Warning($"Too fast, LINEAR impulse {vTotalImpulse} (magnitude "
+                    + $"{vTotalImpulse.Length()}, limit {mass}).");
         }
 
         if (!(vTotalAngular.Length() <= mass))
         {
-            Trace(_dc, $"Too fast, ANGULAR impulse {vTotalAngular} (magnitude "
-                       + $"{vTotalAngular.Length()}, limit {mass}).");
+            Warning($"Too fast, ANGULAR impulse {vTotalAngular} (magnitude "
+                    + $"{vTotalAngular.Length()}, limit {mass}).");
         }
 
 
@@ -353,7 +447,8 @@ internal class HoverController : AController
             }
             else
             {
-                Error($"Player linear velocity {vTargetVelocity} is not finite; cannot limit it.");
+                Error($"Player linear velocity {vTargetVelocity} has a length of {vel}; "
+                      + $"cannot compute a correction. Emergency clamp will handle it.");
             }
         }
 
@@ -366,7 +461,14 @@ internal class HoverController : AController
             }
             else
             {
-                Error($"Player angular velocity {vTargetAngularVelocity} is not finite; cannot limit it.");
+                /*
+                 * Note the components can each be finite while the LENGTH is Infinity: observed
+                 * <4.0E+21, -4.7E+21, 2.66E+20>, and squaring 4E+21 overflows a float (max 3.4E+38)
+                 * long before the sum is taken. The old message said "is not finite" and pointed
+                 * at the wrong thing.
+                 */
+                Error($"Player angular velocity {vTargetAngularVelocity} has a length of {avel}; "
+                      + $"cannot compute a correction. Emergency clamp will handle it.");
             }
         }
         
@@ -390,11 +492,34 @@ internal class HoverController : AController
         Quaternion qFinalTargetOrientation;
         lock (_engine.Simulation)
         {
+            // _clampBodyVelocity is called below; it assumes this lock is already held.
             /*
              * First apply all impulses, angular and linear.
              */
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massTarget, new Vector3(0f, 0f, 0f));
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massTarget);
+
+            /*
+             * EMERGENCY CLAMP. Everything above computes a CORRECTION and hopes the body converges;
+             * this bounds the state outright, and it is the difference between a bad second and a
+             * dead session.
+             *
+             * Observed on device: angular velocity <4.0E+21, -4.7E+21, 2.66E+20> against a
+             * MaxAngularVelocity of 0.8 - twenty-one orders of magnitude over, reached about half a
+             * second after a touch. The proportional limiter cannot recover from that and in fact
+             * made it worse: with the length overflowing to Infinity, its own correction term
+             * (avel - Max)/avel is Infinity/Infinity = NaN, so the "limiter" was handing a NaN
+             * impulse to the body. That is where the NaN orientation came from.
+             *
+             * So the emergency bound is deliberately NOT the proportional path. It rescales the
+             * velocity in place, which cannot overshoot, cannot oscillate and needs no inertia
+             * assumptions. It is set well above the normal limit so ordinary play never reaches it
+             * - crossing it means a term upstream has misbehaved, hence Error, not Warning.
+             *
+             * This does not explain WHY the runaway starts. It stops it from being unrecoverable
+             * while that is investigated.
+             */
+            _clampBodyVelocity();
             
             /*
              * Now manipulate the velocity according to the spec.
