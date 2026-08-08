@@ -901,6 +901,29 @@ public class Platform : engine.IPlatform
             _backend.OnUpdate += _windowOnUpdate;
             _backend.OnClosing += _windowOnClose;
             _backend.OnFocusChanged += _windowOnFocusChanged;
+
+            /*
+             * Keyboard for backends without a Silk input context (SDL3). The backend has
+             * already turned its own key representation into the engine's code string; what
+             * happens to it from here is identical to the Silk path, including the
+             * InputMapper logical translation, because both go through _pushTranslate.
+             */
+            _backend.OnKeyPressed += code =>
+            {
+                if (code == "(F11)")
+                {
+                    _toggleFullscreen();
+                }
+                else
+                {
+                    _pushTranslate(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
+                }
+            };
+            _backend.OnKeyReleased += code =>
+                _pushTranslate(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
+            _backend.OnKeyCharacter += text =>
+                I.Get<EventQueue>().Push(new Event(Event.INPUT_KEY_CHARACTER, text));
+
             _backend.Subscribe();
         }
 
