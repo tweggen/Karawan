@@ -140,6 +140,79 @@ internal class HoverController : AController
     }
 
 
+    private const int MaxOrientationReports = 40;
+    private int _nOrientationReports = 0;
+    private bool _wasOrientationUnit = true;
+
+
+    /**
+     * Diagnostic ONLY - reads state, changes nothing.
+     *
+     * THE QUESTION THIS ANSWERS: does the ship's pose quaternion leave unit length BEFORE the
+     * angular velocity runs away, or after?
+     *
+     * Why it is the discriminating measurement. The three touch-gated angular terms are all
+     * order 1 - NoseDownWhileAcceleration is 0.5 and WingsDownWhileTurning is 1.5, each divided
+     * by 256 with a stick value of at most 255 - and the self-righting term is a bounded
+     * 10 * Cross(vUp, UnitY). Nothing there reaches the hundreds of rad/s that the emergency
+     * clamp keeps reporting. Something must be multiplying, and there is exactly one candidate
+     * on this path:
+     *
+     *   Matrix4x4.CreateFromQuaternion DOES NOT NORMALISE. For a pose quaternion of magnitude
+     *   |q| it returns basis vectors scaled by |q|^2. vFront, vUp and vRight are read straight
+     *   out of that matrix, so every angular term above is multiplied by |q|^2 - and |q| = 27
+     *   would be enough to turn an order-1 impulse into the observed runaway.
+     *
+     *   Nothing restores it, either: the write-back at the end of this method is
+     *   Quaternion.Concatenate(...), and Concatenate PRESERVES magnitude (|ab| = |a||b|). It
+     *   never corrects a non-unit quaternion, so the multiplier is permanent once introduced.
+     *
+     * This also predicts the one thing nothing else explained: the emergency clamp zeroes the
+     * VELOCITY but leaves a finite non-unit ORIENTATION untouched, so the scaled basis vectors
+     * survive the reset and the runaway restarts within frames - which is exactly what the
+     * device log shows, including after the finger is lifted.
+     *
+     * And it matches the boot-loop assert's own wording: "should be initialized to a UNIT
+     * LENGTH quaternion" - non-unit, not NaN.
+     *
+     * If |q| leaves 1 before the velocity climbs, the chain is proven and the fix is a
+     * normalise at the write-back. If |q| stays 1 throughout, this theory is wrong too and the
+     * multiplier is somewhere else.
+     *
+     * Warning, not Trace: putting the "Too fast" lines behind a debug category already cost one
+     * device round where a full runaway logged nothing.
+     */
+    private void _traceOrientationMagnitude(
+        Quaternion qOrientation, Vector3 vFront, Vector3 vUp, Vector3 vRight, Vector3 vAngular)
+    {
+        float lq = qOrientation.Length();
+        bool isUnit = Single.Abs(lq - 1f) <= 1e-3f;
+
+        /*
+         * Report on every transition into non-unit, and on the first frames of a sustained
+         * excursion, but not once per frame forever.
+         */
+        if (isUnit)
+        {
+            _wasOrientationUnit = true;
+            return;
+        }
+
+        if (_wasOrientationUnit || _nOrientationReports < MaxOrientationReports)
+        {
+            _wasOrientationUnit = false;
+            ++_nOrientationReports;
+            Warning(
+                $"Ship orientation is NOT unit length: {qOrientation} |q|={lq} (expected 1). "
+                + $"Basis scaled by |q|^2={lq * lq}: |vFront|={vFront.Length()} |vUp|={vUp.Length()} "
+                + $"|vRight|={vRight.Length()} (each expected 1). "
+                + $"Angular velocity now {vAngular} |w|={vAngular.Length()} "
+                + $"(limit {MaxAngularVelocity}). "
+                + $"Report {_nOrientationReports} of {MaxOrientationReports}.");
+        }
+    }
+
+
     protected override void OnLogicalFrame(object sender, float dt)
     {
         Vector3 vTotalImpulse = new Vector3(0f, 9.81f, 0f);
@@ -219,6 +292,8 @@ internal class HoverController : AController
         var vFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
         var vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
         var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
+
+        _traceOrientationMagnitude(qTargetOrientation, vFront, vUp, vRight, vTargetAngularVelocity);
 
         float radiansTurnVehicle = 0f;
 
