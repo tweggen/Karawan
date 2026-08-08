@@ -58,13 +58,36 @@ Second candidate: EGL surface recreated on resume, renderer holding stale FBOs.
 
 **3. Rider cannot deploy Wuka** — "Unable evaluate deployment properties", **while the build
 succeeds and signs the APK**. Two fixes were tried and BOTH FAILED: single `RuntimeIdentifier`
-(merged anyway, independently correct) and singular `TargetFramework` (#39, **open — keep only as
-tidy-up, it does not fix this**). Since the build is fine and every CLI path works, the next
-suspects are a **stale Rider run configuration** (the output path moved to
-`bin/Debug/net9.0-android36.0/android-arm64/` under Rider's feet) or `.idea` cache. Failing that,
-`nogame/generated/AndroidResources.xml` re-imports `Sdk.props`/`Sdk.targets` and emits `MSB4011`
-on every build — a genuine authoring error that an IDE's evaluator may not tolerate.
-**Workaround: `dotnet build Wuka/Wuka.csproj -t:Run`, then attach Rider to the process.**
+(merged anyway, independently correct) and singular `TargetFramework` (#39, merged, same — keep
+it as tidy-up, it did not fix this).
+
+**Third candidate now removed (2026-08-08), and it is the one real authoring error of the three.**
+`AndroidResourceWriter` emitted the generated manifest as `<Project Sdk="Microsoft.NET.Sdk">`, and
+`Wuka.csproj` `<Import>`s that file at line 156 — so MSBuild re-imported the SDK *there*. Two
+`MSB4011` warnings on every build, and the second one is the damaging half:
+
+```
+Wuka.csproj : warning MSB4011: "…\Microsoft.NET.Sdk\Sdk\Sdk.targets" cannot be imported again.
+It was already imported at "…\nogame\generated\AndroidResources.xml".
+This subsequent import will be ignored.
+```
+
+Wuka.csproj's own implicit **bottom** import of `Sdk.targets` was skipped, so the .NET SDK plus
+the Android and MAUI workloads all landed ~190 lines early, and every static `ItemGroup` inside
+them evaluated against a Wuka.csproj that stopped at the `<Import>`: no `libSDL3`/`libmain`/
+`libopenal` `AndroidNativeLibrary`, no `AndroidResource`, no `PackageReference`, no
+`ProjectReference`. `dotnet build` tolerates it (targets read those items at execution time, by
+which point evaluation is complete); a project evaluator that reads properties without running a
+build need not. The writer now emits a plain `<Project>` — MSB4011 is gone, the build is
+unchanged, and the APK is byte-for-byte the same shape (19 arm64 libs, 170 assets).
+
+**Whether that was Rider's actual cause is UNVERIFIED — nobody has retried Rider since.** If it
+still refuses, the remaining suspects are a **stale Rider run configuration** (the output path
+moved to `bin/Debug/net9.0-android36.0/android-arm64/` under Rider's feet) or `.idea` cache, and
+the next step is to capture Rider's own MSBuild log (Help ▸ Diagnostic Tools ▸ *Show Log*) rather
+than logcat — logcat only shows a package that is not installed, which is the consequence, not
+the cause.
+**Workaround meanwhile: `dotnet build Wuka/Wuka.csproj -t:Run`, then attach Rider to the process.**
 
 ## Small open items
 
