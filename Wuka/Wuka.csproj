@@ -256,7 +256,9 @@
 			Phase 4 removes Assimp from the runtime entirely, which dissolves reason 2.
 			Revisit then, and drop the checked-in natives in favour of the package.
 		-->
-		<PackageReference Include="Karawan.Natives" ExcludeAssets="all" PrivateAssets="all" />
+		<PackageReference Include="Karawan.Natives" ExcludeAssets="all" PrivateAssets="all">
+		  <IncludeAssets>none</IncludeAssets>
+		</PackageReference>
 		<!--
 			WP-2.2: Silk.NET.SDL, Silk.NET.Windowing, Silk.NET.Windowing.Sdl,
 			Silk.NET.Input.Sdl and Ultz.Native.SDL are GONE. Android runs on SDL3 now,

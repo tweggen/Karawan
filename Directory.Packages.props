@@ -1,5 +1,4 @@
 <Project>
-
   <!--
     Central Package Management (WP-0.1, docs/roadmap/proposed/IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md).
 
@@ -20,11 +19,9 @@
       - Aihao.old/ is dead code and is excluded via its own Directory.Packages.props,
         which sets ManagePackageVersionsCentrally=false.
   -->
-
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
-
   <ItemGroup Label="Avalonia / Aihao editor">
     <PackageVersion Include="Avalonia" Version="11.3.8" />
     <PackageVersion Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
@@ -39,7 +36,6 @@
     <PackageVersion Include="Dock.Model" Version="11.3.8" />
     <PackageVersion Include="Dock.Model.Mvvm" Version="11.3.8" />
   </ItemGroup>
-
   <ItemGroup Label="Silk.NET - being removed, see PLATFORM_BACKEND.md">
     <!-- N5/N8: pinned deliberately. Do not bump. -->
     <PackageVersion Include="Silk.NET.Assimp" Version="2.22.0" />
@@ -57,7 +53,6 @@
     <PackageVersion Include="Ultz.Native.Assimp" Version="5.4.1" />
     <PackageVersion Include="Ultz.Native.SDL" Version="2.32.10" />
   </ItemGroup>
-
   <ItemGroup Label="Natives built by our own CI">
     <!--
       openal-soft and SDL3, built by .github/workflows/natives.yml from pinned upstream
@@ -68,9 +63,8 @@
       authentication even for public packages, which would have made a PAT a prerequisite
       for building this repository at all. See recipes/BUILD_NOTES.md.
     -->
-    <PackageVersion Include="Karawan.Natives" Version="0.1.0" />
+    <PackageVersion Include="Karawan.Natives" Version="0.2.0" />
   </ItemGroup>
-
   <ItemGroup Label="Engine">
     <PackageVersion Include="clipper.NetStandard2" Version="6.4.2" />
     <PackageVersion Include="ImGui.NET" Version="1.91.6.1" />
@@ -82,7 +76,6 @@
     <PackageVersion Include="NVorbis" Version="0.10.5" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
   </ItemGroup>
-
   <ItemGroup Label="Imaging">
     <!--
       CONFLICT: Karawan and examples/Launcher use 3.1.10; Splash.Silk uses 3.0.1.
@@ -98,7 +91,6 @@
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="2.88.7" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
   </ItemGroup>
-
   <ItemGroup Label="Build tooling / BCL">
     <PackageVersion Include="Microsoft.Build.Framework" Version="17.9.5" />
     <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="17.9.5" />
@@ -106,7 +98,6 @@
     <PackageVersion Include="System.Text.Json" Version="9.0.10" />
     <PackageVersion Include="System.Threading.Tasks" Version="4.3.0" />
   </ItemGroup>
-
   <ItemGroup Label="MAUI (Wuka / Android)">
     <!--
       Wuka sets <UseMaui>true</UseMaui>, and the MAUI SDK injects an implicit
@@ -119,11 +110,9 @@
     -->
     <PackageVersion Include="Microsoft.Maui.Controls" Version="9.0.111" />
   </ItemGroup>
-
   <ItemGroup Label="Test">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageVersion Include="xunit" Version="2.9.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
-
 </Project>
