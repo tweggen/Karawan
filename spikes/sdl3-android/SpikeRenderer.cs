@@ -42,22 +42,34 @@ internal static class SpikeRenderer
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The reason is timing, not style. On Android these fire inside <c>onPause()</c> /
-    /// <c>onResume()</c> on the UI thread, and SDL blocks its own main thread while the
-    /// app is backgrounded - so by the time the render loop could poll, the process may
-    /// already be frozen or killed. A watch callback runs synchronously at the moment the
-    /// event is pushed.
+    /// It is not a timing hazard, it is absolute. <c>SDL_SendAppEvent</c> special-cases
+    /// these six types and <b>never puts them on the event queue</b>
+    /// (<c>src/events/SDL_events.c</c>): <i>"We won't actually queue this event, it needs
+    /// to be handled in this call stack by an event watcher"</i>. It calls
+    /// <c>SDL_CallEventWatchers</c> instead. So no amount of polling can ever see them.
+    /// </para>
+    /// <para>
+    /// The reason SDL does this is Android's pause semantics, spelled out in
+    /// <c>SDL_androidevents.c</c>: <i>"as soon as the enter background event has been
+    /// queued, the app will block. The application should do any life cycle handling in
+    /// an event filter while the event was being queued."</i> The app is about to stop
+    /// getting CPU, so the notification has to be synchronous or it is worthless.
+    /// </para>
+    /// <para>
+    /// <b>Threading:</b> the callback runs on the <b>SDL thread</b> - the same thread that
+    /// called <c>SDL_PollEvent</c> - because the chain is
+    /// <c>SDL_PollEvent</c> → <c>SDL_PumpEvents</c> → <c>Android_PumpEvents</c> →
+    /// <c>Android_OnPause</c> → <c>SDL_SendAppEvent</c> → watchers, all one call stack.
+    /// It is NOT the Android UI thread; the UI thread only enqueues a lifecycle token that
+    /// the SDL thread picks up. So game state may be touched directly here, with no
+    /// cross-thread hazard.
     /// </para>
     /// <para>
     /// <b>This is a direct constraint on WP-3.2.</b> <c>Wuka</c>'s
     /// <c>GameActivity.OnStop</c> saves the game (<c>I.Get&lt;engine.Saver&gt;()?.Save</c>).
-    /// Once SDL3 owns the activity, that hook has to hang off an event watch - a polled
-    /// event loop would silently never run it, and the failure mode is "the game stopped
+    /// Once SDL3 owns the activity, that hook has to hang off an event watch - ported as a
+    /// polled event it would never run at all, and the failure mode is "the game stopped
     /// saving", noticed days later.
-    /// </para>
-    /// <para>
-    /// The callback runs on the <b>UI thread, not the SDL thread</b>. Logging is safe;
-    /// GL calls are not.
     /// </para>
     /// </remarks>
     private static unsafe bool LifecycleWatch(IntPtr userdata, SDL_Event* evt, Action<string> log)
