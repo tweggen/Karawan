@@ -112,6 +112,41 @@ Fix: `rm -rf Wuka/obj/Release Wuka/bin/Release && dotnet build Wuka/Wuka.csproj 
 `scripts/check-apk.py` now asserts required natives/classes and scans for dangling superclasses;
 it fails the bad APK with the *real* missing class named, and passes the clean one.
 
+**5. Touch drag spun the view, then black screen with OpenAL warnings forever — guarded
+(2026-08-08), root producer NOT yet confirmed on device.** Reported as "drag a finger, the vehicle
+rotates way too fast", followed by a black screen and this, repeating every frame:
+
+```
+[ALSOFT] (WW) Error ... "Listener velocity out of range"
+[ALSOFT] (WW) Error ... "Listener orientation out of range"
+```
+
+The *mechanism* is not in doubt and is visible in the code. A non-finite touch position is not a
+bad frame, it is terminal: `RightStickFingerState.HandleMotion` accumulates finger deltas into
+`InputController.V2RightTouchMove`, and `FollowCameraController` accumulates those again into its
+own long-lived `_v2MouseOffseting` (`FollowCameraController.cs:872-873`). Neither accumulator has
+any path back from NaN/Infinity, so the camera orientation — and through it the OpenAL listener —
+stays NaN for the rest of the process. Spin, then black, then warnings forever. Every symptom
+reported, in order.
+
+The only unguarded producer in that path was `Wuka.GameSurface.OnTouch`, which normalises with
+`e.GetX(i) / Width` against `View.Width`/`Height`. Those are 0 until the surface is laid out, and
+again after it is destroyed and recreated on resume — 0 gives Infinity, and 0/0 at the origin gives
+NaN. SDL guards the identical division in its own `SDLSurface.java`
+(`getNormalizedX`: `if (mWidth <= 1) return 0.5f`). Three guards added:
+
+- `GameSurface.OnTouch` drops the event and logs a `Warning` naming the surface size.
+- `FingerStateHandler` rejects non-finite positions at the engine boundary (all platforms). A
+  release still removes the finger from the map unconditionally — a lifted finger must never stick.
+- `FollowCameraController` resets `_v2MouseOffseting` and logs an `Error` if it ever goes
+  non-finite, so no future producer can make this unrecoverable.
+
+**What is NOT established: that `Width`/`Height` were actually 0 on the reporting device.** That
+needs a device run. The `Warning` was added precisely so the next run says yes or no — if it never
+appears and the spin returns, the producer is elsewhere and the `Error` backstop will name the
+inputs. Note the black screen here is a *different* failure from open problem 2 above (that one
+follows pause/resume and leaves audio running normally).
+
 ## Small open items
 
 - **`Directory.Packages.props` still pins `Karawan.Natives` 0.1.0**, so builds still hit the KI-5

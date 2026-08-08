@@ -871,6 +871,25 @@ public class FollowCameraController : AController, IInputPart
          */
         _v2MouseOffseting += _v2MouseMove * MOUSE_RELATIVE_AMOUNT;
         _v2MouseOffseting += _v2RightTouchMove * RIGHT_TOUCH_RELATIVE_AMOUNT;
+
+        /*
+         * _v2MouseOffseting is a long-lived accumulator that nothing else ever clears, so a
+         * single non-finite input value is not a bad frame - it is the end of rendering for
+         * the process. Everything downstream (camera orientation, and through it the OpenAL
+         * listener) stays NaN forever: the view spins, goes black, and OpenAL logs "Listener
+         * orientation out of range" every frame from then on.
+         *
+         * Inputs are guarded at their own boundaries (FingerStateHandler rejects non-finite
+         * touch positions; Wuka.GameSurface no longer divides by an unlaid-out surface size).
+         * This is the backstop that keeps ANY future producer from being unrecoverable, and it
+         * is loud because reaching it means one of those boundaries has a hole.
+         */
+        if (!Single.IsFinite(_v2MouseOffseting.X) || !Single.IsFinite(_v2MouseOffseting.Y))
+        {
+            Error($"Camera offset became non-finite ({_v2MouseOffseting}) from mouse "
+                  + $"{_v2MouseMove} / touch {_v2RightTouchMove}; resetting to zero.");
+            _v2MouseOffseting = Vector2.Zero;
+        }
         if (Single.Abs(_v2MouseMove.X) < 0.002f 
             && Single.Abs(_v2MouseMove.Y) < 0.002f 
             && Single.Abs(_v2RightTouchMove.X) < 0.002f
