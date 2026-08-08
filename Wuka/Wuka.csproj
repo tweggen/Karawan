@@ -61,8 +61,21 @@
 		<!-- Display name -->
 		<ApplicationTitle>Wuka</ApplicationTitle>
 
-		<!-- App Identifier -->
-		<ApplicationId>com.companyname.wuka</ApplicationId>
+		<!--
+			App Identifier. MUST equal the package= attribute of
+			Platforms/Android/AndroidManifest.xml, which is what actually ships: the
+			.NET Android SDK honours an explicit package= in a hand-written manifest
+			over $(ApplicationId), so the APK, the installed package and the launch
+			intent are all de.nassau_records.silicondesert2 regardless of this line.
+
+			It used to say com.companyname.wuka - the MAUI template default, never
+			corrected. Nothing in the build noticed, because the manifest won every
+			time. But any tool that asks MSBuild "what does this project deploy?"
+			instead of parsing the manifest got the wrong package name, and a deploy
+			that installs one package and then launches/uninstalls another fails in
+			ways that only show up as a not-installed package on the device.
+		-->
+		<ApplicationId>de.nassau_records.silicondesert2</ApplicationId>
 		<ApplicationIdGuid>cf727d7c-225f-415c-9ec3-21ba97580dbc</ApplicationIdGuid>
 
 		<!-- Versions -->

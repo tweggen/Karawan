@@ -227,10 +227,27 @@ The storylets use the second: 14 entries tagged `"type": "taleStorylet"`. That o
 
 ### Symptom: a manifest entry is regenerated but the APK still lacks the file
 
-`Wuka.csproj` line 91 does `<Import Project="../nogame/generated/AndroidResources.xml" />`. MSBuild evaluates `Import` at **project-evaluation time**, before any target in that build runs — so a build that regenerates the manifest is still using the copy that existed when it started. The first build after adding an asset updates the manifest; the **second** build stages it into `Wuka/obj/…/assets/`. Verify with:
+`Wuka.csproj` does `<Import Project="../nogame/generated/AndroidResources.xml" />`. MSBuild evaluates `Import` at **project-evaluation time**, before any target in that build runs — so a build that regenerates the manifest is still using the copy that existed when it started. The first build after adding an asset updates the manifest; the **second** build stages it into `Wuka/obj/…/assets/`. Verify with:
 
 ```bash
 ls Wuka/obj/Debug/net9.0-android36.0/assets/ | wc -l
+```
+
+### The generated manifest must NOT carry an `Sdk` attribute
+
+`AndroidResourceWriter` opens the file with a bare `<Project>`, deliberately. Give it
+`Sdk="Microsoft.NET.Sdk"` and MSBuild re-imports the SDK at the `<Import>` site — two `MSB4011`
+warnings, the second of which reports that *Wuka.csproj's own* bottom `Sdk.targets` import is the
+one being ignored. The .NET SDK and the Android/MAUI workloads then land in the middle of
+Wuka.csproj, and every static `ItemGroup` in them sees only the items declared **above** the
+import: the `libSDL3`/`libmain`/`libopenal` natives, the `AndroidResource` icons, every
+`PackageReference` and every `ProjectReference` are all below it. `dotnet build` survives this
+(targets read items at execution time, after evaluation has finished); IDE project evaluators need
+not, and it was a live suspect for Rider's "Unable evaluate deployment properties". Regression
+check — this must print nothing:
+
+```bash
+dotnet msbuild Wuka/Wuka.csproj -getProperty:RuntimeIdentifier 2>&1 | grep MSB4011
 ```
 
 ### Symptom: build-task A behaves differently from build-task B in the same build
