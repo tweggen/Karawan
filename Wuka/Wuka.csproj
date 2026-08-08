@@ -1,7 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net9.0-android36.0</TargetFrameworks>
+		<!--
+			SINGULAR TargetFramework. With the plural form - even carrying exactly one value -
+			MSBuild builds an outer, framework-less pass that has no Run target and no
+			deployment properties, which is why `dotnet build -t:Run` needed an explicit -f and
+			why Rider reported 'Unable evaluate deployment properties' and refused to deploy.
+			The plural form only earns its keep once a second TFM is actually built; the tizen
+			and maccatalyst lines below have been commented out for as long as they have
+			existed. Restore <TargetFrameworks> if one of them is ever uncommented.
+		-->
+		<TargetFramework>net9.0-android36.0</TargetFramework>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-maccatalyst</TargetFrameworks> -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-tizen</TargetFrameworks> -->
