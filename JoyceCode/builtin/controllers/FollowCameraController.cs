@@ -902,10 +902,33 @@ public class FollowCameraController : AController, IInputPart
             _lastMouseMove = 0f;
         }
 
-        if (_traceControllers && (_engine.FrameNumber & 7) == 0)
+        /*
+         * Gated on the Dc.Input category, not on _traceControllers - that field is declared and
+         * read but NEVER ASSIGNED, so every trace behind it has always been dead code.
+         *
+         * This is the line that answers "are the touch values unexpectedly high?", because it
+         * prints the input next to the CAMERA ANGLE IN DEGREES it produces, which is the number
+         * anyone actually has an intuition about. The conversion is
+         * _v2MouseOffseting += _v2RightTouchMove * RIGHT_TOUCH_RELATIVE_AMOUNT, and
+         * _v2MouseOffseting is then read directly as degrees.
+         *
+         * With RIGHT_TOUCH_RELATIVE_AMOUNT at 180 and the Android producer normalising to 0..1,
+         * a swipe across the full screen height is 180 degrees of pitch - and pitch is clamped to
+         * +/-85, so slightly under half a screen already saturates it. Horizontally it is worse:
+         * RightStickFingerState scales X by 16/9 first, so a full-width swipe is ~320 degrees.
+         * Compare MOUSE_RELATIVE_AMOUNT at 0.03 against a mouse delta in PIXELS - about 30 degrees
+         * per 1000 px. The two paths are three orders of magnitude apart in input units, which is
+         * exactly the shape of an assumption that survived a change of input backend.
+         */
+        if ((_engine.FrameNumber & 7) == 0
+            && (_v2RightTouchMove != Vector2.Zero || _v2MouseMove != Vector2.Zero))
         {
-            Trace(_dc,
-                $"_v2RightTouchMove = {_v2RightTouchMove}, _v2MouseMove = {_v2MouseMove}, _v2MouseOffseting = {_v2MouseOffseting}");
+            Trace(engine.Dc.Input,
+                $"touchMove={_v2RightTouchMove} mouseMove={_v2MouseMove} "
+                + $"-> offset={_v2MouseOffseting} deg "
+                + $"(pitch={_v2MouseOffseting.Y + YAngleDefault:F1} deg before the +/-85 clamp, "
+                + $"yaw={-_v2MouseOffseting.X:F1} deg; "
+                + $"touch x{RIGHT_TOUCH_RELATIVE_AMOUNT}, mouse x{MOUSE_RELATIVE_AMOUNT})");
         }
 
         if (Single.Abs(_v2StickOffset.X) < 0.002)

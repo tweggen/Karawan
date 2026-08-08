@@ -15,8 +15,32 @@ namespace Wuka;
 
 public class GameSurface : SDLSurface
 {
+    private static readonly engine.Dc _dc = engine.Dc.Input;
+
     private EventQueue _eq = null;
-    
+
+
+    /**
+     * Trace one raw MotionEvent pointer alongside what we derive from it.
+     *
+     * Deliberately prints the RAW pixel coordinate, the surface size we divide by, and the
+     * normalised result together, because the interesting failure is a units mismatch and
+     * you cannot see one from the output value alone. What ships in the event is 0..1 with
+     * PhysicalSize = (1,1); several engine-side consumers were written against pixel
+     * coordinates and divide by the "view.size" global instead - that setting is printed
+     * too so the discrepancy is visible in a single line.
+     *
+     * Enable with: debug.category.input = true
+     */
+    private void _traceTouch(string what, int index, MotionEvent e, int fingerId, Vector2 v2Normalized, int width, int height)
+    {
+        Trace(_dc,
+            $"{what}: finger={fingerId} idx={index} raw=({e.GetX(index)},{e.GetY(index)})px "
+            + $"surface={width}x{height} -> normalized={v2Normalized} "
+            + $"(PhysicalSize=(1,1), view.size={engine.GlobalSettings.Get("view.size")})");
+    }
+
+
     public unsafe override bool OnTouch(View? v, MotionEvent? e)
     {
         if (null == e)
@@ -100,6 +124,8 @@ public class GameSurface : SDLSurface
                     p = 1.0f;
                 }
                 
+                _traceTouch("PRESSED", i, e, pointerFingerId, v2Physical, width, height);
+
                 _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_PRESSED, "")
                 {
                     PhysicalPosition = v2Physical,
@@ -129,6 +155,8 @@ public class GameSurface : SDLSurface
                     p = 1.0f;
                 }
                 
+                _traceTouch("RELEASED", i, e, pointerFingerId, v2Physical, width, height);
+
                 _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_RELEASED, "")
                 {
                     PhysicalPosition = v2Physical,
@@ -151,6 +179,8 @@ public class GameSurface : SDLSurface
                         p = 1.0f;
                     }
                     
+                    _traceTouch("CANCEL", i, e, pointerFingerId, v2Physical, width, height);
+
                     _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_RELEASED, "")
                     {
                         PhysicalPosition = v2Physical,
@@ -173,6 +203,8 @@ public class GameSurface : SDLSurface
                         p = 1.0f;
                     }
                     
+                    _traceTouch("MOVED", i, e, pointerFingerId, v2Physical, width, height);
+
                     _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_MOVED, "")
                     {
                         PhysicalPosition = v2Physical,
