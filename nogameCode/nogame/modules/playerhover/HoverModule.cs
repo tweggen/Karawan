@@ -271,47 +271,50 @@ public class HoverModule : AModule, IInputPart
             lock (_engine.Simulation)
             {
                 /*
-                 * The second argument is the cylinder's LENGTH, and it used to read
+                 * KNOWN BUG, DELIBERATELY NOT FIXED HERE. Read before "correcting" this.
                  *
-                 *     ...AABBTransformed.BB.Y - ...AABBTransformed.BB.Y
+                 * The second argument is the cylinder's LENGTH, and the expression below is
+                 * BB.Y minus ITSELF - zero, for every model, always. AA is the AABB minimum and
+                 * BB its maximum, so the height was meant to be BB.Y - AA.Y; the `: 1.0f`
+                 * fallback on the null branch shows a real height was always intended. The
+                 * player ship's collision body is therefore a flat disc of zero height.
                  *
-                 * i.e. BB.Y minus ITSELF, which is zero for every model. AA is the AABB's minimum
-                 * and BB its maximum, so the height is BB.Y - AA.Y; the `: 1.0f` fallback on the
-                 * null branch is the giveaway that a real height was always intended here.
+                 * It was corrected once (#48) and REVERTED (#49), because with the real model
+                 * height the physical system is unstable from the very start - worse than the
+                 * disc, not better. Every tuning constant around it (MassShip, the hover forces,
+                 * the self-righting gain, the damping) has been tuned for years against a
+                 * zero-height body, so changing the shape invalidates all of them at once.
                  *
-                 * Consequence: the player ship's collision body was a flat DISC of zero height,
-                 * not a cylinder. Nothing about that is visible - the rendered model is unaffected,
-                 * the body has sensible mass and radius, and no assert or warning fires. It only
-                 * shows up once the disc is in contact with terrain, where a degenerate contact
-                 * manifold lets the solver produce corrective angular impulses of a magnitude the
-                 * controller never asked for.
+                 * It is also NOT PROVEN to be the cause of the angular runaway that prompted the
+                 * change. The evidence was circumstantial: angular velocity in the hundreds
+                 * against a limit of 0.8, recovering within frames of being clamped to zero, and
+                 * no "Too fast" warning on the controller's own impulse (limit 500) - consistent
+                 * with impulses arriving from the solver rather than from this code, but only
+                 * consistent, not demonstrated.
                  *
-                 * That matches what the device log shows and, importantly, what it does NOT show:
-                 * angular velocity reaching hundreds of rad/s against a limit of 0.8, recovering
-                 * to the same magnitude within a few frames of being clamped to zero, continuing
-                 * after the finger is lifted - while the "Too fast" warning on the controller's
-                 * own impulse (limit 500) never fires once. The impulses this code applies are in
-                 * range; the ones coming back out of the solver are not.
-                 *
-                 * Clamped to a minimum, because a model whose AABB is degenerate in Y would
-                 * otherwise put us straight back here.
+                 * So: fixing the shape is a physics retune, not a bug fix, and it needs the root
+                 * cause established first. The emergency clamp in HoverController keeps the
+                 * runaway survivable meanwhile.
                  */
-                float bodyHeight = 1.0f;
-                var instanceDesc = _model.ModelNodeTree.RootNode.InstanceDesc;
-                if (instanceDesc != null)
-                {
-                    bodyHeight = Single.Max(
-                        0.1f,
-                        instanceDesc.AABBTransformed.BB.Y - instanceDesc.AABBTransformed.AA.Y);
-                }
-
                 uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
                     _engine.PLog, _engine.Simulation,
                     Single.Max(1.4f, bodyRadius),
-                    bodyHeight,
+                    _model.ModelNodeTree.RootNode.InstanceDesc != null
+                        ? _model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.BB.Y-_model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.BB.Y
+                        : 1.0f,
                     out var pbody);
+
+                /*
+                 * Diagnostic only - no behaviour depends on it. Prints the dimensions the body is
+                 * ACTUALLY built with, next to the model extent it was meant to derive them from,
+                 * so the discrepancy above is visible in a log instead of having to be read out of
+                 * the source.
+                 */
                 Trace($"Player ship physics body: radius {Single.Max(1.4f, bodyRadius)}, "
-                      + $"height {bodyHeight}, mass {MassShip}.");
+                      + $"height {pbody.Length} (model Y extent "
+                      + $"{(_model.ModelNodeTree.RootNode.InstanceDesc != null ? _model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.BB.Y - _model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.AA.Y : 1.0f)}), "
+                      + $"mass {MassShip}.");
+
                 var inertia = pbody.ComputeInertia(MassShip);
                 po = new engine.physics.Object(_engine, _eShip, 
                         inertia, new TypedIndex() { Packed = uintShape },
