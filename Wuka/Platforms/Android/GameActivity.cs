@@ -2,9 +2,8 @@ using System.Numerics;
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
-using Silk.NET.Windowing;
-using Silk.NET.Windowing.Sdl;
-using Silk.NET.Input.Sdl;
+using System.Runtime.InteropServices;
+using Splash.Silk;
 
 using Android.Content.Res;
 using Android.Views;
@@ -13,8 +12,6 @@ using AndroidX.Core.App;
 using engine.news;
 using Java.Lang;
 using Org.Libsdl.App;
-using Silk.NET.SDL;
-using Silk.NET.Windowing.Sdl.Android;
 using View = Android.Views.View;
 
 namespace Wuka
@@ -24,14 +21,14 @@ namespace Wuka
         ScreenOrientation = ScreenOrientation.Landscape,
         Theme = "@style/Maui.SplashTheme" //"@android:style/Theme.Black.NoTitleBar.Fullscreen"
     )]
-    public class GameActivity : SilkActivity, ActivityCompat.IOnRequestPermissionsResultCallback
+    public class GameActivity : SDLActivity, ActivityCompat.IOnRequestPermissionsResultCallback
     {
         private object _lo = new();
         private bool _triggeredGame = false;
 
         internal static AssetManager AssetManager;
 
-        private Silk.NET.Windowing.IView _iView;
+        private Sdl3WindowBackend _backend;
         private engine.Engine _engine;
 
 
@@ -69,88 +66,21 @@ namespace Wuka
             _triggerGame();
         }
 
-        private Silk.NET.SDL.Sdl _sdl = null;
         private EventQueue _eq = null;
-
-        private int _eventIteration = 0;
 
         protected override unsafe Org.Libsdl.App.SDLSurface CreateSDLSurface(Android.Content.Context? context)
         {
             var surface = new GameSurface(context);
             return surface;
         }
-        
-        private void _beforeDoEvents()
-        {
-            
-            if (null == _sdl)
-            {
-                System.Console.WriteLine("Fetching sdl.");
-                _sdl = Silk.NET.SDL.Sdl.GetApi();
-            }
-            #if false
 
-            if (null == _eq)
-            {
-                _eq = I.Get<EventQueue>();
-            }
-
-            int maxEvents = 100;
-            ++_eventIteration;
-            Silk.NET.SDL.Event[] events = new Silk.NET.SDL.Event[maxEvents];
-            int nEvents = _sdl.PeepEvents(events.AsSpan(), maxEvents, Eventaction.Peekevent,
-                (uint) Silk.NET.SDL.EventType.Firstevent,
-                (uint) Silk.NET.SDL.EventType.Lastevent);
-            for (int i = 0; i < nEvents; ++i)
-            {
-                Vector2 v2PhysicalPosition = new(events[i].Tfinger.X, events[i].Tfinger.Y);
-                
-                switch ((EventType) events[i].Type)
-                {
-                    case EventType.Fingerdown:
-                        _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_PRESSED, "")
-                        {
-                            PhysicalPosition = v2PhysicalPosition,
-                            PhysicalSize = Vector2.One,
-                            LogicalPosition = v2PhysicalPosition,
-                            Data1 = (uint) events[i].Tfinger.TouchId,
-                            Data2 = (uint) events[i].Tfinger.FingerId,
-                            Data3 = (uint) events[i].Common.Timestamp,
-                            Data4 = (uint) _eventIteration
-                        });
-                        break;
-                    case EventType.Fingerup:
-                        _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_RELEASED, "")
-                        {
-                            PhysicalPosition = v2PhysicalPosition,
-                            PhysicalSize = Vector2.One,
-                            LogicalPosition = v2PhysicalPosition,
-                            Data1 = (uint) events[i].Tfinger.TouchId,
-                            Data2 = (uint) events[i].Tfinger.FingerId,
-                            Data3 = (uint) events[i].Common.Timestamp,
-                            Data4 = (uint) _eventIteration
-                        });
-                        break;
-                    case EventType.Fingermotion:
-                        _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_MOVED, "")
-                        {
-                            PhysicalPosition = new (events[i].Tfinger.X, events[i].Tfinger.Y),
-                            PhysicalSize = Vector2.One,
-                            LogicalPosition = v2PhysicalPosition,
-                            // TXWTODO: CHeck, if we need this size information.
-                            //  = new (events[i].Tfinger.Dx, events[i].Tfinger.Dy),
-                            Data1 = (uint) events[i].Tfinger.TouchId,
-                            Data2 = (uint) events[i].Tfinger.FingerId,
-                            Data3 = (uint) events[i].Common.Timestamp,
-                            Data4 = (uint) _eventIteration
-                        });
-                        break;
-                    default: 
-                        break;
-                }
-            }
-            #endif
-        }
+        /*
+         * The raw-SDL2 _beforeDoEvents hook that used to live here is GONE (WP-3.5). It
+         * fetched Silk's Sdl API and peeked at the event queue, but its entire body was
+         * behind "#if false" - touch has always been delivered by GameSurface.OnTouch
+         * instead, which is also why Sdl3WindowBackend deliberately does not translate
+         * SDL's FINGER_* events: doing both would deliver every touch twice.
+         */
 
         /// <summary>
         /// Force the game assembly to be included by the linker.
@@ -175,13 +105,12 @@ namespace Wuka
                 _triggeredGame = true;
             }
 
-            // 1. Setup view options (platform-specific, not game-specific)
-            var options = ViewOptions.Default;
-            options.API = new GraphicsAPI(ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(3, 0));
-            options.FramesPerSecond = 60;
-            options.VSync = false;
-            options.ShouldSwapAutomatically = false;
-            _iView = Silk.NET.Windowing.Window.GetView(options);
+            /*
+             * 1. The window. Created later, in step 9: unlike Silk's IView - which could be
+             * constructed up front and initialised afterwards - SDL_CreateWindow and
+             * SDL_GL_CreateContext happen together, and the GLES 3.0 attributes have to be
+             * set immediately before them. Sdl3WindowBackend's constructor does all three.
+             */
 
             // 2. Setup Android platform constants (platform-specific, not game-specific)
             GlobalSettings.Set("platform.threeD.API", "OpenGLES");
@@ -221,11 +150,13 @@ namespace Wuka
             assetManagerImplementation.WithLoader();
             I.Get<engine.casette.Loader>().InterpretConfig();
 
-            // 9. Create engine
-            _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView, out var silkPlatform);
-            silkPlatform.BeforeDoEvent = _beforeDoEvents;
-            
-            _iView.Initialize();
+            // 9. Create the window and the engine over it.
+            //
+            // Runs on SDL's thread: SDL's Java glue spawned it, it entered libmain.so's
+            // SDL_main, and that called back into SdlMain below. SDL_CreateWindow must
+            // happen here rather than on the UI thread.
+            _backend = new Sdl3WindowBackend("Silicon Desert 2");
+            _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _backend, out var silkPlatform);
 
             // 10. Register audio API
             I.Register<Boom.ISoundAPI>(() =>
@@ -242,15 +173,53 @@ namespace Wuka
             I.Get<Boom.ISoundAPI>().Dispose();
         }
 
-        protected override void OnRun()
-        {
-            /*
-             * setup framework dependencies.
-             */
-            SdlWindowing.RegisterPlatform();
-            SdlInput.RegisterPlatform();
+        /*
+         * The SDL entry-point bridge, replacing Silk's SilkActivity (WP-2.2).
+         *
+         * SDL's Java glue calls nativeRunMain("libmain.so", "SDL_main", ...) on a thread it
+         * spawns. libSDL3.so does not export SDL_main - it is a library, not an application -
+         * so libmain.so provides one that invokes whatever pointer sdSetMain was given.
+         * Silk shipped exactly this shim inside its .aar; WP-0.0 recovered it by disassembly
+         * and recipes/build-mainshim.sh rebuilds it with a matching ABI.
+         */
 
-            _triggerGame();
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void MainFunc();
+
+        [DllImport("libmain.so", EntryPoint = "sdSetMain")]
+        private static extern void SetupMain(IntPtr funcPtr);
+
+        // Static, and kept for the process lifetime: SDL holds the raw function pointer, so
+        // a collected delegate would jump into freed memory once the game starts.
+        private static readonly MainFunc s_mainDelegate = SdlMain;
+        private static IntPtr s_mainPtr;
+        private static GameActivity s_instance;
+
+        public override void LoadLibraries()
+        {
+            // Loads libSDL3.so and libmain.so, per getLibraries() in SDLActivity.java.
+            base.LoadLibraries();
+
+            s_instance = this;
+            if (s_mainPtr == IntPtr.Zero)
+            {
+                s_mainPtr = Marshal.GetFunctionPointerForDelegate(s_mainDelegate);
+                SetupMain(s_mainPtr);
+            }
+        }
+
+        private static void SdlMain()
+        {
+            try
+            {
+                s_instance?._triggerGame();
+            }
+            catch (System.Exception e)
+            {
+                // Without this the exception unwinds into native SDL and the process dies
+                // with no usable message.
+                Android.Util.Log.Error("WUKA", "game thread failed: " + e);
+            }
         }
     }
 }
