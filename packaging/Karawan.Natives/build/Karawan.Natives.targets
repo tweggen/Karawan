@@ -1,0 +1,44 @@
+<Project>
+
+  <!--
+    Delivers the Android payload. KI-5.
+
+    WHY A TARGETS FILE IS NECESSARY, and why lib/<tfm>/*.aar is not enough
+    =====================================================================
+    NuGet surfaces assets from lib/<tfm>/ only for things it recognises as ASSEMBLIES.
+    An .aar is not one, so it appears in no asset list at all:
+
+        project.assets.json:  compile -> lib/net9.0-android34.0/_._
+                              runtime -> lib/net9.0-android34.0/_._
+                              (no mention of Karawan.Natives.Android.aar)
+
+    Silk.NET.Windowing.Sdl appears to contradict this, but it does not: it ships a real
+    .dll beside its .aar, the assembly is resolved, and .NET Android then finds the .aar
+    next to it. We have no managed assembly to ship - the package is natives only - so the
+    .aar has to be declared explicitly, and that is what this file does.
+
+    This was measured, not guessed. Adding _._ to lib/net9.0-android34.0/ fixed NuGet's
+    framework detection (NU1701 went away, the android TFM was selected) and the APK STILL
+    had no libSDL3.so. Only the item below actually delivers it.
+
+    <AndroidLibrary> on an .aar makes .NET Android extract jni/<abi>/*.so into the APK.
+  -->
+
+  <PropertyGroup>
+    <_KarawanNativesAar>$(MSBuildThisFileDirectory)../lib/net9.0-android34.0/Karawan.Natives.Android.aar</_KarawanNativesAar>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'android' And Exists('$(_KarawanNativesAar)')">
+    <AndroidLibrary Include="$(_KarawanNativesAar)" />
+  </ItemGroup>
+
+  <!--
+    A consumer that already supplies its own copies of these libraries - Wuka does today,
+    from Platforms/Android/android/<abi>/ - must set
+    <PackageReference Include="Karawan.Natives" ExcludeAssets="all" /> or it will get two
+    of each and fail XA4301. Documented rather than auto-detected: silently dropping our
+    payload because the consumer happens to have a same-named file would be worse than a
+    build error that says exactly what is wrong.
+  -->
+
+</Project>
