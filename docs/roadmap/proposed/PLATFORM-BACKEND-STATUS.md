@@ -243,6 +243,30 @@ the packaging (#19). Recovery PRs #18 and #20 carried them across.
 **Future work packages branch from master directly**, even when that costs a rebase; the ordering
 hazard is not worth the tidiness of stacking.
 
+#### It recurred twice more — #28 and #30 — in a different form, and is now guarded
+
+Not stacking this time. **Commits were pushed to a branch whose PR had already merged.** Every
+local signal says fine: the branch tracks its remote, `git status` is clean, `git push` succeeds,
+and `gh pr view` reports MERGED — truthfully, just not with those commits.
+
+- **#28:** two commits stranded, recovered by #30.
+- **#30:** one commit stranded — and this one **left master documenting a fact that had already
+  been corrected** (KI-8's threading claim said "UI thread"; it is the SDL thread). A later work
+  package would have read and trusted it. Recovered by
+  [#31](https://github.com/tweggen/Karawan/pull/31).
+
+**Guard: `scripts/check-branch-landed.sh`.** Asks the one question that actually detects it —
+*what is on this branch that master does not have?* — and, when the branch's PR is already merged,
+prints the exact `cherry-pick` recovery commands.
+
+It uses **`git cherry`, not `git log base..branch`**: recovery means cherry-picking, which mints
+new SHAs, so a SHA-based check reports the originals as missing forever. `git cherry` compares
+patch-ids, so already-landed content is recognised however it got there. Both paths were tested
+against the real branches — `platform/wp-2.1` (content landed as cherry-picks) passes,
+`platform/wp-2.1-lifecycle` (genuinely stranded) fails and names PR #30.
+
+**Run it before reporting a work package as landed.**
+
 ---
 
 ## Gate ledger
