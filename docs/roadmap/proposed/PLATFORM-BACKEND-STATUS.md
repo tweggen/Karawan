@@ -5,7 +5,86 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-07
+**Last updated:** 2026-08-08
+
+---
+
+# ▶▶ RESUME HERE — state at 2026-08-08, end of the Android SDL3 push
+
+**Phase 2 and the Android half of Phase 3 are MERGED.** `Wuka` runs on SDL3 with Silk windowing
+gone. It **starts, renders, plays audio and loads TALE on a physical device** — then misbehaves.
+Three problems are open; none of them is "does SDL3 work", which is answered: it does.
+
+## What landed
+
+| PR | What |
+|---|---|
+| #31 | KI-8 threading correction + `scripts/check-branch-landed.sh` |
+| #32 | `Karawan.Natives` Android payload made deliverable (KI-5, KI-6) |
+| #33 | **WP-3.3** — `IWindowBackend` seam; `Platform` off Silk's `IView`. Desktop source-unchanged, **Windows confirmed working by the owner** |
+| #34 | `Sdl3WindowBackend` (inert on desktop) |
+| #35/#37 | **WP-2.2** — Wuka on SDL3, Silk windowing removed, **AC-1.7 closed** (`XA0141` promoted; all 19 arm64 libs 16 KB aligned) |
+| #36/#38 | 60 FPS cap regression fix + single `RuntimeIdentifier` |
+
+`Karawan.Natives` **0.2.0 is published** on nuget.org.
+
+## 🔴 Open problems, in priority order
+
+**1. Physics `Debug.Assert` crash — restart loop on device.** Native `SIGABRT` via
+`mono_runtime_invoke_checked`; the managed stack is unambiguous:
+
+```
+System.Diagnostics.Debug.Assert(...)
+  at engine.physics.actions.CreateDynamic.Execute(...)
+  at engine.physics.Object..ctor(...)
+  at engine.scheduler.WorkerQueue.RunPart(Single dt)
+  at engine.Engine._onLogicalFrame / _logicalThreadFunction
+```
+
+**Hypothesis (UNCONFIRMED):** the uncapped SDL3 loop over-applied per-frame input → vehicle
+"spun like wild" → invalid body state → assert. #36 capped the loop at 60 FPS; **nobody has
+re-tested since**. Next step: run, and if it still aborts, log the position/inertia at that
+assert. NaN/huge ⇒ the input chain; ordinary values ⇒ a separate physics bug. Note `Debug.Assert`
+only aborts in Debug — a Release build would sail past the same invalid state silently.
+
+**2. Black screen after pause/resume; render loop stops, process and audio stay alive.** Log
+evidence: `surfaceDestroyed()` → `nativePause()` → `onResume()` → `surfaceCreated()`
+(`Window size: 2800x1260`), rendering briefly resumes (`framebuffer://rootscene_3d-Pixels`
+uploaded), then all `DOTNET` traces stop while OpenAL keeps logging.
+**Leading hypothesis:** `Sdl3WindowBackend.LifecycleWatch` maps `WILL_ENTER_BACKGROUND` →
+`OnFocusChanged(false)` and `DID_ENTER_FOREGROUND` → `OnFocusChanged(true)`; if `Platform`'s focus
+handling suspends the engine and the resume path never restores it, this is exactly the symptom.
+Second candidate: EGL surface recreated on resume, renderer holding stale FBOs.
+
+**3. Rider cannot deploy Wuka** — "Unable evaluate deployment properties", **while the build
+succeeds and signs the APK**. Two fixes were tried and BOTH FAILED: single `RuntimeIdentifier`
+(merged anyway, independently correct) and singular `TargetFramework` (#39, **open — keep only as
+tidy-up, it does not fix this**). Since the build is fine and every CLI path works, the next
+suspects are a **stale Rider run configuration** (the output path moved to
+`bin/Debug/net9.0-android36.0/android-arm64/` under Rider's feet) or `.idea` cache. Failing that,
+`nogame/generated/AndroidResources.xml` re-imports `Sdk.props`/`Sdk.targets` and emits `MSB4011`
+on every build — a genuine authoring error that an IDE's evaluator may not tolerate.
+**Workaround: `dotnet build Wuka/Wuka.csproj -t:Run`, then attach Rider to the process.**
+
+## Small open items
+
+- **`Directory.Packages.props` still pins `Karawan.Natives` 0.1.0**, so builds still hit the KI-5
+  `NU1701` fallback. Bump to **0.2.0** and drop the WP-2.1 workaround in
+  `spikes/sdl3-android/Sdl3Spike.csproj` (`ExcludeAssets="all"` + `GeneratePathProperty`) — that
+  doubles as a live check of the packaging fix.
+- **GATE-A: IME is still unanswered** (WP-2.3). Nothing in the spike or Wuka calls
+  `SDL_StartTextInput`. ADR claim 8.
+- **`armeabi-v7a` and `x86_64` are no longer built** (single RID `android-arm64`). x86_64 never
+  worked — WP-0.3 §4.3. Re-add x86_64 to the recipes' matrix first if emulator support is wanted.
+- `spikes/sdl3-android/` is disposable now that WP-2.2 has landed.
+
+## ⚠ Process note
+
+The merge-order trap has now bitten **five times** (#17, #19, #28, #30, #35). `scripts/check-branch-landed.sh`
+exists to catch it — **run it before reporting anything as landed**. It uses `git cherry`, not
+`git log base..branch`, so cherry-picked recoveries don't produce false positives.
+
+---
 
 ---
 
