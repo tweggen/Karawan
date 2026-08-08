@@ -63,6 +63,70 @@ Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MER
 |---|---|---|
 | [#28](https://github.com/tweggen/Karawan/pull/28) | WP-2.1 — Android SDL3 spike | open; buildable ACs green, **GATE-A needs a device** |
 
+### 🟡 GATE-A evidence — rendering confirmed on device, 2026-08-07
+
+The WP-2.1 spike ran on a physical Adreno 825 device. Verbatim from `logcat`:
+
+```
+SDL/APP   pixel format wanted SDL_PIXELFORMAT_RGBA8888 (1), got SDL_PIXELFORMAT_RGBA8888 (1)
+SDL3SPIKE GL_VENDOR   = Qualcomm
+SDL3SPIKE GL_RENDERER = Adreno (TM) 825
+SDL3SPIKE GL_VERSION  = OpenGL ES 3.2 V@0800.73.1 (GIT@b39bb67739, ...)
+SDL3SPIKE drawable    = 1260x2800
+SDL3SPIKE first frame presented
+```
+
+**What this establishes**, beyond "it renders":
+
+- The **whole managed bridge works**: `SDLActivity` → `libmain.so` → `SDL_main` → managed
+  `SdlMain` → `SpikeRenderer.Run`. Nothing else in the process requests an EGL context, and the
+  Adreno driver banner (`/vendor/lib64/egl/libGLESv2_adreno.so`, note `lib64` → arm64-v8a) appears
+  before the first spike log line.
+- **`SDL_GL_GetProcAddress` resolves GL entry points.** All four (`glClearColor`, `glClear`,
+  `glGetString`, `glViewport`) loaded; the spike throws if any returns null. This is the same
+  mechanism Phase 5's generated bindings use, so **WP-5.2 is de-risked as a side effect**.
+- **GLES 3.2, not the 3.0 requested** — a better context than the minimum, and useful input to
+  Phase 5's GLES feature baseline.
+- Our own 16 KB `libSDL3.so` **loads and runs**, not merely packages.
+- **The screen cycles colours** (confirmed visually by the owner). This matters more than the
+  `first frame presented` line on its own: it means `SDL_GL_SwapWindow` is presenting *every*
+  frame and the loop keeps running, rather than one lucky frame followed by a stall. The colour
+  cycle exists in the spike precisely so this is answerable by looking rather than by trusting the
+  absence of errors.
+
+**Also confirmed on device (2026-08-07):** **multi-touch** ✅ (distinct `FINGER_DOWN` ids) and
+**rotation** ✅ (`RESIZED` with swapped dimensions). **Resume** ✅ behaviourally — rendering
+continues after home-and-back — but see KI-8: the log lines were missing because the spike was
+watching for them the wrong way.
+
+**Still not established:** **IME**, which this spike cannot answer at all. GATE-A stays 🟡.
+
+### 🔴 KI-8 — app-lifecycle events need `SDL_AddEventWatch`; `SDL_PollEvent` never sees them
+
+Found by GATE-A: resume worked and rendering continued, but `WILL_ENTER_BACKGROUND` /
+`DID_ENTER_FOREGROUND` never logged. The obvious reading — "the events aren't firing" — is wrong.
+`SDL_events.h` says of **all six** app-lifecycle events (`TERMINATING`, `LOW_MEMORY`,
+`WILL_`/`DID_ENTER_BACKGROUND`, `WILL_`/`DID_ENTER_FOREGROUND`):
+
+> *This event must be handled in a callback set with `SDL_AddEventWatch()`.*
+
+A timing constraint, not a style preference: on Android they fire inside `onPause()`/`onResume()`
+on the **UI thread**, and SDL blocks its own main thread while backgrounded, so a polling loop may
+never get another turn before the process is frozen or killed.
+
+> **⚠ This is a hard constraint on WP-3.2.** `Wuka`'s `GameActivity.OnStop` saves the game
+> (`I.Get<engine.Saver>()?.Save("OnStop")`). Once SDL3 owns the activity that hook **must** hang
+> off an event watch. Ported as a polled event it would silently never run, and the failure mode
+> is *"the game quietly stopped saving"* — no crash, no error, noticed days later. The callback
+> also runs on the **UI thread, not the SDL thread**: state snapshots are fine there, GL calls are
+> not.
+
+Spike fixed (`SpikeRenderer.LifecycleWatch`, lines prefixed `WATCH:`); needs one more device run
+to confirm the lines now appear.
+
+> The spike ran **portrait** (1260×2800) because it does not pin an orientation; `Wuka`'s
+> `GameActivity` sets `ScreenOrientation.Landscape`. Irrelevant to the spike, relevant to WP-2.2.
+
 ### 🔴 KI-5 — `Karawan.Natives` 0.1.0's Android payload is not consumable (found by WP-2.1)
 
 NuGet resolves the package to `lib/netstandard2.0/_._` for a `net9.0-android` project and **never
@@ -167,7 +231,7 @@ hazard is not worth the tidiness of stacking.
 
 | Gate | What | Status |
 |---|---|---|
-| GATE-A | SDL3 spike on physical Android device (multi-touch, **IME**, rotation, resume) | ⏳ **READY TO RUN** — WP-2.1 [#28](https://github.com/tweggen/Karawan/pull/28) builds an installable APK; `dotnet build spikes/sdl3-android/Sdl3Spike.csproj -t:Run` + `adb logcat -s SDL3SPIKE:V`. ⚠ **The IME half cannot be answered by this spike**: SDL3 made `SDL_StartTextInput` per-window and the spike does not call it, so a missing `TEXT_INPUT` means nothing. Real IME validation is WP-2.3. See `spikes/sdl3-android/README.md`. |
+| GATE-A | SDL3 spike on physical Android device (multi-touch, **IME**, rotation, resume) | 🟡 **RENDERING HALF PASSED 2026-08-07** on an Adreno 825 device — `GL_VERSION = OpenGL ES 3.2`, `first frame presented`. **Interaction half not yet run** (multi-touch, rotation, resume). ⚠ **The IME half cannot be answered by this spike at all** — see §GATE-A evidence below. |
 | GATE-B | Play Console upload, no "Memory page size" warning | not reached — **now reachable much earlier via the WP-0.0 repack route** |
 | GATE-C | Windows + Linux desktop | not reached |
 | GATE-D | Animation correct on macOS + Windows | ✅ **PASSED 2026-08-06** — Windows confirmed, macOS confirmed on a **Debug** build (Release does not currently start, see known issue KI-1) |

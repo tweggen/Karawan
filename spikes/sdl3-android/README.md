@@ -14,7 +14,7 @@ something only a human with a physical device can complete.
 | AC-2.1 APK builds | ✅ `dotnet build spikes/sdl3-android/Sdl3Spike.csproj` → exit 0 |
 | AC-2.2 SDL3 16 KB aligned in the APK | ✅ all four `LOAD` segments `0x4000` — and so is **every other** `.so` in the APK |
 | AC-2.3 no Silk | ✅ no Silk assemblies in the APK; no Silk code anywhere in the spike |
-| **AC-2.4 GATE-A** | 🔒 **human, physical device** — see below |
+| **AC-2.4 GATE-A** | 🟡 **rendering confirmed on device 2026-08-07** (Adreno 825, `OpenGL ES 3.2`, first frame presented). Multi-touch / rotation / resume **not yet run**; IME **not answerable here** — see below. |
 | **AC-2.5 GATE-B** | 🔒 **human, Play Console** |
 
 ## Running it (GATE-A)
@@ -47,11 +47,39 @@ Then exercise each of AC-2.4's four requirements and watch for the matching line
 
 | AC-2.4 requirement | What to do | Expected log |
 |---|---|---|
-| clear screen | look at it | colours cycle |
-| multi-touch | two fingers at once | two `FINGER_DOWN` with **different** `id` |
+| clear screen ✅ | look at it | colours cycle — **confirmed 2026-08-07** |
+| multi-touch ✅ | two fingers at once | two `FINGER_DOWN` with **different** `id` — **confirmed** |
 | **IME text entry** | see below | `TEXT_INPUT '<char>'` |
-| rotation | rotate the device | `RESIZED <w>x<h>` with swapped dimensions |
-| resume | home, then back | `WILL_ENTER_BACKGROUND` → `DID_ENTER_FOREGROUND`, rendering resumes |
+| rotation ✅ | rotate the device | `RESIZED <w>x<h>` with swapped dimensions — **confirmed** |
+| resume | home, then back | `WATCH: WILL_ENTER_BACKGROUND` → `WATCH: DID_ENTER_FOREGROUND`, rendering resumes |
+
+### ⚠ Lifecycle events need `SDL_AddEventWatch`, not `SDL_PollEvent`
+
+The first version of this spike watched for `WILL_ENTER_BACKGROUND` / `DID_ENTER_FOREGROUND` in
+the poll loop. **Resume worked and rendering continued, but those lines never appeared** — and the
+first instinct, "the events aren't firing", would have been wrong.
+
+`SDL_events.h` says of all six app-lifecycle events (`TERMINATING`, `LOW_MEMORY`,
+`WILL_/DID_ENTER_BACKGROUND`, `WILL_/DID_ENTER_FOREGROUND`):
+
+> *This event must be handled in a callback set with `SDL_AddEventWatch()`.*
+
+It is a timing constraint, not a style preference. On Android these fire inside `onPause()` /
+`onResume()` **on the UI thread**, and SDL blocks its own main thread while backgrounded — so by
+the time the render loop could poll, the process may already be frozen or killed. A watch callback
+runs synchronously at the moment the event is pushed.
+
+The spike now registers one immediately after `SDL_Init`, and the lines are prefixed `WATCH:`.
+
+> ### 📌 This is a constraint on WP-3.2, not just on the spike
+>
+> `Wuka`'s `GameActivity.OnStop` saves the game (`I.Get<engine.Saver>()?.Save("OnStop")`). Once
+> SDL3 owns the activity, that hook **has to hang off an event watch**. A polled event loop would
+> silently never run it, and the failure mode is "the game quietly stopped saving" — noticed days
+> later, with no error anywhere.
+>
+> The callback runs on the **UI thread, not the SDL thread**. Logging and state snapshots are
+> safe there; GL calls are not.
 
 ### ⚠ About the IME test
 
