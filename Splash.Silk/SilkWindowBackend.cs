@@ -68,6 +68,12 @@ public sealed class SilkWindowBackend : IWindowBackend
     public Action? BeforeEvents { get; set; }
     public Action? ReleaseMainThreadWaiters { get; set; }
 
+    // Unused here: this backend has a real Silk input context, so Platform subscribes to
+    // its keyboards directly, exactly as it did before WP-3.3.
+    public Action<string>? OnKeyPressed { get; set; }
+    public Action<string>? OnKeyReleased { get; set; }
+    public Action<string>? OnKeyCharacter { get; set; }
+
     /// <summary>
     /// Wire Silk's events through to the callbacks. Called by <c>Platform.SetupDone</c>, at
     /// the same point the old code did <c>_iView.Load += ...</c>.

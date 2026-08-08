@@ -16,6 +16,12 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Splash\Splash.csproj" />
+      <!--
+        SDL3 bindings for Sdl3WindowBackend. Source-only (see Platform.SDL3), so desktop
+        builds carry the managed code but never load libSDL3 unless that backend is used -
+        today only Android instantiates it.
+      -->
+      <ProjectReference Include="..\Platform.SDL3\Platform.SDL3.csproj" />
     </ItemGroup>
 
     <ItemGroup>

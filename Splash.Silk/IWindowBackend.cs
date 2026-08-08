@@ -100,6 +100,20 @@ public interface IWindowBackend : IDisposable
     /// <summary>Run once per iteration before events are pumped.</summary>
     Action? BeforeEvents { get; set; }
 
+    /*
+     * Keyboard, for backends with no Silk input context. The argument is the engine's own
+     * key-code string ("a", "(enter)", "(cursorleft)"), i.e. the SAME right-hand side the
+     * Silk path produces - only the translation into it differs per backend.
+     *
+     * They are callbacks rather than direct EventQueue pushes on purpose: Platform pairs
+     * every raw key event with an InputMapper logical translation, and a backend that
+     * pushed straight to the queue would silently skip that. Logical input would then be
+     * dead on Android and nowhere else.
+     */
+    Action<string>? OnKeyPressed { get; set; }
+    Action<string>? OnKeyReleased { get; set; }
+    Action<string>? OnKeyCharacter { get; set; }
+
     /// <summary>
     /// Release anything blocked on the platform's main-thread monitor.
     /// </summary>
