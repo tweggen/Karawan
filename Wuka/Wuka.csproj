@@ -32,22 +32,22 @@
 		<MSBuildWarningsAsErrors>$(MSBuildWarningsAsErrors);XA4301;XA0141</MSBuildWarningsAsErrors>
 
 		<!--
-			ABIs, stated explicitly (WP-2.2). The default set is arm64-v8a + x86_64, and
-			x86_64 was never a working configuration here: WP-0.3 4.3 recorded that the
-			x86_64 split already shipped without libopenal.so, libassimp.so or
-			libc++_shared.so, so it had neither audio nor model loading. Silk's .aar merely
-			hid that by supplying an x86_64 libSDL2.so, so the emulator got a window and
-			nothing else.
+			SINGULAR RuntimeIdentifier, not the plural RuntimeIdentifiers. Rider cannot
+			deploy a project that lists several: it reports 'Unable evaluate deployment
+			properties' and refuses to start, because $(RuntimeIdentifier) evaluates to empty
+			and it has nothing to pick. `dotnet build -t:Run` tolerates it; the IDE does not,
+			and debugging on device is how this gets diagnosed.
 
-			Our natives are built for arm64-v8a and armeabi-v7a only, so continuing to emit
-			x86_64 would produce an APK split with no libSDL3.so and no libmain.so - one
-			that fails at SDL.loadLibrary rather than merely lacking sound.
+			arm64 only is the honest target anyway: Google Play has required 64-bit for years,
+			the 16 KB page-size rule applies only to 64-bit ABIs, and armeabi-v7a is 32-bit
+			legacy. Our natives do build for it, so add it back as a second RID for a release
+			AAB if it is ever wanted - but not while it costs on-device debugging.
 
-			Consequence: no x86_64 emulator build. GATE-A already requires a physical arm64
-			device for exactly this reason. Add x86_64 to the recipes' target matrix first
-			if emulator support is wanted back.
+			The default set (arm64-v8a + x86_64) is still wrong for us: we build no x86_64
+			natives, so that split would ship without libSDL3.so or libmain.so. See WP-0.3 4.3 -
+			it already lacked openal, assimp and libc++_shared, so it never worked.
 		-->
-		<RuntimeIdentifiers>android-arm64;android-arm</RuntimeIdentifiers>
+		<RuntimeIdentifier>android-arm64</RuntimeIdentifier>
 
 		<!-- Display name -->
 		<ApplicationTitle>Wuka</ApplicationTitle>
