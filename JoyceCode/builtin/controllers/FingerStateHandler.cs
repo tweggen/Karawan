@@ -37,24 +37,75 @@ public class FingerStateHandler
     private static bool _isUsable(Event ev)
     {
         Vector2 p = ev.PhysicalPosition;
-        if (Single.IsFinite(p.X) && Single.IsFinite(p.Y))
+        if (!Single.IsFinite(p.X) || !Single.IsFinite(p.Y))
         {
-            /*
-             * Every touch entering the engine, in the units the platform actually sent, next
-             * to the view size the pixel-oriented consumers divide by. Wuka.GameSurface
-             * normalises to 0..1 and sets PhysicalSize=(1,1), while InputController's mouse
-             * path treats positions as pixels against the "view.size" global - printing all
-             * three makes a units mismatch a one-line diagnosis instead of an inference.
-             *
-             * Enable with: debug.category.input = true
-             */
-            Trace(_dc, $"{ev.Type} finger={ev.Data2} dev={ev.Data1} pos={p} size={ev.PhysicalSize} "
-                       + $"(view.size={engine.GlobalSettings.Get("view.size")})");
-            return true;
+            Warning($"Ignoring finger {ev.Data2} event {ev.Type}: non-finite position {p}.");
+            return false;
         }
 
-        Warning($"Ignoring finger {ev.Data2} event {ev.Type}: non-finite position {p}.");
-        return false;
+        _validateRange(ev, p);
+        return true;
+    }
+
+
+    /**
+     * THE CONTRACT for a finger event, stated once, checked at the only door every platform's
+     * touch has to come through.
+     *
+     *   PhysicalPosition   0..1 on both axes, fraction of the surface
+     *   PhysicalSize       (1,1), because the position is already normalised
+     *
+     * That is what Wuka.GameSurface.OnTouch produces (it divides by View.Width/Height). Parts of
+     * InputController were written against PIXEL coordinates and divide by the "view.size" global
+     * instead, so the two conventions coexist in this codebase and a producer sending the wrong
+     * one is not obviously wrong at any single line - it just makes everything downstream 3
+     * orders of magnitude too big.
+     *
+     * Hence: violations are a WARNING, visible without switching anything on. That lesson was
+     * learned the expensive way - the "Too fast" impulse diagnostics were behind a debug category
+     * during an angular runaway and printed nothing, costing a whole test round.
+     *
+     * The per-event OUT-OF-RANGE warning is rate limited; the per-event in-range line stays behind
+     * debug.category.input = true, because at ~100 events/second it would drown the log.
+     */
+    private const float PositionMax = 1f;
+    private const float PositionSlack = 0.05f;
+    private const int MaxRangeReports = 20;
+    private static int _nRangeReports = 0;
+
+    private static void _validateRange(Event ev, Vector2 p)
+    {
+        /*
+         * Slack on purpose: a finger can be reported slightly outside the surface bounds on some
+         * digitizers, and that is not the failure this is looking for. A producer sending pixels
+         * is out by a factor of hundreds, not by 0.05.
+         */
+        bool positionInRange =
+            p.X >= -PositionSlack && p.X <= PositionMax + PositionSlack
+            && p.Y >= -PositionSlack && p.Y <= PositionMax + PositionSlack;
+
+        bool sizeInRange = ev.PhysicalSize == Vector2.One;
+
+        if (!positionInRange || !sizeInRange)
+        {
+            if (_nRangeReports < MaxRangeReports)
+            {
+                ++_nRangeReports;
+                Warning(
+                    $"Finger {ev.Data2} {ev.Type} OUT OF RANGE: pos={p} expected 0..1 on both axes; "
+                    + $"size={ev.PhysicalSize} expected (1,1). "
+                    + $"view.size={engine.GlobalSettings.Get("view.size")}. "
+                    + $"A position that looks like pixels means the producer is not normalising - "
+                    + $"everything downstream is then scaled by the surface size. "
+                    + $"Report {_nRangeReports} of {MaxRangeReports}.");
+            }
+
+            return;
+        }
+
+        Trace(_dc, $"{ev.Type} finger={ev.Data2} dev={ev.Data1} pos={p} (expected 0..1) "
+                   + $"size={ev.PhysicalSize} (expected (1,1)) "
+                   + $"view.size={engine.GlobalSettings.Get("view.size")}");
     }
 
 
