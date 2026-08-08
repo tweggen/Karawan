@@ -782,9 +782,29 @@ public class WalkController : AController, IInputPart
         
         {
             var gameState = M<AutoSave>().GameState;
-            gameState.PlayerPosition = new(vNewTargetPos);
-            gameState.PlayerOrientation = new(qFinalWalkFront);
-            gameState.PlayerEntity = 1;
+
+            /*
+             * Same rule as HoverController: never persist a pose that is not finite. The walking
+             * player is kinematic rather than dynamic so it is the less likely of the two to blow
+             * up, but both write to the SAME saved fields, and one bad write is a boot loop on the
+             * next launch (see HoverController for the full chain).
+             */
+            bool isPoseUsable =
+                Single.IsFinite(vNewTargetPos.X) && Single.IsFinite(vNewTargetPos.Y) && Single.IsFinite(vNewTargetPos.Z)
+                && Single.IsFinite(qFinalWalkFront.X) && Single.IsFinite(qFinalWalkFront.Y)
+                && Single.IsFinite(qFinalWalkFront.Z) && Single.IsFinite(qFinalWalkFront.W);
+
+            if (isPoseUsable)
+            {
+                gameState.PlayerPosition = new(vNewTargetPos);
+                gameState.PlayerOrientation = new(qFinalWalkFront);
+                gameState.PlayerEntity = 1;
+            }
+            else
+            {
+                Error($"Refusing to persist a non-finite walking pose: position {vNewTargetPos}, "
+                      + $"orientation {qFinalWalkFront}. Keeping the previous saved pose.");
+            }
         }
     }
 

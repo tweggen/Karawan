@@ -104,10 +104,37 @@ public class GameState
     {
         if (!engine.world.MetaGen.AABB.Contains(PlayerPosition))
         {
+            /*
+             * Read BEFORE assigning. This message used to print PlayerPosition after it had
+             * already been overwritten, so it always said "from X to X" and hid what was wrong.
+             */
+            Error($"Adjusting GameState PlayerPosition from {PlayerPosition} to {PlayerPos0}.");
+
             PlayerPosition = new(PlayerPos0);
             PlayerOrientation = new(PlayerOrientation0);
-            
-            Error($"Adjusting GameState PlayerPosition from {PlayerPosition} to {PlayerPos0}.");
+        }
+
+        /*
+         * The orientation gets its OWN check, because until now it only ever got repaired as a
+         * side effect of the position being out of bounds - so a save with a perfectly good
+         * position and a broken orientation survived every load untouched. That is the exact
+         * combination observed on device: GetPlayerPosition reported a NaN orientation at
+         * startup while the position check stayed quiet.
+         *
+         * Note default(Quaternion) is (0,0,0,0), NOT identity, and Vector3.Transform happily
+         * accepts it - it does not require a unit quaternion, it scales by |q|^2. So an
+         * orientation that was never initialised does not announce itself; it silently turns
+         * every derived front vector into the zero vector, and the first normalisation of that
+         * produces NaN. Validating length here is what makes an uninitialised orientation a
+         * logged, repaired condition rather than a black screen several subsystems later.
+         */
+        float lOrientation = ((Quaternion)PlayerOrientation).Length();
+        if (!(Single.Abs(lOrientation - 1f) <= 1e-3f))
+        {
+            Error($"Adjusting GameState PlayerOrientation from {PlayerOrientation} "
+                  + $"(length {lOrientation}) to {PlayerOrientation0}.");
+
+            PlayerOrientation = new(PlayerOrientation0);
         }
 
         if (GameNow.Year < GameT0.Year)

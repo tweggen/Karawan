@@ -308,31 +308,66 @@ internal class HoverController : AController
             vTotalImpulse += new Vector3(0f, 10f, 0f);
         }
 
+        /*
+         * These two used to both say just "Too fast", so the log could not tell you WHICH of the
+         * two had run away - and being plain Trace() they ignored the debug category convention.
+         * They are the earliest warning that an input magnitude is reaching the physics wrong, so
+         * they are worth being able to read.
+         *
+         * Negated comparisons deliberately: `!(x <= mass)` is true for NaN, `x > mass` is false.
+         * If a value has already gone non-finite, that is exactly when you want to hear about it.
+         */
         var mass = 500f;
-        if (vTotalImpulse.Length() > mass)
+        if (!(vTotalImpulse.Length() <= mass))
         {
-            Trace($"Too fast: {vTotalImpulse.Length()}.");
+            Trace(_dc, $"Too fast, LINEAR impulse {vTotalImpulse} (magnitude "
+                       + $"{vTotalImpulse.Length()}, limit {mass}).");
         }
 
-        if (vTotalAngular.Length() > mass)
+        if (!(vTotalAngular.Length() <= mass))
         {
-            Trace($"Too fast: {vTotalAngular.Length()}.");
+            Trace(_dc, $"Too fast, ANGULAR impulse {vTotalAngular} (magnitude "
+                       + $"{vTotalAngular.Length()}, limit {mass}).");
         }
 
 
         /*
          * TXWTODO: Workaround to limit top speed.
          */
-        if (vTargetVelocity.Length() > MaxLinearVelocity)
+        /*
+         * These are the speed limiters, and they were NaN-blind in the direction that matters:
+         * `vel > Max` is false when vel is NaN, so the moment the body goes non-finite the limiter
+         * stops engaging - permanently, for exactly the state it exists to contain. Same defect as
+         * the camera's `l < 0.5f` guard.
+         *
+         * The negated form fires for NaN too. Correcting the velocity by a NaN would be pointless,
+         * so a non-finite reading is reported and the impulse left alone rather than poisoned
+         * further; the pose guard further down then refuses to persist the result.
+         */
+        float vel = vTargetVelocity.Length();
+        if (!(vel <= MaxLinearVelocity))
         {
-            float vel = vTargetVelocity.Length();
-            vTotalImpulse += -(vTargetVelocity * (vel - MaxLinearVelocity) / vel) / dt;
+            if (Single.IsFinite(vel))
+            {
+                vTotalImpulse += -(vTargetVelocity * (vel - MaxLinearVelocity) / vel) / dt;
+            }
+            else
+            {
+                Error($"Player linear velocity {vTargetVelocity} is not finite; cannot limit it.");
+            }
         }
 
-        if (vTargetAngularVelocity.Length() > MaxAngularVelocity)
+        float avel = vTargetAngularVelocity.Length();
+        if (!(avel <= MaxAngularVelocity))
         {
-            float avel = vTargetAngularVelocity.Length();
-            vTotalAngular += -(vTargetAngularVelocity * (avel - MaxAngularVelocity) / avel) / dt;
+            if (Single.IsFinite(avel))
+            {
+                vTotalAngular += -(vTargetAngularVelocity * (avel - MaxAngularVelocity) / avel) / dt;
+            }
+            else
+            {
+                Error($"Player angular velocity {vTargetAngularVelocity} is not finite; cannot limit it.");
+            }
         }
         
         /*
@@ -388,9 +423,40 @@ internal class HoverController : AController
 
         {
             var gameState = M<AutoSave>().GameState;
-            gameState.PlayerPosition = new(vTargetPos);
-            gameState.PlayerOrientation = new(qFinalTargetOrientation);
-            gameState.PlayerEntity = 0;
+
+            /*
+             * NEVER persist a pose that is not finite. This is the step that turns a transient
+             * physics excursion into a permanent, cross-launch failure.
+             *
+             * vTargetPos and qFinalTargetOrientation both derive from the body pose. If the body
+             * has been driven to an extreme state, the pose can go non-finite, and writing it here
+             * hands it to AutoSave. On the next launch HoverModule._setupPlayer feeds it straight
+             * back to BepuPhysics.Bodies.Add, whose "Orientation should be initialized to a unit
+             * length quaternion" assert aborts the process on Android - a boot loop that survives
+             * reinstalling, because the bad value is in the save, not the code.
+             *
+             * builtin.tools.SafeOrientation now repairs it on the READ side, so the loop is broken
+             * either way. This is the other half: keeping the last known-good pose is strictly
+             * better than persisting a known-bad one, and it means a save can never be poisoned
+             * in the first place.
+             */
+            bool isPoseUsable =
+                Single.IsFinite(vTargetPos.X) && Single.IsFinite(vTargetPos.Y) && Single.IsFinite(vTargetPos.Z)
+                && Single.IsFinite(qFinalTargetOrientation.X) && Single.IsFinite(qFinalTargetOrientation.Y)
+                && Single.IsFinite(qFinalTargetOrientation.Z) && Single.IsFinite(qFinalTargetOrientation.W);
+
+            if (isPoseUsable)
+            {
+                gameState.PlayerPosition = new(vTargetPos);
+                gameState.PlayerOrientation = new(qFinalTargetOrientation);
+                gameState.PlayerEntity = 0;
+            }
+            else
+            {
+                Error($"Refusing to persist a non-finite player pose: position {vTargetPos}, "
+                      + $"orientation {qFinalTargetOrientation}. Keeping the previous saved pose. "
+                      + $"The physics body is in a broken state - look for 'Too fast' above.");
+            }
         }
 
     }
