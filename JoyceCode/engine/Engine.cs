@@ -535,11 +535,42 @@ public class Engine
     }
 
 
+    private const int MaxBadPhysicalDtReports = 10;
+    private int _nBadPhysicalDt = 0;
+
+
     /**
      * Called by the platform on a new physical frame.
      */
     public void CallOnPhysicalFrame(float dt)
     {
+        /*
+         * This is the ONLY dt in the engine that comes from a wall clock, so it is the only one
+         * that can be zero, negative or non-finite. The logical frame is deliberately not:
+         * _logicalThreadFunction always passes the fixed invFps (1/60) and consumes real elapsed
+         * time through its accumulator instead, so consumers of OnLogicalFrame cannot see a zero
+         * dt no matter how the platform behaves.
+         *
+         * Worth saying out loud because it is easy to assume otherwise and then "guard" the wrong
+         * division: anything dividing by an OnLogicalFrame dt is dividing by a constant.
+         *
+         * A zero here means two platform frames landed inside the clock's resolution. The old
+         * Silk loop was never observed to do it; Sdl3WindowBackend measures with a Stopwatch and
+         * sleeps out the remainder of a 60 FPS budget, so it should not either - if this fires,
+         * that assumption is wrong and the frame-timing path is worth a second look.
+         *
+         * Rate limited: a broken clock would otherwise produce one line per frame forever.
+         */
+        if (!(dt > 0f) || !Single.IsFinite(dt))
+        {
+            if (_nBadPhysicalDt < MaxBadPhysicalDtReports)
+            {
+                ++_nBadPhysicalDt;
+                Warning($"Physical frame dt is {dt}, which should be impossible. "
+                        + $"Report {_nBadPhysicalDt} of {MaxBadPhysicalDtReports}.");
+            }
+        }
+
         lock (_lo)
         {
             /*

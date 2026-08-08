@@ -562,11 +562,30 @@ public class FollowCameraController : AController, IInputPart
     {
         var vRealCameraOffset = vCarrotPos - vRealCameraPosition;
         float l = vRealCameraOffset.Length();
-        if (l < 0.5f)
+
+        /*
+         * `!(l >= 0.5f)`, NOT `l < 0.5f`. They differ on exactly one input, and it is the one
+         * that matters: EVERY comparison involving NaN is false, so `l < 0.5f` is false for a
+         * NaN length and control falls through to `vRealCameraOffset /= l` below - dividing by
+         * NaN, and handing a NaN orientation to the camera.
+         *
+         * That is what made a transient bad value permanent. Once the camera position is NaN,
+         * the next frame's offset is NaN, its length is NaN, this guard declines to fire again,
+         * and the camera never renders anything for the rest of the process while OpenAL logs
+         * "Listener orientation out of range" every frame. Written in the negated form, the
+         * fallback path catches NaN as well as "too close", which is the behaviour the fallback
+         * was there to provide in the first place.
+         */
+        if (!(l >= 0.5f))
         {
             vRealCameraOffset = _vPreviousCameraOffset;
             l = vRealCameraOffset.Length();
-            if (l < 0.5f)
+
+            /*
+             * Same negation, same reason: _vPreviousCameraOffset can itself be NaN, and this is
+             * the last line of defence before a NaN reaches the orientation.
+             */
+            if (!(l >= 0.5f))
             {
                 vRealCameraOffset = new Vector3(0f, 0f, 1f);
             }
@@ -609,10 +628,36 @@ public class FollowCameraController : AController, IInputPart
         /*
          * Compute camera object velocity for audio effects etc.
          */
-        if (!_firstFrame)
+        /*
+         * A backstop, NOT the explanation for anything observed - stated plainly because an
+         * earlier version of this comment claimed otherwise and was wrong.
+         *
+         * dt here comes from OnLogicalFrame, and Engine._logicalThreadFunction always passes the
+         * fixed invFps (1/60); real elapsed time is consumed by its accumulator, not passed on.
+         * So this division is by a constant and CANNOT produce Infinity today, which rules it out
+         * as the source of "[ALSOFT] ... Listener velocity out of range". That warning, like the
+         * orientation one beside it, comes from a non-finite camera POSITION - OpenAL rejects
+         * non-finite listener values, and a NaN position makes both velocity and orientation
+         * non-finite at once. One producer, two messages.
+         *
+         * The guard stays because the constant is an implementation detail of the logical thread,
+         * not a contract, and because a non-finite position reaches the listener through here.
+         */
+        if (!_firstFrame && dt > 0f)
         {
             var vCameraVelocity = (vRealCameraPos - _vPreviousCameraPosition) / dt;
-            _eTarget.Set(new engine.joyce.components.Motion(vCameraVelocity));
+            if (Single.IsFinite(vCameraVelocity.X)
+                && Single.IsFinite(vCameraVelocity.Y)
+                && Single.IsFinite(vCameraVelocity.Z))
+            {
+                _eTarget.Set(new engine.joyce.components.Motion(vCameraVelocity));
+            }
+            else
+            {
+                Error($"Camera velocity {vCameraVelocity} is not finite "
+                      + $"(dt={dt}, pos={vRealCameraPos}, prev={_vPreviousCameraPosition}); "
+                      + $"keeping the previous value.");
+            }
         }
     }
     
