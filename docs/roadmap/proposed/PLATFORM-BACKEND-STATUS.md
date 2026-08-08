@@ -58,13 +58,59 @@ Second candidate: EGL surface recreated on resume, renderer holding stale FBOs.
 
 **3. Rider cannot deploy Wuka** — "Unable evaluate deployment properties", **while the build
 succeeds and signs the APK**. Two fixes were tried and BOTH FAILED: single `RuntimeIdentifier`
-(merged anyway, independently correct) and singular `TargetFramework` (#39, **open — keep only as
-tidy-up, it does not fix this**). Since the build is fine and every CLI path works, the next
-suspects are a **stale Rider run configuration** (the output path moved to
-`bin/Debug/net9.0-android36.0/android-arm64/` under Rider's feet) or `.idea` cache. Failing that,
-`nogame/generated/AndroidResources.xml` re-imports `Sdk.props`/`Sdk.targets` and emits `MSB4011`
-on every build — a genuine authoring error that an IDE's evaluator may not tolerate.
-**Workaround: `dotnet build Wuka/Wuka.csproj -t:Run`, then attach Rider to the process.**
+(merged anyway, independently correct) and singular `TargetFramework` (#39, merged, same — keep
+it as tidy-up, it did not fix this).
+
+**Third candidate now removed (2026-08-08), and it is the one real authoring error of the three.**
+`AndroidResourceWriter` emitted the generated manifest as `<Project Sdk="Microsoft.NET.Sdk">`, and
+`Wuka.csproj` `<Import>`s that file at line 156 — so MSBuild re-imported the SDK *there*. Two
+`MSB4011` warnings on every build, and the second one is the damaging half:
+
+```
+Wuka.csproj : warning MSB4011: "…\Microsoft.NET.Sdk\Sdk\Sdk.targets" cannot be imported again.
+It was already imported at "…\nogame\generated\AndroidResources.xml".
+This subsequent import will be ignored.
+```
+
+Wuka.csproj's own implicit **bottom** import of `Sdk.targets` was skipped, so the .NET SDK plus
+the Android and MAUI workloads all landed ~190 lines early, and every static `ItemGroup` inside
+them evaluated against a Wuka.csproj that stopped at the `<Import>`: no `libSDL3`/`libmain`/
+`libopenal` `AndroidNativeLibrary`, no `AndroidResource`, no `PackageReference`, no
+`ProjectReference`. `dotnet build` tolerates it (targets read those items at execution time, by
+which point evaluation is complete); a project evaluator that reads properties without running a
+build need not. The writer now emits a plain `<Project>` — MSB4011 is gone, the build is
+unchanged, and the APK is byte-for-byte the same shape (19 arm64 libs, 170 assets).
+
+**A fourth candidate, also fixed (2026-08-08): the project lied about its own package name.**
+`<ApplicationId>` was still the MAUI template default `com.companyname.wuka`, while
+`Platforms/Android/AndroidManifest.xml` declares `package="de.nassau_records.silicondesert2"` —
+and the hand-written manifest is what wins, so that is the APK name, the installed package and
+the launch intent. Nothing in the build ever noticed. But a tool that asks MSBuild what the
+project deploys, rather than parsing the manifest, got a package that has never existed on any
+device; installing one package and then launching or uninstalling another surfaces exactly as
+"package not installed" in logcat with no error of its own. `<ApplicationId>` now matches the
+manifest; verified the APK name, the merged manifest's `package=`, the 19 libs and the 170 assets
+are all unchanged.
+
+**Whether either was Rider's actual cause is UNVERIFIED — nobody has retried Rider since.** If it
+still refuses, the remaining suspects are a **stale Rider run configuration** (the output path
+moved to `bin/Debug/net9.0-android36.0/android-arm64/` under Rider's feet) or `.idea` cache, and
+the next step is to capture Rider's own MSBuild log (Help ▸ Diagnostic Tools ▸ *Show Log*) rather
+than logcat — logcat only shows a package that is not installed, which is the consequence, not
+the cause.
+**Workaround meanwhile: `dotnet build Wuka/Wuka.csproj -t:Run`, then attach Rider to the process.**
+
+**4. Release crashed on device with `ClassNotFoundException: crc64e20757511145c75a.GameActivity`
+— DIAGNOSED AND CLOSED (2026-08-08), it was a stale `obj/Release`, not a code defect.** The APK
+defined `GameActivity` and declared it in the manifest; what it lacked was all 49
+`org/libsdl/app/*` classes, i.e. the superclass. ART names the subclass in that situation, which
+sends you looking for a class that is present. `Wuka/obj/Release/net9.0-android36.0/android-arm64/`
+dated from Aug 2, six days before WP-2.2 vendored the SDL3 Java glue; the incremental build
+produced `binding/bin/Wuka.jar` (49 classes) and d8 never received it. Clean Release builds — with
+and without the MSB4011 fix — contain all 49, and incremental builds after a clean one keep them.
+Fix: `rm -rf Wuka/obj/Release Wuka/bin/Release && dotnet build Wuka/Wuka.csproj -c Release`.
+`scripts/check-apk.py` now asserts required natives/classes and scans for dangling superclasses;
+it fails the bad APK with the *real* missing class named, and passes the clean one.
 
 ## Small open items
 

@@ -227,11 +227,70 @@ The storylets use the second: 14 entries tagged `"type": "taleStorylet"`. That o
 
 ### Symptom: a manifest entry is regenerated but the APK still lacks the file
 
-`Wuka.csproj` line 91 does `<Import Project="../nogame/generated/AndroidResources.xml" />`. MSBuild evaluates `Import` at **project-evaluation time**, before any target in that build runs — so a build that regenerates the manifest is still using the copy that existed when it started. The first build after adding an asset updates the manifest; the **second** build stages it into `Wuka/obj/…/assets/`. Verify with:
+`Wuka.csproj` does `<Import Project="../nogame/generated/AndroidResources.xml" />`. MSBuild evaluates `Import` at **project-evaluation time**, before any target in that build runs — so a build that regenerates the manifest is still using the copy that existed when it started. The first build after adding an asset updates the manifest; the **second** build stages it into `Wuka/obj/…/assets/`. Verify with:
 
 ```bash
 ls Wuka/obj/Debug/net9.0-android36.0/assets/ | wc -l
 ```
+
+### The generated manifest must NOT carry an `Sdk` attribute
+
+`AndroidResourceWriter` opens the file with a bare `<Project>`, deliberately. Give it
+`Sdk="Microsoft.NET.Sdk"` and MSBuild re-imports the SDK at the `<Import>` site — two `MSB4011`
+warnings, the second of which reports that *Wuka.csproj's own* bottom `Sdk.targets` import is the
+one being ignored. The .NET SDK and the Android/MAUI workloads then land in the middle of
+Wuka.csproj, and every static `ItemGroup` in them sees only the items declared **above** the
+import: the `libSDL3`/`libmain`/`libopenal` natives, the `AndroidResource` icons, every
+`PackageReference` and every `ProjectReference` are all below it. `dotnet build` survives this
+(targets read items at execution time, after evaluation has finished); IDE project evaluators need
+not, and it was a live suspect for Rider's "Unable evaluate deployment properties". Regression
+check — this must print nothing:
+
+```bash
+dotnet msbuild Wuka/Wuka.csproj -getProperty:RuntimeIdentifier 2>&1 | grep MSB4011
+```
+
+### Symptom: `ClassNotFoundException` on a class that IS in the APK
+
+Seen 2026-08-08, Release only, on device after the permission dialog:
+
+```
+java.lang.ClassNotFoundException: crc64e20757511145c75a.GameActivity
+  at crc64e20757511145c75a.MainActivity.n_onRequestPermissionsResult(Native Method)
+```
+
+`GameActivity` was in `classes2.dex` and correctly declared in the merged manifest. **Read the
+message as naming the wrong class.** Loading a class requires resolving its superclass, and
+`GameActivity extends org.libsdl.app.SDLActivity` — all 49 `org/libsdl/app/*` classes were absent,
+so ART reported the *subclass* as not found. `GameSurface`/`SDLSurface` had the same break.
+
+Cause: `Wuka/obj/Release/net9.0-android36.0/android-arm64/` dated from **Aug 2**, six days before
+WP-2.2 vendored the SDL3 Java glue on Aug 8. The incremental Release build did run
+`_CompileBindingJava` and did produce `binding/bin/Wuka.jar` with all 49 classes — d8 was simply
+never given it. Build result: **0 errors, no relevant warnings**, signed APK, installs, launches.
+
+Fix, and the only reliable one:
+
+```bash
+rm -rf Wuka/obj/Release Wuka/bin/Release
+dotnet build Wuka/Wuka.csproj -c Release
+```
+
+A clean build carries all 49; incremental builds *after* that clean build keep them, so this is a
+one-time poisoning at the commit that introduced the Java sources — not an ongoing defect.
+
+**Do not grep the dex for a class name to check this.** A dex holds the name string of every class
+it *references*, so the string is present either way. `scripts/check-apk.py` parses the
+`class_defs` table, asserts the required natives and classes are there, and scans generically for
+dangling superclasses — it names the genuinely missing class rather than the one in the crash:
+
+```bash
+python scripts/check-apk.py Wuka/bin/Release/net9.0-android36.0/android-arm64/de.nassau_records.silicondesert2-Signed.apk
+```
+
+Worth running after any change to `AndroidJavaSource`, native libraries, or package references —
+this is the second time a green build produced an APK missing something (the first cost a whole
+work package to `libSDL3.so`; see the comment in `Wuka.csproj`).
 
 ### Symptom: build-task A behaves differently from build-task B in the same build
 
