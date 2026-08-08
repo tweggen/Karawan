@@ -41,11 +41,47 @@ System.Diagnostics.Debug.Assert(...)
   at engine.Engine._onLogicalFrame / _logicalThreadFunction
 ```
 
-**Hypothesis (UNCONFIRMED):** the uncapped SDL3 loop over-applied per-frame input → vehicle
-"spun like wild" → invalid body state → assert. #36 capped the loop at 60 FPS; **nobody has
-re-tested since**. Next step: run, and if it still aborts, log the position/inertia at that
-assert. NaN/huge ⇒ the input chain; ordinary values ⇒ a separate physics bug. Note `Debug.Assert`
-only aborts in Debug — a Release build would sail past the same invalid state silently.
+**SOLVED 2026-08-08, and the standing hypothesis was wrong.** The full assert text, once
+captured, named it outright:
+
+```
+---- Assert Short Message ----
+Orientation should be initialized to a unit length quaternion.
+  at BepuPhysics.Bodies.Add(BodyDescription& description)
+  at engine.physics.actions.CreateDynamic.Execute(...)
+  at nogame.modules.playerhover.HoverModule.<_setupPlayer>b__0()
+```
+
+`_setupPlayer` — this fires **once, while creating the player body**, not per frame. It has
+nothing to do with the render loop, the frame cap, or accumulated input, and the "spun like wild"
+theory explained none of it. Attributing it to the uncapped loop was inference from a truncated
+stack that stopped one frame short of the answer.
+
+Actual cause, in `PlayerPosition.GetPlayerPosition`:
+
+```csharp
+Quaternion qShip = Quaternion.Normalize(gameState.PlayerOrientation);
+```
+
+`Quaternion.Normalize` reads like validation and is not. `default(Quaternion)` is `(0,0,0,0)`,
+**not** identity — so any save whose orientation field was never written gives length 0, and
+Normalize computes `1/sqrt(0) = Infinity` then `0 * Infinity = NaN`. One invalid quaternion in,
+a different invalid quaternion out, with the evidence that it started as zero destroyed. NaN
+passes straight through for the same reason. The guard beneath it only tested the **position**
+(`v3Ship == Vector3.Zero`), so a save with a good position and a blank orientation walked past it.
+
+Because a failed `Debug.Assert` on Android aborts rather than prints, one bad persisted
+orientation is a **boot loop**: load state → build player body → abort → relaunch → load the same
+state. Fixed by `builtin.tools.SafeOrientation.Sanitize` (identity for non-finite/degenerate,
+rescale for merely drifted), called from `GetPlayerPosition`, which also now rejects a non-finite
+position. 14 regression tests in `tests/JoyceCode.Tests/builtin/tools/SafeOrientationTests.cs`,
+two of which pin the `Normalize(default) → NaN` behaviour that caused this.
+
+**Correction to the note that used to be here:** "a Release build would sail past the same invalid
+state silently" is right about `Debug.Assert`, and it means the run that produced this stack was a
+**Debug** build. Verified: `Configuration=Release` yields `DefineConstants=TRACE;RELEASE;…` with no
+`DEBUG` for `Wuka`, `Joyce` **and** `BepuPhysics` (sibling repo, solution maps Release→Release), so
+the assert cannot fire in Release regardless of which assembly it lives in.
 
 **2. Black screen after pause/resume; render loop stops, process and audio stay alive.** Log
 evidence: `surfaceDestroyed()` → `nativePause()` → `onResume()` → `surfaceCreated()`

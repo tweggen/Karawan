@@ -8,6 +8,8 @@ namespace builtin.controllers;
 
 public class FingerStateHandler
 {
+    private static readonly engine.Dc _dc = engine.Dc.Input;
+
     private object _lo = new();
 
     private SortedDictionary<uint, IFingerState> _mapFingerStates = new();
@@ -37,6 +39,17 @@ public class FingerStateHandler
         Vector2 p = ev.PhysicalPosition;
         if (Single.IsFinite(p.X) && Single.IsFinite(p.Y))
         {
+            /*
+             * Every touch entering the engine, in the units the platform actually sent, next
+             * to the view size the pixel-oriented consumers divide by. Wuka.GameSurface
+             * normalises to 0..1 and sets PhysicalSize=(1,1), while InputController's mouse
+             * path treats positions as pixels against the "view.size" global - printing all
+             * three makes a units mismatch a one-line diagnosis instead of an inference.
+             *
+             * Enable with: debug.category.input = true
+             */
+            Trace(_dc, $"{ev.Type} finger={ev.Data2} dev={ev.Data1} pos={p} size={ev.PhysicalSize} "
+                       + $"(view.size={engine.GlobalSettings.Get("view.size")})");
             return true;
         }
 
