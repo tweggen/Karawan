@@ -270,13 +270,48 @@ public class HoverModule : AModule, IInputPart
             engine.physics.Object po;
             lock (_engine.Simulation)
             {
+                /*
+                 * The second argument is the cylinder's LENGTH, and it used to read
+                 *
+                 *     ...AABBTransformed.BB.Y - ...AABBTransformed.BB.Y
+                 *
+                 * i.e. BB.Y minus ITSELF, which is zero for every model. AA is the AABB's minimum
+                 * and BB its maximum, so the height is BB.Y - AA.Y; the `: 1.0f` fallback on the
+                 * null branch is the giveaway that a real height was always intended here.
+                 *
+                 * Consequence: the player ship's collision body was a flat DISC of zero height,
+                 * not a cylinder. Nothing about that is visible - the rendered model is unaffected,
+                 * the body has sensible mass and radius, and no assert or warning fires. It only
+                 * shows up once the disc is in contact with terrain, where a degenerate contact
+                 * manifold lets the solver produce corrective angular impulses of a magnitude the
+                 * controller never asked for.
+                 *
+                 * That matches what the device log shows and, importantly, what it does NOT show:
+                 * angular velocity reaching hundreds of rad/s against a limit of 0.8, recovering
+                 * to the same magnitude within a few frames of being clamped to zero, continuing
+                 * after the finger is lifted - while the "Too fast" warning on the controller's
+                 * own impulse (limit 500) never fires once. The impulses this code applies are in
+                 * range; the ones coming back out of the solver are not.
+                 *
+                 * Clamped to a minimum, because a model whose AABB is degenerate in Y would
+                 * otherwise put us straight back here.
+                 */
+                float bodyHeight = 1.0f;
+                var instanceDesc = _model.ModelNodeTree.RootNode.InstanceDesc;
+                if (instanceDesc != null)
+                {
+                    bodyHeight = Single.Max(
+                        0.1f,
+                        instanceDesc.AABBTransformed.BB.Y - instanceDesc.AABBTransformed.AA.Y);
+                }
+
                 uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
                     _engine.PLog, _engine.Simulation,
-                    Single.Max(1.4f, bodyRadius), 
-                    _model.ModelNodeTree.RootNode.InstanceDesc != null 
-                        ? _model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.BB.Y-_model.ModelNodeTree.RootNode.InstanceDesc.AABBTransformed.BB.Y
-                        : 1.0f,
+                    Single.Max(1.4f, bodyRadius),
+                    bodyHeight,
                     out var pbody);
+                Trace($"Player ship physics body: radius {Single.Max(1.4f, bodyRadius)}, "
+                      + $"height {bodyHeight}, mass {MassShip}.");
                 var inertia = pbody.ComputeInertia(MassShip);
                 po = new engine.physics.Object(_engine, _eShip, 
                         inertia, new TypedIndex() { Packed = uintShape },
