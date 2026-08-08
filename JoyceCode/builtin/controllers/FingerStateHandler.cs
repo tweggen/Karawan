@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using engine.news;
 using static engine.Logger;
 
@@ -8,11 +9,40 @@ namespace builtin.controllers;
 public class FingerStateHandler
 {
     private object _lo = new();
-    
+
     private SortedDictionary<uint, IFingerState> _mapFingerStates = new();
 
 
     private Func<Event, IFingerState> _fingerStateFactory;
+
+
+    /**
+     * Reject a touch position that is not a finite number, at the boundary where platform
+     * input enters the engine.
+     *
+     * This is not defensive decoration. Finger deltas are accumulated by
+     * RightStickFingerState into InputController.V2RightTouchMove, and FollowCameraController
+     * accumulates those again into its own long-lived _v2MouseOffseting. Neither accumulator
+     * has any path back from NaN or Infinity, so ONE bad event does not cause one bad frame -
+     * it ends rendering for the rest of the process. Observed on Android as a view that spins
+     * wildly, then goes black, with OpenAL logging "Listener orientation out of range" every
+     * frame from then on.
+     *
+     * The known producer is fixed at source (Wuka.GameSurface.OnTouch divided by a
+     * not-yet-laid-out View.Width/Height), but the cost of a bad value getting through here
+     * is out of all proportion to the cost of checking, and every platform feeds this path.
+     */
+    private static bool _isUsable(Event ev)
+    {
+        Vector2 p = ev.PhysicalPosition;
+        if (Single.IsFinite(p.X) && Single.IsFinite(p.Y))
+        {
+            return true;
+        }
+
+        Warning($"Ignoring finger {ev.Data2} event {ev.Type}: non-finite position {p}.");
+        return false;
+    }
 
 
     public void OnFingerReleased(Event ev)
@@ -31,18 +61,25 @@ public class FingerStateHandler
             }
         }
 
-        if (fingerState != null)
+        /*
+         * Note the removal above is unconditional: a finger that has been lifted must never
+         * stay in the map, whatever its coordinates say. Only the handler call is skipped,
+         * because that is what feeds the position into the accumulators.
+         */
+        if (fingerState != null && _isUsable(ev))
         {
             fingerState.HandleReleased(ev);
             ev.IsHandled = true;
         }
     }
-    
-    
+
+
     public void OnFingerMotion(Event ev)
     {
         IFingerState? fingerState = null;
-        
+
+        if (!_isUsable(ev)) return;
+
         lock (_lo)
         {
             if (_mapFingerStates.TryGetValue(ev.Data2, out fingerState))
@@ -56,10 +93,12 @@ public class FingerStateHandler
             ev.IsHandled = true;
         }
     }
-    
-    
+
+
     public void OnFingerPressed(Event ev, Func<Event, IFingerState> localFingerStateFactory = null)
-    {        
+    {
+        if (!_isUsable(ev)) return;
+
         IFingerState? oldFingerState = null;
         IFingerState? iFingerState;
         

@@ -9,6 +9,7 @@ using engine;
 using engine.news;
 using Org.Libsdl.App;
 using View = Android.Views.View;
+using static engine.Logger;
 
 namespace Wuka;
 
@@ -28,10 +29,37 @@ public class GameSurface : SDLSurface
             _eq = I.Get<EventQueue>();
         }
         
-        int touchDevId = e.DeviceId;
-        
         /*
-         * The number of pointers in this event. 
+         * Every branch below divides by these to normalise the touch into 0..1, so read
+         * them once and refuse the event if they are not usable yet.
+         *
+         * View.Width/Height are 0 until the surface has been laid out, and a MotionEvent
+         * can arrive in that window - also after the surface is destroyed and recreated
+         * on resume. Dividing by 0 yields Infinity, or NaN for the 0/0 at the very origin.
+         *
+         * That value does NOT stay local. RightStickFingerState accumulates finger deltas
+         * into InputController.V2RightTouchMove, and FollowCameraController accumulates
+         * those AGAIN into its own persistent _v2MouseOffseting. Neither ever clears on a
+         * non-finite value, so a single bad event poisons the camera orientation for the
+         * rest of the process: the view spins wildly, then renders black, while OpenAL
+         * logs "Listener orientation out of range" every frame forever.
+         *
+         * SDL guards the identical division in its own SDLSurface.java
+         * (getNormalizedX: "if (mWidth <= 1) return 0.5f"). Dropping the event is the
+         * honest choice here - a touch we cannot locate carries no information.
+         */
+        int width = Width;
+        int height = Height;
+        if (width <= 0 || height <= 0)
+        {
+            Warning($"Dropping touch event: surface not laid out yet ({width}x{height}).");
+            return true;
+        }
+
+        int touchDevId = e.DeviceId;
+
+        /*
+         * The number of pointers in this event.
          */
         int pointerCount = e.PointerCount;
         
@@ -64,7 +92,7 @@ public class GameSurface : SDLSurface
                     i = e.ActionIndex;
                 }
                 pointerFingerId = e.GetPointerId(i);
-                v2Physical = new(e.GetX(i) / Width, e.GetY(i) / Height);
+                v2Physical = new(e.GetX(i) / width, e.GetY(i) / height);
                 p = e.GetPressure(i);
                 if (p > 1.0f) {
                     // may be larger than 1.0f on some devices
@@ -93,7 +121,7 @@ public class GameSurface : SDLSurface
                 }
                 
                 pointerFingerId = e.GetPointerId(i);
-                v2Physical = new(e.GetX(i) / Width, e.GetY(i) / Height);
+                v2Physical = new(e.GetX(i) / width, e.GetY(i) / height);
                 p = e.GetPressure(i);
                 if (p > 1.0f) {
                     // may be larger than 1.0f on some devices
@@ -115,7 +143,7 @@ public class GameSurface : SDLSurface
             case MotionEventActions.Cancel:
                 for (i = 0; i < pointerCount; i++) {
                     pointerFingerId = e.GetPointerId(i);
-                    v2Physical = new(e.GetX(i) / Width, e.GetY(i) / Height);
+                    v2Physical = new(e.GetX(i) / width, e.GetY(i) / height);
                     p = e.GetPressure(i);
                     if (p > 1.0f) {
                         // may be larger than 1.0f on some devices
@@ -137,7 +165,7 @@ public class GameSurface : SDLSurface
             case MotionEventActions.Move:
                 for (i = 0; i < pointerCount; i++) {
                     pointerFingerId = e.GetPointerId(i);
-                    v2Physical = new(e.GetX(i) / Width, e.GetY(i) / Height);
+                    v2Physical = new(e.GetX(i) / width, e.GetY(i) / height);
                     p = e.GetPressure(i);
                     if (p > 1.0f) {
                         // may be larger than 1.0f on some devices
