@@ -81,7 +81,18 @@ which point evaluation is complete); a project evaluator that reads properties w
 build need not. The writer now emits a plain `<Project>` — MSB4011 is gone, the build is
 unchanged, and the APK is byte-for-byte the same shape (19 arm64 libs, 170 assets).
 
-**Whether that was Rider's actual cause is UNVERIFIED — nobody has retried Rider since.** If it
+**A fourth candidate, also fixed (2026-08-08): the project lied about its own package name.**
+`<ApplicationId>` was still the MAUI template default `com.companyname.wuka`, while
+`Platforms/Android/AndroidManifest.xml` declares `package="de.nassau_records.silicondesert2"` —
+and the hand-written manifest is what wins, so that is the APK name, the installed package and
+the launch intent. Nothing in the build ever noticed. But a tool that asks MSBuild what the
+project deploys, rather than parsing the manifest, got a package that has never existed on any
+device; installing one package and then launching or uninstalling another surfaces exactly as
+"package not installed" in logcat with no error of its own. `<ApplicationId>` now matches the
+manifest; verified the APK name, the merged manifest's `package=`, the 19 libs and the 170 assets
+are all unchanged.
+
+**Whether either was Rider's actual cause is UNVERIFIED — nobody has retried Rider since.** If it
 still refuses, the remaining suspects are a **stale Rider run configuration** (the output path
 moved to `bin/Debug/net9.0-android36.0/android-arm64/` under Rider's feet) or `.idea` cache, and
 the next step is to capture Rider's own MSBuild log (Help ▸ Diagnostic Tools ▸ *Show Log*) rather
