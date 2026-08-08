@@ -250,6 +250,48 @@ check — this must print nothing:
 dotnet msbuild Wuka/Wuka.csproj -getProperty:RuntimeIdentifier 2>&1 | grep MSB4011
 ```
 
+### Symptom: `ClassNotFoundException` on a class that IS in the APK
+
+Seen 2026-08-08, Release only, on device after the permission dialog:
+
+```
+java.lang.ClassNotFoundException: crc64e20757511145c75a.GameActivity
+  at crc64e20757511145c75a.MainActivity.n_onRequestPermissionsResult(Native Method)
+```
+
+`GameActivity` was in `classes2.dex` and correctly declared in the merged manifest. **Read the
+message as naming the wrong class.** Loading a class requires resolving its superclass, and
+`GameActivity extends org.libsdl.app.SDLActivity` — all 49 `org/libsdl/app/*` classes were absent,
+so ART reported the *subclass* as not found. `GameSurface`/`SDLSurface` had the same break.
+
+Cause: `Wuka/obj/Release/net9.0-android36.0/android-arm64/` dated from **Aug 2**, six days before
+WP-2.2 vendored the SDL3 Java glue on Aug 8. The incremental Release build did run
+`_CompileBindingJava` and did produce `binding/bin/Wuka.jar` with all 49 classes — d8 was simply
+never given it. Build result: **0 errors, no relevant warnings**, signed APK, installs, launches.
+
+Fix, and the only reliable one:
+
+```bash
+rm -rf Wuka/obj/Release Wuka/bin/Release
+dotnet build Wuka/Wuka.csproj -c Release
+```
+
+A clean build carries all 49; incremental builds *after* that clean build keep them, so this is a
+one-time poisoning at the commit that introduced the Java sources — not an ongoing defect.
+
+**Do not grep the dex for a class name to check this.** A dex holds the name string of every class
+it *references*, so the string is present either way. `scripts/check-apk.py` parses the
+`class_defs` table, asserts the required natives and classes are there, and scans generically for
+dangling superclasses — it names the genuinely missing class rather than the one in the crash:
+
+```bash
+python scripts/check-apk.py Wuka/bin/Release/net9.0-android36.0/android-arm64/de.nassau_records.silicondesert2-Signed.apk
+```
+
+Worth running after any change to `AndroidJavaSource`, native libraries, or package references —
+this is the second time a green build produced an APK missing something (the first cost a whole
+work package to `libSDL3.so`; see the comment in `Wuka.csproj`).
+
 ### Symptom: build-task A behaves differently from build-task B in the same build
 
 A and B almost certainly run from different binaries. `Res2TargetTask` runs the netstandard2.0 task DLL in-process; `PackTexturesTask` and `CompileAssetsTask` spawn a published net9.0 executable child process. After editing Cmdline source, refresh **both** outputs.

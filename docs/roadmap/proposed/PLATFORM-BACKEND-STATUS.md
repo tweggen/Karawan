@@ -100,6 +100,18 @@ than logcat — logcat only shows a package that is not installed, which is the 
 the cause.
 **Workaround meanwhile: `dotnet build Wuka/Wuka.csproj -t:Run`, then attach Rider to the process.**
 
+**4. Release crashed on device with `ClassNotFoundException: crc64e20757511145c75a.GameActivity`
+— DIAGNOSED AND CLOSED (2026-08-08), it was a stale `obj/Release`, not a code defect.** The APK
+defined `GameActivity` and declared it in the manifest; what it lacked was all 49
+`org/libsdl/app/*` classes, i.e. the superclass. ART names the subclass in that situation, which
+sends you looking for a class that is present. `Wuka/obj/Release/net9.0-android36.0/android-arm64/`
+dated from Aug 2, six days before WP-2.2 vendored the SDL3 Java glue; the incremental build
+produced `binding/bin/Wuka.jar` (49 classes) and d8 never received it. Clean Release builds — with
+and without the MSB4011 fix — contain all 49, and incremental builds after a clean one keep them.
+Fix: `rm -rf Wuka/obj/Release Wuka/bin/Release && dotnet build Wuka/Wuka.csproj -c Release`.
+`scripts/check-apk.py` now asserts required natives/classes and scans for dangling superclasses;
+it fails the bad APK with the *real* missing class named, and passes the clean one.
+
 ## Small open items
 
 - **`Directory.Packages.props` still pins `Karawan.Natives` 0.1.0**, so builds still hit the KI-5
