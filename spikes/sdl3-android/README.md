@@ -64,22 +64,48 @@ first instinct, "the events aren't firing", would have been wrong.
 
 > *This event must be handled in a callback set with `SDL_AddEventWatch()`.*
 
-It is a timing constraint, not a style preference. On Android these fire inside `onPause()` /
-`onResume()` **on the UI thread**, and SDL blocks its own main thread while backgrounded — so by
-the time the render loop could poll, the process may already be frozen or killed. A watch callback
-runs synchronously at the moment the event is pushed.
+**This is absolute, not a timing hazard.** `SDL_SendAppEvent` special-cases these six types and
+never puts them on the queue at all (`src/events/SDL_events.c`):
 
-The spike now registers one immediately after `SDL_Init`, and the lines are prefixed `WATCH:`.
+```c
+case SDL_EVENT_WILL_ENTER_BACKGROUND: ...
+    // We won't actually queue this event, it needs to be handled in this call stack by an event watcher
+    SDL_CallEventWatchers(&event);
+```
+
+No amount of polling can ever see them. SDL does this because of Android's pause semantics, spelled
+out in `SDL_androidevents.c`: *"as soon as the enter background event has been queued, the app will
+block. The application should do any life cycle handling in an event filter while the event was
+being queued."* The app is about to stop getting CPU, so the notification must be synchronous or it
+is worthless.
+
+The spike now registers a watch immediately after `SDL_Init`; the lines are prefixed `WATCH:`.
+
+**Confirmed on device 2026-08-08** — home-and-back produced, in order:
+
+```
+WATCH: WILL_ENTER_BACKGROUND
+WATCH: DID_ENTER_BACKGROUND
+WATCH: LOW_MEMORY              <- bonus: the device signalled memory pressure while backgrounded
+WATCH: WILL_ENTER_FOREGROUND
+WATCH: DID_ENTER_FOREGROUND
+```
 
 > ### 📌 This is a constraint on WP-3.2, not just on the spike
 >
 > `Wuka`'s `GameActivity.OnStop` saves the game (`I.Get<engine.Saver>()?.Save("OnStop")`). Once
-> SDL3 owns the activity, that hook **has to hang off an event watch**. A polled event loop would
-> silently never run it, and the failure mode is "the game quietly stopped saving" — noticed days
+> SDL3 owns the activity, that hook **has to hang off an event watch**. Ported as a polled event it
+> would never run at all, and the failure mode is "the game quietly stopped saving" — noticed days
 > later, with no error anywhere.
 >
-> The callback runs on the **UI thread, not the SDL thread**. Logging and state snapshots are
-> safe there; GL calls are not.
+> **Threading:** the callback runs on the **SDL thread** — the same one that called
+> `SDL_PollEvent` — because the whole chain is one call stack: `SDL_PollEvent` → `SDL_PumpEvents`
+> → `Android_PumpEvents` → `Android_OnPause` → `SDL_SendAppEvent` → watchers. It is **not** the
+> Android UI thread; that thread only enqueues a lifecycle token the SDL thread picks up. So the
+> save hook may touch game state directly, with no cross-thread hazard.
+>
+> `LOW_MEMORY` firing during a routine backgrounding is worth noting for the real game: it is a
+> free signal to drop caches, and `Wuka` currently does nothing with it.
 
 ### ⚠ About the IME test
 

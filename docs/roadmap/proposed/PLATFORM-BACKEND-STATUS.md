@@ -95,9 +95,9 @@ SDL3SPIKE first frame presented
   absence of errors.
 
 **Also confirmed on device (2026-08-07):** **multi-touch** ✅ (distinct `FINGER_DOWN` ids) and
-**rotation** ✅ (`RESIZED` with swapped dimensions). **Resume** ✅ behaviourally — rendering
-continues after home-and-back — but see KI-8: the log lines were missing because the spike was
-watching for them the wrong way.
+**rotation** ✅ (`RESIZED` with swapped dimensions). **Resume** ✅ **fully confirmed 2026-08-08** — rendering
+continues after home-and-back, and all five lifecycle events now log via the event watch (see
+KI-8; the original log lines were missing because the spike watched for them the wrong way).
 
 **Still not established:** **IME**, which this spike cannot answer at all. GATE-A stays 🟡.
 
@@ -110,19 +110,37 @@ Found by GATE-A: resume worked and rendering continued, but `WILL_ENTER_BACKGROU
 
 > *This event must be handled in a callback set with `SDL_AddEventWatch()`.*
 
-A timing constraint, not a style preference: on Android they fire inside `onPause()`/`onResume()`
-on the **UI thread**, and SDL blocks its own main thread while backgrounded, so a polling loop may
-never get another turn before the process is frozen or killed.
+**This is absolute, not a timing hazard** — confirmed from the SDL source at our pinned commit.
+`SDL_SendAppEvent` special-cases these six types and never queues them at all
+(`src/events/SDL_events.c`):
 
-> **⚠ This is a hard constraint on WP-3.2.** `Wuka`'s `GameActivity.OnStop` saves the game
+```c
+case SDL_EVENT_WILL_ENTER_BACKGROUND: ...
+    // We won't actually queue this event, it needs to be handled in this call stack by an event watcher
+    SDL_CallEventWatchers(&event);
+```
+
+The rationale is Android's pause semantics (`SDL_androidevents.c`): *"as soon as the enter
+background event has been queued, the app will block. The application should do any life cycle
+handling in an event filter while the event was being queued."*
+
+> **⚠ Hard constraint on WP-3.2.** `Wuka`'s `GameActivity.OnStop` saves the game
 > (`I.Get<engine.Saver>()?.Save("OnStop")`). Once SDL3 owns the activity that hook **must** hang
-> off an event watch. Ported as a polled event it would silently never run, and the failure mode
-> is *"the game quietly stopped saving"* — no crash, no error, noticed days later. The callback
-> also runs on the **UI thread, not the SDL thread**: state snapshots are fine there, GL calls are
-> not.
+> off an event watch. Ported as a polled event it would never run at all — no crash, no error,
+> just *"the game quietly stopped saving"*, noticed days later.
+>
+> **Threading — corrected 2026-08-08.** An earlier revision of this entry said the callback runs
+> on the Android UI thread. **That was wrong.** It runs on the **SDL thread**, the same one that
+> called `SDL_PollEvent`, because the chain is a single call stack: `SDL_PollEvent` →
+> `SDL_PumpEvents` → `Android_PumpEvents` → `Android_OnPause` → `SDL_SendAppEvent` → watchers.
+> The UI thread only enqueues a lifecycle token the SDL thread picks up. Consequence for WP-3.2:
+> the save hook may touch game state **directly**, with no cross-thread hazard — simpler than the
+> original entry implied.
 
-Spike fixed (`SpikeRenderer.LifecycleWatch`, lines prefixed `WATCH:`); needs one more device run
-to confirm the lines now appear.
+**Confirmed on device 2026-08-08**, home-and-back produced all five in order:
+`WILL_ENTER_BACKGROUND` → `DID_ENTER_BACKGROUND` → **`LOW_MEMORY`** → `WILL_ENTER_FOREGROUND` →
+`DID_ENTER_FOREGROUND`. `LOW_MEMORY` firing during a routine backgrounding is a free signal to drop
+caches that `Wuka` currently ignores.
 
 > The spike ran **portrait** (1260×2800) because it does not pin an orientation; `Wuka`'s
 > `GameActivity` sets `ScreenOrientation.Landscape`. Irrelevant to the spike, relevant to WP-2.2.
@@ -224,6 +242,30 @@ the packaging (#19). Recovery PRs #18 and #20 carried them across.
 **All merged WP branches have since been deleted**, so nothing can be stacked onto them again.
 **Future work packages branch from master directly**, even when that costs a rebase; the ordering
 hazard is not worth the tidiness of stacking.
+
+#### It recurred twice more — #28 and #30 — in a different form, and is now guarded
+
+Not stacking this time. **Commits were pushed to a branch whose PR had already merged.** Every
+local signal says fine: the branch tracks its remote, `git status` is clean, `git push` succeeds,
+and `gh pr view` reports MERGED — truthfully, just not with those commits.
+
+- **#28:** two commits stranded, recovered by #30.
+- **#30:** one commit stranded — and this one **left master documenting a fact that had already
+  been corrected** (KI-8's threading claim said "UI thread"; it is the SDL thread). A later work
+  package would have read and trusted it. Recovered by
+  [#31](https://github.com/tweggen/Karawan/pull/31).
+
+**Guard: `scripts/check-branch-landed.sh`.** Asks the one question that actually detects it —
+*what is on this branch that master does not have?* — and, when the branch's PR is already merged,
+prints the exact `cherry-pick` recovery commands.
+
+It uses **`git cherry`, not `git log base..branch`**: recovery means cherry-picking, which mints
+new SHAs, so a SHA-based check reports the originals as missing forever. `git cherry` compares
+patch-ids, so already-landed content is recognised however it got there. Both paths were tested
+against the real branches — `platform/wp-2.1` (content landed as cherry-picks) passes,
+`platform/wp-2.1-lifecycle` (genuinely stranded) fails and names PR #30.
+
+**Run it before reporting a work package as landed.**
 
 ---
 
