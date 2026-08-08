@@ -47,7 +47,8 @@ Consequences carried forward:
 | **WP-1.5** | ✅ **MERGED** | `platform/wp-1.5` | [#26](https://github.com/tweggen/Karawan/pull/26) | 1 | AC-GLOBAL-1 ✅ · 2/3 ✅ · 4 ✅ (168/168) · AC-1.6 ✅ | **desktop audio confirmed by owner** (Windows) | `Karawan.Natives` replaces `Silk.NET.OpenAL.Soft.Native`. Windows file name differs (`OpenAL32.dll` vs `soft_oal.dll`); Silk falls back across name candidates — verified by forcing **real** native calls, since `GetApi()` alone binds lazily and proves nothing. **Android deliberately unchanged** (duplicate `.so` + libc++ ABI vs assimp); revisit at Phase 4. |
 | **WP-1.6** | ⚠ **PARTIAL — PR-OPEN** | `platform/wp-1.6` | [#27](https://github.com/tweggen/Karawan/pull/27) | 1 | **AC-1.7 ⚠ half** — XA4301 ✅ promoted, **XA0141 ⛔ deferred** | none apply | XA4301: 0 occurrences, promoted, build green. XA0141: promoted → **4 errors, all `Silk.NET.Windowing.Sdl`'s `libSDL2.so`/`libmain.so` @ `0x1000`**. Every native we own is `0x4000` (verified independently of the SDK). **Not satisfiable in Phase 1** — only removing Silk's SDL2 fixes it, which is Phase 2/3. See §AC-1.7 below. |
 | **WP-2.1** | ⏳ **PR-OPEN — blocked on GATE-A** | `platform/wp-2.1` | [#28](https://github.com/tweggen/Karawan/pull/28) | 1 | AC-2.1 ✅ · **2.2 ✅** · 2.3 ✅ · GLOBAL-1/2/3/4 ✅ | **GATE-A 🔒 human+device** | Spike builds and packages; **every `.so` in the APK is 16 KB aligned**, a first. Found 3 defects listed below. `Platform.SDL3` + `recipes/build-mainshim.sh` are permanent; `spikes/` is disposable. |
-| WP-2.2 – 2.3 | BLOCKED | — | — | 0 | — | GATE-A, GATE-B | Blocked on GATE-A. ⚠ AC-2.2/AC-0.0.3 AAR path warning was **wrong for our own package** — `Karawan.Natives` uses `jni/<abi>/`, not prefab. |
+| **WP-2.2** | ⛔ **NOT COMPLETABLE AS SCOPED** | — | — | 0 | — | needs a human ordering decision | **KI-9**: SDL2 and SDL3 Java glue cannot coexist in one APK (proven — dex duplicate-class), so WP-2.2 cannot be staged; and removing Silk windowing strands `EasyCreate(…, IView, …)`, which is **WP-3.3**. Minimum atomic unit = **2.2 + 3.3 (+3.1/3.2)**. |
+| WP-2.3 | BLOCKED | — | — | 0 | — | GATE-A, GATE-B | Blocked on WP-2.2. Owns the **IME** answer — the one part of GATE-A still open. |
 | WP-3.1 – 3.5 | BLOCKED | — | — | 0 | — | GATE-C, GATE-E | Blocked on GATE-A + GATE-B per plan. |
 | WP-4.1 – 4.4 | NOT-STARTED | — | — | 0 | — | GATE-D | Independent of Phases 2–3; Phase 0 has landed, so this is dispatchable now. |
 | **WP-5.0** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0 ✅ exactly 0 changed lines** | none apply | Generated from `gl.xml`; baseline and candidate both compile the identical sample. **Caveat: 4 hand-written overloads for 5 entry points** — `gl.xml` cannot describe Silk's overload policy. |
@@ -144,6 +145,70 @@ caches that `Wuka` currently ignores.
 
 > The spike ran **portrait** (1260×2800) because it does not pin an orientation; `Wuka`'s
 > `GameActivity` sets `ScreenOrientation.Landscape`. Irrelevant to the spike, relevant to WP-2.2.
+
+### ✅ KI-5 / KI-6 — FIXED in `packaging/`, 🔒 pending a republish (2026-08-08)
+
+Both are packaging-only changes; the binaries are untouched. Verified end to end against a
+locally-packed `0.1.2-local` consumed by a **clean** Android project — bare `PackageReference`,
+no `ExcludeAssets`, no path hacks, with `XA0141` **and** `XA4301` promoted to errors:
+
+```
+lib/arm64-v8a/libSDL3.so      lib/armeabi-v7a/libSDL3.so
+lib/arm64-v8a/libc++_shared.so  lib/armeabi-v7a/libc++_shared.so
+lib/arm64-v8a/libopenal.so    lib/armeabi-v7a/libopenal.so
+0 Error(s), no NU1701, no XA0141, no XA4301
+```
+
+**Two distinct defects, and the first fix alone was not enough** — worth recording, because the
+obvious fix looks like it works:
+
+1. **NuGet did not recognise the Android TFM.** A `lib/<tfm>/` folder containing only an `.aar`
+   registers no framework, so the package fell back to `netstandard2.0`. Adding `_._` beside the
+   `.aar` fixes detection — `NU1701` disappears and the android TFM is selected.
+2. **…and the APK still had no `libSDL3.so`.** NuGet surfaces `lib/` assets only for *assemblies*;
+   an `.aar` appears in no asset list. `Silk.NET.Windowing.Sdl` seems to disprove this but does
+   not — it ships a real `.dll` beside its `.aar`. We have no managed assembly, so the `.aar` must
+   be declared explicitly by a **`build/`+`buildTransitive/` targets file** in the package
+   (`<AndroidLibrary Include="…aar" />`). That is what actually delivers it.
+3. **KI-6** is closed by shipping empty `runtimes/android-arm64|android-arm/native/_._`, giving RID
+   fallback an exact match so it stops before `linux-x64`. Confirmed in `project.assets.json`:
+   `native -> runtimes/android-arm64/native/_._`.
+
+`NATIVES_PACKAGE_VERSION` bumped to **0.2.0**. 🔒 **Publishing is human-gated (§2.5)** — until then
+consumers keep the WP-2.1 workaround (`ExcludeAssets="all"` + `GeneratePathProperty`).
+
+### 🔴 KI-9 — WP-2.2 cannot be done as scoped: SDL2 and SDL3 Java glue cannot coexist
+
+**Proven by building it**, not inferred. Adding SDL3's `org.libsdl.app` sources to `Wuka` while
+`Silk.NET.Windowing.Sdl` is still referenced fails at dex time:
+
+```
+Type org.libsdl.app.HIDDeviceBLESteamController$1 is defined multiple times:
+  android/bin/classes.zip      <- SDL3's Java glue
+  lp/163/jl/classes.jar        <- Silk's SDL2 .aar
+```
+
+Same package, same class names. So **WP-2.2 cannot be staged**: SDL3's glue can only enter `Wuka`
+in the same change that removes `Silk.NET.Windowing.Sdl`.
+
+But removing it means `GameActivity` can no longer produce the `Silk.NET.Windowing.IView` that
+`Splash.Silk.Platform.EasyCreate(args, iView, out platform)` requires — and changing that signature
+is **WP-3.3** (`Platform.cs` has 29 `IView` references; 3 callers pass one: `Karawan`,
+`examples/Launcher`, `Wuka`).
+
+> **The minimum atomic unit for Android is therefore WP-2.2 + WP-3.3, realistically plus WP-3.1/3.2**
+> (input and main loop both run through the Silk view). The plan orders 2.2 before Phase 3 **and**
+> blocks Phase 3 behind GATE-A/GATE-B, so as written WP-2.2 is not completable. Needs a human
+> decision on ordering — the ledger already notes GATE failures are no longer release-blocking
+> after the WP-0.0 falsification, which makes pulling Phase 3 forward defensible.
+
+Two smaller facts found while measuring, both relevant to whoever does that work:
+
+- `Wuka` sets **`EnableDefaultAndroidItems=false`** (MAUI does this), so every Android item must be
+  listed explicitly. This is why Wuka's native libraries never double up the way the WP-2.1 spike's
+  did — the default `**/*.so` glob is simply off there.
+- `Wuka`'s `GameActivity` pins `ScreenOrientation.Landscape`; the spike does not, which is why it
+  ran portrait.
 
 ### 🔴 KI-5 — `Karawan.Natives` 0.1.0's Android payload is not consumable (found by WP-2.1)
 
