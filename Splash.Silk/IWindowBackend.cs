@@ -1,0 +1,122 @@
+using System;
+using System.Numerics;
+using Silk.NET.Input;
+
+namespace Splash.Silk;
+
+/// <summary>
+/// The seam between <see cref="Platform"/> and whatever actually owns the window, the GL
+/// context and the frame loop.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This is WP-3.3. Before it, <c>Platform</c> took a <c>Silk.NET.Windowing.IView</c>
+/// directly - 29 usages - and that single parameter was the reason every launcher had to
+/// import Silk. Android cannot supply one at all once SDL3 owns the activity, because
+/// <c>Silk.NET.Windowing.Window.GetView</c> needs Silk's own SDL2 window underneath.
+/// </para>
+/// <para>
+/// Deliberately NOT in <c>Splash</c>: the interface still traffics in Silk's
+/// <see cref="IInputContext"/> (see <see cref="SilkInputContext"/>) and in Silk's GL, both
+/// of which stay until Phase 5. Moving it down to <c>Splash</c> would drag Silk with it and
+/// buy nothing.
+/// </para>
+/// <para>
+/// <b>The frame loop is owned by the backend, not by Platform.</b> Silk drives it through
+/// <c>IView.Run</c>; SDL3 on Android drives it from SDL's own thread, entered through
+/// <c>libmain.so</c>. Platform supplies the per-frame work as callbacks and does not care
+/// which.
+/// </para>
+/// </remarks>
+public interface IWindowBackend : IDisposable
+{
+    /// <summary>Logical window size, in the units the engine's view rectangle uses.</summary>
+    Vector2 Size { get; }
+
+    /// <summary>Drawable size in pixels. Differs from <see cref="Size"/> on hidpi.</summary>
+    Vector2 FramebufferSize { get; }
+
+    /// <summary>
+    /// GL entry-point resolver, handed to <c>GL.GetApi</c>.
+    /// </summary>
+    /// <remarks>
+    /// Silk exposes <c>GL.GetApi(Func&lt;string, nint&gt;)</c>, so a backend only has to
+    /// produce this one function - on SDL3 it is <c>SDL_GL_GetProcAddress</c>. That is why
+    /// swapping the window backend does not disturb the GL bindings at all.
+    /// </remarks>
+    Func<string, nint> GetProcAddress { get; }
+
+    /// <summary>True once the loop should stop.</summary>
+    bool IsClosing { get; }
+
+    /// <summary>Present the current frame.</summary>
+    void SwapBuffers();
+
+    /// <summary>
+    /// Silk's input context, or <c>null</c> when the backend feeds
+    /// <c>engine.news.EventQueue</c> itself.
+    /// </summary>
+    /// <remarks>
+    /// Android has always been the second case: <c>GameSurface.OnTouch</c> pushes touch
+    /// events straight into the queue and never went through Silk input. The queue is the
+    /// contract - only the left-hand side of the translation changes.
+    /// </remarks>
+    IInputContext? SilkInputContext { get; }
+
+    /// <summary>
+    /// Fullscreen, where the platform supports it. Desktop only; a no-op elsewhere.
+    /// </summary>
+    void SetFullscreen(bool isFullscreen);
+
+    /// <summary>
+    /// Which windowing library is underneath.
+    /// </summary>
+    /// <remarks>
+    /// Previously sniffed by testing whether the view's type name contained "Glfw" or
+    /// "Sdl", which worked only because Silk happens to name its view types after their
+    /// backend. A backend can simply say.
+    /// </remarks>
+    Platform.UnderlyingFrameworks UnderlyingFramework { get; }
+
+    /// <summary>
+    /// Attach the callbacks above to the underlying window's events. Called once, after
+    /// they have all been assigned.
+    /// </summary>
+    /// <remarks>
+    /// Separate from construction because Silk only produces a usable input context after
+    /// its Load event fires, so the wiring cannot happen in the constructor.
+    /// </remarks>
+    void Subscribe();
+
+    // ---- callbacks, installed by Platform before Run() ----------------------------
+
+    Action? OnLoad { get; set; }
+    Action<Vector2>? OnResize { get; set; }
+    Action<double>? OnUpdate { get; set; }
+    Action<double>? OnRender { get; set; }
+    Action? OnClosing { get; set; }
+    Action<bool>? OnFocusChanged { get; set; }
+
+    /// <summary>Run once per iteration before events are pumped.</summary>
+    Action? BeforeEvents { get; set; }
+
+    /// <summary>
+    /// Release anything blocked on the platform's main-thread monitor.
+    /// </summary>
+    /// <remarks>
+    /// Not decoration. The pre-WP-3.3 loop called <c>_triggerWaitMonitor()</c> at three
+    /// specific points - top of the iteration, before update, and once after the loop ends -
+    /// and code elsewhere in the engine blocks waiting for exactly those. A backend that
+    /// forgets to call it deadlocks on shutdown rather than failing visibly, so it is part
+    /// of the contract instead of an implementation detail of the Silk loop.
+    /// </remarks>
+    Action? ReleaseMainThreadWaiters { get; set; }
+
+    /// <summary>
+    /// Drive the loop until closing. Returns only when the window is gone.
+    /// </summary>
+    void Run();
+
+    /// <summary>Ask the loop to stop.</summary>
+    void Close();
+}

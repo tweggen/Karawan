@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Numerics;
 using builtin.controllers;
@@ -43,7 +43,11 @@ public class Platform : engine.IPlatform
 
     private Splash.Silk.ImGui.Controller _imGuiController = null;
 
-    private IView _iView;
+    /*
+     * WP-3.3: this used to be a Silk.NET.Windowing.IView. It is now the backend seam, so
+     * that Android can supply an SDL3 window instead. See IWindowBackend for why.
+     */
+    private IWindowBackend _backend;
     private IInputContext _iInputContext;
     private GL _gl;
     
@@ -95,37 +99,17 @@ public class Platform : engine.IPlatform
 
     public void SetFullscreen(bool isFullscreen)
     {
-        if (null == _iView)
+        if (null == _backend)
         {
             return;
         }
 
-        IWindow iWindow = _iView as IWindow;
-        if (null == iWindow)
-        {
-            return;
-        }
-
-        try
-        {
-            if (isFullscreen)
-            {
-                iWindow.Size = new Vector2D<int>(1280, 720);
-                iWindow.WindowState = WindowState.Fullscreen;
-            }
-            else
-            {
-                //iWindow.Size = new Vector2D<int>(1280, 720);
-                iWindow.WindowState = WindowState.Normal;
-            }
-        }
-        catch (Exception e)
-        {
-            Error($"Exception while setting fullscreen to {isFullscreen}");
-            // TXWTODO: FIx exception when de-fullscreening.
-            // Setting fullscreeen might fail.
-        }
+        _backend.SetFullscreen(isFullscreen);
     }
+
+
+    // The body of this moved to SilkWindowBackend.SetFullscreen (WP-3.3): it manipulated a
+    // Silk IWindow directly, which is exactly the coupling the backend seam removes.
 
 
     private string _convertKeyCodeFromPlatform(Key args)
@@ -366,7 +350,7 @@ public class Platform : engine.IPlatform
         _engine.GetViewRectangle(out ul, out lr);
         if (Vector2.Zero == lr)
         {
-            lr = new Vector2(_iView.Size.X, _iView.Size.Y) - Vector2.One;
+            lr = _backend.Size - Vector2.One;
         }
     }
 
@@ -566,7 +550,17 @@ public class Platform : engine.IPlatform
          * Instead of just instantiating a SdlInput as intended, we create an
          * input class of our own to intercept the touch events.
          */
-        _iInputContext = _iView.CreateInput();
+        _iInputContext = _backend.SilkInputContext;
+
+        /*
+         * WP-3.3: a backend may have no Silk input context at all. The SDL3 backend
+         * translates SDL events into engine.news.EventQueue itself - the queue is the
+         * contract, not this wiring - so everything below is skipped there. Android never
+         * relied on it for touch anyway: GameSurface.OnTouch has always pushed straight
+         * into the queue.
+         */
+        if (null != _iInputContext)
+        {
         for (int i = 0; i < _iInputContext.Keyboards.Count; i++)
         {
             _iInputContext.Keyboards[i].KeyDown += _onKeyDown;
@@ -608,16 +602,26 @@ public class Platform : engine.IPlatform
 
             _iInputContext.Mice[i].Scroll += _onMouseWheel;
         }
+        } // end: backend supplies a Silk input context
 
         // TXWTODO: Create sort of "on new gl window" event.
-        _gl = GL.GetApi(_iView);
+        _gl = GL.GetApi(_backend.GetProcAddress);
         _silkThreeD.SetGL(_gl);
         _gl.ClearDepth(1f);
         _gl.ClearColor(0f, 0f, 0f, 0f);
 
-        if (engine.GlobalSettings.Get("nogame.CreateUI") != "false")
+        /*
+         * ImGui stays Silk-only. Silk.NET.OpenGL.Extensions.ImGui takes an IView and an
+         * IInputContext in its public constructor, so it cannot be built over the seam -
+         * that entanglement is Phase 5's problem (WP-5.3). It is not a loss on Android:
+         * models/game.launch.android.json sets "createUI": "false" and there is no Android
+         * build of cimgui at all (WP-0.3 4.2).
+         */
+        if (engine.GlobalSettings.Get("nogame.CreateUI") != "false"
+            && _backend is SilkWindowBackend silkBackend
+            && null != _iInputContext)
         {
-            _imGuiController = new (_gl, _iView, _iInputContext);
+            _imGuiController = new (_gl, silkBackend.View, _iInputContext);
         }
 
         _hadFocus = true;
@@ -703,7 +707,7 @@ public class Platform : engine.IPlatform
         _renderSingleFrameStopwatch.Start();
         double msGotFrame = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
-        _applyFramebufferSize(_iView.FramebufferSize);
+        _applyFramebufferSize(_backend.FramebufferSize);
 
         _renderer.RenderFrame(renderFrame);
         double msRendered = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
@@ -722,7 +726,7 @@ public class Platform : engine.IPlatform
 
         _triggerWaitMonitor();
 
-        _iView.SwapBuffers();
+        _backend.SwapBuffers();
         double msSwap = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
         _triggerWaitMonitor();
@@ -761,7 +765,7 @@ public class Platform : engine.IPlatform
     }
 
 
-    private Vector2D<int> _v2LastFramebufferSize = new(0, 0);
+    private Vector2 _v2LastFramebufferSize = new(0, 0);
 
     /**
      * Publish the current framebuffer size to everybody deriving geometry from it.
@@ -777,27 +781,32 @@ public class Platform : engine.IPlatform
      * SDL window is created at its final size, so IView.Resize never fires and the
      * announcement would otherwise never happen.
      */
-    private void _applyFramebufferSize(in Vector2D<int> fbSize)
+    private void _applyFramebufferSize(in Vector2 fbSize)
     {
-        if (fbSize.X == 0 || fbSize.Y == 0) return;
+        // WP-3.3: was Vector2D<int> (a Silk type). Same values, same integer semantics -
+        // the backend reports whole pixels - but expressible without Silk in the seam.
+        int w = (int)fbSize.X;
+        int h = (int)fbSize.Y;
+
+        if (w == 0 || h == 0) return;
         if (fbSize == _v2LastFramebufferSize) return;
         _v2LastFramebufferSize = fbSize;
 
         // TXWTODO: We are abusing the global settings as global variables.
-        _renderer.SetDimension(fbSize.X, fbSize.Y);
-        engine.GlobalSettings.Set("view.size", $"{fbSize.X}x{fbSize.Y}");
+        _renderer.SetDimension(w, h);
+        engine.GlobalSettings.Set("view.size", $"{w}x{h}");
         I.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
         {
-            PhysicalPosition = new(fbSize.X, fbSize.Y)
+            PhysicalPosition = new(w, h)
         });
     }
 
 
-    private void _windowOnResize(Vector2D<int> size)
+    private void _windowOnResize(Vector2 size)
     {
         if (size.X != 0 && size.Y != 0)
         {
-            _applyFramebufferSize(_iView.FramebufferSize);
+            _applyFramebufferSize(_backend.FramebufferSize);
         }
     }
 
@@ -843,48 +852,17 @@ public class Platform : engine.IPlatform
 
 
         /*
-         * Instead of just calling _iView.Run(),
-         * we run the same thing explicitely. That way we can inject calls.
+         * WP-3.3: the loop itself now lives in the backend, because Silk and SDL3 enter it
+         * from opposite directions - Silk calls us back from IView.Run, while on Android
+         * SDL owns the thread and we are already inside it via libmain.so. What used to be
+         * inline here is supplied as callbacks instead; SilkWindowBackend.Run reproduces
+         * the previous body exactly, including where _triggerWaitMonitor was called.
          */
-        IView iView = _iView;
-        iView.Run(delegate
-        {
-            _triggerWaitMonitor();
+        _backend.BeforeEvents = () => BeforeDoEvent?.Invoke();
+        _backend.ReleaseMainThreadWaiters = _triggerWaitMonitor;
 
-            if (BeforeDoEvent != null)
-            {
-                BeforeDoEvent();
-            }
-
-            try
-            {
-                iView.DoEvents();
-            }
-            catch (Exception e)
-            {
-                /*
-                * Catching exception that might come from unknown keys in ImLib
-                */
-            }
-
-            if (!iView.IsClosing)
-            {
-                _triggerWaitMonitor();
-                iView.DoUpdate();
-            }
-
-            if (!iView.IsClosing)
-            {
-                iView.DoRender();
-            }
-        });
-        iView.DoEvents();
-        
-        _triggerWaitMonitor();
-        
-        iView.Reset();
-        iView = null;
-        _iView.Dispose();
+        _backend.Run();
+        _backend.Dispose();
     }
 
 
@@ -905,27 +883,25 @@ public class Platform : engine.IPlatform
         string baseDirectory = System.AppContext.BaseDirectory;
         System.Console.WriteLine($"Running in directory {baseDirectory}");
 
-        if (_iView != null)
+        if (_backend != null)
         {
-            if (_iView.GetType().FullName.Contains("Glfw"))
-            {
-                _underlyingFrameworks = UnderlyingFrameworks.Glfw;
-            } else if (_iView.GetType().FullName.Contains("Sdl"))
-            {
-                _underlyingFrameworks = UnderlyingFrameworks.Sdl;
-            }
+            /*
+             * Which windowing library is underneath. Previously sniffed from the IView's
+             * type name ("Glfw" / "Sdl"), which only ever worked because Silk names its
+             * view types after their backend. The backend now says so directly.
+             */
+            _underlyingFrameworks = _backend.UnderlyingFramework;
 
             /*
              * First, event handling from UI.
              */
-            _iView.Load += _windowOnLoad;
-            _iView.Resize += _windowOnResize;
-            _iView.Render += _windowOnRender;
-            _iView.Update += _windowOnUpdate;
-            _iView.Closing += _windowOnClose;
-            _iView.FocusChanged += _windowOnFocusChanged;
-            // TXWTODO: Add this handler to handle window resizes.
-            // _iView.FramebufferResize +=
+            _backend.OnLoad += _windowOnLoad;
+            _backend.OnResize += _windowOnResize;
+            _backend.OnRender += _windowOnRender;
+            _backend.OnUpdate += _windowOnUpdate;
+            _backend.OnClosing += _windowOnClose;
+            _backend.OnFocusChanged += _windowOnFocusChanged;
+            _backend.Subscribe();
         }
 
         // TXWTODO: Test DEBUG and PLATFORM_ANDROID for format options.
@@ -940,7 +916,7 @@ public class Platform : engine.IPlatform
         _silkThreeD = I.Get<IThreeD>() as SilkThreeD;
         _silkThreeD.SetupDone();
 
-        if (_iView != null)
+        if (_backend != null)
         {
             _engine.RunMainThread(() =>
             {
@@ -1023,9 +999,23 @@ public class Platform : engine.IPlatform
     }
 
 
+    /// <summary>
+    /// Kept for source compatibility with desktop launchers, which still create a Silk
+    /// view. It wraps it in the backend seam (WP-3.3).
+    /// </summary>
     public void SetIView(IView iView)
     {
-        _iView = iView;
+        _backend = new SilkWindowBackend(iView);
+    }
+
+
+    /// <summary>
+    /// The WP-3.3 entry point: hand the platform a window backend directly. Android uses
+    /// this with an SDL3 backend; there is no Silk view involved anywhere in that path.
+    /// </summary>
+    public void SetWindowBackend(IWindowBackend backend)
+    {
+        _backend = backend;
     }
 
 
@@ -1055,7 +1045,19 @@ public class Platform : engine.IPlatform
     }
 
 
+    /// <summary>
+    /// Desktop entry point. Unchanged signature so Karawan and examples/Launcher keep
+    /// compiling; internally it now wraps the view in a SilkWindowBackend.
+    /// </summary>
     static public engine.Engine EasyCreate(string[] args, IView iView, out Splash.Silk.Platform out_platform)
+        => EasyCreate(args, new SilkWindowBackend(iView), out out_platform);
+
+
+    /// <summary>
+    /// WP-3.3: create the engine over any window backend. This is the overload that lets a
+    /// launcher exist without referencing Silk windowing at all.
+    /// </summary>
+    static public engine.Engine EasyCreate(string[] args, IWindowBackend backend, out Splash.Silk.Platform out_platform)
     {
         var platform = new Platform(args);
         out_platform = platform;
@@ -1063,7 +1065,7 @@ public class Platform : engine.IPlatform
         engine.Engine e = I.Get<engine.Engine>();
         e.SetupDone();
 
-        platform.SetIView(iView);
+        platform.SetWindowBackend(backend);
         platform.SetEngine(e);
         platform.SetupDone();
         e.PlatformSetupDone();
