@@ -16,23 +16,38 @@
 			Zero occurrences today, so promoting it is free, and it is exactly the
 			regression that adding a natives package could reintroduce silently.
 
-			XA0141 (shared library without a 16 KB page size) is NOT here, and that is a
-			measured decision rather than an oversight. Promoted, it produces 4 errors,
-			all of them naming libraries we do not build:
+			XA0141 (shared library without a 16 KB page size) IS NOW HERE TOO, which closes
+			AC-1.7. WP-1.6 could only promote XA4301: promoting XA0141 then produced 4
+			errors, every one of them naming a library we do not build -
 
-			  libSDL2.so, libmain.so  <-  Silk.NET.Windowing.Sdl 2.23.0's .aar
+			  libSDL2.so, libmain.so  <-  Silk.NET.Windowing.Sdl 2.23.0's .aar, p_align 0x1000
 
-			Every native this repository is responsible for already passes: libopenal.so,
-			libc++_shared.so and libassimp.so are all 16 KB aligned (asserted at build
-			time in recipes/build-openal.sh). So the criterion cannot be met by fixing
-			our natives - only by removing Silk's SDL2, which is Phase 2/3, not Phase 1.
+			- so the criterion was not satisfiable by fixing our own natives, only by
+			removing Silk's SDL2. WP-2.2 did exactly that, and every native left in the APK
+			is 16 KB aligned, including the libmain.so we now build ourselves.
 
-			Promoting it now would red-line master for every work package in between.
-			Tracked as an open acceptance criterion (AC-1.7) in
-			docs/roadmap/proposed/PLATFORM-BACKEND-STATUS.md rather than silently dropped;
-			add XA0141 to the line below the moment Silk.NET.Windowing.Sdl is gone.
+			Leave both promoted. Between them they are the two defects that made a Play
+			Store upload impossible, and each is the kind that ships silently otherwise.
 		-->
-		<MSBuildWarningsAsErrors>$(MSBuildWarningsAsErrors);XA4301</MSBuildWarningsAsErrors>
+		<MSBuildWarningsAsErrors>$(MSBuildWarningsAsErrors);XA4301;XA0141</MSBuildWarningsAsErrors>
+
+		<!--
+			ABIs, stated explicitly (WP-2.2). The default set is arm64-v8a + x86_64, and
+			x86_64 was never a working configuration here: WP-0.3 4.3 recorded that the
+			x86_64 split already shipped without libopenal.so, libassimp.so or
+			libc++_shared.so, so it had neither audio nor model loading. Silk's .aar merely
+			hid that by supplying an x86_64 libSDL2.so, so the emulator got a window and
+			nothing else.
+
+			Our natives are built for arm64-v8a and armeabi-v7a only, so continuing to emit
+			x86_64 would produce an APK split with no libSDL3.so and no libmain.so - one
+			that fails at SDL.loadLibrary rather than merely lacking sound.
+
+			Consequence: no x86_64 emulator build. GATE-A already requires a physical arm64
+			device for exactly this reason. Add x86_64 to the recipes' target matrix first
+			if emulator support is wanted back.
+		-->
+		<RuntimeIdentifiers>android-arm64;android-arm</RuntimeIdentifiers>
 
 		<!-- Display name -->
 		<ApplicationTitle>Wuka</ApplicationTitle>
@@ -111,6 +126,24 @@
 		</AndroidNativeLibrary>
 	</ItemGroup>
 
+	<ItemGroup>
+		<!--
+			SDL3's Android Java glue, vendored from the SAME SDL commit as the libSDL3.so
+			we build (java/PROVENANCE.md). SDL3 registers its JNI methods dynamically from
+			JNI_OnLoad rather than exporting Java_* symbols, so a mismatched pair fails at
+			RUNTIME with NoSuchMethodError, not at build time - hence one pin for both.
+
+			Bind="true" generates the C# binding GameActivity and GameSurface derive from.
+			Metadata.xml trims four fields whose types are package-private Java helpers the
+			binding generator cannot emit.
+
+			Listed explicitly because MAUI sets EnableDefaultAndroidItems=false, so none of
+			the SDK's default globs apply in this project.
+		-->
+		<AndroidJavaSource Include="Platforms\Android\java\**\*.java" Bind="true" />
+		<TransformFile Include="Platforms\Android\Transforms\Metadata.xml" />
+	</ItemGroup>
+
 	<Import Project="../nogame/generated/AndroidResources.xml" />
 	
 	<!-- Game launch configuration -->
@@ -122,6 +155,40 @@
 	
 	<ItemGroup>
 	  <AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libopenal.so">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidNativeLibrary>
+	  <!--
+	    libmain.so: SDL's Java glue calls nativeRunMain("libmain.so", "SDL_main", ...) and
+	    libSDL3.so does not export SDL_main - it is a library, not an application. Built by
+	    recipes/build-mainshim.sh from WP-0.0's reconstruction of the shim Silk used to ship
+	    inside its .aar, with a symbol table asserted to match Silk's.
+	  -->
+	  <AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libmain.so">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidNativeLibrary>
+	  <AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libmain.so">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidNativeLibrary>
+	  <!--
+	    libSDL3.so, from Karawan.Natives, but checked in beside the other natives rather
+	    than consumed from the package.
+
+	    The package reference above carries ExcludeAssets="all" (WP-1.5), because its .aar
+	    also contains libopenal.so and libc++_shared.so - both already supplied here - and
+	    two copies of one .so is the XA4301 promoted at the top of this file. Taking the
+	    .aar wholesale therefore fails the build; taking one file out of it does not.
+
+	    THIS WAS CAUGHT BY LISTING THE APK, NOT BY THE BUILD. Without these two entries
+	    everything compiled, XA0141 and XA4301 both stayed clean, and the APK simply had no
+	    libSDL3.so in it - the app would have died at SDL.loadLibrary("SDL3") on the device.
+
+	    Phase 4 removes Assimp from the runtime, which dissolves the libc++ ABI constraint;
+	    at that point all of these collapse into a single package reference.
+	  -->
+	  <AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libSDL3.so">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidNativeLibrary>
+	  <AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libSDL3.so">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidNativeLibrary>
 	</ItemGroup>
@@ -155,7 +222,6 @@
 		-->
 		<PackageReference Include="Microsoft.Maui.Controls" />
 		<PackageReference Include="Silk.NET.Assimp" />
-		<PackageReference Include="Silk.NET.Input.Sdl" />
 		<!--
 			WP-1.5 replaced Silk.NET.OpenAL.Soft.Native with Karawan.Natives in
 			Boom.OpenAL, from where it arrives here transitively. On DESKTOP that is the
@@ -182,11 +248,45 @@
 			Revisit then, and drop the checked-in natives in favour of the package.
 		-->
 		<PackageReference Include="Karawan.Natives" ExcludeAssets="all" PrivateAssets="all" />
-		<PackageReference Include="Silk.NET.SDL" />
-		<PackageReference Include="Silk.NET.Windowing" />
-		<PackageReference Include="Silk.NET.Windowing.Sdl" />
-		<!-- Transitive dep of Silk.NET.SDL; exclude Linux linux-arm64 .so from bleeding into Android APK -->
-		<PackageReference Include="Ultz.Native.SDL" ExcludeAssets="native" PrivateAssets="all" />
+		<!--
+			WP-2.2: Silk.NET.SDL, Silk.NET.Windowing, Silk.NET.Windowing.Sdl,
+			Silk.NET.Input.Sdl and Ultz.Native.SDL are GONE. Android runs on SDL3 now,
+			through Splash.Silk's Sdl3WindowBackend.
+
+			THIS COULD NOT BE STAGED (KI-9). Silk.NET.Windowing.Sdl's .aar carries a
+			classes.jar with org.libsdl.app.*, and the vendored SDL3 Java sources declare
+			the same classes. With both present the build fails at dex time:
+
+			  Type org.libsdl.app.HIDDeviceBLESteamController$1 is defined multiple times
+
+			so SDL3's glue can only arrive in the very change that removes Silk's SDL2.
+
+			Removing the direct references is NOT sufficient, which the dex error above says
+			plainly. Splash.Silk references the Silk.NET.Windowing and Silk.NET.Input
+			META-packages, and those pull Windowing.Sdl and Input.Sdl - and therefore the
+			SDL2 .aar - in transitively. The two exclusions below cut that off for the
+			Android build only.
+
+			Safe because nothing on this platform uses them any more: the Silk types
+			Splash.Silk compiles against (IView, IWindow) live in Windowing.Common, and
+			Android no longer calls Window.GetView at all - Sdl3WindowBackend creates the
+			window itself. Desktop is untouched; it still resolves the full meta-package.
+		-->
+		<PackageReference Include="Silk.NET.Windowing.Sdl" ExcludeAssets="all" PrivateAssets="all" />
+		<PackageReference Include="Silk.NET.Input.Sdl" ExcludeAssets="all" PrivateAssets="all" />
+		<!--
+			Ultz.Native.SDL rides in behind Silk.NET.SDL and ships SDL2 for desktop RIDs.
+			RID fallback then packages runtimes/linux-{x64,arm64}/native/libSDL2-2.0.so into
+			the APK - glibc binaries that cannot load on Bionic, neither of them 16 KB
+			aligned. Exactly KI-6's defect class, and the promoted XA0141 catches it:
+
+			  error XA0141: ... 'libSDL2-2.0.so' ... 'runtimes/linux-x64/native/libSDL2-2.0.so'
+
+			ExcludeAssets="all", not just "native": nothing on Android needs any part of
+			Silk's SDL2 any more.
+		-->
+		<PackageReference Include="Ultz.Native.SDL" ExcludeAssets="all" PrivateAssets="all" />
+		<PackageReference Include="Silk.NET.SDL" ExcludeAssets="all" PrivateAssets="all" />
 		<!--
 			Transitive dep of Joyce. ImGui.NET has no Android native, so RID fallback was
 			packaging its runtimes/linux-x64/native/libcimgui.so into lib/x86_64/ of the APK
