@@ -98,6 +98,25 @@ public sealed class Sdl3WindowBackend : IWindowBackend
     /// <see cref="GetProcAddress"/> has to be usable before Platform's load handler runs -
     /// that handler is what calls <c>GL.GetApi</c>.
     /// </remarks>
+    /// <summary>
+    /// Frame cap, in frames per second. 0 disables it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Not optional, and not a nicety.</b> Every existing launcher configured its Silk
+    /// view with <c>options.FramesPerSecond = 60; options.VSync = false;</c> and Silk's
+    /// <c>Run()</c> enforced it. The first version of this backend enforced nothing and ran
+    /// the loop flat out.
+    /// </para>
+    /// <para>
+    /// On a device that manifests as more than wasted battery: anything that accumulates
+    /// per FRAME rather than per elapsed second gets applied several times too often. It was
+    /// first seen as a car that "spun like wild" the moment the accelerate control was
+    /// touched - which looks exactly like a touch-handling bug and is not one.
+    /// </para>
+    /// </remarks>
+    public int TargetFramesPerSecond { get; set; } = 60;
+
     public Sdl3WindowBackend(string title)
     {
         if (!SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_EVENTS))
@@ -192,6 +211,11 @@ public sealed class Sdl3WindowBackend : IWindowBackend
 
         while (!_isClosing)
         {
+            // The frame budget is measured from HERE, not from where dt is taken below:
+            // event pumping is part of the frame, and charging it to nobody would let the
+            // loop drift above the cap under input load.
+            TimeSpan frameStarted = stopwatch.Elapsed;
+
             // Mirrors SilkWindowBackend.Run, which mirrors the pre-WP-3.3 loop. The
             // release points are not decoration - see IWindowBackend.
             ReleaseMainThreadWaiters?.Invoke();
@@ -212,9 +236,35 @@ public sealed class Sdl3WindowBackend : IWindowBackend
             if (_isClosing) break;
 
             OnRender?.Invoke(dt);
+
+            LimitFrameRate(stopwatch, frameStarted);
         }
 
         ReleaseMainThreadWaiters?.Invoke();
+    }
+
+    /// <summary>
+    /// Sleep out the remainder of the frame budget, replacing what Silk's <c>Run()</c> did
+    /// from <c>ViewOptions.FramesPerSecond</c>.
+    /// </summary>
+    /// <remarks>
+    /// Sleeps rather than spins: this is a phone, and a spin-wait would cost battery and
+    /// heat for nothing. Millisecond granularity is coarse, but it was coarse under Silk
+    /// too, and the engine already scales its own work by elapsed time.
+    /// </remarks>
+    private void LimitFrameRate(System.Diagnostics.Stopwatch stopwatch, TimeSpan frameStarted)
+    {
+        int fps = TargetFramesPerSecond;
+        if (fps <= 0) return;
+
+        double budgetMs = 1000.0 / fps;
+        double usedMs = (stopwatch.Elapsed - frameStarted).TotalMilliseconds;
+        int sleepMs = (int)(budgetMs - usedMs);
+
+        if (sleepMs > 0)
+        {
+            System.Threading.Thread.Sleep(sleepMs);
+        }
     }
 
     private unsafe void PumpEvents()
