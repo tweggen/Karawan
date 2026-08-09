@@ -42,8 +42,6 @@
     <PackageVersion Include="Silk.NET.Core" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.Input" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.Input.Sdl" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.OpenAL.Extensions.Enumeration" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.OpenGL" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.OpenGL.Extensions.EXT" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.23.0" />

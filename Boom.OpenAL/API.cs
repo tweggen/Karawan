@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using engine;
 using engine.news;
-using Silk.NET.OpenAL;
-using Silk.NET.OpenAL.Extensions.Enumeration;
-using Silk.NET.OpenAL.Extensions.Soft;
+using Boom.OpenAL.Native;
+
+
 
 using static engine.Logger;
 
@@ -182,7 +182,7 @@ unsafe public class API : Boom.ISoundAPI
     }
     
 
-    private Silk.NET.OpenAL.Context *_currentContext = null;
+    private Boom.OpenAL.Native.Context *_currentContext = null;
     
     public void ResumeOutput(Event ev)
     {

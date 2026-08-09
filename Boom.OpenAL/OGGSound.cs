@@ -1,6 +1,6 @@
 using System;
 using System.Diagnostics;
-using Silk.NET.OpenAL;
+using Boom.OpenAL.Native;
 using static engine.Logger;
 
 namespace Boom.OpenAL;
@@ -23,8 +23,8 @@ public class OGGSound : IDisposable
 
     public int CheckError(string msg)
     {
-        Silk.NET.OpenAL.AudioError aerr = _al.GetError();
-        if (aerr != Silk.NET.OpenAL.AudioError.NoError)
+        Boom.OpenAL.Native.AudioError aerr = _al.GetError();
+        if (aerr != Boom.OpenAL.Native.AudioError.NoError)
         {
             string astring = "unknown error";
             switch (aerr)
