@@ -5,7 +5,7 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-09 (GATE-B)
+**Last updated:** 2026-08-09 (GATE-C, Windows)
 
 ---
 
@@ -332,8 +332,8 @@ Consequences carried forward:
 | **WP-2.3** | ✅ **COMPLETE — GATE-A PASSED** | `platform/wp-2.3` | [#53](https://github.com/tweggen/Karawan/pull/53) | 1 | AC-2.1 ✅ · 2.3 ✅ · **2.4 ✅** · 3.4 ✅ · APK shape unchanged ✅ (19 libs / 170 assets) | **GATE-A ✅ PASSED 2026-08-09** | **Far smaller than scoped.** `GameSurface`/`KarawanInputConnection` were already SDL3-aware, so nothing needed porting — the defect was that **nothing raised the keyboard at all** (KI-10). Adds `IWindowBackend.SetKeyboardVisible`; **deliberately not `SDL_StartTextInput`**, which would bind the IME to SDL's `SDLDummyEdit` and reinstate the composition bug. |
 | **WP-3.1** | ⏳ **PR-OPEN** | `platform/wp-3.1` | [#55](https://github.com/tweggen/Karawan/pull/55) | 1 | builds ✅ · headless ✅ · APK ✅ | GATE-C 🔒 | Mouse + gamepad over SDL3. `Platform`'s 11 Silk handlers are now thin adapters over shared `_push*` cores the backend callbacks reach too, so both paths build the same event by construction. **Not runtime-exercised until WP-3.2** — desktop is still on the Silk backend and Android has neither mouse nor gamepad. Three judgement calls to check at GATE-C: trigger convention derived from the CONSUMER (see below), stick Y negated, touch→mouse synthesis disabled. **AC-3.4 as written in the plan is wrong** — `TestRunner` ignores argv and requires `JOYCE_TEST_SCRIPT`, so `-- --help` can never exit 0; verified headless with a real script instead (phase0-des passes). |
 | **WP-3.2** | :hourglass_flowing_sand: **PR-OPEN** | `platform/wp-3.2` | [#56](https://github.com/tweggen/Karawan/pull/56) | 1 | desktop RUNS on SDL3 :white_check_mark: (GL 4.3 core, shaders, textures, title cards) - Silk fallback runs :white_check_mark: - APK :white_check_mark: - headless :white_check_mark: | GATE-C :lock: | Desktop on SDL3. GL profile now read from `platform.threeD.API[.version]` instead of hardcoded GLES 3.0. `Size` (logical) and `FramebufferSize` (pixels) are now separate queries - they must be, since SDL reports mouse in logical units. Fullscreen, HiDPI, resizable and window icon implemented. **Silk kept behind `platform.windowBackend=silk` so GATE-C failures are one setting away from being bisected.** **Android behaviour change to test: it now requests GLES 3.1 (from the 310 setting) rather than 3.0.** |
-| **WP-3.4** | :hourglass_flowing_sand: **PR-OPEN** | `platform/wp-3.4` | [#57](https://github.com/tweggen/Karawan/pull/57) | 1 | audio works on desktop :white_check_mark: (device enumerated, context created, alcGetIntegerv + extension query OK) - APK :white_check_mark: - solution :white_check_mark: | GATE-C :lock: audio as HEARD | `Silk.NET.OpenAL` and its Enumeration/Soft extensions replaced by ~24 hand-written `DllImport`s in `Boom.OpenAL/Native/`. Drop-in: method names and signatures mirror Silk, so all ~92 call sites are unchanged apart from the namespace they import. **The library-name fallback WP-1.5 relied on Silk for is now ours** (`OpenALNative._candidates`: OpenAL32.dll / soft_oal.dll on Windows, versioned SONAME first on Linux/macOS) - a single-name DllImport reintroduces the WP-1.5 breakage, at first playback rather than at startup. `AudioError` keeps Silk's IllegalEnum/IllegalCommand aliases, declared FIRST so logged error names are unchanged. |
-| **WP-3.5** | 🟡 UNBLOCKED, last | — | — | 0 | — | GATE-C, GATE-E | Deletions. Note two of the five listed targets are ALREADY GONE (the raw-SDL2 `BeforeDoEvent` hatch and `WukaSilkActivity.cs`, both removed by WP-2.2/3.5 work in flight); re-measure before dispatching. |
+| **WP-3.4** | ✅ **MERGED + GATE-C AUDIO CONFIRMED** | `platform/wp-3.4` | [#57](https://github.com/tweggen/Karawan/pull/57) | 1 | audio works on desktop :white_check_mark: (device enumerated, context created, alcGetIntegerv + extension query OK) - APK :white_check_mark: - solution :white_check_mark: | **GATE-C ✅ audio confirmed HEARD on Windows 11, 2026-08-09** | `Silk.NET.OpenAL` and its Enumeration/Soft extensions replaced by ~24 hand-written `DllImport`s in `Boom.OpenAL/Native/`. Drop-in: method names and signatures mirror Silk, so all ~92 call sites are unchanged apart from the namespace they import. **The library-name fallback WP-1.5 relied on Silk for is now ours** (`OpenALNative._candidates`: OpenAL32.dll / soft_oal.dll on Windows, versioned SONAME first on Linux/macOS) - a single-name DllImport reintroduces the WP-1.5 breakage, at first playback rather than at startup. `AudioError` keeps Silk's IllegalEnum/IllegalCommand aliases, declared FIRST so logged error names are unchanged. |
+| **WP-3.5** | 🟡 UNBLOCKED, last — **re-measured 2026-08-09** | — | — | 0 | — | GATE-C, GATE-E | **THREE of the five listed targets are already gone**: `WukaSilkActivity.cs`, the duplicated GLES shaders under `Wuka/Platforms/Android/`, and the raw-SDL2 `BeforeDoEvent` body (the remaining `BeforeDoEvent` hook is generic and has **no consumers** — removable). What actually remains in Phase 3 scope is `Silk.NET.Windowing` + `Silk.NET.Input` in `Splash.Silk`, and removing those means deleting `SilkWindowBackend` and the Silk input path — **i.e. WP-3.5 IS the removal of the `platform.windowBackend=silk` fallback**. There is no useful subset that keeps the bisect tool. The remaining `Silk.NET.OpenGL*` (Phase 5) and `Silk.NET.Assimp` (Phase 4, pinned N5/N8) references are NOT in this work package. |
 | WP-4.1 – 4.4 | NOT-STARTED | — | — | 0 | — | GATE-D | Independent of Phases 2–3; Phase 0 has landed, so this is dispatchable now. |
 | **WP-5.0** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0 ✅ exactly 0 changed lines** | none apply | Generated from `gl.xml`; baseline and candidate both compile the identical sample. **Caveat: 4 hand-written overloads for 5 entry points** — `gl.xml` cannot describe Silk's overload policy. |
 | **WP-5.0b** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0b ✅** costed side by side | none apply | OpenTK 5: **37 % of code lines** ≈ 83 of 225 sites. `GL` is static vs Silk's instance → all 225 change receiver. Also `pre.16` ships **net10.0 only**, dropping our net9.0. |
@@ -618,6 +618,28 @@ and `Sdl3WindowBackend` invokes a `SoftKeyboardHandler` that `GameActivity` inst
 got its guard too. Details in the WP-2.3 row above; **still unverified on a device**, which is the only
 thing that can close GATE-A.
 
+### 🟡 GATE-C — Windows 11 results, 2026-08-09
+
+Fullscreen, keyboard, mouse, gamepad and **audio as heard** all confirmed by the owner on the SDL3
+backend. That closes WP-3.4's open item: the hand-written OpenAL `DllImport`s are proven end to end,
+not merely "a context was created".
+
+**Two defects found, both introduced by WP-3.1, both fixed in
+[#61](https://github.com/tweggen/Karawan/pull/61):**
+
+| defect | cause |
+|---|---|
+| Gamepad left stick front/back inverted while walking | The Y axis was negated because SDL reports +Y as DOWN while `InputController` stores `Y > 0` into `AnalogLeftStick`**`Up`**. That field name says which ACCUMULATOR the value lands in, not which way the character walks. Silk normalises axes without flipping; SDL's sign now passes through unchanged. |
+| Mouse cursor visible in fullscreen | Two compounding causes. WP-3.1 guarded the null Silk input context in `_setMouseEnabled` and returned, which stopped the latent NRE but left the cursor never configured at all on SDL3 — now `IWindowBackend.SetMouseVisible`. AND the setter was never called anyway: `Engine.SetMouseEnabled` has **no caller in the game**, so `_mouseEnabled` sat at its default `false` while both windowing libraries default to showing a cursor. `Platform` now applies the state once at startup. The second half was equally true under Silk — not an SDL3 regression, just newly visible. |
+
+> **Consequence to watch:** the cursor is now hidden by DEFAULT on both backends. Nothing in the
+> game re-enables it, so a menu will not have a pointer until game code calls
+> `Engine.SetMouseEnabled(true)`. That is a game-side fix, not a windowing default.
+
+**Methodological note worth keeping.** Of the three judgement calls WP-3.1 flagged for GATE-C, the
+stick flip was the one derived from a FIELD NAME rather than from observed behaviour, and it is the
+one that was wrong. The trigger convention, derived from the consumer's arithmetic, held.
+
 ### ⚠ Merge-ordering trap — hit twice, now structurally closed
 
 Both #17 and #19 were **stacked PRs based on `platform/wp-1.2`**. In each case the base branch
@@ -661,7 +683,7 @@ against the real branches — `platform/wp-2.1` (content landed as cherry-picks)
 |---|---|---|
 | GATE-A | SDL3 on a physical Android device (multi-touch, **IME**, rotation, resume) | ✅ **PASSED 2026-08-09.** Rendering, multi-touch and rotation confirmed 2026-08-07; resume 2026-08-08; **IME confirmed by the owner 2026-08-09** after WP-2.3 ("working beautifully on mobile"). All four halves are now answered on real hardware. ADR §9 claim 8 — the claim the plan called *"the single most likely point of failure"* — **holds**. |
 | GATE-B | Play Console upload, no "Memory page size" warning | ✅ **PASSED 2026-08-09** — the owner uploaded and **Google Play Console accepted the build**. Together with GATE-A this completes **Phase 2**, and **Phase 3 is now unblocked in full**. The 16 KB work (AC-1.7, `XA0141` promoted, all 19 arm64 libraries aligned) is validated by the store rather than by our own checker. |
-| GATE-C | Windows + Linux desktop | not reached |
+| GATE-C | Windows + Linux desktop | 🟡 **WINDOWS 11 LARGELY PASSED 2026-08-09.** Fullscreen ✅ keyboard ✅ mouse ✅ gamepad ✅ **audio as HEARD ✅** — the last confirms WP-3.4's hand-written OpenAL bindings end to end. Two defects found and fixed in [#61](https://github.com/tweggen/Karawan/pull/61). **Still unrun: resize, HiDPI, and Linux entirely.** |
 | GATE-D | Animation correct on macOS + Windows | ✅ **PASSED 2026-08-06** — Windows confirmed, macOS confirmed on a **Debug** build (Release does not currently start, see known issue KI-1) |
 | GATE-E | ImGui renders + takes input (incl. Linux Fn-key case) | not reached. **Android is now out of scope for this gate**: [#13](https://github.com/tweggen/Karawan/pull/13) excluded the ImGui native, and there is no Android build of cimgui at all — re-enabling it needs a real arm64 `libcimgui.so` built and shipped, not just flipping `createUI`. Desktop still applies. |
 | — | *(AC-0.2.4, gate-adjacent)* Aihao L-System preview renders | ✅ **PASSED 2026-08-06** — confirmed after the GL-context seam was re-expressed in WP-0.2 |
