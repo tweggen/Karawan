@@ -231,6 +231,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\ModuleFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickableHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\AbiProbe.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\ABase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\CreateCylinderShape.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\CreateDynamic.cs" />

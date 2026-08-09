@@ -17,7 +17,25 @@ public class Object : IDisposable
      * Still not happy with the design. All of the
      * following is instance specific.
      */
-    Engine Engine = I.Get<Engine>();
+    /*
+     * NOT a field initialiser, deliberately. Assigned in each constructor body instead.
+     *
+     * C# emits field initialisers into the prologue of EVERY constructor, before the body runs.
+     * On Mono/ARM64 (.NET 9.0.13, Android) a call in that prologue corrupts the constructor's
+     * TRAILING value-type argument: it is read 8 bytes early and picks up the last two floats of
+     * the preceding parameter. Measured here as `Vector3 bodyOffset` arriving as
+     * <Orientation.Z, Orientation.W, 0> instead of <0,0,0>, and reproduced in isolation by
+     * engine.physics.AbiProbe case M - which differs from the twelve passing cases in exactly one
+     * respect: it has a prologue containing a call.
+     *
+     * The knock-on was severe: the ship's BodyInertia was then forwarded to CreateDynamic.Execute
+     * with the same 8-byte skew, producing an INDEFINITE inertia tensor that amplified angular
+     * impulses ~442x and reversed them.
+     *
+     * Keep every constructor body assigning this explicitly, and do not reintroduce
+     * `= I.Get<Engine>()` here.
+     */
+    Engine Engine;
     
     public const uint IsReleased = 1;
     public const uint IsStatic = 2;
@@ -367,6 +385,7 @@ public class Object : IDisposable
     
     public Object(DefaultEcs.Entity entity, BepuPhysics.StaticHandle sh)
     {
+        Engine = I.Get<Engine>();
         Entity = entity;
         Flags |= IsStatic;
         IntHandle = sh.Value;
@@ -385,7 +404,9 @@ public class Object : IDisposable
         Vector3 bodyOffset = default
         )
     {
-        Entity = entity;    
+
+        Engine = engine;
+        Entity = entity;
         Flags = IsDynamic;
         IntHandle = actions.CreateDynamic.Execute(engine.PLog, engine.Simulation, Position+BodyOffset, Orientation, inertia, shape);
         BodyOffset = bodyOffset;
@@ -403,6 +424,7 @@ public class Object : IDisposable
         Vector3 bodyOffset = default
         )
     {
+        Engine = engine;
         Entity = entity;
         IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, Position+BodyOffset, Orientation, shape);
         BodyOffset = bodyOffset;
@@ -418,6 +440,7 @@ public class Object : IDisposable
         BepuPhysics.Collidables.TypedIndex shape,
         Vector3 bodyOffset = default)
     {
+        Engine = engine;
         Entity = entity;
         IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, BodyOffset, Quaternion.Identity, shape);
         BodyOffset = bodyOffset;
