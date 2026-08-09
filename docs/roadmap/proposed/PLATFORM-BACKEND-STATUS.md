@@ -258,8 +258,9 @@ follows pause/resume and leaves audio running normally).
 - ✅ **DONE (verified 2026-08-09): `Directory.Packages.props` pins `Karawan.Natives` **0.2.0**.**
   The WP-2.1 workaround (`ExcludeAssets="all"` + `GeneratePathProperty`) is still present in
   `spikes/sdl3-android/Sdl3Spike.csproj:107`, but that spike is disposable anyway (below).
-- **GATE-A: IME is still unanswered** (WP-2.3) — and see **KI-10** below, which upgrades this
-  from "unverified" to "two identified defects". ADR claim 8.
+- **GATE-A: IME — code landed in WP-2.3, awaiting the device test.** KI-10's two defects are
+  fixed; what remains is purely `[HUMAN]`: focus a JT text field on a device and confirm the
+  keyboard appears, types, and that autocorrect does not corrupt the field. ADR claim 8.
 - **`armeabi-v7a` and `x86_64` are no longer built** (single RID `android-arm64`). x86_64 never
   worked — WP-0.3 §4.3. Re-add x86_64 to the recipes' matrix first if emulator support is wanted.
 - `spikes/sdl3-android/` is disposable now that WP-2.2 has landed.
@@ -313,7 +314,7 @@ Consequences carried forward:
 | **WP-1.6** | ⚠ **PARTIAL — PR-OPEN** | `platform/wp-1.6` | [#27](https://github.com/tweggen/Karawan/pull/27) | 1 | **AC-1.7 ⚠ half** — XA4301 ✅ promoted, **XA0141 ⛔ deferred** | none apply | XA4301: 0 occurrences, promoted, build green. XA0141: promoted → **4 errors, all `Silk.NET.Windowing.Sdl`'s `libSDL2.so`/`libmain.so` @ `0x1000`**. Every native we own is `0x4000` (verified independently of the SDK). **Not satisfiable in Phase 1** — only removing Silk's SDL2 fixes it, which is Phase 2/3. See §AC-1.7 below. |
 | **WP-2.1** | ⏳ **PR-OPEN — blocked on GATE-A** | `platform/wp-2.1` | [#28](https://github.com/tweggen/Karawan/pull/28) | 1 | AC-2.1 ✅ · **2.2 ✅** · 2.3 ✅ · GLOBAL-1/2/3/4 ✅ | **GATE-A 🔒 human+device** | Spike builds and packages; **every `.so` in the APK is 16 KB aligned**, a first. Found 3 defects listed below. `Platform.SDL3` + `recipes/build-mainshim.sh` are permanent; `spikes/` is disposable. |
 | **WP-2.2** | ⛔ **NOT COMPLETABLE AS SCOPED** | — | — | 0 | — | needs a human ordering decision | **KI-9**: SDL2 and SDL3 Java glue cannot coexist in one APK (proven — dex duplicate-class), so WP-2.2 cannot be staged; and removing Silk windowing strands `EasyCreate(…, IView, …)`, which is **WP-3.3**. Minimum atomic unit = **2.2 + 3.3 (+3.1/3.2)**. |
-| WP-2.3 | BLOCKED | — | — | 0 | — | GATE-A, GATE-B | Blocked on WP-2.2. Owns the **IME** answer — the one part of GATE-A still open. |
+| **WP-2.3** | ⏳ **PR-OPEN — blocked on GATE-A device test** | `platform/wp-2.3` | [#53](https://github.com/tweggen/Karawan/pull/53) | 1 | AC-2.1 ✅ · 2.3 ✅ · 3.4 ✅ · APK shape unchanged ✅ (19 libs / 170 assets) | **GATE-A 🔒 human+device** | **Far smaller than scoped.** `GameSurface`/`KarawanInputConnection` were already SDL3-aware, so nothing needed porting — the defect was that **nothing raised the keyboard at all** (KI-10). Adds `IWindowBackend.SetKeyboardVisible`; **deliberately not `SDL_StartTextInput`**, which would bind the IME to SDL's `SDLDummyEdit` and reinstate the composition bug. |
 | WP-3.1 – 3.5 | BLOCKED | — | — | 0 | — | GATE-C, GATE-E | Blocked on GATE-A + GATE-B per plan. |
 | WP-4.1 – 4.4 | NOT-STARTED | — | — | 0 | — | GATE-D | Independent of Phases 2–3; Phase 0 has landed, so this is dispatchable now. |
 | **WP-5.0** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0 ✅ exactly 0 changed lines** | none apply | Generated from `gl.xml`; baseline and candidate both compile the identical sample. **Caveat: 4 hand-written overloads for 5 entry points** — `gl.xml` cannot describe Silk's overload policy. |
@@ -562,7 +563,7 @@ Three ways out, for the record:
 **Re-run when Silk.NET.Windowing.Sdl is removed:** add `XA0141` to `MSBuildWarningsAsErrors` in
 `Wuka/Wuka.csproj` and rebuild. That is the whole remaining task for AC-1.7.
 
-### 🔴 KI-10 — the SDL3 backend has no keyboard path, and two unguarded dereferences (2026-08-09)
+### ✅ KI-10 — FIXED by WP-2.3 (2026-08-09). The SDL3 backend had no keyboard path, and two unguarded dereferences
 
 Found by code reading while scoping WP-2.3. `Sdl3WindowBackend.SilkInputContext => null`
 (`Sdl3WindowBackend.cs:77`) — correct by design, the SDL3 backend translates events into
@@ -592,6 +593,12 @@ That makes WP-2.3 smaller than the plan feared: not "port 345 LOC", but wire one
 guard the two setters. The plan calls AC-2.4 *"the single most likely point of failure in this
 whole plan"*; on this reading the risk is materially lower than that, but it is still **unproven
 on device**, which is the only thing that can close GATE-A.
+
+**Fixed in WP-2.3.** `IWindowBackend.SetKeyboardVisible(bool)` is now the seam: `SilkWindowBackend`
+forwards to the `BeginInput`/`EndInput` loop that used to live inline in `Platform` (now null-guarded),
+and `Sdl3WindowBackend` invokes a `SoftKeyboardHandler` that `GameActivity` installs. `_setMouseEnabled`
+got its guard too. Details in the WP-2.3 row above; **still unverified on a device**, which is the only
+thing that can close GATE-A.
 
 ### ⚠ Merge-ordering trap — hit twice, now structurally closed
 

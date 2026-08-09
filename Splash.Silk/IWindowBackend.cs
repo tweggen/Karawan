@@ -69,6 +69,23 @@ public interface IWindowBackend : IDisposable
     void SetFullscreen(bool isFullscreen);
 
     /// <summary>
+    /// Show or hide the on-screen keyboard, on platforms that have one.
+    /// </summary>
+    /// <remarks>
+    /// This has to be a backend concern rather than something <see cref="Platform"/> does
+    /// through <see cref="SilkInputContext"/>, because that context is <c>null</c> on the
+    /// SDL3 backend - which is precisely the backend that HAS an on-screen keyboard. The
+    /// old call chain (<c>IKeyboard.BeginInput()</c> -> SDL2's <c>SDL_StartTextInput</c>)
+    /// became unreachable on Android when Silk windowing was removed, and nothing replaced
+    /// it, so the keyboard simply never appeared. See KI-10.
+    ///
+    /// Desktop backends forward to Silk's <c>BeginInput</c>/<c>EndInput</c>, which is what
+    /// Platform used to call inline; a desktop platform has a real keyboard and nothing
+    /// visible happens either way.
+    /// </remarks>
+    void SetKeyboardVisible(bool isVisible);
+
+    /// <summary>
     /// Which windowing library is underneath.
     /// </summary>
     /// <remarks>

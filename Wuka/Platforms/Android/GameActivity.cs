@@ -68,9 +68,17 @@ namespace Wuka
 
         private EventQueue _eq = null;
 
+        /*
+         * The surface SDL renders into, and the view the IME binds to. Kept so the
+         * soft-keyboard handler can reach it - see AndroidSoftKeyboard for why the
+         * keyboard is bound to this view rather than raised via SDL_StartTextInput.
+         */
+        private GameSurface _gameSurface;
+
         protected override unsafe Org.Libsdl.App.SDLSurface CreateSDLSurface(Android.Content.Context? context)
         {
             var surface = new GameSurface(context);
+            _gameSurface = surface;
             return surface;
         }
 
@@ -156,6 +164,15 @@ namespace Wuka
             // SDL_main, and that called back into SdlMain below. SDL_CreateWindow must
             // happen here rather than on the UI thread.
             _backend = new Sdl3WindowBackend("Silicon Desert 2");
+
+            /*
+             * The on-screen keyboard. Splash.Silk cannot call InputMethodManager, so the
+             * backend exposes the gesture and we supply the Android half. Installed BEFORE
+             * EasyCreate, so a text field that takes focus during startup still works.
+             */
+            _backend.SoftKeyboardHandler =
+                isVisible => AndroidSoftKeyboard.SetVisible(_gameSurface, isVisible);
+
             _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _backend, out var silkPlatform);
 
             // 10. Register audio API
