@@ -357,6 +357,34 @@ public sealed class Sdl3WindowBackend : IWindowBackend
     /// So the handler binds the IME to the game surface directly, keeping the focus - and
     /// therefore the InputConnection - where the ported code already expects it.
     /// </remarks>
+    /// <summary>
+    /// Cursor visibility, plus relative-motion mode, which are one gesture here.
+    /// </summary>
+    /// <remarks>
+    /// Silk's <c>CursorMode.Raw</c> means hidden AND relative, so both halves have to move
+    /// together or mouse-look breaks in a way that looks like a sensitivity bug. Relative
+    /// mode is per-window in SDL3.
+    ///
+    /// A no-op on Android, which has no cursor - SDL reports failure there and it is not
+    /// worth a warning per toggle.
+    /// </remarks>
+    public void SetMouseVisible(bool isVisible)
+    {
+        if (isVisible)
+        {
+            SDL_ShowCursor();
+        }
+        else
+        {
+            SDL_HideCursor();
+        }
+
+        if (_window != IntPtr.Zero)
+        {
+            SDL_SetWindowRelativeMouseMode(_window, !isVisible);
+        }
+    }
+
     public Action<bool>? SoftKeyboardHandler { get; set; }
 
     private bool _warnedNoSoftKeyboard = false;

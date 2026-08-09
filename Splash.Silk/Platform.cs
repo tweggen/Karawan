@@ -534,20 +534,11 @@ public class Platform : engine.IPlatform
         _mouseEnabled = value;
 
         /*
-         * A backend may have no Silk input context at all (WP-3.3) - the SDL3 one has none.
-         * There is no cursor to configure on a touch device anyway. See KI-10.
+         * Each backend owns the gesture now. Guarding the null input context here - as
+         * WP-3.1 did - was not enough: it stopped the crash but left the cursor never
+         * configured at all on SDL3, which GATE-C saw as a visible cursor in fullscreen.
          */
-        if (null == _iInputContext)
-        {
-            return;
-        }
-
-        var maxMice = _iInputContext.Mice.Count;
-        for (int i = 0; i < maxMice; i++)
-        {
-            _iInputContext.Mice[i].Cursor.CursorMode =
-                value ? CursorMode.Normal : CursorMode.Raw;
-        }
+        _backend.SetMouseVisible(value);
     }
 
 
@@ -671,6 +662,21 @@ public class Platform : engine.IPlatform
         }
 
         _hadFocus = true;
+
+        /*
+         * Apply the cursor state ONCE at startup, so the window begins in the state the
+         * engine believes it is in rather than in whatever the windowing library defaults to.
+         *
+         * Without this the setter is the only thing that ever configures the cursor - and
+         * nothing calls it: engine.Engine.SetMouseEnabled has no caller in the game, so
+         * _mouseEnabled sits at its initial false while SDL and GLFW both show a cursor. That
+         * is why GATE-C saw one in fullscreen.
+         *
+         * NOTE this now takes effect on BOTH backends, so the cursor is hidden by default.
+         * If a menu needs one, the fix belongs in game code - Engine.SetMouseEnabled(true)
+         * while the menu is open - not in a windowing default.
+         */
+        _backend.SetMouseVisible(_mouseEnabled);
 
 #if DEBUG
         if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(

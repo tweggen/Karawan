@@ -69,6 +69,21 @@ public interface IWindowBackend : IDisposable
     void SetFullscreen(bool isFullscreen);
 
     /// <summary>
+    /// Show or hide the mouse cursor, and take or release relative-motion mode with it.
+    /// </summary>
+    /// <remarks>
+    /// Mirrors what <c>Platform._setMouseEnabled</c> used to do inline through Silk's
+    /// <c>Cursor.CursorMode</c>: <c>Normal</c> when the mouse is "enabled" (the pointer is a
+    /// pointer, UI hit-testing applies), <c>Raw</c> otherwise (hidden and captured, the
+    /// mouse-look mode). The engine's default is <c>_mouseEnabled == false</c>, i.e. HIDDEN.
+    ///
+    /// Needed as a backend concern for the same reason as the keyboard: the SDL3 backend has
+    /// no Silk input context, so guarding that null - as WP-3.1 did - left the cursor simply
+    /// never configured. GATE-C found it visible in fullscreen on Windows 11.
+    /// </remarks>
+    void SetMouseVisible(bool isVisible);
+
+    /// <summary>
     /// Show or hide the on-screen keyboard, on platforms that have one.
     /// </summary>
     /// <remarks>
