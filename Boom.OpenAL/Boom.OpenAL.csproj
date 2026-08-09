@@ -9,18 +9,19 @@
 
   <ItemGroup>
     <PackageReference Include="NVorbis" />
-    <PackageReference Include="Silk.NET.OpenAL.Extensions.Enumeration" />
-    <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" />
     <!--
-      The openal-soft binaries now come from Karawan.Natives, built by our own pinned CI
-      (WP-1.2) rather than from Silk.NET.OpenAL.Soft.Native. Silk's managed bindings stay;
-      only the native source changes.
+      The openal-soft binaries come from Karawan.Natives, built by our own pinned CI
+      (WP-1.2) rather than from Silk.NET.OpenAL.Soft.Native (WP-1.5).
 
-      Verified on win-x64 that this satisfies Silk: with only Karawan.Natives present,
-      ALContext.GetApi(true) opens a real device and AL.GetApi().GetError() returns, and the
-      loaded module is our openal32.dll from the app directory - there is no system
-      OpenAL32.dll on the test machine to mask it. Silk falls back across its soft_oal.dll /
-      openal32.dll name candidates, so the differing Windows file name is not a problem.
+      WP-3.4 removed the last Silk dependency here: Silk.NET.OpenAL and its Enumeration and
+      Soft extension packages are gone, replaced by Native/OpenALNative.cs. The NATIVE
+      library is unchanged - only the managed binding.
+
+      The name-candidate fallback WP-1.5 relied on Silk for now lives in
+      OpenALNative._candidates: this repo ships OpenAL32.dll on Windows where Silk's package
+      shipped soft_oal.dll, and both names are tried. That fallback is load-bearing, not
+      defensive - a single-name DllImport reintroduces the exact breakage WP-1.5 diagnosed,
+      and does so at first playback rather than at startup.
     -->
     <PackageReference Include="Karawan.Natives" />
   </ItemGroup>

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Numerics;
 using BepuPhysics.Constraints;
 using engine;
-using Silk.NET.OpenAL;
+using Boom.OpenAL.Native;
 using static engine.Logger;
 
 namespace Boom.OpenAL;
