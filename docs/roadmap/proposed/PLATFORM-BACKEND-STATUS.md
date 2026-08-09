@@ -5,7 +5,7 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-09
+**Last updated:** 2026-08-09 (GATE-B)
 
 ---
 
@@ -19,9 +19,13 @@ gone. It **starts, renders, plays audio, loads TALE, and is now controllable on 
 hardware (WP-2.3). ADR §9 claim 8, which the plan called *"the single most likely point of failure
 in this whole plan"*, holds.
 
-**Phase 3 is now blocked on GATE-B alone** — a Play Console upload, which is a human action. The
-remaining live problems are 2 (pause/resume, **pre-existing, not migration fallout**) and 3 (Rider
-deploy, workaround available). Neither blocks anything.
+**GATE-B PASSED the same day: Google Play Console accepted the build.** So **Phase 2 is COMPLETE**
+and **Phase 3 is unblocked in full** — there is no gate left in front of it. The remaining live
+problems are 2 (pause/resume, **pre-existing, not migration fallout**) and 3 (Rider deploy,
+workaround available). Neither blocks anything.
+
+**Next: WP-3.1** (desktop input over SDL3), then 3.2 → 3.5 serialised on `Platform.cs`, with 3.4
+(OpenAL) runnable in parallel. Scope measured in the work-package table below.
 
 ### Closed since the last update
 
@@ -270,6 +274,11 @@ follows pause/resume and leaves audio running normally).
 - **`armeabi-v7a` and `x86_64` are no longer built** (single RID `android-arm64`). x86_64 never
   worked — WP-0.3 §4.3. Re-add x86_64 to the recipes' matrix first if emulator support is wanted.
 - `spikes/sdl3-android/` is disposable now that WP-2.2 has landed.
+- ✅ **The plan's "project structure decision needed before WP-3.1" is RESOLVED** and can be struck:
+  the vendored `SDL3-CS.cs` lives in its own **`Platform.SDL3`** project, and `Splash.Silk` already
+  takes a `ProjectReference` on it. Desktop builds therefore already carry the managed SDL3 bindings
+  — source-only, so `libSDL3` is never loaded unless that backend is instantiated. Nothing blocks
+  WP-3.1 on this any more.
 
 ## ⚠ Process note
 
@@ -321,7 +330,10 @@ Consequences carried forward:
 | **WP-2.1** | ⏳ **PR-OPEN — blocked on GATE-A** | `platform/wp-2.1` | [#28](https://github.com/tweggen/Karawan/pull/28) | 1 | AC-2.1 ✅ · **2.2 ✅** · 2.3 ✅ · GLOBAL-1/2/3/4 ✅ | **GATE-A 🔒 human+device** | Spike builds and packages; **every `.so` in the APK is 16 KB aligned**, a first. Found 3 defects listed below. `Platform.SDL3` + `recipes/build-mainshim.sh` are permanent; `spikes/` is disposable. |
 | **WP-2.2** | ⛔ **NOT COMPLETABLE AS SCOPED** | — | — | 0 | — | needs a human ordering decision | **KI-9**: SDL2 and SDL3 Java glue cannot coexist in one APK (proven — dex duplicate-class), so WP-2.2 cannot be staged; and removing Silk windowing strands `EasyCreate(…, IView, …)`, which is **WP-3.3**. Minimum atomic unit = **2.2 + 3.3 (+3.1/3.2)**. |
 | **WP-2.3** | ✅ **COMPLETE — GATE-A PASSED** | `platform/wp-2.3` | [#53](https://github.com/tweggen/Karawan/pull/53) | 1 | AC-2.1 ✅ · 2.3 ✅ · **2.4 ✅** · 3.4 ✅ · APK shape unchanged ✅ (19 libs / 170 assets) | **GATE-A ✅ PASSED 2026-08-09** | **Far smaller than scoped.** `GameSurface`/`KarawanInputConnection` were already SDL3-aware, so nothing needed porting — the defect was that **nothing raised the keyboard at all** (KI-10). Adds `IWindowBackend.SetKeyboardVisible`; **deliberately not `SDL_StartTextInput`**, which would bind the IME to SDL's `SDLDummyEdit` and reinstate the composition bug. |
-| WP-3.1 – 3.5 | BLOCKED | — | — | 0 | — | GATE-C, GATE-E | Blocked on GATE-A + GATE-B per plan. |
+| **WP-3.1** | 🟢 **UNBLOCKED — next** | — | — | 0 | — | GATE-C, GATE-E | Desktop input over SDL3 events. **Measured scope:** `Sdl3WindowBackend` already translates quit, resize, key down/up, text input and the six lifecycle events; what is missing for desktop parity is **mouse** (move, wheel, down, up) and **gamepad** (thumbstick, trigger, button down/up) — the 11 `Platform._on*` handlers at `Platform.cs:261-462`. Follow the existing keyboard pattern: backend callbacks, not direct `EventQueue` pushes, so `Platform` keeps pairing each raw event with its `InputMapper` logical translation. |
+| **WP-3.2** | 🟡 UNBLOCKED, after 3.1 | — | — | 0 | — | GATE-C, GATE-E | Desktop window lifecycle + main loop. `Sdl3WindowBackend` currently assumes the window SDL's Android glue creates; desktop needs it to create its own. Then `Karawan/DesktopMain.cs:217` and `examples/Launcher/DesktopMain.cs:391` move off the Silk `IWindow` overload of `EasyCreate` onto the `IWindowBackend` one. |
+| **WP-3.4** | 🟢 UNBLOCKED, independent (⟂) | — | — | 0 | — | — | ~250 LOC of hand-written OpenAL `DllImport`s replacing `Silk.NET.OpenAL` (24 entry points, ~92 call sites in `Boom.OpenAL/`). Does not touch `Platform.cs`, so it can run in parallel with 3.1/3.2/3.5. |
+| **WP-3.5** | 🟡 UNBLOCKED, last | — | — | 0 | — | GATE-C, GATE-E | Deletions. Note two of the five listed targets are ALREADY GONE (the raw-SDL2 `BeforeDoEvent` hatch and `WukaSilkActivity.cs`, both removed by WP-2.2/3.5 work in flight); re-measure before dispatching. |
 | WP-4.1 – 4.4 | NOT-STARTED | — | — | 0 | — | GATE-D | Independent of Phases 2–3; Phase 0 has landed, so this is dispatchable now. |
 | **WP-5.0** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0 ✅ exactly 0 changed lines** | none apply | Generated from `gl.xml`; baseline and candidate both compile the identical sample. **Caveat: 4 hand-written overloads for 5 entry points** — `gl.xml` cannot describe Silk's overload policy. |
 | **WP-5.0b** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0b ✅** costed side by side | none apply | OpenTK 5: **37 % of code lines** ≈ 83 of 225 sites. `GL` is static vs Silk's instance → all 225 change receiver. Also `pre.16` ships **net10.0 only**, dropping our net9.0. |
@@ -648,7 +660,7 @@ against the real branches — `platform/wp-2.1` (content landed as cherry-picks)
 | Gate | What | Status |
 |---|---|---|
 | GATE-A | SDL3 on a physical Android device (multi-touch, **IME**, rotation, resume) | ✅ **PASSED 2026-08-09.** Rendering, multi-touch and rotation confirmed 2026-08-07; resume 2026-08-08; **IME confirmed by the owner 2026-08-09** after WP-2.3 ("working beautifully on mobile"). All four halves are now answered on real hardware. ADR §9 claim 8 — the claim the plan called *"the single most likely point of failure"* — **holds**. |
-| GATE-B | Play Console upload, no "Memory page size" warning | **not reached, and now the ONLY thing blocking Phase 3.** Should pass on inspection: AC-1.7 is closed, `XA0141` is promoted to an error, and all 19 arm64 libraries in the APK are 16 KB aligned — but that is an argument, not an upload. `[HUMAN]` |
+| GATE-B | Play Console upload, no "Memory page size" warning | ✅ **PASSED 2026-08-09** — the owner uploaded and **Google Play Console accepted the build**. Together with GATE-A this completes **Phase 2**, and **Phase 3 is now unblocked in full**. The 16 KB work (AC-1.7, `XA0141` promoted, all 19 arm64 libraries aligned) is validated by the store rather than by our own checker. |
 | GATE-C | Windows + Linux desktop | not reached |
 | GATE-D | Animation correct on macOS + Windows | ✅ **PASSED 2026-08-06** — Windows confirmed, macOS confirmed on a **Debug** build (Release does not currently start, see known issue KI-1) |
 | GATE-E | ImGui renders + takes input (incl. Linux Fn-key case) | not reached. **Android is now out of scope for this gate**: [#13](https://github.com/tweggen/Karawan/pull/13) excluded the ImGui native, and there is no Android build of cimgui at all — re-enabling it needs a real arm64 `libcimgui.so` built and shipped, not just flipping `createUI`. Desktop still applies. |
@@ -674,7 +686,7 @@ against the real branches — `platform/wp-2.1` (content landed as cherry-picks)
 |---|---|---|
 | Phase 2 worker dispatches | 10 | 0 |
 | Programme-wide re-dispatches | 25 | 0 |
-| Calendar: Phases 0–2 complete | 3 months from 2026-08-04 | day 3 — **Phase 0 and Phase 1 (except 1.5/1.6) complete** |
+| Calendar: Phases 0–2 complete | 3 months from 2026-08-04 | **day 5 — Phases 0, 1 and 2 ALL COMPLETE, both gates passed.** Budgeted 3 months; took 5 days. |
 | ADR §9 "assumed" claims falsified | any → escalate | **1 (claim #6)** — escalated 2026-08-05, resolved: continue as planned |
 
 Nothing has tripped. Worth noting the programme is well inside every threshold: no work package
