@@ -97,6 +97,35 @@ public sealed class SilkWindowBackend : IWindowBackend
     public void SwapBuffers() => _iView.SwapBuffers();
 
     /// <summary>
+    /// Moved verbatim from <c>Platform._setKeyboardEnabled</c>, where it used to be the
+    /// whole body.
+    /// </summary>
+    /// <remarks>
+    /// The null guard is new and matters: <c>Platform</c> called this unconditionally, so
+    /// once a backend could have no Silk input context (WP-3.3) the original was a latent
+    /// NRE on every non-Silk backend. See KI-10.
+    /// </remarks>
+    public void SetKeyboardVisible(bool isVisible)
+    {
+        if (null == _iInputContext)
+        {
+            return;
+        }
+
+        for (int i = 0; i < _iInputContext.Keyboards.Count; i++)
+        {
+            if (isVisible)
+            {
+                _iInputContext.Keyboards[i].BeginInput();
+            }
+            else
+            {
+                _iInputContext.Keyboards[i].EndInput();
+            }
+        }
+    }
+
+    /// <summary>
     /// Moved verbatim from <c>Platform.SetFullscreen</c>, including the explicit resize and
     /// the swallowed exception.
     /// </summary>

@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Silk.NET.Input;
 using static SDL3.SDL;
+using static engine.Logger;
 
 namespace Splash.Silk;
 
@@ -197,6 +198,50 @@ public sealed class Sdl3WindowBackend : IWindowBackend
     /// <summary>No-op: Android decides fullscreen, and the activity is already fullscreen.</summary>
     public void SetFullscreen(bool isFullscreen)
     {
+    }
+
+    /// <summary>
+    /// Raises or dismisses the on-screen keyboard. Installed by the platform launcher,
+    /// because doing this needs Android APIs that <c>Splash.Silk</c> cannot reference.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately NOT <c>SDL_StartTextInput</c>, which is the obvious call and the wrong
+    /// one here. SDL3's <c>SDLActivity.showTextInput</c> creates its own
+    /// <c>SDLDummyEdit</c> view, calls <c>requestFocus()</c> on it and shows the keyboard
+    /// against THAT - so the IME would bind to <c>SDLInputConnection</c> instead of our
+    /// <c>GameSurface.OnCreateInputConnection</c>. That is exactly the composition path
+    /// <c>KarawanInputConnection</c> was written to replace: SDL translates IME
+    /// <c>commitText</c>/<c>setComposingText</c> into backspace+retype sequences, which eat
+    /// into committed text because the widget does not track the composing region. See
+    /// docs/SYSTEMS/PLATFORMS/ANDROID.md, "IME Composition Bug (Fixed)".
+    ///
+    /// So the handler binds the IME to the game surface directly, keeping the focus - and
+    /// therefore the InputConnection - where the ported code already expects it.
+    /// </remarks>
+    public Action<bool>? SoftKeyboardHandler { get; set; }
+
+    private bool _warnedNoSoftKeyboard = false;
+
+    public void SetKeyboardVisible(bool isVisible)
+    {
+        var handler = SoftKeyboardHandler;
+        if (null == handler)
+        {
+            /*
+             * Once, not per keystroke: a missing handler is a wiring mistake at startup,
+             * and the symptom - a text field that focuses but never raises a keyboard - is
+             * otherwise entirely silent.
+             */
+            if (!_warnedNoSoftKeyboard)
+            {
+                _warnedNoSoftKeyboard = true;
+                Warning("No SoftKeyboardHandler installed; the on-screen keyboard cannot be shown.");
+            }
+
+            return;
+        }
+
+        handler(isVisible);
     }
 
     public void Run()

@@ -491,6 +491,16 @@ public class Platform : engine.IPlatform
 
 
         _mouseEnabled = value;
+
+        /*
+         * A backend may have no Silk input context at all (WP-3.3) - the SDL3 one has none.
+         * There is no cursor to configure on a touch device anyway. See KI-10.
+         */
+        if (null == _iInputContext)
+        {
+            return;
+        }
+
         var maxMice = _iInputContext.Mice.Count;
         for (int i = 0; i < maxMice; i++)
         {
@@ -516,18 +526,13 @@ public class Platform : engine.IPlatform
 #endif
 
         _keyboardEnabled = value;
-        var maxKeyboards = _iInputContext.Keyboards.Count;
-        for (int i = 0; i < maxKeyboards; i++)
-        {
-            if (value)
-            {
-                _iInputContext.Keyboards[i].BeginInput();
-            }
-            else
-            {
-                _iInputContext.Keyboards[i].EndInput();
-            }
-        }
+
+        /*
+         * Was an inline loop over _iInputContext.Keyboards, which is null on the SDL3
+         * backend - so this threw, and on the one platform that actually has an on-screen
+         * keyboard to raise. Each backend now owns the gesture. See KI-10.
+         */
+        _backend.SetKeyboardVisible(value);
     }
 
 

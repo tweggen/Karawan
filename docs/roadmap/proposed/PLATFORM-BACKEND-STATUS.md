@@ -14,9 +14,14 @@ count wrong.
 **Phase 2 and the Android half of Phase 3 are MERGED.** `Wuka` runs on SDL3 with Silk windowing
 gone. It **starts, renders, plays audio, loads TALE, and is now controllable on a physical device.**
 
-**Since 2026-08-08, open problems 1, 4 and 5 are all closed, and the touch buttons work.** What
-remains is problem 2 (pause/resume) and problem 3 (Rider deploy, workaround available). None of the
-open items is "does SDL3 work", which is answered: it does.
+**Since 2026-08-08, open problems 1, 4 and 5 are all closed, the touch buttons work, and — as of
+2026-08-09 — GATE-A HAS PASSED IN FULL.** IME was the last of its four halves and is confirmed on
+hardware (WP-2.3). ADR §9 claim 8, which the plan called *"the single most likely point of failure
+in this whole plan"*, holds.
+
+**Phase 3 is now blocked on GATE-B alone** — a Play Console upload, which is a human action. The
+remaining live problems are 2 (pause/resume, **pre-existing, not migration fallout**) and 3 (Rider
+deploy, workaround available). Neither blocks anything.
 
 ### Closed since the last update
 
@@ -258,8 +263,10 @@ follows pause/resume and leaves audio running normally).
 - ✅ **DONE (verified 2026-08-09): `Directory.Packages.props` pins `Karawan.Natives` **0.2.0**.**
   The WP-2.1 workaround (`ExcludeAssets="all"` + `GeneratePathProperty`) is still present in
   `spikes/sdl3-android/Sdl3Spike.csproj:107`, but that spike is disposable anyway (below).
-- **GATE-A: IME is still unanswered** (WP-2.3) — and see **KI-10** below, which upgrades this
-  from "unverified" to "two identified defects". ADR claim 8.
+- ✅ **GATE-A: IME CONFIRMED ON DEVICE 2026-08-09** (WP-2.3). KI-10's two defects are fixed and
+  the keyboard works. The owner confirmed it working; the individual sub-cases (per-widget
+  `inputType` via `RestartInput`, autocorrect not corrupting the field) were **not itemised**,
+  so if a text-entry oddity shows up later, start there rather than assuming it regressed.
 - **`armeabi-v7a` and `x86_64` are no longer built** (single RID `android-arm64`). x86_64 never
   worked — WP-0.3 §4.3. Re-add x86_64 to the recipes' matrix first if emulator support is wanted.
 - `spikes/sdl3-android/` is disposable now that WP-2.2 has landed.
@@ -313,7 +320,7 @@ Consequences carried forward:
 | **WP-1.6** | ⚠ **PARTIAL — PR-OPEN** | `platform/wp-1.6` | [#27](https://github.com/tweggen/Karawan/pull/27) | 1 | **AC-1.7 ⚠ half** — XA4301 ✅ promoted, **XA0141 ⛔ deferred** | none apply | XA4301: 0 occurrences, promoted, build green. XA0141: promoted → **4 errors, all `Silk.NET.Windowing.Sdl`'s `libSDL2.so`/`libmain.so` @ `0x1000`**. Every native we own is `0x4000` (verified independently of the SDK). **Not satisfiable in Phase 1** — only removing Silk's SDL2 fixes it, which is Phase 2/3. See §AC-1.7 below. |
 | **WP-2.1** | ⏳ **PR-OPEN — blocked on GATE-A** | `platform/wp-2.1` | [#28](https://github.com/tweggen/Karawan/pull/28) | 1 | AC-2.1 ✅ · **2.2 ✅** · 2.3 ✅ · GLOBAL-1/2/3/4 ✅ | **GATE-A 🔒 human+device** | Spike builds and packages; **every `.so` in the APK is 16 KB aligned**, a first. Found 3 defects listed below. `Platform.SDL3` + `recipes/build-mainshim.sh` are permanent; `spikes/` is disposable. |
 | **WP-2.2** | ⛔ **NOT COMPLETABLE AS SCOPED** | — | — | 0 | — | needs a human ordering decision | **KI-9**: SDL2 and SDL3 Java glue cannot coexist in one APK (proven — dex duplicate-class), so WP-2.2 cannot be staged; and removing Silk windowing strands `EasyCreate(…, IView, …)`, which is **WP-3.3**. Minimum atomic unit = **2.2 + 3.3 (+3.1/3.2)**. |
-| WP-2.3 | BLOCKED | — | — | 0 | — | GATE-A, GATE-B | Blocked on WP-2.2. Owns the **IME** answer — the one part of GATE-A still open. |
+| **WP-2.3** | ✅ **COMPLETE — GATE-A PASSED** | `platform/wp-2.3` | [#53](https://github.com/tweggen/Karawan/pull/53) | 1 | AC-2.1 ✅ · 2.3 ✅ · **2.4 ✅** · 3.4 ✅ · APK shape unchanged ✅ (19 libs / 170 assets) | **GATE-A ✅ PASSED 2026-08-09** | **Far smaller than scoped.** `GameSurface`/`KarawanInputConnection` were already SDL3-aware, so nothing needed porting — the defect was that **nothing raised the keyboard at all** (KI-10). Adds `IWindowBackend.SetKeyboardVisible`; **deliberately not `SDL_StartTextInput`**, which would bind the IME to SDL's `SDLDummyEdit` and reinstate the composition bug. |
 | WP-3.1 – 3.5 | BLOCKED | — | — | 0 | — | GATE-C, GATE-E | Blocked on GATE-A + GATE-B per plan. |
 | WP-4.1 – 4.4 | NOT-STARTED | — | — | 0 | — | GATE-D | Independent of Phases 2–3; Phase 0 has landed, so this is dispatchable now. |
 | **WP-5.0** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0 ✅ exactly 0 changed lines** | none apply | Generated from `gl.xml`; baseline and candidate both compile the identical sample. **Caveat: 4 hand-written overloads for 5 entry points** — `gl.xml` cannot describe Silk's overload policy. |
@@ -562,7 +569,7 @@ Three ways out, for the record:
 **Re-run when Silk.NET.Windowing.Sdl is removed:** add `XA0141` to `MSBuildWarningsAsErrors` in
 `Wuka/Wuka.csproj` and rebuild. That is the whole remaining task for AC-1.7.
 
-### 🔴 KI-10 — the SDL3 backend has no keyboard path, and two unguarded dereferences (2026-08-09)
+### ✅ KI-10 — FIXED by WP-2.3 (2026-08-09). The SDL3 backend had no keyboard path, and two unguarded dereferences
 
 Found by code reading while scoping WP-2.3. `Sdl3WindowBackend.SilkInputContext => null`
 (`Sdl3WindowBackend.cs:77`) — correct by design, the SDL3 backend translates events into
@@ -592,6 +599,12 @@ That makes WP-2.3 smaller than the plan feared: not "port 345 LOC", but wire one
 guard the two setters. The plan calls AC-2.4 *"the single most likely point of failure in this
 whole plan"*; on this reading the risk is materially lower than that, but it is still **unproven
 on device**, which is the only thing that can close GATE-A.
+
+**Fixed in WP-2.3.** `IWindowBackend.SetKeyboardVisible(bool)` is now the seam: `SilkWindowBackend`
+forwards to the `BeginInput`/`EndInput` loop that used to live inline in `Platform` (now null-guarded),
+and `Sdl3WindowBackend` invokes a `SoftKeyboardHandler` that `GameActivity` installs. `_setMouseEnabled`
+got its guard too. Details in the WP-2.3 row above; **still unverified on a device**, which is the only
+thing that can close GATE-A.
 
 ### ⚠ Merge-ordering trap — hit twice, now structurally closed
 
@@ -634,8 +647,8 @@ against the real branches — `platform/wp-2.1` (content landed as cherry-picks)
 
 | Gate | What | Status |
 |---|---|---|
-| GATE-A | SDL3 spike on physical Android device (multi-touch, **IME**, rotation, resume) | 🟡 **RENDERING HALF PASSED 2026-08-07** on an Adreno 825 device — `GL_VERSION = OpenGL ES 3.2`, `first frame presented`. **Interaction half not yet run** (multi-touch, rotation, resume). ⚠ **The IME half cannot be answered by this spike at all** — see §GATE-A evidence below. |
-| GATE-B | Play Console upload, no "Memory page size" warning | not reached — **now reachable much earlier via the WP-0.0 repack route** |
+| GATE-A | SDL3 on a physical Android device (multi-touch, **IME**, rotation, resume) | ✅ **PASSED 2026-08-09.** Rendering, multi-touch and rotation confirmed 2026-08-07; resume 2026-08-08; **IME confirmed by the owner 2026-08-09** after WP-2.3 ("working beautifully on mobile"). All four halves are now answered on real hardware. ADR §9 claim 8 — the claim the plan called *"the single most likely point of failure"* — **holds**. |
+| GATE-B | Play Console upload, no "Memory page size" warning | **not reached, and now the ONLY thing blocking Phase 3.** Should pass on inspection: AC-1.7 is closed, `XA0141` is promoted to an error, and all 19 arm64 libraries in the APK are 16 KB aligned — but that is an argument, not an upload. `[HUMAN]` |
 | GATE-C | Windows + Linux desktop | not reached |
 | GATE-D | Animation correct on macOS + Windows | ✅ **PASSED 2026-08-06** — Windows confirmed, macOS confirmed on a **Debug** build (Release does not currently start, see known issue KI-1) |
 | GATE-E | ImGui renders + takes input (incl. Linux Fn-key case) | not reached. **Android is now out of scope for this gate**: [#13](https://github.com/tweggen/Karawan/pull/13) excluded the ImGui native, and there is no Android build of cimgui at all — re-enabling it needs a real arm64 `libcimgui.so` built and shipped, not just flipping `createUI`. Desktop still applies. |
