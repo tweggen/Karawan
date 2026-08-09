@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Silk.NET.Input;
@@ -87,6 +88,14 @@ public sealed class Sdl3WindowBackend : IWindowBackend
     public Action<bool>? OnFocusChanged { get; set; }
     public Action? BeforeEvents { get; set; }
     public Action? ReleaseMainThreadWaiters { get; set; }
+    public Action<Vector2>? OnMouseMoved { get; set; }
+    public Action<Vector2, Vector2>? OnMouseWheel { get; set; }
+    public Action<int, Vector2>? OnMousePressed { get; set; }
+    public Action<int, Vector2>? OnMouseReleased { get; set; }
+    public Action<int, Vector2>? OnGamepadStickMoved { get; set; }
+    public Action<int, float>? OnGamepadTriggerMoved { get; set; }
+    public Action<string, uint>? OnGamepadButtonPressed { get; set; }
+    public Action<string, uint>? OnGamepadButtonReleased { get; set; }
     public Action<string>? OnKeyPressed { get; set; }
     public Action<string>? OnKeyReleased { get; set; }
     public Action<string>? OnKeyCharacter { get; set; }
@@ -120,10 +129,29 @@ public sealed class Sdl3WindowBackend : IWindowBackend
 
     public Sdl3WindowBackend(string title)
     {
-        if (!SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_EVENTS))
+        /*
+         * SDL_INIT_GAMEPAD is required for gamepad events to be delivered AT ALL - without
+         * it SDL never enumerates pads and never sends GAMEPAD_ADDED, so the whole gamepad
+         * path below is dead with no error anywhere (WP-3.1).
+         */
+        if (!SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_EVENTS
+                      | SDL_InitFlags.SDL_INIT_GAMEPAD))
         {
             throw new InvalidOperationException($"SDL_Init failed: {SDL_GetError()}");
         }
+
+        /*
+         * SDL synthesises mouse events from touch by DEFAULT. With WP-3.1 translating mouse
+         * events, that would deliver every Android touch twice: once from
+         * GameSurface.OnTouch, which has always pushed touch straight into the EventQueue,
+         * and again as a synthetic mouse press. Exactly the double-delivery that keeps
+         * SDL's FINGER_* events deliberately untranslated below.
+         *
+         * The converse hint is off by default but pinned too, so a future SDL default cannot
+         * turn desktop mouse input into phantom touches.
+         */
+        SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+        SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
 
         // Must be set BEFORE the window exists; SDL bakes them into the EGL config it picks.
         SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
@@ -350,9 +378,179 @@ public sealed class Sdl3WindowBackend : IWindowBackend
                     break;
                 }
 
+                case SDL_EventType.SDL_EVENT_MOUSE_MOTION:
+                    OnMouseMoved?.Invoke(new Vector2(ev.motion.x, ev.motion.y));
+                    break;
+
+                case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
+                {
+                    int button = _toEngineMouseButton(ev.button.button);
+                    if (button >= 0)
+                    {
+                        OnMousePressed?.Invoke(button, new Vector2(ev.button.x, ev.button.y));
+                    }
+
+                    break;
+                }
+
+                case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
+                {
+                    int button = _toEngineMouseButton(ev.button.button);
+                    if (button >= 0)
+                    {
+                        OnMouseReleased?.Invoke(button, new Vector2(ev.button.x, ev.button.y));
+                    }
+
+                    break;
+                }
+
+                case SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
+                    /*
+                     * SDL flips x/y itself when direction is FLIPPED (natural scrolling),
+                     * so the sign here is already what the user meant.
+                     */
+                    OnMouseWheel?.Invoke(
+                        new Vector2(ev.wheel.mouse_x, ev.wheel.mouse_y),
+                        new Vector2(ev.wheel.x, ev.wheel.y));
+                    break;
+
+                /*
+                 * Gamepads must be OPENED before SDL sends any of their events - being
+                 * merely connected is not enough. Missing this is silent: the pad shows up
+                 * in the device list and never produces input.
+                 */
+                case SDL_EventType.SDL_EVENT_GAMEPAD_ADDED:
+                    _openGamepad(ev.gdevice.which);
+                    break;
+
+                case SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED:
+                    _closeGamepad(ev.gdevice.which);
+                    break;
+
+                case SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
+                    _onGamepadAxis((SDL_GamepadAxis)ev.gaxis.axis, ev.gaxis.value);
+                    break;
+
+                case SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+                {
+                    string? name = Sdl3GamepadCodes.ToEngineButtonName((SDL_GamepadButton)ev.gbutton.button);
+                    if (null != name)
+                    {
+                        OnGamepadButtonPressed?.Invoke(name, Sdl3GamepadCodes.ToEngineButtonOrdinal(name));
+                    }
+
+                    break;
+                }
+
+                case SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP:
+                {
+                    string? name = Sdl3GamepadCodes.ToEngineButtonName((SDL_GamepadButton)ev.gbutton.button);
+                    if (null != name)
+                    {
+                        OnGamepadButtonReleased?.Invoke(name, Sdl3GamepadCodes.ToEngineButtonOrdinal(name));
+                    }
+
+                    break;
+                }
+
                 // FINGER_* deliberately absent - GameSurface.OnTouch already pushes touch.
             }
         }
+    }
+
+
+    /*
+     * SDL numbers mouse buttons from 1 (SDL_BUTTON_LEFT); the engine uses Silk's
+     * MouseButton ordinals from 0, and the number reaches game code as the event Code
+     * string. Anything past middle-click has no Silk equivalent and is dropped, exactly as
+     * unmapped keys are.
+     */
+    private static int _toEngineMouseButton(byte sdlButton) => sdlButton switch
+    {
+        1 => 0, // SDL_BUTTON_LEFT   -> MouseButton.Left
+        3 => 1, // SDL_BUTTON_RIGHT  -> MouseButton.Right
+        2 => 2, // SDL_BUTTON_MIDDLE -> MouseButton.Middle
+        _ => -1
+    };
+
+
+    /*
+     * Sticks arrive as two independent axis events, but the engine's contract is a whole
+     * Vector2 per stick - InputController._onStickMoved reads both components off one
+     * event. So the last value of each axis is held and the pair is re-emitted whenever
+     * either half moves.
+     */
+    private readonly float[] _stickAxes = new float[4];
+
+    private void _onGamepadAxis(SDL_GamepadAxis axis, short value)
+    {
+        switch (axis)
+        {
+            case SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTX:
+                _stickAxes[0] = Sdl3GamepadCodes.StickAxisToEngine(value, false);
+                OnGamepadStickMoved?.Invoke(0, new Vector2(_stickAxes[0], _stickAxes[1]));
+                break;
+
+            case SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTY:
+                _stickAxes[1] = Sdl3GamepadCodes.StickAxisToEngine(value, true);
+                OnGamepadStickMoved?.Invoke(0, new Vector2(_stickAxes[0], _stickAxes[1]));
+                break;
+
+            case SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTX:
+                _stickAxes[2] = Sdl3GamepadCodes.StickAxisToEngine(value, false);
+                OnGamepadStickMoved?.Invoke(1, new Vector2(_stickAxes[2], _stickAxes[3]));
+                break;
+
+            case SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTY:
+                _stickAxes[3] = Sdl3GamepadCodes.StickAxisToEngine(value, true);
+                OnGamepadStickMoved?.Invoke(1, new Vector2(_stickAxes[2], _stickAxes[3]));
+                break;
+
+            /*
+             * Trigger indices are contract: InputController._onTriggerMoved reads index 0
+             * as braking and index 1 as accelerating.
+             */
+            case SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
+                OnGamepadTriggerMoved?.Invoke(0, Sdl3GamepadCodes.TriggerAxisToEngine(value));
+                break;
+
+            case SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
+                OnGamepadTriggerMoved?.Invoke(1, Sdl3GamepadCodes.TriggerAxisToEngine(value));
+                break;
+        }
+    }
+
+
+    private readonly Dictionary<uint, IntPtr> _openGamepads = new();
+
+    private void _openGamepad(uint instanceId)
+    {
+        if (_openGamepads.ContainsKey(instanceId))
+        {
+            return;
+        }
+
+        IntPtr pad = SDL_OpenGamepad(instanceId);
+        if (IntPtr.Zero == pad)
+        {
+            Warning($"Could not open gamepad {instanceId}: {SDL_GetError()}");
+            return;
+        }
+
+        _openGamepads[instanceId] = pad;
+        Trace($"Gamepad {instanceId} opened.");
+    }
+
+
+    private void _closeGamepad(uint instanceId)
+    {
+        if (!_openGamepads.Remove(instanceId, out IntPtr pad))
+        {
+            return;
+        }
+
+        SDL_CloseGamepad(pad);
+        Trace($"Gamepad {instanceId} closed.");
     }
 
     public void Close()

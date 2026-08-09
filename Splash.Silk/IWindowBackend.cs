@@ -131,6 +131,44 @@ public interface IWindowBackend : IDisposable
     Action<string>? OnKeyReleased { get; set; }
     Action<string>? OnKeyCharacter { get; set; }
 
+    /*
+     * Mouse, same arrangement and for the same reason (WP-3.1). Positions are absolute
+     * window pixels, matching what Silk's IMouse.Position reports, because Platform maps
+     * them through _fullToViewPosition and _shallReturnBecauseUI - both of which are
+     * defined in window pixels.
+     *
+     * The button number is the engine's, i.e. Silk's MouseButton ordinal: 0 left, 1 right,
+     * 2 middle. It reaches game code as the event Code string, so it is contract.
+     */
+    Action<Vector2>? OnMouseMoved { get; set; }
+
+    /// <summary>Pointer position, then the scroll delta.</summary>
+    /// <remarks>
+    /// The position travels WITH the event rather than being tracked between events.
+    /// Platform's <c>_shallReturnBecauseUI</c> needs to know where the pointer was, and
+    /// Silk answers that from <c>IMouse.Position</c> - which a backend with no Silk input
+    /// context does not have. SDL reports it on the wheel event itself, so carrying it here
+    /// removes the need for any shared cursor state, and with it the ordering hazard of
+    /// updating that state from a second handler on the same callback.
+    /// </remarks>
+    Action<Vector2, Vector2>? OnMouseWheel { get; set; }
+    Action<int, Vector2>? OnMousePressed { get; set; }
+    Action<int, Vector2>? OnMouseReleased { get; set; }
+
+    /*
+     * Gamepad. Stick and trigger values are already in the engine's convention: -1..+1,
+     * with +Y UP for sticks and -1 meaning RELEASED for triggers. Converting in the backend
+     * rather than in Platform keeps every SDL/Silk quirk on the left-hand side of the seam -
+     * see Sdl3GamepadCodes for why those two conventions are what they are.
+     *
+     * The button name is the engine's string ("A", "RightStick", "DPadUp"), which is what
+     * InputController switches on.
+     */
+    Action<int, Vector2>? OnGamepadStickMoved { get; set; }
+    Action<int, float>? OnGamepadTriggerMoved { get; set; }
+    Action<string, uint>? OnGamepadButtonPressed { get; set; }
+    Action<string, uint>? OnGamepadButtonReleased { get; set; }
+
     /// <summary>
     /// Release anything blocked on the platform's main-thread monitor.
     /// </summary>

@@ -74,6 +74,20 @@ public sealed class SilkWindowBackend : IWindowBackend
     public Action<string>? OnKeyReleased { get; set; }
     public Action<string>? OnKeyCharacter { get; set; }
 
+    /*
+     * Declared but never invoked, exactly as the three above are. This backend HAS a Silk
+     * input context, so Platform subscribes to Silk's own events directly and these stay
+     * null - they exist for backends that must translate raw platform events themselves.
+     */
+    public Action<Vector2>? OnMouseMoved { get; set; }
+    public Action<Vector2, Vector2>? OnMouseWheel { get; set; }
+    public Action<int, Vector2>? OnMousePressed { get; set; }
+    public Action<int, Vector2>? OnMouseReleased { get; set; }
+    public Action<int, Vector2>? OnGamepadStickMoved { get; set; }
+    public Action<int, float>? OnGamepadTriggerMoved { get; set; }
+    public Action<string, uint>? OnGamepadButtonPressed { get; set; }
+    public Action<string, uint>? OnGamepadButtonReleased { get; set; }
+
     /// <summary>
     /// Wire Silk's events through to the callbacks. Called by <c>Platform.SetupDone</c>, at
     /// the same point the old code did <c>_iView.Load += ...</c>.
