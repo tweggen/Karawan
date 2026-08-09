@@ -171,10 +171,11 @@ public interface IWindowBackend : IDisposable
     Action<int, Vector2>? OnMouseReleased { get; set; }
 
     /*
-     * Gamepad. Stick and trigger values are already in the engine's convention: -1..+1,
-     * with +Y UP for sticks and -1 meaning RELEASED for triggers. Converting in the backend
-     * rather than in Platform keeps every SDL/Silk quirk on the left-hand side of the seam -
-     * see Sdl3GamepadCodes for why those two conventions are what they are.
+     * Gamepad. Stick and trigger values are already in the engine's convention: -1..+1 for
+     * sticks with SDL's sign passed through UNCHANGED, and -1 meaning RELEASED for triggers.
+     * Converting in the backend rather than in Platform keeps every SDL/Silk quirk on the
+     * left-hand side of the seam - see Sdl3GamepadCodes for why those two conventions are
+     * what they are, including why the earlier +Y-is-UP flip was wrong.
      *
      * The button name is the engine's string ("A", "RightStick", "DPadUp"), which is what
      * InputController switches on.
