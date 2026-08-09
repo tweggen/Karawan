@@ -492,6 +492,59 @@ public static class AbiProbe
      */
     private static T _genericGet<T>() where T : class, new() => new T();
 
+    /**
+     * Case N: a prologue containing ONLY `Vector3.Zero` and `Quaternion.Identity`.
+     *
+     * THE QUESTION THIS ANSWERS: does it take a real, non-intrinsified call to corrupt the
+     * trailing argument, or is any static PROPERTY read enough?
+     *
+     * It matters because `engine.physics.Object` carried exactly these two initialisers long
+     * after `= I.Get<Engine>()` was removed. Both are static properties, so both are `call`
+     * in IL; the JIT normally intrinsifies them to a zeroing, and an earlier revision
+     * concluded from a green device run that this made them safe. That conclusion was drawn
+     * from a build which ALSO still had the field-by-field inertia repair in HoverModule -
+     * remove the repair and the runaway returns. So the evidence was confounded and the
+     * question was never actually answered.
+     *
+     * N differs from M in exactly one respect: no generic call, only the two property reads.
+     *
+     *   N PASS + M FAIL -> intrinsics really are safe; the remaining Object initialisers were
+     *                      innocent and the runaway has another cause. Look elsewhere.
+     *   N FAIL          -> ANY static property initialiser is enough, the rule is "no
+     *                      initialisers at all on a class with a trailing struct parameter",
+     *                      and removing them from Object is the fix.
+     */
+    private sealed class ProbeCtorIntrinsicPrologue
+    {
+        public Vector3 SomeOffset { get; set; } = Vector3.Zero;
+        public Quaternion SomeRotation { get; set; } = Quaternion.Identity;
+
+        public readonly bool Ok;
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public ProbeCtorIntrinsicPrologue(
+            object engine,
+            DefaultEcs.Entity entity,
+            ProbeInertia32 s,
+            int shape,
+            Vector3 position, Quaternion orientation,
+            Vector3 bodyOffset = default)
+        {
+            bool structOk = _ok(s.Tensor, s.InverseMass);
+            bool offsetOk = bodyOffset == Vector3.Zero;
+
+            Ok = structOk && offsetOk;
+            if (!Ok)
+            {
+                Warning(
+                    $"ABIPROBE N FAIL (intrinsic-only prologue): "
+                    + $"incomingStruct={(structOk ? "ok" : _fmt(s.Tensor, s.InverseMass))} "
+                    + $"incomingBodyOffset={(offsetOk ? "ok" : bodyOffset.ToString())} "
+                    + $"(expected <0,0,0>) | orientation={orientation}");
+            }
+        }
+    }
+
     private sealed class ProbeCtorWithPrologue
     {
         /*
@@ -561,7 +614,7 @@ public static class AbiProbe
      * matched against the build it came from without inferring it from which cases happen to be
      * present.
      */
-    public const int ProbeRevision = 14;
+    public const int ProbeRevision = 15;
 
     /**
      * Identity of the running build, so a stale deployment is impossible to mistake for a fresh
@@ -626,6 +679,7 @@ public static class AbiProbe
         bool k = _caseK(_getRef(), _getRef2(), _getVec(), _getQuat(), s32, 99);
         bool l = _caseL(_getRef(), default, s32, 77, _getVec(), _getQuat());
         bool m = new ProbeCtorWithPrologue(_getRef(), default, s32, 77, _getVec(), _getQuat()).Ok;
+        bool n = new ProbeCtorIntrinsicPrologue(_getRef(), default, s32, 77, _getVec(), _getQuat()).Ok;
 
         /*
          * EXPECTED OUTCOME, and therefore the pass condition of this probe:
@@ -662,6 +716,8 @@ public static class AbiProbe
             + $"L(ctor shape, ALL aggregates from calls)={(l ? "PASS" : "FAIL")} "
             + $"M(ctor WITH PROLOGUE: field inits + generic call, incoming+forwarded)="
             + $"{(m ? "PASS" : "FAIL")} "
+            + $"N(ctor prologue, INTRINSIC-ONLY: Vector3.Zero + Quaternion.Identity)="
+            + $"{(n ? "PASS" : "FAIL")} "
             + $"| sizeof: ProbeInertia32={Unsafe.SizeOf<ProbeInertia32>()} "
             + $"ProbeInertia28={Unsafe.SizeOf<ProbeInertia28>()} "
             + $"BodyInertia={Unsafe.SizeOf<BodyInertia>()} "
@@ -680,6 +736,15 @@ public static class AbiProbe
                 + "defect. The PASS/FAIL pattern above identifies the trigger: A fail + B pass "
                 + "means argument POSITION; A fail + D pass means the declared StructLayout Size; "
                 + "C fail means size alone suffices. Treat any struct-carrying call as suspect.");
+        }
+        else if (!n)
+        {
+            Warning(
+                "ABIPROBE: case N FAILED. An intrinsic-only prologue - just Vector3.Zero and "
+                + "Quaternion.Identity - is ENOUGH to corrupt the trailing argument. The rule is "
+                + "therefore 'no instance field or property initialisers at all on a class whose "
+                + "constructor takes a trailing value type', not merely 'no calls'. Every class "
+                + "in list B of the sweep needs re-checking against that stricter rule.");
         }
         else if (m)
         {

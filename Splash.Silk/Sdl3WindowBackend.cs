@@ -198,24 +198,29 @@ public sealed class Sdl3WindowBackend : IWindowBackend
          * it SDL never enumerates pads and never sends GAMEPAD_ADDED, so the whole gamepad
          * path below is dead with no error anywhere (WP-3.1).
          */
+        /*
+         * HINTS BEFORE SDL_Init, NOT AFTER.
+         *
+         * SDL reads SDL_HINT_TOUCH_MOUSE_EVENTS while initialising its mouse subsystem, which
+         * happens inside SDL_Init(SDL_INIT_VIDEO). WP-3.1 set it afterwards, so on Android SDL
+         * had already decided to synthesise mouse events from touch. Every finger then arrives
+         * twice: once from GameSurface.OnTouch, and again as a synthetic mouse event that
+         * Platform now translates - and the two carry DIFFERENT coordinate spaces, normalised
+         * 0..1 from the surface versus window pixels from SDL.
+         */
+        SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+        SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
+
+        /*
+         * SDL_INIT_GAMEPAD is required for gamepad events to be delivered AT ALL - without
+         * it SDL never enumerates pads and never sends GAMEPAD_ADDED, so the whole gamepad
+         * path below is dead with no error anywhere (WP-3.1).
+         */
         if (!SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_EVENTS
                       | SDL_InitFlags.SDL_INIT_GAMEPAD))
         {
             throw new InvalidOperationException($"SDL_Init failed: {SDL_GetError()}");
         }
-
-        /*
-         * SDL synthesises mouse events from touch by DEFAULT. With WP-3.1 translating mouse
-         * events, that would deliver every Android touch twice: once from
-         * GameSurface.OnTouch, which has always pushed touch straight into the EventQueue,
-         * and again as a synthetic mouse press. Exactly the double-delivery that keeps
-         * SDL's FINGER_* events deliberately untranslated below.
-         *
-         * The converse hint is off by default but pinned too, so a future SDL default cannot
-         * turn desktop mouse input into phantom touches.
-         */
-        SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
-        SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
 
         _readGlSettings(out bool isGles, out int major, out int minor);
 

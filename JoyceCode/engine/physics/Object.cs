@@ -58,15 +58,31 @@ public class Object : IDisposable
     public static Vector3 OffPosition = new Vector3(0f, -10000f, 0f);
     
     
+    /*
+     * NOT initialised here, for the same reason Engine is not - see the comment above.
+     *
+     * `Vector3.Zero` and `Quaternion.Identity` are static PROPERTIES, so both compile to a
+     * `call` in IL and both land in the prologue of every constructor. The JIT normally
+     * intrinsifies them to a zeroing, and an earlier revision of this file assumed that made
+     * them safe. That assumption was drawn from a device run which ALSO had the field-by-field
+     * inertia repair in HoverModule still in place - remove the repair and the angular runaway
+     * comes straight back, with the ctor fix present and probeRev=14. The repair was doing
+     * real work, so the prologue was still corrupting the trailing argument.
+     *
+     * default(Vector3) is <0,0,0> and default(Quaternion) is (0,0,0,0) - NOT identity - so
+     * BodyRotation must be assigned explicitly in every constructor body rather than left to
+     * the field default. AbiProbe case N isolates this: its prologue contains ONLY these two
+     * static property reads and nothing else.
+     */
     /**
      * Offset of the physics object to the parent object.
      */
-    public Vector3 BodyOffset { get; set; } = Vector3.Zero;
-    
+    public Vector3 BodyOffset { get; set; }
+
     /**
      * Additional rotation, before applying the offset, to the parent object.
      */
-    public Quaternion BodyRotation { get; set; } = Quaternion.Identity;
+    public Quaternion BodyRotation { get; set; }
     
     /*
      * Now, to create an actual physics object, we use these opcodes
@@ -377,18 +393,45 @@ public class Object : IDisposable
     }
 
     
+    /*
+     * THE RULE, for every constructor below:
+     *
+     *     CONSUME EVERY PARAMETER FIRST. DO ANYTHING THAT CALLS AFTERWARDS.
+     *
+     * What matters is not where a value comes from - the instance registry or a parameter -
+     * but WHEN the call happens relative to reading the trailing value-type argument. A call
+     * in a field initialiser runs in the prologue, i.e. before the whole body, which is the
+     * case AbiProbe M reproduces. A call at the TOP OF THE BODY is the same hazard one step
+     * later: the argument has still not been read when the frame is disturbed.
+     *
+     * So `Engine = I.Get<Engine>()` is not itself the problem, and the two constructors here
+     * may keep using the registry. The problem is doing it BEFORE `sh.Value` is read.
+     */
     public Object()
     {
+        /*
+         * No parameters at all, so there is nothing that could be corrupted and the order is
+         * free. Kept in the same shape as the others so it does not read as an exception.
+         */
+        BodyOffset = Vector3.Zero;
+        BodyRotation = Quaternion.Identity;
         Engine = I.Get<Engine>();
     }
-    
-    
+
+
     public Object(DefaultEcs.Entity entity, BepuPhysics.StaticHandle sh)
     {
-        Engine = I.Get<Engine>();
+        /*
+         * `sh` is a TRAILING value-type parameter, so it must be read before any call - and
+         * `I.Get<Engine>()`, `Vector3.Zero` and `Quaternion.Identity` are all calls.
+         */
         Entity = entity;
-        Flags |= IsStatic;
         IntHandle = sh.Value;
+        Flags |= IsStatic;
+
+        BodyOffset = Vector3.Zero;
+        BodyRotation = Quaternion.Identity;
+        Engine = I.Get<Engine>();
     }
 
 
@@ -405,11 +448,32 @@ public class Object : IDisposable
         )
     {
 
+        /*
+         * Parameters first - see THE RULE above. Copying them into locals is what actually
+         * reads the argument slots, so it must happen before Vector3.Zero and
+         * Quaternion.Identity, both of which are static property CALLS.
+         */
         Engine = engine;
         Entity = entity;
         Flags = IsDynamic;
-        IntHandle = actions.CreateDynamic.Execute(engine.PLog, engine.Simulation, Position+BodyOffset, Orientation, inertia, shape);
-        BodyOffset = bodyOffset;
+        Vector3 v3Position = Position;
+        Quaternion qOrientation = Orientation;
+        BodyInertia liInertia = inertia;
+        BepuPhysics.Collidables.TypedIndex tiShape = shape;
+        Vector3 v3BodyOffset = bodyOffset;
+
+        BodyOffset = Vector3.Zero;
+        BodyRotation = Quaternion.Identity;
+
+        /*
+         * NOTE the body is created at `v3Position + BodyOffset` where BodyOffset is still
+         * ZERO - i.e. at v3Position. That is pre-existing behaviour, preserved deliberately:
+         * using v3BodyOffset here instead would move every offset body at creation, which is
+         * a physics change and must not ride along in a regression fix.
+         */
+        IntHandle = actions.CreateDynamic.Execute(
+            engine.PLog, engine.Simulation, v3Position + BodyOffset, qOrientation, liInertia, tiShape);
+        BodyOffset = v3BodyOffset;
     }
     
     
@@ -424,10 +488,20 @@ public class Object : IDisposable
         Vector3 bodyOffset = default
         )
     {
+        // Parameters first - see THE RULE above.
         Engine = engine;
         Entity = entity;
-        IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, Position+BodyOffset, Orientation, shape);
-        BodyOffset = bodyOffset;
+        Vector3 v3Position = Position;
+        Quaternion qOrientation = Orientation;
+        BepuPhysics.Collidables.TypedIndex tiShape = shape;
+        Vector3 v3BodyOffset = bodyOffset;
+
+        BodyOffset = Vector3.Zero;
+        BodyRotation = Quaternion.Identity;
+
+        IntHandle = actions.CreateKinematic.Execute(
+            engine.PLog, engine.Simulation, v3Position + BodyOffset, qOrientation, tiShape);
+        BodyOffset = v3BodyOffset;
     }
 
     
@@ -440,9 +514,17 @@ public class Object : IDisposable
         BepuPhysics.Collidables.TypedIndex shape,
         Vector3 bodyOffset = default)
     {
+        // Parameters first - see THE RULE above. bodyOffset is the trailing one.
         Engine = engine;
         Entity = entity;
-        IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, BodyOffset, Quaternion.Identity, shape);
-        BodyOffset = bodyOffset;
+        BepuPhysics.Collidables.TypedIndex tiShape = shape;
+        Vector3 v3BodyOffset = bodyOffset;
+
+        BodyOffset = Vector3.Zero;
+        BodyRotation = Quaternion.Identity;
+
+        IntHandle = actions.CreateKinematic.Execute(
+            engine.PLog, engine.Simulation, BodyOffset, BodyRotation, tiShape);
+        BodyOffset = v3BodyOffset;
     }
 }
