@@ -119,6 +119,22 @@ public sealed class SilkWindowBackend : IWindowBackend
     /// once a backend could have no Silk input context (WP-3.3) the original was a latent
     /// NRE on every non-Silk backend. See KI-10.
     /// </remarks>
+    /// <summary>
+    /// Moved verbatim from <c>Platform._setMouseEnabled</c>, null guard included.
+    /// </summary>
+    public void SetMouseVisible(bool isVisible)
+    {
+        if (null == _iInputContext)
+        {
+            return;
+        }
+
+        for (int i = 0; i < _iInputContext.Mice.Count; i++)
+        {
+            _iInputContext.Mice[i].Cursor.CursorMode = isVisible ? CursorMode.Normal : CursorMode.Raw;
+        }
+    }
+
     public void SetKeyboardVisible(bool isVisible)
     {
         if (null == _iInputContext)

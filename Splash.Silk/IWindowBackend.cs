@@ -69,6 +69,21 @@ public interface IWindowBackend : IDisposable
     void SetFullscreen(bool isFullscreen);
 
     /// <summary>
+    /// Show or hide the mouse cursor, and take or release relative-motion mode with it.
+    /// </summary>
+    /// <remarks>
+    /// Mirrors what <c>Platform._setMouseEnabled</c> used to do inline through Silk's
+    /// <c>Cursor.CursorMode</c>: <c>Normal</c> when the mouse is "enabled" (the pointer is a
+    /// pointer, UI hit-testing applies), <c>Raw</c> otherwise (hidden and captured, the
+    /// mouse-look mode). The engine's default is <c>_mouseEnabled == false</c>, i.e. HIDDEN.
+    ///
+    /// Needed as a backend concern for the same reason as the keyboard: the SDL3 backend has
+    /// no Silk input context, so guarding that null - as WP-3.1 did - left the cursor simply
+    /// never configured. GATE-C found it visible in fullscreen on Windows 11.
+    /// </remarks>
+    void SetMouseVisible(bool isVisible);
+
+    /// <summary>
     /// Show or hide the on-screen keyboard, on platforms that have one.
     /// </summary>
     /// <remarks>
@@ -156,10 +171,11 @@ public interface IWindowBackend : IDisposable
     Action<int, Vector2>? OnMouseReleased { get; set; }
 
     /*
-     * Gamepad. Stick and trigger values are already in the engine's convention: -1..+1,
-     * with +Y UP for sticks and -1 meaning RELEASED for triggers. Converting in the backend
-     * rather than in Platform keeps every SDL/Silk quirk on the left-hand side of the seam -
-     * see Sdl3GamepadCodes for why those two conventions are what they are.
+     * Gamepad. Stick and trigger values are already in the engine's convention: -1..+1 for
+     * sticks with SDL's sign passed through UNCHANGED, and -1 meaning RELEASED for triggers.
+     * Converting in the backend rather than in Platform keeps every SDL/Silk quirk on the
+     * left-hand side of the seam - see Sdl3GamepadCodes for why those two conventions are
+     * what they are, including why the earlier +Y-is-UP flip was wrong.
      *
      * The button name is the engine's string ("A", "RightStick", "DPadUp"), which is what
      * InputController switches on.

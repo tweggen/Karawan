@@ -72,18 +72,23 @@ internal static class Sdl3GamepadCodes
     private const float AxisRange = 32767f;
 
     /// <summary>
-    /// Stick axis to the engine's -1..+1, with +Y meaning UP.
+    /// Stick axis to the engine's -1..+1. SDL's sign is passed through unchanged.
     /// </summary>
     /// <remarks>
-    /// The Y negation is not cosmetic. SDL reports +Y as DOWN (screen convention), while
-    /// <c>InputController._onStickMoved</c> reads <c>PhysicalPosition.Y &gt; 0</c> as
-    /// <c>AnalogLeftStickUp</c>. Without the flip, pushing the stick forward would steer
-    /// backwards - and only on this backend.
+    /// <b>An earlier revision negated Y and that was wrong.</b> The reasoning was that SDL
+    /// reports +Y as DOWN while <c>InputController._onStickMoved</c> stores
+    /// <c>PhysicalPosition.Y &gt; 0</c> into <c>AnalogLeftStickUp</c> - so a flip looked
+    /// obviously correct. It is not: that field name describes which accumulator the value
+    /// lands in, not which way the character walks. Measured on Windows 11 at GATE-C,
+    /// front/back came out inverted while walking.
+    ///
+    /// The contract is defined by what the Silk path produced, and Silk normalises axes
+    /// uniformly without flipping. Passing SDL's sign through matches it. Derive input
+    /// conventions from the observed end behaviour, not from what a field is called.
     /// </remarks>
     public static float StickAxisToEngine(short value, bool isVertical)
     {
-        float f = System.Math.Clamp(value / AxisRange, -1f, 1f);
-        return isVertical ? -f : f;
+        return System.Math.Clamp(value / AxisRange, -1f, 1f);
     }
 
     /// <summary>
