@@ -340,6 +340,9 @@ Consequences carried forward:
 | **WP-5.1** | ✅ **MERGED** | `platform/wp-5.1` | [#25](https://github.com/tweggen/Karawan/pull/25) | 1 | generated surface compiles standalone ✅ | none apply | `Splash.GL/generated/GL.g.cs` generated from Khronos `gl.xml`, no package references. Surface resolved by **Roslyn** (339 call sites / 81 distinct entry points), not regex — an earlier MSBuildWorkspace attempt silently reported **zero**, indistinguishable from "uses no GL". |
 | WP-5.2 – 5.4 | **BLOCKED-ON-HUMAN** | — | — | 0 | — | GATE-E, GATE-F | Owner chose **S2a, narrow form** (2026-08-06). Remaining blocker: GATE-F reference frames, plus `Silk.NET.OpenGL.Extensions.ImGui` entanglement — it takes Silk's `GL` type in its public API, so swapping the GL binding drags ImGui with it. |
 
+| **WP-6.1** | 🟢 **SCOPED, not started** | — | — | 0 | — | `[HUMAN]` device launch | **Drop MAUI from Wuka.** Scoped 2026-08-09, see the WP-6.1 section below. Removes the single largest unknown from the .NET 10 decision. |
+| **WP-6.2** | ⏸ **BLOCKED on WP-6.1** | — | — | 0 | — | — | **.NET 10 (LTS) evaluation.** Deliberately after 6.1: the MAUI workload is the biggest migration risk, and removing it first makes this an ordinary TFM bump. First experiment is cheap and decisive - see the WP-6.2 section. |
+
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
 
 ### Open PRs
@@ -654,6 +657,77 @@ against the real branches — `platform/wp-2.1` (content landed as cherry-picks)
 **Run it before reporting a work package as landed.**
 
 ---
+
+
+### 🟢 WP-6.1 - drop MAUI from Wuka (scoped 2026-08-09)
+
+**Finding: MAUI is template scaffolding the project has outgrown.** `MainActivity`, the actual
+`MainLauncher`, is a plain `Android.App.Activity` - NOT `MauiAppCompatActivity`. It handles
+Bluetooth permissions and launches `GameActivity`, which is an `SDLActivity`. Every MAUI type
+present is untouched default template code; `App.xaml.cs` sets `MainPage = new AppShell()` and
+nothing in the game path ever reaches it.
+
+**Delete outright** (7 files, all template): `App.xaml(.cs)`, `AppShell.xaml(.cs)`,
+`MainPage.xaml(.cs)`, `MauiProgram.cs`.
+
+**Rework, small but real:**
+
+| item | change | note |
+|---|---|---|
+| `MainApplication : MauiApplication` | to `: Android.App.Application` | **Keep its body.** It does real work: a `libassimp.so` `DllImport` probe that reports load failures at startup. |
+| `Theme = "@style/Maui.SplashTheme"` | replace with an own style | Referenced by **both** `MainActivity:17` and `GameActivity:22`. MAUI generates that theme from `<MauiSplashScreen>`. |
+| `<MauiSplashScreen splash_nassau.svg>` | hand-written drawable + style, or drop | Cosmetic but visible; decide deliberately rather than by omission. |
+| `<UseMaui>true</UseMaui>` | `false` | Drops the MAUI workload from the build prerequisites. |
+| `Microsoft.Maui.Controls` 9.0.111 pin | remove | Also removes the CPM workaround in `Directory.Packages.props`, which exists only because `UseMaui=true` injects an implicit reference. |
+
+**Two traps, both already documented elsewhere in this ledger:**
+
+1. **`EnableDefaultAndroidItems` must stay `false` EXPLICITLY.** MAUI sets it, which is precisely
+   why Wuka's native libraries never double up - the default `**/*.so` glob is off. Letting it
+   revert to `true` risks re-introducing duplicate natives, and `XA4301` is promoted to an error
+   with a current count of 0.
+2. **AndroidX may arrive transitively via MAUI.** `ActivityCompat` is used directly in
+   `MainActivity` and `GameActivity`. If MAUI is what pulls `Xamarin.AndroidX.Core`, it needs an
+   explicit `PackageReference` - check `project.assets.json` before assuming.
+
+**Verification is already built:** `scripts/check-apk.py` asserts **19 native libraries, 170
+assets, no dangling superclasses**. An unchanged APK shape is a real check, not a hope. Plus a
+`[HUMAN]` device launch: permission prompt, game start, `ABIPROBE BUILD` line present.
+
+**Why it is worth doing:** largest single de-risking of the .NET 10 migration, independent of
+Phase 3 so it cannot confound GATE-C, and mostly deletion. It does change app startup on the only
+mobile target - so: own branch, own device check, bundled with nothing else.
+
+### ⏸ WP-6.2 - .NET 10 evaluation (blocked on WP-6.1)
+
+**The reason to upgrade is not features.** The ARM64 trailing-struct corruption is a **JIT codegen
+fault** - proved 2026-08-09: identical source passes all 14 `AbiProbe` cases on x64/CoreCLR and
+fails M and N on arm64/Mono, and the corrupt value straddles a parameter boundary, which is not
+expressible in IL at all (IL addresses arguments by ordinal, never by offset). Android runs
+**Mono**. A runtime without the defect retires the `HoverModule` workaround, the "no instance
+initialisers" rule, the ~309-class latent audit, and an entry point we still have not located.
+
+**Cheapest first experiment, and it may need no upgrade at all: try CoreCLR on Android.** If it is
+reachable as an opt-in on .NET 9, the hypothesis is testable immediately. The acceptance test
+already exists - deploy and read `ABIPROBE RESULT`:
+
+- **M and N PASS** -> the defect is Mono-specific, the migration has a hard business case, and
+  workaround removal can begin.
+- **M and N still FAIL** -> it is broader than Mono, the upgrade drops to routine maintenance, and
+  we learned that for an hour of work. It also sharpens any upstream report.
+
+**Prefer .NET 10 (LTS) over 11.** 11 is preview until roughly Nov 2026, and preview toolchains for
+a shipping mobile target cost days on things unrelated to our code. Skipping 10 also means
+migrating twice, or sitting on 9 for another year.
+
+**Do it AFTER Phase 3 is green.** Upgrading mid-phase makes every regression ambiguous between the
+windowing rewrite and the runtime move.
+
+**Migration surface, measured:** 53 projects on `net9.0`, plus `net9.0-android36.0` and
+`net9.0-windows10.0.22000.0`; three sibling repos (`DefaultEcs`, `BepuPhysics2`, `ObjLoader`) on
+`net9.0` - our forks, so retarget or multi-target; `Karawan.Natives` targets `net9.0-android34/36`
+and needs republishing (human-gated); a few `net6.0` / `net7.0-windows` stragglers.
+**`Silk.NET.Assimp` stays pinned at 2.22.0** - N5/N8, bumping it is what corrupted model loading.
 
 ## Gate ledger
 
