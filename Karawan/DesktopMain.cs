@@ -202,61 +202,17 @@ public class DesktopMain
 #endif
 
         /*
-         * WP-3.2: desktop windowing moves from Silk to SDL3.
+         * WP-3.5: the Silk windowing fallback is GONE. SDL3 is the only desktop backend.
          *
-         * The Silk path is KEPT and selectable, because this replaces the window, the main
-         * loop and the whole input surface on the platform people actually develop on. If
-         * something misbehaves, being able to flip one setting and see whether it follows
-         * the backend is the difference between a five-minute answer and a bisect:
-         *
-         *     platform.windowBackend = silk
-         *
-         * either in the game config or via --setting platform.windowBackend=silk.
-         *
-         * It is a fallback, not a supported configuration - Phase 3 removes it once GATE-C
-         * has passed on Windows and Linux.
+         * No Initialize() step: SDL_CreateWindow and SDL_GL_CreateContext happen together in
+         * the constructor, because GetProcAddress has to be usable before Platform's load
+         * handler runs - that handler is what calls GL.GetApi.
          */
-        bool useSilkWindowing = GlobalSettings.Get("platform.windowBackend") == "silk";
+        var sdl3Backend = new Splash.Silk.Sdl3WindowBackend(
+            launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
 
-        engine.Engine e;
-        Splash.Silk.Sdl3WindowBackend sdl3Backend = null;
-        IWindow iWindow = null;
-
-        if (useSilkWindowing)
-        {
-            Console.WriteLine("Window backend: Silk (fallback, platform.windowBackend=silk).");
-
-            var options = WindowOptions.Default;
-            options.Size = new Vector2D<int>(1280, 720);
-            options.Title = launchConfig.Branding.WindowTitle;
-            options.FramesPerSecond = 60;
-            options.VSync = false;
-            options.ShouldSwapAutomatically = false;
-            options.WindowState = WindowState.Normal;
-            options.PreferredDepthBufferBits = 16;
-
-            iWindow = Window.Create(options);
-            iWindow.Size = new Vector2D<int>(1280, 720);
-
-            // 9. Create engine
-            e = Splash.Silk.Platform.EasyCreate(args, iWindow, out var _);
-            e.SetFullscreen(startFullscreen);
-
-            iWindow.Initialize();
-        }
-        else
-        {
-            /*
-             * No Initialize() step: SDL_CreateWindow and SDL_GL_CreateContext happen together
-             * in the constructor, because GetProcAddress has to be usable before Platform's
-             * load handler runs - that handler is what calls GL.GetApi.
-             */
-            sdl3Backend = new Splash.Silk.Sdl3WindowBackend(
-                launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
-
-            e = Splash.Silk.Platform.EasyCreate(args, sdl3Backend, out var _);
-            e.SetFullscreen(startFullscreen);
-        }
+        engine.Engine e = Splash.Silk.Platform.EasyCreate(args, sdl3Backend, out var _);
+        e.SetFullscreen(startFullscreen);
 
         // 10. Set window icon
         try
@@ -266,16 +222,7 @@ public class DesktopMain
             using var img = Image.Load<Rgba32>(streamImage);
             byte[] pixelArray = new byte[img.Width * img.Height * 4];
             img.CopyPixelDataTo(pixelArray);
-
-            if (null != sdl3Backend)
-            {
-                sdl3Backend.SetWindowIcon(pixelArray, img.Width, img.Height);
-            }
-            else
-            {
-                RawImage rawImage = new RawImage(img.Width, img.Height, pixelArray.AsMemory());
-                iWindow.SetWindowIcon(ref rawImage);
-            }
+            sdl3Backend.SetWindowIcon(pixelArray, img.Width, img.Height);
         }
         catch (Exception)
         {

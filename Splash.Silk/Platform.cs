@@ -584,82 +584,22 @@ public class Platform : engine.IPlatform
         _prevFrame = _frameTimingStopwatch.Elapsed;
         
         /*
-         * Instead of just instantiating a SdlInput as intended, we create an
-         * input class of our own to intercept the touch events.
+         * WP-3.5: the Silk input subscription that used to be here is gone with
+         * SilkWindowBackend. Every backend now feeds engine.news.EventQueue through the
+         * IWindowBackend callbacks - the queue was always the contract, and that wiring was
+         * only ever the Silk half of it.
+         *
+         * ImGui went with it. Splash.Silk/ImGui/Controller.cs needs a Silk IInputContext,
+         * which no surviving backend provides, so the desktop debug UI is OFF until Phase 5
+         * (WP-5.3) deals with the ImGui entanglement. It was already off in practice from
+         * WP-3.2 onward, when desktop moved to SDL3 - this only makes that explicit.
          */
-        _iInputContext = _backend.SilkInputContext;
-
-        /*
-         * WP-3.3: a backend may have no Silk input context at all. The SDL3 backend
-         * translates SDL events into engine.news.EventQueue itself - the queue is the
-         * contract, not this wiring - so everything below is skipped there. Android never
-         * relied on it for touch anyway: GameSurface.OnTouch has always pushed straight
-         * into the queue.
-         */
-        if (null != _iInputContext)
-        {
-        for (int i = 0; i < _iInputContext.Keyboards.Count; i++)
-        {
-            _iInputContext.Keyboards[i].KeyDown += _onKeyDown;
-            _iInputContext.Keyboards[i].KeyUp += _onKeyUp;
-            _iInputContext.Keyboards[i].KeyChar += _onKeyChar;
-        }
-
-        for (int i = 0; i < _iInputContext.Gamepads.Count; i++)
-        {
-            _iInputContext.Gamepads[i].ButtonDown += _onGamepadButtonDown;
-            _iInputContext.Gamepads[i].ButtonUp += _onGamepadButtonUp;
-            _iInputContext.Gamepads[i].ThumbstickMoved += _onGamepadThumbstickMoved;
-            _iInputContext.Gamepads[i].TriggerMoved += _onGamepadTriggerMoved;
-        }
-        
-        int maxMice;
-        bool useRawMouse;
-        if (GlobalSettings.Get("Android") == "true")
-        {
-            maxMice = 1;
-            useRawMouse = false;
-        }
-        else
-        {
-            maxMice = _iInputContext.Mice.Count;
-            useRawMouse = true;
-        }
-
-        for (int i = 0; i < maxMice; i++)
-        {
-            if (useRawMouse)
-            {
-                _iInputContext.Mice[i].Cursor.CursorMode = CursorMode.Raw;
-            }
-
-            _iInputContext.Mice[i].MouseDown += _onMouseDown;
-            _iInputContext.Mice[i].MouseUp += _onMouseUp;
-            _iInputContext.Mice[i].MouseMove += _onMouseMove;
-
-            _iInputContext.Mice[i].Scroll += _onMouseWheel;
-        }
-        } // end: backend supplies a Silk input context
 
         // TXWTODO: Create sort of "on new gl window" event.
         _gl = GL.GetApi(_backend.GetProcAddress);
         _silkThreeD.SetGL(_gl);
         _gl.ClearDepth(1f);
         _gl.ClearColor(0f, 0f, 0f, 0f);
-
-        /*
-         * ImGui stays Silk-only. Silk.NET.OpenGL.Extensions.ImGui takes an IView and an
-         * IInputContext in its public constructor, so it cannot be built over the seam -
-         * that entanglement is Phase 5's problem (WP-5.3). It is not a loss on Android:
-         * models/game.launch.android.json sets "createUI": "false" and there is no Android
-         * build of cimgui at all (WP-0.3 4.2).
-         */
-        if (engine.GlobalSettings.Get("nogame.CreateUI") != "false"
-            && _backend is SilkWindowBackend silkBackend
-            && null != _iInputContext)
-        {
-            _imGuiController = new (_gl, silkBackend.View, _iInputContext);
-        }
 
         _hadFocus = true;
 
@@ -1099,16 +1039,6 @@ public class Platform : engine.IPlatform
 
 
     /// <summary>
-    /// Kept for source compatibility with desktop launchers, which still create a Silk
-    /// view. It wraps it in the backend seam (WP-3.3).
-    /// </summary>
-    public void SetIView(IView iView)
-    {
-        _backend = new SilkWindowBackend(iView);
-    }
-
-
-    /// <summary>
     /// The WP-3.3 entry point: hand the platform a window backend directly. Android uses
     /// this with an SDL3 backend; there is no Silk view involved anywhere in that path.
     /// </summary>
@@ -1142,14 +1072,6 @@ public class Platform : engine.IPlatform
 
         return e;
     }
-
-
-    /// <summary>
-    /// Desktop entry point. Unchanged signature so Karawan and examples/Launcher keep
-    /// compiling; internally it now wraps the view in a SilkWindowBackend.
-    /// </summary>
-    static public engine.Engine EasyCreate(string[] args, IView iView, out Splash.Silk.Platform out_platform)
-        => EasyCreate(args, new SilkWindowBackend(iView), out out_platform);
 
 
     /// <summary>
