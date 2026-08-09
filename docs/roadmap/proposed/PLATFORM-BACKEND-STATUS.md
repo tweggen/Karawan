@@ -114,7 +114,15 @@ state silently" is right about `Debug.Assert`, and it means the run that produce
 `DEBUG` for `Wuka`, `Joyce` **and** `BepuPhysics` (sibling repo, solution maps Release→Release), so
 the assert cannot fire in Release regardless of which assembly it lives in.
 
-**2. 🔴 OPEN — NOW THE TOP ITEM. Black screen after pause/resume; render loop stops, process and audio stay alive.** Log
+**2. 🟡 OPEN, DEPRIORITISED — PRE-EXISTING, NOT AN SDL3 REGRESSION.**
+**Owner, 2026-08-09: "it was not working with Silk.NET either."** So this is not migration
+fallout and must not be treated as Phase 2/3 exit criteria — it predates the whole programme.
+The analysis below stays because it is still the best starting point whenever someone picks it
+up, but it is **out of the platform-backend critical path**. Note this also weakens it as
+GATE-A 'resume' evidence in the other direction: resume was confirmed working in the WP-2.1
+spike, so SDL3 resumes fine; it is *our* engine/render restart that does not.
+
+**2 (original). Black screen after pause/resume; render loop stops, process and audio stay alive.** Log
 evidence: `surfaceDestroyed()` → `nativePause()` → `onResume()` → `surfaceCreated()`
 (`Window size: 2800x1260`), rendering briefly resumes (`framebuffer://rootscene_3d-Pixels`
 uploaded), then all `DOTNET` traces stop while OpenAL keeps logging.
@@ -247,12 +255,11 @@ follows pause/resume and leaves audio running normally).
 
 ## Small open items
 
-- **`Directory.Packages.props` still pins `Karawan.Natives` 0.1.0**, so builds still hit the KI-5
-  `NU1701` fallback. Bump to **0.2.0** and drop the WP-2.1 workaround in
-  `spikes/sdl3-android/Sdl3Spike.csproj` (`ExcludeAssets="all"` + `GeneratePathProperty`) — that
-  doubles as a live check of the packaging fix.
-- **GATE-A: IME is still unanswered** (WP-2.3). Nothing in the spike or Wuka calls
-  `SDL_StartTextInput`. ADR claim 8.
+- ✅ **DONE (verified 2026-08-09): `Directory.Packages.props` pins `Karawan.Natives` **0.2.0**.**
+  The WP-2.1 workaround (`ExcludeAssets="all"` + `GeneratePathProperty`) is still present in
+  `spikes/sdl3-android/Sdl3Spike.csproj:107`, but that spike is disposable anyway (below).
+- **GATE-A: IME is still unanswered** (WP-2.3) — and see **KI-10** below, which upgrades this
+  from "unverified" to "two identified defects". ADR claim 8.
 - **`armeabi-v7a` and `x86_64` are no longer built** (single RID `android-arm64`). x86_64 never
   worked — WP-0.3 §4.3. Re-add x86_64 to the recipes' matrix first if emulator support is wanted.
 - `spikes/sdl3-android/` is disposable now that WP-2.2 has landed.
@@ -554,6 +561,37 @@ Three ways out, for the record:
 
 **Re-run when Silk.NET.Windowing.Sdl is removed:** add `XA0141` to `MSBuildWarningsAsErrors` in
 `Wuka/Wuka.csproj` and rebuild. That is the whole remaining task for AC-1.7.
+
+### 🔴 KI-10 — the SDL3 backend has no keyboard path, and two unguarded dereferences (2026-08-09)
+
+Found by code reading while scoping WP-2.3. `Sdl3WindowBackend.SilkInputContext => null`
+(`Sdl3WindowBackend.cs:77`) — correct by design, the SDL3 backend translates events into
+`engine.news.EventQueue` itself. WP-3.3 guarded the **subscribe** path for exactly this
+(`Platform.cs:562`, with a comment explaining why). It did **not** guard the two setters:
+
+| site | code | consequence on the SDL3 backend |
+|---|---|---|
+| `Platform.cs:519` | `_iInputContext.Keyboards.Count` in `_setKeyboardEnabled` | **NRE** whenever anything enables the keyboard |
+| `Platform.cs:494` | `_iInputContext.Mice.Count` in `_setMouseEnabled` | **NRE** whenever anything toggles the cursor |
+
+Reachable from `builtin/jt/InputWidgetImplementation.cs:25/30` → `Engine.SetKeyboardEnabled` →
+`Platform.KeyboardEnabled` (`Platform.cs:71-74`), which enqueues the setter onto the platform
+thread. **Not yet observed on device** — the app runs, so neither setter is hit on the startup
+path; both are latent until a JT input widget takes focus. Guarding them is a two-line change.
+
+**The larger half: nothing raises the Android soft keyboard on SDL3 at all.** A repo-wide search
+finds **no** call to `SDL_StartTextInput`, `ShowSoftInput` or `InputMethodManager`. The old path
+went through Silk's `IKeyboard.BeginInput()`, which is now unreachable on Android.
+`KarawanInputConnection` (`Wuka/Platforms/Android/`) is already SDL3-aware — it derives from
+`BaseInputConnection` precisely because `SDLSurface` is a plain `SurfaceView` that returns null
+from `onCreateInputConnection`, and it turns IME composition into `INPUT_TEXT_REPLACE` events — so
+**composition handling is ported; only the "open the keyboard" trigger is missing.**
+
+That makes WP-2.3 smaller than the plan feared: not "port 345 LOC", but wire one trigger
+(`SDL_StartTextInput` on the window, or `InputMethodManager.ShowSoftInput` on `GameSurface`) and
+guard the two setters. The plan calls AC-2.4 *"the single most likely point of failure in this
+whole plan"*; on this reading the risk is materially lower than that, but it is still **unproven
+on device**, which is the only thing that can close GATE-A.
 
 ### ⚠ Merge-ordering trap — hit twice, now structurally closed
 
