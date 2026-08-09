@@ -321,6 +321,45 @@ public class HoverModule : AModule, IInputPart
                         v3Ship, qShip)
                     { CollisionProperties = collisionProperties }.AddContactListener();
                 _prefShip = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+
+                /*
+                 * RESTORED, and this time not on a hunch.
+                 *
+                 * AbiProbe case N FAILED on device (probeRev=15): a constructor prologue
+                 * containing ONLY Vector3.Zero and Quaternion.Identity is enough to corrupt
+                 * the trailing value-type argument on Mono/ARM64. So the struct passed into
+                 * engine.physics.Object and forwarded to CreateDynamic.Execute cannot be
+                 * trusted to arrive intact, however carefully that class is written.
+                 *
+                 * This repair sidesteps argument passing entirely: `inertia` is correct HERE,
+                 * in this frame, and the seven values are copied into the live body one
+                 * SCALAR at a time. Scalars are not aggregates, so the defect cannot touch
+                 * them. It is a workaround for a runtime bug, not a design.
+                 *
+                 * Removing it during the WP-2.3 cleanup is what brought the angular runaway
+                 * back: an indefinite inverse inertia tensor amplifies angular impulses ~442x
+                 * and reverses them. Do not remove it again without a device run that shows
+                 * the tensor arriving correct WITHOUT it.
+                 *
+                 * See docs/BUGS/MONO-ARM64-CTOR-PROLOGUE-ARG-CORRUPTION.md.
+                 */
+                {
+                    ref var liShip = ref _prefShip.LocalInertia;
+                    liShip.InverseInertiaTensor.XX = inertia.InverseInertiaTensor.XX;
+                    liShip.InverseInertiaTensor.YX = inertia.InverseInertiaTensor.YX;
+                    liShip.InverseInertiaTensor.YY = inertia.InverseInertiaTensor.YY;
+                    liShip.InverseInertiaTensor.ZX = inertia.InverseInertiaTensor.ZX;
+                    liShip.InverseInertiaTensor.ZY = inertia.InverseInertiaTensor.ZY;
+                    liShip.InverseInertiaTensor.ZZ = inertia.InverseInertiaTensor.ZZ;
+                    liShip.InverseMass = inertia.InverseMass;
+
+                    Trace($"Ship inertia repaired scalar-wise: "
+                          + $"XX={liShip.InverseInertiaTensor.XX} YY={liShip.InverseInertiaTensor.YY} "
+                          + $"ZZ={liShip.InverseInertiaTensor.ZZ} InvMass={liShip.InverseMass} "
+                          + $"(off-diagonals YX={liShip.InverseInertiaTensor.YX} "
+                          + $"ZX={liShip.InverseInertiaTensor.ZX} ZY={liShip.InverseInertiaTensor.ZY}).");
+                }
+
                 /*
                  * Now actually apply the position to the ship.
                  */
