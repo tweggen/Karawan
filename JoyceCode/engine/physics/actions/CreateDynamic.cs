@@ -13,15 +13,22 @@ public class CreateDynamic : ABase
     public Quaternion Orientation;
     public BodyInertia Inertia;
     public uint PackedTypeIndex;
-    
+
     static public int Execute(Log? plog, Simulation simulation,
-        Vector3 v3Position, Quaternion qOrientation, 
+        Vector3 v3Position, Quaternion qOrientation,
         BodyInertia inertia, TypedIndex shape)
     {
+        /*
+         * Fires once per process, on the first dynamic body. Detects the Mono/ARM64 constructor
+         * prologue defect described in docs/BUGS/MONO-ARM64-CTOR-PROLOGUE-ARG-CORRUPTION.md, which
+         * silently corrupts the inertia tensor arriving here. Silent unless a case fails.
+         */
+        engine.physics.AbiProbe.RunOnce();
+
         int intHandle = simulation.Bodies.Add(
             BodyDescription.CreateDynamic(
                 new RigidPose(v3Position, qOrientation),
-                inertia, 
+                inertia,
                 new CollidableDescription(shape, 0.1f),
                 new BodyActivityDescription(0.01f))).Value;
 
