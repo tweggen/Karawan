@@ -5,15 +5,40 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-08
+**Last updated:** 2026-08-09
 
 ---
 
-# ▶▶ RESUME HERE — state at 2026-08-08, end of the Android SDL3 push
+# ▶▶ RESUME HERE — state at 2026-08-09
 
 **Phase 2 and the Android half of Phase 3 are MERGED.** `Wuka` runs on SDL3 with Silk windowing
-gone. It **starts, renders, plays audio and loads TALE on a physical device** — then misbehaves.
-Three problems are open; none of them is "does SDL3 work", which is answered: it does.
+gone. It **starts, renders, plays audio, loads TALE, and is now controllable on a physical device.**
+
+**Since 2026-08-08, open problems 1, 4 and 5 are all closed, and the touch buttons work.** What
+remains is problem 2 (pause/resume) and problem 3 (Rider deploy, workaround available). None of the
+open items is "does SDL3 work", which is answered: it does.
+
+### Closed since the last update
+
+- **Open problem 5 — root producer found and fixed.** It was **not** the NaN touch path the guards
+  were built around. Cause: a Mono/ARM64 codegen defect corrupting `engine.physics.Object`'s
+  trailing constructor argument, which made the ship's inverse inertia tensor **indefinite** and
+  amplified angular impulses **441.6×**. PR [#51](https://github.com/tweggen/Karawan/pull/51),
+  KAR-411, full writeup in `docs/BUGS/MONO-ARM64-CTOR-PROLOGUE-ARG-CORRUPTION.md`. Device-verified.
+  The NaN guards from #42–#46 stay — they were independently correct, and the black-screen half of
+  the report is still explained by them. **Note for anyone reading the old entry:** "the mechanism
+  is not in doubt and is visible in the code" was true of the NaN path and still produced the wrong
+  culprit, because a plausible mechanism was mistaken for the operative one.
+- **Touch buttons were dead on Android** (`0ea01284`). `IView.Resize` never fires on Android, so
+  `view.size` stayed at the `SetupDone()` default `320x200` while the renderer refreshed from
+  `IView.FramebufferSize` every frame. Aspect 1.60 vs 2.22 displaced the hit rects vertically and
+  killed the bottom button row. `Platform._applyFramebufferSize()` now drives `SetDimension()`,
+  `view.size` and `VIEW_SIZE_CHANGED` from one place so they cannot disagree.
+- **Open problem 1** (boot loop) closed 2026-08-08 by `SafeOrientation.Sanitize` — detail retained
+  below.
+- **Open problem 4** (`ClassNotFoundException`) closed 2026-08-08 — stale `obj/Release`, not code.
+- **Both `platform/wp-2.1*` branches are fully landed** (verified with
+  `scripts/check-branch-landed.sh`, 2026-08-09). The "Open PRs" table below is cleared.
 
 ## What landed
 
@@ -25,12 +50,18 @@ Three problems are open; none of them is "does SDL3 work", which is answered: it
 | #34 | `Sdl3WindowBackend` (inert on desktop) |
 | #35/#37 | **WP-2.2** — Wuka on SDL3, Silk windowing removed, **AC-1.7 closed** (`XA0141` promoted; all 19 arm64 libs 16 KB aligned) |
 | #36/#38 | 60 FPS cap regression fix + single `RuntimeIdentifier` |
+| #41-#46 | Boot-loop fix (`SafeOrientation`), NaN guards across touch / camera / player pose |
+| `0ea01284` | Dead touch buttons: `view.size` published from the framebuffer, so hit tests match rendering |
+| #51 | **KAR-411** — Mono/ARM64 ctor-prologue argument corruption; the ship's angular runaway |
 
 `Karawan.Natives` **0.2.0 is published** on nuget.org.
 
 ## 🔴 Open problems, in priority order
 
-**1. Physics `Debug.Assert` crash — restart loop on device.** Native `SIGABRT` via
+**1 (was), 4 (was) and 5 (was) are CLOSED — see the RESUME block above. The two live
+items are 2 and 3; they keep their original numbers so older notes still resolve.**
+
+**1. ✅ CLOSED 2026-08-08. Physics `Debug.Assert` crash — restart loop on device.** Native `SIGABRT` via
 `mono_runtime_invoke_checked`; the managed stack is unambiguous:
 
 ```
@@ -83,7 +114,15 @@ state silently" is right about `Debug.Assert`, and it means the run that produce
 `DEBUG` for `Wuka`, `Joyce` **and** `BepuPhysics` (sibling repo, solution maps Release→Release), so
 the assert cannot fire in Release regardless of which assembly it lives in.
 
-**2. Black screen after pause/resume; render loop stops, process and audio stay alive.** Log
+**2. 🟡 OPEN, DEPRIORITISED — PRE-EXISTING, NOT AN SDL3 REGRESSION.**
+**Owner, 2026-08-09: "it was not working with Silk.NET either."** So this is not migration
+fallout and must not be treated as Phase 2/3 exit criteria — it predates the whole programme.
+The analysis below stays because it is still the best starting point whenever someone picks it
+up, but it is **out of the platform-backend critical path**. Note this also weakens it as
+GATE-A 'resume' evidence in the other direction: resume was confirmed working in the WP-2.1
+spike, so SDL3 resumes fine; it is *our* engine/render restart that does not.
+
+**2 (original). Black screen after pause/resume; render loop stops, process and audio stay alive.** Log
 evidence: `surfaceDestroyed()` → `nativePause()` → `onResume()` → `surfaceCreated()`
 (`Window size: 2800x1260`), rendering briefly resumes (`framebuffer://rootscene_3d-Pixels`
 uploaded), then all `DOTNET` traces stop while OpenAL keeps logging.
@@ -92,7 +131,32 @@ uploaded), then all `DOTNET` traces stop while OpenAL keeps logging.
 handling suspends the engine and the resume path never restores it, this is exactly the symptom.
 Second candidate: EGL surface recreated on resume, renderer holding stale FBOs.
 
-**3. Rider cannot deploy Wuka** — "Unable evaluate deployment properties", **while the build
+**Hypothesis refined by code reading, 2026-08-09 — the leading candidate now looks WEAKER than the
+second.** The focus path is symmetric on inspection: `Sdl3WindowBackend.cs:169-177` maps the two
+events onto `OnFocusChanged`, and `Platform._windowOnFocusChanged` (`Platform.cs:814-838`) pairs
+`Suspend()` + `SetEngineState(Stopping)` against `SetEngineState(Starting)` → `Running` →
+`Resume()`, guarded by `_hadFocus` so neither half can run twice. If the resume path simply never
+ran, rendering would never come back — but the log says **rendering briefly resumes and then
+stops**, which is a different shape: something restarts and *then* dies.
+
+That points at the second candidate, and at **KI-4**: the unbounded `Monitor.Wait` in
+`LogicalRenderer.WaitNextRenderFrame` turns any post-resume fault on the logical thread into a
+silent freeze with the process and audio still alive — exactly the reported symptom. A throw
+inside the first post-resume logical frame would look identical to a deadlock from here.
+
+**Therefore instrument before theorising further.** The three questions a device run must answer:
+1. Do `WILL_ENTER_BACKGROUND` / `DID_ENTER_FOREGROUND` both reach `_windowOnFocusChanged`, and does
+   `_hadFocus` end up `true`? (Log both edges with the resulting engine state.)
+2. Does the logical thread survive the first post-resume frame, or does it throw? (KI-4 hides this
+   today — a temporary timeout on that `Monitor.Wait` that logs and returns is the cheapest way to
+   find out, and is the diagnostic KI-4 was deliberately left open to enable.)
+3. Are the GL objects still valid after `surfaceCreated()`? EGL context loss would invalidate every
+   FBO and texture handle the renderer caches.
+
+Note `LOW_MEMORY` fires during a routine backgrounding (confirmed on device, see KI-8) and `Wuka`
+ignores it — if anything drops caches or GL resources in response, that is a third candidate.
+
+**3. 🟠 OPEN, workaround available. Rider cannot deploy Wuka** — "Unable evaluate deployment properties", **while the build
 succeeds and signs the APK**. Two fixes were tried and BOTH FAILED: single `RuntimeIdentifier`
 (merged anyway, independently correct) and singular `TargetFramework` (#39, merged, same — keep
 it as tidy-up, it did not fix this).
@@ -148,7 +212,13 @@ Fix: `rm -rf Wuka/obj/Release Wuka/bin/Release && dotnet build Wuka/Wuka.csproj 
 `scripts/check-apk.py` now asserts required natives/classes and scans for dangling superclasses;
 it fails the bad APK with the *real* missing class named, and passes the clean one.
 
-**5. Touch drag spun the view, then black screen with OpenAL warnings forever — guarded
+**5. ✅ CLOSED 2026-08-09 — root producer found, and it was NOT the one hypothesised here.**
+See the RESUME block: the vehicle-spin half was the Mono/ARM64 constructor defect (KAR-411,
+PR #51), not the NaN touch path. The guards below stay and the black-screen half still
+belongs to them. Original entry retained verbatim because the reasoning is instructive:
+it is a worked example of a correct mechanism that was not the operative one.
+
+**5 (original). Touch drag spun the view, then black screen with OpenAL warnings forever — guarded
 (2026-08-08), root producer NOT yet confirmed on device.** Reported as "drag a finger, the vehicle
 rotates way too fast", followed by a black screen and this, repeating every frame:
 
@@ -185,12 +255,11 @@ follows pause/resume and leaves audio running normally).
 
 ## Small open items
 
-- **`Directory.Packages.props` still pins `Karawan.Natives` 0.1.0**, so builds still hit the KI-5
-  `NU1701` fallback. Bump to **0.2.0** and drop the WP-2.1 workaround in
-  `spikes/sdl3-android/Sdl3Spike.csproj` (`ExcludeAssets="all"` + `GeneratePathProperty`) — that
-  doubles as a live check of the packaging fix.
-- **GATE-A: IME is still unanswered** (WP-2.3). Nothing in the spike or Wuka calls
-  `SDL_StartTextInput`. ADR claim 8.
+- ✅ **DONE (verified 2026-08-09): `Directory.Packages.props` pins `Karawan.Natives` **0.2.0**.**
+  The WP-2.1 workaround (`ExcludeAssets="all"` + `GeneratePathProperty`) is still present in
+  `spikes/sdl3-android/Sdl3Spike.csproj:107`, but that spike is disposable anyway (below).
+- **GATE-A: IME is still unanswered** (WP-2.3) — and see **KI-10** below, which upgrades this
+  from "unverified" to "two identified defects". ADR claim 8.
 - **`armeabi-v7a` and `x86_64` are no longer built** (single RID `android-arm64`). x86_64 never
   worked — WP-0.3 §4.3. Re-add x86_64 to the recipes' matrix first if emulator support is wanted.
 - `spikes/sdl3-android/` is disposable now that WP-2.2 has landed.
@@ -256,9 +325,9 @@ Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MER
 
 ### Open PRs
 
-| PR | What | State |
-|---|---|---|
-| [#28](https://github.com/tweggen/Karawan/pull/28) | WP-2.1 — Android SDL3 spike | open; buildable ACs green, **GATE-A needs a device** |
+**None.** [#28](https://github.com/tweggen/Karawan/pull/28) is merged and both `platform/wp-2.1`
+and `platform/wp-2.1-lifecycle` are fully landed on master — re-verified with
+`scripts/check-branch-landed.sh` on 2026-08-09.
 
 ### 🟡 GATE-A evidence — rendering confirmed on device, 2026-08-07
 
@@ -492,6 +561,37 @@ Three ways out, for the record:
 
 **Re-run when Silk.NET.Windowing.Sdl is removed:** add `XA0141` to `MSBuildWarningsAsErrors` in
 `Wuka/Wuka.csproj` and rebuild. That is the whole remaining task for AC-1.7.
+
+### 🔴 KI-10 — the SDL3 backend has no keyboard path, and two unguarded dereferences (2026-08-09)
+
+Found by code reading while scoping WP-2.3. `Sdl3WindowBackend.SilkInputContext => null`
+(`Sdl3WindowBackend.cs:77`) — correct by design, the SDL3 backend translates events into
+`engine.news.EventQueue` itself. WP-3.3 guarded the **subscribe** path for exactly this
+(`Platform.cs:562`, with a comment explaining why). It did **not** guard the two setters:
+
+| site | code | consequence on the SDL3 backend |
+|---|---|---|
+| `Platform.cs:519` | `_iInputContext.Keyboards.Count` in `_setKeyboardEnabled` | **NRE** whenever anything enables the keyboard |
+| `Platform.cs:494` | `_iInputContext.Mice.Count` in `_setMouseEnabled` | **NRE** whenever anything toggles the cursor |
+
+Reachable from `builtin/jt/InputWidgetImplementation.cs:25/30` → `Engine.SetKeyboardEnabled` →
+`Platform.KeyboardEnabled` (`Platform.cs:71-74`), which enqueues the setter onto the platform
+thread. **Not yet observed on device** — the app runs, so neither setter is hit on the startup
+path; both are latent until a JT input widget takes focus. Guarding them is a two-line change.
+
+**The larger half: nothing raises the Android soft keyboard on SDL3 at all.** A repo-wide search
+finds **no** call to `SDL_StartTextInput`, `ShowSoftInput` or `InputMethodManager`. The old path
+went through Silk's `IKeyboard.BeginInput()`, which is now unreachable on Android.
+`KarawanInputConnection` (`Wuka/Platforms/Android/`) is already SDL3-aware — it derives from
+`BaseInputConnection` precisely because `SDLSurface` is a plain `SurfaceView` that returns null
+from `onCreateInputConnection`, and it turns IME composition into `INPUT_TEXT_REPLACE` events — so
+**composition handling is ported; only the "open the keyboard" trigger is missing.**
+
+That makes WP-2.3 smaller than the plan feared: not "port 345 LOC", but wire one trigger
+(`SDL_StartTextInput` on the window, or `InputMethodManager.ShowSoftInput` on `GameSurface`) and
+guard the two setters. The plan calls AC-2.4 *"the single most likely point of failure in this
+whole plan"*; on this reading the risk is materially lower than that, but it is still **unproven
+on device**, which is the only thing that can close GATE-A.
 
 ### ⚠ Merge-ordering trap — hit twice, now structurally closed
 
