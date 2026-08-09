@@ -324,9 +324,16 @@ public class Platform : engine.IPlatform
      * - on Windows, using Teamviewer, the coordinates are insanely high.
      * - on Android, I didn't quite understand the math yet.
      */
-    private void _onMouseMove(IMouse mouse, Vector2 position)
+    /*
+     * WP-3.1: the bodies below are the CONTRACT - the engine.news.Event each raw input
+     * produces. They are deliberately split from the Silk-specific signatures so that the
+     * SDL3 backend can reach exactly the same code through IWindowBackend's callbacks.
+     * Two paths building "the same" event independently is how they drift.
+     */
+
+    private void _pushMouseMoved(Vector2 position)
     {
-        if (_shallReturnBecauseUI(mouse.Position)) return;
+        if (_shallReturnBecauseUI(position)) return;
 
         I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_MOVED, "")
         {
@@ -335,15 +342,29 @@ public class Platform : engine.IPlatform
     }
 
 
-    private void _onMouseWheel(IMouse mouse, ScrollWheel scrollWheel)
+    private void _pushMouseWheel(Vector2 mousePosition, Vector2 delta)
     {
-        if (_shallReturnBecauseUI(mouse.Position)) return;
+        if (_shallReturnBecauseUI(mousePosition)) return;
 
         I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_WHEEL, "")
         {
-            PhysicalPosition = new(scrollWheel.X, scrollWheel.Y)
+            PhysicalPosition = delta
         });
     }
+
+
+    /*
+     * The original tested _shallReturnBecauseUI(mouse.Position) while pushing the `position`
+     * argument. Silk raises MouseMove after updating the property, so the two are the same
+     * value and collapsing them changes nothing - but it is worth stating, because if they
+     * ever diverged this is where a hit-test would silently disagree with the event it
+     * guards.
+     */
+    private void _onMouseMove(IMouse mouse, Vector2 position) => _pushMouseMoved(position);
+
+
+    private void _onMouseWheel(IMouse mouse, ScrollWheel scrollWheel)
+        => _pushMouseWheel(mouse.Position, new Vector2(scrollWheel.X, scrollWheel.Y));
 
     private void _getActualViewRectangle(out Vector2 ul, out Vector2 lr)
     {
@@ -376,15 +397,17 @@ public class Platform : engine.IPlatform
     
 
     private void _onMouseDown(IMouse mouse, MouseButton mouseButton)
+        => _pushMousePressed((int)mouseButton, mouse.Position);
+
+
+    private void _pushMousePressed(int mouseButton, Vector2 mousePosition)
     {
-        if (_shallReturnBecauseUI(mouse.Position)) return;
-        
-        _fullToViewPosition(mouse.Position, out var pos, out var size, out var v2LogicalPosition);
-        
-        // Trace($"Position is {mouse.Position}");
+        if (_shallReturnBecauseUI(mousePosition)) return;
+
+        _fullToViewPosition(mousePosition, out var pos, out var size, out var v2LogicalPosition);
 
         I.Get<EventQueue>().Push(
-            new Event(Event.INPUT_MOUSE_PRESSED, $"{(int)mouseButton}")
+            new Event(Event.INPUT_MOUSE_PRESSED, $"{mouseButton}")
             {
                 PhysicalPosition = pos,
                 PhysicalSize = size,
@@ -402,13 +425,17 @@ public class Platform : engine.IPlatform
 
 
     private void _onMouseUp(IMouse mouse, MouseButton mouseButton)
-    {
-        if (_shallReturnBecauseUI(mouse.Position)) return;
+        => _pushMouseReleased((int)mouseButton, mouse.Position);
 
-        _fullToViewPosition(mouse.Position, out var pos, out var size, out var v2LogicalPosition);
+
+    private void _pushMouseReleased(int mouseButton, Vector2 mousePosition)
+    {
+        if (_shallReturnBecauseUI(mousePosition)) return;
+
+        _fullToViewPosition(mousePosition, out var pos, out var size, out var v2LogicalPosition);
 
         I.Get<EventQueue>().Push(
-            new Event(Event.INPUT_MOUSE_RELEASED, $"{(int)mouseButton}")
+            new Event(Event.INPUT_MOUSE_RELEASED, $"{mouseButton}")
             {
                 PhysicalPosition = pos,
                 PhysicalSize = size,
@@ -425,49 +452,63 @@ public class Platform : engine.IPlatform
     }
 
 
-    private void _onGamepadThumbstickMoved(IGamepad gamepad, Thumbstick thumbstick)
+    private void _pushGamepadStickMoved(int stickIndex, Vector2 position)
     {
         _pushTranslate(new Event(Event.INPUT_GAMEPAD_STICK_MOVED, "")
             {
-                PhysicalPosition = new(thumbstick.X, thumbstick.Y),
-                Data1 = (uint) thumbstick.Index
+                PhysicalPosition = position,
+                Data1 = (uint) stickIndex
             });
     }
 
 
-    private void _onGamepadTriggerMoved(IGamepad gamepad, Trigger trigger)
+    private void _pushGamepadTriggerMoved(int triggerIndex, float position)
     {
-        // Trace($"trigger {trigger.Index}");
         I.Get<EventQueue>().Push(
             new Event(Event.INPUT_GAMEPAD_TRIGGER_MOVED, "")
             {
-                PhysicalPosition = new(trigger.Position, 0f),
-                Data1 = (uint) trigger.Index
+                PhysicalPosition = new(position, 0f),
+                Data1 = (uint) triggerIndex
             });
     }
+
+
+    private void _pushGamepadButtonPressed(string buttonName, uint buttonOrdinal, uint buttonIndex)
+    {
+        _pushTranslate(
+            new Event(Event.INPUT_GAMEPAD_BUTTON_PRESSED, buttonName)
+            {
+                Data1 = buttonOrdinal,
+                Data2 = buttonIndex
+            });
+    }
+
+
+    private void _pushGamepadButtonReleased(string buttonName, uint buttonOrdinal, uint buttonIndex)
+    {
+        _pushTranslate(
+            new Event(Event.INPUT_GAMEPAD_BUTTON_RELEASED, buttonName)
+            {
+                Data1 = buttonOrdinal,
+                Data2 = buttonIndex
+            });
+    }
+
+
+    private void _onGamepadThumbstickMoved(IGamepad gamepad, Thumbstick thumbstick)
+        => _pushGamepadStickMoved(thumbstick.Index, new Vector2(thumbstick.X, thumbstick.Y));
+
+
+    private void _onGamepadTriggerMoved(IGamepad gamepad, Trigger trigger)
+        => _pushGamepadTriggerMoved(trigger.Index, trigger.Position);
 
 
     private void _onGamepadButtonDown(IGamepad gamepad, Button button)
-    {
-        // Trace($"button {button.Name}");
-        _pushTranslate(
-            new Event(Event.INPUT_GAMEPAD_BUTTON_PRESSED, $"{button.Name}")
-            {
-                Data1 = (uint) button.Name,
-                Data2 = (uint) button.Index
-            });
-    }
+        => _pushGamepadButtonPressed($"{button.Name}", (uint)button.Name, (uint)button.Index);
 
 
     private void _onGamepadButtonUp(IGamepad gamepad, Button button)
-    {
-        _pushTranslate(
-            new Event(Event.INPUT_GAMEPAD_BUTTON_RELEASED, $"{button.Name}")
-            {
-                Data1 = (uint) button.Name,
-                Data2 = (uint) button.Index
-            });
-    }
+        => _pushGamepadButtonReleased($"{button.Name}", (uint)button.Name, (uint)button.Index);
 
 
     private bool _hadFocus = true;
@@ -928,6 +969,30 @@ public class Platform : engine.IPlatform
                 _pushTranslate(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
             _backend.OnKeyCharacter += text =>
                 I.Get<EventQueue>().Push(new Event(Event.INPUT_KEY_CHARACTER, text));
+
+            /*
+             * Mouse and gamepad, same arrangement (WP-3.1). These land on exactly the code
+             * the Silk handlers land on, so the produced events - and the InputMapper
+             * translation that _pushTranslate performs for sticks and buttons - are the same
+             * on both backends by construction rather than by inspection.
+             */
+            _backend.OnMouseMoved += _pushMouseMoved;
+            _backend.OnMouseWheel += _pushMouseWheel;
+            _backend.OnMousePressed += _pushMousePressed;
+            _backend.OnMouseReleased += _pushMouseReleased;
+
+            _backend.OnGamepadStickMoved += _pushGamepadStickMoved;
+            _backend.OnGamepadTriggerMoved += _pushGamepadTriggerMoved;
+
+            /*
+             * Index 0: the engine supports one gamepad, and the Silk path only ever reported
+             * button.Index for a device that was already the active one. Nothing downstream
+             * reads Data2.
+             */
+            _backend.OnGamepadButtonPressed += (name, ordinal) =>
+                _pushGamepadButtonPressed(name, ordinal, 0);
+            _backend.OnGamepadButtonReleased += (name, ordinal) =>
+                _pushGamepadButtonReleased(name, ordinal, 0);
 
             _backend.Subscribe();
         }
