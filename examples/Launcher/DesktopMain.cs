@@ -375,23 +375,41 @@ public class DesktopMain
         _applySettingsOverrides(args);
 
         // 7. Create window
-        var options = WindowOptions.Default;
-        options.Size = new Vector2D<int>(1280, 720);
-        options.Title = launchConfig.Branding.WindowTitle;
-        options.FramesPerSecond = 60;
-        options.VSync = false;
-        options.ShouldSwapAutomatically = false;
-        options.WindowState = WindowState.Normal;
-        options.PreferredDepthBufferBits = 16;
+        //
+        // WP-3.2: SDL3 by default, Silk kept as a fallback behind
+        // platform.windowBackend=silk. See Karawan/DesktopMain.cs for why.
+        engine.Engine e;
 
-        IWindow iWindow = Window.Create(options);
-        iWindow.Size = new Vector2D<int>(1280, 720);
+        if (GlobalSettings.Get("platform.windowBackend") == "silk")
+        {
+            Console.WriteLine("Window backend: Silk (fallback, platform.windowBackend=silk).");
 
-        // 8. Create engine
-        var e = Splash.Silk.Platform.EasyCreate(args, iWindow, out var _);
-        e.SetFullscreen(false);
+            var options = WindowOptions.Default;
+            options.Size = new Vector2D<int>(1280, 720);
+            options.Title = launchConfig.Branding.WindowTitle;
+            options.FramesPerSecond = 60;
+            options.VSync = false;
+            options.ShouldSwapAutomatically = false;
+            options.WindowState = WindowState.Normal;
+            options.PreferredDepthBufferBits = 16;
 
-        iWindow.Initialize();
+            IWindow iWindow = Window.Create(options);
+            iWindow.Size = new Vector2D<int>(1280, 720);
+
+            // 8. Create engine
+            e = Splash.Silk.Platform.EasyCreate(args, iWindow, out var _);
+            e.SetFullscreen(false);
+
+            iWindow.Initialize();
+        }
+        else
+        {
+            var backend = new Splash.Silk.Sdl3WindowBackend(
+                launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
+
+            e = Splash.Silk.Platform.EasyCreate(args, backend, out var _);
+            e.SetFullscreen(false);
+        }
 
         // 9. Setup logging
         {

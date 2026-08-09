@@ -41,16 +41,39 @@ public sealed class Sdl3WindowBackend : IWindowBackend
 
     private const int SDL_GL_CONTEXT_PROFILE_ES = 0x0004;
 
-    public Vector2 Size => FramebufferSize;
+    /// <summary>
+    /// Logical window size - the same coordinate space SDL reports mouse positions in.
+    /// </summary>
+    /// <remarks>
+    /// Differs from <see cref="FramebufferSize"/> only on a HiDPI display; identical
+    /// everywhere else, Android included. The distinction matters because
+    /// <c>Platform._shallReturnBecauseUI</c> compares a MOUSE position against a rectangle
+    /// derived from this, and SDL reports mouse positions in logical units. Returning pixels
+    /// here would put the UI hit-test off by the display scale on a retina Mac while looking
+    /// perfectly correct on every other machine (WP-3.2).
+    /// </remarks>
+    public Vector2 Size
+    {
+        get
+        {
+            if (_window == IntPtr.Zero) return Vector2.Zero;
+            SDL_GetWindowSize(_window, out int w, out int h);
+            return new Vector2(w, h);
+        }
+    }
 
     /// <summary>
     /// Drawable size in pixels.
     /// </summary>
     /// <remarks>
-    /// <c>Size</c> and <c>FramebufferSize</c> are deliberately the same here. On Android the
-    /// SDL window IS the drawable - there is no separate logical window size - and reporting
-    /// a different pair would desynchronise the renderer's projection from the hit-test
-    /// rectangle, which is precisely the drift <c>_applyFramebufferSize</c> warns about.
+    /// On Android this equals <see cref="Size"/>: the SDL window IS the drawable, with no
+    /// separate logical size. On a HiDPI desktop display the two legitimately differ, which
+    /// is why they are now separate queries (WP-3.2) rather than one value returned twice.
+    /// <para>
+    /// Feed this to the RENDERER and <see cref="Size"/> to anything comparing against a mouse
+    /// position. Getting that backwards is the exact drift <c>Platform._applyFramebufferSize</c>
+    /// exists to prevent, and it is invisible on any non-retina machine.
+    /// </para>
     /// </remarks>
     public Vector2 FramebufferSize
     {
@@ -127,7 +150,48 @@ public sealed class Sdl3WindowBackend : IWindowBackend
     /// </remarks>
     public int TargetFramesPerSecond { get; set; } = 60;
 
-    public Sdl3WindowBackend(string title)
+    private const int SDL_GL_CONTEXT_PROFILE_CORE = 0x0001;
+
+    /*
+     * Same two settings engine.Resource.ShaderSource reads. Defaults match the Android
+     * values this backend shipped with, so an unconfigured caller behaves as before WP-3.2.
+     */
+    private static void _readGlSettings(out bool isGles, out int major, out int minor)
+    {
+        string api = engine.GlobalSettings.Get("platform.threeD.API");
+        string version = engine.GlobalSettings.Get("platform.threeD.API.version");
+
+        isGles = api != "OpenGL";
+        major = isGles ? 3 : 4;
+        minor = isGles ? 0 : 1;
+
+        if (!string.IsNullOrEmpty(version) && version.Length >= 2
+            && int.TryParse(version.Substring(0, 1), out int parsedMajor)
+            && int.TryParse(version.Substring(1, 1), out int parsedMinor))
+        {
+            major = parsedMajor;
+            minor = parsedMinor;
+        }
+    }
+
+    /// <summary>
+    /// Creates the window and its GL context.
+    /// </summary>
+    /// <remarks>
+    /// <b>The GL profile comes from <c>platform.threeD.API</c> and
+    /// <c>platform.threeD.API.version</c>, not hardcoded (WP-3.2).</b> Both launchers already
+    /// set them before constructing a backend - "OpenGLES"/"310" on Android, "OpenGL"/"410"
+    /// on macOS, "OpenGL"/"430" on Windows and Linux - and <c>ShaderSource</c> compiles
+    /// shaders against those same two values. Asking SDL for a different context than the
+    /// shaders are written for would present as shaders failing to compile, with nothing in
+    /// the message mentioning the window.
+    /// <para>
+    /// <paramref name="width"/> and <paramref name="height"/> are logical units, or 0 to let
+    /// the platform decide. Android always decides: SDL binds to the activity's existing
+    /// surface and ignores them.
+    /// </para>
+    /// </remarks>
+    public Sdl3WindowBackend(string title, int width = 0, int height = 0, bool isResizable = false)
     {
         /*
          * SDL_INIT_GAMEPAD is required for gamepad events to be delivered AT ALL - without
@@ -153,15 +217,30 @@ public sealed class Sdl3WindowBackend : IWindowBackend
         SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
         SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
 
-        // Must be set BEFORE the window exists; SDL bakes them into the EGL config it picks.
-        SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-        SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        _readGlSettings(out bool isGles, out int major, out int minor);
+
+        // Must be set BEFORE the window exists; SDL bakes them into the config it picks.
+        SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK,
+            isGles ? SDL_GL_CONTEXT_PROFILE_ES : SDL_GL_CONTEXT_PROFILE_CORE);
+        SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, major);
+        SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, minor);
         SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DEPTH_SIZE, 16);
+
+        /*
+         * HIGH_PIXEL_DENSITY makes the drawable a true pixel buffer on a retina display
+         * rather than an upscaled logical one. It is what makes Size and FramebufferSize
+         * legitimately differ - see the Size property.
+         */
+        SDL_WindowFlags flags = SDL_WindowFlags.SDL_WINDOW_OPENGL
+                                | SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY;
+        if (isResizable)
+        {
+            flags |= SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
+        }
 
         // On Android the size arguments are ignored - SDL binds to the activity's existing
         // surface - but SDL_WINDOW_OPENGL is what makes it an EGL surface.
-        _window = SDL_CreateWindow(title, 0, 0, SDL_WindowFlags.SDL_WINDOW_OPENGL);
+        _window = SDL_CreateWindow(title, width, height, flags);
         if (_window == IntPtr.Zero)
         {
             throw new InvalidOperationException($"SDL_CreateWindow failed: {SDL_GetError()}");
@@ -170,8 +249,20 @@ public sealed class Sdl3WindowBackend : IWindowBackend
         _glContext = SDL_GL_CreateContext(_window);
         if (_glContext == IntPtr.Zero)
         {
-            throw new InvalidOperationException($"SDL_GL_CreateContext failed: {SDL_GetError()}");
+            throw new InvalidOperationException(
+                $"SDL_GL_CreateContext failed for {(isGles ? "GLES" : "GL")} {major}.{minor}: "
+                + $"{SDL_GetError()}");
         }
+
+        /*
+         * Every launcher configured its Silk view with VSync = false and drove the cap
+         * itself via FramesPerSecond; TargetFramesPerSecond does that here. Leaving the swap
+         * interval at the driver default would silently stack vsync pacing on top of it.
+         */
+        SDL_GL_SetSwapInterval(0);
+
+        Trace($"SDL3 window {width}x{height}, {(isGles ? "GLES" : "GL")} {major}.{minor}, "
+              + $"resizable={isResizable}.");
     }
 
     /// <summary>
@@ -223,9 +314,24 @@ public sealed class Sdl3WindowBackend : IWindowBackend
         }
     }
 
-    /// <summary>No-op: Android decides fullscreen, and the activity is already fullscreen.</summary>
+    /// <summary>
+    /// Desktop fullscreen. Effectively a no-op on Android, where the activity is already
+    /// fullscreen and SDL ignores the request.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately SDL's borderless "fullscreen desktop" behaviour - what SDL3 gives a
+    /// window with no explicit fullscreen mode set - rather than a videomode switch. KI-1 is
+    /// that a Release build starts fullscreen and hangs on macOS, with the mode switch a
+    /// prime suspect; not reproducing that mechanism is the point.
+    /// </remarks>
     public void SetFullscreen(bool isFullscreen)
     {
+        if (_window == IntPtr.Zero) return;
+
+        if (!SDL_SetWindowFullscreen(_window, isFullscreen))
+        {
+            Warning($"Could not set fullscreen to {isFullscreen}: {SDL_GetError()}");
+        }
     }
 
     /// <summary>
@@ -551,6 +657,41 @@ public sealed class Sdl3WindowBackend : IWindowBackend
 
         SDL_CloseGamepad(pad);
         Trace($"Gamepad {instanceId} closed.");
+    }
+
+    /// <summary>
+    /// Sets the window icon from raw RGBA8888 pixels.
+    /// </summary>
+    /// <remarks>
+    /// Replaces Silk's <c>IWindow.SetWindowIcon</c>, which is otherwise the last desktop
+    /// feature that would be silently lost by moving off the Silk view (WP-3.2). SDL copies
+    /// the pixels into its own surface, so the caller's array can be released immediately -
+    /// but only once SDL_SetWindowIcon has returned, hence the pin for the whole call.
+    /// </remarks>
+    public unsafe void SetWindowIcon(byte[] rgba, int width, int height)
+    {
+        if (_window == IntPtr.Zero || null == rgba || width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        fixed (byte* pPixels = rgba)
+        {
+            SDL_Surface* surface = SDL_CreateSurfaceFrom(
+                width, height, SDL_PixelFormat.SDL_PIXELFORMAT_RGBA32, (IntPtr)pPixels, width * 4);
+            if (null == surface)
+            {
+                Warning($"Could not create icon surface: {SDL_GetError()}");
+                return;
+            }
+
+            if (!SDL_SetWindowIcon(_window, (IntPtr)surface))
+            {
+                Warning($"Could not set the window icon: {SDL_GetError()}");
+            }
+
+            SDL_DestroySurface((IntPtr)surface);
+        }
     }
 
     public void Close()
