@@ -119,8 +119,8 @@ public sealed class Sdl3WindowBackend : IWindowBackend
     public Action<int, float>? OnGamepadTriggerMoved { get; set; }
     public Action<string, uint>? OnGamepadButtonPressed { get; set; }
     public Action<string, uint>? OnGamepadButtonReleased { get; set; }
-    public Action<string>? OnKeyPressed { get; set; }
-    public Action<string>? OnKeyReleased { get; set; }
+    public Action<string, engine.inputs.ScanCode>? OnKeyPressed { get; set; }
+    public Action<string, engine.inputs.ScanCode>? OnKeyReleased { get; set; }
     public Action<string>? OnKeyCharacter { get; set; }
 
     /// <summary>
@@ -497,15 +497,15 @@ public sealed class Sdl3WindowBackend : IWindowBackend
 
                 case SDL_EventType.SDL_EVENT_KEY_DOWN:
                 {
-                    string? code = Sdl3KeyCodes.ToEngineCode(ev.key.scancode);
-                    if (null != code) OnKeyPressed?.Invoke(code);
+                    var (scanCode, code) = Sdl3KeyCodes.Translate(ev.key.scancode);
+                    if (null != code) OnKeyPressed?.Invoke(code, scanCode);
                     break;
                 }
 
                 case SDL_EventType.SDL_EVENT_KEY_UP:
                 {
-                    string? code = Sdl3KeyCodes.ToEngineCode(ev.key.scancode);
-                    if (null != code) OnKeyReleased?.Invoke(code);
+                    var (scanCode, code) = Sdl3KeyCodes.Translate(ev.key.scancode);
+                    if (null != code) OnKeyReleased?.Invoke(code, scanCode);
                     break;
                 }
 

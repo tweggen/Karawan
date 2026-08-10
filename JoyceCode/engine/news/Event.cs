@@ -95,6 +95,19 @@ public class Event
     public uint Data3;
     public uint Data4;
 
+    /**
+     * For INPUT_KEY_PRESSED / INPUT_KEY_RELEASED: the PHYSICAL key position.
+     *
+     * Code carries the engine's key-code string for backwards compatibility, but that
+     * string only looks like a character - "a" is the A-POSITION, which prints Q on
+     * AZERTY. Bindings should migrate onto this field (WP-6.4); text entry must use
+     * INPUT_KEY_CHARACTER, which is layout- and IME-composed, and must never be
+     * synthesised from a key event.
+     *
+     * ScanCode.Unknown on every other event type.
+     */
+    public engine.inputs.ScanCode ScanCode = engine.inputs.ScanCode.Unknown;
+
     public string ToKey() => $"{Type}:{Code}";
 
     public override string ToString()

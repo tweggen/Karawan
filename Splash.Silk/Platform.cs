@@ -878,7 +878,7 @@ public class Platform : engine.IPlatform
              * happens to it from here is identical to the Silk path, including the
              * InputMapper logical translation, because both go through _pushTranslate.
              */
-            _backend.OnKeyPressed += code =>
+            _backend.OnKeyPressed += (code, scanCode) =>
             {
                 if (code == "(F11)")
                 {
@@ -886,11 +886,13 @@ public class Platform : engine.IPlatform
                 }
                 else
                 {
-                    _pushTranslate(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
+                    _pushTranslate(new engine.news.Event(Event.INPUT_KEY_PRESSED, code)
+                        { ScanCode = scanCode });
                 }
             };
-            _backend.OnKeyReleased += code =>
-                _pushTranslate(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
+            _backend.OnKeyReleased += (code, scanCode) =>
+                _pushTranslate(new engine.news.Event(Event.INPUT_KEY_RELEASED, code)
+                    { ScanCode = scanCode });
             _backend.OnKeyCharacter += text =>
                 I.Get<EventQueue>().Push(new Event(Event.INPUT_KEY_CHARACTER, text));
 

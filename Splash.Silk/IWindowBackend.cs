@@ -142,8 +142,17 @@ public interface IWindowBackend : IDisposable
      * pushed straight to the queue would silently skip that. Logical input would then be
      * dead on Android and nowhere else.
      */
-    Action<string>? OnKeyPressed { get; set; }
-    Action<string>? OnKeyReleased { get; set; }
+    /*
+     * WP-6.3: key events carry the PHYSICAL position alongside the legacy code string.
+     * The string stays because it is the existing contract with game code; the ScanCode
+     * is what bindings should migrate onto (WP-6.4), because the string only looks like
+     * a character - "a" is the A-POSITION, which prints Q on AZERTY.
+     *
+     * OnKeyCharacter stays a bare string: it is TEXT, already composed by layout and IME,
+     * and has no physical position to report. Never synthesise it from a key event.
+     */
+    Action<string, engine.inputs.ScanCode>? OnKeyPressed { get; set; }
+    Action<string, engine.inputs.ScanCode>? OnKeyReleased { get; set; }
     Action<string>? OnKeyCharacter { get; set; }
 
     /*
