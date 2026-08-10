@@ -94,9 +94,17 @@ public interface IWindowBackend : IDisposable
     /// became unreachable on Android when Silk windowing was removed, and nothing replaced
     /// it, so the keyboard simply never appeared. See KI-10.
     ///
-    /// Desktop backends forward to Silk's <c>BeginInput</c>/<c>EndInput</c>, which is what
-    /// Platform used to call inline; a desktop platform has a real keyboard and nothing
-    /// visible happens either way.
+    /// <b>On desktop this is NOT a no-op, despite the name.</b> An earlier revision of this
+    /// comment said desktop "has a real keyboard and nothing visible happens either way".
+    /// That held under SDL2, where text input is on by default and Silk's
+    /// <c>BeginInput</c>/<c>EndInput</c> merely toggled it. Under SDL3 text input is
+    /// per-window and OFF until <c>SDL_StartTextInput</c> is called, so without this call
+    /// <c>SDL_EVENT_TEXT_INPUT</c> never fires and <c>INPUT_KEY_CHARACTER</c> is never
+    /// raised - a focused text field silently accepts nothing.
+    ///
+    /// That regressed when desktop left the Silk backend and stayed hidden because key
+    /// events are unaffected: WASD, F8 and every scancode binding travel a different path
+    /// and kept working. Only typing was dead.
     /// </remarks>
     void SetKeyboardVisible(bool isVisible);
 
