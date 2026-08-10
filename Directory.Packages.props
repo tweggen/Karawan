@@ -96,17 +96,13 @@
     <PackageVersion Include="System.Text.Json" Version="9.0.10" />
     <PackageVersion Include="System.Threading.Tasks" Version="4.3.0" />
   </ItemGroup>
-  <ItemGroup Label="MAUI (Wuka / Android)">
+  <ItemGroup Label="Android">
     <!--
-      Wuka sets <UseMaui>true</UseMaui>, and the MAUI SDK injects an implicit
-      Microsoft.Maui.Controls PackageReference. Turning CPM on drops that implicit
-      reference unless a PackageVersion exists for it: without this line
-      "dotnet list Wuka package" loses Microsoft.Maui.Controls entirely, which
-      AC-0.1.3 catches as a resolution change. 9.0.111 is the version that
-      resolved before the migration - keep it in step with the installed
-      maui-windows workload.
+      WP-6.1 removed Microsoft.Maui.Controls: Wuka no longer uses MAUI at all.
+      Xamarin.AndroidX.Core replaces what MAUI used to supply transitively -
+      ActivityCompat is used directly by both activities.
     -->
-    <PackageVersion Include="Microsoft.Maui.Controls" Version="9.0.111" />
+    <PackageVersion Include="Xamarin.AndroidX.Core" Version="1.15.0.1" />
   </ItemGroup>
   <ItemGroup Label="Test">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />

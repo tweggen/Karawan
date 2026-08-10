@@ -1,16 +1,18 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using Android.App;
 using Android.Media;
 using Android.Runtime;
-using Microsoft.Maui;
-using Microsoft.Maui.Hosting;
-using Wuka.Platforms.Android;
 
 namespace Wuka
 {
     [Application]
-    public class MainApplication : MauiApplication
+    /*
+     * WP-6.1: was MauiApplication. MAUI contributed nothing here beyond the base class -
+     * the body below is the real work, a libassimp load probe that reports at startup
+     * whether the native library resolved.
+     */
+    public class MainApplication : Android.App.Application
     {
 
         [DllImport("libassimp.so", EntryPoint = "aiGetExportFormatCount", SetLastError = true)]
@@ -43,7 +45,5 @@ namespace Wuka
                 Console.WriteLine($"Continuing...");
             }
         }
-
-        protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
     }
 }

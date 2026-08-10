@@ -16,8 +16,29 @@
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-tizen</TargetFrameworks> -->
 		<OutputType>Exe</OutputType>
 		<RootNamespace>Wuka</RootNamespace>
-		<UseMaui>true</UseMaui>
-		<SingleProject>true</SingleProject>
+		<!--
+			WP-6.1: MAUI is gone. It was template scaffolding - MainActivity was always a
+			plain Android.App.Activity - and its only load-bearing contribution was the
+			splash theme, now Platforms/Android/Resources/values/styles.xml.
+
+			EnableDefaultAndroidItems is pinned false EXPLICITLY. MAUI used to set it, and
+			that is precisely why this project never double-packages natives: the default
+			**/*.so glob stays off and every Android item is listed by hand below. XA4301
+			is promoted to an error, so letting this revert would red-line the build.
+		-->
+		<UseMaui>false</UseMaui>
+		<EnableDefaultAndroidItems>false</EnableDefaultAndroidItems>
+
+		<!--
+			WP-6.1: MAUI SingleProject is what used to point the SDK at
+			Platforms/Android/AndroidManifest.xml. Without this line the SDK looks in its own
+			default location, finds nothing, and SYNTHESISES a manifest - the build still
+			succeeds and the package name still looks right, because ApplicationId supplies
+			that. What silently disappears is everything only the hand-written manifest
+			declares: android:label, android:icon=@mipmap/sd_launcher, hardwareAccelerated.
+			Rider refusing to deploy was the honest signal; the build was not.
+		-->
+		<AndroidManifest>Platforms\Android\AndroidManifest.xml</AndroidManifest>
 		<ImplicitUsings>enable</ImplicitUsings>
 
 		<!--
@@ -104,26 +125,13 @@
 	  <RunAOTCompilation>False</RunAOTCompilation>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<!-- App Icon -->
-		<!-- MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" / -->
-		<!-- MauiIcon Include="Resources\mipmap\appicon.png" Color="#080800" / -->
-		<MauiSplashScreen Include="Resources\Splash\splash_nassau.svg" Color="#000000" BaseSize="144, 144" />
-
-		<Resource Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
-
-		<!-- Images -->
-		<MauiImage Include="Resources\Images\*" />
-		<!-- MauiImage Include="Resources\Images\dotnet_bot.svg" / -->
-		<MauiImage Include="Resources\mipmap\appicon.png" />
-		<MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
-
-		<!-- Custom Fonts -->
-		<MauiFont Include="Resources\Fonts\*" />
-
-		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
-		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-	</ItemGroup>
+	<!--
+		WP-6.1: the MauiSplashScreen / MauiImage / MauiFont / MauiAsset group lived here.
+		Everything in it was template content - dotnet_bot.svg, OpenSans, AboutAssets.txt -
+		and the game's real assets arrive through the generated AndroidResources.xml import
+		below. The launcher icon is declared in AndroidManifest.xml as @mipmap/sd_launcher
+		and comes from the explicit AndroidResource items, not from MauiIcon.
+	-->
 
 	<ItemGroup>
 	  <None Remove="Platforms\Android\android\arm64-v8a\libopenal.so" />
@@ -231,18 +239,54 @@
 	  <AndroidResource Include="Platforms\Android\mipmap-xhdpi\appicon_foreground.png" />
 	  <AndroidResource Include="Platforms\Android\mipmap-xxhdpi\appicon_foreground.png" />
 	  <AndroidResource Include="Platforms\Android\mipmap-xxxhdpi\appicon_foreground.png" />
+	  <!-- WP-6.1: replaces the generated @style/Maui.SplashTheme. -->
+	  <AndroidResource Include="Platforms\Android\Resources\values\styles.xml" />
+	  <!-- WP-6.1: Android 12+ splash. The PNGs are MAUI's own conversion of
+	       Resources/Splash/splash_nassau.svg, lifted from the last AAB it built -
+	       Android cannot consume the SVG directly. -->
+	  <AndroidResource Include="Platforms\Android\Resources\values-v31\styles.xml" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable\splash_window.xml" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable\splash_icon_none.xml" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-mdpi\splash_nassau.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-mdpi\splash_icon.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-hdpi\splash_nassau.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-hdpi\splash_icon.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xhdpi\splash_nassau.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xhdpi\splash_icon.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xxhdpi\splash_nassau.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xxhdpi\splash_icon.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xxxhdpi\splash_nassau.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xxxhdpi\splash_icon.png" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<!--
-			Explicit because Central Package Management (WP-0.1) turns MAUI's implicit
-			references off: Microsoft.Maui.Sdk's BundledVersions.targets sets
-			DisableMauiImplicitPackageReferences=true whenever
-			ManagePackageVersionsCentrally is true. Without this line, UseMaui=true no
-			longer pulls in Microsoft.Maui.Controls at all. Version lives in
-			Directory.Packages.props.
+			WP-6.1: Microsoft.Maui.Controls is gone, and with it the CPM workaround that
+			existed solely because UseMaui=true stopped injecting it under central package
+			management.
+
+			Xamarin.AndroidX.Core is now EXPLICIT. It used to arrive transitively via MAUI,
+			and ActivityCompat is used directly by MainActivity and GameActivity - so
+			removing MAUI without this would fail to compile.
 		-->
-		<PackageReference Include="Microsoft.Maui.Controls" />
+		<PackageReference Include="Xamarin.AndroidX.Core" />
+
+		<!--
+			WP-6.1 CORRECTION: these are SUPPRESSORS, not sources. WP-3.5 removed them on the
+			assumption they pulled Silk in; they do the opposite. Silk.NET.Input.Sdl arrives
+			TRANSITIVELY behind Silk.NET.Input, which Splash.Silk still references for the dead
+			input handlers (KI-12), and its .aar carries SDL2 Java glue that collides with our
+			SDL3 glue at dex time - the exact duplicate-class failure recorded as KI-9:
+
+			  Type org.libsdl.app.HIDDeviceBLESteamController$1 is defined multiple times
+
+			ExcludeAssets="all" is what keeps that .aar out of the APK. They can only go once
+			KI-12 is done and Silk.NET.Input itself is dropped.
+		-->
+		<PackageReference Include="Silk.NET.Input.Sdl" ExcludeAssets="all" PrivateAssets="all" />
+		<PackageReference Include="Silk.NET.Windowing.Sdl" ExcludeAssets="all" PrivateAssets="all" />
+		<PackageReference Include="Ultz.Native.SDL" ExcludeAssets="all" PrivateAssets="all" />
+		<PackageReference Include="Silk.NET.SDL" ExcludeAssets="all" PrivateAssets="all" />
 		<PackageReference Include="Silk.NET.Assimp" />
 		<!--
 			WP-1.5 replaced Silk.NET.OpenAL.Soft.Native with Karawan.Natives in

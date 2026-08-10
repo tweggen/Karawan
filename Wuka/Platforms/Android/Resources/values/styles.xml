@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  WP-6.1: replaces @style/Maui.SplashTheme, which MAUI generated from <MauiSplashScreen> and
+  which was the ONLY load-bearing thing MAUI contributed. Both activities referenced it.
+
+  Deliberately parented on a plain android: theme rather than an AppCompat one - nothing here
+  uses AppCompat, and depending on it would pull back a chunk of what this work package
+  removes. Black background because the game renders black-first and any other colour shows
+  as a flash before the GL surface appears.
+-->
+<resources>
+  <style name="SiliconDesert.Theme" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+    <item name="android:windowBackground">@drawable/splash_window</item>
+    <item name="android:windowNoTitle">true</item>
+    <item name="android:windowFullscreen">true</item>
+  </style>
+</resources>

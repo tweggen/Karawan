@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (API 31) splash screen.
+
+  From API 31 the system ALWAYS draws a splash: with no attributes set it uses the launcher
+  icon, which is why removing MAUI's generated theme made the app open on a large rendition of
+  its own icon rather than the Nassau Records title.
+
+  The PNGs are MAUI's own conversion of Resources/Splash/splash_nassau.svg, lifted out of the
+  last AAB it built and checked in as ordinary drawables - Android cannot consume the SVG
+  directly, and re-deriving it by hand would risk a different result than shipped before.
+
+  WHY splash_icon RATHER THAN splash_nassau. The shipped splash_nassau.png is a fully
+  OPAQUE BLACK 576x576 square whose white title sits at y 457..518 - wide, and near the
+  bottom. The API 31+ splash masks its icon to a circle and only the inner two thirds
+  survive, so that title lands outside the mask and the splash renders as pure black. Two
+  earlier attempts failed on this: putting the image in the icon slot unchanged (masked away)
+  and moving it to windowBackground (that surface only shows until the first rendered frame,
+  and SDL creates its GL surface immediately).
+
+  splash_icon.png is generated from splash_nassau.png: the title is cropped to its bounding
+  box and centred on a TRANSPARENT square 1.5x its width, so it occupies two thirds of the
+  frame and fits the mask whole. Transparent because windowSplashScreenBackground already
+  paints black - baking the background in is what made the original unusable here.
+
+  Regenerate with the snippet in the WP-6.1 commit message if the artwork ever changes.
+-->
+<resources>
+  <style name="SiliconDesert.Theme" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+    <item name="android:windowBackground">@drawable/splash_window</item>
+    <item name="android:windowNoTitle">true</item>
+    <item name="android:windowFullscreen">true</item>
+
+    <item name="android:windowSplashScreenBackground">@android:color/black</item>
+    <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+  </style>
+</resources>

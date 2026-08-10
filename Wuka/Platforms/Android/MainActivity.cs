@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using Android;
@@ -14,7 +14,7 @@ namespace Wuka
         MainLauncher = true, 
         ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density,
         ScreenOrientation = ScreenOrientation.Landscape,
-        Theme = "@style/Maui.SplashTheme" //"@android:style/Theme.Black.NoTitleBar.Fullscreen"
+        Theme = "@style/SiliconDesert.Theme"
     )]
     public class MainActivity : Activity, ActivityCompat.IOnRequestPermissionsResultCallback
     {
@@ -108,7 +108,26 @@ namespace Wuka
             base.OnCreate(savedInstanceState);
 
             bool doTrigger = true;
-            if (Android.OS.Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+
+            /*
+             * BLUETOOTH_CONNECT IS NOT ASKED FOR ANY MORE.
+             *
+             * It is not needed for what players actually want, which is hearing the game on
+             * headphones they have already paired: Android routes media audio to a connected
+             * A2DP device by itself, and the app never touches the Bluetooth stack to do it.
+             * The permission only covers ENUMERATING, pairing or connecting devices.
+             *
+             * What it did buy is SDL discovering Bluetooth GAME CONTROLLERS - see
+             * HIDDeviceManager.java, which checks BLUETOOTH_CONNECT for BLE pads such as the
+             * Steam controller. Without it SDL skips BLE discovery; USB and classic-paired
+             * gamepads are unaffected. The trade is deliberate: a "search for nearby devices"
+             * prompt on every cold start is a poor greeting for a benefit few players use.
+             *
+             * The machinery below is INTENTIONALLY LEFT INTACT - _requestBluetoothPermission,
+             * _checkPermissionGranted and OnRequestPermissionsResult all still work. Re-enable
+             * by putting the condition back; nothing else has to change.
+             */
+            if (false && Android.OS.Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
             {
                 if (!(_checkPermissionGranted(Manifest.Permission.BluetoothConnect)))
                 {
