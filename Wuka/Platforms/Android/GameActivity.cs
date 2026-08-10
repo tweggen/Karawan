@@ -19,7 +19,7 @@ namespace Wuka
     [Activity(
         ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density,
         ScreenOrientation = ScreenOrientation.Landscape,
-        Theme = "@style/Maui.SplashTheme" //"@android:style/Theme.Black.NoTitleBar.Fullscreen"
+        Theme = "@style/SiliconDesert.Theme"
     )]
     public class GameActivity : SDLActivity, ActivityCompat.IOnRequestPermissionsResultCallback
     {
