@@ -10,7 +10,7 @@
 			and maccatalyst lines below have been commented out for as long as they have
 			existed. Restore <TargetFrameworks> if one of them is ever uncommented.
 		-->
-		<TargetFramework>net9.0-android36.0</TargetFramework>
+		<TargetFramework>net10.0-android36.0</TargetFramework>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-maccatalyst</TargetFrameworks> -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-tizen</TargetFrameworks> -->
@@ -28,6 +28,36 @@
 		-->
 		<UseMaui>false</UseMaui>
 		<EnableDefaultAndroidItems>false</EnableDefaultAndroidItems>
+
+		<!--
+			WP-6.2: CoreCLR is the DEFAULT runtime on Android. Mono is one flag away:
+
+				dotnet build Wuka/Wuka.csproj                      # CoreCLR (default)
+				dotnet build Wuka/Wuka.csproj -p:WukaCoreClr=false # Mono
+
+			KAR-411 is a Mono/ARM64 JIT codegen fault (see
+			docs/BUGS/MONO-ARM64-CTOR-PROLOGUE-ARG-CORRUPTION.md). Both runtimes on .NET 10
+			pass every AbiProbe case including M and N on device, so CORRECTNESS DOES NOT
+			DECIDE THIS - the defect was fixed upstream in Mono between .NET 9 and .NET 10,
+			and staying on Mono would also have been defensible.
+
+			Two things decide it instead:
+
+			1. Load time. Measured on device, Debug: CoreCLR reaches the first physics body
+			   in 3.95 s against Mono's 18.31 s - 4.64x, same anchor (ABIPROBE BUILD) in both
+			   logs. Load phase only; steady-state frame rate is still unmeasured.
+			2. Test coverage. Deliberate owner decision (2026-08-10): we have no automated
+			   coverage of the runtime boundary, and shipping is the broadest coverage
+			   available. Making CoreCLR the default means every play session exercises it.
+
+			The flag stays so a runtime regression is bisectable without moving the working
+			tree. Both paths are verified to build; Mono ships 19 native libraries, CoreCLR 17
+			(libmonosgen-2.0/libarc.bin/mono components out, libcoreclr/libclrjit/
+			libmscordaccore/libmscordbi in). Asset count and class count are identical, and
+			XA0141 stays promoted to an error, so the CoreCLR natives are 16 KB aligned too.
+		-->
+		<WukaCoreClr Condition="'$(WukaCoreClr)' == ''">true</WukaCoreClr>
+		<UseMonoRuntime Condition="'$(WukaCoreClr)' == 'true'">false</UseMonoRuntime>
 
 		<!--
 			WP-6.1: MAUI SingleProject is what used to point the SDK at
