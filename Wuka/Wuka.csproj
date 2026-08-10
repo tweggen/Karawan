@@ -10,7 +10,7 @@
 			and maccatalyst lines below have been commented out for as long as they have
 			existed. Restore <TargetFrameworks> if one of them is ever uncommented.
 		-->
-		<TargetFramework>net9.0-android36.0</TargetFramework>
+		<TargetFramework>net10.0-android36.0</TargetFramework>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-maccatalyst</TargetFrameworks> -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-tizen</TargetFrameworks> -->
@@ -28,6 +28,25 @@
 		-->
 		<UseMaui>false</UseMaui>
 		<EnableDefaultAndroidItems>false</EnableDefaultAndroidItems>
+
+		<!--
+			WP-6.2 SPIKE: opt-in CoreCLR instead of Mono on Android.
+
+				dotnet build Wuka/Wuka.csproj -p:WukaCoreClr=true
+
+			This, not the net10.0 TFM bump, is the experiment. KAR-411 is a Mono/ARM64 JIT
+			codegen fault (see docs/BUGS/MONO-ARM64-CTOR-PROLOGUE-ARG-CORRUPTION.md); a plain
+			TFM bump still ships libmonosgen-2.0.so and would prove nothing. AbiProbe cases M
+			and N are the acceptance test - read "ABIPROBE RESULT" from logcat on device.
+
+			Left opt-in rather than default so both runtimes are one flag apart on the same
+			commit: if a device regression appears, the runtime is bisectable without moving
+			the working tree. Verified to build both ways; Mono ships 19 native libraries,
+			CoreCLR 17 (libmonosgen-2.0/libarc.bin/mono components out, libcoreclr/libclrjit/
+			libmscordaccore/libmscordbi in). Asset count and class count are identical, and
+			XA0141 stays promoted to an error, so the CoreCLR natives are 16 KB aligned too.
+		-->
+		<UseMonoRuntime Condition="'$(WukaCoreClr)' == 'true'">false</UseMonoRuntime>
 
 		<!--
 			WP-6.1: MAUI SingleProject is what used to point the SDK at
