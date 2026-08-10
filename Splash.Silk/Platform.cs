@@ -5,14 +5,10 @@ using builtin.controllers;
 using engine;
 using engine.news;
 using ObjLoader.Loader.Common;
-using Silk.NET.Core.Loader;
 using static engine.Logger;
 
 using Silk.NET.Input;
-using Silk.NET.Maths;
 using Silk.NET.OpenGL;
-using Silk.NET.Windowing;
-using Silk.NET.OpenGL.Extensions.ImGui;
 
 namespace Splash.Silk;
 
@@ -48,7 +44,6 @@ public class Platform : engine.IPlatform
      * that Android can supply an SDL3 window instead. See IWindowBackend for why.
      */
     private IWindowBackend _backend;
-    private IInputContext _iInputContext;
     private GL _gl;
     
     private engine.scheduler.WorkerQueue _platformThreadActions = new("platformThread");
@@ -559,11 +554,6 @@ public class Platform : engine.IPlatform
 
         _keyboardEnabled = value;
 
-        /*
-         * Was an inline loop over _iInputContext.Keyboards, which is null on the SDL3
-         * backend - so this threw, and on the one platform that actually has an on-screen
-         * keyboard to raise. Each backend now owns the gesture. See KI-10.
-         */
         _backend.SetKeyboardVisible(value);
     }
 
@@ -583,18 +573,6 @@ public class Platform : engine.IPlatform
         _frameTimingStopwatch.Start();
         _prevFrame = _frameTimingStopwatch.Elapsed;
         
-        /*
-         * WP-3.5: the Silk input subscription that used to be here is gone with
-         * SilkWindowBackend. Every backend now feeds engine.news.EventQueue through the
-         * IWindowBackend callbacks - the queue was always the contract, and that wiring was
-         * only ever the Silk half of it.
-         *
-         * ImGui went with it. Splash.Silk/ImGui/Controller.cs needs a Silk IInputContext,
-         * which no surviving backend provides, so the desktop debug UI is OFF until Phase 5
-         * (WP-5.3) deals with the ImGui entanglement. It was already off in practice from
-         * WP-3.2 onward, when desktop moved to SDL3 - this only makes that explicit.
-         */
-
         // TXWTODO: Create sort of "on new gl window" event.
         _gl = GL.GetApi(_backend.GetProcAddress);
         _silkThreeD.SetGL(_gl);
@@ -900,7 +878,7 @@ public class Platform : engine.IPlatform
              * happens to it from here is identical to the Silk path, including the
              * InputMapper logical translation, because both go through _pushTranslate.
              */
-            _backend.OnKeyPressed += code =>
+            _backend.OnKeyPressed += (code, scanCode) =>
             {
                 if (code == "(F11)")
                 {
@@ -908,11 +886,13 @@ public class Platform : engine.IPlatform
                 }
                 else
                 {
-                    _pushTranslate(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
+                    _pushTranslate(new engine.news.Event(Event.INPUT_KEY_PRESSED, code)
+                        { ScanCode = scanCode });
                 }
             };
-            _backend.OnKeyReleased += code =>
-                _pushTranslate(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
+            _backend.OnKeyReleased += (code, scanCode) =>
+                _pushTranslate(new engine.news.Event(Event.INPUT_KEY_RELEASED, code)
+                    { ScanCode = scanCode });
             _backend.OnKeyCharacter += text =>
                 I.Get<EventQueue>().Push(new Event(Event.INPUT_KEY_CHARACTER, text));
 

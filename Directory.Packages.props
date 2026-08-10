@@ -40,16 +40,11 @@
     <!-- N5/N8: pinned deliberately. Do not bump. -->
     <PackageVersion Include="Silk.NET.Assimp" Version="2.22.0" />
     <PackageVersion Include="Silk.NET.Core" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.Input" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.Input.Sdl" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.OpenGL" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.OpenGL.Extensions.EXT" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.SDL" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.Windowing" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.Windowing.Sdl" Version="2.23.0" />
     <PackageVersion Include="Ultz.Native.Assimp" Version="5.4.1" />
-    <PackageVersion Include="Ultz.Native.SDL" Version="2.32.10" />
   </ItemGroup>
   <ItemGroup Label="Natives built by our own CI">
     <!--
