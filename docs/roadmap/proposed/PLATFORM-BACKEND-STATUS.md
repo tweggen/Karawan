@@ -349,6 +349,8 @@ Consequences carried forward:
 
 | **WP-6.3** | 🟢 **NEXT — design agreed 2026-08-10** | `refactor/ki-12-drop-silk-input` | — | 0 | — | GATE-C input | **Native input semantics.** Follows KI-12: the Silk translation layer is gone, so scancode-vs-text and device enumeration both need defining natively. Independent of WP-6.1/6.2 — can run in parallel. Four ordered steps in the section below. |
 
+| **WP-6.4** | 🟡 **SCOPED, after WP-6.3** | — | — | 0 | — | `[HUMAN]` rebinding UI | **Action / binding layer, runtime r/w.** Grows the existing `InputMapper` JSON assignment into a proper control→action layer that can be read AND written while the game runs. Section below. |
+
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
 
 ### Open PRs
@@ -816,6 +818,51 @@ code `"w"` — right for movement, misleading to read.
 **Consequence worth noting:** because devices no longer raise events, `ScanCode` does not belong on
 `IKeyboard` at all — it is part of the event payload. That is what makes step 1 independent of
 steps 2–4.
+
+
+### 🟡 WP-6.4 — action / binding layer, readable and writable at runtime
+
+**Continuation of what already exists.** `builtin.controllers.InputMapper` already holds a
+`SortedDictionary<string, string> MapButtonToLogical`, already configured from JSON, already
+lock-guarded, and already re-emits a logical event beside every raw one via `_pushTranslate`. This
+work package grows that into the full layer rather than replacing it.
+
+**The model, borrowed deliberately:**
+
+| concept | meaning here | prior art |
+|---|---|---|
+| **control** | a physical thing that produces a value: `ScanCode.W`, gamepad stick axis, mouse button | Unity's "control" |
+| **action** | the game-meaningful verb: `move.forward`, `ui.confirm` | Unity action / Godot input map action |
+| **binding** | control → action, plus its transform | Godot's flat named-action config |
+| **modifier** | dead zone, inversion, curve, hold, double-tap, expressed as composable transforms on a binding | Unreal Enhanced Input |
+
+**The rule that makes it worth doing:** gameplay code sees ACTIONS ONLY. No `if (code == "w")`
+anywhere outside the binding layer. Today `InputController` reads raw codes directly, which is why
+the trigger convention and `StickTransfer`'s x⁴ curve are hardcoded at their call sites — those are
+modifiers in disguise and should become data.
+
+**Runtime read/write is the defining requirement,** and it drives three things:
+
+1. **The binding table is live state, not load-time config.** `InputMapper` already has the shape
+   (locked accessor, wholesale replace). Rebinding writes one entry, not a reload.
+2. **A write must be persistable.** JSON in, JSON out, same schema — so a rebinding UI round-trips
+   through the file the game shipped with, and a user's overrides survive an update.
+3. **Rebinding needs "listen for the next control".** A transient capture mode where the next raw
+   control is returned instead of being translated. That is a mode on the mapper, not a new
+   subsystem.
+
+**Depends on WP-6.3 step 1** (`ScanCode` on HID usage IDs), because a binding must store a POSITION,
+never a character - otherwise a user's saved bindings break when they switch layout. And on WP-6.3
+rule 3 for display: the UI shows `SDL_GetKeyName(SDL_GetKeyFromScancode(...))`, layout-dependent and
+display-only, while the stored binding stays positional.
+
+**Deliberately NOT copied:** Unity's device-layout description language and Unreal's asset-based
+binding editor. Both solve third-party hardware support without engine changes - a problem this
+project does not have, at a cost it should not pay.
+
+> ⚠ The prior art above is reconstructed from memory and API details will have drifted. The
+> concepts are stable enough to design from; if a specific mechanism is adopted - Unreal's modifier
+> evaluation order, say - check it against current documentation before encoding it.
 
 ## Gate ledger
 
