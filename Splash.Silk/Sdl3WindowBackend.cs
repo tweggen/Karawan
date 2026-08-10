@@ -387,28 +387,53 @@ public sealed class Sdl3WindowBackend : IWindowBackend
 
     public Action<bool>? SoftKeyboardHandler { get; set; }
 
-    private bool _warnedNoSoftKeyboard = false;
 
     public void SetKeyboardVisible(bool isVisible)
     {
         var handler = SoftKeyboardHandler;
-        if (null == handler)
+        if (null != handler)
         {
             /*
-             * Once, not per keystroke: a missing handler is a wiring mistake at startup,
-             * and the symptom - a text field that focuses but never raises a keyboard - is
-             * otherwise entirely silent.
+             * Android. The handler binds the IME to GameSurface rather than letting SDL
+             * raise its own SDLDummyEdit - see the remarks above, and KI-10.
              */
-            if (!_warnedNoSoftKeyboard)
-            {
-                _warnedNoSoftKeyboard = true;
-                Warning("No SoftKeyboardHandler installed; the on-screen keyboard cannot be shown.");
-            }
-
+            handler(isVisible);
             return;
         }
 
-        handler(isVisible);
+        /*
+         * Desktop, and NOT a no-op however much it looks like one.
+         *
+         * The old remarks on IWindowBackend.SetKeyboardVisible said a desktop platform
+         * "has a real keyboard and nothing visible happens either way". That was true
+         * under SDL2, where text input is on by default and Silk's BeginInput/EndInput
+         * merely toggled it. It is FALSE under SDL3: text input is per-window and OFF
+         * until SDL_StartTextInput is called, so SDL_EVENT_TEXT_INPUT never fires and
+         * INPUT_KEY_CHARACTER is never raised. Typing into a focused field produces
+         * nothing at all.
+         *
+         * That regressed when desktop left the Silk backend (WP-3.2, sealed by WP-3.5
+         * deleting SilkWindowBackend and with it the BeginInput forward). It stayed
+         * invisible because key events kept working perfectly - WASD, F8 and every
+         * binding are scancode-driven and travel a different path - so only text entry
+         * was dead, and only if someone opened a field and typed. Same shape as KI-11.
+         *
+         * SDL_StartTextInput is the right call HERE and the wrong one on Android, which
+         * is why this sits below the handler check rather than replacing it.
+         */
+        if (_window == IntPtr.Zero) return;
+
+        if (isVisible)
+        {
+            if (!SDL_StartTextInput(_window))
+            {
+                Warning($"SDL_StartTextInput failed: {SDL_GetError()}");
+            }
+        }
+        else
+        {
+            SDL_StopTextInput(_window);
+        }
     }
 
     public void Run()
