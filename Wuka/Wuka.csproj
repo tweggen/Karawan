@@ -296,8 +296,6 @@
 			Android no longer calls Window.GetView at all - Sdl3WindowBackend creates the
 			window itself. Desktop is untouched; it still resolves the full meta-package.
 		-->
-		<PackageReference Include="Silk.NET.Windowing.Sdl" ExcludeAssets="all" PrivateAssets="all" />
-		<PackageReference Include="Silk.NET.Input.Sdl" ExcludeAssets="all" PrivateAssets="all" />
 		<!--
 			Ultz.Native.SDL rides in behind Silk.NET.SDL and ships SDL2 for desktop RIDs.
 			RID fallback then packages runtimes/linux-{x64,arm64}/native/libSDL2-2.0.so into
@@ -310,7 +308,6 @@
 			Silk's SDL2 any more.
 		-->
 		<PackageReference Include="Ultz.Native.SDL" ExcludeAssets="all" PrivateAssets="all" />
-		<PackageReference Include="Silk.NET.SDL" ExcludeAssets="all" PrivateAssets="all" />
 		<!--
 			Transitive dep of Joyce. ImGui.NET has no Android native, so RID fallback was
 			packaging its runtimes/linux-x64/native/libcimgui.so into lib/x86_64/ of the APK

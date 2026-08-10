@@ -374,42 +374,13 @@ public class DesktopMain
         // Applied after InterpretConfig so CLI args take precedence over game config.
         _applySettingsOverrides(args);
 
-        // 7. Create window
-        //
-        // WP-3.2: SDL3 by default, Silk kept as a fallback behind
-        // platform.windowBackend=silk. See Karawan/DesktopMain.cs for why.
-        engine.Engine e;
+        // 7. Create window. WP-3.5: SDL3 is the only desktop backend.
+        var backend = new Splash.Silk.Sdl3WindowBackend(
+            launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
 
-        if (GlobalSettings.Get("platform.windowBackend") == "silk")
-        {
-            Console.WriteLine("Window backend: Silk (fallback, platform.windowBackend=silk).");
-
-            var options = WindowOptions.Default;
-            options.Size = new Vector2D<int>(1280, 720);
-            options.Title = launchConfig.Branding.WindowTitle;
-            options.FramesPerSecond = 60;
-            options.VSync = false;
-            options.ShouldSwapAutomatically = false;
-            options.WindowState = WindowState.Normal;
-            options.PreferredDepthBufferBits = 16;
-
-            IWindow iWindow = Window.Create(options);
-            iWindow.Size = new Vector2D<int>(1280, 720);
-
-            // 8. Create engine
-            e = Splash.Silk.Platform.EasyCreate(args, iWindow, out var _);
-            e.SetFullscreen(false);
-
-            iWindow.Initialize();
-        }
-        else
-        {
-            var backend = new Splash.Silk.Sdl3WindowBackend(
-                launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
-
-            e = Splash.Silk.Platform.EasyCreate(args, backend, out var _);
-            e.SetFullscreen(false);
-        }
+        // 8. Create engine
+        engine.Engine e = Splash.Silk.Platform.EasyCreate(args, backend, out var _);
+        e.SetFullscreen(false);
 
         // 9. Setup logging
         {
