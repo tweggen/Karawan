@@ -347,6 +347,8 @@ Consequences carried forward:
 | **WP-6.1** | 🟢 **SCOPED, not started** | — | — | 0 | — | `[HUMAN]` device launch | **Drop MAUI from Wuka.** Scoped 2026-08-09, see the WP-6.1 section below. Removes the single largest unknown from the .NET 10 decision. |
 | **WP-6.2** | ⏸ **BLOCKED on WP-6.1** | — | — | 0 | — | — | **.NET 10 (LTS) evaluation.** Deliberately after 6.1: the MAUI workload is the biggest migration risk, and removing it first makes this an ordinary TFM bump. First experiment is cheap and decisive - see the WP-6.2 section. |
 
+| **WP-6.3** | 🟢 **NEXT — design agreed 2026-08-10** | `refactor/ki-12-drop-silk-input` | — | 0 | — | GATE-C input | **Native input semantics.** Follows KI-12: the Silk translation layer is gone, so scancode-vs-text and device enumeration both need defining natively. Independent of WP-6.1/6.2 — can run in parallel. Four ordered steps in the section below. |
+
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
 
 ### Open PRs
@@ -755,6 +757,66 @@ windowing rewrite and the runtime move.
 and needs republishing (human-gated); a few `net6.0` / `net7.0-windows` stragglers.
 **`Silk.NET.Assimp` stays pinned at 2.22.0** - N5/N8, bumping it is what corrupted model loading.
 
+
+### 🟢 WP-6.3 — native input semantics (design agreed 2026-08-10)
+
+**Why now.** KI-12 removed `Silk.NET.Input`, and with it the translation layer that used to define
+what a key event *meant*. `engine.inputs.*` was introduced as a Silk-shaped replacement; this work
+package settles its semantics before anything is built on it.
+
+**The agreed split — two halves doing different jobs:**
+
+| | responsibility |
+|---|---|
+| **`engine.news.EventQueue`** | everything that HAPPENS — keys, mouse, gamepad, and device attach/detach |
+| **`engine.inputs.IContext`** | what EXISTS right now — enumeration and capability only, nothing subscribable |
+
+**Where we sit on keys, and it is already correct.** SDL3 hands us both channels cleanly and
+`Sdl3WindowBackend` already uses both:
+
+- `SDL_EVENT_KEY_DOWN/UP` → `ev.key.scancode` — physical position, layout- and IME-independent
+- `SDL_EVENT_TEXT_INPUT` → UTF-8, already composed by layout **and** IME
+
+Nothing needs introducing. What is missing is honesty in the types: engine codes look like
+characters (`"a"`, `"w"`) but are POSITIONS. On AZERTY the physical W-position key yields engine
+code `"w"` — right for movement, misleading to read.
+
+**Three rules to encode:**
+
+1. **Bindings consume positions only.** WASD is `ScanCode.W`, never the character `'w'`.
+2. **Text consumes `INPUT_KEY_CHARACTER` only** — never synthesised from key events. That is what
+   makes IME, dead keys and accents work, and it is already wired.
+3. **Display is a THIRD thing.** A rebinding UI must show the label the user's layout prints on
+   that key: `SDL_GetKeyName(SDL_GetKeyFromScancode(...))`. Layout-dependent, display-only, never
+   used for lookup. This is the one usually missed — it is why "press a key to bind" screens show
+   `Z` on AZERTY while correctly storing the W position.
+
+**Ordered steps:**
+
+1. **`ScanCode` on USB HID usage IDs** (`A = 0x04`), which is exactly what `SDL_Scancode` already
+   is — so `Sdl3KeyCodes` collapses from a translation table to a cast, and the enum is
+   platform-neutral by construction rather than by convention. The key event carries it. **Do this
+   first**: it is the step with real behaviour attached, and a wrong table is silently wrong rather
+   than loudly wrong.
+2. **Strip the events off the device interfaces.** Biggest departure from the copied Silk shape:
+   Silk's `IKeyboard` carries `KeyDown`/`KeyUp`; ours carries nothing. `IKeyboard`/`IMouse`/
+   `IGamepad` reduce to identity and capability. `IDevicePart` (`IButton`, `IThumbstick`,
+   `ITrigger`, `IMotor`, `IKey`, `IWheel`) then earns its place as capability description, which is
+   what a bindings UI needs. Note `IMotor` is the odd one out — output flows the other way and will
+   not fit the queue model.
+3. **Device attach/detach onto the queue.** Delete `IContext.OnConnectionChanged`; emit
+   `INPUT_DEVICE_ATTACHED` / `INPUT_DEVICE_DETACHED` instead. **Not tidiness — a race.** A C# event
+   fires immediately on SDL's thread while queue events drain later on the logical thread, so a
+   gamepad's first axis event could be PROCESSED before the game is told the device exists. One
+   channel gives one ordering and one thread by construction.
+4. **Enumeration as an immutable snapshot.** It will be read from the logical thread while SDL
+   mutates devices on its own. Rebuild on change and publish atomically: no locks in the hot path,
+   and a caller iterating cannot have the collection change underneath it.
+
+**Consequence worth noting:** because devices no longer raise events, `ScanCode` does not belong on
+`IKeyboard` at all — it is part of the event payload. That is what makes step 1 independent of
+steps 2–4.
+
 ## Gate ledger
 
 | Gate | What | Status |
@@ -777,7 +839,7 @@ and needs republishing (human-gated); a few `net6.0` / `net7.0-windows` straggle
 | **KI-2** | `I.RegisterFactory: Error: Already registered engine.news.EmissionContext` on every run, both platforms. Something registers that factory twice. | open, unowned, benign so far |
 | **KI-3** | `ink` is listed as a required sibling checkout in `README.md` and `CLAUDE.md`, but no csproj references it via `$(SiblingRoot)`. Possibly a second dead prerequisite (cf. FbxSharp, PR #10). | open, unverified |
 | **KI-11** | **ImGui is OFF on desktop.** `Splash.Silk/ImGui/Controller.cs` needs a Silk `IInputContext`, which no surviving backend provides. **Caused by WP-3.2**, not WP-3.5 — desktop stopped satisfying `_backend is SilkWindowBackend` the moment it moved to SDL3, and that went unreported at the time. GATE-E fails on desktop until fixed. **Measured while scoping WP-3.5: the controller touches `IView` in only three places** (`Resize +=`, `FramebufferSize`, `Resize -=`), all of which exist on `IWindowBackend` — so the real dependency is input alone, and WP-5.3 is smaller than the plan implies. | open, owned by Phase 5 (WP-5.3) |
-| **KI-12** | **Dead Silk input handlers in `Platform`.** `_onKeyDown(IKeyboard,…)`, `_onMouseDown(IMouse,…)` and the gamepad pair are no longer subscribed by anything, and `IWindowBackend.SilkInputContext` is always null. They are the only reason `Silk.NET.Input` is still referenced. Harmless — the package ships no natives — but they are dead code. | **owner will refactor manually** (2026-08-10) |
+| **KI-12** | **Dead Silk input handlers in `Platform`.** `_onKeyDown(IKeyboard,…)`, `_onMouseDown(IMouse,…)` and the gamepad pair are no longer subscribed by anything, and `IWindowBackend.SilkInputContext` is always null. They are the only reason `Silk.NET.Input` is still referenced. Harmless — the package ships no natives — but they are dead code. | ✅ **RESOLVED 2026-08-10** by `refactor/ki-12-drop-silk-input`. `Silk.NET.Input` is gone, and with it `Input.Sdl`, `Windowing.Sdl`, `SDL` and `Ultz.Native.SDL` — verified absent from `dotnet list Wuka --include-transitive`. The four `ExcludeAssets` suppressors went too: with nothing pulling those packages in, they had become the sole SOURCE, the inverse of their role an hour earlier. **KI-9 is retired in practice** — no SDL2 `.aar` in the graph means no duplicate Java glue to collide. Wuka builds; APK unchanged at 19 natives. Semantics follow in WP-6.3. |
 | **KI-4** | An unbounded `Monitor.Wait` in `LogicalRenderer.WaitNextRenderFrame` runs on the thread macOS requires for event pumping, so *any* logical-thread fault presents as a frozen app rather than an error. A timeout that logs and returns null would make this class of failure diagnosable. | open — deliberately not "fixed", since it would mask causes |
 
 ---
