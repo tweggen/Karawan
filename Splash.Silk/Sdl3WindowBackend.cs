@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using Silk.NET.Input;
 using static SDL3.SDL;
 using static engine.Logger;
 
@@ -88,18 +87,6 @@ public sealed class Sdl3WindowBackend : IWindowBackend
     public Func<string, nint> GetProcAddress => name => SDL_GL_GetProcAddress(name);
 
     public bool IsClosing => _isClosing;
-
-    /// <summary>
-    /// Always null: this backend feeds <c>engine.news.EventQueue</c> itself.
-    /// </summary>
-    /// <remarks>
-    /// Touch is NOT translated here. <c>Wuka.GameSurface.OnTouch</c> has always pushed touch
-    /// events into the queue from the Android view layer, and it still does. Translating
-    /// SDL's <c>FINGER_*</c> events as well would deliver every touch twice - which is why
-    /// the old raw-SDL2 <c>PeepEvents</c> block in <c>GameActivity</c> was left disabled
-    /// behind <c>#if false</c>.
-    /// </remarks>
-    public IInputContext? SilkInputContext => null;
 
     public Platform.UnderlyingFrameworks UnderlyingFramework => Platform.UnderlyingFrameworks.Sdl;
 

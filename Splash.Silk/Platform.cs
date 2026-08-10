@@ -7,7 +7,6 @@ using engine.news;
 using ObjLoader.Loader.Common;
 using static engine.Logger;
 
-using Silk.NET.Input;
 using Silk.NET.OpenGL;
 
 namespace Splash.Silk;
@@ -102,128 +101,6 @@ public class Platform : engine.IPlatform
         _backend.SetFullscreen(isFullscreen);
     }
 
-
-    // The body of this moved to SilkWindowBackend.SetFullscreen (WP-3.3): it manipulated a
-    // Silk IWindow directly, which is exactly the coupling the backend seam removes.
-
-
-    private string _convertKeyCodeFromPlatform(Key args)
-    {
-        string code = null;
-        switch (args)
-        {
-            case Key.ShiftLeft:
-                code = "(shiftleft)";
-                break;
-            case Key.ShiftRight:
-                code = "(shiftright)";
-                break;
-            case Key.Space:
-                code = " ";
-                break;
-            case Key.Number0:
-                code = "0";
-                break;
-            case Key.Number1:
-                code = "1";
-                break;
-            case Key.Number2:
-                code = "2";
-                break;
-            case Key.Number3:
-                code = "3";
-                break;
-            case Key.Number4:
-                code = "4";
-                break;
-            case Key.Number5:
-                code = "5";
-                break;
-            case Key.Number6:
-                code = "6";
-                break;
-            case Key.Number7:
-                code = "7";
-                break;
-            case Key.Number8:
-                code = "8";
-                break;
-            case Key.Number9:
-                code = "9";
-                break;
-            case Key.A:
-                code = "a";
-                break;
-            case Key.D:
-                code = "d";
-                break;
-            case Key.E:
-                code = "e";
-                break;
-            case Key.F:
-                code = "f";
-                break;
-            case Key.S:
-                code = "s";
-                break;
-            case Key.Q:
-                code = "q";
-                break;
-            case Key.W:
-                code = "w";
-                break;
-            case Key.Z:
-                code = "z";
-                break;
-            case Key.Enter:
-                code = "(enter)";
-                break;
-            case Key.Tab:
-                code = "(tab)";
-                break;
-            case Key.Escape:
-                code = "(escape)";
-                break;
-            case Key.F8:
-                code = "(F8)";
-                break;
-            case Key.F9:
-                code = "(F9)";
-                break;
-            case Key.F10:
-                code = "(F10)";
-                break;
-            case Key.F11:
-                code = "(F11)";
-                break;
-            case Key.F12:
-                code = "(F12)";
-                break;
-            case Key.Up:
-                code = "(cursorup)";
-                break;
-            case Key.Down:
-                code = "(cursordown)";
-                break;
-            case Key.Right:
-                code = "(cursorright)";
-                break;
-            case Key.Left:
-                code = "(cursorleft)";
-                break;
-            case Key.Delete:
-                code = "(delete)";
-                break;
-            case Key.Backspace:
-                code = "(backspace)";
-                break;
-            default:
-                break;
-        }
-
-        return code;
-    }
-
     
     /**
      * Push an event and optionally its translated logical version.
@@ -251,66 +128,6 @@ public class Platform : engine.IPlatform
             }
         }
     }
-    
-
-    private void _onKeyDown(IKeyboard arg1, Key arg2, int arg3)
-    {
-        string code = _convertKeyCodeFromPlatform(arg2);
-        if (!code.IsNullOrEmpty())
-        {
-            switch (code)
-            {
-                case "(F11)":
-                    _toggleFullscreen();
-                    break;
-                default:
-                    _pushTranslate(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
-                    break;
-            }
-        }
-    }
-
-
-    private void _onKeyChar(IKeyboard arg1, char arg3)
-    {
-        string keyCode = null;
-        switch (arg3)
-        {
-            case '\b':
-                keyCode = "(backspace)";
-                break;
-            case '\t':
-                keyCode = "(tab)";
-                break;
-            case '\n':
-            case '\r':
-                keyCode = "(enter)";
-                break;
-            case '\x7f':
-                keyCode = "(delete)";
-                break;
-            default:
-                if (!char.IsControl(arg3))
-                {
-                    I.Get<EventQueue>().Push(new Event(Event.INPUT_KEY_CHARACTER, arg3.ToString()));
-                }
-                return;
-        }
-
-        // Emit press+release pair for translated control characters.
-        _pushTranslate(new Event(Event.INPUT_KEY_PRESSED, keyCode));
-        _pushTranslate(new Event(Event.INPUT_KEY_RELEASED, keyCode));
-    }
-
-
-    private void _onKeyUp(IKeyboard arg1, Key arg2, int arg3)
-    {
-        string code = _convertKeyCodeFromPlatform(arg2);
-        if (!code.IsNullOrEmpty())
-        {
-            _pushTranslate(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
-        }
-    }
 
 
     /**
@@ -326,8 +143,62 @@ public class Platform : engine.IPlatform
      * Two paths building "the same" event independently is how they drift.
      */
 
+
+    private void _pushMousePressed(int mouseButton, Vector2 mousePosition)
+    {
+        _imGuiController?.FeedMouseMoved(mousePosition);
+        _imGuiController?.FeedMouseButton(mouseButton, true);
+        if (_imGuiController?.WantCaptureMouse == true) return;
+        if (_shallReturnBecauseUI(mousePosition)) return;
+
+        _fullToViewPosition(mousePosition, out var pos, out var size, out var v2LogicalPosition);
+
+        I.Get<EventQueue>().Push(
+            new Event(Event.INPUT_MOUSE_PRESSED, $"{mouseButton}")
+            {
+                PhysicalPosition = pos,
+                PhysicalSize = size,
+                LogicalPosition = v2LogicalPosition,
+                Data1 = (uint) mouseButton
+            });
+        I.Get<EventQueue>().Push(
+            new Event(Event.INPUT_TOUCH_PRESSED, "")
+            {
+                PhysicalPosition = pos,
+                PhysicalSize = size,
+                LogicalPosition = v2LogicalPosition
+            });
+    }
+
+
+    private void _pushMouseReleased(int mouseButton, Vector2 mousePosition)
+    {
+        _imGuiController?.FeedMouseButton(mouseButton, false);
+        if (_shallReturnBecauseUI(mousePosition)) return;
+
+        _fullToViewPosition(mousePosition, out var pos, out var size, out var v2LogicalPosition);
+
+        I.Get<EventQueue>().Push(
+            new Event(Event.INPUT_MOUSE_RELEASED, $"{mouseButton}")
+            {
+                PhysicalPosition = pos,
+                PhysicalSize = size,
+                LogicalPosition = v2LogicalPosition,
+                Data1 = (uint) mouseButton
+            });
+        I.Get<EventQueue>().Push(
+            new Event(Event.INPUT_TOUCH_RELEASED, "")
+            {
+                PhysicalPosition = pos,
+                PhysicalSize = size,
+                LogicalPosition = v2LogicalPosition 
+            });
+    }
+
+
     private void _pushMouseMoved(Vector2 position)
     {
+        _imGuiController?.FeedMouseMoved(position);
         if (_shallReturnBecauseUI(position)) return;
 
         I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_MOVED, "")
@@ -355,11 +226,8 @@ public class Platform : engine.IPlatform
      * ever diverged this is where a hit-test would silently disagree with the event it
      * guards.
      */
-    private void _onMouseMove(IMouse mouse, Vector2 position) => _pushMouseMoved(position);
 
 
-    private void _onMouseWheel(IMouse mouse, ScrollWheel scrollWheel)
-        => _pushMouseWheel(mouse.Position, new Vector2(scrollWheel.X, scrollWheel.Y));
 
     private void _getActualViewRectangle(out Vector2 ul, out Vector2 lr)
     {
@@ -388,62 +256,6 @@ public class Platform : engine.IPlatform
             return true;
         }
         return false;
-    }
-    
-
-    private void _onMouseDown(IMouse mouse, MouseButton mouseButton)
-        => _pushMousePressed((int)mouseButton, mouse.Position);
-
-
-    private void _pushMousePressed(int mouseButton, Vector2 mousePosition)
-    {
-        if (_shallReturnBecauseUI(mousePosition)) return;
-
-        _fullToViewPosition(mousePosition, out var pos, out var size, out var v2LogicalPosition);
-
-        I.Get<EventQueue>().Push(
-            new Event(Event.INPUT_MOUSE_PRESSED, $"{mouseButton}")
-            {
-                PhysicalPosition = pos,
-                PhysicalSize = size,
-                LogicalPosition = v2LogicalPosition,
-                Data1 = (uint) mouseButton
-            });
-        I.Get<EventQueue>().Push(
-            new Event(Event.INPUT_TOUCH_PRESSED, "")
-            {
-                PhysicalPosition = pos,
-                PhysicalSize = size,
-                LogicalPosition = v2LogicalPosition
-            });
-    }
-
-
-    private void _onMouseUp(IMouse mouse, MouseButton mouseButton)
-        => _pushMouseReleased((int)mouseButton, mouse.Position);
-
-
-    private void _pushMouseReleased(int mouseButton, Vector2 mousePosition)
-    {
-        if (_shallReturnBecauseUI(mousePosition)) return;
-
-        _fullToViewPosition(mousePosition, out var pos, out var size, out var v2LogicalPosition);
-
-        I.Get<EventQueue>().Push(
-            new Event(Event.INPUT_MOUSE_RELEASED, $"{mouseButton}")
-            {
-                PhysicalPosition = pos,
-                PhysicalSize = size,
-                LogicalPosition = v2LogicalPosition,
-                Data1 = (uint) mouseButton
-            });
-        I.Get<EventQueue>().Push(
-            new Event(Event.INPUT_TOUCH_RELEASED, "")
-            {
-                PhysicalPosition = pos,
-                PhysicalSize = size,
-                LogicalPosition = v2LogicalPosition 
-            });
     }
 
 
@@ -490,20 +302,8 @@ public class Platform : engine.IPlatform
     }
 
 
-    private void _onGamepadThumbstickMoved(IGamepad gamepad, Thumbstick thumbstick)
-        => _pushGamepadStickMoved(thumbstick.Index, new Vector2(thumbstick.X, thumbstick.Y));
 
 
-    private void _onGamepadTriggerMoved(IGamepad gamepad, Trigger trigger)
-        => _pushGamepadTriggerMoved(trigger.Index, trigger.Position);
-
-
-    private void _onGamepadButtonDown(IGamepad gamepad, Button button)
-        => _pushGamepadButtonPressed($"{button.Name}", (uint)button.Name, (uint)button.Index);
-
-
-    private void _onGamepadButtonUp(IGamepad gamepad, Button button)
-        => _pushGamepadButtonReleased($"{button.Name}", (uint)button.Name, (uint)button.Index);
 
 
     private bool _hadFocus = true;
@@ -576,6 +376,38 @@ public class Platform : engine.IPlatform
         // TXWTODO: Create sort of "on new gl window" event.
         _gl = GL.GetApi(_backend.GetProcAddress);
         _silkThreeD.SetGL(_gl);
+
+        /*
+         * WP-5.3 / KI-11: the desktop debug UI is back.
+         *
+         * It went dark at WP-3.2 and was made explicit at WP-3.5: the controller wanted a
+         * Silk IInputContext and a Silk IView, and no surviving backend has either. It now
+         * takes IWindowBackend and is FED input from the callbacks below, so nothing about
+         * it depends on which windowing library is underneath.
+         *
+         * Gated on nogame.CreateUI, the same setting that gates the debug UI module, and
+         * skipped on GLES: there is no Android build of cimgui at all (PR #13 excluded the
+         * native), so constructing it there would fail at the first draw rather than here.
+         */
+        if (engine.GlobalSettings.Get("nogame.CreateUI") == "true"
+            && engine.GlobalSettings.Get("platform.threeD.API") == "OpenGL")
+        {
+            try
+            {
+                _imGuiController = new Splash.Silk.ImGui.Controller(_gl, _backend);
+            }
+            catch (Exception e)
+            {
+                /*
+                 * Not fatal. A missing cimgui native or a context the backend cannot
+                 * satisfy should cost the debug overlay, not the game - and the previous
+                 * arrangement failed silently, which is how this went unnoticed for two
+                 * work packages.
+                 */
+                Error($"Unable to create the ImGui controller, debug UI disabled: {e}");
+                _imGuiController = null;
+            }
+        }
         _gl.ClearDepth(1f);
         _gl.ClearColor(0f, 0f, 0f, 0f);
 
@@ -894,7 +726,14 @@ public class Platform : engine.IPlatform
                 _pushTranslate(new engine.news.Event(Event.INPUT_KEY_RELEASED, code)
                     { ScanCode = scanCode });
             _backend.OnKeyCharacter += text =>
+            {
+                if (null != _imGuiController)
+                {
+                    foreach (char c in text) _imGuiController.PressChar(c);
+                }
+
                 I.Get<EventQueue>().Push(new Event(Event.INPUT_KEY_CHARACTER, text));
+            };
 
             /*
              * Mouse and gamepad, same arrangement (WP-3.1). These land on exactly the code
@@ -903,7 +742,7 @@ public class Platform : engine.IPlatform
              * on both backends by construction rather than by inspection.
              */
             _backend.OnMouseMoved += _pushMouseMoved;
-            _backend.OnMouseWheel += _pushMouseWheel;
+            _backend.OnMouseWheel += (pos, delta) => { _imGuiController?.FeedMouseWheel(delta); _pushMouseWheel(pos, delta); };
             _backend.OnMousePressed += _pushMousePressed;
             _backend.OnMouseReleased += _pushMouseReleased;
 

@@ -1,6 +1,5 @@
 using System;
 using System.Numerics;
-using Silk.NET.Input;
 
 namespace Splash.Silk;
 
@@ -17,7 +16,7 @@ namespace Splash.Silk;
 /// </para>
 /// <para>
 /// Deliberately NOT in <c>Splash</c>: the interface still traffics in Silk's
-/// <see cref="IInputContext"/> (see <see cref="SilkInputContext"/>) and in Silk's GL, both
+/// Silk's GL bindings, which
 /// of which stay until Phase 5. Moving it down to <c>Splash</c> would drag Silk with it and
 /// buy nothing.
 /// </para>
@@ -53,17 +52,6 @@ public interface IWindowBackend : IDisposable
     void SwapBuffers();
 
     /// <summary>
-    /// Silk's input context, or <c>null</c> when the backend feeds
-    /// <c>engine.news.EventQueue</c> itself.
-    /// </summary>
-    /// <remarks>
-    /// Android has always been the second case: <c>GameSurface.OnTouch</c> pushes touch
-    /// events straight into the queue and never went through Silk input. The queue is the
-    /// contract - only the left-hand side of the translation changes.
-    /// </remarks>
-    IInputContext? SilkInputContext { get; }
-
-    /// <summary>
     /// Fullscreen, where the platform supports it. Desktop only; a no-op elsewhere.
     /// </summary>
     void SetFullscreen(bool isFullscreen);
@@ -88,7 +76,7 @@ public interface IWindowBackend : IDisposable
     /// </summary>
     /// <remarks>
     /// This has to be a backend concern rather than something <see cref="Platform"/> does
-    /// through <see cref="SilkInputContext"/>, because that context is <c>null</c> on the
+    /// in the backend, because no backend exposes a Silk input context any more - the
     /// SDL3 backend - which is precisely the backend that HAS an on-screen keyboard. The
     /// old call chain (<c>IKeyboard.BeginInput()</c> -> SDL2's <c>SDL_StartTextInput</c>)
     /// became unreachable on Android when Silk windowing was removed, and nothing replaced
