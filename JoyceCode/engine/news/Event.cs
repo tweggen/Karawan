@@ -38,6 +38,20 @@ public class Event
     public const string INPUT_BUTTON_PRESSED = "input.button.pressed";
     public const string INPUT_BUTTON_RELEASED = "input.button.released";
 
+    /*
+     * Device arrival and departure (WP-6.3 step 3). Code carries the device name.
+     *
+     * These are on the QUEUE, and IContext deliberately has no OnConnectionChanged event,
+     * because the alternative is a RACE and not merely an inconsistency. A C# event fires
+     * synchronously on whichever thread the platform noticed the device on; queue events
+     * drain later, on the logical thread. Split across both channels, a freshly attached
+     * gamepad's first axis event - which travels on the queue - could be PROCESSED before
+     * the game had been told the device existed. One channel gives one ordering and one
+     * thread by construction, with no handshake to get right.
+     */
+    public const string INPUT_DEVICE_ATTACHED = "input.device.attached";
+    public const string INPUT_DEVICE_DETACHED = "input.device.detached";
+
 
     public const string VIEW_SIZE_CHANGED = "view.size.changed";
     public const string MAP_RANGE_EVENT = "map.range";
