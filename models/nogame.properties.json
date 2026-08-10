@@ -7,6 +7,7 @@
     "world.CreateCubeCharacters": true,
     "world.CreateCar3Characters": true,
     "world.CreateTramCharacters": true,
+    "world.CreateTaleCharacters": true,
     "world.CreateStreets": true,
     "world.CreateClusterQuarters": true,
     "debug.options.flatshading": false,
