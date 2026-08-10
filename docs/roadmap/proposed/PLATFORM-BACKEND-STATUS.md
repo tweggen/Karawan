@@ -71,30 +71,16 @@ and refuses to emit a bundle whose embedded certificate does not match the keyst
 (the SDK's silent debug-key fallback is otherwise indistinguishable from success — the file
 is called `-Signed.aab` either way).
 
-> ### 🟠 FOLLOW-UP: Play reports no deobfuscation / debug-symbol file
->
-> Measured on the shipped bundle, so this is not guesswork:
->
-> - **The dex is NOT obfuscated** — 5,785 readable slash-separated identifiers against 49
->   short ones, and no R8/ProGuard settings exist in `Wuka.csproj`. **A `mapping.txt` would
->   therefore buy nothing**, and no build step produces one. (`type-mapping.txt` under
->   `obj/` is .NET Android's managed↔Java type map, unrelated.)
-> - **The AAB carries no `BUNDLE-METADATA/` at all**, so no native debug symbols ship. **This
->   is the real gap**, and it is what Play is actually short of.
-> - **Our own natives are stripped at build time** — `recipes/build-openal.sh` and
->   `recipes/build-assimp-android.sh` run `llvm-strip` in place. So the symbols do not merely
->   go unshipped; outside a CI run they no longer exist anywhere.
->
-> Consequence: a native crash in `libSDL3`/`libopenal`/`libassimp`/`libcoreclr` arrives as
-> bare addresses. Managed C# exceptions are unaffected and stay readable.
->
-> Fixing it means preserving unstripped copies (or `--only-keep-debug` companions) as CI
-> artifacts before the strip, then shipping them — either uploaded to Play per release or
-> embedded under `BUNDLE-METADATA/com.android.tools.build.debugsymbols/`. Scope it before
-> doing it: the runtime libraries come from the .NET Android workload and are a separate
-> question from the five we build ourselves.
+Play also reports a missing deobfuscation/symbol file. Measured, scoped, and parked as
+**KI-13** — deliberately not a work package. Short version: a `mapping.txt` would buy nothing
+(nothing is obfuscated); the real gap is native debug symbols, and our recipes strip them in
+place, so they do not exist outside a CI run. Managed C# exceptions are unaffected.
 
-**Next: unwind the KAR-411 workarounds one at a time, device-checking each** (see the WP-6.2 section).
+**Next: WP-6.3 (native input semantics)** — already in flight on `refactor/ki-12-drop-silk-input`,
+independent of the runtime change. **Hold the KAR-411 unwind** until the CoreCLR build has a few
+days of field data; removing the guards that defend against that exact defect class, hours after
+shipping a new runtime with no crash history, is the wrong order even though the guards are now
+believed unnecessary.
 Separately, the **perf A/B is now MEASURED**: CoreCLR reaches the first physics body **4.64× faster**
 than Mono (3.95 s vs 18.31 s from the starting tap) — but in a **Debug** build, and covering the load
 phase only. Re-measure in `Release` before letting it reopen the runtime choice. See "Perf A/B" below.
@@ -1066,6 +1052,7 @@ not only a Phase 5 nicety. **Still unrun: HiDPI hit-testing (blocked), and Linux
 | **KI-11** | **ImGui is OFF on desktop.** `Splash.Silk/ImGui/Controller.cs` needs a Silk `IInputContext`, which no surviving backend provides. **Caused by WP-3.2**, not WP-3.5 — desktop stopped satisfying `_backend is SilkWindowBackend` the moment it moved to SDL3, and that went unreported at the time. GATE-E fails on desktop until fixed. **Measured while scoping WP-3.5: the controller touches `IView` in only three places** (`Resize +=`, `FramebufferSize`, `Resize -=`), all of which exist on `IWindowBackend` — so the real dependency is input alone, and WP-5.3 is smaller than the plan implies. | open, owned by Phase 5 (WP-5.3) |
 | **KI-12** | **Dead Silk input handlers in `Platform`.** `_onKeyDown(IKeyboard,…)`, `_onMouseDown(IMouse,…)` and the gamepad pair are no longer subscribed by anything, and `IWindowBackend.SilkInputContext` is always null. They are the only reason `Silk.NET.Input` is still referenced. Harmless — the package ships no natives — but they are dead code. | ✅ **RESOLVED 2026-08-10** by `refactor/ki-12-drop-silk-input`. `Silk.NET.Input` is gone, and with it `Input.Sdl`, `Windowing.Sdl`, `SDL` and `Ultz.Native.SDL` — verified absent from `dotnet list Wuka --include-transitive`. The four `ExcludeAssets` suppressors went too: with nothing pulling those packages in, they had become the sole SOURCE, the inverse of their role an hour earlier. **KI-9 is retired in practice** — no SDL2 `.aar` in the graph means no duplicate Java glue to collide. Wuka builds; APK unchanged at 19 natives. Semantics follow in WP-6.3. |
 | **KI-4** | An unbounded `Monitor.Wait` in `LogicalRenderer.WaitNextRenderFrame` runs on the thread macOS requires for event pumping, so *any* logical-thread fault presents as a frozen app rather than an error. A timeout that logs and returns null would make this class of failure diagnosable. | open — deliberately not "fixed", since it would mask causes |
+| **KI-13** | **No native debug symbols ship, so native crashes in Play are bare addresses.** Play reports a missing deobfuscation/symbol file. Measured on the shipped versionCode 199 bundle, not assumed: (a) the dex is **not obfuscated** — 5,785 readable slash-separated identifiers vs 49 short ones, and no R8/ProGuard settings exist in `Wuka.csproj` — so **a `mapping.txt` would buy nothing** and no build step emits one (`obj/.../type-mapping.txt` is .NET Android's managed↔Java map, unrelated despite the name); (b) the AAB carries **no `BUNDLE-METADATA/`**, so no symbols ship — this is the real gap; (c) **our own natives are stripped in place** by `recipes/build-openal.sh` and `recipes/build-assimp-android.sh` (`llvm-strip`), so outside a live CI run the symbols **no longer exist anywhere**. Managed C# exceptions are unaffected and stay readable. Fix = preserve unstripped copies (or `--only-keep-debug` companions) **before** the strip, publish as CI artifacts, then either upload per release or embed under `BUNDLE-METADATA/com.android.tools.build.debugsymbols/`. The runtime libraries (`libcoreclr`, `libclrjit`, `libSystem.*`) come from the .NET Android workload and are a separate sourcing question. | open, deferred by owner 2026-08-10 — pairs naturally with the CI workflow, since that is where unstripped artifacts would live. **Step (c) is the irreversible half**: symbols for a crash that already happened cannot be recovered later. |
 
 ---
 
