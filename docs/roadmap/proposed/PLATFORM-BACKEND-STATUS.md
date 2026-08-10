@@ -378,8 +378,10 @@ Consequences carried forward:
 | **WP-5.1** | ✅ **MERGED** | `platform/wp-5.1` | [#25](https://github.com/tweggen/Karawan/pull/25) | 1 | generated surface compiles standalone ✅ | none apply | `Splash.GL/generated/GL.g.cs` generated from Khronos `gl.xml`, no package references. Surface resolved by **Roslyn** (339 call sites / 81 distinct entry points), not regex — an earlier MSBuildWorkspace attempt silently reported **zero**, indistinguishable from "uses no GL". |
 | WP-5.2 – 5.4 | **BLOCKED-ON-HUMAN** | — | — | 0 | — | GATE-E, GATE-F | Owner chose **S2a, narrow form** (2026-08-06). Remaining blocker: GATE-F reference frames, plus `Silk.NET.OpenGL.Extensions.ImGui` entanglement — it takes Silk's `GL` type in its public API, so swapping the GL binding drags ImGui with it. |
 
-| **WP-6.1** | ✅ **MERGED** | `platform/wp-6.1` | [#66](https://github.com/tweggen/Karawan/pull/66) | 1 | APK shape unchanged ✅ | `[HUMAN]` device launch ✅ | **MAUI dropped from Wuka** (`595b5296`). `UseMaui=false`, `Microsoft.Maui.Controls` out of CPM, splash theme hand-written, `MainApplication` rebased to `Android.App.Application` keeping its `libassimp.so` probe. `EnableDefaultAndroidItems` stays pinned `false`. |
-| **WP-6.2** | ⏳ **PR-OPEN — ANSWERED, both runtimes pass** | `platform/wp-6.2-net10-spike` | [#70](https://github.com/tweggen/Karawan/pull/70) | 1 | GLOBAL-1 ✅ · 1b ✅ · 4 ✅ (192/192 on net10.0) · Windows desktop ✅ · Android both runtimes ✅ · APK shape ✅ · AC-1.7 ✅ | **ABIPROBE M+N ✅ PASSED on device — Mono AND CoreCLR** | **.NET 10 retarget + opt-in CoreCLR.** 19 projects to `net10.0`; Wuka to `net10.0-android36.0`. **Two source fixes in the whole tree**, both the C# 14 span-overload change. **Mono-on-net10 also passes → fix came upstream; stay on Mono.** Perf A/B open (Debug-only impression). Built on **both** Windows 11 and macOS. |
+| **WP-6.1** | ✅ **MERGED, device-verified** | `platform/wp-6.1` | [#66](https://github.com/tweggen/Karawan/pull/66) | 1 | gameplay loop, sound, input, splash all confirmed on device ✅ | — | **MAUI is gone from Wuka.** Four things surfaced only by building and running, none visible from source: `SingleProject` was hiding four dead platform folders AND pointing the SDK at `AndroidManifest.xml` (without `<AndroidManifest>` the SDK silently SYNTHESISES one — green build, right package name via `ApplicationId`, `android:label`/`icon` gone); the Silk `ExcludeAssets` entries are **suppressors, not sources** (see KI-12); and the splash artwork cannot be used as-is. Bluetooth permission prompt also disabled, code retained. |
+| **WP-6.2** | ⚠ **HALF-MERGED — see note** | `platform/wp-6.2-net10-spike` → `platform/wp-6.2-coreclr-default` | [#70](https://github.com/tweggen/Karawan/pull/70) **merged**, follow-up PR open | 1 | GLOBAL-1 ✅ · 1b ✅ · 4 ✅ (192/192 on net10.0) · Windows desktop ✅ · Android both runtimes ✅ · APK+AAB shape ✅ · AC-1.7 ✅ · 16 KB verified from ELF ✅ | **ABIPROBE M+N ✅ PASSED on device — Mono AND CoreCLR** | **.NET 10 retarget is ON MASTER via #70.** **CoreCLR-as-default and `versionCode` 199 are NOT** — they were pushed after #70 merged and stranded (merge-order trap, 6th occurrence). Recovered onto `platform/wp-6.2-coreclr-default`. **Two source fixes in the whole tree**, both the C# 14 span-overload change. Both runtimes pass → fix came upstream; CoreCLR chosen anyway for load time (4.64×) and coverage. Built on Windows 11 **and** macOS. |
+| **WP-6.3** | 🟢 **NEXT — design agreed 2026-08-10** | `refactor/ki-12-drop-silk-input` | — | 0 | — | GATE-C input | **Native input semantics.** Follows KI-12: the Silk translation layer is gone, so scancode-vs-text and device enumeration both need defining natively. Independent of WP-6.1/6.2 — can run in parallel. Four ordered steps in the section below. |
+| **WP-6.4** | 🟡 **SCOPED, after WP-6.3** | — | — | 0 | — | `[HUMAN]` rebinding UI | **Action / binding layer, runtime r/w.** Grows the existing `InputMapper` JSON assignment into a proper control→action layer that can be read AND written while the game runs. Section below. |
 
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
 
@@ -893,13 +895,125 @@ windowing rewrite and the runtime move.
 and needs republishing (human-gated); a few `net6.0` / `net7.0-windows` stragglers.
 **`Silk.NET.Assimp` stays pinned at 2.22.0** - N5/N8, bumping it is what corrupted model loading.
 
+
+### 🟢 WP-6.3 — native input semantics (design agreed 2026-08-10)
+
+**Why now.** KI-12 removed `Silk.NET.Input`, and with it the translation layer that used to define
+what a key event *meant*. `engine.inputs.*` was introduced as a Silk-shaped replacement; this work
+package settles its semantics before anything is built on it.
+
+**The agreed split — two halves doing different jobs:**
+
+| | responsibility |
+|---|---|
+| **`engine.news.EventQueue`** | everything that HAPPENS — keys, mouse, gamepad, and device attach/detach |
+| **`engine.inputs.IContext`** | what EXISTS right now — enumeration and capability only, nothing subscribable |
+
+**Where we sit on keys, and it is already correct.** SDL3 hands us both channels cleanly and
+`Sdl3WindowBackend` already uses both:
+
+- `SDL_EVENT_KEY_DOWN/UP` → `ev.key.scancode` — physical position, layout- and IME-independent
+- `SDL_EVENT_TEXT_INPUT` → UTF-8, already composed by layout **and** IME
+
+Nothing needs introducing. What is missing is honesty in the types: engine codes look like
+characters (`"a"`, `"w"`) but are POSITIONS. On AZERTY the physical W-position key yields engine
+code `"w"` — right for movement, misleading to read.
+
+**Three rules to encode:**
+
+1. **Bindings consume positions only.** WASD is `ScanCode.W`, never the character `'w'`.
+2. **Text consumes `INPUT_KEY_CHARACTER` only** — never synthesised from key events. That is what
+   makes IME, dead keys and accents work, and it is already wired.
+3. **Display is a THIRD thing.** A rebinding UI must show the label the user's layout prints on
+   that key: `SDL_GetKeyName(SDL_GetKeyFromScancode(...))`. Layout-dependent, display-only, never
+   used for lookup. This is the one usually missed — it is why "press a key to bind" screens show
+   `Z` on AZERTY while correctly storing the W position.
+
+**Ordered steps:**
+
+1. **`ScanCode` on USB HID usage IDs** (`A = 0x04`), which is exactly what `SDL_Scancode` already
+   is — so `Sdl3KeyCodes` collapses from a translation table to a cast, and the enum is
+   platform-neutral by construction rather than by convention. The key event carries it. **Do this
+   first**: it is the step with real behaviour attached, and a wrong table is silently wrong rather
+   than loudly wrong.
+2. **Strip the events off the device interfaces.** Biggest departure from the copied Silk shape:
+   Silk's `IKeyboard` carries `KeyDown`/`KeyUp`; ours carries nothing. `IKeyboard`/`IMouse`/
+   `IGamepad` reduce to identity and capability. `IDevicePart` (`IButton`, `IThumbstick`,
+   `ITrigger`, `IMotor`, `IKey`, `IWheel`) then earns its place as capability description, which is
+   what a bindings UI needs. Note `IMotor` is the odd one out — output flows the other way and will
+   not fit the queue model.
+3. **Device attach/detach onto the queue.** Delete `IContext.OnConnectionChanged`; emit
+   `INPUT_DEVICE_ATTACHED` / `INPUT_DEVICE_DETACHED` instead. **Not tidiness — a race.** A C# event
+   fires immediately on SDL's thread while queue events drain later on the logical thread, so a
+   gamepad's first axis event could be PROCESSED before the game is told the device exists. One
+   channel gives one ordering and one thread by construction.
+4. **Enumeration as an immutable snapshot.** It will be read from the logical thread while SDL
+   mutates devices on its own. Rebuild on change and publish atomically: no locks in the hot path,
+   and a caller iterating cannot have the collection change underneath it.
+
+**Consequence worth noting:** because devices no longer raise events, `ScanCode` does not belong on
+`IKeyboard` at all — it is part of the event payload. That is what makes step 1 independent of
+steps 2–4.
+
+
+### 🟡 WP-6.4 — action / binding layer, readable and writable at runtime
+
+**Continuation of what already exists.** `builtin.controllers.InputMapper` already holds a
+`SortedDictionary<string, string> MapButtonToLogical`, already configured from JSON, already
+lock-guarded, and already re-emits a logical event beside every raw one via `_pushTranslate`. This
+work package grows that into the full layer rather than replacing it.
+
+**The model, borrowed deliberately:**
+
+| concept | meaning here | prior art |
+|---|---|---|
+| **control** | a physical thing that produces a value: `ScanCode.W`, gamepad stick axis, mouse button | Unity's "control" |
+| **action** | the game-meaningful verb: `move.forward`, `ui.confirm` | Unity action / Godot input map action |
+| **binding** | control → action, plus its transform | Godot's flat named-action config |
+| **modifier** | dead zone, inversion, curve, hold, double-tap, expressed as composable transforms on a binding | Unreal Enhanced Input |
+
+**The rule that makes it worth doing:** gameplay code sees ACTIONS ONLY. No `if (code == "w")`
+anywhere outside the binding layer. Today `InputController` reads raw codes directly, which is why
+the trigger convention and `StickTransfer`'s x⁴ curve are hardcoded at their call sites — those are
+modifiers in disguise and should become data.
+
+**Runtime read/write is the defining requirement,** and it drives three things:
+
+1. **The binding table is live state, not load-time config.** `InputMapper` already has the shape
+   (locked accessor, wholesale replace). Rebinding writes one entry, not a reload.
+2. **A write must be persistable.** JSON in, JSON out, same schema — so a rebinding UI round-trips
+   through the file the game shipped with, and a user's overrides survive an update.
+3. **Rebinding needs "listen for the next control".** A transient capture mode where the next raw
+   control is returned instead of being translated. That is a mode on the mapper, not a new
+   subsystem.
+
+**Depends on WP-6.3 step 1** (`ScanCode` on HID usage IDs), because a binding must store a POSITION,
+never a character - otherwise a user's saved bindings break when they switch layout. And on WP-6.3
+rule 3 for display: the UI shows `SDL_GetKeyName(SDL_GetKeyFromScancode(...))`, layout-dependent and
+display-only, while the stored binding stays positional.
+
+**Deliberately NOT copied:** Unity's device-layout description language and Unreal's asset-based
+binding editor. Both solve third-party hardware support without engine changes - a problem this
+project does not have, at a cost it should not pay.
+
+> ⚠ The prior art above is reconstructed from memory and API details will have drifted. The
+> concepts are stable enough to design from; if a specific mechanism is adopted - Unreal's modifier
+> evaluation order, say - check it against current documentation before encoding it.
+
 ## Gate ledger
 
 | Gate | What | Status |
 |---|---|---|
 | GATE-A | SDL3 on a physical Android device (multi-touch, **IME**, rotation, resume) | ✅ **PASSED 2026-08-09.** Rendering, multi-touch and rotation confirmed 2026-08-07; resume 2026-08-08; **IME confirmed by the owner 2026-08-09** after WP-2.3 ("working beautifully on mobile"). All four halves are now answered on real hardware. ADR §9 claim 8 — the claim the plan called *"the single most likely point of failure"* — **holds**. |
 | GATE-B | Play Console upload, no "Memory page size" warning | ✅ **PASSED 2026-08-09** — the owner uploaded and **Google Play Console accepted the build**. Together with GATE-A this completes **Phase 2**, and **Phase 3 is now unblocked in full**. The 16 KB work (AC-1.7, `XA0141` promoted, all 19 arm64 libraries aligned) is validated by the store rather than by our own checker. |
-| GATE-C | Windows + Linux desktop | 🟡 **WINDOWS 11 LARGELY PASSED 2026-08-09.** Fullscreen ✅ keyboard ✅ mouse ✅ gamepad ✅ **resize ✅** **audio as HEARD ✅** — the last confirms WP-3.4's hand-written OpenAL bindings end to end. Two defects found and fixed in [#61](https://github.com/tweggen/Karawan/pull/61). **Still unrun: HiDPI, and Linux entirely.** Resize confirmed 2026-08-10 on the post-WP-3.5 build, i.e. against SDL3 with no Silk fallback present. |
+| GATE-C | Windows + Linux desktop | 🟡 **WINDOWS 11 LARGELY PASSED 2026-08-09.** Fullscreen ✅ keyboard ✅ mouse ✅ gamepad ✅ **resize ✅** **audio as HEARD ✅** — the last confirms WP-3.4's hand-written OpenAL bindings end to end. Two defects found and fixed in [#61](https://github.com/tweggen/Karawan/pull/61). **HiDPI: RENDERING confirmed 2026-08-10** on a 15" MacBook Air at medium scaling - the WP-3.2 split
+(SDL_GetWindowSize logical for hit-testing, SDL_GetWindowSizeInPixels for the renderer) is right on a
+real retina display. **The HIT-TEST half is NOT verifiable today**: with ImGui off (KI-11) there is
+nothing clickable on desktop, and `_shallReturnBecauseUI` - comparing a mouse position in logical
+units against a rectangle derived from `Size` - is precisely what a transposed pair would break. It
+renders perfectly and clicks land off by the scale factor, so rendering evidence says nothing about
+it. **KI-11 therefore BLOCKS the rest of this criterion**, which makes WP-5.3 a GATE-C dependency and
+not only a Phase 5 nicety. **Still unrun: HiDPI hit-testing (blocked), and Linux entirely.** Resize confirmed 2026-08-10 on the post-WP-3.5 build, i.e. against SDL3 with no Silk fallback present. |
 | GATE-D | Animation correct on macOS + Windows | ✅ **PASSED 2026-08-06** — Windows confirmed, macOS confirmed on a **Debug** build (Release does not currently start, see known issue KI-1) |
 | GATE-E | ImGui renders + takes input (incl. Linux Fn-key case) | not reached. **Android is now out of scope for this gate**: [#13](https://github.com/tweggen/Karawan/pull/13) excluded the ImGui native, and there is no Android build of cimgui at all — re-enabling it needs a real arm64 `libcimgui.so` built and shipped, not just flipping `createUI`. Desktop still applies. |
 | — | *(AC-0.2.4, gate-adjacent)* Aihao L-System preview renders | ✅ **PASSED 2026-08-06** — confirmed after the GL-context seam was re-expressed in WP-0.2 |
@@ -915,7 +1029,7 @@ and needs republishing (human-gated); a few `net6.0` / `net7.0-windows` straggle
 | **KI-2** | `I.RegisterFactory: Error: Already registered engine.news.EmissionContext` on every run, both platforms. Something registers that factory twice. | open, unowned, benign so far |
 | **KI-3** | `ink` is listed as a required sibling checkout in `README.md` and `CLAUDE.md`, but no csproj references it via `$(SiblingRoot)`. Possibly a second dead prerequisite (cf. FbxSharp, PR #10). | open, unverified |
 | **KI-11** | **ImGui is OFF on desktop.** `Splash.Silk/ImGui/Controller.cs` needs a Silk `IInputContext`, which no surviving backend provides. **Caused by WP-3.2**, not WP-3.5 — desktop stopped satisfying `_backend is SilkWindowBackend` the moment it moved to SDL3, and that went unreported at the time. GATE-E fails on desktop until fixed. **Measured while scoping WP-3.5: the controller touches `IView` in only three places** (`Resize +=`, `FramebufferSize`, `Resize -=`), all of which exist on `IWindowBackend` — so the real dependency is input alone, and WP-5.3 is smaller than the plan implies. | open, owned by Phase 5 (WP-5.3) |
-| **KI-12** | **Dead Silk input handlers in `Platform`.** `_onKeyDown(IKeyboard,…)`, `_onMouseDown(IMouse,…)` and the gamepad pair are no longer subscribed by anything, and `IWindowBackend.SilkInputContext` is always null. They are the only reason `Silk.NET.Input` is still referenced. Harmless — the package ships no natives — but they are dead code. | **owner will refactor manually** (2026-08-10) |
+| **KI-12** | **Dead Silk input handlers in `Platform`.** `_onKeyDown(IKeyboard,…)`, `_onMouseDown(IMouse,…)` and the gamepad pair are no longer subscribed by anything, and `IWindowBackend.SilkInputContext` is always null. They are the only reason `Silk.NET.Input` is still referenced. Harmless — the package ships no natives — but they are dead code. | ✅ **RESOLVED 2026-08-10** by `refactor/ki-12-drop-silk-input`. `Silk.NET.Input` is gone, and with it `Input.Sdl`, `Windowing.Sdl`, `SDL` and `Ultz.Native.SDL` — verified absent from `dotnet list Wuka --include-transitive`. The four `ExcludeAssets` suppressors went too: with nothing pulling those packages in, they had become the sole SOURCE, the inverse of their role an hour earlier. **KI-9 is retired in practice** — no SDL2 `.aar` in the graph means no duplicate Java glue to collide. Wuka builds; APK unchanged at 19 natives. Semantics follow in WP-6.3. |
 | **KI-4** | An unbounded `Monitor.Wait` in `LogicalRenderer.WaitNextRenderFrame` runs on the thread macOS requires for event pumping, so *any* logical-thread fault presents as a frozen app rather than an error. A timeout that logs and returns null would make this class of failure diagnosable. | open — deliberately not "fixed", since it would mask causes |
 
 ---
