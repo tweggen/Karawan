@@ -37,6 +37,11 @@
 #     MSBuild properties via the environment instead, the same mechanism the repo
 #     already uses for SiblingRoot in Directory.Build.props.
 #   * Git Bash needs Windows-shaped paths for MSBuild; cygpath handles that here.
+#   * keytool is looked for in the Android SDK's and Android Studio's bundled JDKs, not
+#     only on the PATH. A machine set up for Android development nearly always HAS a
+#     JDK and nearly never has it on the PATH - `command -v keytool` alone reports "no
+#     JDK" on a box carrying a perfectly good JDK 17, and sends you off installing a
+#     second one. Set JAVA_HOME to override the search.
 #
 # USAGE
 #
@@ -110,11 +115,51 @@ else
     KEYSTORE_ARG="$(cd "$(dirname "$KEYSTORE")" && pwd)/$(basename "$KEYSTORE")"
 fi
 
-command -v dotnet  >/dev/null 2>&1 || _die "dotnet not on PATH."
-command -v keytool >/dev/null 2>&1 || _die \
-"keytool not on PATH - a JDK is required to sign and to verify the result.
+command -v dotnet >/dev/null 2>&1 || _die "dotnet not on PATH."
+
+# Find keytool. Do NOT just test the PATH: on a machine set up for Android development
+# there is almost always a JDK present and almost never on the PATH - the Android SDK
+# and Android Studio each bundle one. Checking `command -v keytool` alone reports "no
+# JDK" on a box that has a perfectly good JDK 17, which is a wrong answer that sends
+# someone off to install a second one.
+KEYTOOL=""
+_try_keytool() { [ -x "$1" ] && KEYTOOL="$1" && return 0; return 1; }
+
+if command -v keytool >/dev/null 2>&1; then
+    KEYTOOL="keytool"
+elif [ -n "${JAVA_HOME:-}" ] && _try_keytool "$JAVA_HOME/bin/keytool"; then :
+elif [ -n "${JAVA_HOME:-}" ] && _try_keytool "$JAVA_HOME/bin/keytool.exe"; then :
+else
+    # Newest first, so a modern JDK wins over an ancient one.
+    for _c in \
+        "/c/Program Files (x86)/Android/openjdk"/*/bin/keytool.exe \
+        "/c/Program Files/Android/openjdk"/*/bin/keytool.exe \
+        "/c/Program Files/Android/Android Studio/jbr/bin/keytool.exe" \
+        "/c/Program Files/Microsoft"/jdk*/bin/keytool.exe \
+        "/c/Program Files/Java"/*/bin/keytool.exe \
+        "/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" \
+        "$HOME/Library/Java/JavaVirtualMachines"/*/Contents/Home/bin/keytool \
+        "/Library/Java/JavaVirtualMachines"/*/Contents/Home/bin/keytool \
+        "/opt/homebrew/opt/openjdk/bin/keytool" \
+        "/usr/local/opt/openjdk/bin/keytool"
+    do
+        _try_keytool "$_c" && break
+    done
+    # macOS ships a resolver; ask it last, since it may point at a JRE-only install.
+    if [ -z "$KEYTOOL" ] && [ -x /usr/libexec/java_home ]; then
+        _jh="$(/usr/libexec/java_home 2>/dev/null || true)"
+        [ -n "$_jh" ] && _try_keytool "$_jh/bin/keytool"
+    fi
+fi
+
+[ -n "$KEYTOOL" ] || _die \
+"no keytool found - a JDK is required to sign and to verify the result.
+   Looked on PATH, in \$JAVA_HOME, and in the usual Android SDK / Android Studio
+   bundled-JDK locations.
    macOS:   brew install --cask temurin
-   Windows: install a JDK and put its bin/ on PATH (this machine had none)."
+   Windows: the Android SDK usually ships one, e.g.
+            C:\\Program Files (x86)\\Android\\openjdk\\jdk-17.x.x
+            Set JAVA_HOME to it, or put its bin/ on PATH."
 
 # TFM is read, not hardcoded, so a future retarget does not silently break this script.
 TFM="$(sed -n 's:.*<TargetFramework>\(net[^<]*android[^<]*\)</TargetFramework>.*:\1:p' "$CSPROJ" | head -1)"
@@ -166,12 +211,12 @@ printf '\n'
 
 # Fail before a five-minute build rather than after it.
 _head "Verifying the keystore and alias"
-if ! KEYSTORE_CERT="$(keytool -list -v -keystore "$KEYSTORE" -alias "$ALIAS" \
+if ! KEYSTORE_CERT="$("$KEYTOOL" -list -v -keystore "$KEYSTORE" -alias "$ALIAS" \
                         -storepass "$STORE_PASS" 2>&1)"; then
     printf '%s\n' "$KEYSTORE_CERT" | head -5 >&2
     _die "could not read alias '$ALIAS' from the keystore (wrong password, or wrong alias).
        List what is actually in there with:
-           keytool -list -keystore \"$KEYSTORE\""
+           \"$KEYTOOL\" -list -keystore \"$KEYSTORE\""
 fi
 
 EXPECTED_SHA="$(printf '%s\n' "$KEYSTORE_CERT" \
@@ -223,7 +268,7 @@ _head "Verifying the finished AAB"
 
 # The decisive check: is the bundle signed with the key we asked for, or with the
 # debug key the SDK silently falls back to?
-if ! AAB_CERT="$(keytool -printcert -jarfile "$AAB" 2>&1)"; then
+if ! AAB_CERT="$("$KEYTOOL" -printcert -jarfile "$AAB" 2>&1)"; then
     printf '%s\n' "$AAB_CERT" | head -5 >&2
     _die "could not read a certificate from $AAB - is it signed at all?"
 fi
