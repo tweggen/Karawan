@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Numerics;
 using engine.geom;
 using engine.joyce;
@@ -576,6 +577,12 @@ public class ClusterDesc
              * If we didn't find anything, position ourselves in the center of the cluster, facing north.
              */
             v3Start = (Pos + vOffset) with { Y = AverageHeight + 100f };
+            qStart = Quaternion.Identity;
+        }
+        
+        if (!(Single.IsFinite(qStart.X) && Single.IsFinite(qStart.Y) && Single.IsFinite(qStart.Z) && Single.IsFinite(qStart.W)))
+        {
+            Debug.Assert(false, "Invalid quaternion!");
             qStart = Quaternion.Identity;
         }
     }
