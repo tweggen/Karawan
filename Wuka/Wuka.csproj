@@ -283,10 +283,6 @@
 			ExcludeAssets="all" is what keeps that .aar out of the APK. They can only go once
 			KI-12 is done and Silk.NET.Input itself is dropped.
 		-->
-		<PackageReference Include="Silk.NET.Input.Sdl" ExcludeAssets="all" PrivateAssets="all" />
-		<PackageReference Include="Silk.NET.Windowing.Sdl" ExcludeAssets="all" PrivateAssets="all" />
-		<PackageReference Include="Ultz.Native.SDL" ExcludeAssets="all" PrivateAssets="all" />
-		<PackageReference Include="Silk.NET.SDL" ExcludeAssets="all" PrivateAssets="all" />
 		<PackageReference Include="Silk.NET.Assimp" />
 		<!--
 			WP-1.5 replaced Silk.NET.OpenAL.Soft.Native with Karawan.Natives in
@@ -351,7 +347,6 @@
 			ExcludeAssets="all", not just "native": nothing on Android needs any part of
 			Silk's SDL2 any more.
 		-->
-		<PackageReference Include="Ultz.Native.SDL" ExcludeAssets="all" PrivateAssets="all" />
 		<!--
 			Transitive dep of Joyce. ImGui.NET has no Android native, so RID fallback was
 			packaging its runtimes/linux-x64/native/libcimgui.so into lib/x86_64/ of the APK
