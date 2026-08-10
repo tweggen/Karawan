@@ -60,6 +60,40 @@ exactly the kind that deserves a control:
   `mvid=d6f6e38b-806e-4a66-816c-0a18d1a6bf08`. Same IL, different runtime — the only variable was the
   runtime itself.
 
+### ✅ SHIPPED 2026-08-10 — Play accepted versionCode 199 (.NET 10 + CoreCLR)
+
+**WP-6.2 is not merely evaluated, it is in production.** Google Play accepted the bundle, so
+GATE-B has now been passed a second time — deliberately, because the first pass validated
+**Mono's** native set and five CoreCLR libraries had never faced a review.
+
+Signing is scripted: `scripts/build-release-aab.sh` builds and signs from Git Bash or macOS,
+and refuses to emit a bundle whose embedded certificate does not match the keystore alias
+(the SDK's silent debug-key fallback is otherwise indistinguishable from success — the file
+is called `-Signed.aab` either way).
+
+> ### 🟠 FOLLOW-UP: Play reports no deobfuscation / debug-symbol file
+>
+> Measured on the shipped bundle, so this is not guesswork:
+>
+> - **The dex is NOT obfuscated** — 5,785 readable slash-separated identifiers against 49
+>   short ones, and no R8/ProGuard settings exist in `Wuka.csproj`. **A `mapping.txt` would
+>   therefore buy nothing**, and no build step produces one. (`type-mapping.txt` under
+>   `obj/` is .NET Android's managed↔Java type map, unrelated.)
+> - **The AAB carries no `BUNDLE-METADATA/` at all**, so no native debug symbols ship. **This
+>   is the real gap**, and it is what Play is actually short of.
+> - **Our own natives are stripped at build time** — `recipes/build-openal.sh` and
+>   `recipes/build-assimp-android.sh` run `llvm-strip` in place. So the symbols do not merely
+>   go unshipped; outside a CI run they no longer exist anywhere.
+>
+> Consequence: a native crash in `libSDL3`/`libopenal`/`libassimp`/`libcoreclr` arrives as
+> bare addresses. Managed C# exceptions are unaffected and stay readable.
+>
+> Fixing it means preserving unstripped copies (or `--only-keep-debug` companions) as CI
+> artifacts before the strip, then shipping them — either uploaded to Play per release or
+> embedded under `BUNDLE-METADATA/com.android.tools.build.debugsymbols/`. Scope it before
+> doing it: the runtime libraries come from the .NET Android workload and are a separate
+> question from the five we build ourselves.
+
 **Next: unwind the KAR-411 workarounds one at a time, device-checking each** (see the WP-6.2 section).
 Separately, the **perf A/B is now MEASURED**: CoreCLR reaches the first physics body **4.64× faster**
 than Mono (3.95 s vs 18.31 s from the starting tap) — but in a **Debug** build, and covering the load
@@ -1006,6 +1040,7 @@ project does not have, at a cost it should not pay.
 |---|---|---|
 | GATE-A | SDL3 on a physical Android device (multi-touch, **IME**, rotation, resume) | ✅ **PASSED 2026-08-09.** Rendering, multi-touch and rotation confirmed 2026-08-07; resume 2026-08-08; **IME confirmed by the owner 2026-08-09** after WP-2.3 ("working beautifully on mobile"). All four halves are now answered on real hardware. ADR §9 claim 8 — the claim the plan called *"the single most likely point of failure"* — **holds**. |
 | GATE-B | Play Console upload, no "Memory page size" warning | ✅ **PASSED 2026-08-09** — the owner uploaded and **Google Play Console accepted the build**. Together with GATE-A this completes **Phase 2**, and **Phase 3 is now unblocked in full**. The 16 KB work (AC-1.7, `XA0141` promoted, all 19 arm64 libraries aligned) is validated by the store rather than by our own checker. |
+| GATE-B (again) | Play accepts the **.NET 10 + CoreCLR** bundle | ✅ **PASSED 2026-08-10, versionCode 199.** Re-passed deliberately, because the first pass validated **Mono's** native set. `libcoreclr`, `libclrjit`, `libmscordaccore`, `libmscordbi` and `libassembly-store` had never been through a Play review; all 18 arm64 libraries verified `0x4000` from the ELF program headers before upload. **Silicon Desert 2 now ships on .NET 10 with CoreCLR as its Android runtime.** |
 | GATE-C | Windows + Linux desktop | 🟡 **WINDOWS 11 LARGELY PASSED 2026-08-09.** Fullscreen ✅ keyboard ✅ mouse ✅ gamepad ✅ **resize ✅** **audio as HEARD ✅** — the last confirms WP-3.4's hand-written OpenAL bindings end to end. Two defects found and fixed in [#61](https://github.com/tweggen/Karawan/pull/61). **HiDPI: RENDERING confirmed 2026-08-10** on a 15" MacBook Air at medium scaling - the WP-3.2 split
 (SDL_GetWindowSize logical for hit-testing, SDL_GetWindowSizeInPixels for the renderer) is right on a
 real retina display. **The HIT-TEST half is NOT verifiable today**: with ImGui off (KI-11) there is
