@@ -5,11 +5,11 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-09 (GATE-C, Windows)
+**Last updated:** 2026-08-10 (WP-6.2 spike — AbiProbe passes on CoreCLR/ARM64)
 
 ---
 
-# ▶▶ RESUME HERE — state at 2026-08-09
+# ▶▶ RESUME HERE — state at 2026-08-10
 
 **Phase 2 and the Android half of Phase 3 are MERGED.** `Wuka` runs on SDL3 with Silk windowing
 gone. It **starts, renders, plays audio, loads TALE, and is now controllable on a physical device.**
@@ -29,7 +29,41 @@ owner. Silk no longer provides windowing, input or audio anywhere: `SilkWindowBa
 zero Silk windowing packages remain. What survives of Silk is `Silk.NET.OpenGL*` (Phase 5) and
 `Silk.NET.Assimp` (Phase 4, pinned N5/N8).
 
-**Next: WP-6.1 (drop MAUI) → WP-6.2 (.NET 10 evaluation)**, in that order — see their sections below.
+**WP-6.1 IS MERGED** (PR [#66](https://github.com/tweggen/Karawan/pull/66), commit `595b5296`).
+MAUI is gone from `Wuka`: `UseMaui=false`, `Microsoft.Maui.Controls` dropped from CPM, splash theme
+hand-written. The row below said "SCOPED, not started" for a day after it landed — a reminder that
+this ledger is only as good as the update discipline.
+
+**WP-6.2 IS ANSWERED, AND THE ANSWER IS THE CHEAPEST ONE AVAILABLE (2026-08-10).** On
+`net10.0-android36.0`, `AbiProbe` reports **all cases PASS, including M and N**, on a physical ARM64
+device — on **BOTH runtimes**. The runtime was confirmed from the installed APK in each case, not
+inferred from the command that was typed:
+
+| Runtime | APK evidence | AbiProbe M + N |
+|---|---|---|
+| CoreCLR (`-p:WukaCoreClr=true`) | `libcoreclr.so` present, `libmonosgen-2.0.so` absent | ✅ PASS |
+| **Mono (default)** | **`libmonosgen-2.0.so` present** | ✅ **PASS** |
+
+**Therefore: the Mono ARM64 JIT defect was fixed UPSTREAM between .NET 9 and .NET 10, and we do NOT
+need to switch runtimes.** The recommendation is **bump the TFM and stay on Mono.** CoreCLR-on-Android
+remains available behind `-p:WukaCoreClr=true` but adopting it buys nothing for KAR-411 and would add
+a new runtime's risk surface to a shipping mobile target for no corresponding gain.
+
+**The comparison is airtight, and deliberately so** — this is a "runtime got fixed" claim, which is
+exactly the kind that deserves a control:
+
+- **The probe logic did not change between the failing and passing runs.** `ec048bef` bumped
+  `ProbeRevision` 15 → 16 and changed *nothing else*: `1 file changed, 1 insertion(+), 1 deletion(-)`,
+  the diff being literally `15` → `16`. So rev 15 (FAILED on .NET 9 Mono, `incomingBodyOffset=<0,
+  0.9740994, 0>`) and rev 16 (PASSES on .NET 10 Mono) are the same test.
+- **The managed assembly was identical across the two .NET 10 runs**: both reported
+  `mvid=d6f6e38b-806e-4a66-816c-0a18d1a6bf08`. Same IL, different runtime — the only variable was the
+  runtime itself.
+
+**Next: unwind the KAR-411 workarounds one at a time, device-checking each** (see the WP-6.2 section).
+Separately, the **perf A/B is now MEASURED**: CoreCLR reaches the first physics body **4.64× faster**
+than Mono (3.95 s vs 18.31 s from the starting tap) — but in a **Debug** build, and covering the load
+phase only. Re-measure in `Release` before letting it reopen the runtime choice. See "Perf A/B" below.
 
 ### Closed since the last update
 
@@ -345,10 +379,8 @@ Consequences carried forward:
 | WP-5.2 – 5.4 | **BLOCKED-ON-HUMAN** | — | — | 0 | — | GATE-E, GATE-F | Owner chose **S2a, narrow form** (2026-08-06). Remaining blocker: GATE-F reference frames, plus `Silk.NET.OpenGL.Extensions.ImGui` entanglement — it takes Silk's `GL` type in its public API, so swapping the GL binding drags ImGui with it. |
 
 | **WP-6.1** | ✅ **MERGED, device-verified** | `platform/wp-6.1` | [#66](https://github.com/tweggen/Karawan/pull/66) | 1 | gameplay loop, sound, input, splash all confirmed on device ✅ | — | **MAUI is gone from Wuka.** Four things surfaced only by building and running, none visible from source: `SingleProject` was hiding four dead platform folders AND pointing the SDK at `AndroidManifest.xml` (without `<AndroidManifest>` the SDK silently SYNTHESISES one — green build, right package name via `ApplicationId`, `android:label`/`icon` gone); the Silk `ExcludeAssets` entries are **suppressors, not sources** (see KI-12); and the splash artwork cannot be used as-is. Bluetooth permission prompt also disabled, code retained. |
-| **WP-6.2** | 🟢 **UNBLOCKED — next** | — | — | 0 | — | — | **.NET 10 (LTS) evaluation.** Deliberately after 6.1: the MAUI workload is the biggest migration risk, and removing it first makes this an ordinary TFM bump. First experiment is cheap and decisive - see the WP-6.2 section. |
-
+| **WP-6.2** | ⚠ **HALF-MERGED — see note** | `platform/wp-6.2-net10-spike` → `platform/wp-6.2-coreclr-default` | [#70](https://github.com/tweggen/Karawan/pull/70) **merged**, follow-up PR open | 1 | GLOBAL-1 ✅ · 1b ✅ · 4 ✅ (192/192 on net10.0) · Windows desktop ✅ · Android both runtimes ✅ · APK+AAB shape ✅ · AC-1.7 ✅ · 16 KB verified from ELF ✅ | **ABIPROBE M+N ✅ PASSED on device — Mono AND CoreCLR** | **.NET 10 retarget is ON MASTER via #70.** **CoreCLR-as-default and `versionCode` 199 are NOT** — they were pushed after #70 merged and stranded (merge-order trap, 6th occurrence). Recovered onto `platform/wp-6.2-coreclr-default`. **Two source fixes in the whole tree**, both the C# 14 span-overload change. Both runtimes pass → fix came upstream; CoreCLR chosen anyway for load time (4.64×) and coverage. Built on Windows 11 **and** macOS. |
 | **WP-6.3** | 🟢 **NEXT — design agreed 2026-08-10** | `refactor/ki-12-drop-silk-input` | — | 0 | — | GATE-C input | **Native input semantics.** Follows KI-12: the Silk translation layer is gone, so scancode-vs-text and device enumeration both need defining natively. Independent of WP-6.1/6.2 — can run in parallel. Four ordered steps in the section below. |
-
 | **WP-6.4** | 🟡 **SCOPED, after WP-6.3** | — | — | 0 | — | `[HUMAN]` rebinding UI | **Action / binding layer, runtime r/w.** Grows the existing `InputMapper` JSON assignment into a proper control→action layer that can be read AND written while the game runs. Section below. |
 
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
@@ -728,7 +760,111 @@ assets, no dangling superclasses**. An unchanged APK shape is a real check, not 
 Phase 3 so it cannot confound GATE-C, and mostly deletion. It does change app startup on the only
 mobile target - so: own branch, own device check, bundled with nothing else.
 
-### ⏸ WP-6.2 - .NET 10 evaluation (blocked on WP-6.1)
+### ✅ WP-6.2 - .NET 10 evaluation - EXECUTED 2026-08-10, PR [#70](https://github.com/tweggen/Karawan/pull/70)
+
+> **Result first: `AbiProbe` passes ALL cases including M and N on .NET 10, on a physical ARM64
+> device, on BOTH Mono and CoreCLR.** Each runtime was confirmed from the installed APK rather than
+> inferred from the command typed — the ABIPROBE log line does not name the runtime.
+>
+> **Conclusion: the fix came UPSTREAM in Mono between .NET 9 and .NET 10. Do not switch runtimes.**
+> Bump the TFM, stay on Mono. CoreCLR stays available behind `-p:WukaCoreClr=true` as a bisection
+> tool and a fallback; adopting it buys nothing for KAR-411.
+
+### Perf A/B — MEASURED on device: CoreCLR loads ~4.6× faster in Debug
+
+The owner's impression that CoreCLR was significantly faster **is confirmed, and the magnitude is
+large.** Measured from the two device logcat runs of 2026-08-10, using the interval from the first
+`OnFingerPressed` (the tap that starts the scene) to a fixed downstream milestone:
+
+| Anchor | Mono | CoreCLR | CoreCLR faster by |
+|---|---|---|---|
+| touch → `ABIPROBE BUILD` (first `CreateDynamic`) | **18.308 s** | **3.949 s** | **4.64×** |
+| touch → first `SkTexture:_uploadImage` | 19.514 s | 4.130 s | 4.73× |
+
+**`ABIPROBE BUILD` is the anchor to trust.** It fires exactly once, deterministically, from
+`AbiProbe.RunOnce()` in `CreateDynamic`, and it is the *same* event in both logs. The texture anchor
+is weaker — the two runs happened to name **different** atlases (`atlas-albedo001.png` vs
+`atlas-emissive-half-trans000.png`), so it is not strictly the same milestone. It is quoted only
+because the two anchors agree to within 2 %, which shows the result is not an artifact of endpoint
+choice.
+
+**What this is NOT:** a frame-rate or steady-state measurement. It covers the **load phase** —
+asset decode, mesh/texture upload, world generation, physics setup. Steady-state throughput is
+still unmeasured, and the engine emits no frame timing to measure it with.
+
+**The Debug caveat still stands, and here it is load-bearing:**
+
+- **Both runs were `Debug`.** Debug is not a performance configuration, and the two APKs do not carry
+  the same diagnostic scaffolding: the Mono Debug APK ships `libmono-component-debugger.so`,
+  `libmono-component-hot_reload.so`, `libmono-component-marshal-ilgen.so`,
+  `libxamarin-debug-app-helper.so` and `libarc.bin.so`; the CoreCLR one ships none of those. A gap
+  measured here may be mostly debug scaffolding rather than runtime throughput, and may narrow or
+  invert in `Release`.
+- The engine emits **no frame-time or FPS logging**, so there is currently no in-process metric to
+  compare. Any number has to come from outside the app or from new instrumentation.
+
+**Measure before deciding.** Startup is the cheap objective one:
+
+```
+adb shell cmd package resolve-activity --brief de.nassau_records.silicondesert2   # get component
+adb shell am start -W -n <component>      # reports ThisTime / TotalTime / WaitTime
+```
+
+Run each build ~5×, take the median, **in `Release`**, force-stopping between runs
+(`adb shell am force-stop de.nassau_records.silicondesert2`).
+
+A 4.6× gap concentrated in a compute-heavy load phase is the classic signature of a **codegen-quality
+difference**, which is exactly what `Debug` perturbs most — so `Release` is where this has to be
+re-run before it drives a decision. It could narrow sharply. It could also survive, in which case
+18 s versus 4 s to enter the world is a user-visible difference that matters on its own.
+
+**Note this is a genuinely separate question from KAR-411.** The correctness result no longer favours
+either runtime — both pass. If CoreCLR stays materially faster in `Release`, that becomes its **own**
+business case for adopting it, argued on those numbers alone. Treat the two questions separately:
+
+- **Correctness → stay on Mono.** Settled, both runtimes pass, no reason to take on new risk.
+- **Performance → open.** Re-measure in `Release`; if the gap holds, reopen the runtime choice
+  deliberately, with the CoreCLR risk surface priced in rather than inherited from this spike.
+
+**What the spike actually measured** (all on PR #70, verified on Windows 11 and built again on macOS):
+
+| Finding | Detail |
+|---|---|
+| **A TFM bump alone does not test the hypothesis** | Default `net10.0-android36.0` still ships `libmonosgen-2.0.so`. A green net10 build proves nothing about KAR-411. CoreCLR is opt-in via `-p:WukaCoreClr=true`, anchored in `Wuka.csproj`, so both runtimes are one flag apart on one commit and a device regression stays bisectable by runtime. |
+| **Two source changes in the whole tree** | Both the same C# 14 breaking change: with first-class span conversions a bare `Matrix4x4[]` binds to `MemoryMarshal.Cast(ReadOnlySpan<T>)` instead of the `Span<T>` overload. `Splash.Silk/SkAnimationsEntry.cs:36`, `Splash.Silk/SilkThreeD.cs:553`, fixed with explicit `.AsSpan()`. **Fails at compile time, not silently.** |
+| **APK shape unchanged** | Diffed entry-by-entry vs the net9 baseline: **167 assets, 3789 classes, zero entries added or removed.** 19 native libs on Mono, 17 on CoreCLR. `XA0141`/`XA4301` stay promoted to errors, so the CoreCLR natives are 16 KB aligned too. |
+| **192/192 unit tests pass** on `net10.0` | |
+| **The documented "170 assets" was already stale** | The net9 baseline is also 167. Not a net10 regression. `scripts/check-apk.py` asserts required libs/classes, not that count. |
+
+**Two corrections to the migration surface recorded below:**
+
+1. **The sibling repos need no retargeting.** The paragraph below says three of them are on `net9.0`
+   and must be retargeted or multi-targeted. Measured: `DefaultEcs` is `net7.0`/`net7.0-windows`/
+   `netstandard2.1`, `BepuPhysics2` is `net6.0`/`net8.0`/`net9.0`, `ObjLoader` is `net6.0`,
+   `glTF-CSharp-Loader` and `ink` are `net6.0`/`netstandard2.0`. **`net10.0` consumes all of them
+   unchanged.** They were left untouched and everything builds. Budgeted work that evaporates.
+2. **`global.json` distorts diagnostics, not just builds.** The old `9.0.0`/`latestFeature` pin meant
+   every SDK-scoped command run inside this repo — notably `dotnet workload list` — silently answered
+   for .NET 9. That is how the .NET 10 android workload came to be reported as MISSING when it is in
+   fact installed at **`36.1.43/10.0.100`** via VS 2026. **Ground workload questions by reading
+   `C:\Program Files\dotnet\sdk-manifests\<band>\microsoft.net.sdk.android`, or by querying under an
+   explicitly pinned SDK — never by running `dotnet workload list` in a repo with a stale pin.**
+
+> ⚠ **`global.json` now pins `10.0.302` with `rollForward: latestFeature`, which accepts feature band
+> 300+.** A machine with only a `10.0.1xx` SDK fails with "compatible SDK version not found" despite
+> having .NET 10. Relax to `10.0.100` if this branch needs to build on such a machine.
+
+**Unwinding KAR-411 workarounds — do NOT batch this.** The probe's own message says verify on device
+before removing any of them. The candidates are the `HoverModule` workaround, the "no instance
+initialisers" rule, the ~309-class latent audit, and an entry point never located. Remove **one at a
+time with a device check each**: this failure mode is silent and renders plausible-looking wrong
+results, which is exactly what made KAR-411 expensive to find. Note also that passing at
+`probeRev=16` on .NET 10 does not by itself re-explain the `probeRev=15` failure on .NET 9 — the
+comparison holds only because the probe source did not change between those runs.
+
+---
+
+**Original scoping notes (2026-08-09), retained — the reasoning still stands:**
 
 **The reason to upgrade is not features.** The ARM64 trailing-struct corruption is a **JIT codegen
 fault** - proved 2026-08-09: identical source passes all 14 `AbiProbe` cases on x64/CoreCLR and
