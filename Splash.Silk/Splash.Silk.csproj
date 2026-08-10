@@ -27,7 +27,6 @@
     <ItemGroup>
       <PackageReference Include="Silk.NET.OpenGL" />
       <PackageReference Include="Silk.NET.OpenGL.Extensions.EXT" />
-      <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" />
       <PackageReference Include="SixLabors.ImageSharp" VersionOverride="3.0.1" />
     </ItemGroup>
 

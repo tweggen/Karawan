@@ -8,7 +8,6 @@ using engine.news;
 using ImGuiNET;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.ImGui;
 #if GLES
 using Silk.NET.OpenGLES;
 #elif GL
@@ -16,7 +15,6 @@ using Silk.NET.OpenGL;
 #elif LEGACY
 using Silk.NET.OpenGL.Legacy;
 #endif
-using Silk.NET.Windowing;
 using Point = System.Drawing.Point;
 using static engine.Logger;
 
@@ -28,8 +26,13 @@ namespace Splash.Silk.ImGui;
 public class Controller : IDisposable
 {
     private GL _gl;
-    private IView _view;
-    private engine.inputs.IContext _input;
+    /*
+     * WP-5.3 / KI-11: was a Silk IView. The controller only ever needed three things from
+     * it - resize notification, and the framebuffer size - and IWindowBackend has all of
+     * them. That was the whole "ImGui entanglement": not the renderer, just the window
+     * handle and an input context.
+     */
+    private IWindowBackend _backend;
     private bool _frameBegun;
     private readonly List<char> _pressedChars = new();
     private engine.inputs.IKeyboard _keyboard;
@@ -114,13 +117,14 @@ public class Controller : IDisposable
         ImGuiNET.ImGui.SetCurrentContext(Context);
     }
 
-    private void Init(GL gl, IView view, engine.inputs.IContext input)
+    private void Init(GL gl, IWindowBackend backend)
     {
         _gl = gl;
-        _view = view;
-        _input = input;
-        _windowWidth = view.Size.X;
-        _windowHeight = view.Size.Y;
+        _backend = backend;
+        _windowWidth = (int)backend.Size.X;
+        _windowHeight = (int)backend.Size.Y;
+
+        _backend.OnResize += WindowResized;
 
         Context = ImGuiNET.ImGui.CreateContext();
         ImGuiNET.ImGui.SetCurrentContext(Context);
@@ -131,13 +135,15 @@ public class Controller : IDisposable
     {
         ImGuiNET.ImGui.NewFrame();
         _frameBegun = true;
-        foreach (engine.inputs.IKeyboard keyboard in _input.Keyboards)
-        {
-            _keyboard = keyboard;
-            break;
-        }
-        _view.Resize += WindowResized;
-        // TXWTODO: Forward the actual key events to OnKeyEvent()
+        /*
+         * The resize subscription used to live HERE, which meant it was added once per
+         * FRAME and never removed - an unbounded delegate chain, and WindowResized running
+         * once per frame elapsed. It is now done once, in Init.
+         *
+         * The keyboard scan that also lived here is gone with engine.inputs.IContext: the
+         * controller is FED input by Platform now (FeedKey/FeedChar/FeedMouse*) rather
+         * than reaching out for a device. See the class remarks.
+         */
     }
 
     /// <summary>
@@ -148,7 +154,7 @@ public class Controller : IDisposable
     /// <param name="keycode">The native keycode of the key generating the event.</param>
     /// <param name="scancode">The native scancode of the key generating the event.</param>
     /// <param name="down">True if the event is a key down event, otherwise False</param>
-    private static void OnKeyEvent(IKeyboard keyboard, char keyCode, engine.inputs.ScanCode scanCode, bool down)
+    private static void OnKeyEvent(char keyCode, engine.inputs.ScanCode scanCode, bool down)
     {
         var io = ImGuiNET.ImGui.GetIO();
         var imGuiKey = TranslateInputKeyToImGuiKey(keyCode, scanCode);
@@ -156,15 +162,12 @@ public class Controller : IDisposable
         io.SetKeyEventNativeData(imGuiKey, (int)keyCode, (int)scanCode);
     }
 
-    private void OnKeyChar(IKeyboard arg1, char arg2)
-    {
-        _pressedChars.Add(arg2);
-    }
 
-    private void WindowResized(Vector2D<int> size)
+
+    private void WindowResized(Vector2 size)
     {
-        _windowWidth = size.X;
-        _windowHeight = size.Y;
+        _windowWidth = (int)size.X;
+        _windowHeight = (int)size.Y;
     }
 
     /// <summary>
@@ -235,56 +238,80 @@ public class Controller : IDisposable
 
         if (_windowWidth > 0 && _windowHeight > 0)
         {
-            io.DisplayFramebufferScale = new Vector2(_view.FramebufferSize.X / _windowWidth,
-                _view.FramebufferSize.Y / _windowHeight);
+            io.DisplayFramebufferScale = new Vector2(_backend.FramebufferSize.X / _windowWidth,
+                _backend.FramebufferSize.Y / _windowHeight);
         }
 
         io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
     }
 
+    /*
+     * Input state, fed by Platform from the SAME backend callbacks that drive the engine's
+     * event queue (WP-5.3 / KI-11).
+     *
+     * Why fed rather than pulled: this controller used to reach into a Silk IInputContext
+     * and poll it. No surviving backend provides one, and the engine's own input travels
+     * as queue events drained on the LOGICAL thread while ImGui renders on the platform
+     * thread - so pulling from the queue here would mean cross-thread state and a second
+     * ordering. Platform already receives every raw callback on the platform thread, which
+     * is the same thread Render runs on, so handing them straight over needs no lock and
+     * introduces no second source of truth.
+     */
+    private Vector2 _mousePosition;
+    private readonly bool[] _mouseDown = new bool[3];
+    private Vector2 _mouseWheel;
+
+    internal void FeedMouseMoved(Vector2 position) => _mousePosition = position;
+
+    internal void FeedMouseButton(int button, bool down)
+    {
+        if (button >= 0 && button < _mouseDown.Length) _mouseDown[button] = down;
+    }
+
+    internal void FeedMouseWheel(Vector2 delta) => _mouseWheel += delta;
+
+    internal void FeedKey(char keyCode, engine.inputs.ScanCode scanCode, bool down)
+        => OnKeyEvent(keyCode, scanCode, down);
+
+    /**
+     * True while ImGui wants the pointer, i.e. the cursor is over a panel. Platform uses
+     * this to decide whether a click belongs to the UI or to the game.
+     */
+    public bool WantCaptureMouse => ImGuiNET.ImGui.GetIO().WantCaptureMouse;
+
+    /**
+     * True while ImGui wants typed input, i.e. a text field has focus.
+     */
+    public bool WantCaptureKeyboard => ImGuiNET.ImGui.GetIO().WantCaptureKeyboard;
+
     private void UpdateImGuiInput()
     {
         var io = ImGuiNET.ImGui.GetIO();
 
-        // using var mouseState = _input.Mice[0].CaptureState();
-
         /*
-         * TXWTODO: Update mouse button states.
-         * io.MouseDown[0] = mouseState.IsButtonPressed(MouseButton.Left);
-         * io.MouseDown[1] = mouseState.IsButtonPressed(MouseButton.Right);
-         * io.MouseDown[2] = mouseState.IsButtonPressed(MouseButton.Middle);
-        */
-
-        /*
-         * TXWTODO: Update mouse position
-         * var point = new Point((int)mouseState.Position.X, (int)mouseState.Position.Y);
-         * io.MousePos = new Vector2(point.X, point.Y);
-        */
-        
-        /*
-         * TXWTODO: Update mouse wheels
-         * var wheel = mouseState.GetScrollWheels()[0];
-         * io.MouseWheel = wheel.Y;
-         * io.MouseWheelH = wheel.X;
-        */
-
-        /*
-         * emqueue input characters
+         * Mouse position is in LOGICAL units, matching io.DisplaySize, which is set from
+         * IWindowBackend.Size rather than FramebufferSize. On a HiDPI display those differ
+         * by the scale factor, and feeding pixels here would put every hit-test off by
+         * exactly that factor while rendering looked perfect - which is the failure GATE-C
+         * cannot currently check for, and the reason this work unblocks it.
          */
+        io.MousePos = _mousePosition;
+
+        io.MouseDown[0] = _mouseDown[0];
+        io.MouseDown[1] = _mouseDown[1];
+        io.MouseDown[2] = _mouseDown[2];
+
+        io.MouseWheel = _mouseWheel.Y;
+        io.MouseWheelH = _mouseWheel.X;
+        // Wheel is a DELTA, so it has to be consumed. Left set, it scrolls forever.
+        _mouseWheel = Vector2.Zero;
+
         foreach (var c in _pressedChars)
         {
             io.AddInputCharacter(c);
         }
 
         _pressedChars.Clear();
-
-        /*
-         * TXWTODO: Update modifiers
-         * io.KeyCtrl = _keyboard.IsKeyPressed(Key.ControlLeft) || _keyboard.IsKeyPressed(Key.ControlRight);
-         * io.KeyAlt = _keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight);
-         * io.KeyShift = _keyboard.IsKeyPressed(Key.ShiftLeft) || _keyboard.IsKeyPressed(Key.ShiftRight);
-         * io.KeySuper = _keyboard.IsKeyPressed(Key.SuperLeft) || _keyboard.IsKeyPressed(Key.SuperRight);
-         */
     }
 
     internal void PressChar(char keyChar)
@@ -765,7 +792,7 @@ public class Controller : IDisposable
     /// </summary>
     public void Dispose()
     {
-        _view.Resize -= WindowResized;
+        _backend.OnResize -= WindowResized;
 
         _gl.DeleteBuffer(_vboHandle);
         _gl.DeleteBuffer(_elementsHandle);
@@ -786,7 +813,7 @@ public class Controller : IDisposable
     /// <summary>
     /// Constructs a new ImGuiController.
     /// </summary>
-    public Controller(GL gl, IView view, IContext input) : this(gl, view, input, null, null)
+    public Controller(GL gl, IWindowBackend backend) : this(gl, backend, null, null)
     {
     }
     
@@ -794,8 +821,8 @@ public class Controller : IDisposable
     /// <summary>
     /// Constructs a new ImGuiController with font configuration.
     /// </summary>
-    public Controller(GL gl, IView view, IContext input, ImGuiFontConfig imGuiFontConfig) : this(gl, view,
-        input, imGuiFontConfig, null)
+    public Controller(GL gl, IWindowBackend backend, ImGuiFontConfig imGuiFontConfig) : this(gl, backend,
+        imGuiFontConfig, null)
     {
     }
     
@@ -803,7 +830,7 @@ public class Controller : IDisposable
     /// <summary>
     /// Constructs a new ImGuiController with an onConfigureIO Action.
     /// </summary>
-    public Controller(GL gl, IView view, IContext input, Action onConfigureIO) : this(gl, view, input, null,
+    public Controller(GL gl, IWindowBackend backend, Action onConfigureIO) : this(gl, backend, null,
         onConfigureIO)
     {
     }
@@ -812,10 +839,10 @@ public class Controller : IDisposable
     /// <summary>
     /// Constructs a new ImGuiController with font configuration and onConfigure Action.
     /// </summary>
-    public Controller(GL gl, IView view, IContext input, ImGuiFontConfig? imGuiFontConfig = null,
+    public Controller(GL gl, IWindowBackend backend, ImGuiFontConfig? imGuiFontConfig = null,
         Action onConfigureIO = null)
     {
-        Init(gl, view, input);
+        Init(gl, backend);
 
         var io = ImGuiNET.ImGui.GetIO();
         if (imGuiFontConfig is not null)
