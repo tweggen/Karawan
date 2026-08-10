@@ -30,22 +30,33 @@
 		<EnableDefaultAndroidItems>false</EnableDefaultAndroidItems>
 
 		<!--
-			WP-6.2 SPIKE: opt-in CoreCLR instead of Mono on Android.
+			WP-6.2: CoreCLR is the DEFAULT runtime on Android. Mono is one flag away:
 
-				dotnet build Wuka/Wuka.csproj -p:WukaCoreClr=true
+				dotnet build Wuka/Wuka.csproj                      # CoreCLR (default)
+				dotnet build Wuka/Wuka.csproj -p:WukaCoreClr=false # Mono
 
-			This, not the net10.0 TFM bump, is the experiment. KAR-411 is a Mono/ARM64 JIT
-			codegen fault (see docs/BUGS/MONO-ARM64-CTOR-PROLOGUE-ARG-CORRUPTION.md); a plain
-			TFM bump still ships libmonosgen-2.0.so and would prove nothing. AbiProbe cases M
-			and N are the acceptance test - read "ABIPROBE RESULT" from logcat on device.
+			KAR-411 is a Mono/ARM64 JIT codegen fault (see
+			docs/BUGS/MONO-ARM64-CTOR-PROLOGUE-ARG-CORRUPTION.md). Both runtimes on .NET 10
+			pass every AbiProbe case including M and N on device, so CORRECTNESS DOES NOT
+			DECIDE THIS - the defect was fixed upstream in Mono between .NET 9 and .NET 10,
+			and staying on Mono would also have been defensible.
 
-			Left opt-in rather than default so both runtimes are one flag apart on the same
-			commit: if a device regression appears, the runtime is bisectable without moving
-			the working tree. Verified to build both ways; Mono ships 19 native libraries,
-			CoreCLR 17 (libmonosgen-2.0/libarc.bin/mono components out, libcoreclr/libclrjit/
+			Two things decide it instead:
+
+			1. Load time. Measured on device, Debug: CoreCLR reaches the first physics body
+			   in 3.95 s against Mono's 18.31 s - 4.64x, same anchor (ABIPROBE BUILD) in both
+			   logs. Load phase only; steady-state frame rate is still unmeasured.
+			2. Test coverage. Deliberate owner decision (2026-08-10): we have no automated
+			   coverage of the runtime boundary, and shipping is the broadest coverage
+			   available. Making CoreCLR the default means every play session exercises it.
+
+			The flag stays so a runtime regression is bisectable without moving the working
+			tree. Both paths are verified to build; Mono ships 19 native libraries, CoreCLR 17
+			(libmonosgen-2.0/libarc.bin/mono components out, libcoreclr/libclrjit/
 			libmscordaccore/libmscordbi in). Asset count and class count are identical, and
 			XA0141 stays promoted to an error, so the CoreCLR natives are 16 KB aligned too.
 		-->
+		<WukaCoreClr Condition="'$(WukaCoreClr)' == ''">true</WukaCoreClr>
 		<UseMonoRuntime Condition="'$(WukaCoreClr)' == 'true'">false</UseMonoRuntime>
 
 		<!--
