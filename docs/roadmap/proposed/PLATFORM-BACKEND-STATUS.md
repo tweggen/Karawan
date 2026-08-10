@@ -60,7 +60,27 @@ exactly the kind that deserves a control:
   `mvid=d6f6e38b-806e-4a66-816c-0a18d1a6bf08`. Same IL, different runtime — the only variable was the
   runtime itself.
 
-**Next: unwind the KAR-411 workarounds one at a time, device-checking each** (see the WP-6.2 section).
+### ✅ SHIPPED 2026-08-10 — Play accepted versionCode 199 (.NET 10 + CoreCLR)
+
+**WP-6.2 is not merely evaluated, it is in production.** Google Play accepted the bundle, so
+GATE-B has now been passed a second time — deliberately, because the first pass validated
+**Mono's** native set and five CoreCLR libraries had never faced a review.
+
+Signing is scripted: `scripts/build-release-aab.sh` builds and signs from Git Bash or macOS,
+and refuses to emit a bundle whose embedded certificate does not match the keystore alias
+(the SDK's silent debug-key fallback is otherwise indistinguishable from success — the file
+is called `-Signed.aab` either way).
+
+Play also reports a missing deobfuscation/symbol file. Measured, scoped, and parked as
+**KI-13** — deliberately not a work package. Short version: a `mapping.txt` would buy nothing
+(nothing is obfuscated); the real gap is native debug symbols, and our recipes strip them in
+place, so they do not exist outside a CI run. Managed C# exceptions are unaffected.
+
+**Next: WP-6.3 (native input semantics)** — already in flight on `refactor/ki-12-drop-silk-input`,
+independent of the runtime change. **Hold the KAR-411 unwind** until the CoreCLR build has a few
+days of field data; removing the guards that defend against that exact defect class, hours after
+shipping a new runtime with no crash history, is the wrong order even though the guards are now
+believed unnecessary.
 Separately, the **perf A/B is now MEASURED**: CoreCLR reaches the first physics body **4.64× faster**
 than Mono (3.95 s vs 18.31 s from the starting tap) — but in a **Debug** build, and covering the load
 phase only. Re-measure in `Release` before letting it reopen the runtime choice. See "Perf A/B" below.
@@ -1006,6 +1026,7 @@ project does not have, at a cost it should not pay.
 |---|---|---|
 | GATE-A | SDL3 on a physical Android device (multi-touch, **IME**, rotation, resume) | ✅ **PASSED 2026-08-09.** Rendering, multi-touch and rotation confirmed 2026-08-07; resume 2026-08-08; **IME confirmed by the owner 2026-08-09** after WP-2.3 ("working beautifully on mobile"). All four halves are now answered on real hardware. ADR §9 claim 8 — the claim the plan called *"the single most likely point of failure"* — **holds**. |
 | GATE-B | Play Console upload, no "Memory page size" warning | ✅ **PASSED 2026-08-09** — the owner uploaded and **Google Play Console accepted the build**. Together with GATE-A this completes **Phase 2**, and **Phase 3 is now unblocked in full**. The 16 KB work (AC-1.7, `XA0141` promoted, all 19 arm64 libraries aligned) is validated by the store rather than by our own checker. |
+| GATE-B (again) | Play accepts the **.NET 10 + CoreCLR** bundle | ✅ **PASSED 2026-08-10, versionCode 199.** Re-passed deliberately, because the first pass validated **Mono's** native set. `libcoreclr`, `libclrjit`, `libmscordaccore`, `libmscordbi` and `libassembly-store` had never been through a Play review; all 18 arm64 libraries verified `0x4000` from the ELF program headers before upload. **Silicon Desert 2 now ships on .NET 10 with CoreCLR as its Android runtime.** |
 | GATE-C | Windows + Linux desktop | 🟡 **WINDOWS 11 LARGELY PASSED 2026-08-09.** Fullscreen ✅ keyboard ✅ mouse ✅ gamepad ✅ **resize ✅** **audio as HEARD ✅** — the last confirms WP-3.4's hand-written OpenAL bindings end to end. Two defects found and fixed in [#61](https://github.com/tweggen/Karawan/pull/61). **HiDPI: RENDERING confirmed 2026-08-10** on a 15" MacBook Air at medium scaling - the WP-3.2 split
 (SDL_GetWindowSize logical for hit-testing, SDL_GetWindowSizeInPixels for the renderer) is right on a
 real retina display. **The HIT-TEST half is NOT verifiable today**: with ImGui off (KI-11) there is
@@ -1031,6 +1052,7 @@ not only a Phase 5 nicety. **Still unrun: HiDPI hit-testing (blocked), and Linux
 | **KI-11** | **ImGui is OFF on desktop.** `Splash.Silk/ImGui/Controller.cs` needs a Silk `IInputContext`, which no surviving backend provides. **Caused by WP-3.2**, not WP-3.5 — desktop stopped satisfying `_backend is SilkWindowBackend` the moment it moved to SDL3, and that went unreported at the time. GATE-E fails on desktop until fixed. **Measured while scoping WP-3.5: the controller touches `IView` in only three places** (`Resize +=`, `FramebufferSize`, `Resize -=`), all of which exist on `IWindowBackend` — so the real dependency is input alone, and WP-5.3 is smaller than the plan implies. | open, owned by Phase 5 (WP-5.3) |
 | **KI-12** | **Dead Silk input handlers in `Platform`.** `_onKeyDown(IKeyboard,…)`, `_onMouseDown(IMouse,…)` and the gamepad pair are no longer subscribed by anything, and `IWindowBackend.SilkInputContext` is always null. They are the only reason `Silk.NET.Input` is still referenced. Harmless — the package ships no natives — but they are dead code. | ✅ **RESOLVED 2026-08-10** by `refactor/ki-12-drop-silk-input`. `Silk.NET.Input` is gone, and with it `Input.Sdl`, `Windowing.Sdl`, `SDL` and `Ultz.Native.SDL` — verified absent from `dotnet list Wuka --include-transitive`. The four `ExcludeAssets` suppressors went too: with nothing pulling those packages in, they had become the sole SOURCE, the inverse of their role an hour earlier. **KI-9 is retired in practice** — no SDL2 `.aar` in the graph means no duplicate Java glue to collide. Wuka builds; APK unchanged at 19 natives. Semantics follow in WP-6.3. |
 | **KI-4** | An unbounded `Monitor.Wait` in `LogicalRenderer.WaitNextRenderFrame` runs on the thread macOS requires for event pumping, so *any* logical-thread fault presents as a frozen app rather than an error. A timeout that logs and returns null would make this class of failure diagnosable. | open — deliberately not "fixed", since it would mask causes |
+| **KI-13** | **No native debug symbols ship, so native crashes in Play are bare addresses.** Play reports a missing deobfuscation/symbol file. Measured on the shipped versionCode 199 bundle, not assumed: (a) the dex is **not obfuscated** — 5,785 readable slash-separated identifiers vs 49 short ones, and no R8/ProGuard settings exist in `Wuka.csproj` — so **a `mapping.txt` would buy nothing** and no build step emits one (`obj/.../type-mapping.txt` is .NET Android's managed↔Java map, unrelated despite the name); (b) the AAB carries **no `BUNDLE-METADATA/`**, so no symbols ship — this is the real gap; (c) **our own natives are stripped in place** by `recipes/build-openal.sh` and `recipes/build-assimp-android.sh` (`llvm-strip`), so outside a live CI run the symbols **no longer exist anywhere**. Managed C# exceptions are unaffected and stay readable. Fix = preserve unstripped copies (or `--only-keep-debug` companions) **before** the strip, publish as CI artifacts, then either upload per release or embed under `BUNDLE-METADATA/com.android.tools.build.debugsymbols/`. The runtime libraries (`libcoreclr`, `libclrjit`, `libSystem.*`) come from the .NET Android workload and are a separate sourcing question. | open, deferred by owner 2026-08-10 — pairs naturally with the CI workflow, since that is where unstripped artifacts would live. **Step (c) is the irreversible half**: symbols for a crash that already happened cannot be recovered later. |
 
 ---
 
