@@ -61,8 +61,9 @@ exactly the kind that deserves a control:
   runtime itself.
 
 **Next: unwind the KAR-411 workarounds one at a time, device-checking each** (see the WP-6.2 section).
-Separately, a **perf A/B is open** — CoreCLR felt significantly faster to the owner, but the
-observation is from a **Debug** build and is not yet a measurement. See "Perf A/B" below.
+Separately, the **perf A/B is now MEASURED**: CoreCLR reaches the first physics body **4.64× faster**
+than Mono (3.95 s vs 18.31 s from the starting tap) — but in a **Debug** build, and covering the load
+phase only. Re-measure in `Release` before letting it reopen the runtime choice. See "Perf A/B" below.
 
 ### Closed since the last update
 
@@ -767,11 +768,29 @@ mobile target - so: own branch, own device check, bundled with nothing else.
 > Bump the TFM, stay on Mono. CoreCLR stays available behind `-p:WukaCoreClr=true` as a bisection
 > tool and a fallback; adopting it buys nothing for KAR-411.
 
-### Perf A/B — OPEN, and not yet a measurement
+### Perf A/B — MEASURED on device: CoreCLR loads ~4.6× faster in Debug
 
-The owner's impression from the device runs is that **CoreCLR was significantly faster**. That is
-worth pursuing but is **not yet evidence**, and the configuration argues for caution before acting
-on it:
+The owner's impression that CoreCLR was significantly faster **is confirmed, and the magnitude is
+large.** Measured from the two device logcat runs of 2026-08-10, using the interval from the first
+`OnFingerPressed` (the tap that starts the scene) to a fixed downstream milestone:
+
+| Anchor | Mono | CoreCLR | CoreCLR faster by |
+|---|---|---|---|
+| touch → `ABIPROBE BUILD` (first `CreateDynamic`) | **18.308 s** | **3.949 s** | **4.64×** |
+| touch → first `SkTexture:_uploadImage` | 19.514 s | 4.130 s | 4.73× |
+
+**`ABIPROBE BUILD` is the anchor to trust.** It fires exactly once, deterministically, from
+`AbiProbe.RunOnce()` in `CreateDynamic`, and it is the *same* event in both logs. The texture anchor
+is weaker — the two runs happened to name **different** atlases (`atlas-albedo001.png` vs
+`atlas-emissive-half-trans000.png`), so it is not strictly the same milestone. It is quoted only
+because the two anchors agree to within 2 %, which shows the result is not an artifact of endpoint
+choice.
+
+**What this is NOT:** a frame-rate or steady-state measurement. It covers the **load phase** —
+asset decode, mesh/texture upload, world generation, physics setup. Steady-state throughput is
+still unmeasured, and the engine emits no frame timing to measure it with.
+
+**The Debug caveat still stands, and here it is load-bearing:**
 
 - **Both runs were `Debug`.** Debug is not a performance configuration, and the two APKs do not carry
   the same diagnostic scaffolding: the Mono Debug APK ships `libmono-component-debugger.so`,
@@ -792,9 +811,18 @@ adb shell am start -W -n <component>      # reports ThisTime / TotalTime / WaitT
 Run each build ~5×, take the median, **in `Release`**, force-stopping between runs
 (`adb shell am force-stop de.nassau_records.silicondesert2`).
 
-**Note this is a genuinely separate question from KAR-411.** If CoreCLR turns out to be materially
-faster in Release, that is its own business case for adopting it — but it must be argued on those
-numbers, not carried over from the correctness result, which no longer favours either runtime.
+A 4.6× gap concentrated in a compute-heavy load phase is the classic signature of a **codegen-quality
+difference**, which is exactly what `Debug` perturbs most — so `Release` is where this has to be
+re-run before it drives a decision. It could narrow sharply. It could also survive, in which case
+18 s versus 4 s to enter the world is a user-visible difference that matters on its own.
+
+**Note this is a genuinely separate question from KAR-411.** The correctness result no longer favours
+either runtime — both pass. If CoreCLR stays materially faster in `Release`, that becomes its **own**
+business case for adopting it, argued on those numbers alone. Treat the two questions separately:
+
+- **Correctness → stay on Mono.** Settled, both runtimes pass, no reason to take on new risk.
+- **Performance → open.** Re-measure in `Release`; if the gap holds, reopen the runtime choice
+  deliberately, with the CoreCLR risk surface priced in rather than inherited from this spike.
 
 **What the spike actually measured** (all on PR #70, verified on Windows 11 and built again on macOS):
 
