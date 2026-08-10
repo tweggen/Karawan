@@ -549,8 +549,9 @@ public class SilkThreeD : IThreeD
                                 break;
                             }
 
+                            // .AsSpan() is required from C# 14 on: see SkAnimationsEntry.Upload().
                             Span<float> span =
-                                MemoryMarshal.Cast<Matrix4x4, float>(allBakedMatrices)
+                                MemoryMarshal.Cast<Matrix4x4, float>(allBakedMatrices.AsSpan())
                                     .Slice(16 * frameOffset, 16 * nBones);
 #endif
                             _gl.UniformMatrix4((int)_locBoneMatrices,

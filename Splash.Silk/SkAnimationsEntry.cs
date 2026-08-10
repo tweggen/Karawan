@@ -33,7 +33,10 @@ public class SkAnimationsEntry : AAnimationsEntry
             case GLAnimBuffers.AnimSSBO:
                 if (Model != null)
                 {
-                    Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(Model.AnimationCollection.AllBakedMatrices);
+                    // .AsSpan() is required from C# 14 on: with first-class span conversions a
+                    // bare Matrix4x4[] now binds to Cast(ReadOnlySpan<T>), which returns a
+                    // ReadOnlySpan. Selecting the Span overload explicitly keeps this writable.
+                    Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(Model.AnimationCollection.AllBakedMatrices.AsSpan());
                     //_gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length, false,
 
                     SSBOAnimations = new BufferObject<float>(_gl, span, BufferTargetARB.ShaderStorageBuffer);
