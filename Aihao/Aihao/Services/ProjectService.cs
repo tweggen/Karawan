@@ -186,14 +186,38 @@ public class ProjectService
         if (project.SolutionPath != null)
         {
             var slnDir = Path.GetDirectoryName(project.SolutionPath) ?? string.Empty;
-            var possibleExePaths = new[]
+            /*
+             * TFM segments are DISCOVERED, not spelled out.
+             *
+             * This list is what hardcoding costs, visible in one place: it still carried
+             * net8.0 entries left behind by an earlier retarget, alongside net9.0 entries
+             * that went stale at the next one. Nothing ever failed to build - the exe was
+             * simply not found, and "cannot locate the built executable" says nothing about
+             * a search path that names a framework the project stopped targeting.
+             */
+            var possibleExePaths = new List<string>();
+
+            foreach (var projectDir in new[] { Path.Combine(slnDir, project.Name), Path.Combine(slnDir, "Karawan") })
             {
-                Path.Combine(slnDir, project.Name, "bin", "Debug", "net8.0", $"{project.Name}.exe"),
-                Path.Combine(slnDir, project.Name, "bin", "Debug", "net9.0", $"{project.Name}.exe"),
-                Path.Combine(slnDir, project.Name, "bin", "Release", "net8.0", $"{project.Name}.exe"),
-                Path.Combine(slnDir, "Karawan", "bin", "Debug", "net8.0", "Karawan.exe"),
-                Path.Combine(slnDir, "Karawan", "bin", "Debug", "net9.0", "Karawan.exe"),
-            };
+                var exeName = Path.GetFileName(projectDir) + ".exe";
+
+                foreach (var config in new[] { "Debug", "Release" })
+                {
+                    var configDir = Path.Combine(projectDir, "bin", config);
+                    if (!Directory.Exists(configDir)) continue;
+
+                    foreach (var tfmDir in Directory.EnumerateDirectories(configDir))
+                    {
+                        possibleExePaths.Add(Path.Combine(tfmDir, exeName));
+
+                        // Self-contained / RID-specific builds nest one level deeper.
+                        foreach (var ridDir in Directory.EnumerateDirectories(tfmDir))
+                        {
+                            possibleExePaths.Add(Path.Combine(ridDir, exeName));
+                        }
+                    }
+                }
+            }
             
             foreach (var exePath in possibleExePaths)
             {

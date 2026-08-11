@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -280,23 +281,42 @@ public class DesktopMain
         // Get CWD for searching relative to the game project
         string cwd = Directory.GetCurrentDirectory();
         
-        // Search paths prioritizing CWD-relative locations (game project) over launcher binary location
-        string[] searchPaths = {
-            // CWD-relative paths (game project)
-            Path.Combine(cwd, "bin", "Debug", "net9.0", assemblyName),
-            Path.Combine(cwd, "bin", "Release", "net9.0", assemblyName),
-            Path.Combine(cwd, "bin", "Debug", "net9.0", "osx-arm64", assemblyName),
-            Path.Combine(cwd, "bin", "Release", "net9.0", "osx-arm64", assemblyName),
-            Path.Combine(cwd, "bin", "Debug", "net9.0", "win-x64", assemblyName),
-            Path.Combine(cwd, "bin", "Release", "net9.0", "win-x64", assemblyName),
-            Path.Combine(cwd, assemblyName),
-            // Resource path relative
-            Path.Combine(resourcePath, assemblyName),
-            Path.Combine(resourcePath, "..", "bin", "Debug", "net9.0", assemblyName),
-            Path.Combine(resourcePath, "..", "bin", "Release", "net9.0", assemblyName),
-            // Launcher binary directory (fallback - e.g., if DLL was copied there)
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, assemblyName),
-        };
+        /*
+         * Search paths prioritising CWD-relative locations (the game project) over the
+         * launcher binary location.
+         *
+         * The TFM segment is DISCOVERED rather than spelled out. It used to be a hardcoded
+         * "net9.0", which is a path that silently stops existing the day the tree
+         * retargets - nothing fails to build, the assembly is simply never found, and the
+         * launcher reports a missing game DLL rather than a stale search path.
+         */
+        var candidates = new List<string>();
+
+        foreach (string root in new[] { cwd, Path.Combine(resourcePath, "..") })
+        {
+            foreach (string config in new[] { "Debug", "Release" })
+            {
+                string configDir = Path.Combine(root, "bin", config);
+                if (!Directory.Exists(configDir)) continue;
+
+                foreach (string tfmDir in Directory.EnumerateDirectories(configDir))
+                {
+                    candidates.Add(Path.Combine(tfmDir, assemblyName));
+
+                    // Self-contained / RID-specific builds nest one level deeper.
+                    foreach (string ridDir in Directory.EnumerateDirectories(tfmDir))
+                    {
+                        candidates.Add(Path.Combine(ridDir, assemblyName));
+                    }
+                }
+            }
+        }
+
+        candidates.Add(Path.Combine(cwd, assemblyName));
+        candidates.Add(Path.Combine(resourcePath, assemblyName));
+        candidates.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, assemblyName));
+
+        string[] searchPaths = candidates.ToArray();
 
         Console.WriteLine($"Searching for assembly in:");
         foreach (var searchPath in searchPaths)
