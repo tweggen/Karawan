@@ -25,7 +25,21 @@ namespace Splash.Silk
         /**
          * This is the size of the physical view
          */
+        /** Framebuffer size, in PIXELS. This is what glViewport speaks. */
         private Vector2 _vViewSize;
+
+        /**
+         * Pixels per logical unit, i.e. FramebufferSize / Size. 1.0 everywhere except a
+         * HiDPI display.
+         *
+         * The engine's VIEW RECTANGLE is in LOGICAL units - it is compared against mouse
+         * positions in Platform._shallReturnBecauseUI, and set from ImGui coordinates by
+         * the debug pane - while _vViewSize is in pixels. Mixing the two put the 3D
+         * viewport's left edge at PIXEL 500 when the pane occupied LOGICAL 0..500, i.e.
+         * halfway underneath the panel on a 2x display, and made the viewport shrink at
+         * half the rate the splitter was dragged.
+         */
+        private Vector2 _v2LogicalToPixel = Vector2.One;
         
         /**
          * This is the size of the logical view.
@@ -243,7 +257,15 @@ namespace Splash.Silk
                  * Compute the size and the upper left edge, keep it in ul and vDesiredSize
                  */
                 _engine.GetViewRectangle(out ul, out var lr);
-                
+
+                /*
+                 * LOGICAL -> PIXELS. Everything below is in framebuffer pixels because that
+                 * is what glViewport takes; the view rectangle arrives in logical units.
+                 * Equal on any 1x display, which is why this went unnoticed.
+                 */
+                ul *= _v2LogicalToPixel;
+                if (Vector2.Zero != lr) lr *= _v2LogicalToPixel;
+
                 if (Vector2.Zero == lr)
                 {
                     /*
@@ -328,11 +350,21 @@ namespace Splash.Silk
         }
 
 
-        public void SetDimension(int x, int y)
+        /**
+         * Framebuffer size in PIXELS, and the logical size it corresponds to.
+         *
+         * logicalX/logicalY may be 0, meaning "same as pixels" - the correct answer for
+         * offscreen render targets (RenderExternalFrame), where there is no window scale
+         * involved at all.
+         */
+        public void SetDimension(int x, int y, int logicalX = 0, int logicalY = 0)
         {
             if (x != 0 && y != 0)
             {
                 _vViewSize = new Vector2((float)x, (float)y);
+                _v2LogicalToPixel = (logicalX > 0 && logicalY > 0)
+                    ? new Vector2((float)x / logicalX, (float)y / logicalY)
+                    : Vector2.One;
             }
         }
         
