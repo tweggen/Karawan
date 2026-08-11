@@ -2,7 +2,8 @@
   "profiles": {
     "Karawan": {
       "commandName": "Project",
-      "workingDirectory": "$(SolutionDir)",
+      "//": "Relative to this project directory, i.e. the repository root. It used to say $(SolutionDir), which is a Visual Studio MSBuild macro: VS expands it, `dotnet run` does not, so `dotnet run` fell back to the project directory and every ..-relative content lookup started one level too deep. engine.GameRoot no longer depends on the working directory at all, but leaving an unexpanded macro here would keep surprising people.",
+      "workingDirectory": "..",
       "hotReloadEnabled": false,
       "environmentVariables": {
       }

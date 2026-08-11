@@ -82,14 +82,26 @@ public class DesktopMain
             return "./assets/";
         }
 
-        if (File.Exists("./models/game.launch.json") || File.Exists("./models/nogame.json"))
-        {
-            // Jetbrains Rider / direct run from project root
-            return "./models/";
-        }
+        /*
+         * Search UPWARD for the content root instead of counting "..".
+         *
+         * This used to end in a hardcoded "../../../../../models/", tuned for a CWD of
+         * <repo>/Karawan/bin/Debug/<tfm>/<rid>. `dotnet run` sets CWD to the PROJECT
+         * directory instead, so the same five levels walked out of the checkout and landed
+         * in the user's home - producing a DirectoryNotFoundException for a path nobody
+         * configured, at a distance that varied with how deep the repo sits.
+         *
+         * See engine.GameRoot for the full account.
+         */
+        string? root = engine.GameRoot.PathTo("models");
+        if (null != root) return root;
 
-        // Running from bin/Debug or similar
-        return "../../../../../models/";
+        throw new DirectoryNotFoundException(
+            "Could not locate the game content root. Searched upward from "
+            + $"'{Directory.GetCurrentDirectory()}' and from '{AppContext.BaseDirectory}' "
+            + "for models/nogame.json, models/game.launch.json or Karawan.sln, and found "
+            + "none. Run from inside the repository, or ship an 'assets' directory beside "
+            + "the executable.");
     }
 
     /// <summary>
@@ -105,14 +117,15 @@ public class DesktopMain
             return Path.GetFullPath("./assets/") + Path.DirectorySeparatorChar;
         }
 
-        if (File.Exists("./models/game.launch.json") || File.Exists("./models/nogame.json"))
-        {
-            // Jetbrains Rider / direct run from project root
-            return Path.GetFullPath("./nogame/generated/") + Path.DirectorySeparatorChar;
-        }
+        // Same upward search as _determineResourcePath. Note the old hardcoded chains here
+        // and there disagreed - four levels vs five - because each was tuned separately
+        // against a different observed layout. Neither was right for `dotnet run`.
+        string? generated = engine.GameRoot.PathTo(Path.Combine("nogame", "generated"));
+        if (null != generated) return generated;
 
-        // Running from bin/Debug or similar
-        return Path.GetFullPath("../../../../nogame/generated/") + Path.DirectorySeparatorChar;
+        throw new DirectoryNotFoundException(
+            "Could not locate the generated resource directory (nogame/generated). "
+            + "See the message from the resource-path lookup for what was searched.");
     }
 
     /// <summary>

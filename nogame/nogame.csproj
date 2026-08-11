@@ -14,13 +14,29 @@
     <HostRid Condition=" '$(OSPlatform)' == 'OSX' ">osx-arm64</HostRid>
   </PropertyGroup>
 
-  <!-- Register tasks once, using HostRid -->
-  <UsingTask TaskName="CmdLine.CompileAssetsTask"
-             AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\$(HostRid)\joycecmd.dll" />
-  <UsingTask TaskName="CmdLine.PackTexturesTask"
-             AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\$(HostRid)\joycecmd.dll" />
-  <UsingTask TaskName="CmdLine.Res2TargetTask"
-             AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\$(HostRid)\joycecmd.dll" />
+  <!--
+    Resolve the MSBuild TASK assembly, as opposed to the command-line tools resolved in
+    ResolveJoyceTools below. This has to happen at EVALUATION time - UsingTask is read
+    before any target runs - so it cannot use the properties that target computes.
+
+    netstandard2.0 is deliberately not searched for by wildcard: a task assembly must be
+    netstandard2.0 to load into MSBuild at all, so that segment cannot drift the way the
+    tools' TFM did. Configuration can and does: Tooling/Cmdline/build.sh builds Debug, but
+    nothing guarantees a given tree only ever has Debug output.
+  -->
+  <PropertyGroup>
+    <_TaskDllDebug>$(MSBuildThisFileDirectory)..\Tooling\Cmdline\bin\Debug\netstandard2.0\$(HostRid)\joycecmd.dll</_TaskDllDebug>
+    <_TaskDllRelease>$(MSBuildThisFileDirectory)..\Tooling\Cmdline\bin\Release\netstandard2.0\$(HostRid)\joycecmd.dll</_TaskDllRelease>
+
+    <JoyceTaskAssembly Condition="Exists('$(_TaskDllDebug)')">$(_TaskDllDebug)</JoyceTaskAssembly>
+    <JoyceTaskAssembly Condition="'$(JoyceTaskAssembly)' == '' And Exists('$(_TaskDllRelease)')">$(_TaskDllRelease)</JoyceTaskAssembly>
+    <!-- Fall back to the Debug path so a missing-file error names somewhere real. -->
+    <JoyceTaskAssembly Condition="'$(JoyceTaskAssembly)' == ''">$(_TaskDllDebug)</JoyceTaskAssembly>
+  </PropertyGroup>
+
+  <UsingTask TaskName="CmdLine.CompileAssetsTask" AssemblyFile="$(JoyceTaskAssembly)" />
+  <UsingTask TaskName="CmdLine.PackTexturesTask"  AssemblyFile="$(JoyceTaskAssembly)" />
+  <UsingTask TaskName="CmdLine.Res2TargetTask"    AssemblyFile="$(JoyceTaskAssembly)" />
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -44,20 +60,117 @@
     <MakeDir Directories="../nogame/generated" />
   </Target>
 
+  <!--
+    Locate the build-time tools instead of spelling their paths out.
+
+    THE FAILURE THIS REPLACES
+
+      System.ComponentModel.Win32Exception (2): An error occurred trying to start process
+      '..\Tooling\Cmdline\bin\Debug\net9.0\win-x64\publish\joycecmd.exe'
+
+    The path had FIVE varying segments - configuration, target framework, RID, the publish
+    subdirectory and the executable suffix - of which only two were ever generalised. When
+    the tree retargeted to .NET 10, the TFM segment went stale, and Process.Start reported
+    only "the system cannot find the file specified" against a relative path. Nothing named
+    the framework, so the message pointed at everything except the cause.
+
+    It also did not reproduce on the machine that made the change, because a stale
+    bin/Debug/net9.0 publish was still sitting there from before. That is the same reason a
+    plain wildcard would be dangerous here: with several TFM directories present, a glob can
+    happily resolve to a tool built months ago.
+
+    SO: search in priority order, preferring this project's OWN $(TargetFramework) - the
+    retarget touches every csproj at once, so game and tools stay in step by construction -
+    then widen. Take the first hit, warn if it is not the expected framework, and fail with
+    a message that says what to run if there is nothing at all.
+  -->
+  <Target Name="ResolveJoyceTools">
+    <!--
+      Priority order, checked with Exists() rather than by globbing.
+
+      The first attempt at this DID glob, relying on MSBuild's batching to yield the first
+      matching item. It does not: with both a net9.0 and a net10.0 publish present, it
+      resolved to net9.0 - the stale one - even though the net10.0 build existed and was
+      listed first. Batch order is not item-declaration order, and depending on it here
+      would have reintroduced exactly the silent-stale-tool problem this target exists to
+      prevent. Explicit Exists() checks are longer and deterministic.
+    -->
+    <PropertyGroup>
+      <_CmdBase>$(MSBuildThisFileDirectory)..\Tooling\Cmdline\bin</_CmdBase>
+      <_ChuBase>$(MSBuildThisFileDirectory)..\Chushi\bin</_ChuBase>
+
+      <_Cmd1>$(_CmdBase)\$(Configuration)\$(TargetFramework)\$(HostRid)\publish\joycecmd$(ExeSuffix)</_Cmd1>
+      <_Cmd2>$(_CmdBase)\$(Configuration)\$(TargetFramework)\publish\joycecmd$(ExeSuffix)</_Cmd2>
+      <_Cmd3>$(_CmdBase)\$(Configuration)\$(TargetFramework)\$(HostRid)\joycecmd$(ExeSuffix)</_Cmd3>
+      <_Cmd4>$(_CmdBase)\$(Configuration)\$(TargetFramework)\joycecmd$(ExeSuffix)</_Cmd4>
+
+      <JoyceCmdExe Condition="'$(JoyceCmdExe)' == '' And Exists('$(_Cmd1)')">$(_Cmd1)</JoyceCmdExe>
+      <JoyceCmdExe Condition="'$(JoyceCmdExe)' == '' And Exists('$(_Cmd2)')">$(_Cmd2)</JoyceCmdExe>
+      <JoyceCmdExe Condition="'$(JoyceCmdExe)' == '' And Exists('$(_Cmd3)')">$(_Cmd3)</JoyceCmdExe>
+      <JoyceCmdExe Condition="'$(JoyceCmdExe)' == '' And Exists('$(_Cmd4)')">$(_Cmd4)</JoyceCmdExe>
+
+      <_Chu1>$(_ChuBase)\$(Configuration)\$(TargetFramework)\$(HostRid)\publish\Chushi$(ExeSuffix)</_Chu1>
+      <_Chu2>$(_ChuBase)\$(Configuration)\$(TargetFramework)\publish\Chushi$(ExeSuffix)</_Chu2>
+      <_Chu3>$(_ChuBase)\$(Configuration)\$(TargetFramework)\$(HostRid)\Chushi$(ExeSuffix)</_Chu3>
+      <_Chu4>$(_ChuBase)\$(Configuration)\$(TargetFramework)\Chushi$(ExeSuffix)</_Chu4>
+
+      <ChushiExe Condition="'$(ChushiExe)' == '' And Exists('$(_Chu1)')">$(_Chu1)</ChushiExe>
+      <ChushiExe Condition="'$(ChushiExe)' == '' And Exists('$(_Chu2)')">$(_Chu2)</ChushiExe>
+      <ChushiExe Condition="'$(ChushiExe)' == '' And Exists('$(_Chu3)')">$(_Chu3)</ChushiExe>
+      <ChushiExe Condition="'$(ChushiExe)' == '' And Exists('$(_Chu4)')">$(_Chu4)</ChushiExe>
+    </PropertyGroup>
+
+    <!--
+      Nothing for THIS framework. Fall back to any build at all, so a tree that has only an
+      older tool still builds - but the warning below will say so. Ordering does not matter
+      here: every candidate is already known to be the wrong framework.
+    -->
+    <ItemGroup Condition="'$(JoyceCmdExe)' == ''">
+      <_CmdAny Include="$(_CmdBase)\*\*\$(HostRid)\publish\joycecmd$(ExeSuffix)" />
+      <_CmdAny Include="$(_CmdBase)\*\*\$(HostRid)\joycecmd$(ExeSuffix)" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(ChushiExe)' == ''">
+      <_ChuAny Include="$(_ChuBase)\*\*\$(HostRid)\publish\Chushi$(ExeSuffix)" />
+      <_ChuAny Include="$(_ChuBase)\*\*\$(HostRid)\Chushi$(ExeSuffix)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <JoyceCmdExe Condition="'$(JoyceCmdExe)' == ''">%(_CmdAny.FullPath)</JoyceCmdExe>
+      <ChushiExe Condition="'$(ChushiExe)' == ''">%(_ChuAny.FullPath)</ChushiExe>
+    </PropertyGroup>
+
+    <Error Condition="'$(JoyceCmdExe)' == ''"
+           Text="joycecmd not found for $(TargetFramework)/$(HostRid). Build it first:  bash Tooling/Cmdline/build.sh" />
+    <Error Condition="'$(ChushiExe)' == ''"
+           Text="Chushi not found for $(TargetFramework)/$(HostRid). Build it first:  bash Chushi/build.sh" />
+
+    <!--
+      A tool from another framework still RUNS, so this warns rather than fails - but it is
+      usually a binary left over from before a retarget, and saying so beats discovering it
+      through puzzling asset output.
+    -->
+    <Warning Condition="!$([System.String]::Copy('$(JoyceCmdExe)').Contains('$(TargetFramework)'))"
+             Text="joycecmd resolved to '$(JoyceCmdExe)', which is not a $(TargetFramework) build. Probably stale - rebuild with Tooling/Cmdline/build.sh" />
+    <Warning Condition="!$([System.String]::Copy('$(ChushiExe)').Contains('$(TargetFramework)'))"
+             Text="Chushi resolved to '$(ChushiExe)', which is not a $(TargetFramework) build. Probably stale - rebuild with Chushi/build.sh" />
+
+    <Message Text="joycecmd -> $(JoyceCmdExe)" Importance="high" />
+    <Message Text="Chushi   -> $(ChushiExe)" Importance="high" />
+  </Target>
+
   <!-- Gather textures (must run before Chushi, which reads the packed atlases) -->
-  <Target Name="GatherTexturesHost" BeforeTargets="GatherResources">
+  <Target Name="GatherTexturesHost" BeforeTargets="GatherResources" DependsOnTargets="ResolveJoyceTools">
     <Message Text="gathering textures ($(HostRid))" />
     <PackTexturesTask OutputDirectory="../nogame/generated"
                       GameJson="../models/nogame.json"
-                      Executable="..\Tooling\Cmdline\bin\Debug\net9.0\$(HostRid)\publish\joycecmd$(ExeSuffix)" />
+                      Executable="$(JoyceCmdExe)" />
   </Target>
 
   <!-- Compile assets (depends on GatherTexturesHost so the atlases exist when Chushi opens them) -->
-  <Target Name="CompileAssetsHost" BeforeTargets="GatherResources" DependsOnTargets="GatherTexturesHost">
+  <Target Name="CompileAssetsHost" BeforeTargets="GatherResources" DependsOnTargets="ResolveJoyceTools;GatherTexturesHost">
     <Message Text="compiling assets ($(HostRid))" />
     <CompileAssetsTask OutputDirectory="../nogame/generated"
                        GameJson="../models/nogame.json"
-                       Executable="..\Chushi\bin\Debug\net9.0\$(HostRid)\publish\Chushi$(ExeSuffix)" />
+                       Executable="$(ChushiExe)" />
   </Target>
 
   <!-- Gather resources -->

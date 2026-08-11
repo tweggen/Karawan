@@ -89,6 +89,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\IGamepad.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\IKeyboard.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\IMouse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\GameRoot.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\ScanCode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\ScanCodeNames.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AnimationPackRegistry.cs" />
