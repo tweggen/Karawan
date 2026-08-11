@@ -119,6 +119,16 @@ public interface IWindowBackend : IDisposable
     // ---- callbacks, installed by Platform before Run() ----------------------------
 
     Action? OnLoad { get; set; }
+
+    /**
+     * Delivers the FRAMEBUFFER size, in PIXELS - not the logical window size.
+     *
+     * Stated explicitly because the two are equal on every non-HiDPI display, so a
+     * consumer that assumes the wrong one is correct everywhere except a retina Mac. That
+     * is not hypothetical: the ImGui controller stored this value as its logical display
+     * size and, on a 15" M4 Air, drew its whole UI at half size AND hit-tested at half the
+     * cursor position. Anything that needs logical units must read <see cref="Size"/>.
+     */
     Action<Vector2>? OnResize { get; set; }
     Action<double>? OnUpdate { get; set; }
     Action<double>? OnRender { get; set; }
