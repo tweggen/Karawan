@@ -594,8 +594,15 @@ public class Platform : engine.IPlatform
         if (fbSize == _v2LastFramebufferSize) return;
         _v2LastFramebufferSize = fbSize;
 
+        /*
+         * Pixels AND the logical size they correspond to. The renderer needs both: it
+         * draws in pixels, but the engine's view rectangle - which decides where the 3D
+         * viewport starts when the debug pane is open - is in logical units.
+         */
+        Vector2 logical = _backend.Size;
+
         // TXWTODO: We are abusing the global settings as global variables.
-        _renderer.SetDimension(w, h);
+        _renderer.SetDimension(w, h, (int)logical.X, (int)logical.Y);
         engine.GlobalSettings.Set("view.size", $"{w}x{h}");
         I.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
         {
