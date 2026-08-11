@@ -15,7 +15,17 @@ public class DebuggerToggle : AModule, IInputPart
         new SharedModule<InputEventPipeline>()
     };
 
-    public Vector2 TopLeft { get; set; } = new(500f, 20f);
+    /**
+     * Where the 3D view starts once the debug UI is shown.
+     *
+     * Read from joyce.ui.Main rather than held here, so the drag handle on the pane's edge
+     * and this toggle cannot disagree. Both used to hardcode 500 independently - change one
+     * and the panel overlaps the viewport, or leaves a gap, with nothing to say why.
+     */
+    public Vector2 TopLeft => new(
+        joyce.ui.Main.LeftPaneWidth,
+        joyce.ui.Main.MenuBarHeight);
+
     
     private bool _isUIShown = false;
 
