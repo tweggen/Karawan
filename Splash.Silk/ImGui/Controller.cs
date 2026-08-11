@@ -164,10 +164,29 @@ public class Controller : IDisposable
 
 
 
-    private void WindowResized(Vector2 size)
+    /**
+     * IWindowBackend.OnResize delivers the FRAMEBUFFER size in pixels, because that is what
+     * the renderer needs. ImGui's DisplaySize must be the LOGICAL size, so the argument is
+     * deliberately ignored and the logical size read from the backend instead.
+     *
+     * Storing the argument here was one defect with two symptoms, both seen on a 15" M4 Air
+     * at 1440x932 (backing store 2880x1864):
+     *
+     *   - DisplaySize became 2880 wide, so DisplayFramebufferScale computed as
+     *     FramebufferSize/DisplaySize = 1.0 rather than 2.0, the ortho projection covered
+     *     0..2880, and one ImGui unit became one PIXEL - the whole UI drew at half its
+     *     intended physical size. "Renders pixel-native, unscaled."
+     *   - MousePos is fed in logical units, so a cursor at logical (100,200) was
+     *     interpreted in that 2880-wide space and hit whatever sat at PIXEL (100,200) -
+     *     i.e. logical (50,100). Hits landed at half the cursor position.
+     *
+     * Both are the transposed logical/pixel pair GATE-C exists to catch, and neither is
+     * visible on a 1x display, where the two sizes are equal.
+     */
+    private void WindowResized(Vector2 framebufferSizeIgnored)
     {
-        _windowWidth = (int)size.X;
-        _windowHeight = (int)size.Y;
+        _windowWidth = (int)_backend.Size.X;
+        _windowHeight = (int)_backend.Size.Y;
     }
 
     /// <summary>
