@@ -32,42 +32,34 @@ public class ConsoleMain
         }
         else
         {
-            if (Path.Exists("./models/nogame.json"))
+            /*
+             * Search UPWARD for the content root rather than guessing how far down we are.
+             *
+             * What stood here was three escalating fallbacks - four, then five, then six
+             * levels of ".." - each with a comment naming the one launch method it had been
+             * observed to fix ("from the debugger on windows", "when called from jetbrains
+             * compiler", "in Chushi on windows"). That list is the shape of the bug: the
+             * depth is not a property of this code, it is a property of where the process
+             * was started, so every new launch path needed another rung and any tree at an
+             * unexpected depth fell off the end into "Running in unknown environment".
+             *
+             * engine.GameRoot looks for models/nogame.json upward from the current
+             * directory and from the assembly location, which answers all of those cases
+             * and the ones nobody has hit yet.
+             */
+            string? chushiRoot = engine.GameRoot.Find();
+            if (null == chushiRoot)
             {
-                /*
-                * I don't know this case.
-                */
-                strResourcePath = "./models/";
-                jsonPath = "../models/";
-            }
-            else if (Path.Exists("../../../../nogame/"))
-            {
-                /*
-                 * This is when we start from the debugger on windows in Karawan
-                 */
-                jsonPath = "../models/";
-                strResourcePath = "../../../../models/";
-            } else if (Path.Exists("../../../../../nogame/"))
-            {
-                /*
-                * This is in Chushi on windows when called from jetbrains compiler.
-                */
-                jsonPath = "../models/";
-                strResourcePath = "../../../../../models/";
-            } else if (Path.Exists("../../../../../../nogame/"))
-            {
-                /*
-                * This is in Chushi on windows.
-                */
-                jsonPath = "../models/";
-                strResourcePath = "../../../../../../models/";
-            }
-            else
-            {
-                Console.Error.WriteLine($"Running in unknown environment, cwd=={cwd}");
+                Console.Error.WriteLine(
+                    $"Could not locate the content root. Searched upward from '{cwd}' and from "
+                    + $"'{AppContext.BaseDirectory}' for models/nogame.json, "
+                    + "models/game.launch.json or Karawan.sln.");
                 System.Environment.Exit(-1);
                 return;
             }
+
+            strResourcePath = Path.Combine(chushiRoot, "models") + Path.DirectorySeparatorChar;
+            jsonPath = strResourcePath;
         }
         engine.GlobalSettings.Set("Engine.ResourcePath", strResourcePath);
         Trace($"Using resource path {strResourcePath}, json path {jsonPath}");
