@@ -95,10 +95,41 @@ public static class FrameDigest
         _mix(ref h, m.M41); _mix(ref h, m.M42); _mix(ref h, m.M43); _mix(ref h, m.M44);
     }
 
+    /**
+     * Invoked with the frame's digest, before the frame is drawn.
+     *
+     * This is how GATE-F's trace capture is armed: the tracer arms itself when the digest
+     * matches a nominated anchor, and disarms after the frame. It has to happen HERE
+     * rather than in a script, because the decision is about the frame that is ABOUT to
+     * issue its GL calls - by the time a log line has been written the calls are gone.
+     */
+    public static Action<string, RenderFrame>? OnFrameDigest;
+
     public static void Record(RenderFrame renderFrame)
     {
-        if (!IsEnabled || null == _writer) return;
+        if (!IsEnabled || null == _writer)
+        {
+            // The anchor hook must still fire: tracing is useful without a digest FILE.
+            if (null != OnFrameDigest) OnFrameDigest(Compute(renderFrame), renderFrame);
+            return;
+        }
 
+        var fs = renderFrame.FrameStats;
+        string digest = Compute(renderFrame);
+        if (null != OnFrameDigest) OnFrameDigest(digest, renderFrame);
+
+        lock (_lo)
+        {
+            _writer.WriteLine(string.Format(CultureInfo.InvariantCulture,
+                "{0} {1} {2} {3} {4} {5} {6}",
+                renderFrame.FrameNumber, digest, renderFrame.RenderParts.Count,
+                fs.NMeshes, fs.NMaterials, fs.NInstances, fs.NAnimations));
+        }
+    }
+
+    /** The frame's content digest, as the 16-hex-digit string used everywhere. */
+    public static string Compute(RenderFrame renderFrame)
+    {
         var fs = renderFrame.FrameStats;
 
         ulong h = FnvOffset;
@@ -121,12 +152,6 @@ public static class FrameDigest
             _mix(ref h, co.TransformToWorld);
         }
 
-        lock (_lo)
-        {
-            _writer.WriteLine(string.Format(CultureInfo.InvariantCulture,
-                "{0} {1:x16} {2} {3} {4} {5} {6}",
-                renderFrame.FrameNumber, h, renderFrame.RenderParts.Count,
-                fs.NMeshes, fs.NMaterials, fs.NInstances, fs.NAnimations));
-        }
+        return h.ToString("x16", CultureInfo.InvariantCulture);
     }
 }
