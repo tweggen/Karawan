@@ -257,6 +257,7 @@ def cs_param(p):
 # guard written inline here could never be exercised, and an unrun guard is a guard nobody
 # knows works. test-shapecheck.py drives it with a synthetic registry.
 import shapecheck
+import funcptr
 
 shape_problems = shapecheck.check(shapes, shapecheck.pointer_flags(root))
 if shape_problems:
@@ -281,14 +282,7 @@ for key in sorted(shapes):
     args = ', '.join((p['RefKind'] + ' ' if p['RefKind'] else '') + ident(p['Name']) for p in ps)
     dele = ', '.join(((p['RefKind'] + ' ') if p['RefKind'] else '') + p['Type'] + ' ' + ident(p['Name']) for p in ps)
     slug = re.sub(r'[^A-Za-z0-9]', '_', key.split('|')[1])
-    L.append(f'        private delegate {ret} d_{slug}({dele});')
-    L.append(f'        private d_{slug} f_{slug};')
-    L.append(f'        public {ret} {name}({sig})')
-    L.append('        {')
-    L.append(f'            f_{slug} ??= Marshal.GetDelegateForFunctionPointer<d_{slug}>(_getProc("{entry}"));')
-    L.append(f'            {"return " if ret != "void" else ""}f_{slug}({args});')
-    L.append('        }')
-    L.append('')
+    funcptr.emit(L, 8, name, ret, ps, entry, slug, ident)
     emitted += 1
 
 L.append('        // --- support entry points, required by the conveniences below ---')
@@ -299,14 +293,8 @@ for nm in SUPPORT:
     sig = ', '.join('%s %s' % (t, ident(n)) for n, t in rps)
     args = ', '.join(ident(n) for n, _ in rps)
     slug = 'sup_' + csname
-    L.append('        private delegate %s d_%s(%s);' % (rret, slug, sig))
-    L.append('        private d_%s f_%s;' % (slug, slug))
-    L.append('        public %s %s(%s)' % (rret, csname, sig))
-    L.append('        {')
-    L.append('            f_%s ??= Marshal.GetDelegateForFunctionPointer<d_%s>(_getProc("%s"));' % (slug, slug, rname))
-    L.append('            %sf_%s(%s);' % ('return ' if rret != 'void' else '', slug, args))
-    L.append('        }')
-    L.append('')
+    sup_params = [{'Name': n, 'Type': t, 'RefKind': ''} for n, t in rps]
+    funcptr.emit(L, 8, csname, rret, sup_params, rname, slug, ident)
 
 L.append(CONVENIENCES)
 L.append('    }')

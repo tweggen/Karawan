@@ -263,797 +263,722 @@ namespace Karawan.Graphics.OpenGL
         public static GL GetApi(Func<string, IntPtr> getProcAddress) => new GL(getProcAddress);
         public static GL GetApi(IGLProcAddress ctx) => new GL(ctx.GetProcAddress);
 
-        private delegate void d_void_ActiveTexture_GLEnum_(GLEnum texture);
-        private d_void_ActiveTexture_GLEnum_ f_void_ActiveTexture_GLEnum_;
+        private delegate* unmanaged<GLEnum, void> f_void_ActiveTexture_GLEnum_;
         public void ActiveTexture(GLEnum texture)
         {
-            f_void_ActiveTexture_GLEnum_ ??= Marshal.GetDelegateForFunctionPointer<d_void_ActiveTexture_GLEnum_>(_getProc("glActiveTexture"));
+            if (f_void_ActiveTexture_GLEnum_ == null) f_void_ActiveTexture_GLEnum_ = (delegate* unmanaged<GLEnum, void>)_getProc("glActiveTexture");
             f_void_ActiveTexture_GLEnum_(texture);
         }
 
-        private delegate void d_void_ActiveTexture_TextureUnit_(TextureUnit texture);
-        private d_void_ActiveTexture_TextureUnit_ f_void_ActiveTexture_TextureUnit_;
+        private delegate* unmanaged<TextureUnit, void> f_void_ActiveTexture_TextureUnit_;
         public void ActiveTexture(TextureUnit texture)
         {
-            f_void_ActiveTexture_TextureUnit_ ??= Marshal.GetDelegateForFunctionPointer<d_void_ActiveTexture_TextureUnit_>(_getProc("glActiveTexture"));
+            if (f_void_ActiveTexture_TextureUnit_ == null) f_void_ActiveTexture_TextureUnit_ = (delegate* unmanaged<TextureUnit, void>)_getProc("glActiveTexture");
             f_void_ActiveTexture_TextureUnit_(texture);
         }
 
-        private delegate void d_void_AttachShader_uint__uint_(uint program, uint shader);
-        private d_void_AttachShader_uint__uint_ f_void_AttachShader_uint__uint_;
+        private delegate* unmanaged<uint, uint, void> f_void_AttachShader_uint__uint_;
         public void AttachShader(uint program, uint shader)
         {
-            f_void_AttachShader_uint__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_AttachShader_uint__uint_>(_getProc("glAttachShader"));
+            if (f_void_AttachShader_uint__uint_ == null) f_void_AttachShader_uint__uint_ = (delegate* unmanaged<uint, uint, void>)_getProc("glAttachShader");
             f_void_AttachShader_uint__uint_(program, shader);
         }
 
-        private delegate void d_void_BindBufferBase_BufferTargetARB__uint__uint_(BufferTargetARB target, uint index, uint buffer);
-        private d_void_BindBufferBase_BufferTargetARB__uint__uint_ f_void_BindBufferBase_BufferTargetARB__uint__uint_;
+        private delegate* unmanaged<BufferTargetARB, uint, uint, void> f_void_BindBufferBase_BufferTargetARB__uint__uint_;
         public void BindBufferBase(BufferTargetARB target, uint index, uint buffer)
         {
-            f_void_BindBufferBase_BufferTargetARB__uint__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BindBufferBase_BufferTargetARB__uint__uint_>(_getProc("glBindBufferBase"));
+            if (f_void_BindBufferBase_BufferTargetARB__uint__uint_ == null) f_void_BindBufferBase_BufferTargetARB__uint__uint_ = (delegate* unmanaged<BufferTargetARB, uint, uint, void>)_getProc("glBindBufferBase");
             f_void_BindBufferBase_BufferTargetARB__uint__uint_(target, index, buffer);
         }
 
-        private delegate void d_void_BindBuffer_BufferTargetARB__uint_(BufferTargetARB target, uint buffer);
-        private d_void_BindBuffer_BufferTargetARB__uint_ f_void_BindBuffer_BufferTargetARB__uint_;
+        private delegate* unmanaged<BufferTargetARB, uint, void> f_void_BindBuffer_BufferTargetARB__uint_;
         public void BindBuffer(BufferTargetARB target, uint buffer)
         {
-            f_void_BindBuffer_BufferTargetARB__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BindBuffer_BufferTargetARB__uint_>(_getProc("glBindBuffer"));
+            if (f_void_BindBuffer_BufferTargetARB__uint_ == null) f_void_BindBuffer_BufferTargetARB__uint_ = (delegate* unmanaged<BufferTargetARB, uint, void>)_getProc("glBindBuffer");
             f_void_BindBuffer_BufferTargetARB__uint_(target, buffer);
         }
 
-        private delegate void d_void_BindBuffer_GLEnum__uint_(GLEnum target, uint buffer);
-        private d_void_BindBuffer_GLEnum__uint_ f_void_BindBuffer_GLEnum__uint_;
+        private delegate* unmanaged<GLEnum, uint, void> f_void_BindBuffer_GLEnum__uint_;
         public void BindBuffer(GLEnum target, uint buffer)
         {
-            f_void_BindBuffer_GLEnum__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BindBuffer_GLEnum__uint_>(_getProc("glBindBuffer"));
+            if (f_void_BindBuffer_GLEnum__uint_ == null) f_void_BindBuffer_GLEnum__uint_ = (delegate* unmanaged<GLEnum, uint, void>)_getProc("glBindBuffer");
             f_void_BindBuffer_GLEnum__uint_(target, buffer);
         }
 
-        private delegate void d_void_BindFramebuffer_GLEnum__uint_(GLEnum target, uint framebuffer);
-        private d_void_BindFramebuffer_GLEnum__uint_ f_void_BindFramebuffer_GLEnum__uint_;
+        private delegate* unmanaged<GLEnum, uint, void> f_void_BindFramebuffer_GLEnum__uint_;
         public void BindFramebuffer(GLEnum target, uint framebuffer)
         {
-            f_void_BindFramebuffer_GLEnum__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BindFramebuffer_GLEnum__uint_>(_getProc("glBindFramebuffer"));
+            if (f_void_BindFramebuffer_GLEnum__uint_ == null) f_void_BindFramebuffer_GLEnum__uint_ = (delegate* unmanaged<GLEnum, uint, void>)_getProc("glBindFramebuffer");
             f_void_BindFramebuffer_GLEnum__uint_(target, framebuffer);
         }
 
-        private delegate void d_void_BindRenderbuffer_GLEnum__uint_(GLEnum target, uint renderbuffer);
-        private d_void_BindRenderbuffer_GLEnum__uint_ f_void_BindRenderbuffer_GLEnum__uint_;
+        private delegate* unmanaged<GLEnum, uint, void> f_void_BindRenderbuffer_GLEnum__uint_;
         public void BindRenderbuffer(GLEnum target, uint renderbuffer)
         {
-            f_void_BindRenderbuffer_GLEnum__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BindRenderbuffer_GLEnum__uint_>(_getProc("glBindRenderbuffer"));
+            if (f_void_BindRenderbuffer_GLEnum__uint_ == null) f_void_BindRenderbuffer_GLEnum__uint_ = (delegate* unmanaged<GLEnum, uint, void>)_getProc("glBindRenderbuffer");
             f_void_BindRenderbuffer_GLEnum__uint_(target, renderbuffer);
         }
 
-        private delegate void d_void_BindSampler_uint__uint_(uint unit, uint sampler);
-        private d_void_BindSampler_uint__uint_ f_void_BindSampler_uint__uint_;
+        private delegate* unmanaged<uint, uint, void> f_void_BindSampler_uint__uint_;
         public void BindSampler(uint unit, uint sampler)
         {
-            f_void_BindSampler_uint__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BindSampler_uint__uint_>(_getProc("glBindSampler"));
+            if (f_void_BindSampler_uint__uint_ == null) f_void_BindSampler_uint__uint_ = (delegate* unmanaged<uint, uint, void>)_getProc("glBindSampler");
             f_void_BindSampler_uint__uint_(unit, sampler);
         }
 
-        private delegate void d_void_BindTexture_GLEnum__uint_(GLEnum target, uint texture);
-        private d_void_BindTexture_GLEnum__uint_ f_void_BindTexture_GLEnum__uint_;
+        private delegate* unmanaged<GLEnum, uint, void> f_void_BindTexture_GLEnum__uint_;
         public void BindTexture(GLEnum target, uint texture)
         {
-            f_void_BindTexture_GLEnum__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BindTexture_GLEnum__uint_>(_getProc("glBindTexture"));
+            if (f_void_BindTexture_GLEnum__uint_ == null) f_void_BindTexture_GLEnum__uint_ = (delegate* unmanaged<GLEnum, uint, void>)_getProc("glBindTexture");
             f_void_BindTexture_GLEnum__uint_(target, texture);
         }
 
-        private delegate void d_void_BindTexture_TextureTarget__uint_(TextureTarget target, uint texture);
-        private d_void_BindTexture_TextureTarget__uint_ f_void_BindTexture_TextureTarget__uint_;
+        private delegate* unmanaged<TextureTarget, uint, void> f_void_BindTexture_TextureTarget__uint_;
         public void BindTexture(TextureTarget target, uint texture)
         {
-            f_void_BindTexture_TextureTarget__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BindTexture_TextureTarget__uint_>(_getProc("glBindTexture"));
+            if (f_void_BindTexture_TextureTarget__uint_ == null) f_void_BindTexture_TextureTarget__uint_ = (delegate* unmanaged<TextureTarget, uint, void>)_getProc("glBindTexture");
             f_void_BindTexture_TextureTarget__uint_(target, texture);
         }
 
-        private delegate void d_void_BindVertexArray_uint_(uint array);
-        private d_void_BindVertexArray_uint_ f_void_BindVertexArray_uint_;
+        private delegate* unmanaged<uint, void> f_void_BindVertexArray_uint_;
         public void BindVertexArray(uint array)
         {
-            f_void_BindVertexArray_uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BindVertexArray_uint_>(_getProc("glBindVertexArray"));
+            if (f_void_BindVertexArray_uint_ == null) f_void_BindVertexArray_uint_ = (delegate* unmanaged<uint, void>)_getProc("glBindVertexArray");
             f_void_BindVertexArray_uint_(array);
         }
 
-        private delegate void d_void_BlendEquationSeparate_GLEnum__GLEnum_(GLEnum modeRGB, GLEnum modeAlpha);
-        private d_void_BlendEquationSeparate_GLEnum__GLEnum_ f_void_BlendEquationSeparate_GLEnum__GLEnum_;
+        private delegate* unmanaged<GLEnum, GLEnum, void> f_void_BlendEquationSeparate_GLEnum__GLEnum_;
         public void BlendEquationSeparate(GLEnum modeRGB, GLEnum modeAlpha)
         {
-            f_void_BlendEquationSeparate_GLEnum__GLEnum_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BlendEquationSeparate_GLEnum__GLEnum_>(_getProc("glBlendEquationSeparate"));
+            if (f_void_BlendEquationSeparate_GLEnum__GLEnum_ == null) f_void_BlendEquationSeparate_GLEnum__GLEnum_ = (delegate* unmanaged<GLEnum, GLEnum, void>)_getProc("glBlendEquationSeparate");
             f_void_BlendEquationSeparate_GLEnum__GLEnum_(modeRGB, modeAlpha);
         }
 
-        private delegate void d_void_BlendEquation_BlendEquationModeEXT_(BlendEquationModeEXT mode);
-        private d_void_BlendEquation_BlendEquationModeEXT_ f_void_BlendEquation_BlendEquationModeEXT_;
+        private delegate* unmanaged<BlendEquationModeEXT, void> f_void_BlendEquation_BlendEquationModeEXT_;
         public void BlendEquation(BlendEquationModeEXT mode)
         {
-            f_void_BlendEquation_BlendEquationModeEXT_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BlendEquation_BlendEquationModeEXT_>(_getProc("glBlendEquation"));
+            if (f_void_BlendEquation_BlendEquationModeEXT_ == null) f_void_BlendEquation_BlendEquationModeEXT_ = (delegate* unmanaged<BlendEquationModeEXT, void>)_getProc("glBlendEquation");
             f_void_BlendEquation_BlendEquationModeEXT_(mode);
         }
 
-        private delegate void d_void_BlendEquation_GLEnum_(GLEnum mode);
-        private d_void_BlendEquation_GLEnum_ f_void_BlendEquation_GLEnum_;
+        private delegate* unmanaged<GLEnum, void> f_void_BlendEquation_GLEnum_;
         public void BlendEquation(GLEnum mode)
         {
-            f_void_BlendEquation_GLEnum_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BlendEquation_GLEnum_>(_getProc("glBlendEquation"));
+            if (f_void_BlendEquation_GLEnum_ == null) f_void_BlendEquation_GLEnum_ = (delegate* unmanaged<GLEnum, void>)_getProc("glBlendEquation");
             f_void_BlendEquation_GLEnum_(mode);
         }
 
-        private delegate void d_void_BlendFuncSeparate_BlendingFactor__BlendingFactor__BlendingFactor__BlendingFactor_(BlendingFactor sfactorRGB, BlendingFactor dfactorRGB, BlendingFactor sfactorAlpha, BlendingFactor dfactorAlpha);
-        private d_void_BlendFuncSeparate_BlendingFactor__BlendingFactor__BlendingFactor__BlendingFactor_ f_void_BlendFuncSeparate_BlendingFactor__BlendingFactor__BlendingFactor__BlendingFactor_;
+        private delegate* unmanaged<BlendingFactor, BlendingFactor, BlendingFactor, BlendingFactor, void> f_void_BlendFuncSeparate_BlendingFactor__BlendingFactor__BlendingFactor__BlendingFactor_;
         public void BlendFuncSeparate(BlendingFactor sfactorRGB, BlendingFactor dfactorRGB, BlendingFactor sfactorAlpha, BlendingFactor dfactorAlpha)
         {
-            f_void_BlendFuncSeparate_BlendingFactor__BlendingFactor__BlendingFactor__BlendingFactor_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BlendFuncSeparate_BlendingFactor__BlendingFactor__BlendingFactor__BlendingFactor_>(_getProc("glBlendFuncSeparate"));
+            if (f_void_BlendFuncSeparate_BlendingFactor__BlendingFactor__BlendingFactor__BlendingFactor_ == null) f_void_BlendFuncSeparate_BlendingFactor__BlendingFactor__BlendingFactor__BlendingFactor_ = (delegate* unmanaged<BlendingFactor, BlendingFactor, BlendingFactor, BlendingFactor, void>)_getProc("glBlendFuncSeparate");
             f_void_BlendFuncSeparate_BlendingFactor__BlendingFactor__BlendingFactor__BlendingFactor_(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha);
         }
 
-        private delegate void d_void_BlendFuncSeparate_GLEnum__GLEnum__GLEnum__GLEnum_(GLEnum sfactorRGB, GLEnum dfactorRGB, GLEnum sfactorAlpha, GLEnum dfactorAlpha);
-        private d_void_BlendFuncSeparate_GLEnum__GLEnum__GLEnum__GLEnum_ f_void_BlendFuncSeparate_GLEnum__GLEnum__GLEnum__GLEnum_;
+        private delegate* unmanaged<GLEnum, GLEnum, GLEnum, GLEnum, void> f_void_BlendFuncSeparate_GLEnum__GLEnum__GLEnum__GLEnum_;
         public void BlendFuncSeparate(GLEnum sfactorRGB, GLEnum dfactorRGB, GLEnum sfactorAlpha, GLEnum dfactorAlpha)
         {
-            f_void_BlendFuncSeparate_GLEnum__GLEnum__GLEnum__GLEnum_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BlendFuncSeparate_GLEnum__GLEnum__GLEnum__GLEnum_>(_getProc("glBlendFuncSeparate"));
+            if (f_void_BlendFuncSeparate_GLEnum__GLEnum__GLEnum__GLEnum_ == null) f_void_BlendFuncSeparate_GLEnum__GLEnum__GLEnum__GLEnum_ = (delegate* unmanaged<GLEnum, GLEnum, GLEnum, GLEnum, void>)_getProc("glBlendFuncSeparate");
             f_void_BlendFuncSeparate_GLEnum__GLEnum__GLEnum__GLEnum_(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha);
         }
 
-        private delegate void d_void_BufferData_BufferTargetARB__nuint__void___BufferUsageARB_(BufferTargetARB target, nuint size, void* data, BufferUsageARB usage);
-        private d_void_BufferData_BufferTargetARB__nuint__void___BufferUsageARB_ f_void_BufferData_BufferTargetARB__nuint__void___BufferUsageARB_;
+        private delegate* unmanaged<BufferTargetARB, nuint, void*, BufferUsageARB, void> f_void_BufferData_BufferTargetARB__nuint__void___BufferUsageARB_;
         public void BufferData(BufferTargetARB target, nuint size, void* data, BufferUsageARB usage)
         {
-            f_void_BufferData_BufferTargetARB__nuint__void___BufferUsageARB_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BufferData_BufferTargetARB__nuint__void___BufferUsageARB_>(_getProc("glBufferData"));
+            if (f_void_BufferData_BufferTargetARB__nuint__void___BufferUsageARB_ == null) f_void_BufferData_BufferTargetARB__nuint__void___BufferUsageARB_ = (delegate* unmanaged<BufferTargetARB, nuint, void*, BufferUsageARB, void>)_getProc("glBufferData");
             f_void_BufferData_BufferTargetARB__nuint__void___BufferUsageARB_(target, size, data, usage);
         }
 
-        private delegate void d_void_BufferData_GLEnum__nuint__void___GLEnum_(GLEnum target, nuint size, void* data, GLEnum usage);
-        private d_void_BufferData_GLEnum__nuint__void___GLEnum_ f_void_BufferData_GLEnum__nuint__void___GLEnum_;
+        private delegate* unmanaged<GLEnum, nuint, void*, GLEnum, void> f_void_BufferData_GLEnum__nuint__void___GLEnum_;
         public void BufferData(GLEnum target, nuint size, void* data, GLEnum usage)
         {
-            f_void_BufferData_GLEnum__nuint__void___GLEnum_ ??= Marshal.GetDelegateForFunctionPointer<d_void_BufferData_GLEnum__nuint__void___GLEnum_>(_getProc("glBufferData"));
+            if (f_void_BufferData_GLEnum__nuint__void___GLEnum_ == null) f_void_BufferData_GLEnum__nuint__void___GLEnum_ = (delegate* unmanaged<GLEnum, nuint, void*, GLEnum, void>)_getProc("glBufferData");
             f_void_BufferData_GLEnum__nuint__void___GLEnum_(target, size, data, usage);
         }
 
-        private delegate GLEnum d_GLEnum_CheckFramebufferStatus_GLEnum_(GLEnum target);
-        private d_GLEnum_CheckFramebufferStatus_GLEnum_ f_GLEnum_CheckFramebufferStatus_GLEnum_;
+        private delegate* unmanaged<GLEnum, GLEnum> f_GLEnum_CheckFramebufferStatus_GLEnum_;
         public GLEnum CheckFramebufferStatus(GLEnum target)
         {
-            f_GLEnum_CheckFramebufferStatus_GLEnum_ ??= Marshal.GetDelegateForFunctionPointer<d_GLEnum_CheckFramebufferStatus_GLEnum_>(_getProc("glCheckFramebufferStatus"));
+            if (f_GLEnum_CheckFramebufferStatus_GLEnum_ == null) f_GLEnum_CheckFramebufferStatus_GLEnum_ = (delegate* unmanaged<GLEnum, GLEnum>)_getProc("glCheckFramebufferStatus");
             return f_GLEnum_CheckFramebufferStatus_GLEnum_(target);
         }
 
-        private delegate void d_void_ClearColor_float__float__float__float_(float red, float green, float blue, float alpha);
-        private d_void_ClearColor_float__float__float__float_ f_void_ClearColor_float__float__float__float_;
+        private delegate* unmanaged<float, float, float, float, void> f_void_ClearColor_float__float__float__float_;
         public void ClearColor(float red, float green, float blue, float alpha)
         {
-            f_void_ClearColor_float__float__float__float_ ??= Marshal.GetDelegateForFunctionPointer<d_void_ClearColor_float__float__float__float_>(_getProc("glClearColor"));
+            if (f_void_ClearColor_float__float__float__float_ == null) f_void_ClearColor_float__float__float__float_ = (delegate* unmanaged<float, float, float, float, void>)_getProc("glClearColor");
             f_void_ClearColor_float__float__float__float_(red, green, blue, alpha);
         }
 
-        private delegate void d_void_ClearDepth_float_(float d);
-        private d_void_ClearDepth_float_ f_void_ClearDepth_float_;
+        private delegate* unmanaged<float, void> f_void_ClearDepth_float_;
         public void ClearDepth(float d)
         {
-            f_void_ClearDepth_float_ ??= Marshal.GetDelegateForFunctionPointer<d_void_ClearDepth_float_>(_getProc("glClearDepthf"));
+            if (f_void_ClearDepth_float_ == null) f_void_ClearDepth_float_ = (delegate* unmanaged<float, void>)_getProc("glClearDepthf");
             f_void_ClearDepth_float_(d);
         }
 
-        private delegate void d_void_Clear_ClearBufferMask_(ClearBufferMask mask);
-        private d_void_Clear_ClearBufferMask_ f_void_Clear_ClearBufferMask_;
+        private delegate* unmanaged<ClearBufferMask, void> f_void_Clear_ClearBufferMask_;
         public void Clear(ClearBufferMask mask)
         {
-            f_void_Clear_ClearBufferMask_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Clear_ClearBufferMask_>(_getProc("glClear"));
+            if (f_void_Clear_ClearBufferMask_ == null) f_void_Clear_ClearBufferMask_ = (delegate* unmanaged<ClearBufferMask, void>)_getProc("glClear");
             f_void_Clear_ClearBufferMask_(mask);
         }
 
-        private delegate void d_void_Clear_uint_(uint mask);
-        private d_void_Clear_uint_ f_void_Clear_uint_;
+        private delegate* unmanaged<uint, void> f_void_Clear_uint_;
         public void Clear(uint mask)
         {
-            f_void_Clear_uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Clear_uint_>(_getProc("glClear"));
+            if (f_void_Clear_uint_ == null) f_void_Clear_uint_ = (delegate* unmanaged<uint, void>)_getProc("glClear");
             f_void_Clear_uint_(mask);
         }
 
-        private delegate void d_void_CompileShader_uint_(uint shader);
-        private d_void_CompileShader_uint_ f_void_CompileShader_uint_;
+        private delegate* unmanaged<uint, void> f_void_CompileShader_uint_;
         public void CompileShader(uint shader)
         {
-            f_void_CompileShader_uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_CompileShader_uint_>(_getProc("glCompileShader"));
+            if (f_void_CompileShader_uint_ == null) f_void_CompileShader_uint_ = (delegate* unmanaged<uint, void>)_getProc("glCompileShader");
             f_void_CompileShader_uint_(shader);
         }
 
-        private delegate uint d_uint_CreateProgram__();
-        private d_uint_CreateProgram__ f_uint_CreateProgram__;
+        private delegate* unmanaged<uint> f_uint_CreateProgram__;
         public uint CreateProgram()
         {
-            f_uint_CreateProgram__ ??= Marshal.GetDelegateForFunctionPointer<d_uint_CreateProgram__>(_getProc("glCreateProgram"));
+            if (f_uint_CreateProgram__ == null) f_uint_CreateProgram__ = (delegate* unmanaged<uint>)_getProc("glCreateProgram");
             return f_uint_CreateProgram__();
         }
 
-        private delegate uint d_uint_CreateShader_ShaderType_(ShaderType type);
-        private d_uint_CreateShader_ShaderType_ f_uint_CreateShader_ShaderType_;
+        private delegate* unmanaged<ShaderType, uint> f_uint_CreateShader_ShaderType_;
         public uint CreateShader(ShaderType type)
         {
-            f_uint_CreateShader_ShaderType_ ??= Marshal.GetDelegateForFunctionPointer<d_uint_CreateShader_ShaderType_>(_getProc("glCreateShader"));
+            if (f_uint_CreateShader_ShaderType_ == null) f_uint_CreateShader_ShaderType_ = (delegate* unmanaged<ShaderType, uint>)_getProc("glCreateShader");
             return f_uint_CreateShader_ShaderType_(type);
         }
 
-        private delegate void d_void_CullFace_TriangleFace_(TriangleFace mode);
-        private d_void_CullFace_TriangleFace_ f_void_CullFace_TriangleFace_;
+        private delegate* unmanaged<TriangleFace, void> f_void_CullFace_TriangleFace_;
         public void CullFace(TriangleFace mode)
         {
-            f_void_CullFace_TriangleFace_ ??= Marshal.GetDelegateForFunctionPointer<d_void_CullFace_TriangleFace_>(_getProc("glCullFace"));
+            if (f_void_CullFace_TriangleFace_ == null) f_void_CullFace_TriangleFace_ = (delegate* unmanaged<TriangleFace, void>)_getProc("glCullFace");
             f_void_CullFace_TriangleFace_(mode);
         }
 
-        private delegate void d_void_DeleteProgram_uint_(uint program);
-        private d_void_DeleteProgram_uint_ f_void_DeleteProgram_uint_;
+        private delegate* unmanaged<uint, void> f_void_DeleteProgram_uint_;
         public void DeleteProgram(uint program)
         {
-            f_void_DeleteProgram_uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_DeleteProgram_uint_>(_getProc("glDeleteProgram"));
+            if (f_void_DeleteProgram_uint_ == null) f_void_DeleteProgram_uint_ = (delegate* unmanaged<uint, void>)_getProc("glDeleteProgram");
             f_void_DeleteProgram_uint_(program);
         }
 
-        private delegate void d_void_DeleteShader_uint_(uint shader);
-        private d_void_DeleteShader_uint_ f_void_DeleteShader_uint_;
+        private delegate* unmanaged<uint, void> f_void_DeleteShader_uint_;
         public void DeleteShader(uint shader)
         {
-            f_void_DeleteShader_uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_DeleteShader_uint_>(_getProc("glDeleteShader"));
+            if (f_void_DeleteShader_uint_ == null) f_void_DeleteShader_uint_ = (delegate* unmanaged<uint, void>)_getProc("glDeleteShader");
             f_void_DeleteShader_uint_(shader);
         }
 
-        private delegate void d_void_DepthFunc_DepthFunction_(DepthFunction func);
-        private d_void_DepthFunc_DepthFunction_ f_void_DepthFunc_DepthFunction_;
+        private delegate* unmanaged<DepthFunction, void> f_void_DepthFunc_DepthFunction_;
         public void DepthFunc(DepthFunction func)
         {
-            f_void_DepthFunc_DepthFunction_ ??= Marshal.GetDelegateForFunctionPointer<d_void_DepthFunc_DepthFunction_>(_getProc("glDepthFunc"));
+            if (f_void_DepthFunc_DepthFunction_ == null) f_void_DepthFunc_DepthFunction_ = (delegate* unmanaged<DepthFunction, void>)_getProc("glDepthFunc");
             f_void_DepthFunc_DepthFunction_(func);
         }
 
-        private delegate void d_void_DepthMask_bool_(bool flag);
-        private d_void_DepthMask_bool_ f_void_DepthMask_bool_;
+        private delegate* unmanaged<byte, void> f_void_DepthMask_bool_;
         public void DepthMask(bool flag)
         {
-            f_void_DepthMask_bool_ ??= Marshal.GetDelegateForFunctionPointer<d_void_DepthMask_bool_>(_getProc("glDepthMask"));
-            f_void_DepthMask_bool_(flag);
+            if (f_void_DepthMask_bool_ == null) f_void_DepthMask_bool_ = (delegate* unmanaged<byte, void>)_getProc("glDepthMask");
+            f_void_DepthMask_bool_((byte)(flag ? 1 : 0));
         }
 
-        private delegate void d_void_DetachShader_uint__uint_(uint program, uint shader);
-        private d_void_DetachShader_uint__uint_ f_void_DetachShader_uint__uint_;
+        private delegate* unmanaged<uint, uint, void> f_void_DetachShader_uint__uint_;
         public void DetachShader(uint program, uint shader)
         {
-            f_void_DetachShader_uint__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_DetachShader_uint__uint_>(_getProc("glDetachShader"));
+            if (f_void_DetachShader_uint__uint_ == null) f_void_DetachShader_uint__uint_ = (delegate* unmanaged<uint, uint, void>)_getProc("glDetachShader");
             f_void_DetachShader_uint__uint_(program, shader);
         }
 
-        private delegate void d_void_Disable_EnableCap_(EnableCap cap);
-        private d_void_Disable_EnableCap_ f_void_Disable_EnableCap_;
+        private delegate* unmanaged<EnableCap, void> f_void_Disable_EnableCap_;
         public void Disable(EnableCap cap)
         {
-            f_void_Disable_EnableCap_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Disable_EnableCap_>(_getProc("glDisable"));
+            if (f_void_Disable_EnableCap_ == null) f_void_Disable_EnableCap_ = (delegate* unmanaged<EnableCap, void>)_getProc("glDisable");
             f_void_Disable_EnableCap_(cap);
         }
 
-        private delegate void d_void_Disable_GLEnum_(GLEnum cap);
-        private d_void_Disable_GLEnum_ f_void_Disable_GLEnum_;
+        private delegate* unmanaged<GLEnum, void> f_void_Disable_GLEnum_;
         public void Disable(GLEnum cap)
         {
-            f_void_Disable_GLEnum_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Disable_GLEnum_>(_getProc("glDisable"));
+            if (f_void_Disable_GLEnum_ == null) f_void_Disable_GLEnum_ = (delegate* unmanaged<GLEnum, void>)_getProc("glDisable");
             f_void_Disable_GLEnum_(cap);
         }
 
-        private delegate void d_void_DrawBuffers_uint__DrawBufferMode__(uint n, DrawBufferMode* bufs);
-        private d_void_DrawBuffers_uint__DrawBufferMode__ f_void_DrawBuffers_uint__DrawBufferMode__;
+        private delegate* unmanaged<uint, DrawBufferMode*, void> f_void_DrawBuffers_uint__DrawBufferMode__;
         public void DrawBuffers(uint n, DrawBufferMode* bufs)
         {
-            f_void_DrawBuffers_uint__DrawBufferMode__ ??= Marshal.GetDelegateForFunctionPointer<d_void_DrawBuffers_uint__DrawBufferMode__>(_getProc("glDrawBuffers"));
+            if (f_void_DrawBuffers_uint__DrawBufferMode__ == null) f_void_DrawBuffers_uint__DrawBufferMode__ = (delegate* unmanaged<uint, DrawBufferMode*, void>)_getProc("glDrawBuffers");
             f_void_DrawBuffers_uint__DrawBufferMode__(n, bufs);
         }
 
-        private delegate void d_void_DrawElementsBaseVertex_GLEnum__uint__GLEnum__void___int_(GLEnum mode, uint count, GLEnum type, void* indices, int basevertex);
-        private d_void_DrawElementsBaseVertex_GLEnum__uint__GLEnum__void___int_ f_void_DrawElementsBaseVertex_GLEnum__uint__GLEnum__void___int_;
+        private delegate* unmanaged<GLEnum, uint, GLEnum, void*, int, void> f_void_DrawElementsBaseVertex_GLEnum__uint__GLEnum__void___int_;
         public void DrawElementsBaseVertex(GLEnum mode, uint count, GLEnum type, void* indices, int basevertex)
         {
-            f_void_DrawElementsBaseVertex_GLEnum__uint__GLEnum__void___int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_DrawElementsBaseVertex_GLEnum__uint__GLEnum__void___int_>(_getProc("glDrawElementsBaseVertex"));
+            if (f_void_DrawElementsBaseVertex_GLEnum__uint__GLEnum__void___int_ == null) f_void_DrawElementsBaseVertex_GLEnum__uint__GLEnum__void___int_ = (delegate* unmanaged<GLEnum, uint, GLEnum, void*, int, void>)_getProc("glDrawElementsBaseVertex");
             f_void_DrawElementsBaseVertex_GLEnum__uint__GLEnum__void___int_(mode, count, type, indices, basevertex);
         }
 
-        private delegate void d_void_DrawElementsInstanced_PrimitiveType__uint__GLEnum__void___uint_(PrimitiveType mode, uint count, GLEnum type, void* indices, uint instancecount);
-        private d_void_DrawElementsInstanced_PrimitiveType__uint__GLEnum__void___uint_ f_void_DrawElementsInstanced_PrimitiveType__uint__GLEnum__void___uint_;
+        private delegate* unmanaged<PrimitiveType, uint, GLEnum, void*, uint, void> f_void_DrawElementsInstanced_PrimitiveType__uint__GLEnum__void___uint_;
         public void DrawElementsInstanced(PrimitiveType mode, uint count, GLEnum type, void* indices, uint instancecount)
         {
-            f_void_DrawElementsInstanced_PrimitiveType__uint__GLEnum__void___uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_DrawElementsInstanced_PrimitiveType__uint__GLEnum__void___uint_>(_getProc("glDrawElementsInstanced"));
+            if (f_void_DrawElementsInstanced_PrimitiveType__uint__GLEnum__void___uint_ == null) f_void_DrawElementsInstanced_PrimitiveType__uint__GLEnum__void___uint_ = (delegate* unmanaged<PrimitiveType, uint, GLEnum, void*, uint, void>)_getProc("glDrawElementsInstanced");
             f_void_DrawElementsInstanced_PrimitiveType__uint__GLEnum__void___uint_(mode, count, type, indices, instancecount);
         }
 
-        private delegate void d_void_DrawElements_PrimitiveType__uint__DrawElementsType__void__(PrimitiveType mode, uint count, DrawElementsType type, void* indices);
-        private d_void_DrawElements_PrimitiveType__uint__DrawElementsType__void__ f_void_DrawElements_PrimitiveType__uint__DrawElementsType__void__;
+        private delegate* unmanaged<PrimitiveType, uint, DrawElementsType, void*, void> f_void_DrawElements_PrimitiveType__uint__DrawElementsType__void__;
         public void DrawElements(PrimitiveType mode, uint count, DrawElementsType type, void* indices)
         {
-            f_void_DrawElements_PrimitiveType__uint__DrawElementsType__void__ ??= Marshal.GetDelegateForFunctionPointer<d_void_DrawElements_PrimitiveType__uint__DrawElementsType__void__>(_getProc("glDrawElements"));
+            if (f_void_DrawElements_PrimitiveType__uint__DrawElementsType__void__ == null) f_void_DrawElements_PrimitiveType__uint__DrawElementsType__void__ = (delegate* unmanaged<PrimitiveType, uint, DrawElementsType, void*, void>)_getProc("glDrawElements");
             f_void_DrawElements_PrimitiveType__uint__DrawElementsType__void__(mode, count, type, indices);
         }
 
-        private delegate void d_void_EnableVertexAttribArray_uint_(uint index);
-        private d_void_EnableVertexAttribArray_uint_ f_void_EnableVertexAttribArray_uint_;
+        private delegate* unmanaged<uint, void> f_void_EnableVertexAttribArray_uint_;
         public void EnableVertexAttribArray(uint index)
         {
-            f_void_EnableVertexAttribArray_uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_EnableVertexAttribArray_uint_>(_getProc("glEnableVertexAttribArray"));
+            if (f_void_EnableVertexAttribArray_uint_ == null) f_void_EnableVertexAttribArray_uint_ = (delegate* unmanaged<uint, void>)_getProc("glEnableVertexAttribArray");
             f_void_EnableVertexAttribArray_uint_(index);
         }
 
-        private delegate void d_void_Enable_EnableCap_(EnableCap cap);
-        private d_void_Enable_EnableCap_ f_void_Enable_EnableCap_;
+        private delegate* unmanaged<EnableCap, void> f_void_Enable_EnableCap_;
         public void Enable(EnableCap cap)
         {
-            f_void_Enable_EnableCap_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Enable_EnableCap_>(_getProc("glEnable"));
+            if (f_void_Enable_EnableCap_ == null) f_void_Enable_EnableCap_ = (delegate* unmanaged<EnableCap, void>)_getProc("glEnable");
             f_void_Enable_EnableCap_(cap);
         }
 
-        private delegate void d_void_Enable_GLEnum_(GLEnum cap);
-        private d_void_Enable_GLEnum_ f_void_Enable_GLEnum_;
+        private delegate* unmanaged<GLEnum, void> f_void_Enable_GLEnum_;
         public void Enable(GLEnum cap)
         {
-            f_void_Enable_GLEnum_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Enable_GLEnum_>(_getProc("glEnable"));
+            if (f_void_Enable_GLEnum_ == null) f_void_Enable_GLEnum_ = (delegate* unmanaged<GLEnum, void>)_getProc("glEnable");
             f_void_Enable_GLEnum_(cap);
         }
 
-        private delegate void d_void_FramebufferRenderbuffer_GLEnum__GLEnum__GLEnum__uint_(GLEnum target, GLEnum attachment, GLEnum renderbuffertarget, uint renderbuffer);
-        private d_void_FramebufferRenderbuffer_GLEnum__GLEnum__GLEnum__uint_ f_void_FramebufferRenderbuffer_GLEnum__GLEnum__GLEnum__uint_;
+        private delegate* unmanaged<GLEnum, GLEnum, GLEnum, uint, void> f_void_FramebufferRenderbuffer_GLEnum__GLEnum__GLEnum__uint_;
         public void FramebufferRenderbuffer(GLEnum target, GLEnum attachment, GLEnum renderbuffertarget, uint renderbuffer)
         {
-            f_void_FramebufferRenderbuffer_GLEnum__GLEnum__GLEnum__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_FramebufferRenderbuffer_GLEnum__GLEnum__GLEnum__uint_>(_getProc("glFramebufferRenderbuffer"));
+            if (f_void_FramebufferRenderbuffer_GLEnum__GLEnum__GLEnum__uint_ == null) f_void_FramebufferRenderbuffer_GLEnum__GLEnum__GLEnum__uint_ = (delegate* unmanaged<GLEnum, GLEnum, GLEnum, uint, void>)_getProc("glFramebufferRenderbuffer");
             f_void_FramebufferRenderbuffer_GLEnum__GLEnum__GLEnum__uint_(target, attachment, renderbuffertarget, renderbuffer);
         }
 
-        private delegate void d_void_FramebufferTexture_GLEnum__GLEnum__uint__int_(GLEnum target, GLEnum attachment, uint texture, int level);
-        private d_void_FramebufferTexture_GLEnum__GLEnum__uint__int_ f_void_FramebufferTexture_GLEnum__GLEnum__uint__int_;
+        private delegate* unmanaged<GLEnum, GLEnum, uint, int, void> f_void_FramebufferTexture_GLEnum__GLEnum__uint__int_;
         public void FramebufferTexture(GLEnum target, GLEnum attachment, uint texture, int level)
         {
-            f_void_FramebufferTexture_GLEnum__GLEnum__uint__int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_FramebufferTexture_GLEnum__GLEnum__uint__int_>(_getProc("glFramebufferTexture"));
+            if (f_void_FramebufferTexture_GLEnum__GLEnum__uint__int_ == null) f_void_FramebufferTexture_GLEnum__GLEnum__uint__int_ = (delegate* unmanaged<GLEnum, GLEnum, uint, int, void>)_getProc("glFramebufferTexture");
             f_void_FramebufferTexture_GLEnum__GLEnum__uint__int_(target, attachment, texture, level);
         }
 
-        private delegate void d_void_FrontFace_FrontFaceDirection_(FrontFaceDirection mode);
-        private d_void_FrontFace_FrontFaceDirection_ f_void_FrontFace_FrontFaceDirection_;
+        private delegate* unmanaged<FrontFaceDirection, void> f_void_FrontFace_FrontFaceDirection_;
         public void FrontFace(FrontFaceDirection mode)
         {
-            f_void_FrontFace_FrontFaceDirection_ ??= Marshal.GetDelegateForFunctionPointer<d_void_FrontFace_FrontFaceDirection_>(_getProc("glFrontFace"));
+            if (f_void_FrontFace_FrontFaceDirection_ == null) f_void_FrontFace_FrontFaceDirection_ = (delegate* unmanaged<FrontFaceDirection, void>)_getProc("glFrontFace");
             f_void_FrontFace_FrontFaceDirection_(mode);
         }
 
-        private delegate void d_void_GenFramebuffers_uint__uint__(uint n, uint* framebuffers);
-        private d_void_GenFramebuffers_uint__uint__ f_void_GenFramebuffers_uint__uint__;
+        private delegate* unmanaged<uint, uint*, void> f_void_GenFramebuffers_uint__uint__;
         public void GenFramebuffers(uint n, uint* framebuffers)
         {
-            f_void_GenFramebuffers_uint__uint__ ??= Marshal.GetDelegateForFunctionPointer<d_void_GenFramebuffers_uint__uint__>(_getProc("glGenFramebuffers"));
+            if (f_void_GenFramebuffers_uint__uint__ == null) f_void_GenFramebuffers_uint__uint__ = (delegate* unmanaged<uint, uint*, void>)_getProc("glGenFramebuffers");
             f_void_GenFramebuffers_uint__uint__(n, framebuffers);
         }
 
-        private delegate void d_void_GenRenderbuffers_uint__uint__(uint n, uint* renderbuffers);
-        private d_void_GenRenderbuffers_uint__uint__ f_void_GenRenderbuffers_uint__uint__;
+        private delegate* unmanaged<uint, uint*, void> f_void_GenRenderbuffers_uint__uint__;
         public void GenRenderbuffers(uint n, uint* renderbuffers)
         {
-            f_void_GenRenderbuffers_uint__uint__ ??= Marshal.GetDelegateForFunctionPointer<d_void_GenRenderbuffers_uint__uint__>(_getProc("glGenRenderbuffers"));
+            if (f_void_GenRenderbuffers_uint__uint__ == null) f_void_GenRenderbuffers_uint__uint__ = (delegate* unmanaged<uint, uint*, void>)_getProc("glGenRenderbuffers");
             f_void_GenRenderbuffers_uint__uint__(n, renderbuffers);
         }
 
-        private delegate void d_void_GenerateMipmap_TextureTarget_(TextureTarget target);
-        private d_void_GenerateMipmap_TextureTarget_ f_void_GenerateMipmap_TextureTarget_;
+        private delegate* unmanaged<TextureTarget, void> f_void_GenerateMipmap_TextureTarget_;
         public void GenerateMipmap(TextureTarget target)
         {
-            f_void_GenerateMipmap_TextureTarget_ ??= Marshal.GetDelegateForFunctionPointer<d_void_GenerateMipmap_TextureTarget_>(_getProc("glGenerateMipmap"));
+            if (f_void_GenerateMipmap_TextureTarget_ == null) f_void_GenerateMipmap_TextureTarget_ = (delegate* unmanaged<TextureTarget, void>)_getProc("glGenerateMipmap");
             f_void_GenerateMipmap_TextureTarget_(target);
         }
 
-        private delegate int d_int_GetAttribLocation_uint__string_(uint program, string name);
-        private d_int_GetAttribLocation_uint__string_ f_int_GetAttribLocation_uint__string_;
+        private delegate* unmanaged<uint, byte*, int> f_int_GetAttribLocation_uint__string_;
         public int GetAttribLocation(uint program, string name)
         {
-            f_int_GetAttribLocation_uint__string_ ??= Marshal.GetDelegateForFunctionPointer<d_int_GetAttribLocation_uint__string_>(_getProc("glGetAttribLocation"));
-            return f_int_GetAttribLocation_uint__string_(program, name);
+            if (f_int_GetAttribLocation_uint__string_ == null) f_int_GetAttribLocation_uint__string_ = (delegate* unmanaged<uint, byte*, int>)_getProc("glGetAttribLocation");
+            var _s1 = System.Text.Encoding.UTF8.GetBytes(name + "\0");
+            fixed (byte* _p1 = _s1)
+            {
+                return f_int_GetAttribLocation_uint__string_(program, _p1);
+            }
         }
 
-        private delegate void d_void_GetBoolean_GLEnum__out_bool_(GLEnum pname, out bool data);
-        private d_void_GetBoolean_GLEnum__out_bool_ f_void_GetBoolean_GLEnum__out_bool_;
+        private delegate* unmanaged<GLEnum, byte*, void> f_void_GetBoolean_GLEnum__out_bool_;
         public void GetBoolean(GLEnum pname, out bool data)
         {
-            f_void_GetBoolean_GLEnum__out_bool_ ??= Marshal.GetDelegateForFunctionPointer<d_void_GetBoolean_GLEnum__out_bool_>(_getProc("glGetBooleanv"));
-            f_void_GetBoolean_GLEnum__out_bool_(pname, out data);
+            if (f_void_GetBoolean_GLEnum__out_bool_ == null) f_void_GetBoolean_GLEnum__out_bool_ = (delegate* unmanaged<GLEnum, byte*, void>)_getProc("glGetBooleanv");
+            byte _a1 = 0;
+            f_void_GetBoolean_GLEnum__out_bool_(pname, &_a1);
+            data = _a1 != 0;
         }
 
-        private delegate GLEnum d_GLEnum_GetError__();
-        private d_GLEnum_GetError__ f_GLEnum_GetError__;
+        private delegate* unmanaged<GLEnum> f_GLEnum_GetError__;
         public GLEnum GetError()
         {
-            f_GLEnum_GetError__ ??= Marshal.GetDelegateForFunctionPointer<d_GLEnum_GetError__>(_getProc("glGetError"));
+            if (f_GLEnum_GetError__ == null) f_GLEnum_GetError__ = (delegate* unmanaged<GLEnum>)_getProc("glGetError");
             return f_GLEnum_GetError__();
         }
 
-        private delegate void d_void_GetInteger_GLEnum__out_int_(GLEnum pname, out int data);
-        private d_void_GetInteger_GLEnum__out_int_ f_void_GetInteger_GLEnum__out_int_;
+        private delegate* unmanaged<GLEnum, int*, void> f_void_GetInteger_GLEnum__out_int_;
         public void GetInteger(GLEnum pname, out int data)
         {
-            f_void_GetInteger_GLEnum__out_int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_GetInteger_GLEnum__out_int_>(_getProc("glGetIntegerv"));
-            f_void_GetInteger_GLEnum__out_int_(pname, out data);
+            if (f_void_GetInteger_GLEnum__out_int_ == null) f_void_GetInteger_GLEnum__out_int_ = (delegate* unmanaged<GLEnum, int*, void>)_getProc("glGetIntegerv");
+            int _a1 = default;
+            f_void_GetInteger_GLEnum__out_int_(pname, &_a1);
+            data = _a1;
         }
 
-        private delegate void d_void_GetInteger_GetPName__out_int_(GetPName pname, out int data);
-        private d_void_GetInteger_GetPName__out_int_ f_void_GetInteger_GetPName__out_int_;
+        private delegate* unmanaged<GetPName, int*, void> f_void_GetInteger_GetPName__out_int_;
         public void GetInteger(GetPName pname, out int data)
         {
-            f_void_GetInteger_GetPName__out_int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_GetInteger_GetPName__out_int_>(_getProc("glGetIntegerv"));
-            f_void_GetInteger_GetPName__out_int_(pname, out data);
+            if (f_void_GetInteger_GetPName__out_int_ == null) f_void_GetInteger_GetPName__out_int_ = (delegate* unmanaged<GetPName, int*, void>)_getProc("glGetIntegerv");
+            int _a1 = default;
+            f_void_GetInteger_GetPName__out_int_(pname, &_a1);
+            data = _a1;
         }
 
-        private delegate void d_void_GetProgram_uint__GLEnum__out_int_(uint program, GLEnum pname, out int @params);
-        private d_void_GetProgram_uint__GLEnum__out_int_ f_void_GetProgram_uint__GLEnum__out_int_;
+        private delegate* unmanaged<uint, GLEnum, int*, void> f_void_GetProgram_uint__GLEnum__out_int_;
         public void GetProgram(uint program, GLEnum pname, out int @params)
         {
-            f_void_GetProgram_uint__GLEnum__out_int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_GetProgram_uint__GLEnum__out_int_>(_getProc("glGetProgramiv"));
-            f_void_GetProgram_uint__GLEnum__out_int_(program, pname, out @params);
+            if (f_void_GetProgram_uint__GLEnum__out_int_ == null) f_void_GetProgram_uint__GLEnum__out_int_ = (delegate* unmanaged<uint, GLEnum, int*, void>)_getProc("glGetProgramiv");
+            int _a2 = default;
+            f_void_GetProgram_uint__GLEnum__out_int_(program, pname, &_a2);
+            @params = _a2;
         }
 
-        private delegate void d_void_GetShader_uint__ShaderParameterName__out_int_(uint shader, ShaderParameterName pname, out int @params);
-        private d_void_GetShader_uint__ShaderParameterName__out_int_ f_void_GetShader_uint__ShaderParameterName__out_int_;
+        private delegate* unmanaged<uint, ShaderParameterName, int*, void> f_void_GetShader_uint__ShaderParameterName__out_int_;
         public void GetShader(uint shader, ShaderParameterName pname, out int @params)
         {
-            f_void_GetShader_uint__ShaderParameterName__out_int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_GetShader_uint__ShaderParameterName__out_int_>(_getProc("glGetShaderiv"));
-            f_void_GetShader_uint__ShaderParameterName__out_int_(shader, pname, out @params);
+            if (f_void_GetShader_uint__ShaderParameterName__out_int_ == null) f_void_GetShader_uint__ShaderParameterName__out_int_ = (delegate* unmanaged<uint, ShaderParameterName, int*, void>)_getProc("glGetShaderiv");
+            int _a2 = default;
+            f_void_GetShader_uint__ShaderParameterName__out_int_(shader, pname, &_a2);
+            @params = _a2;
         }
 
-        private delegate string d_string_GetStringS_StringName_(StringName name);
-        private d_string_GetStringS_StringName_ f_string_GetStringS_StringName_;
+        private delegate* unmanaged<StringName, byte*> f_string_GetStringS_StringName_;
         public string GetStringS(StringName name)
         {
-            f_string_GetStringS_StringName_ ??= Marshal.GetDelegateForFunctionPointer<d_string_GetStringS_StringName_>(_getProc("glGetString"));
-            return f_string_GetStringS_StringName_(name);
+            if (f_string_GetStringS_StringName_ == null) f_string_GetStringS_StringName_ = (delegate* unmanaged<StringName, byte*>)_getProc("glGetString");
+            return Marshal.PtrToStringUTF8((IntPtr)f_string_GetStringS_StringName_(name)) ?? string.Empty;
         }
 
-        private delegate uint d_uint_GetUniformBlockIndex_uint__string_(uint program, string uniformBlockName);
-        private d_uint_GetUniformBlockIndex_uint__string_ f_uint_GetUniformBlockIndex_uint__string_;
+        private delegate* unmanaged<uint, byte*, uint> f_uint_GetUniformBlockIndex_uint__string_;
         public uint GetUniformBlockIndex(uint program, string uniformBlockName)
         {
-            f_uint_GetUniformBlockIndex_uint__string_ ??= Marshal.GetDelegateForFunctionPointer<d_uint_GetUniformBlockIndex_uint__string_>(_getProc("glGetUniformBlockIndex"));
-            return f_uint_GetUniformBlockIndex_uint__string_(program, uniformBlockName);
+            if (f_uint_GetUniformBlockIndex_uint__string_ == null) f_uint_GetUniformBlockIndex_uint__string_ = (delegate* unmanaged<uint, byte*, uint>)_getProc("glGetUniformBlockIndex");
+            var _s1 = System.Text.Encoding.UTF8.GetBytes(uniformBlockName + "\0");
+            fixed (byte* _p1 = _s1)
+            {
+                return f_uint_GetUniformBlockIndex_uint__string_(program, _p1);
+            }
         }
 
-        private delegate int d_int_GetUniformLocation_uint__string_(uint program, string name);
-        private d_int_GetUniformLocation_uint__string_ f_int_GetUniformLocation_uint__string_;
+        private delegate* unmanaged<uint, byte*, int> f_int_GetUniformLocation_uint__string_;
         public int GetUniformLocation(uint program, string name)
         {
-            f_int_GetUniformLocation_uint__string_ ??= Marshal.GetDelegateForFunctionPointer<d_int_GetUniformLocation_uint__string_>(_getProc("glGetUniformLocation"));
-            return f_int_GetUniformLocation_uint__string_(program, name);
+            if (f_int_GetUniformLocation_uint__string_ == null) f_int_GetUniformLocation_uint__string_ = (delegate* unmanaged<uint, byte*, int>)_getProc("glGetUniformLocation");
+            var _s1 = System.Text.Encoding.UTF8.GetBytes(name + "\0");
+            fixed (byte* _p1 = _s1)
+            {
+                return f_int_GetUniformLocation_uint__string_(program, _p1);
+            }
         }
 
-        private delegate bool d_bool_IsEnabled_GLEnum_(GLEnum cap);
-        private d_bool_IsEnabled_GLEnum_ f_bool_IsEnabled_GLEnum_;
+        private delegate* unmanaged<GLEnum, byte> f_bool_IsEnabled_GLEnum_;
         public bool IsEnabled(GLEnum cap)
         {
-            f_bool_IsEnabled_GLEnum_ ??= Marshal.GetDelegateForFunctionPointer<d_bool_IsEnabled_GLEnum_>(_getProc("glIsEnabled"));
-            return f_bool_IsEnabled_GLEnum_(cap);
+            if (f_bool_IsEnabled_GLEnum_ == null) f_bool_IsEnabled_GLEnum_ = (delegate* unmanaged<GLEnum, byte>)_getProc("glIsEnabled");
+            return f_bool_IsEnabled_GLEnum_(cap) != 0;
         }
 
-        private delegate void d_void_LinkProgram_uint_(uint program);
-        private d_void_LinkProgram_uint_ f_void_LinkProgram_uint_;
+        private delegate* unmanaged<uint, void> f_void_LinkProgram_uint_;
         public void LinkProgram(uint program)
         {
-            f_void_LinkProgram_uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_LinkProgram_uint_>(_getProc("glLinkProgram"));
+            if (f_void_LinkProgram_uint_ == null) f_void_LinkProgram_uint_ = (delegate* unmanaged<uint, void>)_getProc("glLinkProgram");
             f_void_LinkProgram_uint_(program);
         }
 
-        private delegate void d_void_PixelStore_PixelStoreParameter__int_(PixelStoreParameter pname, int param);
-        private d_void_PixelStore_PixelStoreParameter__int_ f_void_PixelStore_PixelStoreParameter__int_;
+        private delegate* unmanaged<PixelStoreParameter, int, void> f_void_PixelStore_PixelStoreParameter__int_;
         public void PixelStore(PixelStoreParameter pname, int param)
         {
-            f_void_PixelStore_PixelStoreParameter__int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_PixelStore_PixelStoreParameter__int_>(_getProc("glPixelStorei"));
+            if (f_void_PixelStore_PixelStoreParameter__int_ == null) f_void_PixelStore_PixelStoreParameter__int_ = (delegate* unmanaged<PixelStoreParameter, int, void>)_getProc("glPixelStorei");
             f_void_PixelStore_PixelStoreParameter__int_(pname, param);
         }
 
-        private delegate void d_void_PolygonMode_GLEnum__GLEnum_(GLEnum face, GLEnum mode);
-        private d_void_PolygonMode_GLEnum__GLEnum_ f_void_PolygonMode_GLEnum__GLEnum_;
+        private delegate* unmanaged<GLEnum, GLEnum, void> f_void_PolygonMode_GLEnum__GLEnum_;
         public void PolygonMode(GLEnum face, GLEnum mode)
         {
-            f_void_PolygonMode_GLEnum__GLEnum_ ??= Marshal.GetDelegateForFunctionPointer<d_void_PolygonMode_GLEnum__GLEnum_>(_getProc("glPolygonMode"));
+            if (f_void_PolygonMode_GLEnum__GLEnum_ == null) f_void_PolygonMode_GLEnum__GLEnum_ = (delegate* unmanaged<GLEnum, GLEnum, void>)_getProc("glPolygonMode");
             f_void_PolygonMode_GLEnum__GLEnum_(face, mode);
         }
 
-        private delegate void d_void_RenderbufferStorage_GLEnum__GLEnum__uint__uint_(GLEnum target, GLEnum internalformat, uint width, uint height);
-        private d_void_RenderbufferStorage_GLEnum__GLEnum__uint__uint_ f_void_RenderbufferStorage_GLEnum__GLEnum__uint__uint_;
+        private delegate* unmanaged<GLEnum, GLEnum, uint, uint, void> f_void_RenderbufferStorage_GLEnum__GLEnum__uint__uint_;
         public void RenderbufferStorage(GLEnum target, GLEnum internalformat, uint width, uint height)
         {
-            f_void_RenderbufferStorage_GLEnum__GLEnum__uint__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_RenderbufferStorage_GLEnum__GLEnum__uint__uint_>(_getProc("glRenderbufferStorage"));
+            if (f_void_RenderbufferStorage_GLEnum__GLEnum__uint__uint_ == null) f_void_RenderbufferStorage_GLEnum__GLEnum__uint__uint_ = (delegate* unmanaged<GLEnum, GLEnum, uint, uint, void>)_getProc("glRenderbufferStorage");
             f_void_RenderbufferStorage_GLEnum__GLEnum__uint__uint_(target, internalformat, width, height);
         }
 
-        private delegate void d_void_Scissor_int__int__uint__uint_(int x, int y, uint width, uint height);
-        private d_void_Scissor_int__int__uint__uint_ f_void_Scissor_int__int__uint__uint_;
+        private delegate* unmanaged<int, int, uint, uint, void> f_void_Scissor_int__int__uint__uint_;
         public void Scissor(int x, int y, uint width, uint height)
         {
-            f_void_Scissor_int__int__uint__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Scissor_int__int__uint__uint_>(_getProc("glScissor"));
+            if (f_void_Scissor_int__int__uint__uint_ == null) f_void_Scissor_int__int__uint__uint_ = (delegate* unmanaged<int, int, uint, uint, void>)_getProc("glScissor");
             f_void_Scissor_int__int__uint__uint_(x, y, width, height);
         }
 
-        private delegate void d_void_TexImage2D_TextureTarget__int__InternalFormat__uint__uint__int__PixelFormat__PixelType__void__(TextureTarget target, int level, InternalFormat internalformat, uint width, uint height, int border, PixelFormat format, PixelType type, void* pixels);
-        private d_void_TexImage2D_TextureTarget__int__InternalFormat__uint__uint__int__PixelFormat__PixelType__void__ f_void_TexImage2D_TextureTarget__int__InternalFormat__uint__uint__int__PixelFormat__PixelType__void__;
+        private delegate* unmanaged<TextureTarget, int, InternalFormat, uint, uint, int, PixelFormat, PixelType, void*, void> f_void_TexImage2D_TextureTarget__int__InternalFormat__uint__uint__int__PixelFormat__PixelType__void__;
         public void TexImage2D(TextureTarget target, int level, InternalFormat internalformat, uint width, uint height, int border, PixelFormat format, PixelType type, void* pixels)
         {
-            f_void_TexImage2D_TextureTarget__int__InternalFormat__uint__uint__int__PixelFormat__PixelType__void__ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexImage2D_TextureTarget__int__InternalFormat__uint__uint__int__PixelFormat__PixelType__void__>(_getProc("glTexImage2D"));
+            if (f_void_TexImage2D_TextureTarget__int__InternalFormat__uint__uint__int__PixelFormat__PixelType__void__ == null) f_void_TexImage2D_TextureTarget__int__InternalFormat__uint__uint__int__PixelFormat__PixelType__void__ = (delegate* unmanaged<TextureTarget, int, InternalFormat, uint, uint, int, PixelFormat, PixelType, void*, void>)_getProc("glTexImage2D");
             f_void_TexImage2D_TextureTarget__int__InternalFormat__uint__uint__int__PixelFormat__PixelType__void__(target, level, internalformat, width, height, border, format, type, pixels);
         }
 
-        private delegate void d_void_TexImage2D_TextureTarget__int__int__uint__uint__int__PixelFormat__PixelType__void__(TextureTarget target, int level, int internalformat, uint width, uint height, int border, PixelFormat format, PixelType type, void* pixels);
-        private d_void_TexImage2D_TextureTarget__int__int__uint__uint__int__PixelFormat__PixelType__void__ f_void_TexImage2D_TextureTarget__int__int__uint__uint__int__PixelFormat__PixelType__void__;
+        private delegate* unmanaged<TextureTarget, int, int, uint, uint, int, PixelFormat, PixelType, void*, void> f_void_TexImage2D_TextureTarget__int__int__uint__uint__int__PixelFormat__PixelType__void__;
         public void TexImage2D(TextureTarget target, int level, int internalformat, uint width, uint height, int border, PixelFormat format, PixelType type, void* pixels)
         {
-            f_void_TexImage2D_TextureTarget__int__int__uint__uint__int__PixelFormat__PixelType__void__ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexImage2D_TextureTarget__int__int__uint__uint__int__PixelFormat__PixelType__void__>(_getProc("glTexImage2D"));
+            if (f_void_TexImage2D_TextureTarget__int__int__uint__uint__int__PixelFormat__PixelType__void__ == null) f_void_TexImage2D_TextureTarget__int__int__uint__uint__int__PixelFormat__PixelType__void__ = (delegate* unmanaged<TextureTarget, int, int, uint, uint, int, PixelFormat, PixelType, void*, void>)_getProc("glTexImage2D");
             f_void_TexImage2D_TextureTarget__int__int__uint__uint__int__PixelFormat__PixelType__void__(target, level, internalformat, width, height, border, format, type, pixels);
         }
 
-        private delegate void d_void_TexParameterI_GLEnum__TextureParameterName__int_(GLEnum target, TextureParameterName pname, in int @params);
-        private d_void_TexParameterI_GLEnum__TextureParameterName__int_ f_void_TexParameterI_GLEnum__TextureParameterName__int_;
+        private delegate* unmanaged<GLEnum, TextureParameterName, int*, void> f_void_TexParameterI_GLEnum__TextureParameterName__int_;
         public void TexParameterI(GLEnum target, TextureParameterName pname, in int @params)
         {
-            f_void_TexParameterI_GLEnum__TextureParameterName__int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexParameterI_GLEnum__TextureParameterName__int_>(_getProc("glTexParameterIiv"));
-            f_void_TexParameterI_GLEnum__TextureParameterName__int_(target, pname, in @params);
+            if (f_void_TexParameterI_GLEnum__TextureParameterName__int_ == null) f_void_TexParameterI_GLEnum__TextureParameterName__int_ = (delegate* unmanaged<GLEnum, TextureParameterName, int*, void>)_getProc("glTexParameterIiv");
+            int _a2 = @params;
+            f_void_TexParameterI_GLEnum__TextureParameterName__int_(target, pname, &_a2);
         }
 
-        private delegate void d_void_TexParameterI_GLEnum__TextureParameterName__uint_(GLEnum target, TextureParameterName pname, in uint @params);
-        private d_void_TexParameterI_GLEnum__TextureParameterName__uint_ f_void_TexParameterI_GLEnum__TextureParameterName__uint_;
+        private delegate* unmanaged<GLEnum, TextureParameterName, uint*, void> f_void_TexParameterI_GLEnum__TextureParameterName__uint_;
         public void TexParameterI(GLEnum target, TextureParameterName pname, in uint @params)
         {
-            f_void_TexParameterI_GLEnum__TextureParameterName__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexParameterI_GLEnum__TextureParameterName__uint_>(_getProc("glTexParameterIuiv"));
-            f_void_TexParameterI_GLEnum__TextureParameterName__uint_(target, pname, in @params);
+            if (f_void_TexParameterI_GLEnum__TextureParameterName__uint_ == null) f_void_TexParameterI_GLEnum__TextureParameterName__uint_ = (delegate* unmanaged<GLEnum, TextureParameterName, uint*, void>)_getProc("glTexParameterIuiv");
+            uint _a2 = @params;
+            f_void_TexParameterI_GLEnum__TextureParameterName__uint_(target, pname, &_a2);
         }
 
-        private delegate void d_void_TexParameter_GLEnum__GLEnum__float_(GLEnum target, GLEnum pname, float param);
-        private d_void_TexParameter_GLEnum__GLEnum__float_ f_void_TexParameter_GLEnum__GLEnum__float_;
+        private delegate* unmanaged<GLEnum, GLEnum, float, void> f_void_TexParameter_GLEnum__GLEnum__float_;
         public void TexParameter(GLEnum target, GLEnum pname, float param)
         {
-            f_void_TexParameter_GLEnum__GLEnum__float_ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexParameter_GLEnum__GLEnum__float_>(_getProc("glTexParameterf"));
+            if (f_void_TexParameter_GLEnum__GLEnum__float_ == null) f_void_TexParameter_GLEnum__GLEnum__float_ = (delegate* unmanaged<GLEnum, GLEnum, float, void>)_getProc("glTexParameterf");
             f_void_TexParameter_GLEnum__GLEnum__float_(target, pname, param);
         }
 
-        private delegate void d_void_TexParameter_TextureTarget__TextureParameterName__int_(TextureTarget target, TextureParameterName pname, int param);
-        private d_void_TexParameter_TextureTarget__TextureParameterName__int_ f_void_TexParameter_TextureTarget__TextureParameterName__int_;
+        private delegate* unmanaged<TextureTarget, TextureParameterName, int, void> f_void_TexParameter_TextureTarget__TextureParameterName__int_;
         public void TexParameter(TextureTarget target, TextureParameterName pname, int param)
         {
-            f_void_TexParameter_TextureTarget__TextureParameterName__int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexParameter_TextureTarget__TextureParameterName__int_>(_getProc("glTexParameteri"));
+            if (f_void_TexParameter_TextureTarget__TextureParameterName__int_ == null) f_void_TexParameter_TextureTarget__TextureParameterName__int_ = (delegate* unmanaged<TextureTarget, TextureParameterName, int, void>)_getProc("glTexParameteri");
             f_void_TexParameter_TextureTarget__TextureParameterName__int_(target, pname, param);
         }
 
-        private delegate void d_void_TexStorage2D_GLEnum__uint__SizedInternalFormat__uint__uint_(GLEnum target, uint levels, SizedInternalFormat internalformat, uint width, uint height);
-        private d_void_TexStorage2D_GLEnum__uint__SizedInternalFormat__uint__uint_ f_void_TexStorage2D_GLEnum__uint__SizedInternalFormat__uint__uint_;
+        private delegate* unmanaged<GLEnum, uint, SizedInternalFormat, uint, uint, void> f_void_TexStorage2D_GLEnum__uint__SizedInternalFormat__uint__uint_;
         public void TexStorage2D(GLEnum target, uint levels, SizedInternalFormat internalformat, uint width, uint height)
         {
-            f_void_TexStorage2D_GLEnum__uint__SizedInternalFormat__uint__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexStorage2D_GLEnum__uint__SizedInternalFormat__uint__uint_>(_getProc("glTexStorage2D"));
+            if (f_void_TexStorage2D_GLEnum__uint__SizedInternalFormat__uint__uint_ == null) f_void_TexStorage2D_GLEnum__uint__SizedInternalFormat__uint__uint_ = (delegate* unmanaged<GLEnum, uint, SizedInternalFormat, uint, uint, void>)_getProc("glTexStorage2D");
             f_void_TexStorage2D_GLEnum__uint__SizedInternalFormat__uint__uint_(target, levels, internalformat, width, height);
         }
 
-        private delegate void d_void_TexSubImage2D_GLEnum__int__int__int__uint__uint__PixelFormat__PixelType__void__(GLEnum target, int level, int xoffset, int yoffset, uint width, uint height, PixelFormat format, PixelType type, void* pixels);
-        private d_void_TexSubImage2D_GLEnum__int__int__int__uint__uint__PixelFormat__PixelType__void__ f_void_TexSubImage2D_GLEnum__int__int__int__uint__uint__PixelFormat__PixelType__void__;
+        private delegate* unmanaged<GLEnum, int, int, int, uint, uint, PixelFormat, PixelType, void*, void> f_void_TexSubImage2D_GLEnum__int__int__int__uint__uint__PixelFormat__PixelType__void__;
         public void TexSubImage2D(GLEnum target, int level, int xoffset, int yoffset, uint width, uint height, PixelFormat format, PixelType type, void* pixels)
         {
-            f_void_TexSubImage2D_GLEnum__int__int__int__uint__uint__PixelFormat__PixelType__void__ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexSubImage2D_GLEnum__int__int__int__uint__uint__PixelFormat__PixelType__void__>(_getProc("glTexSubImage2D"));
+            if (f_void_TexSubImage2D_GLEnum__int__int__int__uint__uint__PixelFormat__PixelType__void__ == null) f_void_TexSubImage2D_GLEnum__int__int__int__uint__uint__PixelFormat__PixelType__void__ = (delegate* unmanaged<GLEnum, int, int, int, uint, uint, PixelFormat, PixelType, void*, void>)_getProc("glTexSubImage2D");
             f_void_TexSubImage2D_GLEnum__int__int__int__uint__uint__PixelFormat__PixelType__void__(target, level, xoffset, yoffset, width, height, format, type, pixels);
         }
 
-        private delegate void d_void_TexSubImage2D_TextureTarget__int__int__int__uint__uint__PixelFormat__PixelType__void__(TextureTarget target, int level, int xoffset, int yoffset, uint width, uint height, PixelFormat format, PixelType type, void* pixels);
-        private d_void_TexSubImage2D_TextureTarget__int__int__int__uint__uint__PixelFormat__PixelType__void__ f_void_TexSubImage2D_TextureTarget__int__int__int__uint__uint__PixelFormat__PixelType__void__;
+        private delegate* unmanaged<TextureTarget, int, int, int, uint, uint, PixelFormat, PixelType, void*, void> f_void_TexSubImage2D_TextureTarget__int__int__int__uint__uint__PixelFormat__PixelType__void__;
         public void TexSubImage2D(TextureTarget target, int level, int xoffset, int yoffset, uint width, uint height, PixelFormat format, PixelType type, void* pixels)
         {
-            f_void_TexSubImage2D_TextureTarget__int__int__int__uint__uint__PixelFormat__PixelType__void__ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexSubImage2D_TextureTarget__int__int__int__uint__uint__PixelFormat__PixelType__void__>(_getProc("glTexSubImage2D"));
+            if (f_void_TexSubImage2D_TextureTarget__int__int__int__uint__uint__PixelFormat__PixelType__void__ == null) f_void_TexSubImage2D_TextureTarget__int__int__int__uint__uint__PixelFormat__PixelType__void__ = (delegate* unmanaged<TextureTarget, int, int, int, uint, uint, PixelFormat, PixelType, void*, void>)_getProc("glTexSubImage2D");
             f_void_TexSubImage2D_TextureTarget__int__int__int__uint__uint__PixelFormat__PixelType__void__(target, level, xoffset, yoffset, width, height, format, type, pixels);
         }
 
-        private delegate void d_void_Uniform1_int__float_(int location, float v0);
-        private d_void_Uniform1_int__float_ f_void_Uniform1_int__float_;
+        private delegate* unmanaged<int, float, void> f_void_Uniform1_int__float_;
         public void Uniform1(int location, float v0)
         {
-            f_void_Uniform1_int__float_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Uniform1_int__float_>(_getProc("glUniform1f"));
+            if (f_void_Uniform1_int__float_ == null) f_void_Uniform1_int__float_ = (delegate* unmanaged<int, float, void>)_getProc("glUniform1f");
             f_void_Uniform1_int__float_(location, v0);
         }
 
-        private delegate void d_void_Uniform1_int__int_(int location, int v0);
-        private d_void_Uniform1_int__int_ f_void_Uniform1_int__int_;
+        private delegate* unmanaged<int, int, void> f_void_Uniform1_int__int_;
         public void Uniform1(int location, int v0)
         {
-            f_void_Uniform1_int__int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Uniform1_int__int_>(_getProc("glUniform1i"));
+            if (f_void_Uniform1_int__int_ == null) f_void_Uniform1_int__int_ = (delegate* unmanaged<int, int, void>)_getProc("glUniform1i");
             f_void_Uniform1_int__int_(location, v0);
         }
 
-        private delegate void d_void_Uniform1_int__uint_(int location, uint v0);
-        private d_void_Uniform1_int__uint_ f_void_Uniform1_int__uint_;
+        private delegate* unmanaged<int, uint, void> f_void_Uniform1_int__uint_;
         public void Uniform1(int location, uint v0)
         {
-            f_void_Uniform1_int__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Uniform1_int__uint_>(_getProc("glUniform1ui"));
+            if (f_void_Uniform1_int__uint_ == null) f_void_Uniform1_int__uint_ = (delegate* unmanaged<int, uint, void>)_getProc("glUniform1ui");
             f_void_Uniform1_int__uint_(location, v0);
         }
 
-        private delegate void d_void_Uniform3_int__float__float__float_(int location, float v0, float v1, float v2);
-        private d_void_Uniform3_int__float__float__float_ f_void_Uniform3_int__float__float__float_;
+        private delegate* unmanaged<int, float, float, float, void> f_void_Uniform3_int__float__float__float_;
         public void Uniform3(int location, float v0, float v1, float v2)
         {
-            f_void_Uniform3_int__float__float__float_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Uniform3_int__float__float__float_>(_getProc("glUniform3f"));
+            if (f_void_Uniform3_int__float__float__float_ == null) f_void_Uniform3_int__float__float__float_ = (delegate* unmanaged<int, float, float, float, void>)_getProc("glUniform3f");
             f_void_Uniform3_int__float__float__float_(location, v0, v1, v2);
         }
 
-        private delegate void d_void_Uniform4_int__float__float__float__float_(int location, float v0, float v1, float v2, float v3);
-        private d_void_Uniform4_int__float__float__float__float_ f_void_Uniform4_int__float__float__float__float_;
+        private delegate* unmanaged<int, float, float, float, float, void> f_void_Uniform4_int__float__float__float__float_;
         public void Uniform4(int location, float v0, float v1, float v2, float v3)
         {
-            f_void_Uniform4_int__float__float__float__float_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Uniform4_int__float__float__float__float_>(_getProc("glUniform4f"));
+            if (f_void_Uniform4_int__float__float__float__float_ == null) f_void_Uniform4_int__float__float__float__float_ = (delegate* unmanaged<int, float, float, float, float, void>)_getProc("glUniform4f");
             f_void_Uniform4_int__float__float__float__float_(location, v0, v1, v2, v3);
         }
 
-        private delegate void d_void_UniformMatrix4_int__uint__bool__float__(int location, uint count, bool transpose, float* value);
-        private d_void_UniformMatrix4_int__uint__bool__float__ f_void_UniformMatrix4_int__uint__bool__float__;
+        private delegate* unmanaged<int, uint, byte, float*, void> f_void_UniformMatrix4_int__uint__bool__float__;
         public void UniformMatrix4(int location, uint count, bool transpose, float* value)
         {
-            f_void_UniformMatrix4_int__uint__bool__float__ ??= Marshal.GetDelegateForFunctionPointer<d_void_UniformMatrix4_int__uint__bool__float__>(_getProc("glUniformMatrix4fv"));
-            f_void_UniformMatrix4_int__uint__bool__float__(location, count, transpose, value);
+            if (f_void_UniformMatrix4_int__uint__bool__float__ == null) f_void_UniformMatrix4_int__uint__bool__float__ = (delegate* unmanaged<int, uint, byte, float*, void>)_getProc("glUniformMatrix4fv");
+            f_void_UniformMatrix4_int__uint__bool__float__(location, count, (byte)(transpose ? 1 : 0), value);
         }
 
-        private delegate void d_void_UseProgram_uint_(uint program);
-        private d_void_UseProgram_uint_ f_void_UseProgram_uint_;
+        private delegate* unmanaged<uint, void> f_void_UseProgram_uint_;
         public void UseProgram(uint program)
         {
-            f_void_UseProgram_uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_UseProgram_uint_>(_getProc("glUseProgram"));
+            if (f_void_UseProgram_uint_ == null) f_void_UseProgram_uint_ = (delegate* unmanaged<uint, void>)_getProc("glUseProgram");
             f_void_UseProgram_uint_(program);
         }
 
-        private delegate void d_void_VertexAttribDivisor_uint__uint_(uint index, uint divisor);
-        private d_void_VertexAttribDivisor_uint__uint_ f_void_VertexAttribDivisor_uint__uint_;
+        private delegate* unmanaged<uint, uint, void> f_void_VertexAttribDivisor_uint__uint_;
         public void VertexAttribDivisor(uint index, uint divisor)
         {
-            f_void_VertexAttribDivisor_uint__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_VertexAttribDivisor_uint__uint_>(_getProc("glVertexAttribDivisor"));
+            if (f_void_VertexAttribDivisor_uint__uint_ == null) f_void_VertexAttribDivisor_uint__uint_ = (delegate* unmanaged<uint, uint, void>)_getProc("glVertexAttribDivisor");
             f_void_VertexAttribDivisor_uint__uint_(index, divisor);
         }
 
-        private delegate void d_void_VertexAttribIPointer_uint__int__VertexAttribIType__uint__void__(uint index, int size, VertexAttribIType type, uint stride, void* pointer);
-        private d_void_VertexAttribIPointer_uint__int__VertexAttribIType__uint__void__ f_void_VertexAttribIPointer_uint__int__VertexAttribIType__uint__void__;
+        private delegate* unmanaged<uint, int, VertexAttribIType, uint, void*, void> f_void_VertexAttribIPointer_uint__int__VertexAttribIType__uint__void__;
         public void VertexAttribIPointer(uint index, int size, VertexAttribIType type, uint stride, void* pointer)
         {
-            f_void_VertexAttribIPointer_uint__int__VertexAttribIType__uint__void__ ??= Marshal.GetDelegateForFunctionPointer<d_void_VertexAttribIPointer_uint__int__VertexAttribIType__uint__void__>(_getProc("glVertexAttribIPointer"));
+            if (f_void_VertexAttribIPointer_uint__int__VertexAttribIType__uint__void__ == null) f_void_VertexAttribIPointer_uint__int__VertexAttribIType__uint__void__ = (delegate* unmanaged<uint, int, VertexAttribIType, uint, void*, void>)_getProc("glVertexAttribIPointer");
             f_void_VertexAttribIPointer_uint__int__VertexAttribIType__uint__void__(index, size, type, stride, pointer);
         }
 
-        private delegate void d_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__(uint index, int size, GLEnum type, bool normalized, uint stride, void* pointer);
-        private d_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__ f_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__;
+        private delegate* unmanaged<uint, int, GLEnum, byte, uint, void*, void> f_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__;
         public void VertexAttribPointer(uint index, int size, GLEnum type, bool normalized, uint stride, void* pointer)
         {
-            f_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__ ??= Marshal.GetDelegateForFunctionPointer<d_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__>(_getProc("glVertexAttribPointer"));
-            f_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__(index, size, type, normalized, stride, pointer);
+            if (f_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__ == null) f_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__ = (delegate* unmanaged<uint, int, GLEnum, byte, uint, void*, void>)_getProc("glVertexAttribPointer");
+            f_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__(index, size, type, (byte)(normalized ? 1 : 0), stride, pointer);
         }
 
-        private delegate void d_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__(uint index, int size, VertexAttribPointerType type, bool normalized, uint stride, void* pointer);
-        private d_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__ f_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__;
+        private delegate* unmanaged<uint, int, VertexAttribPointerType, byte, uint, void*, void> f_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__;
         public void VertexAttribPointer(uint index, int size, VertexAttribPointerType type, bool normalized, uint stride, void* pointer)
         {
-            f_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__ ??= Marshal.GetDelegateForFunctionPointer<d_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__>(_getProc("glVertexAttribPointer"));
-            f_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__(index, size, type, normalized, stride, pointer);
+            if (f_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__ == null) f_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__ = (delegate* unmanaged<uint, int, VertexAttribPointerType, byte, uint, void*, void>)_getProc("glVertexAttribPointer");
+            f_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__(index, size, type, (byte)(normalized ? 1 : 0), stride, pointer);
         }
 
-        private delegate void d_void_Viewport_int__int__uint__uint_(int x, int y, uint width, uint height);
-        private d_void_Viewport_int__int__uint__uint_ f_void_Viewport_int__int__uint__uint_;
+        private delegate* unmanaged<int, int, uint, uint, void> f_void_Viewport_int__int__uint__uint_;
         public void Viewport(int x, int y, uint width, uint height)
         {
-            f_void_Viewport_int__int__uint__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_Viewport_int__int__uint__uint_>(_getProc("glViewport"));
+            if (f_void_Viewport_int__int__uint__uint_ == null) f_void_Viewport_int__int__uint__uint_ = (delegate* unmanaged<int, int, uint, uint, void>)_getProc("glViewport");
             f_void_Viewport_int__int__uint__uint_(x, y, width, height);
         }
 
         // --- support entry points, required by the conveniences below ---
 
-        private delegate void d_sup_GenBuffers(int n, uint* buffers);
-        private d_sup_GenBuffers f_sup_GenBuffers;
+        private delegate* unmanaged<int, uint*, void> f_sup_GenBuffers;
         public void GenBuffers(int n, uint* buffers)
         {
-            f_sup_GenBuffers ??= Marshal.GetDelegateForFunctionPointer<d_sup_GenBuffers>(_getProc("glGenBuffers"));
+            if (f_sup_GenBuffers == null) f_sup_GenBuffers = (delegate* unmanaged<int, uint*, void>)_getProc("glGenBuffers");
             f_sup_GenBuffers(n, buffers);
         }
 
-        private delegate void d_sup_GenTextures(int n, uint* textures);
-        private d_sup_GenTextures f_sup_GenTextures;
+        private delegate* unmanaged<int, uint*, void> f_sup_GenTextures;
         public void GenTextures(int n, uint* textures)
         {
-            f_sup_GenTextures ??= Marshal.GetDelegateForFunctionPointer<d_sup_GenTextures>(_getProc("glGenTextures"));
+            if (f_sup_GenTextures == null) f_sup_GenTextures = (delegate* unmanaged<int, uint*, void>)_getProc("glGenTextures");
             f_sup_GenTextures(n, textures);
         }
 
-        private delegate void d_sup_GenVertexArrays(int n, uint* arrays);
-        private d_sup_GenVertexArrays f_sup_GenVertexArrays;
+        private delegate* unmanaged<int, uint*, void> f_sup_GenVertexArrays;
         public void GenVertexArrays(int n, uint* arrays)
         {
-            f_sup_GenVertexArrays ??= Marshal.GetDelegateForFunctionPointer<d_sup_GenVertexArrays>(_getProc("glGenVertexArrays"));
+            if (f_sup_GenVertexArrays == null) f_sup_GenVertexArrays = (delegate* unmanaged<int, uint*, void>)_getProc("glGenVertexArrays");
             f_sup_GenVertexArrays(n, arrays);
         }
 
-        private delegate void d_sup_DeleteBuffers(int n, uint* buffers);
-        private d_sup_DeleteBuffers f_sup_DeleteBuffers;
+        private delegate* unmanaged<int, uint*, void> f_sup_DeleteBuffers;
         public void DeleteBuffers(int n, uint* buffers)
         {
-            f_sup_DeleteBuffers ??= Marshal.GetDelegateForFunctionPointer<d_sup_DeleteBuffers>(_getProc("glDeleteBuffers"));
+            if (f_sup_DeleteBuffers == null) f_sup_DeleteBuffers = (delegate* unmanaged<int, uint*, void>)_getProc("glDeleteBuffers");
             f_sup_DeleteBuffers(n, buffers);
         }
 
-        private delegate void d_sup_DeleteTextures(int n, uint* textures);
-        private d_sup_DeleteTextures f_sup_DeleteTextures;
+        private delegate* unmanaged<int, uint*, void> f_sup_DeleteTextures;
         public void DeleteTextures(int n, uint* textures)
         {
-            f_sup_DeleteTextures ??= Marshal.GetDelegateForFunctionPointer<d_sup_DeleteTextures>(_getProc("glDeleteTextures"));
+            if (f_sup_DeleteTextures == null) f_sup_DeleteTextures = (delegate* unmanaged<int, uint*, void>)_getProc("glDeleteTextures");
             f_sup_DeleteTextures(n, textures);
         }
 
-        private delegate void d_sup_DeleteVertexArrays(int n, uint* arrays);
-        private d_sup_DeleteVertexArrays f_sup_DeleteVertexArrays;
+        private delegate* unmanaged<int, uint*, void> f_sup_DeleteVertexArrays;
         public void DeleteVertexArrays(int n, uint* arrays)
         {
-            f_sup_DeleteVertexArrays ??= Marshal.GetDelegateForFunctionPointer<d_sup_DeleteVertexArrays>(_getProc("glDeleteVertexArrays"));
+            if (f_sup_DeleteVertexArrays == null) f_sup_DeleteVertexArrays = (delegate* unmanaged<int, uint*, void>)_getProc("glDeleteVertexArrays");
             f_sup_DeleteVertexArrays(n, arrays);
         }
 
-        private delegate void d_sup_GetFloatv(uint pname, float* data);
-        private d_sup_GetFloatv f_sup_GetFloatv;
+        private delegate* unmanaged<uint, float*, void> f_sup_GetFloatv;
         public void GetFloatv(uint pname, float* data)
         {
-            f_sup_GetFloatv ??= Marshal.GetDelegateForFunctionPointer<d_sup_GetFloatv>(_getProc("glGetFloatv"));
+            if (f_sup_GetFloatv == null) f_sup_GetFloatv = (delegate* unmanaged<uint, float*, void>)_getProc("glGetFloatv");
             f_sup_GetFloatv(pname, data);
         }
 
-        private delegate void d_sup_GetIntegerv(uint pname, int* data);
-        private d_sup_GetIntegerv f_sup_GetIntegerv;
+        private delegate* unmanaged<uint, int*, void> f_sup_GetIntegerv;
         public void GetIntegerv(uint pname, int* data)
         {
-            f_sup_GetIntegerv ??= Marshal.GetDelegateForFunctionPointer<d_sup_GetIntegerv>(_getProc("glGetIntegerv"));
+            if (f_sup_GetIntegerv == null) f_sup_GetIntegerv = (delegate* unmanaged<uint, int*, void>)_getProc("glGetIntegerv");
             f_sup_GetIntegerv(pname, data);
         }
 
-        private delegate void d_sup_GetProgramiv(uint program, uint pname, int* @params);
-        private d_sup_GetProgramiv f_sup_GetProgramiv;
+        private delegate* unmanaged<uint, uint, int*, void> f_sup_GetProgramiv;
         public void GetProgramiv(uint program, uint pname, int* @params)
         {
-            f_sup_GetProgramiv ??= Marshal.GetDelegateForFunctionPointer<d_sup_GetProgramiv>(_getProc("glGetProgramiv"));
+            if (f_sup_GetProgramiv == null) f_sup_GetProgramiv = (delegate* unmanaged<uint, uint, int*, void>)_getProc("glGetProgramiv");
             f_sup_GetProgramiv(program, pname, @params);
         }
 
-        private delegate void d_sup_GetShaderiv(uint shader, uint pname, int* @params);
-        private d_sup_GetShaderiv f_sup_GetShaderiv;
+        private delegate* unmanaged<uint, uint, int*, void> f_sup_GetShaderiv;
         public void GetShaderiv(uint shader, uint pname, int* @params)
         {
-            f_sup_GetShaderiv ??= Marshal.GetDelegateForFunctionPointer<d_sup_GetShaderiv>(_getProc("glGetShaderiv"));
+            if (f_sup_GetShaderiv == null) f_sup_GetShaderiv = (delegate* unmanaged<uint, uint, int*, void>)_getProc("glGetShaderiv");
             f_sup_GetShaderiv(shader, pname, @params);
         }
 
-        private delegate void d_sup_UniformMatrix4fv(int location, int count, bool transpose, float* value);
-        private d_sup_UniformMatrix4fv f_sup_UniformMatrix4fv;
+        private delegate* unmanaged<int, int, byte, float*, void> f_sup_UniformMatrix4fv;
         public void UniformMatrix4fv(int location, int count, bool transpose, float* value)
         {
-            f_sup_UniformMatrix4fv ??= Marshal.GetDelegateForFunctionPointer<d_sup_UniformMatrix4fv>(_getProc("glUniformMatrix4fv"));
-            f_sup_UniformMatrix4fv(location, count, transpose, value);
+            if (f_sup_UniformMatrix4fv == null) f_sup_UniformMatrix4fv = (delegate* unmanaged<int, int, byte, float*, void>)_getProc("glUniformMatrix4fv");
+            f_sup_UniformMatrix4fv(location, count, (byte)(transpose ? 1 : 0), value);
         }
 
-        private delegate void d_sup_ShaderSource(uint shader, int count, byte** @string, int* length);
-        private d_sup_ShaderSource f_sup_ShaderSource;
+        private delegate* unmanaged<uint, int, byte**, int*, void> f_sup_ShaderSource;
         public void ShaderSource(uint shader, int count, byte** @string, int* length)
         {
-            f_sup_ShaderSource ??= Marshal.GetDelegateForFunctionPointer<d_sup_ShaderSource>(_getProc("glShaderSource"));
+            if (f_sup_ShaderSource == null) f_sup_ShaderSource = (delegate* unmanaged<uint, int, byte**, int*, void>)_getProc("glShaderSource");
             f_sup_ShaderSource(shader, count, @string, length);
         }
 
-        private delegate void d_sup_GetShaderInfoLog(uint shader, int bufSize, int* length, byte* infoLog);
-        private d_sup_GetShaderInfoLog f_sup_GetShaderInfoLog;
+        private delegate* unmanaged<uint, int, int*, byte*, void> f_sup_GetShaderInfoLog;
         public void GetShaderInfoLog(uint shader, int bufSize, int* length, byte* infoLog)
         {
-            f_sup_GetShaderInfoLog ??= Marshal.GetDelegateForFunctionPointer<d_sup_GetShaderInfoLog>(_getProc("glGetShaderInfoLog"));
+            if (f_sup_GetShaderInfoLog == null) f_sup_GetShaderInfoLog = (delegate* unmanaged<uint, int, int*, byte*, void>)_getProc("glGetShaderInfoLog");
             f_sup_GetShaderInfoLog(shader, bufSize, length, infoLog);
         }
 
-        private delegate void d_sup_GetProgramInfoLog(uint program, int bufSize, int* length, byte* infoLog);
-        private d_sup_GetProgramInfoLog f_sup_GetProgramInfoLog;
+        private delegate* unmanaged<uint, int, int*, byte*, void> f_sup_GetProgramInfoLog;
         public void GetProgramInfoLog(uint program, int bufSize, int* length, byte* infoLog)
         {
-            f_sup_GetProgramInfoLog ??= Marshal.GetDelegateForFunctionPointer<d_sup_GetProgramInfoLog>(_getProc("glGetProgramInfoLog"));
+            if (f_sup_GetProgramInfoLog == null) f_sup_GetProgramInfoLog = (delegate* unmanaged<uint, int, int*, byte*, void>)_getProc("glGetProgramInfoLog");
             f_sup_GetProgramInfoLog(program, bufSize, length, infoLog);
         }
 

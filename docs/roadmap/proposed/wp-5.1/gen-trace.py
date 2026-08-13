@@ -92,41 +92,32 @@ ABI_OVERRIDE = {
 
 
 def native_type(t):
-    """C# parameter type -> the type as it appears at the ABI."""
+    """Function-pointer type -> the type the thunk declares."""
     t = t.strip()
-    if t.startswith("out ") or t.startswith("ref ") or t.startswith("in "):
-        return "IntPtr"          # passed as a pointer
     if t.endswith("*"):
         return "IntPtr"
-    if t == "string":
-        return "IntPtr"          # marshalled as a pointer
-    if t == "bool":
-        return "byte"            # GLboolean is one byte; bool would need marshalling
     if t in ENUMS:
-        return "uint"
+        return "uint"            # every generated enum is ": uint"
     if t in PRIMS:
         return t
     # An unknown type is a generator bug, not something to guess at.
     raise SystemExit(f"gen-trace: unknown type {t!r} - teach native_type() about it")
 
 
-# Each public method body resolves its entry point; pair the delegate with the name by
-# walking the file in order, since the generated layout is delegate/field/method triples.
-blocks = re.findall(
-    r'private delegate ([\w\*]+) (\w+)\(([^)]*)\);.*?_getProc\("(\w+)"\)',
-    src, re.S)
+# The function-pointer type IS the ABI signature - bool is already byte, string already
+# byte*, byref already T* - because the binding writes those conversions out rather than
+# leaving them to a marshaller. Parsing it is therefore both simpler and more faithful than
+# reading C# delegate declarations was.
+blocks = re.findall(r'\(delegate\* unmanaged<([^>]*)>\)_getProc\("(\w+)"\)', src)
 
 sigs = {}      # native name -> (ret, [param types])
 conflicts = {}
 overloads = collections.Counter()
-for ret, dname, params, native in blocks:
+for typelist, native in blocks:
+    parts = [t.strip() for t in typelist.split(",")]
+    ps = [native_type(t) for t in parts[:-1]]
+    r = native_type(parts[-1])
     overloads[native] += 1
-    ps = []
-    for p in [x.strip() for x in params.split(",") if x.strip()]:
-        # "TYPE name", where TYPE may itself contain a space ("out int")
-        ptype = p.rsplit(" ", 1)[0]
-        ps.append(native_type(ptype))
-    r = native_type(ret) if ret != "void" else "void"
     if native in ABI_OVERRIDE:
         sigs[native] = ABI_OVERRIDE[native]
         continue
