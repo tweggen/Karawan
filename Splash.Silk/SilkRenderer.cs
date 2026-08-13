@@ -312,6 +312,8 @@ namespace Splash.Silk
 
         public void RenderFrame(in RenderFrame renderFrame)
         {
+            FrameDigest.Record(renderFrame);
+
             _silkThreeD.BeginRenderFrame(renderFrame);
             _gl = _silkThreeD.GetGL();
             

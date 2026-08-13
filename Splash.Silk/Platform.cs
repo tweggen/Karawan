@@ -374,7 +374,32 @@ public class Platform : engine.IPlatform
         _prevFrame = _frameTimingStopwatch.Elapsed;
         
         // TXWTODO: Create sort of "on new gl window" event.
-        _gl = GL.GetApi(_backend.GetProcAddress);
+        /*
+         * GATE-F: optionally interpose on entry-point resolution.
+         *
+         * GLTrace hands back thunks instead of the driver's pointers, so every GL call
+         * becomes observable without wrapping the binding - and because BOTH bindings
+         * resolve through this one Func, the same tracer observes the Silk build and the
+         * generated build identically. Off unless debug.option.glTraceAnchor is set, and
+         * then it costs one dictionary lookup per entry point ONCE, at resolution.
+         */
+        Func<string, nint> getProc = _backend.GetProcAddress;
+        if (!string.IsNullOrEmpty(engine.GlobalSettings.Get("debug.option.glTraceAnchor")))
+        {
+            getProc = GLTrace.Wrap(name => _backend.GetProcAddress(name));
+            GlTraceAnchor.Install();
+            Trace($"GL tracing armed for anchor "
+                  + engine.GlobalSettings.Get("debug.option.glTraceAnchor"));
+        }
+
+        _gl = GL.GetApi(getProc);
+
+        if (GLTrace.TracedCount > 0)
+        {
+            Trace($"GLTrace: {GLTrace.TracedCount} entry points traced, "
+                  + $"{GLTrace.Untraced.Count} passed through untraced"
+                  + (GLTrace.Untraced.Count > 0 ? ": " + string.Join(",", GLTrace.Untraced) : ""));
+        }
         _silkThreeD.SetGL(_gl);
 
         /*
