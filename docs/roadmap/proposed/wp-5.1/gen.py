@@ -253,56 +253,18 @@ def cs_param(p):
 
 # ------------------------------------------------------ pointer-ness, verified vs gl.xml
 #
-# WHY THIS GUARD EXISTS
-#
-# surface.json is the MAPPING and gl.xml is the SPECIFICATION, and where they disagree
-# about the ABI the specification wins. That is not hypothetical: the Roslyn probe
-# recorded Silk's "in int" as a plain "int" for glTexParameterIiv and glTexParameterIuiv,
-# so this generator emitted a delegate passing an integer BY VALUE where the driver
-# dereferences a pointer. Nothing failed at build time; it segfaulted the first time the
-# call was reached, and only surfaced because the GATE-F tracer built thunks from these
-# signatures and Silk called one.
-#
-# Enum VALUES were already verified against gl.xml. Parameter SHAPE was not, and shape is
-# the half that corrupts memory rather than merely drawing the wrong thing.
-pointer_params = {}
-for cmd in root.find('commands').findall('command'):
-    nm = cmd.find('proto').find('name').text
-    flags = []
-    for prm in cmd.findall('param'):
-        flags.append('*' in ''.join(prm.itertext()))
-    pointer_params[nm] = flags
+# The logic lives in shapecheck.py so it can be tested: gl.xml is not checked in, so a
+# guard written inline here could never be exercised, and an unrun guard is a guard nobody
+# knows works. test-shapecheck.py drives it with a synthetic registry.
+import shapecheck
 
-shape_problems = []
-for key in sorted(shapes):
-    sh = shapes[key]
-    entry = sh['EntryPoint']
-    if not entry or entry not in pointer_params:
-        continue
-    spec = pointer_params[entry]
-    got = sh['Parameters']
-    if len(spec) != len(got):
-        shape_problems.append(
-            f"  {entry}: gl.xml has {len(spec)} parameters, surface.json has {len(got)}")
-        continue
-    for i, (is_ptr, prm) in enumerate(zip(spec, got)):
-        # "in"/"ref"/"out" and an explicit "*" both reach the driver as a pointer.
-        passes_pointer = bool(prm['RefKind']) or prm['Type'].endswith('*') or prm['Type'] == 'string'
-        if is_ptr and not passes_pointer:
-            shape_problems.append(
-                f"  {entry} param {i} ({prm['Name']}): gl.xml says POINTER, "
-                f"surface.json says by-value {prm['Type']!r}")
-        elif not is_ptr and prm['Type'].endswith('*'):
-            shape_problems.append(
-                f"  {entry} param {i} ({prm['Name']}): gl.xml says by-value, "
-                f"surface.json says pointer {prm['Type']!r}")
-
+shape_problems = shapecheck.check(shapes, shapecheck.pointer_flags(root))
 if shape_problems:
     raise SystemExit(
-        "gen.py: parameter shapes disagree with gl.xml. Emitting these would pass a value\n"
-        "where the driver dereferences a pointer, which fails at CALL time, not build time.\n"
-        "Correct surface.json (the mapping); gl.xml is the specification.\n\n"
-        + chr(10).join(shape_problems))
+        'gen.py: parameter shapes disagree with gl.xml. Emitting these would pass a '
+        'value where the driver dereferences a pointer, which fails at CALL time, not '
+        'build time. Correct surface.json (the mapping); gl.xml is the specification.'
+        + chr(10) + chr(10).join(shape_problems))
 
 emitted = 0
 skipped_conv = 0
