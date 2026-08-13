@@ -44,6 +44,39 @@ namespace GlDiff;
 /// </remarks>
 public static class Program
 {
+    /**
+     * Reflection type -> the spelling surface.json uses, so a reflected method can be
+     * looked up among the shapes. surface.json's key drops ref kinds, so byref collapses
+     * to its element type here too.
+     */
+    private static string SurfaceType(Type t)
+    {
+        if (t.IsByRef) return SurfaceType(t.GetElementType()!);
+        if (t.IsPointer) return SurfaceType(t.GetElementType()!) + "*";
+        if (t.IsGenericType)
+        {
+            string open = t.Name.Substring(0, t.Name.IndexOf('`'));
+            string args = string.Join(", ", t.GetGenericArguments().Select(SurfaceType));
+            return $"{open}<{args}>";
+        }
+
+        return t.Name switch
+        {
+            "Void" => "void", "Int32" => "int", "UInt32" => "uint",
+            "Single" => "float", "Double" => "double", "Byte" => "byte",
+            "Boolean" => "bool", "String" => "string",
+            "UIntPtr" => "nuint", "IntPtr" => "nint",
+            _ => t.Name,
+        };
+    }
+
+    /** Member plus parameter types, in surface.json's vocabulary. */
+    private static string ShapeKey(string member, IEnumerable<string> types)
+        => member + "(" + string.Join(", ", types) + ")";
+
+    private static string ShapeKey(MethodInfo m)
+        => ShapeKey(m.Name, m.GetParameters().Select(p => SurfaceType(p.ParameterType)));
+
     /** Collapse 32-bit signedness, so int and uint compare equal. */
     private static string Relax(string sig)
         => sig.Replace("UInt32", "I32").Replace("Int32", "I32");
@@ -69,8 +102,12 @@ public static class Program
          * intent and comparing them produces noise, not findings. surface.json is the only
          * thing that knows which is which.
          */
-        var conveniences = new HashSet<string>();
-        var backed = new HashSet<string>();
+        // Keyed by SHAPE, not by member name. Several names carry both a native-backed
+        // overload and a convenience - UniformMatrix4 has float* (backed) and
+        // ReadOnlySpan<float> (not) - so excluding by name would either skip real
+        // signatures or check hand-written ones that were never meant to match Silk.
+        var backedShapes = new HashSet<string>();
+        var allShapes = new HashSet<string>();
         string surfacePath = Path.Combine(AppContext.BaseDirectory, "surface.json");
         using (JsonDocument doc = JsonDocument.Parse(File.ReadAllText(surfacePath)))
         {
@@ -78,8 +115,12 @@ public static class Program
             {
                 string member = shape.Value.GetProperty("Member").GetString()!;
                 string entry = shape.Value.GetProperty("EntryPoint").GetString() ?? "";
-                if (string.IsNullOrEmpty(entry)) conveniences.Add(member);
-                else backed.Add(member);
+                var types = shape.Value.GetProperty("Parameters").EnumerateArray()
+                    .Select(p => p.GetProperty("Type").GetString()!);
+                string key = ShapeKey(member, types);
+
+                allShapes.Add(key);
+                if (!string.IsNullOrEmpty(entry)) backedShapes.Add(key);
             }
         }
 
@@ -98,15 +139,32 @@ public static class Program
 
         int matched = 0;
         var signedness = new List<string>();
+        var support = new List<string>();
         var mismatches = new List<string>();
         var absent = new List<string>();
 
         int skipped = 0;
         foreach (MethodInfo m in genMethods.OrderBy(m => m.Name))
         {
-            // A member is a convenience only if NO overload of that name is entry-point
-            // backed; several names carry both, and those must still be checked.
-            if (conveniences.Contains(m.Name) && !backed.Contains(m.Name)) { ++skipped; continue; }
+            string shapeKey = ShapeKey(m);
+            if (!backedShapes.Contains(shapeKey))
+            {
+                /*
+                 * Two very different reasons a method is not compared, and collapsing them
+                 * would hide the second:
+                 *
+                 *   in surface.json without an entry point -> a CONVENIENCE, Silk-shaped by
+                 *       intent, nothing to compare.
+                 *   not in surface.json at all             -> a SUPPORT entry point, which
+                 *       gen.py emits straight from gl.xml because no call site uses it
+                 *       directly. Silk renames these (glGetIntegerv -> GetInteger), so
+                 *       there is no signature to compare against - they are verified
+                 *       against the SPECIFICATION by gen.py instead, not against Silk.
+                 */
+                if (allShapes.Contains(shapeKey)) ++skipped;
+                else support.Add($"  {Sig(m)}");
+                continue;
+            }
 
             string sig = Sig(m);
             if (silkBySig.Contains(sig)) { ++matched; continue; }
@@ -141,6 +199,14 @@ public static class Program
         Console.Error.WriteLine($"generated methods : {genMethods.Count}");
         Console.Error.WriteLine($"exact signature match against Silk : {matched}");
         Console.Error.WriteLine($"conveniences skipped (no native entry point) : {skipped}");
+        Console.Error.WriteLine($"support entry points, verified vs gl.xml not Silk : {support.Count}");
+
+        if (support.Count > 0)
+        {
+            Console.Error.WriteLine();
+            Console.Error.WriteLine("SUPPORT entry points - emitted from gl.xml, no Silk counterpart to compare:");
+            support.ForEach(Console.Error.WriteLine);
+        }
 
         if (signedness.Count > 0)
         {
