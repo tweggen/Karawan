@@ -15,6 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+    <ProjectReference Include="..\Splash.GL\Splash.GL.csproj" />
       <ProjectReference Include="..\Splash\Splash.csproj" />
       <!--
         SDL3 bindings for Sdl3WindowBackend. Source-only (see Platform.SDL3), so desktop
@@ -25,8 +26,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Silk.NET.OpenGL" />
-      <PackageReference Include="Silk.NET.OpenGL.Extensions.EXT" />
       <PackageReference Include="SixLabors.ImageSharp" VersionOverride="3.0.1" />
     </ItemGroup>
 

@@ -6,12 +6,11 @@ using engine;
 using engine.inputs;
 using engine.news;
 using ImGuiNET;
-using Silk.NET.Maths;
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 #if GLES
 using Silk.NET.OpenGLES;
 #elif GL
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 #elif LEGACY
 using Silk.NET.OpenGL.Legacy;
 #endif
@@ -49,7 +48,6 @@ public class Controller : IDisposable
     public uint Program;
 
     private Texture _fontTexture;
-    private Shader _shader;
     private bool _initialized = false;
 
     private int _windowWidth;

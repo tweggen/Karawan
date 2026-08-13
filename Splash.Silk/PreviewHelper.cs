@@ -1,6 +1,6 @@
 using System;
 using engine;
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 using Splash;
 using static engine.Logger;
 
@@ -51,8 +51,9 @@ public sealed class PreviewHelper
     /// </remarks>
     public static void DetectAndSetGlVersion(Func<string, nint> getProcAddress)
     {
-        using var ctx = new DelegateProcContext(getProcAddress);
-        var gl = GL.GetApi(ctx);
+        // The generated binding takes the resolver directly - no INativeContext shim, which
+        // is the only reason DelegateProcContext existed (WP-5.2).
+        var gl = GL.GetApi(getProcAddress);
         string versionStr = gl.GetStringS(StringName.Version) ?? "";
         Trace($"GL version string: \"{versionStr}\"");
 
@@ -101,7 +102,7 @@ public sealed class PreviewHelper
             _platform = platform;
 
             // Create the Silk.NET GL context from the getProcAddress delegate
-            _gl = GL.GetApi(new DelegateProcContext(getProcAddress));
+            _gl = GL.GetApi(getProcAddress);
 
             // Initialize the platform's GL state
             _platform.SetExternalGL(_gl);
@@ -134,26 +135,4 @@ public sealed class PreviewHelper
             targetFbo, saveRestoreState: true);
     }
 
-    /// <summary>
-    /// Simple INativeContext implementation using a delegate.
-    /// </summary>
-    private sealed class DelegateProcContext : global::Silk.NET.Core.Contexts.INativeContext
-    {
-        private readonly Func<string, nint> _getProcAddress;
-
-        public DelegateProcContext(Func<string, nint> getProcAddress)
-        {
-            _getProcAddress = getProcAddress;
-        }
-
-        public nint GetProcAddress(string proc, int? slot = null) => _getProcAddress(proc);
-
-        public bool TryGetProcAddress(string proc, out nint addr, int? slot = null)
-        {
-            addr = _getProcAddress(proc);
-            return addr != nint.Zero;
-        }
-
-        public void Dispose() { }
-    }
 }

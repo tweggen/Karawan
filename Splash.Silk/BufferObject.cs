@@ -1,5 +1,5 @@
 ﻿using System;
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 using static engine.Logger;
 using static Splash.Silk.GLCheck;
 

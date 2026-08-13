@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using builtin.tools;
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 
 namespace Splash.Silk;
 

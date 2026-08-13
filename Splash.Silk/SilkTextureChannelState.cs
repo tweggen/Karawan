@@ -1,4 +1,4 @@
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 using Texture = engine.joyce.Texture;
 using static engine.Logger;
 
