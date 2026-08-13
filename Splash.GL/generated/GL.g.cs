@@ -791,20 +791,20 @@ namespace Karawan.Graphics.OpenGL
             f_void_TexImage2D_TextureTarget__int__int__uint__uint__int__PixelFormat__PixelType__void__(target, level, internalformat, width, height, border, format, type, pixels);
         }
 
-        private delegate void d_void_TexParameterI_GLEnum__TextureParameterName__int_(GLEnum target, TextureParameterName pname, int @params);
+        private delegate void d_void_TexParameterI_GLEnum__TextureParameterName__int_(GLEnum target, TextureParameterName pname, in int @params);
         private d_void_TexParameterI_GLEnum__TextureParameterName__int_ f_void_TexParameterI_GLEnum__TextureParameterName__int_;
-        public void TexParameterI(GLEnum target, TextureParameterName pname, int @params)
+        public void TexParameterI(GLEnum target, TextureParameterName pname, in int @params)
         {
             f_void_TexParameterI_GLEnum__TextureParameterName__int_ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexParameterI_GLEnum__TextureParameterName__int_>(_getProc("glTexParameterIiv"));
-            f_void_TexParameterI_GLEnum__TextureParameterName__int_(target, pname, @params);
+            f_void_TexParameterI_GLEnum__TextureParameterName__int_(target, pname, in @params);
         }
 
-        private delegate void d_void_TexParameterI_GLEnum__TextureParameterName__uint_(GLEnum target, TextureParameterName pname, uint @params);
+        private delegate void d_void_TexParameterI_GLEnum__TextureParameterName__uint_(GLEnum target, TextureParameterName pname, in uint @params);
         private d_void_TexParameterI_GLEnum__TextureParameterName__uint_ f_void_TexParameterI_GLEnum__TextureParameterName__uint_;
-        public void TexParameterI(GLEnum target, TextureParameterName pname, uint @params)
+        public void TexParameterI(GLEnum target, TextureParameterName pname, in uint @params)
         {
             f_void_TexParameterI_GLEnum__TextureParameterName__uint_ ??= Marshal.GetDelegateForFunctionPointer<d_void_TexParameterI_GLEnum__TextureParameterName__uint_>(_getProc("glTexParameterIuiv"));
-            f_void_TexParameterI_GLEnum__TextureParameterName__uint_(target, pname, @params);
+            f_void_TexParameterI_GLEnum__TextureParameterName__uint_(target, pname, in @params);
         }
 
         private delegate void d_void_TexParameter_GLEnum__GLEnum__float_(GLEnum target, GLEnum pname, float param);

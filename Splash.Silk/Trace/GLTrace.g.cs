@@ -35,7 +35,10 @@ public static class GLTrace
 
     public static void Begin()
     {
-        lock (_lo) { _sink = new List<string>(65536); }
+        // Ordinals restart per capture, so each trace is self-contained. Otherwise the
+        // numbering of the second anchor would depend on what the first one saw, and two
+        // runs that captured different anchor sets could never be compared.
+        lock (_lo) { _sink = new List<string>(65536); _canonMaps.Clear(); }
         IsRecording = true;
     }
 
@@ -43,6 +46,38 @@ public static class GLTrace
     {
         IsRecording = false;
         lock (_lo) { var s = _sink ?? new List<string>(); _sink = null; return s; }
+    }
+
+    /// <summary>
+    /// Driver-assigned object name -> a stable ordinal, per KIND.
+    /// </summary>
+    /// <remarks>
+    /// GL hands out object names in allocation order, so the same logical buffer is 24
+    /// in one run and 31 in the next. Recording the raw value guarantees a diff that
+    /// says nothing about the binding. Kinds are separate numbering spaces because a
+    /// buffer 24 and a texture 24 are unrelated objects.
+    /// </remarks>
+    private static readonly Dictionary<string, Dictionary<uint, int>> _canonMaps = new();
+
+    private static string _canon(string kind, uint raw)
+    {
+        // 0 is not an object, it is 'unbind'. It must stay 0 or every unbind reads as
+        // a distinct object and the traces diverge on nothing.
+        if (raw == 0) return kind + "#none";
+
+        if (!_canonMaps.TryGetValue(kind, out var m))
+        {
+            m = new Dictionary<uint, int>();
+            _canonMaps[kind] = m;
+        }
+
+        if (!m.TryGetValue(raw, out int ordinal))
+        {
+            ordinal = m.Count;
+            m[raw] = ordinal;
+        }
+
+        return kind + "#" + ordinal;
     }
 
     private static void _rec(string line)
@@ -62,6 +97,18 @@ public static class GLTrace
         return _lookup;
     }
 
+    /// <summary>
+    /// Trace with NO driver behind it: every entry point gets a thunk that records and
+    /// returns default without forwarding.
+    /// </summary>
+    /// <remarks>
+    /// This is what lets the two bindings be compared without a GL context, without a
+    /// window, and without arguments that would be valid to execute - the question
+    /// being asked is which NATIVE call a given C# call produces, which is answered
+    /// before the driver is ever involved.
+    /// </remarks>
+    public static Func<string, IntPtr> WrapRecordOnly() => Wrap(_ => IntPtr.Zero);
+
     private static IntPtr _lookup(string name)
     {
         if (_thunks.TryGetValue(name, out IntPtr thunk)) return thunk;
@@ -75,7 +122,7 @@ public static class GLTrace
     private static void _t_glActiveTexture(uint p0)
     {
         if (IsRecording) _rec("glActiveTexture(" + p0 + ")");
-        _r_glActiveTexture!(p0);
+        if (null != _r_glActiveTexture) _r_glActiveTexture(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -83,8 +130,8 @@ public static class GLTrace
     private static D_glAttachShader? _r_glAttachShader;
     private static void _t_glAttachShader(uint p0, uint p1)
     {
-        if (IsRecording) _rec("glAttachShader(" + p0 + "," + p1 + ")");
-        _r_glAttachShader!(p0, p1);
+        if (IsRecording) _rec("glAttachShader(" + _canon("program", p0) + "," + _canon("shader", p1) + ")");
+        if (null != _r_glAttachShader) _r_glAttachShader(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -92,8 +139,8 @@ public static class GLTrace
     private static D_glBindBuffer? _r_glBindBuffer;
     private static void _t_glBindBuffer(uint p0, uint p1)
     {
-        if (IsRecording) _rec("glBindBuffer(" + p0 + "," + p1 + ")");
-        _r_glBindBuffer!(p0, p1);
+        if (IsRecording) _rec("glBindBuffer(" + p0 + "," + _canon("buffer", p1) + ")");
+        if (null != _r_glBindBuffer) _r_glBindBuffer(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -101,8 +148,8 @@ public static class GLTrace
     private static D_glBindBufferBase? _r_glBindBufferBase;
     private static void _t_glBindBufferBase(uint p0, uint p1, uint p2)
     {
-        if (IsRecording) _rec("glBindBufferBase(" + p0 + "," + p1 + "," + p2 + ")");
-        _r_glBindBufferBase!(p0, p1, p2);
+        if (IsRecording) _rec("glBindBufferBase(" + p0 + "," + p1 + "," + _canon("buffer", p2) + ")");
+        if (null != _r_glBindBufferBase) _r_glBindBufferBase(p0, p1, p2);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -110,8 +157,8 @@ public static class GLTrace
     private static D_glBindFramebuffer? _r_glBindFramebuffer;
     private static void _t_glBindFramebuffer(uint p0, uint p1)
     {
-        if (IsRecording) _rec("glBindFramebuffer(" + p0 + "," + p1 + ")");
-        _r_glBindFramebuffer!(p0, p1);
+        if (IsRecording) _rec("glBindFramebuffer(" + p0 + "," + _canon("framebuffer", p1) + ")");
+        if (null != _r_glBindFramebuffer) _r_glBindFramebuffer(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -119,8 +166,8 @@ public static class GLTrace
     private static D_glBindRenderbuffer? _r_glBindRenderbuffer;
     private static void _t_glBindRenderbuffer(uint p0, uint p1)
     {
-        if (IsRecording) _rec("glBindRenderbuffer(" + p0 + "," + p1 + ")");
-        _r_glBindRenderbuffer!(p0, p1);
+        if (IsRecording) _rec("glBindRenderbuffer(" + p0 + "," + _canon("renderbuffer", p1) + ")");
+        if (null != _r_glBindRenderbuffer) _r_glBindRenderbuffer(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -129,7 +176,7 @@ public static class GLTrace
     private static void _t_glBindSampler(uint p0, uint p1)
     {
         if (IsRecording) _rec("glBindSampler(" + p0 + "," + p1 + ")");
-        _r_glBindSampler!(p0, p1);
+        if (null != _r_glBindSampler) _r_glBindSampler(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -137,8 +184,8 @@ public static class GLTrace
     private static D_glBindTexture? _r_glBindTexture;
     private static void _t_glBindTexture(uint p0, uint p1)
     {
-        if (IsRecording) _rec("glBindTexture(" + p0 + "," + p1 + ")");
-        _r_glBindTexture!(p0, p1);
+        if (IsRecording) _rec("glBindTexture(" + p0 + "," + _canon("texture", p1) + ")");
+        if (null != _r_glBindTexture) _r_glBindTexture(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -146,8 +193,8 @@ public static class GLTrace
     private static D_glBindVertexArray? _r_glBindVertexArray;
     private static void _t_glBindVertexArray(uint p0)
     {
-        if (IsRecording) _rec("glBindVertexArray(" + p0 + ")");
-        _r_glBindVertexArray!(p0);
+        if (IsRecording) _rec("glBindVertexArray(" + _canon("vao", p0) + ")");
+        if (null != _r_glBindVertexArray) _r_glBindVertexArray(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -156,7 +203,7 @@ public static class GLTrace
     private static void _t_glBlendEquation(uint p0)
     {
         if (IsRecording) _rec("glBlendEquation(" + p0 + ")");
-        _r_glBlendEquation!(p0);
+        if (null != _r_glBlendEquation) _r_glBlendEquation(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -165,7 +212,7 @@ public static class GLTrace
     private static void _t_glBlendEquationSeparate(uint p0, uint p1)
     {
         if (IsRecording) _rec("glBlendEquationSeparate(" + p0 + "," + p1 + ")");
-        _r_glBlendEquationSeparate!(p0, p1);
+        if (null != _r_glBlendEquationSeparate) _r_glBlendEquationSeparate(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -174,7 +221,7 @@ public static class GLTrace
     private static void _t_glBlendFuncSeparate(uint p0, uint p1, uint p2, uint p3)
     {
         if (IsRecording) _rec("glBlendFuncSeparate(" + p0 + "," + p1 + "," + p2 + "," + p3 + ")");
-        _r_glBlendFuncSeparate!(p0, p1, p2, p3);
+        if (null != _r_glBlendFuncSeparate) _r_glBlendFuncSeparate(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -183,7 +230,7 @@ public static class GLTrace
     private static void _t_glBufferData(uint p0, nuint p1, IntPtr p2, uint p3)
     {
         if (IsRecording) _rec("glBufferData(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + p3 + ")");
-        _r_glBufferData!(p0, p1, p2, p3);
+        if (null != _r_glBufferData) _r_glBufferData(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -192,7 +239,7 @@ public static class GLTrace
     private static uint _t_glCheckFramebufferStatus(uint p0)
     {
         if (IsRecording) _rec("glCheckFramebufferStatus(" + p0 + ")");
-        return _r_glCheckFramebufferStatus!(p0);
+        return null != _r_glCheckFramebufferStatus ? _r_glCheckFramebufferStatus(p0) : default;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -201,7 +248,7 @@ public static class GLTrace
     private static void _t_glClear(uint p0)
     {
         if (IsRecording) _rec("glClear(" + p0 + ")");
-        _r_glClear!(p0);
+        if (null != _r_glClear) _r_glClear(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -210,7 +257,7 @@ public static class GLTrace
     private static void _t_glClearColor(float p0, float p1, float p2, float p3)
     {
         if (IsRecording) _rec("glClearColor(" + p0.ToString("G9", CultureInfo.InvariantCulture) + "," + p1.ToString("G9", CultureInfo.InvariantCulture) + "," + p2.ToString("G9", CultureInfo.InvariantCulture) + "," + p3.ToString("G9", CultureInfo.InvariantCulture) + ")");
-        _r_glClearColor!(p0, p1, p2, p3);
+        if (null != _r_glClearColor) _r_glClearColor(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -219,7 +266,7 @@ public static class GLTrace
     private static void _t_glClearDepthf(float p0)
     {
         if (IsRecording) _rec("glClearDepthf(" + p0.ToString("G9", CultureInfo.InvariantCulture) + ")");
-        _r_glClearDepthf!(p0);
+        if (null != _r_glClearDepthf) _r_glClearDepthf(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -227,8 +274,8 @@ public static class GLTrace
     private static D_glCompileShader? _r_glCompileShader;
     private static void _t_glCompileShader(uint p0)
     {
-        if (IsRecording) _rec("glCompileShader(" + p0 + ")");
-        _r_glCompileShader!(p0);
+        if (IsRecording) _rec("glCompileShader(" + _canon("shader", p0) + ")");
+        if (null != _r_glCompileShader) _r_glCompileShader(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -237,7 +284,7 @@ public static class GLTrace
     private static uint _t_glCreateProgram()
     {
         if (IsRecording) _rec("glCreateProgram(" + "" + ")");
-        return _r_glCreateProgram!();
+        return null != _r_glCreateProgram ? _r_glCreateProgram() : default;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -246,7 +293,7 @@ public static class GLTrace
     private static uint _t_glCreateShader(uint p0)
     {
         if (IsRecording) _rec("glCreateShader(" + p0 + ")");
-        return _r_glCreateShader!(p0);
+        return null != _r_glCreateShader ? _r_glCreateShader(p0) : default;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -255,7 +302,7 @@ public static class GLTrace
     private static void _t_glCullFace(uint p0)
     {
         if (IsRecording) _rec("glCullFace(" + p0 + ")");
-        _r_glCullFace!(p0);
+        if (null != _r_glCullFace) _r_glCullFace(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -264,7 +311,7 @@ public static class GLTrace
     private static void _t_glDeleteBuffers(int p0, IntPtr p1)
     {
         if (IsRecording) _rec("glDeleteBuffers(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glDeleteBuffers!(p0, p1);
+        if (null != _r_glDeleteBuffers) _r_glDeleteBuffers(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -272,8 +319,8 @@ public static class GLTrace
     private static D_glDeleteProgram? _r_glDeleteProgram;
     private static void _t_glDeleteProgram(uint p0)
     {
-        if (IsRecording) _rec("glDeleteProgram(" + p0 + ")");
-        _r_glDeleteProgram!(p0);
+        if (IsRecording) _rec("glDeleteProgram(" + _canon("program", p0) + ")");
+        if (null != _r_glDeleteProgram) _r_glDeleteProgram(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -281,8 +328,8 @@ public static class GLTrace
     private static D_glDeleteShader? _r_glDeleteShader;
     private static void _t_glDeleteShader(uint p0)
     {
-        if (IsRecording) _rec("glDeleteShader(" + p0 + ")");
-        _r_glDeleteShader!(p0);
+        if (IsRecording) _rec("glDeleteShader(" + _canon("shader", p0) + ")");
+        if (null != _r_glDeleteShader) _r_glDeleteShader(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -291,7 +338,7 @@ public static class GLTrace
     private static void _t_glDeleteTextures(int p0, IntPtr p1)
     {
         if (IsRecording) _rec("glDeleteTextures(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glDeleteTextures!(p0, p1);
+        if (null != _r_glDeleteTextures) _r_glDeleteTextures(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -300,7 +347,7 @@ public static class GLTrace
     private static void _t_glDeleteVertexArrays(int p0, IntPtr p1)
     {
         if (IsRecording) _rec("glDeleteVertexArrays(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glDeleteVertexArrays!(p0, p1);
+        if (null != _r_glDeleteVertexArrays) _r_glDeleteVertexArrays(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -309,7 +356,7 @@ public static class GLTrace
     private static void _t_glDepthFunc(uint p0)
     {
         if (IsRecording) _rec("glDepthFunc(" + p0 + ")");
-        _r_glDepthFunc!(p0);
+        if (null != _r_glDepthFunc) _r_glDepthFunc(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -318,7 +365,7 @@ public static class GLTrace
     private static void _t_glDepthMask(byte p0)
     {
         if (IsRecording) _rec("glDepthMask(" + p0 + ")");
-        _r_glDepthMask!(p0);
+        if (null != _r_glDepthMask) _r_glDepthMask(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -327,7 +374,7 @@ public static class GLTrace
     private static void _t_glDetachShader(uint p0, uint p1)
     {
         if (IsRecording) _rec("glDetachShader(" + p0 + "," + p1 + ")");
-        _r_glDetachShader!(p0, p1);
+        if (null != _r_glDetachShader) _r_glDetachShader(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -336,7 +383,7 @@ public static class GLTrace
     private static void _t_glDisable(uint p0)
     {
         if (IsRecording) _rec("glDisable(" + p0 + ")");
-        _r_glDisable!(p0);
+        if (null != _r_glDisable) _r_glDisable(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -345,7 +392,7 @@ public static class GLTrace
     private static void _t_glDrawBuffers(uint p0, IntPtr p1)
     {
         if (IsRecording) _rec("glDrawBuffers(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glDrawBuffers!(p0, p1);
+        if (null != _r_glDrawBuffers) _r_glDrawBuffers(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -354,7 +401,7 @@ public static class GLTrace
     private static void _t_glDrawElements(uint p0, uint p1, uint p2, IntPtr p3)
     {
         if (IsRecording) _rec("glDrawElements(" + p0 + "," + p1 + "," + p2 + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glDrawElements!(p0, p1, p2, p3);
+        if (null != _r_glDrawElements) _r_glDrawElements(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -363,7 +410,7 @@ public static class GLTrace
     private static void _t_glDrawElementsBaseVertex(uint p0, uint p1, uint p2, IntPtr p3, int p4)
     {
         if (IsRecording) _rec("glDrawElementsBaseVertex(" + p0 + "," + p1 + "," + p2 + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + "," + p4 + ")");
-        _r_glDrawElementsBaseVertex!(p0, p1, p2, p3, p4);
+        if (null != _r_glDrawElementsBaseVertex) _r_glDrawElementsBaseVertex(p0, p1, p2, p3, p4);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -372,7 +419,7 @@ public static class GLTrace
     private static void _t_glDrawElementsInstanced(uint p0, uint p1, uint p2, IntPtr p3, uint p4)
     {
         if (IsRecording) _rec("glDrawElementsInstanced(" + p0 + "," + p1 + "," + p2 + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + "," + p4 + ")");
-        _r_glDrawElementsInstanced!(p0, p1, p2, p3, p4);
+        if (null != _r_glDrawElementsInstanced) _r_glDrawElementsInstanced(p0, p1, p2, p3, p4);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -381,7 +428,7 @@ public static class GLTrace
     private static void _t_glEnable(uint p0)
     {
         if (IsRecording) _rec("glEnable(" + p0 + ")");
-        _r_glEnable!(p0);
+        if (null != _r_glEnable) _r_glEnable(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -390,7 +437,7 @@ public static class GLTrace
     private static void _t_glEnableVertexAttribArray(uint p0)
     {
         if (IsRecording) _rec("glEnableVertexAttribArray(" + p0 + ")");
-        _r_glEnableVertexAttribArray!(p0);
+        if (null != _r_glEnableVertexAttribArray) _r_glEnableVertexAttribArray(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -398,8 +445,8 @@ public static class GLTrace
     private static D_glFramebufferRenderbuffer? _r_glFramebufferRenderbuffer;
     private static void _t_glFramebufferRenderbuffer(uint p0, uint p1, uint p2, uint p3)
     {
-        if (IsRecording) _rec("glFramebufferRenderbuffer(" + p0 + "," + p1 + "," + p2 + "," + p3 + ")");
-        _r_glFramebufferRenderbuffer!(p0, p1, p2, p3);
+        if (IsRecording) _rec("glFramebufferRenderbuffer(" + p0 + "," + p1 + "," + p2 + "," + _canon("renderbuffer", p3) + ")");
+        if (null != _r_glFramebufferRenderbuffer) _r_glFramebufferRenderbuffer(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -408,7 +455,7 @@ public static class GLTrace
     private static void _t_glFramebufferTexture(uint p0, uint p1, uint p2, int p3)
     {
         if (IsRecording) _rec("glFramebufferTexture(" + p0 + "," + p1 + "," + p2 + "," + p3 + ")");
-        _r_glFramebufferTexture!(p0, p1, p2, p3);
+        if (null != _r_glFramebufferTexture) _r_glFramebufferTexture(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -417,7 +464,7 @@ public static class GLTrace
     private static void _t_glFrontFace(uint p0)
     {
         if (IsRecording) _rec("glFrontFace(" + p0 + ")");
-        _r_glFrontFace!(p0);
+        if (null != _r_glFrontFace) _r_glFrontFace(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -426,7 +473,7 @@ public static class GLTrace
     private static void _t_glGenBuffers(int p0, IntPtr p1)
     {
         if (IsRecording) _rec("glGenBuffers(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGenBuffers!(p0, p1);
+        if (null != _r_glGenBuffers) _r_glGenBuffers(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -435,7 +482,7 @@ public static class GLTrace
     private static void _t_glGenFramebuffers(uint p0, IntPtr p1)
     {
         if (IsRecording) _rec("glGenFramebuffers(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGenFramebuffers!(p0, p1);
+        if (null != _r_glGenFramebuffers) _r_glGenFramebuffers(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -444,7 +491,7 @@ public static class GLTrace
     private static void _t_glGenRenderbuffers(uint p0, IntPtr p1)
     {
         if (IsRecording) _rec("glGenRenderbuffers(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGenRenderbuffers!(p0, p1);
+        if (null != _r_glGenRenderbuffers) _r_glGenRenderbuffers(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -453,7 +500,7 @@ public static class GLTrace
     private static void _t_glGenTextures(int p0, IntPtr p1)
     {
         if (IsRecording) _rec("glGenTextures(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGenTextures!(p0, p1);
+        if (null != _r_glGenTextures) _r_glGenTextures(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -462,7 +509,7 @@ public static class GLTrace
     private static void _t_glGenVertexArrays(int p0, IntPtr p1)
     {
         if (IsRecording) _rec("glGenVertexArrays(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGenVertexArrays!(p0, p1);
+        if (null != _r_glGenVertexArrays) _r_glGenVertexArrays(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -471,7 +518,7 @@ public static class GLTrace
     private static void _t_glGenerateMipmap(uint p0)
     {
         if (IsRecording) _rec("glGenerateMipmap(" + p0 + ")");
-        _r_glGenerateMipmap!(p0);
+        if (null != _r_glGenerateMipmap) _r_glGenerateMipmap(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -479,8 +526,8 @@ public static class GLTrace
     private static D_glGetAttribLocation? _r_glGetAttribLocation;
     private static int _t_glGetAttribLocation(uint p0, IntPtr p1)
     {
-        if (IsRecording) _rec("glGetAttribLocation(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        return _r_glGetAttribLocation!(p0, p1);
+        if (IsRecording) _rec("glGetAttribLocation(" + _canon("program", p0) + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
+        return null != _r_glGetAttribLocation ? _r_glGetAttribLocation(p0, p1) : default;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -489,7 +536,7 @@ public static class GLTrace
     private static void _t_glGetBooleanv(uint p0, IntPtr p1)
     {
         if (IsRecording) _rec("glGetBooleanv(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGetBooleanv!(p0, p1);
+        if (null != _r_glGetBooleanv) _r_glGetBooleanv(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -498,7 +545,7 @@ public static class GLTrace
     private static uint _t_glGetError()
     {
         if (IsRecording) _rec("glGetError(" + "" + ")");
-        return _r_glGetError!();
+        return null != _r_glGetError ? _r_glGetError() : default;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -507,7 +554,7 @@ public static class GLTrace
     private static void _t_glGetFloatv(uint p0, IntPtr p1)
     {
         if (IsRecording) _rec("glGetFloatv(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGetFloatv!(p0, p1);
+        if (null != _r_glGetFloatv) _r_glGetFloatv(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -516,7 +563,7 @@ public static class GLTrace
     private static void _t_glGetIntegerv(uint p0, IntPtr p1)
     {
         if (IsRecording) _rec("glGetIntegerv(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGetIntegerv!(p0, p1);
+        if (null != _r_glGetIntegerv) _r_glGetIntegerv(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -524,8 +571,8 @@ public static class GLTrace
     private static D_glGetProgramInfoLog? _r_glGetProgramInfoLog;
     private static void _t_glGetProgramInfoLog(uint p0, int p1, IntPtr p2, IntPtr p3)
     {
-        if (IsRecording) _rec("glGetProgramInfoLog(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGetProgramInfoLog!(p0, p1, p2, p3);
+        if (IsRecording) _rec("glGetProgramInfoLog(" + _canon("program", p0) + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (null != _r_glGetProgramInfoLog) _r_glGetProgramInfoLog(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -533,8 +580,8 @@ public static class GLTrace
     private static D_glGetProgramiv? _r_glGetProgramiv;
     private static void _t_glGetProgramiv(uint p0, uint p1, IntPtr p2)
     {
-        if (IsRecording) _rec("glGetProgramiv(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGetProgramiv!(p0, p1, p2);
+        if (IsRecording) _rec("glGetProgramiv(" + _canon("program", p0) + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (null != _r_glGetProgramiv) _r_glGetProgramiv(p0, p1, p2);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -542,8 +589,8 @@ public static class GLTrace
     private static D_glGetShaderInfoLog? _r_glGetShaderInfoLog;
     private static void _t_glGetShaderInfoLog(uint p0, int p1, IntPtr p2, IntPtr p3)
     {
-        if (IsRecording) _rec("glGetShaderInfoLog(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGetShaderInfoLog!(p0, p1, p2, p3);
+        if (IsRecording) _rec("glGetShaderInfoLog(" + _canon("shader", p0) + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (null != _r_glGetShaderInfoLog) _r_glGetShaderInfoLog(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -551,8 +598,8 @@ public static class GLTrace
     private static D_glGetShaderiv? _r_glGetShaderiv;
     private static void _t_glGetShaderiv(uint p0, uint p1, IntPtr p2)
     {
-        if (IsRecording) _rec("glGetShaderiv(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glGetShaderiv!(p0, p1, p2);
+        if (IsRecording) _rec("glGetShaderiv(" + _canon("shader", p0) + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (null != _r_glGetShaderiv) _r_glGetShaderiv(p0, p1, p2);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -561,7 +608,7 @@ public static class GLTrace
     private static IntPtr _t_glGetString(uint p0)
     {
         if (IsRecording) _rec("glGetString(" + p0 + ")");
-        return _r_glGetString!(p0);
+        return null != _r_glGetString ? _r_glGetString(p0) : default;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -569,8 +616,8 @@ public static class GLTrace
     private static D_glGetUniformBlockIndex? _r_glGetUniformBlockIndex;
     private static uint _t_glGetUniformBlockIndex(uint p0, IntPtr p1)
     {
-        if (IsRecording) _rec("glGetUniformBlockIndex(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        return _r_glGetUniformBlockIndex!(p0, p1);
+        if (IsRecording) _rec("glGetUniformBlockIndex(" + _canon("program", p0) + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
+        return null != _r_glGetUniformBlockIndex ? _r_glGetUniformBlockIndex(p0, p1) : default;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -578,8 +625,8 @@ public static class GLTrace
     private static D_glGetUniformLocation? _r_glGetUniformLocation;
     private static int _t_glGetUniformLocation(uint p0, IntPtr p1)
     {
-        if (IsRecording) _rec("glGetUniformLocation(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
-        return _r_glGetUniformLocation!(p0, p1);
+        if (IsRecording) _rec("glGetUniformLocation(" + _canon("program", p0) + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
+        return null != _r_glGetUniformLocation ? _r_glGetUniformLocation(p0, p1) : default;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -588,7 +635,7 @@ public static class GLTrace
     private static byte _t_glIsEnabled(uint p0)
     {
         if (IsRecording) _rec("glIsEnabled(" + p0 + ")");
-        return _r_glIsEnabled!(p0);
+        return null != _r_glIsEnabled ? _r_glIsEnabled(p0) : default;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -596,8 +643,8 @@ public static class GLTrace
     private static D_glLinkProgram? _r_glLinkProgram;
     private static void _t_glLinkProgram(uint p0)
     {
-        if (IsRecording) _rec("glLinkProgram(" + p0 + ")");
-        _r_glLinkProgram!(p0);
+        if (IsRecording) _rec("glLinkProgram(" + _canon("program", p0) + ")");
+        if (null != _r_glLinkProgram) _r_glLinkProgram(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -606,7 +653,7 @@ public static class GLTrace
     private static void _t_glPixelStorei(uint p0, int p1)
     {
         if (IsRecording) _rec("glPixelStorei(" + p0 + "," + p1 + ")");
-        _r_glPixelStorei!(p0, p1);
+        if (null != _r_glPixelStorei) _r_glPixelStorei(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -615,7 +662,7 @@ public static class GLTrace
     private static void _t_glPolygonMode(uint p0, uint p1)
     {
         if (IsRecording) _rec("glPolygonMode(" + p0 + "," + p1 + ")");
-        _r_glPolygonMode!(p0, p1);
+        if (null != _r_glPolygonMode) _r_glPolygonMode(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -624,7 +671,7 @@ public static class GLTrace
     private static void _t_glRenderbufferStorage(uint p0, uint p1, uint p2, uint p3)
     {
         if (IsRecording) _rec("glRenderbufferStorage(" + p0 + "," + p1 + "," + p2 + "," + p3 + ")");
-        _r_glRenderbufferStorage!(p0, p1, p2, p3);
+        if (null != _r_glRenderbufferStorage) _r_glRenderbufferStorage(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -633,7 +680,7 @@ public static class GLTrace
     private static void _t_glScissor(int p0, int p1, uint p2, uint p3)
     {
         if (IsRecording) _rec("glScissor(" + p0 + "," + p1 + "," + p2 + "," + p3 + ")");
-        _r_glScissor!(p0, p1, p2, p3);
+        if (null != _r_glScissor) _r_glScissor(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -641,8 +688,8 @@ public static class GLTrace
     private static D_glShaderSource? _r_glShaderSource;
     private static void _t_glShaderSource(uint p0, int p1, IntPtr p2, IntPtr p3)
     {
-        if (IsRecording) _rec("glShaderSource(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glShaderSource!(p0, p1, p2, p3);
+        if (IsRecording) _rec("glShaderSource(" + _canon("shader", p0) + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (null != _r_glShaderSource) _r_glShaderSource(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -651,7 +698,7 @@ public static class GLTrace
     private static void _t_glTexImage2D(uint p0, int p1, int p2, uint p3, uint p4, int p5, uint p6, uint p7, IntPtr p8)
     {
         if (IsRecording) _rec("glTexImage2D(" + p0 + "," + p1 + "," + p2 + "," + p3 + "," + p4 + "," + p5 + "," + p6 + "," + p7 + "," + (p8 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glTexImage2D!(p0, p1, p2, p3, p4, p5, p6, p7, p8);
+        if (null != _r_glTexImage2D) _r_glTexImage2D(p0, p1, p2, p3, p4, p5, p6, p7, p8);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -660,7 +707,7 @@ public static class GLTrace
     private static void _t_glTexParameterIiv(uint p0, uint p1, IntPtr p2)
     {
         if (IsRecording) _rec("glTexParameterIiv(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glTexParameterIiv!(p0, p1, p2);
+        if (null != _r_glTexParameterIiv) _r_glTexParameterIiv(p0, p1, p2);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -669,7 +716,7 @@ public static class GLTrace
     private static void _t_glTexParameterIuiv(uint p0, uint p1, IntPtr p2)
     {
         if (IsRecording) _rec("glTexParameterIuiv(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glTexParameterIuiv!(p0, p1, p2);
+        if (null != _r_glTexParameterIuiv) _r_glTexParameterIuiv(p0, p1, p2);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -678,7 +725,7 @@ public static class GLTrace
     private static void _t_glTexParameterf(uint p0, uint p1, float p2)
     {
         if (IsRecording) _rec("glTexParameterf(" + p0 + "," + p1 + "," + p2.ToString("G9", CultureInfo.InvariantCulture) + ")");
-        _r_glTexParameterf!(p0, p1, p2);
+        if (null != _r_glTexParameterf) _r_glTexParameterf(p0, p1, p2);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -687,7 +734,7 @@ public static class GLTrace
     private static void _t_glTexParameteri(uint p0, uint p1, int p2)
     {
         if (IsRecording) _rec("glTexParameteri(" + p0 + "," + p1 + "," + p2 + ")");
-        _r_glTexParameteri!(p0, p1, p2);
+        if (null != _r_glTexParameteri) _r_glTexParameteri(p0, p1, p2);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -696,7 +743,7 @@ public static class GLTrace
     private static void _t_glTexStorage2D(uint p0, uint p1, uint p2, uint p3, uint p4)
     {
         if (IsRecording) _rec("glTexStorage2D(" + p0 + "," + p1 + "," + p2 + "," + p3 + "," + p4 + ")");
-        _r_glTexStorage2D!(p0, p1, p2, p3, p4);
+        if (null != _r_glTexStorage2D) _r_glTexStorage2D(p0, p1, p2, p3, p4);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -705,7 +752,7 @@ public static class GLTrace
     private static void _t_glTexSubImage2D(uint p0, int p1, int p2, int p3, uint p4, uint p5, uint p6, uint p7, IntPtr p8)
     {
         if (IsRecording) _rec("glTexSubImage2D(" + p0 + "," + p1 + "," + p2 + "," + p3 + "," + p4 + "," + p5 + "," + p6 + "," + p7 + "," + (p8 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glTexSubImage2D!(p0, p1, p2, p3, p4, p5, p6, p7, p8);
+        if (null != _r_glTexSubImage2D) _r_glTexSubImage2D(p0, p1, p2, p3, p4, p5, p6, p7, p8);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -714,7 +761,7 @@ public static class GLTrace
     private static void _t_glUniform1f(int p0, float p1)
     {
         if (IsRecording) _rec("glUniform1f(" + p0 + "," + p1.ToString("G9", CultureInfo.InvariantCulture) + ")");
-        _r_glUniform1f!(p0, p1);
+        if (null != _r_glUniform1f) _r_glUniform1f(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -723,7 +770,7 @@ public static class GLTrace
     private static void _t_glUniform1i(int p0, int p1)
     {
         if (IsRecording) _rec("glUniform1i(" + p0 + "," + p1 + ")");
-        _r_glUniform1i!(p0, p1);
+        if (null != _r_glUniform1i) _r_glUniform1i(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -732,7 +779,7 @@ public static class GLTrace
     private static void _t_glUniform1ui(int p0, uint p1)
     {
         if (IsRecording) _rec("glUniform1ui(" + p0 + "," + p1 + ")");
-        _r_glUniform1ui!(p0, p1);
+        if (null != _r_glUniform1ui) _r_glUniform1ui(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -741,7 +788,7 @@ public static class GLTrace
     private static void _t_glUniform3f(int p0, float p1, float p2, float p3)
     {
         if (IsRecording) _rec("glUniform3f(" + p0 + "," + p1.ToString("G9", CultureInfo.InvariantCulture) + "," + p2.ToString("G9", CultureInfo.InvariantCulture) + "," + p3.ToString("G9", CultureInfo.InvariantCulture) + ")");
-        _r_glUniform3f!(p0, p1, p2, p3);
+        if (null != _r_glUniform3f) _r_glUniform3f(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -750,7 +797,7 @@ public static class GLTrace
     private static void _t_glUniform4f(int p0, float p1, float p2, float p3, float p4)
     {
         if (IsRecording) _rec("glUniform4f(" + p0 + "," + p1.ToString("G9", CultureInfo.InvariantCulture) + "," + p2.ToString("G9", CultureInfo.InvariantCulture) + "," + p3.ToString("G9", CultureInfo.InvariantCulture) + "," + p4.ToString("G9", CultureInfo.InvariantCulture) + ")");
-        _r_glUniform4f!(p0, p1, p2, p3, p4);
+        if (null != _r_glUniform4f) _r_glUniform4f(p0, p1, p2, p3, p4);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -759,7 +806,7 @@ public static class GLTrace
     private static void _t_glUniformMatrix4fv(int p0, int p1, byte p2, IntPtr p3)
     {
         if (IsRecording) _rec("glUniformMatrix4fv(" + p0 + "," + p1 + "," + p2 + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glUniformMatrix4fv!(p0, p1, p2, p3);
+        if (null != _r_glUniformMatrix4fv) _r_glUniformMatrix4fv(p0, p1, p2, p3);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -767,8 +814,8 @@ public static class GLTrace
     private static D_glUseProgram? _r_glUseProgram;
     private static void _t_glUseProgram(uint p0)
     {
-        if (IsRecording) _rec("glUseProgram(" + p0 + ")");
-        _r_glUseProgram!(p0);
+        if (IsRecording) _rec("glUseProgram(" + _canon("program", p0) + ")");
+        if (null != _r_glUseProgram) _r_glUseProgram(p0);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -777,7 +824,7 @@ public static class GLTrace
     private static void _t_glVertexAttribDivisor(uint p0, uint p1)
     {
         if (IsRecording) _rec("glVertexAttribDivisor(" + p0 + "," + p1 + ")");
-        _r_glVertexAttribDivisor!(p0, p1);
+        if (null != _r_glVertexAttribDivisor) _r_glVertexAttribDivisor(p0, p1);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -786,7 +833,7 @@ public static class GLTrace
     private static void _t_glVertexAttribIPointer(uint p0, int p1, uint p2, uint p3, IntPtr p4)
     {
         if (IsRecording) _rec("glVertexAttribIPointer(" + p0 + "," + p1 + "," + p2 + "," + p3 + "," + (p4 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glVertexAttribIPointer!(p0, p1, p2, p3, p4);
+        if (null != _r_glVertexAttribIPointer) _r_glVertexAttribIPointer(p0, p1, p2, p3, p4);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -795,7 +842,7 @@ public static class GLTrace
     private static void _t_glVertexAttribPointer(uint p0, int p1, uint p2, byte p3, uint p4, IntPtr p5)
     {
         if (IsRecording) _rec("glVertexAttribPointer(" + p0 + "," + p1 + "," + p2 + "," + p3 + "," + p4 + "," + (p5 == IntPtr.Zero ? "null" : "ptr") + ")");
-        _r_glVertexAttribPointer!(p0, p1, p2, p3, p4, p5);
+        if (null != _r_glVertexAttribPointer) _r_glVertexAttribPointer(p0, p1, p2, p3, p4, p5);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -804,7 +851,7 @@ public static class GLTrace
     private static void _t_glViewport(int p0, int p1, uint p2, uint p3)
     {
         if (IsRecording) _rec("glViewport(" + p0 + "," + p1 + "," + p2 + "," + p3 + ")");
-        _r_glViewport!(p0, p1, p2, p3);
+        if (null != _r_glViewport) _r_glViewport(p0, p1, p2, p3);
     }
 
     private static void _register()
@@ -898,10 +945,13 @@ public static class GLTrace
     private static void _bind(string name, Action<IntPtr> setReal, Delegate thunk)
     {
         IntPtr real = _real!(name);
-        // A null pointer means the driver does not export it - a GLES context missing
-        // a desktop-only call, say. Leave it untraced rather than binding a null.
-        if (real == IntPtr.Zero) return;
-        setReal(real);
+        // A null real pointer is legitimate in two different situations, and the thunk
+        // is registered either way:
+        //   - RECORD-ONLY mode, where there is deliberately no driver behind this;
+        //   - a driver that does not export the call (a GLES context missing a
+        //     desktop-only entry point), where recording the attempt is still useful.
+        // The thunk checks for null before forwarding, so neither case jumps to 0.
+        if (real != IntPtr.Zero) setReal(real);
         _keepAlive.Add(thunk);
         _thunks[name] = Marshal.GetFunctionPointerForDelegate(thunk);
     }

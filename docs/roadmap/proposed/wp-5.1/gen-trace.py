@@ -40,10 +40,11 @@ import re
 import sys
 import collections
 
-if len(sys.argv) != 3:
+if len(sys.argv) not in (3, 4):
     sys.exit(__doc__)
 
 SRC, OUT = sys.argv[1], sys.argv[2]
+NS = sys.argv[3] if len(sys.argv) > 3 else "Splash.Silk"
 src = open(SRC, encoding="utf-8").read()
 
 # Enums are emitted as ": uint", so every enum name reduces to uint.
@@ -147,8 +148,47 @@ if not sigs:
     sys.exit("gen-trace: parsed no entry points - has GL.g.cs changed shape?")
 
 
-def fmt_arg(t, name):
+# ------------------------------------------------------------- object-name canonicalising
+#
+# GL object names are assigned by the DRIVER in allocation order, so the same logical
+# buffer is 24 in one run and 31 in the next. Measured: of ~6500 calls in a shared-anchor
+# frame, 595 differed only in numeric arguments, and object names were most of them.
+# Recording the raw number guarantees a diff that says nothing.
+#
+# Each entry below names the parameter positions that carry an object name, and the KIND
+# it belongs to - a buffer 24 and a texture 24 are different objects and must not share a
+# numbering space. Positions are indices into the native parameter list.
+CANON = {
+    "glBindBuffer":            {1: "buffer"},
+    "glBindBufferBase":        {2: "buffer"},
+    "glBindVertexArray":       {0: "vao"},
+    "glBindTexture":           {1: "texture"},
+    "glBindFramebuffer":       {1: "framebuffer"},
+    "glBindRenderbuffer":      {1: "renderbuffer"},
+    "glUseProgram":            {0: "program"},
+    "glAttachShader":          {0: "program", 1: "shader"},
+    "glCompileShader":         {0: "shader"},
+    "glLinkProgram":           {0: "program"},
+    "glDeleteProgram":         {0: "program"},
+    "glDeleteShader":          {0: "shader"},
+    "glShaderSource":          {0: "shader"},
+    "glGetShaderiv":           {0: "shader"},
+    "glGetProgramiv":          {0: "program"},
+    "glGetShaderInfoLog":      {0: "shader"},
+    "glGetProgramInfoLog":     {0: "program"},
+    "glGetUniformLocation":    {0: "program"},
+    "glGetAttribLocation":     {0: "program"},
+    "glGetUniformBlockIndex":  {0: "program"},
+    "glUniformBlockBinding":   {0: "program"},
+    "glFramebufferTexture2D":  {3: "texture"},
+    "glFramebufferRenderbuffer": {3: "renderbuffer"},
+}
+
+
+def fmt_arg(t, name, native=None, idx=None):
     """How an argument is rendered into the trace line."""
+    if native is not None and native in CANON and idx in CANON[native] and t == "uint":
+        return f'_canon("{CANON[native][idx]}", {name})'
     if t == "IntPtr":
         # NEVER the address. It is allocation-dependent, so recording it would guarantee
         # a diff between any two runs and prove nothing. Presence is what is stable.
@@ -174,7 +214,7 @@ w("")
 # NOT a "Splash.Silk.Trace" sub-namespace, however natural that reads: Splash.Silk files
 # do "using static engine.Logger;", and a namespace segment named Trace shadows the
 # Logger.Trace() method throughout the assembly. The file still lives in Trace/.
-w("namespace Splash.Silk;")
+w(f"namespace {NS};")
 w("")
 w("/// <summary>")
 w("/// Records every GL call, by interposing on the one function both bindings use to")
@@ -202,7 +242,10 @@ w("    private static readonly List<Delegate> _keepAlive = new();")
 w("")
 w("    public static void Begin()")
 w("    {")
-w("        lock (_lo) { _sink = new List<string>(65536); }")
+w("        // Ordinals restart per capture, so each trace is self-contained. Otherwise the")
+w("        // numbering of the second anchor would depend on what the first one saw, and two")
+w("        // runs that captured different anchor sets could never be compared.")
+w("        lock (_lo) { _sink = new List<string>(65536); _canonMaps.Clear(); }")
 w("        IsRecording = true;")
 w("    }")
 w("")
@@ -210,6 +253,38 @@ w("    public static IReadOnlyList<string> End()")
 w("    {")
 w("        IsRecording = false;")
 w("        lock (_lo) { var s = _sink ?? new List<string>(); _sink = null; return s; }")
+w("    }")
+w("")
+w("    /// <summary>")
+w("    /// Driver-assigned object name -> a stable ordinal, per KIND.")
+w("    /// </summary>")
+w("    /// <remarks>")
+w("    /// GL hands out object names in allocation order, so the same logical buffer is 24")
+w("    /// in one run and 31 in the next. Recording the raw value guarantees a diff that")
+w("    /// says nothing about the binding. Kinds are separate numbering spaces because a")
+w("    /// buffer 24 and a texture 24 are unrelated objects.")
+w("    /// </remarks>")
+w("    private static readonly Dictionary<string, Dictionary<uint, int>> _canonMaps = new();")
+w("")
+w("    private static string _canon(string kind, uint raw)")
+w("    {")
+w("        // 0 is not an object, it is 'unbind'. It must stay 0 or every unbind reads as")
+w("        // a distinct object and the traces diverge on nothing.")
+w("        if (raw == 0) return kind + \"#none\";")
+w("")
+w("        if (!_canonMaps.TryGetValue(kind, out var m))")
+w("        {")
+w("            m = new Dictionary<uint, int>();")
+w("            _canonMaps[kind] = m;")
+w("        }")
+w("")
+w("        if (!m.TryGetValue(raw, out int ordinal))")
+w("        {")
+w("            ordinal = m.Count;")
+w("            m[raw] = ordinal;")
+w("        }")
+w("")
+w("        return kind + \"#\" + ordinal;")
 w("    }")
 w("")
 w("    private static void _rec(string line)")
@@ -229,6 +304,18 @@ w("        _register();")
 w("        return _lookup;")
 w("    }")
 w("")
+w("    /// <summary>")
+w("    /// Trace with NO driver behind it: every entry point gets a thunk that records and")
+w("    /// returns default without forwarding.")
+w("    /// </summary>")
+w("    /// <remarks>")
+w("    /// This is what lets the two bindings be compared without a GL context, without a")
+w("    /// window, and without arguments that would be valid to execute - the question")
+w("    /// being asked is which NATIVE call a given C# call produces, which is answered")
+w("    /// before the driver is ever involved.")
+w("    /// </remarks>")
+w("    public static Func<string, IntPtr> WrapRecordOnly() => Wrap(_ => IntPtr.Zero);")
+w("")
 w("    private static IntPtr _lookup(string name)")
 w("    {")
 w("        if (_thunks.TryGetValue(name, out IntPtr thunk)) return thunk;")
@@ -242,17 +329,21 @@ for native in sorted(sigs):
     names = [f"p{i}" for i in range(len(ps))]
     decl = ", ".join(f"{t} {n}" for t, n in zip(ps, names))
     call = ", ".join(names)
-    parts = " + \",\" + ".join(fmt_arg(t, n) for t, n in zip(ps, names)) or '""'
+    parts = " + \",\" + ".join(
+        fmt_arg(t, n, native, i) for i, (t, n) in enumerate(zip(ps, names))) or '""'
     w(f"    [UnmanagedFunctionPointer(CallingConvention.Winapi)]")
     w(f"    private delegate {ret} D_{native}({decl});")
     w(f"    private static D_{native}? _r_{native};")
     w(f"    private static {ret} _t_{native}({decl})")
     w("    {")
     w(f'        if (IsRecording) _rec("{native}(" + {parts} + ")");')
+    # Tolerating a null real pointer is what makes RECORD-ONLY mode possible: the
+    # differential harness needs no GL context, no driver and no valid arguments,
+    # because nothing is forwarded - only observed.
     if ret == "void":
-        w(f"        _r_{native}!({call});")
+        w(f"        if (null != _r_{native}) _r_{native}({call});")
     else:
-        w(f"        return _r_{native}!({call});")
+        w(f"        return null != _r_{native} ? _r_{native}({call}) : default;")
     w("    }")
     w("")
 
@@ -268,10 +359,13 @@ w("")
 w("    private static void _bind(string name, Action<IntPtr> setReal, Delegate thunk)")
 w("    {")
 w("        IntPtr real = _real!(name);")
-w("        // A null pointer means the driver does not export it - a GLES context missing")
-w("        // a desktop-only call, say. Leave it untraced rather than binding a null.")
-w("        if (real == IntPtr.Zero) return;")
-w("        setReal(real);")
+w("        // A null real pointer is legitimate in two different situations, and the thunk")
+w("        // is registered either way:")
+w("        //   - RECORD-ONLY mode, where there is deliberately no driver behind this;")
+w("        //   - a driver that does not export the call (a GLES context missing a")
+w("        //     desktop-only entry point), where recording the attempt is still useful.")
+w("        // The thunk checks for null before forwarding, so neither case jumps to 0.")
+w("        if (real != IntPtr.Zero) setReal(real);")
 w("        _keepAlive.Add(thunk);")
 w("        _thunks[name] = Marshal.GetFunctionPointerForDelegate(thunk);")
 w("    }")

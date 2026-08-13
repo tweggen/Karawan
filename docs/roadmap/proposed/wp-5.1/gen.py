@@ -251,6 +251,21 @@ def cs_param(p):
     rk = p['RefKind']
     return (rk + ' ' if rk else '') + t + ' ' + ident(p['Name'])
 
+# ------------------------------------------------------ pointer-ness, verified vs gl.xml
+#
+# The logic lives in shapecheck.py so it can be tested: gl.xml is not checked in, so a
+# guard written inline here could never be exercised, and an unrun guard is a guard nobody
+# knows works. test-shapecheck.py drives it with a synthetic registry.
+import shapecheck
+
+shape_problems = shapecheck.check(shapes, shapecheck.pointer_flags(root))
+if shape_problems:
+    raise SystemExit(
+        'gen.py: parameter shapes disagree with gl.xml. Emitting these would pass a '
+        'value where the driver dereferences a pointer, which fails at CALL time, not '
+        'build time. Correct surface.json (the mapping); gl.xml is the specification.'
+        + chr(10) + chr(10).join(shape_problems))
+
 emitted = 0
 skipped_conv = 0
 for key in sorted(shapes):
