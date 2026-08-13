@@ -35,7 +35,10 @@ public static class GLTrace
 
     public static void Begin()
     {
-        lock (_lo) { _sink = new List<string>(65536); }
+        // Ordinals restart per capture, so each trace is self-contained. Otherwise the
+        // numbering of the second anchor would depend on what the first one saw, and two
+        // runs that captured different anchor sets could never be compared.
+        lock (_lo) { _sink = new List<string>(65536); _canonMaps.Clear(); }
         IsRecording = true;
     }
 
@@ -43,6 +46,38 @@ public static class GLTrace
     {
         IsRecording = false;
         lock (_lo) { var s = _sink ?? new List<string>(); _sink = null; return s; }
+    }
+
+    /// <summary>
+    /// Driver-assigned object name -> a stable ordinal, per KIND.
+    /// </summary>
+    /// <remarks>
+    /// GL hands out object names in allocation order, so the same logical buffer is 24
+    /// in one run and 31 in the next. Recording the raw value guarantees a diff that
+    /// says nothing about the binding. Kinds are separate numbering spaces because a
+    /// buffer 24 and a texture 24 are unrelated objects.
+    /// </remarks>
+    private static readonly Dictionary<string, Dictionary<uint, int>> _canonMaps = new();
+
+    private static string _canon(string kind, uint raw)
+    {
+        // 0 is not an object, it is 'unbind'. It must stay 0 or every unbind reads as
+        // a distinct object and the traces diverge on nothing.
+        if (raw == 0) return kind + "#none";
+
+        if (!_canonMaps.TryGetValue(kind, out var m))
+        {
+            m = new Dictionary<uint, int>();
+            _canonMaps[kind] = m;
+        }
+
+        if (!m.TryGetValue(raw, out int ordinal))
+        {
+            ordinal = m.Count;
+            m[raw] = ordinal;
+        }
+
+        return kind + "#" + ordinal;
     }
 
     private static void _rec(string line)
@@ -83,7 +118,7 @@ public static class GLTrace
     private static D_glAttachShader? _r_glAttachShader;
     private static void _t_glAttachShader(uint p0, uint p1)
     {
-        if (IsRecording) _rec("glAttachShader(" + p0 + "," + p1 + ")");
+        if (IsRecording) _rec("glAttachShader(" + _canon("program", p0) + "," + _canon("shader", p1) + ")");
         _r_glAttachShader!(p0, p1);
     }
 
@@ -92,7 +127,7 @@ public static class GLTrace
     private static D_glBindBuffer? _r_glBindBuffer;
     private static void _t_glBindBuffer(uint p0, uint p1)
     {
-        if (IsRecording) _rec("glBindBuffer(" + p0 + "," + p1 + ")");
+        if (IsRecording) _rec("glBindBuffer(" + p0 + "," + _canon("buffer", p1) + ")");
         _r_glBindBuffer!(p0, p1);
     }
 
@@ -101,7 +136,7 @@ public static class GLTrace
     private static D_glBindBufferBase? _r_glBindBufferBase;
     private static void _t_glBindBufferBase(uint p0, uint p1, uint p2)
     {
-        if (IsRecording) _rec("glBindBufferBase(" + p0 + "," + p1 + "," + p2 + ")");
+        if (IsRecording) _rec("glBindBufferBase(" + p0 + "," + p1 + "," + _canon("buffer", p2) + ")");
         _r_glBindBufferBase!(p0, p1, p2);
     }
 
@@ -110,7 +145,7 @@ public static class GLTrace
     private static D_glBindFramebuffer? _r_glBindFramebuffer;
     private static void _t_glBindFramebuffer(uint p0, uint p1)
     {
-        if (IsRecording) _rec("glBindFramebuffer(" + p0 + "," + p1 + ")");
+        if (IsRecording) _rec("glBindFramebuffer(" + p0 + "," + _canon("framebuffer", p1) + ")");
         _r_glBindFramebuffer!(p0, p1);
     }
 
@@ -119,7 +154,7 @@ public static class GLTrace
     private static D_glBindRenderbuffer? _r_glBindRenderbuffer;
     private static void _t_glBindRenderbuffer(uint p0, uint p1)
     {
-        if (IsRecording) _rec("glBindRenderbuffer(" + p0 + "," + p1 + ")");
+        if (IsRecording) _rec("glBindRenderbuffer(" + p0 + "," + _canon("renderbuffer", p1) + ")");
         _r_glBindRenderbuffer!(p0, p1);
     }
 
@@ -137,7 +172,7 @@ public static class GLTrace
     private static D_glBindTexture? _r_glBindTexture;
     private static void _t_glBindTexture(uint p0, uint p1)
     {
-        if (IsRecording) _rec("glBindTexture(" + p0 + "," + p1 + ")");
+        if (IsRecording) _rec("glBindTexture(" + p0 + "," + _canon("texture", p1) + ")");
         _r_glBindTexture!(p0, p1);
     }
 
@@ -146,7 +181,7 @@ public static class GLTrace
     private static D_glBindVertexArray? _r_glBindVertexArray;
     private static void _t_glBindVertexArray(uint p0)
     {
-        if (IsRecording) _rec("glBindVertexArray(" + p0 + ")");
+        if (IsRecording) _rec("glBindVertexArray(" + _canon("vao", p0) + ")");
         _r_glBindVertexArray!(p0);
     }
 
@@ -227,7 +262,7 @@ public static class GLTrace
     private static D_glCompileShader? _r_glCompileShader;
     private static void _t_glCompileShader(uint p0)
     {
-        if (IsRecording) _rec("glCompileShader(" + p0 + ")");
+        if (IsRecording) _rec("glCompileShader(" + _canon("shader", p0) + ")");
         _r_glCompileShader!(p0);
     }
 
@@ -272,7 +307,7 @@ public static class GLTrace
     private static D_glDeleteProgram? _r_glDeleteProgram;
     private static void _t_glDeleteProgram(uint p0)
     {
-        if (IsRecording) _rec("glDeleteProgram(" + p0 + ")");
+        if (IsRecording) _rec("glDeleteProgram(" + _canon("program", p0) + ")");
         _r_glDeleteProgram!(p0);
     }
 
@@ -281,7 +316,7 @@ public static class GLTrace
     private static D_glDeleteShader? _r_glDeleteShader;
     private static void _t_glDeleteShader(uint p0)
     {
-        if (IsRecording) _rec("glDeleteShader(" + p0 + ")");
+        if (IsRecording) _rec("glDeleteShader(" + _canon("shader", p0) + ")");
         _r_glDeleteShader!(p0);
     }
 
@@ -398,7 +433,7 @@ public static class GLTrace
     private static D_glFramebufferRenderbuffer? _r_glFramebufferRenderbuffer;
     private static void _t_glFramebufferRenderbuffer(uint p0, uint p1, uint p2, uint p3)
     {
-        if (IsRecording) _rec("glFramebufferRenderbuffer(" + p0 + "," + p1 + "," + p2 + "," + p3 + ")");
+        if (IsRecording) _rec("glFramebufferRenderbuffer(" + p0 + "," + p1 + "," + p2 + "," + _canon("renderbuffer", p3) + ")");
         _r_glFramebufferRenderbuffer!(p0, p1, p2, p3);
     }
 
@@ -479,7 +514,7 @@ public static class GLTrace
     private static D_glGetAttribLocation? _r_glGetAttribLocation;
     private static int _t_glGetAttribLocation(uint p0, IntPtr p1)
     {
-        if (IsRecording) _rec("glGetAttribLocation(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (IsRecording) _rec("glGetAttribLocation(" + _canon("program", p0) + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
         return _r_glGetAttribLocation!(p0, p1);
     }
 
@@ -524,7 +559,7 @@ public static class GLTrace
     private static D_glGetProgramInfoLog? _r_glGetProgramInfoLog;
     private static void _t_glGetProgramInfoLog(uint p0, int p1, IntPtr p2, IntPtr p3)
     {
-        if (IsRecording) _rec("glGetProgramInfoLog(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (IsRecording) _rec("glGetProgramInfoLog(" + _canon("program", p0) + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
         _r_glGetProgramInfoLog!(p0, p1, p2, p3);
     }
 
@@ -533,7 +568,7 @@ public static class GLTrace
     private static D_glGetProgramiv? _r_glGetProgramiv;
     private static void _t_glGetProgramiv(uint p0, uint p1, IntPtr p2)
     {
-        if (IsRecording) _rec("glGetProgramiv(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (IsRecording) _rec("glGetProgramiv(" + _canon("program", p0) + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + ")");
         _r_glGetProgramiv!(p0, p1, p2);
     }
 
@@ -542,7 +577,7 @@ public static class GLTrace
     private static D_glGetShaderInfoLog? _r_glGetShaderInfoLog;
     private static void _t_glGetShaderInfoLog(uint p0, int p1, IntPtr p2, IntPtr p3)
     {
-        if (IsRecording) _rec("glGetShaderInfoLog(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (IsRecording) _rec("glGetShaderInfoLog(" + _canon("shader", p0) + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
         _r_glGetShaderInfoLog!(p0, p1, p2, p3);
     }
 
@@ -551,7 +586,7 @@ public static class GLTrace
     private static D_glGetShaderiv? _r_glGetShaderiv;
     private static void _t_glGetShaderiv(uint p0, uint p1, IntPtr p2)
     {
-        if (IsRecording) _rec("glGetShaderiv(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (IsRecording) _rec("glGetShaderiv(" + _canon("shader", p0) + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + ")");
         _r_glGetShaderiv!(p0, p1, p2);
     }
 
@@ -569,7 +604,7 @@ public static class GLTrace
     private static D_glGetUniformBlockIndex? _r_glGetUniformBlockIndex;
     private static uint _t_glGetUniformBlockIndex(uint p0, IntPtr p1)
     {
-        if (IsRecording) _rec("glGetUniformBlockIndex(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (IsRecording) _rec("glGetUniformBlockIndex(" + _canon("program", p0) + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
         return _r_glGetUniformBlockIndex!(p0, p1);
     }
 
@@ -578,7 +613,7 @@ public static class GLTrace
     private static D_glGetUniformLocation? _r_glGetUniformLocation;
     private static int _t_glGetUniformLocation(uint p0, IntPtr p1)
     {
-        if (IsRecording) _rec("glGetUniformLocation(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (IsRecording) _rec("glGetUniformLocation(" + _canon("program", p0) + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
         return _r_glGetUniformLocation!(p0, p1);
     }
 
@@ -596,7 +631,7 @@ public static class GLTrace
     private static D_glLinkProgram? _r_glLinkProgram;
     private static void _t_glLinkProgram(uint p0)
     {
-        if (IsRecording) _rec("glLinkProgram(" + p0 + ")");
+        if (IsRecording) _rec("glLinkProgram(" + _canon("program", p0) + ")");
         _r_glLinkProgram!(p0);
     }
 
@@ -641,7 +676,7 @@ public static class GLTrace
     private static D_glShaderSource? _r_glShaderSource;
     private static void _t_glShaderSource(uint p0, int p1, IntPtr p2, IntPtr p3)
     {
-        if (IsRecording) _rec("glShaderSource(" + p0 + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (IsRecording) _rec("glShaderSource(" + _canon("shader", p0) + "," + p1 + "," + (p2 == IntPtr.Zero ? "null" : "ptr") + "," + (p3 == IntPtr.Zero ? "null" : "ptr") + ")");
         _r_glShaderSource!(p0, p1, p2, p3);
     }
 
@@ -767,7 +802,7 @@ public static class GLTrace
     private static D_glUseProgram? _r_glUseProgram;
     private static void _t_glUseProgram(uint p0)
     {
-        if (IsRecording) _rec("glUseProgram(" + p0 + ")");
+        if (IsRecording) _rec("glUseProgram(" + _canon("program", p0) + ")");
         _r_glUseProgram!(p0);
     }
 

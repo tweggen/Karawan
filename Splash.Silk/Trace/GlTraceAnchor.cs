@@ -166,8 +166,79 @@ public static class GlTraceAnchor
         return Path.Combine(dir, $"{stem}.{digest}{ext}");
     }
 
+    /**
+     * Calls that manage RESOURCES rather than describe the frame.
+     *
+     * A frame's GL stream is not purely a function of what it draws: whichever run happens
+     * to still be streaming assets uploads a texture during the frame, and the other does
+     * not. Measured on a shared anchor: glTexImage2D appeared once in one run and not at
+     * all in the other, dragging glActiveTexture and glBindTexture with it - 112-mesh
+     * frames that agreed on every drawn thing and still differed by five calls.
+     *
+     * The content digest cannot see this by construction, because an upload is not part of
+     * what is drawn. So such frames are REJECTED as anchors rather than compared loosely:
+     * an anchor has to be a frame whose stream depends on nothing but its content.
+     */
+    private static readonly string[] _resourceCalls =
+    {
+        // ASSET ARRIVAL only. These fire when content finishes loading, which depends on
+        // load timing rather than on what the frame draws - so whichever run is still
+        // streaming does them and the other does not.
+        "glTexImage2D(", "glTexSubImage2D(",
+        "glCompileShader(", "glLinkProgram(", "glShaderSource(",
+
+        // Two earlier attempts were WRONG, and both rejected every single frame:
+        //
+        //   glBufferData/glBufferSubData - this renderer re-uploads instance data every
+        //       frame, so they are ordinary per-frame traffic.
+        //   glGen*/glDelete*             - measured at 192-250 glGenBuffers AND the same
+        //       number of glDeleteBuffers PER FRAME, plus a VAO pair. The renderer creates
+        //       and destroys its per-batch buffers every frame.
+        //
+        // Both are a direct function of what is drawn, which is exactly what an anchor
+        // holds constant. Excluding them left no anchors at all - 4398 rejections, zero
+        // captures.
+    };
+
+    private static string? _resourceTraffic(IReadOnlyList<string> calls)
+    {
+        var found = new SortedDictionary<string, int>();
+        foreach (string c in calls)
+        {
+            foreach (string r in _resourceCalls)
+            {
+                if (c.StartsWith(r, StringComparison.Ordinal))
+                {
+                    string k = r.TrimEnd('(');
+                    found[k] = found.TryGetValue(k, out int n) ? n + 1 : 1;
+                }
+            }
+        }
+
+        if (found.Count == 0) return null;
+        return string.Join(",", found.Keys.GetEnumerator() is var _ ? _fmt(found) : "");
+    }
+
+    private static string _fmt(SortedDictionary<string, int> d)
+    {
+        var parts = new List<string>();
+        foreach (var kv in d) parts.Add($"{kv.Key}x{kv.Value}");
+        return string.Join(",", parts);
+    }
+
     private static void _write(IReadOnlyList<string> calls)
     {
+        string? traffic = _resourceTraffic(calls);
+        if (null != traffic)
+        {
+            /*
+             * Deliberately NOT added to _captured: this state may well be quiescent a
+             * moment later, once streaming has settled, and it should be eligible again.
+             */
+            Trace($"GlTraceAnchor: rejected {_capturingDigest} - resource work: {traffic}");
+            return;
+        }
+
         _captured.Add(_capturingDigest);
         string path = _pathFor(_capturingDigest);
         try
