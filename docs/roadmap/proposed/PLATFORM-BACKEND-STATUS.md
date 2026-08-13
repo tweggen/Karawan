@@ -76,8 +76,13 @@ Play also reports a missing deobfuscation/symbol file. Measured, scoped, and par
 (nothing is obfuscated); the real gap is native debug symbols, and our recipes strip them in
 place, so they do not exist outside a CI run. Managed C# exceptions are unaffected.
 
-**Next: WP-6.3 steps 2–4 are PR-open; then GATE-C input on real hardware, then WP-6.4.**
-KI-12 landed with #73. **Hold the KAR-411 unwind** until the CoreCLR build has a few
+**Next: WP-5.2 — the GL binding swap. GATE-F no longer blocks it** (satisfied by three
+deterministic checks; see the GATE-F section). WP-6.3 is merged and GATE-C input is confirmed
+on macOS for WASD and text entry.
+
+**The KAR-411 unwind is now reasonable to start** - versionCode 199 has been in the field on
+CoreCLR since 2026-08-10. Check Play crash/ANR rates first, then remove ONE workaround at a
+time with a device check each. Original hold reasoning: until the CoreCLR build has a few
 days of field data; removing the guards that defend against that exact defect class, hours after
 shipping a new runtime with no crash history, is the wrong order even though the guards are now
 believed unnecessary.
@@ -397,7 +402,8 @@ Consequences carried forward:
 | **WP-5.0b** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0b ✅** costed side by side | none apply | OpenTK 5: **37 % of code lines** ≈ 83 of 225 sites. `GL` is static vs Silk's instance → all 225 change receiver. Also `pre.16` ships **net10.0 only**, dropping our net9.0. |
 | **WP-5.1** | ✅ **MERGED** | `platform/wp-5.1` | [#25](https://github.com/tweggen/Karawan/pull/25) | 1 | generated surface compiles standalone ✅ | none apply | `Splash.GL/generated/GL.g.cs` generated from Khronos `gl.xml`, no package references. Surface resolved by **Roslyn** (339 call sites / 81 distinct entry points), not regex — an earlier MSBuildWorkspace attempt silently reported **zero**, indistinguishable from "uses no GL". |
 | **WP-5.3** | ✅ **MERGED** | `platform/wp-5.3-imgui-detach` | [#76](https://github.com/tweggen/Karawan/pull/76) | 1 | build ✅ · 234/234 ✅ · net −123 lines | **GATE-E desktop ✅ (owner-confirmed)** | **ImGui detached from Silk, desktop UI restored.** `ImGuiFontConfig` inlined and `Silk.NET.OpenGL.Extensions.ImGui` dropped — it was the only type used from that package. Removing it exposed that **`Silk.NET.Input`/`.Windowing` were arriving transitively through it**, keeping ~250 lines of dead Silk-typed handlers compiling long after KI-12 reported them gone; all deleted. |
-| WP-5.2, 5.4 | **BLOCKED-ON-HUMAN** | — | — | 0 | — | GATE-F | Owner chose **S2a, narrow form** (2026-08-06). Remaining blocker: GATE-F reference frames, which must be captured **before** WP-5.2 merges or the comparison is unrunnable forever. The ImGui entanglement that also blocked this is now gone (WP-5.3). |
+| **WP-5.2** | 🟢 **UNBLOCKED — GATE-F satisfied by other means** | — | [#85](https://github.com/tweggen/Karawan/pull/85) built the gate | 0 | see the GATE-F section | GATE-F ✅ | Owner chose **S2a, narrow form** (2026-08-06). The old blocker - capture pixel reference frames before the swap - is **retired**: pixel comparison of a live session was tried three ways and is not achievable here (see §GATE-F). It is replaced by three deterministic checks that pass today. **One open decision, not a blocker:** `GL.g.cs` dispatches via `Marshal.GetDelegateForFunctionPointer` where Silk uses unmanaged function pointers - a performance question at ~2,650 GL calls/frame, and the reason a record-only call harness could not be used. |
+| WP-5.4 | NOT-STARTED | — | — | 0 | — | — | Rename `Splash.Silk` → `Splash.GL`. Trivial once WP-5.2 lands. |
 
 | **WP-6.1** | ✅ **MERGED, device-verified** | `platform/wp-6.1` | [#66](https://github.com/tweggen/Karawan/pull/66) | 1 | gameplay loop, sound, input, splash all confirmed on device ✅ | — | **MAUI is gone from Wuka.** Four things surfaced only by building and running, none visible from source: `SingleProject` was hiding four dead platform folders AND pointing the SDK at `AndroidManifest.xml` (without `<AndroidManifest>` the SDK silently SYNTHESISES one — green build, right package name via `ApplicationId`, `android:label`/`icon` gone); the Silk `ExcludeAssets` entries are **suppressors, not sources** (see KI-12); and the splash artwork cannot be used as-is. Bluetooth permission prompt also disabled, code retained. |
 | **WP-6.2** | ⚠ **HALF-MERGED — see note** | `platform/wp-6.2-net10-spike` → `platform/wp-6.2-coreclr-default` | [#70](https://github.com/tweggen/Karawan/pull/70) **merged**, follow-up PR open | 1 | GLOBAL-1 ✅ · 1b ✅ · 4 ✅ (192/192 on net10.0) · Windows desktop ✅ · Android both runtimes ✅ · APK+AAB shape ✅ · AC-1.7 ✅ · 16 KB verified from ELF ✅ | **ABIPROBE M+N ✅ PASSED on device — Mono AND CoreCLR** | **.NET 10 retarget is ON MASTER via #70.** **CoreCLR-as-default and `versionCode` 199 are NOT** — they were pushed after #70 merged and stranded (merge-order trap, 6th occurrence). Recovered onto `platform/wp-6.2-coreclr-default`. **Two source fixes in the whole tree**, both the C# 14 span-overload change. Both runtimes pass → fix came upstream; CoreCLR chosen anyway for load time (4.64×) and coverage. Built on Windows 11 **and** macOS. |
@@ -1021,6 +1027,72 @@ project does not have, at a cost it should not pay.
 > concepts are stable enough to design from; if a specific mechanism is adopted - Unreal's modifier
 > evaluation order, say - check it against current documentation before encoding it.
 
+### ✅ GATE-F — three approaches, and why the plan's one does not work here
+
+The plan specified pixel-comparing rendered frames before and after the GL swap, with the
+warning that baselines must be captured first or the comparison is unrunnable forever. That
+instrument cannot be built on this game. Three attempts, each abandoned on measurement
+rather than on taste, and each measurement is why the next one exists.
+
+**1. Diff a live session.** Requires two runs to render the same thing. They do not.
+Measured over four runs of the same unmodified build, `autoLogin=new` so each starts fresh:
+
+| configuration | frames compared | identical | identical prefix |
+|---|---|---|---|
+| default | 3934 | 13% | 2 frames |
+| `engine.Turbo=true` (fixed dt) | 3797 | 13% | 5 frames |
+
+Fixed dt does not help, so it is not frame pacing. First divergence at frame 3 with
+identical counts but a different camera transform - the logos scene takes its timeline
+marker from `DateTime.Now`. Structure diverges by frame 12, with mesh-count deltas reaching
+71: the runs cross scene transitions on different frames. They are executing different
+content at the same frame number.
+
+**2. Anchor on CONTENT instead of frame number.** 74% of consecutive frames within a run are
+byte-identical - the game settles into plateaus, longest observed 269 frames - and those
+plateaus recur across runs. That gets a rendezvous, and `scripts/find-gl-anchors.py` finds
+shared states from two digest logs.
+
+It still fails, for a reason worth keeping: **the states that reliably recur are loading
+milestones, and those are exactly the frames whose GL stream is not a function of content.**
+One run uploads a texture during the frame and the other has already finished. Steady-state
+frames are content-pure but never coincide - the NPC population differs when each run
+settles (run A anchors at 121/112/97/140 meshes, run B at 120/119/114/111). Filtering out
+asset traffic removed the only overlap.
+
+**3. A record-only differential harness**, calling every signature on both bindings with no
+driver behind them. Silk went through the tracer and recorded all 85 calls; the generated
+binding recorded **zero**. It resolves entry points with
+`Marshal.GetDelegateForFunctionPointer`, and .NET returns the ORIGINAL delegate when the
+pointer came from `GetFunctionPointerForDelegate`, so the cast throws. Documented round-trip
+behaviour, not a defect in the tracer - but it makes call-level interposition unusable
+against this binding.
+
+**What GATE-F is instead.** The swap's actual risk is that a generated signature marshals
+differently from Silk's. That is a metadata property - no game, no window, no GL context, no
+execution - and it is checked three ways, all deterministic:
+
+| check | where | result |
+|---|---|---|
+| enum **values** vs `gl.xml` | `gen.py` | 114 verified, 0 unverifiable |
+| parameter **shape** vs `gl.xml` | `shapecheck.py` | 8/8 cases, incl. the real defect |
+| **signature parity** vs Silk | `wp-5.1/differ` | 85 exact, exit 0 |
+
+The differ is verified in both directions: reintroducing the defect makes it exit 1 and name
+the signature. And regeneration is now proven - `GL.g.cs` and `GLTrace.g.cs` both regenerate
+**byte-identically** from the real registry (sha256 in
+`WP-5.1-GENERATED-BINDINGS.md` §10), so the binding is regenerable rather than hand-patched.
+
+**The defect this found before WP-5.2 started.** `glTexParameterIiv` and `glTexParameterIuiv`
+declared their third parameter BY VALUE where the driver dereferences a pointer. It
+segfaults on first use and nothing fails at build time. Root cause: the Roslyn probe that
+captured `surface.json` flattened Silk's `in int` to `int`. Fixed at all three levels -
+`surface.json`, `GL.g.cs`, and a `gen.py` guard so the class cannot recur.
+
+**What is left of the session tooling.** `Splash/FrameDigest.cs`, `GLTrace`, `GlTraceAnchor`
+and `find-gl-anchors.py` did not close the gate, but they are how the above was measured and
+how the binding defect was found. All are off unless explicitly configured.
+
 ## Gate ledger
 
 | Gate | What | Status |
@@ -1032,7 +1104,7 @@ project does not have, at a cost it should not pay.
 | GATE-D | Animation correct on macOS + Windows | ✅ **PASSED 2026-08-06** — Windows confirmed, macOS confirmed on a **Debug** build (Release does not currently start, see known issue KI-1) |
 | GATE-E | ImGui renders + takes input (incl. Linux Fn-key case) | 🟡 **DESKTOP PASSED 2026-08-11** — owner, after WP-5.3 ([#76](https://github.com/tweggen/Karawan/pull/76)): *"works better than it ever did"*. Worth noting mouse input to ImGui had **never** been wired, even under Silk (position/buttons/wheel were commented-out `TXWTODO`s), so this is the first build in which it is clickable at all. **Android is out of scope for this gate**: [#13](https://github.com/tweggen/Karawan/pull/13) excluded the ImGui native and there is no Android build of cimgui — re-enabling needs a real arm64 `libcimgui.so`, not a flag. **Still unrun: the Linux Fn-key case.** |
 | — | *(AC-0.2.4, gate-adjacent)* Aihao L-System preview renders | ✅ **PASSED 2026-08-06** — confirmed after the GL-context seam was re-expressed in WP-0.2 |
-| GATE-F | Pixel-compare before/after GL swap | not reached. ⚠ **Baseline must be captured before WP-5.2 merges** or it is unrunnable forever |
+| GATE-F | Prove the GL binding swap changes nothing | ✅ **SATISFIED 2026-08-13, by a different instrument than the plan specified.** Pixel-comparing a live session is **not achievable here** - three approaches were built and measured, see the section below. Replaced by three deterministic checks, all runnable in ~1 minute with no device: enum **values** vs `gl.xml` (114, 0 unverifiable), parameter **shape** vs `gl.xml` (`shapecheck.py`, 8/8 tested), and public **signature parity** vs the binding being replaced (`differ`, exit 0, verified to fail on a reintroduced defect). Together these cover **every** entry point rather than whichever ones one frame happened to draw. |
 
 ---
 
@@ -1048,6 +1120,7 @@ project does not have, at a cost it should not pay.
 | **KI-14** | ✅ **FIXED 2026-08-10 (device-confirmed).** **Desktop text entry was silently dead on SDL3.** Typing into a focused field produced nothing; WASD, F8 and every scancode binding kept working perfectly, which is why it survived undetected. Cause: SDL2 has text input ON by default and Silk's `BeginInput`/`EndInput` merely toggled it, but **SDL3 makes it per-window and OFF until `SDL_StartTextInput`** — and nothing in the tree ever called it. `Sdl3WindowBackend.SetKeyboardVisible` only invoked `SoftKeyboardHandler`, which `GameActivity` installs on Android and nothing installs on desktop, so on desktop it warned once and returned. **Entered at WP-3.2, sealed by WP-3.5** deleting `SilkWindowBackend` and the `BeginInput` forward with it — the same entry point and the same silence as KI-11. The false assumption was written into the doc comment on `IWindowBackend.SetKeyboardVisible` (*"a desktop platform has a real keyboard and nothing visible happens either way"*), which is now corrected in place. Fix drives `SDL_StartTextInput`/`SDL_StopTextInput` **below** the handler check, because that call is right on desktop and wrong on Android (it would raise `SDLDummyEdit` and reinstate the KI-10 composition bug). | fixed in [#74](https://github.com/tweggen/Karawan/pull/74). **Found only because someone typed into a field** — the first time anyone had, on the SDL3 desktop build. Android shares the method and is untouched, but should be re-checked. |
 | **KI-4** | An unbounded `Monitor.Wait` in `LogicalRenderer.WaitNextRenderFrame` runs on the thread macOS requires for event pumping, so *any* logical-thread fault presents as a frozen app rather than an error. A timeout that logs and returns null would make this class of failure diagnosable. | open — deliberately not "fixed", since it would mask causes |
 | **KI-15** | **Logical-vs-pixel confusion is a recurring defect class on this codebase, not three coincidences.** Four instances found in two days, every one invisible on a 1x display and therefore on every machine except a retina Mac: `SetKeyboardVisible` (KI-14, different axis but same "equal on my machine" blindness), ImGui `DisplaySize` (#80), the render viewport (#82), and the splitter drag which would have inherited it. **The seam is now documented where it is crossed** — `IWindowBackend.Size` vs `.FramebufferSize`, `OnResize` (pixels), `SetDimension(px, logical)` — but nothing MECHANICALLY prevents the next one. A units type (`LogicalV2` / `PixelV2`) would; that is a real refactor across `Splash.Silk` and worth costing before committing to. | open, unowned. **Suggested cheap mitigation: run GATE-C's HiDPI checks on any PR touching `Splash.Silk` geometry**, since a 1x developer machine cannot see this class at all. |
+| **KI-16** | **The renderer creates and destroys ~400 GL objects every frame.** Measured while building the GATE-F tracer, not sought: a steady-state gameplay frame issues **192–250 `glGenBuffers` and the same number of `glDeleteBuffers`**, plus a `glGenVertexArrays`/`glDeleteVertexArrays` pair - per-batch buffers allocated and freed each frame. Total GL traffic is ~2,650 calls/frame for ~110 mesh batches, so this churn is a large fraction of it. Not a correctness problem and nothing observed to be wrong because of it; a plausible pooling candidate. Noted because it is invisible without tracing, and the tracing now exists (`debug.option.glTraceAnchor`). | open, unowned, **found in passing** - no measurement of its actual cost has been made, only of its volume. Anyone acting on this should profile first. |
 | **KI-13** | **No native debug symbols ship, so native crashes in Play are bare addresses.** Play reports a missing deobfuscation/symbol file. Measured on the shipped versionCode 199 bundle, not assumed: (a) the dex is **not obfuscated** — 5,785 readable slash-separated identifiers vs 49 short ones, and no R8/ProGuard settings exist in `Wuka.csproj` — so **a `mapping.txt` would buy nothing** and no build step emits one (`obj/.../type-mapping.txt` is .NET Android's managed↔Java map, unrelated despite the name); (b) the AAB carries **no `BUNDLE-METADATA/`**, so no symbols ship — this is the real gap; (c) **our own natives are stripped in place** by `recipes/build-openal.sh` and `recipes/build-assimp-android.sh` (`llvm-strip`), so outside a live CI run the symbols **no longer exist anywhere**. Managed C# exceptions are unaffected and stay readable. Fix = preserve unstripped copies (or `--only-keep-debug` companions) **before** the strip, publish as CI artifacts, then either upload per release or embed under `BUNDLE-METADATA/com.android.tools.build.debugsymbols/`. The runtime libraries (`libcoreclr`, `libclrjit`, `libSystem.*`) come from the .NET Android workload and are a separate sourcing question. | open, deferred by owner 2026-08-10 — pairs naturally with the CI workflow, since that is where unstripped artifacts would live. **Step (c) is the irreversible half**: symbols for a crash that already happened cannot be recovered later. |
 
 ---
