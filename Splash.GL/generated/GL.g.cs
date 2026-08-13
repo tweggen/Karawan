@@ -1057,6 +1057,22 @@ namespace Karawan.Graphics.OpenGL
             f_sup_GetProgramInfoLog(program, bufSize, length, infoLog);
         }
 
+        private delegate void d_sup_DebugMessageCallback(nint callback, int* userParam);
+        private d_sup_DebugMessageCallback f_sup_DebugMessageCallback;
+        public void DebugMessageCallback(nint callback, int* userParam)
+        {
+            f_sup_DebugMessageCallback ??= Marshal.GetDelegateForFunctionPointer<d_sup_DebugMessageCallback>(_getProc("glDebugMessageCallback"));
+            f_sup_DebugMessageCallback(callback, userParam);
+        }
+
+        private delegate void d_sup_DebugMessageControl(uint source, uint type, uint severity, int count, uint* ids, bool enabled);
+        private d_sup_DebugMessageControl f_sup_DebugMessageControl;
+        public void DebugMessageControl(uint source, uint type, uint severity, int count, uint* ids, bool enabled)
+        {
+            f_sup_DebugMessageControl ??= Marshal.GetDelegateForFunctionPointer<d_sup_DebugMessageControl>(_getProc("glDebugMessageControl"));
+            f_sup_DebugMessageControl(source, type, severity, count, ids, enabled);
+        }
+
 
         // ---------------------------------------------------------------------
         // Conveniences: Silk API surface with NO 1:1 native entry point. gl.xml

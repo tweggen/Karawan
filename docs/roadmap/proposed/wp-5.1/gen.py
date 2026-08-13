@@ -70,12 +70,20 @@ SUPPORT = [
     "glDeleteBuffers", "glDeleteTextures", "glDeleteVertexArrays",
     "glGetFloatv", "glGetIntegerv", "glGetProgramiv", "glGetShaderiv",
     "glUniformMatrix4fv", "glShaderSource", "glGetShaderInfoLog", "glGetProgramInfoLog",
+    # KHR_debug, core since GL 4.3. Used by Splash.Silk/GlDiagnostics.cs to replace
+    # glGetError polling on desktop. Deliberately NOT the ...KHR-suffixed ES variants:
+    # the callback is desktop-only for now, so ES resolves nothing and keeps polling.
+    "glDebugMessageCallback", "glDebugMessageControl",
 ]
 
 GLTYPE = {
     'GLenum': 'uint', 'GLuint': 'uint', 'GLint': 'int', 'GLsizei': 'int',
     'GLboolean': 'bool', 'GLbitfield': 'uint', 'GLfloat': 'float', 'GLdouble': 'double',
     'GLchar': 'byte', 'GLubyte': 'byte', 'void': 'void',
+    # A function pointer. Passed as a raw address so the caller owns the delegate and its
+    # lifetime - the callback is invoked from native code and a collected delegate jumps
+    # into freed memory, the same hazard Sdl3WindowBackend's s_lifecycleWatch documents.
+    'GLDEBUGPROC': 'nint',
 }
 
 def parse_command(cmd):
