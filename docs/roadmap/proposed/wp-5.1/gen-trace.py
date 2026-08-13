@@ -112,8 +112,13 @@ def native_type(t):
 
 # Each public method body resolves its entry point; pair the delegate with the name by
 # walking the file in order, since the generated layout is delegate/field/method triples.
+# The parameter list is matched greedily to the LAST ")" before the ";", not with
+# [^)]*, because parameters now carry attributes - "[MarshalAs(UnmanagedType.U1)] bool
+# flag" - whose own parentheses terminated the lazy form. That silently dropped four
+# entry points (82 -> 78) without failing anything: the tracer simply stopped watching
+# part of the surface it is meant to cover.
 blocks = re.findall(
-    r'private delegate ([\w\*]+) (\w+)\(([^)]*)\);.*?_getProc\("(\w+)"\)',
+    r'private delegate ([\w\*]+) (\w+)\((.*?)\);.*?_getProc\("(\w+)"\)',
     src, re.S)
 
 sigs = {}      # native name -> (ret, [param types])
@@ -122,7 +127,11 @@ overloads = collections.Counter()
 for ret, dname, params, native in blocks:
     overloads[native] += 1
     ps = []
-    for p in [x.strip() for x in params.split(",") if x.strip()]:
+    # Attributes are marshalling instructions for the BINDING; the ABI shape is what
+    # matters here, and [MarshalAs(UnmanagedType.U1)] bool is still one byte either way -
+    # native_type already maps bool to byte.
+    cleaned = re.sub(r'\[[^\]]*\]', '', params)
+    for p in [x.strip() for x in cleaned.split(",") if x.strip()]:
         # "TYPE name", where TYPE may itself contain a space ("out int")
         ptype = p.rsplit(" ", 1)[0]
         ps.append(native_type(ptype))

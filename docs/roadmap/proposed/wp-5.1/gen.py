@@ -266,6 +266,35 @@ if shape_problems:
         'build time. Correct surface.json (the mapping); gl.xml is the specification.'
         + chr(10) + chr(10).join(shape_problems))
 
+
+# ---------------------------------------------------------------- GLboolean is ONE byte
+#
+# C# `bool` marshals as UnmanagedType.Bool by default - a 4-byte Win32 BOOL - but GLboolean
+# is a GLubyte, one byte. The mismatch is not theoretical:
+#
+#   glIsEnabled     returns 1 byte in AL; the marshaller reads 4 bytes of EAX, so the
+#                   upper three are whatever the driver happened to leave there.
+#   glGetBooleanv   writes 1 byte into a 4-byte stack slot; the other three are
+#                   uninitialised.
+#
+# Either can read back TRUE where GL said false. It usually works because drivers tend to
+# zero those bytes, which is exactly what makes it the silent-failure class the plan warns
+# about for GlStateSaver - and GlStateSaver is a live caller of both.
+#
+# Inherited from Silk, which marshals these the same way; not introduced by WP-5.2.
+U1 = '[MarshalAs(UnmanagedType.U1)] '
+
+
+def bool_param(type_name, decl):
+    """Prefix a bool parameter declaration with the one-byte marshalling attribute."""
+    return (U1 + decl) if type_name == 'bool' else decl
+
+
+def bool_return(ret):
+    """The [return:] attribute a bool-returning delegate needs, or nothing."""
+    return '[return: MarshalAs(UnmanagedType.U1)] ' if ret == 'bool' else ''
+
+
 emitted = 0
 skipped_conv = 0
 for key in sorted(shapes):
@@ -279,9 +308,11 @@ for key in sorted(shapes):
     ps = sh['Parameters']
     sig = ', '.join(cs_param(p) for p in ps)
     args = ', '.join((p['RefKind'] + ' ' if p['RefKind'] else '') + ident(p['Name']) for p in ps)
-    dele = ', '.join(((p['RefKind'] + ' ') if p['RefKind'] else '') + p['Type'] + ' ' + ident(p['Name']) for p in ps)
+    dele = ', '.join(bool_param(p['Type'],
+                                ((p['RefKind'] + ' ') if p['RefKind'] else '') + p['Type'] + ' ' + ident(p['Name']))
+                     for p in ps)
     slug = re.sub(r'[^A-Za-z0-9]', '_', key.split('|')[1])
-    L.append(f'        private delegate {ret} d_{slug}({dele});')
+    L.append(f'        {bool_return(ret)}private delegate {ret} d_{slug}({dele});')
     L.append(f'        private d_{slug} f_{slug};')
     L.append(f'        public {ret} {name}({sig})')
     L.append('        {')
@@ -297,9 +328,10 @@ for nm in SUPPORT:
     rname, rret, rps = support_cmds[nm]
     csname = rname[2:]
     sig = ', '.join('%s %s' % (t, ident(n)) for n, t in rps)
+    dele_sig = ', '.join(bool_param(t, '%s %s' % (t, ident(n))) for n, t in rps)
     args = ', '.join(ident(n) for n, _ in rps)
     slug = 'sup_' + csname
-    L.append('        private delegate %s d_%s(%s);' % (rret, slug, sig))
+    L.append('        %sprivate delegate %s d_%s(%s);' % (bool_return(rret), rret, slug, dele_sig))
     L.append('        private d_%s f_%s;' % (slug, slug))
     L.append('        public %s %s(%s)' % (rret, csname, sig))
     L.append('        {')
