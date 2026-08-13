@@ -40,10 +40,11 @@ import re
 import sys
 import collections
 
-if len(sys.argv) != 3:
+if len(sys.argv) not in (3, 4):
     sys.exit(__doc__)
 
 SRC, OUT = sys.argv[1], sys.argv[2]
+NS = sys.argv[3] if len(sys.argv) > 3 else "Splash.Silk"
 src = open(SRC, encoding="utf-8").read()
 
 # Enums are emitted as ": uint", so every enum name reduces to uint.
@@ -213,7 +214,7 @@ w("")
 # NOT a "Splash.Silk.Trace" sub-namespace, however natural that reads: Splash.Silk files
 # do "using static engine.Logger;", and a namespace segment named Trace shadows the
 # Logger.Trace() method throughout the assembly. The file still lives in Trace/.
-w("namespace Splash.Silk;")
+w(f"namespace {NS};")
 w("")
 w("/// <summary>")
 w("/// Records every GL call, by interposing on the one function both bindings use to")
@@ -303,6 +304,18 @@ w("        _register();")
 w("        return _lookup;")
 w("    }")
 w("")
+w("    /// <summary>")
+w("    /// Trace with NO driver behind it: every entry point gets a thunk that records and")
+w("    /// returns default without forwarding.")
+w("    /// </summary>")
+w("    /// <remarks>")
+w("    /// This is what lets the two bindings be compared without a GL context, without a")
+w("    /// window, and without arguments that would be valid to execute - the question")
+w("    /// being asked is which NATIVE call a given C# call produces, which is answered")
+w("    /// before the driver is ever involved.")
+w("    /// </remarks>")
+w("    public static Func<string, IntPtr> WrapRecordOnly() => Wrap(_ => IntPtr.Zero);")
+w("")
 w("    private static IntPtr _lookup(string name)")
 w("    {")
 w("        if (_thunks.TryGetValue(name, out IntPtr thunk)) return thunk;")
@@ -324,10 +337,13 @@ for native in sorted(sigs):
     w(f"    private static {ret} _t_{native}({decl})")
     w("    {")
     w(f'        if (IsRecording) _rec("{native}(" + {parts} + ")");')
+    # Tolerating a null real pointer is what makes RECORD-ONLY mode possible: the
+    # differential harness needs no GL context, no driver and no valid arguments,
+    # because nothing is forwarded - only observed.
     if ret == "void":
-        w(f"        _r_{native}!({call});")
+        w(f"        if (null != _r_{native}) _r_{native}({call});")
     else:
-        w(f"        return _r_{native}!({call});")
+        w(f"        return null != _r_{native} ? _r_{native}({call}) : default;")
     w("    }")
     w("")
 
@@ -343,10 +359,13 @@ w("")
 w("    private static void _bind(string name, Action<IntPtr> setReal, Delegate thunk)")
 w("    {")
 w("        IntPtr real = _real!(name);")
-w("        // A null pointer means the driver does not export it - a GLES context missing")
-w("        // a desktop-only call, say. Leave it untraced rather than binding a null.")
-w("        if (real == IntPtr.Zero) return;")
-w("        setReal(real);")
+w("        // A null real pointer is legitimate in two different situations, and the thunk")
+w("        // is registered either way:")
+w("        //   - RECORD-ONLY mode, where there is deliberately no driver behind this;")
+w("        //   - a driver that does not export the call (a GLES context missing a")
+w("        //     desktop-only entry point), where recording the attempt is still useful.")
+w("        // The thunk checks for null before forwarding, so neither case jumps to 0.")
+w("        if (real != IntPtr.Zero) setReal(real);")
 w("        _keepAlive.Add(thunk);")
 w("        _thunks[name] = Marshal.GetFunctionPointerForDelegate(thunk);")
 w("    }")
