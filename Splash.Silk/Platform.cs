@@ -7,7 +7,7 @@ using engine.news;
 using ObjLoader.Loader.Common;
 using static engine.Logger;
 
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 
 namespace Splash.Silk;
 
@@ -586,7 +586,12 @@ public class Platform : engine.IPlatform
         }
 
         _instanceManager?.Dispose();
-        _gl?.Dispose();
+        /*
+         * WP-5.2: the generated binding is not IDisposable, and has nothing to dispose - it
+         * holds a resolver delegate and lazily-created P/Invoke delegates, no GL objects
+         * and no unmanaged allocation. Silk's GL implemented IDisposable for its own
+         * loader bookkeeping, which does not exist here.
+         */
         _isRunning = false;
         _logicalRenderer.ShallQuit = true;
     }

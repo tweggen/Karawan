@@ -5,7 +5,7 @@ using System.Numerics;
 using engine;
 using static engine.Logger;
 
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 using Renderbuffer = engine.joyce.Renderbuffer;
 using static Splash.Silk.GLCheck;
 

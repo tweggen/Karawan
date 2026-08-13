@@ -2,7 +2,7 @@ using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using engine.joyce;
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 
 namespace Splash.Silk;
 

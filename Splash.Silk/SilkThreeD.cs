@@ -8,7 +8,7 @@ using BepuPhysics.Constraints;
 using engine;
 using engine.joyce;
 using static engine.Logger;
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 using static Splash.Silk.GLCheck;
 
 namespace Splash.Silk;

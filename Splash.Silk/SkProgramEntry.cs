@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using engine;
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 using static engine.Logger;
 using static Splash.Silk.GLCheck;
 

@@ -1,4 +1,4 @@
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 
 namespace Splash.Silk.ImGui;
 
@@ -9,16 +9,20 @@ using System;
 #if GLES
 using Silk.NET.OpenGLES;
 #elif GL
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 #elif LEGACY
 using Silk.NET.OpenGL.Legacy;
 #endif
 
 public enum TextureCoordinate
 {
-    S = TextureParameterName.TextureWrapS,
-    T = TextureParameterName.TextureWrapT,
-    R = TextureParameterName.TextureWrapR
+    // Cast because the generated TextureParameterName is uint-backed (gl.xml calls these
+    // GLenum) while Silk's was int-backed. Same values, same ABI - this is the
+    // "signedness only" category the WP-5.1 differ reports, and it is the one place in
+    // Splash.Silk where the swap needed a source change at all.
+    S = (int)TextureParameterName.TextureWrapS,
+    T = (int)TextureParameterName.TextureWrapT,
+    R = (int)TextureParameterName.TextureWrapR
 }
 
 class Texture : IDisposable

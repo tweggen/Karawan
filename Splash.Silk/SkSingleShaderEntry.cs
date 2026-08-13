@@ -1,6 +1,6 @@
 using System;
 using System.Data;
-using Silk.NET.OpenGL;
+using Karawan.Graphics.OpenGL;
 using static Splash.Silk.GLCheck;
 using static engine.Logger;
 
