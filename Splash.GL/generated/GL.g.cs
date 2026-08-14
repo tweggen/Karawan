@@ -511,7 +511,7 @@ namespace Karawan.Graphics.OpenGL
             f_void_DepthFunc_DepthFunction_(func);
         }
 
-        private delegate void d_void_DepthMask_bool_(bool flag);
+        private delegate void d_void_DepthMask_bool_([MarshalAs(UnmanagedType.U1)] bool flag);
         private d_void_DepthMask_bool_ f_void_DepthMask_bool_;
         public void DepthMask(bool flag)
         {
@@ -655,7 +655,7 @@ namespace Karawan.Graphics.OpenGL
             return f_int_GetAttribLocation_uint__string_(program, name);
         }
 
-        private delegate void d_void_GetBoolean_GLEnum__out_bool_(GLEnum pname, out bool data);
+        private delegate void d_void_GetBoolean_GLEnum__out_bool_(GLEnum pname, [MarshalAs(UnmanagedType.U1)] out bool data);
         private d_void_GetBoolean_GLEnum__out_bool_ f_void_GetBoolean_GLEnum__out_bool_;
         public void GetBoolean(GLEnum pname, out bool data)
         {
@@ -727,7 +727,7 @@ namespace Karawan.Graphics.OpenGL
             return f_int_GetUniformLocation_uint__string_(program, name);
         }
 
-        private delegate bool d_bool_IsEnabled_GLEnum_(GLEnum cap);
+        [return: MarshalAs(UnmanagedType.U1)] private delegate bool d_bool_IsEnabled_GLEnum_(GLEnum cap);
         private d_bool_IsEnabled_GLEnum_ f_bool_IsEnabled_GLEnum_;
         public bool IsEnabled(GLEnum cap)
         {
@@ -887,7 +887,7 @@ namespace Karawan.Graphics.OpenGL
             f_void_Uniform4_int__float__float__float__float_(location, v0, v1, v2, v3);
         }
 
-        private delegate void d_void_UniformMatrix4_int__uint__bool__float__(int location, uint count, bool transpose, float* value);
+        private delegate void d_void_UniformMatrix4_int__uint__bool__float__(int location, uint count, [MarshalAs(UnmanagedType.U1)] bool transpose, float* value);
         private d_void_UniformMatrix4_int__uint__bool__float__ f_void_UniformMatrix4_int__uint__bool__float__;
         public void UniformMatrix4(int location, uint count, bool transpose, float* value)
         {
@@ -919,7 +919,7 @@ namespace Karawan.Graphics.OpenGL
             f_void_VertexAttribIPointer_uint__int__VertexAttribIType__uint__void__(index, size, type, stride, pointer);
         }
 
-        private delegate void d_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__(uint index, int size, GLEnum type, bool normalized, uint stride, void* pointer);
+        private delegate void d_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__(uint index, int size, GLEnum type, [MarshalAs(UnmanagedType.U1)] bool normalized, uint stride, void* pointer);
         private d_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__ f_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__;
         public void VertexAttribPointer(uint index, int size, GLEnum type, bool normalized, uint stride, void* pointer)
         {
@@ -927,7 +927,7 @@ namespace Karawan.Graphics.OpenGL
             f_void_VertexAttribPointer_uint__int__GLEnum__bool__uint__void__(index, size, type, normalized, stride, pointer);
         }
 
-        private delegate void d_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__(uint index, int size, VertexAttribPointerType type, bool normalized, uint stride, void* pointer);
+        private delegate void d_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__(uint index, int size, VertexAttribPointerType type, [MarshalAs(UnmanagedType.U1)] bool normalized, uint stride, void* pointer);
         private d_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__ f_void_VertexAttribPointer_uint__int__VertexAttribPointerType__bool__uint__void__;
         public void VertexAttribPointer(uint index, int size, VertexAttribPointerType type, bool normalized, uint stride, void* pointer)
         {
@@ -1025,7 +1025,7 @@ namespace Karawan.Graphics.OpenGL
             f_sup_GetShaderiv(shader, pname, @params);
         }
 
-        private delegate void d_sup_UniformMatrix4fv(int location, int count, bool transpose, float* value);
+        private delegate void d_sup_UniformMatrix4fv(int location, int count, [MarshalAs(UnmanagedType.U1)] bool transpose, float* value);
         private d_sup_UniformMatrix4fv f_sup_UniformMatrix4fv;
         public void UniformMatrix4fv(int location, int count, bool transpose, float* value)
         {
