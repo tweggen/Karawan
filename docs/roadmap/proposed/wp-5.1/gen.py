@@ -257,6 +257,7 @@ def cs_param(p):
 # guard written inline here could never be exercised, and an unrun guard is a guard nobody
 # knows works. test-shapecheck.py drives it with a synthetic registry.
 import shapecheck
+import funcptr
 
 shape_problems = shapecheck.check(shapes, shapecheck.pointer_flags(root))
 if shape_problems:
@@ -267,33 +268,13 @@ if shape_problems:
         + chr(10) + chr(10).join(shape_problems))
 
 
-# ---------------------------------------------------------------- GLboolean is ONE byte
+# GLboolean is ONE byte, and that is handled in funcptr.py rather than here.
 #
-# C# `bool` marshals as UnmanagedType.Bool by default - a 4-byte Win32 BOOL - but GLboolean
-# is a GLubyte, one byte. The mismatch is not theoretical:
-#
-#   glIsEnabled     returns 1 byte in AL; the marshaller reads 4 bytes of EAX, so the
-#                   upper three are whatever the driver happened to leave there.
-#   glGetBooleanv   writes 1 byte into a 4-byte stack slot; the other three are
-#                   uninitialised.
-#
-# Either can read back TRUE where GL said false. It usually works because drivers tend to
-# zero those bytes, which is exactly what makes it the silent-failure class the plan warns
-# about for GlStateSaver - and GlStateSaver is a live caller of both.
-#
-# Inherited from Silk, which marshals these the same way; not introduced by WP-5.2.
-U1 = '[MarshalAs(UnmanagedType.U1)] '
-
-
-def bool_param(type_name, decl):
-    """Prefix a bool parameter declaration with the one-byte marshalling attribute."""
-    return (U1 + decl) if type_name == 'bool' else decl
-
-
-def bool_return(ret):
-    """The [return:] attribute a bool-returning delegate needs, or nothing."""
-    return '[return: MarshalAs(UnmanagedType.U1)] ' if ret == 'bool' else ''
-
+# This used to emit [MarshalAs(UnmanagedType.U1)] onto delegate declarations, because C#
+# bool marshals as a 4-byte Win32 BOOL by default while GLboolean is a GLubyte - glIsEnabled
+# and glGetBooleanv could both read back TRUE where GL said false. Function pointers have no
+# marshaller to instruct, so the conversion is written out explicitly at the call boundary
+# instead of being requested from one. The defect is the same; the fix moved.
 
 emitted = 0
 skipped_conv = 0
@@ -308,18 +289,8 @@ for key in sorted(shapes):
     ps = sh['Parameters']
     sig = ', '.join(cs_param(p) for p in ps)
     args = ', '.join((p['RefKind'] + ' ' if p['RefKind'] else '') + ident(p['Name']) for p in ps)
-    dele = ', '.join(bool_param(p['Type'],
-                                ((p['RefKind'] + ' ') if p['RefKind'] else '') + p['Type'] + ' ' + ident(p['Name']))
-                     for p in ps)
     slug = re.sub(r'[^A-Za-z0-9]', '_', key.split('|')[1])
-    L.append(f'        {bool_return(ret)}private delegate {ret} d_{slug}({dele});')
-    L.append(f'        private d_{slug} f_{slug};')
-    L.append(f'        public {ret} {name}({sig})')
-    L.append('        {')
-    L.append(f'            f_{slug} ??= Marshal.GetDelegateForFunctionPointer<d_{slug}>(_getProc("{entry}"));')
-    L.append(f'            {"return " if ret != "void" else ""}f_{slug}({args});')
-    L.append('        }')
-    L.append('')
+    funcptr.emit(L, 8, name, ret, ps, entry, slug, ident)
     emitted += 1
 
 L.append('        // --- support entry points, required by the conveniences below ---')
@@ -328,17 +299,10 @@ for nm in SUPPORT:
     rname, rret, rps = support_cmds[nm]
     csname = rname[2:]
     sig = ', '.join('%s %s' % (t, ident(n)) for n, t in rps)
-    dele_sig = ', '.join(bool_param(t, '%s %s' % (t, ident(n))) for n, t in rps)
     args = ', '.join(ident(n) for n, _ in rps)
     slug = 'sup_' + csname
-    L.append('        %sprivate delegate %s d_%s(%s);' % (bool_return(rret), rret, slug, dele_sig))
-    L.append('        private d_%s f_%s;' % (slug, slug))
-    L.append('        public %s %s(%s)' % (rret, csname, sig))
-    L.append('        {')
-    L.append('            f_%s ??= Marshal.GetDelegateForFunctionPointer<d_%s>(_getProc("%s"));' % (slug, slug, rname))
-    L.append('            %sf_%s(%s);' % ('return ' if rret != 'void' else '', slug, args))
-    L.append('        }')
-    L.append('')
+    sup_params = [{'Name': n, 'Type': t, 'RefKind': ''} for n, t in rps]
+    funcptr.emit(L, 8, csname, rret, sup_params, rname, slug, ident)
 
 L.append(CONVENIENCES)
 L.append('    }')
