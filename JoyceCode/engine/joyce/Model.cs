@@ -231,6 +231,124 @@ public partial class Model : IMessagePackSerializationCallbackReceiver
 
 
     /**
+     * Try to load this model from its baked mo-{hash} file instead of importing
+     * the source asset (WP-4.3).
+     *
+     * Deliberately the same shape as TryLoadModelAnimationCollection above,
+     * including the escape hatches: nothing is loaded in CompileMode, because that
+     * is the run that PRODUCES these files, and joyce.DisablePrebakedModels forces
+     * the import path for debugging - the mirror of joyce.DisablePrebakedAnimations.
+     *
+     * ModelUrl and AnimationUrls are re-stamped from the REQUEST rather than taken
+     * from the file. AnimationUrls is not persisted at all (one baked model serves
+     * every animation pack), and ModelUrl is what
+     * ModelAnimationCollectionReader.ModelAnimationCollectionFileName hashes to
+     * find the ac-{hash} companion - so a model loaded from a bake must still name
+     * itself exactly as the caller asked for it, or it silently loses its
+     * animations.
+     */
+    public static bool TryLoadBaked(
+        string url, builtin.loader.ModelProperties? modelProperties, out Model? model)
+    {
+        model = null;
+
+        if (engine.GlobalSettings.Get("joyce.CompileMode") == "true")
+        {
+            return false;
+        }
+
+        if (engine.GlobalSettings.Get("joyce.DisablePrebakedModels") == "true")
+        {
+            Trace(_dc, $"Pre-baked models disabled via joyce.DisablePrebakedModels setting.");
+            return false;
+        }
+
+        string strFileName = ModelFileName.Of(System.IO.Path.GetFileName(url), modelProperties);
+
+        try
+        {
+            using (var stream = engine.Assets.Open(strFileName))
+            {
+                model = ModelReader.Read(stream);
+            }
+        }
+        catch (Exception e)
+        {
+            /*
+             * A miss is recoverable only for as long as the source asset still
+             * ships. Name the file that was wanted: the usual cause is a bake
+             * identity that does not match the properties this call site loads
+             * with, and that is not deducible from "model failed to load".
+             */
+            Warning($"Unable to read baked model {strFileName} for {url}: {e.Message}");
+            model = null;
+            return false;
+        }
+
+        if (null == model)
+        {
+            Warning($"Baked model {strFileName} for {url} was empty.");
+            return false;
+        }
+
+        model.ModelUrl = url;
+        model.AnimationUrls =
+            modelProperties != null
+            && modelProperties.Properties.TryGetValue("AnimationUrls", out var animationUrls)
+                ? animationUrls
+                : null;
+
+        Trace(_dc, $"Loaded baked model {strFileName} for {url}.");
+        return true;
+    }
+
+
+    /**
+     * Finish a model that came out of a baked mo-{hash} file.
+     *
+     * This is the tail of FbxModel.Load, and it has to be: Polish derives the
+     * instance-desc transforms the renderer uses, and BakeAnimations is what pulls
+     * in the ac-{hash} companion. Skipping either gives a model that loads and
+     * then renders in the wrong place with no animations.
+     *
+     * On Model rather than in ModelCache so the runtime and the tests exercise the
+     * same code - a test that reimplemented these two calls would pass while the
+     * real path did something else.
+     */
+    public void FinishBaked(builtin.loader.ModelProperties? modelProperties)
+    {
+        string? strModelBaseBone = null;
+        List<string>? cpuNodes = null;
+
+        if (modelProperties != null)
+        {
+            if (modelProperties.Properties.TryGetValue("ModelBaseBone", out var baseBone))
+            {
+                strModelBaseBone = baseBone;
+            }
+
+            if (modelProperties.Properties.TryGetValue("CPUNodes", out var strCpuNodes))
+            {
+                cpuNodes = strCpuNodes
+                    .Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                    .ToList();
+            }
+        }
+
+        Polish(strModelBaseBone);
+
+        try
+        {
+            BakeAnimations(strModelBaseBone, cpuNodes);
+        }
+        catch (Exception e)
+        {
+            Trace(_dc, $"Caught exception while baking animations for {ModelUrl}: {e}");
+        }
+    }
+
+
+    /**
      * Bake the animation data as required by the vertex shader.
      * This one either loads it from the animation data cache / baked assets
      * or computes it..

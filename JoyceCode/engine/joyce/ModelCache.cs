@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -110,6 +111,21 @@ public class ModelCache
     private Task<Model> _fromFile(
         string url, ModelProperties modelProperties)
     {
+        /*
+         * Baked first (WP-4.3). A mo-{hash} file is the same graph the importer
+         * would have produced - AC-4.2 asserts that per model - so preferring it
+         * is not a fallback but the normal route, and the importer below is what
+         * remains for assets that have not been baked.
+         */
+        if (Model.TryLoadBaked(url, modelProperties, out var bakedModel) && bakedModel != null)
+        {
+            return _engine.Run(() =>
+            {
+                bakedModel.FinishBaked(modelProperties);
+                return bakedModel;
+            });
+        }
+
         if (url.EndsWith(".obj"))
         {
             return I.Get<Obj>().LoadModelInstance(url, modelProperties);
