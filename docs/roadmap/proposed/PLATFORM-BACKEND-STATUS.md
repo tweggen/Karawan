@@ -187,6 +187,57 @@ distance. And `run_tests_parallel.sh` still hardcodes
 **Still open:** GATE-D (AC-4.7) — walk / idle / death rendering correctly on
 macOS *and* Windows. Nothing here can show that.
 
+### 🔴 2026-08-14 — Phase 4 shipped a defect: models invisible on Windows. Fixed.
+
+**Found by the owner on the first Windows run after #94 merged**, which is
+precisely the thing GATE-D exists to catch — and it caught it.
+
+Symptom: the game runs, the NPCs are there, **but no character models are
+visible**, while the cyan debug cube attached to an NPC's hand moves around
+correctly. That pairing is the whole diagnosis: bone-attached objects read the
+animation matrices, meshes read `InstanceDesc.ModelTransform`, so the fault was
+in the latter alone.
+
+**Cause: the bake captured per-instance state and the runtime applied it again.**
+`ModelCompiler` loaded through `ModelCache.LoadModel`, and `_obtain` does more
+than load — it also runs `_instantiateModelParams`, which folds
+`Model.FirstInstanceDescTransformWithInstance` into the instance desc's
+`ModelTransform`, and `FindLights.Process`, which *adds meshes and materials*.
+Both are per-instance steps the runtime performs itself on whatever `_fromFile`
+returns, baked models included. So the matrix went in twice. On the character
+rigs it carries the fbx cm→m scaling, `0.01` — squared to `0.0001`, i.e. rendered
+at 1/10000 size. Invisible, and never an error.
+
+**Why the tests missed it, which is the part worth keeping.** AC-4.2 compares the
+baked model against a fresh Assimp load field by field — vertices, indices, UVs,
+normals, bone weights, bone names, bone **order**, materials, textures, node tree,
+and the `Polish`-derived matrices. It did not compare
+`InstanceDesc.ModelTransform` or `MaxDistance`. The comparison was exhaustive
+about the *geometry* and simply did not look at the *placement* of it, and the
+one field that got mutated was in the gap. Adding those two lines makes the test
+fail 13/13 with `expected 1, got 0.01` — a defect that names its own magnitude.
+
+**Fix:** `ModelCompiler` imports directly via `Fbx.LoadModelInstance` instead of
+going through `ModelCache`, so the file holds the model exactly as `_fromFile`
+returns it and nothing more. Bypassing the cache is doubly right — the cache could
+otherwise hand the compiler an instance another compiler had already mutated.
+
+**Two smaller things from the same run:**
+
+- `TryLoadBaked` was probed for EVERY model, so each `.obj` and `.glb` produced
+  `Attempt to open unknown resource "mo-…"` plus a misleading *"Error occurred
+  while reading from the stream"*. Only `.fbx` is probed now — it is the only
+  format without a runtime importer, which is the entire reason the bake exists.
+- `engine.Assets.Open` returns **null** for an unknown resource rather than
+  throwing, and handing that to MessagePack produced the stream error above,
+  describing the symptom and hiding the cause. Now reported as what it is, with
+  the declaration and property-matching hint that actually fixes it.
+
+**Standing lesson:** an equivalence test between two load paths must cover the
+per-instance state as well as the payload. "The geometry is identical" and "the
+model is placed identically" are different claims, and only the first was being
+made.
+
 ### ✅ 2026-08-14 — GL diagnostics unified; polling off on every platform that can push
 
 Merged as [#92](https://github.com/tweggen/Karawan/pull/92); running on desktop.

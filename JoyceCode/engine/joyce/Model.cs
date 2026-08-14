@@ -269,6 +269,20 @@ public partial class Model : IMessagePackSerializationCallbackReceiver
         {
             using (var stream = engine.Assets.Open(strFileName))
             {
+                /*
+                 * Assets.Open returns null for a resource it does not know, rather
+                 * than throwing. Handing that to MessagePack produces "Error
+                 * occurred while reading from the stream", which describes the
+                 * symptom and hides the cause - the file was never declared.
+                 */
+                if (null == stream)
+                {
+                    Warning($"No baked model {strFileName} is registered for {url}. "
+                            + "Declare it with \"type\": \"model\" in the resource list, and make "
+                            + "sure its modelProperties match the ones this call site loads with.");
+                    return false;
+                }
+
                 model = ModelReader.Read(stream);
             }
         }

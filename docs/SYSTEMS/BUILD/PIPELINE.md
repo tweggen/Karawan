@@ -211,6 +211,16 @@ deserialises that and never sees an fbx. Consequences worth knowing:
   (ships nothing; its output is the `ac-{hash}`), so they are no longer packaged.
 - **Two builds are still needed** after adding a model, for the usual reason:
   `Wuka.csproj` `<Import>`s the generated manifest at project-evaluation time.
+- **The bake must import DIRECTLY, never through `ModelCache.LoadModel`.**
+  `ModelCache._obtain` also runs `_instantiateModelParams` (which folds
+  `FirstInstanceDescTransformWithInstance` into `InstanceDesc.ModelTransform`) and
+  `FindLights.Process` (which adds meshes). Those are per-instance steps the
+  runtime performs itself on whatever `_fromFile` returns — so baking a model that
+  has been through them makes the runtime apply them **twice**. That shipped once:
+  the character rigs' matrix carries the fbx cm→m scaling `0.01`, squared to
+  `0.0001`, and every model rendered at 1/10000 size — invisible, with no error.
+  The give-away was that bone-attached objects still moved correctly, because they
+  read the animation matrices rather than `ModelTransform`.
 
 Equivalence between the two load paths is asserted per model by
 `tests/JoyceCode.Tests/engine/joyce/BakedModelEquivalenceTests.cs` — geometry to
