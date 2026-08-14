@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using engine.geom;
+using MessagePack;
 using static engine.Logger;
 
 
@@ -14,12 +15,26 @@ namespace engine.joyce;
 /**
  * Describe one specific instance of a 3d object (aka Instance3 components)
  * Note that this is only a descriptor, not a lifetime object.
+ *
+ * WP-4.1 - two things shape how this is persisted into a baked mo-{hash} model.
+ *
+ * The public Meshes/MeshMaterials/Materials/ModelNodes fields are read-only VIEWS
+ * over the private lists, so only the lists are written and the views are rebuilt
+ * afterwards; serialising both would produce two independent copies of every mesh.
+ *
+ * ModelNodes is the second half of the graph cycle (node -> instanceDesc -> node).
+ * It is stored as node NAMES and re-resolved against ModelNodeTree.MapNodes once
+ * the tree exists - see ResolveModelNodes. Names are safe as identity here because
+ * ModelNodeTree rejects duplicate node names outright.
  */
-public class InstanceDesc
+[MessagePackObject(AllowPrivate = true)]
+public partial class InstanceDesc : IMessagePackSerializationCallbackReceiver
 {
+    [Key(0)]
     private Matrix4x4 _m = Matrix4x4.Identity;
 
     [JsonIgnore]
+    [IgnoreMember]
     public Matrix4x4 ModelTransform
     {
         get => _m;
@@ -33,36 +48,59 @@ public class InstanceDesc
         }
     }
 
+    [Key(1)]
     public float MaxDistance = 200f;
-    
+
+    [Key(2)]
     private IList<engine.joyce.Mesh> _meshes;
+    [IgnoreMember]
     public ReadOnlyCollection<Mesh> Meshes;
-    
+
+    [Key(3)]
     private IList<int> _meshMaterials;
+    [IgnoreMember]
     public ReadOnlyCollection<int> MeshMaterials;
-    
+
+    [Key(4)]
     private IList<engine.joyce.Material> _materials;
+    [IgnoreMember]
     public ReadOnlyCollection<Material> Materials;
-    
+
     /**
      * In lack of a dedicated Animation data structure (on the level of material),
      * we abuse the modelNode to reference the corresponding model, per mesh by index.
      */
+    [IgnoreMember]
     private IList<engine.joyce.ModelNode> _modelNodes;
+    [IgnoreMember]
     public ReadOnlyCollection<ModelNode> ModelNodes;
-    
-    
+
+    /**
+     * The by-name stand-in for _modelNodes on disk. Entries may be null, and the
+     * list length is preserved exactly: consumers index it in step with Meshes.
+     */
+    [Key(5)]
+    private List<string?>? _modelNodeNames;
+
+
+    [IgnoreMember]
     private bool _haveCenter = false;
+    [IgnoreMember]
     private bool _haveAABBMerged = true;
+    [IgnoreMember]
     private AABB _aabbMerged;
+    [IgnoreMember]
     private bool _haveAABBTransformed = false;
+    [IgnoreMember]
     private AABB _aabbTransformed;
 
-    
+
+    [IgnoreMember]
     private Vector3 _vCenter;
 
 
     [JsonIgnore]
+    [IgnoreMember]
     public Vector3 Center
     {
         get
@@ -79,6 +117,7 @@ public class InstanceDesc
     
     
     [JsonIgnore]
+    [IgnoreMember]
     public AABB AABBMerged
     {
         get
@@ -101,6 +140,7 @@ public class InstanceDesc
     }
 
     [JsonIgnore]
+    [IgnoreMember]
     public AABB AABBTransformed
     {
         get
@@ -230,6 +270,93 @@ public class InstanceDesc
     {
         _m = Matrix4x4.Identity;
         MaxDistance = 200f;
+    }
+
+
+    /**
+     * Capture the model nodes by name.
+     *
+     * Deliberately reads the public ModelNodes view rather than _modelNodes: the
+     * ModelNodeTree(Model, InstanceDesc) constructor assigns the view directly and
+     * leaves the private list empty, so the view is the authority every consumer
+     * actually reads.
+     */
+    public void OnBeforeSerialize()
+    {
+        var nodes = ModelNodes;
+        if (null == nodes)
+        {
+            _modelNodeNames = null;
+            return;
+        }
+
+        _modelNodeNames = new List<string?>(nodes.Count);
+        foreach (var mn in nodes)
+        {
+            _modelNodeNames.Add(mn?.Name);
+        }
+    }
+
+
+    public void OnAfterDeserialize()
+    {
+        _meshes ??= new List<Mesh>();
+        _meshMaterials ??= new List<int>();
+        _materials ??= new List<Material>();
+
+        Meshes = new ReadOnlyCollection<Mesh>(_meshes);
+        MeshMaterials = new ReadOnlyCollection<int>(_meshMaterials);
+        Materials = new ReadOnlyCollection<Material>(_materials);
+
+        /*
+         * The model nodes cannot be resolved yet - the tree that owns them is still
+         * being deserialised. Publish an empty view so nothing sees null in the
+         * meantime; ResolveModelNodes replaces it.
+         */
+        _modelNodes = new List<ModelNode>();
+        ModelNodes = new ReadOnlyCollection<ModelNode>(_modelNodes);
+
+        _haveCenter = false;
+        _haveAABBMerged = false;
+        _haveAABBTransformed = false;
+    }
+
+
+    /**
+     * Second half of loading: turn the persisted node names back into the very
+     * ModelNode objects the rebuilt tree holds.
+     *
+     * A name that is not in the tree resolves to null rather than being dropped,
+     * because callers index ModelNodes in step with Meshes - silently shortening
+     * the list would slide every later mesh onto the wrong node.
+     */
+    public void ResolveModelNodes(ModelNodeTree modelNodeTree)
+    {
+        if (null == _modelNodeNames)
+        {
+            return;
+        }
+
+        var resolved = new List<ModelNode>(_modelNodeNames.Count);
+        foreach (var strName in _modelNodeNames)
+        {
+            if (null == strName || null == modelNodeTree
+                                || !modelNodeTree.MapNodes.TryGetValue(strName, out var mn))
+            {
+                if (null != strName)
+                {
+                    Warning($"Baked instance desc references unknown model node \"{strName}\".");
+                }
+
+                resolved.Add(null);
+                continue;
+            }
+
+            resolved.Add(mn);
+        }
+
+        _modelNodes = resolved;
+        ModelNodes = new ReadOnlyCollection<ModelNode>(_modelNodes);
     }
 
     

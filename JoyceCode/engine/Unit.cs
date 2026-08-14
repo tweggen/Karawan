@@ -23,7 +23,8 @@ public class Unit : IDisposable
         Trace("Running startup unit tests...");
         builtin.tools.kanshu.Api.UnitTest();
         engine.news.SubscriptionManager.Unit();
-        builtin.loader.Fbx.Unit();
+        // builtin.loader.Fbx.Unit() removed with WP-4.4: the fbx importer is no
+        // longer part of the runtime. Its body was two commented-out lines anyway.
         // builtin.loader.GlTF.Unit();
         SubscriptionManager.Unit();
         // builtin.jt.Parser.Unit();

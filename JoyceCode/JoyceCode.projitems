@@ -15,6 +15,9 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelAnimationCollectionReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelAnimationCollectionWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelFileName.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AInputControllerFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\ClickableFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FingerStateHandler.cs" />
@@ -29,8 +32,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\InterfacePointerConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\InterfacePtr.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\MenuWidget.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\AxisInterpreter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Metadata.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\MergePolicy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Matrix4x4JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\ClusterWatch.cs" />
@@ -150,15 +151,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\TextWidgetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Widget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\WidgetEvent.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Fbx.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Assets.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\AssimpFile.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\CustomAssimpLibraryNameContainer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\AssimpVersionDetector.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\FbxModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Mesh.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Texture.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Vertex.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\FindLights.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\GlTF.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\ModelProperties.cs" />
@@ -391,7 +383,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Parent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AnyShader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Index3.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AssimpVersion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Model.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelNode.cs" />

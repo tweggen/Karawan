@@ -4,7 +4,6 @@ using System.Numerics;
 using System.Text.Json.Serialization;
 using BepuPhysics;
 using BepuPhysics.Collidables;
-using Silk.NET.Maths;
 using static engine.Logger;
 
 namespace engine.physics;

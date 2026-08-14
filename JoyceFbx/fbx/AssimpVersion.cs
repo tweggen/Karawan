@@ -1,8 +1,17 @@
-namespace engine.joyce;
+namespace builtin.loader.fbx;
 
 /// <summary>
 /// Enum to track which version of Assimp is being used for FBX animation loading.
 /// Different versions have different behaviors and require compensation in baking/loading code.
+///
+/// Moved out of engine.joyce by WP-4.4 along with the importer. The plan's
+/// definition of done says to DELETE this and AssimpVersionDetector; that is
+/// wrong in one respect and is deliberately not followed. FbxModel still uses the
+/// detected version to compensate the bone offset matrices at load time, so
+/// deleting it would not remove a dead concept, it would silently change the
+/// geometry the bake produces. What the DoD is actually after - no Assimp in the
+/// shipped app - is achieved by this type living in JoyceFbx, which no runtime
+/// target references.
 /// </summary>
 public enum AssimpVersion
 {

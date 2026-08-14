@@ -53,8 +53,15 @@ REQUIRED_LIBS = [
     "libSDL3.so",      # windowing/input; SDL.loadLibrary("SDL3") dies without it
     "libmain.so",      # SDL's Java glue calls nativeRunMain("libmain.so", "SDL_main")
     "libopenal.so",    # audio
-    "libassimp.so",    # model loading
-    "libc++_shared.so",  # C++ runtime assimp and openal are linked against
+    "libc++_shared.so",  # C++ runtime SDL3 and openal are linked against
+]
+
+# Natives that must NOT be in the APK. libassimp.so was required until WP-4.4;
+# models are baked into mo-{hash} files at build time now and nothing at runtime
+# can read an fbx, so its reappearance means a runtime project picked up an Assimp
+# reference again - which is easy to do by accident and invisible otherwise.
+FORBIDDEN_LIBS = [
+    "libassimp.so",
 ]
 
 # Classes that must be DEFINED in the dex. The activities are the entry points; SDLActivity
@@ -128,6 +135,14 @@ def main(apk_path):
     for lib in REQUIRED_LIBS:
         if not any(n.endswith("/" + lib) for n in libs):
             failures.append(f"native library missing from the APK: {lib}")
+
+    for lib in FORBIDDEN_LIBS:
+        present = [n for n in libs if n.endswith("/" + lib)]
+        if present:
+            failures.append(
+                f"native library must NOT be in the APK: {lib} ({', '.join(present)}). "
+                f"Since WP-4.4 fbx import is build-time only; a runtime project has "
+                f"re-acquired an Assimp reference.")
 
     for descriptor in REQUIRED_CLASSES:
         if descriptor not in defined:

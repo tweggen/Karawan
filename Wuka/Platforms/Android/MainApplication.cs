@@ -1,49 +1,28 @@
 using System;
-using System.Runtime.InteropServices;
 using Android.App;
-using Android.Media;
 using Android.Runtime;
 
 namespace Wuka
 {
     [Application]
     /*
-     * WP-6.1: was MauiApplication. MAUI contributed nothing here beyond the base class -
-     * the body below is the real work, a libassimp load probe that reports at startup
-     * whether the native library resolved.
+     * WP-6.1: was MauiApplication. MAUI contributed nothing here beyond the base class.
+     *
+     * WP-4.4 removed what the body used to do. It was a libassimp.so load probe,
+     * reporting at startup whether that native resolved - useful while Assimp was
+     * the model importer and shipped in the APK. Phase 4 bakes models at build
+     * time, libassimp.so is no longer packaged, and the probe would now report a
+     * missing library on every launch: an alarming log line describing the
+     * intended state. The class stays because [Application] and the JNI
+     * constructor are what Android instantiates.
      */
     public class MainApplication : Android.App.Application
     {
-
-        [DllImport("libassimp.so", EntryPoint = "aiGetExportFormatCount", SetLastError = true)]
-        static extern int twgAiGetExportFormatCount();
-
         public MainApplication(IntPtr handle, JniHandleOwnership ownership)
             : base(handle, ownership)
         {
-            {
-                var runtime = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier;
-                Console.WriteLine($"Starting on platform {runtime}. Waiting for permissions...");
-                try
-                {
-                    var size = twgAiGetExportFormatCount();
-                    Console.WriteLine("Library loaded successfully!");
-                }
-                catch (DllNotFoundException e)
-                {
-                    Console.WriteLine($"Library not found: {e.Message}");
-                }
-                catch (EntryPointNotFoundException e)
-                {
-                    Console.WriteLine($"Function not found in library: {e.Message}");
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error loading library: {e.Message}");
-                }
-
-                Console.WriteLine($"Continuing...");
-            }
+            var runtime = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier;
+            Console.WriteLine($"Starting on platform {runtime}. Waiting for permissions...");
         }
     }
 }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -15,8 +15,12 @@
     <PackageReference Include="NetOctree" />
     <PackageReference Include="NLua" />
     <PackageReference Include="OneOf" />
-    <!-- We use Assimp 2.22 on all platforms because of a mac os issue with assimp 6.0.2/Silk.NET.Assimp.5.4.2 -->
-    <PackageReference Include="Silk.NET.Assimp"/>
+    <!--
+      Silk.NET.Assimp is deliberately absent (WP-4.4). The fbx importer moved to
+      JoyceFbx, which only the build tools reference, so Assimp is no longer part
+      of any shipped binary. Adding it back here would put it into every runtime
+      target again, since they all reference Joyce.
+    -->
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="System.Collections" />
   </ItemGroup>

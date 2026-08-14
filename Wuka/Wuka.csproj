@@ -175,13 +175,17 @@
 		<AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libc++_shared.so">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</AndroidNativeLibrary>
-	  	<AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libassimp.so">
-		    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</AndroidNativeLibrary>
+		<!--
+			libassimp.so is gone with WP-4.4. Models are baked into mo-{hash} files by
+			Chushi and read back with no importer at runtime, so nothing in the APK
+			loads Assimp any more. This is the Phase 4 half of the DoD.
+
+			libc++_shared.so STAYS. It was assimp's C++ runtime, but libSDL3.so and
+			libopenal.so link against it too, so removing it here would strip a library
+			two shipped natives still need - see recipes/BUILD_NOTES.md on there being
+			exactly one libc++_shared.so per APK.
+		-->
 		<AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libc++_shared.so">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</AndroidNativeLibrary>
-		<AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libassimp.so">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</AndroidNativeLibrary>
 	</ItemGroup>
@@ -313,7 +317,11 @@
 			ExcludeAssets="all" is what keeps that .aar out of the APK. They can only go once
 			KI-12 is done and Silk.NET.Input itself is dropped.
 		-->
-		<PackageReference Include="Silk.NET.Assimp" />
+		<!--
+			Silk.NET.Assimp removed by WP-4.4. It used to arrive here both directly and
+			transitively through Joyce; the importer now lives in JoyceFbx, which only
+			the build tools reference, so neither route remains.
+		-->
 		<!--
 			WP-1.5 replaced Silk.NET.OpenAL.Soft.Native with Karawan.Natives in
 			Boom.OpenAL, from where it arrives here transitively. On DESKTOP that is the
