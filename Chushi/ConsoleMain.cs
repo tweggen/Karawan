@@ -81,6 +81,14 @@ public class ConsoleMain
         engine.GlobalSettings.Set("joyce.CompileMode", "true");
 
 
+        /*
+         * WP-4.4: fbx import is build-time only, so the importer no longer ships
+         * inside Joyce and ModelCache cannot call it directly. Chushi is one of
+         * the two processes that still has it, and installs it here. Without this
+         * line the model bake would find no importer and say so.
+         */
+        engine.joyce.ModelCache.FbxLoader = builtin.loader.Fbx.LoadModelInstance;
+
         I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
         I.Register<engine.joyce.ModelCache>(() => new engine.joyce.ModelCache());
         I.Register<engine.joyce.AnimationPackRegistry>(() => new engine.joyce.AnimationPackRegistry());

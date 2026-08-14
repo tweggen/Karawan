@@ -4,7 +4,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using engine;
-using Silk.NET.Maths;
 
 namespace Karawan.GenericLauncher;
 

@@ -26,6 +26,16 @@ public class ModelCache
 
     private engine.Engine _engine = I.Get<engine.Engine>();
 
+    /**
+     * The fbx importer, if one is present in this process (WP-4.4).
+     *
+     * A hook rather than a direct call because the importer no longer ships with
+     * the game: it lives in JoyceFbx, referenced by Chushi and the test suite
+     * only, which is what keeps Silk.NET.Assimp and libassimp.so out of the
+     * runtime binaries. Chushi assigns this during startup.
+     */
+    public static Func<string, ModelProperties, Task<Model>>? FbxLoader = null;
+
 
     internal class ConsumerEntry
     {
@@ -131,7 +141,23 @@ public class ModelCache
             return I.Get<Obj>().LoadModelInstance(url, modelProperties);
         } else if (url.EndsWith(".fbx"))
         {
-            return Fbx.LoadModelInstance(url, modelProperties);
+            /*
+             * WP-4.4: fbx import is a BUILD-TIME capability now. The importer lives
+             * in JoyceFbx, which only Chushi and the tests reference, so it is
+             * absent from the shipped game together with Assimp. Chushi installs
+             * itself here; in the game this is null, and reaching this point means
+             * something asked for an fbx that was never baked.
+             */
+            var fbxLoader = FbxLoader;
+            if (null == fbxLoader)
+            {
+                ErrorThrow($"No fbx importer is available for url {url}. Models must be baked "
+                           + "into mo-{hash} files by Chushi; fbx import is build-time only.",
+                    m => new InvalidOperationException(m));
+                return _engine.Run(() => new Model());
+            }
+
+            return fbxLoader(url, modelProperties);
         } else if (url.EndsWith(".glb"))
         {
             return GlTF.LoadModelInstance(url, modelProperties);

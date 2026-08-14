@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using builtin.extensions;
-using builtin.loader.fbx;
 using static engine.Logger;
 
 namespace engine.joyce;
@@ -544,8 +543,13 @@ public partial class ModelAnimationCollection
             return;
         }
 
-        var assimpVersion = AssimpVersionDetector.GetVersion();
-        Trace(_dc, $"Baking animations for {_model.Name}, Skeleton has {_model.Skeleton.NBones} bones, Assimp version: {assimpVersion}");
+        /*
+         * The Assimp version used to be logged here. Dropped with WP-4.4 together
+         * with AssimpVersionDetector: this method now runs in processes that have
+         * no Assimp at all, and the version-compensation it was introduced for is
+         * applied at fbx load time, which is a build step.
+         */
+        Trace(_dc, $"Baking animations for {_model.Name}, Skeleton has {_model.Skeleton.NBones} bones");
 
 
         var skeleton = _model.FindSkeleton();

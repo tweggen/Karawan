@@ -8,6 +8,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Joyce\Joyce.csproj" />
+      <!--
+        WP-4.4: the fbx importer is here, not in Joyce. Mazu and Chushi are build
+        tools and are exactly the places that still need to read fbx.
+      -->
+      <ProjectReference Include="..\JoyceFbx\JoyceFbx.csproj" />
     </ItemGroup>
 
     <ItemGroup>

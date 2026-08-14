@@ -25,6 +25,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Joyce\Joyce.csproj" />
+    <!-- AC-4.2 needs the fbx importer, which WP-4.4 moved out of the runtime. -->
+    <ProjectReference Include="..\..\JoyceFbx\JoyceFbx.csproj" />
   </ItemGroup>
 
   <!--

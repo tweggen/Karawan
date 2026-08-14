@@ -64,8 +64,13 @@
     <PackageReference Include="Silk.NET.Core" />
     <PackageReference Include="SixLabors.ImageSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
-    <!-- pin to Ultz.Native.Assimp 5.1.4 due to animation artifacts in 2.22/5.4.1 on mac os -->
-    <PackageReference Include="Ultz.Native.Assimp"/>
+    <!--
+      Ultz.Native.Assimp removed by WP-4.4. This carried the native assimp for the
+      DESKTOP build; with fbx import moved to build time there is nothing left in
+      this process to load it. The pin comment it replaced ("5.1.4 due to
+      animation artifacts in 2.22/5.4.1 on mac os") now lives where the importer
+      does, in Mazu, which is the project that still needs the native.
+    -->
   </ItemGroup>
 
 </Project>

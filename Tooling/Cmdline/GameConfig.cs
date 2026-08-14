@@ -260,21 +260,36 @@ namespace CmdLine
                 {
                     Resource resource = LoadResource(nodeRes);
                     string tag = resource.Tag;
-                    MapResources[tag] = resource;
-                    Trace($"GameConfig: Added Resource \"{tag}\".");
 
                     /*
-                     * A declared model also ships its baked mo-{hash} counterpart.
-                     * Mirrors AAssetImplementation._registerModelEntry: one JSON
-                     * line declares both the source and the bake output, so the
-                     * two cannot drift apart.
+                     * WP-4.4: a model declaration ships its BAKE, not its source.
+                     * The fbx is a build input - Chushi reads it to produce the
+                     * mo-{hash} - and nothing in the shipped game can read fbx any
+                     * more, so packaging it would just be dead weight in the APK
+                     * that also keeps a false "we still support fbx at runtime"
+                     * impression alive.
                      */
                     if ("model" == resource.Type)
                     {
                         Resource baked = _modelResource(resource, nodeRes);
                         MapResources[baked.Tag] = baked;
-                        Trace($"GameConfig: Added Model Resource \"{baked.Tag}\".");
+                        Trace($"GameConfig: Added Model Resource \"{baked.Tag}\" (source {tag} not shipped).");
+                        continue;
                     }
+
+                    /*
+                     * Likewise for the fbx files that exist only as animation
+                     * sources: their output is the ac-{hash} collection, which the
+                     * /animations list already declares.
+                     */
+                    if ("animationSource" == resource.Type)
+                    {
+                        Trace($"GameConfig: Skipping build-input resource \"{tag}\".");
+                        continue;
+                    }
+
+                    MapResources[tag] = resource;
+                    Trace($"GameConfig: Added Resource \"{tag}\".");
                 }
             }
             catch (Exception e)

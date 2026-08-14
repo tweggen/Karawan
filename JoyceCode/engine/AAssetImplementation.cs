@@ -108,16 +108,32 @@ public abstract class AAssetImplementation : IAssetImplementation
                     if (_traceLoadingResources)
                         Trace(_dc,$"LoadResourcesTo: Added Resource \"{tag}\" from {uri}.");
 
-                    string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uri);
-                    if (!File.Exists(pathProbe))
-                    {
-                        Trace(_dc,$"Warning: resource file for {pathProbe} does not exist.");
-                    }
-                    this.AddAssociation(tag!, uri);
+                    string? type = resNode?["type"]?.GetValue<string>();
 
-                    if ("model" == resNode?["type"]?.GetValue<string>())
+                    /*
+                     * WP-4.4: models and animation sources are BUILD INPUTS. They do
+                     * not ship, so outside a bake there is no file to associate and
+                     * doing so would only produce a warning per model on every
+                     * start. During the bake (CompileMode) the association is what
+                     * lets Chushi open them, so it is kept there.
+                     */
+                    bool isBuildInput = "model" == type || "animationSource" == type;
+                    bool isCompiling = GlobalSettings.Get("joyce.CompileMode") == "true";
+
+                    if (!isBuildInput || isCompiling)
                     {
-                        _registerModelEntry(uri, tag!, resNode);
+                        string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uri);
+                        if (!File.Exists(pathProbe))
+                        {
+                            Trace(_dc, $"Warning: resource file for {pathProbe} does not exist.");
+                        }
+
+                        this.AddAssociation(tag!, uri);
+                    }
+
+                    if ("model" == type)
+                    {
+                        _registerModelEntry(uri, tag!, resNode!);
                     }
                 }
             }
