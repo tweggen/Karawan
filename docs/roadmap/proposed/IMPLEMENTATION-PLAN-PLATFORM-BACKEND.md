@@ -577,8 +577,10 @@ achieved — see `PLATFORM-BACKEND-STATUS.md` for the evidence behind each line.
 - [ ] **CI asserts zero Silk references so it cannot creep back** — ✗ **NOT DONE. This repo still
       has no CI at all**, which is also KI-17 (nothing enforces that the generated GL files are
       reproducible). The single largest remaining structural gap in the programme.
-- [ ] ADR status changed from *Proposal* to *Accepted*, with outcomes recorded against each §9
-      claim — ✗ not done
+- [x] ADR status changed from *Proposal* to *Accepted*, with outcomes recorded against each §9
+      claim — done 2026-08-14, plus a resolution per §11 challenge. Two are recorded as **not**
+      achieved: no CI (claim 11), and no ANGLE evaluation (11d), which the ADR now names as the
+      largest open risk it leaves behind.
 
 ---
 
