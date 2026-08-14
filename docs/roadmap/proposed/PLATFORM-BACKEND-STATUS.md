@@ -5,11 +5,51 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-14 (Phases 4 AND 5 complete — **zero Silk.NET in any shipping project**)
+**Last updated:** 2026-08-14 (**Phases 0–5 all complete and merged** — zero Silk.NET in any shipping project. Remaining: Phase 6 WP-6.4, GATE-C Linux, GATE-D macOS.)
 
 ---
 
-# ▶▶ RESUME HERE — state at 2026-08-10
+# ▶▶ RESUME HERE — state at 2026-08-14
+
+**PHASES 0–5 ARE ALL COMPLETE AND MERGED.** The Silk.NET exit is done in substance: windowing,
+input and audio left in Phases 2–3, model import became a build step in Phase 4, and the GL
+binding is generated from the Khronos registry as of Phase 5. **Zero Silk.NET references remain
+in any shipping project** — what is left is `Silk.NET.Assimp` in `JoyceFbx` (build-time only, by
+design) and the WP-5.0/5.1 comparison tools, which must name Silk in order to diff against it.
+
+Projects were renamed with WP-5.4: **`Splash.OpenGL`** (the GL backend, was `Splash.Silk`) and
+**`Splash.API.OpenGL`** (the generated binding, was `Splash.GL`, namespace was
+`Karawan.Graphics.OpenGL`). The namespace change is the owner's rule and generalises:
+`Karawan` and `Wuka` are *startup applications*, not layers — shared code belongs to its
+subsystem.
+
+**What is actually left:**
+
+| item | state |
+|---|---|
+| **GATE-C Linux** | 🔴 **never run.** Still the only tier in the whole programme with zero evidence. |
+| **GATE-D macOS** | 🔴 unrun for Phase 4 (models now come from bakes, not Assimp). Windows passed 2026-08-14. |
+| **GATE-E Linux Fn-key** | 🔴 unrun |
+| **WP-6.4** | 🟡 scoped, not started — the action/binding layer |
+| **KI-17 (CI)** | 🟠 open. Nothing enforces generated-file reproducibility; the repo has no CI at all. |
+| **KAR-411 unwind** | 🟠 reasonable to start — versionCode 199 has been in the field on CoreCLR since 2026-08-10 |
+| **Perf A/B in Release** | 🟠 open — CoreCLR loads 4.64× faster than Mono, but measured in **Debug**, load phase only |
+
+**Three defects shipped and were fixed after their phases merged.** All three are worth reading
+before adding anything to this pipeline, because each was invisible to the checks that passed:
+
+1. **Models rendered invisibly** ([#95](https://github.com/tweggen/Karawan/pull/95)) — the bake
+   captured per-instance state and the runtime applied it again. Every automated check passed.
+2. **A detached entity was touched after an `await`**
+   ([#97](https://github.com/tweggen/Karawan/pull/97)) — pre-existing, unrelated to the migration,
+   but a good worked example of a misleading exception message.
+3. **A stale published Chushi silently baked nothing**
+   ([#98](https://github.com/tweggen/Karawan/pull/98)) — now a build error rather than a runtime
+   mystery. See the fallout section below.
+
+---
+
+## Earlier milestones (retained)
 
 **Phase 2 and the Android half of Phase 3 are MERGED.** `Wuka` runs on SDL3 with Silk windowing
 gone. It **starts, renders, plays audio, loads TALE, and is now controllable on a physical device.**
@@ -109,6 +149,49 @@ is what created this. **This is still a manual step** — see the CI note under 
 > **Comparing generated files on Windows:** git checks them out CRLF while `gen.py` writes LF, so
 > a plain `diff` reports every line as changed and buries the real ones. Use
 > `diff <(tr -d '\r' a) <(tr -d '\r' b)`.
+
+### 🔴 2026-08-14 — Phase 4 fallout #2: a stale build tool baked nothing, silently. Now a build error.
+
+**Second defect to reach the owner from Phase 4, and the more instructive one**, because unlike
+the double-transform it was not a coding mistake at all — it was a gap in what the build checks.
+
+Reported as:
+
+```
+No fbx importer is available for url man_coat_winter_Rig.fbx.
+  -> Unable to load model .
+  -> Exception in _setupPlayer main code
+  -> NullReferenceException at ModelBuilder..ctor
+```
+
+That message is true and nearly useless: it names a consequence three layers from the cause. The
+runtime is right to refuse — fbx import *is* build-time only now.
+
+**Cause: `nogame.csproj` runs the PUBLISHED Chushi binary, and `dotnet build` does not refresh
+it.** A Chushi published before Phase 4 has no `ModelCompiler`, so it writes **no `mo-{hash}`
+files at all — silently**. The resource declaration still registers the tag, so at runtime the
+association points at a file that was never written.
+
+The code was verified consistent before concluding this: all 13 declared models hash to exactly
+the filenames present in `nogame/generated`, and every call site supplies `Scale="1"` as declared.
+A stale *tool*, not a naming mismatch — precisely the class that had no detector.
+
+**`PIPELINE.md` documented this two-outputs trap for `Tooling/Cmdline` but not for Chushi, where
+it is worse.** Cmdline produces the *manifests*, and a wrong manifest fails the Android build
+loudly; Chushi produces the *content*, and missing content was silent on desktop until runtime.
+
+**Fix: `res2target` now fails the build when a declared bake artifact does not exist**, naming the
+file and the command that fixes it, covering `mo-`, `ac-` and `sc-` alike. The same stale Chushi
+would have hidden a missing animation collection just as well.
+
+> **A negative control that did not work, worth recording.** Deleting a baked file and running the
+> full `nogame` build *passes* — Chushi's up-to-date check notices the missing output and re-bakes
+> it before `res2target` runs. The check had to be exercised against `res2target` directly. Third
+> time in this programme that a green result came from a check that never ran; see also the AC-4.2
+> test that "passed" 13 cases in 51 ms without loading an fbx.
+
+**Limitation:** this catches artifacts the manifests **declare**. A resource nobody declares is
+still invisible — the separate lesson of the TALE storylet fix.
 
 ### ✅ 2026-08-14 — WP-5.4: PHASE 5 COMPLETE, and Silk.NET is gone from every shipping project
 
@@ -374,10 +457,10 @@ Play also reports a missing deobfuscation/symbol file. Measured, scoped, and par
 (nothing is obfuscated); the real gap is native debug symbols, and our recipes strip them in
 place, so they do not exist outside a CI run. Managed C# exceptions are unaffected.
 
-**Next: WP-5.4 — rename `Splash.Silk` → `Splash.GL`.** WP-5.2 is merged and running on
-desktop, so the last thing holding the old name is the name itself. Note it touches the
-generated files again, which is where **KI-17** bites: regenerate after merging, do not
-hand-resolve.
+**~~Next: WP-5.4~~ — DONE 2026-08-14** ([#96](https://github.com/tweggen/Karawan/pull/96)), and
+not to `Splash.GL`: that name was taken by the generated-bindings project. See the WP-5.4 entry
+above. The prediction that it "touches the generated files again, which is where **KI-17** bites"
+was correct — it did, and the check caught it.
 
 **Still unrun: Linux, entirely** (GATE-C). Windows and macOS have both passed; nobody has
 started Linux, and it is the only tier with no evidence at all.
@@ -691,12 +774,12 @@ Consequences carried forward:
 | **WP-1.3** | ✅ **MERGED** | `platform/wp-1.3` | [#17](https://github.com/tweggen/Karawan/pull/17) → [#18](https://github.com/tweggen/Karawan/pull/18) | 1 | AC-1.1 ✅ · 1.2 ✅ (asserted in-build) · 1.6 ✅ | none apply | SDL3, all six targets. ⚠ Merged into `platform/wp-1.2` rather than master; **#18 was needed to land it** — see §Merge-ordering below. |
 | **WP-1.4** | ✅ **MERGED** | `platform/wp-1.4` | [#19](https://github.com/tweggen/Karawan/pull/19) → [#20](https://github.com/tweggen/Karawan/pull/20) | 1 | AC-1.1 ✅ · GLOBAL-2/3 ✅ | **publish 🔒 not done** | `Karawan.Natives` NuGet: `runtimes/<rid>/native/` + Android `.aar` + `build-manifest.json` with per-file sha256. AAR built deterministically (python, fixed timestamps) — byte-identical across runs. ⚠ Same merge-ordering trap as #17; **#20 was needed to land it**. |
 | **WP-1.5** | ✅ **MERGED** | `platform/wp-1.5` | [#26](https://github.com/tweggen/Karawan/pull/26) | 1 | AC-GLOBAL-1 ✅ · 2/3 ✅ · 4 ✅ (168/168) · AC-1.6 ✅ | **desktop audio confirmed by owner** (Windows) | `Karawan.Natives` replaces `Silk.NET.OpenAL.Soft.Native`. Windows file name differs (`OpenAL32.dll` vs `soft_oal.dll`); Silk falls back across name candidates — verified by forcing **real** native calls, since `GetApi()` alone binds lazily and proves nothing. **Android deliberately unchanged** (duplicate `.so` + libc++ ABI vs assimp); revisit at Phase 4. |
-| **WP-1.6** | ⚠ **PARTIAL — PR-OPEN** | `platform/wp-1.6` | [#27](https://github.com/tweggen/Karawan/pull/27) | 1 | **AC-1.7 ⚠ half** — XA4301 ✅ promoted, **XA0141 ⛔ deferred** | none apply | XA4301: 0 occurrences, promoted, build green. XA0141: promoted → **4 errors, all `Silk.NET.Windowing.Sdl`'s `libSDL2.so`/`libmain.so` @ `0x1000`**. Every native we own is `0x4000` (verified independently of the SDK). **Not satisfiable in Phase 1** — only removing Silk's SDL2 fixes it, which is Phase 2/3. See §AC-1.7 below. |
-| **WP-2.1** | ⏳ **PR-OPEN — blocked on GATE-A** | `platform/wp-2.1` | [#28](https://github.com/tweggen/Karawan/pull/28) | 1 | AC-2.1 ✅ · **2.2 ✅** · 2.3 ✅ · GLOBAL-1/2/3/4 ✅ | **GATE-A 🔒 human+device** | Spike builds and packages; **every `.so` in the APK is 16 KB aligned**, a first. Found 3 defects listed below. `Platform.SDL3` + `recipes/build-mainshim.sh` are permanent; `spikes/` is disposable. |
+| **WP-1.6** | ✅ **MERGED** (AC-1.7 half deferred, closed later by WP-2.2) | `platform/wp-1.6` | [#27](https://github.com/tweggen/Karawan/pull/27) | 1 | **AC-1.7 ⚠ half** — XA4301 ✅ promoted, **XA0141 ⛔ deferred** | none apply | XA4301: 0 occurrences, promoted, build green. XA0141: promoted → **4 errors, all `Silk.NET.Windowing.Sdl`'s `libSDL2.so`/`libmain.so` @ `0x1000`**. Every native we own is `0x4000` (verified independently of the SDK). **Not satisfiable in Phase 1** — only removing Silk's SDL2 fixes it, which is Phase 2/3. See §AC-1.7 below. |
+| **WP-2.1** | ✅ **MERGED** (GATE-A has since passed) | `platform/wp-2.1` | [#28](https://github.com/tweggen/Karawan/pull/28) | 1 | AC-2.1 ✅ · **2.2 ✅** · 2.3 ✅ · GLOBAL-1/2/3/4 ✅ | **GATE-A 🔒 human+device** | Spike builds and packages; **every `.so` in the APK is 16 KB aligned**, a first. Found 3 defects listed below. `Platform.SDL3` + `recipes/build-mainshim.sh` are permanent; `spikes/` is disposable. |
 | **WP-2.2** | ⛔ **NOT COMPLETABLE AS SCOPED** | — | — | 0 | — | needs a human ordering decision | **KI-9**: SDL2 and SDL3 Java glue cannot coexist in one APK (proven — dex duplicate-class), so WP-2.2 cannot be staged; and removing Silk windowing strands `EasyCreate(…, IView, …)`, which is **WP-3.3**. Minimum atomic unit = **2.2 + 3.3 (+3.1/3.2)**. |
 | **WP-2.3** | ✅ **COMPLETE — GATE-A PASSED** | `platform/wp-2.3` | [#53](https://github.com/tweggen/Karawan/pull/53) | 1 | AC-2.1 ✅ · 2.3 ✅ · **2.4 ✅** · 3.4 ✅ · APK shape unchanged ✅ (19 libs / 170 assets) | **GATE-A ✅ PASSED 2026-08-09** | **Far smaller than scoped.** `GameSurface`/`KarawanInputConnection` were already SDL3-aware, so nothing needed porting — the defect was that **nothing raised the keyboard at all** (KI-10). Adds `IWindowBackend.SetKeyboardVisible`; **deliberately not `SDL_StartTextInput`**, which would bind the IME to SDL's `SDLDummyEdit` and reinstate the composition bug. |
-| **WP-3.1** | ⏳ **PR-OPEN** | `platform/wp-3.1` | [#55](https://github.com/tweggen/Karawan/pull/55) | 1 | builds ✅ · headless ✅ · APK ✅ | GATE-C 🔒 | Mouse + gamepad over SDL3. `Platform`'s 11 Silk handlers are now thin adapters over shared `_push*` cores the backend callbacks reach too, so both paths build the same event by construction. **Not runtime-exercised until WP-3.2** — desktop is still on the Silk backend and Android has neither mouse nor gamepad. Three judgement calls to check at GATE-C: trigger convention derived from the CONSUMER (see below), stick Y negated, touch→mouse synthesis disabled. **AC-3.4 as written in the plan is wrong** — `TestRunner` ignores argv and requires `JOYCE_TEST_SCRIPT`, so `-- --help` can never exit 0; verified headless with a real script instead (phase0-des passes). |
-| **WP-3.2** | :hourglass_flowing_sand: **PR-OPEN** | `platform/wp-3.2` | [#56](https://github.com/tweggen/Karawan/pull/56) | 1 | desktop RUNS on SDL3 :white_check_mark: (GL 4.3 core, shaders, textures, title cards) - Silk fallback runs :white_check_mark: - APK :white_check_mark: - headless :white_check_mark: | GATE-C :lock: | Desktop on SDL3. GL profile now read from `platform.threeD.API[.version]` instead of hardcoded GLES 3.0. `Size` (logical) and `FramebufferSize` (pixels) are now separate queries - they must be, since SDL reports mouse in logical units. Fullscreen, HiDPI, resizable and window icon implemented. **Silk kept behind `platform.windowBackend=silk` so GATE-C failures are one setting away from being bisected.** **Android behaviour change to test: it now requests GLES 3.1 (from the 310 setting) rather than 3.0.** |
+| **WP-3.1** | ✅ **MERGED** | `platform/wp-3.1` | [#55](https://github.com/tweggen/Karawan/pull/55) | 1 | builds ✅ · headless ✅ · APK ✅ | GATE-C 🔒 | Mouse + gamepad over SDL3. `Platform`'s 11 Silk handlers are now thin adapters over shared `_push*` cores the backend callbacks reach too, so both paths build the same event by construction. **Not runtime-exercised until WP-3.2** — desktop is still on the Silk backend and Android has neither mouse nor gamepad. Three judgement calls to check at GATE-C: trigger convention derived from the CONSUMER (see below), stick Y negated, touch→mouse synthesis disabled. **AC-3.4 as written in the plan is wrong** — `TestRunner` ignores argv and requires `JOYCE_TEST_SCRIPT`, so `-- --help` can never exit 0; verified headless with a real script instead (phase0-des passes). |
+| **WP-3.2** | ✅ **MERGED** | `platform/wp-3.2` | [#56](https://github.com/tweggen/Karawan/pull/56) | 1 | desktop RUNS on SDL3 :white_check_mark: (GL 4.3 core, shaders, textures, title cards) - Silk fallback runs :white_check_mark: - APK :white_check_mark: - headless :white_check_mark: | GATE-C :lock: | Desktop on SDL3. GL profile now read from `platform.threeD.API[.version]` instead of hardcoded GLES 3.0. `Size` (logical) and `FramebufferSize` (pixels) are now separate queries - they must be, since SDL reports mouse in logical units. Fullscreen, HiDPI, resizable and window icon implemented. **Silk kept behind `platform.windowBackend=silk` so GATE-C failures are one setting away from being bisected.** **Android behaviour change to test: it now requests GLES 3.1 (from the 310 setting) rather than 3.0.** |
 | **WP-3.4** | ✅ **MERGED + GATE-C AUDIO CONFIRMED** | `platform/wp-3.4` | [#57](https://github.com/tweggen/Karawan/pull/57) | 1 | audio works on desktop :white_check_mark: (device enumerated, context created, alcGetIntegerv + extension query OK) - APK :white_check_mark: - solution :white_check_mark: | **GATE-C ✅ audio confirmed HEARD on Windows 11, 2026-08-09** | `Silk.NET.OpenAL` and its Enumeration/Soft extensions replaced by ~24 hand-written `DllImport`s in `Boom.OpenAL/Native/`. Drop-in: method names and signatures mirror Silk, so all ~92 call sites are unchanged apart from the namespace they import. **The library-name fallback WP-1.5 relied on Silk for is now ours** (`OpenALNative._candidates`: OpenAL32.dll / soft_oal.dll on Windows, versioned SONAME first on Linux/macOS) - a single-name DllImport reintroduces the WP-1.5 breakage, at first playback rather than at startup. `AudioError` keeps Silk's IllegalEnum/IllegalCommand aliases, declared FIRST so logged error names are unchanged. |
 | **WP-3.5** | ✅ **MERGED** | `platform/wp-3.5` | [#64](https://github.com/tweggen/Karawan/pull/64) | 1 | Windows verified by the owner ✅ | GATE-C ✅ Windows | **`SilkWindowBackend` deleted** (431 lines), with the `IView` entry points, the Silk input subscription, the `platform.windowBackend=silk` fallback, and `Silk.NET.Windowing` / `.Windowing.Sdl` / `.Input.Sdl` / `.SDL` — the packages that carried SDL2 natives. Zero Silk windowing `PackageReference`s remain in the tree. |
 | **WP-4.1** | ✅ **MERGED** | `platform/wp-4` | [#94](https://github.com/tweggen/Karawan/pull/94) | 1 | build ✅ · **261/261** ✅ · round trip incl. every cycle ✅ | none apply | **MessagePack-annotated the Model graph.** The plan's designated unknown, and the answer is that no DTO layer is needed: every shared/upward edge is DERIVABLE, so each is persisted once from its authority and rebuilt on load (`Skeleton._listBones` → map; `ModelNode.Children` → Parent/Model/tree via `ModelNodeTree.Rebind`; `InstanceDesc.ModelNodes` as NAMES; everything below `Model.IsHierarchical` via `Polish()`). Asserted by `Assert.Same`, not by value — a copy with equal values is exactly what no-reference-tracking produces. |
@@ -708,14 +791,21 @@ Consequences carried forward:
 | **WP-5.1** | ✅ **MERGED** | `platform/wp-5.1` | [#25](https://github.com/tweggen/Karawan/pull/25) | 1 | generated surface compiles standalone ✅ | none apply | `Splash.GL/generated/GL.g.cs` generated from Khronos `gl.xml`, no package references. Surface resolved by **Roslyn** (339 call sites / 81 distinct entry points), not regex — an earlier MSBuildWorkspace attempt silently reported **zero**, indistinguishable from "uses no GL". |
 | **WP-5.3** | ✅ **MERGED** | `platform/wp-5.3-imgui-detach` | [#76](https://github.com/tweggen/Karawan/pull/76) | 1 | build ✅ · 234/234 ✅ · net −123 lines | **GATE-E desktop ✅ (owner-confirmed)** | **ImGui detached from Silk, desktop UI restored.** `ImGuiFontConfig` inlined and `Silk.NET.OpenGL.Extensions.ImGui` dropped — it was the only type used from that package. Removing it exposed that **`Silk.NET.Input`/`.Windowing` were arriving transitively through it**, keeping ~250 lines of dead Silk-typed handlers compiling long after KI-12 reported them gone; all deleted. |
 | **WP-5.2** | ✅ **MERGED 2026-08-14, running on desktop** | `platform/wp-5.2-gl-swap`, `platform/gl-funcptr-dispatch`, `feature/gl-debug-callback`, `fix/regenerate-after-merge`, `feat/gl-diagnostics-unified` | [#86](https://github.com/tweggen/Karawan/pull/86), [#87](https://github.com/tweggen/Karawan/pull/87), [#88](https://github.com/tweggen/Karawan/pull/88), [#89](https://github.com/tweggen/Karawan/pull/89), [#90](https://github.com/tweggen/Karawan/pull/90), [#91](https://github.com/tweggen/Karawan/pull/91), [#92](https://github.com/tweggen/Karawan/pull/92) | 0 | build ✅ · **234/234 tests** ✅ · differ exit 0 ✅ · shapecheck 8/8 ✅ · regeneration byte-identical ✅ · live run: 86 entry points traced, 0 untraced, **0 `glGetError`** ✅ | GATE-F ✅ · **GATE-E owner-run on desktop ✅** | Owner chose **S2a, narrow form** (2026-08-06). The old blocker - capture pixel reference frames before the swap - is **retired**: pixel comparison of a live session was tried three ways and is not achievable here (see §GATE-F). It is replaced by three deterministic checks that pass today. **That open decision is now decided** ([#90](https://github.com/tweggen/Karawan/pull/90)): dispatch is `delegate* unmanaged<>`. **The ledger's framing of it as a performance question was wrong** and is corrected in the 2026-08-14 entry - `glGetError` polling was ~33% of GL traffic while dispatch overhead is under 1%. What actually forced the change is that a delegate-based binding **cannot be traced**, because `GetDelegateForFunctionPointer` returns the ORIGINAL delegate for a pointer that came from `GetFunctionPointerForDelegate` and the cast throws - which is precisely where the GATE-F tracer interposes. |
-| **WP-5.4** | ✅ **DONE, PR-OPEN** | `platform/wp-5.4` | — | 1 | build ✅ · 275/275 ✅ · Wuka ✅ · **regeneration byte-identical ✅** · **0 Silk.NET in any shipping project** ✅ | — | **Renamed, and the DoD closed with it.** NOT to `Splash.GL` as the plan says — that name was already taken by the generated-bindings project WP-5.1 created, which the plan predates. Owner chose `Splash.OpenGL` (backend) and `Splash.API.OpenGL` (generated surface), and **rejected the `Karawan.Graphics.OpenGL` namespace outright**: Karawan is the desktop *startup app*, Wuka is the Android one, and the bindings are no more specific to one than the other — they belong to the Splash family. Mirrors `Boom`/`Boom.OpenAL`. |
+| **WP-5.4** | ✅ **MERGED** | `platform/wp-5.4` | [#96](https://github.com/tweggen/Karawan/pull/96) | 1 | build ✅ · 275/275 ✅ · Wuka ✅ · **regeneration byte-identical ✅** · **0 Silk.NET in any shipping project** ✅ | — | **Renamed, and the DoD closed with it.** NOT to `Splash.GL` as the plan says — that name was already taken by the generated-bindings project WP-5.1 created, which the plan predates. Owner chose `Splash.OpenGL` (backend) and `Splash.API.OpenGL` (generated surface), and **rejected the `Karawan.Graphics.OpenGL` namespace outright**: Karawan is the desktop *startup app*, Wuka is the Android one, and the bindings are no more specific to one than the other — they belong to the Splash family. Mirrors `Boom`/`Boom.OpenAL`. |
 
 | **WP-6.1** | ✅ **MERGED, device-verified** | `platform/wp-6.1` | [#66](https://github.com/tweggen/Karawan/pull/66) | 1 | gameplay loop, sound, input, splash all confirmed on device ✅ | — | **MAUI is gone from Wuka.** Four things surfaced only by building and running, none visible from source: `SingleProject` was hiding four dead platform folders AND pointing the SDK at `AndroidManifest.xml` (without `<AndroidManifest>` the SDK silently SYNTHESISES one — green build, right package name via `ApplicationId`, `android:label`/`icon` gone); the Silk `ExcludeAssets` entries are **suppressors, not sources** (see KI-12); and the splash artwork cannot be used as-is. Bluetooth permission prompt also disabled, code retained. |
-| **WP-6.2** | ⚠ **HALF-MERGED — see note** | `platform/wp-6.2-net10-spike` → `platform/wp-6.2-coreclr-default` | [#70](https://github.com/tweggen/Karawan/pull/70) **merged**, follow-up PR open | 1 | GLOBAL-1 ✅ · 1b ✅ · 4 ✅ (192/192 on net10.0) · Windows desktop ✅ · Android both runtimes ✅ · APK+AAB shape ✅ · AC-1.7 ✅ · 16 KB verified from ELF ✅ | **ABIPROBE M+N ✅ PASSED on device — Mono AND CoreCLR** | **.NET 10 retarget is ON MASTER via #70.** **CoreCLR-as-default and `versionCode` 199 are NOT** — they were pushed after #70 merged and stranded (merge-order trap, 6th occurrence). Recovered onto `platform/wp-6.2-coreclr-default`. **Two source fixes in the whole tree**, both the C# 14 span-overload change. Both runtimes pass → fix came upstream; CoreCLR chosen anyway for load time (4.64×) and coverage. Built on Windows 11 **and** macOS. |
+| **WP-6.2** | ✅ **FULLY MERGED** (re-verified 2026-08-14) | `platform/wp-6.2-net10-spike` → `platform/wp-6.2-coreclr-default` | [#70](https://github.com/tweggen/Karawan/pull/70) **merged**, follow-up PR open | 1 | GLOBAL-1 ✅ · 1b ✅ · 4 ✅ (192/192 on net10.0) · Windows desktop ✅ · Android both runtimes ✅ · APK+AAB shape ✅ · AC-1.7 ✅ · 16 KB verified from ELF ✅ | **ABIPROBE M+N ✅ PASSED on device — Mono AND CoreCLR** | **.NET 10 retarget is ON MASTER via #70.** **CoreCLR-as-default and `versionCode` 199 were initially stranded** (merge-order trap, 6th occurrence) and recovered onto `platform/wp-6.2-coreclr-default` — **which has since landed in full.** Re-verified 2026-08-14: `check-branch-landed.sh` reports every commit on that branch is on master, `Wuka.csproj` defaults `WukaCoreClr` to `true`, and the manifest carries `versionCode="199"`. This row read HALF-MERGED for four days after it was whole. **Two source fixes in the whole tree**, both the C# 14 span-overload change. Both runtimes pass → fix came upstream; CoreCLR chosen anyway for load time (4.64×) and coverage. Built on Windows 11 **and** macOS. |
 | **WP-6.3** | ✅ **MERGED (all four steps)** | `platform/wp-6.3-scancodes`, `platform/wp-6.3-device-contracts` | [#73](https://github.com/tweggen/Karawan/pull/73), [#74](https://github.com/tweggen/Karawan/pull/74) | 1 | build ✅ · **234/234 tests** ✅ · ScanCode ≡ SDL_Scancode 104/104 ✅ | **GATE-C input 🟡 macOS: WASD ✅, text entry ✅** | **Native input semantics.** `ScanCode` on USB HID usage IDs, so `Sdl3KeyCodes` is a **cast**; one name table in `engine.inputs.ScanCodeNames`, not one per backend. Devices carry no events; `OnConnectionChanged` → `INPUT_DEVICE_ATTACHED/DETACHED` on the queue (**a race fix**); enumeration is an immutable `IReadOnlyList` snapshot. **Validating it uncovered KI-14**, a pre-existing WP-3.2 regression that had killed desktop text entry. **Still unconfirmed: F8, the arrow/escape/enter family, and an Android re-check of `SetKeyboardVisible`.** |
 | **WP-6.4** | 🟡 **SCOPED, after WP-6.3** | — | — | 0 | — | `[HUMAN]` rebinding UI | **Action / binding layer, runtime r/w.** Grows the existing `InputMapper` JSON assignment into a proper control→action layer that can be read AND written while the game runs. Section below. |
 
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
+
+> **Four rows sat at `PR-OPEN` for days after their PRs merged** (WP-1.6, WP-2.1, WP-3.1, WP-3.2 —
+> all verified MERGED on 2026-08-14 and corrected). The same thing happened to WP-6.1 and is noted
+> above, and WP-6.2 still read "HALF-MERGED" after `check-branch-landed.sh` confirmed every commit
+> was on master. **A status column nobody updates is worse than no status column**, because a
+> fresh session trusts it and re-does landed work. Check the row against `gh pr view` before
+> believing it.
 
 ### Open PRs
 
@@ -1427,7 +1517,7 @@ how the binding defect was found. All are off unless explicitly configured.
 | **KI-15** | **Logical-vs-pixel confusion is a recurring defect class on this codebase, not three coincidences.** Four instances found in two days, every one invisible on a 1x display and therefore on every machine except a retina Mac: `SetKeyboardVisible` (KI-14, different axis but same "equal on my machine" blindness), ImGui `DisplaySize` (#80), the render viewport (#82), and the splitter drag which would have inherited it. **The seam is now documented where it is crossed** — `IWindowBackend.Size` vs `.FramebufferSize`, `OnResize` (pixels), `SetDimension(px, logical)` — but nothing MECHANICALLY prevents the next one. A units type (`LogicalV2` / `PixelV2`) would; that is a real refactor across `Splash.Silk` and worth costing before committing to. | open, unowned. **Suggested cheap mitigation: run GATE-C's HiDPI checks on any PR touching `Splash.Silk` geometry**, since a 1x developer machine cannot see this class at all. |
 | **KI-16** | **The renderer creates and destroys ~400 GL objects every frame.** Measured while building the GATE-F tracer, not sought: a steady-state gameplay frame issues **192–250 `glGenBuffers` and the same number of `glDeleteBuffers`**, plus a `glGenVertexArrays`/`glDeleteVertexArrays` pair - per-batch buffers allocated and freed each frame. Total GL traffic is ~2,650 calls/frame for ~110 mesh batches, so this churn is a large fraction of it. Not a correctness problem and nothing observed to be wrong because of it; a plausible pooling candidate. Noted because it is invisible without tracing, and the tracing now exists (`debug.option.glTraceAnchor`). | open, unowned, **found in passing** - no measurement of its actual cost has been made, only of its volume. Anyone acting on this should profile first. |
 | **KI-13** | **No native debug symbols ship, so native crashes in Play are bare addresses.** Play reports a missing deobfuscation/symbol file. Measured on the shipped versionCode 199 bundle, not assumed: (a) the dex is **not obfuscated** — 5,785 readable slash-separated identifiers vs 49 short ones, and no R8/ProGuard settings exist in `Wuka.csproj` — so **a `mapping.txt` would buy nothing** and no build step emits one (`obj/.../type-mapping.txt` is .NET Android's managed↔Java map, unrelated despite the name); (b) the AAB carries **no `BUNDLE-METADATA/`**, so no symbols ship — this is the real gap; (c) **our own natives are stripped in place** by `recipes/build-openal.sh` and `recipes/build-assimp-android.sh` (`llvm-strip`), so outside a live CI run the symbols **no longer exist anywhere**. Managed C# exceptions are unaffected and stay readable. Fix = preserve unstripped copies (or `--only-keep-debug` companions) **before** the strip, publish as CI artifacts, then either upload per release or embed under `BUNDLE-METADATA/com.android.tools.build.debugsymbols/`. The runtime libraries (`libcoreclr`, `libclrjit`, `libSystem.*`) come from the .NET Android workload and are a separate sourcing question. | open, deferred by owner 2026-08-10 — pairs naturally with the CI workflow, since that is where unstripped artifacts would live. **Step (c) is the irreversible half**: symbols for a crash that already happened cannot be recovered later. |
-| **KI-17** | **Nothing enforces that the generated GL files are reproducible.** `GL.g.cs` and `GLTrace.g.cs` are generated, but the check that they still match `gen.py`'s output is a command someone remembers to run. That is exactly how the #89/#90 hybrid survived two merges and reached master: both PRs were verified, neither was regenerated after the other landed, and no build, test or review step compares the checked-in file against a fresh generation. A CI step running `gen.py` + `gen-trace.py` and failing on a non-empty **CR-normalised** diff would make the property structural instead of remembered. Cost is real: this repo has no CI at all today, so this means standing one up, and the collision recurs on any PR that touches `surface.json`, `gen.py` or the SUPPORT list. | open, unowned. **Recurs by construction** — WP-5.4's `Splash.Silk` → `Splash.GL` rename touches these files again. Interim rule, in the 2026-08-14 entry above: when two open PRs both regenerate the same file, the second to merge is **regenerated after the merge, never hand-resolved**. |
+| **KI-17** | **Nothing enforces that the generated GL files are reproducible.** `GL.g.cs` and `GLTrace.g.cs` are generated, but the check that they still match `gen.py`'s output is a command someone remembers to run. That is exactly how the #89/#90 hybrid survived two merges and reached master: both PRs were verified, neither was regenerated after the other landed, and no build, test or review step compares the checked-in file against a fresh generation. A CI step running `gen.py` + `gen-trace.py` and failing on a non-empty **CR-normalised** diff would make the property structural instead of remembered. Cost is real: this repo has no CI at all today, so this means standing one up, and the collision recurs on any PR that touches `surface.json`, `gen.py` or the SUPPORT list. | open, unowned. **The predicted recurrence happened, and the interim rule caught it.** WP-5.4 renamed the projects with a scripted sweep over `*.cs` — and `GL.g.cs` is a `.cs` file, so the sweep rewrote a comment inside a GENERATED file and the checked-in copy stopped matching generator output. Found by re-running both generators and diffing: `GLTrace.g.cs` stayed byte-identical while `GL.g.cs` did not, which localised it at once. Fixed in `gen.py` and regenerated, never by editing the output. **That is twice now** (#89/#90, then WP-5.4) that this was caught by someone remembering to run the check. Interim rule stands: when a change can touch a generated file, regenerate and diff afterwards. A CI step is still the only thing that would make it structural. |
 | **KI-18** | **The ES 3.0/3.1 `GL_KHR_debug` path is bound but has never executed.** [#92](https://github.com/tweggen/Karawan/pull/92) binds the `…KHR`-suffixed entry points and selects them by spec rule (`GlDiagnostics.Detect`), but no device here runs ES below 3.2 — the shipping phone reports **ES 3.2** and takes the Core path, which the live run did verify. So the suffixed branch is compiled, generated and unexercised. Low risk (the two signatures are identical to the Core pair apart from the typedef name, and shapecheck verifies both against `gl.xml`) but it is untested code on a platform we ship to. Falling back is safe by construction: if the callback fails to install, `GlDbg` polls. | open. **Testable only on an older device or an ES 3.0/3.1 emulator image** — worth one run if such a device passes through, not worth sourcing hardware for. |
 
 ---
@@ -1439,7 +1529,10 @@ how the binding defect was found. All are off unless explicitly configured.
 | Phase 2 worker dispatches | 10 | 0 |
 | Programme-wide re-dispatches | 25 | 0 |
 | Calendar: Phases 0–2 complete | 3 months from 2026-08-04 | **day 5 — Phases 0, 1 and 2 ALL COMPLETE, both gates passed.** Budgeted 3 months; took 5 days. |
+| Calendar: Phases 0–5 complete | — (no threshold set) | **day 10 (2026-08-14).** The whole Silk exit, against an estimate of "~2,900 LOC spread over months". |
 | ADR §9 "assumed" claims falsified | any → escalate | **1 (claim #6)** — escalated 2026-08-05, resolved: continue as planned |
+| Acceptance criteria found WRONG | — | **3** — AC-3.4 (`TestRunner` ignores argv), AC-4.4 (TestRunner has no renderer and never loads a model), AC-5.1 (`rg 'Silk.NET'` cannot return nothing while the differ and the fbx bake exist). Each recorded rather than weakened; none was quietly reinterpreted to pass. |
+| Defects that reached the owner | — | **3**, all from Phase 4/5 and all fixed: invisible models ([#95](https://github.com/tweggen/Karawan/pull/95)), stale-Chushi silent bake ([#98](https://github.com/tweggen/Karawan/pull/98)), plus one pre-existing TALE race surfaced in passing ([#97](https://github.com/tweggen/Karawan/pull/97)). **Every one passed the full automated suite first** — which is the honest measure of what these checks do and do not cover. |
 
 Nothing has tripped. Worth noting the programme is well inside every threshold: no work package
 has needed a second iteration, and the two recovery PRs (#18, #20) were merge-ordering fixes
