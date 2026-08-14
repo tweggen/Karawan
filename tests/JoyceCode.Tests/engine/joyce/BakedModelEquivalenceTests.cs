@@ -252,6 +252,23 @@ public class BakedModelEquivalenceTests
 
     private void _assertInstanceDescsMatch(InstanceDesc expected, InstanceDesc actual, string what)
     {
+        /*
+         * ModelTransform and MaxDistance are PER-INSTANCE state that ModelCache
+         * applies after loading, and they were the gap that let the double-transform
+         * defect ship: the bake ran the model through ModelCache.LoadModel, so
+         * _instantiateModelParams had already folded
+         * FirstInstanceDescTransformWithInstance into ModelTransform before the file
+         * was written - and the runtime folded it in a second time. On the character
+         * rigs that matrix carries the fbx cm->m scaling, so the mesh rendered at
+         * ~1/10000 size, i.e. invisibly, while bone-attached objects kept moving
+         * correctly because they read the animation matrices instead.
+         *
+         * The rest of this comparison was thorough about geometry and skeleton and
+         * simply did not look here. It does now.
+         */
+        _assertMatrixEqual(expected.ModelTransform, actual.ModelTransform, $"{what}: ModelTransform");
+        _assertClose(expected.MaxDistance, actual.MaxDistance, $"{what}: MaxDistance");
+
         Assert.Equal(expected.Meshes.Count, actual.Meshes.Count);
         Assert.Equal(expected.MeshMaterials, actual.MeshMaterials);
         Assert.Equal(expected.Materials.Count, actual.Materials.Count);

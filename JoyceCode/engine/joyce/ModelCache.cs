@@ -126,8 +126,16 @@ public class ModelCache
          * would have produced - AC-4.2 asserts that per model - so preferring it
          * is not a fallback but the normal route, and the importer below is what
          * remains for assets that have not been baked.
+         *
+         * Only fbx is probed. The bake exists because fbx has no runtime importer
+         * any more; obj and glb still have theirs, so probing them just asked the
+         * asset layer for a file that was never going to be there and logged a
+         * warning per model - which is what a Windows run of the first cut showed,
+         * one "Attempt to open unknown resource mo-..." per car.
          */
-        if (Model.TryLoadBaked(url, modelProperties, out var bakedModel) && bakedModel != null)
+        if (url.EndsWith(".fbx")
+            && Model.TryLoadBaked(url, modelProperties, out var bakedModel)
+            && bakedModel != null)
         {
             return _engine.Run(() =>
             {

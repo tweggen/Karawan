@@ -33,14 +33,32 @@ public class ModelCompiler : IDisposable
     {
         Trace($"Compiling model {ModelUrl}.");
 
-        var model = await I.Get<ModelCache>().LoadModel(new ModelCacheParams()
+        var modelProperties = new ModelProperties()
         {
-            Url = ModelUrl,
-            Properties = new ModelProperties()
-            {
-                Properties = new(Properties)
-            }
-        });
+            Properties = new(Properties)
+        };
+
+        /*
+         * Imported DIRECTLY rather than through ModelCache.LoadModel, and this is
+         * load-bearing.
+         *
+         * ModelCache.LoadModel does more than load: _obtain also runs
+         * _instantiateModelParams, which folds
+         * Model.FirstInstanceDescTransformWithInstance into the instance desc's
+         * ModelTransform, and FindLights.Process. Those are PER-INSTANCE steps, and
+         * the runtime performs them itself on whatever _fromFile returns - baked
+         * model included. Baking a model that had already been through them made
+         * the runtime apply them a SECOND time.
+         *
+         * On the character rigs that matrix carries the fbx cm->m scaling (0.01),
+         * so the mesh rendered at 1/10000 scale, i.e. invisibly, while bone-attached
+         * objects kept moving correctly because they read the animation matrices
+         * instead. Shipped in the first cut of WP-4.2 and found on Windows.
+         *
+         * The file must therefore hold the model exactly as the IMPORTER produced
+         * it - which is what _fromFile returns, and nothing more.
+         */
+        var model = await Fbx.LoadModelInstance(ModelUrl, modelProperties);
         Trace($"Model {model.Name} loaded.");
 
         string strModelFileOnly = Path.GetFileName(ModelUrl);
