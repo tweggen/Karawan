@@ -308,7 +308,7 @@
 		<!--
 			WP-6.1 CORRECTION: these are SUPPRESSORS, not sources. WP-3.5 removed them on the
 			assumption they pulled Silk in; they do the opposite. Silk.NET.Input.Sdl arrives
-			TRANSITIVELY behind Silk.NET.Input, which Splash.Silk still references for the dead
+			TRANSITIVELY behind Silk.NET.Input, which Splash.OpenGL still references for the dead
 			input handlers (KI-12), and its .aar carries SDL2 Java glue that collides with our
 			SDL3 glue at dex time - the exact duplicate-class failure recorded as KI-9:
 
@@ -353,7 +353,7 @@
 		<!--
 			WP-2.2: Silk.NET.SDL, Silk.NET.Windowing, Silk.NET.Windowing.Sdl,
 			Silk.NET.Input.Sdl and Ultz.Native.SDL are GONE. Android runs on SDL3 now,
-			through Splash.Silk's Sdl3WindowBackend.
+			through Splash.OpenGL's Sdl3WindowBackend.
 
 			THIS COULD NOT BE STAGED (KI-9). Silk.NET.Windowing.Sdl's .aar carries a
 			classes.jar with org.libsdl.app.*, and the vendored SDL3 Java sources declare
@@ -364,13 +364,13 @@
 			so SDL3's glue can only arrive in the very change that removes Silk's SDL2.
 
 			Removing the direct references is NOT sufficient, which the dex error above says
-			plainly. Splash.Silk references the Silk.NET.Windowing and Silk.NET.Input
+			plainly. Splash.OpenGL references the Silk.NET.Windowing and Silk.NET.Input
 			META-packages, and those pull Windowing.Sdl and Input.Sdl - and therefore the
 			SDL2 .aar - in transitively. The two exclusions below cut that off for the
 			Android build only.
 
 			Safe because nothing on this platform uses them any more: the Silk types
-			Splash.Silk compiles against (IView, IWindow) live in Windowing.Common, and
+			Splash.OpenGL compiles against (IView, IWindow) live in Windowing.Common, and
 			Android no longer calls Window.GetView at all - Sdl3WindowBackend creates the
 			window itself. Desktop is untouched; it still resolves the full meta-package.
 		-->
@@ -416,7 +416,7 @@
 	  <ProjectReference Include="..\Boom.OpenAL\Boom.OpenAL.csproj" />
 	  <ProjectReference Include="..\Joyce\Joyce.csproj" />
 	  <ProjectReference Include="..\nogame\nogame.csproj" />
-	  <ProjectReference Include="..\Splash.Silk\Splash.Silk.csproj" />
+	  <ProjectReference Include="..\Splash.OpenGL\Splash.OpenGL.csproj" />
 	  <ProjectReference Include="..\Splash\Splash.csproj" />
 	</ItemGroup>
 

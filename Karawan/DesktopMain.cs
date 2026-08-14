@@ -3,7 +3,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using engine;
-using Silk.NET.Core;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -219,10 +218,10 @@ public class DesktopMain
          * the constructor, because GetProcAddress has to be usable before Platform's load
          * handler runs - that handler is what calls GL.GetApi.
          */
-        var sdl3Backend = new Splash.Silk.Sdl3WindowBackend(
+        var sdl3Backend = new Splash.OpenGL.Sdl3WindowBackend(
             launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
 
-        engine.Engine e = Splash.Silk.Platform.EasyCreate(args, sdl3Backend, out var _);
+        engine.Engine e = Splash.OpenGL.Platform.EasyCreate(args, sdl3Backend, out var _);
         e.SetFullscreen(startFullscreen);
 
         // 10. Set window icon

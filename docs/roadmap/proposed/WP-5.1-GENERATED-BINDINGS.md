@@ -99,8 +99,8 @@ be mistaken for a result again.
 
 ## 6. The generator
 
-[`wp-5.1/gen.py`](wp-5.1/gen.py) → `Splash.GL/generated/GL.g.cs` (1,138 lines), namespace
-`Karawan.Graphics.OpenGL`.
+[`wp-5.1/gen.py`](wp-5.1/gen.py) → `Splash.API.OpenGL/generated/GL.g.cs` (1,138 lines), namespace
+`Splash.API.OpenGL`.
 
 Where each input is authoritative — this split is the point of the exercise:
 
@@ -121,7 +121,7 @@ Output composition:
                                string marshalling, Span forms, GetApi
 ```
 
-`Splash.GL.csproj` has **no package references at all**. That is the deliverable: the bindings
+`Splash.API.OpenGL.csproj` has **no package references at all**. That is the deliverable: the bindings
 depend on a specification, not on a wrapper.
 
 ### Silk's entry points are recorded in metadata
@@ -170,7 +170,7 @@ did not include `GetApi`; this is the corrected figure, and it is still ~1 % aga
 
 ## 8. What is NOT done
 
-- **The swap.** Nothing references `Splash.GL` yet. `Splash.Silk` still compiles against Silk,
+- **The swap.** Nothing references `Splash.API.OpenGL` yet. `Splash.OpenGL` still compiles against Silk,
   and WP-5.2 is where that changes. Note the swap is entangled with
   `Silk.NET.OpenGL.Extensions.ImGui`, which consumes Silk's `GL` type directly — that
   dependency has to be resolved before or during WP-5.2, and it is not addressed here.
@@ -186,20 +186,20 @@ did not include `GetApi`; this is the corrected figure, and it is still ~1 % aga
 ## 9. Reproducing
 
 ```bash
-dotnet build Splash.Silk/Splash.Silk.csproj
-dotnet msbuild Splash.Silk/Splash.Silk.csproj -t:ResolveReferences -getItem:ReferencePath -v:q > refs.json
-dotnet run --project docs/roadmap/proposed/wp-5.1/surface -- Splash.Silk refs.json surface.json
-python docs/roadmap/proposed/wp-5.1/gen.py surface.json gl.xml Splash.GL/generated/GL.g.cs
-dotnet build Splash.GL/Splash.GL.csproj
-dotnet run --project docs/roadmap/proposed/wp-5.1/verify -- <Splash.GL.dll> surface.json
+dotnet build Splash.OpenGL/Splash.OpenGL.csproj
+dotnet msbuild Splash.OpenGL/Splash.OpenGL.csproj -t:ResolveReferences -getItem:ReferencePath -v:q > refs.json
+dotnet run --project docs/roadmap/proposed/wp-5.1/surface -- Splash.OpenGL refs.json surface.json
+python docs/roadmap/proposed/wp-5.1/gen.py surface.json gl.xml Splash.API.OpenGL/generated/GL.g.cs
+dotnet build Splash.API.OpenGL/Splash.API.OpenGL.csproj
+dotnet run --project docs/roadmap/proposed/wp-5.1/verify -- <Splash.API.OpenGL.dll> surface.json
 ```
 
 ## 7. Reproducing
 
 ```bash
-dotnet build Splash.Silk/Splash.Silk.csproj
-dotnet msbuild Splash.Silk/Splash.Silk.csproj -t:ResolveReferences -getItem:ReferencePath -v:q > refs.json
-dotnet run --project docs/roadmap/proposed/wp-5.1/surface -- Splash.Silk refs.json surface.json
+dotnet build Splash.OpenGL/Splash.OpenGL.csproj
+dotnet msbuild Splash.OpenGL/Splash.OpenGL.csproj -t:ResolveReferences -getItem:ReferencePath -v:q > refs.json
+dotnet run --project docs/roadmap/proposed/wp-5.1/surface -- Splash.OpenGL refs.json surface.json
 ```
 
 ## 10. Regeneration verified end to end (2026-08-13)

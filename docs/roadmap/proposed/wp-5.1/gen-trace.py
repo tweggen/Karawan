@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Emit Splash.Silk/Trace/GLTrace.g.cs - a tracing interposer for the GATE-F comparison.
+Emit Splash.OpenGL/Trace/GLTrace.g.cs - a tracing interposer for the GATE-F comparison.
 
 WHY INTERPOSE AT GetProcAddress
 
@@ -44,7 +44,7 @@ if len(sys.argv) not in (3, 4):
     sys.exit(__doc__)
 
 SRC, OUT = sys.argv[1], sys.argv[2]
-NS = sys.argv[3] if len(sys.argv) > 3 else "Splash.Silk"
+NS = sys.argv[3] if len(sys.argv) > 3 else "Splash.OpenGL"
 src = open(SRC, encoding="utf-8").read()
 
 # Enums are emitted as ": uint", so every enum name reduces to uint.
@@ -202,7 +202,7 @@ w("using System.Collections.Generic;")
 w("using System.Globalization;")
 w("using System.Runtime.InteropServices;")
 w("")
-# NOT a "Splash.Silk.Trace" sub-namespace, however natural that reads: Splash.Silk files
+# NOT a "Splash.OpenGL.Trace" sub-namespace, however natural that reads: Splash.OpenGL files
 # do "using static engine.Logger;", and a namespace segment named Trace shadows the
 # Logger.Trace() method throughout the assembly. The file still lives in Trace/.
 w(f"namespace {NS};")

@@ -1,4 +1,4 @@
-// WP-5.1 — resolve the EXACT Silk.NET.OpenGL surface Splash.Silk binds to.
+// WP-5.1 — resolve the EXACT Silk.NET.OpenGL surface Splash.OpenGL binds to.
 //
 // WP-5.0 established that the expensive part of generating GL bindings is not names but
 // Silk's overload expansion, and that gl.xml cannot describe it. The agreed scope is to

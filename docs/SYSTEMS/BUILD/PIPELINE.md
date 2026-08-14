@@ -25,7 +25,7 @@ Three things about this setup are not obvious and will bite:
    one central version each. The odd one out uses `VersionOverride` at its call site:
    | Package | Central | Override |
    |---|---|---|
-   | `SixLabors.ImageSharp` | 3.1.10 (`Karawan`, `examples/Launcher`) | `Splash.Silk` → 3.0.1 |
+   | `SixLabors.ImageSharp` | 3.1.10 (`Karawan`, `examples/Launcher`) | `Splash.OpenGL` → 3.0.1 |
    | `SkiaSharp.NativeAssets.Linux` | 2.88.7 (`Karawan`, `examples/Launcher`) | `Tooling/Cmdline` → 3.119.1 |
    Unifying either one would change what resolves. Don't "tidy" them without deciding that
    deliberately.

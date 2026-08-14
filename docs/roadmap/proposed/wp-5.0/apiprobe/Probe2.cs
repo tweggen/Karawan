@@ -49,7 +49,7 @@ static class Probe2
         Console.WriteLine(new string('=', 78));
         var glEnum = silkGl.Assembly.GetExportedTypes().FirstOrDefault(t => t.Name == "GLEnum");
         Console.WriteLine($"Silk GLEnum members: {(glEnum != null ? Enum.GetNames(glEnum).Length : 0)}");
-        Console.WriteLine("Splash.Silk uses 43 distinct GLEnum members (from the source survey).");
+        Console.WriteLine("Splash.OpenGL uses 43 distinct GLEnum members (from the source survey).");
         Console.WriteLine("Each becomes a specifically-typed enum under OpenTK - no single substitute exists.");
     }
 }

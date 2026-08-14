@@ -28,7 +28,7 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BoomCode", "BoomCode\BoomCo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom", "Boom\Boom.csproj", "{732A58F8-7A92-461E-A3A0-CF2C535E7D9B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Splash.Silk", "Splash.Silk\Splash.Silk.csproj", "{D0D207D7-1B26-4E47-B259-FF5272613F26}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Splash.OpenGL", "Splash.OpenGL\Splash.OpenGL.csproj", "{D0D207D7-1B26-4E47-B259-FF5272613F26}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DefaultEcs", "..\DefaultEcs\source\DefaultEcs\DefaultEcs.csproj", "{5869EABD-EB51-4495-8650-7513592F41E2}"
 EndProject

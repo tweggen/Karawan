@@ -72,7 +72,7 @@ public class ScanCodeTests
      * These strings are the live contract with game code - Scene.cs tests for "(F8)",
      * InputMapper keys its JSON on them - so this is a pinning test, not a description of
      * something desirable. The expectations were transcribed from the table as it stood in
-     * Splash.Silk/Sdl3KeyCodes.cs before WP-6.3 moved it.
+     * Splash.OpenGL/Sdl3KeyCodes.cs before WP-6.3 moved it.
      */
     [Theory]
     [InlineData(ScanCode.LeftShift, "(shiftleft)")]
