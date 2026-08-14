@@ -124,7 +124,7 @@ public static class Program
             }
         }
 
-        Type gen = typeof(Karawan.Graphics.OpenGL.GL);
+        Type gen = typeof(Splash.API.OpenGL.GL);
         Type silk = typeof(Silk.NET.OpenGL.GL);
 
         var genMethods = gen.GetMethods(BindingFlags.Public | BindingFlags.Instance)

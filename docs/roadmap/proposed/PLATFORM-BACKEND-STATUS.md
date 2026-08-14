@@ -5,7 +5,7 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-14 (Phase 4 complete and **validated on Windows 11** — Assimp is out of the shipped game)
+**Last updated:** 2026-08-14 (Phases 4 AND 5 complete — **zero Silk.NET in any shipping project**)
 
 ---
 
@@ -109,6 +109,68 @@ is what created this. **This is still a manual step** — see the CI note under 
 > **Comparing generated files on Windows:** git checks them out CRLF while `gen.py` writes LF, so
 > a plain `diff` reports every line as changed and buries the real ones. Use
 > `diff <(tr -d '\r' a) <(tr -d '\r' b)`.
+
+### ✅ 2026-08-14 — WP-5.4: PHASE 5 COMPLETE, and Silk.NET is gone from every shipping project
+
+**Measured, not asserted.** Every `PackageReference` to a Silk package and every
+`using Silk.NET` in the repository:
+
+| where | what | why it stays |
+|---|---|---|
+| `JoyceFbx` | `Silk.NET.Assimp` | the **build-time** fbx importer (Phase 4). No shipping project references it. |
+| `wp-5.0/apiprobe`, `wp-5.1/differ` | `Silk.NET.OpenGL` | comparison tools whose entire job is to diff our binding **against** Silk |
+
+Nothing else. Not `Karawan`, not `Wuka`, not `Splash.OpenGL`, not `Joyce`.
+
+**The plan's literal criterion is therefore not satisfiable, and should not be.**
+AC-5.1 wants `rg 'Silk.NET' --glob '*.cs' --glob '*.csproj'` to return nothing.
+It cannot while the differ exists — that tool must name Silk to compare with it —
+and it cannot while models are baked from fbx, which Phase 4 chose deliberately.
+The criterion behind the criterion — *no Silk.NET in anything we ship* — is met.
+
+**The rename is not what the plan says either.** WP-5.4 asks for
+`Splash.Silk` → `Splash.GL`; `Splash.GL` was already taken by the generated-
+bindings project WP-5.1 created, so the plan collides with work done after it was
+written. The owner chose:
+
+```
+Splash              abstract renderer
+Splash.OpenGL       the GL backend           <- was Splash.Silk
+Splash.API.OpenGL   generated GL bindings    <- was Splash.GL
+                    namespace Splash.API.OpenGL  <- was Karawan.Graphics.OpenGL
+```
+
+parallel to the `Boom` / `Boom.OpenAL` split already in the tree. **The namespace
+change was the owner's correction and matters more than the project names:**
+`Karawan` is the desktop *startup application* and `Wuka` the Android one, so
+naming shared bindings after Karawan encodes a dependency that does not exist —
+Wuka consumes them identically. Shared code belongs to its subsystem.
+
+The `Silk*` TYPE names went too (`SilkThreeD` → `GlThreeD`, and four others),
+since leaving them inside `Splash.OpenGL` preserves exactly the confusion the
+rename removes. Nothing binds them by string — checked against the Mix config
+before touching them, because class names there are resolved from JSON.
+
+**KI-17 caught a hand-edit of a generated file, which is what it is for.** The
+bulk rename was a scripted sweep over `*.cs`, and `GL.g.cs` is a `.cs` file: the
+sweep rewrote a comment inside it, and the checked-in file stopped matching
+generator output. Found by re-running the generators and diffing — `GLTrace.g.cs`
+stayed byte-identical while `GL.g.cs` did not, which localised it immediately.
+Fixed in `gen.py` and regenerated. **Both files now reproduce byte-for-byte**, and
+a control run before any change confirmed the toolchain reproduced the *previous*
+state too, so the only diff attributable to this work is the namespace line.
+`gl.xml` was re-fetched and its sha256 matches the value pinned in
+`WP-5.1-GENERATED-BINDINGS.md` §10 exactly — same registry revision.
+
+**Two dead things removed while in there:** `Silk.NET.Core` (referenced by
+`Karawan` and `examples/Launcher`, used by neither — the last `using` was left
+behind by WP-4.4), and a `#if GLES / #elif GL / #elif LEGACY` selector in the
+ImGui backend choosing between three Silk GL flavours. **None of those three
+symbols is defined anywhere in the build**, so the block always compiled to
+nothing; it came in with the upstream Silk ImGui sample and outlived the binding
+it chose between. Five now-unreferenced `PackageVersion` pins were pruned from
+CPM — inert, but they misrepresented the dependency graph in the one file you
+would read to answer "what do we still take from Silk?".
 
 ### ✅ 2026-08-14 — PHASE 4 COMPLETE AND VALIDATED ON WINDOWS 11: FBX import is a build step, Assimp is out of the game
 
@@ -646,7 +708,7 @@ Consequences carried forward:
 | **WP-5.1** | ✅ **MERGED** | `platform/wp-5.1` | [#25](https://github.com/tweggen/Karawan/pull/25) | 1 | generated surface compiles standalone ✅ | none apply | `Splash.GL/generated/GL.g.cs` generated from Khronos `gl.xml`, no package references. Surface resolved by **Roslyn** (339 call sites / 81 distinct entry points), not regex — an earlier MSBuildWorkspace attempt silently reported **zero**, indistinguishable from "uses no GL". |
 | **WP-5.3** | ✅ **MERGED** | `platform/wp-5.3-imgui-detach` | [#76](https://github.com/tweggen/Karawan/pull/76) | 1 | build ✅ · 234/234 ✅ · net −123 lines | **GATE-E desktop ✅ (owner-confirmed)** | **ImGui detached from Silk, desktop UI restored.** `ImGuiFontConfig` inlined and `Silk.NET.OpenGL.Extensions.ImGui` dropped — it was the only type used from that package. Removing it exposed that **`Silk.NET.Input`/`.Windowing` were arriving transitively through it**, keeping ~250 lines of dead Silk-typed handlers compiling long after KI-12 reported them gone; all deleted. |
 | **WP-5.2** | ✅ **MERGED 2026-08-14, running on desktop** | `platform/wp-5.2-gl-swap`, `platform/gl-funcptr-dispatch`, `feature/gl-debug-callback`, `fix/regenerate-after-merge`, `feat/gl-diagnostics-unified` | [#86](https://github.com/tweggen/Karawan/pull/86), [#87](https://github.com/tweggen/Karawan/pull/87), [#88](https://github.com/tweggen/Karawan/pull/88), [#89](https://github.com/tweggen/Karawan/pull/89), [#90](https://github.com/tweggen/Karawan/pull/90), [#91](https://github.com/tweggen/Karawan/pull/91), [#92](https://github.com/tweggen/Karawan/pull/92) | 0 | build ✅ · **234/234 tests** ✅ · differ exit 0 ✅ · shapecheck 8/8 ✅ · regeneration byte-identical ✅ · live run: 86 entry points traced, 0 untraced, **0 `glGetError`** ✅ | GATE-F ✅ · **GATE-E owner-run on desktop ✅** | Owner chose **S2a, narrow form** (2026-08-06). The old blocker - capture pixel reference frames before the swap - is **retired**: pixel comparison of a live session was tried three ways and is not achievable here (see §GATE-F). It is replaced by three deterministic checks that pass today. **That open decision is now decided** ([#90](https://github.com/tweggen/Karawan/pull/90)): dispatch is `delegate* unmanaged<>`. **The ledger's framing of it as a performance question was wrong** and is corrected in the 2026-08-14 entry - `glGetError` polling was ~33% of GL traffic while dispatch overhead is under 1%. What actually forced the change is that a delegate-based binding **cannot be traced**, because `GetDelegateForFunctionPointer` returns the ORIGINAL delegate for a pointer that came from `GetFunctionPointerForDelegate` and the cast throws - which is precisely where the GATE-F tracer interposes. |
-| WP-5.4 | NOT-STARTED | — | — | 0 | — | — | Rename `Splash.Silk` → `Splash.GL`. Trivial once WP-5.2 lands. |
+| **WP-5.4** | ✅ **DONE, PR-OPEN** | `platform/wp-5.4` | — | 1 | build ✅ · 275/275 ✅ · Wuka ✅ · **regeneration byte-identical ✅** · **0 Silk.NET in any shipping project** ✅ | — | **Renamed, and the DoD closed with it.** NOT to `Splash.GL` as the plan says — that name was already taken by the generated-bindings project WP-5.1 created, which the plan predates. Owner chose `Splash.OpenGL` (backend) and `Splash.API.OpenGL` (generated surface), and **rejected the `Karawan.Graphics.OpenGL` namespace outright**: Karawan is the desktop *startup app*, Wuka is the Android one, and the bindings are no more specific to one than the other — they belong to the Splash family. Mirrors `Boom`/`Boom.OpenAL`. |
 
 | **WP-6.1** | ✅ **MERGED, device-verified** | `platform/wp-6.1` | [#66](https://github.com/tweggen/Karawan/pull/66) | 1 | gameplay loop, sound, input, splash all confirmed on device ✅ | — | **MAUI is gone from Wuka.** Four things surfaced only by building and running, none visible from source: `SingleProject` was hiding four dead platform folders AND pointing the SDK at `AndroidManifest.xml` (without `<AndroidManifest>` the SDK silently SYNTHESISES one — green build, right package name via `ApplicationId`, `android:label`/`icon` gone); the Silk `ExcludeAssets` entries are **suppressors, not sources** (see KI-12); and the splash artwork cannot be used as-is. Bluetooth permission prompt also disabled, code retained. |
 | **WP-6.2** | ⚠ **HALF-MERGED — see note** | `platform/wp-6.2-net10-spike` → `platform/wp-6.2-coreclr-default` | [#70](https://github.com/tweggen/Karawan/pull/70) **merged**, follow-up PR open | 1 | GLOBAL-1 ✅ · 1b ✅ · 4 ✅ (192/192 on net10.0) · Windows desktop ✅ · Android both runtimes ✅ · APK+AAB shape ✅ · AC-1.7 ✅ · 16 KB verified from ELF ✅ | **ABIPROBE M+N ✅ PASSED on device — Mono AND CoreCLR** | **.NET 10 retarget is ON MASTER via #70.** **CoreCLR-as-default and `versionCode` 199 are NOT** — they were pushed after #70 merged and stranded (merge-order trap, 6th occurrence). Recovered onto `platform/wp-6.2-coreclr-default`. **Two source fixes in the whole tree**, both the C# 14 span-overload change. Both runtimes pass → fix came upstream; CoreCLR chosen anyway for load time (4.64×) and coverage. Built on Windows 11 **and** macOS. |

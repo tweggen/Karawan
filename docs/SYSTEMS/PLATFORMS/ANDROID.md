@@ -102,7 +102,7 @@ InputWidgetImplementation.OnPropertyChanged("focussed", true)
 | OSDText | JoyceCode/engine/draw/components/OSDText.cs | Component with Position, Size, GaugeValue (cursor pos) |
 | Engine | JoyceCode/engine/Engine.cs | EnableKeyboard/DisableKeyboard, SetKeyboardInputType |
 | IPlatform | JoyceCode/engine/IPlatform.cs | Interface: `KeyboardEnabled`, `KeyboardInputType` |
-| Platform | Splash.Silk/Platform.cs | Calls Silk.NET BeginInput/EndInput, control char filtering |
+| Platform | Splash.OpenGL/Platform.cs | Calls Silk.NET BeginInput/EndInput, control char filtering |
 | GameSurface | Wuka/Platforms/Android/GameSurface.cs | Android SDL surface, input type selection |
 
 ## Future: Input Field Position Awareness

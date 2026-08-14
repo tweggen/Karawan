@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="Silk.NET.OpenGL" Version="2.23.0" />
-    <ProjectReference Include="..\..\..\..\..\Splash.GL\Splash.GL.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Splash.API.OpenGL\Splash.API.OpenGL.csproj" />
     <Content Include="..\surface\surface.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

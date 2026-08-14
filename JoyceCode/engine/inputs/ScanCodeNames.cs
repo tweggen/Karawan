@@ -5,7 +5,7 @@ namespace engine.inputs;
  *
  * WHY THIS LIVES HERE AND NOT IN A BACKEND
  *
- * It used to live in Splash.Silk/Sdl3KeyCodes.cs, whose own doc-comment warned that it
+ * It used to live in Splash.OpenGL/Sdl3KeyCodes.cs, whose own doc-comment warned that it
  * and Platform._convertKeyCodeFromPlatform "must produce identical strings for the same
  * physical key or the same keypress means different things on different platforms". Two
  * tables that must agree are a defect waiting for someone to edit one of them. There is

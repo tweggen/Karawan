@@ -1,7 +1,7 @@
 // WP-5.0 call-site sample.
 //
-// Every statement below is copied VERBATIM from Splash.Silk - GlStateSaver.cs,
-// BufferObject.cs, SilkThreeD.cs, SkProgramEntry.cs - narrowed to the entry points the
+// Every statement below is copied VERBATIM from Splash.OpenGL - GlStateSaver.cs,
+// BufferObject.cs, GlThreeD.cs, SkProgramEntry.cs - narrowed to the entry points the
 // prototype generator emits. Only the surrounding scaffolding (class, fields) is written
 // for the harness.
 //
@@ -53,7 +53,7 @@ namespace Karawan.Wp50Sample
             _gl.BindBuffer(GLEnum.ArrayBuffer, (uint)_lastArrayBuffer);
         }
 
-        // SilkThreeD.cs:1099-1105
+        // GlThreeD.cs:1099-1105
         public void ConfigureState()
         {
             _gl.Enable(EnableCap.CullFace);

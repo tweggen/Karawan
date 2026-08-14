@@ -36,14 +36,24 @@
     <PackageVersion Include="Dock.Model" Version="11.3.8" />
     <PackageVersion Include="Dock.Model.Mvvm" Version="11.3.8" />
   </ItemGroup>
-  <ItemGroup Label="Silk.NET - being removed, see PLATFORM_BACKEND.md">
-    <!-- N5/N8: pinned deliberately. Do not bump. -->
+  <ItemGroup Label="Silk.NET - REMOVED except the build-time fbx importer">
+    <!--
+      WP-5.4 pruned this group down to Assimp. Silk.NET.Core, .OpenGL,
+      .OpenGL.Extensions.EXT, .OpenGL.Extensions.ImGui and .Windowing all had zero
+      PackageReferences left: windowing went in Phase 3, the ImGui extension in
+      WP-5.3, the GL binding in WP-5.2, and Core was unused after WP-4.4.
+
+      A PackageVersion with no PackageReference is inert, so these cost nothing at
+      build time - but they misrepresent the dependency graph to anyone reading
+      this file, which is the one place you would look to answer "what do we still
+      take from Silk?". The answer is now visible: the fbx importer, at build time
+      only.
+
+      N5/N8: Assimp is pinned deliberately. Do not bump - that is the mechanism
+      that corrupted model loading. It reaches only JoyceFbx, which no shipping
+      project references (WP-4.4).
+    -->
     <PackageVersion Include="Silk.NET.Assimp" Version="2.22.0" />
-    <PackageVersion Include="Silk.NET.Core" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.OpenGL" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.OpenGL.Extensions.EXT" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.23.0" />
-    <PackageVersion Include="Silk.NET.Windowing" Version="2.23.0" />
     <PackageVersion Include="Ultz.Native.Assimp" Version="5.4.1" />
   </ItemGroup>
   <ItemGroup Label="Natives built by our own CI">

@@ -10,7 +10,7 @@ namespace Wuka;
  * Raises and dismisses the Android on-screen keyboard for the game surface.
  *
  * Installed onto Sdl3WindowBackend.SoftKeyboardHandler by GameActivity, because
- * Splash.Silk cannot reference Android APIs. Reached from
+ * Splash.OpenGL cannot reference Android APIs. Reached from
  * builtin/jt/InputWidgetImplementation -> Engine.EnableKeyboard ->
  * IPlatform.KeyboardEnabled -> Platform._setKeyboardEnabled -> the backend seam.
  *

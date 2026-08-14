@@ -5,7 +5,7 @@
 // This reflects over the compiled output and checks each of the 99 required signatures, plus
 // every enum type and member, against surface.json.
 //
-// A missing signature here is a compile error later, in Splash.Silk, with a worse message.
+// A missing signature here is a compile error later, in Splash.OpenGL, with a worse message.
 
 using System;
 using System.Collections.Generic;

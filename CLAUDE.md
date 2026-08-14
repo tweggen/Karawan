@@ -101,7 +101,8 @@ The engine uses **DefaultEcs** (Entity-Component-System). Entities are composed 
 | **Joyce** | Core engine library: ECS, scene management, transforms, modules, physics, assets, serialization |
 | **JoyceCode** (.shproj) | Engine builtins: components, systems, controllers, UI, map system, inventory, loaders (FBX/OBJ/glTF), behaviours |
 | **Splash** | Abstract renderer (platform-agnostic mesh/material/texture interfaces) |
-| **Splash.Silk** | OpenGL renderer via Silk.NET |
+| **Splash.OpenGL** | OpenGL renderer (was `Splash.Silk`; renamed WP-5.4 — no Silk.NET left in it) |
+| **Splash.API.OpenGL** | Generated OpenGL bindings from the Khronos `gl.xml` registry (was `Splash.GL`, namespace was `Karawan.Graphics.OpenGL`). Regenerate with `docs/roadmap/proposed/wp-5.1/gen.py`; never hand-edit — see KI-17 |
 | **Boom** / **Boom.OpenAL** | Audio framework and OpenAL implementation |
 | **BoomCode** (.shproj) | Shared audio code |
 | **nogame** + **nogameCode** (.shproj) | Game-specific logic for Silicon Desert 2 |

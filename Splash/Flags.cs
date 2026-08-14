@@ -12,7 +12,7 @@ public class Flags
      * The backend expresses that need through IThreeD.HasPerInstanceAnimationFrames.
      *
      * The GL-specific choice that drives it (SSBO vs UBO vs uniform) lives in
-     * Splash.Silk.GLAnimBuffers - it names a GL concept and does not belong here.
+     * Splash.OpenGL.GLAnimBuffers - it names a GL concept and does not belong here.
      */
     [Flags]
     public enum AnimBatching

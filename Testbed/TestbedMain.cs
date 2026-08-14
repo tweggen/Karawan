@@ -170,7 +170,7 @@ public class TestbedMain
         Props.Set("world.CreateCubeCharacters", false);
         Props.Set("world.CreateTramCharacters", false);
 
-        var e = Splash.Silk.Platform.EasyCreateHeadless(args, out var _);
+        var e = Splash.OpenGL.Platform.EasyCreateHeadless(args, out var _);
         e.ExecuteLogicalThreadOnly();
         e.CallOnPlatformAvailable();
 

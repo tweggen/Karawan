@@ -393,11 +393,11 @@ public class DesktopMain
         _applySettingsOverrides(args);
 
         // 7. Create window. WP-3.5: SDL3 is the only desktop backend.
-        var backend = new Splash.Silk.Sdl3WindowBackend(
+        var backend = new Splash.OpenGL.Sdl3WindowBackend(
             launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
 
         // 8. Create engine
-        engine.Engine e = Splash.Silk.Platform.EasyCreate(args, backend, out var _);
+        engine.Engine e = Splash.OpenGL.Platform.EasyCreate(args, backend, out var _);
         e.SetFullscreen(false);
 
         // 9. Setup logging

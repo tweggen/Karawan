@@ -36,7 +36,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Joyce\Joyce.csproj" />
     <ProjectReference Include="..\..\Splash\Splash.csproj" />
-    <ProjectReference Include="..\..\Splash.Silk\Splash.Silk.csproj" />
+    <ProjectReference Include="..\..\Splash.OpenGL\Splash.OpenGL.csproj" />
   </ItemGroup>
 
   <ItemGroup>

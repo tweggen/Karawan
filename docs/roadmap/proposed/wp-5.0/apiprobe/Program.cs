@@ -1,7 +1,7 @@
 // WP-5.0 / WP-5.0b API probe.
 //
 // Answers three questions with reflection instead of estimates:
-//   1. For each GL entry point Splash.Silk actually calls, how many OVERLOADS does Silk
+//   1. For each GL entry point Splash.OpenGL actually calls, how many OVERLOADS does Silk
 //      expose? ADR section 11c says matching Silk's overload expansion policy is the real
 //      work, not name matching - this measures it.
 //   2. Which of those names exist in OpenTK 5, spelled identically?
