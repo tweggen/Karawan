@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using builtin.loader;
+using MessagePack;
 using static engine.Logger;
 
 namespace engine.joyce;
@@ -11,23 +12,94 @@ namespace engine.joyce;
 /**
  * Represents a tree of model nodes.
  * Used to represent a pose.
+ *
+ * WP-4.1 - only RootNode is persisted into a baked mo-{hash} model. MapNodes is a
+ * by-name index over the very same nodes the spine already holds, so writing it
+ * would emit every node a second time and deserialise into a second, disjoint set
+ * of nodes: a lookup by name would then return a different object than the one
+ * reachable through Children. Rebind rebuilds it - and every upward reference -
+ * from the spine.
  */
-public class ModelNodeTree
+[MessagePackObject(AllowPrivate = true)]
+public partial class ModelNodeTree
 {
-    private ModelNode _mnRoot; 
+    [Key(0)]
+    private ModelNode _mnRoot;
+
+    [IgnoreMember]
     public ModelNode RootNode
     {
         get => _mnRoot;
         set
         {
             _mnRoot = value;
-        } 
+        }
     }
+
+    [IgnoreMember]
     private int _nextNodeIndex = 1;
 
-    
+
+    [IgnoreMember]
     public readonly SortedDictionary<string, ModelNode> MapNodes = new();
-    
+
+
+    private void _rebindRecursively(ModelNode mn, ModelNode? mnParent, Model model)
+    {
+        mn.Model = model;
+        mn.ModelNodeTree = this;
+        mn.Parent = mnParent;
+
+        if (null != mn.Name)
+        {
+            MapNodes[mn.Name] = mn;
+        }
+
+        if (mn.Children != null)
+        {
+            foreach (var mnChild in mn.Children)
+            {
+                _rebindRecursively(mnChild, mn, model);
+            }
+        }
+    }
+
+
+    /**
+     * Restore everything a deserialised tree does not carry: the node index, and
+     * each node's Model / ModelNodeTree / Parent back-references.
+     *
+     * The InstanceDesc node names are resolved in a SECOND pass, after the whole
+     * spine is in MapNodes - an instance desc hanging off an early node routinely
+     * references a node that appears later in the walk, so resolving inline would
+     * miss it.
+     */
+    public void Rebind(Model model)
+    {
+        MapNodes.Clear();
+        if (null == _mnRoot)
+        {
+            return;
+        }
+
+        _rebindRecursively(_mnRoot, null, model);
+        _resolveInstanceDescsRecursively(_mnRoot);
+    }
+
+
+    private void _resolveInstanceDescsRecursively(ModelNode mn)
+    {
+        mn.InstanceDesc?.ResolveModelNodes(this);
+        if (mn.Children != null)
+        {
+            foreach (var mnChild in mn.Children)
+            {
+                _resolveInstanceDescsRecursively(mnChild);
+            }
+        }
+    }
+
+
     public string DumpNodes()
     {
         string s = "";

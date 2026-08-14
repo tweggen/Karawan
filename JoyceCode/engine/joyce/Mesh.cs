@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using engine.geom;
 using engine.joyce;
+using MessagePack;
 
 
 namespace engine.joyce;
@@ -18,9 +19,28 @@ public class MergeMeshEntry
 }
 
 
-
-public class Mesh : IComparable<Mesh>
+/**
+ * Geometry, persisted into the baked mo-{hash} model (WP-4.1).
+ *
+ * Three things are deliberately NOT written to the file:
+ *
+ * - _idHolder. It is process-local identity, not data: CompareTo/Equals/
+ *   GetHashCode are all defined on it, and MatMesh keys dictionaries by Mesh.
+ *   A deserialised mesh must get a FRESH id, which is why the private
+ *   parameterless constructor below exists - it lets the field initialiser run.
+ *   Without a constructor MessagePack cannot build the object at all, and a
+ *   default(IdHolder) would give every loaded mesh Id 0, i.e. make them all
+ *   compare equal.
+ * - The AABB, which is a pure function of Vertices and is recomputed lazily on
+ *   first access exactly as it is for a freshly built mesh. Nothing in the tree
+ *   assigns Mesh.AABB explicitly, so there is no state to lose.
+ * - The WriteIndex* cursors, restored from the collection counts in
+ *   OnAfterDeserialize - the same thing the public constructor does.
+ */
+[MessagePackObject(AllowPrivate = true)]
+public partial class Mesh : IComparable<Mesh>, IMessagePackSerializationCallbackReceiver
 {
+    [IgnoreMember]
     private readonly IdHolder _idHolder = new();
     public int CompareTo(Mesh other) => _idHolder.CompareTo(other._idHolder);
 
@@ -34,10 +54,13 @@ public class Mesh : IComparable<Mesh>
         return o is Mesh m && m._idHolder.Id == _idHolder.Id;
     }
 
+    [IgnoreMember]
     private AABB _aabb;
 
+    [IgnoreMember]
     private bool _haveAABB = false;
 
+    [IgnoreMember]
     public AABB AABB
     {
         get
@@ -58,11 +81,16 @@ public class Mesh : IComparable<Mesh>
         }
     }
 
+    [Key(0)]
     public string Name = "unnamed mesh";
-    
+
+    [IgnoreMember]
     public int WriteIndexVertices;
+    [IgnoreMember]
     public int WriteIndexIndices;
+    [IgnoreMember]
     public int WriteIndexUVs;
+    [IgnoreMember]
     public int WriteIndexNormals;
 
     // TXWTODO: Come up with a supersmart concept only storing the mesh source/factory
@@ -70,33 +98,40 @@ public class Mesh : IComparable<Mesh>
     /**
      * Indexable array like of Vector3
      */
+    [Key(1)]
     public IList<Vector3> Vertices;
 
     /**
      * Indexable array like of int
      */
+    [Key(2)]
     public IList<uint> Indices;
 
     /**
      * Indexable array like of Vector2
      */
+    [Key(3)]
     public IList<Vector2> UVs;
 
     /**
      * Indexable array like of Vector3 or null.
      */
+    [Key(4)]
     public IList<Vector3> Normals;
 
     /**
      * Indexable array of bone indices per Vertex.
      */
+    [Key(5)]
     public IList<Int4>? BoneIndices;
 
     /**
      * Indexable array of bone weights
      */
+    [Key(6)]
     public IList<Vector4>? BoneWeights;
 
+    [Key(7)]
     public bool UploadImmediately = false;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -397,6 +432,29 @@ public class Mesh : IComparable<Mesh>
         Indices = new List<uint>();
         UVs = new List<Vector2>();
         Normals = null;
+    }
+
+
+    /**
+     * Deserialisation constructor. Exists so the _idHolder field initialiser runs
+     * and every loaded mesh gets its own identity; see the class comment.
+     */
+    private Mesh()
+    {
+    }
+
+
+    public void OnBeforeSerialize()
+    {
+    }
+
+
+    public void OnAfterDeserialize()
+    {
+        WriteIndexVertices = Vertices != null ? Vertices.Count : 0;
+        WriteIndexIndices = Indices != null ? Indices.Count : 0;
+        WriteIndexUVs = UVs != null ? UVs.Count : 0;
+        WriteIndexNormals = Normals != null ? Normals.Count : 0;
     }
 
     public static Mesh CreateListInstance(string name)
