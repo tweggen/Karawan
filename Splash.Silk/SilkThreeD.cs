@@ -133,17 +133,9 @@ public class SilkThreeD : IThreeD
         try
         {
             _silkRenderState.Texture0.UseTextureEntry(skMaterialEntry.SkDiffuseTexture);
-            {
-                var err = _getGL().GetError();
-                if (err != GLEnum.NoError)
-                    System.Console.Error.WriteLine($"[_loadMaterialToShader] GL ERROR after Texture0.UseTextureEntry: {err}");
-            }
+            GlDiagnostics.Poll(_getGL(), "_loadMaterialToShader/Texture0.UseTextureEntry");
             _silkRenderState.Texture2.UseTextureEntry(skMaterialEntry.SkEmissiveTexture);
-            {
-                var err = _getGL().GetError();
-                if (err != GLEnum.NoError)
-                    System.Console.Error.WriteLine($"[_loadMaterialToShader] GL ERROR after Texture2.UseTextureEntry: {err}");
-            }
+            GlDiagnostics.Poll(_getGL(), "_loadMaterialToShader/Texture2.UseTextureEntry");
 
             engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
             sh.SetUniform("col4Diffuse", new Vector4(
@@ -164,11 +156,7 @@ public class SilkThreeD : IThreeD
                 ((jMaterial.EmissiveFactors) & 0xff) / 255f,
                 ((jMaterial.EmissiveFactors >> 24) & 0xff) / 255f
             ));
-            {
-                var err = _getGL().GetError();
-                if (err != GLEnum.NoError)
-                    System.Console.Error.WriteLine($"[_loadMaterialToShader] GL ERROR after material uniforms: {err}");
-            }
+            GlDiagnostics.Poll(_getGL(), "_loadMaterialToShader/material uniforms");
 
             // sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
             sh.SetUniform("texture0", 0);
@@ -180,11 +168,7 @@ public class SilkThreeD : IThreeD
                 materialFlags |= Material.ShaderFlags.RenderInterior;
             }
             sh.SetUniform("materialFlags", (int) materialFlags);
-            {
-                var err = _getGL().GetError();
-                if (err != GLEnum.NoError)
-                    System.Console.Error.WriteLine($"[_loadMaterialToShader] GL ERROR after texture/materialFlags uniforms: {err}");
-            }
+            GlDiagnostics.Poll(_getGL(), "_loadMaterialToShader/texture/materialFlags uniforms");
         }
         catch (Exception e)
         {
@@ -1119,11 +1103,17 @@ public class SilkThreeD : IThreeD
         if (_hasGL43)
         {
             /*
-             * KHR_debug, core since 4.3. Note nothing calls DebugMessageCallback, so this
-             * currently only populates the (unread) debug message log.
+             * KHR_debug, core since 4.3. The callback is what makes this useful - without
+             * it the driver only populated a debug message log nobody read, which was the
+             * state here until GlDiagnostics was added.
+             *
+             * SYNCHRONOUS stays OFF. It makes the callback fire on the offending call's
+             * stack, which is exactly what you want when hunting a specific fault, but it
+             * serialises the driver and is far too costly to leave on.
              */
             _gl.Enable(EnableCap.DebugOutput);
             _gl.Disable(EnableCap.DebugOutputSynchronous);
+            GlDiagnostics.Install(_gl);
         }
         _gl.Enable(EnableCap.DepthClamp);
         _gl.Enable(EnableCap.DepthTest);
