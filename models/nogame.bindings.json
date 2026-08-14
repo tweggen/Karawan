@@ -1,0 +1,42 @@
+{
+  "interact": {
+    "description": "Interact with your environment.",
+    "controls": [ "Key:E", "GamepadButton:Y" ]
+  },
+  "change": {
+    "description": "Change something about you",
+    "controls": [ "Key:F", "GamepadButton:X" ]
+  },
+  "menu": {
+    "description": "Toggle menu",
+    "controls": [ "Key:Escape", "GamepadButton:Start" ]
+  },
+  "map": {
+    "description": "Toggle map",
+    "controls": [ "Key:Tab", "GamepadButton:Back" ]
+  },
+  "jump": {
+    "description": "Jump",
+    "controls": [ "Key:Space", "GamepadButton:A" ]
+  },
+  "run": {
+    "description": "Run",
+    "controls": [ "Key:LeftShift", "GamepadButton:LeftShoulder" ]
+  },
+  "followquest": {
+    "description": "Follow the currently-triggered quest",
+    "controls": [ "Key:Q" ]
+  },
+  "cursorup": {
+    "controls": [ "GamepadButton:DPadUp" ]
+  },
+  "cursordown": {
+    "controls": [ "GamepadButton:DPadDown" ]
+  },
+  "cursorleft": {
+    "controls": [ "GamepadButton:DPadLeft" ]
+  },
+  "cursorright": {
+    "controls": [ "GamepadButton:DPadRight" ]
+  }
+}

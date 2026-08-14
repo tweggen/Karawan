@@ -30,7 +30,7 @@ subsystem.
 | **GATE-C Linux** | 🔴 **never run.** Still the only tier in the whole programme with zero evidence. |
 | **GATE-D macOS** | 🔴 unrun for Phase 4 (models now come from bakes, not Assimp). Windows passed 2026-08-14. |
 | **GATE-E Linux Fn-key** | 🔴 unrun |
-| **WP-6.4** | 🟡 scoped, not started — the action/binding layer |
+| **WP-6.4** | 🟢 part 1 (the layer + button bindings) done; part 2 (`InputController` → actions) open |
 | **KI-17 (CI)** | 🟠 open. Nothing enforces generated-file reproducibility; the repo has no CI at all. |
 | **KAR-411 unwind** | 🟠 reasonable to start — versionCode 199 has been in the field on CoreCLR since 2026-08-10 |
 | **Perf A/B in Release** | 🟠 open — CoreCLR loads 4.64× faster than Mono, but measured in **Debug**, load phase only |
@@ -796,7 +796,7 @@ Consequences carried forward:
 | **WP-6.1** | ✅ **MERGED, device-verified** | `platform/wp-6.1` | [#66](https://github.com/tweggen/Karawan/pull/66) | 1 | gameplay loop, sound, input, splash all confirmed on device ✅ | — | **MAUI is gone from Wuka.** Four things surfaced only by building and running, none visible from source: `SingleProject` was hiding four dead platform folders AND pointing the SDK at `AndroidManifest.xml` (without `<AndroidManifest>` the SDK silently SYNTHESISES one — green build, right package name via `ApplicationId`, `android:label`/`icon` gone); the Silk `ExcludeAssets` entries are **suppressors, not sources** (see KI-12); and the splash artwork cannot be used as-is. Bluetooth permission prompt also disabled, code retained. |
 | **WP-6.2** | ✅ **FULLY MERGED** (re-verified 2026-08-14) | `platform/wp-6.2-net10-spike` → `platform/wp-6.2-coreclr-default` | [#70](https://github.com/tweggen/Karawan/pull/70) **merged**, follow-up PR open | 1 | GLOBAL-1 ✅ · 1b ✅ · 4 ✅ (192/192 on net10.0) · Windows desktop ✅ · Android both runtimes ✅ · APK+AAB shape ✅ · AC-1.7 ✅ · 16 KB verified from ELF ✅ | **ABIPROBE M+N ✅ PASSED on device — Mono AND CoreCLR** | **.NET 10 retarget is ON MASTER via #70.** **CoreCLR-as-default and `versionCode` 199 were initially stranded** (merge-order trap, 6th occurrence) and recovered onto `platform/wp-6.2-coreclr-default` — **which has since landed in full.** Re-verified 2026-08-14: `check-branch-landed.sh` reports every commit on that branch is on master, `Wuka.csproj` defaults `WukaCoreClr` to `true`, and the manifest carries `versionCode="199"`. This row read HALF-MERGED for four days after it was whole. **Two source fixes in the whole tree**, both the C# 14 span-overload change. Both runtimes pass → fix came upstream; CoreCLR chosen anyway for load time (4.64×) and coverage. Built on Windows 11 **and** macOS. |
 | **WP-6.3** | ✅ **MERGED (all four steps)** | `platform/wp-6.3-scancodes`, `platform/wp-6.3-device-contracts` | [#73](https://github.com/tweggen/Karawan/pull/73), [#74](https://github.com/tweggen/Karawan/pull/74) | 1 | build ✅ · **234/234 tests** ✅ · ScanCode ≡ SDL_Scancode 104/104 ✅ | **GATE-C input 🟡 macOS: WASD ✅, text entry ✅** | **Native input semantics.** `ScanCode` on USB HID usage IDs, so `Sdl3KeyCodes` is a **cast**; one name table in `engine.inputs.ScanCodeNames`, not one per backend. Devices carry no events; `OnConnectionChanged` → `INPUT_DEVICE_ATTACHED/DETACHED` on the queue (**a race fix**); enumeration is an immutable `IReadOnlyList` snapshot. **Validating it uncovered KI-14**, a pre-existing WP-3.2 regression that had killed desktop text entry. **Still unconfirmed: F8, the arrow/escape/enter family, and an Android re-check of `SetKeyboardVisible`.** |
-| **WP-6.4** | 🟡 **SCOPED, after WP-6.3** | — | — | 0 | — | `[HUMAN]` rebinding UI | **Action / binding layer, runtime r/w.** Grows the existing `InputMapper` JSON assignment into a proper control→action layer that can be read AND written while the game runs. Section below. |
+| **WP-6.4** | 🟢 **PART 1 DONE, PR-OPEN** | `platform/wp-6.4` | — | 1 | build ✅ · Wuka ✅ · **334/334 unit** (59 new) ✅ · bindings ship in the APK ✅ | `[HUMAN]` rebinding UI · analog migration deferred | **Action / binding layer, runtime r/w.** Controls stored by POSITION (`ScanCode`), actions carry all their controls, table writable at runtime, JSON round-trip, capture mode. Button bindings MIGRATED out of `MapButtonToLogical` into `models/nogame.bindings.json`. **Staged deliberately:** `InputController`'s 871 lines of WASD/trigger/stick handling stay on their current code until part 2, because that file has no automated coverage and is verifiable only by a human run — the exact trade the ADR reviewer flagged and Phase 3 paid for. |
 
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
 
@@ -1378,7 +1378,55 @@ code `"w"` — right for movement, misleading to read.
 steps 2–4.
 
 
-### 🟡 WP-6.4 — action / binding layer, readable and writable at runtime
+### 🟢 2026-08-14 — WP-6.4 part 1: the action/binding layer, and why part 2 is separate
+
+**What landed.** `builtin.controllers.bindings`: `Control` (a physical control as a
+value type with a canonical string form), `IInputModifier` + four implementations,
+`ActionBinding`, and `BindingTable` — the live, lock-guarded, JSON-round-tripping table
+with capture mode. `InputMapper` consults it first and falls through to the old flat
+table for anything it does not answer. The shipped **button** bindings moved to
+`models/nogame.bindings.json`.
+
+**Controls are stored by POSITION, and that is the whole point.** `Key:W` cannot be
+misread as "the key that prints w"; the old `"input.key.pressed:w"` could, and would
+have been, by the next person to touch it. `ScanCodeNames`' own doc-comment predicted
+this migration: *"WP-6.4 is expected to move bindings onto ScanCode directly."*
+
+**The four modifiers are not speculative.** Each is a behaviour that already exists,
+hardcoded where it cannot be seen or tested:
+
+| modifier | what it replaces |
+|---|---|
+| `curve 4` | `InputController.StickTransfer` — `sign(x) * \|x⁴\|`, written inline in the stick handler |
+| `range -1 1 0 255` | the trigger convention in `_onTriggerMoved`, one of the three judgement calls WP-3.1 flagged for GATE-C *because nobody could see it* |
+| `invert` | the stick axis WP-3.1 negated **from a field name** and got backwards (#61) |
+| `deadzone` | nothing — which is itself the observation |
+
+Tests pin `curve 4` against `StickTransfer` exactly and `range` against the trigger
+convention exactly, so part 2 can swap the call sites without changing how the game
+feels.
+
+**The bindings MOVED out of `nogame.implementations.json` rather than being duplicated,**
+and that was not the safe-looking choice. Leaving them as a fallback would mean a
+rebound key fires the new action *and* the old one still fires from the legacy table —
+rebinding would add a control instead of replacing it. Because the shipped game now
+depends on the new file, a missing one logs an **Error**, not a Trace (the TaleModule
+lesson), and a drift test asserts it is declared as a resource — the TALE storylet
+lesson, which is why it is in the APK rather than merely loadable on desktop.
+
+**A test caught a real defect immediately:** `Enum.TryParse` also accepts the underlying
+NUMBER, so `Key:26` parsed happily as `W`. A numeric form keeps parsing after a
+renumbering of `ScanCode` and silently means a different physical key — precisely what
+positional storage exists to prevent. Rejected explicitly.
+
+**Part 2 — migrating `InputController` — is deliberately separate.** That file is 871
+lines of WASD, triggers, stick curve and touch handling, it has **no automated
+coverage**, and it is verifiable only through a GATE-C human run. Doing it in the same
+change as the layer would be regression risk purchased against no recorded failure —
+the trade the ADR reviewer named and that Phase 3 paid for three times over, including
+KI-14. The layer is proven first; the call sites move against something already tested.
+
+### 🟡 WP-6.4 — action / binding layer, readable and writable at runtime (original scoping)
 
 **Continuation of what already exists.** `builtin.controllers.InputMapper` already holds a
 `SortedDictionary<string, string> MapButtonToLogical`, already configured from JSON, already
