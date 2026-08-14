@@ -267,6 +267,15 @@ if shape_problems:
         'build time. Correct surface.json (the mapping); gl.xml is the specification.'
         + chr(10) + chr(10).join(shape_problems))
 
+
+# GLboolean is ONE byte, and that is handled in funcptr.py rather than here.
+#
+# This used to emit [MarshalAs(UnmanagedType.U1)] onto delegate declarations, because C#
+# bool marshals as a 4-byte Win32 BOOL by default while GLboolean is a GLubyte - glIsEnabled
+# and glGetBooleanv could both read back TRUE where GL said false. Function pointers have no
+# marshaller to instruct, so the conversion is written out explicitly at the call boundary
+# instead of being requested from one. The defect is the same; the fix moved.
+
 emitted = 0
 skipped_conv = 0
 for key in sorted(shapes):
@@ -280,7 +289,6 @@ for key in sorted(shapes):
     ps = sh['Parameters']
     sig = ', '.join(cs_param(p) for p in ps)
     args = ', '.join((p['RefKind'] + ' ' if p['RefKind'] else '') + ident(p['Name']) for p in ps)
-    dele = ', '.join(((p['RefKind'] + ' ') if p['RefKind'] else '') + p['Type'] + ' ' + ident(p['Name']) for p in ps)
     slug = re.sub(r'[^A-Za-z0-9]', '_', key.split('|')[1])
     funcptr.emit(L, 8, name, ret, ps, entry, slug, ident)
     emitted += 1
