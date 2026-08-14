@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Numerics;
@@ -9,7 +9,6 @@ using engine;
 using engine.joyce;
 using static engine.Logger;
 using Karawan.Graphics.OpenGL;
-using static Splash.Silk.GLCheck;
 
 namespace Splash.Silk;
 
@@ -46,14 +45,6 @@ public class SilkThreeD : IThreeD
     
     private readonly engine.scheduler.WorkerQueue _graphicsThreadActions = new("Splash.silk.graphicsThreadActions");
 
-    private bool _checkGLErrors = false;
-
-    public bool CheckGLErrors
-    {
-        get => _checkGLErrors;
-        set { _checkGLErrors = value; }
-    }
-
     private GL _getGL()
     {
         if (null == _gl)
@@ -87,6 +78,14 @@ public class SilkThreeD : IThreeD
      * probing it and a silent GL_INVALID_ENUM to lose on older ES contexts.
      */
     private readonly bool _hasGL43;
+
+    /**
+     * Kept from the constructor because KHR_debug capability cannot be decided there: on
+     * ES below 3.2 it depends on the extension string, and there is no GL context yet.
+     * SetGL asks GlDiagnostics.Detect once the context exists.
+     */
+    private readonly string _api = "";
+    private readonly int _versionNumber;
 
     /**
      * Only the SSBO strategy carries a per-instance frame number (the instanceFrameno
@@ -133,9 +132,9 @@ public class SilkThreeD : IThreeD
         try
         {
             _silkRenderState.Texture0.UseTextureEntry(skMaterialEntry.SkDiffuseTexture);
-            GlDiagnostics.Poll(_getGL(), "_loadMaterialToShader/Texture0.UseTextureEntry");
+            GlDbg.Check(_getGL());
             _silkRenderState.Texture2.UseTextureEntry(skMaterialEntry.SkEmissiveTexture);
-            GlDiagnostics.Poll(_getGL(), "_loadMaterialToShader/Texture2.UseTextureEntry");
+            GlDbg.Check(_getGL());
 
             engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
             sh.SetUniform("col4Diffuse", new Vector4(
@@ -156,7 +155,7 @@ public class SilkThreeD : IThreeD
                 ((jMaterial.EmissiveFactors) & 0xff) / 255f,
                 ((jMaterial.EmissiveFactors >> 24) & 0xff) / 255f
             ));
-            GlDiagnostics.Poll(_getGL(), "_loadMaterialToShader/material uniforms");
+            GlDbg.Check(_getGL());
 
             // sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
             sh.SetUniform("texture0", 0);
@@ -168,7 +167,7 @@ public class SilkThreeD : IThreeD
                 materialFlags |= Material.ShaderFlags.RenderInterior;
             }
             sh.SetUniform("materialFlags", (int) materialFlags);
-            GlDiagnostics.Poll(_getGL(), "_loadMaterialToShader/texture/materialFlags uniforms");
+            GlDbg.Check(_getGL());
         }
         catch (Exception e)
         {
@@ -295,22 +294,14 @@ public class SilkThreeD : IThreeD
         var gl = _getGL();
 
         shader.Use();
-        {
-            var err = gl.GetError();
-            if (err != GLEnum.NoError)
-                System.Console.Error.WriteLine($"[_setupProgramGlobals] GL ERROR after shader.Use() (program={shader.Handle}): {err}");
-        }
+        GlDbg.Check(gl, $"program={shader.Handle}");
 
         /*
          * Before using the shader at all, make sure all our use cases are
          * resolved
          */
         _resolveProgramUseCases(shader);
-        {
-            var err = gl.GetError();
-            if (err != GLEnum.NoError)
-                System.Console.Error.WriteLine($"[_setupProgramGlobals] GL ERROR after _resolveProgramUseCases: {err}");
-        }
+        GlDbg.Check(gl);
 
         /*
          * Now specific calls.
@@ -322,21 +313,13 @@ public class SilkThreeD : IThreeD
                     as LightShaderUseCaseLocs;
             uc.Apply(gl, shader, _silkFrame.RenderFrame.LightCollector);
         }
-        {
-            var err = gl.GetError();
-            if (err != GLEnum.NoError)
-                System.Console.Error.WriteLine($"[_setupProgramGlobals] GL ERROR after LightShaderUseCaseLocs.Apply(): {err}");
-        }
+        GlDbg.Check(gl);
 
         shader.SetUniform("fogDistance", _fogDistance);
         shader.SetUniform("col4Fog", _v4FogColor);
         shader.SetUniform("v3AbsPosView", _vCamera);
         shader.SetUniform("frameNo", _frameno);
-        {
-            var err = gl.GetError();
-            if (err != GLEnum.NoError)
-                System.Console.Error.WriteLine($"[_setupProgramGlobals] GL ERROR after uniforms (fog/camera/frame): {err}");
-        }
+        GlDbg.Check(gl);
 
         /*
          * Also load the locations for some programs from the shader.
@@ -362,11 +345,7 @@ public class SilkThreeD : IThreeD
 
         _locMvp = shader.GetUniform("mvp");
         _locVertexFlags = shader.GetUniform("iVertexFlags");
-        {
-            var err = gl.GetError();
-            if (err != GLEnum.NoError)
-                System.Console.Error.WriteLine($"[_setupProgramGlobals] GL ERROR after attrib/uniform locations: {err}");
-        }
+        GlDbg.Check(gl);
     }
 
     
@@ -382,7 +361,7 @@ public class SilkThreeD : IThreeD
     {
         var gl = _getGL();
 
-        if (_checkGLErrors) CheckError(gl,"Beginning of DrawMeshInstanced");
+        GlDbg.Check(gl);
 
         if (false && _frameno % 300 == 0)
         {
@@ -402,7 +381,7 @@ public class SilkThreeD : IThreeD
             gl.GetInteger(GLEnum.Viewport, vp);
             System.Console.Error.WriteLine(
                 $"[DrawMeshInstanced] GL: program={curProg}, fbo={curFbo}, viewport=[{vp[0]},{vp[1]},{vp[2]},{vp[3]}]");
-            CheckError(gl, "DrawMeshInstanced diagnostics");
+            GlDbg.Check(gl);
         }
         SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
         //VertexArrayObject skMesh = skMeshEntry.vao;
@@ -427,19 +406,9 @@ public class SilkThreeD : IThreeD
          * calls by material.
          */
         // Drain any pre-existing GL errors before _loadMaterialToShader
-        {
-            GLEnum preErr;
-            while ((preErr = gl.GetError()) != GLEnum.NoError)
-            {
-                System.Console.Error.WriteLine($"[DrawMeshInstanced] GL ERROR BEFORE _loadMaterialToShader (pre-existing): {preErr}");
-            }
-        }
+        GlDbg.Check(gl);
         _loadMaterialToShader(sh, skMaterialEntry);
-        {
-            var err = gl.GetError();
-            if (err != GLEnum.NoError)
-                System.Console.Error.WriteLine($"[DrawMeshInstanced] GL ERROR after _loadMaterialToShader: {err}");
-        }
+        GlDbg.Check(gl);
 
         /*
          * Load the mesh, if it changed since the last call.
@@ -466,12 +435,8 @@ public class SilkThreeD : IThreeD
              * Bind the mesh itself.
              */
             skMeshEntry.vao.BindVertexArray();
-            {
-                var err = gl.GetError();
-                if (err != GLEnum.NoError)
-                    System.Console.Error.WriteLine($"[DrawMeshInstanced] GL ERROR after BindVertexArray({skMeshEntry.vao.Handle}): {err}");
-            }
-            if (_checkGLErrors) CheckError(gl,"Bind Vertex Array");
+            GlDbg.Check(gl, $"vao={skMeshEntry.vao.Handle}");
+            GlDbg.Check(gl);
             
             _silkFrame.RegisterInstanceBuffer(spanMatrices);
 
@@ -570,7 +535,7 @@ public class SilkThreeD : IThreeD
              * Upload the matrix array for instanced rendering.
              */
             bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
-            if (_checkGLErrors) CheckError(gl,"New matrix Buffer Object");
+            GlDbg.Check(gl);
 
             if (false && _frameno % 300 == 0)
             {
@@ -581,11 +546,7 @@ public class SilkThreeD : IThreeD
             for (uint i = 0; i < 4; ++i)
             {
                 gl.EnableVertexAttribArray((uint) _locInstanceMatrices + i);
-                {
-                    var err = gl.GetError();
-                    if (err != GLEnum.NoError)
-                        System.Console.Error.WriteLine($"[DrawMeshInstanced] GL ERROR after EnableVertexAttribArray({(uint)_locInstanceMatrices + i}): {err}");
-                }
+                GlDbg.Check(gl, $"loc={(uint)_locInstanceMatrices + i}");
                 gl.VertexAttribPointer(
                     (uint) _locInstanceMatrices + i,
                     4,
@@ -594,17 +555,9 @@ public class SilkThreeD : IThreeD
                     16 * (uint)sizeof(float),
                     (void*)(sizeof(float) * i * 4)
                 );
-                {
-                    var err = gl.GetError();
-                    if (err != GLEnum.NoError)
-                        System.Console.Error.WriteLine($"[DrawMeshInstanced] GL ERROR after VertexAttribPointer({(uint)_locInstanceMatrices + i}): {err}");
-                }
+                GlDbg.Check(gl, $"loc={(uint)_locInstanceMatrices + i}");
                 gl.VertexAttribDivisor((uint) _locInstanceMatrices + i, 1);
-                {
-                    var err = gl.GetError();
-                    if (err != GLEnum.NoError)
-                        System.Console.Error.WriteLine($"[DrawMeshInstanced] GL ERROR after VertexAttribDivisor({(uint)_locInstanceMatrices + i}): {err}");
-                }
+                GlDbg.Check(gl, $"loc={(uint)_locInstanceMatrices + i}");
             }
 
             if (AnimStrategy == GLAnimBuffers.AnimSSBO)
@@ -621,27 +574,27 @@ public class SilkThreeD : IThreeD
                     }
 
                     sh.SetUniform(_locNBones, (uint)nBones);
-                    if (_checkGLErrors) CheckError(gl, "setting nbones uniform");
+                    GlDbg.Check(gl);
 
                     /*
                      * Upload the frame number array for instanced rendering
                      */
                     bFramenos = new BufferObject<uint>(_gl, spanFramenos, BufferTargetARB.ArrayBuffer);
-                    if (_checkGLErrors) CheckError(gl, "New frameno Buffer Object");
+                    GlDbg.Check(gl);
                     gl.EnableVertexAttribArray((uint)_locFrameno);
-                    if (_checkGLErrors) CheckError(gl, "Enable vertex array in framenos");
+                    GlDbg.Check(gl);
                     gl.VertexAttribIPointer((uint)_locFrameno, 1,
                         VertexAttribIType.UnsignedInt, 0, (void*)0);
-                    if (_checkGLErrors) CheckError(gl, "Enable vertex attribute frameno ipointer n");
+                    GlDbg.Check(gl);
                     gl.VertexAttribDivisor((uint)_locFrameno, 1);
-                    if (_checkGLErrors) CheckError(gl, "attrib frameno divisor");
+                    GlDbg.Check(gl);
                 }
             } 
         }
         else
         {
             skMeshEntry.vao.BindVertexArray();
-            if (_checkGLErrors) CheckError(gl,"instance vertex array bind");
+            GlDbg.Check(gl);
         }
         
         /*
@@ -669,30 +622,15 @@ public class SilkThreeD : IThreeD
                 Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh instances at once ({nMatrices})");
             }
             // Drain any accumulated GL errors before the draw call
-            {
-                GLEnum preErr;
-                while ((preErr = gl.GetError()) != GLEnum.NoError)
-                {
-                    System.Console.Error.WriteLine(
-                        $"[DrawMeshInstanced] GL ERROR BEFORE draw: {preErr}, vao={skMeshEntry.vao?.Handle}");
-                }
-            }
+            GlDbg.Check(gl, $"vao={skMeshEntry.vao?.Handle}");
             gl.DrawElementsInstanced(
                 PrimitiveType.Triangles,
                 (uint)jMesh.Indices.Count,
                 GLEnum.UnsignedShort,
                 (void*)0,
                 (uint)nMatrices);
-            {
-                var err = gl.GetError();
-                if (err != GLEnum.NoError)
-                {
-                    System.Console.Error.WriteLine(
-                        $"[DrawMeshInstanced] GL ERROR after DrawElementsInstanced: {err}, " +
-                        $"indices={jMesh.Indices.Count}, instances={nMatrices}, vao={skMeshEntry.vao?.Handle}");
-                }
-            }
-            if (_checkGLErrors) CheckError(gl,"draw elements instanced");
+            GlDbg.Check(gl, $"indices={jMesh.Indices.Count}, instances={nMatrices}, vao={skMeshEntry.vao?.Handle}");
+            GlDbg.Check(gl);
         }
         else
         {
@@ -709,13 +647,13 @@ public class SilkThreeD : IThreeD
             {
                 Matrix4x4 mvpi = Matrix4x4.Transpose(spanMatrices[i]) * _m4View * _m4Projection;
                 sh.SetUniform(_locMvp, mvpi);
-                if (_checkGLErrors) CheckError(gl,"upload mvpi");
+                GlDbg.Check(gl);
                 gl.DrawElements(
                     PrimitiveType.Triangles,
                     (uint)jMesh.Indices.Count,
                     DrawElementsType.UnsignedShort,
                     (void*)0);
-                if (_checkGLErrors) CheckError(gl,"draw elements");
+                GlDbg.Check(gl);
             }
         }
         
@@ -743,7 +681,7 @@ public class SilkThreeD : IThreeD
         if (!skMeshEntry.IsUploaded())
         {
             skMeshEntry.Upload();
-            if (_checkGLErrors) CheckError(gl, "AfterUpload mesh");
+            GlDbg.Check(gl);
             ++_nUploadedMeshes;
         }
     }
@@ -1100,21 +1038,28 @@ public class SilkThreeD : IThreeD
         _gl.Enable(EnableCap.CullFace);
         _gl.CullFace(TriangleFace.Back);
         _gl.FrontFace(FrontFaceDirection.Ccw);
-        if (_hasGL43)
+        /*
+         * KHR_debug. The callback is what makes this useful - without it the driver only
+         * populated a debug message log nobody read, which was the state here until
+         * GlDiagnostics was added.
+         *
+         * Gated on the DEBUG capability, not on _hasGL43. Those are different questions and
+         * conflating them is what kept mobile polling: _hasGL43 also selects the SSBO
+         * animation strategy and is false for ES by construction, while ES 3.2 has KHR_debug
+         * in core. GL_DEBUG_OUTPUT and GL_DEBUG_OUTPUT_SYNCHRONOUS carry the same token
+         * values under the KHR extension, so the two Enable/Disable calls need no variant.
+         *
+         * SYNCHRONOUS stays OFF. It makes the callback fire on the offending call's stack,
+         * which is exactly what you want when hunting a specific fault, but it serialises
+         * the driver - punishing on desktop, worse on a tile-based mobile GPU.
+         */
+        var debugApi = GlDiagnostics.Detect(_gl, _api, _versionNumber);
+        if (debugApi != GlDiagnostics.DebugApi.None)
         {
-            /*
-             * KHR_debug, core since 4.3. The callback is what makes this useful - without
-             * it the driver only populated a debug message log nobody read, which was the
-             * state here until GlDiagnostics was added.
-             *
-             * SYNCHRONOUS stays OFF. It makes the callback fire on the offending call's
-             * stack, which is exactly what you want when hunting a specific fault, but it
-             * serialises the driver and is far too costly to leave on.
-             */
             _gl.Enable(EnableCap.DebugOutput);
             _gl.Disable(EnableCap.DebugOutputSynchronous);
-            GlDiagnostics.Install(_gl);
         }
+        GlDbg.Init(_gl, debugApi);
         _gl.Enable(EnableCap.DepthClamp);
         _gl.Enable(EnableCap.DepthTest);
         _gl.Disable(EnableCap.ScissorTest);
@@ -1138,14 +1083,7 @@ public class SilkThreeD : IThreeD
          * state. An error surfacing here means one of the calls above is unsupported on
          * this context.
          */
-        {
-            GLEnum setupErr;
-            while ((setupErr = _gl.GetError()) != GLEnum.NoError)
-            {
-                Error($"GL error during SetGL on {engine.GlobalSettings.Get("platform.threeD.API")} "
-                      + $"{engine.GlobalSettings.Get("platform.threeD.API.version")}: {setupErr}");
-            }
-        }
+        GlDbg.Check(_gl, $"{engine.GlobalSettings.Get("platform.threeD.API")} {engine.GlobalSettings.Get("platform.threeD.API.version")}");
 
         _silkRenderState = new(_gl);
     }
@@ -1184,6 +1122,7 @@ public class SilkThreeD : IThreeD
         _listShaderUseCases.Add(new LightShaderUseCase());
         string api = engine.GlobalSettings.Get("platform.threeD.API");
         string version = engine.GlobalSettings.Get("platform.threeD.API.version");
+        _api = api;
 
         /*
          * Parse numerically. The previous String.Compare(version, "430") happens to be
@@ -1197,6 +1136,7 @@ public class SilkThreeD : IThreeD
                     + "Assuming the lowest capability level.");
             versionNumber = 0;
         }
+        _versionNumber = versionNumber;
 
         if (api == "OpenGL")
         {

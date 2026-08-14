@@ -194,6 +194,7 @@ namespace Karawan.Graphics.OpenGL
 
     public enum StringName : uint
     {
+        Extensions = 0x1F03,
         Version = 0x1F02,
     }
 
@@ -994,6 +995,20 @@ namespace Karawan.Graphics.OpenGL
         {
             if (f_sup_DebugMessageControl == null) f_sup_DebugMessageControl = (delegate* unmanaged<uint, uint, uint, int, uint*, byte, void>)_getProc("glDebugMessageControl");
             f_sup_DebugMessageControl(source, type, severity, count, ids, (byte)(enabled ? 1 : 0));
+        }
+
+        private delegate* unmanaged<nint, int*, void> f_sup_DebugMessageCallbackKHR;
+        public void DebugMessageCallbackKHR(nint callback, int* userParam)
+        {
+            if (f_sup_DebugMessageCallbackKHR == null) f_sup_DebugMessageCallbackKHR = (delegate* unmanaged<nint, int*, void>)_getProc("glDebugMessageCallbackKHR");
+            f_sup_DebugMessageCallbackKHR(callback, userParam);
+        }
+
+        private delegate* unmanaged<uint, uint, uint, int, uint*, byte, void> f_sup_DebugMessageControlKHR;
+        public void DebugMessageControlKHR(uint source, uint type, uint severity, int count, uint* ids, bool enabled)
+        {
+            if (f_sup_DebugMessageControlKHR == null) f_sup_DebugMessageControlKHR = (delegate* unmanaged<uint, uint, uint, int, uint*, byte, void>)_getProc("glDebugMessageControlKHR");
+            f_sup_DebugMessageControlKHR(source, type, severity, count, ids, (byte)(enabled ? 1 : 0));
         }
 
 

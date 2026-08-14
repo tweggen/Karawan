@@ -1,7 +1,6 @@
 using System;
 using System.Data;
 using Karawan.Graphics.OpenGL;
-using static Splash.Silk.GLCheck;
 using static engine.Logger;
 
 namespace Splash.Silk;
@@ -21,13 +20,13 @@ public class SkSingleShaderEntry : ASingleShaderEntry
         //4) Compile the shader.
         //5) Check for errors.
         uint handle = _gl.CreateShader(type);
-        CheckError(_gl,$"glCreateShader {type}.");
+        GlDbg.Check(_gl, $"glCreateShader {type}.");
         _gl.ShaderSource(handle, source);
-        CheckError(_gl,$"glShaderSource {handle}.");
+        GlDbg.Check(_gl, $"glShaderSource {handle}.");
         _gl.CompileShader(handle);
-        CheckError(_gl,$"glCompileShader {handle}.");
+        GlDbg.Check(_gl, $"glCompileShader {handle}.");
         string infoLog = _gl.GetShaderInfoLog(handle);
-        CheckError(_gl,$"glGetShaderInfoLog {handle}.");
+        GlDbg.Check(_gl, $"glGetShaderInfoLog {handle}.");
         if (!string.IsNullOrWhiteSpace(infoLog))
         {
             if (infoLog.Contains("error", StringComparison.OrdinalIgnoreCase))

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Numerics;
 using Karawan.Graphics.OpenGL;
 using static engine.Logger;
@@ -23,31 +23,14 @@ public class SkRenderbufferEntry : ARenderbufferEntry
     }
 
     
-    public int CheckError(string what)
-    {
-        int err = 0;
-        while (true)
-        {
-            var error = _gl.GetError();
-            if (error != GLEnum.NoError)
-            {
-                Error($"Found OpenGL {what} error {error}");
-                err += (int)error;
-            }
-            else
-            {
-                // Console.WriteLine($"OK: {what}");
-                return err;
-            }
-        }
-    }
+
 
 
     public void Use(GL gl, Vector2 ul, Vector2 lr)
     {
         _gl = gl;
         gl.BindFramebuffer(GLEnum.Framebuffer, _handleFramebuffer);
-        CheckError("SkRenderbuffer BindFramebuffer");
+        GlDbg.Check(_gl);
 
         Vector2 v2Ul = ul;
         Vector2 v2Lr = lr;
@@ -57,7 +40,7 @@ public class SkRenderbufferEntry : ARenderbufferEntry
         v2Lr.Y *= JRenderbuffer.Height;
         Vector2 v2Size = v2Lr - v2Ul;
         gl.Viewport((int)v2Ul.X, (int)v2Ul.Y, (uint)v2Size.X, (uint)v2Size.Y);
-        CheckError("SkRenderbuffer Viewport");
+        GlDbg.Check(_gl);
     }
     
 
@@ -99,41 +82,41 @@ public class SkRenderbufferEntry : ARenderbufferEntry
         fixed (uint* pHandle = &_handleFramebuffer)
         {
             gl.GenFramebuffers(1U, pHandle);
-            CheckError("SkRenderbuffer GenFramebuffers");
+            GlDbg.Check(_gl);
         }
         gl.BindFramebuffer(GLEnum.Framebuffer, _handleFramebuffer);
-        CheckError("SkRenderbuffer BindFramebuffer");
+        GlDbg.Check(_gl);
 
         /*
          * Assign the texture as color channel.
          */
         gl.FramebufferTexture(GLEnum.Framebuffer, GLEnum.ColorAttachment0, _skTexture.Handle, 0);
-        CheckError("SkRenderbuffer FramebufferTexture");
+        GlDbg.Check(_gl);
 
         /*
          * Create a renderbuffer for depth.
          */
         fixed (uint *pHandle = &_handleDepthbuffer) {
             gl.GenRenderbuffers(1, pHandle);
-            CheckError("SkRenderbuffer GenRenderbuffers");
+            GlDbg.Check(_gl);
         }
         /*
          * Bind as current ...
          */
         gl.BindRenderbuffer(GLEnum.Renderbuffer, _handleDepthbuffer);
-        CheckError("SkRenderbuffer BindRenderbuffers");
+        GlDbg.Check(_gl);
         /*
          * ... allocate ram ...
          */
         gl.RenderbufferStorage(GLEnum.Renderbuffer, GLEnum.DepthComponent24, 
             JRenderbuffer.Width, JRenderbuffer.Height);
-        CheckError("SkRenderbuffer RenderbufferStorage");
+        GlDbg.Check(_gl);
         /*
          * ... bind it to the framebufffer.
          */
         gl.FramebufferRenderbuffer(GLEnum.Framebuffer, GLEnum.DepthAttachment,
             GLEnum.Renderbuffer, _handleDepthbuffer);
-        CheckError("SkRenderbuffer FramebufferRenderbuffer");
+        GlDbg.Check(_gl);
         
         
         _modesDrawbuffer = new DrawBufferMode[1];
@@ -141,14 +124,14 @@ public class SkRenderbufferEntry : ARenderbufferEntry
         fixed (DrawBufferMode* pModes = _modesDrawbuffer)
         {
             gl.DrawBuffers(1, pModes);
-            CheckError("SkRenderbuffer DrawBuffers");
+            GlDbg.Check(_gl);
         }
 
         if (gl.CheckFramebufferStatus(GLEnum.Framebuffer) != GLEnum.FramebufferComplete)
         {
             Error("Unable to initialize frame buffer");
         }
-        CheckError("SkRenderbuffer CheckFramebufferStatus");
+        GlDbg.Check(_gl);
         Trace( $"Uploaded texture {_jTexture.Key}.");
 
         textureManager.PushTexture(_jTexture.Key, _skTextureEntry);

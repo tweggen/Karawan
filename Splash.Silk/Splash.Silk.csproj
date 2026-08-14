@@ -10,6 +10,23 @@
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
+    <!--
+      GL error polling (Splash.Silk/GlDbg.cs).
+
+      Defined for Debug, undefined for Release. GlDbg.Check is [Conditional] on this symbol,
+      so when it is undefined the compiler emits NO IL for those call sites - the call and
+      its arguments both disappear, including any interpolated string. Release therefore
+      carries zero polling cost, while the KHR_debug callback stays installed on contexts
+      that support it, because a driver that pushes errors costs nothing when none occur.
+
+      Override explicitly to poll in a Release build: dotnet build -p:GlDiag=true
+    -->
+    <PropertyGroup>
+      <GlDiag Condition=" '$(GlDiag)' == '' and '$(Configuration)' == 'Debug' ">true</GlDiag>
+      <GlDiag Condition=" '$(GlDiag)' == '' ">false</GlDiag>
+      <DefineConstants Condition=" '$(GlDiag)' == 'true' ">$(DefineConstants);JOYCE_GL_DIAG</DefineConstants>
+    </PropertyGroup>
+
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>

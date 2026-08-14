@@ -4,7 +4,6 @@ using System.Numerics;
 using engine;
 using Karawan.Graphics.OpenGL;
 using static engine.Logger;
-using static Splash.Silk.GLCheck;
 
 namespace Splash.Silk;
 
@@ -19,48 +18,26 @@ public class SkProgramEntry : IDisposable
 
     public SortedDictionary<string, ShaderLocs> ShaderUseCases = new();
 
-    private const bool _checkErrors = false;
     
     public void SetUniform(int location, int value)
     {
         if (-1 == location) return;
         _gl.Uniform1(location, (int)value);
-        if (_checkErrors)
-        {
-            var err = _gl.GetError();
-            if (err != GLEnum.NoError)
-            {
-                if (_traceShader) Error($"Error setting uniform int {location}: {err}");
-            }
-        }
+        GlDbg.Check(_gl, $"setting uniform int {location}");
     }
 
     public void SetUniform(int location, uint value)
     {
         if (-1 == location) return;
         _gl.Uniform1(location, (uint)value);
-        if (_checkErrors)
-        {
-            var err = _gl.GetError();
-            if (err != GLEnum.NoError)
-            {
-                if (_traceShader) Error($"Error setting uniform uint {location}: {err}");
-            }
-        }
+        GlDbg.Check(_gl, $"setting uniform uint {location}");
     }
 
     public void SetUniform(int location, float value)
     {
         if (-1 == location) return;
         _gl.Uniform1(location, value);
-        if (_checkErrors)
-        {
-            var err = _gl.GetError();
-            if (err != GLEnum.NoError)
-            {
-                if (_traceShader) Error($"Error setting uniform float {location}: {err}");
-            }
-        }
+        GlDbg.Check(_gl, $"setting uniform float {location}");
     }
     
     //Uniforms are properties that applies to the entire geometry
@@ -74,14 +51,7 @@ public class SkProgramEntry : IDisposable
             return;
         }
         _gl.Uniform1(location, value);
-        if (_checkErrors)
-        {
-            var err = _gl.GetError();
-            if (err != GLEnum.NoError)
-            {
-                if (_traceShader) Error($"Error setting uniform {name}: {err}");
-            }
-        }
+        GlDbg.Check(_gl, $"setting uniform {name}");
     }
 
     public void SetUniform(string name, float value)
@@ -93,14 +63,7 @@ public class SkProgramEntry : IDisposable
             return;
         }
         _gl.Uniform1(location, value);
-        if (_checkErrors)
-        {
-            var err = _gl.GetError();
-            if (err != GLEnum.NoError)
-            {
-                if (_traceShader) Error($"Error setting uniform {name}: {err}");
-            }
-        }
+        GlDbg.Check(_gl, $"setting uniform {name}");
     }
 
     
@@ -203,14 +166,7 @@ public class SkProgramEntry : IDisposable
     public void Use()
     {
         _gl.UseProgram(Handle);
-        if (_checkErrors)
-        {
-            var err = _gl.GetError();
-            if (err != GLEnum.NoError)
-            {
-                if (_traceShader) Error($"Error using program {Handle}: {err}.");
-            }
-        }
+        GlDbg.Check(_gl, $"using program {Handle}");
     }
     
     
@@ -226,29 +182,29 @@ public class SkProgramEntry : IDisposable
         if (!SkFragmentShader.IsUploaded()) SkFragmentShader.Upload();
 
         Handle = _gl.CreateProgram();
-        CheckError(_gl, $"CreateProgram");
+        GlDbg.Check(_gl, $"CreateProgram");
         
         /*
          * Attach the individual shaders.
          */
         _gl.AttachShader(Handle, SkVertexShader.Handle);
-        CheckError(_gl, $"glAttachShader Vertex {SkVertexShader.Handle} to Program {Handle} .");
+        GlDbg.Check(_gl, $"glAttachShader Vertex {SkVertexShader.Handle} to Program {Handle} .");
         _gl.AttachShader(Handle, SkFragmentShader.Handle);
-        CheckError(_gl, $"glAttachShader Fragment {SkFragmentShader.Handle} to Program {Handle} .");
+        GlDbg.Check(_gl, $"glAttachShader Fragment {SkFragmentShader.Handle} to Program {Handle} .");
         _gl.LinkProgram(Handle); 
-        CheckError(_gl, $"glLinkProgram {Handle}.");
+        GlDbg.Check(_gl, $"glLinkProgram {Handle}.");
         //Check for linking errors.
         _gl.GetProgram(Handle, GLEnum.LinkStatus, out var status);
-        CheckError(_gl, $"glGetProgram LinkStatus {Handle}.");
+        GlDbg.Check(_gl, $"glGetProgram LinkStatus {Handle}.");
         if (status == 0)
         {
             throw new Exception($"Program failed to link with error: {_gl.GetProgramInfoLog(Handle)}");
         }
         //Detach and delete the shaders
         _gl.DetachShader(Handle, SkVertexShader.Handle);
-        CheckError(_gl, $"glDetachShader Vertex {SkVertexShader.Handle} from Program {Handle} .");
+        GlDbg.Check(_gl, $"glDetachShader Vertex {SkVertexShader.Handle} from Program {Handle} .");
         _gl.DetachShader(Handle, SkFragmentShader.Handle);
-        CheckError(_gl, $"glDetachShader Fragment {SkFragmentShader.Handle} from Program {Handle} .");
+        GlDbg.Check(_gl, $"glDetachShader Fragment {SkFragmentShader.Handle} from Program {Handle} .");
     }
     
     
@@ -262,7 +218,7 @@ public class SkProgramEntry : IDisposable
         if (Handle != 0xffffffff)
         {
             _gl.DeleteProgram(Handle);
-            CheckError(_gl, $"glDeleteProgram {Handle}.");
+            GlDbg.Check(_gl, $"glDeleteProgram {Handle}.");
             Handle = 0xffffffff;
         }
         SkVertexShader.Dispose();

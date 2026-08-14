@@ -55,18 +55,7 @@ public class Controller : IDisposable
 
     public IntPtr Context;
 
-    [Conditional("DEBUG")]
-    public static void CheckGlError(GL gl, string title)
-    {
-        var error = gl.GetError();
-        if (!string.IsNullOrWhiteSpace(title))
-        {
-            if (error != GLEnum.NoError)
-            {
-                Warning($"{title}: {error}");
-            }
-        }
-    }
+
 
     private readonly Dictionary<string, int> _uniformToLocation = new Dictionary<string, int>();
 
@@ -379,11 +368,11 @@ public class Controller : IDisposable
         };
 
         UseShader();
-        CheckGlError(_gl, "");
+        GlDbg.Check(_gl);
         _gl.Uniform1(_attribLocationTex, 0);
-        CheckGlError(_gl, "");
+        GlDbg.Check(_gl);
         _gl.UniformMatrix4(_attribLocationProjMtx, 1, false, orthoProjection);
-        CheckGlError(_gl, "Projection");
+        GlDbg.Check(_gl);
 
         _gl.BindSampler(0, 0);
 
@@ -392,7 +381,7 @@ public class Controller : IDisposable
         // The renderer would actually work without any VAO bound, but then our VertexAttrib calls would overwrite the default one currently bound.
         _vertexArrayObject = _gl.GenVertexArray();
         _gl.BindVertexArray(_vertexArrayObject);
-        CheckGlError(_gl, "VAO");
+        GlDbg.Check(_gl);
 
         // Bind vertex/index buffers and setup attributes for ImDrawVert
         _gl.BindBuffer(GLEnum.ArrayBuffer, _vboHandle);
@@ -468,10 +457,10 @@ public class Controller : IDisposable
 
             _gl.BufferData(GLEnum.ArrayBuffer, (nuint)(cmdListPtr.VtxBuffer.Size * sizeof(ImDrawVert)),
                 (void*)cmdListPtr.VtxBuffer.Data, GLEnum.StreamDraw);
-            CheckGlError(_gl, $"Data Vert {n}");
+            GlDbg.Check(_gl, $"Data Vert {n}");
             _gl.BufferData(GLEnum.ElementArrayBuffer, (nuint)(cmdListPtr.IdxBuffer.Size * sizeof(ushort)),
                 (void*)cmdListPtr.IdxBuffer.Data, GLEnum.StreamDraw);
-            CheckGlError(_gl, $"Data Idx {n}");
+            GlDbg.Check(_gl, $"Data Idx {n}");
 
             for (int cmd_i = 0; cmd_i < cmdListPtr.CmdBuffer.Size; cmd_i++)
             {
@@ -495,15 +484,15 @@ public class Controller : IDisposable
                         // Apply scissor/clipping rectangle
                         _gl.Scissor((int)clipRect.X, (int)(framebufferHeight - clipRect.W),
                             (uint)(clipRect.Z - clipRect.X), (uint)(clipRect.W - clipRect.Y));
-                        CheckGlError(_gl, "Scissor");
+                        GlDbg.Check(_gl);
 
                         // Bind texture, Draw
                         _gl.BindTexture(GLEnum.Texture2D, (uint)cmdPtr.TextureId);
-                        CheckGlError(_gl, "Texture");
+                        GlDbg.Check(_gl);
 
                         _gl.DrawElementsBaseVertex(GLEnum.Triangles, cmdPtr.ElemCount, GLEnum.UnsignedShort,
                             (void*)(cmdPtr.IdxOffset * sizeof(ushort)), (int)cmdPtr.VtxOffset);
-                        CheckGlError(_gl, "Draw");
+                        GlDbg.Check(_gl);
                     }
                 }
             }
@@ -775,7 +764,7 @@ public class Controller : IDisposable
 
         _gl.BindVertexArray((uint)lastVertexArray);
 
-        CheckGlError(_gl, "End of ImGui setup");
+        GlDbg.Check(_gl);
     }
 
     /// <summary>

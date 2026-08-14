@@ -60,6 +60,53 @@ exactly the kind that deserves a control:
   `mvid=d6f6e38b-806e-4a66-816c-0a18d1a6bf08`. Same IL, different runtime — the only variable was the
   runtime itself.
 
+### ✅ 2026-08-14 — GL diagnostics unified; polling off on every platform that can push
+
+**One API for "did that GL call fail": `Splash.Silk/GlDbg.cs`.** It replaces **nine** separate
+mechanisms whose differences nobody had chosen — five drained the error queue and four read a
+single error; three reported through `Error`, one through `Warning`, one straight to
+`Console.Error`, and one read the error and then discarded it unless a second private flag was
+also set. Gates ranged from a `const false`, through instance bools and a local
+`bool checkLights = false`, to `[Conditional("DEBUG")]`, to nothing at all.
+
+**Measured before:** 2,524 `glGetError` calls in a captured frame — **31.5% of all GL traffic**
+— from 14 ungated sites in `SilkThreeD` that ran on **every platform, mobile included**, while
+the KHR_debug callback was simultaneously active on desktop. **After: 0.**
+
+Three properties, each verified rather than argued:
+
+| Property | How it was checked | Result |
+|---|---|---|
+| Zero cost when compiled out | IL scan of the shipped assembly for call sites | Debug **114**, Release **0** |
+| No allocation when the callback is active | probe asserting the interpolation is never evaluated | argument function never called |
+| Correct overload binding | probe asserting the label reaches `what`, not `member` | label preserved, location auto-filled |
+
+`[Conditional("JOYCE_GL_DIAG")]` is what buys the first row: the compiler erases the call **and
+its arguments**, so `$"vao={handle}"` is never built. An `if` on a `const` cannot do that.
+Location comes from `CallerMemberName`/`CallerFilePath`/`CallerLineNumber`, so the hand-typed
+`"after BindVertexArray"` strings — which drift the moment code moves — are gone.
+
+**Mobile was the inverted case and is now fixed.** The callback was gated on `_hasGL43`, which
+also selects the SSBO animation strategy and is `false` for GLES *by construction* — so ES 3.2,
+which has KHR_debug **in core**, scored false and kept polling. Mobile got no callback *and*
+every ungated poll, on tile-based GPUs where polling costs most. Capability is now decided by
+`GlDiagnostics.Detect` on what the spec says: desktop ≥ 4.3 and ES ≥ 3.2 use the unsuffixed
+entry points, ES 3.0/3.1 use `GL_KHR_debug`'s **`…KHR`-suffixed** ones (both pairs are now bound
+— `surface.json` carries `GL_EXTENSIONS`, gen.py's SUPPORT list carries all four entry points,
+and `GLDEBUGPROCKHR` was added to `GLTYPE`). Detection is spec-driven, **not** a
+`glGetProcAddress` non-null probe, because `GLTrace` deliberately hands back a thunk for every
+entry point it knows — so a pointer probe reports success on a driver that has no such call.
+
+**Two latent defects fell out of the migration**, neither of which was the goal:
+- `SkProgramEntry` read the error and dropped it unless `_traceShader` was also on. That is
+  worse than not checking: it *consumed* the evidence, leaving nothing for the next drain — and
+  it is what produced the "GL ERROR BEFORE … (pre-existing)" loops in `DrawMeshInstanced`, which
+  were draining a queue the single-read sites kept dirty. Drain-always removes the cause.
+- `SkTexture` let the **diagnostic gate render state**: `_liveBound`/`_backBound` were assigned
+  only when the error check returned clean. With `_checkGLErrors = false` — the state that has
+  always shipped — that was always. Enabling the check would have silently stopped tracking the
+  binding. Now decoupled; shipped behaviour preserved.
+
 ### ✅ SHIPPED 2026-08-10 — Play accepted versionCode 199 (.NET 10 + CoreCLR)
 
 **WP-6.2 is not merely evaluated, it is in production.** Google Play accepted the bundle, so

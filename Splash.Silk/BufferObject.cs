@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using Karawan.Graphics.OpenGL;
 using static engine.Logger;
-using static Splash.Silk.GLCheck;
 
 namespace Splash.Silk;
 
@@ -26,11 +25,11 @@ public class BufferObject<TDataType> : IDisposable
         //Getting the handle, and then uploading the data to said handle.
         _handle = _gl.GenBuffer();
         _gl.BindBuffer(_bufferType, _handle);
-        CheckError(_gl,$"BindBuffer type {_bufferType}.");
+        GlDbg.Check(_gl, $"BindBuffer type {_bufferType}.");
         fixed (void* d = data)
         {
             _gl.BufferData(bufferType, (nuint)(data.Length * sizeof(TDataType)), d, BufferUsageARB.DynamicDraw);
-            CheckError(_gl,$"BufferData type {_bufferType}.");
+            GlDbg.Check(_gl, $"BufferData type {_bufferType}.");
         }
     }
 
@@ -38,7 +37,7 @@ public class BufferObject<TDataType> : IDisposable
     public void BindBufferBase(uint slot)
     {
         _gl.BindBufferBase(_bufferType, slot, _handle);
-        CheckError(_gl,$"BindBufferBase.");
+        GlDbg.Check(_gl, $"BindBufferBase.");
     }
     
     
@@ -46,7 +45,7 @@ public class BufferObject<TDataType> : IDisposable
     {
         //Binding the buffer object, with the correct buffer type.
         _gl.BindBuffer(_bufferType, _handle);
-        CheckError(_gl,$"BindBuffer.");
+        GlDbg.Check(_gl, $"BindBuffer.");
     }
 
     

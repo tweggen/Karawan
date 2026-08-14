@@ -1,7 +1,6 @@
 using System;
 using System.Numerics;
 using Karawan.Graphics.OpenGL;
-using static Splash.Silk.GLCheck;
 using static engine.Logger;
 
 namespace Splash.Silk;
@@ -28,28 +27,27 @@ public class LightShaderUseCaseLocs : ShaderLocs
         try
         {
             var lightShaderPos = Pos[index];
-            bool checkLights = false;
 
             // Send to shader light enabled state and type
             sh.SetUniform(lightShaderPos.EnabledLoc, (light.enabled ? 1 : 0));
-            if (checkLights) CheckError(gl,$"Set Uniform light enabled {index}");
+            GlDbg.Check(gl, $"Set Uniform light enabled {index}");
             sh.SetUniform(lightShaderPos.TypeLoc, (int)light.type);
-            if (checkLights) CheckError(gl,$"Set Uniform light type {index}");
+            GlDbg.Check(gl, $"Set Uniform light type {index}");
 
             // Send to shader light position values
             Vector3 position = new(light.position.X, light.position.Y, light.position.Z);
             sh.SetUniform(lightShaderPos.PosLoc, position);
-            if (checkLights) CheckError(gl,$"Set Uniform light position {index}");
+            GlDbg.Check(gl, $"Set Uniform light position {index}");
 
             // Send to shader light target position values
             Vector3 target = new(light.target.X, light.target.Y, light.target.Z);
             sh.SetUniform(lightShaderPos.TargetLoc, target);
-            if (checkLights) CheckError(gl,$"Set Uniform light target {index}");
+            GlDbg.Check(gl, $"Set Uniform light target {index}");
 
             // Send to shader light color values
             Vector4 color = light.color;
             sh.SetUniform(lightShaderPos.ColorLoc, color);
-            if (checkLights) CheckError(gl,$"Set Uniform light color {index}");
+            GlDbg.Check(gl, $"Set Uniform light color {index}");
 
             float param1 = light.param1;
             sh.SetUniform(lightShaderPos.Param1Loc, param1);
