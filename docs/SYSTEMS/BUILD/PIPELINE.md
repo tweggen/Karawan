@@ -141,12 +141,13 @@ models/nogame.narration.json
 
 ### Generated-file names must be derived identically on both sides
 
-Some manifest entries are not files that exist in the source tree — they name files the bake *will* produce (`ac-{hash}` animation collections, `sc-{hash}` TALE scenarios). Their names are hashes, and the hash is computed **twice** from independent copies of the code, because `Tooling/Cmdline` cannot reference `JoyceCode`:
+Some manifest entries are not files that exist in the source tree — they name files the bake *will* produce (`ac-{hash}` animation collections, `sc-{hash}` TALE scenarios, `mo-{hash}` models). Their names are hashes, and the hash is computed **twice** from independent copies of the code, because `Tooling/Cmdline` cannot reference `JoyceCode`:
 
 | Artifact | Build-time (manifest) | Runtime / bake |
 |---|---|---|
 | `ac-{hash}` | `GameConfig.ModelAnimationCollectionFileName` + `GameConfig.LoadAnimation` | `ModelAnimationCollectionReader.ModelAnimationCollectionFileName` + `AAssetImplementation._whenLoadedAnimations` |
 | `sc-{hash}` | `GameConfig.ScenarioFileName` + `LoadScenarioList` | `engine.tale.bake.ScenarioFileName.Of` + `AAssetImplementation._whenLoadedScenarios` |
+| `mo-{hash}` | `GameConfig.ModelFileName` + `GameConfig.LoadResourceList` | `builtin.baking.ModelFileName.Of` + `AAssetImplementation._registerModelEntry` |
 
 Drift between the copies is invisible on desktop (the game just re-bakes on demand) but **breaks the Android build**, where every manifest entry becomes an `<AndroidAsset Include="…"/>` that MSBuild must find on disk:
 
@@ -162,7 +163,60 @@ Note the hash inputs are **not just the hash function** — the JSON shape feedi
 dotnet build nogame/nogame.csproj
 diff <(grep -o 'ac-[A-Za-z0-9_~-]*' nogame/generated/AndroidResources.xml | sort -u) \
      <(ls nogame/generated/ | grep '^ac-' | sort)
+# and the same for mo- :
+diff <(grep -o 'mo-[A-Za-z0-9_~-]*' nogame/generated/AndroidResources.xml | sort -u) \
+     <(ls nogame/generated/ | grep '^mo-' | sort)
 ```
+
+`mo-{hash}` has one extra hash input the others do not: the model's **load
+properties**. Two call sites loading the same fbx with a different `Scale` (or
+`Axis`, `AnimAxis`, …) do not get the same `Model`, so the properties are part of
+the identity. They are declared beside the resource and must match what the game
+passes in its `ModelCacheParams`:
+
+```json
+{ "uri": "../models/.../man_business_Rig.fbx", "type": "model",
+  "modelProperties": { "Scale": "1" } }
+```
+
+Significance is decided by **exclusion**: only `AnimationUrls`, `CPUNodes` and
+`ModelBaseBone` are known not to reach the persisted graph (each justified at
+`ModelFileName._insignificantProperties`). Everything else counts, including a
+property that does not exist yet — so adding one forces a re-bake, which is
+merely wasteful, rather than silently reusing a file baked without it, which
+would be wrong and invisible. This bit during WP-4.2: the game passes `Scale=1`
+and the first bake did not declare it, so the runtime hashed to a name the bake
+had never written.
+
+---
+
+## Models are baked (Phase 4)
+
+Since WP-4.1–4.4, **fbx import is a build-time capability only.** Chushi reads
+each declared model through Assimp and writes a `mo-{hash}` file; the game
+deserialises that and never sees an fbx. Consequences worth knowing:
+
+- **`libassimp.so` is not in the APK**, and `scripts/check-apk.py` fails if it
+  reappears (`FORBIDDEN_LIBS`) — a runtime project re-acquiring an Assimp
+  reference is easy to do by accident and otherwise invisible.
+- **The importer lives in `JoyceFbx`**, referenced by `Mazu`/`Chushi` and the test
+  suite and by nothing that ships. It is NOT in `Joyce`, because every runtime
+  target references `Joyce` and would pick Assimp up transitively — which is what
+  used to happen.
+- **`ModelCache.FbxLoader`** is the seam. Chushi assigns it at startup; in the
+  game it is null and asking for an unbaked fbx raises rather than silently
+  working.
+- **The fbx files stay in the tree** — they are the bake input. They are marked
+  `"type": "model"` (ships its bake instead) or `"type": "animationSource"`
+  (ships nothing; its output is the `ac-{hash}`), so they are no longer packaged.
+- **Two builds are still needed** after adding a model, for the usual reason:
+  `Wuka.csproj` `<Import>`s the generated manifest at project-evaluation time.
+
+Equivalence between the two load paths is asserted per model by
+`tests/JoyceCode.Tests/engine/joyce/BakedModelEquivalenceTests.cs` — geometry to
+`1e-6`, bone names and **order** exactly, because `AllBakedMatrices` is indexed
+`frame * NBones + boneIndex` and a reorder renders a foreign pose plausibly
+instead of failing.
 
 ---
 
