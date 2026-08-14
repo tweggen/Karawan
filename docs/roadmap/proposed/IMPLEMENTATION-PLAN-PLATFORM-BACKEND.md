@@ -553,15 +553,32 @@ successful outcome, not a failure.** The orchestrator should say so explicitly w
 
 ## 6. Definition of done (whole plan)
 
-- [ ] `rg 'Silk\.NET' --glob '*.cs' --glob '*.csproj'` returns nothing (docs keep their history)
-- [ ] APK publishes to Play with no page-size warning
-- [ ] One windowing backend (SDL3) on all platforms
-- [ ] `libassimp.so` absent from the APK; `AssimpVersionDetector.cs` and `AssimpVersion.cs` deleted
-- [ ] All natives built by pinned CI, distributed as a versioned package
-- [ ] `Splash/`, `JoyceCode/`, `nogameCode/`, and `models/shaders/` show no functional diff except
-      WP-4.1's `engine/joyce` serialisation attributes
-- [ ] CI asserts zero Silk references so it cannot creep back
-- [ ] ADR status changed from *Proposal* to *Accepted*, with outcomes recorded against each §9 claim
+**Status as of 2026-08-14: Phases 0–5 complete and merged.** Marked up against what was actually
+achieved — see `PLATFORM-BACKEND-STATUS.md` for the evidence behind each line.
+
+- [x] ~~`rg 'Silk\.NET' --glob '*.cs' --glob '*.csproj'` returns nothing~~ — **met in substance,
+      NOT literally satisfiable, and it should not be.** Zero Silk.NET in any *shipping* project.
+      What remains: `Silk.NET.Assimp` in `JoyceFbx` (build-time fbx import, which Phase 4 chose
+      deliberately) and `Silk.NET.OpenGL` in the WP-5.0/5.1 comparison tools, whose entire job is
+      to diff our binding *against* Silk. The criterion behind the criterion is met.
+- [x] APK publishes to Play with no page-size warning — GATE-B, passed twice (Mono, then .NET 10 +
+      CoreCLR, versionCode 199)
+- [x] One windowing backend (SDL3) on all platforms — Phase 3; `SilkWindowBackend` deleted
+- [x] `libassimp.so` absent from the APK — verified from the built APK, and `scripts/check-apk.py`
+      now **fails** if it returns. ⚠ `AssimpVersionDetector.cs` / `AssimpVersion.cs` were NOT
+      deleted, deliberately: `FbxModel` uses the detected version to compensate bone offset
+      matrices at load time, so deleting them would silently change the geometry the bake
+      produces. Both moved into `JoyceFbx` instead.
+- [x] All natives built by pinned CI, distributed as a versioned package — `Karawan.Natives` 0.2.0
+- [x] `Splash/`, `JoyceCode/`, `nogameCode/`, `models/shaders/` show no functional diff except
+      WP-4.1's `engine/joyce` serialisation attributes — shaders untouched throughout; the
+      `JoyceCode` changes beyond WP-4.1 are the Phase 4 baked-load path and the WP-5.4 rename,
+      each granted in its own work package
+- [ ] **CI asserts zero Silk references so it cannot creep back** — ✗ **NOT DONE. This repo still
+      has no CI at all**, which is also KI-17 (nothing enforces that the generated GL files are
+      reproducible). The single largest remaining structural gap in the programme.
+- [ ] ADR status changed from *Proposal* to *Accepted*, with outcomes recorded against each §9
+      claim — ✗ not done
 
 ---
 
