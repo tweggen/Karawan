@@ -3102,6 +3102,7 @@
    "Rgba8"
   ],
   "StringName": [
+   "Extensions",
    "Version"
   ],
   "TextureMagFilter": [
@@ -3237,6 +3238,7 @@
   "ShaderType.FragmentShader": "35632",
   "ShaderType.VertexShader": "35633",
   "SizedInternalFormat.Rgba8": "32856",
+  "StringName.Extensions": "7939",
   "StringName.Version": "7938",
   "TextureMagFilter.Linear": "9729",
   "TextureMinFilter.Linear": "9729",

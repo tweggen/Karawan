@@ -1,4 +1,4 @@
-﻿
+
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -7,7 +7,6 @@ using static engine.Logger;
 
 using Karawan.Graphics.OpenGL;
 using Renderbuffer = engine.joyce.Renderbuffer;
-using static Splash.Silk.GLCheck;
 
 namespace Splash.Silk
 {
@@ -304,7 +303,7 @@ namespace Splash.Silk
                 _v3dSize = v2ClippedSize;
                 _gl.Viewport((int)v2ClippedUl.X, (int)(_vViewSize.Y-v2ClippedSize.Y-v2ClippedUl.Y),
                     (uint)(v2ClippedSize.X), (uint)(v2ClippedSize.Y));
-                CheckError(_gl, $"glViewport {_v3dSize}");
+                GlDbg.Check(_gl, $"glViewport {_v3dSize}");
                 _vLastGlSize = _v3dSize;
             }
         }
@@ -321,7 +320,7 @@ namespace Splash.Silk
              * Switch to the main viewport.
              */
             _gl.BindFramebuffer(GLEnum.Framebuffer, 0);
-            CheckError(_gl, "glBindFramebuffer");
+            GlDbg.Check(_gl);
             _nailViewport(true, Vector2.Zero, Vector2.One, true);
             _renderParts(renderFrame.RenderParts);
             _nailViewport(false, Vector2.Zero, Vector2.One, true);
@@ -343,7 +342,7 @@ namespace Splash.Silk
             _gl.CullFace(TriangleFace.Back);
 
             _gl.BindFramebuffer(GLEnum.Framebuffer, targetFbo);
-            CheckError(_gl, "glBindFramebuffer (external)");
+            GlDbg.Check(_gl);
             _nailViewport(true, Vector2.Zero, Vector2.One, true);
             _renderParts(renderFrame.RenderParts);
             _nailViewport(false, Vector2.Zero, Vector2.One, true);

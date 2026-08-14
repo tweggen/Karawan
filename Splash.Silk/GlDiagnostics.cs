@@ -30,22 +30,85 @@ namespace Splash.Silk;
  * on and the comment admitted "nothing calls DebugMessageCallback, so this currently only
  * populates the (unread) debug message log". This installs the missing half.
  *
- * DESKTOP ONLY, DELIBERATELY
+ * DESKTOP AND MOBILE
  *
- * Installed only under SilkThreeD's _hasGL43, which is false for OpenGLES by construction,
- * so mobile behaviour is unchanged and keeps polling.
+ * This was desktop-only when first written, gated on SilkThreeD's _hasGL43. That gate was
+ * wrong for the job: _hasGL43 also selects the SSBO animation strategy, and it is false for
+ * OpenGLES BY CONSTRUCTION - so ES 3.2, which has KHR_debug in core, scored false and kept
+ * polling. Mobile got the worst arrangement available: no callback, and every one of the
+ * ungated glGetError sites, on tile-based GPUs where polling costs most.
  *
- * KHR_debug IS available on ES - core in ES 3.2, and as GL_KHR_debug with ...KHR-suffixed
- * entry points on ES 3.0/3.1 - and the device this ships to reports ES 3.2. Enabling it
- * there is a deliberate later step: it would need the suffixed entry points, severity
- * filtering tight enough that chatty mobile drivers do not turn logging into the
- * bottleneck, and SYNCHRONOUS kept off because serialising a tile-based deferred GPU is
- * punishing. None of that should ride along with a desktop change.
+ * Capability is now decided by _detect, on what the spec actually says:
+ *
+ *   desktop GL >= 4.3     core           unsuffixed entry points
+ *   OpenGL ES  >= 3.2     core           unsuffixed entry points
+ *   OpenGL ES  3.0 / 3.1  GL_KHR_debug   ...KHR-suffixed entry points (the extension
+ *                                        mandates the suffix on ES; a context exports
+ *                                        one spelling or the other, never both)
+ *   anything else         none           GlDbg falls back to polling
+ *
+ * Detection is spec-driven rather than probing glGetProcAddress for a non-null pointer,
+ * because GLTrace deliberately hands back a thunk for every entry point it knows - present
+ * in the driver or not - so a pointer probe reports success under tracing on a driver that
+ * has no such call.
+ *
+ * SYNCHRONOUS stays off everywhere, and matters more here than on desktop: serialising a
+ * tile-based deferred renderer to deliver messages on the offending call's stack is
+ * punishing on mobile. Severity filtering is applied BEFORE enabling anything, for the same
+ * reason it is on desktop - mobile drivers are the chatty ones.
  */
 public static class GlDiagnostics
 {
+    /** Which spelling of the KHR_debug entry points this context exports, if any. */
+    public enum DebugApi
+    {
+        None,
+
+        /** Unsuffixed - core in desktop GL 4.3+ and in OpenGL ES 3.2+. */
+        Core,
+
+        /** ...KHR-suffixed - the GL_KHR_debug extension on OpenGL ES 3.0/3.1. */
+        Khr,
+    }
+
     /** True once the driver is pushing messages, which is what makes polling redundant. */
     public static bool IsCallbackActive { get; private set; }
+
+    /**
+     * What this context can do, from the API name and version SilkThreeD already parsed
+     * out of global config, plus - on ES below 3.2 only - the extension string.
+     *
+     * glGetString(GL_EXTENSIONS) is queried ONLY on ES, where it is valid and returns the
+     * whole space-separated list. On a desktop core profile the same call is an error
+     * (GL_INVALID_ENUM), which would seed the very error queue this system exists to keep
+     * clean; desktop never reaches that branch because >= 4.3 is decided by version alone.
+     */
+    public static DebugApi Detect(GL gl, string api, int versionNumber)
+    {
+        if (api == "OpenGL") return versionNumber >= 430 ? DebugApi.Core : DebugApi.None;
+        if (api != "OpenGLES") return DebugApi.None;
+        if (versionNumber >= 320) return DebugApi.Core;
+        if (versionNumber < 300) return DebugApi.None;
+
+        string extensions;
+        try
+        {
+            extensions = gl.GetStringS(StringName.Extensions) ?? "";
+        }
+        catch (Exception e)
+        {
+            Warning($"GlDiagnostics: could not read the ES extension string: {e.Message}");
+            return DebugApi.None;
+        }
+
+        // Substring alone would also match a hypothetical GL_KHR_debug_something, so the
+        // list is split on the separator the spec defines.
+        foreach (var ext in extensions.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (ext == "GL_KHR_debug") return DebugApi.Khr;
+        }
+        return DebugApi.None;
+    }
 
     /*
      * The driver keeps the raw pointer. A collected delegate would jump into freed memory
@@ -116,17 +179,20 @@ public static class GlDiagnostics
     }
 
     /**
-     * Install the callback. Call ONLY where KHR_debug is known present - under
-     * SilkThreeD's _hasGL43, which means desktop GL 4.3 or newer.
+     * Install the callback for the spelling this context exports.
+     *
+     * Returns whether the driver is now pushing messages. False is a normal outcome, not a
+     * failure to handle here - GlDbg reads it and falls back to polling.
      */
-    public static unsafe void Install(GL gl)
+    public static unsafe bool Install(GL gl, DebugApi api)
     {
-        if (IsCallbackActive) return;
+        if (IsCallbackActive) return true;
+        if (api == DebugApi.None) return false;
 
         try
         {
             _keepAlive = _onMessage;
-            gl.DebugMessageCallback(Marshal.GetFunctionPointerForDelegate(_keepAlive), null);
+            IntPtr callback = Marshal.GetFunctionPointerForDelegate(_keepAlive);
 
             /*
              * Filter before enabling, not after. Some drivers emit a performance hint per
@@ -134,40 +200,36 @@ public static class GlDiagnostics
              * second, and the logging becomes the bottleneck the diagnostic was meant to
              * find. Everything off, then errors and the two severities worth waking up for.
              */
-            gl.DebugMessageControl(DONT_CARE, DONT_CARE, DONT_CARE, 0, null, false);
-            gl.DebugMessageControl(DONT_CARE, DONT_CARE, SEVERITY_HIGH, 0, null, true);
-            gl.DebugMessageControl(DONT_CARE, DONT_CARE, SEVERITY_MEDIUM, 0, null, true);
-            gl.DebugMessageControl(DONT_CARE, TYPE_ERROR, DONT_CARE, 0, null, true);
+            if (api == DebugApi.Khr)
+            {
+                gl.DebugMessageCallbackKHR(callback, null);
+                gl.DebugMessageControlKHR(DONT_CARE, DONT_CARE, DONT_CARE, 0, null, false);
+                gl.DebugMessageControlKHR(DONT_CARE, DONT_CARE, SEVERITY_HIGH, 0, null, true);
+                gl.DebugMessageControlKHR(DONT_CARE, DONT_CARE, SEVERITY_MEDIUM, 0, null, true);
+                gl.DebugMessageControlKHR(DONT_CARE, TYPE_ERROR, DONT_CARE, 0, null, true);
+            }
+            else
+            {
+                gl.DebugMessageCallback(callback, null);
+                gl.DebugMessageControl(DONT_CARE, DONT_CARE, DONT_CARE, 0, null, false);
+                gl.DebugMessageControl(DONT_CARE, DONT_CARE, SEVERITY_HIGH, 0, null, true);
+                gl.DebugMessageControl(DONT_CARE, DONT_CARE, SEVERITY_MEDIUM, 0, null, true);
+                gl.DebugMessageControl(DONT_CARE, TYPE_ERROR, DONT_CARE, 0, null, true);
+            }
 
             IsCallbackActive = true;
-            Trace("GlDiagnostics: KHR_debug callback installed; glGetError polling is now redundant.");
+            Trace($"GlDiagnostics: KHR_debug callback installed ({api} entry points); "
+                  + "glGetError polling is now redundant.");
+            return true;
         }
         catch (Exception e)
         {
-            // A driver that advertises 4.3 but rejects the callback should cost the
-            // diagnostic, not the frame. Polling stays available.
+            // A context that advertises the capability but rejects the callback should cost
+            // the diagnostic, not the frame. Polling stays available.
             _keepAlive = null;
             IsCallbackActive = false;
             Warning($"GlDiagnostics: could not install the KHR_debug callback, falling back to polling: {e}");
-        }
-    }
-
-    /**
-     * Drain and report pending errors - the fallback for contexts with no debug output.
-     *
-     * A no-op once the callback is active, which is the point: the same call sites work on
-     * both paths and only pay on the one that needs it.
-     */
-    public static void Poll(GL gl, string where)
-    {
-        if (IsCallbackActive) return;
-
-        while (true)
-        {
-            var error = gl.GetError();
-            if (error == GLEnum.NoError) return;
-
-            Error($"GL error at {where}: {error}");
+            return false;
         }
     }
 }

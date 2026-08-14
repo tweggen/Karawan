@@ -315,12 +315,30 @@ public static class GLTrace
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    private delegate void D_glDebugMessageCallbackKHR(nint p0, IntPtr p1);
+    private static D_glDebugMessageCallbackKHR? _r_glDebugMessageCallbackKHR;
+    private static void _t_glDebugMessageCallbackKHR(nint p0, IntPtr p1)
+    {
+        if (IsRecording) _rec("glDebugMessageCallbackKHR(" + p0 + "," + (p1 == IntPtr.Zero ? "null" : "ptr") + ")");
+        if (null != _r_glDebugMessageCallbackKHR) _r_glDebugMessageCallbackKHR(p0, p1);
+    }
+
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     private delegate void D_glDebugMessageControl(uint p0, uint p1, uint p2, int p3, IntPtr p4, byte p5);
     private static D_glDebugMessageControl? _r_glDebugMessageControl;
     private static void _t_glDebugMessageControl(uint p0, uint p1, uint p2, int p3, IntPtr p4, byte p5)
     {
         if (IsRecording) _rec("glDebugMessageControl(" + p0 + "," + p1 + "," + p2 + "," + p3 + "," + (p4 == IntPtr.Zero ? "null" : "ptr") + "," + p5 + ")");
         if (null != _r_glDebugMessageControl) _r_glDebugMessageControl(p0, p1, p2, p3, p4, p5);
+    }
+
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    private delegate void D_glDebugMessageControlKHR(uint p0, uint p1, uint p2, int p3, IntPtr p4, byte p5);
+    private static D_glDebugMessageControlKHR? _r_glDebugMessageControlKHR;
+    private static void _t_glDebugMessageControlKHR(uint p0, uint p1, uint p2, int p3, IntPtr p4, byte p5)
+    {
+        if (IsRecording) _rec("glDebugMessageControlKHR(" + p0 + "," + p1 + "," + p2 + "," + p3 + "," + (p4 == IntPtr.Zero ? "null" : "ptr") + "," + p5 + ")");
+        if (null != _r_glDebugMessageControlKHR) _r_glDebugMessageControlKHR(p0, p1, p2, p3, p4, p5);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
@@ -898,7 +916,9 @@ public static class GLTrace
         _bind("glCreateShader", p => _r_glCreateShader = Marshal.GetDelegateForFunctionPointer<D_glCreateShader>(p), new D_glCreateShader(_t_glCreateShader));
         _bind("glCullFace", p => _r_glCullFace = Marshal.GetDelegateForFunctionPointer<D_glCullFace>(p), new D_glCullFace(_t_glCullFace));
         _bind("glDebugMessageCallback", p => _r_glDebugMessageCallback = Marshal.GetDelegateForFunctionPointer<D_glDebugMessageCallback>(p), new D_glDebugMessageCallback(_t_glDebugMessageCallback));
+        _bind("glDebugMessageCallbackKHR", p => _r_glDebugMessageCallbackKHR = Marshal.GetDelegateForFunctionPointer<D_glDebugMessageCallbackKHR>(p), new D_glDebugMessageCallbackKHR(_t_glDebugMessageCallbackKHR));
         _bind("glDebugMessageControl", p => _r_glDebugMessageControl = Marshal.GetDelegateForFunctionPointer<D_glDebugMessageControl>(p), new D_glDebugMessageControl(_t_glDebugMessageControl));
+        _bind("glDebugMessageControlKHR", p => _r_glDebugMessageControlKHR = Marshal.GetDelegateForFunctionPointer<D_glDebugMessageControlKHR>(p), new D_glDebugMessageControlKHR(_t_glDebugMessageControlKHR));
         _bind("glDeleteBuffers", p => _r_glDeleteBuffers = Marshal.GetDelegateForFunctionPointer<D_glDeleteBuffers>(p), new D_glDeleteBuffers(_t_glDeleteBuffers));
         _bind("glDeleteProgram", p => _r_glDeleteProgram = Marshal.GetDelegateForFunctionPointer<D_glDeleteProgram>(p), new D_glDeleteProgram(_t_glDeleteProgram));
         _bind("glDeleteShader", p => _r_glDeleteShader = Marshal.GetDelegateForFunctionPointer<D_glDeleteShader>(p), new D_glDeleteShader(_t_glDeleteShader));

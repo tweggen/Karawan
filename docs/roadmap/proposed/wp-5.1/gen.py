@@ -70,10 +70,17 @@ SUPPORT = [
     "glDeleteBuffers", "glDeleteTextures", "glDeleteVertexArrays",
     "glGetFloatv", "glGetIntegerv", "glGetProgramiv", "glGetShaderiv",
     "glUniformMatrix4fv", "glShaderSource", "glGetShaderInfoLog", "glGetProgramInfoLog",
-    # KHR_debug, core since GL 4.3. Used by Splash.Silk/GlDiagnostics.cs to replace
-    # glGetError polling on desktop. Deliberately NOT the ...KHR-suffixed ES variants:
-    # the callback is desktop-only for now, so ES resolves nothing and keeps polling.
+    # KHR_debug. Used by Splash.Silk/GlDiagnostics.cs to replace glGetError polling.
+    #
+    # BOTH spellings are bound, because the two are not interchangeable and which one a
+    # context exports is decided by the spec, not by preference:
+    #   unsuffixed  core in desktop GL 4.3+ AND in OpenGL ES 3.2
+    #   ...KHR      the GL_KHR_debug EXTENSION on ES 3.0/3.1, where the extension
+    #               mandates the suffix
+    # A context exports one set or the other, never both, so GlDiagnostics picks by
+    # capability and calls only the pair it resolved. See GlDiagnostics._detect.
     "glDebugMessageCallback", "glDebugMessageControl",
+    "glDebugMessageCallbackKHR", "glDebugMessageControlKHR",
 ]
 
 GLTYPE = {
@@ -84,6 +91,10 @@ GLTYPE = {
     # lifetime - the callback is invoked from native code and a collected delegate jumps
     # into freed memory, the same hazard Sdl3WindowBackend's s_lifecycleWatch documents.
     'GLDEBUGPROC': 'nint',
+    # Same callback shape under the ES extension's own typedef name. gl.xml spells the
+    # KHR entry points with GLDEBUGPROCKHR, so without this the parse fails rather than
+    # silently emitting something wrong.
+    'GLDEBUGPROCKHR': 'nint',
 }
 
 def parse_command(cmd):
