@@ -175,6 +175,65 @@ public class ConsoleMain
         }
 
         /*
+         * Model compilation loop (WP-4.2). Mirrors the animation loop above: one
+         * task per declared model, same Task.Run pool, same generated/ directory.
+         * Files are named mo-{hash} so they sit alongside ac-{hash} and sc-{hash}.
+         *
+         * The set comes from /resources/list entries typed "model", so a model
+         * that ships is a model that bakes, by construction.
+         */
+        {
+            string modelOutputDirectory = Path.Combine(
+                cwd,
+                GlobalSettings.Get("Engine.ResourcePath"),
+                "generated");
+            if (args.Length >= 4)
+            {
+                modelOutputDirectory = Path.Combine(args[3], args[2]);
+            }
+
+            var availableModels = iassetDesktop.AvailableModels;
+            Trace($"Model compilation: Found {availableModels.Count} models to bake.");
+            foreach (var req in availableModels)
+            {
+                string fileName = builtin.baking.ModelFileName.Of(req.ModelFileName, req.Properties);
+                string filePath = Path.GetFullPath(Path.Combine(modelOutputDirectory, fileName));
+                if (_IsModelUpToDate(filePath, req.Uri, Path.GetFullPath(strResourcePath)))
+                {
+                    Trace($"ModelCompiler: skipping {fileName} — output is up-to-date.");
+                    continue;
+                }
+
+                var captured = req;
+                var modelComp = new ModelCompiler
+                {
+                    ModelUrl = captured.ModelFileName,
+                    Properties = new SortedDictionary<string, string>(captured.Properties),
+                    OutputDirectory = modelOutputDirectory
+                };
+                /*
+                 * async/await, not a void lambda. A block-bodied lambda returning
+                 * void binds to Task.Run(Action), which starts Compile() and then
+                 * reports completion the moment it hits its first await - so
+                 * Task.WaitAll below returns while models are still being written
+                 * and the process exits mid-bake. Observed: 10 of 13 files.
+                 */
+                listTasks.Add(Task.Run(async () =>
+                {
+                    try
+                    {
+                        await modelComp.Compile();
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace($"ModelCompiler ERROR: {captured.Uri} failed: {ex.GetType().Name}: {ex.Message}");
+                        throw;
+                    }
+                }));
+            }
+        }
+
+        /*
          * Scenario compilation loop. Mirrors the animation loop above: one task
          * per (category, index) pair, dispatched to the same Task.Run pool, all
          * writing into the same nogame/generated/ directory. Files are named
@@ -376,6 +435,48 @@ public class ConsoleMain
         }
 
         return true;  // All sources are older or missing, output is up-to-date
+    }
+
+    /// <summary>
+    /// Check if a baked model file is up-to-date (makefile-style incremental build).
+    /// Returns true if the output exists and is newer than the model source and the
+    /// resource declaration that decides how it is baked.
+    /// </summary>
+    private static bool _IsModelUpToDate(string outputPath, string modelUri, string resourcePath)
+    {
+        if (!File.Exists(outputPath))
+        {
+            return false;  // Output missing, needs compilation
+        }
+
+        var outputTime = File.GetLastWriteTimeUtc(outputPath);
+
+        string modelPath = Path.Combine(resourcePath, modelUri);
+        if (File.Exists(modelPath))
+        {
+            if (File.GetLastWriteTimeUtc(modelPath) > outputTime)
+            {
+                return false;  // Model is newer, needs recompilation
+            }
+        }
+
+        /*
+         * The resource declaration carries the type and the load properties, and
+         * the properties are part of the bake identity. Editing them normally
+         * changes the file NAME, which the File.Exists check above already catches
+         * - but removing a property can equally well restore an older name, so the
+         * declaration's timestamp is checked too.
+         */
+        string resourceConfigPath = Path.Combine(resourcePath, "nogame.resources.json");
+        if (File.Exists(resourceConfigPath))
+        {
+            if (File.GetLastWriteTimeUtc(resourceConfigPath) > outputTime)
+            {
+                return false;  // Declaration is newer, needs recompilation
+            }
+        }
+
+        return true;
     }
 
     /// <summary>

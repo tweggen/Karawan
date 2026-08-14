@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      WP-4.2's AC-4.2 compares a model loaded through Assimp against the same model
+      loaded from its baked mo-{hash} file, so the test process needs the real
+      native. Joyce brings the managed Silk.NET.Assimp binding; the native comes
+      from this package, which the game gets via Karawan/Mazu.
+    -->
+    <PackageReference Include="Ultz.Native.Assimp" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">

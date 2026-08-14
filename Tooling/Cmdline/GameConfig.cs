@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -47,6 +48,50 @@ namespace CmdLine
             Console.Error.WriteLine($"Returning hash {strHash} for {strModelAnims}");
 
             return  $"ac-{strHash}";;
+        }
+
+
+        /// <summary>
+        /// Load properties that do not affect the baked model graph, and are
+        /// therefore excluded from its hash. MUST match
+        /// builtin.baking.ModelFileName._insignificantProperties exactly.
+        /// </summary>
+        private static readonly string[] _insignificantModelProperties =
+        {
+            "AnimationUrls",
+            "CPUNodes",
+            "ModelBaseBone",
+        };
+
+
+        /// <summary>
+        /// Compute the bake filename for a model. Mirrors
+        /// builtin.baking.ModelFileName.Of() — duplicated here because
+        /// Tooling/Cmdline cannot reference JoyceCode (same convention as
+        /// ModelAnimationCollectionFileName above). Drift between the two copies
+        /// manifests as manifests listing files the bake never produces, so any
+        /// change to the hashing scheme MUST be applied to both files.
+        /// </summary>
+        public static string ModelFileName(string localUrlModel, IDictionary<string, string> properties)
+        {
+            var sb = new StringBuilder(localUrlModel);
+            if (properties != null)
+            {
+                foreach (var kvp in properties
+                             .Where(kvp => !_insignificantModelProperties.Contains(kvp.Key))
+                             .OrderBy(kvp => kvp.Key, StringComparer.Ordinal))
+                {
+                    sb.Append(';').Append(kvp.Key).Append('=').Append(kvp.Value);
+                }
+            }
+
+            string strHash =
+                Convert.ToBase64String(_sha256.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString())))
+                    .Replace('+', '-')
+                    .Replace('/', '_')
+                    .Replace('=', '~');
+
+            return $"mo-{strHash}";
         }
 
 
@@ -217,6 +262,19 @@ namespace CmdLine
                     string tag = resource.Tag;
                     MapResources[tag] = resource;
                     Trace($"GameConfig: Added Resource \"{tag}\".");
+
+                    /*
+                     * A declared model also ships its baked mo-{hash} counterpart.
+                     * Mirrors AAssetImplementation._registerModelEntry: one JSON
+                     * line declares both the source and the bake output, so the
+                     * two cannot drift apart.
+                     */
+                    if ("model" == resource.Type)
+                    {
+                        Resource baked = _modelResource(resource, nodeRes);
+                        MapResources[baked.Tag] = baked;
+                        Trace($"GameConfig: Added Model Resource \"{baked.Tag}\".");
+                    }
                 }
             }
             catch (Exception e)
@@ -225,7 +283,34 @@ namespace CmdLine
             }
         }
 
-        
+
+        private Resource _modelResource(Resource resource, JsonNode nodeRes)
+        {
+            var properties = new SortedDictionary<string, string>();
+            if (nodeRes.AsObject()["modelProperties"] is JsonObject objProperties)
+            {
+                foreach (var kvp in objProperties)
+                {
+                    string value = kvp.Value?.GetValue<string>();
+                    if (value != null)
+                    {
+                        properties[kvp.Key] = value;
+                    }
+                }
+            }
+
+            string strFilename = ModelFileName(Path.GetFileName(resource.Uri), properties);
+            Trace($"GameConfig: Generating Model Resource \"{strFilename}\" from {resource.Uri}.");
+
+            return new Resource
+            {
+                Type = "bakedModel",
+                Uri = Path.Combine(DestinationPath + "/", strFilename),
+                Tag = strFilename
+            };
+        }
+
+
         public void LoadAnimationList(JsonNode node)
         {
             Trace($"LoadAnimationList()");
