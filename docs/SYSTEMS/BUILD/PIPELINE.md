@@ -93,6 +93,21 @@ The ordering between `GatherTexturesHost` and `CompileAssetsHost` is **load-bear
 
 A bare `dotnet build nogame.csproj` will refresh (1) incrementally but does **not** publish (2). I have observed `PackTextures` running stale code while `Res2Target` runs current code in the same build invocation — symptoms look like the BFS works for one task and not the other. Always re-publish after touching Cmdline source.
 
+**The same applies to Chushi, and it bites harder**, because Chushi produces the bake artifacts the game loads. A published `Chushi.exe` that predates a bake step simply does not perform it: no error, no warning, just no output files. That is how Phase 4 shipped a build in which **no character model loaded** — the published Chushi had no `ModelCompiler`, so no `mo-{hash}` was ever written, and the first symptom appeared at runtime as
+
+```
+No fbx importer is available for url man_coat_winter_Rig.fbx
+```
+
+which is a true statement about a *consequence*, three layers from the cause. Refresh with:
+
+```bash
+bash Chushi/build.sh            # after any change to Chushi/ or Mazu/
+bash Tooling/Cmdline/build.sh   # after any change to Tooling/Cmdline/
+```
+
+**`res2target` now fails the build if a declared bake artifact is missing**, naming the file and this command — so a stale build tool is a build error rather than a runtime mystery. It covers `mo-`, `ac-` and `sc-` alike. Note the check only catches artifacts the manifests *declare*; a resource nobody declares is still invisible, which is the separate lesson of the TALE storylet fix.
+
 `dotnet build-server shutdown` is also useful — MSBuild caches the task assembly across runs and can pin an old version even after a rebuild succeeds.
 
 ---
