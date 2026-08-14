@@ -60,7 +60,59 @@ exactly the kind that deserves a control:
   `mvid=d6f6e38b-806e-4a66-816c-0a18d1a6bf08`. Same IL, different runtime — the only variable was the
   runtime itself.
 
+### ✅ 2026-08-14 — WP-5.2 landed: the renderer is on the generated binding
+
+Five PRs closed the swap and everything it dragged behind it. All merged, and the desktop
+build has been run on the generated binding by the owner.
+
+| PR | What |
+|---|---|
+| [#86](https://github.com/tweggen/Karawan/pull/86) / [#87](https://github.com/tweggen/Karawan/pull/87) | **WP-5.2** — `Splash.Silk` swapped onto `GL.g.cs` |
+| [#88](https://github.com/tweggen/Karawan/pull/88) | `GLboolean` is one byte; C# `bool` marshals as a 4-byte Win32 BOOL. Needed `[MarshalAs(UnmanagedType.U1)]` |
+| [#89](https://github.com/tweggen/Karawan/pull/89) | KHR_debug callback (desktop at the time) |
+| [#90](https://github.com/tweggen/Karawan/pull/90) | dispatch through `delegate* unmanaged<>` instead of `Marshal.GetDelegateForFunctionPointer` |
+| [#91](https://github.com/tweggen/Karawan/pull/91) | repaired the hybrid `GL.g.cs` that merging #89 and #90 produced |
+| [#92](https://github.com/tweggen/Karawan/pull/92) | one diagnostic API; polling off wherever the driver can push |
+
+**The dispatch change was not a performance fix, and the ledger previously said it was.**
+`glGetError` polling was ~33% of GL traffic; dispatch overhead is under 1%. What forced
+function pointers is that a delegate-based binding **cannot be traced**: .NET returns the
+ORIGINAL delegate from `GetDelegateForFunctionPointer` when the pointer came from
+`GetFunctionPointerForDelegate`, so the cast to the binding's own delegate type throws. The
+GATE-F tracer interposes exactly there — it worked against Silk, which dispatches through
+function pointers, and broke the moment WP-5.2 pointed the renderer at this binding.
+
+### ⚠️ 2026-08-14 — two verified PRs composed into a broken one (#91)
+
+**Worth keeping, because nothing in the process caught it.** #89 and #90 were each reviewed and
+each verified. Merged, they produced a `GL.g.cs` that **no run of `gen.py` reproduces**: #89 added
+two entry points while emission was still delegate-based, #90 converted everything else to
+function pointers, and git merged both cleanly. 97 function pointers, 2 delegates, zero conflicts.
+
+Three consequences, **none of which fails a build**:
+
+- The file **stopped being reproducible** — the property §10 of the WP-5.1 plan exists to
+  guarantee. A generated file nobody can regenerate has quietly become hand-maintained.
+- Those two entry points **would have reintroduced the crash #90 fixed**, latent only because
+  nothing traces them yet.
+- `DebugMessageControl`'s `bool enabled` was back on default marshalling — the #88 defect,
+  restored for one parameter.
+
+Caught by re-running the byte-identical regeneration check *after* the merges, rather than
+assuming two independently-verified PRs compose. **They did not.** Master reproduces byte-for-byte
+again as of 2026-08-14.
+
+**Standing rule this earns:** when two open PRs both regenerate the same file, the second to
+merge must be regenerated *after* the merge, never hand-resolved. Hand-merging a generated file
+is what created this. **This is still a manual step** — see the CI note under KI-17.
+
+> **Comparing generated files on Windows:** git checks them out CRLF while `gen.py` writes LF, so
+> a plain `diff` reports every line as changed and buries the real ones. Use
+> `diff <(tr -d '\r' a) <(tr -d '\r' b)`.
+
 ### ✅ 2026-08-14 — GL diagnostics unified; polling off on every platform that can push
+
+Merged as [#92](https://github.com/tweggen/Karawan/pull/92); running on desktop.
 
 **One API for "did that GL call fail": `Splash.Silk/GlDbg.cs`.** It replaces **nine** separate
 mechanisms whose differences nobody had chosen — five drained the error queue and four read a
@@ -123,9 +175,13 @@ Play also reports a missing deobfuscation/symbol file. Measured, scoped, and par
 (nothing is obfuscated); the real gap is native debug symbols, and our recipes strip them in
 place, so they do not exist outside a CI run. Managed C# exceptions are unaffected.
 
-**Next: WP-5.2 — the GL binding swap. GATE-F no longer blocks it** (satisfied by three
-deterministic checks; see the GATE-F section). WP-6.3 is merged and GATE-C input is confirmed
-on macOS for WASD and text entry.
+**Next: WP-5.4 — rename `Splash.Silk` → `Splash.GL`.** WP-5.2 is merged and running on
+desktop, so the last thing holding the old name is the name itself. Note it touches the
+generated files again, which is where **KI-17** bites: regenerate after merging, do not
+hand-resolve.
+
+**Still unrun: Linux, entirely** (GATE-C). Windows and macOS have both passed; nobody has
+started Linux, and it is the only tier with no evidence at all.
 
 **The KAR-411 unwind is now reasonable to start** - versionCode 199 has been in the field on
 CoreCLR since 2026-08-10. Check Play crash/ANR rates first, then remove ONE workaround at a
@@ -449,7 +505,7 @@ Consequences carried forward:
 | **WP-5.0b** | ✅ **MERGED** | `platform/wp-5.0` | [#22](https://github.com/tweggen/Karawan/pull/22) | 1 | **AC-5.0b ✅** costed side by side | none apply | OpenTK 5: **37 % of code lines** ≈ 83 of 225 sites. `GL` is static vs Silk's instance → all 225 change receiver. Also `pre.16` ships **net10.0 only**, dropping our net9.0. |
 | **WP-5.1** | ✅ **MERGED** | `platform/wp-5.1` | [#25](https://github.com/tweggen/Karawan/pull/25) | 1 | generated surface compiles standalone ✅ | none apply | `Splash.GL/generated/GL.g.cs` generated from Khronos `gl.xml`, no package references. Surface resolved by **Roslyn** (339 call sites / 81 distinct entry points), not regex — an earlier MSBuildWorkspace attempt silently reported **zero**, indistinguishable from "uses no GL". |
 | **WP-5.3** | ✅ **MERGED** | `platform/wp-5.3-imgui-detach` | [#76](https://github.com/tweggen/Karawan/pull/76) | 1 | build ✅ · 234/234 ✅ · net −123 lines | **GATE-E desktop ✅ (owner-confirmed)** | **ImGui detached from Silk, desktop UI restored.** `ImGuiFontConfig` inlined and `Silk.NET.OpenGL.Extensions.ImGui` dropped — it was the only type used from that package. Removing it exposed that **`Silk.NET.Input`/`.Windowing` were arriving transitively through it**, keeping ~250 lines of dead Silk-typed handlers compiling long after KI-12 reported them gone; all deleted. |
-| **WP-5.2** | 🟢 **UNBLOCKED — GATE-F satisfied by other means** | — | [#85](https://github.com/tweggen/Karawan/pull/85) built the gate | 0 | see the GATE-F section | GATE-F ✅ | Owner chose **S2a, narrow form** (2026-08-06). The old blocker - capture pixel reference frames before the swap - is **retired**: pixel comparison of a live session was tried three ways and is not achievable here (see §GATE-F). It is replaced by three deterministic checks that pass today. **One open decision, not a blocker:** `GL.g.cs` dispatches via `Marshal.GetDelegateForFunctionPointer` where Silk uses unmanaged function pointers - a performance question at ~2,650 GL calls/frame, and the reason a record-only call harness could not be used. |
+| **WP-5.2** | ✅ **MERGED 2026-08-14, running on desktop** | `platform/wp-5.2-gl-swap`, `platform/gl-funcptr-dispatch`, `feature/gl-debug-callback`, `fix/regenerate-after-merge`, `feat/gl-diagnostics-unified` | [#86](https://github.com/tweggen/Karawan/pull/86), [#87](https://github.com/tweggen/Karawan/pull/87), [#88](https://github.com/tweggen/Karawan/pull/88), [#89](https://github.com/tweggen/Karawan/pull/89), [#90](https://github.com/tweggen/Karawan/pull/90), [#91](https://github.com/tweggen/Karawan/pull/91), [#92](https://github.com/tweggen/Karawan/pull/92) | 0 | build ✅ · **234/234 tests** ✅ · differ exit 0 ✅ · shapecheck 8/8 ✅ · regeneration byte-identical ✅ · live run: 86 entry points traced, 0 untraced, **0 `glGetError`** ✅ | GATE-F ✅ · **GATE-E owner-run on desktop ✅** | Owner chose **S2a, narrow form** (2026-08-06). The old blocker - capture pixel reference frames before the swap - is **retired**: pixel comparison of a live session was tried three ways and is not achievable here (see §GATE-F). It is replaced by three deterministic checks that pass today. **That open decision is now decided** ([#90](https://github.com/tweggen/Karawan/pull/90)): dispatch is `delegate* unmanaged<>`. **The ledger's framing of it as a performance question was wrong** and is corrected in the 2026-08-14 entry - `glGetError` polling was ~33% of GL traffic while dispatch overhead is under 1%. What actually forced the change is that a delegate-based binding **cannot be traced**, because `GetDelegateForFunctionPointer` returns the ORIGINAL delegate for a pointer that came from `GetFunctionPointerForDelegate` and the cast throws - which is precisely where the GATE-F tracer interposes. |
 | WP-5.4 | NOT-STARTED | — | — | 0 | — | — | Rename `Splash.Silk` → `Splash.GL`. Trivial once WP-5.2 lands. |
 
 | **WP-6.1** | ✅ **MERGED, device-verified** | `platform/wp-6.1` | [#66](https://github.com/tweggen/Karawan/pull/66) | 1 | gameplay loop, sound, input, splash all confirmed on device ✅ | — | **MAUI is gone from Wuka.** Four things surfaced only by building and running, none visible from source: `SingleProject` was hiding four dead platform folders AND pointing the SDK at `AndroidManifest.xml` (without `<AndroidManifest>` the SDK silently SYNTHESISES one — green build, right package name via `ApplicationId`, `android:label`/`icon` gone); the Silk `ExcludeAssets` entries are **suppressors, not sources** (see KI-12); and the splash artwork cannot be used as-is. Bluetooth permission prompt also disabled, code retained. |
@@ -1169,6 +1225,8 @@ how the binding defect was found. All are off unless explicitly configured.
 | **KI-15** | **Logical-vs-pixel confusion is a recurring defect class on this codebase, not three coincidences.** Four instances found in two days, every one invisible on a 1x display and therefore on every machine except a retina Mac: `SetKeyboardVisible` (KI-14, different axis but same "equal on my machine" blindness), ImGui `DisplaySize` (#80), the render viewport (#82), and the splitter drag which would have inherited it. **The seam is now documented where it is crossed** — `IWindowBackend.Size` vs `.FramebufferSize`, `OnResize` (pixels), `SetDimension(px, logical)` — but nothing MECHANICALLY prevents the next one. A units type (`LogicalV2` / `PixelV2`) would; that is a real refactor across `Splash.Silk` and worth costing before committing to. | open, unowned. **Suggested cheap mitigation: run GATE-C's HiDPI checks on any PR touching `Splash.Silk` geometry**, since a 1x developer machine cannot see this class at all. |
 | **KI-16** | **The renderer creates and destroys ~400 GL objects every frame.** Measured while building the GATE-F tracer, not sought: a steady-state gameplay frame issues **192–250 `glGenBuffers` and the same number of `glDeleteBuffers`**, plus a `glGenVertexArrays`/`glDeleteVertexArrays` pair - per-batch buffers allocated and freed each frame. Total GL traffic is ~2,650 calls/frame for ~110 mesh batches, so this churn is a large fraction of it. Not a correctness problem and nothing observed to be wrong because of it; a plausible pooling candidate. Noted because it is invisible without tracing, and the tracing now exists (`debug.option.glTraceAnchor`). | open, unowned, **found in passing** - no measurement of its actual cost has been made, only of its volume. Anyone acting on this should profile first. |
 | **KI-13** | **No native debug symbols ship, so native crashes in Play are bare addresses.** Play reports a missing deobfuscation/symbol file. Measured on the shipped versionCode 199 bundle, not assumed: (a) the dex is **not obfuscated** — 5,785 readable slash-separated identifiers vs 49 short ones, and no R8/ProGuard settings exist in `Wuka.csproj` — so **a `mapping.txt` would buy nothing** and no build step emits one (`obj/.../type-mapping.txt` is .NET Android's managed↔Java map, unrelated despite the name); (b) the AAB carries **no `BUNDLE-METADATA/`**, so no symbols ship — this is the real gap; (c) **our own natives are stripped in place** by `recipes/build-openal.sh` and `recipes/build-assimp-android.sh` (`llvm-strip`), so outside a live CI run the symbols **no longer exist anywhere**. Managed C# exceptions are unaffected and stay readable. Fix = preserve unstripped copies (or `--only-keep-debug` companions) **before** the strip, publish as CI artifacts, then either upload per release or embed under `BUNDLE-METADATA/com.android.tools.build.debugsymbols/`. The runtime libraries (`libcoreclr`, `libclrjit`, `libSystem.*`) come from the .NET Android workload and are a separate sourcing question. | open, deferred by owner 2026-08-10 — pairs naturally with the CI workflow, since that is where unstripped artifacts would live. **Step (c) is the irreversible half**: symbols for a crash that already happened cannot be recovered later. |
+| **KI-17** | **Nothing enforces that the generated GL files are reproducible.** `GL.g.cs` and `GLTrace.g.cs` are generated, but the check that they still match `gen.py`'s output is a command someone remembers to run. That is exactly how the #89/#90 hybrid survived two merges and reached master: both PRs were verified, neither was regenerated after the other landed, and no build, test or review step compares the checked-in file against a fresh generation. A CI step running `gen.py` + `gen-trace.py` and failing on a non-empty **CR-normalised** diff would make the property structural instead of remembered. Cost is real: this repo has no CI at all today, so this means standing one up, and the collision recurs on any PR that touches `surface.json`, `gen.py` or the SUPPORT list. | open, unowned. **Recurs by construction** — WP-5.4's `Splash.Silk` → `Splash.GL` rename touches these files again. Interim rule, in the 2026-08-14 entry above: when two open PRs both regenerate the same file, the second to merge is **regenerated after the merge, never hand-resolved**. |
+| **KI-18** | **The ES 3.0/3.1 `GL_KHR_debug` path is bound but has never executed.** [#92](https://github.com/tweggen/Karawan/pull/92) binds the `…KHR`-suffixed entry points and selects them by spec rule (`GlDiagnostics.Detect`), but no device here runs ES below 3.2 — the shipping phone reports **ES 3.2** and takes the Core path, which the live run did verify. So the suffixed branch is compiled, generated and unexercised. Low risk (the two signatures are identical to the Core pair apart from the typedef name, and shapecheck verifies both against `gl.xml`) but it is untested code on a platform we ship to. Falling back is safe by construction: if the callback fails to install, `GlDbg` polls. | open. **Testable only on an older device or an ES 3.0/3.1 emulator image** — worth one run if such a device passes through, not worth sourcing hardware for. |
 
 ---
 
