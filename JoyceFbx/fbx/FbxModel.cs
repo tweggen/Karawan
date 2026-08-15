@@ -103,31 +103,48 @@ public class FbxModel : IDisposable
     private bool _traceFbxTree = false;
     private bool _traceFbxMetadata = false;
     
+    /**
+     * Ensure the native Assimp library is loaded, or THROW.
+     *
+     * This used to catch everything and Trace it, which left _assimp null and let Load()
+     * continue. The caller then dereferenced it 1,400 lines further down and the whole
+     * failure presented as:
+     *
+     *   System.NullReferenceException at FbxModel.Load ... FbxModel.cs:1485
+     *
+     * with no indication that a native library had failed to load - and, because the
+     * trace category is off by default, with no log line at all. It surfaced when CI first
+     * ran the model tests on Linux: thirteen NREs and nothing anywhere saying why.
+     *
+     * There is no useful way to continue without Assimp. Everything below this point
+     * assumes it. So say what went wrong, at the point where it is still known.
+     */
     private static void _needAssimp()
     {
         lock (_slo)
         {
+            if (null != _assimp)
+            {
+                return;
+            }
+
+            Trace(_dc, $"Loading assimp...");
             try
             {
-
-                if (null == _assimp)
-                {
-                    Trace(_dc, $"Loading assimp...");
-                    _assimp = Assimp.GetApi();
-                    var nativeVersion = AssimpVersionDetector.GetNativeAssimpVersion(_assimp);
-                    Trace(_dc, $"Native Assimp library version: {nativeVersion}");
-                    AssimpVersionDetector.SetNativeVersion(_assimp);
-                }
-                else
-                {
-                    Trace(_dc, $"Assimp previously had been loaded...");
-                }
+                _assimp = Assimp.GetApi();
+                var nativeVersion = AssimpVersionDetector.GetNativeAssimpVersion(_assimp);
+                Trace(_dc, $"Native Assimp library version: {nativeVersion}");
+                AssimpVersionDetector.SetNativeVersion(_assimp);
             }
             catch (Exception e)
             {
-                Trace(_dc, $"Exception instantiating assimp: {e}");
+                _assimp = null;
+                throw new InvalidOperationException(
+                    "The native Assimp library could not be loaded, so no fbx can be imported. "
+                    + "Assimp is a BUILD-TIME dependency (JoyceFbx, used by Chushi/Mazu and the "
+                    + "tests); the shipped game reads baked mo-/ac- files and never gets here. "
+                    + $"Underlying failure: {e}", e);
             }
-
         }
     }
 
