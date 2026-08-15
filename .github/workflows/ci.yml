@@ -179,8 +179,28 @@ jobs:
         with:
           global-json-file: Karawan/global.json
 
+      # TEST=true is DefaultEcs's own escape hatch, not a workaround invented here.
+      #
+      # Its csproj carries:
+      #
+      #   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true' AND '$(TEST)' != 'true'">
+      #     <SignAssembly>True</SignAssembly>
+      #     <AssemblyOriginatorKeyFile>..\..\ds.snk</AssemblyOriginatorKeyFile>
+      #
+      # so merely BEING in GitHub Actions switches on strong-name signing with a key that
+      # is gitignored and therefore absent from any clone:
+      #
+      #   CSC : error CS7027: Error signing output with public key from file
+      #         '../../ds.snk' -- File not found.
+      #
+      # That is release plumbing leaking onto anyone who builds the library inside
+      # Actions. TEST=true is the flag upstream provides to turn it off, so use theirs
+      # rather than -p:SignAssembly=false, which would apply to every project in the graph
+      # including ours. Nothing in this repository reads $(TEST) - checked.
       - name: Build the test project and everything it needs
         working-directory: Karawan
+        env:
+          TEST: 'true'
         run: dotnet build tests/JoyceCode.Tests/JoyceCode.Tests.csproj
 
       # --logger trx so the skip count is visible in the log rather than folded into a
@@ -189,4 +209,6 @@ jobs:
       # the failure mode this whole programme keeps running into.
       - name: Unit tests
         working-directory: Karawan
+        env:
+          TEST: 'true'
         run: dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj --no-build --verbosity normal
