@@ -144,13 +144,27 @@ namespace engine
             Log(Level.Warning, _createLogEntry(Level.Warning, msg));
         }
 
-        public static void Warning(engine.Dc category,
-            [InterpolatedStringHandlerArgument("category")]
-            ref engine.DebugInterpolatedStringHandler message)
-        {
-            if (message.IsEnabled)
-                Log(Level.Warning, _createLogEntry(Level.Warning, message.ToStringAndClear()));
-        }
+        /*
+         * There is deliberately NO Warning(Dc, ref DebugInterpolatedStringHandler).
+         *
+         * There used to be, and it silenced 57 call sites. An interpolated string argument
+         * prefers the handler overload, so every `Warning(_dc, $"...")` in the tree bound
+         * to it and then emitted nothing unless that debug CATEGORY happened to be enabled
+         * - while the overload immediately below it documents itself as "Always emits (not
+         * filtered)". Two overloads, opposite behaviour, and the silent one wins overload
+         * resolution.
+         *
+         * It cost real time. TaleSpawnOperator has carried a post-spawn health check saying
+         * "E-to-Talk will not work" for exactly the symptom being chased, and it never
+         * printed. Two rounds of investigation went by with "no logs" taken as evidence
+         * that nothing was wrong.
+         *
+         * A category filter decides how much TRACE detail to keep. A warning is not detail;
+         * it is the program saying something is wrong, and no display setting should be
+         * able to swallow it. Removing the overload sends every existing call to the
+         * always-emitting one - the string is now built eagerly, which is the correct
+         * trade for something that should be rare.
+         */
 
         public static void Error(in string msg)
         {
