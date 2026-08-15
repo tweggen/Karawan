@@ -31,7 +31,7 @@ subsystem.
 | **GATE-D macOS** | 🔴 unrun for Phase 4 (models now come from bakes, not Assimp). Windows passed 2026-08-14. |
 | **GATE-E Linux Fn-key** | 🔴 unrun |
 | **WP-6.3 leftovers** | 🟡 **Desktop keys all confirmed 2026-08-15** (F8, cursor keys, Enter, Escape). Only the Android `SetKeyboardVisible` re-check is left. |
-| **WP-6.4** | ✅ **merged and owner-run on Windows.** Only the `[HUMAN]` rebinding UI is left — nothing exercises capture mode or `SaveUserBindings` end to end. |
+| **WP-6.4** | ✅ **merged and owner-run.** The rebinding UI is built (Options → Controls); capture mode and `SaveUserBindings` are now driven end to end. `[HUMAN]`: nobody has clicked it yet. |
 | **KI-17 (CI)** | ✅ **resolved 2026-08-15.** `.github/workflows/ci.yml`: regenerates both GL files and fails on any diff (PRs **and** push to master), then builds and unit-tests on **Linux** — 367/367, zero skipped, assets baked so the bake drift tests actually run. Its first run found two real defects: a case-mismatched model filename that broke the asset pipeline on Linux, and a swallowed native-Assimp load failure that presented as an NRE 1,400 lines away. |
 | **KAR-411 unwind** | 🟠 reasonable to start — versionCode 199 has been in the field on CoreCLR since 2026-08-10 |
 | **Perf A/B in Release** | 🟠 open — CoreCLR loads 4.64× faster than Mono, but measured in **Debug**, load phase only |
@@ -106,6 +106,73 @@ exactly the kind that deserves a control:
 - **The managed assembly was identical across the two .NET 10 runs**: both reported
   `mvid=d6f6e38b-806e-4a66-816c-0a18d1a6bf08`. Same IL, different runtime — the only variable was the
   runtime itself.
+
+### ✅ 2026-08-15 — the rebinding UI: WP-6.4's last open item, and the third channel finally exists
+
+Options → **Controls**. Rows come from the live `BindingTable`, so the screen shows what is
+actually bound — including the player's own rebindings and any action a later update adds.
+
+**The layout-dependent key label is a new channel, not a formatting choice.** `ScanCode`'s
+doc-comment has always described a three-way split: the POSITION a binding is stored by, the
+TEXT that arrives already composed by layout and IME, and the LABEL printed on the user's key.
+Only the third was missing, and a rebinding screen cannot work without it — on AZERTY,
+`ScanCode.W` is the key printed **Z**, so a screen rendering the positional name instructs the
+player to press a key their keyboard does not have. `SDL_GetKeyName(SDL_GetKeyFromScancode(...))`
+now answers it through `IWindowBackend` → `IPlatform` → `Engine.GetKeyDisplayName`, and
+`ControlLabels` is the only thing that consumes it. Strictly one-way: `Control → label` yes,
+`label → Control` never, because the label moves when the layout does.
+
+`SDL_GetScancodeName` would have been simpler and answers the wrong question — it returns the
+POSITION's name, which is what we already have.
+
+**Capture needs BOTH halves of the suppression, and part 1 only had one.** `InputMapper`'s
+capture short-circuit stops the *logical* translation, so binding Escape does not also close the
+menu. It does not stop the *raw* event, and the platform pushes both — while `Widget.cs`
+switches on raw codes directly (`"w"`, `"(cursorup)"`, `" "`, `"e"`). Without the second half,
+pressing W to rebind "walk forward" would also move the menu cursor. `RebindController` is
+therefore an `IInputPart` at Z 1000, ahead of the map overlay's 500 (`PriorityMap.Add` negates
+the key, so higher runs first), and swallows every key and button while capturing. Mouse and
+touch are left alone so Cancel stays clickable.
+
+**Escape is reserved as the way out**, because the consequence of the above is that a gamepad
+player would otherwise have no route out of "press a key" at all. Handled in
+`_onControlCaptured` rather than the pipeline: `ToLogical` calls back **synchronously** while
+the platform is still pushing the event, so an Escape handled in `InputPartOnInputEvent` would
+arrive after it had already been bound. Cost is stated rather than hidden — Escape cannot be
+assigned from this screen.
+
+**A test found a real design hole before a human did.** `BindingTable.Bind` **appends**,
+deliberately, because an action carries several controls and "interact" is E *and* Pad Y. That
+is right for the table and wrong for a button labelled Rebind: a player who rebinds jump to J
+and finds Space still jumping has added a key, not replaced one — the exact defect part 1
+refused to ship when it MOVED the button bindings rather than duplicating them. `RebindController.Rebind`
+now replaces the existing control **of the same kind** and leaves the others, so rebinding at the
+keyboard does not silently cost the player their controller. Static and table-in, so it is
+testable without an engine, a platform or a menu.
+
+**Two smaller things worth keeping.**
+
+- The refresh after a capture hops to the logical thread. `OnCaptureFinished` is raised from
+  `ToLogical` on the platform's event-pump thread; the JT widget tree belongs to the logical
+  thread. Same hazard as the NPC strategies that touched an entity from a thread-pool
+  continuation — except there it surfaced as an exception, and a torn widget tree would not
+  announce itself.
+- **The Help screen stopped lying.** It hardcoded "WASD - navigate", "ESC - pause menu",
+  "tab - map" — which a single rebind turned into a lie with nothing to catch it. Those lines
+  are gone; Help now links to Controls and lists only the keys that are *not* bindings (F8, F10,
+  F11, F12).
+
+**Drift guard.** `onClick='bindings:beginCapture(action)'` is a string resolved by name at click
+time: rename the C# method and nothing fails to compile, load or render — the option just stops
+doing anything. `RebindMenuDriftTests` parses `menu.xml`, extracts every `bindings:<name>` it
+invokes and requires the method to exist. `BindingsLuaBindings` moved to `builtin.controllers`
+for that reason and one better one: it contains nothing game-specific, and the naming rule says
+shared code belongs to its subsystem rather than to whichever app starts it.
+
+**Verification:** solution and Wuka build clean, **384/384** unit tests (17 new), TALE 200/200.
+**Not verified by clicking it** — that is the `[HUMAN]` step, and the one place the design could
+still be wrong is whether `<if>` behaves at `vmenu` level as it does inside `<for>`, which only
+the quest log has exercised.
 
 ### ✅ 2026-08-15 — CI exists (KI-17 closed), and its first Linux run found two real defects
 

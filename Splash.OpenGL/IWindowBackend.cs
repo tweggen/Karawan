@@ -96,6 +96,25 @@ public interface IWindowBackend : IDisposable
     /// </remarks>
     void SetKeyboardVisible(bool isVisible);
 
+    /**
+     * The LAYOUT-DEPENDENT display label for a physical key, for showing to a human.
+     *
+     * This is the third channel in the three-way split ScanCode's doc-comment describes,
+     * and the only one that has been missing. A binding stores the POSITION
+     * (ScanCode.W); text entry arrives already composed (INPUT_KEY_CHARACTER); and a
+     * rebinding screen has to print something the user recognises on THEIR keyboard.
+     * Those are three different questions and the position cannot answer the third: on
+     * AZERTY, ScanCode.W is the key printed Z, so a screen that renders the positional
+     * name tells the user to press a key that does not exist on their keyboard.
+     *
+     * Display only. Never round-trip it, never key anything on it - it changes when the
+     * user changes layout, which is precisely why bindings are not stored this way.
+     *
+     * Returns null if the platform cannot say, and the caller should fall back to the
+     * positional name rather than show nothing.
+     */
+    string? GetKeyDisplayName(engine.inputs.ScanCode scanCode) => null;
+
     /// <summary>
     /// Which windowing library is underneath.
     /// </summary>

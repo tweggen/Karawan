@@ -68,6 +68,7 @@ public class Main : AModule
         I.Get<engine.gongzuo.API>().AddDefaultBinding("nogame", () => new LuaBindings());
         I.Get<engine.gongzuo.API>().AddDefaultBinding("inv", () => new builtin.modules.inventory.InvLuaBindings());
         I.Get<engine.gongzuo.API>().AddDefaultBinding("questlog", () => new nogame.quests.QuestLuaBindings());
+        I.Get<engine.gongzuo.API>().AddDefaultBinding("bindings", () => new builtin.controllers.BindingsLuaBindings());
         
         _setupScreenComposition();
 
