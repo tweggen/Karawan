@@ -68,9 +68,9 @@ jobs:
       GL_XML_SHA256: fba2eaa6262cededdba0dd3cd1e3b1806c24899a7c5df8158467e41c19969426
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
 
@@ -123,7 +123,7 @@ jobs:
       # Checked out into a subdirectory so the sibling repositories can sit NEXT to it -
       # the layout Directory.Build.props probes for. Cloning them inside the repo would
       # need -p:SiblingRoot and would put untracked source trees under the working copy.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: Karawan
 
@@ -143,16 +143,31 @@ jobs:
           USE_DEFAULT: ${{ github.event.inputs.siblings_from_default_branch }}
         run: |
           set -euo pipefail
+          # Shallow FETCH of the pinned commit, not a blobless partial clone.
+          #
+          # A partial clone sets extensions.partialClone, which forces
+          # core.repositoryFormatVersion to 1 - and the SourceLink task these siblings
+          # carry (Microsoft.Build.Tasks.Git 1.1.1) refuses anything above 0:
+          #
+          #   error : Error reading git repository information: Unsupported repository
+          #           version 1. Only versions up to 0 are supported.
+          #
+          # A shallow repository stays at version 0, so the tool works normally. Fixing
+          # the clone shape rather than passing -p:EnableSourceLink=false keeps the
+          # failure honest: a real SourceLink problem would still surface.
+          #
+          # Fetching a bare SHA requires the server to allow it. GitHub does.
           clone() {
             local url="$1" dir="$2" sha="$3"
+            git init -q "$dir"
+            git -C "$dir" remote add origin "$url"
             if [ "${USE_DEFAULT:-false}" = "true" ]; then
-              git clone --depth 1 "$url" "$dir"
-              echo "$dir: default branch, $(git -C "$dir" rev-parse HEAD)"
+              git -C "$dir" fetch -q --depth 1 origin HEAD
             else
-              git clone --filter=blob:none --no-checkout "$url" "$dir"
-              git -C "$dir" checkout --detach "$sha"
-              echo "$dir: pinned $sha"
+              git -C "$dir" fetch -q --depth 1 origin "$sha"
             fi
+            git -C "$dir" checkout -q --detach FETCH_HEAD
+            echo "$dir: $(git -C "$dir" rev-parse HEAD)"
           }
 
           clone https://github.com/TimosForks/bepuphysics2.git       BepuPhysics2         f8223cac41406c56c6ad20214d74416c76ac2876
@@ -160,7 +175,7 @@ jobs:
           clone https://github.com/TimosForks/ObjLoader.git          ObjLoader            5c4a693194443b801d90cdd6f7d3f9d0664868cf
           clone https://github.com/KhronosGroup/glTF-CSharp-Loader.git glTF-CSharp-Loader 41d9b6b7fe288bae706a8ff80505b3eecf0f1743
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: Karawan/global.json
 
