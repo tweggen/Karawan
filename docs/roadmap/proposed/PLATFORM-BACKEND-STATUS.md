@@ -5,11 +5,11 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-15 (**Phases 0–5 all complete and merged** — zero Silk.NET in any shipping project. WP-6.4 parts 1 and 2 done. Remaining: the `[HUMAN]` rebinding UI, GATE-C Linux, GATE-C gamepad, GATE-D macOS.)
+**Last updated:** 2026-08-15 (**Phases 0–5 all complete and merged**, **Phase 6 WP-6.1–6.4 all merged** — zero Silk.NET in any shipping project. Remaining: the `[HUMAN]` rebinding UI, GATE-C Linux, GATE-D macOS, KI-17/CI.)
 
 ---
 
-# ▶▶ RESUME HERE — state at 2026-08-14
+# ▶▶ RESUME HERE — state at 2026-08-15
 
 **PHASES 0–5 ARE ALL COMPLETE AND MERGED.** The Silk.NET exit is done in substance: windowing,
 input and audio left in Phases 2–3, model import became a build step in Phase 4, and the GL
@@ -30,7 +30,7 @@ subsystem.
 | **GATE-C Linux** | 🔴 **never run.** Still the only tier in the whole programme with zero evidence. |
 | **GATE-D macOS** | 🔴 unrun for Phase 4 (models now come from bakes, not Assimp). Windows passed 2026-08-14. |
 | **GATE-E Linux Fn-key** | 🔴 unrun |
-| **WP-6.4** | 🟢 parts 1 and 2 done (layer + button bindings, then `InputController`'s analog path); only the `[HUMAN]` rebinding UI is left |
+| **WP-6.4** | ✅ **merged and owner-run on Windows.** Only the `[HUMAN]` rebinding UI is left — nothing exercises capture mode or `SaveUserBindings` end to end. |
 | **KI-17 (CI)** | 🟠 open. Nothing enforces generated-file reproducibility; the repo has no CI at all. |
 | **KAR-411 unwind** | 🟠 reasonable to start — versionCode 199 has been in the field on CoreCLR since 2026-08-10 |
 | **Perf A/B in Release** | 🟠 open — CoreCLR loads 4.64× faster than Mono, but measured in **Debug**, load phase only |
@@ -46,6 +46,12 @@ before adding anything to this pipeline, because each was invisible to the check
 3. **A stale published Chushi silently baked nothing**
    ([#98](https://github.com/tweggen/Karawan/pull/98)) — now a build error rather than a runtime
    mystery. See the fallout section below.
+
+**A fourth, which is the counter-example:** "jump stopped working" arrived immediately after
+WP-6.4 and was **four months old and unrelated**
+([#102](https://github.com/tweggen/Karawan/pull/102)). Checking the changed half *first* — a test
+proving the shipped bindings still emit `<jump>` — is what stopped a day being spent in the
+binding layer. A symptom that appears right after a merge names a suspect, not a cause.
 
 ---
 
@@ -840,7 +846,7 @@ Consequences carried forward:
 | **WP-6.1** | ✅ **MERGED, device-verified** | `platform/wp-6.1` | [#66](https://github.com/tweggen/Karawan/pull/66) | 1 | gameplay loop, sound, input, splash all confirmed on device ✅ | — | **MAUI is gone from Wuka.** Four things surfaced only by building and running, none visible from source: `SingleProject` was hiding four dead platform folders AND pointing the SDK at `AndroidManifest.xml` (without `<AndroidManifest>` the SDK silently SYNTHESISES one — green build, right package name via `ApplicationId`, `android:label`/`icon` gone); the Silk `ExcludeAssets` entries are **suppressors, not sources** (see KI-12); and the splash artwork cannot be used as-is. Bluetooth permission prompt also disabled, code retained. |
 | **WP-6.2** | ✅ **FULLY MERGED** (re-verified 2026-08-14) | `platform/wp-6.2-net10-spike` → `platform/wp-6.2-coreclr-default` | [#70](https://github.com/tweggen/Karawan/pull/70) **merged**, follow-up PR open | 1 | GLOBAL-1 ✅ · 1b ✅ · 4 ✅ (192/192 on net10.0) · Windows desktop ✅ · Android both runtimes ✅ · APK+AAB shape ✅ · AC-1.7 ✅ · 16 KB verified from ELF ✅ | **ABIPROBE M+N ✅ PASSED on device — Mono AND CoreCLR** | **.NET 10 retarget is ON MASTER via #70.** **CoreCLR-as-default and `versionCode` 199 were initially stranded** (merge-order trap, 6th occurrence) and recovered onto `platform/wp-6.2-coreclr-default` — **which has since landed in full.** Re-verified 2026-08-14: `check-branch-landed.sh` reports every commit on that branch is on master, `Wuka.csproj` defaults `WukaCoreClr` to `true`, and the manifest carries `versionCode="199"`. This row read HALF-MERGED for four days after it was whole. **Two source fixes in the whole tree**, both the C# 14 span-overload change. Both runtimes pass → fix came upstream; CoreCLR chosen anyway for load time (4.64×) and coverage. Built on Windows 11 **and** macOS. |
 | **WP-6.3** | ✅ **MERGED (all four steps)** | `platform/wp-6.3-scancodes`, `platform/wp-6.3-device-contracts` | [#73](https://github.com/tweggen/Karawan/pull/73), [#74](https://github.com/tweggen/Karawan/pull/74) | 1 | build ✅ · **234/234 tests** ✅ · ScanCode ≡ SDL_Scancode 104/104 ✅ | **GATE-C input 🟡 macOS: WASD ✅, text entry ✅** | **Native input semantics.** `ScanCode` on USB HID usage IDs, so `Sdl3KeyCodes` is a **cast**; one name table in `engine.inputs.ScanCodeNames`, not one per backend. Devices carry no events; `OnConnectionChanged` → `INPUT_DEVICE_ATTACHED/DETACHED` on the queue (**a race fix**); enumeration is an immutable `IReadOnlyList` snapshot. **Validating it uncovered KI-14**, a pre-existing WP-3.2 regression that had killed desktop text entry. **Still unconfirmed: F8, the arrow/escape/enter family, and an Android re-check of `SetKeyboardVisible`.** |
-| **WP-6.4** | 🟢 **PARTS 1 + 2 DONE, PR-OPEN** | `platform/wp-6.4` | [#101](https://github.com/tweggen/Karawan/pull/101) | 2 | build ✅ · Wuka ✅ · **348/348 unit** (73 new) ✅ · TALE 200/200 ✅ · bindings ship in the APK ✅ | `[HUMAN]` rebinding UI · `[HUMAN]` GATE-C gamepad feel | **Action / binding layer, runtime r/w — and the analog path now reads it.** Controls stored by POSITION (`ScanCode`), actions carry all their controls, table writable at runtime, JSON round-trip, capture mode. Part 1 migrated the button bindings out of `MapButtonToLogical`; part 2 migrated WASD, the sticks and the triggers out of `InputController`, deleting `StickTransfer` and the inline trigger remap in favour of `curve 4` / `range -1 1 0 255` in `models/nogame.bindings.json`. **No hardcoded fallback anywhere** — a second copy of the defaults is how a rebind leaves the old control live. Regression pins are on the SHIPPED data, and were confirmed to fail when it was patched. |
+| **WP-6.4** | ✅ **MERGED (parts 1 + 2)** | `platform/wp-6.4` | [#101](https://github.com/tweggen/Karawan/pull/101) | 2 | build ✅ · Wuka ✅ · **348/348 unit** (73 new) ✅ · TALE 200/200 ✅ · bindings ship in the APK ✅ | **GATE-C Windows 🟡 owner-run 2026-08-15: keyboard and gamepad buttons ✅, movement ✅.** Jump was the only fault and was **not** this work package ([#102](https://github.com/tweggen/Karawan/pull/102)). Stick/trigger *feel* not separately reported; `[HUMAN]` rebinding UI still unbuilt | **Action / binding layer, runtime r/w — and the analog path now reads it.** Controls stored by POSITION (`ScanCode`), actions carry all their controls, table writable at runtime, JSON round-trip, capture mode. Part 1 migrated the button bindings out of `MapButtonToLogical`; part 2 migrated WASD, the sticks and the triggers out of `InputController`, deleting `StickTransfer` and the inline trigger remap in favour of `curve 4` / `range -1 1 0 255` in `models/nogame.bindings.json`. **No hardcoded fallback anywhere** — a second copy of the defaults is how a rebind leaves the old control live. Regression pins are on the SHIPPED data, and were confirmed to fail when it was patched. |
 
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
 
