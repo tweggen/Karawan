@@ -140,5 +140,5 @@ Complete list of runtime group-data consumers:
 - New `docs/tale/phases/PHASE_E_SOCIAL.md` (architecture + tuning numbers).
 - `docs/tale/phases/PHASE_D_SOCIAL.md`: resolve the five D5 concerns (1: obsoleted by community detection; 2/3: new statistics; 4: partial; 5: fear bootstrap + circularity fix); correct the "25 scenarios" claim (large disabled by config, not a bake failure).
 - `CLAUDE.md`: status lines (D follow-up resolved, Phase E entries), test counts.
-- `docs/TESTING/TESTING_STRATEGY.md` + `docs/PROCESS_TALE.md` if fixture counts change.
+- `docs/testing/docs/TESTING_STRATEGY.md` + `docs/PROCESS_TALE.md` if fixture counts change.
 - Move this plan to `docs/roadmap/done/` when complete.

@@ -479,7 +479,7 @@ simulation completed, 19169 events" and then times out on *"Wait for the main
 scene to start"*, with **zero** model activity in the log. It never loads a
 character model, so no amount of fbx-moving makes that grep mean anything — the
 smoke scripts are documented as running against the game, not TestRunner
-(`docs/SYSTEMS/NARRATION/EXPECT_IMPLEMENTATION.md:80`). Replaced with a stricter
+(`docs/testing/docs/EXPECT_IMPLEMENTATION.md:80`). Replaced with a stricter
 check that *is* runnable: every declared model loaded through the real runtime
 path against an asset layer that **throws** on any fbx open, so falling back to
 Assimp is impossible rather than merely unobserved. Result: *13 models loaded

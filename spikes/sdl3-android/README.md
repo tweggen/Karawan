@@ -120,7 +120,7 @@ and rebuild.
 
 Getting a real answer on the soft keyboard is **WP-2.3's job** — that work package exists to port
 `KarawanInputConnection.cs` and re-validate why SDL2's IME path was bypassed
-(`docs/SYSTEMS/PLATFORMS/ANDROID.md`). Do not let a green screen here be read as "IME works".
+(`docs/main/docs/platforms/ANDROID.md`). Do not let a green screen here be read as "IME works".
 
 ## How it fits together
 

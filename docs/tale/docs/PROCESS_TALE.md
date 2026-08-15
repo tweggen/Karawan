@@ -27,7 +27,7 @@ Run tests at different levels depending on your change:
 ./run_tests.sh all    # ~5 minutes (same as 'standard')
 # All 192 tests with 60-day simulations
 # Currently: Phase 0-6 (183) + C1-C4 (29) = 212 total test files
-# See docs/TESTING/TESTING_STRATEGY.md for full list
+# See docs/testing/docs/TESTING_STRATEGY.md for full list
 ```
 
 **Pre-Merge (Full Regression)**:
@@ -103,7 +103,7 @@ docs/tale/
 | New TALE phase | Create `docs/tale/phases/PHASE_N.md` |
 | Phase design/architecture changes | Update `docs/tale/phases/PHASE_N.md` |
 | New test cases | Update `docs/tale/phases/PHASE_N.md` + (quarterly) `docs/tale/tests/PHASE_N.md` |
-| Test infrastructure changes | Update `docs/TESTING/TESTING_STRATEGY.md` + `docs/tale/tests/STRATEGY.md` |
+| Test infrastructure changes | Update `docs/testing/docs/TESTING_STRATEGY.md` + `docs/tale/tests/STRATEGY.md` |
 | Overall TALE status | Update `CLAUDE.md` section on TALE phases |
 
 ---
@@ -128,7 +128,7 @@ docs/tale/
 3. Create: models/tests/tale/phaseN-*/  (test directory)
 4. Create: docs/tale/tests/PHASE_N.md (test specifications)
 5. Implement code + tests
-6. Update: docs/TESTING/TESTING_STRATEGY.md (add phase to test phases table)
+6. Update: docs/testing/docs/TESTING_STRATEGY.md (add phase to test phases table)
 7. Update: CLAUDE.md (update phase status)
 8. Move: docs/roadmap/proposed/ → docs/roadmap/done/
 9. Commit: "Implement Phase N: Description"
@@ -141,7 +141,7 @@ docs/tale/
 2. Update: docs/tale/phases/PHASE_N.md (if design changed)
 3. Add/modify tests in: models/tests/tale/phaseN-*/
 4. Run: ./run_tests.sh phaseN
-5. Update: docs/TESTING/TESTING_STRATEGY.md (if test counts changed)
+5. Update: docs/testing/docs/TESTING_STRATEGY.md (if test counts changed)
 6. Commit: "Update Phase N: Description"
 ```
 

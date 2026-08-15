@@ -9,7 +9,7 @@ were **not** done and say so: no CI exists, and ANGLE was never evaluated.
 **Scope:** the platform layer only — windowing, input, GL bindings, audio bindings, model import.
 Explicitly *not* the renderer design, the ECS, or the game.
 
-**Implementation:** [`docs/roadmap/proposed/IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](../roadmap/proposed/IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md)
+**Implementation:** [`docs/roadmap/proposed/IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](../../../roadmap/proposed/IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md)
 — work packages, executable acceptance criteria, and the agent-orchestration protocol. This document
 is the *why*; that one is the *how*.
 
@@ -280,7 +280,7 @@ it stays frozen at its current working pin until Phase 4 deletes it, so generali
 activity → GLES 3.0 context → `SDL_GL_GetProcAddress` → clear screen → multi-touch + IME. Resolve: how
 `GameActivity` (`Wuka/Platforms/Android/GameActivity.cs:27`, today `: SilkActivity`) rebases onto
 SDL3's `org.libsdl.app.SDLActivity`; whether the MAUI shell (`MainActivity.cs:155`) still works;
-whether `GameSurface.cs` ports. `docs/SYSTEMS/PLATFORMS/ANDROID.md` records *why* SDL2's IME path was
+whether `GameSurface.cs` ports. `docs/main/docs/platforms/ANDROID.md` records *why* SDL2's IME path was
 bypassed — re-validate that reasoning against SDL3 rather than porting it forward blindly. Verify
 16 KB alignment with `readelf`; do not take it on faith, since that is exactly the assumption that
 failed with Silk.
@@ -572,4 +572,4 @@ WP-0.0 shows the AAR cannot be repacked; Phase 4 defensible but re-justify on si
 - [Khronos OpenGL registry (`gl.xml`)](https://github.com/KhronosGroup/OpenGL-Registry)
 - [OpenTK](https://opentk.net/faq.html) · [MonoGame roadmap](https://docs.monogame.net/roadmap/)
 - In-repo: `Wuka/ANDROID_NATIVE_LIBS.md`, `docs/ANIMATION_ASSIMP_VERSION_COMPENSATION.md`,
-  `recipes/BUILD_NOTES.md`, `docs/SYSTEMS/PLATFORMS/ANDROID.md`
+  `recipes/BUILD_NOTES.md`, `docs/main/docs/platforms/ANDROID.md`

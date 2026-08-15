@@ -42,8 +42,8 @@ For implementation details of specific engine components, see:
 
 - [../SYSTEMS/](../SYSTEMS/) — Game systems (quests, persistence, world generation, narration)
 - [../tale/](../tale/) — TALE narrative simulation
-- [PROCESS.md](../../PROCESS.md) — Generic development process
-- [CLAUDE.md](../../CLAUDE.md) — Project overview
+- [PROCESS.md](../../../../PROCESS.md) — Generic development process
+- [CLAUDE.md](../../../../CLAUDE.md) — Project overview
 
 ---
 
