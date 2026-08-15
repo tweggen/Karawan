@@ -20,6 +20,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AInputControllerFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\ClickableFingerState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\ActionBinding.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\BindingTable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\Control.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\InputModifier.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FingerStateHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\IFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\Context.cs" />

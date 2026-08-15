@@ -1,0 +1,80 @@
+{
+  "interact": {
+    "description": "Interact with your environment.",
+    "controls": [ "Key:E", "GamepadButton:Y" ]
+  },
+  "change": {
+    "description": "Change something about you",
+    "controls": [ "Key:F", "GamepadButton:X" ]
+  },
+  "menu": {
+    "description": "Toggle menu",
+    "controls": [ "Key:Escape", "GamepadButton:Start" ]
+  },
+  "map": {
+    "description": "Toggle map",
+    "controls": [ "Key:Tab", "GamepadButton:Back" ]
+  },
+  "jump": {
+    "description": "Jump",
+    "controls": [ "Key:Space", "GamepadButton:A" ]
+  },
+  "run": {
+    "description": "Run",
+    "controls": [ "Key:LeftShift", "GamepadButton:LeftShoulder" ]
+  },
+  "followquest": {
+    "description": "Follow the currently-triggered quest",
+    "controls": [ "Key:Q" ]
+  },
+  "cursorup": {
+    "controls": [ "GamepadButton:DPadUp" ]
+  },
+  "cursordown": {
+    "controls": [ "GamepadButton:DPadDown" ]
+  },
+  "cursorleft": {
+    "controls": [ "GamepadButton:DPadLeft" ]
+  },
+  "cursorright": {
+    "controls": [ "GamepadButton:DPadRight" ]
+  },
+
+  "walkforward": {
+    "description": "Walk / drive forward",
+    "controls": [ "Key:W" ]
+  },
+  "walkbackward": {
+    "description": "Walk / drive backward",
+    "controls": [ "Key:S" ]
+  },
+  "walkleft": {
+    "description": "Walk / steer left",
+    "controls": [ "Key:A" ]
+  },
+  "walkright": {
+    "description": "Walk / steer right",
+    "controls": [ "Key:D" ]
+  },
+
+  "move": {
+    "description": "Move (left stick)",
+    "controls": [ "GamepadStick:0" ],
+    "modifiers": [ "curve 4" ]
+  },
+  "look": {
+    "description": "Look around, or zoom while the stick is pressed (right stick)",
+    "controls": [ "GamepadStick:1" ],
+    "modifiers": [ "curve 4" ]
+  },
+  "brake": {
+    "description": "Brake (left trigger)",
+    "controls": [ "GamepadTrigger:0" ],
+    "modifiers": [ "range -1 1 0 255" ]
+  },
+  "accelerate": {
+    "description": "Accelerate (right trigger)",
+    "controls": [ "GamepadTrigger:1" ],
+    "modifiers": [ "range -1 1 0 255" ]
+  }
+}

@@ -630,6 +630,9 @@ public sealed class Sdl3WindowBackend : IWindowBackend
      * Vector2 per stick - InputController._onStickMoved reads both components off one
      * event. So the last value of each axis is held and the pair is re-emitted whenever
      * either half moves.
+     *
+     * That is also why a stick is ONE bindable Control ("GamepadStick:0") rather than two
+     * axes: no event ever carries a single axis, so there is nothing to bind one to.
      */
     private readonly float[] _stickAxes = new float[4];
 
@@ -658,8 +661,10 @@ public sealed class Sdl3WindowBackend : IWindowBackend
                 break;
 
             /*
-             * Trigger indices are contract: InputController._onTriggerMoved reads index 0
-             * as braking and index 1 as accelerating.
+             * Trigger indices are contract: since WP-6.4 part 2 they are the identity of a
+             * Control ("GamepadTrigger:0"), so index 0 is what nogame.bindings.json binds
+             * to "brake" and index 1 to "accelerate". Renumbering here silently swaps two
+             * pedals; it does not fail to compile.
              */
             case SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
                 OnGamepadTriggerMoved?.Invoke(0, Sdl3GamepadCodes.TriggerAxisToEngine(value));
