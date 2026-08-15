@@ -4,14 +4,14 @@
 **Created:** 2026-08-04
 **Estimated Effort:** large — 6 phases, ~2,900 LOC, spread over months
 **Complexity:** Medium (mechanical) with two High-risk gates
-**Design doc:** [`docs/ARCHITECTURE/PLATFORM_BACKEND.md`](../../ARCHITECTURE/PLATFORM_BACKEND.md) — **read it first**
+**Design doc:** [`docs/main/docs/architecture/PLATFORM_BACKEND.md`](../../main/docs/architecture/PLATFORM_BACKEND.md) — **read it first**
 
 ---
 
 ## 0. Read this first (orchestrator and workers)
 
 You are implementing a decision that has already been argued through. **The reasoning is in the ADR
-and must not be re-derived.** Read `docs/ARCHITECTURE/PLATFORM_BACKEND.md` in full before dispatching
+and must not be re-derived.** Read `docs/main/docs/architecture/PLATFORM_BACKEND.md` in full before dispatching
 or accepting any work package. In particular read §6 (options rejected), §9 (which claims are
 unverified), and §10 (two earlier recommendations that were already tried and rejected).
 
@@ -144,7 +144,7 @@ Stop immediately, do not work around, when:
 ### 2.4 Worker dispatch template
 
 ```
-Read docs/ARCHITECTURE/PLATFORM_BACKEND.md (the why) and
+Read docs/main/docs/architecture/PLATFORM_BACKEND.md (the why) and
 docs/roadmap/proposed/IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md §1, §2, §3 (the rules).
 
 Implement work package <WP-ID> from §5 of the implementation plan, and only that package.
@@ -381,7 +381,7 @@ on a device answers nothing.
   onto SDL3's `org.libsdl.app.SDLActivity`; confirm the MAUI shell (`MainActivity.cs:155`) still
   launches it.
 - **WP-2.3** — port or replace `GameSurface.cs` (229 LOC) and `KarawanInputConnection.cs` (116 LOC).
-  **SDL3 reworked text input** (`SDL_StartTextInput` is now per-window). `docs/SYSTEMS/PLATFORMS/ANDROID.md`
+  **SDL3 reworked text input** (`SDL_StartTextInput` is now per-window). `docs/main/docs/platforms/ANDROID.md`
   records *why* SDL2's IME path was bypassed — re-validate that reasoning against SDL3 rather than
   porting the workaround forward blindly.
 
@@ -605,7 +605,7 @@ Ranked by likelihood, for the orchestrator to watch for.
 
 | Date | Change |
 |---|---|
-| 2026-08-04 | Created from `docs/ARCHITECTURE/PLATFORM_BACKEND.md` rev 3 |
+| 2026-08-04 | Created from `docs/main/docs/architecture/PLATFORM_BACKEND.md` rev 3 |
 | 2026-08-06 | **AC-1.4 rewritten.** It required `libOpenSLES.so` in `NEEDED`, which no correct build produces — openal `dlopen()`s it. Replaced by four assertions that live in `recipes/build-openal.sh` and run on every Android build. Establishes the general preference: a criterion that can be a build-time assertion should be one. Also corrected the §8 note about ELF tooling, which assumed a Mac. |
 | 2026-08-05 | **WP-0.0 executed — ADR claim #6 falsified, claim #7 confirmed.** Programme halted for re-plan per §4/§5c. Added `PLATFORM-BACKEND-STATUS.md` (the §2.2b ledger, previously missing). Corrected §5b (described macOS; work is on Windows 11 — ELF tooling and NDK are present, `gh` is **not**). Corrected AC-0.0.3's SDL3 AAR path (prefab layout, not `jni/`). |
 | 2026-08-04 | Revised after orchestrator review. Fixed: WP-0.3 vs AC-GLOBAL-1 contradiction (promotion deferred to WP-1.6); WP-0.1 scope 6→13 csprojs; AC-3.1 and AC-5.1 expected values (were unachievable); AC-1.1/1.5/4.2/4.4/5.0 made measurable; GATE-D moved to WP-0.1; TestRunner added (not in `.sln`). Added: §2.2b state ledger, §2.2c PR-rejected path, §2.2d conflict sets, §2.2e gates-are-pre-merge, §2.5 re-run exemptions, §5b environment, §5c off-the-rails thresholds and the bank-the-wins exit. **N4 relaxed** — Phase 5's approach is now open pending S2b costing (WP-5.0b). |

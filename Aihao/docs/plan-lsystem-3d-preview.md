@@ -12,7 +12,7 @@
 > - `Platform.SetExternalGL` is now `internal`.
 >
 > The boundary Aihao actually uses today is a `Func<string, nint>` GetProcAddress delegate — no
-> graphics-API type crosses into Aihao. See `docs/ARCHITECTURE/PLATFORM_BACKEND.md` §5.
+> graphics-API type crosses into Aihao. See `docs/main/docs/architecture/PLATFORM_BACKEND.md` §5.
 
 ## Context
 
