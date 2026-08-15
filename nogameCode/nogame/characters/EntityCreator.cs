@@ -147,26 +147,54 @@ public class EntityCreator
 
             }
 
+            /*
+             * The animation state is attached UNCONDITIONALLY, and this is the fix for the
+             * T-posed NPCs that survived the retry added in #106.
+             *
+             * All of this used to sit behind `if (default != EntityAnimations)`.
+             * EntityAnimations comes from ModelBuilder, which records the first node whose
+             * model carries a MapAnimations - so when it comes back default the character
+             * got NO GPUAnimationState component and CharacterModelDescription.AnimationState
+             * stayed null. The behaviours then waited on `entity.Has<GPUAnimationState>()`
+             * forever: #106 made them retry, but there was nothing for the retry to find,
+             * which is exactly why that fix did not help.
+             *
+             * Attaching the component regardless costs nothing when there are no
+             * animations - SetAnimation simply keeps returning false - and turns a
+             * permanent bind pose into something the per-frame retry can still repair.
+             */
+            CharacterModelDescription.Model = _model;
+            CharacterModelDescription.AnimationState = _animStatePerson;
+
             if (default != EntityAnimations)
             {
                 CharacterModelDescription.EntityAnimations = EntityAnimations;
-                CharacterModelDescription.Model = _model;
-                CharacterModelDescription.AnimationState = _animStatePerson;
-                
-                if (!_ePerson.Has<engine.joyce.components.GPUAnimationState>())
+            }
+            else
+            {
+                /*
+                 * Loud, because it is the difference between a character that animates and
+                 * one that stands in a T-pose, and until now it was completely silent.
+                 */
+                Error($"No animations entity for model '{CharacterModelDescription.ModelUrl}' "
+                      + $"(pack '{CharacterModelDescription.AnimationPackName ?? "(none)"}'). "
+                      + "The character will render in its bind pose - a T-pose - until an "
+                      + "animation can be selected.");
+            }
+
+            if (!_ePerson.Has<engine.joyce.components.GPUAnimationState>())
+            {
+                _ePerson.Set(new engine.joyce.components.GPUAnimationState()
                 {
-                    _ePerson.Set(new engine.joyce.components.GPUAnimationState()
-                    {
-                        AnimationState = CharacterModelDescription.AnimationState
-                    });
-                }
-                
-                if (InitialAnimName != null)
-                {
-                    // TXWTODO: Maybe we can even do an initial animation setup generically?
-                    ref var cGpuAnimationState = ref _ePerson.Get<engine.joyce.components.GPUAnimationState>();
-                    cGpuAnimationState.AnimationState?.SetAnimation(_model, InitialAnimName);
-                }
+                    AnimationState = CharacterModelDescription.AnimationState
+                });
+            }
+
+            if (InitialAnimName != null)
+            {
+                // TXWTODO: Maybe we can even do an initial animation setup generically?
+                ref var cGpuAnimationState = ref _ePerson.Get<engine.joyce.components.GPUAnimationState>();
+                cGpuAnimationState.AnimationState?.SetAnimation(_model, InitialAnimName);
             }
             
             if (CollisionPropertiesFactory != null) {

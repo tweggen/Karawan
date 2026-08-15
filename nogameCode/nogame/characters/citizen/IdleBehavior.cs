@@ -15,6 +15,7 @@ public class IdleBehavior : ABehavior
 {
     public required CharacterModelDescription CharacterModelDescription;
     private bool _animationSet = false;
+    private StuckAnimationReporter _stuckReporter;
 
     public override void Behave(in Entity entity, float dt)
     {
@@ -43,6 +44,12 @@ public class IdleBehavior : ABehavior
                 _animationSet = true == cGpuAnimationState.AnimationState?.SetAnimation(
                     model, CharacterModelDescription.IdleAnimName, 0);
             }
+
+            if (!_animationSet)
+            {
+                _stuckReporter.NoteFailure(entity, nameof(IdleBehavior),
+                    CharacterModelDescription.IdleAnimName);
+            }
         }
     }
 
@@ -61,6 +68,7 @@ public class IdleBehavior : ABehavior
     {
         base.OnAttach(engine0, entity0);
         _animationSet = false;
+        _stuckReporter.Reset();
 
         ref engine.physics.components.Body cBody = ref entity0.Get<engine.physics.components.Body>();
         cBody.PhysicsObject?.MakeKinematic(ref cBody.Reference);
