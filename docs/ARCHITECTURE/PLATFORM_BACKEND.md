@@ -1,7 +1,9 @@
 # ADR: Platform backend strategy
 
-**Status:** Proposal — not decided. Written to be challenged.
-**Date:** 2026-08-04
+**Status:** **ACCEPTED — implemented 2026-08-14.** Phases 0–5 are complete and merged; outcomes are
+recorded against every §9 claim and every §11 challenge below. Two things this document proposed
+were **not** done and say so: no CI exists, and ANGLE was never evaluated.
+**Date:** 2026-08-04 · **Accepted:** 2026-08-14
 **Author:** drafted with Claude Code, from a repo audit; conclusions revised twice under challenge
 (see §10).
 **Scope:** the platform layer only — windowing, input, GL bindings, audio bindings, model import.
@@ -374,20 +376,20 @@ the subtle ones — a wrong enum value there fails silently rather than loudly.
 Load-bearing claims, with evidence class. **Measured** = counted in this repo. **Estimated** =
 extrapolated. **Assumed** = taken on external authority and not verified here.
 
-| # | Claim | Class | How to falsify |
+| # | Claim | Class | Outcome (2026-08-14) |
 |---|---|---|---|
-| 1 | Zero Silk breakages trace to `Silk.NET.OpenGL` | **measured** (381 commits, `Splash.Silk`) | find a GL-binding bug in the history; the whole §4c argument weakens |
-| 2 | ~80 GL entry points, ~10 enum types | **measured** | recount; if the real surface is much wider, Phase 5's cost estimate breaks |
-| 3 | A generator emitting matching names leaves ~4,100 call-site LOC untouched | **estimated** | the biggest single soft spot. Prototype the generator on 5 entry points before committing to Phase 5 |
-| 4 | `gl.xml` is sufficient to generate what's needed | **assumed** | check that Silk's typed-enum grouping is derivable from the registry, not hand-curated. If hand-curated, Phase 5 costs more |
-| 5 | Silk 2.x is maintenance-mode; 3.0 is a rewrite with no ETA | **assumed** (milestone ~49%, May 2026) | if 3.0 ships soon with a clean 2.x migration path, S2 becomes competitive again |
-| 6 | The SDL2 AAR cannot be fixed locally | **assumed**, from `ANDROID_NATIVE_LIBS.md` | try repacking the AAR with a self-built 16 KB-aligned SDL2. If that works, Play unblocks without touching windowing — and the case for SDL3 rests on longevity alone |
-| 7 | SDL3's Android build is 16 KB-aligned | **assumed** | verify with `readelf -lW` **before** Phase 2. If false, the acute problem is not solved by this plan |
-| 8 | `KarawanInputConnection.cs` / `GameSurface.cs` port to SDL3 | **assumed — weakest point** | this is why Phase 2 is a gate. If IME cannot be made to work, reconsider |
-| 9 | Assimp binding/native skew is a struct-layout problem | **measured** (`FbxModel.cs` walks raw pointers) | if the corruption had another cause, Phase 4's justification weakens (though the 11.2 MB saving stands) |
-| 10 | Phase 4 is tractable because the infra exists | **estimated** | the unknown is how much of the `Model` graph resists MessagePack. Spike the annotation on `Mesh` + `Skeleton` first |
-| 11 | GitHub Actions is free for this repo on all runners | **measured** (repo is public) | — |
-| 12 | The abstraction is the durable asset | **measured** (`Splash/` survived Raylib→Silk; `SplashCode/` dead since 2023-03-20) | — |
+| 1 | Zero Silk breakages trace to `Silk.NET.OpenGL` | **measured** (381 commits, `Splash.Silk`) | ✅ **held.** Nothing in five phases contradicted it. The GL binding was replaced for reasons unrelated to defects — see 11b, where the operative reason turned out to be something this document never considered. |
+| 2 | ~80 GL entry points, ~10 enum types | **measured** | 🟡 **entry points right, enum types 3× low.** WP-5.1 resolved the surface by Roslyn: 339 call sites, 81 distinct entry points; the generator emits **85** native entry points + 14 hand-written conveniences, and **30** enum types, not ~10. Cost estimate survived anyway. |
+| 3 | A generator emitting matching names leaves ~4,100 call-site LOC untouched | **estimated** — *"the biggest single soft spot"* | ✅ **CONFIRMED EXACTLY.** AC-5.0 measured **0 changed lines** on the call-site sample. The document's most-doubted estimate was its most precisely correct one. |
+| 4 | `gl.xml` is sufficient to generate what's needed | **assumed** | ✅ **held.** 114 enum values verified against the registry, 0 unverifiable. The one real defect found (`glTexParameterI[u]iv` taking its third parameter by value) came from **our** Roslyn probe flattening `in int`, not from the registry. |
+| 5 | Silk 2.x is maintenance-mode; 3.0 is a rewrite with no ETA | **assumed** | ⬜ **never tested.** The programme neither confirmed nor refuted it. It remains the load-bearing assumption under the whole longevity argument, and it is still unverified. |
+| 6 | The SDL2 AAR cannot be fixed locally | **assumed** | ❌ **FALSIFIED** by WP-0.0 — the repack works. Escalated per plan §5c; the owner chose to continue, on the grounds that repackability buys *time*, not maintenance attention. So this was **schedule relief, not a change of direction**. |
+| 7 | SDL3's Android build is 16 KB-aligned | **assumed** | ✅ **confirmed**, and then validated by the store rather than by our own checker: GATE-B passed twice, including a second deliberate pass for CoreCLR's native set. |
+| 8 | `KarawanInputConnection.cs` / `GameSurface.cs` port to SDL3 | **assumed — weakest point** | ✅ **confirmed on hardware**, and **far smaller than feared**. Both files were already SDL3-aware; nothing needed porting. The actual defect was that *nothing raised the keyboard at all* (KI-10). The claim called "the single most likely point of failure in this whole plan" cost one seam and two null guards. |
+| 9 | Assimp binding/native skew is a struct-layout problem | **measured** | ⬜ **moot, not verified.** Phase 4 removed Assimp from the runtime, so the skew can no longer occur, but the mechanism was never independently retested. §11's "lower stakes" note was right that the pin had already neutralised it — the real payoff was size and load time. |
+| 10 | Phase 4 is tractable because the infra exists | **estimated** | ✅ **confirmed, and the recommended spike was the right call.** The `Mesh`+`Skeleton` spike answered the open question immediately: every shared/cyclic edge in the `Model` graph is *derivable*, so no DTO layer was needed. The plan called WP-4.1 "the bulk of the effort"; it was not. |
+| 11 | GitHub Actions is free for this repo on all runners | **measured** | ⬜ **untested — no CI was ever stood up.** WP-1.1 added one workflow for native builds; nothing else. This is KI-17 and the largest structural gap left. |
+| 12 | The abstraction is the durable asset | **measured** | ✅ **confirmed emphatically.** Windowing, input, audio, the GL binding and model import were *all* replaced underneath `Splash/`, across five phases, without the renderer design changing. This is the claim the whole document rests on and it is the one the work most clearly validated. |
 
 **Questions a reviewer should press on:**
 
@@ -418,17 +420,29 @@ reasoning matters more than the conclusion.
   self-generation.
 - **Rev 3** — Full de-Silk via self-generation, with the ABI-shape principle (§3b) as the
   organising idea and the macOS/OpenGL risk (§5) named as the thing that actually outranks it.
-- **Rev 3.1 (this)** — Reviewed by an independent Fable instance. Corrected: "6 packages" → 13
+- **Rev 3.1** — Reviewed by an independent Fable instance. Corrected: "6 packages" → 13
   (6 was the *project* count); `Joyce.csproj:18` → `:18-19`. Added §11 recording four unresolved
   objections, and `S2b` to §6 as **not costed**. Phase 5 is no longer treated as settled.
+- **Rev 4 (this) — ACCEPTED 2026-08-14.** Phases 0–5 implemented and merged over 10 days against an
+  estimate of "months". §9 now carries an outcome per claim and §11 a resolution per challenge,
+  including the two that were **not** achieved: no CI (claim 11, KI-17) and no ANGLE evaluation
+  (11d), the latter still outranked only by itself as the largest open risk. One claim was
+  falsified (#6, the SDL2 AAR *can* be repacked) and escalated as the plan required; the owner
+  continued deliberately, treating it as schedule relief rather than a change of direction. The
+  decision this document argued for was carried out; the *reasons* it gave were not always the
+  reasons that turned out to matter — see 11b.
 
 ---
 
-## 11. Open challenges (unresolved — raised in review, 2026-08-04)
+## 11. Open challenges (raised in review 2026-08-04 — **resolved 2026-08-14**)
+
+> **Outcome summary.** Three of the four were answered by doing the work; one (11d, ANGLE) was
+> never addressed and remains open. The reviewer's "lower stakes" aside turned out to be the most
+> predictive paragraph in the document — see the note at the end of this section.
 
 An independent review by a Fable instance (which would also be this plan's orchestrator) raised four
-objections that are **not resolved** by this document. They are recorded rather than answered,
-because answering them changes the plan and is the owner's call. Phases 0–2 are unaffected.
+objections that were **not resolved** by this document as drafted. They were recorded rather than
+answered, because answering them changes the plan and is the owner's call. Phases 0–2 are unaffected.
 
 **11a. `S2b` — SDL3 windowing + OpenTK for GL — was never costed, and §1/N4 of the implementation
 plan forbids workers from raising it.** That is a process failure: an option was foreclosed without
@@ -437,6 +451,13 @@ evaluation. The case for it: OpenTK's GL bindings work without its windowing
 and the churn objection in §4c is unusually weak *in this specific context* — a one-time mechanical
 rename across ~4,100 call sites, verified by the pixel-compare gate (GATE-F) being built anyway, is
 close to an ideal agent task. **N4 has been relaxed accordingly. Cost S2b honestly before Phase 5.**
+
+> ✅ **RESOLVED — S2b was costed (WP-5.0b) and lost on numbers, not on preference.** OpenTK 5
+> would have changed **37% of code lines** (~83 of 225 sites on the sample), because `GL` is static
+> where Silk's is an instance — so all 225 sites change receiver even where nothing else moves.
+> `pre.16` also shipped **net10.0 only**, which would have dropped our then-net9.0 targets. Against
+> that, self-generation measured **0 changed lines** (claim 3). The process failure the reviewer
+> named was real and the fix — relax N4, cost it — produced a decision instead of an assumption.
 
 **11b. §4c's rejection of "keep `Silk.NET.OpenGL`" may be rhetorical rather than technical.** It
 conflates the *vendor's* survival with the *artifact's*. A pinned, pure-managed binding of an ABI
@@ -447,6 +468,24 @@ windowing/input/native packaging, which **S2 already removes**. Counter-argument
 name-compatible generator maintained by one person may be a *worse* 10-year bet than a frozen DLL,
 since the DLL cannot rot but the generator must be re-understood by future-you on every change.
 
+> 🟡 **RESOLVED, but the winning argument is one neither side made.** The reviewer is right that
+> §4c's survival argument was rhetorical: a pinned pure-managed binding of a frozen ABI does not
+> rot. What actually forced the swap was **traceability**. A delegate-based binding *cannot be
+> traced*: .NET returns the ORIGINAL delegate from `GetDelegateForFunctionPointer` when the pointer
+> came from `GetFunctionPointerForDelegate`, so an interposer's cast to its own delegate type
+> throws. GATE-F's tracer interposes exactly there — it worked against Silk (which dispatches
+> through function pointers) and broke the moment the renderer moved to our binding, which is what
+> drove the switch to `delegate* unmanaged<>` dispatch. That instrument is how the
+> `glTexParameterI[u]iv` defect was found *before* it could segfault, and how "0 `glGetError` calls
+> in a live frame" was verified. **A frozen DLL cannot rot, but it also cannot be instrumented.**
+>
+> On the "re-understood by future-you" worry: partly mitigated, not eliminated. `gen.py` is ~1,000
+> lines and both generated files **regenerate byte-identically** from a registry pinned by sha256,
+> so the artifact is reproducible rather than hand-maintained. But KI-17 records that nothing
+> *enforces* that — it is a command someone remembers to run, and it has already caught two real
+> drifts (#89/#90, and the WP-5.4 rename). The reviewer's concern is answered by discipline, which
+> is exactly the weaker form of answer.
+
 **11c. Claim 3 (§9) is understated, and the ~500 LOC generator estimate is probably 2–4× optimistic.**
 Matching "the same type and member names" is not the hard part. `SilkThreeD.cs` call sites depend on
 Silk's *overload expansion policy* — unsafe-pointer/`Span`/`out`/`ref` variants, the dual
@@ -455,11 +494,38 @@ typed-enum/`GLEnum` surface (92 `GLEnum` uses per §3d), string marshalling, and
 behaviour. Compounding this, claim 4 is a known-real hazard: `gl.xml` `group` attributes are
 historically incomplete, and other generator projects supplement them by hand.
 
+> 🟡 **HALF RIGHT, and the halves are instructive.** The **size** estimate was indeed optimistic:
+> `gen.py` emits ~1,000 lines and needs `gen-trace.py`, `shapecheck.py`, the Roslyn `surface`
+> probe, the `differ` and the `verify` tool alongside it — comfortably 2× the ~500 LOC estimate
+> once the verification apparatus is counted, and that apparatus is not optional.
+>
+> But the **premise** was wrong: matching Silk's overload-expansion policy did not have to be
+> reimplemented. WP-5.1 resolved the *actual* surface this codebase binds — 339 call sites, 81
+> entry points — and generated only that, the "narrow form of S2a" the owner chose. Reproducing a
+> compatible slice of SilkTouch's emission behaviour was never necessary; reproducing **our own**
+> usage of it was, and that is a much smaller thing. 14 hand-written conveniences cover what the
+> registry cannot express.
+>
+> Claim 4's hazard did not materialise: 114 enum values verified against the registry, 0
+> unverifiable.
+
 **11d. ANGLE is absent, and §5 says macOS GL deprecation outranks everything in this document.**
 ANGLE is the industry-standard GL-on-Metal escape hatch, it composes with SDL3, and a working ANGLE
 path would validate the `IThreeD` seam with running code rather than discipline — which is §5's own
 stated priority. The alternative allocation (do S2, spend the saved months on ANGLE-on-Metal or a
 thin second backend) is not in §6's options table and should be.
+
+> 🔴 **NOT RESOLVED. This challenge stands unanswered.** ANGLE was never evaluated, no second
+> `IThreeD` backend exists, and the macOS/OpenGL deprecation risk §5 calls the thing that
+> *outranks this entire document* is exactly where it was on 2026-08-04.
+>
+> Two things sharpen it now. First, the reviewer's proposed trade — "do S2, spend the saved months
+> on ANGLE" — turned out to be affordable in a way nobody predicted: the whole programme took **10
+> days**, not months, so the months were never spent and are still available. Second, `IThreeD` has
+> now been validated by *discipline* over five phases (claim 12), which is precisely the weaker
+> form of validation the reviewer objected to; a running ANGLE path would still be the stronger
+> one. **This is the most significant open item the ADR leaves behind**, and it should be read as
+> the reviewer's, not the author's, priority.
 
 **Also noted, lower stakes:** Phase 4's justification leans on ABI skew that the pin has *already*
 neutralised; its real payoff is APK size (11–20 MB) and load time, and Assimp does not leave the
@@ -471,6 +537,31 @@ everywhere." That is regression risk purchased against no recorded failure.
 **Reviewer's net position:** Phases 0–2 unconditionally yes; Phase 3 on Android yes, desktop only if
 WP-0.0 shows the AAR cannot be repacked; Phase 4 defensible but re-justify on size/load-time;
 **Phase 5 burden of proof not met** — run WP-5.0 early and properly specified, and cost S2b first.
+
+> ### The reviewer's "lower stakes" paragraph was the most predictive text in this document
+>
+> Both of its claims came true, and the second one cost real defects:
+>
+> **"Assimp does not leave the project — Chushi still runs it."** Exactly right. Phase 4 moved the
+> importer to `JoyceFbx`, which the build tools reference and no shipping project does. Assimp left
+> the *APK*, not the repository, and the real payoff was the one the reviewer named: 25 fbx assets
+> and `libassimp.so` out of the package.
+>
+> **"Phase 3 rewrites desktop input on three OSes … regression risk purchased against no recorded
+> failure."** Borne out precisely. Desktop input regressions introduced by that rewrite: gamepad
+> stick inverted (#61), the mouse cursor never configured (#61), and **KI-14 — desktop text entry
+> silently dead**, which survived undetected because WASD and every scancode binding kept working,
+> and was found only when someone typed into a field. Three regressions, against the zero desktop
+> windowing failures §3a recorded in 3.5 years. The reviewer's arithmetic was right.
+>
+> **What the reviewer got wrong:** the Phase 5 burden of proof *was* met, but by a mechanism they
+> did not anticipate and neither did this document — traceability, not survival (see 11b). And the
+> cost that made Phase 5 defensible was the one they doubted most: claim 3's 0-changed-lines
+> estimate held exactly.
+>
+> **The standing lesson**, worth more than any single verdict here: *the objections that proved
+> most valuable were the quantitative asides, not the strategic positions.* "Regression risk
+> against no recorded failure" is a checkable statement. "Longevity" is not.
 
 ## Sources
 
