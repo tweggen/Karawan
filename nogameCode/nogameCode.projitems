@@ -28,6 +28,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\SpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\GoToStrategyPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\IdleBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\StuckAnimationReporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\StayAtStrategyPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleEntityStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\TaleConversationBehavior.cs" />

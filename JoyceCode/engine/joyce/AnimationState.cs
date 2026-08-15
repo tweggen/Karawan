@@ -62,4 +62,46 @@ public class AnimationState
         ModelAnimationFrame = validatedFrame;
         return true;
     }
+
+
+    /**
+     * Why SetAnimation would refuse, in words.
+     *
+     * A caller that has been retrying for a while needs to say WHICH of the four failures
+     * it is stuck on, because they have completely different causes - a missing FromModel
+     * resolves itself, a clip that is not in the pack never will. Every one of them
+     * previously presented as the same thing: a character in a T-pose and not one line of
+     * log anywhere.
+     */
+    public static string DescribeFailure(Model? model, string? strAnimation)
+    {
+        if (null == model)
+        {
+            return "the entity has no model yet (FromModel not attached)";
+        }
+
+        if (null == strAnimation)
+        {
+            return $"no clip was named for model '{model.Name}'";
+        }
+
+        if (null == model.AnimationCollection)
+        {
+            return $"model '{model.Name}' has no AnimationCollection - it was loaded without "
+                   + "an AnimationUrls property, or is still a placeholder";
+        }
+
+        if (null == model.AnimationCollection.MapAnimations)
+        {
+            return $"model '{model.Name}' has an AnimationCollection but no MapAnimations";
+        }
+
+        if (!model.AnimationCollection.MapAnimations.ContainsKey(strAnimation))
+        {
+            return $"model '{model.Name}' has no clip '{strAnimation}'; it carries "
+                   + $"[{string.Join(", ", model.AnimationCollection.MapAnimations.Keys)}]";
+        }
+
+        return "no failure - the clip is present";
+    }
 }

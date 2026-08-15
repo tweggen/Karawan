@@ -116,6 +116,47 @@ public class AnimationSelectionTests
         Assert.True(animationSet);
         Assert.NotNull(state.ModelAnimation);
     }
+
+
+    /**
+     * The failure descriptions the stuck-animation report prints.
+     *
+     * These exist because the first attempt at this bug shipped a retry that changed
+     * nothing and produced no evidence either way, costing a whole round trip. Each cause
+     * must be named DISTINCTLY, because they have opposite remedies: a missing model
+     * resolves itself, a clip absent from the pack never will.
+     */
+    [Fact]
+    public void EachCauseIsDescribedDistinctly()
+    {
+        Assert.Contains("no model yet", AnimationState.DescribeFailure(null, "Idle_Generic"));
+        Assert.Contains("no clip was named",
+            AnimationState.DescribeFailure(_modelWith("Idle_Generic"), null));
+        /*
+         * A freshly constructed Model already HAS an AnimationCollection - it is
+         * MapAnimations that is null. Worth pinning, because ModelBuilder's decision to
+         * record a node as "the animations entity" tests both, and only the second one
+         * ever actually discriminates.
+         */
+        Assert.Contains("no MapAnimations",
+            AnimationState.DescribeFailure(new Model { Name = "m" }, "Idle_Generic"));
+    }
+
+
+    /**
+     * The most useful one: it lists what the model DOES carry, so a reader can see at a
+     * glance whether the wrong clip was asked for or the wrong pack was baked.
+     */
+    [Fact]
+    public void AMissingClipListsTheOnesThatArePresent()
+    {
+        string described = AnimationState.DescribeFailure(
+            _modelWith("Idle_HardDay", "Walk_Male"), "Idle_Generic");
+
+        Assert.Contains("no clip 'Idle_Generic'", described);
+        Assert.Contains("Idle_HardDay", described);
+        Assert.Contains("Walk_Male", described);
+    }
 }
 
 
