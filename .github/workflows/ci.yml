@@ -207,8 +207,34 @@ jobs:
       # single "Passed!". Several tests skip on a checkout whose assets have not been
       # baked, and a suite that silently skips half of itself while reporting green is
       # the failure mode this whole programme keeps running into.
+      # The asset bake, because three of the tests are drift checks over its OUTPUT.
+      #
+      # BakedAnimationLayoutTests and BakedModelEquivalenceTests are [Theory] tests whose
+      # data comes from enumerating the baked ac-* / mo-* files. On a checkout that has
+      # never been built there are none, and xUnit fails a theory with no rows:
+      #
+      #   System.InvalidOperationException : No data found for ...
+      #
+      # Skipping them would be the cheap answer and the wrong one - they exist to catch a
+      # bake whose layout drifted, which is precisely the class of defect that shipped
+      # twice from Phase 4. So bake, and let them do their job.
+      #
+      # The published build tools first, and separately: nogame.csproj runs Chushi and
+      # joycecmd from their PUBLISHED output, and `dotnet build` does not refresh those. A
+      # stale published Chushi performs no bake at all - no error, no warning, no output
+      # files - which is how a build shipped in which no character model loaded.
+      - name: Publish the build tools and bake the assets
+        working-directory: Karawan
+        env:
+          TEST: 'true'
+        run: |
+          set -euo pipefail
+          bash Chushi/build.sh
+          bash Tooling/Cmdline/build.sh
+          dotnet build nogame/nogame.csproj
+
       - name: Unit tests
         working-directory: Karawan
         env:
           TEST: 'true'
-        run: dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj --no-build --verbosity normal
+        run: dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj --verbosity normal
