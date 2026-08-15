@@ -27,12 +27,12 @@ subsystem.
 
 | item | state |
 |---|---|
-| **GATE-C Linux** | 🔴 **never run.** Still the only tier in the whole programme with zero evidence. |
+| **GATE-C Linux** | 🔴 **never run.** Windowing, GL context, input and audio have still never executed on Linux. As of 2026-08-15 the code does provably **compile and unit-test** there (CI) — a precondition, not the gate. Standing it up immediately found the asset pipeline broken on Linux. |
 | **GATE-D macOS** | 🔴 unrun for Phase 4 (models now come from bakes, not Assimp). Windows passed 2026-08-14. |
 | **GATE-E Linux Fn-key** | 🔴 unrun |
 | **WP-6.3 leftovers** | 🟡 **Desktop keys all confirmed 2026-08-15** (F8, cursor keys, Enter, Escape). Only the Android `SetKeyboardVisible` re-check is left. |
 | **WP-6.4** | ✅ **merged and owner-run on Windows.** Only the `[HUMAN]` rebinding UI is left — nothing exercises capture mode or `SaveUserBindings` end to end. |
-| **KI-17 (CI)** | ✅ **resolved 2026-08-15.** `.github/workflows/ci.yml` regenerates both GL files and fails on any diff, on PRs and on push to master. It also builds and unit-tests on Linux, which nothing did before. |
+| **KI-17 (CI)** | ✅ **resolved 2026-08-15.** `.github/workflows/ci.yml`: regenerates both GL files and fails on any diff (PRs **and** push to master), then builds and unit-tests on **Linux** — 367/367, zero skipped, assets baked so the bake drift tests actually run. Its first run found two real defects: a case-mismatched model filename that broke the asset pipeline on Linux, and a swallowed native-Assimp load failure that presented as an NRE 1,400 lines away. |
 | **KAR-411 unwind** | 🟠 reasonable to start — versionCode 199 has been in the field on CoreCLR since 2026-08-10 |
 | **Perf A/B in Release** | 🟠 open — CoreCLR loads 4.64× faster than Mono, but measured in **Debug**, load phase only |
 
@@ -106,6 +106,51 @@ exactly the kind that deserves a control:
 - **The managed assembly was identical across the two .NET 10 runs**: both reported
   `mvid=d6f6e38b-806e-4a66-816c-0a18d1a6bf08`. Same IL, different runtime — the only variable was the
   runtime itself.
+
+### ✅ 2026-08-15 — CI exists (KI-17 closed), and its first Linux run found two real defects
+
+**KI-17 is resolved.** `.github/workflows/ci.yml`, two jobs, both green.
+
+`generated` is the KI-17 job proper: fetch `gl.xml` **pinned to a commit** (not `main` — an
+input that can move underneath a generated file is not a reproducible input), verify its
+sha256 against WP-5.1 §10, re-run `gen.py` and `gen-trace.py` **in place**, fail on a
+non-empty `git diff`. It runs on `pull_request` **and on push to master**, because the
+#89/#90 failure was a property of the *merge*. `gen-trace.py` reads the `GL.g.cs` that
+`gen.py` just wrote, so the pair must agree with each other rather than each with its own
+last run. No .NET, no siblings — it cannot be taken down by the job beside it.
+
+`build-test` builds and unit-tests **on Linux**: 367/367, zero skipped. It bakes the assets
+first, because three of those tests are drift checks over the bake and xUnit fails a
+`[Theory]` with no rows (`No data found for …`) rather than skipping it. Skipping them
+would have been the cheap answer and the wrong one, given Phase 4 shipped two bake defects.
+
+**Four things went wrong before it went green, and all four are worth keeping.**
+
+| failure | what it actually was |
+|---|---|
+| `Unsupported repository version 1` | A blobless partial clone sets `extensions.partialClone`, forcing `core.repositoryFormatVersion` to 1, and the SourceLink task in the siblings refuses anything above 0. Fixed by shallow-fetching the pinned SHA — fixing the clone shape rather than switching SourceLink off, so a real SourceLink problem still surfaces. |
+| `CS7027: Error signing output … ds.snk` | `DefaultEcs.csproj` switches on strong-name signing from `'$(GITHUB_ACTIONS)' == 'true'` alone, with a key that is gitignored upstream. **Being in Actions at all is enough**, so no developer machine can reproduce it. `TEST=true` is upstream's own escape hatch; used theirs rather than a global `-p:SignAssembly=false`. |
+| **`man_homeless_Rig.fbx` not found** | **A real defect in this repository.** The file was `man_homeless_rig.fbx`; twelve sibling rigs are all `_Rig.fbx`. Case-insensitive filesystems hid it on Windows and macOS, presumably forever. On Linux the bake failed. **The game's asset pipeline was broken on Linux and nothing anywhere could see it** — which is what GATE-C Linux exists to find, arriving by another route. Renamed the file, so the declared uri and the `mo-{hash}` identity are unchanged. An audit of all 99 asset references found it to be the only one. |
+| 13 × `NullReferenceException` at `FbxModel.cs:1485` | **A second real defect.** `_needAssimp` caught every exception and only `Trace`d it, leaving `_assimp` null and letting `Load()` continue to dereference it 1,400 lines later — and the trace category is off by default, so grepping the whole CI log for `instantiating assimp` returned **nothing**. Now throws, naming the cause. Same shape as the TaleModule null manager and the stale Chushi: a swallowed failure resurfacing as a null dereference somewhere unrelated. |
+
+The last one is the pattern this ledger keeps recording, so it is worth stating plainly: **the
+diagnostic fix is what made the fifth iteration possible.** With the NRE, the next step would
+have been guesswork; with the message, the cause read *"Could not load from any of the possible
+library names"* and the fix followed directly — point `LD_LIBRARY_PATH` at the **pinned**
+`Ultz.Native.Assimp` 5.4.1 rather than `apt-get install libassimp5`, since these tests compare
+an fbx import against Chushi's bake and running the two halves on different Assimp builds would
+make the result a statement about Ubuntu's packaging.
+
+**Guard added:** `DeclaredResourceCasingTests` asserts every declared uri resolves to a file
+with exactly that case. The comparison is done in code, not by `File.Exists` — `File.Exists`
+answers the *filesystem's* question, so on Windows it returns true for a mismatch and the test
+would pass on the machine most likely to introduce the defect. Confirmed to fail on Windows when
+the case is flipped back.
+
+**What this is NOT.** CI builds and unit-tests on Linux; it does not run the game there.
+**GATE-C Linux is still unrun** — windowing, GL context, input and audio have never executed on
+Linux. What changed is that the code now provably compiles and its unit tests pass there, which
+is a precondition, not the gate.
 
 ### 🔴 2026-08-15 — "jump does nothing" after WP-6.4 — and it was never the bindings
 
