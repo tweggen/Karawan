@@ -125,7 +125,13 @@ public class TaleWalkBehavior : ANearbyBehavior
         float speed = Navigator.Speed;
         if (speed == _previousSpeed) return;
 
-        if (!entity.Has<GPUAnimationState>()) return;
+        /*
+         * FromModel was read WITHOUT being checked for. DefaultEcs's Get<T> on an entity
+         * that lacks the component does not throw - it hands back a reference into unused
+         * storage - and ModelCache attaches FromModel through QueueMainThreadAction, so
+         * its absence on an early frame is ordinary rather than exceptional.
+         */
+        if (!entity.Has<GPUAnimationState>() || !entity.Has<FromModel>()) return;
 
         ref var cGpuAnimationState = ref entity.Get<GPUAnimationState>();
         ref var cFromModel = ref entity.Get<FromModel>();
@@ -139,8 +145,17 @@ public class TaleWalkBehavior : ANearbyBehavior
         else
             strAnimation = CharacterModelDescription.IdleAnimName;
 
-        _previousSpeed = speed;
-        cGpuAnimationState.AnimationState?.SetAnimation(model, strAnimation, 0);
+        /*
+         * _previousSpeed advances only when the animation TOOK. It used to advance
+         * regardless, so a walker whose model was not ready on the frame its speed
+         * changed kept the bind pose until the speed changed AGAIN. Walkers mostly get
+         * away with that because they accelerate constantly; one that spawns already at
+         * a steady speed does not.
+         */
+        if (true == cGpuAnimationState.AnimationState?.SetAnimation(model, strAnimation, 0))
+        {
+            _previousSpeed = speed;
+        }
     }
 
     public override void OnCollision(ContactEvent cev)
