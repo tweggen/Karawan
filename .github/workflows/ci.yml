@@ -233,6 +233,39 @@ jobs:
           bash Tooling/Cmdline/build.sh
           dotnet build nogame/nogame.csproj
 
+      # Point the loader at the PINNED native Assimp from Ultz.Native.Assimp.
+      #
+      # Silk's Assimp binding resolves its native with its own NativeLibrary search rather
+      # than through deps.json, and a non-RID `dotnet build` leaves runtimes/linux-x64/
+      # native/ in the package folder instead of copying it next to the test assembly. The
+      # search then finds nothing:
+      #
+      #   The native Assimp library could not be loaded ... Could not load from any of the
+      #   possible library names!
+      #
+      # (That message exists because of this run; it used to be a NullReferenceException
+      # 1,400 lines away with no log line at all.)
+      #
+      # apt-get install libassimp5 would also make it load, and would be wrong: the tests
+      # compare an fbx import against Chushi's bake, and Chushi uses the pinned 5.4.1 from
+      # the package. Letting the two halves of that comparison run on different Assimp
+      # builds would make the result a statement about Ubuntu's packaging. The version is
+      # pinned in Directory.Packages.props for exactly the reasons written there (N5/N8),
+      # so read it from there rather than hardcoding it here.
+      - name: Locate the pinned native Assimp
+        working-directory: Karawan
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/.*"Ultz.Native.Assimp" Version="\([^"]*\)".*/\1/p' Directory.Packages.props)"
+          [ -n "$version" ] || { echo "no Ultz.Native.Assimp version in Directory.Packages.props" >&2; exit 1; }
+
+          dir="$HOME/.nuget/packages/ultz.native.assimp/$version/runtimes/linux-x64/native"
+          [ -d "$dir" ] || { echo "pinned native Assimp $version not restored at $dir" >&2; exit 1; }
+
+          echo "using native Assimp $version from $dir"
+          ls -l "$dir"
+          echo "LD_LIBRARY_PATH=$dir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+
       - name: Unit tests
         working-directory: Karawan
         env:
