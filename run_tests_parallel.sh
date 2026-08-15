@@ -29,6 +29,14 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEST_BASE="models/tests/tale"
 TESTRUNNER_DLL="./TestRunner/bin/Release/net9.0/TestRunner.dll"
+# The TFM moves (net9.0 -> net10.0) and on Windows carries an OS suffix. run_tests.sh has
+# had this fallback since it was written; this script did not, so it refused to run at all
+# once the projects retargeted - and it exits 1 for that, which the harness reports as a
+# clean 0. Fall back to whatever Release TFM is actually on disk.
+if [ ! -f "$TESTRUNNER_DLL" ]; then
+    TESTRUNNER_DLL=$(ls ./TestRunner/bin/Release/*/TestRunner.dll 2>/dev/null | head -1)
+    TESTRUNNER_DLL="${TESTRUNNER_DLL:-./TestRunner/bin/Release/net9.0/TestRunner.dll}"
+fi
 WORKER="$SCRIPT_DIR/tools/run_one_tale_test.sh"
 
 if [ ! -f "$TESTRUNNER_DLL" ]; then

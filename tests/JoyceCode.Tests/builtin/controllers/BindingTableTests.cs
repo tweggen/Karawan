@@ -38,12 +38,24 @@ public class ControlTests
                  {
                      Control.GamepadButton("DPadUp"),
                      Control.GamepadTrigger(1),
+                     Control.GamepadStick(0),
+                     Control.GamepadStick(1),
                      Control.MouseButton(2),
                  })
         {
             Assert.True(Control.TryParse(control.ToString(), out var parsed), control.ToString());
             Assert.Equal(control, parsed);
         }
+    }
+
+
+    [Fact]
+    public void StickControlsHaveTheirOwnCanonicalForm()
+    {
+        Assert.Equal("GamepadStick:0", Control.GamepadStick(0).ToString());
+        Assert.Equal("GamepadStick:1", Control.GamepadStick(1).ToString());
+
+        Assert.False(Control.TryParse("GamepadStick:left", out _));
     }
 
 
@@ -76,6 +88,7 @@ public class ControlTests
 
         // same index, different kind - must not collide
         Assert.NotEqual(Control.GamepadTrigger(1), Control.MouseButton(1));
+        Assert.NotEqual(Control.GamepadTrigger(0), Control.GamepadStick(0));
     }
 }
 

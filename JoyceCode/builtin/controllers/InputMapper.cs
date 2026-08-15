@@ -30,6 +30,12 @@ namespace builtin.controllers;
  * and friends - so nothing downstream of this class can tell which table answered. That
  * is deliberate: it is what makes the migration invisible to game code, which is the
  * only reason it can be done incrementally.
+ *
+ * `Bindings` is also read directly by `InputController`, which since WP-6.4 part 2 resolves
+ * WASD, the sticks and the triggers through it rather than switching on raw control
+ * identity. That is a different use of the same table: this class turns a control into a
+ * logical EVENT, InputController turns one into polled analog STATE. Both need to know
+ * which action a control drives, and neither should own that knowledge.
  */
 public class InputMapper : AModule
 {

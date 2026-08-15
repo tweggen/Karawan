@@ -13,9 +13,9 @@ namespace engine.inputs;
  *
  * WHAT THESE STRINGS ARE
  *
- * They are the existing CONTRACT with game code - `Scene.cs` tests for "(F8)",
- * `InputMapper` keys its JSON on them. They are deliberately unchanged here, so this
- * step introduces the ScanCode channel without breaking a single binding.
+ * They are the existing CONTRACT with game code - `Scene.cs` tests for "(F8)", `Widget`
+ * and `Narration` switch on "(cursorup)" and "w" for menu navigation. They are
+ * deliberately unchanged here, so introducing the ScanCode channel broke no binding.
  *
  * WHAT THESE STRINGS ARE NOT
  *
@@ -24,8 +24,11 @@ namespace engine.inputs;
  * Event.INPUT_KEY_CHARACTER; a rebinding UI must ask the platform for a display name.
  * See the comment on ScanCode for the full three-way split.
  *
- * WP-6.4 is expected to move bindings onto ScanCode directly and let these strings
- * retire; until then both travel on the event.
+ * WP-6.4 did move the BINDINGS onto ScanCode: models/nogame.bindings.json stores
+ * "Key:W", and neither InputMapper nor InputController consults these strings any more.
+ * They have not retired, because direct consumers remain - the ones named above switch on
+ * ev.Code without going through a binding at all. Both channels therefore still travel on
+ * the event, and a key that produces no string here is still invisible to those consumers.
  */
 public static class ScanCodeNames
 {

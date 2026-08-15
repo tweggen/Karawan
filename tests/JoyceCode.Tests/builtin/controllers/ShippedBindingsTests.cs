@@ -118,12 +118,133 @@ public class ShippedBindingsTests
     [InlineData("jump", ScanCode.Space)]
     [InlineData("run", ScanCode.LeftShift)]
     [InlineData("followquest", ScanCode.Q)]
+    /*
+     * Part 2: the movement keys InputController used to switch on as raw strings. "w" was
+     * the W POSITION all along; ScanCode.W says so.
+     */
+    [InlineData("walkforward", ScanCode.W)]
+    [InlineData("walkbackward", ScanCode.S)]
+    [InlineData("walkleft", ScanCode.A)]
+    [InlineData("walkright", ScanCode.D)]
     public void MigratedKeysKeptTheirPhysicalPosition(string action, ScanCode expected)
     {
         var table = _load(out _);
         Assert.NotNull(table);
 
         Assert.Equal(action, table!.ActionOf(Control.Key(expected)));
+    }
+
+
+    /**
+     * The drift test proper: every action InputController reads must be bound to
+     * something. Driven from InputController.RequiredActions rather than a list here, so
+     * an action added there cannot quietly go unbound - which would show up only as a
+     * control that does nothing.
+     */
+    [Fact]
+    public void EveryActionInputControllerReadsIsBound()
+    {
+        var table = _load(out _);
+        Assert.NotNull(table);
+
+        var missing = new List<string>();
+        foreach (var action in global::builtin.controllers.InputController.RequiredActions)
+        {
+            var binding = table!.Find(action);
+            if (null == binding || 0 == binding.Controls.Count)
+            {
+                missing.Add(action);
+            }
+        }
+
+        Assert.True(missing.Count == 0,
+            $"InputController reads these, but nogame.bindings.json binds nothing to them: "
+            + string.Join(", ", missing));
+    }
+
+
+    /**
+     * The stick and trigger indices InputController._onStickMoved / _onTriggerMoved used
+     * to switch on directly. They are contract with the platform backend
+     * (Sdl3WindowBackend._onGamepadAxis), so getting one wrong swaps brake and
+     * accelerate - which drives, just backwards.
+     */
+    [Theory]
+    [InlineData("move", 0)]
+    [InlineData("look", 1)]
+    public void AnalogSticksAreBoundToTheirIndex(string action, int index)
+    {
+        var table = _load(out _);
+        Assert.NotNull(table);
+
+        Assert.Equal(action, table!.ActionOf(Control.GamepadStick(index)));
+    }
+
+
+    [Theory]
+    [InlineData("brake", 0)]
+    [InlineData("accelerate", 1)]
+    public void AnalogTriggersAreBoundToTheirIndex(string action, int index)
+    {
+        var table = _load(out _);
+        Assert.NotNull(table);
+
+        Assert.Equal(action, table!.ActionOf(Control.GamepadTrigger(index)));
+    }
+
+
+    /**
+     * THE regression pin for part 2, and the reason the modifiers were written before the
+     * call sites moved.
+     *
+     * InputController.StickTransfer - sign(x) * |x^4| - was deleted; the curve now comes
+     * from "curve 4" in the SHIPPED file. This asserts the shipped data reproduces the
+     * deleted expression, which is a different claim from InputModifierTests: that one
+     * proves CurveModifier can compute it, this one proves the game is configured to.
+     * Editing nogame.bindings.json to "curve 2" would change how the game feels and fail
+     * nothing otherwise.
+     */
+    [Theory]
+    [InlineData("move")]
+    [InlineData("look")]
+    public void ShippedStickCurveReproducesStickTransfer(string action)
+    {
+        var table = _load(out _);
+        var binding = table!.Find(action);
+        Assert.True(null != binding, $"'{action}' is not in nogame.bindings.json");
+
+        foreach (float x in new[] { 0f, 0.1f, 0.25f, 0.5f, 0.75f, 1f, -0.25f, -0.5f, -1f })
+        {
+            float expected = Single.Sign(x) * Single.Abs(x * x * x * x);
+            float actual = InputModifiers.Apply(binding!.Modifiers, x);
+            Assert.True(Single.Abs(expected - actual) < 1e-5f,
+                $"{action} at {x}: expected {expected}, got {actual}");
+        }
+    }
+
+
+    /**
+     * Same claim for the trigger convention: "range -1 1 0 255" in the shipped file must
+     * reproduce the deleted `(int)(255f * (x + 1f) / 2f)`, INCLUDING the truncation to
+     * int that the controller state stores. The endpoint that matters most is -1: a
+     * released trigger has to read 0, or the car brakes at rest for as long as the pad is
+     * plugged in.
+     */
+    [Theory]
+    [InlineData("brake")]
+    [InlineData("accelerate")]
+    public void ShippedTriggerRangeReproducesTheOldArithmetic(string action)
+    {
+        var table = _load(out _);
+        var binding = table!.Find(action);
+        Assert.True(null != binding, $"'{action}' is not in nogame.bindings.json");
+
+        foreach (float x in new[] { -1f, -0.75f, -0.5f, -0.25f, 0f, 0.25f, 0.5f, 0.75f, 1f })
+        {
+            int expected = (int)(255f * (x + 1f) / 2f);
+            int actual = (int)InputModifiers.Apply(binding!.Modifiers, x);
+            Assert.True(expected == actual, $"{action} at {x}: expected {expected}, got {actual}");
+        }
     }
 
 

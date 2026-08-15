@@ -38,5 +38,43 @@
   },
   "cursorright": {
     "controls": [ "GamepadButton:DPadRight" ]
+  },
+
+  "walkforward": {
+    "description": "Walk / drive forward",
+    "controls": [ "Key:W" ]
+  },
+  "walkbackward": {
+    "description": "Walk / drive backward",
+    "controls": [ "Key:S" ]
+  },
+  "walkleft": {
+    "description": "Walk / steer left",
+    "controls": [ "Key:A" ]
+  },
+  "walkright": {
+    "description": "Walk / steer right",
+    "controls": [ "Key:D" ]
+  },
+
+  "move": {
+    "description": "Move (left stick)",
+    "controls": [ "GamepadStick:0" ],
+    "modifiers": [ "curve 4" ]
+  },
+  "look": {
+    "description": "Look around, or zoom while the stick is pressed (right stick)",
+    "controls": [ "GamepadStick:1" ],
+    "modifiers": [ "curve 4" ]
+  },
+  "brake": {
+    "description": "Brake (left trigger)",
+    "controls": [ "GamepadTrigger:0" ],
+    "modifiers": [ "range -1 1 0 255" ]
+  },
+  "accelerate": {
+    "description": "Accelerate (right trigger)",
+    "controls": [ "GamepadTrigger:1" ],
+    "modifiers": [ "range -1 1 0 255" ]
   }
 }

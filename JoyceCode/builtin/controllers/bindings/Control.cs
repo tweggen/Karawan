@@ -32,6 +32,17 @@ public enum ControlKind
     GamepadTrigger,
 
     /**
+     * A gamepad stick as a WHOLE, identified by its index (0 = left, 1 = right,
+     * matching Event.Data1 on INPUT_GAMEPAD_STICK_MOVED).
+     *
+     * One control rather than two axes, because that is how a stick arrives: the platform
+     * holds the last value of each axis and re-emits the PAIR whenever either half moves
+     * (Sdl3WindowBackend._onGamepadAxis), so no event carries one axis alone. Modifiers
+     * are applied to each component separately.
+     */
+    GamepadStick,
+
+    /**
      * A mouse button, identified by index.
      */
     MouseButton,
@@ -66,7 +77,7 @@ public readonly struct Control : IEquatable<Control>
     public readonly ControlKind Kind;
 
     /**
-     * ScanCode for Key; trigger/mouse index for those kinds; unused for
+     * ScanCode for Key; stick/trigger/mouse index for those kinds; unused for
      * GamepadButton, which carries its identity in Name.
      */
     public readonly int Index;
@@ -91,6 +102,8 @@ public readonly struct Control : IEquatable<Control>
 
     public static Control GamepadTrigger(int index) => new(ControlKind.GamepadTrigger, index);
 
+    public static Control GamepadStick(int index) => new(ControlKind.GamepadStick, index);
+
     public static Control MouseButton(int index) => new(ControlKind.MouseButton, index);
 
     public static readonly Control None = new(ControlKind.None, 0);
@@ -112,6 +125,7 @@ public readonly struct Control : IEquatable<Control>
         ControlKind.Key => $"Key:{(ScanCode)Index}",
         ControlKind.GamepadButton => $"GamepadButton:{Name}",
         ControlKind.GamepadTrigger => $"GamepadTrigger:{Index}",
+        ControlKind.GamepadStick => $"GamepadStick:{Index}",
         ControlKind.MouseButton => $"MouseButton:{Index}",
         _ => "None",
     };
@@ -168,6 +182,15 @@ public readonly struct Control : IEquatable<Control>
                 if (int.TryParse(strValue, out var idxTrigger))
                 {
                     control = GamepadTrigger(idxTrigger);
+                    return true;
+                }
+
+                return false;
+
+            case "GamepadStick":
+                if (int.TryParse(strValue, out var idxStick))
+                {
+                    control = GamepadStick(idxStick);
                     return true;
                 }
 

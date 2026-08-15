@@ -5,7 +5,7 @@ Required by [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLAT
 orchestrator session reconstructs state by git archaeology and gets the "max 3 iterations"
 count wrong.
 
-**Last updated:** 2026-08-14 (**Phases 0–5 all complete and merged** — zero Silk.NET in any shipping project. Remaining: Phase 6 WP-6.4, GATE-C Linux, GATE-D macOS.)
+**Last updated:** 2026-08-15 (**Phases 0–5 all complete and merged** — zero Silk.NET in any shipping project. WP-6.4 parts 1 and 2 done. Remaining: the `[HUMAN]` rebinding UI, GATE-C Linux, GATE-C gamepad, GATE-D macOS.)
 
 ---
 
@@ -30,7 +30,7 @@ subsystem.
 | **GATE-C Linux** | 🔴 **never run.** Still the only tier in the whole programme with zero evidence. |
 | **GATE-D macOS** | 🔴 unrun for Phase 4 (models now come from bakes, not Assimp). Windows passed 2026-08-14. |
 | **GATE-E Linux Fn-key** | 🔴 unrun |
-| **WP-6.4** | 🟢 part 1 (the layer + button bindings) done; part 2 (`InputController` → actions) open |
+| **WP-6.4** | 🟢 parts 1 and 2 done (layer + button bindings, then `InputController`'s analog path); only the `[HUMAN]` rebinding UI is left |
 | **KI-17 (CI)** | 🟠 open. Nothing enforces generated-file reproducibility; the repo has no CI at all. |
 | **KAR-411 unwind** | 🟠 reasonable to start — versionCode 199 has been in the field on CoreCLR since 2026-08-10 |
 | **Perf A/B in Release** | 🟠 open — CoreCLR loads 4.64× faster than Mono, but measured in **Debug**, load phase only |
@@ -796,7 +796,7 @@ Consequences carried forward:
 | **WP-6.1** | ✅ **MERGED, device-verified** | `platform/wp-6.1` | [#66](https://github.com/tweggen/Karawan/pull/66) | 1 | gameplay loop, sound, input, splash all confirmed on device ✅ | — | **MAUI is gone from Wuka.** Four things surfaced only by building and running, none visible from source: `SingleProject` was hiding four dead platform folders AND pointing the SDK at `AndroidManifest.xml` (without `<AndroidManifest>` the SDK silently SYNTHESISES one — green build, right package name via `ApplicationId`, `android:label`/`icon` gone); the Silk `ExcludeAssets` entries are **suppressors, not sources** (see KI-12); and the splash artwork cannot be used as-is. Bluetooth permission prompt also disabled, code retained. |
 | **WP-6.2** | ✅ **FULLY MERGED** (re-verified 2026-08-14) | `platform/wp-6.2-net10-spike` → `platform/wp-6.2-coreclr-default` | [#70](https://github.com/tweggen/Karawan/pull/70) **merged**, follow-up PR open | 1 | GLOBAL-1 ✅ · 1b ✅ · 4 ✅ (192/192 on net10.0) · Windows desktop ✅ · Android both runtimes ✅ · APK+AAB shape ✅ · AC-1.7 ✅ · 16 KB verified from ELF ✅ | **ABIPROBE M+N ✅ PASSED on device — Mono AND CoreCLR** | **.NET 10 retarget is ON MASTER via #70.** **CoreCLR-as-default and `versionCode` 199 were initially stranded** (merge-order trap, 6th occurrence) and recovered onto `platform/wp-6.2-coreclr-default` — **which has since landed in full.** Re-verified 2026-08-14: `check-branch-landed.sh` reports every commit on that branch is on master, `Wuka.csproj` defaults `WukaCoreClr` to `true`, and the manifest carries `versionCode="199"`. This row read HALF-MERGED for four days after it was whole. **Two source fixes in the whole tree**, both the C# 14 span-overload change. Both runtimes pass → fix came upstream; CoreCLR chosen anyway for load time (4.64×) and coverage. Built on Windows 11 **and** macOS. |
 | **WP-6.3** | ✅ **MERGED (all four steps)** | `platform/wp-6.3-scancodes`, `platform/wp-6.3-device-contracts` | [#73](https://github.com/tweggen/Karawan/pull/73), [#74](https://github.com/tweggen/Karawan/pull/74) | 1 | build ✅ · **234/234 tests** ✅ · ScanCode ≡ SDL_Scancode 104/104 ✅ | **GATE-C input 🟡 macOS: WASD ✅, text entry ✅** | **Native input semantics.** `ScanCode` on USB HID usage IDs, so `Sdl3KeyCodes` is a **cast**; one name table in `engine.inputs.ScanCodeNames`, not one per backend. Devices carry no events; `OnConnectionChanged` → `INPUT_DEVICE_ATTACHED/DETACHED` on the queue (**a race fix**); enumeration is an immutable `IReadOnlyList` snapshot. **Validating it uncovered KI-14**, a pre-existing WP-3.2 regression that had killed desktop text entry. **Still unconfirmed: F8, the arrow/escape/enter family, and an Android re-check of `SetKeyboardVisible`.** |
-| **WP-6.4** | 🟢 **PART 1 DONE, PR-OPEN** | `platform/wp-6.4` | — | 1 | build ✅ · Wuka ✅ · **334/334 unit** (59 new) ✅ · bindings ship in the APK ✅ | `[HUMAN]` rebinding UI · analog migration deferred | **Action / binding layer, runtime r/w.** Controls stored by POSITION (`ScanCode`), actions carry all their controls, table writable at runtime, JSON round-trip, capture mode. Button bindings MIGRATED out of `MapButtonToLogical` into `models/nogame.bindings.json`. **Staged deliberately:** `InputController`'s 871 lines of WASD/trigger/stick handling stay on their current code until part 2, because that file has no automated coverage and is verifiable only by a human run — the exact trade the ADR reviewer flagged and Phase 3 paid for. |
+| **WP-6.4** | 🟢 **PARTS 1 + 2 DONE, PR-OPEN** | `platform/wp-6.4` | [#101](https://github.com/tweggen/Karawan/pull/101) | 2 | build ✅ · Wuka ✅ · **348/348 unit** (73 new) ✅ · TALE 200/200 ✅ · bindings ship in the APK ✅ | `[HUMAN]` rebinding UI · `[HUMAN]` GATE-C gamepad feel | **Action / binding layer, runtime r/w — and the analog path now reads it.** Controls stored by POSITION (`ScanCode`), actions carry all their controls, table writable at runtime, JSON round-trip, capture mode. Part 1 migrated the button bindings out of `MapButtonToLogical`; part 2 migrated WASD, the sticks and the triggers out of `InputController`, deleting `StickTransfer` and the inline trigger remap in favour of `curve 4` / `range -1 1 0 255` in `models/nogame.bindings.json`. **No hardcoded fallback anywhere** — a second copy of the defaults is how a rebind leaves the old control live. Regression pins are on the SHIPPED data, and were confirmed to fail when it was patched. |
 
 Status vocabulary: `NOT-STARTED / IN-PROGRESS / PR-OPEN / BLOCKED-ON-HUMAN / MERGED / ABANDONED`.
 
@@ -1377,6 +1377,61 @@ code `"w"` — right for movement, misleading to read.
 `IKeyboard` at all — it is part of the event payload. That is what makes step 1 independent of
 steps 2–4.
 
+
+### 🟢 2026-08-15 — WP-6.4 part 2: `InputController`'s analog path moved onto the layer
+
+**What landed.** `InputController` no longer switches on raw control identity. It asks
+`InputMapper.Bindings` which ACTION a control drives and applies that action's modifier
+pipeline, so both halves are now data in `models/nogame.bindings.json`:
+
+| was, in code | is, in the binding file |
+|---|---|
+| `case "w":` … `"s"` `"a"` `"d"` `"(shiftleft)"` | `walkforward` / `walkbackward` / `walkleft` / `walkright` / `run`, on `Key:W` … |
+| `switch (ev.Data1)` over stick indices | `move` on `GamepadStick:0`, `look` on `GamepadStick:1` |
+| `StickTransfer` = `sign(x)·\|x⁴\|`, inline | `"modifiers": [ "curve 4" ]` |
+| `switch (ev.Data1)` over trigger indices | `brake` on `GamepadTrigger:0`, `accelerate` on `GamepadTrigger:1` |
+| `(int)(255f * (x + 1f) / 2f)`, inline | `"modifiers": [ "range -1 1 0 255" ]` |
+
+`StickTransfer` is **deleted**, not kept as a wrapper: a response curve that exists in two
+places is one that will be edited in one of them.
+
+**A stick is ONE control, not two axes.** `ControlKind.GamepadStick` matches how the value
+arrives — `Sdl3WindowBackend._onGamepadAxis` holds the last value of each axis and re-emits
+the *pair* whenever either half moves, so no event ever carries a single axis and there is
+nothing to bind one to. Modifiers still apply per component, because a curve is scalar.
+
+**One deliberate behaviour change.** The accumulator branches (`AnalogLeftStickRight` vs
+`…Left`) now test the MODIFIED value where they used to test the raw one. Equivalent under
+the curve that was hardcoded — `sign(x)·|x⁴|` preserves sign — but *not* under `invert`,
+which would otherwise put the magnitude in the wrong accumulator. Since `invert` exists
+precisely because WP-3.1 negated an axis and got it backwards, leaving that latent would
+have rebuilt the bug it was written to prevent.
+
+**There is no hardcoded fallback, on purpose.** A second copy of the defaults living in
+code is exactly how a rebind leaves the old control live — the same argument part 1 used
+for moving rather than duplicating the button bindings. The failure mode if the file goes
+missing is that the player cannot move, which is loud but mute, so `OnModuleActivate` names
+the unbound actions instead. `InputController.RequiredActions` is `internal` and the drift
+test iterates **it**, not a copy, so a tenth action cannot go unbound while the test still
+passes on nine.
+
+**The regression pins are on the SHIPPED data, which is a different claim from part 1's.**
+Part 1 proved `CurveModifier` *can* compute `sign(x)·|x⁴|`; part 2 proves
+`nogame.bindings.json` *is configured to*. Editing it to `curve 2` changes how the game
+feels and would otherwise fail nothing. Both pins were confirmed to fail: patching the
+shipped file to `curve 2` and `Key:W`→`Key:Y` failed exactly the two tests that should.
+
+**Not migrated: touch.** `TouchSteerTransfer*` and the finger states are screen-geometry
+scale factors on a path with no bindable control behind it.
+
+**Found in passing:** `run_tests_parallel.sh` and `tools/run_one_tale_test.sh` still looked
+for `TestRunner/bin/Release/net9.0/` and had never gained the TFM fallback `run_tests.sh`
+has, so the parallel suite had been unrunnable since the .NET 10 retarget — and it *exits
+1*, which reads as a clean 0 through the harness. Fixed in all three.
+
+**Still `[HUMAN]`:** the rebinding UI, and a GATE-C run with a gamepad. Nothing here is
+verifiable by test beyond "the arithmetic is identical"; whether the game still *feels*
+right on a stick is a human observation.
 
 ### 🟢 2026-08-14 — WP-6.4 part 1: the action/binding layer, and why part 2 is separate
 

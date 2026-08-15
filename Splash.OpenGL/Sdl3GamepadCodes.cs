@@ -85,6 +85,10 @@ internal static class Sdl3GamepadCodes
     /// The contract is defined by what the Silk path produced, and Silk normalises axes
     /// uniformly without flipping. Passing SDL's sign through matches it. Derive input
     /// conventions from the observed end behaviour, not from what a field is called.
+    ///
+    /// If an axis ever does need flipping, the place is now an <c>"invert"</c> modifier on
+    /// the action in <c>models/nogame.bindings.json</c> (WP-6.4 part 2), not a sign change
+    /// here: that keeps it visible, per-action, and reversible without a rebuild.
     /// </remarks>
     public static float StickAxisToEngine(short value, bool isVertical)
     {
@@ -97,9 +101,11 @@ internal static class Sdl3GamepadCodes
     /// <remarks>
     /// <para>
     /// SDL reports triggers as 0..32767. The engine's convention is derived from its only
-    /// consumer, <c>InputController._onTriggerMoved</c>:
+    /// consumer, <c>InputController._onTriggerMoved</c>, which since WP-6.4 part 2 gets the
+    /// remap from the <c>brake</c> / <c>accelerate</c> bindings in
+    /// <c>models/nogame.bindings.json</c> rather than from arithmetic in the handler:
     /// </para>
-    /// <code>AnalogLeft2 = (int)(255f * (ev.PhysicalPosition.X + 1f) / 2f);</code>
+    /// <code>"modifiers": [ "range -1 1 0 255" ]   // was (int)(255f * (X + 1f) / 2f)</code>
     /// <para>
     /// That maps -1 to 0 and +1 to 255, so a released trigger MUST arrive as -1. Deriving it
     /// from the consumer rather than from Silk is deliberate: if Silk's SDL backend

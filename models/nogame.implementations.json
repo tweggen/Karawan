@@ -33,7 +33,12 @@
       "",
       "The MapButtonToLogical property itself is retained on the class. It is public",
       "API, it still works, and a game that has not migrated can still use it; the new",
-      "table is simply consulted first."
+      "table is simply consulted first.",
+      "",
+      "WP-6.4 part 2: the same file now also carries the ANALOG bindings that used to be",
+      "hardcoded in InputController - walkforward/backward/left/right, move, look, brake",
+      "and accelerate - together with the response curves that were written as arithmetic",
+      "at those call sites ('curve 4', 'range -1 1 0 255')."
     ]
   },
   "engine.streets.ClusterStorage": null,

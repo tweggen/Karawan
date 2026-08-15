@@ -70,7 +70,9 @@ public class ScanCodeTests
      * Claim 2: the engine code strings are UNCHANGED by the move out of Sdl3KeyCodes.
      *
      * These strings are the live contract with game code - Scene.cs tests for "(F8)",
-     * InputMapper keys its JSON on them - so this is a pinning test, not a description of
+     * Widget and Narration switch on "(cursorup)" and "w" for menu navigation (WP-6.4
+     * moved the BINDINGS off them, but not those direct consumers) - so this is a pinning
+     * test, not a description of
      * something desirable. The expectations were transcribed from the table as it stood in
      * Splash.OpenGL/Sdl3KeyCodes.cs before WP-6.3 moved it.
      */

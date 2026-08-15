@@ -17,7 +17,12 @@ TIMEOUT_S="$2"
 RESULTS_DIR="$3"
 TEST_SCRIPT="$4"
 
+# Same TFM fallback as run_tests.sh / run_tests_parallel.sh - see the comment there.
 TESTRUNNER_DLL="./TestRunner/bin/Release/net9.0/TestRunner.dll"
+if [ ! -f "$TESTRUNNER_DLL" ]; then
+    TESTRUNNER_DLL=$(ls ./TestRunner/bin/Release/*/TestRunner.dll 2>/dev/null | head -1)
+    TESTRUNNER_DLL="${TESTRUNNER_DLL:-./TestRunner/bin/Release/net9.0/TestRunner.dll}"
+fi
 
 test_name=$(basename "$TEST_SCRIPT")
 phase=$(basename "$(dirname "$TEST_SCRIPT")")
