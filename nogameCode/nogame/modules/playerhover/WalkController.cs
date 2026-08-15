@@ -538,11 +538,30 @@ public class WalkController : AController, IInputPart
                 /*
                  * Are we below ground?
                  */
-                // TXWTODO: Emit ground hit if I was above                
+                // TXWTODO: Emit ground hit if I was above
                 vNewTargetPos.Y = heightAtTarget;
-                isOnGround = true;
-                _jumpState = JumpState.Grounded;
                 needAdjust = true;
+
+                /*
+                 * A jump that is STARTING has not been moved yet - the impulse is only
+                 * added to the position on the not-on-ground path further down - so it is
+                 * still standing exactly on the floor when this runs. Calling it grounded
+                 * here cancels the jump on its own first frame. Snap it out of the terrain
+                 * by all means, but do not decide it landed.
+                 */
+                if (JumpState.Starting != _jumpState)
+                {
+                    isOnGround = true;
+                    _jumpState = JumpState.Grounded;
+
+                    /*
+                     * Grounded must mean zero vertical velocity. This branch used to set
+                     * the state without clearing the impulse, so every jump attempt that
+                     * died here left its +6 behind and the next `_verticalImpulse += 6f`
+                     * stacked on top of it.
+                     */
+                    _verticalImpulse = 0f;
+                }
             }
         }
 
@@ -702,8 +721,26 @@ public class WalkController : AController, IInputPart
                          * We have our feet below ground, adjust, upwards. Still, we are on the ground.
                          * adjust, very fast.
                          */
-                        isOnGround = true;
                         vNewTargetPos.Y += 1.7f - closestCollision;
+
+                        /*
+                         * ...unless we are pushing off, and THIS is why jumping did
+                         * nothing anywhere the city has a physics floor.
+                         *
+                         * A character standing still puts the floor exactly 1.7 below the
+                         * ray origin, so this branch is where it lives every frame. The
+                         * launch impulse is only ever added to the position on the
+                         * not-on-ground path below, so declaring a Starting jump grounded
+                         * here means it is never moved, and the state machine then walks
+                         * Starting -> InJump -> Grounded on the next two frames and zeroes
+                         * the impulse. The player got two frames of the jump animation and
+                         * no altitude, which is exactly what was reported.
+                         *
+                         * The 1.7..2.0 branch below already knew this - "if we are about
+                         * to trigger a jump, we would not glue ourselves to the ground" -
+                         * but a character on the floor never reaches it.
+                         */
+                        isOnGround = JumpState.Starting != _jumpState;
                     }
                     else
                     {
@@ -742,9 +779,14 @@ public class WalkController : AController, IInputPart
                 {
                     switch (_jumpState)
                     {
-                        case JumpState.Starting:
-                            _jumpState = JumpState.InJump;
-                            break;
+                        /*
+                         * There is deliberately no Starting case here any more. Starting
+                         * now means "pushing off", and the checks above never report a
+                         * pushing-off character as grounded - so this used to be the ONLY
+                         * transition out of Starting, and it fired on a jump that had not
+                         * moved. Leaving off the ground is what advances the state, and
+                         * that happens below.
+                         */
                         case JumpState.InJump:
                             _verticalImpulse = 0f;
                             _jumpState = JumpState.Grounded;
@@ -753,6 +795,18 @@ public class WalkController : AController, IInputPart
                 }
                 else
                 {
+                    /*
+                     * We are airborne, so a jump that was pushing off has now actually
+                     * left the floor. Advancing here rather than on the grounded path also
+                     * keeps the animation honest: JumpState.Starting forces the jump clip
+                     * back to frame 0, so a state that persisted would restart the
+                     * animation every frame instead of playing it once.
+                     */
+                    if (JumpState.Starting == _jumpState)
+                    {
+                        _jumpState = JumpState.InJump;
+                    }
+
                     /*
                      * decrease the vertical velocity.
                      */

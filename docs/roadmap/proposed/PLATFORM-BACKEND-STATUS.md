@@ -100,6 +100,50 @@ exactly the kind that deserves a control:
   `mvid=d6f6e38b-806e-4a66-816c-0a18d1a6bf08`. Same IL, different runtime — the only variable was the
   runtime itself.
 
+### 🔴 2026-08-15 — "jump does nothing" after WP-6.4 — and it was never the bindings
+
+Reported right after WP-6.4 merged: Space and gamepad **A** produce "little jitter, like
+jumping 1–2 frames, that's it". The obvious suspect was the binding migration.
+
+**It was not.** The input half was checked before touching anything else, because that is
+the half WP-6.4 changed. New `LogicalEventTests` drives the **shipped** `nogame.bindings.json`
+through `InputMapper.ToLogical` and asserts the event code the consumer actually switches
+on — `ScanCode.Space` → `input.button.pressed:<jump>`, gamepad `A` → the same, plus the
+matching releases and the other nine buttons. All pass. WP-6.4's own tests had stopped at
+`BindingTable.ActionOf`, one angle bracket short of the string `WalkController` reads;
+that join is now pinned.
+
+**The real fault is in `WalkController`, and it is four months old.** The jump impulse is
+only ever added to the position on the **not-on-ground** path, but a character standing
+still puts the floor exactly 1.7 below the ray origin, which lands in
+`closestCollision <= 1.7f` → `isOnGround = true`. So a jump that had just been given its
+impulse was declared grounded on its own first frame, was never moved, and the state
+machine then ran `Starting → InJump → Grounded` on the following two frames and zeroed the
+impulse. Two frames of the jump animation, no altitude — exactly the report.
+
+The neighbouring branch already knew the rule — *"if we are about to trigger a jump, we
+would not glue ourselves to the ground"* — but it guards the 1.7–2.0 m band, which a
+character on the floor never reaches. Fix: `Starting` means *pushing off*, so none of the
+ground checks may report it as grounded, and `Starting → InJump` moves to the **airborne**
+path (it was the grounded path, i.e. the only exit from `Starting` fired on a jump that had
+not moved). Keeping it there also stops the jump clip being forced back to frame 0 on every
+frame it persists.
+
+**Why it looked platform-shaped.** On pure terrain, with no physics floor under the player,
+the raycast hits nothing and the jump *does* work — so it fails on roads and building floors
+and works in open ground, which reads like a regression in whatever last touched input.
+
+**Found while tracing it:** on pure terrain `_verticalImpulse` drifted **unboundedly
+negative**. The terrain snap set `JumpState.Grounded` without clearing the impulse, while
+the frames in between decremented it by gravity every time; only the `InJump` case ever
+zeroed it, and that case is not reached when standing. After a while on foot, a jump's
+`+= 6f` would land on a large negative number. The snap now clears the impulse, which is
+what "grounded" has to mean.
+
+**Verified by:** build, 366/366 unit, TALE 200/200, and reasoning through the state machine
+frame by frame. **Not** verified by playing it — that is a `[HUMAN]` check, and the reason
+the failure survived four months is that nothing here is reachable from a test.
+
 ### ✅ 2026-08-14 — WP-5.2 landed: the renderer is on the generated binding
 
 Five PRs closed the swap and everything it dragged behind it. All merged, and the desktop
