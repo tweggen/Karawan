@@ -329,7 +329,39 @@ public class EntityCreator
         }
         catch (Exception e)
         {
-            Warning($"Exception in _createLogical code: {e}");
+            /*
+             * A HALF-BUILT CHARACTER IS LEFT IN THE WORLD, AND THAT IS THE BUG.
+             *
+             * Everything above runs against _ePerson, which the caller created and still
+             * owns - every call site passes one in and ignores the return value. So a
+             * throw part way through does not abort a creation, it FREEZES one: the mesh
+             * and transform set before the throw stay, and everything after it never
+             * happens. No animation state, no physics body, no collision properties, no
+             * behaviour, no strategy.
+             *
+             * That is precisely the reported triple - a T-posed figure with no "E to talk"
+             * marker that a car drives straight through - and it was logged as a Warning,
+             * one line, with no indication that a character had been left in the scene.
+             *
+             * Hidden rather than disposed: the entity belongs to the caller and to its
+             * fragment Owner, and disposing someone else's entity from here risks a double
+             * dispose. Invisible-and-broken is not correct either, but it is strictly
+             * better than a visible ghost, and the Error below is what actually closes it.
+             */
+            Error($"Failed to build character '{CharacterModelDescription?.ModelUrl ?? "(no model)"}' "
+                  + $"at {Position} (fragment {Fragment?.NumericalId.ToString() ?? "none"}): {e}");
+
+            try
+            {
+                if (_ePerson != default && _ePerson.IsAlive)
+                {
+                    I.Get<engine.joyce.TransformApi>().SetVisible(_ePerson, false);
+                }
+            }
+            catch (Exception eHide)
+            {
+                Error($"...and it could not even be hidden: {eHide.Message}");
+            }
         }
 
         return default;
@@ -422,9 +454,18 @@ public class EntityCreator
         }
         catch (Exception e)
         {
-            Warning($"Exception in _setupPlayer main code: {e}");
+            /*
+             * Returning null here does not stop anything: the caller goes on to
+             * CreateLogical, ModelBuilder's constructor dereferences the model, and the
+             * NullReferenceException lands in _createLogical's catch - where it presents
+             * as a character that failed to build for no stated reason, two layers from
+             * the actual cause. Naming the model here is what makes those two lines
+             * readable as one story.
+             */
+            Error($"Unable to load model '{CharacterModelDescription?.ModelUrl ?? "(none)"}' "
+                  + $"(pack '{CharacterModelDescription?.AnimationPackName ?? "(none)"}'): {e}");
         }
-        
+
         return _model;
     }
 
