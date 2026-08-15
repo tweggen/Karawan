@@ -23,6 +23,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\ActionBinding.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\BindingTable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\Control.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\ControlLabels.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\InputModifier.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FingerStateHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\IFingerState.cs" />
@@ -132,7 +133,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\InputController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\BindingsLuaBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\InputMapper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\RebindController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\LeftStickFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\RightStickFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\ZoomStickFingerState.cs" />

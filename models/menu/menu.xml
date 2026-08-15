@@ -72,6 +72,7 @@
             <text color='#666666' height='40'>Options</text>
             <option color="#999999" onClick='jt:replaceAll("pausemenu", "menuInventory")'>Inventory...</option>
             <option color="#999999" onClick='jt:replaceAll("pausemenu", "menuQuestLog")'>Quest Log...</option>
+            <option color="#999999" onClick='jt:replaceAll("pausemenu", "menuControls")'>Controls...</option>
             <option color='#999999' onClick='joyce:ev("nogame.modules.menu.toggleMenu")'>Continue</option>
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuHelp")'>Help...</option>
             <option color='#999999' onClick='os.exit()'>Exit to desktop...</option>
@@ -110,17 +111,60 @@
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>
         </vmenu>
     </view>
+    <!--
+        Controls. Rows come from the live binding table, so what is printed here is what
+        is actually bound - including the player's own rebindings, and including any
+        action a later update adds.
+
+        The key labels are LAYOUT-DEPENDENT and asked of the platform (see
+        ControlLabels): an AZERTY player is shown "Z" for the key an English player is
+        shown "W", because that is the key they will press. What is stored is neither -
+        it is the physical position.
+
+        Analog rows (move, look, brake, accelerate) render without a Rebind option.
+        Capture recognises a key or button PRESS, and a stick does not press.
+    -->
+    <view layer='pausemenu' id='menuControls'>
+        <vmenu width='420' x='120' y='60'>
+            <text color='#666666' height='40'>Controls</text>
+            <if test='{return bindings:isCapturing()}'>
+                <text color='#ffcc44' height='20'>Press a key or button... (Escape cancels)</text>
+                <option color='#999999' height='20'
+                        onClick='bindings:cancelCapture(); jt:refresh("pausemenu","menuControls")'>Cancel</option>
+            </if>
+            <if test='{return not bindings:isCapturing()}'>
+                <for items='{return bindings:getActionList()}'>
+                    <hmenu height="20">
+                        <text color='#999999' width='170' height='20' text="{return description}"/>
+                        <text color='#66aacc' width='170' height='20' text="{return controls}"/>
+                        <if test='{return canRebind}'>
+                            <option color='#aaaaaa' width='80' height='20'
+                                    onClick='bindings:beginCapture(action); jt:refresh("pausemenu","menuControls")'>Rebind</option>
+                        </if>
+                    </hmenu>
+                </for>
+                <option color='#999999' height='20'
+                        onClick='bindings:resetDefaults(); jt:refresh("pausemenu","menuControls")'>Reset to defaults</option>
+                <option color='#999999' height='20'
+                        onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>
+            </if>
+        </vmenu>
+    </view>
     <view layer='pausemenu' id='menuHelp'>
         <vbox width='250' x='200' y='100'>
             <text color='#666666' height='40'>Help</text>
-            <text color='#999999'>WASD - navigate</text>
-            <text color='#999999'>Q/Y - up/down</text>
-            <text color='#999999'>ESC - pause menu</text>
+            <!--
+                Only the keys that are NOT bindings live here now. Everything a player can
+                rebind is on the Controls screen, read from the table it is actually bound
+                in - this list used to name WASD, ESC and tab, which a single rebind turned
+                into a lie with nothing to catch it.
+            -->
             <text color='#999999'>F8 - debug</text>
             <text color='#999999'>F10 - demo ride</text>
             <text color='#999999'>F11 - full screen</text>
             <text color='#999999'>F12 - joyce ui</text>
-            <text color='#999999'>tab - map</text>
+            <text color='#999999'> </text>
+            <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuControls")'>Controls...</option>
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>
         </vbox>
     </view>

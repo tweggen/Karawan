@@ -101,6 +101,10 @@ public class Platform : engine.IPlatform
         _backend.SetFullscreen(isFullscreen);
     }
 
+
+    public string? GetKeyDisplayName(engine.inputs.ScanCode scanCode)
+        => _backend?.GetKeyDisplayName(scanCode);
+
     
     /**
      * Push an event and optionally its translated logical version.

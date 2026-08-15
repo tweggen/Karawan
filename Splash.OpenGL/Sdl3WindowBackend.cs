@@ -423,6 +423,37 @@ public sealed class Sdl3WindowBackend : IWindowBackend
         }
     }
 
+
+    /// <summary>
+    /// The layout-dependent label for a physical key. See IWindowBackend for why this is
+    /// a separate channel from the scancode and from text input.
+    /// </summary>
+    /// <remarks>
+    /// Scancode to keycode to name, which is the whole point: SDL_GetScancodeName would be
+    /// simpler and would answer the wrong question - it returns the POSITION's name ("W"
+    /// for SDL_SCANCODE_W on every layout on earth), which is what we already have.
+    /// SDL_GetKeyFromScancode applies the user's active layout, so the AZERTY user sees
+    /// "Z" for the key they will actually press.
+    ///
+    /// SDL_KMOD_NONE, not the live modifier state: the label must not change to "%" while
+    /// the user happens to be holding shift as they open the screen.
+    ///
+    /// Empty is SDL's answer for "no name", and is normalised to null so the caller falls
+    /// back to the positional name rather than rendering a blank row.
+    /// </remarks>
+    public string? GetKeyDisplayName(engine.inputs.ScanCode scanCode)
+    {
+        uint key = SDL_GetKeyFromScancode((SDL_Scancode)(int)scanCode, SDL_Keymod.SDL_KMOD_NONE, false);
+        if (0 == key)
+        {
+            return null;
+        }
+
+        string name = SDL_GetKeyName(key);
+        return string.IsNullOrEmpty(name) ? null : name;
+    }
+
+
     public void Run()
     {
         OnLoad?.Invoke();

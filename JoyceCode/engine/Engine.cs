@@ -1228,6 +1228,16 @@ public class Engine
     {
         _platform.KeyboardInputType = inputType;
     }
+
+    /**
+     * The layout-dependent DISPLAY label for a physical key, or null if the platform
+     * cannot say. See IPlatform.GetKeyDisplayName - display only, never for lookup.
+     *
+     * Null-tolerant on purpose: a headless engine (TestRunner, Chushi) has no platform,
+     * and a rebinding label is not worth an exception.
+     */
+    public string? GetKeyDisplayName(engine.inputs.ScanCode scanCode)
+        => _platform?.GetKeyDisplayName(scanCode);
     public void EnableKeyboard() => _keyboardEnabler.Add();
     public void DisableKeyboard() => _keyboardEnabler.Remove();
 
