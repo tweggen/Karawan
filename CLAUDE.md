@@ -65,7 +65,7 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 - Always run `./run_tests.sh all` before commit
 - Search for all references when changing systems
 - Keep JSON config case-insensitive in mind (use `PropertyNameCaseInsensitive = true`)
-- **Debug output pattern (mandatory)**: All debug/trace calls must use category-based filtering: add `private static readonly engine.Dc _dc = engine.Dc.{Category};` to class, then use `Trace(_dc, $"...")` instead of plain `Trace($"...")`
+- **Debug output pattern (mandatory)**: All debug/**trace** calls must use category-based filtering: add `private static readonly engine.Dc _dc = engine.Dc.{Category};` to class, then use `Trace(_dc, $"...")` instead of plain `Trace($"...")`. **The filtering applies to `Trace` ONLY.** `Warning(_dc, …)` and `Error(_dc, …)` prefix the category and always emit — a category decides how much *detail* to keep, never whether a problem is reported. This was not always true: until 2026-08-15 `Logger` also had a `Warning(Dc, ref DebugInterpolatedStringHandler)` overload, and since an interpolated argument prefers the handler form, **all 57 `Warning(_dc, $"...")` call sites in the tree were silently suppressed** unless that category happened to be enabled — including a `TaleSpawnOperator` health check reading *"E-to-Talk will not work"* that had never printed once. Two rounds of a live investigation treated "there are no logs" as evidence that nothing was wrong. `tests/JoyceCode.Tests/engine/LoggerFilteringTests.cs` now fails if a filtered `Warning`/`Error` overload reappears.
 
 ## Build & Run
 
