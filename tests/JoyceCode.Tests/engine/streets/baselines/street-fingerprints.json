@@ -1,7 +1,7 @@
 {
   "_note": "StreetNetworkFingerprint.V1 of the generated network",
   "_regenerate": "JOYCE_STREET_BASELINE_WRITE=1 dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj",
-  "_recordedFromCommit": "c6d52bce8dea0582c2028cbb5e6f8456b321b960",
+  "_recordedFromCommit": "c9d4f1db9a9b52371d4ee1aea26f73e0707519b5",
   "_warning": "Keyed by runtime+architecture: float output is not guaranteed identical across runtimes. Add your environment's stamp rather than overwriting another.",
   "environments": {
     ".NET 10.0.10|X64": {
