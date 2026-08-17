@@ -184,6 +184,66 @@ ID-independent.** It hashes geometry, not identity.
 the tests. It means the fingerprint is still identity-coupled — fix the fingerprint.
 This is the single most likely place for WP-0 to go wrong.
 
+### WP-0 outcome — DONE
+
+Delivered: `engine/streets/StreetSeeds.cs` (production, extracted) and, under
+`tests/JoyceCode.Tests/engine/streets/`, `StreetHarness`, `StreetNetworkFingerprint`,
+`StreetBaselines`, `StreetDeterminismTests`, `StreetCostTests`, plus
+`baselines/street-{fingerprints,cost-baseline}.json`. 40 tests, ~1 s.
+AC-0.1 … AC-0.7 all verified. `Generator.cs` was not touched.
+
+Findings that change how later WPs must be executed:
+
+1. **Baselines are per environment, not portable.** Float output is only guaranteed
+   reproducible for a given runtime and architecture, so the baseline files are keyed
+   by an environment stamp (`".NET 10.0.10|X64"`). A missing stamp fails loudly with
+   instructions — it never silently passes. **The committed baselines were recorded on
+   .NET 10.0.10 / x64**, because the authoring container had no .NET 9 runtime
+   available (Ubuntu 24.04 ships no `dotnet-sdk-9.0`, and the Microsoft download host
+   is blocked by egress policy). **A developer on the project's own .NET 9 toolchain
+   must regenerate once** with
+   `JOYCE_STREET_BASELINE_WRITE=1 dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj`
+   and commit the added stamp. Both stamps can coexist in the file.
+2. **`_connectOrphanedBundles` is live code, not dead code.** Measured over 180
+   generated clusters: 105 of them (58%) required orphan bridging, with 153
+   `orphan_bridge` strokes total. WP-2c must move it with care, not retire it.
+3. **The corridor branch is all but unreachable.** The `bridgeDistance > 300f`
+   multi-stroke corridor path fired exactly **once** in those 180 clusters.
+   `seed017@2400` is the only known cover and is in the seed set for that reason —
+   do not drop it.
+4. **`Size=100` generates an empty network.** Corner seeds sit at `±Size/2.2`, outside
+   the `±(Size/2 − 20)` bounds, so nothing survives. This is the size the deleted
+   diagnostic test used: it was asserting `Assert.True(true)` over an empty network.
+   Pinned deliberately as a seed so that a refactor which starts generating here is
+   caught.
+5. **Allocation is reproducible only to ~0.02%**, not exactly (seed011@500 measured
+   74944 then 74960 bytes with a byte-identical network). `StreetCostTests` therefore
+   takes the minimum of 3 runs and allows 0.5% drift; the regression ceiling stays 2%.
+   Use `GC.GetAllocatedBytesForCurrentThread`, never `GetTotalAllocatedBytes` — the
+   suite runs in parallel.
+6. **Namespace shadowing gotcha.** Inside `namespace JoyceCode.Tests.engine.streets`,
+   a qualified name like `builtin.tools.RandomSource` binds to
+   `JoyceCode.Tests.builtin.tools` and fails to compile. Use `global::builtin.tools…`.
+   (`using` directives placed above the file-scoped namespace are unaffected.)
+7. **Build prerequisite drift.** `Joyce.csproj` needs a `glTF-CSharp-Loader` that still
+   uses Newtonsoft.Json. Upstream `main` switched to System.Text.Json in commit
+   `d8be51b`, so a fresh clone of HEAD fails with three `CS0246: Newtonsoft` errors.
+   Check out `d8be51b^` (or any earlier commit). CLAUDE.md § Build & Run does not
+   mention this pin.
+
+Baseline for later WPs, on the recorded environment:
+
+| seed | points | strokes | allocated |
+|---|---|---|---|
+| Yelukhdidru@100 | 0 | 0 | 6 464 |
+| Yelukhdidru@400 | 12 | 11 | 35 024 |
+| seed011@500 | 23 | 24 | 74 960 |
+| seed000@500 | 27 | 29 | 86 440 |
+| Yelukhdidru@800 | 64 | 74 | 207 096 |
+| seed000@1500 | 274 | 367 | 941 584 |
+| seed017@2400 | 785 | 1034 | 2 824 032 |
+| Yelukhdidru@3000 | 1379 | 1875 | 4 937 400 |
+
 ---
 
 ## 2. WP-1 — NetworkBuilder: topology surgery extraction

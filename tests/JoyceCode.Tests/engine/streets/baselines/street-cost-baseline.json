@@ -1,0 +1,44 @@
+{
+  "_note": "allocated bytes (min of 3 runs); wallMs is advisory only",
+  "_regenerate": "JOYCE_STREET_BASELINE_WRITE=1 dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj",
+  "_recordedFromCommit": "c6d52bce8dea0582c2028cbb5e6f8456b321b960",
+  "_warning": "Keyed by runtime+architecture: float output is not guaranteed identical across runtimes. Add your environment's stamp rather than overwriting another.",
+  "environments": {
+    ".NET 10.0.10|X64": {
+      "seeds": {
+        "Yelukhdidru@100": {
+          "allocatedBytes": 6464,
+          "wallMsAdvisory": 0.0205
+        },
+        "Yelukhdidru@3000": {
+          "allocatedBytes": 4937400,
+          "wallMsAdvisory": 74.9724
+        },
+        "Yelukhdidru@400": {
+          "allocatedBytes": 35024,
+          "wallMsAdvisory": 0.2516
+        },
+        "Yelukhdidru@800": {
+          "allocatedBytes": 207096,
+          "wallMsAdvisory": 2.671
+        },
+        "seed000@1500": {
+          "allocatedBytes": 941584,
+          "wallMsAdvisory": 13.6657
+        },
+        "seed000@500": {
+          "allocatedBytes": 86440,
+          "wallMsAdvisory": 1.4829
+        },
+        "seed011@500": {
+          "allocatedBytes": 74960,
+          "wallMsAdvisory": 0.825
+        },
+        "seed017@2400": {
+          "allocatedBytes": 2824032,
+          "wallMsAdvisory": 32.4473
+        }
+      }
+    }
+  }
+}

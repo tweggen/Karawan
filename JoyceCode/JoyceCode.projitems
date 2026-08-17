@@ -539,6 +539,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\QuarterGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\QuarterStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetPoint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetSeeds.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Stroke.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeIntersection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeStore.cs" />

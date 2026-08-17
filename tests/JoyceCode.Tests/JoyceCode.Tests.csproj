@@ -28,10 +28,13 @@
     wired one up. Excluded for now; revive when someone updates them against
     the current navigation API.
 
-    StreetGenerationDiagnosticsTests both need ClusterStorage registered in
-    the I container, which only happens in a full engine boot. They are
-    integration tests rather than unit tests; excluded so the project stays
-    a self-contained, fast-running unit test suite.
+    The engine/streets folder IS compiled as of WP-0 of the streets generator
+    rework. The old StreetGenerationDiagnosticsTests that used to live there was
+    deleted rather than revived: it asserted only Assert.True(true), and drove
+    generation through ClusterDesc.StrokeStore(), which needs ClusterStorage in
+    the I container and would hit the cluster cache. It has been replaced by
+    StreetHarness + StreetDeterminismTests, which drive engine.streets.Generator
+    directly with no container and no cache.
 
     The engine/tale/RoutingPreferencesTests.cs file is clean and runs as
     part of the suite (10 passing tests), as do the new TALE-SOCIAL D4
@@ -39,7 +42,6 @@
   -->
   <ItemGroup>
     <Compile Remove="engine\navigation\**\*.cs" />
-    <Compile Remove="engine\streets\**\*.cs" />
   </ItemGroup>
 
 </Project>
