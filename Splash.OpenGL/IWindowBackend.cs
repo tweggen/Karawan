@@ -189,7 +189,17 @@ public interface IWindowBackend : IDisposable
      * The button number is the engine's, i.e. Silk's MouseButton ordinal: 0 left, 1 right,
      * 2 middle. It reaches game code as the event Code string, so it is contract.
      */
-    Action<Vector2>? OnMouseMoved { get; set; }
+    /// <summary>Absolute pointer position, then the relative motion since the last event.</summary>
+    /// <remarks>
+    /// BOTH halves are needed and they answer different questions. The position is what
+    /// hit-tests against the view rectangle and feeds ImGui. The delta is what mouse-look
+    /// consumes - and it cannot be recovered from the position, because the position is
+    /// clamped to the window and, while the cursor is hidden (= relative mouse mode),
+    /// warped as well. Silk's CursorMode.Raw hid that by reporting an unbounded position,
+    /// so the port inherited a difference-of-positions that quietly caps the camera at the
+    /// window borders. Backends must report the platform's own relative motion here.
+    /// </remarks>
+    Action<Vector2, Vector2>? OnMouseMoved { get; set; }
 
     /// <summary>Pointer position, then the scroll delta.</summary>
     /// <remarks>

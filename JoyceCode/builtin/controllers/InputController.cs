@@ -144,7 +144,16 @@ public class InputController : engine.AController, engine.IInputPart
     private Vector2 _v2MousePressPosition = Vector2.Zero;
     private Vector2 _v2CurrentMousePosition = Vector2.Zero;
     private bool _isMouseButtonClicked = false;
-    private Vector2 _lastMousePosition;
+
+    /**
+     * Relative mouse motion received since the last logical frame consumed it.
+     *
+     * Mouse-look accumulates the platform's own deltas here rather than differencing
+     * _v2CurrentMousePosition. The absolute position is clamped to the window - and,
+     * while the cursor is hidden, warped - so the difference goes to zero at the borders
+     * and the camera appears to stop turning. See engine.news.Event.PhysicalDelta.
+     */
+    private Vector2 _v2MouseMoveAccumulated = Vector2.Zero;
     private bool _isKeyboardFast = false;
     
     private ControllerState _controllerState = new();
@@ -426,18 +435,18 @@ public class InputController : engine.AController, engine.IInputPart
     {
         lock (_lo)
         {
+            /*
+             * Consume the accumulated motion either way: while a button is held we do not
+             * look around, but the deltas that arrived meanwhile must be DROPPED, not
+             * carried over, or releasing the button snaps the camera by everything that
+             * happened during the drag.
+             */
+            Vector2 v2Moved = _v2MouseMoveAccumulated;
+            _v2MouseMoveAccumulated = Vector2.Zero;
+
             if (!_isMouseButtonClicked)
             {
-                if (_lastMousePosition == default)
-                {
-                }
-                else
-                {
-                    var xOffset = (_v2CurrentMousePosition.X - _lastMousePosition.X) * MouseLookMoveSensitivity;
-                    var yOffset = (_v2CurrentMousePosition.Y - _lastMousePosition.Y) * MouseLookMoveSensitivity;
-                    V2MouseMove += new Vector2(xOffset, yOffset);
-                }
-                _lastMousePosition = _v2CurrentMousePosition;
+                V2MouseMove += v2Moved * MouseLookMoveSensitivity;
             }
         }
     }
@@ -575,7 +584,6 @@ public class InputController : engine.AController, engine.IInputPart
             _v2CurrentMousePosition = ev.PhysicalPosition;
             _isMouseButtonClicked = true;
 
-            _lastMousePosition = ev.PhysicalPosition;
             _lastTouchPosition = ev.PhysicalPosition;
             if (strButton != null)
             {
@@ -593,6 +601,7 @@ public class InputController : engine.AController, engine.IInputPart
         lock (_lo)
         {
             _v2CurrentMousePosition = ev.PhysicalPosition;
+            _v2MouseMoveAccumulated += ev.PhysicalDelta;
         }
     }
 

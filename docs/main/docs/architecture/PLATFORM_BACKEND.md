@@ -549,10 +549,15 @@ WP-0.0 shows the AAR cannot be repacked; Phase 4 defensible but re-justify on si
 >
 > **"Phase 3 rewrites desktop input on three OSes … regression risk purchased against no recorded
 > failure."** Borne out precisely. Desktop input regressions introduced by that rewrite: gamepad
-> stick inverted (#61), the mouse cursor never configured (#61), and **KI-14 — desktop text entry
+> stick inverted (#61), the mouse cursor never configured (#61), **KI-14 — desktop text entry
 > silently dead**, which survived undetected because WASD and every scancode binding kept working,
-> and was found only when someone typed into a field. Three regressions, against the zero desktop
-> windowing failures §3a recorded in 3.5 years. The reviewer's arithmetic was right.
+> and was found only when someone typed into a field, and **KI-19 — mouse-look capped at the window
+> borders**, because the port kept differencing the absolute pointer position after moving to a
+> backend that, unlike Silk's `CursorMode.Raw`, reports that position clamped. Note the shape it
+> shares with KI-14: the code compiled, ran, and produced *plausible* input, so nothing failed —
+> the camera merely stopped turning, which reads as a design decision. Four regressions, against
+> the zero desktop windowing failures §3a recorded in 3.5 years — and the paragraph the reviewer
+> flagged names raw mouse specifically. The reviewer's arithmetic was right.
 >
 > **What the reviewer got wrong:** the Phase 5 burden of proof *was* met, but by a mechanism they
 > did not anticipate and neither did this document — traceability, not survival (see 11b). And the

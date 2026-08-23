@@ -91,7 +91,22 @@ public class Event
      * This may coincide with the logical position but does not have to.
      */
     public Vector2 PhysicalPosition = Vector2.Zero;
-    
+
+    /**
+     * For INPUT_MOUSE_MOVED: the RELATIVE motion since the previous mouse event, in
+     * original dimensions.
+     *
+     * This is the field mouse-look must read - never a difference of two
+     * PhysicalPosition values. The absolute position is CLAMPED to the window, and in
+     * relative-mouse mode (which is what hiding the cursor turns on) it is additionally
+     * warped, so differencing it stops producing motion as soon as the pointer reaches a
+     * border. That presents as the camera hitting an invisible rotation limit rather
+     * than as an input bug.
+     *
+     * Vector2.Zero on every other event type.
+     */
+    public Vector2 PhysicalDelta = Vector2.Zero;
+
     /**
      * The size in original dimensions.
      */

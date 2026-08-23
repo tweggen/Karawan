@@ -200,14 +200,15 @@ public class Platform : engine.IPlatform
     }
 
 
-    private void _pushMouseMoved(Vector2 position)
+    private void _pushMouseMoved(Vector2 position, Vector2 delta)
     {
         _imGuiController?.FeedMouseMoved(position);
         if (_shallReturnBecauseUI(position)) return;
 
         I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_MOVED, "")
         {
-            PhysicalPosition = position
+            PhysicalPosition = position,
+            PhysicalDelta = delta
         });
     }
 
