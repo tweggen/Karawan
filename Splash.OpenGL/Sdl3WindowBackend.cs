@@ -98,7 +98,7 @@ public sealed class Sdl3WindowBackend : IWindowBackend
     public Action<bool>? OnFocusChanged { get; set; }
     public Action? BeforeEvents { get; set; }
     public Action? ReleaseMainThreadWaiters { get; set; }
-    public Action<Vector2>? OnMouseMoved { get; set; }
+    public Action<Vector2, Vector2>? OnMouseMoved { get; set; }
     public Action<Vector2, Vector2>? OnMouseWheel { get; set; }
     public Action<int, Vector2>? OnMousePressed { get; set; }
     public Action<int, Vector2>? OnMouseReleased { get; set; }
@@ -561,7 +561,14 @@ public sealed class Sdl3WindowBackend : IWindowBackend
                 }
 
                 case SDL_EventType.SDL_EVENT_MOUSE_MOTION:
-                    OnMouseMoved?.Invoke(new Vector2(ev.motion.x, ev.motion.y));
+                    /*
+                     * x/y are clamped to the window and, in relative mouse mode, warped;
+                     * xrel/yrel are the true motion and are the only thing mouse-look may
+                     * use. See IWindowBackend.OnMouseMoved.
+                     */
+                    OnMouseMoved?.Invoke(
+                        new Vector2(ev.motion.x, ev.motion.y),
+                        new Vector2(ev.motion.xrel, ev.motion.yrel));
                     break;
 
                 case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
