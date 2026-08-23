@@ -161,12 +161,17 @@ public class GlThreeD : IThreeD
             sh.SetUniform("texture0", 0);
             sh.SetUniform("texture2", 2);
 
-            Material.ShaderFlags materialFlags = 0;
+            Material.ShaderFlags shaderFlags = 0;
             if (jMaterial.AddInterior)
             {
-                materialFlags |= Material.ShaderFlags.RenderInterior;
+                shaderFlags |= Material.ShaderFlags.RenderInterior;
             }
-            sh.SetUniform("materialFlags", (int) materialFlags);
+
+            if ((jMaterial.Flags & Material.MaterialFlags.NoDistanceFog) != 0)
+            {
+                shaderFlags |= Material.ShaderFlags.NoDistanceFog;
+            }
+            sh.SetUniform("materialFlags", (int) shaderFlags);
             GlDbg.Check(_getGL());
         }
         catch (Exception e)

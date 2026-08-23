@@ -27,10 +27,10 @@ public class FogColor : AController
     }
 
 
-    private Vector4 v4FogNight = new(0.00f, 0.00f, 0.02f, 0.4f);
-    private Vector4 v4FogDawn = new(0.2f, 0.11f, 0.2f, 0.8f); 
-    private Vector4 v4FogDay = new(0.4f, 0.3f, 0.3f, 0.4f);
-    private Vector4 v4FogDusk = new(0.3f, 0.25f, 0.2f, 0.7f);
+    private Vector4 v4FogNight = new(0.00f, 0.00f, 0.02f, 0.6f);
+    private Vector4 v4FogDawn = new(0.2f, 0.11f, 0.2f, 0.85f); 
+    private Vector4 v4FogDay = new(0.4f, 0.3f, 0.3f, 0.5f);
+    private Vector4 v4FogDusk = new(0.3f, 0.25f, 0.2f, 0.8f);
     private Vector4 v4AmbientNight = new(0f, 0f, 0f, 0.008f);
     private Vector4 v4AmbientDawn = new(0f, 0.003f, 0.0015f, 0f); 
     private Vector4 v4AmbientDay = new(0.015f, 0.015f, 0.015f, 0f);

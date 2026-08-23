@@ -60,7 +60,8 @@ namespace engine.joyce
          */
         [Flags] public enum ShaderFlags
         {
-            RenderInterior = 0x00000001
+            RenderInterior = 0x00000001,
+            NoDistanceFog = 0x00000002
         }
 
         [Flags] public enum MaterialFlags
@@ -71,6 +72,7 @@ namespace engine.joyce
              * the parameters of the shaders.
              */
             AddInterior = 0x00000001,
+            NoDistanceFog = 0x00000002,
             HasTransparency = 0x00000008,
             UnmergableFlags = 0x00ffffff,
             
