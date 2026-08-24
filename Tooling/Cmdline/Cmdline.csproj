@@ -22,7 +22,7 @@
       <PackageReference Include="Microsoft.Build.Framework" />
       <PackageReference Include="Microsoft.Build.Utilities.Core" />
       <PackageReference Include="SkiaSharp" />
-      <PackageReference Include="SkiaSharp.NativeAssets.Linux" VersionOverride="3.119.1" />
+      <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
       <PackageReference Include="SkiaSharp.NativeAssets.Win32" />
       <PackageReference Include="System.Text.Json" />
     </ItemGroup>

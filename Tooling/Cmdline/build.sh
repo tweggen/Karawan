@@ -11,11 +11,19 @@
 # which reads like a broken restore or a missing SDK - it is neither, and installing a
 # newer SDK cannot fix it, because the wrong framework is being requested explicitly.
 #
+# The extraction MUST use `sed -E`. `\?` is a GNU extension to basic regular expressions
+# and the BSD sed macOS ships does not have it - there it matches a literal `?`, so
+# `<TargetFrameworks?>` never matches `<TargetFramework>`. sed then prints nothing, grep
+# exits 1, and under `set -e -o pipefail` the ASSIGNMENT dies before the guard below can
+# say why. Symptom on macOS: no output at all, exit 1, as if the script never ran.
+# `-E` (POSIX ERE) is understood by both BSD sed and GNU sed.
+#
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-TFM="$(sed -n 's:.*<TargetFrameworks\?>\([^<]*\).*:\1:p' Cmdline.csproj \
-       | tr ';' '\n' | grep -E '^net[0-9]' | head -1)"
+# `|| TFM=""` stops a failed pipeline from tripping `set -e` here, so the guard gets to report it.
+TFM="$(sed -nE 's:.*<TargetFrameworks?>([^<]*).*:\1:p' Cmdline.csproj \
+       | tr ';' '\n' | grep -E '^net[0-9]' | head -1)" || TFM=""
 [ -n "$TFM" ] || { echo "could not read a net* TargetFramework from Cmdline.csproj" >&2; exit 1; }
 echo "building Cmdline for $TFM"
 

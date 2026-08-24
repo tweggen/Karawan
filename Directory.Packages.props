@@ -85,14 +85,19 @@
       Splash.Silk carries VersionOverride="3.0.1". Unifying would change resolution.
     -->
     <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.10" />
-    <PackageVersion Include="SkiaSharp" Version="4.152.0-preview.1.1" />
     <!--
-      CONFLICT: Karawan and examples/Launcher use 2.88.7; Tooling/Cmdline uses 3.119.1
-      (Cmdline is on the SkiaSharp 3.x line throughout). Tooling/Cmdline carries
-      VersionOverride="3.119.1".
+      All four SkiaSharp packages MUST move together. SkiaSharp x.y depends on
+      SkiaSharp.NativeAssets.* (>= x.y), so pinning one native-asset package below the
+      managed one is not "keeping a platform on the old line" - it is a package downgrade,
+      and NU1605 is escalated to an error here, so it fails the restore on EVERY host, not
+      just the one whose natives were pinned. That is what happened when the Linux fix
+      moved SkiaSharp and NativeAssets.Linux to 4.152.0-preview.1.1 and left Win32 behind:
+      Tooling/Cmdline stopped restoring on macOS.
+      NativeAssets.macOS is not listed because SkiaSharp pulls it in transitively.
     -->
+    <PackageVersion Include="SkiaSharp" Version="4.152.0-preview.1.1" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.152.0-preview.1.1" />
-    <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="4.152.0-preview.1.1" />
   </ItemGroup>
   <ItemGroup Label="Build tooling / BCL">
     <PackageVersion Include="Microsoft.Build.Framework" Version="17.9.5" />
