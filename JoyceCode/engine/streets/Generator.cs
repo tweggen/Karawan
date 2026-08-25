@@ -27,6 +27,13 @@ namespace engine.streets
          */
         public bool CollectReport { get; set; } = false;
         private GenerationReport _report;
+        private ExpansionRuleTable _ruleTable;
+        private SuccessorEmitter _emitter;
+
+        /**
+         * The ruleset to grow with. Null means the shipped defaults.
+         */
+        internal ExpansionRuleTable RuleTable { get; set; }
         private ICandidateConstraint[] _pipeline;
         private BoundsConstraint _boundsConstraint;
         private GenerationContext _ctx;
@@ -124,44 +131,6 @@ namespace engine.streets
 
 
         /**
-         * Whether a freshly emitted successor is worth putting on the queue at all.
-         *
-         * This is BEHAVIOUR, not a diagnostic, despite having grown up among the
-         * orphan-tracking helpers that WP-2c deleted. The 15 m edge buffer below is
-         * strictly tighter than the bounds check, so removing this would let candidates
-         * near the cluster edge through and change every generated cluster.
-         */
-        private bool _isSuccessorWorthQueueing(in Stroke candidateStroke)
-        {
-            // Check if B endpoint (the new point) is in bounds
-            var b = candidateStroke.B.Pos;
-            if (b.X <= _bl.X || b.X >= _tr.X || b.Y <= _bl.Y || b.Y >= _tr.Y)
-            {
-                return false;  // Out of bounds
-            }
-
-            // Check if B is too close to cluster edges (would fail edge distance checks)
-            const float edgeBuffer = 15f;
-            float distToBoundary = MathF.Min(
-                MathF.Min(b.X - _bl.X, _tr.X - b.X),
-                MathF.Min(b.Y - _bl.Y, _tr.Y - b.Y)
-            );
-            if (distToBoundary < edgeBuffer)
-            {
-                return false;  // Too close to boundary
-            }
-
-            // Check if B is very close to A (minimum length constraint)
-            float lengthToB = Vector2.Distance(candidateStroke.A.Pos, b);
-            if (lengthToB < newStrokeMinimum * 0.8f)  // Conservative check
-            {
-                return false;  // Stroke too short
-            }
-
-            return true;  // Endpoint appears valid
-        }
-
-        /**
          * Build the constraint pipeline for this run.
          *
          * ORDER IS BEHAVIOUR: it is exactly the order these checks appeared in the
@@ -186,6 +155,26 @@ namespace engine.streets
                 _strokeStore, _clusterDesc.Id, _rnd, _annotation);
 
             _report = CollectReport ? new GenerationReport() : null;
+
+            _ruleTable = RuleTable ?? ExpansionRuleTable.Defaults();
+
+            _emitter = new SuccessorEmitter(
+                _ruleTable, _rnd, _clusterDesc,
+                new EmitterSettings
+                {
+                    WeightMin = weightMin,
+                    WeightMax = weightMax,
+                    WeightDecreaseFactor = weightDecreaseFactor,
+                    WeightIncreaseFactor = weightIncreaseFactor,
+                    NewStrokeMinimum = newStrokeMinimum,
+                    NewStrokeSquaredWeight = newStrokeSquaredWeight,
+                    NewLengthMin = newLengthMin,
+                    ProbabilityAngleSlightTurn = probabilityAngleSlightTurn,
+                    AngleSlightTurnMax = AngleSlightTurnMax,
+                    BottomLeft = _bl,
+                    TopRight = _tr
+                },
+                stroke => _addStrokeToDo(stroke));
 
             _pipeline = new ICandidateConstraint[]
             {
@@ -404,162 +393,10 @@ namespace engine.streets
                 /*
                  * Compute some options.
                  */
-                bool doForward = _rnd.Get8() < probabilityNextStrokeForward;
-                bool doRight = _rnd.Get8() < (int)probabilityNextStrokeBranch(curr.Weight);
-                bool doLeft = _rnd.Get8() < (int)probabilityNextStrokeBranch(curr.Weight);
-                bool doRandomDirection = _rnd.Get8() < (int)probabilityNextStrokeRandom(curr.Weight);
-
-                var computeWeight = (
-                    float currentWeight, 
-                    float probDescrease, 
-                    float probIncrease, 
-                    float facDecrease, 
-                    float facIncrease
-                ) => {
-                    float resultWeight = currentWeight;
-                    bool doDecreaseWeight = _rnd.Get8() < probDescrease;
-                    bool doIncreaseWeight = _rnd.Get8() < probIncrease;
-
-                    if( doDecreaseWeight ) {
-                        resultWeight = resultWeight * facDecrease;
-                    }
-                    if( doIncreaseWeight ) {
-                        resultWeight = resultWeight * facIncrease;
-                    }
-
-                    if( resultWeight < weightMin ) {
-                        resultWeight = weightMin;
-                    } else {
-                        if( resultWeight > weightMax) {
-                            resultWeight = weightMax;
-                        }
-                    }
-                    resultWeight = (int)((resultWeight)*1000f)/1000f;
-                    
-                    return resultWeight;
-                };
-
-                float newAngle = curr.Angle;
-                if (_rnd.Get8() < probabilityAngleSlightTurn ) {
-                    newAngle = newAngle +_rnd.GetFloat()*2f*AngleSlightTurnMax-AngleSlightTurnMax;
-                }
-
-                if(!doForward && !doRight && !doLeft && !doRandomDirection) {
-                    doRandomDirection = true;
-                }
-
-                if (doForward || doRandomDirection) {
-                    var straightWeight = computeWeight(
-                        curr.Weight,
-                        probabilityNextStrokeStraightDecreaseWeight,
-                        probabilityNextStrokeStraightIncreaseWeight,
-                        weightDecreaseFactor,
-                        weightIncreaseFactor
-                    );
-                
-                    float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (straightWeight*straightWeight))*10f)/10f;
-                    if( newLength < newLengthMin ) {
-                        newLength = newLengthMin;
-                    }
-
-                    if (doForward)
-                    {
-                        StreetPoint newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        var forward = Stroke.CreateByAngleFrom(
-                            _clusterDesc,
-                            curr.B,
-                            newB,
-                            newAngle,
-                            newLength,
-                            curr.IsPrimary,
-                            straightWeight
-                        );
-
-                        if (_isSuccessorWorthQueueing(forward))
-                        {
-                            forward.PushCreator("forward");
-                            newB.PushCreator("forward");
-                            _addStrokeToDo(forward);
-                        }
-                    }
-
-                    if (doRandomDirection) {
-                        var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        var randStroke = Stroke.CreateByAngleFrom(
-                            _clusterDesc,
-                            curr.B,
-                            newB,
-                            _rnd.GetFloat()*(float)Math.PI*2f,
-                            newLength,
-                            curr.IsPrimary,
-                            straightWeight
-                        );
-
-                        if (_isSuccessorWorthQueueing(randStroke))
-                        {
-                            randStroke.PushCreator("randStroke");
-                            newB.PushCreator("randStroke");
-                            _addStrokeToDo(randStroke);
-                        }
-                    }
-                }
-
-                if (doRight || doLeft)
-                {
-                    var branchWeight = computeWeight(
-                        curr.Weight,
-                        probabilityNextStrokeBranchDecreaseWeight,
-                        probabilityNextStrokeBranchIncreaseWeight,
-                        weightDecreaseFactor,
-                        weightIncreaseFactor
-                    );
-                
-                    float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (branchWeight*branchWeight))*10f)/10f;
-                    if( newLength < newLengthMin ) {
-                        newLength = newLengthMin;
-                    }
-
-                    if( doRight ) {
-                        var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        var right = Stroke.CreateByAngleFrom(
-                            _clusterDesc,
-                            curr.B,
-                            newB,
-                            newAngle-(float)Math.PI/2f,
-                            newLength,
-                            !curr.IsPrimary,
-                            branchWeight
-                        );
-
-                        if (_isSuccessorWorthQueueing(right))
-                        {
-                            right.PushCreator("right");
-                            newB.PushCreator("right");
-                            _addStrokeToDo(right);
-                        }
-                    }
-                    if( doLeft ) {
-                        var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        var left = Stroke.CreateByAngleFrom(
-                            _clusterDesc,
-                            curr.B,
-                            newB,
-                            newAngle+(float)Math.PI/2f,
-                            newLength,
-                            !curr.IsPrimary,
-                            branchWeight
-                        );
-
-                        if (_isSuccessorWorthQueueing(left))
-                        {
-                            left.PushCreator("left");
-                            newB.PushCreator("left");
-                            _addStrokeToDo(left);
-                        }
-                    }
-                }
+                _emitter.Emit(curr);
             }
         }
+
 
 
         public void SetBounds( 

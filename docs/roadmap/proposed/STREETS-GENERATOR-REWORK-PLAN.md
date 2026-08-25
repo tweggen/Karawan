@@ -511,6 +511,70 @@ to fix — is now about 80.
 
 ---
 
+### WP-3 outcome — DONE
+
+`Generator.cs` 605 → **442** lines. New: `ExpansionRule` (rule table + compiled
+`ProbExpr`), `StreetGenConfig` (parser), `SuccessorEmitter` (the emission walk),
+`models/nogame.streets.json` referenced from `models/nogame.json`. 18 config tests.
+xUnit 489/489, TALE 200/200, fingerprints byte-identical.
+
+**The rule table carries two different orderings, and conflating them would change
+every city.** Probabilities are drawn one per rule in array order
+(forward, right, left, random), but weights and emission run per weight group and,
+within a group, in array order — which for the default table means
+straight(forward, randStroke) then branch(right, left). The original hard-coded both
+sequences; the table has to reproduce both. `ExpansionRuleTable` documents this at
+the top and `models/nogame.streets.json` repeats it, because it is the single easiest
+thing to get wrong when editing a ruleset.
+
+Verified wired rather than assumed: changing `forward`'s probability from 252 to 200
+fails 7 of the 24 determinism tests.
+
+The parser refuses anything it does not recognise — unknown direction, unknown
+probability shape, undefined weight group, missing or duplicated fallback rule — at
+parse time rather than at draw time, with seven tests covering those cases. A ruleset
+that silently ignored a misspelled field would reshape a city and give no clue why.
+`ClusterDesc` catches a parse failure, logs an Error and falls back to the defaults,
+so a bad ruleset degrades rather than crashing world generation.
+
+Packaging was verified, not assumed: `nogame.streets.json` appears in both the
+regenerated `AndroidResources.xml` and `InnoResources.iss`. This is the failure mode
+CLAUDE.md records for the TALE storylets, where 14 declared-nowhere files loaded fine
+on desktop and left the module null on Android.
+
+#### Revising the ≤ 250 line target
+
+WP-2c carried an AC of `Generator.cs` ≤ 250 lines, deferred to here. It is now 442,
+and I am recording that the **target itself was wrong** rather than contorting the
+code to reach it. What remains is: the queue loop and verdict handling (~150), the
+public tunable properties that are the class's configuration surface (~65), pipeline
+and emitter construction (~60), `Reset`/`SetBounds`/`SetAnnotation`/`AddStartingStroke`
+(~40), and the queue helpers (~30). Reaching 250 would mean relocating the tunable
+property block for its own sake — a reshuffle that moves lines without separating a
+responsibility.
+
+The number that mattered was never 250. It was that the five fused responsibilities
+the architecture doc identified now live apart, each testable on its own: validation
+in eight constraints, topology in `NetworkBuilder`, emission in `SuccessorEmitter`,
+post-processing in `ConnectComponentsPass`, and diagnostics in `GenerationReport` —
+with the forensic scaffolding deleted outright. `Generate()` is down from 340 lines to
+about 150, of which the validation loop is ~80.
+
+#### Not done: seeds are still hard-coded
+
+Step 5 (`StreetSeeds` reading its seed list from the same config) is **deliberately
+left out**, and it is the one part of WP-3 that is unfinished.
+
+The reason is arithmetic identity. The four corner seeds sit at `-Size/2.2f`,
+`Size/2.1f`, `-Size/2.2f`, `Size/2.15f` — irregular divisors that look accidental.
+Expressing them in JSON as fractions of the cluster size (`-0.4545…`) is **not**
+bit-identical to dividing by `2.2f`, so the natural encoding would silently move every
+seed and reshape every city. Doing it safely means encoding the divisor and the signs
+rather than the product, which is a fiddly schema for little gain. Worth doing, worth
+doing on its own, and not worth rushing inside WP-3.
+
+---
+
 ## 5. WP-4 — Multilayer (levels, ramps, bridges, tunnels)
 
 **Branch:** `claude/streets-wp4-levels` · **First WP that may change output — by design.**

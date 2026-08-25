@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using engine.streets;
+using engine.streets.generation;
 using engine.world;
 
 namespace JoyceCode.Tests.engine.streets;
@@ -39,6 +40,14 @@ internal static class StreetHarness
      * Mirrors ClusterDesc._generateStrokes exactly.
      */
     internal static StrokeStore Generate(string idString, float size)
+        => Generate(idString, size, null);
+
+
+    /**
+     * @param ruleTable
+     *     Ruleset to grow with, or null for the built-in defaults.
+     */
+    internal static StrokeStore Generate(string idString, float size, ExpansionRuleTable ruleTable)
     {
         var clusterDesc = MakeCluster(idString, size);
         var strokeStore = new StrokeStore(size);
@@ -46,6 +55,7 @@ internal static class StreetHarness
         var streetGenerator = new Generator();
         streetGenerator.SetAnnotation($"Cluster {clusterDesc.Name}");
         streetGenerator.Reset("streets-" + idString, strokeStore, clusterDesc);
+        streetGenerator.RuleTable = ruleTable;
         StreetSeeds.ApplyBounds(streetGenerator, clusterDesc);
         StreetSeeds.AddTo(streetGenerator, clusterDesc, clusterDesc.Rnd);
         streetGenerator.Generate();

@@ -327,11 +327,34 @@ public class ClusterDesc
         get => _rnd;
     }
 
+    /**
+     * Read the street generation ruleset from the Mix configuration.
+     *
+     * A missing section is fine and yields the built-in defaults, which are
+     * value-identical to it. A malformed one is not: it is reported and the defaults
+     * are used, because a half-applied ruleset would quietly reshape every city.
+     */
+    private streets.generation.ExpansionRuleTable _loadStreetGenRuleTable()
+    {
+        try
+        {
+            return streets.generation.StreetGenConfig.Parse(
+                I.Get<engine.casette.Mix>().GetTree("/streetGen"));
+        }
+        catch (System.Exception e)
+        {
+            Error($"Invalid street generation ruleset, falling back to defaults: {e.Message}");
+            return streets.generation.ExpansionRuleTable.Defaults();
+        }
+    }
+
+
     private void _generateStrokes()
     {
         Generator streetGenerator = new Generator();
         streetGenerator.SetAnnotation($"Cluster {Name}");
         streetGenerator.Reset("streets-" + _strKey, _strokeStore, this);
+        streetGenerator.RuleTable = _loadStreetGenRuleTable();
         streets.StreetSeeds.ApplyBounds(streetGenerator, this);
         streets.StreetSeeds.AddTo(streetGenerator, this, _rnd);
         streetGenerator.Generate();

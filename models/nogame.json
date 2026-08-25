@@ -16,6 +16,7 @@
   "quests": { "__include__": "nogame.quests.json" },
   "layers": { "__include__": "nogame.layers.json" },
   "scenes": { "__include__": "nogame.scenes.json" },
+  "streetGen": { "__include__": "nogame.streets.json" },
   "textures": { "__include__": "nogame.textures.json" },
   "animations": { "__include__": "nogame.animations.json" },
   "narration": { "__include__": "nogame.narration.json" },
