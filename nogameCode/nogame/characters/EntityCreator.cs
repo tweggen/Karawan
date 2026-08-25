@@ -194,7 +194,31 @@ public class EntityCreator
             {
                 // TXWTODO: Maybe we can even do an initial animation setup generically?
                 ref var cGpuAnimationState = ref _ePerson.Get<engine.joyce.components.GPUAnimationState>();
-                cGpuAnimationState.AnimationState?.SetAnimation(_model, InitialAnimName);
+
+                /*
+                 * The result is checked, because for some callers this is the ONLY
+                 * attempt that will ever be made.
+                 *
+                 * Callers that also attach a strategy get a behaviour that re-issues the
+                 * clip every frame until it takes, and reports through
+                 * StuckAnimationReporter when it does not. Callers that pass only an
+                 * InitialAnimName - the niceday NPCs and the taxi passenger - have
+                 * nothing behind them: if this one call refuses, the character stands in
+                 * its bind pose, a T-pose, for its entire life. Silently, until now.
+                 *
+                 * Unchecking a one-shot exactly like this one is what made the first
+                 * T-pose fix (#106) a no-op, twice.
+                 */
+                bool didSet = true == cGpuAnimationState.AnimationState?.SetAnimation(_model, InitialAnimName);
+                if (!didSet)
+                {
+                    Error($"Unable to select initial animation '{InitialAnimName}' for "
+                          + $"'{CharacterModelDescription.ModelUrl}' (pack "
+                          + $"'{CharacterModelDescription.AnimationPackName ?? "(none)"}') - "
+                          + $"{engine.joyce.AnimationState.DescribeFailure(_model, InitialAnimName)}. "
+                          + "Nothing will retry this; the character renders in its bind "
+                          + "pose (a T-pose).");
+                }
             }
             
             if (CollisionPropertiesFactory != null) {
