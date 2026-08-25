@@ -549,6 +549,7 @@ namespace engine.streets
                 MinPointToCandStrokeDistance = minPointToCandStrokeDistance,
                 MinPointToCandIntersectionDistance = minPointToCandIntersectionDistance,
                 AngleMinStrokesRad = AngleMinStrokes * (float) Math.PI / 180f,
+                ClusterId = _clusterDesc.Id,
                 IsTracing = _traceGenerator
             };
 
@@ -561,6 +562,9 @@ namespace engine.streets
                 new AlreadyConnectedConstraint(),
                 new AngleSeparationConstraint(atB: false),
                 new AngleSeparationConstraint(atB: true),
+                new StrokeNearPointConstraint(),
+                new PointNearStrokeConstraint(),
+                new IntersectionConstraint(),
             };
         }
 
@@ -649,9 +653,9 @@ namespace engine.streets
                 while (continueCheck)
                 {
                     /*
-                     * Constraints 1..5. A Restart means a constraint moved an endpoint
-                     * and everything has to be judged again from the top; the remaining
-                     * inline checks below are migrated in WP-2b.
+                     * A Restart means a constraint moved an endpoint and everything has
+                     * to be judged again from the top. A Split means the candidate
+                     * crosses an existing stroke.
                      */
                     Verdict verdict = _runPipeline(curr);
 
@@ -684,139 +688,22 @@ namespace engine.streets
                         continue;
                     }
 
-                    /*
-                     * Look, whether the stroke is too close to an existing point
-                     */
+                    if (verdict.Kind == VerdictKind.Split)
                     {
-                        var si = _strokeStore.GetClosestPoint(curr, minPointToCandStrokeDistance);
-                        if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
-                            if( _traceGenerator ) Trace(_dc, $"Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
-
-                            if (curr.B.InStore)
-                            {
-                                /*
-                                 * If B already is in the store, we do not want to exchange it.
-                                 */
-                                doAdd = false;
-                                continueCheck = false;
-                                break;
-                            }
-                            
-                            /*
-                             * Be is not in the store, maybe we can replace it by the streetpoint we found?
-                             */
-                            // float distB = (si.StreetPoint.Pos - curr.B.Pos).Length();
-                            curr.B = si.StreetPoint;
-                            continue;
-                        }
-                    }
-
-                    /*
-                     * The following does not seem to have pleasing results.
-                     */
-#if true
-                    /*
-                     * Look, whether the new point to is too close to an existing stroke
-                     */
-                    {
-                        var si = _strokeStore.GetClosestStroke( curr.B, minPointToCandStrokeDistance);
-                        if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
-                            /*
-                             * We might want to check here, if it is perpendicular to the stroke as opposed to parallel.
-                             * If it is perpendicular, we might be able to keep it, it might be a meaningful route.
-                             */
-                            float angleVice = Single.Abs(geom.Angles.Snorm(curr.Angle - si.StrokeExists.Angle));
-                            float angleVersa = Single.Abs(geom.Angles.Snorm(Single.Pi+angleVice));
-                            if (true ||angleVice<(Single.Pi/4f) || angleVersa<(Single.Pi/4f)) {
-                                if (_traceGenerator)
-                                    Trace(_dc,
-                                        $"Discarding stroke {curr.ToString()}, point b too close to stroke: {si.StrokeExists}");
-
-                                /*
-                                 * If there is any point closer the d meters to this stroke,
-                                 * then [look, which point is closer to the stroke and connect
-                                 * it instead] drop it.
-                                 */
-                                doAdd = false;
-                                continueCheck = false;
-                                break;
-                            }
-                        }
-                    }
-#endif
-
-                    /*
-                     * Neither of the endpoints is too close to an existing one.
-                     * However, this new stroke still could intersect with another 
-                     * stroke. Test this.
-                     */
-                    StrokeIntersection? intersection  = _strokeStore.IntersectsMayTouchClosest(curr, curr.A);
-                    if( null != intersection ) {
-                        /*
-                         * Logical error: We need to remove all of the intersections in some way.
-                         * Therefore truncate this right now.
-                         */
-                        // doAdd = false;
-                        // continueCheck = false;
-                        // break;
-                        /*
-                         * We have an intersection of this stroke with another
-                         * stroke.
-                         *
-                         * Given the way that we emit strokes we know, that curr.a
-                         * is one StreetPoint of an existing stroke.
-                         *
-                         * In every case we will need to split the existing stroke into
-                         * two, adding a new streetpoint at the intersection. If curr has a 
-                         * higher weight than the existing one, curr also is added (in two parts).
-                         * Otherwise, curr simply stops at the intersection point.
-                         */
-
-                        var intersectionStreetPoint = new StreetPoint() { ClusterId = _clusterDesc.Id };
+                        StreetPoint intersectionStreetPoint = verdict.SplitPoint;
                         _createdStreetPointIds.Add(intersectionStreetPoint.Id);  // Track creation
-                        var intersectingStroke = intersection.StrokeExists;
-                        intersectionStreetPoint.SetPos( intersection.Pos );
-                        intersectionStreetPoint.PushCreator("intersection");
-                        if( _traceGenerator ) {
-                            Trace( $"Trying intersection point {intersectionStreetPoint}" );
+
+                        if (_traceGenerator)
+                        {
+                            Trace(_dc, $"Trying intersection point {intersectionStreetPoint}");
                         }
 
-                        /*
-                         * Check, if the intersection is too close to either endpoint. It it is, just route it through
-                         * the existing end point.
-                         */
-
-                        bool doGenerateTail = true;
-                        
-                        if( Vector2.Distance( intersectionStreetPoint.Pos, intersectingStroke.A.Pos) < minPointToCandIntersectionDistance ) {
-                            /*
-                             * The current one intersects very close to the beginning of this stroke.
-                             */
-                            // TXWTOOD: Add the part until this endpoint, continuing with the tail.
-                            //doAdd = false;
-                            //continueCheck = false;
-                            //break;
-                            doGenerateTail = true;
-                        }
-
-                        if( Vector2.Distance( intersectionStreetPoint.Pos, intersectingStroke.B.Pos) < minPointToCandIntersectionDistance ) {
-                            /*
-                             * The current one intersects very close to the ending of this stroke.
-                             */
-                            // TXWTOOD: Add the part until this endpoint, continuing with the tail.
-                            // TXWTODO: Why don't we want to add this? Just use the intersection as b and we are fine, just leave out the tail.
-                            
-                            //doAdd = false;
-                            //continueCheck = false;
-                            doGenerateTail = false;
-                            // break;
-                        }
                         /*
                          * Split the intersected stroke in two at the intersection point.
                          * All topology mutation lives in NetworkBuilder; the order of
                          * operations in there is part of the generated output.
                          */
-                        Stroke oldStrokeExists = intersection.StrokeExists;
+                        Stroke oldStrokeExists = verdict.SplitTarget;
                         Stroke newStrokeExists = _networkBuilder.SplitStrokeAt(
                             oldStrokeExists, intersectionStreetPoint);
 
@@ -838,7 +725,7 @@ namespace engine.streets
                         }
                         curr.B = intersectionStreetPoint;
 
-                        if (doGenerateTail)
+                        if (verdict.GenerateTail)
                         {
                             /*
                              * And add the continuation, after the intersection.
@@ -851,7 +738,6 @@ namespace engine.streets
                             // As this is a stack, first the continuation, then the head.
                             _listStrokesToDo.Add(currTail);
                         }
-                        
 
                         _listStrokesToDo.Add(curr);
                         _generationCounter++;
@@ -859,6 +745,7 @@ namespace engine.streets
                         // Leave this loop.
                         doAdd = false;
                         continueCheck = false;
+                        continue;
                     }
 
                     /*

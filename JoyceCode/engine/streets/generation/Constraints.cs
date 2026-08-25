@@ -192,3 +192,121 @@ internal sealed class BoundsConstraint : ICandidateConstraint
         return inBounds ? Verdict.Accept : _outOfBounds;
     }
 }
+
+
+/**
+ * The candidate must not pass too close to a junction it does not touch.
+ *
+ * If the far end is still free, it is pulled onto that junction instead of the
+ * candidate being thrown away — hence the restart.
+ */
+internal sealed class StrokeNearPointConstraint : ICandidateConstraint
+{
+    private static readonly Verdict _tooCloseToPoint = Verdict.Reject("stroke too close to a junction");
+
+    public string Name => "stroke-near-point";
+
+    public Verdict Check(Stroke cand, StrokeStore store, GenerationContext ctx)
+    {
+        var si = store.GetClosestPoint(cand, ctx.MinPointToCandStrokeDistance);
+
+        if (null == si || si.ScaleExists >= ctx.MinPointToCandStrokeDistance)
+        {
+            return Verdict.Accept;
+        }
+
+        if (cand.B.InStore)
+        {
+            /*
+             * B is an established junction; we are not going to move it.
+             */
+            return _tooCloseToPoint;
+        }
+
+        cand.B = si.StreetPoint;
+        return Verdict.Restart;
+    }
+}
+
+
+/**
+ * The candidate's far end must not land on top of an existing stroke.
+ *
+ * The original computed two angles here, `angleVice` and `angleVersa`, to ask whether
+ * the candidate crosses the existing stroke perpendicularly - in which case it might
+ * be a meaningful route worth keeping - but then guarded the rejection with
+ * `if (true || ...)`, so neither angle could ever affect the outcome. Both were pure
+ * computation over cached values with no side effects, and are dropped here; the
+ * fingerprint gate is what shows that this changes nothing. The intent survives in
+ * the git history if anyone wants to finish the thought.
+ */
+internal sealed class PointNearStrokeConstraint : ICandidateConstraint
+{
+    private static readonly Verdict _tooCloseToStroke = Verdict.Reject("endpoint too close to a stroke");
+
+    public string Name => "point-near-stroke";
+
+    public Verdict Check(Stroke cand, StrokeStore store, GenerationContext ctx)
+    {
+        var si = store.GetClosestStroke(cand.B, ctx.MinPointToCandStrokeDistance);
+
+        if (null != si && si.ScaleExists < ctx.MinPointToCandStrokeDistance)
+        {
+            return _tooCloseToStroke;
+        }
+
+        return Verdict.Accept;
+    }
+}
+
+
+/**
+ * The candidate crosses an existing stroke.
+ *
+ * Runs last: everything before it can still rewrite the candidate, and re-testing an
+ * intersection is much the most expensive check here.
+ *
+ * The crossing junction is created here rather than by the driver, because
+ * StreetPoint.SetPos quantises to 10 cm and the tail decision below is taken on the
+ * quantised position. Computing it from the raw intersection position would silently
+ * shift which side of the threshold a near-endpoint crossing falls on.
+ */
+internal sealed class IntersectionConstraint : ICandidateConstraint
+{
+    public string Name => "intersection";
+
+    public Verdict Check(Stroke cand, StrokeStore store, GenerationContext ctx)
+    {
+        StrokeIntersection intersection = store.IntersectsMayTouchClosest(cand, cand.A);
+        if (null == intersection)
+        {
+            return Verdict.Accept;
+        }
+
+        Stroke intersectingStroke = intersection.StrokeExists;
+
+        var splitPoint = new StreetPoint() { ClusterId = ctx.ClusterId };
+        splitPoint.SetPos(intersection.Pos);
+        splitPoint.PushCreator("intersection");
+
+        /*
+         * If the crossing sits almost on top of an endpoint of the stroke being split,
+         * route through that end instead of stubbing a tail off it.
+         */
+        bool doGenerateTail = true;
+
+        if (Vector2.Distance(splitPoint.Pos, intersectingStroke.A.Pos)
+            < ctx.MinPointToCandIntersectionDistance)
+        {
+            doGenerateTail = true;
+        }
+
+        if (Vector2.Distance(splitPoint.Pos, intersectingStroke.B.Pos)
+            < ctx.MinPointToCandIntersectionDistance)
+        {
+            doGenerateTail = false;
+        }
+
+        return Verdict.Split(intersectingStroke, splitPoint, doGenerateTail);
+    }
+}

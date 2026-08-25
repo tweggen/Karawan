@@ -18,7 +18,14 @@ internal enum VerdictKind
      * onto an existing junction). Every constraint must run again from the start,
      * because an earlier one may now have something to say about it.
      */
-    Restart
+    Restart,
+
+    /**
+     * The candidate crosses an existing stroke. That stroke has to be split at the
+     * crossing, and the candidate re-queued in one or two pieces. Carries everything
+     * the driver needs to do it.
+     */
+    Split
 }
 
 
@@ -42,11 +49,34 @@ internal sealed class Verdict
      */
     internal readonly string Reason;
 
+    /**
+     * Split only: the stored stroke to cut in two.
+     */
+    internal readonly Stroke SplitTarget;
 
-    private Verdict(VerdictKind kind, string reason)
+    /**
+     * Split only: the new junction, already positioned. Created by the constraint
+     * rather than by the driver because StreetPoint.SetPos quantises to 10 cm, and the
+     * decision below is taken on the quantised position. Deriving it anywhere else
+     * would mean duplicating that quantisation.
+     */
+    internal readonly StreetPoint SplitPoint;
+
+    /**
+     * Split only: whether the part of the candidate beyond the crossing is re-queued.
+     * False when the crossing lands close to the far end of the stroke being split.
+     */
+    internal readonly bool GenerateTail;
+
+
+    private Verdict(VerdictKind kind, string reason,
+        Stroke splitTarget = null, StreetPoint splitPoint = null, bool generateTail = false)
     {
         Kind = kind;
         Reason = reason;
+        SplitTarget = splitTarget;
+        SplitPoint = splitPoint;
+        GenerateTail = generateTail;
     }
 
 
@@ -59,4 +89,11 @@ internal sealed class Verdict
      * rejection allocates at generation time.
      */
     internal static Verdict Reject(string reason) => new(VerdictKind.Reject, reason);
+
+
+    /**
+     * Unavoidably allocates, but only once per actual crossing.
+     */
+    internal static Verdict Split(Stroke target, StreetPoint at, bool generateTail)
+        => new(VerdictKind.Split, null, target, at, generateTail);
 }

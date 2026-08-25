@@ -338,3 +338,147 @@ public class BoundsConstraintTests
             _c.Check(cand, ConstraintFixture.Store(), ConstraintFixture.Context()).Kind);
     }
 }
+
+
+public class StrokeNearPointConstraintTests
+{
+    private readonly StrokeNearPointConstraint _c = new();
+
+    [Fact]
+    public void AStrokeClearOfEveryJunctionIsAccepted()
+    {
+        var store = ConstraintFixture.Store();
+        ConstraintFixture.AddStroke(store, ConstraintFixture.PointAt(0f, 0f), 0f, 100f);
+
+        var cand = ConstraintFixture.Candidate(ConstraintFixture.PointAt(0f, 300f), 0f, 100f);
+
+        Assert.Equal(VerdictKind.Accept, _c.Check(cand, store, ConstraintFixture.Context()).Kind);
+    }
+
+    [Fact]
+    public void AStrokeGrazingAJunctionPullsItsFreeEndOntoIt()
+    {
+        var store = ConstraintFixture.Store();
+        var stored = ConstraintFixture.AddStroke(store, ConstraintFixture.PointAt(0f, 0f), 0f, 100f);
+
+        /*
+         * Runs from (0,10) eastwards, passing 10 m under the junction at (100,0).
+         */
+        var cand = ConstraintFixture.Candidate(ConstraintFixture.PointAt(0f, 10f), 0f, 200f);
+
+        var verdict = _c.Check(cand, store, ConstraintFixture.Context());
+
+        Assert.Equal(VerdictKind.Restart, verdict.Kind);
+        Assert.True(cand.B == stored.A || cand.B == stored.B,
+            "the free end should have been pulled onto one of the stored junctions");
+    }
+
+    [Fact]
+    public void AnEstablishedEndpointIsNotMovedAndTheCandidateIsRejected()
+    {
+        var store = ConstraintFixture.Store();
+        ConstraintFixture.AddStroke(store, ConstraintFixture.PointAt(0f, 0f), 0f, 100f);
+
+        /*
+         * Anchor so that (200,10) - where the candidate ends - is an established
+         * junction. The candidate keeps exactly the grazing geometry of the test
+         * above, so the only difference is that its far end may no longer be moved.
+         */
+        var anchor = ConstraintFixture.AddStroke(store, ConstraintFixture.PointAt(200f, 10f), 90f, 100f);
+
+        var cand = ConstraintFixture.Candidate(ConstraintFixture.PointAt(0f, 10f), 0f, 200f);
+        cand.B = anchor.A;
+        Assert.True(cand.B.InStore);
+
+        var verdict = _c.Check(cand, store, ConstraintFixture.Context());
+
+        Assert.Equal(VerdictKind.Reject, verdict.Kind);
+        Assert.Same(anchor.A, cand.B);
+    }
+}
+
+
+public class IntersectionConstraintTests
+{
+    private readonly IntersectionConstraint _c = new();
+
+    [Fact]
+    public void AStrokeThatCrossesNothingIsAccepted()
+    {
+        var store = ConstraintFixture.Store();
+        ConstraintFixture.AddStroke(store, ConstraintFixture.PointAt(0f, 0f), 0f, 100f);
+
+        var cand = ConstraintFixture.Candidate(ConstraintFixture.PointAt(0f, 300f), 0f, 100f);
+
+        Assert.Equal(VerdictKind.Accept, _c.Check(cand, store, ConstraintFixture.Context()).Kind);
+    }
+
+    /**
+     * A clean crossing near the middle: the stroke is split and the far part of the
+     * candidate is re-queued.
+     */
+    [Fact]
+    public void ACleanCrossingSplitsAndKeepsTheTail()
+    {
+        var store = ConstraintFixture.Store();
+        var stored = ConstraintFixture.AddStroke(store, ConstraintFixture.PointAt(0f, 0f), 0f, 100f);
+
+        /*
+         * Vertical, crossing the stored horizontal stroke at (50,0).
+         */
+        var cand = ConstraintFixture.Candidate(ConstraintFixture.PointAt(50f, -50f), 90f, 100f);
+
+        var verdict = _c.Check(cand, store, ConstraintFixture.Context());
+
+        Assert.Equal(VerdictKind.Split, verdict.Kind);
+        Assert.Same(stored, verdict.SplitTarget);
+        Assert.True(verdict.GenerateTail);
+        /*
+         * Not exactly 50: StreetPoint.SetPos truncates to 10 cm rather than rounding,
+         * so a crossing computed at 49.99999 is stored as 49.9. This is the very
+         * quantisation that forces IntersectionConstraint to create the point itself
+         * before deciding about the tail.
+         */
+        Assert.InRange(verdict.SplitPoint.Pos.X, 49.8f, 50.1f);
+        Assert.InRange(verdict.SplitPoint.Pos.Y, -0.2f, 0.2f);
+        Assert.False(verdict.SplitPoint.InStore);
+    }
+
+    /**
+     * Crossing close to the far end of the stroke being split: the candidate stops
+     * there rather than stubbing a short tail past it.
+     */
+    [Fact]
+    public void ACrossingNearTheFarEndDropsTheTail()
+    {
+        var store = ConstraintFixture.Store();
+        var stored = ConstraintFixture.AddStroke(store, ConstraintFixture.PointAt(0f, 0f), 0f, 100f);
+
+        /*
+         * Crosses at (95,0), only 5 m from the stored stroke's B at (100,0).
+         */
+        var cand = ConstraintFixture.Candidate(ConstraintFixture.PointAt(95f, -50f), 90f, 100f);
+
+        var verdict = _c.Check(cand, store, ConstraintFixture.Context());
+
+        Assert.Equal(VerdictKind.Split, verdict.Kind);
+        Assert.False(verdict.GenerateTail);
+    }
+
+    /**
+     * The mirror case: close to the near end, the tail is kept.
+     */
+    [Fact]
+    public void ACrossingNearTheNearEndKeepsTheTail()
+    {
+        var store = ConstraintFixture.Store();
+        ConstraintFixture.AddStroke(store, ConstraintFixture.PointAt(0f, 0f), 0f, 100f);
+
+        var cand = ConstraintFixture.Candidate(ConstraintFixture.PointAt(5f, -50f), 90f, 100f);
+
+        var verdict = _c.Check(cand, store, ConstraintFixture.Context());
+
+        Assert.Equal(VerdictKind.Split, verdict.Kind);
+        Assert.True(verdict.GenerateTail);
+    }
+}

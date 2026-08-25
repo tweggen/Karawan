@@ -22,6 +22,8 @@ internal sealed class GenerationContext
      */
     internal float AngleMinStrokesRad;
 
+    internal int ClusterId;
+
     internal bool IsTracing;
 }
 
