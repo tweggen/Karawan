@@ -543,6 +543,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Generator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\NetworkBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\Constraints.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\ConnectComponentsPass.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\GenerationReport.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\ICandidateConstraint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\Verdict.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Quarter.cs" />

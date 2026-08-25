@@ -424,6 +424,65 @@ any deleted symbol remain (grep clean) · `./run_tests.sh all` green.
 
 ---
 
+### WP-2 outcome — DONE (2a, 2b, 2c)
+
+`Generator.cs` 1241 → 605 lines. New under `engine/streets/generation/`:
+`Verdict`, `ICandidateConstraint` + `GenerationContext`, `Constraints` (eight of them),
+`ConnectComponentsPass`, `GenerationReport`. Tests: 24 constraint tests plus the 8
+NetworkBuilder tests. xUnit 471/471, TALE 200/200, fingerprints byte-identical
+throughout all three sub-packages.
+
+**Allocation is now strictly below the WP-0 baseline on every seed**, which is what
+WP-2c was required to demonstrate:
+
+| seed | before | after | change |
+|---|---|---|---|
+| Yelukhdidru@100 | 6,464 | 5,568 | −13.9% |
+| Yelukhdidru@400 | 34,952 | 33,360 | −4.6% |
+| seed011@500 | 74,888 | 71,624 | −4.4% |
+| seed000@500 | 86,440 | 81,976 | −5.2% |
+| Yelukhdidru@800 | 207,176 | 198,344 | −4.3% |
+| seed000@1500 | 941,536 | 909,912 | −3.4% |
+| seed017@2400 | 2,824,144 | 2,729,736 | −3.3% |
+| Yelukhdidru@3000 | 4,936,592 | 4,807,760 | −2.6% |
+
+The cost baseline was regenerated to lock the gain in. That is a deliberate,
+measured re-baseline, not the silent kind section 0.2 forbids: the fingerprints are
+unchanged, so behaviour provably did not move.
+
+#### AC not met: Generator.cs is 605 lines, not ≤ 250
+
+Stated plainly rather than quietly dropped. The remaining bulk is:
+
+- **158 lines of successor emission** (forward / left / right / random, four
+  near-identical blocks with their probability and weight arithmetic). This is
+  precisely what **WP-3** converts into a rule table, so the ≤ 250 target lands there,
+  not here. Cutting it in WP-2c would have meant doing WP-3 early and without its gate.
+- ~90 lines of tunable properties and their probability helpers, also WP-3's material.
+- `_isSuccessorWorthQueueing` (37) and `_buildPipeline` (36).
+
+`Generate()` itself is 340 lines, of which the validation loop — the part WP-2 set out
+to fix — is now about 80.
+
+#### Corrections to the steps as written
+
+1. **`_willStrokeEndpointBeValid` must NOT be deleted.** Step 2 listed it for deletion
+   on the theory that `BoundsConstraint` and `MinLengthConstraint` subsume it. They do
+   not: it applies a **15 m edge buffer** that is strictly tighter than the bounds
+   check, so deleting it would let candidates near the cluster edge onto the queue and
+   change every generated cluster. It is behaviour, not diagnostics, and had merely
+   grown up among the diagnostic helpers. Renamed to `_isSuccessorWorthQueueing` so the
+   next reader does not repeat the mistake. This is exactly the "verify with the
+   fingerprint, this one is subtle" case the plan flagged — the answer was no.
+2. **No `Kind = ConnectorBridge` tagging.** `StrokeKind` does not exist until WP-4;
+   the bridge strokes remain identifiable by their `Creator` tags (`orphan_bridge`,
+   `corridor_seg1/2`), which is what the WP-0 survey used.
+3. **`ConnectComponentsPass` must keep running last.** `_createBridgeCorridor` draws
+   from the `RandomSource`, so its position in the sequence of draws is part of the
+   output.
+
+---
+
 ## 4. WP-3 — Expansion rules as data
 
 **Branch:** `claude/streets-wp3-ruleset`

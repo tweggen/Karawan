@@ -20,6 +20,13 @@ namespace engine.streets
         private List<Stroke> _listStrokesToDo;
         private StrokeStore _strokeStore;
         private generation.NetworkBuilder _networkBuilder;
+        private ConnectComponentsPass _connectPass;
+
+        /**
+         * Set to collect per-constraint rejection counts for a run. Null costs nothing.
+         */
+        public bool CollectReport { get; set; } = false;
+        private GenerationReport _report;
         private ICandidateConstraint[] _pipeline;
         private BoundsConstraint _boundsConstraint;
         private GenerationContext _ctx;
@@ -38,19 +45,6 @@ namespace engine.streets
 
         private Vector2 _bl;
         private Vector2 _tr;
-
-        // Safeguard 1: Track created vs added StreetPoints
-        private HashSet<int> _createdStreetPointIds = new();
-        private HashSet<int> _orphanedStreetPointIds = new();
-        private Dictionary<int, string> _orphanedPointOrigins = new();  // ID -> creator info
-
-        // Safeguard 2: Track strokes with missing endpoints
-        private List<(int strokeId, int missingEndpointId, string missingEndpointCreator)> _strokesWithMissingEndpoints = new();
-
-        // Option B: Track new StreetPoints created for current stroke being processed
-        // If stroke fails validation, we'll mark these for cleanup
-        private List<int> _currentStrokeNewPoints = new();
-        private int _cleanedUpOrphanedPoints = 0;
 
         public float minPointToCandPointDistance { get; set; } = 30f;
         public float minPointToCandStrokeDistance { get; set; } = 30f;
@@ -129,63 +123,15 @@ namespace engine.streets
         }
 
 
-        /// <summary>
-        /// Validate that all stroke endpoints exist in the stroke store.
-        /// Returns true if valid, false if endpoints are missing.
-        /// </summary>
-        private bool _validateStrokeEndpoints(in Stroke stroke)
-        {
-            // Check if both endpoints are in the store
-            bool aInStore = stroke.A.InStore;
-            bool bInStore = stroke.B.InStore;
-
-            if (!aInStore)
-            {
-                // Track the missing endpoint
-                int missingId = stroke.A.Id;
-                if (!_orphanedPointOrigins.ContainsKey(missingId))
-                {
-                    _orphanedPointOrigins[missingId] = stroke.A.Creator;
-                    _orphanedStreetPointIds.Add(missingId);
-                }
-                _strokesWithMissingEndpoints.Add((stroke.Sid, missingId, stroke.A.Creator));
-
-                if (_traceGenerator)
-                    trace($"Stroke {stroke.Sid} has missing endpoint A (ID {missingId}, creator: {stroke.A.Creator})");
-
-                return false;
-            }
-
-            if (!bInStore)
-            {
-                // Track the missing endpoint
-                int missingId = stroke.B.Id;
-                if (!_orphanedPointOrigins.ContainsKey(missingId))
-                {
-                    _orphanedPointOrigins[missingId] = stroke.B.Creator;
-                    _orphanedStreetPointIds.Add(missingId);
-                }
-                _strokesWithMissingEndpoints.Add((stroke.Sid, missingId, stroke.B.Creator));
-
-                if (_traceGenerator)
-                    trace($"Stroke {stroke.Sid} has missing endpoint B (ID {missingId}, creator: {stroke.B.Creator})");
-
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Option B: Mark current stroke's new points as candidates for cleanup if validation fails.
-        /// Call this BEFORE processing a stroke from the queue.
-        /// </summary>
-        /// <summary>
-        /// Option A: Quick validation of stroke endpoint before creating the StreetPoint.
-        /// Checks if endpoint position passes basic validity constraints (bounds, edge distance).
-        /// Returns true if endpoint appears valid, false if it would likely fail validation.
-        /// </summary>
-        private bool _willStrokeEndpointBeValid(in Stroke candidateStroke)
+        /**
+         * Whether a freshly emitted successor is worth putting on the queue at all.
+         *
+         * This is BEHAVIOUR, not a diagnostic, despite having grown up among the
+         * orphan-tracking helpers that WP-2c deleted. The 15 m edge buffer below is
+         * strictly tighter than the bounds check, so removing this would let candidates
+         * near the cluster edge through and change every generated cluster.
+         */
+        private bool _isSuccessorWorthQueueing(in Stroke candidateStroke)
         {
             // Check if B endpoint (the new point) is in bounds
             var b = candidateStroke.B.Pos;
@@ -215,325 +161,6 @@ namespace engine.streets
             return true;  // Endpoint appears valid
         }
 
-        private void _markNewPointsForStroke(in Stroke stroke)
-        {
-            _currentStrokeNewPoints.Clear();
-
-            // Mark endpoints that aren't in store yet (newly created)
-            if (!stroke.A.InStore)
-                _currentStrokeNewPoints.Add(stroke.A.Id);
-            if (!stroke.B.InStore)
-                _currentStrokeNewPoints.Add(stroke.B.Id);
-        }
-
-        /// <summary>
-        /// Option B: Clean up StreetPoints that were created for a stroke that failed validation.
-        /// Removes them from the created tracking set so they won't appear as orphaned.
-        /// </summary>
-        private void _cleanupFailedStrokePoints()
-        {
-            foreach (var pointId in _currentStrokeNewPoints)
-            {
-                // Remove from created set so it's not counted as orphaned later
-                _createdStreetPointIds.Remove(pointId);
-                _cleanedUpOrphanedPoints++;
-            }
-            _currentStrokeNewPoints.Clear();
-        }
-
-        /// <summary>
-        /// Report on any orphaned street points that were created but never added.
-        /// </summary>
-        private void _reportOrphanedPoints()
-        {
-            trace($"\n{'='} GENERATION SAFEGUARD REPORT ======================");
-
-            // Check which created points actually made it into the final store
-            var actualStorePoints = new HashSet<int>(_strokeStore.GetStreetPoints().Select(p => p.Id));
-            var truelyOrphanedPoints = _createdStreetPointIds.Where(id => !actualStorePoints.Contains(id)).ToList();
-
-            trace($"Total StreetPoints created during generation: {_createdStreetPointIds.Count}");
-            trace($"Total StreetPoints cleaned up (Option B): {_cleanedUpOrphanedPoints}");
-            trace($"Total StreetPoints in final store: {actualStorePoints.Count}");
-            trace($"⚠️  ORPHANED POINTS (created but not in final store): {truelyOrphanedPoints.Count}");
-            trace($"Total strokes with endpoint issues: {_strokesWithMissingEndpoints.Count}");
-
-            if (truelyOrphanedPoints.Count == 0 && _strokesWithMissingEndpoints.Count == 0)
-            {
-                trace($"✅ No orphaned StreetPoints found - all created points successfully added or cleaned up");
-                return;
-            }
-
-            if (truelyOrphanedPoints.Count > 0)
-            {
-                trace($"⚠️  DETAILS: {truelyOrphanedPoints.Count} orphaned points (sample):");
-                foreach (var orphanId in truelyOrphanedPoints.OrderBy(id => id).Take(20))
-                {
-                    trace($"  StreetPoint {orphanId} was created but never added to final store");
-                }
-                if (truelyOrphanedPoints.Count > 20)
-                    trace($"  ... and {truelyOrphanedPoints.Count - 20} more orphaned points");
-            }
-
-            if (_strokesWithMissingEndpoints.Count > 0)
-            {
-                trace($"⚠️  STROKES WITH MISSING ENDPOINTS: {_strokesWithMissingEndpoints.Count} strokes reference non-existent endpoints:");
-                foreach (var (strokeId, missingId, creator) in _strokesWithMissingEndpoints.Take(20))
-                {
-                    trace($"  Stroke {strokeId} → missing endpoint {missingId} (creator: {creator})");
-                }
-                if (_strokesWithMissingEndpoints.Count > 20)
-                    trace($"  ... and {_strokesWithMissingEndpoints.Count - 20} more");
-            }
-        }
-
-        /// <summary>
-        /// Post-processing: Connect orphaned street bundles to the main cluster.
-        /// Finds disconnected components and bridges them with connector streets.
-        /// </summary>
-        private void _connectOrphanedBundles()
-        {
-            var allPoints = _strokeStore.GetStreetPoints().ToList();
-            if (allPoints.Count == 0) return;
-
-            // Find all connected components via BFS on stroke graph
-            var components = _findConnectedComponents(allPoints);
-            if (components.Count <= 1)
-            {
-                trace($"All streets connected - no orphaned bundles to bridge.");
-                return;
-            }
-
-            trace($"\n= ORPHANED BUNDLE BRIDGING =======================");
-            trace($"Found {components.Count} disconnected street bundles");
-
-            // Get the largest component (main city)
-            var mainComponent = components.OrderByDescending(c => c.Count).First();
-            var mainPointIds = new HashSet<int>(mainComponent.Select(p => p.Id));
-
-            trace($"Main cluster: {mainComponent.Count} streets");
-
-            // Connect each orphan to the main cluster
-            int bridgeCount = 0;
-            foreach (var orphanComponent in components.Skip(1))
-            {
-                trace($"Connecting orphan bundle ({orphanComponent.Count} streets)...");
-
-                if (_bridgeOrphanToMain(orphanComponent, mainComponent, mainPointIds))
-                {
-                    bridgeCount++;
-                }
-            }
-
-            trace($"Created {bridgeCount} bridge connections to main cluster.");
-        }
-
-        /// <summary>
-        /// Find connected components of streets using BFS.
-        /// </summary>
-        private List<List<StreetPoint>> _findConnectedComponents(List<StreetPoint> allPoints)
-        {
-            var pointDict = allPoints.ToDictionary(p => p.Id, p => p);
-            var allStrokes = _strokeStore.GetStrokes().ToList();
-
-            // Build adjacency for BFS
-            var adj = new Dictionary<int, List<int>>();
-            foreach (var point in allPoints)
-                adj[point.Id] = new List<int>();
-
-            foreach (var stroke in allStrokes)
-            {
-                adj[stroke.A.Id].Add(stroke.B.Id);
-                adj[stroke.B.Id].Add(stroke.A.Id);
-            }
-
-            // BFS to find components
-            var visited = new HashSet<int>();
-            var components = new List<List<StreetPoint>>();
-
-            foreach (var point in allPoints)
-            {
-                if (visited.Contains(point.Id)) continue;
-
-                var component = new List<StreetPoint>();
-                var queue = new Queue<int>();
-                queue.Enqueue(point.Id);
-                visited.Add(point.Id);
-
-                while (queue.Count > 0)
-                {
-                    int curr = queue.Dequeue();
-                    component.Add(pointDict[curr]);
-
-                    foreach (int neighbor in adj[curr])
-                    {
-                        if (!visited.Contains(neighbor))
-                        {
-                            visited.Add(neighbor);
-                            queue.Enqueue(neighbor);
-                        }
-                    }
-                }
-
-                components.Add(component);
-            }
-
-            return components.OrderByDescending(c => c.Count).ToList();
-        }
-
-        /// <summary>
-        /// Bridge a single orphaned component to the main cluster.
-        /// </summary>
-        private bool _bridgeOrphanToMain(List<StreetPoint> orphan, List<StreetPoint> main, HashSet<int> mainPointIds)
-        {
-            // Find convex hull perimeter of orphan
-            var orphanHull = _getConvexHull(orphan);
-            if (orphanHull.Count == 0) return false;
-
-            // Find hull point closest to main cluster
-            StreetPoint bestOrphanPoint = null;
-            float bestDistance = float.MaxValue;
-
-            foreach (var hullPoint in orphanHull)
-            {
-                float minDist = float.MaxValue;
-                foreach (var mainPoint in main)
-                {
-                    float dist = Vector2.Distance(hullPoint.Pos, mainPoint.Pos);
-                    if (dist < minDist)
-                        minDist = dist;
-                }
-
-                if (minDist < bestDistance)
-                {
-                    bestDistance = minDist;
-                    bestOrphanPoint = hullPoint;
-                }
-            }
-
-            if (bestOrphanPoint == null) return false;
-
-            // Find closest point on main cluster
-            StreetPoint bestMainPoint = null;
-            float minMainDist = float.MaxValue;
-
-            foreach (var mainPoint in main)
-            {
-                float dist = Vector2.Distance(mainPoint.Pos, bestOrphanPoint.Pos);
-                if (dist < minMainDist && !orphan.Contains(mainPoint))
-                {
-                    minMainDist = dist;
-                    bestMainPoint = mainPoint;
-                }
-            }
-
-            if (bestMainPoint == null) return false;
-
-            // Create bridge stroke(s)
-            float bridgeDistance = Vector2.Distance(bestOrphanPoint.Pos, bestMainPoint.Pos);
-
-            if (bridgeDistance > 300f)
-            {
-                // Long distance: create multi-stroke corridor
-                _createBridgeCorridor(bestOrphanPoint, bestMainPoint);
-                trace($"  Bridged (corridor) at distance {bridgeDistance:F1}m");
-            }
-            else
-            {
-                // Short distance: single direct stroke
-                _createBridgeStroke(bestOrphanPoint, bestMainPoint);
-                trace($"  Bridged (direct) at distance {bridgeDistance:F1}m");
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Create a direct bridge stroke between two points.
-        /// </summary>
-        private void _createBridgeStroke(StreetPoint fromPoint, StreetPoint toPoint)
-        {
-            var bridge = new Stroke
-            {
-                A = fromPoint,
-                B = toPoint,
-                ClusterId = _clusterDesc.Id,
-                IsPrimary = false,
-                Weight = 0.7f  // Secondary/suburban roads
-            };
-            bridge.PushCreator("orphan_bridge");
-            _strokeStore.AddStroke(bridge);
-        }
-
-        /// <summary>
-        /// Create a curved multi-stroke corridor for long bridge distances.
-        /// </summary>
-        private void _createBridgeCorridor(StreetPoint fromPoint, StreetPoint toPoint)
-        {
-            var from = fromPoint.Pos;
-            var to = toPoint.Pos;
-            var mid = (from + to) / 2f;
-
-            // Add perpendicular offset for curve
-            var delta = to - from;
-            var perpendicular = new Vector2(-delta.Y, delta.X);
-            perpendicular = Vector2.Normalize(perpendicular);
-
-            float offset = 40f + _rnd.GetFloat() * 40f;  // Random curve amount
-            mid += perpendicular * offset;
-
-            // Create intermediate point
-            var midPoint = new StreetPoint { ClusterId = _clusterDesc.Id };
-            midPoint.PushCreator("corridor_mid");
-
-            // Create two segments: from→mid, mid→to
-            var seg1 = new Stroke
-            {
-                A = fromPoint,
-                B = midPoint,
-                ClusterId = _clusterDesc.Id,
-                IsPrimary = false,
-                Weight = 0.7f
-            };
-            seg1.PushCreator("corridor_seg1");
-
-            var seg2 = new Stroke
-            {
-                A = midPoint,
-                B = toPoint,
-                ClusterId = _clusterDesc.Id,
-                IsPrimary = false,
-                Weight = 0.7f
-            };
-            seg2.PushCreator("corridor_seg2");
-
-            _strokeStore.AddStroke(seg1);
-            _strokeStore.AddStroke(seg2);
-        }
-
-        /// <summary>
-        /// Get the convex hull of points (simplified: extremal points).
-        /// </summary>
-        private List<StreetPoint> _getConvexHull(List<StreetPoint> points)
-        {
-            if (points.Count <= 3) return points;
-
-            // Simplified hull: return extremal points
-            var hull = new List<StreetPoint>();
-
-            // Leftmost
-            hull.Add(points.OrderBy(p => p.Pos.X).First());
-            // Rightmost
-            hull.Add(points.OrderBy(p => p.Pos.X).Last());
-            // Topmost
-            hull.Add(points.OrderBy(p => p.Pos.Y).First());
-            // Bottommost
-            hull.Add(points.OrderBy(p => p.Pos.Y).Last());
-
-            // Remove duplicates and return
-            return hull.Distinct().ToList();
-        }
-
         /**
          * Build the constraint pipeline for this run.
          *
@@ -554,6 +181,11 @@ namespace engine.streets
             };
 
             _boundsConstraint = new BoundsConstraint(_bl, _tr);
+
+            _connectPass = new ConnectComponentsPass(
+                _strokeStore, _clusterDesc.Id, _rnd, _annotation);
+
+            _report = CollectReport ? new GenerationReport() : null;
 
             _pipeline = new ICandidateConstraint[]
             {
@@ -602,16 +234,16 @@ namespace engine.streets
                 if (maxGenerations < _generationCounter)
                 {
                     Trace(_dc, $"Returning: max generations reached.");
-                    _reportOrphanedPoints();
-                    _connectOrphanedBundles();  // Post-process: connect isolated clusters
+                    if (_report != null) Trace(_dc, $"{_annotation}: {_report.Describe()}");
+                    _connectPass.Run();
                     return;
                 }
 
                 if (!_haveStrokesToDo())
                 {
                     Trace(_dc, $"Returning: no more streets to do.");
-                    _reportOrphanedPoints();
-                    _connectOrphanedBundles();  // Post-process: connect isolated clusters
+                    if (_report != null) Trace(_dc, $"{_annotation}: {_report.Describe()}");
+                    _connectPass.Run();
                     return;
                 }
 
@@ -619,8 +251,6 @@ namespace engine.streets
                 // trace( 'Generator: Starting new generation.' );
 
                 // Option B: Mark new points created for this stroke, in case validation fails
-                _markNewPointsForStroke(curr);
-
                 /*
                  * Check, wether this segment is valid.
                  */
@@ -634,7 +264,6 @@ namespace engine.streets
                     /*
                      * Out of range, so discard it.
                      */
-                    _cleanupFailedStrokePoints();  // Option B: Clean up points for failed stroke
                     continue;
                 }
 
@@ -665,6 +294,7 @@ namespace engine.streets
                         {
                             Trace(_dc, $"Discarding candidate ({verdict.Reason}): {curr}");
                         }
+                        _report?.CountRejection(verdict.Reason);
                         doAdd = false;
                         continueCheck = false;
                         continue;
@@ -672,6 +302,8 @@ namespace engine.streets
 
                     if (verdict.Kind == VerdictKind.Restart)
                     {
+                        if (_report != null) ++_report.Restarts;
+
                         if (++restarts > MaxRestartsPerCandidate)
                         {
                             /*
@@ -681,6 +313,7 @@ namespace engine.streets
                              * turn the loop into a hang.
                              */
                             Warning(_dc, $"Restart budget exhausted for {curr}, discarding.");
+                            if (_report != null) ++_report.RestartBudgetExhausted;
                             doAdd = false;
                             continueCheck = false;
                             continue;
@@ -690,8 +323,9 @@ namespace engine.streets
 
                     if (verdict.Kind == VerdictKind.Split)
                     {
+                        if (_report != null) ++_report.Splits;
+
                         StreetPoint intersectionStreetPoint = verdict.SplitPoint;
-                        _createdStreetPointIds.Add(intersectionStreetPoint.Id);  // Track creation
 
                         if (_traceGenerator)
                         {
@@ -712,8 +346,6 @@ namespace engine.streets
                          * necessarily InStore and these checks cannot report anything.
                          * Retained until WP-2c retires the orphan tracking wholesale.
                          */
-                        _validateStrokeEndpoints(newStrokeExists);
-                        _validateStrokeEndpoints(oldStrokeExists);
                         _generationCounter++;
 
                         /*
@@ -758,7 +390,6 @@ namespace engine.streets
 
                 if( !doAdd ) {
                     // trace( 'Generator: Avoiding to add stroke.' );
-                    _cleanupFailedStrokePoints();  // Option B: Clean up points for any failed stroke
                     continue;
                 }
 
@@ -767,7 +398,7 @@ namespace engine.streets
                  * pronably side streets.
                  */
                 _strokeStore.AddStroke(curr);
-                _validateStrokeEndpoints(curr);  // Validate endpoints
+                if (_report != null) ++_report.Accepted;
                 ++_generationCounter;
 
                 /*
@@ -844,15 +475,12 @@ namespace engine.streets
                             straightWeight
                         );
 
-                        // Option A: Pre-validate endpoint before creating the point
-                        if (_willStrokeEndpointBeValid(forward))
+                        if (_isSuccessorWorthQueueing(forward))
                         {
-                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
                             forward.PushCreator("forward");
                             newB.PushCreator("forward");
                             _addStrokeToDo(forward);
                         }
-                        // else: skip adding this stroke entirely - avoids creating orphan point
                     }
 
                     if (doRandomDirection) {
@@ -867,15 +495,12 @@ namespace engine.streets
                             straightWeight
                         );
 
-                        // Option A: Pre-validate endpoint before creating the point
-                        if (_willStrokeEndpointBeValid(randStroke))
+                        if (_isSuccessorWorthQueueing(randStroke))
                         {
-                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
                             randStroke.PushCreator("randStroke");
                             newB.PushCreator("randStroke");
                             _addStrokeToDo(randStroke);
                         }
-                        // else: skip adding this stroke entirely - avoids creating orphan point
                     }
                 }
 
@@ -906,15 +531,12 @@ namespace engine.streets
                             branchWeight
                         );
 
-                        // Option A: Pre-validate endpoint before creating the point
-                        if (_willStrokeEndpointBeValid(right))
+                        if (_isSuccessorWorthQueueing(right))
                         {
-                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
                             right.PushCreator("right");
                             newB.PushCreator("right");
                             _addStrokeToDo(right);
                         }
-                        // else: skip adding this stroke entirely - avoids creating orphan point
                     }
                     if( doLeft ) {
                         var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
@@ -928,15 +550,12 @@ namespace engine.streets
                             branchWeight
                         );
 
-                        // Option A: Pre-validate endpoint before creating the point
-                        if (_willStrokeEndpointBeValid(left))
+                        if (_isSuccessorWorthQueueing(left))
                         {
-                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
                             left.PushCreator("left");
                             newB.PushCreator("left");
                             _addStrokeToDo(left);
                         }
-                        // else: skip adding this stroke entirely - avoids creating orphan point
                     }
                 }
             }
@@ -976,10 +595,6 @@ namespace engine.streets
             _generationCounter = 0;
 
             // Reset tracking structures
-            _createdStreetPointIds.Clear();
-            _orphanedStreetPointIds.Clear();
-            _orphanedPointOrigins.Clear();
-            _strokesWithMissingEndpoints.Clear();
         }
 
 
