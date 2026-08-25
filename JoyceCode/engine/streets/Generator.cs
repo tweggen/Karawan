@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using engine.streets.generation;
 using engine.world;
 using static engine.Logger;
 
@@ -18,6 +19,30 @@ namespace engine.streets
 
         private List<Stroke> _listStrokesToDo;
         private StrokeStore _strokeStore;
+        private generation.NetworkBuilder _networkBuilder;
+        private ConnectComponentsPass _connectPass;
+
+        /**
+         * Set to collect per-constraint rejection counts for a run. Null costs nothing.
+         */
+        public bool CollectReport { get; set; } = false;
+        private GenerationReport _report;
+        private ExpansionRuleTable _ruleTable;
+        private SuccessorEmitter _emitter;
+
+        /**
+         * The ruleset to grow with. Null means the shipped defaults.
+         */
+        internal ExpansionRuleTable RuleTable { get; set; }
+        private ICandidateConstraint[] _pipeline;
+        private BoundsConstraint _boundsConstraint;
+        private GenerationContext _ctx;
+
+        /**
+         * A constraint may rewrite a candidate and demand that everything runs again.
+         * The original loop was unbounded; this is a backstop, not a tuning knob.
+         */
+        private const int MaxRestartsPerCandidate = 32;
         private bool _traceGenerator = false;
         private string _annotation = "";
         private ClusterDesc _clusterDesc;
@@ -27,19 +52,6 @@ namespace engine.streets
 
         private Vector2 _bl;
         private Vector2 _tr;
-
-        // Safeguard 1: Track created vs added StreetPoints
-        private HashSet<int> _createdStreetPointIds = new();
-        private HashSet<int> _orphanedStreetPointIds = new();
-        private Dictionary<int, string> _orphanedPointOrigins = new();  // ID -> creator info
-
-        // Safeguard 2: Track strokes with missing endpoints
-        private List<(int strokeId, int missingEndpointId, string missingEndpointCreator)> _strokesWithMissingEndpoints = new();
-
-        // Option B: Track new StreetPoints created for current stroke being processed
-        // If stroke fails validation, we'll mark these for cleanup
-        private List<int> _currentStrokeNewPoints = new();
-        private int _cleanedUpOrphanedPoints = 0;
 
         public float minPointToCandPointDistance { get; set; } = 30f;
         public float minPointToCandStrokeDistance { get; set; } = 30f;
@@ -118,416 +130,91 @@ namespace engine.streets
         }
 
 
-        /// <summary>
-        /// Validate that all stroke endpoints exist in the stroke store.
-        /// Returns true if valid, false if endpoints are missing.
-        /// </summary>
-        private bool _validateStrokeEndpoints(in Stroke stroke)
+        /**
+         * Build the constraint pipeline for this run.
+         *
+         * ORDER IS BEHAVIOUR: it is exactly the order these checks appeared in the
+         * original validation loop. An earlier rejection means a later constraint never
+         * gets to rewrite the candidate. Do not rearrange.
+         */
+        private void _buildPipeline()
         {
-            // Check if both endpoints are in the store
-            bool aInStore = stroke.A.InStore;
-            bool bInStore = stroke.B.InStore;
-
-            if (!aInStore)
+            _ctx = new GenerationContext
             {
-                // Track the missing endpoint
-                int missingId = stroke.A.Id;
-                if (!_orphanedPointOrigins.ContainsKey(missingId))
-                {
-                    _orphanedPointOrigins[missingId] = stroke.A.Creator;
-                    _orphanedStreetPointIds.Add(missingId);
-                }
-                _strokesWithMissingEndpoints.Add((stroke.Sid, missingId, stroke.A.Creator));
-
-                if (_traceGenerator)
-                    trace($"Stroke {stroke.Sid} has missing endpoint A (ID {missingId}, creator: {stroke.A.Creator})");
-
-                return false;
-            }
-
-            if (!bInStore)
-            {
-                // Track the missing endpoint
-                int missingId = stroke.B.Id;
-                if (!_orphanedPointOrigins.ContainsKey(missingId))
-                {
-                    _orphanedPointOrigins[missingId] = stroke.B.Creator;
-                    _orphanedStreetPointIds.Add(missingId);
-                }
-                _strokesWithMissingEndpoints.Add((stroke.Sid, missingId, stroke.B.Creator));
-
-                if (_traceGenerator)
-                    trace($"Stroke {stroke.Sid} has missing endpoint B (ID {missingId}, creator: {stroke.B.Creator})");
-
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Option B: Mark current stroke's new points as candidates for cleanup if validation fails.
-        /// Call this BEFORE processing a stroke from the queue.
-        /// </summary>
-        /// <summary>
-        /// Option A: Quick validation of stroke endpoint before creating the StreetPoint.
-        /// Checks if endpoint position passes basic validity constraints (bounds, edge distance).
-        /// Returns true if endpoint appears valid, false if it would likely fail validation.
-        /// </summary>
-        private bool _willStrokeEndpointBeValid(in Stroke candidateStroke)
-        {
-            // Check if B endpoint (the new point) is in bounds
-            var b = candidateStroke.B.Pos;
-            if (b.X <= _bl.X || b.X >= _tr.X || b.Y <= _bl.Y || b.Y >= _tr.Y)
-            {
-                return false;  // Out of bounds
-            }
-
-            // Check if B is too close to cluster edges (would fail edge distance checks)
-            const float edgeBuffer = 15f;
-            float distToBoundary = MathF.Min(
-                MathF.Min(b.X - _bl.X, _tr.X - b.X),
-                MathF.Min(b.Y - _bl.Y, _tr.Y - b.Y)
-            );
-            if (distToBoundary < edgeBuffer)
-            {
-                return false;  // Too close to boundary
-            }
-
-            // Check if B is very close to A (minimum length constraint)
-            float lengthToB = Vector2.Distance(candidateStroke.A.Pos, b);
-            if (lengthToB < newStrokeMinimum * 0.8f)  // Conservative check
-            {
-                return false;  // Stroke too short
-            }
-
-            return true;  // Endpoint appears valid
-        }
-
-        private void _markNewPointsForStroke(in Stroke stroke)
-        {
-            _currentStrokeNewPoints.Clear();
-
-            // Mark endpoints that aren't in store yet (newly created)
-            if (!stroke.A.InStore)
-                _currentStrokeNewPoints.Add(stroke.A.Id);
-            if (!stroke.B.InStore)
-                _currentStrokeNewPoints.Add(stroke.B.Id);
-        }
-
-        /// <summary>
-        /// Option B: Clean up StreetPoints that were created for a stroke that failed validation.
-        /// Removes them from the created tracking set so they won't appear as orphaned.
-        /// </summary>
-        private void _cleanupFailedStrokePoints()
-        {
-            foreach (var pointId in _currentStrokeNewPoints)
-            {
-                // Remove from created set so it's not counted as orphaned later
-                _createdStreetPointIds.Remove(pointId);
-                _cleanedUpOrphanedPoints++;
-            }
-            _currentStrokeNewPoints.Clear();
-        }
-
-        /// <summary>
-        /// Report on any orphaned street points that were created but never added.
-        /// </summary>
-        private void _reportOrphanedPoints()
-        {
-            trace($"\n{'='} GENERATION SAFEGUARD REPORT ======================");
-
-            // Check which created points actually made it into the final store
-            var actualStorePoints = new HashSet<int>(_strokeStore.GetStreetPoints().Select(p => p.Id));
-            var truelyOrphanedPoints = _createdStreetPointIds.Where(id => !actualStorePoints.Contains(id)).ToList();
-
-            trace($"Total StreetPoints created during generation: {_createdStreetPointIds.Count}");
-            trace($"Total StreetPoints cleaned up (Option B): {_cleanedUpOrphanedPoints}");
-            trace($"Total StreetPoints in final store: {actualStorePoints.Count}");
-            trace($"⚠️  ORPHANED POINTS (created but not in final store): {truelyOrphanedPoints.Count}");
-            trace($"Total strokes with endpoint issues: {_strokesWithMissingEndpoints.Count}");
-
-            if (truelyOrphanedPoints.Count == 0 && _strokesWithMissingEndpoints.Count == 0)
-            {
-                trace($"✅ No orphaned StreetPoints found - all created points successfully added or cleaned up");
-                return;
-            }
-
-            if (truelyOrphanedPoints.Count > 0)
-            {
-                trace($"⚠️  DETAILS: {truelyOrphanedPoints.Count} orphaned points (sample):");
-                foreach (var orphanId in truelyOrphanedPoints.OrderBy(id => id).Take(20))
-                {
-                    trace($"  StreetPoint {orphanId} was created but never added to final store");
-                }
-                if (truelyOrphanedPoints.Count > 20)
-                    trace($"  ... and {truelyOrphanedPoints.Count - 20} more orphaned points");
-            }
-
-            if (_strokesWithMissingEndpoints.Count > 0)
-            {
-                trace($"⚠️  STROKES WITH MISSING ENDPOINTS: {_strokesWithMissingEndpoints.Count} strokes reference non-existent endpoints:");
-                foreach (var (strokeId, missingId, creator) in _strokesWithMissingEndpoints.Take(20))
-                {
-                    trace($"  Stroke {strokeId} → missing endpoint {missingId} (creator: {creator})");
-                }
-                if (_strokesWithMissingEndpoints.Count > 20)
-                    trace($"  ... and {_strokesWithMissingEndpoints.Count - 20} more");
-            }
-        }
-
-        /// <summary>
-        /// Post-processing: Connect orphaned street bundles to the main cluster.
-        /// Finds disconnected components and bridges them with connector streets.
-        /// </summary>
-        private void _connectOrphanedBundles()
-        {
-            var allPoints = _strokeStore.GetStreetPoints().ToList();
-            if (allPoints.Count == 0) return;
-
-            // Find all connected components via BFS on stroke graph
-            var components = _findConnectedComponents(allPoints);
-            if (components.Count <= 1)
-            {
-                trace($"All streets connected - no orphaned bundles to bridge.");
-                return;
-            }
-
-            trace($"\n= ORPHANED BUNDLE BRIDGING =======================");
-            trace($"Found {components.Count} disconnected street bundles");
-
-            // Get the largest component (main city)
-            var mainComponent = components.OrderByDescending(c => c.Count).First();
-            var mainPointIds = new HashSet<int>(mainComponent.Select(p => p.Id));
-
-            trace($"Main cluster: {mainComponent.Count} streets");
-
-            // Connect each orphan to the main cluster
-            int bridgeCount = 0;
-            foreach (var orphanComponent in components.Skip(1))
-            {
-                trace($"Connecting orphan bundle ({orphanComponent.Count} streets)...");
-
-                if (_bridgeOrphanToMain(orphanComponent, mainComponent, mainPointIds))
-                {
-                    bridgeCount++;
-                }
-            }
-
-            trace($"Created {bridgeCount} bridge connections to main cluster.");
-        }
-
-        /// <summary>
-        /// Find connected components of streets using BFS.
-        /// </summary>
-        private List<List<StreetPoint>> _findConnectedComponents(List<StreetPoint> allPoints)
-        {
-            var pointDict = allPoints.ToDictionary(p => p.Id, p => p);
-            var allStrokes = _strokeStore.GetStrokes().ToList();
-
-            // Build adjacency for BFS
-            var adj = new Dictionary<int, List<int>>();
-            foreach (var point in allPoints)
-                adj[point.Id] = new List<int>();
-
-            foreach (var stroke in allStrokes)
-            {
-                adj[stroke.A.Id].Add(stroke.B.Id);
-                adj[stroke.B.Id].Add(stroke.A.Id);
-            }
-
-            // BFS to find components
-            var visited = new HashSet<int>();
-            var components = new List<List<StreetPoint>>();
-
-            foreach (var point in allPoints)
-            {
-                if (visited.Contains(point.Id)) continue;
-
-                var component = new List<StreetPoint>();
-                var queue = new Queue<int>();
-                queue.Enqueue(point.Id);
-                visited.Add(point.Id);
-
-                while (queue.Count > 0)
-                {
-                    int curr = queue.Dequeue();
-                    component.Add(pointDict[curr]);
-
-                    foreach (int neighbor in adj[curr])
-                    {
-                        if (!visited.Contains(neighbor))
-                        {
-                            visited.Add(neighbor);
-                            queue.Enqueue(neighbor);
-                        }
-                    }
-                }
-
-                components.Add(component);
-            }
-
-            return components.OrderByDescending(c => c.Count).ToList();
-        }
-
-        /// <summary>
-        /// Bridge a single orphaned component to the main cluster.
-        /// </summary>
-        private bool _bridgeOrphanToMain(List<StreetPoint> orphan, List<StreetPoint> main, HashSet<int> mainPointIds)
-        {
-            // Find convex hull perimeter of orphan
-            var orphanHull = _getConvexHull(orphan);
-            if (orphanHull.Count == 0) return false;
-
-            // Find hull point closest to main cluster
-            StreetPoint bestOrphanPoint = null;
-            float bestDistance = float.MaxValue;
-
-            foreach (var hullPoint in orphanHull)
-            {
-                float minDist = float.MaxValue;
-                foreach (var mainPoint in main)
-                {
-                    float dist = Vector2.Distance(hullPoint.Pos, mainPoint.Pos);
-                    if (dist < minDist)
-                        minDist = dist;
-                }
-
-                if (minDist < bestDistance)
-                {
-                    bestDistance = minDist;
-                    bestOrphanPoint = hullPoint;
-                }
-            }
-
-            if (bestOrphanPoint == null) return false;
-
-            // Find closest point on main cluster
-            StreetPoint bestMainPoint = null;
-            float minMainDist = float.MaxValue;
-
-            foreach (var mainPoint in main)
-            {
-                float dist = Vector2.Distance(mainPoint.Pos, bestOrphanPoint.Pos);
-                if (dist < minMainDist && !orphan.Contains(mainPoint))
-                {
-                    minMainDist = dist;
-                    bestMainPoint = mainPoint;
-                }
-            }
-
-            if (bestMainPoint == null) return false;
-
-            // Create bridge stroke(s)
-            float bridgeDistance = Vector2.Distance(bestOrphanPoint.Pos, bestMainPoint.Pos);
-
-            if (bridgeDistance > 300f)
-            {
-                // Long distance: create multi-stroke corridor
-                _createBridgeCorridor(bestOrphanPoint, bestMainPoint);
-                trace($"  Bridged (corridor) at distance {bridgeDistance:F1}m");
-            }
-            else
-            {
-                // Short distance: single direct stroke
-                _createBridgeStroke(bestOrphanPoint, bestMainPoint);
-                trace($"  Bridged (direct) at distance {bridgeDistance:F1}m");
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Create a direct bridge stroke between two points.
-        /// </summary>
-        private void _createBridgeStroke(StreetPoint fromPoint, StreetPoint toPoint)
-        {
-            var bridge = new Stroke
-            {
-                A = fromPoint,
-                B = toPoint,
+                MinPointToCandPointDistance = minPointToCandPointDistance,
+                MinPointToCandStrokeDistance = minPointToCandStrokeDistance,
+                MinPointToCandIntersectionDistance = minPointToCandIntersectionDistance,
+                AngleMinStrokesRad = AngleMinStrokes * (float) Math.PI / 180f,
                 ClusterId = _clusterDesc.Id,
-                IsPrimary = false,
-                Weight = 0.7f  // Secondary/suburban roads
+                IsTracing = _traceGenerator
             };
-            bridge.PushCreator("orphan_bridge");
-            _strokeStore.AddStroke(bridge);
-        }
 
-        /// <summary>
-        /// Create a curved multi-stroke corridor for long bridge distances.
-        /// </summary>
-        private void _createBridgeCorridor(StreetPoint fromPoint, StreetPoint toPoint)
-        {
-            var from = fromPoint.Pos;
-            var to = toPoint.Pos;
-            var mid = (from + to) / 2f;
+            _boundsConstraint = new BoundsConstraint(_bl, _tr);
 
-            // Add perpendicular offset for curve
-            var delta = to - from;
-            var perpendicular = new Vector2(-delta.Y, delta.X);
-            perpendicular = Vector2.Normalize(perpendicular);
+            _connectPass = new ConnectComponentsPass(
+                _strokeStore, _clusterDesc.Id, _rnd, _annotation);
 
-            float offset = 40f + _rnd.GetFloat() * 40f;  // Random curve amount
-            mid += perpendicular * offset;
+            _report = CollectReport ? new GenerationReport() : null;
 
-            // Create intermediate point
-            var midPoint = new StreetPoint { ClusterId = _clusterDesc.Id };
-            midPoint.PushCreator("corridor_mid");
+            _ruleTable = RuleTable ?? ExpansionRuleTable.Defaults();
 
-            // Create two segments: from→mid, mid→to
-            var seg1 = new Stroke
+            _emitter = new SuccessorEmitter(
+                _ruleTable, _rnd, _clusterDesc,
+                new EmitterSettings
+                {
+                    WeightMin = weightMin,
+                    WeightMax = weightMax,
+                    WeightDecreaseFactor = weightDecreaseFactor,
+                    WeightIncreaseFactor = weightIncreaseFactor,
+                    NewStrokeMinimum = newStrokeMinimum,
+                    NewStrokeSquaredWeight = newStrokeSquaredWeight,
+                    NewLengthMin = newLengthMin,
+                    ProbabilityAngleSlightTurn = probabilityAngleSlightTurn,
+                    AngleSlightTurnMax = AngleSlightTurnMax,
+                    BottomLeft = _bl,
+                    TopRight = _tr
+                },
+                stroke => _addStrokeToDo(stroke));
+
+            _pipeline = new ICandidateConstraint[]
             {
-                A = fromPoint,
-                B = midPoint,
-                ClusterId = _clusterDesc.Id,
-                IsPrimary = false,
-                Weight = 0.7f
+                new MinLengthConstraint(),
+                new SnapToNearbyPointConstraint(),
+                new AlreadyConnectedConstraint(),
+                new AngleSeparationConstraint(atB: false),
+                new AngleSeparationConstraint(atB: true),
+                new StrokeNearPointConstraint(),
+                new PointNearStrokeConstraint(),
+                new IntersectionConstraint(),
             };
-            seg1.PushCreator("corridor_seg1");
-
-            var seg2 = new Stroke
-            {
-                A = midPoint,
-                B = toPoint,
-                ClusterId = _clusterDesc.Id,
-                IsPrimary = false,
-                Weight = 0.7f
-            };
-            seg2.PushCreator("corridor_seg2");
-
-            _strokeStore.AddStroke(seg1);
-            _strokeStore.AddStroke(seg2);
         }
 
-        /// <summary>
-        /// Get the convex hull of points (simplified: extremal points).
-        /// </summary>
-        private List<StreetPoint> _getConvexHull(List<StreetPoint> points)
+
+        /**
+         * Run every constraint once, stopping at the first that has something to say.
+         */
+        private Verdict _runPipeline(Stroke cand)
         {
-            if (points.Count <= 3) return points;
+            foreach (var constraint in _pipeline)
+            {
+                Verdict verdict = constraint.Check(cand, _strokeStore, _ctx);
+                if (verdict.Kind != VerdictKind.Accept)
+                {
+                    return verdict;
+                }
+            }
 
-            // Simplified hull: return extremal points
-            var hull = new List<StreetPoint>();
-
-            // Leftmost
-            hull.Add(points.OrderBy(p => p.Pos.X).First());
-            // Rightmost
-            hull.Add(points.OrderBy(p => p.Pos.X).Last());
-            // Topmost
-            hull.Add(points.OrderBy(p => p.Pos.Y).First());
-            // Bottommost
-            hull.Add(points.OrderBy(p => p.Pos.Y).Last());
-
-            // Remove duplicates and return
-            return hull.Distinct().ToList();
+            return Verdict.Accept;
         }
+
 
         /**
          * Iterate until the queue of strokes is empty again.
          */
         public void Generate()
         {
+            _buildPipeline();
+
             int maxGenerations = (int)(_clusterDesc.Size * _clusterDesc.Size / 1000f);
             
             while (true)
@@ -536,16 +223,16 @@ namespace engine.streets
                 if (maxGenerations < _generationCounter)
                 {
                     Trace(_dc, $"Returning: max generations reached.");
-                    _reportOrphanedPoints();
-                    _connectOrphanedBundles();  // Post-process: connect isolated clusters
+                    if (_report != null) Trace(_dc, $"{_annotation}: {_report.Describe()}");
+                    _connectPass.Run();
                     return;
                 }
 
                 if (!_haveStrokesToDo())
                 {
                     Trace(_dc, $"Returning: no more streets to do.");
-                    _reportOrphanedPoints();
-                    _connectOrphanedBundles();  // Post-process: connect isolated clusters
+                    if (_report != null) Trace(_dc, $"{_annotation}: {_report.Describe()}");
+                    _connectPass.Run();
                     return;
                 }
 
@@ -553,8 +240,6 @@ namespace engine.streets
                 // trace( 'Generator: Starting new generation.' );
 
                 // Option B: Mark new points created for this stroke, in case validation fails
-                _markNewPointsForStroke(curr);
-
                 /*
                  * Check, wether this segment is valid.
                  */
@@ -562,13 +247,12 @@ namespace engine.streets
                 /*
                  * In bounds of the desired area?
                  */
-                if (!_inBounds(curr))
+                if (_boundsConstraint.Check(curr, _strokeStore, _ctx).Kind != VerdictKind.Accept)
                 {
                     if (_traceGenerator) Trace(_dc, $"curr is out of bounds: {curr.ToString()}");
                     /*
                      * Out of range, so discard it.
                      */
-                    _cleanupFailedStrokePoints();  // Option B: Clean up points for failed stroke
                     continue;
                 }
 
@@ -582,390 +266,75 @@ namespace engine.streets
                 bool continueCheck = true;
                 bool doAdd = true;
 
+                int restarts = 0;
+
                 while (continueCheck)
                 {
-
                     /*
-                     * This actually might happen due to intersections etc. 
+                     * A Restart means a constraint moved an endpoint and everything has
+                     * to be judged again from the top. A Split means the candidate
+                     * crosses an existing stroke.
                      */
+                    Verdict verdict = _runPipeline(curr);
 
-                    /*
-                     * Is the end of the stroke too close to the beginning of the stroke?
-                     */
-                    if (Vector2.Distance(curr.A.Pos, curr.B.Pos) < minPointToCandPointDistance)
+                    if (verdict.Kind == VerdictKind.Reject)
                     {
                         if (_traceGenerator)
                         {
-                            Trace(_dc, $"Discarding candidate: is too short. {curr}");
+                            Trace(_dc, $"Discarding candidate ({verdict.Reason}): {curr}");
                         }
-                        /*
-                         * Test: If both are in store, we have an invalid entry in the store.
-                         */
-                        if (curr.A.InStore && curr.B.InStore)
-                        {
-                            // TXWTODO: Is this really invalid? Couldn't that happen due to merging both sides of a stroke?
-                            // throw new InvalidOperationException( "Generator: (test too short) Found too close points (curr.a and curr.b) both in store" );
-                        }
+                        _report?.CountRejection(verdict.Reason);
                         doAdd = false;
                         continueCheck = false;
-                        _cleanupFailedStrokePoints();  // Option B: Clean up points for failed stroke
                         continue;
                     }
 
-                    /*
-                     * Check: Is any of our endpoints too close to an existing endpoint?
-                     */
-                    if(false) {
-                        // TXWTODO: I don't check point a any more. Is that ok?
-                        /*
-                         * I wonder why a should be too close to another point?
-                         * Possibly due to moving intersections?
-                         */
-                        StreetPoint tooClose = _strokeStore.FindClosestBelowButNot(
-                            curr.A, minPointToCandPointDistance, curr.B);
+                    if (verdict.Kind == VerdictKind.Restart)
+                    {
+                        if (_report != null) ++_report.Restarts;
 
-                        if (null != tooClose)
+                        if (++restarts > MaxRestartsPerCandidate)
                         {
-                            if (_traceGenerator)
-                            {
-                                Trace(_dc, $"StreetPoint A ({curr.A}) too close to StreetPoint ({tooClose}).");
-                            }
-
                             /*
-                             * A probably already is in the store, as we are moving from a to be. 
+                             * Unreachable for every baseline seed - if it were not, the
+                             * fingerprints would have moved when this bound was
+                             * introduced. Present so that a future constraint cannot
+                             * turn the loop into a hang.
                              */
-
-#if false
-                             /*
-                             * if a is close to another existing point, use that one.
-                             */
-                            curr.a = tooClose;
-#endif
+                            Warning(_dc, $"Restart budget exhausted for {curr}, discarding.");
+                            if (_report != null) ++_report.RestartBudgetExhausted;
                             doAdd = false;
                             continueCheck = false;
                             continue;
                         }
+                        continue;
                     }
 
-                    /*
-                     * if B is new, look if it is too close to an existing point.
-                     */
-                    if (!curr.B.InStore)
+                    if (verdict.Kind == VerdictKind.Split)
                     {
-                        StreetPoint tooClose = _strokeStore.FindClosestBelowButNot(
-                            curr.B, minPointToCandPointDistance, curr.A );
+                        if (_report != null) ++_report.Splits;
 
-                        if( null != tooClose ) {
-                            if( _traceGenerator ) {
-                                Trace(_dc, $"StreetPoint B ({curr.B}) too close to StreetPoint ({tooClose}).");
-                            }
+                        StreetPoint intersectionStreetPoint = verdict.SplitPoint;
 
-                            /*
-                             * if a is close to another existing point, use that one.
-                             */
-                            curr.B = tooClose;
-
-                            // Leave this loop.
-                            // doAdd = false;
-                            // continueCheck = false;
-                            // break;
-                            continue;
-                        }
-                    }
-                    
-                    /*
-                     * Now test whether the given points already are connected?
-                     */
-                    if( curr.A.InStore && curr.B.InStore ) {
-                        if( _strokeStore.AreConnected(curr.A, curr.B)) {
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
-                        }
-                    }
-                    
-
-                    /*
-                     * Look if the stroke would be too close to an existing one origining from either endpoint.
-                     */
-                    {
-                        /*
-                         * Anything too close in point a?
-                         */
-                        var angles = curr.A.GetAngleArray();
-                        var closestAngle = 9.0;
-                        // its an incoming angle wrt a.
-                        var myAngle = curr.Angle;
-                        foreach( var stroke in angles ) {
-                            float candAngle = stroke.GetAngleSP(curr.A);
-                            float thisAngle = (float) Math.Abs(geom.Angles.Snorm( candAngle - myAngle ));
-                            if( thisAngle < closestAngle ) {
-                                closestAngle = thisAngle;
-                            }
-                        }
-                        if( closestAngle < (AngleMinStrokes*(float)Math.PI/180f) ) {
-                            if( _traceGenerator ) Trace(_dc, $"Discarding stroke {curr.ToStringSP(curr.A)}, angle too close {closestAngle}" );
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
-                        }
-                    }
-
-                    {
-                        /*
-                         * Anything too close in point b?
-                         */
-                        var angles = curr.B.GetAngleArray();
-                        float closestAngle = 9.0f;
-                        // its an incoming angle wrt b.
-                        float myAngle = curr.Angle + (float) Math.PI;
-                        foreach( var stroke in angles ) {
-                            var candAngle = stroke.GetAngleSP(curr.B);
-                            var thisAngle = Math.Abs(geom.Angles.Snorm( candAngle - myAngle ));
-                            if( thisAngle < closestAngle ) {
-                                closestAngle = thisAngle;
-                            }
-                        }
-                        if( closestAngle < (AngleMinStrokes*(float) Math.PI/180f) ) {
-                            if( _traceGenerator ) Trace(_dc, $"Discarding stroke {curr.ToStringSP(curr.B)}, angle too close {closestAngle}" );
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
-                        }
-                    }
-
-
-                    /*
-                     * Look, whether the stroke is too close to an existing point
-                     */
-                    {
-                        var si = _strokeStore.GetClosestPoint(curr, minPointToCandStrokeDistance);
-                        if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
-                            if( _traceGenerator ) Trace(_dc, $"Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
-
-                            if (curr.B.InStore)
-                            {
-                                /*
-                                 * If B already is in the store, we do not want to exchange it.
-                                 */
-                                doAdd = false;
-                                continueCheck = false;
-                                break;
-                            }
-                            
-                            /*
-                             * Be is not in the store, maybe we can replace it by the streetpoint we found?
-                             */
-                            // float distB = (si.StreetPoint.Pos - curr.B.Pos).Length();
-                            curr.B = si.StreetPoint;
-                            continue;
-                        }
-                    }
-
-                    /*
-                     * The following does not seem to have pleasing results.
-                     */
-#if true
-                    /*
-                     * Look, whether the new point to is too close to an existing stroke
-                     */
-                    {
-                        var si = _strokeStore.GetClosestStroke( curr.B, minPointToCandStrokeDistance);
-                        if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
-                            /*
-                             * We might want to check here, if it is perpendicular to the stroke as opposed to parallel.
-                             * If it is perpendicular, we might be able to keep it, it might be a meaningful route.
-                             */
-                            float angleVice = Single.Abs(geom.Angles.Snorm(curr.Angle - si.StrokeExists.Angle));
-                            float angleVersa = Single.Abs(geom.Angles.Snorm(Single.Pi+angleVice));
-                            if (true ||angleVice<(Single.Pi/4f) || angleVersa<(Single.Pi/4f)) {
-                                if (_traceGenerator)
-                                    Trace(_dc,
-                                        $"Discarding stroke {curr.ToString()}, point b too close to stroke: {si.StrokeExists}");
-
-                                /*
-                                 * If there is any point closer the d meters to this stroke,
-                                 * then [look, which point is closer to the stroke and connect
-                                 * it instead] drop it.
-                                 */
-                                doAdd = false;
-                                continueCheck = false;
-                                break;
-                            }
-                        }
-                    }
-#endif
-
-                    /*
-                     * Neither of the endpoints is too close to an existing one.
-                     * However, this new stroke still could intersect with another 
-                     * stroke. Test this.
-                     */
-                    StrokeIntersection? intersection  = _strokeStore.IntersectsMayTouchClosest(curr, curr.A);
-                    if( null != intersection ) {
-                        /*
-                         * Logical error: We need to remove all of the intersections in some way.
-                         * Therefore truncate this right now.
-                         */
-                        // doAdd = false;
-                        // continueCheck = false;
-                        // break;
-                        /*
-                         * We have an intersection of this stroke with another
-                         * stroke.
-                         *
-                         * Given the way that we emit strokes we know, that curr.a
-                         * is one StreetPoint of an existing stroke.
-                         *
-                         * In every case we will need to split the existing stroke into
-                         * two, adding a new streetpoint at the intersection. If curr has a 
-                         * higher weight than the existing one, curr also is added (in two parts).
-                         * Otherwise, curr simply stops at the intersection point.
-                         */
-
-                        var intersectionStreetPoint = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        _createdStreetPointIds.Add(intersectionStreetPoint.Id);  // Track creation
-                        var intersectingStroke = intersection.StrokeExists;
-                        intersectionStreetPoint.SetPos( intersection.Pos );
-                        intersectionStreetPoint.PushCreator("intersection");
-                        if( _traceGenerator ) {
-                            Trace( $"Trying intersection point {intersectionStreetPoint}" );
+                        if (_traceGenerator)
+                        {
+                            Trace(_dc, $"Trying intersection point {intersectionStreetPoint}");
                         }
 
                         /*
-                         * Check, if the intersection is too close to either endpoint. It it is, just route it through
-                         * the existing end point.
+                         * Split the intersected stroke in two at the intersection point.
+                         * All topology mutation lives in NetworkBuilder; the order of
+                         * operations in there is part of the generated output.
                          */
-
-                        bool doGenerateTail = true;
-                        
-                        if( Vector2.Distance( intersectionStreetPoint.Pos, intersectingStroke.A.Pos) < minPointToCandIntersectionDistance ) {
-                            /*
-                             * The current one intersects very close to the beginning of this stroke.
-                             */
-                            // TXWTOOD: Add the part until this endpoint, continuing with the tail.
-                            //doAdd = false;
-                            //continueCheck = false;
-                            //break;
-                            doGenerateTail = true;
-                        }
-
-                        if( Vector2.Distance( intersectionStreetPoint.Pos, intersectingStroke.B.Pos) < minPointToCandIntersectionDistance ) {
-                            /*
-                             * The current one intersects very close to the ending of this stroke.
-                             */
-                            // TXWTOOD: Add the part until this endpoint, continuing with the tail.
-                            // TXWTODO: Why don't we want to add this? Just use the intersection as b and we are fine, just leave out the tail.
-                            
-                            //doAdd = false;
-                            //continueCheck = false;
-                            doGenerateTail = false;
-                            // break;
-                        }
-#if false
-                        /*
-                         * Well, still this intersection point might be closer to another
-                         * known street point. If it does, we use the established point instead of the
-                         * intersection point. Which, you guess, might yield to a different intersection...
-                         */
-                        var tooClose: StreetPoint = _strokeStore.findClosestBelowButNot( 
-                            intersectionStreetPoint, minPointToCandIntersectionDistance, null );
-
-                        if( tooClose != null ) {
-                            if( _traceGenerator ) {
-                                trace( 'Generator: Found $intersectionStreetPoint to be too close to $tooClose. Ignoring intersecting stroke $curr');
-                            }
-                            /*
-                             * The intersection is pretty close to another street point. Given,
-                             * that the network was in a sane state before, it should remain sane enough if
-                             * I replace this intersection with the existing street point for both
-                             * the existing and the new stroke.
-                             *
-                             * TXWTODO: Add a new condition to check for street points near strokes
-                             * while 1st path insertion.
-                             */
-
-                            /*
-                             * Until we add further checks, do not add this stroke, but remove it.
-                             */
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
-                        }
-#endif
-#if false
-                        /*
-                         * Now, before dissecting the target stroke look, whether the intersection
-                         * point would be too close to another point. If it would be, discard the current 
-                         * stroke entirely.
-                         * 
-                         * TXWTODO: However, we do not test whether it is too close to another line.
-                         */
-                         {
-                            var si = _strokeStore.getClosestPoint( curr );
-                            if( si != null && si.scaleExists < minPointToCandStrokeDistance ) {
-                                if( _traceGenerator ) trace( 'Generator: Discarding stroke, too close: ${si.scaleExists}' );
-                                /*
-                                * If there is any point closer the d meters to this stroke,
-                                * then [look, which point is closer to the stroke and connect
-                                * it instead] drop it.
-                                */
-                                doAdd = false;
-                                continueCheck = false;
-                                break;
-                            }
-                        }
-#endif
-                        Stroke oldStrokeExists = intersection.StrokeExists;
+                        Stroke oldStrokeExists = verdict.SplitTarget;
+                        Stroke newStrokeExists = _networkBuilder.SplitStrokeAt(
+                            oldStrokeExists, intersectionStreetPoint);
 
                         /*
-                         * Important: We must not modify the topology of the graph directly.
-                         * Therefore we first remove the edge from the graph. Modifying the nodes
-                         * and then readding it.
+                         * Both halves are in the store now, so both endpoints of both are
+                         * necessarily InStore and these checks cannot report anything.
+                         * Retained until WP-2c retires the orphan tracking wholesale.
                          */
-                        _strokeStore.Remove( intersection.StrokeExists );
-                        var newStrokeExists = intersection.StrokeExists.CreateUnattachedCopy();
-                        /*
-                         * the two endpoints of stroke still are in the stroke store.
-                         */
-                        /*
-                         * Warning: [null file name]:0: WorkerQueue:RunPart: Warning: Error executing worker queue engine.Engine.MainThread action: System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
-   at System.Collections.Generic.List`1.get_Item(Int32 index)
-   at engine.streets.StrokeStore.AddPoint(StreetPoint& sp) in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\streets\StrokeStore.cs:line 368
-   at engine.streets.StrokeStore.AddStroke(Stroke& stroke) in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\streets\StrokeStore.cs:line 396
-   at engine.streets.Generator.Generate() in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\streets\Generator.cs:line 494
-   at engine.world.ClusterDesc._triggerStreets() in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\world\ClusterDesc.cs:line 310
-   at engine.world.ClusterDesc.FindStartPosition() in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\world\ClusterDesc.cs:line 347
-   at joyce.ui.Main.<>c__DisplayClass7_0.<Render>b__1() in C:\Users\timow\coding\github\Karawan\JoyceCode\ui\Main.cs:line 181
-   at engine.WorkerQueue.RunPart(Single dt) in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\WorkerQueue.cs:line 78
-Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue engine.Engine.MainThread
-
-                         */
-                        newStrokeExists.PushCreator( "newStrokeExists" );
-
-                        /*
-                         * Intersection street point is not in the stroke store.
-                         */
-                        oldStrokeExists.B = intersectionStreetPoint;
-                        oldStrokeExists.PushCreator( "oldStrokeExists" );
-
-                        newStrokeExists.A = intersectionStreetPoint;
-                        
-                        /*
-                         * So at this point:
-                         * - oldStrokeExists.A already is in the stroke store.
-                         * - oldStrokeExists.B is not.
-                         * - newStrokeExists.A is not in the stroke store, same as old.B
-                         * - newStrokeExists.B already is in the stroke store.
-                         */
-
-                        // newStrokeExists.weight = 0.1;
-                        // oldStrokeExists.weight = 6.0;
-
-                        _strokeStore.AddStroke(newStrokeExists);
-                        _validateStrokeEndpoints(newStrokeExists);  // Validate endpoints
-                        _strokeStore.AddStroke(oldStrokeExists);
-                        _validateStrokeEndpoints(oldStrokeExists);  // Validate endpoints
                         _generationCounter++;
 
                         /*
@@ -977,7 +346,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                         }
                         curr.B = intersectionStreetPoint;
 
-                        if (doGenerateTail)
+                        if (verdict.GenerateTail)
                         {
                             /*
                              * And add the continuation, after the intersection.
@@ -990,7 +359,6 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                             // As this is a stack, first the continuation, then the head.
                             _listStrokesToDo.Add(currTail);
                         }
-                        
 
                         _listStrokesToDo.Add(curr);
                         _generationCounter++;
@@ -998,6 +366,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                         // Leave this loop.
                         doAdd = false;
                         continueCheck = false;
+                        continue;
                     }
 
                     /*
@@ -1010,7 +379,6 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
 
                 if( !doAdd ) {
                     // trace( 'Generator: Avoiding to add stroke.' );
-                    _cleanupFailedStrokePoints();  // Option B: Clean up points for any failed stroke
                     continue;
                 }
 
@@ -1019,180 +387,16 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                  * pronably side streets.
                  */
                 _strokeStore.AddStroke(curr);
-                _validateStrokeEndpoints(curr);  // Validate endpoints
+                if (_report != null) ++_report.Accepted;
                 ++_generationCounter;
 
                 /*
                  * Compute some options.
                  */
-                bool doForward = _rnd.Get8() < probabilityNextStrokeForward;
-                bool doRight = _rnd.Get8() < (int)probabilityNextStrokeBranch(curr.Weight);
-                bool doLeft = _rnd.Get8() < (int)probabilityNextStrokeBranch(curr.Weight);
-                bool doRandomDirection = _rnd.Get8() < (int)probabilityNextStrokeRandom(curr.Weight);
-
-                var computeWeight = (
-                    float currentWeight, 
-                    float probDescrease, 
-                    float probIncrease, 
-                    float facDecrease, 
-                    float facIncrease
-                ) => {
-                    float resultWeight = currentWeight;
-                    bool doDecreaseWeight = _rnd.Get8() < probDescrease;
-                    bool doIncreaseWeight = _rnd.Get8() < probIncrease;
-
-                    if( doDecreaseWeight ) {
-                        resultWeight = resultWeight * facDecrease;
-                    }
-                    if( doIncreaseWeight ) {
-                        resultWeight = resultWeight * facIncrease;
-                    }
-
-                    if( resultWeight < weightMin ) {
-                        resultWeight = weightMin;
-                    } else {
-                        if( resultWeight > weightMax) {
-                            resultWeight = weightMax;
-                        }
-                    }
-                    resultWeight = (int)((resultWeight)*1000f)/1000f;
-                    
-                    return resultWeight;
-                };
-
-                float newAngle = curr.Angle;
-                if (_rnd.Get8() < probabilityAngleSlightTurn ) {
-                    newAngle = newAngle +_rnd.GetFloat()*2f*AngleSlightTurnMax-AngleSlightTurnMax;
-                }
-
-                if(!doForward && !doRight && !doLeft && !doRandomDirection) {
-                    doRandomDirection = true;
-                }
-
-                if (doForward || doRandomDirection) {
-                    var straightWeight = computeWeight(
-                        curr.Weight,
-                        probabilityNextStrokeStraightDecreaseWeight,
-                        probabilityNextStrokeStraightIncreaseWeight,
-                        weightDecreaseFactor,
-                        weightIncreaseFactor
-                    );
-                
-                    float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (straightWeight*straightWeight))*10f)/10f;
-                    if( newLength < newLengthMin ) {
-                        newLength = newLengthMin;
-                    }
-
-                    if (doForward)
-                    {
-                        StreetPoint newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        var forward = Stroke.CreateByAngleFrom(
-                            _clusterDesc,
-                            curr.B,
-                            newB,
-                            newAngle,
-                            newLength,
-                            curr.IsPrimary,
-                            straightWeight
-                        );
-
-                        // Option A: Pre-validate endpoint before creating the point
-                        if (_willStrokeEndpointBeValid(forward))
-                        {
-                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
-                            forward.PushCreator("forward");
-                            newB.PushCreator("forward");
-                            _addStrokeToDo(forward);
-                        }
-                        // else: skip adding this stroke entirely - avoids creating orphan point
-                    }
-
-                    if (doRandomDirection) {
-                        var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        var randStroke = Stroke.CreateByAngleFrom(
-                            _clusterDesc,
-                            curr.B,
-                            newB,
-                            _rnd.GetFloat()*(float)Math.PI*2f,
-                            newLength,
-                            curr.IsPrimary,
-                            straightWeight
-                        );
-
-                        // Option A: Pre-validate endpoint before creating the point
-                        if (_willStrokeEndpointBeValid(randStroke))
-                        {
-                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
-                            randStroke.PushCreator("randStroke");
-                            newB.PushCreator("randStroke");
-                            _addStrokeToDo(randStroke);
-                        }
-                        // else: skip adding this stroke entirely - avoids creating orphan point
-                    }
-                }
-
-                if (doRight || doLeft)
-                {
-                    var branchWeight = computeWeight(
-                        curr.Weight,
-                        probabilityNextStrokeBranchDecreaseWeight,
-                        probabilityNextStrokeBranchIncreaseWeight,
-                        weightDecreaseFactor,
-                        weightIncreaseFactor
-                    );
-                
-                    float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (branchWeight*branchWeight))*10f)/10f;
-                    if( newLength < newLengthMin ) {
-                        newLength = newLengthMin;
-                    }
-
-                    if( doRight ) {
-                        var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        var right = Stroke.CreateByAngleFrom(
-                            _clusterDesc,
-                            curr.B,
-                            newB,
-                            newAngle-(float)Math.PI/2f,
-                            newLength,
-                            !curr.IsPrimary,
-                            branchWeight
-                        );
-
-                        // Option A: Pre-validate endpoint before creating the point
-                        if (_willStrokeEndpointBeValid(right))
-                        {
-                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
-                            right.PushCreator("right");
-                            newB.PushCreator("right");
-                            _addStrokeToDo(right);
-                        }
-                        // else: skip adding this stroke entirely - avoids creating orphan point
-                    }
-                    if( doLeft ) {
-                        var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                        var left = Stroke.CreateByAngleFrom(
-                            _clusterDesc,
-                            curr.B,
-                            newB,
-                            newAngle+(float)Math.PI/2f,
-                            newLength,
-                            !curr.IsPrimary,
-                            branchWeight
-                        );
-
-                        // Option A: Pre-validate endpoint before creating the point
-                        if (_willStrokeEndpointBeValid(left))
-                        {
-                            _createdStreetPointIds.Add(newB.Id);  // Track creation only if likely valid
-                            left.PushCreator("left");
-                            newB.PushCreator("left");
-                            _addStrokeToDo(left);
-                        }
-                        // else: skip adding this stroke entirely - avoids creating orphan point
-                    }
-                }
+                _emitter.Emit(curr);
             }
         }
+
 
 
         public void SetBounds( 
@@ -1223,14 +427,11 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
             _rnd = new builtin.tools.RandomSource(seed0);
             _listStrokesToDo = new List<Stroke>();
             _strokeStore = strokeStore;
+            _networkBuilder = new generation.NetworkBuilder(strokeStore);
             _clusterDesc = clusterDesc;
             _generationCounter = 0;
 
             // Reset tracking structures
-            _createdStreetPointIds.Clear();
-            _orphanedStreetPointIds.Clear();
-            _orphanedPointOrigins.Clear();
-            _strokesWithMissingEndpoints.Clear();
         }
 
 

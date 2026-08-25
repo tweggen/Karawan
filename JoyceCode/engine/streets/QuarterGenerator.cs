@@ -334,6 +334,17 @@ namespace engine.streets
             var points = _strokeStore.GetStreetPoints();
             foreach (var spStart in points)
             {
+                /*
+                 * Quarters, estates and buildings live on the ground. A face traced
+                 * through a raised deck is not a city block, it is the hole under a
+                 * bridge, and the ground face it sits on has already been traced
+                 * separately. Currently a no-op: every junction is on level 0 until a
+                 * multilayer ruleset is enabled.
+                 */
+                if (0 != spStart.Level)
+                {
+                    continue;
+                }
 
                 if (_traceGenerate) trace($"QuarterGenerator(): Tracing Point {spStart.Pos}");
                 var angleStrokes = spStart.GetAngleArray();

@@ -344,8 +344,17 @@ bump, to be coordinated like any generation change.
 1. **Extract topology surgery.** Add `NetworkBuilder.SplitStrokeAt` /
    `Commit`; make the old `Generate()` call them; add the unattached-mutation
    asserts on `Stroke`. Pin with a determinism snapshot test (same seed →
-   identical point/stroke sets, byte-for-byte via the existing serializers) using
-   `StreetGenerationDiagnosticsTests` as the harness.
+   identical network fingerprint).
+
+   > **Correction to an earlier draft of this doc:** the fingerprint must be
+   > *ID-independent*, not "byte-for-byte via the existing serializers".
+   > `StreetPoint._nextId` and `Stroke._nextId` are process-global static counters
+   > (`StreetPoint.cs:20`, `Stroke.cs:80`), so IDs depend on what else ran first in
+   > the process. The gate hashes canonicalized geometry instead. Likewise,
+   > `StreetGenerationDiagnosticsTests` cannot serve as the harness: it is excluded
+   > from compilation, asserts `Assert.True(true)`, and drives generation through the
+   > `I` container and cluster cache. Building a real harness is WP-0 of the
+   > implementation plan.
 2. **Extract the constraint pipeline** 1:1 per the table in §2.2; delete the
    orphan-tracking machinery (now provably dead); move `_connectOrphanedBundles`
    into `ConnectComponentsPass`. Old `Generator` becomes the ~100-line driver.

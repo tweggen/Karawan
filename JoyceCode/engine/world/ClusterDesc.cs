@@ -105,10 +105,6 @@ public class ClusterDesc
     private builtin.tools.RandomSource _rnd;
     private engine.geom.AABB _aabb;
 
-    private float _initialOuterStreetLength;
-    private float _initialOuterStreetWeight = 1.2f;
-    private float _initialInnerStreetLength;
-    private float _initialInnerStreetWeight = 1.1f;
 
     /** 
      * Each cluster has a stroke store associated that descirbes the 
@@ -322,73 +318,34 @@ public class ClusterDesc
 
 
     /**
-     * Using the information about the next cities, create seed points for 
-     * the map based on the interconnecting stations.
+     * Expose the cluster's random source to the street seeding code (and to the
+     * deterministic street test harness), so both draw from the very same generator
+     * state that the game uses.
      */
-    private void _addHighwayTriggers(Generator streetGenerator)
+    internal builtin.tools.RandomSource Rnd
     {
-        _initialOuterStreetLength =
-            Single.Max(45f, Single.Min(1000f, Size) / 12f);
-        _initialInnerStreetLength =
-            Single.Max(45f, Single.Min(1000f, Size) / 16f);
-        
-        /*
-         * Variant two: n random points
-         */
-        var nSeeds = (_rnd.Get8()>>5)+1;
-        for( int i=0; i<nSeeds; ++i ) {
-            engine.streets.StreetPoint newA = new engine.streets.StreetPoint() { ClusterId = this.Id };
-            float x = _rnd.Get8()*((2f*Size)/3f)/256f-Size/3f;
-            float y = _rnd.Get8()*((2f*Size)/3f)/256f-Size/3f;
-            newA.SetPos( x, y );
-            float dir = _rnd.Get8()*(float)Math.PI/128f;
-            var newB = new engine.streets.StreetPoint() { ClusterId = this.Id };
-            var stroke = engine.streets.Stroke.CreateByAngleFrom( this, 
-                newA, newB, dir, 
-                _initialInnerStreetLength, true, _initialInnerStreetWeight );
-            streetGenerator.AddStartingStroke(stroke);
-        }
-#if true
-        /*
-         * Plus the four corners.
-         */
+        get => _rnd;
+    }
+
+    /**
+     * Read the street generation ruleset from the Mix configuration.
+     *
+     * A missing section is fine and yields the built-in defaults, which are
+     * value-identical to it. A malformed one is not: it is reported and the defaults
+     * are used, because a half-applied ruleset would quietly reshape every city.
+     */
+    private streets.generation.ExpansionRuleTable _loadStreetGenRuleTable()
+    {
+        try
         {
-            var newA = new StreetPoint() { ClusterId = this.Id };
-            newA.SetPos( -Size/2.2f, -Size/2.2f );
-            var newB = new StreetPoint() { ClusterId = this.Id };
-            var stroke = Stroke.CreateByAngleFrom( this,
-                newA, newB, (float)Math.PI*0.25f, 
-                _initialOuterStreetLength, true, _initialOuterStreetWeight );
-            streetGenerator.AddStartingStroke(stroke);
+            return streets.generation.StreetGenConfig.Parse(
+                I.Get<engine.casette.Mix>().GetTree("/streetGen"));
         }
+        catch (System.Exception e)
         {
-            var newA = new StreetPoint() { ClusterId = this.Id };
-            newA.SetPos( Size/2.1f, -Size/2.1f );
-            var newB = new StreetPoint() { ClusterId = this.Id };
-            var stroke = Stroke.CreateByAngleFrom( this,
-                newA, newB, 3f*(float)Math.PI*0.25f,
-                _initialOuterStreetLength, true, _initialOuterStreetWeight );
-            streetGenerator.AddStartingStroke(stroke);
+            Error($"Invalid street generation ruleset, falling back to defaults: {e.Message}");
+            return streets.generation.ExpansionRuleTable.Defaults();
         }
-        {
-            var newA = new StreetPoint() { ClusterId = this.Id };
-            newA.SetPos( -Size/2.2f, Size/2.2f );
-            var newB = new StreetPoint() { ClusterId = this.Id };
-            var stroke = Stroke.CreateByAngleFrom( this, 
-                newA, newB, -(float)Math.PI*0.25f, 
-                _initialOuterStreetLength, true, _initialOuterStreetWeight );
-            streetGenerator.AddStartingStroke(stroke);
-        }
-        {
-            var newA = new StreetPoint() { ClusterId = this.Id };
-            newA.SetPos( Size/2.15f, Size/2.2f );
-            var newB = new StreetPoint() { ClusterId = this.Id };
-            var stroke = Stroke.CreateByAngleFrom( this,
-                newA, newB, -3.0f*(float)Math.PI*0.25f, 
-                _initialOuterStreetLength, true, _initialOuterStreetWeight );
-            streetGenerator.AddStartingStroke(stroke);
-        }
-#endif
     }
 
 
@@ -397,14 +354,9 @@ public class ClusterDesc
         Generator streetGenerator = new Generator();
         streetGenerator.SetAnnotation($"Cluster {Name}");
         streetGenerator.Reset("streets-" + _strKey, _strokeStore, this);
-        float terrainFacetSize =
-            world.MetaGen.FragmentSize / (float) world.MetaGen.GroundResolution;
-        streetGenerator.SetBounds(
-            -Size / 2f + terrainFacetSize, 
-            -Size / 2f + terrainFacetSize,
-            Size / 2f - terrainFacetSize,
-            Size / 2f - terrainFacetSize);
-        _addHighwayTriggers(streetGenerator);
+        streetGenerator.RuleTable = _loadStreetGenRuleTable();
+        streets.StreetSeeds.ApplyBounds(streetGenerator, this);
+        streets.StreetSeeds.AddTo(streetGenerator, this, _rnd);
         streetGenerator.Generate();
         streetGenerator = null;
     }

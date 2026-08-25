@@ -9,6 +9,18 @@ using static engine.Logger;
 namespace engine.streets;
 
 
+/**
+ * The street graph of one cluster, with its spatial indices.
+ *
+ * MULTILAYER: strokes and junctions carry a Level. The four neighbourhood queries
+ * below all skip entries on a different level, so two streets on different decks can
+ * cross without meeting - that crossing is the overpass. Everything stays in ONE pair
+ * of octrees and the level is filtered out of the results, rather than keeping an
+ * octree per level: for the ground-only case that shipping configurations use, no
+ * entry is ever skipped and the cost is exactly what it was. Per-level indices would
+ * only pay off once several busy decks exist, and can be added then without touching
+ * any caller.
+ */
 public class StrokeStore
 {
     private static readonly engine.Dc _dc = engine.Dc.StreetGen;
@@ -21,6 +33,31 @@ public class StrokeStore
     private HashSet<long> _setStrokes = new();
 
     private bool _traceStrokes;
+
+    /*
+     * Id sequences for this network.
+     *
+     * An Id packs the cluster into its high 16 bits and a sequence number into its low
+     * 16, so the sequence only has to be unique within one street network - which is
+     * exactly the scope of one store. It used to come from a process-global counter,
+     * which meant that after 65535 points anywhere in the process the low half wrapped
+     * and two points in the SAME network could share an Id, quietly corrupting the
+     * adjacency set behind AreConnected and colliding on the LiteDB primary key. The
+     * test suite alone gets through that budget some fifty times over.
+     *
+     * Deliberately per store rather than a static keyed on cluster id: several networks
+     * for the same cluster are built concurrently (the test suite does it constantly),
+     * and any shared counter that gets reset between them corrupts whichever run is
+     * still in flight.
+     */
+    private int _nextPointLocalId;
+    private int _nextStrokeLocalId;
+
+    /**
+     * Set while re-adding a cluster that came back from the cache, whose ids are
+     * already meaningful and must survive.
+     */
+    private bool _keepStoredIds;
 
 
     static private void _computeStrokeBoundingBox(in Stroke stroke, out Octree.BoundingBox bb)
@@ -60,6 +97,15 @@ public class StrokeStore
             {
                 /*
                  * We do not want to intersect with ourselves.
+                 */
+                continue;
+            }
+
+            if (stroke.Level != cand.Level)
+            {
+                /*
+                 * Different decks. They cross on the map and not in the world, which is
+                 * exactly what an overpass is. No junction, no split.
                  */
                 continue;
             }
@@ -133,7 +179,7 @@ public class StrokeStore
             for (int i = 0; i < l; ++i)
             {
                 StreetPoint cand = _tmpListNearby[i];
-                if (cand != spNot && cand != sp0)
+                if (cand != spNot && cand != sp0 && cand.Level == sp0.Level)
                 {
                     if (null == closestSP)
                     {
@@ -220,6 +266,11 @@ public class StrokeStore
                 continue;
             }
 
+            if (stroke.Level != sp.Level)
+            {
+                continue;
+            }
+
             var dist = stroke.Distance(sp.Pos);
 
             if (dist < closestDist)
@@ -280,6 +331,11 @@ public class StrokeStore
             if (sp0 == stroke.A || sp0 == stroke.B)
             {
                 if (_traceStrokes) Trace(_dc, $"Skipping point {sp0.Pos.X}, {sp0.Pos.Y}, because its part of this stroke.");
+                continue;
+            }
+
+            if (sp0.Level != stroke.Level)
+            {
                 continue;
             }
 
@@ -367,10 +423,31 @@ public class StrokeStore
             }
         }
 #endif
+        _assignLocalId(sp);
+
         _octreeSP.Add(sp, sp.Pos3);
 
         sp.InStore = true;
         _listPoints.Add(sp);
+    }
+
+
+    /**
+     * Re-add a stroke that came back from the cluster cache, keeping the ids it was
+     * stored with. Everything else must go through AddStroke, which hands out fresh
+     * network-local ids.
+     */
+    public void AddStoredStroke(in Stroke stroke)
+    {
+        _keepStoredIds = true;
+        try
+        {
+            AddStroke(stroke);
+        }
+        finally
+        {
+            _keepStoredIds = false;
+        }
     }
 
 
@@ -404,12 +481,69 @@ public class StrokeStore
 
         stroke.B.AddEndingStroke(stroke);
 
+        _assignLocalSid(stroke);
+
         stroke.Store = this;
         _listStrokes.Add(stroke);
         _setStrokes.Add((long)stroke.A.Id | ((long)stroke.B.Id << 32));
         _setStrokes.Add((long)stroke.B.Id | ((long)stroke.A.Id << 32));
         _computeStrokeBoundingBox(stroke, out var bb);
         _octreeStrokes.Add(stroke, bb);
+    }
+
+
+    /**
+     * Give a point its identity within this network, unless it already has one from
+     * storage.
+     */
+    private void _assignLocalId(in StreetPoint sp)
+    {
+        if (_keepStoredIds)
+        {
+            /*
+             * Keep the sequence ahead of what came back, so anything added afterwards
+             * cannot collide with it.
+             */
+            int stored = sp.Id & 0xffff;
+            if (stored > _nextPointLocalId) _nextPointLocalId = stored;
+            return;
+        }
+
+        if (_nextPointLocalId >= 0xffff)
+        {
+            ErrorThrow(
+                $"This street network has run out of street point ids: an Id carries only "
+                + $"16 bits of sequence, so one cluster cannot hold more than 65535 points.",
+                m => new InvalidOperationException(m));
+        }
+
+        /*
+         * Round-trips through ClusterId's setter, which is what does the packing.
+         */
+        sp.Id = ++_nextPointLocalId;
+        sp.ClusterId = sp.ClusterId;
+    }
+
+
+    private void _assignLocalSid(in Stroke stroke)
+    {
+        if (_keepStoredIds)
+        {
+            int stored = stroke.Sid & 0xffff;
+            if (stored > _nextStrokeLocalId) _nextStrokeLocalId = stored;
+            return;
+        }
+
+        if (_nextStrokeLocalId >= 0xffff)
+        {
+            ErrorThrow(
+                $"This street network has run out of stroke ids: an Sid carries only 16 "
+                + $"bits of sequence.",
+                m => new InvalidOperationException(m));
+        }
+
+        stroke.Sid = ++_nextStrokeLocalId;
+        stroke.ClusterId = stroke.ClusterId;
     }
 
 
@@ -432,6 +566,45 @@ public class StrokeStore
             }
             return false;
 #endif
+    }
+
+
+    /**
+     * Ramps whose bounding box comes within maxDistance of the given stroke.
+     *
+     * Deliberately ignores Level: a ramp is the one thing that occupies two decks at
+     * once, so the caller decides which of its ends matter.
+     */
+    public IEnumerable<Stroke> GetRampsNear(in Stroke stroke, float maxDistance)
+    {
+        List<Stroke> found = new();
+
+        _computeStrokeBoundingBox(stroke, out var bb);
+        bb = new Octree.BoundingBox(bb.Center, bb.Size + 2f * maxDistance * Vector3.One);
+
+        List<Stroke> nearby = new();
+        if (!_octreeStrokes.GetCollidingNonAlloc(nearby, bb))
+        {
+            return found;
+        }
+
+        foreach (var cand in nearby)
+        {
+            if (cand.Kind != StrokeKind.Ramp || cand == stroke)
+            {
+                continue;
+            }
+
+            if (cand.Distance(stroke.A.Pos) <= maxDistance
+                || cand.Distance(stroke.B.Pos) <= maxDistance
+                || stroke.Distance(cand.A.Pos) <= maxDistance
+                || stroke.Distance(cand.B.Pos) <= maxDistance)
+            {
+                found.Add(cand);
+            }
+        }
+
+        return found;
     }
 
 

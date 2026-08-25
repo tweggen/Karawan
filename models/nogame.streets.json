@@ -1,0 +1,57 @@
+{
+  "_comment": [
+    "Street generation ruleset. Value-identical to ExpansionRuleTable.Defaults(); if",
+    "this file is absent the generator falls back to those defaults and produces the",
+    "same cities.",
+    "",
+    "ORDER MATTERS TWICE OVER, and not in the same way:",
+    "  - 'rules' is the order in which each rule's probability is drawn. Reordering the",
+    "    array reorders the random sequence and changes every generated cluster.",
+    "  - weights and emission run per weight group, and within a group in the order the",
+    "    rules appear here. So the default table draws forward/right/left/random but",
+    "    emits straight(forward, randStroke) then branch(right, left).",
+    "Exactly one rule must be marked isFallback; it fires when nothing else does, so a",
+    "junction never stops growing.",
+    "",
+    "probability.kind is one of constant (a), affine (a - w*b) or hyperbola",
+    "(a / (1 + b*(1-w))), where w is the parent weight normalised over weightMin..Max.",
+    "Anything else is refused when this file is parsed."
+  ],
+
+  "weightGroups": [
+    { "name": "straight", "decreaseProbability": 5, "increaseProbability": 10 },
+    { "name": "branch", "decreaseProbability": 190, "increaseProbability": 3 }
+  ],
+
+  "rules": [
+    {
+      "name": "forward",
+      "direction": "forward",
+      "weightGroup": "straight",
+      "probability": { "kind": "constant", "a": 252 },
+      "keepPrimary": true
+    },
+    {
+      "name": "right",
+      "direction": "right",
+      "weightGroup": "branch",
+      "probability": { "kind": "hyperbola", "a": 150, "b": 4 },
+      "keepPrimary": false
+    },
+    {
+      "name": "left",
+      "direction": "left",
+      "weightGroup": "branch",
+      "probability": { "kind": "hyperbola", "a": 150, "b": 4 },
+      "keepPrimary": false
+    },
+    {
+      "name": "randStroke",
+      "direction": "random",
+      "weightGroup": "straight",
+      "probability": { "kind": "affine", "a": 80, "b": 60 },
+      "keepPrimary": true,
+      "isFallback": true
+    }
+  ]
+}

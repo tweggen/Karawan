@@ -74,10 +74,27 @@ public class StrokeConverter : JsonConverter<Stroke>
 }
 
 
+public enum StrokeKind : byte
+{
+    Street,
+    Ramp,
+    Bridge,
+    Tunnel,
+    ConnectorBridge
+}
+
+
 public class Stroke
 {
     static private object _classLock = new();
-    static private int _nextId = 10000;
+
+    /**
+     * Provisional identity until the stroke joins a network. See
+     * StreetPoint._nextProvisionalId.
+     */
+    static private int _nextProvisionalSid = 10000;
+
+
 
     [LiteDB.BsonId]
     public int Sid
@@ -96,9 +113,11 @@ public class Stroke
         set
         {
             _clusterId = value;
+
             Sid = (_clusterId << 16) | (Sid & 0xffff);
         }
     }
+
 
     public StrokeStore? Store;
 
@@ -117,6 +136,23 @@ public class Stroke
      * Whether this one goes in primary or secondary direction.
      */
     public bool IsPrimary { get; set; }
+
+    /**
+     * Which deck this stroke occupies, matching its endpoints. Strokes on different
+     * levels may cross without meeting - that crossing IS the overpass.
+     *
+     * Additive for persistence: clusters cached before multilayer existed come back
+     * entirely on level 0.
+     */
+    public sbyte Level { get; set; }
+
+    /**
+     * What kind of thing this stroke is. Street is an ordinary road on one deck; Ramp
+     * is the only kind permitted to join junctions on different decks; Bridge and
+     * Tunnel are the spans a ramp pair leads onto; ConnectorBridge marks a stroke laid
+     * down by ConnectComponentsPass to reattach an orphaned bundle.
+     */
+    public StrokeKind Kind { get; set; } = StrokeKind.Street;
 
 
     /**
@@ -508,6 +544,8 @@ public class Stroke
     {
         IsPrimary = o.IsPrimary;
         Weight = o.Weight;
+        Level = o.Level;
+        Kind = o.Kind;
         Invalidate();
     }
 
@@ -571,6 +609,13 @@ public class Stroke
         stroke.IsPrimary = isPrimary0;
         stroke.Weight = weight0;
 
+        /*
+         * A successor grows on the deck its parent junction sits on. Changing level is
+         * the exclusive business of a ramp.
+         */
+        stroke.Level = a0.Level;
+        b0.Level = a0.Level;
+
         return stroke;
     }
 
@@ -627,7 +672,7 @@ public class Stroke
     {
         lock (_classLock)
         {
-            Sid = ++_nextId;
+            Sid = ++_nextProvisionalSid;
         }
 
         _a = null;

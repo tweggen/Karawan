@@ -74,7 +74,7 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 - `BepuPhysics2` (github.com/TimosForks/bepuphysics2)
 - `DefaultEcs` (github.com/TimosForks/DefaultEcs)
 - `ObjLoader` (github.com/TimosForks/ObjLoader)
-- `glTF-CSharp-Loader` (github.com/KhronosGroup/glTF-CSharp-Loader)
+- `glTF-CSharp-Loader` (github.com/KhronosGroup/glTF-CSharp-Loader) — **pin to a commit before `d8be51b`** (e.g. `git checkout d8be51b^`). That commit switched the loader from Newtonsoft.Json to System.Text.Json, and `JoyceCode/engine/{PriorityMap,rom/Loader,world/TerrainKnitter}.cs` still depend on Newtonsoft arriving transitively from it. A fresh clone of upstream `main` fails with three `CS0246: Newtonsoft` errors that name none of this.
 - `ink` (github.com/TimosForks/ink)
 
 ```bash
@@ -88,7 +88,22 @@ dotnet run --project Karawan/Karawan.csproj
 dotnet run --project examples/Launcher/Karawan.GenericLauncher.csproj
 ```
 
-No test suite exists in this repository.
+**Test suites** (this section used to say none existed; that has not been true for some time):
+
+```bash
+# xUnit unit/regression suite — fast, no engine boot required
+dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj
+
+# TALE scenario suite — needs the build-tool chain published first, see below
+bash Tooling/Cmdline/build.sh && bash Chushi/build.sh
+dotnet build TestRunner/TestRunner.csproj -c Release
+./run_tests_parallel.sh all      # or ./run_tests.sh all
+```
+
+Three xUnit tests (`BakedAnimationLayoutTests` ×2, `BakedModelEquivalenceTests`) read
+baked assets from `nogame/generated/` and fail until the asset pipeline has run at
+least once — which the `TestRunner` build above does. A green run is currently
+510 xUnit + 200 TALE.
 
 **Build notes:**
 - The `nogame/generated/` directory is auto-created by an `EnsureGeneratedDirectory` MSBuild target before asset compilation. If you see build errors about missing generated files, verify this target runs first.

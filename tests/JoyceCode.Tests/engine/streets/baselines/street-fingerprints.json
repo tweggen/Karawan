@@ -1,0 +1,20 @@
+{
+  "_note": "StreetNetworkFingerprint.V1 of the generated network",
+  "_regenerate": "JOYCE_STREET_BASELINE_WRITE=1 dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj",
+  "_recordedFromCommit": "c9d4f1db9a9b52371d4ee1aea26f73e0707519b5",
+  "_warning": "Keyed by runtime\u002Barchitecture: float output is not guaranteed identical across runtimes. Add your environment\u0027s stamp rather than overwriting another.",
+  "environments": {
+    ".NET 10.0|X64": {
+      "seeds": {
+        "seed000@500": "n=27,s=29,h=6C5E1DEFAA2E916B",
+        "Yelukhdidru@800": "n=64,s=74,h=4CD73F7A1DEA2F08",
+        "Yelukhdidru@100": "n=0,s=0,h=E3B0C44298FC1C14",
+        "Yelukhdidru@400": "n=12,s=11,h=00226777ABE96D49",
+        "seed017@2400": "n=785,s=1034,h=27B690F7094A1DE5",
+        "seed011@500": "n=23,s=24,h=F8CA7939F33672CE",
+        "seed000@1500": "n=274,s=367,h=42F6B75E2D6AB98C",
+        "Yelukhdidru@3000": "n=1379,s=1875,h=080C7C4FC7F30196"
+      }
+    }
+  }
+}
