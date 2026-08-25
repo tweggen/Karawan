@@ -17,7 +17,18 @@ public class StreetPoint
     private static readonly engine.Dc _dc = engine.Dc.StreetGen;
 
     private static object _classLo = new();
-    static private int _nextId = 1;
+
+    /**
+     * Provisional identity for a point that is not in a store yet.
+     *
+     * Points are compared and keyed on Id well before they join a network - the
+     * section maps do it, and so do tests that build a junction by hand - so a fresh
+     * point cannot simply have no id. StrokeStore replaces this with a sequence number
+     * local to the network when the point is added; see StrokeStore._assignLocalId.
+     */
+    static private int _nextProvisionalId = 1;
+
+
 
     private object _lo = new();
 
@@ -39,11 +50,16 @@ public class StreetPoint
         set
         {
             _clusterId = value;
+
             Id = (_clusterId<<16) | (Id & 0xffff);
         }
     }
 
 
+    /**
+     * Hand out the next sequence number within a cluster. Never returns 0, so that a
+     * zero low half unambiguously means "no identity yet".
+     */
     public Vector2 Pos
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -769,7 +785,7 @@ public class StreetPoint
     {
         lock (_classLo)
         {
-            Id = _nextId++;
+            Id = _nextProvisionalId++;
         }
 
         Pos = new Vector2(0f, 0f);

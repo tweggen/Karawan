@@ -87,7 +87,14 @@ public enum StrokeKind : byte
 public class Stroke
 {
     static private object _classLock = new();
-    static private int _nextId = 10000;
+
+    /**
+     * Provisional identity until the stroke joins a network. See
+     * StreetPoint._nextProvisionalId.
+     */
+    static private int _nextProvisionalSid = 10000;
+
+
 
     [LiteDB.BsonId]
     public int Sid
@@ -106,9 +113,11 @@ public class Stroke
         set
         {
             _clusterId = value;
+
             Sid = (_clusterId << 16) | (Sid & 0xffff);
         }
     }
+
 
     public StrokeStore? Store;
 
@@ -663,7 +672,7 @@ public class Stroke
     {
         lock (_classLock)
         {
-            Sid = ++_nextId;
+            Sid = ++_nextProvisionalSid;
         }
 
         _a = null;

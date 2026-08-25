@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using engine.world;
 using LiteDB;
 
@@ -33,7 +33,7 @@ public class ClusterStorage
         StrokeStore strokeStore = clusterDesc.StrokeStore();
         foreach (var stroke in strokes)
         {
-            strokeStore.AddStroke(stroke);
+            strokeStore.AddStoredStroke(stroke);
         }
         
         return true;

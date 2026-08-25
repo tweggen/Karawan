@@ -34,6 +34,31 @@ public class StrokeStore
 
     private bool _traceStrokes;
 
+    /*
+     * Id sequences for this network.
+     *
+     * An Id packs the cluster into its high 16 bits and a sequence number into its low
+     * 16, so the sequence only has to be unique within one street network - which is
+     * exactly the scope of one store. It used to come from a process-global counter,
+     * which meant that after 65535 points anywhere in the process the low half wrapped
+     * and two points in the SAME network could share an Id, quietly corrupting the
+     * adjacency set behind AreConnected and colliding on the LiteDB primary key. The
+     * test suite alone gets through that budget some fifty times over.
+     *
+     * Deliberately per store rather than a static keyed on cluster id: several networks
+     * for the same cluster are built concurrently (the test suite does it constantly),
+     * and any shared counter that gets reset between them corrupts whichever run is
+     * still in flight.
+     */
+    private int _nextPointLocalId;
+    private int _nextStrokeLocalId;
+
+    /**
+     * Set while re-adding a cluster that came back from the cache, whose ids are
+     * already meaningful and must survive.
+     */
+    private bool _keepStoredIds;
+
 
     static private void _computeStrokeBoundingBox(in Stroke stroke, out Octree.BoundingBox bb)
     {
@@ -398,10 +423,31 @@ public class StrokeStore
             }
         }
 #endif
+        _assignLocalId(sp);
+
         _octreeSP.Add(sp, sp.Pos3);
 
         sp.InStore = true;
         _listPoints.Add(sp);
+    }
+
+
+    /**
+     * Re-add a stroke that came back from the cluster cache, keeping the ids it was
+     * stored with. Everything else must go through AddStroke, which hands out fresh
+     * network-local ids.
+     */
+    public void AddStoredStroke(in Stroke stroke)
+    {
+        _keepStoredIds = true;
+        try
+        {
+            AddStroke(stroke);
+        }
+        finally
+        {
+            _keepStoredIds = false;
+        }
     }
 
 
@@ -435,12 +481,69 @@ public class StrokeStore
 
         stroke.B.AddEndingStroke(stroke);
 
+        _assignLocalSid(stroke);
+
         stroke.Store = this;
         _listStrokes.Add(stroke);
         _setStrokes.Add((long)stroke.A.Id | ((long)stroke.B.Id << 32));
         _setStrokes.Add((long)stroke.B.Id | ((long)stroke.A.Id << 32));
         _computeStrokeBoundingBox(stroke, out var bb);
         _octreeStrokes.Add(stroke, bb);
+    }
+
+
+    /**
+     * Give a point its identity within this network, unless it already has one from
+     * storage.
+     */
+    private void _assignLocalId(in StreetPoint sp)
+    {
+        if (_keepStoredIds)
+        {
+            /*
+             * Keep the sequence ahead of what came back, so anything added afterwards
+             * cannot collide with it.
+             */
+            int stored = sp.Id & 0xffff;
+            if (stored > _nextPointLocalId) _nextPointLocalId = stored;
+            return;
+        }
+
+        if (_nextPointLocalId >= 0xffff)
+        {
+            ErrorThrow(
+                $"This street network has run out of street point ids: an Id carries only "
+                + $"16 bits of sequence, so one cluster cannot hold more than 65535 points.",
+                m => new InvalidOperationException(m));
+        }
+
+        /*
+         * Round-trips through ClusterId's setter, which is what does the packing.
+         */
+        sp.Id = ++_nextPointLocalId;
+        sp.ClusterId = sp.ClusterId;
+    }
+
+
+    private void _assignLocalSid(in Stroke stroke)
+    {
+        if (_keepStoredIds)
+        {
+            int stored = stroke.Sid & 0xffff;
+            if (stored > _nextStrokeLocalId) _nextStrokeLocalId = stored;
+            return;
+        }
+
+        if (_nextStrokeLocalId >= 0xffff)
+        {
+            ErrorThrow(
+                $"This street network has run out of stroke ids: an Sid carries only 16 "
+                + $"bits of sequence.",
+                m => new InvalidOperationException(m));
+        }
+
+        stroke.Sid = ++_nextStrokeLocalId;
+        stroke.ClusterId = stroke.ClusterId;
     }
 
 
