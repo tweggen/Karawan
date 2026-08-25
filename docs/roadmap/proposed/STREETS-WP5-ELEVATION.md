@@ -51,7 +51,28 @@ rest):
 
 ## 2. What remains
 
-### WP-5a — Street geometry carries elevation
+### WP-5a — Street geometry carries elevation — **PARTLY DONE**
+
+Done: junction caps and stroke surfaces are raised by their level. This turned out to
+be two lines rather than a rewrite, because **streets are built at one flat height per
+cluster rather than following the terrain** — every vertex derives from a single
+`v3Cluster` with that height baked in, so raising it raises the whole surface.
+`GenerateClusterStreetsOperator` lines 96 and 280.
+
+The fragment's physics floor is deliberately left on the ground: it is one plane for
+the whole fragment, and a raised deck needs its own collision surface (WP-5c).
+
+Remaining, as **WP-5a-ii — ramps**. A ramp's two ends are on different decks, so its
+surface has to shear along its length. That is not a one-line change: `h` is consumed
+at roughly fifteen vertex-emission sites in that function, and a sloped surface also
+needs a real normal instead of the `Vector3.UnitY` every site currently passes, or the
+lighting is wrong. Today a ramp renders as a flat platform at its lower deck. Nothing
+generates ramps until a multilayer ruleset is enabled, so this is unreachable rather
+than broken — but it must land before WP-5d.
+
+Original scoping follows.
+
+#### Original scoping
 
 `GenerateClusterStreetsOperator` builds the road surface from strokes and from
 `StreetPoint.GetSectionArray()`. Every vertex it emits needs

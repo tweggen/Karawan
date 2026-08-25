@@ -93,7 +93,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             return true;
         }
 
-        float h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+        /*
+         * Streets sit at one flat height across the cluster rather than following the
+         * terrain, so a deck is simply that height plus its level's elevation.
+         */
+        float h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+            + StreetLevels.ElevationOf(sp.Level);
 
         /*
          * First compute the center of the array, we need it for both
@@ -277,7 +282,18 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         Vector3 n3 = new(n.X, 0f, n.Y);
         Vector2 q = stroke.Unit;
         Vector3 q3 = new(q.X, 0f, q.Y);
-        var h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+        /*
+         * The whole surface is built from v3Cluster plus planar offsets, so raising it
+         * by the stroke's level raises every vertex of it.
+         *
+         * NOT yet correct for a ramp, whose two ends are on different decks: it renders
+         * as a flat platform at its lower one. Doing it properly means shearing Y along
+         * the stroke at every emission site below and giving the surface a sloped
+         * normal instead of UnitY, which is WP-5a-ii. Nothing generates ramps until a
+         * multilayer ruleset is enabled, so this is unreachable today.
+         */
+        var h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+            + StreetLevels.ElevationOf(stroke.Level);
         Vector3 v3Cluster = new(cx, h, cy);
         
 
@@ -823,6 +839,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 Vector3 v3BodyOffset = new(0f, floorHeight / 2f, 0f);
 
                 // TXWTODO: We create the full fragment, now only the part containing the city
+                /*
+                 * One floor plane for the whole fragment, so it stays on the ground.
+                 * Collision for a raised deck is a separate surface and belongs to
+                 * WP-5c; without it a vehicle would drive through a bridge.
+                 */
                 Vector3 v3BoxPos = worldFragment.Position with
                 {
                     Y = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
