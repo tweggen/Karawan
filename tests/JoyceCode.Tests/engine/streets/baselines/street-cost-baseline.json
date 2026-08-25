@@ -2,41 +2,41 @@
   "_note": "allocated bytes (min of 3 runs); wallMs is advisory only",
   "_regenerate": "JOYCE_STREET_BASELINE_WRITE=1 dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj",
   "_recordedFromCommit": "c9d4f1db9a9b52371d4ee1aea26f73e0707519b5",
-  "_warning": "Keyed by runtime+architecture: float output is not guaranteed identical across runtimes. Add your environment's stamp rather than overwriting another.",
+  "_warning": "Keyed by runtime\u002Barchitecture: float output is not guaranteed identical across runtimes. Add your environment\u0027s stamp rather than overwriting another.",
   "environments": {
-    ".NET 10.0.10|X64": {
+    ".NET 10.0|X64": {
       "seeds": {
+        "Yelukhdidru@3000": {
+          "allocatedBytes": 4936592,
+          "wallMsAdvisory": 35.3546
+        },
         "Yelukhdidru@100": {
           "allocatedBytes": 6464,
-          "wallMsAdvisory": 0.0205
-        },
-        "Yelukhdidru@3000": {
-          "allocatedBytes": 4937400,
-          "wallMsAdvisory": 74.9724
-        },
-        "Yelukhdidru@400": {
-          "allocatedBytes": 35024,
-          "wallMsAdvisory": 0.2516
-        },
-        "Yelukhdidru@800": {
-          "allocatedBytes": 207096,
-          "wallMsAdvisory": 2.671
+          "wallMsAdvisory": 0.0091
         },
         "seed000@1500": {
-          "allocatedBytes": 941584,
-          "wallMsAdvisory": 13.6657
+          "allocatedBytes": 941536,
+          "wallMsAdvisory": 3.531
+        },
+        "seed011@500": {
+          "allocatedBytes": 74888,
+          "wallMsAdvisory": 0.156
         },
         "seed000@500": {
           "allocatedBytes": 86440,
-          "wallMsAdvisory": 1.4829
-        },
-        "seed011@500": {
-          "allocatedBytes": 74960,
-          "wallMsAdvisory": 0.825
+          "wallMsAdvisory": 0.2072
         },
         "seed017@2400": {
-          "allocatedBytes": 2824032,
-          "wallMsAdvisory": 32.4473
+          "allocatedBytes": 2824144,
+          "wallMsAdvisory": 12.2492
+        },
+        "Yelukhdidru@800": {
+          "allocatedBytes": 207176,
+          "wallMsAdvisory": 0.5606
+        },
+        "Yelukhdidru@400": {
+          "allocatedBytes": 34952,
+          "wallMsAdvisory": 0.0972
         }
       }
     }

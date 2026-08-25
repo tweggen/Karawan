@@ -93,11 +93,18 @@ internal static class StreetNetworkFingerprint
      * Floating point results are only guaranteed to be reproducible for a given
      * runtime and architecture, so golden fingerprints are recorded per environment
      * rather than assumed to be portable.
+     *
+     * Deliberately major.minor rather than the full patch version: recompiling the
+     * suite from net9.0 to net10.0 on the same runtime was verified to leave every
+     * fingerprint bit-identical, so keying on the patch level would invalidate the
+     * baselines on every routine runtime update for no benefit. A major runtime
+     * change is the level at which codegen differences are at least conceivable.
      */
     internal static string EnvironmentStamp()
     {
-        return string.Format(CultureInfo.InvariantCulture, "{0}|{1}",
-            RuntimeInformation.FrameworkDescription,
+        return string.Format(CultureInfo.InvariantCulture, ".NET {0}.{1}|{2}",
+            Environment.Version.Major,
+            Environment.Version.Minor,
             RuntimeInformation.ProcessArchitecture);
     }
 

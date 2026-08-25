@@ -58,10 +58,13 @@ references `Joyce.csproj`, so **the full sibling checkout from CLAUDE.md § Buil
 is required** to run any gate. Agents must verify this before starting; a missing
 sibling presents as an unrelated-looking restore error.
 
-> Note: this plan was authored in a container with neither `dotnet` nor the sibling
-> repos present, so no command in it has been executed. Every AC is specified but
-> unverified — WP-0's entire purpose is to turn that into a running gate. Treat WP-0
-> effort estimates as the least certain in this document.
+Toolchain is .NET 10 (`global.json` pins SDK 10.0.110; the test project targets
+net10.0). See finding 7 below for the `glTF-CSharp-Loader` commit pin, which is not
+documented in CLAUDE.md and breaks a fresh clone.
+
+> Note: WP-0 has since been executed and its gate verified on trunk's toolchain
+> (SDK 10.0.110, net10.0). The remaining work packages are still specified but
+> unverified.
 
 ---
 
@@ -196,14 +199,19 @@ Findings that change how later WPs must be executed:
 
 1. **Baselines are per environment, not portable.** Float output is only guaranteed
    reproducible for a given runtime and architecture, so the baseline files are keyed
-   by an environment stamp (`".NET 10.0.10|X64"`). A missing stamp fails loudly with
-   instructions — it never silently passes. **The committed baselines were recorded on
-   .NET 10.0.10 / x64**, because the authoring container had no .NET 9 runtime
-   available (Ubuntu 24.04 ships no `dotnet-sdk-9.0`, and the Microsoft download host
-   is blocked by egress policy). **A developer on the project's own .NET 9 toolchain
-   must regenerate once** with
-   `JOYCE_STREET_BASELINE_WRITE=1 dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj`
-   and commit the added stamp. Both stamps can coexist in the file.
+   by an environment stamp — `".NET 10.0|X64"`, i.e. **major.minor, not the patch
+   level**. A missing stamp fails loudly with instructions; it never silently passes.
+   Regenerate with
+   `JOYCE_STREET_BASELINE_WRITE=1 dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj`;
+   several stamps can coexist in the file.
+
+   The patch level is deliberately excluded because it was measured to be irrelevant:
+   WP-0 was first developed against the pre-migration tree (net9.0 target) and then
+   rebuilt on trunk's net10.0 target on the same runtime, and **all eight fingerprint
+   hashes came out bit-identical**. Keying on the patch version would therefore
+   invalidate baselines on every routine runtime update for no benefit. A major
+   runtime change remains the level at which codegen differences are conceivable, so
+   that much is still keyed on.
 2. **`_connectOrphanedBundles` is live code, not dead code.** Measured over 180
    generated clusters: 105 of them (58%) required orphan bridging, with 153
    `orphan_bridge` strokes total. WP-2c must move it with care, not retire it.
