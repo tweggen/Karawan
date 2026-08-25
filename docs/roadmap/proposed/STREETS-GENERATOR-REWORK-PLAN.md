@@ -292,6 +292,56 @@ Baseline for later WPs, on the recorded environment:
 | 1.5 | Net line count of `Generator.cs` reduced by ≥120 (surgery + dead blocks removed). |
 | 1.6 | `./run_tests.sh all` green. |
 
+### WP-1 outcome — DONE
+
+Delivered `engine/streets/generation/NetworkBuilder.cs` and
+`tests/.../engine/streets/NetworkBuilderTests.cs` (8 tests). `Generator.cs`
+1241 → 1120 lines (−121). All ACs met: fingerprints byte-identical, allocation within
+tolerance, xUnit 446/446, TALE `./run_tests_parallel.sh all` 200/200.
+
+Corrections to the steps as written above:
+
+1. **Step 3 was already done.** `Stroke._setA`/`_setB` (`Stroke.cs:304`, `:326`) have
+   always thrown `InvalidOperationException` when `Store != null`. The guard did not
+   need adding, only covering — `AStoredStrokeRefusesToExchangeItsEndpoints` does that.
+   It also means the pasted stack trace at the old `Generator.cs:932` was *not* a
+   half-rewired stored stroke: it is an `ArgumentOutOfRangeException` from
+   `StrokeStore.AddPoint`'s `DEBUG` proximity check indexing `_tmpListNearby[0]`. That
+   list is a shared mutable field which `_findClosestToCoordBelowButNot` and
+   `GetClosestPoint` *reassign* mid-use — a latent aliasing bug, unrelated to this
+   rework, not fixed here.
+2. **`SplitStrokeAt` takes the `StreetPoint`, not a `Vector2`.** The intersection point
+   must exist before the split, because the `doGenerateTail` decision measures its
+   distance to both endpoints of the stroke being split. Creating it inside the builder
+   would have forced that decision to move too, which belongs to WP-2b.
+3. **The two `_validateStrokeEndpoints` calls in the split path can never fire.**
+   `AddStroke` adds any endpoint that is not yet `InStore`, so by the time they run
+   both endpoints always pass. More evidence that the orphan machinery is vestigial;
+   WP-2c deletes it.
+4. **The cost gate needed an absolute slack floor.** A purely relative tolerance is the
+   wrong shape for the degenerate seeds: `Yelukhdidru@100` allocates ~6.5 KB in total,
+   so 152 bytes of runtime noise reads as +2.4% and trips a 2% ceiling — on a seed
+   whose network is empty, where `SplitStrokeAt` is never called. `StreetCostTests` now
+   allows `2% + 8192 bytes`; on the largest seed the slack is 0.17%, so the relative
+   check still dominates where the cost signal lives. This surfaced only when baked
+   assets became available and changed the suite composition.
+
+**The gate was mutation-tested rather than assumed to work:**
+
+| Mutation | Result |
+|---|---|
+| Swap the two `AddStroke` calls in `SplitStrokeAt` | 1 fingerprint test fails — confirms the ordering warning is real, not folklore, and that the determinism gate detects it |
+| Drop `AddStroke(tail)` | 4 of 8 `NetworkBuilderTests` fail |
+
+Later WPs should keep doing this: a gate nobody has seen fail is not known to work.
+
+**Environment note:** the TALE suite needs the build-tool chain published first —
+`bash Tooling/Cmdline/build.sh` then `bash Chushi/build.sh`, before
+`dotnet build TestRunner/TestRunner.csproj -c Release`. Each missing step fails with a
+message naming the next one. Running it also bakes `nogame/generated`, which is what
+makes the three asset-dependent xUnit tests (`BakedAnimationLayoutTests` ×2,
+`BakedModelEquivalenceTests`) pass; without it they fail for environmental reasons.
+
 ---
 
 ## 3. WP-2 — Constraint pipeline (three sub-packages)

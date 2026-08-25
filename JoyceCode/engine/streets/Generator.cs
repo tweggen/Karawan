@@ -18,6 +18,7 @@ namespace engine.streets
 
         private List<Stroke> _listStrokesToDo;
         private StrokeStore _strokeStore;
+        private generation.NetworkBuilder _networkBuilder;
         private bool _traceGenerator = false;
         private string _annotation = "";
         private ClusterDesc _clusterDesc;
@@ -613,41 +614,6 @@ namespace engine.streets
                     }
 
                     /*
-                     * Check: Is any of our endpoints too close to an existing endpoint?
-                     */
-                    if(false) {
-                        // TXWTODO: I don't check point a any more. Is that ok?
-                        /*
-                         * I wonder why a should be too close to another point?
-                         * Possibly due to moving intersections?
-                         */
-                        StreetPoint tooClose = _strokeStore.FindClosestBelowButNot(
-                            curr.A, minPointToCandPointDistance, curr.B);
-
-                        if (null != tooClose)
-                        {
-                            if (_traceGenerator)
-                            {
-                                Trace(_dc, $"StreetPoint A ({curr.A}) too close to StreetPoint ({tooClose}).");
-                            }
-
-                            /*
-                             * A probably already is in the store, as we are moving from a to be. 
-                             */
-
-#if false
-                             /*
-                             * if a is close to another existing point, use that one.
-                             */
-                            curr.a = tooClose;
-#endif
-                            doAdd = false;
-                            continueCheck = false;
-                            continue;
-                        }
-                    }
-
-                    /*
                      * if B is new, look if it is too close to an existing point.
                      */
                     if (!curr.B.InStore)
@@ -862,110 +828,22 @@ namespace engine.streets
                             doGenerateTail = false;
                             // break;
                         }
-#if false
                         /*
-                         * Well, still this intersection point might be closer to another
-                         * known street point. If it does, we use the established point instead of the
-                         * intersection point. Which, you guess, might yield to a different intersection...
+                         * Split the intersected stroke in two at the intersection point.
+                         * All topology mutation lives in NetworkBuilder; the order of
+                         * operations in there is part of the generated output.
                          */
-                        var tooClose: StreetPoint = _strokeStore.findClosestBelowButNot( 
-                            intersectionStreetPoint, minPointToCandIntersectionDistance, null );
-
-                        if( tooClose != null ) {
-                            if( _traceGenerator ) {
-                                trace( 'Generator: Found $intersectionStreetPoint to be too close to $tooClose. Ignoring intersecting stroke $curr');
-                            }
-                            /*
-                             * The intersection is pretty close to another street point. Given,
-                             * that the network was in a sane state before, it should remain sane enough if
-                             * I replace this intersection with the existing street point for both
-                             * the existing and the new stroke.
-                             *
-                             * TXWTODO: Add a new condition to check for street points near strokes
-                             * while 1st path insertion.
-                             */
-
-                            /*
-                             * Until we add further checks, do not add this stroke, but remove it.
-                             */
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
-                        }
-#endif
-#if false
-                        /*
-                         * Now, before dissecting the target stroke look, whether the intersection
-                         * point would be too close to another point. If it would be, discard the current 
-                         * stroke entirely.
-                         * 
-                         * TXWTODO: However, we do not test whether it is too close to another line.
-                         */
-                         {
-                            var si = _strokeStore.getClosestPoint( curr );
-                            if( si != null && si.scaleExists < minPointToCandStrokeDistance ) {
-                                if( _traceGenerator ) trace( 'Generator: Discarding stroke, too close: ${si.scaleExists}' );
-                                /*
-                                * If there is any point closer the d meters to this stroke,
-                                * then [look, which point is closer to the stroke and connect
-                                * it instead] drop it.
-                                */
-                                doAdd = false;
-                                continueCheck = false;
-                                break;
-                            }
-                        }
-#endif
                         Stroke oldStrokeExists = intersection.StrokeExists;
+                        Stroke newStrokeExists = _networkBuilder.SplitStrokeAt(
+                            oldStrokeExists, intersectionStreetPoint);
 
                         /*
-                         * Important: We must not modify the topology of the graph directly.
-                         * Therefore we first remove the edge from the graph. Modifying the nodes
-                         * and then readding it.
+                         * Both halves are in the store now, so both endpoints of both are
+                         * necessarily InStore and these checks cannot report anything.
+                         * Retained until WP-2c retires the orphan tracking wholesale.
                          */
-                        _strokeStore.Remove( intersection.StrokeExists );
-                        var newStrokeExists = intersection.StrokeExists.CreateUnattachedCopy();
-                        /*
-                         * the two endpoints of stroke still are in the stroke store.
-                         */
-                        /*
-                         * Warning: [null file name]:0: WorkerQueue:RunPart: Warning: Error executing worker queue engine.Engine.MainThread action: System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
-   at System.Collections.Generic.List`1.get_Item(Int32 index)
-   at engine.streets.StrokeStore.AddPoint(StreetPoint& sp) in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\streets\StrokeStore.cs:line 368
-   at engine.streets.StrokeStore.AddStroke(Stroke& stroke) in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\streets\StrokeStore.cs:line 396
-   at engine.streets.Generator.Generate() in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\streets\Generator.cs:line 494
-   at engine.world.ClusterDesc._triggerStreets() in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\world\ClusterDesc.cs:line 310
-   at engine.world.ClusterDesc.FindStartPosition() in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\world\ClusterDesc.cs:line 347
-   at joyce.ui.Main.<>c__DisplayClass7_0.<Render>b__1() in C:\Users\timow\coding\github\Karawan\JoyceCode\ui\Main.cs:line 181
-   at engine.WorkerQueue.RunPart(Single dt) in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\WorkerQueue.cs:line 78
-Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue engine.Engine.MainThread
-
-                         */
-                        newStrokeExists.PushCreator( "newStrokeExists" );
-
-                        /*
-                         * Intersection street point is not in the stroke store.
-                         */
-                        oldStrokeExists.B = intersectionStreetPoint;
-                        oldStrokeExists.PushCreator( "oldStrokeExists" );
-
-                        newStrokeExists.A = intersectionStreetPoint;
-                        
-                        /*
-                         * So at this point:
-                         * - oldStrokeExists.A already is in the stroke store.
-                         * - oldStrokeExists.B is not.
-                         * - newStrokeExists.A is not in the stroke store, same as old.B
-                         * - newStrokeExists.B already is in the stroke store.
-                         */
-
-                        // newStrokeExists.weight = 0.1;
-                        // oldStrokeExists.weight = 6.0;
-
-                        _strokeStore.AddStroke(newStrokeExists);
-                        _validateStrokeEndpoints(newStrokeExists);  // Validate endpoints
-                        _strokeStore.AddStroke(oldStrokeExists);
-                        _validateStrokeEndpoints(oldStrokeExists);  // Validate endpoints
+                        _validateStrokeEndpoints(newStrokeExists);
+                        _validateStrokeEndpoints(oldStrokeExists);
                         _generationCounter++;
 
                         /*
@@ -1223,6 +1101,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
             _rnd = new builtin.tools.RandomSource(seed0);
             _listStrokesToDo = new List<Stroke>();
             _strokeStore = strokeStore;
+            _networkBuilder = new generation.NetworkBuilder(strokeStore);
             _clusterDesc = clusterDesc;
             _generationCounter = 0;
 
