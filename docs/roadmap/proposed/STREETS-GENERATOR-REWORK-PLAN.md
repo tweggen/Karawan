@@ -613,6 +613,68 @@ deliberate content decision.
 
 ---
 
+### WP-4 outcome — DONE (4a, 4b), with the policy hook deliberately unwired
+
+`StreetPoint` and `Stroke` carry `sbyte Level`; `Stroke` carries `StrokeKind`
+(Street / Ramp / Bridge / Tunnel / ConnectorBridge). New:
+`ClearanceConstraint`, `SpanLengthConstraint`, `OverpassBuilder`,
+`NetworkBuilder.Commit`/`CommitChain`, `StrokeStore.GetRampsNear`, fingerprint `V2`.
+21 multilayer tests. xUnit 510/510, TALE 200/200.
+
+**AC-4.1 holds: ground-only V1 fingerprints are byte-identical.** Layers are free when
+unused, which was the non-negotiable one. Allocation is unchanged against the WP-3
+baseline (AC-4.2).
+
+#### One octree pair, filtered — not an octree per level
+
+The plan called for `Dictionary<sbyte, …>` of per-level octrees. Implemented instead
+as a level filter inside the four neighbourhood queries
+(`IntersectsMayTouchClosest`, `FindClosestBelowButNot`, `GetClosestStroke`,
+`GetClosestPoint`). Reasoning: for the ground-only case that shipping configurations
+use, **no entry is ever skipped and the cost is exactly what it was** — whereas
+per-level indices are a substantial refactor of a class `QuarterGenerator` and the
+operators also depend on. Per-level indices only start paying off once several busy
+decks exist, and can be added then without touching a single caller. Recorded as a
+deliberate deviation, not an oversight.
+
+`AngleSeparationConstraint` needed no filtering at all, contrary to the architecture
+doc's list: it reads `StreetPoint.GetAngleArray()`, which contains only strokes
+actually incident to that junction. A deck passing overhead never touches it, and a
+ramp leaving it genuinely does occupy angular space there — so the unfiltered
+behaviour is already the correct one.
+
+#### What is built, and what is not
+
+Built and tested: the invariants (`Commit` refuses an ordinary street joining two
+levels, a ramp skipping a level, and a ramp that changes no level), the atomic
+`CommitChain` (a chain whose third member is inadmissible leaves **zero** strokes and
+**zero** points behind), clearance against ramps, span bounds, and `OverpassBuilder`
+producing ramp–deck–ramp along the plan route an ordinary street would have taken.
+
+**Not built: the policy hook** — the ruleset `"when": "intersectionRejected"` that
+would have the generator *choose* to throw an overpass instead of splitting at a heavy
+crossing. This is deliberate and it is the honest boundary of WP-4. The construction
+primitives and their invariants are done and covered; deciding *when* a city wants a
+bridge is a content question that wants tuning against real clusters, and it must ship
+off regardless (enabling it invalidates every `ClusterStorage`-cached cluster, a
+world-content version bump). The seam is `OverpassBuilder` plus `CommitChain`: a rule
+that fires it needs no further engine work.
+
+#### Tests caught two false positives, both mine
+
+- "Strokes on different levels cross without splitting" initially passed **for the
+  wrong reason**: `Stroke.CreateByAngleFrom` derives B's position from an angle and a
+  length, so the supposedly vertical candidates were 1 m horizontal stubs crossing
+  nothing. The paired same-level control failed and exposed it. Pairing a positive
+  with its control is what made the difference.
+- The degenerate-structure test assumed a 20 cm span was refusable by the builder. It
+  is not, and should not be: the builder refuses only the geometrically impossible
+  (deck points quantising onto one spot), while "too short to be sensible" belongs to
+  `SpanLengthConstraint`. The test clarified a responsibility boundary rather than
+  finding a bug.
+
+---
+
 ## 6. Out of scope
 
 - **WP-5 (downstream elevation):** `StreetPoint.Pos3`'s hardcoded `Y = 0`, deck/ramp

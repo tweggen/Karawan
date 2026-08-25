@@ -22,6 +22,19 @@ internal sealed class GenerationContext
      */
     internal float AngleMinStrokesRad;
 
+    /**
+     * How far, in plan view, a stroke must stay from a ramp reaching into its deck.
+     * Zero disables the check, which is the ground-only case.
+     */
+    internal float RampClearance;
+
+    internal float MinSpanLength;
+
+    /**
+     * Zero means unbounded.
+     */
+    internal float MaxSpanLength;
+
     internal int ClusterId;
 
     internal bool IsTracing;

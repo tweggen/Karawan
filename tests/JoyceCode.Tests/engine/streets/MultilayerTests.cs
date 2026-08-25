@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using engine.streets;
 using engine.streets.generation;
@@ -224,5 +225,249 @@ public class MultilayerTests
         Assert.NotEqual(
             StreetNetworkFingerprint.V2(ground),
             StreetNetworkFingerprint.V2(elevated));
+    }
+}
+
+
+/**
+ * The construction primitives: ramps, atomic chains, clearance and span.
+ */
+public class OverpassTests
+{
+    private const float ClusterSize = 1000f;
+
+    private static StreetPoint _pointAt(float x, float y, sbyte level)
+    {
+        var sp = new StreetPoint() { ClusterId = 0, Level = level };
+        sp.SetPos(x, y);
+        return sp;
+    }
+
+    private static Stroke _stroke(StreetPoint a, StreetPoint b, StrokeKind kind, sbyte level)
+    {
+        var s = new Stroke() { ClusterId = 0, IsPrimary = true, Weight = 1f, Kind = kind, Level = level };
+        s.A = a;
+        s.B = b;
+        return s;
+    }
+
+    private static List<Stroke> _overpass()
+    {
+        return new OverpassBuilder(0).Build(
+            _pointAt(0f, 0f, 0), _pointAt(200f, 0f, 0),
+            StrokeKind.Bridge, rampFraction: 0.25f, weight: 1f);
+    }
+
+
+    /**
+     * AC-4.4 and AC-4.5, on the structure the builder actually produces.
+     */
+    [Fact]
+    public void EveryCrossLevelJointInAnOverpassIsAnAdjacentLevelRamp()
+    {
+        var chain = _overpass();
+        Assert.Equal(3, chain.Count);
+
+        foreach (var s in chain)
+        {
+            if (s.A.Level == s.B.Level) continue;
+
+            Assert.Equal(StrokeKind.Ramp, s.Kind);
+            Assert.Equal(1, Math.Abs(s.A.Level - s.B.Level));
+        }
+
+        Assert.Equal(StrokeKind.Ramp, chain[0].Kind);
+        Assert.Equal(StrokeKind.Bridge, chain[1].Kind);
+        Assert.Equal(StrokeKind.Ramp, chain[2].Kind);
+
+        /* the deck is one level up, and level with itself */
+        Assert.Equal((sbyte)1, chain[1].A.Level);
+        Assert.Equal((sbyte)1, chain[1].B.Level);
+    }
+
+
+    [Fact]
+    public void ATunnelGoesDownInsteadOfUp()
+    {
+        var chain = new OverpassBuilder(0).Build(
+            _pointAt(0f, 0f, 0), _pointAt(200f, 0f, 0),
+            StrokeKind.Tunnel, rampFraction: 0.25f, weight: 1f);
+
+        Assert.Equal((sbyte)-1, chain[1].A.Level);
+        Assert.Equal(StrokeKind.Tunnel, chain[1].Kind);
+    }
+
+
+    [Fact]
+    public void TheStructureKeepsThePlanRouteItReplaces()
+    {
+        var chain = _overpass();
+
+        Assert.Equal(0f, chain[0].A.Pos.X, 1);
+        Assert.Equal(200f, chain[2].B.Pos.X, 1);
+        foreach (var s in chain)
+        {
+            Assert.Equal(0f, s.A.Pos.Y, 1);
+            Assert.Equal(0f, s.B.Pos.Y, 1);
+        }
+    }
+
+
+    [Fact]
+    public void ACommittedOverpassSatisfiesTheLevelInvariants()
+    {
+        var store = new StrokeStore(ClusterSize);
+        new NetworkBuilder(store).CommitChain(_overpass());
+
+        Assert.Equal(3, store.GetStrokes().Count);
+
+        foreach (var s in store.GetStrokes())
+        {
+            if (s.A.Level != s.B.Level)
+            {
+                Assert.Equal(StrokeKind.Ramp, s.Kind);
+                Assert.Equal(1, Math.Abs(s.A.Level - s.B.Level));
+            }
+        }
+    }
+
+
+    /**
+     * AC-4.6. The whole reason CommitChain exists.
+     */
+    [Fact]
+    public void AChainWithAnInadmissibleMemberLeavesNothingBehind()
+    {
+        var store = new StrokeStore(ClusterSize);
+        var chain = _overpass();
+
+        /*
+         * Break the last member: a deck-to-ground joint that claims to be an ordinary
+         * street. It is the third of three, so a non-atomic commit would already have
+         * added the first two by the time it is rejected.
+         */
+        chain[2].Kind = StrokeKind.Street;
+
+        Assert.Throws<InvalidOperationException>(
+            () => new NetworkBuilder(store).CommitChain(chain));
+
+        Assert.Empty(store.GetStrokes());
+        Assert.Empty(store.GetStreetPoints());
+    }
+
+
+    [Fact]
+    public void AnOrdinaryStreetMayNotJoinTwoLevels()
+    {
+        var store = new StrokeStore(ClusterSize);
+        var bad = _stroke(_pointAt(0f, 0f, 0), _pointAt(100f, 0f, 1), StrokeKind.Street, 0);
+
+        Assert.Throws<InvalidOperationException>(() => new NetworkBuilder(store).Commit(bad));
+        Assert.Empty(store.GetStrokes());
+    }
+
+
+    [Fact]
+    public void ARampMayNotSkipALevel()
+    {
+        var store = new StrokeStore(ClusterSize);
+        var bad = _stroke(_pointAt(0f, 0f, 0), _pointAt(100f, 0f, 2), StrokeKind.Ramp, 0);
+
+        Assert.Throws<InvalidOperationException>(() => new NetworkBuilder(store).Commit(bad));
+    }
+
+
+    [Fact]
+    public void ARampThatDoesNotChangeLevelIsRefused()
+    {
+        var store = new StrokeStore(ClusterSize);
+        var bad = _stroke(_pointAt(0f, 0f, 0), _pointAt(100f, 0f, 0), StrokeKind.Ramp, 0);
+
+        Assert.Throws<InvalidOperationException>(() => new NetworkBuilder(store).Commit(bad));
+    }
+
+
+    /**
+     * AC-4.7.
+     */
+    [Fact]
+    public void AStrokeRunningAlongsideARampIsRejectedForClearance()
+    {
+        var store = new StrokeStore(ClusterSize);
+        new NetworkBuilder(store).CommitChain(_overpass());
+
+        var ctx = ConstraintFixture.Context();
+        ctx.RampClearance = 20f;
+
+        /*
+         * Parallel to the first ramp and 5 m from it, on the ground.
+         */
+        var cand = _stroke(_pointAt(0f, 5f, 0), _pointAt(50f, 5f, 0), StrokeKind.Street, 0);
+
+        var verdict = new ClearanceConstraint().Check(cand, store, ctx);
+        Assert.Equal(VerdictKind.Reject, verdict.Kind);
+        Assert.Equal("too close to a ramp", verdict.Reason);
+    }
+
+
+    [Fact]
+    public void ClearanceIsInactiveWhenNotConfigured()
+    {
+        var store = new StrokeStore(ClusterSize);
+        new NetworkBuilder(store).CommitChain(_overpass());
+
+        var ctx = ConstraintFixture.Context();
+        Assert.Equal(0f, ctx.RampClearance);
+
+        var cand = _stroke(_pointAt(0f, 5f, 0), _pointAt(50f, 5f, 0), StrokeKind.Street, 0);
+
+        Assert.Equal(VerdictKind.Accept,
+            new ClearanceConstraint().Check(cand, store, ctx).Kind);
+    }
+
+
+    [Fact]
+    public void ADeckMustBeLongEnoughAndShortEnough()
+    {
+        var ctx = ConstraintFixture.Context();
+        ctx.MinSpanLength = 40f;
+        ctx.MaxSpanLength = 300f;
+
+        var c = new SpanLengthConstraint();
+
+        var tooShort = _stroke(_pointAt(0f, 0f, 1), _pointAt(10f, 0f, 1), StrokeKind.Bridge, 1);
+        Assert.Equal(VerdictKind.Reject, c.Check(tooShort, null, ctx).Kind);
+
+        var tooLong = _stroke(_pointAt(0f, 0f, 1), _pointAt(500f, 0f, 1), StrokeKind.Bridge, 1);
+        Assert.Equal(VerdictKind.Reject, c.Check(tooLong, null, ctx).Kind);
+
+        var justRight = _stroke(_pointAt(0f, 0f, 1), _pointAt(100f, 0f, 1), StrokeKind.Bridge, 1);
+        Assert.Equal(VerdictKind.Accept, c.Check(justRight, null, ctx).Kind);
+
+        /* an ordinary street is none of this constraint's business */
+        var street = _stroke(_pointAt(0f, 0f, 0), _pointAt(10f, 0f, 0), StrokeKind.Street, 0);
+        Assert.Equal(VerdictKind.Accept, c.Check(street, null, ctx).Kind);
+    }
+
+
+    [Fact]
+    public void ADegenerateStructureIsRefusedRatherThanBuilt()
+    {
+        /*
+         * So short that the two deck points quantise onto the same spot. Note the
+         * builder only refuses what is geometrically impossible; refusing a span that
+         * is merely too short to be sensible is SpanLengthConstraint's job, and a
+         * 20 cm structure is built happily here for exactly that reason.
+         */
+        Assert.Null(new OverpassBuilder(0).Build(
+            _pointAt(0f, 0f, 0), _pointAt(0.1f, 0f, 0), StrokeKind.Bridge, 0.25f, 1f));
+
+        /* feet on different decks */
+        Assert.Null(new OverpassBuilder(0).Build(
+            _pointAt(0f, 0f, 0), _pointAt(200f, 0f, 1), StrokeKind.Bridge, 0.25f, 1f));
+
+        /* a ramp fraction that leaves no deck */
+        Assert.Null(new OverpassBuilder(0).Build(
+            _pointAt(0f, 0f, 0), _pointAt(200f, 0f, 0), StrokeKind.Bridge, 0.5f, 1f));
     }
 }

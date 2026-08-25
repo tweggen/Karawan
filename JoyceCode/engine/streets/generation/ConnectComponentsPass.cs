@@ -230,7 +230,8 @@ internal sealed class ConnectComponentsPass
             B = toPoint,
             ClusterId = _clusterId,
             IsPrimary = false,
-            Weight = 0.7f  // Secondary/suburban roads
+            Weight = 0.7f,  // Secondary/suburban roads
+            Kind = StrokeKind.ConnectorBridge
         };
         bridge.PushCreator("orphan_bridge");
         _strokeStore.AddStroke(bridge);
@@ -264,7 +265,8 @@ internal sealed class ConnectComponentsPass
             B = midPoint,
             ClusterId = _clusterId,
             IsPrimary = false,
-            Weight = 0.7f
+            Weight = 0.7f,
+            Kind = StrokeKind.ConnectorBridge
         };
         seg1.PushCreator("corridor_seg1");
 
@@ -274,7 +276,8 @@ internal sealed class ConnectComponentsPass
             B = toPoint,
             ClusterId = _clusterId,
             IsPrimary = false,
-            Weight = 0.7f
+            Weight = 0.7f,
+            Kind = StrokeKind.ConnectorBridge
         };
         seg2.PushCreator("corridor_seg2");
 

@@ -466,6 +466,45 @@ public class StrokeStore
     }
 
 
+    /**
+     * Ramps whose bounding box comes within maxDistance of the given stroke.
+     *
+     * Deliberately ignores Level: a ramp is the one thing that occupies two decks at
+     * once, so the caller decides which of its ends matter.
+     */
+    public IEnumerable<Stroke> GetRampsNear(in Stroke stroke, float maxDistance)
+    {
+        List<Stroke> found = new();
+
+        _computeStrokeBoundingBox(stroke, out var bb);
+        bb = new Octree.BoundingBox(bb.Center, bb.Size + 2f * maxDistance * Vector3.One);
+
+        List<Stroke> nearby = new();
+        if (!_octreeStrokes.GetCollidingNonAlloc(nearby, bb))
+        {
+            return found;
+        }
+
+        foreach (var cand in nearby)
+        {
+            if (cand.Kind != StrokeKind.Ramp || cand == stroke)
+            {
+                continue;
+            }
+
+            if (cand.Distance(stroke.A.Pos) <= maxDistance
+                || cand.Distance(stroke.B.Pos) <= maxDistance
+                || stroke.Distance(cand.A.Pos) <= maxDistance
+                || stroke.Distance(cand.B.Pos) <= maxDistance)
+            {
+                found.Add(cand);
+            }
+        }
+
+        return found;
+    }
+
+
     public List<Stroke> GetStrokes()
     {
         return _listStrokes;

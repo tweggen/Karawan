@@ -310,3 +310,91 @@ internal sealed class IntersectionConstraint : ICandidateConstraint
         return Verdict.Split(intersectingStroke, splitPoint, doGenerateTail);
     }
 }
+
+
+/**
+ * A stroke must not pass through the space a nearby ramp occupies.
+ *
+ * Level filtering makes two decks independent, which is what an overpass needs, but
+ * a ramp is the one thing that lives in BOTH decks at once: it climbs the gap between
+ * them. So a candidate on level L has to keep its distance, in plan view, from ramps
+ * joining L to L+1 or L-1, or the two would intersect in the world however cleanly
+ * they miss each other on the map.
+ *
+ * Does nothing at all until ramps exist, so ground-only generation is unaffected.
+ */
+internal sealed class ClearanceConstraint : ICandidateConstraint
+{
+    private static readonly Verdict _tooCloseToRamp = Verdict.Reject("too close to a ramp");
+
+    public string Name => "clearance";
+
+    public Verdict Check(Stroke cand, StrokeStore store, GenerationContext ctx)
+    {
+        if (ctx.RampClearance <= 0f)
+        {
+            return Verdict.Accept;
+        }
+
+        foreach (var ramp in store.GetRampsNear(cand, ctx.RampClearance))
+        {
+            /*
+             * Only ramps reaching into this candidate's deck are in the way. One two
+             * decks up is no more relevant than an unrelated street.
+             */
+            if (ramp.A.Level != cand.Level && ramp.B.Level != cand.Level)
+            {
+                continue;
+            }
+
+            if (ramp.A == cand.A || ramp.A == cand.B || ramp.B == cand.A || ramp.B == cand.B)
+            {
+                /*
+                 * Sharing a junction with the ramp is how you get onto it.
+                 */
+                continue;
+            }
+
+            return _tooCloseToRamp;
+        }
+
+        return Verdict.Accept;
+    }
+}
+
+
+/**
+ * A deck has to be long enough to be worth building and short enough to stand up.
+ *
+ * Applies only to bridges and tunnels; ordinary streets are governed by
+ * MinLengthConstraint and by the rule that emitted them.
+ */
+internal sealed class SpanLengthConstraint : ICandidateConstraint
+{
+    private static readonly Verdict _tooShort = Verdict.Reject("span too short");
+    private static readonly Verdict _tooLong = Verdict.Reject("span too long");
+
+    public string Name => "span-length";
+
+    public Verdict Check(Stroke cand, StrokeStore store, GenerationContext ctx)
+    {
+        if (cand.Kind != StrokeKind.Bridge && cand.Kind != StrokeKind.Tunnel)
+        {
+            return Verdict.Accept;
+        }
+
+        float length = Vector2.Distance(cand.A.Pos, cand.B.Pos);
+
+        if (length < ctx.MinSpanLength)
+        {
+            return _tooShort;
+        }
+
+        if (ctx.MaxSpanLength > 0f && length > ctx.MaxSpanLength)
+        {
+            return _tooLong;
+        }
+
+        return Verdict.Accept;
+    }
+}

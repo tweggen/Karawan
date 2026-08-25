@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using static engine.Logger;
 
 namespace engine.streets.generation;
@@ -26,6 +27,93 @@ internal sealed class NetworkBuilder
     internal NetworkBuilder(StrokeStore strokeStore)
     {
         _strokeStore = strokeStore ?? throw new ArgumentNullException(nameof(strokeStore));
+    }
+
+
+    /**
+     * Add one stroke, enforcing the rules that keep the layer model coherent.
+     *
+     * A stroke whose endpoints sit on different decks is a ramp, and nothing else. If
+     * an ordinary street were ever allowed to join two levels, it would render as a
+     * road climbing through the air, and every level-filtered query would start
+     * lying about what is reachable from where.
+     */
+    internal void Commit(Stroke stroke)
+    {
+        _checkLevels(stroke);
+        _strokeStore.AddStroke(stroke);
+    }
+
+
+    /**
+     * Add a whole structure, or none of it.
+     *
+     * A ramp - deck - ramp chain is only meaningful complete. Half a bridge is worse
+     * than no bridge: it is a road that stops in mid air, and it would be indexed,
+     * pathfound over and rendered like anything else. Every member is checked before
+     * any member is added.
+     */
+    internal void CommitChain(IReadOnlyList<Stroke> chain)
+    {
+        if (null == chain || chain.Count == 0)
+        {
+            ErrorThrow("Cannot commit an empty chain.", m => new InvalidOperationException(m));
+        }
+
+        foreach (var stroke in chain)
+        {
+            _checkLevels(stroke);
+
+            if (null != stroke.Store)
+            {
+                ErrorThrow($"Chain member {stroke} already is in a store.",
+                    m => new InvalidOperationException(m));
+            }
+        }
+
+        /*
+         * Only now, once every member is known to be admissible.
+         */
+        foreach (var stroke in chain)
+        {
+            _strokeStore.AddStroke(stroke);
+        }
+    }
+
+
+    private void _checkLevels(Stroke stroke)
+    {
+        sbyte levelA = stroke.A.Level;
+        sbyte levelB = stroke.B.Level;
+
+        if (levelA == levelB)
+        {
+            if (stroke.Kind == StrokeKind.Ramp)
+            {
+                ErrorThrow(
+                    $"Ramp {stroke} joins two junctions on level {levelA}. A ramp exists " +
+                    $"to change level; one that does not is an ordinary street.",
+                    m => new InvalidOperationException(m));
+            }
+
+            return;
+        }
+
+        if (stroke.Kind != StrokeKind.Ramp)
+        {
+            ErrorThrow(
+                $"Stroke {stroke} of kind {stroke.Kind} joins level {levelA} to level " +
+                $"{levelB}. Only a ramp may change level.",
+                m => new InvalidOperationException(m));
+        }
+
+        if (Math.Abs(levelA - levelB) != 1)
+        {
+            ErrorThrow(
+                $"Ramp {stroke} spans from level {levelA} to level {levelB}. Ramps join " +
+                $"adjacent decks only; further apart needs a ramp per level.",
+                m => new InvalidOperationException(m));
+        }
     }
 
 

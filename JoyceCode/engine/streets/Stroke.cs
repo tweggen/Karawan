@@ -74,6 +74,16 @@ public class StrokeConverter : JsonConverter<Stroke>
 }
 
 
+public enum StrokeKind : byte
+{
+    Street,
+    Ramp,
+    Bridge,
+    Tunnel,
+    ConnectorBridge
+}
+
+
 public class Stroke
 {
     static private object _classLock = new();
@@ -126,6 +136,14 @@ public class Stroke
      * entirely on level 0.
      */
     public sbyte Level { get; set; }
+
+    /**
+     * What kind of thing this stroke is. Street is an ordinary road on one deck; Ramp
+     * is the only kind permitted to join junctions on different decks; Bridge and
+     * Tunnel are the spans a ramp pair leads onto; ConnectorBridge marks a stroke laid
+     * down by ConnectComponentsPass to reattach an orphaned bundle.
+     */
+    public StrokeKind Kind { get; set; } = StrokeKind.Street;
 
 
     /**
@@ -518,6 +536,7 @@ public class Stroke
         IsPrimary = o.IsPrimary;
         Weight = o.Weight;
         Level = o.Level;
+        Kind = o.Kind;
         Invalidate();
     }
 
