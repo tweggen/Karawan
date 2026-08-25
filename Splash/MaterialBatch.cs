@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using builtin.loader.fbx;
 using engine.joyce.components;
 
 namespace Splash;

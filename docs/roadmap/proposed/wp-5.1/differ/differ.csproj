@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    GATE-F differential harness. Deliberately NOT in Karawan.sln: it references BOTH GL
+    bindings at once, which no shipping project does or should.
+
+    Run it with dotnet run, pointed at this directory.
+    Exit code 0 when both bindings emit identical native calls, 1 otherwise.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <RootNamespace>GlDiff</RootNamespace>
+    <AssemblyName>gl-differ</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.23.0" />
+    <ProjectReference Include="..\..\..\..\..\Splash.API.OpenGL\Splash.API.OpenGL.csproj" />
+    <Content Include="..\surface\surface.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

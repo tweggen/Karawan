@@ -10,14 +10,65 @@
 			and maccatalyst lines below have been commented out for as long as they have
 			existed. Restore <TargetFrameworks> if one of them is ever uncommented.
 		-->
-		<TargetFramework>net9.0-android36.0</TargetFramework>
+		<TargetFramework>net10.0-android36.0</TargetFramework>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-maccatalyst</TargetFrameworks> -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-tizen</TargetFrameworks> -->
 		<OutputType>Exe</OutputType>
 		<RootNamespace>Wuka</RootNamespace>
-		<UseMaui>true</UseMaui>
-		<SingleProject>true</SingleProject>
+		<!--
+			WP-6.1: MAUI is gone. It was template scaffolding - MainActivity was always a
+			plain Android.App.Activity - and its only load-bearing contribution was the
+			splash theme, now Platforms/Android/Resources/values/styles.xml.
+
+			EnableDefaultAndroidItems is pinned false EXPLICITLY. MAUI used to set it, and
+			that is precisely why this project never double-packages natives: the default
+			**/*.so glob stays off and every Android item is listed by hand below. XA4301
+			is promoted to an error, so letting this revert would red-line the build.
+		-->
+		<UseMaui>false</UseMaui>
+		<EnableDefaultAndroidItems>false</EnableDefaultAndroidItems>
+
+		<!--
+			WP-6.2: CoreCLR is the DEFAULT runtime on Android. Mono is one flag away:
+
+				dotnet build Wuka/Wuka.csproj                      # CoreCLR (default)
+				dotnet build Wuka/Wuka.csproj -p:WukaCoreClr=false # Mono
+
+			KAR-411 is a Mono/ARM64 JIT codegen fault (see
+			docs/BUGS/MONO-ARM64-CTOR-PROLOGUE-ARG-CORRUPTION.md). Both runtimes on .NET 10
+			pass every AbiProbe case including M and N on device, so CORRECTNESS DOES NOT
+			DECIDE THIS - the defect was fixed upstream in Mono between .NET 9 and .NET 10,
+			and staying on Mono would also have been defensible.
+
+			Two things decide it instead:
+
+			1. Load time. Measured on device, Debug: CoreCLR reaches the first physics body
+			   in 3.95 s against Mono's 18.31 s - 4.64x, same anchor (ABIPROBE BUILD) in both
+			   logs. Load phase only; steady-state frame rate is still unmeasured.
+			2. Test coverage. Deliberate owner decision (2026-08-10): we have no automated
+			   coverage of the runtime boundary, and shipping is the broadest coverage
+			   available. Making CoreCLR the default means every play session exercises it.
+
+			The flag stays so a runtime regression is bisectable without moving the working
+			tree. Both paths are verified to build; Mono ships 19 native libraries, CoreCLR 17
+			(libmonosgen-2.0/libarc.bin/mono components out, libcoreclr/libclrjit/
+			libmscordaccore/libmscordbi in). Asset count and class count are identical, and
+			XA0141 stays promoted to an error, so the CoreCLR natives are 16 KB aligned too.
+		-->
+		<WukaCoreClr Condition="'$(WukaCoreClr)' == ''">true</WukaCoreClr>
+		<UseMonoRuntime Condition="'$(WukaCoreClr)' == 'true'">false</UseMonoRuntime>
+
+		<!--
+			WP-6.1: MAUI SingleProject is what used to point the SDK at
+			Platforms/Android/AndroidManifest.xml. Without this line the SDK looks in its own
+			default location, finds nothing, and SYNTHESISES a manifest - the build still
+			succeeds and the package name still looks right, because ApplicationId supplies
+			that. What silently disappears is everything only the hand-written manifest
+			declares: android:label, android:icon=@mipmap/sd_launcher, hardwareAccelerated.
+			Rider refusing to deploy was the honest signal; the build was not.
+		-->
+		<AndroidManifest>Platforms\Android\AndroidManifest.xml</AndroidManifest>
 		<ImplicitUsings>enable</ImplicitUsings>
 
 		<!--
@@ -104,26 +155,13 @@
 	  <RunAOTCompilation>False</RunAOTCompilation>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<!-- App Icon -->
-		<!-- MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" / -->
-		<!-- MauiIcon Include="Resources\mipmap\appicon.png" Color="#080800" / -->
-		<MauiSplashScreen Include="Resources\Splash\splash_nassau.svg" Color="#000000" BaseSize="144, 144" />
-
-		<Resource Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
-
-		<!-- Images -->
-		<MauiImage Include="Resources\Images\*" />
-		<!-- MauiImage Include="Resources\Images\dotnet_bot.svg" / -->
-		<MauiImage Include="Resources\mipmap\appicon.png" />
-		<MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
-
-		<!-- Custom Fonts -->
-		<MauiFont Include="Resources\Fonts\*" />
-
-		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
-		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-	</ItemGroup>
+	<!--
+		WP-6.1: the MauiSplashScreen / MauiImage / MauiFont / MauiAsset group lived here.
+		Everything in it was template content - dotnet_bot.svg, OpenSans, AboutAssets.txt -
+		and the game's real assets arrive through the generated AndroidResources.xml import
+		below. The launcher icon is declared in AndroidManifest.xml as @mipmap/sd_launcher
+		and comes from the explicit AndroidResource items, not from MauiIcon.
+	-->
 
 	<ItemGroup>
 	  <None Remove="Platforms\Android\android\arm64-v8a\libopenal.so" />
@@ -137,13 +175,17 @@
 		<AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libc++_shared.so">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</AndroidNativeLibrary>
-	  	<AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libassimp.so">
-		    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</AndroidNativeLibrary>
+		<!--
+			libassimp.so is gone with WP-4.4. Models are baked into mo-{hash} files by
+			Chushi and read back with no importer at runtime, so nothing in the APK
+			loads Assimp any more. This is the Phase 4 half of the DoD.
+
+			libc++_shared.so STAYS. It was assimp's C++ runtime, but libSDL3.so and
+			libopenal.so link against it too, so removing it here would strip a library
+			two shipped natives still need - see recipes/BUILD_NOTES.md on there being
+			exactly one libc++_shared.so per APK.
+		-->
 		<AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libc++_shared.so">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</AndroidNativeLibrary>
-		<AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libassimp.so">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</AndroidNativeLibrary>
 	</ItemGroup>
@@ -231,19 +273,55 @@
 	  <AndroidResource Include="Platforms\Android\mipmap-xhdpi\appicon_foreground.png" />
 	  <AndroidResource Include="Platforms\Android\mipmap-xxhdpi\appicon_foreground.png" />
 	  <AndroidResource Include="Platforms\Android\mipmap-xxxhdpi\appicon_foreground.png" />
+	  <!-- WP-6.1: replaces the generated @style/Maui.SplashTheme. -->
+	  <AndroidResource Include="Platforms\Android\Resources\values\styles.xml" />
+	  <!-- WP-6.1: Android 12+ splash. The PNGs are MAUI's own conversion of
+	       Resources/Splash/splash_nassau.svg, lifted from the last AAB it built -
+	       Android cannot consume the SVG directly. -->
+	  <AndroidResource Include="Platforms\Android\Resources\values-v31\styles.xml" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable\splash_window.xml" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable\splash_icon_none.xml" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-mdpi\splash_nassau.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-mdpi\splash_icon.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-hdpi\splash_nassau.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-hdpi\splash_icon.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xhdpi\splash_nassau.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xhdpi\splash_icon.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xxhdpi\splash_nassau.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xxhdpi\splash_icon.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xxxhdpi\splash_nassau.png" />
+	  <AndroidResource Include="Platforms\Android\Resources\drawable-xxxhdpi\splash_icon.png" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<!--
-			Explicit because Central Package Management (WP-0.1) turns MAUI's implicit
-			references off: Microsoft.Maui.Sdk's BundledVersions.targets sets
-			DisableMauiImplicitPackageReferences=true whenever
-			ManagePackageVersionsCentrally is true. Without this line, UseMaui=true no
-			longer pulls in Microsoft.Maui.Controls at all. Version lives in
-			Directory.Packages.props.
+			WP-6.1: Microsoft.Maui.Controls is gone, and with it the CPM workaround that
+			existed solely because UseMaui=true stopped injecting it under central package
+			management.
+
+			Xamarin.AndroidX.Core is now EXPLICIT. It used to arrive transitively via MAUI,
+			and ActivityCompat is used directly by MainActivity and GameActivity - so
+			removing MAUI without this would fail to compile.
 		-->
-		<PackageReference Include="Microsoft.Maui.Controls" />
-		<PackageReference Include="Silk.NET.Assimp" />
+		<PackageReference Include="Xamarin.AndroidX.Core" />
+
+		<!--
+			WP-6.1 CORRECTION: these are SUPPRESSORS, not sources. WP-3.5 removed them on the
+			assumption they pulled Silk in; they do the opposite. Silk.NET.Input.Sdl arrives
+			TRANSITIVELY behind Silk.NET.Input, which Splash.OpenGL still references for the dead
+			input handlers (KI-12), and its .aar carries SDL2 Java glue that collides with our
+			SDL3 glue at dex time - the exact duplicate-class failure recorded as KI-9:
+
+			  Type org.libsdl.app.HIDDeviceBLESteamController$1 is defined multiple times
+
+			ExcludeAssets="all" is what keeps that .aar out of the APK. They can only go once
+			KI-12 is done and Silk.NET.Input itself is dropped.
+		-->
+		<!--
+			Silk.NET.Assimp removed by WP-4.4. It used to arrive here both directly and
+			transitively through Joyce; the importer now lives in JoyceFbx, which only
+			the build tools reference, so neither route remains.
+		-->
 		<!--
 			WP-1.5 replaced Silk.NET.OpenAL.Soft.Native with Karawan.Natives in
 			Boom.OpenAL, from where it arrives here transitively. On DESKTOP that is the
@@ -275,7 +353,7 @@
 		<!--
 			WP-2.2: Silk.NET.SDL, Silk.NET.Windowing, Silk.NET.Windowing.Sdl,
 			Silk.NET.Input.Sdl and Ultz.Native.SDL are GONE. Android runs on SDL3 now,
-			through Splash.Silk's Sdl3WindowBackend.
+			through Splash.OpenGL's Sdl3WindowBackend.
 
 			THIS COULD NOT BE STAGED (KI-9). Silk.NET.Windowing.Sdl's .aar carries a
 			classes.jar with org.libsdl.app.*, and the vendored SDL3 Java sources declare
@@ -286,18 +364,16 @@
 			so SDL3's glue can only arrive in the very change that removes Silk's SDL2.
 
 			Removing the direct references is NOT sufficient, which the dex error above says
-			plainly. Splash.Silk references the Silk.NET.Windowing and Silk.NET.Input
+			plainly. Splash.OpenGL references the Silk.NET.Windowing and Silk.NET.Input
 			META-packages, and those pull Windowing.Sdl and Input.Sdl - and therefore the
 			SDL2 .aar - in transitively. The two exclusions below cut that off for the
 			Android build only.
 
 			Safe because nothing on this platform uses them any more: the Silk types
-			Splash.Silk compiles against (IView, IWindow) live in Windowing.Common, and
+			Splash.OpenGL compiles against (IView, IWindow) live in Windowing.Common, and
 			Android no longer calls Window.GetView at all - Sdl3WindowBackend creates the
 			window itself. Desktop is untouched; it still resolves the full meta-package.
 		-->
-		<PackageReference Include="Silk.NET.Windowing.Sdl" ExcludeAssets="all" PrivateAssets="all" />
-		<PackageReference Include="Silk.NET.Input.Sdl" ExcludeAssets="all" PrivateAssets="all" />
 		<!--
 			Ultz.Native.SDL rides in behind Silk.NET.SDL and ships SDL2 for desktop RIDs.
 			RID fallback then packages runtimes/linux-{x64,arm64}/native/libSDL2-2.0.so into
@@ -309,8 +385,6 @@
 			ExcludeAssets="all", not just "native": nothing on Android needs any part of
 			Silk's SDL2 any more.
 		-->
-		<PackageReference Include="Ultz.Native.SDL" ExcludeAssets="all" PrivateAssets="all" />
-		<PackageReference Include="Silk.NET.SDL" ExcludeAssets="all" PrivateAssets="all" />
 		<!--
 			Transitive dep of Joyce. ImGui.NET has no Android native, so RID fallback was
 			packaging its runtimes/linux-x64/native/libcimgui.so into lib/x86_64/ of the APK
@@ -342,7 +416,7 @@
 	  <ProjectReference Include="..\Boom.OpenAL\Boom.OpenAL.csproj" />
 	  <ProjectReference Include="..\Joyce\Joyce.csproj" />
 	  <ProjectReference Include="..\nogame\nogame.csproj" />
-	  <ProjectReference Include="..\Splash.Silk\Splash.Silk.csproj" />
+	  <ProjectReference Include="..\Splash.OpenGL\Splash.OpenGL.csproj" />
 	  <ProjectReference Include="..\Splash\Splash.csproj" />
 	</ItemGroup>
 

@@ -7,12 +7,12 @@
     ===========================
     The implementation plan (Phase 3 preamble) left this unassigned: "the vendored
     SDL3-CS.cs is introduced by WP-2.1 in an Android context, but desktop needs it
-    too. Decide where it lives (new Platform.SDL3 project vs. inside Splash.Silk)
+    too. Decide where it lives (new Platform.SDL3 project vs. inside Splash.OpenGL)
     and record it in the WP-2.1 PR."
 
     Decision: its own project, for three reasons.
 
-      1. Splash.Silk is the thing being deleted. Putting SDL3 inside the project
+      1. Splash.OpenGL is the thing being deleted. Putting SDL3 inside the project
          named after the dependency we are removing means WP-3.x would have to move
          it again, during the single riskiest refactor in the plan.
       2. Consumers are not all renderers. Wuka (Android), Karawan, examples/Launcher,
@@ -30,7 +30,7 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <!-- SDL3-CS is pointer-based interop throughout. -->

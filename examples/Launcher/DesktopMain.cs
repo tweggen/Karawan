@@ -1,10 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using engine;
-using Silk.NET.Windowing;
-using Silk.NET.Maths;
 
 namespace Karawan.GenericLauncher;
 
@@ -281,23 +280,42 @@ public class DesktopMain
         // Get CWD for searching relative to the game project
         string cwd = Directory.GetCurrentDirectory();
         
-        // Search paths prioritizing CWD-relative locations (game project) over launcher binary location
-        string[] searchPaths = {
-            // CWD-relative paths (game project)
-            Path.Combine(cwd, "bin", "Debug", "net9.0", assemblyName),
-            Path.Combine(cwd, "bin", "Release", "net9.0", assemblyName),
-            Path.Combine(cwd, "bin", "Debug", "net9.0", "osx-arm64", assemblyName),
-            Path.Combine(cwd, "bin", "Release", "net9.0", "osx-arm64", assemblyName),
-            Path.Combine(cwd, "bin", "Debug", "net9.0", "win-x64", assemblyName),
-            Path.Combine(cwd, "bin", "Release", "net9.0", "win-x64", assemblyName),
-            Path.Combine(cwd, assemblyName),
-            // Resource path relative
-            Path.Combine(resourcePath, assemblyName),
-            Path.Combine(resourcePath, "..", "bin", "Debug", "net9.0", assemblyName),
-            Path.Combine(resourcePath, "..", "bin", "Release", "net9.0", assemblyName),
-            // Launcher binary directory (fallback - e.g., if DLL was copied there)
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, assemblyName),
-        };
+        /*
+         * Search paths prioritising CWD-relative locations (the game project) over the
+         * launcher binary location.
+         *
+         * The TFM segment is DISCOVERED rather than spelled out. It used to be a hardcoded
+         * "net9.0", which is a path that silently stops existing the day the tree
+         * retargets - nothing fails to build, the assembly is simply never found, and the
+         * launcher reports a missing game DLL rather than a stale search path.
+         */
+        var candidates = new List<string>();
+
+        foreach (string root in new[] { cwd, Path.Combine(resourcePath, "..") })
+        {
+            foreach (string config in new[] { "Debug", "Release" })
+            {
+                string configDir = Path.Combine(root, "bin", config);
+                if (!Directory.Exists(configDir)) continue;
+
+                foreach (string tfmDir in Directory.EnumerateDirectories(configDir))
+                {
+                    candidates.Add(Path.Combine(tfmDir, assemblyName));
+
+                    // Self-contained / RID-specific builds nest one level deeper.
+                    foreach (string ridDir in Directory.EnumerateDirectories(tfmDir))
+                    {
+                        candidates.Add(Path.Combine(ridDir, assemblyName));
+                    }
+                }
+            }
+        }
+
+        candidates.Add(Path.Combine(cwd, assemblyName));
+        candidates.Add(Path.Combine(resourcePath, assemblyName));
+        candidates.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, assemblyName));
+
+        string[] searchPaths = candidates.ToArray();
 
         Console.WriteLine($"Searching for assembly in:");
         foreach (var searchPath in searchPaths)
@@ -374,42 +392,13 @@ public class DesktopMain
         // Applied after InterpretConfig so CLI args take precedence over game config.
         _applySettingsOverrides(args);
 
-        // 7. Create window
-        //
-        // WP-3.2: SDL3 by default, Silk kept as a fallback behind
-        // platform.windowBackend=silk. See Karawan/DesktopMain.cs for why.
-        engine.Engine e;
+        // 7. Create window. WP-3.5: SDL3 is the only desktop backend.
+        var backend = new Splash.OpenGL.Sdl3WindowBackend(
+            launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
 
-        if (GlobalSettings.Get("platform.windowBackend") == "silk")
-        {
-            Console.WriteLine("Window backend: Silk (fallback, platform.windowBackend=silk).");
-
-            var options = WindowOptions.Default;
-            options.Size = new Vector2D<int>(1280, 720);
-            options.Title = launchConfig.Branding.WindowTitle;
-            options.FramesPerSecond = 60;
-            options.VSync = false;
-            options.ShouldSwapAutomatically = false;
-            options.WindowState = WindowState.Normal;
-            options.PreferredDepthBufferBits = 16;
-
-            IWindow iWindow = Window.Create(options);
-            iWindow.Size = new Vector2D<int>(1280, 720);
-
-            // 8. Create engine
-            e = Splash.Silk.Platform.EasyCreate(args, iWindow, out var _);
-            e.SetFullscreen(false);
-
-            iWindow.Initialize();
-        }
-        else
-        {
-            var backend = new Splash.Silk.Sdl3WindowBackend(
-                launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
-
-            e = Splash.Silk.Platform.EasyCreate(args, backend, out var _);
-            e.SetFullscreen(false);
-        }
+        // 8. Create engine
+        engine.Engine e = Splash.OpenGL.Platform.EasyCreate(args, backend, out var _);
+        e.SetFullscreen(false);
 
         // 9. Setup logging
         {

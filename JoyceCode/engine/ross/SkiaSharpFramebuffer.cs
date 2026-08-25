@@ -217,118 +217,91 @@ public class SkiaSharpFramebuffer : IFramebuffer
 
     public void TextExtent(Context context, out Vector2 ul, out Vector2 size, out float ascent, out float descent, string text, uint fontSize, bool includeWhiteSpaces=false)
     {
-        SKFont font = new SKFont(_skiaTypefacePrototype, fontSize);
+        using SKFont font = new SKFont(_skiaTypefacePrototype, fontSize);
         var metrics = font.Metrics;
-        
-        var paint = new SKPaint(font)
-        {
-            Color = context.TextColor,
-            IsAntialias = false,
-            Style = SKPaintStyle.Fill,
-            TextAlign = _toSkiaTextAlign(context.HAlign),
-            TextSize = fontSize
-        };
         ascent = metrics.Ascent;
         descent = metrics.Descent;
 
-        SKRect rectExtent = new();
-        float totalWidth = paint.MeasureText(text, ref rectExtent);
+        SKRect rectExtent;
+        float totalWidth = font.MeasureText(text, out rectExtent);
+
+        // 4. Populate output values
         ul = new(rectExtent.Left, rectExtent.Top);
-        size = new(includeWhiteSpaces?totalWidth:rectExtent.Width, rectExtent.Height);
-        font.Dispose();
+        size = new(includeWhiteSpaces ? totalWidth : rectExtent.Width, rectExtent.Height);
     }
 
     
+    
     public void DrawText(Context context, Vector2 ul, Vector2 lr, string text, uint fontSize)
     {
-        SKFont font = new SKFont(_skiaTypefacePrototype, fontSize);
+        // 1. Manage lifetime and properties via SKFont
+        using SKFont font = new SKFont(_skiaTypefacePrototype, fontSize);
         var metrics = font.Metrics;
         
-        
-        var paint = new SKPaint(font)
+        // 2. SKPaint handles pure styling/coloring now (no font or text size passed in)
+        using SKPaint paint = new SKPaint
         {
             Color = context.TextColor,
             IsAntialias = IsTextAntiAlias,
-            Style = SKPaintStyle.Fill,
-            TextAlign = _toSkiaTextAlign(context.HAlign),
-            TextSize = fontSize
+            Style = SKPaintStyle.Fill
         };
+
         float x;
         switch (context.HAlign)
         {
-            default:
-            case HAlign.Left:
-                x = ul.X;
-                break;
             case HAlign.Center:
                 x = ul.X + (lr.X - ul.X) / 2f;
                 break;
             case HAlign.Right:
                 x = lr.X;
                 break;
+            case HAlign.Left:
+            default:
+                x = ul.X;
+                break;
         }
         
-        /*
-         * To compute vAlign, we need to count the number of linefeed.
-         * The number of lines is the number of line feeds + one.
-         */
+        // Count lines (trailing newlines trimmed, internal newlines counted)
         int nLines = 1;
+        int l = text.Length;
+        while (l > 0 && text[l - 1] == '\n')
         {
-            int l = text.Length;
-            while (l > 0)
-            {
-                if (text[l - 1] == '\n')
-                {
-                    --l;
-                }
-                else
-                {
-                    break;
-                }
-            }
+            --l;
+        }
 
-            for (int i = 0; i < l; ++i)
+        for (int i = 0; i < l; ++i)
+        {
+            if (text[i] == '\n')
             {
-                if (text[i] == '\n')
-                {
-                    nLines++;
-                }
+                nLines++;
             }
         }
 
-        var textHeight = (metrics.Leading + metrics.Descent - metrics.Ascent) * (nLines);
-        
+        var textHeight = (metrics.Leading + metrics.Descent - metrics.Ascent) * nLines;
         float y = ul.Y - metrics.Ascent;
         float h = lr.Y - ul.Y;
-        
-        /*
-         * The amount we can align vertically is the difference between the
-         * textheight and the actual height,
-         */
 
         switch (context.VAlign)
         {
-            default:
-            case VAlign.Top:
-                // Leave y as is.
-                break;
             case VAlign.Bottom:
-                y += (h-textHeight);
+                y += (h - textHeight);
                 break;
             case VAlign.Center:
-                y += (h-textHeight) / 2;
+                y += (h - textHeight) / 2f;
+                break;
+            case VAlign.Top:
+            default:
                 break;
         }
         
-        string remainingText = text;
+        SKTextAlign skTextAlign = _toSkiaTextAlign(context.HAlign);
+
         lock (_lo)
         {
+            string remainingText = text;
             while (remainingText.Length > 0)
             {
-                string renderText = "";
-                /*
-                 * Render text until exluding the next \n .
-                 */
+                string renderText = string.Empty;
                 int i = remainingText.IndexOf('\n');
                 if (i >= 0)
                 {
@@ -336,31 +309,24 @@ public class SkiaSharpFramebuffer : IFramebuffer
                     {
                         renderText = remainingText.Substring(0, i);
                     }
-                    else
-                    {
-                        // Leave rendertext empty.
-                    }
-
                     remainingText = remainingText.Substring(i + 1);
-                } else 
+                } 
+                else 
                 {
                     renderText = remainingText;
-                    remainingText = "";
+                    remainingText = string.Empty;
                 }
 
                 if (renderText.Length > 0)
                 {
-                    _skiaSurface.Canvas.DrawText(renderText, x, y, paint);
+                    // 3. Use the modern canvas overload containing alignment, font, and paint
+                    _skiaSurface.Canvas.DrawText(renderText, x, y, skTextAlign, font, paint);
                 }
 
-                //y += fontSize;
                 y += metrics.Leading + metrics.Descent - metrics.Ascent;
             }
-            // TXWTODO: We do not need y+the entire fontSize, just the under lengths.
-            //_applyModified(ul, lr with { Y = y + fontSize});
-            _applyModified(ul, lr with { Y = y /* metrics.Descent-metrics.Ascent */ });
-            paint.Dispose();
-            font.Dispose();
+
+            _applyModified(ul, lr with { Y = y });
         }
     }
     

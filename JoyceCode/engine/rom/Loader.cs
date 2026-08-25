@@ -48,13 +48,30 @@ public class Loader
     private static IEnumerable<string> _getAssemblySearchPaths()
     {
         // 1. CWD-relative paths (for generic launcher scenarios where CWD is the game project)
+        //
+        // The TFM segment is DISCOVERED, not spelled out. It used to be a hardcoded
+        // "net9.0", which is a path that silently stops existing the day the tree
+        // retargets: nothing fails to build, the assembly simply is not found any more and
+        // the game reports a missing game DLL instead of a stale search path. Enumerating
+        // whatever is actually under bin/<config>/ cannot go stale that way.
         string cwd = Directory.GetCurrentDirectory();
-        yield return Path.Combine(cwd, "bin", "Debug", "net9.0");
-        yield return Path.Combine(cwd, "bin", "Release", "net9.0");
-        yield return Path.Combine(cwd, "bin", "Debug", "net9.0", "osx-arm64");
-        yield return Path.Combine(cwd, "bin", "Release", "net9.0", "osx-arm64");
-        yield return Path.Combine(cwd, "bin", "Debug", "net9.0", "win-x64");
-        yield return Path.Combine(cwd, "bin", "Release", "net9.0", "win-x64");
+        foreach (string config in new[] { "Debug", "Release" })
+        {
+            string configDir = Path.Combine(cwd, "bin", config);
+            if (!Directory.Exists(configDir)) continue;
+
+            foreach (string tfmDir in Directory.EnumerateDirectories(configDir))
+            {
+                yield return tfmDir;
+
+                // Self-contained/RID-specific builds nest one level deeper.
+                foreach (string ridDir in Directory.EnumerateDirectories(tfmDir))
+                {
+                    yield return ridDir;
+                }
+            }
+        }
+
         yield return cwd;
         
         // 2. Executable directory paths (prefer Location over obsolete CodeBase)

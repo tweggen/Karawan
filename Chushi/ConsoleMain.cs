@@ -32,42 +32,34 @@ public class ConsoleMain
         }
         else
         {
-            if (Path.Exists("./models/nogame.json"))
+            /*
+             * Search UPWARD for the content root rather than guessing how far down we are.
+             *
+             * What stood here was three escalating fallbacks - four, then five, then six
+             * levels of ".." - each with a comment naming the one launch method it had been
+             * observed to fix ("from the debugger on windows", "when called from jetbrains
+             * compiler", "in Chushi on windows"). That list is the shape of the bug: the
+             * depth is not a property of this code, it is a property of where the process
+             * was started, so every new launch path needed another rung and any tree at an
+             * unexpected depth fell off the end into "Running in unknown environment".
+             *
+             * engine.GameRoot looks for models/nogame.json upward from the current
+             * directory and from the assembly location, which answers all of those cases
+             * and the ones nobody has hit yet.
+             */
+            string? chushiRoot = engine.GameRoot.Find();
+            if (null == chushiRoot)
             {
-                /*
-                * I don't know this case.
-                */
-                strResourcePath = "./models/";
-                jsonPath = "../models/";
-            }
-            else if (Path.Exists("../../../../nogame/"))
-            {
-                /*
-                 * This is when we start from the debugger on windows in Karawan
-                 */
-                jsonPath = "../models/";
-                strResourcePath = "../../../../models/";
-            } else if (Path.Exists("../../../../../nogame/"))
-            {
-                /*
-                * This is in Chushi on windows when called from jetbrains compiler.
-                */
-                jsonPath = "../models/";
-                strResourcePath = "../../../../../models/";
-            } else if (Path.Exists("../../../../../../nogame/"))
-            {
-                /*
-                * This is in Chushi on windows.
-                */
-                jsonPath = "../models/";
-                strResourcePath = "../../../../../../models/";
-            }
-            else
-            {
-                Console.Error.WriteLine($"Running in unknown environment, cwd=={cwd}");
+                Console.Error.WriteLine(
+                    $"Could not locate the content root. Searched upward from '{cwd}' and from "
+                    + $"'{AppContext.BaseDirectory}' for models/nogame.json, "
+                    + "models/game.launch.json or Karawan.sln.");
                 System.Environment.Exit(-1);
                 return;
             }
+
+            strResourcePath = Path.Combine(chushiRoot, "models") + Path.DirectorySeparatorChar;
+            jsonPath = strResourcePath;
         }
         engine.GlobalSettings.Set("Engine.ResourcePath", strResourcePath);
         Trace($"Using resource path {strResourcePath}, json path {jsonPath}");
@@ -88,6 +80,14 @@ public class ConsoleMain
 
         engine.GlobalSettings.Set("joyce.CompileMode", "true");
 
+
+        /*
+         * WP-4.4: fbx import is build-time only, so the importer no longer ships
+         * inside Joyce and ModelCache cannot call it directly. Chushi is one of
+         * the two processes that still has it, and installs it here. Without this
+         * line the model bake would find no importer and say so.
+         */
+        engine.joyce.ModelCache.FbxLoader = builtin.loader.Fbx.LoadModelInstance;
 
         I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
         I.Register<engine.joyce.ModelCache>(() => new engine.joyce.ModelCache());
@@ -180,6 +180,65 @@ public class ConsoleMain
             };
 
             listTasks.Add(Task.Run(() => comp.Compile()));
+        }
+
+        /*
+         * Model compilation loop (WP-4.2). Mirrors the animation loop above: one
+         * task per declared model, same Task.Run pool, same generated/ directory.
+         * Files are named mo-{hash} so they sit alongside ac-{hash} and sc-{hash}.
+         *
+         * The set comes from /resources/list entries typed "model", so a model
+         * that ships is a model that bakes, by construction.
+         */
+        {
+            string modelOutputDirectory = Path.Combine(
+                cwd,
+                GlobalSettings.Get("Engine.ResourcePath"),
+                "generated");
+            if (args.Length >= 4)
+            {
+                modelOutputDirectory = Path.Combine(args[3], args[2]);
+            }
+
+            var availableModels = iassetDesktop.AvailableModels;
+            Trace($"Model compilation: Found {availableModels.Count} models to bake.");
+            foreach (var req in availableModels)
+            {
+                string fileName = builtin.baking.ModelFileName.Of(req.ModelFileName, req.Properties);
+                string filePath = Path.GetFullPath(Path.Combine(modelOutputDirectory, fileName));
+                if (_IsModelUpToDate(filePath, req.Uri, Path.GetFullPath(strResourcePath)))
+                {
+                    Trace($"ModelCompiler: skipping {fileName} — output is up-to-date.");
+                    continue;
+                }
+
+                var captured = req;
+                var modelComp = new ModelCompiler
+                {
+                    ModelUrl = captured.ModelFileName,
+                    Properties = new SortedDictionary<string, string>(captured.Properties),
+                    OutputDirectory = modelOutputDirectory
+                };
+                /*
+                 * async/await, not a void lambda. A block-bodied lambda returning
+                 * void binds to Task.Run(Action), which starts Compile() and then
+                 * reports completion the moment it hits its first await - so
+                 * Task.WaitAll below returns while models are still being written
+                 * and the process exits mid-bake. Observed: 10 of 13 files.
+                 */
+                listTasks.Add(Task.Run(async () =>
+                {
+                    try
+                    {
+                        await modelComp.Compile();
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace($"ModelCompiler ERROR: {captured.Uri} failed: {ex.GetType().Name}: {ex.Message}");
+                        throw;
+                    }
+                }));
+            }
         }
 
         /*
@@ -384,6 +443,48 @@ public class ConsoleMain
         }
 
         return true;  // All sources are older or missing, output is up-to-date
+    }
+
+    /// <summary>
+    /// Check if a baked model file is up-to-date (makefile-style incremental build).
+    /// Returns true if the output exists and is newer than the model source and the
+    /// resource declaration that decides how it is baked.
+    /// </summary>
+    private static bool _IsModelUpToDate(string outputPath, string modelUri, string resourcePath)
+    {
+        if (!File.Exists(outputPath))
+        {
+            return false;  // Output missing, needs compilation
+        }
+
+        var outputTime = File.GetLastWriteTimeUtc(outputPath);
+
+        string modelPath = Path.Combine(resourcePath, modelUri);
+        if (File.Exists(modelPath))
+        {
+            if (File.GetLastWriteTimeUtc(modelPath) > outputTime)
+            {
+                return false;  // Model is newer, needs recompilation
+            }
+        }
+
+        /*
+         * The resource declaration carries the type and the load properties, and
+         * the properties are part of the bake identity. Editing them normally
+         * changes the file NAME, which the File.Exists check above already catches
+         * - but removing a property can equally well restore an older name, so the
+         * declaration's timestamp is checked too.
+         */
+        string resourceConfigPath = Path.Combine(resourcePath, "nogame.resources.json");
+        if (File.Exists(resourceConfigPath))
+        {
+            if (File.GetLastWriteTimeUtc(resourceConfigPath) > outputTime)
+            {
+                return false;  // Declaration is newer, needs recompilation
+            }
+        }
+
+        return true;
     }
 
     /// <summary>

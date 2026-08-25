@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using builtin.controllers.bindings;
 using engine;
 using engine.news;
 using static engine.Logger;
@@ -12,7 +13,30 @@ namespace builtin.controllers;
  * Translate input events to the Game Controller data structure, providing a more
  * semantic input representation that can be polled.
  *
- * COnsumes input 
+ * COnsumes input
+ *
+ * THE ANALOG PATH READS THE BINDING TABLE (WP-6.4 part 2)
+ *
+ * This class used to switch on raw control identity - the key string "w", stick index 0,
+ * trigger index 1 - and apply its response curves as arithmetic written into the handler.
+ * It now asks InputMapper.Bindings which ACTION a control drives and applies that action's
+ * modifier pipeline, so both halves live in models/nogame.bindings.json:
+ *
+ *   walkforward/backward/left/right   were "w"/"s"/"a"/"d", now rebindable
+ *   run                               was "(shiftleft)"
+ *   move / look                       were stick indices 0 / 1, with StickTransfer's
+ *                                     sign(x)*|x^4| inline; now "curve 4"
+ *   brake / accelerate                were trigger indices 0 / 1, with (x+1)/2*255
+ *                                     inline; now "range -1 1 0 255"
+ *
+ * There is deliberately NO hardcoded fallback: a second, unexercised copy of the defaults
+ * is how a rebind ends up leaving the old control live. If the file is missing the game
+ * does not move, which is loud - and OnModuleActivate names the missing actions so the
+ * loudness is also informative.
+ *
+ * NOT migrated: the TOUCH path (TouchSteerTransfer*, the finger states). Those transfers
+ * are scale factors tied to screen geometry rather than response curves on a bindable
+ * control, and touch has nothing to rebind onto.
  */
 public class InputController : engine.AController, engine.IInputPart
 {
@@ -20,8 +44,31 @@ public class InputController : engine.AController, engine.IInputPart
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<InputEventPipeline>()
+        new SharedModule<InputEventPipeline>(),
+
+        /*
+         * For Bindings. A dependency rather than an I.Get at use time: AModule activates
+         * dependencies BEFORE OnModuleActivate, which is what guarantees the table has
+         * been loaded by the time the first event arrives.
+         */
+        new SharedModule<InputMapper>()
     };
+
+    /*
+     * The action ids this class reacts to. They are names in nogame.bindings.json; which
+     * controls sit behind them is that file's business, which is the whole point.
+     */
+    private const string ActionWalkForward = "walkforward";
+    private const string ActionWalkBackward = "walkbackward";
+    private const string ActionWalkLeft = "walkleft";
+    private const string ActionWalkRight = "walkright";
+    private const string ActionRun = "run";
+    private const string ActionMove = "move";
+    private const string ActionLook = "look";
+    private const string ActionBrake = "brake";
+    private const string ActionAccelerate = "accelerate";
+
+    private BindingTable? _bindings;
 
     private object _lo = new();
 
@@ -97,7 +144,16 @@ public class InputController : engine.AController, engine.IInputPart
     private Vector2 _v2MousePressPosition = Vector2.Zero;
     private Vector2 _v2CurrentMousePosition = Vector2.Zero;
     private bool _isMouseButtonClicked = false;
-    private Vector2 _lastMousePosition;
+
+    /**
+     * Relative mouse motion received since the last logical frame consumed it.
+     *
+     * Mouse-look accumulates the platform's own deltas here rather than differencing
+     * _v2CurrentMousePosition. The absolute position is clamped to the window - and,
+     * while the cursor is hidden, warped - so the difference goes to zero at the borders
+     * and the camera appears to stop turning. See engine.news.Event.PhysicalDelta.
+     */
+    private Vector2 _v2MouseMoveAccumulated = Vector2.Zero;
     private bool _isKeyboardFast = false;
     
     private ControllerState _controllerState = new();
@@ -121,62 +177,98 @@ public class InputController : engine.AController, engine.IInputPart
     }
 
     
+    /**
+     * Which action, if any, this key event drives.
+     *
+     * Keyed on ev.ScanCode, never ev.Code: only the scancode is guaranteed to be the
+     * physical POSITION, and a binding that means "the key left of S" must not turn into
+     * "the key that prints a" on a French keyboard. See Control's doc-comment.
+     */
+    private string? _keyActionOf(Event ev)
+    {
+        var bindings = _bindings;
+        if (null == bindings || engine.inputs.ScanCode.Unknown == ev.ScanCode)
+        {
+            return null;
+        }
+
+        return bindings.ActionOf(Control.Key(ev.ScanCode));
+    }
+
+
+    /**
+     * The binding for an analog control, or null if nothing is bound to it.
+     */
+    private ActionBinding? _analogBindingOf(Control control)
+    {
+        var bindings = _bindings;
+        if (null == bindings)
+        {
+            return null;
+        }
+
+        string? action = bindings.ActionOf(control);
+        return null != action ? bindings.Find(action) : null;
+    }
+
+
     private void _onKeyDown(Event ev)
     {
+        string? action = _keyActionOf(ev);
+
         lock (_lo)
         {
             _controllerState.LastInput = DateTime.UtcNow;
 
             // TXWTODO: This is for driving mode only. Walking mode would have a different assignment.
-            
-            switch (ev.Code)
+
+            switch (action)
             {
-                case "(shiftleft)":
+                case ActionRun:
                     _isKeyboardFast = true;
                     break;
-                case "w":
+                case ActionWalkForward:
                     _controllerState.WASDUp = _isKeyboardFast?KeyboardAnalogMax:KeyboardAnalogWalk;
                     break;
-                case "s":
+                case ActionWalkBackward:
                     _controllerState.WASDDown = _isKeyboardFast?KeyboardAnalogMax:KeyboardAnalogWalk;
                     break;
-                case "a":
+                case ActionWalkLeft:
                     _controllerState.WASDLeft = KeyboardAnalogMax;
                     break;
-                case "d":
+                case ActionWalkRight:
                     _controllerState.WASDRight = KeyboardAnalogMax;
-                    break;
-                case "e":
-                    
                     break;
                 default:
                     break;
             }
         }
     }
-    
+
 
     private void _onKeyUp(Event ev)
     {
+        string? action = _keyActionOf(ev);
+
         lock (_lo)
         {
             _controllerState.LastInput = DateTime.UtcNow;
 
-            switch (ev.Code)
+            switch (action)
             {
-                case "(shiftleft)":
+                case ActionRun:
                     _isKeyboardFast = false;
                     break;
-                case "w":
+                case ActionWalkForward:
                     _controllerState.WASDUp = 0;
                     break;
-                case "s":
+                case ActionWalkBackward:
                     _controllerState.WASDDown = 0;
                     break;
-                case "a":
+                case ActionWalkLeft:
                     _controllerState.WASDLeft = 0;
                     break;
-                case "d":
+                case ActionWalkRight:
                     _controllerState.WASDRight = 0;
                     break;
                 default:
@@ -343,18 +435,18 @@ public class InputController : engine.AController, engine.IInputPart
     {
         lock (_lo)
         {
+            /*
+             * Consume the accumulated motion either way: while a button is held we do not
+             * look around, but the deltas that arrived meanwhile must be DROPPED, not
+             * carried over, or releasing the button snaps the camera by everything that
+             * happened during the drag.
+             */
+            Vector2 v2Moved = _v2MouseMoveAccumulated;
+            _v2MouseMoveAccumulated = Vector2.Zero;
+
             if (!_isMouseButtonClicked)
             {
-                if (_lastMousePosition == default)
-                {
-                }
-                else
-                {
-                    var xOffset = (_v2CurrentMousePosition.X - _lastMousePosition.X) * MouseLookMoveSensitivity;
-                    var yOffset = (_v2CurrentMousePosition.Y - _lastMousePosition.Y) * MouseLookMoveSensitivity;
-                    V2MouseMove += new Vector2(xOffset, yOffset);
-                }
-                _lastMousePosition = _v2CurrentMousePosition;
+                V2MouseMove += v2Moved * MouseLookMoveSensitivity;
             }
         }
     }
@@ -492,7 +584,6 @@ public class InputController : engine.AController, engine.IInputPart
             _v2CurrentMousePosition = ev.PhysicalPosition;
             _isMouseButtonClicked = true;
 
-            _lastMousePosition = ev.PhysicalPosition;
             _lastTouchPosition = ev.PhysicalPosition;
             if (strButton != null)
             {
@@ -510,6 +601,7 @@ public class InputController : engine.AController, engine.IInputPart
         lock (_lo)
         {
             _v2CurrentMousePosition = ev.PhysicalPosition;
+            _v2MouseMoveAccumulated += ev.PhysicalDelta;
         }
     }
 
@@ -570,16 +662,16 @@ public class InputController : engine.AController, engine.IInputPart
     }
 
 
-    public float StickTransfer(float X)
-    {
-        return Single.Sign(X) * Single.Abs(X * X * X * X);
-    }
-
-
-    public Vector2 StickTransfer(Vector2 v)
-    {
-        return new Vector2(StickTransfer(v.X), StickTransfer(v.Y));
-    }
+    /*
+     * StickTransfer - sign(X) * |X^4| - used to live here and is gone. It is now
+     * "curve 4" on the "move" and "look" actions in models/nogame.bindings.json, which is
+     * the same function expressed where it can be seen and changed. Keeping a copy of it
+     * on this class would make the response curve two things that must be edited
+     * together, and only one of them would be.
+     *
+     * TouchSteerTransfer* above stay: those are screen-geometry scale factors on a path
+     * with no bindable control behind it.
+     */
 
 
     public void GetStickOffset(out Vector2 vStickOffset)
@@ -625,16 +717,32 @@ public class InputController : engine.AController, engine.IInputPart
     
     public void _onStickMoved(Event ev)
     {
-        Vector2 pos = StickTransfer(ev.PhysicalPosition);
-        switch (ev.Data1)
+        ActionBinding? binding = _analogBindingOf(Control.GamepadStick((int)ev.Data1));
+        if (null == binding)
         {
-            case 0:
-                /*
-                 * Left stick
-                 */
+            return;
+        }
+
+        /*
+         * Per component, because a stick's two axes are one control (see
+         * ControlKind.GamepadStick) but a curve is a scalar transform.
+         *
+         * The branches below then test the MODIFIED value, where the old code tested the
+         * raw one. Equivalent for the curve it used to hardcode - sign(x)*|x^4| preserves
+         * sign - but an "invert" modifier does not, and branching on the raw value would
+         * put the magnitude in the wrong accumulator. Invert exists here precisely
+         * because WP-3.1 got a stick axis backwards.
+         */
+        Vector2 pos = new(
+            InputModifiers.Apply(binding.Modifiers, ev.PhysicalPosition.X),
+            InputModifiers.Apply(binding.Modifiers, ev.PhysicalPosition.Y));
+
+        switch (binding.Action)
+        {
+            case ActionMove:
                 lock (_lo)
                 {
-                    if (ev.PhysicalPosition.X > 0)
+                    if (pos.X > 0)
                     {
                         _controllerState.AnalogLeftStickRight = (int)(pos.X * 255f);
                         _controllerState.AnalogLeftStickLeft = 0;
@@ -645,7 +753,7 @@ public class InputController : engine.AController, engine.IInputPart
                         _controllerState.AnalogLeftStickLeft = -(int)(pos.X * 255f);
                     }
 
-                    if (ev.PhysicalPosition.Y > 0)
+                    if (pos.Y > 0)
                     {
                         _controllerState.AnalogLeftStickUp = (int)(pos.Y * 255f);
                         _controllerState.AnalogLeftStickDown = 0;
@@ -658,8 +766,8 @@ public class InputController : engine.AController, engine.IInputPart
                 }
 
                 break;
-            
-            case 1:
+
+            case ActionLook:
                 /*
                  * This is for viewing or zooming
                  */
@@ -772,31 +880,33 @@ public class InputController : engine.AController, engine.IInputPart
     
     public void _onTriggerMoved(Event ev)
     {
-        switch (ev.Data1)
+        ActionBinding? binding = _analogBindingOf(Control.GamepadTrigger((int)ev.Data1));
+        if (null == binding)
         {
-            case 0:
-                /*
-                 * This is braking
-                 */
-                lock (_lo)
-                {
-                    _controllerState.AnalogLeft2 = (int)(255f * (ev.PhysicalPosition.X+1f)/2f);
-                }
+            return;
+        }
 
-                break;
-            
-            case 1:
-                /*
-                 * This is for accelerating
-                 */
-                lock (_lo)
-                {
-                    _controllerState.AnalogRight2 = (int)(255f * (ev.PhysicalPosition.X+1f)/2f);
-                }
+        /*
+         * "range -1 1 0 255" in the binding file, replacing 255f * (x+1f)/2f here. Same
+         * endpoints - a released trigger is -1 and still lands on 0 - which is the
+         * property that matters, since a trigger reading 127 at rest would brake the car
+         * for as long as the pad is connected (Sdl3GamepadCodes.TriggerAxisToEngine).
+         */
+        int value = (int)InputModifiers.Apply(binding.Modifiers, ev.PhysicalPosition.X);
 
-                break;
-            default:
-                break;
+        lock (_lo)
+        {
+            switch (binding.Action)
+            {
+                case ActionBrake:
+                    _controllerState.AnalogLeft2 = value;
+                    break;
+                case ActionAccelerate:
+                    _controllerState.AnalogRight2 = value;
+                    break;
+                default:
+                    break;
+            }
         }
     }
     
@@ -865,8 +975,60 @@ public class InputController : engine.AController, engine.IInputPart
                 }
             }
         );
+        _bindings = M<InputMapper>().Bindings;
+        _checkRequiredActions();
+
         Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _refreshViewSize();
+    }
+
+
+    /**
+     * Every action this class reads. Nothing else in the game does, so an action missing
+     * from the binding file shows up as a dead control and nothing else.
+     *
+     * Internal rather than private so ShippedBindingsTests can assert the shipped file
+     * binds all of them. That check has to be driven from THIS list, not a copy of it, or
+     * adding a tenth action here would leave the test still passing on nine.
+     */
+    internal static readonly string[] RequiredActions =
+    {
+        ActionWalkForward, ActionWalkBackward, ActionWalkLeft, ActionWalkRight,
+        ActionRun, ActionMove, ActionLook, ActionBrake, ActionAccelerate
+    };
+
+
+    /**
+     * Say at startup which movement actions are unbound.
+     *
+     * The analog path has no hardcoded fallback (see the class comment), so a binding file
+     * that is missing or stale means the player cannot move. That failure is loud but
+     * mute: "the game does not respond to WASD" says nothing about its cause, and the
+     * cause is one line of JSON. Naming it here is the same trade as InputMapper logging
+     * an Error rather than a Trace when it cannot open the file at all.
+     */
+    private void _checkRequiredActions()
+    {
+        var bindings = _bindings;
+        if (null == bindings)
+        {
+            return;
+        }
+
+        var missing = new List<string>();
+        foreach (var action in RequiredActions)
+        {
+            var binding = bindings.Find(action);
+            if (null == binding || 0 == binding.Controls.Count)
+            {
+                missing.Add(action);
+            }
+        }
+
+        if (missing.Count > 0)
+        {
+            Error(_dc, $"No control is bound to: {String.Join(", ", missing)}. Check {InputMapper.DefaultBindingsResource}; those inputs will do nothing.");
+        }
     }
 }

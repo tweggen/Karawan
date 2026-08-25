@@ -80,14 +80,19 @@ public class RecoverBehavior : ABehavior
 
         if (!_deathAnimationTriggered)
         {
-            _deathAnimationTriggered = true;
+            /*
+             * Consumed only once the animation actually took - see IdleBehavior. Here the
+             * old behaviour cost a death animation outright: the NPC snapped to a T-pose
+             * and stayed there instead of falling over.
+             */
             if (entity.Has<GPUAnimationState>() && entity.Has<engine.joyce.components.FromModel>())
             {
                 ref var cGpuAnimationState = ref entity.Get<GPUAnimationState>();
                 ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
                 ref var model = ref cFromModel.Model;
 
-                cGpuAnimationState.AnimationState?.SetAnimation(model, CharacterModelDescription.DeathAnimName, 0, true);
+                _deathAnimationTriggered = true == cGpuAnimationState.AnimationState?.SetAnimation(
+                    model, CharacterModelDescription.DeathAnimName, 0, true);
             }
         }
         

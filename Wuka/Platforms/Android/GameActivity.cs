@@ -3,7 +3,7 @@ using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using System.Runtime.InteropServices;
-using Splash.Silk;
+using Splash.OpenGL;
 
 using Android.Content.Res;
 using Android.Views;
@@ -19,7 +19,7 @@ namespace Wuka
     [Activity(
         ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density,
         ScreenOrientation = ScreenOrientation.Landscape,
-        Theme = "@style/Maui.SplashTheme" //"@android:style/Theme.Black.NoTitleBar.Fullscreen"
+        Theme = "@style/SiliconDesert.Theme"
     )]
     public class GameActivity : SDLActivity, ActivityCompat.IOnRequestPermissionsResultCallback
     {
@@ -166,14 +166,14 @@ namespace Wuka
             _backend = new Sdl3WindowBackend("Silicon Desert 2");
 
             /*
-             * The on-screen keyboard. Splash.Silk cannot call InputMethodManager, so the
+             * The on-screen keyboard. Splash.OpenGL cannot call InputMethodManager, so the
              * backend exposes the gesture and we supply the Android half. Installed BEFORE
              * EasyCreate, so a text field that takes focus during startup still works.
              */
             _backend.SoftKeyboardHandler =
                 isVisible => AndroidSoftKeyboard.SetVisible(_gameSurface, isVisible);
 
-            _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _backend, out var silkPlatform);
+            _engine = Splash.OpenGL.Platform.EasyCreate(new string[] { }, _backend, out var silkPlatform);
 
             // 10. Register audio API
             I.Register<Boom.ISoundAPI>(() =>

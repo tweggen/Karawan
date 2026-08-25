@@ -1,0 +1,42 @@
+﻿using System;
+
+namespace Splash.OpenGL
+{
+    public class SkMaterialEntry : AMaterialEntry
+    {
+        public SkSingleShaderEntry? SkVertexShader = null;
+        public SkSingleShaderEntry? SkFragmentShader = null;
+        public SkProgramEntry? SkProgram = null;
+        public SkTextureEntry? SkDiffuseTexture = null;
+        public SkTextureEntry? SkEmissiveTexture = null;
+        public bool _isUploaded = false; 
+
+        public override bool IsUploaded()
+        {
+            return _isUploaded;
+        }
+
+        public void SetUploaded()
+        {
+            _isUploaded = true;
+        }
+
+        public override bool IsOutdated()
+        {
+            return
+                (null != SkDiffuseTexture && SkDiffuseTexture.IsOutdated())
+                || (null != SkEmissiveTexture && SkEmissiveTexture.IsOutdated())
+                ;
+        }
+        
+        public override bool HasTransparency()
+        {
+            return JMaterial.HasTransparency;
+        }
+
+        public SkMaterialEntry(in engine.joyce.Material jMaterial)
+            : base(jMaterial)
+        {
+        }
+    }
+}

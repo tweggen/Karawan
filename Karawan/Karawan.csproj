@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <!-- TargetFramework>net9.0-windows10.0.22000.0</TargetFramework -->
-    <TargetFramework>net9.0-windows10.0.22000.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.22000.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
@@ -52,7 +52,7 @@
     <ProjectReference Include="..\Boom\Boom.csproj" />
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
     <ProjectReference Include="..\nogame\nogame.csproj" />
-    <ProjectReference Include="..\Splash.Silk\Splash.Silk.csproj" />
+    <ProjectReference Include="..\Splash.OpenGL\Splash.OpenGL.csproj" />
     <ProjectReference Include="..\Splash\Splash.csproj" />
   </ItemGroup>
 
@@ -61,11 +61,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Silk.NET.Core" />
+    <!--
+      Silk.NET.Core removed by WP-5.4. It was the last Silk package any shipping
+      project referenced, and nothing used it: the only `using Silk.NET.Core;` in
+      this file was left behind when WP-4.4 removed Silk.NET.Maths, and the two
+      remaining Silk-looking call sites are Splash.OpenGL - our own namespace.
+    -->
     <PackageReference Include="SixLabors.ImageSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
-    <!-- pin to Ultz.Native.Assimp 5.1.4 due to animation artifacts in 2.22/5.4.1 on mac os -->
-    <PackageReference Include="Ultz.Native.Assimp"/>
+    <!--
+      Ultz.Native.Assimp removed by WP-4.4. This carried the native assimp for the
+      DESKTOP build; with fbx import moved to build time there is nothing left in
+      this process to load it. The pin comment it replaced ("5.1.4 due to
+      animation artifacts in 2.22/5.4.1 on mac os") now lives where the importer
+      does, in Mazu, which is the project that still needs the native.
+    -->
   </ItemGroup>
 
 </Project>

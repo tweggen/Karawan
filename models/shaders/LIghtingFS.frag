@@ -31,7 +31,8 @@ out vec4 finalColor;
 
 // NOTE: Add here your custom variables
 
-#define MATERIAL_FLAGS_RENDER_INTERIOR 0x00000001
+#define SHADER_FLAGS_RENDER_INTERIOR 0x00000001
+#define SHADER_FLAGS_NO_DISTANCE_FOG 0x00000002
 
 #define MAX_LIGHTS              4
 #define LIGHT_DIRECTIONAL       0
@@ -383,7 +384,7 @@ void main()
     vec4 col4TexelDiffuse = vec4(0);
     vec4 col4TexelEmissive = vec4(0);
     vec3 v3Normal = v3FragNormal;    
-    if (0 != (materialFlags & MATERIAL_FLAGS_RENDER_INTERIOR))
+    if (0 != (materialFlags & SHADER_FLAGS_RENDER_INTERIOR))
     {
         renderInterior(v3Normal, col4TexelDiffuse, col4TexelEmissive);    
     } else
@@ -406,7 +407,7 @@ void main()
         + col4EmissiveTotal
         ;
 
-    if (fogDistance > 1.0)
+    if (  (0 == (materialFlags & SHADER_FLAGS_NO_DISTANCE_FOG)) && (fogDistance > 1.0))
     {
         vec3 col3Unfogged = vec3(col4Unfogged.xyz);
         float distance = length(v3RelFragPosition);

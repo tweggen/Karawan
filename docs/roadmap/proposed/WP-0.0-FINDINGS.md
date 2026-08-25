@@ -4,7 +4,7 @@
 **Date:** 2026-08-05
 **Branch:** `platform/wp-0.0`
 **Plan:** [`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`](IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md) §5 / §4
-**ADR:** [`docs/ARCHITECTURE/PLATFORM_BACKEND.md`](../../ARCHITECTURE/PLATFORM_BACKEND.md) §9
+**ADR:** [`docs/main/docs/architecture/PLATFORM_BACKEND.md`](../../main/docs/architecture/PLATFORM_BACKEND.md) §9
 
 Spike only. **No product code was changed.** Per plan §4 and §5c, a falsified "assumed"
 claim is an escalation trigger — this document is the escalation.

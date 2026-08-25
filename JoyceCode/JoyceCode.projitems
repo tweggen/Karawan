@@ -15,8 +15,16 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelAnimationCollectionReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelAnimationCollectionWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelFileName.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AInputControllerFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\ClickableFingerState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\ActionBinding.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\BindingTable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\Control.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\ControlLabels.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\bindings\InputModifier.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FingerStateHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\IFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\Context.cs" />
@@ -29,8 +37,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\InterfacePointerConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\InterfacePtr.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\MenuWidget.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\AxisInterpreter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Metadata.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\MergePolicy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Matrix4x4JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\ClusterWatch.cs" />
@@ -83,6 +89,15 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityObserver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\CompiledCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ImplementationLoader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\IDevicePart.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\IContext.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\IDevice.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\IGamepad.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\IKeyboard.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\IMouse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\GameRoot.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\ScanCode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\inputs\ScanCodeNames.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AnimationPackRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AnimationState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\BakedAnimationCatalogue.cs" />
@@ -118,7 +133,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\InputController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\BindingsLuaBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\InputMapper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\RebindController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\LeftStickFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\RightStickFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\ZoomStickFingerState.cs" />
@@ -141,15 +158,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\TextWidgetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Widget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\WidgetEvent.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Fbx.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Assets.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\AssimpFile.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\CustomAssimpLibraryNameContainer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\AssimpVersionDetector.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\FbxModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Mesh.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Texture.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Vertex.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\FindLights.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\GlTF.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\ModelProperties.cs" />
@@ -382,7 +390,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Parent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AnyShader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Index3.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AssimpVersion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Model.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelNode.cs" />

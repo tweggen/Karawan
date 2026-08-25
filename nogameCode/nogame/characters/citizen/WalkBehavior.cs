@@ -47,6 +47,14 @@ public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
             });
         }
         
+        /*
+         * FromModel is read below and was never checked for. DefaultEcs's Get<T> on an
+         * entity that lacks the component hands back a reference into unused storage
+         * rather than throwing, and ModelCache attaches FromModel through
+         * QueueMainThreadAction - so its absence on an early frame is ordinary.
+         */
+        if (!entity.Has<engine.joyce.components.FromModel>()) return;
+
         ref var cGpuAnimationState = ref entity.Get<engine.joyce.components.GPUAnimationState>();
         ref var cFromModel = ref entity.Get<engine.joyce.components.FromModel>();
         ref var model = ref cFromModel.Model;
@@ -65,8 +73,15 @@ public class WalkBehavior : builtin.tools.SimpleNavigationBehavior
             strAnimation = CharacterModelDescription.IdleAnimName;
         }
 
-        _previousSpeed = speed;
-        cGpuAnimationState.AnimationState?.SetAnimation(model, strAnimation, 0);
+        /*
+         * Only advance _previousSpeed once the animation TOOK, or a walker whose model was
+         * not ready on the frame its speed changed keeps the bind pose until the speed
+         * changes again. See AnimationState.SetAnimation.
+         */
+        if (true == cGpuAnimationState.AnimationState?.SetAnimation(model, strAnimation, 0))
+        {
+            _previousSpeed = speed;
+        }
     }
 
     

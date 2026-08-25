@@ -58,6 +58,25 @@ public class DrivingStrategy : AEntityStrategyPart
                 PhysicsName = "taxi.guest",
                 Position = v3Ground,
                 Fragment = worldFragment,
+
+                /*
+                 * Without this the passenger renders in its bind pose - a T-pose - for
+                 * as long as the quest runs, standing at a street point on the sidewalk.
+                 *
+                 * This is the ONLY character we create with neither an entity strategy
+                 * nor a behaviour, and every other animation driver in the game lives in
+                 * one of those two: the strategy parts attach IdleBehavior/WalkBehavior,
+                 * which set the clip and retry until it takes. Nothing here ever called
+                 * SetAnimation at all, so AnimationState.ModelAnimation stayed null,
+                 * CameraOutput substituted NullAnimationsEntry, and the vertex shader
+                 * skipped skinning entirely.
+                 *
+                 * Note IdleBehavior is NOT an option here: its OnAttach reads the Body
+                 * component, and this entity has no physics object (no
+                 * CollisionPropertiesFactory), so DefaultEcs would hand it a reference
+                 * into unused storage.
+                 */
+                InitialAnimName = cmd.IdleAnimName,
             };
 
             await creator.CreateAsync();

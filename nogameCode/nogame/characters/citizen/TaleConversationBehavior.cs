@@ -96,13 +96,17 @@ public class TaleConversationBehavior : ANearbyBehavior
 
         if (!_animationSet)
         {
-            _animationSet = true;
+            /*
+             * Consumed only once the animation actually took - see IdleBehavior for the
+             * failure this prevents. A conversation partner frozen in a T-pose is the most
+             * visible instance of it, because the player is standing right in front of them.
+             */
             if (entity.Has<GPUAnimationState>() && entity.Has<FromModel>())
             {
                 ref var cGpuAnimationState = ref entity.Get<GPUAnimationState>();
                 ref var cFromModel = ref entity.Get<FromModel>();
                 ref var model = ref cFromModel.Model;
-                cGpuAnimationState.AnimationState?.SetAnimation(
+                _animationSet = true == cGpuAnimationState.AnimationState?.SetAnimation(
                     model, CharacterModelDescription.IdleAnimName, 0);
             }
         }

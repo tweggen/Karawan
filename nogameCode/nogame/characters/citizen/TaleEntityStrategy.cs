@@ -214,7 +214,29 @@ public class TaleEntityStrategy : AOneOfStrategy
     }
 
 
+    /**
+     * These three entry points are deliberately fire-and-forget, but `async void`
+     * means an escaping exception is rethrown on the thread pool, where nothing can
+     * catch it - it takes the process down instead of appearing in the log. That is
+     * how a routine "this NPC was depopulated mid-await" turned into a crash.
+     *
+     * Each therefore wraps its body and reports. Faults here are per-NPC and
+     * recoverable: the NPC stays in whatever state it was in.
+     */
     private async void _advanceAndTravel()
+    {
+        try
+        {
+            await _advanceAndTravelAsync();
+        }
+        catch (Exception e)
+        {
+            Error(_dc, $"NPC {_npcId} _advanceAndTravel failed: {e}");
+        }
+    }
+
+
+    private async System.Threading.Tasks.Task _advanceAndTravelAsync()
     {
         // Diagnostic: show current location type before advancing
         var tempSchedule = _taleManager.GetSchedule(_npcId);
@@ -264,6 +286,19 @@ public class TaleEntityStrategy : AOneOfStrategy
     /// the storylet. Used after flee/recover when the NPC was in transit.
     /// </summary>
     private async void _resumeTravel()
+    {
+        try
+        {
+            await _resumeTravelAsync();
+        }
+        catch (Exception e)
+        {
+            Error(_dc, $"NPC {_npcId} _resumeTravel failed: {e}");
+        }
+    }
+
+
+    private async System.Threading.Tasks.Task _resumeTravelAsync()
     {
         Trace(_dc, $"NPC {_npcId} _resumeTravel called");
 
@@ -348,11 +383,16 @@ public class TaleEntityStrategy : AOneOfStrategy
             Logger.Trace(_dc, $"Route generation failed: {e.Message}");
         }
 
+        /*
+         * Past the await above: thread pool thread, and the NPC may have been
+         * depopulated meanwhile. See SpawnInTravel for the full reasoning.
+         */
+
         if (route == null && distToDestination > 10f)
         {
             Trace(_dc, $"NPC {_npcId} destination '{locationName}' unreachable (distance={distToDestination:F0}m but no path). Staying at current location instead.");
             _setupActivity();
-            TriggerStrategy("activity");
+            TriggerStrategyOnLogicalThread("activity");
             return;
         }
 
@@ -371,7 +411,7 @@ public class TaleEntityStrategy : AOneOfStrategy
             Navigator = navigator
         };
 
-        TriggerStrategy("travel");
+        TriggerStrategyOnLogicalThread("travel");
     }
 
 
@@ -454,6 +494,19 @@ public class TaleEntityStrategy : AOneOfStrategy
     /// </summary>
     public async void SpawnInTravel()
     {
+        try
+        {
+            await _spawnInTravelAsync();
+        }
+        catch (Exception e)
+        {
+            Error(_dc, $"NPC {_npcId} SpawnInTravel failed: {e}");
+        }
+    }
+
+
+    private async System.Threading.Tasks.Task _spawnInTravelAsync()
+    {
         var schedule = _taleManager.GetSchedule(_npcId);
         if (schedule == null || !schedule.IsInTransit)
         {
@@ -492,12 +545,20 @@ public class TaleEntityStrategy : AOneOfStrategy
             Trace(_dc, $"NPC {_npcId} SpawnInTravel route exception: {e.Message}");
         }
 
+        /*
+         * Everything below runs AFTER the await above, i.e. on a thread pool
+         * thread and possibly after this NPC was depopulated. Entering a strategy
+         * writes ECS components, so it has to go back to the logical thread and
+         * re-check that the entity is still there - see
+         * AOneOfStrategy.TriggerStrategyOnLogicalThread.
+         */
+
         // If no route and far away, stay in place rather than walking through buildings
         if (route == null && distToDestination > 10f)
         {
             Trace(_dc, $"NPC {_npcId} SpawnInTravel destination unreachable (distance={distToDestination:F0}m, no path). Staying.");
             _setupActivity();
-            TriggerStrategy("activity");
+            TriggerStrategyOnLogicalThread("activity");
             return;
         }
 
@@ -512,7 +573,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         };
 
         Trace(_dc, $"NPC {_npcId} spawning in travel to {dest} (from {_currentPosition.Position}, route={route?.Segments.Count ?? 0} segments)");
-        TriggerStrategy("travel");
+        TriggerStrategyOnLogicalThread("travel");
     }
 
 

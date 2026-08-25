@@ -1,18 +1,26 @@
 ﻿using System.Net.Security;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using MessagePack;
 
 namespace engine.joyce.components;
 
+/**
+ * WP-4.1 added the MessagePack keys so a ModelNode's local transform can be
+ * carried in a baked mo-{hash} model. Purely additive - the Json attributes and
+ * the [IsPersistable] save-game path are untouched.
+ */
 [IsPersistable]
+[MessagePackObject]
 public struct Transform3ToParent
 {
-    [JsonInclude] public bool IsVisible;
-    [JsonInclude] public bool PassVisibility;
-    [JsonInclude] public uint CameraMask;
-    [JsonInclude] public Matrix4x4 Matrix;
+    [JsonInclude] [Key(0)] public bool IsVisible;
+    [JsonInclude] [Key(1)] public bool PassVisibility;
+    [JsonInclude] [Key(2)] public uint CameraMask;
+    [JsonInclude] [Key(3)] public Matrix4x4 Matrix;
 
     [JsonIgnore]
+    [IgnoreMember]
     public Transform3 Transform3
     {
         //private get default;

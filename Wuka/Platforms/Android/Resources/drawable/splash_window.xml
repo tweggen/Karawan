@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The window background both activities show until the GL surface produces its first frame.
+
+  This is where the UNCROPPED Nassau Records title lives. The Android 12+ system splash can
+  only draw its icon through a circular mask at a fixed size, so a wide title is always cut
+  there; the window background has no mask and no size constraint, so the image is shown
+  whole, centred on black.
+
+  gravity="center" rather than a scaled fitCenter: the PNGs are already density-specific
+  (mdpi..xxxhdpi), so Android picks the right one and centring it keeps it pixel-exact
+  instead of resampling.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:drawable="@android:color/black" />
+  <item>
+    <bitmap
+        android:src="@drawable/splash_nassau"
+        android:gravity="center" />
+  </item>
+</layer-list>

@@ -1,4 +1,5 @@
 using System.Numerics;
+using MessagePack;
 
 namespace engine.joyce;
 
@@ -44,21 +45,34 @@ public class BoneMesh
     
 }
 
+/**
+ * One bone of a Skeleton.
+ *
+ * Persisted as part of the baked mo-{hash} model (WP-4.1). Index is serialised
+ * rather than re-derived: it is what AllBakedMatrices is indexed by
+ * (frame * NBones + Index), so the baked model and the baked ac-{hash}
+ * animations must agree on it exactly. See AC-4.3.
+ */
+[MessagePackObject]
 public class Bone
 {
     /**
      * The name of the bone. This corresponds with the name of the node it shall transform.
      */
+    [Key(0)]
     public string Name;
-    
+
     /**
      * This matrix transforms from model space to bone space.
      * As such, it shall be the first part of any bone transformation.
      */
+    [Key(1)]
     public Matrix4x4 Model2Bone = Matrix4x4.Identity;
 
+    [Key(2)]
     public Matrix4x4 Bone2Model = Matrix4x4.Identity;
-    
+
+    [Key(3)]
     public int Index;
 }
 

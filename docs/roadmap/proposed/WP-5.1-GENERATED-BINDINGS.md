@@ -99,8 +99,8 @@ be mistaken for a result again.
 
 ## 6. The generator
 
-[`wp-5.1/gen.py`](wp-5.1/gen.py) → `Splash.GL/generated/GL.g.cs` (1,138 lines), namespace
-`Karawan.Graphics.OpenGL`.
+[`wp-5.1/gen.py`](wp-5.1/gen.py) → `Splash.API.OpenGL/generated/GL.g.cs` (1,138 lines), namespace
+`Splash.API.OpenGL`.
 
 Where each input is authoritative — this split is the point of the exercise:
 
@@ -121,7 +121,7 @@ Output composition:
                                string marshalling, Span forms, GetApi
 ```
 
-`Splash.GL.csproj` has **no package references at all**. That is the deliverable: the bindings
+`Splash.API.OpenGL.csproj` has **no package references at all**. That is the deliverable: the bindings
 depend on a specification, not on a wrapper.
 
 ### Silk's entry points are recorded in metadata
@@ -170,7 +170,7 @@ did not include `GetApi`; this is the corrected figure, and it is still ~1 % aga
 
 ## 8. What is NOT done
 
-- **The swap.** Nothing references `Splash.GL` yet. `Splash.Silk` still compiles against Silk,
+- **The swap.** Nothing references `Splash.API.OpenGL` yet. `Splash.OpenGL` still compiles against Silk,
   and WP-5.2 is where that changes. Note the swap is entangled with
   `Silk.NET.OpenGL.Extensions.ImGui`, which consumes Silk's `GL` type directly — that
   dependency has to be resolved before or during WP-5.2, and it is not addressed here.
@@ -186,18 +186,73 @@ did not include `GetApi`; this is the corrected figure, and it is still ~1 % aga
 ## 9. Reproducing
 
 ```bash
-dotnet build Splash.Silk/Splash.Silk.csproj
-dotnet msbuild Splash.Silk/Splash.Silk.csproj -t:ResolveReferences -getItem:ReferencePath -v:q > refs.json
-dotnet run --project docs/roadmap/proposed/wp-5.1/surface -- Splash.Silk refs.json surface.json
-python docs/roadmap/proposed/wp-5.1/gen.py surface.json gl.xml Splash.GL/generated/GL.g.cs
-dotnet build Splash.GL/Splash.GL.csproj
-dotnet run --project docs/roadmap/proposed/wp-5.1/verify -- <Splash.GL.dll> surface.json
+dotnet build Splash.OpenGL/Splash.OpenGL.csproj
+dotnet msbuild Splash.OpenGL/Splash.OpenGL.csproj -t:ResolveReferences -getItem:ReferencePath -v:q > refs.json
+dotnet run --project docs/roadmap/proposed/wp-5.1/surface -- Splash.OpenGL refs.json surface.json
+python docs/roadmap/proposed/wp-5.1/gen.py surface.json gl.xml Splash.API.OpenGL/generated/GL.g.cs
+dotnet build Splash.API.OpenGL/Splash.API.OpenGL.csproj
+dotnet run --project docs/roadmap/proposed/wp-5.1/verify -- <Splash.API.OpenGL.dll> surface.json
 ```
 
 ## 7. Reproducing
 
 ```bash
-dotnet build Splash.Silk/Splash.Silk.csproj
-dotnet msbuild Splash.Silk/Splash.Silk.csproj -t:ResolveReferences -getItem:ReferencePath -v:q > refs.json
-dotnet run --project docs/roadmap/proposed/wp-5.1/surface -- Splash.Silk refs.json surface.json
+dotnet build Splash.OpenGL/Splash.OpenGL.csproj
+dotnet msbuild Splash.OpenGL/Splash.OpenGL.csproj -t:ResolveReferences -getItem:ReferencePath -v:q > refs.json
+dotnet run --project docs/roadmap/proposed/wp-5.1/surface -- Splash.OpenGL refs.json surface.json
 ```
+
+## 10. Regeneration verified end to end (2026-08-13)
+
+Until now `GL.g.cs` had been **hand-patched twice** — once to correct
+`glTexParameterI[u]iv`, and once implicitly by trusting that the correction matched what
+the generator would emit. `gl.xml` is not checked in, so neither claim had been tested.
+
+The registry was fetched and the generator run for the first time with every guard live:
+
+```
+gl.xml   https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry/main/xml/gl.xml
+         2,774,652 bytes
+         sha256 fba2eaa6262cededdba0dd3cd1e3b1806c24899a7c5df8158467e41c19969426
+```
+
+```
+enum values verified against gl.xml : 114
+  unverifiable                      : 0
+enum types emitted                  : 30
+native entry points emitted         : 85
+support entry points from gl.xml    : 14
+conveniences (hand-written)         : 14
+```
+
+Two results worth stating separately.
+
+**The parameter-shape guard passed against the real registry.** It had only ever been
+exercised against the synthetic one in `test-shapecheck.py`. The corrected `surface.json`
+genuinely agrees with the specification; the `RefKind: "in"` fix was not merely
+self-consistent.
+
+**The regenerated file is byte-identical to the checked-in one.** So the hand-patch
+reproduced exactly what the generator produces, and `GL.g.cs` is now demonstrably
+*regenerable* rather than maintained by hand. That distinction is the whole point of
+depending on a specification: a file nobody can reproduce is a fork, whatever the header
+says.
+
+The tracer regenerates identically too, which matters because it is derived from
+`GL.g.cs` — if the binding drifts, the instrument that watches it drifts with it.
+
+Full chain, all green:
+
+| check | result |
+|---|---|
+| `gen.py` with real `gl.xml` | 114 enums verified, shape guard passed |
+| `GL.g.cs` regenerated vs checked in | **byte-identical** |
+| `GLTrace.g.cs` regenerated vs checked in | **byte-identical** |
+| `test-shapecheck.py` | 8/8 |
+| `differ` (signature parity vs Silk) | exit 0 |
+| `dotnet build Karawan.sln` | 0 errors |
+| unit tests | 234/234 |
+
+`gl.xml` stays out of the repository deliberately — it is a fetched input, and pinning it
+here by sha256 records *which* revision was used without vendoring 2.7 MB that Khronos
+already versions.

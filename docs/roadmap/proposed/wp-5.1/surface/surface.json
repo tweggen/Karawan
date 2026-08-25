@@ -1,3267 +1,3269 @@
 {
-  "callSites": 339,
-  "members": {
-    "GL.ActiveTexture": {
-      "sites": 8,
-      "signatures": [
-        "void ActiveTexture(GLEnum)",
-        "void ActiveTexture(TextureUnit)"
-      ]
-    },
-    "GL.AttachShader": {
-      "sites": 3,
-      "signatures": [
-        "void AttachShader(uint, uint)"
-      ]
-    },
-    "GL.BindBuffer": {
-      "sites": 9,
-      "signatures": [
-        "void BindBuffer(BufferTargetARB, uint)",
-        "void BindBuffer(GLEnum, uint)"
-      ]
-    },
-    "GL.BindBufferBase": {
-      "sites": 1,
-      "signatures": [
-        "void BindBufferBase(BufferTargetARB, uint, uint)"
-      ]
-    },
-    "GL.BindFramebuffer": {
-      "sites": 6,
-      "signatures": [
-        "void BindFramebuffer(GLEnum, uint)"
-      ]
-    },
-    "GL.BindRenderbuffer": {
-      "sites": 1,
-      "signatures": [
-        "void BindRenderbuffer(GLEnum, uint)"
-      ]
-    },
-    "GL.BindSampler": {
-      "sites": 3,
-      "signatures": [
-        "void BindSampler(uint, uint)"
-      ]
-    },
-    "GL.BindTexture": {
-      "sites": 10,
-      "signatures": [
-        "void BindTexture(GLEnum, uint)",
-        "void BindTexture(TextureTarget, uint)"
-      ]
-    },
-    "GL.BindVertexArray": {
-      "sites": 6,
-      "signatures": [
-        "void BindVertexArray(uint)"
-      ]
-    },
-    "GL.BlendEquation": {
-      "sites": 2,
-      "signatures": [
-        "void BlendEquation(BlendEquationModeEXT)",
-        "void BlendEquation(GLEnum)"
-      ]
-    },
-    "GL.BlendEquationSeparate": {
-      "sites": 2,
-      "signatures": [
-        "void BlendEquationSeparate(GLEnum, GLEnum)"
-      ]
-    },
-    "GL.BlendFuncSeparate": {
-      "sites": 4,
-      "signatures": [
-        "void BlendFuncSeparate(BlendingFactor, BlendingFactor, BlendingFactor, BlendingFactor)",
-        "void BlendFuncSeparate(GLEnum, GLEnum, GLEnum, GLEnum)"
-      ]
-    },
-    "GL.BufferData": {
-      "sites": 3,
-      "signatures": [
-        "void BufferData(BufferTargetARB, nuint, void*, BufferUsageARB)",
-        "void BufferData(GLEnum, nuint, void*, GLEnum)"
-      ]
-    },
-    "GL.CheckFramebufferStatus": {
-      "sites": 1,
-      "signatures": [
-        "GLEnum CheckFramebufferStatus(GLEnum)"
-      ]
-    },
-    "GL.Clear": {
-      "sites": 2,
-      "signatures": [
-        "void Clear(ClearBufferMask)",
-        "void Clear(uint)"
-      ]
-    },
-    "GL.ClearColor": {
-      "sites": 2,
-      "signatures": [
-        "void ClearColor(float, float, float, float)"
-      ]
-    },
-    "GL.ClearDepth": {
-      "sites": 3,
-      "signatures": [
-        "void ClearDepth(float)"
-      ]
-    },
-    "GL.CompileShader": {
-      "sites": 2,
-      "signatures": [
-        "void CompileShader(uint)"
-      ]
-    },
-    "GL.CreateProgram": {
-      "sites": 2,
-      "signatures": [
-        "uint CreateProgram()"
-      ]
-    },
-    "GL.CreateShader": {
-      "sites": 2,
-      "signatures": [
-        "uint CreateShader(ShaderType)"
-      ]
-    },
-    "GL.CullFace": {
-      "sites": 3,
-      "signatures": [
-        "void CullFace(TriangleFace)"
-      ]
-    },
-    "GL.DeleteBuffer": {
-      "sites": 3,
-      "signatures": [
-        "void DeleteBuffer(uint)"
-      ]
-    },
-    "GL.DeleteProgram": {
-      "sites": 1,
-      "signatures": [
-        "void DeleteProgram(uint)"
-      ]
-    },
-    "GL.DeleteShader": {
-      "sites": 2,
-      "signatures": [
-        "void DeleteShader(uint)"
-      ]
-    },
-    "GL.DeleteTexture": {
-      "sites": 3,
-      "signatures": [
-        "void DeleteTexture(uint)"
-      ]
-    },
-    "GL.DeleteVertexArray": {
-      "sites": 3,
-      "signatures": [
-        "void DeleteVertexArray(uint)"
-      ]
-    },
-    "GL.DepthFunc": {
-      "sites": 2,
-      "signatures": [
-        "void DepthFunc(DepthFunction)"
-      ]
-    },
-    "GL.DepthMask": {
-      "sites": 2,
-      "signatures": [
-        "void DepthMask(bool)"
-      ]
-    },
-    "GL.DetachShader": {
-      "sites": 3,
-      "signatures": [
-        "void DetachShader(uint, uint)"
-      ]
-    },
-    "GL.Disable": {
-      "sites": 18,
-      "signatures": [
-        "void Disable(EnableCap)",
-        "void Disable(GLEnum)"
-      ]
-    },
-    "GL.DrawBuffers": {
-      "sites": 1,
-      "signatures": [
-        "void DrawBuffers(uint, DrawBufferMode*)"
-      ]
-    },
-    "GL.DrawElements": {
-      "sites": 1,
-      "signatures": [
-        "void DrawElements(PrimitiveType, uint, DrawElementsType, void*)"
-      ]
-    },
-    "GL.DrawElementsBaseVertex": {
-      "sites": 1,
-      "signatures": [
-        "void DrawElementsBaseVertex(GLEnum, uint, GLEnum, void*, int)"
-      ]
-    },
-    "GL.DrawElementsInstanced": {
-      "sites": 1,
-      "signatures": [
-        "void DrawElementsInstanced(PrimitiveType, uint, GLEnum, void*, uint)"
-      ]
-    },
-    "GL.Enable": {
-      "sites": 17,
-      "signatures": [
-        "void Enable(EnableCap)",
-        "void Enable(GLEnum)"
-      ]
-    },
-    "GL.EnableVertexAttribArray": {
-      "sites": 11,
-      "signatures": [
-        "void EnableVertexAttribArray(uint)"
-      ]
-    },
-    "GL.FramebufferRenderbuffer": {
-      "sites": 1,
-      "signatures": [
-        "void FramebufferRenderbuffer(GLEnum, GLEnum, GLEnum, uint)"
-      ]
-    },
-    "GL.FramebufferTexture": {
-      "sites": 1,
-      "signatures": [
-        "void FramebufferTexture(GLEnum, GLEnum, uint, int)"
-      ]
-    },
-    "GL.FrontFace": {
-      "sites": 3,
-      "signatures": [
-        "void FrontFace(FrontFaceDirection)"
-      ]
-    },
-    "GL.GenBuffer": {
-      "sites": 3,
-      "signatures": [
-        "uint GenBuffer()"
-      ]
-    },
-    "GL.GenFramebuffers": {
-      "sites": 1,
-      "signatures": [
-        "void GenFramebuffers(uint, uint*)"
-      ]
-    },
-    "GL.GenRenderbuffers": {
-      "sites": 1,
-      "signatures": [
-        "void GenRenderbuffers(uint, uint*)"
-      ]
-    },
-    "GL.GenTexture": {
-      "sites": 2,
-      "signatures": [
-        "uint GenTexture()"
-      ]
-    },
-    "GL.GenVertexArray": {
-      "sites": 2,
-      "signatures": [
-        "uint GenVertexArray()"
-      ]
-    },
-    "GL.GenerateMipmap": {
-      "sites": 1,
-      "signatures": [
-        "void GenerateMipmap(TextureTarget)"
-      ]
-    },
-    "GL.GetApi": {
-      "sites": 3,
-      "signatures": [
-        "GL GetApi(IGLContextSource)",
-        "GL GetApi(INativeContext)"
-      ]
-    },
-    "GL.GetAttribLocation": {
-      "sites": 2,
-      "signatures": [
-        "int GetAttribLocation(uint, string)"
-      ]
-    },
-    "GL.GetBoolean": {
-      "sites": 1,
-      "signatures": [
-        "void GetBoolean(GLEnum, out bool)"
-      ]
-    },
-    "GL.GetError": {
-      "sites": 28,
-      "signatures": [
-        "GLEnum GetError()"
-      ]
-    },
-    "GL.GetFloat": {
-      "sites": 1,
-      "signatures": [
-        "float GetFloat(GLEnum)"
-      ]
-    },
-    "GL.GetInteger": {
-      "sites": 36,
-      "signatures": [
-        "void GetInteger(GLEnum, out int)",
-        "void GetInteger(GetPName, out int)"
-      ]
-    },
-    "GL.GetProgram": {
-      "sites": 2,
-      "signatures": [
-        "void GetProgram(uint, GLEnum, out int)"
-      ]
-    },
-    "GL.GetProgramInfoLog": {
-      "sites": 2,
-      "signatures": [
-        "string GetProgramInfoLog(uint)"
-      ]
-    },
-    "GL.GetShader": {
-      "sites": 1,
-      "signatures": [
-        "void GetShader(uint, ShaderParameterName, out int)"
-      ]
-    },
-    "GL.GetShaderInfoLog": {
-      "sites": 2,
-      "signatures": [
-        "string GetShaderInfoLog(uint)"
-      ]
-    },
-    "GL.GetStringS": {
-      "sites": 1,
-      "signatures": [
-        "string GetStringS(StringName)"
-      ]
-    },
-    "GL.GetUniformBlockIndex": {
-      "sites": 1,
-      "signatures": [
-        "uint GetUniformBlockIndex(uint, string)"
-      ]
-    },
-    "GL.GetUniformLocation": {
-      "sites": 7,
-      "signatures": [
-        "int GetUniformLocation(uint, string)"
-      ]
-    },
-    "GL.IsEnabled": {
-      "sites": 11,
-      "signatures": [
-        "bool IsEnabled(GLEnum)"
-      ]
-    },
-    "GL.LinkProgram": {
-      "sites": 2,
-      "signatures": [
-        "void LinkProgram(uint)"
-      ]
-    },
-    "GL.PixelStore": {
-      "sites": 1,
-      "signatures": [
-        "void PixelStore(PixelStoreParameter, int)"
-      ]
-    },
-    "GL.PolygonMode": {
-      "sites": 2,
-      "signatures": [
-        "void PolygonMode(GLEnum, GLEnum)"
-      ]
-    },
-    "GL.RenderbufferStorage": {
-      "sites": 1,
-      "signatures": [
-        "void RenderbufferStorage(GLEnum, GLEnum, uint, uint)"
-      ]
-    },
-    "GL.Scissor": {
-      "sites": 3,
-      "signatures": [
-        "void Scissor(int, int, uint, uint)"
-      ]
-    },
-    "GL.ShaderSource": {
-      "sites": 2,
-      "signatures": [
-        "void ShaderSource(uint, string)"
-      ]
-    },
-    "GL.TexImage2D": {
-      "sites": 5,
-      "signatures": [
-        "void TexImage2D(TextureTarget, int, InternalFormat, uint, uint, int, PixelFormat, PixelType, void*)",
-        "void TexImage2D(TextureTarget, int, int, uint, uint, int, PixelFormat, PixelType, void*)"
-      ]
-    },
-    "GL.TexParameter": {
-      "sites": 15,
-      "signatures": [
-        "void TexParameter(GLEnum, GLEnum, float)",
-        "void TexParameter(TextureTarget, TextureParameterName, int)"
-      ]
-    },
-    "GL.TexParameterI": {
-      "sites": 7,
-      "signatures": [
-        "void TexParameterI(GLEnum, TextureParameterName, int)",
-        "void TexParameterI(GLEnum, TextureParameterName, uint)"
-      ]
-    },
-    "GL.TexStorage2D": {
-      "sites": 1,
-      "signatures": [
-        "void TexStorage2D(GLEnum, uint, SizedInternalFormat, uint, uint)"
-      ]
-    },
-    "GL.TexSubImage2D": {
-      "sites": 3,
-      "signatures": [
-        "void TexSubImage2D(GLEnum, int, int, int, uint, uint, PixelFormat, PixelType, void*)",
-        "void TexSubImage2D(TextureTarget, int, int, int, uint, uint, PixelFormat, PixelType, void*)"
-      ]
-    },
-    "GL.Uniform1": {
-      "sites": 6,
-      "signatures": [
-        "void Uniform1(int, float)",
-        "void Uniform1(int, int)",
-        "void Uniform1(int, uint)"
-      ]
-    },
-    "GL.Uniform3": {
-      "sites": 2,
-      "signatures": [
-        "void Uniform3(int, float, float, float)"
-      ]
-    },
-    "GL.Uniform4": {
-      "sites": 2,
-      "signatures": [
-        "void Uniform4(int, float, float, float, float)"
-      ]
-    },
-    "GL.UniformMatrix4": {
-      "sites": 2,
-      "signatures": [
-        "void UniformMatrix4(int, uint, bool, float*)"
-      ]
-    },
-    "GL.UseProgram": {
-      "sites": 5,
-      "signatures": [
-        "void UseProgram(uint)"
-      ]
-    },
-    "GL.VertexAttribDivisor": {
-      "sites": 2,
-      "signatures": [
-        "void VertexAttribDivisor(uint, uint)"
-      ]
-    },
-    "GL.VertexAttribIPointer": {
-      "sites": 2,
-      "signatures": [
-        "void VertexAttribIPointer(uint, int, VertexAttribIType, uint, void*)"
-      ]
-    },
-    "GL.VertexAttribPointer": {
-      "sites": 9,
-      "signatures": [
-        "void VertexAttribPointer(uint, int, GLEnum, bool, uint, void*)",
-        "void VertexAttribPointer(uint, int, VertexAttribPointerType, bool, uint, void*)"
-      ]
-    },
-    "GL.Viewport": {
-      "sites": 3,
-      "signatures": [
-        "void Viewport(int, int, uint, uint)"
-      ]
-    },
-    "GLOverloads.GetInteger": {
-      "sites": 5,
-      "signatures": [
-        "void GetInteger(GLEnum, Span\u003Cint\u003E)"
-      ]
-    },
-    "GLOverloads.UniformMatrix4": {
-      "sites": 2,
-      "signatures": [
-        "void UniformMatrix4(int, uint, bool, ReadOnlySpan\u003Cfloat\u003E)"
-      ]
+ "callSites": 339,
+ "members": {
+  "GL.ActiveTexture": {
+   "sites": 8,
+   "signatures": [
+    "void ActiveTexture(GLEnum)",
+    "void ActiveTexture(TextureUnit)"
+   ]
+  },
+  "GL.AttachShader": {
+   "sites": 3,
+   "signatures": [
+    "void AttachShader(uint, uint)"
+   ]
+  },
+  "GL.BindBuffer": {
+   "sites": 9,
+   "signatures": [
+    "void BindBuffer(BufferTargetARB, uint)",
+    "void BindBuffer(GLEnum, uint)"
+   ]
+  },
+  "GL.BindBufferBase": {
+   "sites": 1,
+   "signatures": [
+    "void BindBufferBase(BufferTargetARB, uint, uint)"
+   ]
+  },
+  "GL.BindFramebuffer": {
+   "sites": 6,
+   "signatures": [
+    "void BindFramebuffer(GLEnum, uint)"
+   ]
+  },
+  "GL.BindRenderbuffer": {
+   "sites": 1,
+   "signatures": [
+    "void BindRenderbuffer(GLEnum, uint)"
+   ]
+  },
+  "GL.BindSampler": {
+   "sites": 3,
+   "signatures": [
+    "void BindSampler(uint, uint)"
+   ]
+  },
+  "GL.BindTexture": {
+   "sites": 10,
+   "signatures": [
+    "void BindTexture(GLEnum, uint)",
+    "void BindTexture(TextureTarget, uint)"
+   ]
+  },
+  "GL.BindVertexArray": {
+   "sites": 6,
+   "signatures": [
+    "void BindVertexArray(uint)"
+   ]
+  },
+  "GL.BlendEquation": {
+   "sites": 2,
+   "signatures": [
+    "void BlendEquation(BlendEquationModeEXT)",
+    "void BlendEquation(GLEnum)"
+   ]
+  },
+  "GL.BlendEquationSeparate": {
+   "sites": 2,
+   "signatures": [
+    "void BlendEquationSeparate(GLEnum, GLEnum)"
+   ]
+  },
+  "GL.BlendFuncSeparate": {
+   "sites": 4,
+   "signatures": [
+    "void BlendFuncSeparate(BlendingFactor, BlendingFactor, BlendingFactor, BlendingFactor)",
+    "void BlendFuncSeparate(GLEnum, GLEnum, GLEnum, GLEnum)"
+   ]
+  },
+  "GL.BufferData": {
+   "sites": 3,
+   "signatures": [
+    "void BufferData(BufferTargetARB, nuint, void*, BufferUsageARB)",
+    "void BufferData(GLEnum, nuint, void*, GLEnum)"
+   ]
+  },
+  "GL.CheckFramebufferStatus": {
+   "sites": 1,
+   "signatures": [
+    "GLEnum CheckFramebufferStatus(GLEnum)"
+   ]
+  },
+  "GL.Clear": {
+   "sites": 2,
+   "signatures": [
+    "void Clear(ClearBufferMask)",
+    "void Clear(uint)"
+   ]
+  },
+  "GL.ClearColor": {
+   "sites": 2,
+   "signatures": [
+    "void ClearColor(float, float, float, float)"
+   ]
+  },
+  "GL.ClearDepth": {
+   "sites": 3,
+   "signatures": [
+    "void ClearDepth(float)"
+   ]
+  },
+  "GL.CompileShader": {
+   "sites": 2,
+   "signatures": [
+    "void CompileShader(uint)"
+   ]
+  },
+  "GL.CreateProgram": {
+   "sites": 2,
+   "signatures": [
+    "uint CreateProgram()"
+   ]
+  },
+  "GL.CreateShader": {
+   "sites": 2,
+   "signatures": [
+    "uint CreateShader(ShaderType)"
+   ]
+  },
+  "GL.CullFace": {
+   "sites": 3,
+   "signatures": [
+    "void CullFace(TriangleFace)"
+   ]
+  },
+  "GL.DeleteBuffer": {
+   "sites": 3,
+   "signatures": [
+    "void DeleteBuffer(uint)"
+   ]
+  },
+  "GL.DeleteProgram": {
+   "sites": 1,
+   "signatures": [
+    "void DeleteProgram(uint)"
+   ]
+  },
+  "GL.DeleteShader": {
+   "sites": 2,
+   "signatures": [
+    "void DeleteShader(uint)"
+   ]
+  },
+  "GL.DeleteTexture": {
+   "sites": 3,
+   "signatures": [
+    "void DeleteTexture(uint)"
+   ]
+  },
+  "GL.DeleteVertexArray": {
+   "sites": 3,
+   "signatures": [
+    "void DeleteVertexArray(uint)"
+   ]
+  },
+  "GL.DepthFunc": {
+   "sites": 2,
+   "signatures": [
+    "void DepthFunc(DepthFunction)"
+   ]
+  },
+  "GL.DepthMask": {
+   "sites": 2,
+   "signatures": [
+    "void DepthMask(bool)"
+   ]
+  },
+  "GL.DetachShader": {
+   "sites": 3,
+   "signatures": [
+    "void DetachShader(uint, uint)"
+   ]
+  },
+  "GL.Disable": {
+   "sites": 18,
+   "signatures": [
+    "void Disable(EnableCap)",
+    "void Disable(GLEnum)"
+   ]
+  },
+  "GL.DrawBuffers": {
+   "sites": 1,
+   "signatures": [
+    "void DrawBuffers(uint, DrawBufferMode*)"
+   ]
+  },
+  "GL.DrawElements": {
+   "sites": 1,
+   "signatures": [
+    "void DrawElements(PrimitiveType, uint, DrawElementsType, void*)"
+   ]
+  },
+  "GL.DrawElementsBaseVertex": {
+   "sites": 1,
+   "signatures": [
+    "void DrawElementsBaseVertex(GLEnum, uint, GLEnum, void*, int)"
+   ]
+  },
+  "GL.DrawElementsInstanced": {
+   "sites": 1,
+   "signatures": [
+    "void DrawElementsInstanced(PrimitiveType, uint, GLEnum, void*, uint)"
+   ]
+  },
+  "GL.Enable": {
+   "sites": 17,
+   "signatures": [
+    "void Enable(EnableCap)",
+    "void Enable(GLEnum)"
+   ]
+  },
+  "GL.EnableVertexAttribArray": {
+   "sites": 11,
+   "signatures": [
+    "void EnableVertexAttribArray(uint)"
+   ]
+  },
+  "GL.FramebufferRenderbuffer": {
+   "sites": 1,
+   "signatures": [
+    "void FramebufferRenderbuffer(GLEnum, GLEnum, GLEnum, uint)"
+   ]
+  },
+  "GL.FramebufferTexture": {
+   "sites": 1,
+   "signatures": [
+    "void FramebufferTexture(GLEnum, GLEnum, uint, int)"
+   ]
+  },
+  "GL.FrontFace": {
+   "sites": 3,
+   "signatures": [
+    "void FrontFace(FrontFaceDirection)"
+   ]
+  },
+  "GL.GenBuffer": {
+   "sites": 3,
+   "signatures": [
+    "uint GenBuffer()"
+   ]
+  },
+  "GL.GenFramebuffers": {
+   "sites": 1,
+   "signatures": [
+    "void GenFramebuffers(uint, uint*)"
+   ]
+  },
+  "GL.GenRenderbuffers": {
+   "sites": 1,
+   "signatures": [
+    "void GenRenderbuffers(uint, uint*)"
+   ]
+  },
+  "GL.GenTexture": {
+   "sites": 2,
+   "signatures": [
+    "uint GenTexture()"
+   ]
+  },
+  "GL.GenVertexArray": {
+   "sites": 2,
+   "signatures": [
+    "uint GenVertexArray()"
+   ]
+  },
+  "GL.GenerateMipmap": {
+   "sites": 1,
+   "signatures": [
+    "void GenerateMipmap(TextureTarget)"
+   ]
+  },
+  "GL.GetApi": {
+   "sites": 3,
+   "signatures": [
+    "GL GetApi(IGLContextSource)",
+    "GL GetApi(INativeContext)"
+   ]
+  },
+  "GL.GetAttribLocation": {
+   "sites": 2,
+   "signatures": [
+    "int GetAttribLocation(uint, string)"
+   ]
+  },
+  "GL.GetBoolean": {
+   "sites": 1,
+   "signatures": [
+    "void GetBoolean(GLEnum, out bool)"
+   ]
+  },
+  "GL.GetError": {
+   "sites": 28,
+   "signatures": [
+    "GLEnum GetError()"
+   ]
+  },
+  "GL.GetFloat": {
+   "sites": 1,
+   "signatures": [
+    "float GetFloat(GLEnum)"
+   ]
+  },
+  "GL.GetInteger": {
+   "sites": 36,
+   "signatures": [
+    "void GetInteger(GLEnum, out int)",
+    "void GetInteger(GetPName, out int)"
+   ]
+  },
+  "GL.GetProgram": {
+   "sites": 2,
+   "signatures": [
+    "void GetProgram(uint, GLEnum, out int)"
+   ]
+  },
+  "GL.GetProgramInfoLog": {
+   "sites": 2,
+   "signatures": [
+    "string GetProgramInfoLog(uint)"
+   ]
+  },
+  "GL.GetShader": {
+   "sites": 1,
+   "signatures": [
+    "void GetShader(uint, ShaderParameterName, out int)"
+   ]
+  },
+  "GL.GetShaderInfoLog": {
+   "sites": 2,
+   "signatures": [
+    "string GetShaderInfoLog(uint)"
+   ]
+  },
+  "GL.GetStringS": {
+   "sites": 1,
+   "signatures": [
+    "string GetStringS(StringName)"
+   ]
+  },
+  "GL.GetUniformBlockIndex": {
+   "sites": 1,
+   "signatures": [
+    "uint GetUniformBlockIndex(uint, string)"
+   ]
+  },
+  "GL.GetUniformLocation": {
+   "sites": 7,
+   "signatures": [
+    "int GetUniformLocation(uint, string)"
+   ]
+  },
+  "GL.IsEnabled": {
+   "sites": 11,
+   "signatures": [
+    "bool IsEnabled(GLEnum)"
+   ]
+  },
+  "GL.LinkProgram": {
+   "sites": 2,
+   "signatures": [
+    "void LinkProgram(uint)"
+   ]
+  },
+  "GL.PixelStore": {
+   "sites": 1,
+   "signatures": [
+    "void PixelStore(PixelStoreParameter, int)"
+   ]
+  },
+  "GL.PolygonMode": {
+   "sites": 2,
+   "signatures": [
+    "void PolygonMode(GLEnum, GLEnum)"
+   ]
+  },
+  "GL.RenderbufferStorage": {
+   "sites": 1,
+   "signatures": [
+    "void RenderbufferStorage(GLEnum, GLEnum, uint, uint)"
+   ]
+  },
+  "GL.Scissor": {
+   "sites": 3,
+   "signatures": [
+    "void Scissor(int, int, uint, uint)"
+   ]
+  },
+  "GL.ShaderSource": {
+   "sites": 2,
+   "signatures": [
+    "void ShaderSource(uint, string)"
+   ]
+  },
+  "GL.TexImage2D": {
+   "sites": 5,
+   "signatures": [
+    "void TexImage2D(TextureTarget, int, InternalFormat, uint, uint, int, PixelFormat, PixelType, void*)",
+    "void TexImage2D(TextureTarget, int, int, uint, uint, int, PixelFormat, PixelType, void*)"
+   ]
+  },
+  "GL.TexParameter": {
+   "sites": 15,
+   "signatures": [
+    "void TexParameter(GLEnum, GLEnum, float)",
+    "void TexParameter(TextureTarget, TextureParameterName, int)"
+   ]
+  },
+  "GL.TexParameterI": {
+   "sites": 7,
+   "signatures": [
+    "void TexParameterI(GLEnum, TextureParameterName, int)",
+    "void TexParameterI(GLEnum, TextureParameterName, uint)"
+   ]
+  },
+  "GL.TexStorage2D": {
+   "sites": 1,
+   "signatures": [
+    "void TexStorage2D(GLEnum, uint, SizedInternalFormat, uint, uint)"
+   ]
+  },
+  "GL.TexSubImage2D": {
+   "sites": 3,
+   "signatures": [
+    "void TexSubImage2D(GLEnum, int, int, int, uint, uint, PixelFormat, PixelType, void*)",
+    "void TexSubImage2D(TextureTarget, int, int, int, uint, uint, PixelFormat, PixelType, void*)"
+   ]
+  },
+  "GL.Uniform1": {
+   "sites": 6,
+   "signatures": [
+    "void Uniform1(int, float)",
+    "void Uniform1(int, int)",
+    "void Uniform1(int, uint)"
+   ]
+  },
+  "GL.Uniform3": {
+   "sites": 2,
+   "signatures": [
+    "void Uniform3(int, float, float, float)"
+   ]
+  },
+  "GL.Uniform4": {
+   "sites": 2,
+   "signatures": [
+    "void Uniform4(int, float, float, float, float)"
+   ]
+  },
+  "GL.UniformMatrix4": {
+   "sites": 2,
+   "signatures": [
+    "void UniformMatrix4(int, uint, bool, float*)"
+   ]
+  },
+  "GL.UseProgram": {
+   "sites": 5,
+   "signatures": [
+    "void UseProgram(uint)"
+   ]
+  },
+  "GL.VertexAttribDivisor": {
+   "sites": 2,
+   "signatures": [
+    "void VertexAttribDivisor(uint, uint)"
+   ]
+  },
+  "GL.VertexAttribIPointer": {
+   "sites": 2,
+   "signatures": [
+    "void VertexAttribIPointer(uint, int, VertexAttribIType, uint, void*)"
+   ]
+  },
+  "GL.VertexAttribPointer": {
+   "sites": 9,
+   "signatures": [
+    "void VertexAttribPointer(uint, int, GLEnum, bool, uint, void*)",
+    "void VertexAttribPointer(uint, int, VertexAttribPointerType, bool, uint, void*)"
+   ]
+  },
+  "GL.Viewport": {
+   "sites": 3,
+   "signatures": [
+    "void Viewport(int, int, uint, uint)"
+   ]
+  },
+  "GLOverloads.GetInteger": {
+   "sites": 5,
+   "signatures": [
+    "void GetInteger(GLEnum, Span<int>)"
+   ]
+  },
+  "GLOverloads.UniformMatrix4": {
+   "sites": 2,
+   "signatures": [
+    "void UniformMatrix4(int, uint, bool, ReadOnlySpan<float>)"
+   ]
+  }
+ },
+ "shapes": {
+  "GL.ActiveTexture|void ActiveTexture(GLEnum)": {
+   "Member": "ActiveTexture",
+   "EntryPoint": "glActiveTexture",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "texture",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
     }
+   ]
   },
-  "shapes": {
-    "GL.ActiveTexture|void ActiveTexture(GLEnum)": {
-      "Member": "ActiveTexture",
-      "EntryPoint": "glActiveTexture",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "texture",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.ActiveTexture|void ActiveTexture(TextureUnit)": {
-      "Member": "ActiveTexture",
-      "EntryPoint": "glActiveTexture",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "texture",
-          "Type": "TextureUnit",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.AttachShader|void AttachShader(uint, uint)": {
-      "Member": "AttachShader",
-      "EntryPoint": "glAttachShader",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "program",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "shader",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BindBufferBase|void BindBufferBase(BufferTargetARB, uint, uint)": {
-      "Member": "BindBufferBase",
-      "EntryPoint": "glBindBufferBase",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "BufferTargetARB",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "index",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "buffer",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BindBuffer|void BindBuffer(BufferTargetARB, uint)": {
-      "Member": "BindBuffer",
-      "EntryPoint": "glBindBuffer",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "BufferTargetARB",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "buffer",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BindBuffer|void BindBuffer(GLEnum, uint)": {
-      "Member": "BindBuffer",
-      "EntryPoint": "glBindBuffer",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "buffer",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BindFramebuffer|void BindFramebuffer(GLEnum, uint)": {
-      "Member": "BindFramebuffer",
-      "EntryPoint": "glBindFramebuffer",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "framebuffer",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BindRenderbuffer|void BindRenderbuffer(GLEnum, uint)": {
-      "Member": "BindRenderbuffer",
-      "EntryPoint": "glBindRenderbuffer",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "renderbuffer",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BindSampler|void BindSampler(uint, uint)": {
-      "Member": "BindSampler",
-      "EntryPoint": "glBindSampler",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "unit",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "sampler",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BindTexture|void BindTexture(GLEnum, uint)": {
-      "Member": "BindTexture",
-      "EntryPoint": "glBindTexture",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "texture",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BindTexture|void BindTexture(TextureTarget, uint)": {
-      "Member": "BindTexture",
-      "EntryPoint": "glBindTexture",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "TextureTarget",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "texture",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BindVertexArray|void BindVertexArray(uint)": {
-      "Member": "BindVertexArray",
-      "EntryPoint": "glBindVertexArray",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "array",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BlendEquationSeparate|void BlendEquationSeparate(GLEnum, GLEnum)": {
-      "Member": "BlendEquationSeparate",
-      "EntryPoint": "glBlendEquationSeparate",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "modeRGB",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "modeAlpha",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BlendEquation|void BlendEquation(BlendEquationModeEXT)": {
-      "Member": "BlendEquation",
-      "EntryPoint": "glBlendEquation",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "mode",
-          "Type": "BlendEquationModeEXT",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BlendEquation|void BlendEquation(GLEnum)": {
-      "Member": "BlendEquation",
-      "EntryPoint": "glBlendEquation",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "mode",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BlendFuncSeparate|void BlendFuncSeparate(BlendingFactor, BlendingFactor, BlendingFactor, BlendingFactor)": {
-      "Member": "BlendFuncSeparate",
-      "EntryPoint": "glBlendFuncSeparate",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "sfactorRGB",
-          "Type": "BlendingFactor",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "dfactorRGB",
-          "Type": "BlendingFactor",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "sfactorAlpha",
-          "Type": "BlendingFactor",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "dfactorAlpha",
-          "Type": "BlendingFactor",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BlendFuncSeparate|void BlendFuncSeparate(GLEnum, GLEnum, GLEnum, GLEnum)": {
-      "Member": "BlendFuncSeparate",
-      "EntryPoint": "glBlendFuncSeparate",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "sfactorRGB",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "dfactorRGB",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "sfactorAlpha",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "dfactorAlpha",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BufferData|void BufferData(BufferTargetARB, nuint, void*, BufferUsageARB)": {
-      "Member": "BufferData",
-      "EntryPoint": "glBufferData",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "BufferTargetARB",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "size",
-          "Type": "nuint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "data",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        },
-        {
-          "Name": "usage",
-          "Type": "BufferUsageARB",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.BufferData|void BufferData(GLEnum, nuint, void*, GLEnum)": {
-      "Member": "BufferData",
-      "EntryPoint": "glBufferData",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "size",
-          "Type": "nuint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "data",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        },
-        {
-          "Name": "usage",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.CheckFramebufferStatus|GLEnum CheckFramebufferStatus(GLEnum)": {
-      "Member": "CheckFramebufferStatus",
-      "EntryPoint": "glCheckFramebufferStatus",
-      "ReturnType": "GLEnum",
-      "ReturnIsEnum": true,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.ClearColor|void ClearColor(float, float, float, float)": {
-      "Member": "ClearColor",
-      "EntryPoint": "glClearColor",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "red",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "green",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "blue",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "alpha",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.ClearDepth|void ClearDepth(float)": {
-      "Member": "ClearDepth",
-      "EntryPoint": "glClearDepthf",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "d",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Clear|void Clear(ClearBufferMask)": {
-      "Member": "Clear",
-      "EntryPoint": "glClear",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "mask",
-          "Type": "ClearBufferMask",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Clear|void Clear(uint)": {
-      "Member": "Clear",
-      "EntryPoint": "glClear",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "mask",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.CompileShader|void CompileShader(uint)": {
-      "Member": "CompileShader",
-      "EntryPoint": "glCompileShader",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "shader",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.CreateProgram|uint CreateProgram()": {
-      "Member": "CreateProgram",
-      "EntryPoint": "glCreateProgram",
-      "ReturnType": "uint",
-      "ReturnIsEnum": false,
-      "Parameters": []
-    },
-    "GL.CreateShader|uint CreateShader(ShaderType)": {
-      "Member": "CreateShader",
-      "EntryPoint": "glCreateShader",
-      "ReturnType": "uint",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "type",
-          "Type": "ShaderType",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.CullFace|void CullFace(TriangleFace)": {
-      "Member": "CullFace",
-      "EntryPoint": "glCullFace",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "mode",
-          "Type": "TriangleFace",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DeleteBuffer|void DeleteBuffer(uint)": {
-      "Member": "DeleteBuffer",
-      "EntryPoint": "",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "buffers",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DeleteProgram|void DeleteProgram(uint)": {
-      "Member": "DeleteProgram",
-      "EntryPoint": "glDeleteProgram",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "program",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DeleteShader|void DeleteShader(uint)": {
-      "Member": "DeleteShader",
-      "EntryPoint": "glDeleteShader",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "shader",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DeleteTexture|void DeleteTexture(uint)": {
-      "Member": "DeleteTexture",
-      "EntryPoint": "",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "textures",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DeleteVertexArray|void DeleteVertexArray(uint)": {
-      "Member": "DeleteVertexArray",
-      "EntryPoint": "",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "arrays",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DepthFunc|void DepthFunc(DepthFunction)": {
-      "Member": "DepthFunc",
-      "EntryPoint": "glDepthFunc",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "func",
-          "Type": "DepthFunction",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DepthMask|void DepthMask(bool)": {
-      "Member": "DepthMask",
-      "EntryPoint": "glDepthMask",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "flag",
-          "Type": "bool",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DetachShader|void DetachShader(uint, uint)": {
-      "Member": "DetachShader",
-      "EntryPoint": "glDetachShader",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "program",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "shader",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Disable|void Disable(EnableCap)": {
-      "Member": "Disable",
-      "EntryPoint": "glDisable",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "cap",
-          "Type": "EnableCap",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Disable|void Disable(GLEnum)": {
-      "Member": "Disable",
-      "EntryPoint": "glDisable",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "cap",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DrawBuffers|void DrawBuffers(uint, DrawBufferMode*)": {
-      "Member": "DrawBuffers",
-      "EntryPoint": "glDrawBuffers",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "n",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "bufs",
-          "Type": "DrawBufferMode*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.DrawElementsBaseVertex|void DrawElementsBaseVertex(GLEnum, uint, GLEnum, void*, int)": {
-      "Member": "DrawElementsBaseVertex",
-      "EntryPoint": "glDrawElementsBaseVertex",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "mode",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "count",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "type",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "indices",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        },
-        {
-          "Name": "basevertex",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DrawElementsInstanced|void DrawElementsInstanced(PrimitiveType, uint, GLEnum, void*, uint)": {
-      "Member": "DrawElementsInstanced",
-      "EntryPoint": "glDrawElementsInstanced",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "mode",
-          "Type": "PrimitiveType",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "count",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "type",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "indices",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        },
-        {
-          "Name": "instancecount",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.DrawElements|void DrawElements(PrimitiveType, uint, DrawElementsType, void*)": {
-      "Member": "DrawElements",
-      "EntryPoint": "glDrawElements",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "mode",
-          "Type": "PrimitiveType",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "count",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "type",
-          "Type": "DrawElementsType",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "indices",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.EnableVertexAttribArray|void EnableVertexAttribArray(uint)": {
-      "Member": "EnableVertexAttribArray",
-      "EntryPoint": "glEnableVertexAttribArray",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "index",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Enable|void Enable(EnableCap)": {
-      "Member": "Enable",
-      "EntryPoint": "glEnable",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "cap",
-          "Type": "EnableCap",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Enable|void Enable(GLEnum)": {
-      "Member": "Enable",
-      "EntryPoint": "glEnable",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "cap",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.FramebufferRenderbuffer|void FramebufferRenderbuffer(GLEnum, GLEnum, GLEnum, uint)": {
-      "Member": "FramebufferRenderbuffer",
-      "EntryPoint": "glFramebufferRenderbuffer",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "attachment",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "renderbuffertarget",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "renderbuffer",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.FramebufferTexture|void FramebufferTexture(GLEnum, GLEnum, uint, int)": {
-      "Member": "FramebufferTexture",
-      "EntryPoint": "glFramebufferTexture",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "attachment",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "texture",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "level",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.FrontFace|void FrontFace(FrontFaceDirection)": {
-      "Member": "FrontFace",
-      "EntryPoint": "glFrontFace",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "mode",
-          "Type": "FrontFaceDirection",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GenBuffer|uint GenBuffer()": {
-      "Member": "GenBuffer",
-      "EntryPoint": "",
-      "ReturnType": "uint",
-      "ReturnIsEnum": false,
-      "Parameters": []
-    },
-    "GL.GenFramebuffers|void GenFramebuffers(uint, uint*)": {
-      "Member": "GenFramebuffers",
-      "EntryPoint": "glGenFramebuffers",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "n",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "framebuffers",
-          "Type": "uint*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.GenRenderbuffers|void GenRenderbuffers(uint, uint*)": {
-      "Member": "GenRenderbuffers",
-      "EntryPoint": "glGenRenderbuffers",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "n",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "renderbuffers",
-          "Type": "uint*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.GenTexture|uint GenTexture()": {
-      "Member": "GenTexture",
-      "EntryPoint": "",
-      "ReturnType": "uint",
-      "ReturnIsEnum": false,
-      "Parameters": []
-    },
-    "GL.GenVertexArray|uint GenVertexArray()": {
-      "Member": "GenVertexArray",
-      "EntryPoint": "",
-      "ReturnType": "uint",
-      "ReturnIsEnum": false,
-      "Parameters": []
-    },
-    "GL.GenerateMipmap|void GenerateMipmap(TextureTarget)": {
-      "Member": "GenerateMipmap",
-      "EntryPoint": "glGenerateMipmap",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "TextureTarget",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetApi|GL GetApi(IGLContextSource)": {
-      "Member": "GetApi",
-      "EntryPoint": "",
-      "ReturnType": "GL",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "contextSource",
-          "Type": "IGLContextSource",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetApi|GL GetApi(INativeContext)": {
-      "Member": "GetApi",
-      "EntryPoint": "",
-      "ReturnType": "GL",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "ctx",
-          "Type": "INativeContext",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetAttribLocation|int GetAttribLocation(uint, string)": {
-      "Member": "GetAttribLocation",
-      "EntryPoint": "glGetAttribLocation",
-      "ReturnType": "int",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "program",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "name",
-          "Type": "string",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetBoolean|void GetBoolean(GLEnum, out bool)": {
-      "Member": "GetBoolean",
-      "EntryPoint": "glGetBooleanv",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "pname",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "data",
-          "Type": "bool",
-          "RefKind": "out",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetError|GLEnum GetError()": {
-      "Member": "GetError",
-      "EntryPoint": "glGetError",
-      "ReturnType": "GLEnum",
-      "ReturnIsEnum": true,
-      "Parameters": []
-    },
-    "GL.GetFloat|float GetFloat(GLEnum)": {
-      "Member": "GetFloat",
-      "EntryPoint": "",
-      "ReturnType": "float",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "pname",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetInteger|void GetInteger(GLEnum, out int)": {
-      "Member": "GetInteger",
-      "EntryPoint": "glGetIntegerv",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "pname",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "data",
-          "Type": "int",
-          "RefKind": "out",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetInteger|void GetInteger(GetPName, out int)": {
-      "Member": "GetInteger",
-      "EntryPoint": "glGetIntegerv",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "pname",
-          "Type": "GetPName",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "data",
-          "Type": "int",
-          "RefKind": "out",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetProgramInfoLog|string GetProgramInfoLog(uint)": {
-      "Member": "GetProgramInfoLog",
-      "EntryPoint": "",
-      "ReturnType": "string",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "program",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetProgram|void GetProgram(uint, GLEnum, out int)": {
-      "Member": "GetProgram",
-      "EntryPoint": "glGetProgramiv",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "program",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "pname",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "params",
-          "Type": "int",
-          "RefKind": "out",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetShaderInfoLog|string GetShaderInfoLog(uint)": {
-      "Member": "GetShaderInfoLog",
-      "EntryPoint": "",
-      "ReturnType": "string",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "shader",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetShader|void GetShader(uint, ShaderParameterName, out int)": {
-      "Member": "GetShader",
-      "EntryPoint": "glGetShaderiv",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "shader",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "pname",
-          "Type": "ShaderParameterName",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "params",
-          "Type": "int",
-          "RefKind": "out",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetStringS|string GetStringS(StringName)": {
-      "Member": "GetStringS",
-      "EntryPoint": "glGetString",
-      "ReturnType": "string",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "name",
-          "Type": "StringName",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetUniformBlockIndex|uint GetUniformBlockIndex(uint, string)": {
-      "Member": "GetUniformBlockIndex",
-      "EntryPoint": "glGetUniformBlockIndex",
-      "ReturnType": "uint",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "program",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "uniformBlockName",
-          "Type": "string",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.GetUniformLocation|int GetUniformLocation(uint, string)": {
-      "Member": "GetUniformLocation",
-      "EntryPoint": "glGetUniformLocation",
-      "ReturnType": "int",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "program",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "name",
-          "Type": "string",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.IsEnabled|bool IsEnabled(GLEnum)": {
-      "Member": "IsEnabled",
-      "EntryPoint": "glIsEnabled",
-      "ReturnType": "bool",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "cap",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.LinkProgram|void LinkProgram(uint)": {
-      "Member": "LinkProgram",
-      "EntryPoint": "glLinkProgram",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "program",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.PixelStore|void PixelStore(PixelStoreParameter, int)": {
-      "Member": "PixelStore",
-      "EntryPoint": "glPixelStorei",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "pname",
-          "Type": "PixelStoreParameter",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "param",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.PolygonMode|void PolygonMode(GLEnum, GLEnum)": {
-      "Member": "PolygonMode",
-      "EntryPoint": "glPolygonMode",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "face",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "mode",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.RenderbufferStorage|void RenderbufferStorage(GLEnum, GLEnum, uint, uint)": {
-      "Member": "RenderbufferStorage",
-      "EntryPoint": "glRenderbufferStorage",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "internalformat",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "width",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "height",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Scissor|void Scissor(int, int, uint, uint)": {
-      "Member": "Scissor",
-      "EntryPoint": "glScissor",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "x",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "y",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "width",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "height",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.ShaderSource|void ShaderSource(uint, string)": {
-      "Member": "ShaderSource",
-      "EntryPoint": "",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "shader",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "string",
-          "Type": "string",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.TexImage2D|void TexImage2D(TextureTarget, int, InternalFormat, uint, uint, int, PixelFormat, PixelType, void*)": {
-      "Member": "TexImage2D",
-      "EntryPoint": "glTexImage2D",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "TextureTarget",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "level",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "internalformat",
-          "Type": "InternalFormat",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "width",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "height",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "border",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "format",
-          "Type": "PixelFormat",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "type",
-          "Type": "PixelType",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "pixels",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.TexImage2D|void TexImage2D(TextureTarget, int, int, uint, uint, int, PixelFormat, PixelType, void*)": {
-      "Member": "TexImage2D",
-      "EntryPoint": "glTexImage2D",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "TextureTarget",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "level",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "internalformat",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "width",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "height",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "border",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "format",
-          "Type": "PixelFormat",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "type",
-          "Type": "PixelType",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "pixels",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.TexParameterI|void TexParameterI(GLEnum, TextureParameterName, int)": {
-      "Member": "TexParameterI",
-      "EntryPoint": "glTexParameterIiv",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "pname",
-          "Type": "TextureParameterName",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "params",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.TexParameterI|void TexParameterI(GLEnum, TextureParameterName, uint)": {
-      "Member": "TexParameterI",
-      "EntryPoint": "glTexParameterIuiv",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "pname",
-          "Type": "TextureParameterName",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "params",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.TexParameter|void TexParameter(GLEnum, GLEnum, float)": {
-      "Member": "TexParameter",
-      "EntryPoint": "glTexParameterf",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "pname",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "param",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.TexParameter|void TexParameter(TextureTarget, TextureParameterName, int)": {
-      "Member": "TexParameter",
-      "EntryPoint": "glTexParameteri",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "TextureTarget",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "pname",
-          "Type": "TextureParameterName",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "param",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.TexStorage2D|void TexStorage2D(GLEnum, uint, SizedInternalFormat, uint, uint)": {
-      "Member": "TexStorage2D",
-      "EntryPoint": "glTexStorage2D",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "levels",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "internalformat",
-          "Type": "SizedInternalFormat",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "width",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "height",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.TexSubImage2D|void TexSubImage2D(GLEnum, int, int, int, uint, uint, PixelFormat, PixelType, void*)": {
-      "Member": "TexSubImage2D",
-      "EntryPoint": "glTexSubImage2D",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "level",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "xoffset",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "yoffset",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "width",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "height",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "format",
-          "Type": "PixelFormat",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "type",
-          "Type": "PixelType",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "pixels",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.TexSubImage2D|void TexSubImage2D(TextureTarget, int, int, int, uint, uint, PixelFormat, PixelType, void*)": {
-      "Member": "TexSubImage2D",
-      "EntryPoint": "glTexSubImage2D",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "target",
-          "Type": "TextureTarget",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "level",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "xoffset",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "yoffset",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "width",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "height",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "format",
-          "Type": "PixelFormat",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "type",
-          "Type": "PixelType",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "pixels",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.Uniform1|void Uniform1(int, float)": {
-      "Member": "Uniform1",
-      "EntryPoint": "glUniform1f",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "location",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "v0",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Uniform1|void Uniform1(int, int)": {
-      "Member": "Uniform1",
-      "EntryPoint": "glUniform1i",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "location",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "v0",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Uniform1|void Uniform1(int, uint)": {
-      "Member": "Uniform1",
-      "EntryPoint": "glUniform1ui",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "location",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "v0",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Uniform3|void Uniform3(int, float, float, float)": {
-      "Member": "Uniform3",
-      "EntryPoint": "glUniform3f",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "location",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "v0",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "v1",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "v2",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.Uniform4|void Uniform4(int, float, float, float, float)": {
-      "Member": "Uniform4",
-      "EntryPoint": "glUniform4f",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "location",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "v0",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "v1",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "v2",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "v3",
-          "Type": "float",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.UniformMatrix4|void UniformMatrix4(int, uint, bool, float*)": {
-      "Member": "UniformMatrix4",
-      "EntryPoint": "glUniformMatrix4fv",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "location",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "count",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "transpose",
-          "Type": "bool",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "value",
-          "Type": "float*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.UseProgram|void UseProgram(uint)": {
-      "Member": "UseProgram",
-      "EntryPoint": "glUseProgram",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "program",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.VertexAttribDivisor|void VertexAttribDivisor(uint, uint)": {
-      "Member": "VertexAttribDivisor",
-      "EntryPoint": "glVertexAttribDivisor",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "index",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "divisor",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GL.VertexAttribIPointer|void VertexAttribIPointer(uint, int, VertexAttribIType, uint, void*)": {
-      "Member": "VertexAttribIPointer",
-      "EntryPoint": "glVertexAttribIPointer",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "index",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "size",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "type",
-          "Type": "VertexAttribIType",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "stride",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "pointer",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.VertexAttribPointer|void VertexAttribPointer(uint, int, GLEnum, bool, uint, void*)": {
-      "Member": "VertexAttribPointer",
-      "EntryPoint": "glVertexAttribPointer",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "index",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "size",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "type",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "normalized",
-          "Type": "bool",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "stride",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "pointer",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.VertexAttribPointer|void VertexAttribPointer(uint, int, VertexAttribPointerType, bool, uint, void*)": {
-      "Member": "VertexAttribPointer",
-      "EntryPoint": "glVertexAttribPointer",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "index",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "size",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "type",
-          "Type": "VertexAttribPointerType",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "normalized",
-          "Type": "bool",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "stride",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "pointer",
-          "Type": "void*",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": true
-        }
-      ]
-    },
-    "GL.Viewport|void Viewport(int, int, uint, uint)": {
-      "Member": "Viewport",
-      "EntryPoint": "glViewport",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "x",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "y",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "width",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "height",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GLOverloads.GetInteger|void GetInteger(GLEnum, Span\u003Cint\u003E)": {
-      "Member": "GetInteger",
-      "EntryPoint": "",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "pname",
-          "Type": "GLEnum",
-          "RefKind": "",
-          "IsEnum": true,
-          "IsPointer": false
-        },
-        {
-          "Name": "data",
-          "Type": "Span\u003Cint\u003E",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
-    },
-    "GLOverloads.UniformMatrix4|void UniformMatrix4(int, uint, bool, ReadOnlySpan\u003Cfloat\u003E)": {
-      "Member": "UniformMatrix4",
-      "EntryPoint": "",
-      "ReturnType": "void",
-      "ReturnIsEnum": false,
-      "Parameters": [
-        {
-          "Name": "location",
-          "Type": "int",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "count",
-          "Type": "uint",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "transpose",
-          "Type": "bool",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        },
-        {
-          "Name": "value",
-          "Type": "ReadOnlySpan\u003Cfloat\u003E",
-          "RefKind": "",
-          "IsEnum": false,
-          "IsPointer": false
-        }
-      ]
+  "GL.ActiveTexture|void ActiveTexture(TextureUnit)": {
+   "Member": "ActiveTexture",
+   "EntryPoint": "glActiveTexture",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "texture",
+     "Type": "TextureUnit",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
     }
+   ]
   },
-  "enums": {
-    "BlendEquationModeEXT": [
-      "FuncAdd"
-    ],
-    "BlendingFactor": [
-      "OneMinusSrcAlpha",
-      "SrcAlpha"
-    ],
-    "BufferTargetARB": [
-      "ArrayBuffer",
-      "ElementArrayBuffer",
-      "ShaderStorageBuffer",
-      "UniformBuffer"
-    ],
-    "BufferUsageARB": [
-      "DynamicDraw"
-    ],
-    "ClearBufferMask": [
-      "ColorBufferBit",
-      "DepthBufferBit"
-    ],
-    "DepthFunction": [
-      "Lequal",
-      "Less"
-    ],
-    "DrawBufferMode": [
-      "ColorAttachment0"
-    ],
-    "DrawElementsType": [
-      "UnsignedShort"
-    ],
-    "EnableCap": [
-      "Blend",
-      "CullFace",
-      "DebugOutput",
-      "DebugOutputSynchronous",
-      "DepthClamp",
-      "DepthTest",
-      "ScissorTest",
-      "StencilTest"
-    ],
-    "FrontFaceDirection": [
-      "Ccw"
-    ],
-    "GLEnum": [
-      "ActiveTexture",
-      "ArrayBuffer",
-      "ArrayBufferBinding",
-      "Blend",
-      "BlendDstAlpha",
-      "BlendDstRgb",
-      "BlendEquationAlpha",
-      "BlendEquationRgb",
-      "BlendSrcAlpha",
-      "BlendSrcRgb",
-      "ClampToEdge",
-      "ColorAttachment0",
-      "CullFace",
-      "CullFaceMode",
-      "CurrentProgram",
-      "DepthAttachment",
-      "DepthComponent24",
-      "DepthTest",
-      "DepthWritemask",
-      "ElementArrayBuffer",
-      "Fill",
-      "Float",
-      "Framebuffer",
-      "FramebufferBinding",
-      "FramebufferComplete",
-      "FrontAndBack",
-      "FrontFace",
-      "FuncAdd",
-      "Linear",
-      "LinearMipmapLinear",
-      "LinkStatus",
-      "Nearest",
-      "NearestMipmapNearest",
-      "NoError",
-      "One",
-      "OneMinusSrcAlpha",
-      "PolygonMode",
-      "PrimitiveRestart",
-      "Renderbuffer",
-      "Rgb32f",
-      "SamplerBinding",
-      "ScissorBox",
-      "ScissorTest",
-      "SrcAlpha",
-      "Srgb8Alpha8",
-      "StencilTest",
-      "StreamDraw",
-      "Texture0",
-      "Texture2D",
-      "TextureBinding2D",
-      "Triangles",
-      "UnsignedByte",
-      "UnsignedShort",
-      "VertexArrayBinding",
-      "Viewport"
-    ],
-    "GetPName": [
-      "MaxElementIndex",
-      "MaxElementsIndices",
-      "MaxElementsVertices"
-    ],
-    "InternalFormat": [
-      "Rgba",
-      "Rgba8"
-    ],
-    "PixelFormat": [
-      "Bgra",
-      "Rgba"
-    ],
-    "PixelStoreParameter": [
-      "PackRowLength"
-    ],
-    "PixelType": [
-      "UnsignedByte"
-    ],
-    "PrimitiveType": [
-      "Triangles"
-    ],
-    "ShaderParameterName": [
-      "CompileStatus"
-    ],
-    "ShaderType": [
-      "FragmentShader",
-      "VertexShader"
-    ],
-    "SizedInternalFormat": [
-      "Rgba8"
-    ],
-    "StringName": [
-      "Version"
-    ],
-    "TextureMagFilter": [
-      "Linear"
-    ],
-    "TextureMinFilter": [
-      "Linear"
-    ],
-    "TextureParameterName": [
-      "TextureBaseLevel",
-      "TextureLodBias",
-      "TextureMagFilter",
-      "TextureMaxLevel",
-      "TextureMaxLod",
-      "TextureMinFilter",
-      "TextureMinLod",
-      "TextureWrapR",
-      "TextureWrapS",
-      "TextureWrapT"
-    ],
-    "TextureTarget": [
-      "Texture2D"
-    ],
-    "TextureUnit": [
-      "Texture0",
-      "Texture2",
-      "Texture3"
-    ],
-    "TextureWrapMode": [
-      "Repeat"
-    ],
-    "TriangleFace": [
-      "Back"
-    ],
-    "VertexAttribIType": [
-      "Int",
-      "UnsignedInt"
-    ],
-    "VertexAttribPointerType": [
-      "Float"
-    ]
+  "GL.AttachShader|void AttachShader(uint, uint)": {
+   "Member": "AttachShader",
+   "EntryPoint": "glAttachShader",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "program",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "shader",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
   },
-  "enumValues": {
-    "BlendEquationModeEXT.FuncAdd": "32774",
-    "BlendingFactor.OneMinusSrcAlpha": "771",
-    "BlendingFactor.SrcAlpha": "770",
-    "BufferTargetARB.ArrayBuffer": "34962",
-    "BufferTargetARB.ElementArrayBuffer": "34963",
-    "BufferTargetARB.ShaderStorageBuffer": "37074",
-    "BufferTargetARB.UniformBuffer": "35345",
-    "BufferUsageARB.DynamicDraw": "35048",
-    "ClearBufferMask.ColorBufferBit": "16384",
-    "ClearBufferMask.DepthBufferBit": "256",
-    "DepthFunction.Lequal": "515",
-    "DepthFunction.Less": "513",
-    "DrawBufferMode.ColorAttachment0": "36064",
-    "DrawElementsType.UnsignedShort": "5123",
-    "EnableCap.Blend": "3042",
-    "EnableCap.CullFace": "2884",
-    "EnableCap.DebugOutput": "37600",
-    "EnableCap.DebugOutputSynchronous": "33346",
-    "EnableCap.DepthClamp": "34383",
-    "EnableCap.DepthTest": "2929",
-    "EnableCap.ScissorTest": "3089",
-    "EnableCap.StencilTest": "2960",
-    "FrontFaceDirection.Ccw": "2305",
-    "GLEnum.ActiveTexture": "34016",
-    "GLEnum.ArrayBuffer": "34962",
-    "GLEnum.ArrayBufferBinding": "34964",
-    "GLEnum.Blend": "3042",
-    "GLEnum.BlendDstAlpha": "32970",
-    "GLEnum.BlendDstRgb": "32968",
-    "GLEnum.BlendEquationAlpha": "34877",
-    "GLEnum.BlendEquationRgb": "32777",
-    "GLEnum.BlendSrcAlpha": "32971",
-    "GLEnum.BlendSrcRgb": "32969",
-    "GLEnum.ClampToEdge": "33071",
-    "GLEnum.ColorAttachment0": "36064",
-    "GLEnum.CullFace": "2884",
-    "GLEnum.CullFaceMode": "2885",
-    "GLEnum.CurrentProgram": "35725",
-    "GLEnum.DepthAttachment": "36096",
-    "GLEnum.DepthComponent24": "33190",
-    "GLEnum.DepthTest": "2929",
-    "GLEnum.DepthWritemask": "2930",
-    "GLEnum.ElementArrayBuffer": "34963",
-    "GLEnum.Fill": "6914",
-    "GLEnum.Float": "5126",
-    "GLEnum.Framebuffer": "36160",
-    "GLEnum.FramebufferBinding": "36006",
-    "GLEnum.FramebufferComplete": "36053",
-    "GLEnum.FrontAndBack": "1032",
-    "GLEnum.FrontFace": "2886",
-    "GLEnum.FuncAdd": "32774",
-    "GLEnum.Linear": "9729",
-    "GLEnum.LinearMipmapLinear": "9987",
-    "GLEnum.LinkStatus": "35714",
-    "GLEnum.Nearest": "9728",
-    "GLEnum.NearestMipmapNearest": "9984",
-    "GLEnum.NoError": "0",
-    "GLEnum.One": "1",
-    "GLEnum.OneMinusSrcAlpha": "771",
-    "GLEnum.PolygonMode": "2880",
-    "GLEnum.PrimitiveRestart": "36765",
-    "GLEnum.Renderbuffer": "36161",
-    "GLEnum.Rgb32f": "34837",
-    "GLEnum.SamplerBinding": "35097",
-    "GLEnum.ScissorBox": "3088",
-    "GLEnum.ScissorTest": "3089",
-    "GLEnum.SrcAlpha": "770",
-    "GLEnum.Srgb8Alpha8": "35907",
-    "GLEnum.StencilTest": "2960",
-    "GLEnum.StreamDraw": "35040",
-    "GLEnum.Texture0": "33984",
-    "GLEnum.Texture2D": "3553",
-    "GLEnum.TextureBinding2D": "32873",
-    "GLEnum.Triangles": "4",
-    "GLEnum.UnsignedByte": "5121",
-    "GLEnum.UnsignedShort": "5123",
-    "GLEnum.VertexArrayBinding": "34229",
-    "GLEnum.Viewport": "2978",
-    "GetPName.MaxElementIndex": "36203",
-    "GetPName.MaxElementsIndices": "33001",
-    "GetPName.MaxElementsVertices": "33000",
-    "InternalFormat.Rgba": "6408",
-    "InternalFormat.Rgba8": "32856",
-    "PixelFormat.Bgra": "32993",
-    "PixelFormat.Rgba": "6408",
-    "PixelStoreParameter.PackRowLength": "3330",
-    "PixelType.UnsignedByte": "5121",
-    "PrimitiveType.Triangles": "4",
-    "ShaderParameterName.CompileStatus": "35713",
-    "ShaderType.FragmentShader": "35632",
-    "ShaderType.VertexShader": "35633",
-    "SizedInternalFormat.Rgba8": "32856",
-    "StringName.Version": "7938",
-    "TextureMagFilter.Linear": "9729",
-    "TextureMinFilter.Linear": "9729",
-    "TextureParameterName.TextureBaseLevel": "33084",
-    "TextureParameterName.TextureLodBias": "34049",
-    "TextureParameterName.TextureMagFilter": "10240",
-    "TextureParameterName.TextureMaxLevel": "33085",
-    "TextureParameterName.TextureMaxLod": "33083",
-    "TextureParameterName.TextureMinFilter": "10241",
-    "TextureParameterName.TextureMinLod": "33082",
-    "TextureParameterName.TextureWrapR": "32882",
-    "TextureParameterName.TextureWrapS": "10242",
-    "TextureParameterName.TextureWrapT": "10243",
-    "TextureTarget.Texture2D": "3553",
-    "TextureUnit.Texture0": "33984",
-    "TextureUnit.Texture2": "33986",
-    "TextureUnit.Texture3": "33987",
-    "TextureWrapMode.Repeat": "10497",
-    "TriangleFace.Back": "1029",
-    "VertexAttribIType.Int": "5124",
-    "VertexAttribIType.UnsignedInt": "5125",
-    "VertexAttribPointerType.Float": "5126"
+  "GL.BindBufferBase|void BindBufferBase(BufferTargetARB, uint, uint)": {
+   "Member": "BindBufferBase",
+   "EntryPoint": "glBindBufferBase",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "BufferTargetARB",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "index",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "buffer",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
   },
-  "otherTypes": [
-    "GL",
-    "Shader"
+  "GL.BindBuffer|void BindBuffer(BufferTargetARB, uint)": {
+   "Member": "BindBuffer",
+   "EntryPoint": "glBindBuffer",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "BufferTargetARB",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "buffer",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BindBuffer|void BindBuffer(GLEnum, uint)": {
+   "Member": "BindBuffer",
+   "EntryPoint": "glBindBuffer",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "buffer",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BindFramebuffer|void BindFramebuffer(GLEnum, uint)": {
+   "Member": "BindFramebuffer",
+   "EntryPoint": "glBindFramebuffer",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "framebuffer",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BindRenderbuffer|void BindRenderbuffer(GLEnum, uint)": {
+   "Member": "BindRenderbuffer",
+   "EntryPoint": "glBindRenderbuffer",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "renderbuffer",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BindSampler|void BindSampler(uint, uint)": {
+   "Member": "BindSampler",
+   "EntryPoint": "glBindSampler",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "unit",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "sampler",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BindTexture|void BindTexture(GLEnum, uint)": {
+   "Member": "BindTexture",
+   "EntryPoint": "glBindTexture",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "texture",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BindTexture|void BindTexture(TextureTarget, uint)": {
+   "Member": "BindTexture",
+   "EntryPoint": "glBindTexture",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "TextureTarget",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "texture",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BindVertexArray|void BindVertexArray(uint)": {
+   "Member": "BindVertexArray",
+   "EntryPoint": "glBindVertexArray",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "array",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BlendEquationSeparate|void BlendEquationSeparate(GLEnum, GLEnum)": {
+   "Member": "BlendEquationSeparate",
+   "EntryPoint": "glBlendEquationSeparate",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "modeRGB",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "modeAlpha",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BlendEquation|void BlendEquation(BlendEquationModeEXT)": {
+   "Member": "BlendEquation",
+   "EntryPoint": "glBlendEquation",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "mode",
+     "Type": "BlendEquationModeEXT",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BlendEquation|void BlendEquation(GLEnum)": {
+   "Member": "BlendEquation",
+   "EntryPoint": "glBlendEquation",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "mode",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BlendFuncSeparate|void BlendFuncSeparate(BlendingFactor, BlendingFactor, BlendingFactor, BlendingFactor)": {
+   "Member": "BlendFuncSeparate",
+   "EntryPoint": "glBlendFuncSeparate",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "sfactorRGB",
+     "Type": "BlendingFactor",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "dfactorRGB",
+     "Type": "BlendingFactor",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "sfactorAlpha",
+     "Type": "BlendingFactor",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "dfactorAlpha",
+     "Type": "BlendingFactor",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BlendFuncSeparate|void BlendFuncSeparate(GLEnum, GLEnum, GLEnum, GLEnum)": {
+   "Member": "BlendFuncSeparate",
+   "EntryPoint": "glBlendFuncSeparate",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "sfactorRGB",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "dfactorRGB",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "sfactorAlpha",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "dfactorAlpha",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BufferData|void BufferData(BufferTargetARB, nuint, void*, BufferUsageARB)": {
+   "Member": "BufferData",
+   "EntryPoint": "glBufferData",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "BufferTargetARB",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "size",
+     "Type": "nuint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "data",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    },
+    {
+     "Name": "usage",
+     "Type": "BufferUsageARB",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.BufferData|void BufferData(GLEnum, nuint, void*, GLEnum)": {
+   "Member": "BufferData",
+   "EntryPoint": "glBufferData",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "size",
+     "Type": "nuint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "data",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    },
+    {
+     "Name": "usage",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.CheckFramebufferStatus|GLEnum CheckFramebufferStatus(GLEnum)": {
+   "Member": "CheckFramebufferStatus",
+   "EntryPoint": "glCheckFramebufferStatus",
+   "ReturnType": "GLEnum",
+   "ReturnIsEnum": true,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.ClearColor|void ClearColor(float, float, float, float)": {
+   "Member": "ClearColor",
+   "EntryPoint": "glClearColor",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "red",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "green",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "blue",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "alpha",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.ClearDepth|void ClearDepth(float)": {
+   "Member": "ClearDepth",
+   "EntryPoint": "glClearDepthf",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "d",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Clear|void Clear(ClearBufferMask)": {
+   "Member": "Clear",
+   "EntryPoint": "glClear",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "mask",
+     "Type": "ClearBufferMask",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Clear|void Clear(uint)": {
+   "Member": "Clear",
+   "EntryPoint": "glClear",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "mask",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.CompileShader|void CompileShader(uint)": {
+   "Member": "CompileShader",
+   "EntryPoint": "glCompileShader",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "shader",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.CreateProgram|uint CreateProgram()": {
+   "Member": "CreateProgram",
+   "EntryPoint": "glCreateProgram",
+   "ReturnType": "uint",
+   "ReturnIsEnum": false,
+   "Parameters": []
+  },
+  "GL.CreateShader|uint CreateShader(ShaderType)": {
+   "Member": "CreateShader",
+   "EntryPoint": "glCreateShader",
+   "ReturnType": "uint",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "type",
+     "Type": "ShaderType",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.CullFace|void CullFace(TriangleFace)": {
+   "Member": "CullFace",
+   "EntryPoint": "glCullFace",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "mode",
+     "Type": "TriangleFace",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DeleteBuffer|void DeleteBuffer(uint)": {
+   "Member": "DeleteBuffer",
+   "EntryPoint": "",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "buffers",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DeleteProgram|void DeleteProgram(uint)": {
+   "Member": "DeleteProgram",
+   "EntryPoint": "glDeleteProgram",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "program",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DeleteShader|void DeleteShader(uint)": {
+   "Member": "DeleteShader",
+   "EntryPoint": "glDeleteShader",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "shader",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DeleteTexture|void DeleteTexture(uint)": {
+   "Member": "DeleteTexture",
+   "EntryPoint": "",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "textures",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DeleteVertexArray|void DeleteVertexArray(uint)": {
+   "Member": "DeleteVertexArray",
+   "EntryPoint": "",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "arrays",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DepthFunc|void DepthFunc(DepthFunction)": {
+   "Member": "DepthFunc",
+   "EntryPoint": "glDepthFunc",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "func",
+     "Type": "DepthFunction",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DepthMask|void DepthMask(bool)": {
+   "Member": "DepthMask",
+   "EntryPoint": "glDepthMask",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "flag",
+     "Type": "bool",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DetachShader|void DetachShader(uint, uint)": {
+   "Member": "DetachShader",
+   "EntryPoint": "glDetachShader",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "program",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "shader",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Disable|void Disable(EnableCap)": {
+   "Member": "Disable",
+   "EntryPoint": "glDisable",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "cap",
+     "Type": "EnableCap",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Disable|void Disable(GLEnum)": {
+   "Member": "Disable",
+   "EntryPoint": "glDisable",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "cap",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DrawBuffers|void DrawBuffers(uint, DrawBufferMode*)": {
+   "Member": "DrawBuffers",
+   "EntryPoint": "glDrawBuffers",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "n",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "bufs",
+     "Type": "DrawBufferMode*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.DrawElementsBaseVertex|void DrawElementsBaseVertex(GLEnum, uint, GLEnum, void*, int)": {
+   "Member": "DrawElementsBaseVertex",
+   "EntryPoint": "glDrawElementsBaseVertex",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "mode",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "count",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "type",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "indices",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    },
+    {
+     "Name": "basevertex",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DrawElementsInstanced|void DrawElementsInstanced(PrimitiveType, uint, GLEnum, void*, uint)": {
+   "Member": "DrawElementsInstanced",
+   "EntryPoint": "glDrawElementsInstanced",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "mode",
+     "Type": "PrimitiveType",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "count",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "type",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "indices",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    },
+    {
+     "Name": "instancecount",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.DrawElements|void DrawElements(PrimitiveType, uint, DrawElementsType, void*)": {
+   "Member": "DrawElements",
+   "EntryPoint": "glDrawElements",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "mode",
+     "Type": "PrimitiveType",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "count",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "type",
+     "Type": "DrawElementsType",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "indices",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.EnableVertexAttribArray|void EnableVertexAttribArray(uint)": {
+   "Member": "EnableVertexAttribArray",
+   "EntryPoint": "glEnableVertexAttribArray",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "index",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Enable|void Enable(EnableCap)": {
+   "Member": "Enable",
+   "EntryPoint": "glEnable",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "cap",
+     "Type": "EnableCap",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Enable|void Enable(GLEnum)": {
+   "Member": "Enable",
+   "EntryPoint": "glEnable",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "cap",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.FramebufferRenderbuffer|void FramebufferRenderbuffer(GLEnum, GLEnum, GLEnum, uint)": {
+   "Member": "FramebufferRenderbuffer",
+   "EntryPoint": "glFramebufferRenderbuffer",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "attachment",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "renderbuffertarget",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "renderbuffer",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.FramebufferTexture|void FramebufferTexture(GLEnum, GLEnum, uint, int)": {
+   "Member": "FramebufferTexture",
+   "EntryPoint": "glFramebufferTexture",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "attachment",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "texture",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "level",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.FrontFace|void FrontFace(FrontFaceDirection)": {
+   "Member": "FrontFace",
+   "EntryPoint": "glFrontFace",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "mode",
+     "Type": "FrontFaceDirection",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GenBuffer|uint GenBuffer()": {
+   "Member": "GenBuffer",
+   "EntryPoint": "",
+   "ReturnType": "uint",
+   "ReturnIsEnum": false,
+   "Parameters": []
+  },
+  "GL.GenFramebuffers|void GenFramebuffers(uint, uint*)": {
+   "Member": "GenFramebuffers",
+   "EntryPoint": "glGenFramebuffers",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "n",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "framebuffers",
+     "Type": "uint*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.GenRenderbuffers|void GenRenderbuffers(uint, uint*)": {
+   "Member": "GenRenderbuffers",
+   "EntryPoint": "glGenRenderbuffers",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "n",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "renderbuffers",
+     "Type": "uint*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.GenTexture|uint GenTexture()": {
+   "Member": "GenTexture",
+   "EntryPoint": "",
+   "ReturnType": "uint",
+   "ReturnIsEnum": false,
+   "Parameters": []
+  },
+  "GL.GenVertexArray|uint GenVertexArray()": {
+   "Member": "GenVertexArray",
+   "EntryPoint": "",
+   "ReturnType": "uint",
+   "ReturnIsEnum": false,
+   "Parameters": []
+  },
+  "GL.GenerateMipmap|void GenerateMipmap(TextureTarget)": {
+   "Member": "GenerateMipmap",
+   "EntryPoint": "glGenerateMipmap",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "TextureTarget",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetApi|GL GetApi(IGLContextSource)": {
+   "Member": "GetApi",
+   "EntryPoint": "",
+   "ReturnType": "GL",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "contextSource",
+     "Type": "IGLContextSource",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetApi|GL GetApi(INativeContext)": {
+   "Member": "GetApi",
+   "EntryPoint": "",
+   "ReturnType": "GL",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "ctx",
+     "Type": "INativeContext",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetAttribLocation|int GetAttribLocation(uint, string)": {
+   "Member": "GetAttribLocation",
+   "EntryPoint": "glGetAttribLocation",
+   "ReturnType": "int",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "program",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "name",
+     "Type": "string",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetBoolean|void GetBoolean(GLEnum, out bool)": {
+   "Member": "GetBoolean",
+   "EntryPoint": "glGetBooleanv",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "pname",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "data",
+     "Type": "bool",
+     "RefKind": "out",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetError|GLEnum GetError()": {
+   "Member": "GetError",
+   "EntryPoint": "glGetError",
+   "ReturnType": "GLEnum",
+   "ReturnIsEnum": true,
+   "Parameters": []
+  },
+  "GL.GetFloat|float GetFloat(GLEnum)": {
+   "Member": "GetFloat",
+   "EntryPoint": "",
+   "ReturnType": "float",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "pname",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetInteger|void GetInteger(GLEnum, out int)": {
+   "Member": "GetInteger",
+   "EntryPoint": "glGetIntegerv",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "pname",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "data",
+     "Type": "int",
+     "RefKind": "out",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetInteger|void GetInteger(GetPName, out int)": {
+   "Member": "GetInteger",
+   "EntryPoint": "glGetIntegerv",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "pname",
+     "Type": "GetPName",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "data",
+     "Type": "int",
+     "RefKind": "out",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetProgramInfoLog|string GetProgramInfoLog(uint)": {
+   "Member": "GetProgramInfoLog",
+   "EntryPoint": "",
+   "ReturnType": "string",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "program",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetProgram|void GetProgram(uint, GLEnum, out int)": {
+   "Member": "GetProgram",
+   "EntryPoint": "glGetProgramiv",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "program",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "pname",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "params",
+     "Type": "int",
+     "RefKind": "out",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetShaderInfoLog|string GetShaderInfoLog(uint)": {
+   "Member": "GetShaderInfoLog",
+   "EntryPoint": "",
+   "ReturnType": "string",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "shader",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetShader|void GetShader(uint, ShaderParameterName, out int)": {
+   "Member": "GetShader",
+   "EntryPoint": "glGetShaderiv",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "shader",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "pname",
+     "Type": "ShaderParameterName",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "params",
+     "Type": "int",
+     "RefKind": "out",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetStringS|string GetStringS(StringName)": {
+   "Member": "GetStringS",
+   "EntryPoint": "glGetString",
+   "ReturnType": "string",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "name",
+     "Type": "StringName",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetUniformBlockIndex|uint GetUniformBlockIndex(uint, string)": {
+   "Member": "GetUniformBlockIndex",
+   "EntryPoint": "glGetUniformBlockIndex",
+   "ReturnType": "uint",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "program",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "uniformBlockName",
+     "Type": "string",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.GetUniformLocation|int GetUniformLocation(uint, string)": {
+   "Member": "GetUniformLocation",
+   "EntryPoint": "glGetUniformLocation",
+   "ReturnType": "int",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "program",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "name",
+     "Type": "string",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.IsEnabled|bool IsEnabled(GLEnum)": {
+   "Member": "IsEnabled",
+   "EntryPoint": "glIsEnabled",
+   "ReturnType": "bool",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "cap",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.LinkProgram|void LinkProgram(uint)": {
+   "Member": "LinkProgram",
+   "EntryPoint": "glLinkProgram",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "program",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.PixelStore|void PixelStore(PixelStoreParameter, int)": {
+   "Member": "PixelStore",
+   "EntryPoint": "glPixelStorei",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "pname",
+     "Type": "PixelStoreParameter",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "param",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.PolygonMode|void PolygonMode(GLEnum, GLEnum)": {
+   "Member": "PolygonMode",
+   "EntryPoint": "glPolygonMode",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "face",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "mode",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.RenderbufferStorage|void RenderbufferStorage(GLEnum, GLEnum, uint, uint)": {
+   "Member": "RenderbufferStorage",
+   "EntryPoint": "glRenderbufferStorage",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "internalformat",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "width",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "height",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Scissor|void Scissor(int, int, uint, uint)": {
+   "Member": "Scissor",
+   "EntryPoint": "glScissor",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "x",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "y",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "width",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "height",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.ShaderSource|void ShaderSource(uint, string)": {
+   "Member": "ShaderSource",
+   "EntryPoint": "",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "shader",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "string",
+     "Type": "string",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.TexImage2D|void TexImage2D(TextureTarget, int, InternalFormat, uint, uint, int, PixelFormat, PixelType, void*)": {
+   "Member": "TexImage2D",
+   "EntryPoint": "glTexImage2D",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "TextureTarget",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "level",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "internalformat",
+     "Type": "InternalFormat",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "width",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "height",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "border",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "format",
+     "Type": "PixelFormat",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "type",
+     "Type": "PixelType",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "pixels",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.TexImage2D|void TexImage2D(TextureTarget, int, int, uint, uint, int, PixelFormat, PixelType, void*)": {
+   "Member": "TexImage2D",
+   "EntryPoint": "glTexImage2D",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "TextureTarget",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "level",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "internalformat",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "width",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "height",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "border",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "format",
+     "Type": "PixelFormat",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "type",
+     "Type": "PixelType",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "pixels",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.TexParameterI|void TexParameterI(GLEnum, TextureParameterName, int)": {
+   "Member": "TexParameterI",
+   "EntryPoint": "glTexParameterIiv",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "pname",
+     "Type": "TextureParameterName",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "params",
+     "Type": "int",
+     "RefKind": "in",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.TexParameterI|void TexParameterI(GLEnum, TextureParameterName, uint)": {
+   "Member": "TexParameterI",
+   "EntryPoint": "glTexParameterIuiv",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "pname",
+     "Type": "TextureParameterName",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "params",
+     "Type": "uint",
+     "RefKind": "in",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.TexParameter|void TexParameter(GLEnum, GLEnum, float)": {
+   "Member": "TexParameter",
+   "EntryPoint": "glTexParameterf",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "pname",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "param",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.TexParameter|void TexParameter(TextureTarget, TextureParameterName, int)": {
+   "Member": "TexParameter",
+   "EntryPoint": "glTexParameteri",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "TextureTarget",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "pname",
+     "Type": "TextureParameterName",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "param",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.TexStorage2D|void TexStorage2D(GLEnum, uint, SizedInternalFormat, uint, uint)": {
+   "Member": "TexStorage2D",
+   "EntryPoint": "glTexStorage2D",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "levels",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "internalformat",
+     "Type": "SizedInternalFormat",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "width",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "height",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.TexSubImage2D|void TexSubImage2D(GLEnum, int, int, int, uint, uint, PixelFormat, PixelType, void*)": {
+   "Member": "TexSubImage2D",
+   "EntryPoint": "glTexSubImage2D",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "level",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "xoffset",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "yoffset",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "width",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "height",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "format",
+     "Type": "PixelFormat",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "type",
+     "Type": "PixelType",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "pixels",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.TexSubImage2D|void TexSubImage2D(TextureTarget, int, int, int, uint, uint, PixelFormat, PixelType, void*)": {
+   "Member": "TexSubImage2D",
+   "EntryPoint": "glTexSubImage2D",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "target",
+     "Type": "TextureTarget",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "level",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "xoffset",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "yoffset",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "width",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "height",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "format",
+     "Type": "PixelFormat",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "type",
+     "Type": "PixelType",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "pixels",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.Uniform1|void Uniform1(int, float)": {
+   "Member": "Uniform1",
+   "EntryPoint": "glUniform1f",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "location",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "v0",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Uniform1|void Uniform1(int, int)": {
+   "Member": "Uniform1",
+   "EntryPoint": "glUniform1i",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "location",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "v0",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Uniform1|void Uniform1(int, uint)": {
+   "Member": "Uniform1",
+   "EntryPoint": "glUniform1ui",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "location",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "v0",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Uniform3|void Uniform3(int, float, float, float)": {
+   "Member": "Uniform3",
+   "EntryPoint": "glUniform3f",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "location",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "v0",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "v1",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "v2",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.Uniform4|void Uniform4(int, float, float, float, float)": {
+   "Member": "Uniform4",
+   "EntryPoint": "glUniform4f",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "location",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "v0",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "v1",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "v2",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "v3",
+     "Type": "float",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.UniformMatrix4|void UniformMatrix4(int, uint, bool, float*)": {
+   "Member": "UniformMatrix4",
+   "EntryPoint": "glUniformMatrix4fv",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "location",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "count",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "transpose",
+     "Type": "bool",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "value",
+     "Type": "float*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.UseProgram|void UseProgram(uint)": {
+   "Member": "UseProgram",
+   "EntryPoint": "glUseProgram",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "program",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.VertexAttribDivisor|void VertexAttribDivisor(uint, uint)": {
+   "Member": "VertexAttribDivisor",
+   "EntryPoint": "glVertexAttribDivisor",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "index",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "divisor",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GL.VertexAttribIPointer|void VertexAttribIPointer(uint, int, VertexAttribIType, uint, void*)": {
+   "Member": "VertexAttribIPointer",
+   "EntryPoint": "glVertexAttribIPointer",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "index",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "size",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "type",
+     "Type": "VertexAttribIType",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "stride",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "pointer",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.VertexAttribPointer|void VertexAttribPointer(uint, int, GLEnum, bool, uint, void*)": {
+   "Member": "VertexAttribPointer",
+   "EntryPoint": "glVertexAttribPointer",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "index",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "size",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "type",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "normalized",
+     "Type": "bool",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "stride",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "pointer",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.VertexAttribPointer|void VertexAttribPointer(uint, int, VertexAttribPointerType, bool, uint, void*)": {
+   "Member": "VertexAttribPointer",
+   "EntryPoint": "glVertexAttribPointer",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "index",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "size",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "type",
+     "Type": "VertexAttribPointerType",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "normalized",
+     "Type": "bool",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "stride",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "pointer",
+     "Type": "void*",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": true
+    }
+   ]
+  },
+  "GL.Viewport|void Viewport(int, int, uint, uint)": {
+   "Member": "Viewport",
+   "EntryPoint": "glViewport",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "x",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "y",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "width",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "height",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GLOverloads.GetInteger|void GetInteger(GLEnum, Span<int>)": {
+   "Member": "GetInteger",
+   "EntryPoint": "",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "pname",
+     "Type": "GLEnum",
+     "RefKind": "",
+     "IsEnum": true,
+     "IsPointer": false
+    },
+    {
+     "Name": "data",
+     "Type": "Span<int>",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  },
+  "GLOverloads.UniformMatrix4|void UniformMatrix4(int, uint, bool, ReadOnlySpan<float>)": {
+   "Member": "UniformMatrix4",
+   "EntryPoint": "",
+   "ReturnType": "void",
+   "ReturnIsEnum": false,
+   "Parameters": [
+    {
+     "Name": "location",
+     "Type": "int",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "count",
+     "Type": "uint",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "transpose",
+     "Type": "bool",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    },
+    {
+     "Name": "value",
+     "Type": "ReadOnlySpan<float>",
+     "RefKind": "",
+     "IsEnum": false,
+     "IsPointer": false
+    }
+   ]
+  }
+ },
+ "enums": {
+  "BlendEquationModeEXT": [
+   "FuncAdd"
+  ],
+  "BlendingFactor": [
+   "OneMinusSrcAlpha",
+   "SrcAlpha"
+  ],
+  "BufferTargetARB": [
+   "ArrayBuffer",
+   "ElementArrayBuffer",
+   "ShaderStorageBuffer",
+   "UniformBuffer"
+  ],
+  "BufferUsageARB": [
+   "DynamicDraw"
+  ],
+  "ClearBufferMask": [
+   "ColorBufferBit",
+   "DepthBufferBit"
+  ],
+  "DepthFunction": [
+   "Lequal",
+   "Less"
+  ],
+  "DrawBufferMode": [
+   "ColorAttachment0"
+  ],
+  "DrawElementsType": [
+   "UnsignedShort"
+  ],
+  "EnableCap": [
+   "Blend",
+   "CullFace",
+   "DebugOutput",
+   "DebugOutputSynchronous",
+   "DepthClamp",
+   "DepthTest",
+   "ScissorTest",
+   "StencilTest"
+  ],
+  "FrontFaceDirection": [
+   "Ccw"
+  ],
+  "GLEnum": [
+   "ActiveTexture",
+   "ArrayBuffer",
+   "ArrayBufferBinding",
+   "Blend",
+   "BlendDstAlpha",
+   "BlendDstRgb",
+   "BlendEquationAlpha",
+   "BlendEquationRgb",
+   "BlendSrcAlpha",
+   "BlendSrcRgb",
+   "ClampToEdge",
+   "ColorAttachment0",
+   "CullFace",
+   "CullFaceMode",
+   "CurrentProgram",
+   "DepthAttachment",
+   "DepthComponent24",
+   "DepthTest",
+   "DepthWritemask",
+   "ElementArrayBuffer",
+   "Fill",
+   "Float",
+   "Framebuffer",
+   "FramebufferBinding",
+   "FramebufferComplete",
+   "FrontAndBack",
+   "FrontFace",
+   "FuncAdd",
+   "Linear",
+   "LinearMipmapLinear",
+   "LinkStatus",
+   "Nearest",
+   "NearestMipmapNearest",
+   "NoError",
+   "One",
+   "OneMinusSrcAlpha",
+   "PolygonMode",
+   "PrimitiveRestart",
+   "Renderbuffer",
+   "Rgb32f",
+   "SamplerBinding",
+   "ScissorBox",
+   "ScissorTest",
+   "SrcAlpha",
+   "Srgb8Alpha8",
+   "StencilTest",
+   "StreamDraw",
+   "Texture0",
+   "Texture2D",
+   "TextureBinding2D",
+   "Triangles",
+   "UnsignedByte",
+   "UnsignedShort",
+   "VertexArrayBinding",
+   "Viewport"
+  ],
+  "GetPName": [
+   "MaxElementIndex",
+   "MaxElementsIndices",
+   "MaxElementsVertices"
+  ],
+  "InternalFormat": [
+   "Rgba",
+   "Rgba8"
+  ],
+  "PixelFormat": [
+   "Bgra",
+   "Rgba"
+  ],
+  "PixelStoreParameter": [
+   "PackRowLength"
+  ],
+  "PixelType": [
+   "UnsignedByte"
+  ],
+  "PrimitiveType": [
+   "Triangles"
+  ],
+  "ShaderParameterName": [
+   "CompileStatus"
+  ],
+  "ShaderType": [
+   "FragmentShader",
+   "VertexShader"
+  ],
+  "SizedInternalFormat": [
+   "Rgba8"
+  ],
+  "StringName": [
+   "Extensions",
+   "Version"
+  ],
+  "TextureMagFilter": [
+   "Linear"
+  ],
+  "TextureMinFilter": [
+   "Linear"
+  ],
+  "TextureParameterName": [
+   "TextureBaseLevel",
+   "TextureLodBias",
+   "TextureMagFilter",
+   "TextureMaxLevel",
+   "TextureMaxLod",
+   "TextureMinFilter",
+   "TextureMinLod",
+   "TextureWrapR",
+   "TextureWrapS",
+   "TextureWrapT"
+  ],
+  "TextureTarget": [
+   "Texture2D"
+  ],
+  "TextureUnit": [
+   "Texture0",
+   "Texture2",
+   "Texture3"
+  ],
+  "TextureWrapMode": [
+   "Repeat"
+  ],
+  "TriangleFace": [
+   "Back"
+  ],
+  "VertexAttribIType": [
+   "Int",
+   "UnsignedInt"
+  ],
+  "VertexAttribPointerType": [
+   "Float"
   ]
+ },
+ "enumValues": {
+  "BlendEquationModeEXT.FuncAdd": "32774",
+  "BlendingFactor.OneMinusSrcAlpha": "771",
+  "BlendingFactor.SrcAlpha": "770",
+  "BufferTargetARB.ArrayBuffer": "34962",
+  "BufferTargetARB.ElementArrayBuffer": "34963",
+  "BufferTargetARB.ShaderStorageBuffer": "37074",
+  "BufferTargetARB.UniformBuffer": "35345",
+  "BufferUsageARB.DynamicDraw": "35048",
+  "ClearBufferMask.ColorBufferBit": "16384",
+  "ClearBufferMask.DepthBufferBit": "256",
+  "DepthFunction.Lequal": "515",
+  "DepthFunction.Less": "513",
+  "DrawBufferMode.ColorAttachment0": "36064",
+  "DrawElementsType.UnsignedShort": "5123",
+  "EnableCap.Blend": "3042",
+  "EnableCap.CullFace": "2884",
+  "EnableCap.DebugOutput": "37600",
+  "EnableCap.DebugOutputSynchronous": "33346",
+  "EnableCap.DepthClamp": "34383",
+  "EnableCap.DepthTest": "2929",
+  "EnableCap.ScissorTest": "3089",
+  "EnableCap.StencilTest": "2960",
+  "FrontFaceDirection.Ccw": "2305",
+  "GLEnum.ActiveTexture": "34016",
+  "GLEnum.ArrayBuffer": "34962",
+  "GLEnum.ArrayBufferBinding": "34964",
+  "GLEnum.Blend": "3042",
+  "GLEnum.BlendDstAlpha": "32970",
+  "GLEnum.BlendDstRgb": "32968",
+  "GLEnum.BlendEquationAlpha": "34877",
+  "GLEnum.BlendEquationRgb": "32777",
+  "GLEnum.BlendSrcAlpha": "32971",
+  "GLEnum.BlendSrcRgb": "32969",
+  "GLEnum.ClampToEdge": "33071",
+  "GLEnum.ColorAttachment0": "36064",
+  "GLEnum.CullFace": "2884",
+  "GLEnum.CullFaceMode": "2885",
+  "GLEnum.CurrentProgram": "35725",
+  "GLEnum.DepthAttachment": "36096",
+  "GLEnum.DepthComponent24": "33190",
+  "GLEnum.DepthTest": "2929",
+  "GLEnum.DepthWritemask": "2930",
+  "GLEnum.ElementArrayBuffer": "34963",
+  "GLEnum.Fill": "6914",
+  "GLEnum.Float": "5126",
+  "GLEnum.Framebuffer": "36160",
+  "GLEnum.FramebufferBinding": "36006",
+  "GLEnum.FramebufferComplete": "36053",
+  "GLEnum.FrontAndBack": "1032",
+  "GLEnum.FrontFace": "2886",
+  "GLEnum.FuncAdd": "32774",
+  "GLEnum.Linear": "9729",
+  "GLEnum.LinearMipmapLinear": "9987",
+  "GLEnum.LinkStatus": "35714",
+  "GLEnum.Nearest": "9728",
+  "GLEnum.NearestMipmapNearest": "9984",
+  "GLEnum.NoError": "0",
+  "GLEnum.One": "1",
+  "GLEnum.OneMinusSrcAlpha": "771",
+  "GLEnum.PolygonMode": "2880",
+  "GLEnum.PrimitiveRestart": "36765",
+  "GLEnum.Renderbuffer": "36161",
+  "GLEnum.Rgb32f": "34837",
+  "GLEnum.SamplerBinding": "35097",
+  "GLEnum.ScissorBox": "3088",
+  "GLEnum.ScissorTest": "3089",
+  "GLEnum.SrcAlpha": "770",
+  "GLEnum.Srgb8Alpha8": "35907",
+  "GLEnum.StencilTest": "2960",
+  "GLEnum.StreamDraw": "35040",
+  "GLEnum.Texture0": "33984",
+  "GLEnum.Texture2D": "3553",
+  "GLEnum.TextureBinding2D": "32873",
+  "GLEnum.Triangles": "4",
+  "GLEnum.UnsignedByte": "5121",
+  "GLEnum.UnsignedShort": "5123",
+  "GLEnum.VertexArrayBinding": "34229",
+  "GLEnum.Viewport": "2978",
+  "GetPName.MaxElementIndex": "36203",
+  "GetPName.MaxElementsIndices": "33001",
+  "GetPName.MaxElementsVertices": "33000",
+  "InternalFormat.Rgba": "6408",
+  "InternalFormat.Rgba8": "32856",
+  "PixelFormat.Bgra": "32993",
+  "PixelFormat.Rgba": "6408",
+  "PixelStoreParameter.PackRowLength": "3330",
+  "PixelType.UnsignedByte": "5121",
+  "PrimitiveType.Triangles": "4",
+  "ShaderParameterName.CompileStatus": "35713",
+  "ShaderType.FragmentShader": "35632",
+  "ShaderType.VertexShader": "35633",
+  "SizedInternalFormat.Rgba8": "32856",
+  "StringName.Extensions": "7939",
+  "StringName.Version": "7938",
+  "TextureMagFilter.Linear": "9729",
+  "TextureMinFilter.Linear": "9729",
+  "TextureParameterName.TextureBaseLevel": "33084",
+  "TextureParameterName.TextureLodBias": "34049",
+  "TextureParameterName.TextureMagFilter": "10240",
+  "TextureParameterName.TextureMaxLevel": "33085",
+  "TextureParameterName.TextureMaxLod": "33083",
+  "TextureParameterName.TextureMinFilter": "10241",
+  "TextureParameterName.TextureMinLod": "33082",
+  "TextureParameterName.TextureWrapR": "32882",
+  "TextureParameterName.TextureWrapS": "10242",
+  "TextureParameterName.TextureWrapT": "10243",
+  "TextureTarget.Texture2D": "3553",
+  "TextureUnit.Texture0": "33984",
+  "TextureUnit.Texture2": "33986",
+  "TextureUnit.Texture3": "33987",
+  "TextureWrapMode.Repeat": "10497",
+  "TriangleFace.Back": "1029",
+  "VertexAttribIType.Int": "5124",
+  "VertexAttribIType.UnsignedInt": "5125",
+  "VertexAttribPointerType.Float": "5126"
+ },
+ "otherTypes": [
+  "GL",
+  "Shader"
+ ]
 }

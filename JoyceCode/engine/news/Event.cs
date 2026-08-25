@@ -38,6 +38,20 @@ public class Event
     public const string INPUT_BUTTON_PRESSED = "input.button.pressed";
     public const string INPUT_BUTTON_RELEASED = "input.button.released";
 
+    /*
+     * Device arrival and departure (WP-6.3 step 3). Code carries the device name.
+     *
+     * These are on the QUEUE, and IContext deliberately has no OnConnectionChanged event,
+     * because the alternative is a RACE and not merely an inconsistency. A C# event fires
+     * synchronously on whichever thread the platform noticed the device on; queue events
+     * drain later, on the logical thread. Split across both channels, a freshly attached
+     * gamepad's first axis event - which travels on the queue - could be PROCESSED before
+     * the game had been told the device existed. One channel gives one ordering and one
+     * thread by construction, with no handshake to get right.
+     */
+    public const string INPUT_DEVICE_ATTACHED = "input.device.attached";
+    public const string INPUT_DEVICE_DETACHED = "input.device.detached";
+
 
     public const string VIEW_SIZE_CHANGED = "view.size.changed";
     public const string MAP_RANGE_EVENT = "map.range";
@@ -77,7 +91,22 @@ public class Event
      * This may coincide with the logical position but does not have to.
      */
     public Vector2 PhysicalPosition = Vector2.Zero;
-    
+
+    /**
+     * For INPUT_MOUSE_MOVED: the RELATIVE motion since the previous mouse event, in
+     * original dimensions.
+     *
+     * This is the field mouse-look must read - never a difference of two
+     * PhysicalPosition values. The absolute position is CLAMPED to the window, and in
+     * relative-mouse mode (which is what hiding the cursor turns on) it is additionally
+     * warped, so differencing it stops producing motion as soon as the pointer reaches a
+     * border. That presents as the camera hitting an invisible rotation limit rather
+     * than as an input bug.
+     *
+     * Vector2.Zero on every other event type.
+     */
+    public Vector2 PhysicalDelta = Vector2.Zero;
+
     /**
      * The size in original dimensions.
      */
@@ -94,6 +123,19 @@ public class Event
     public uint Data2;
     public uint Data3;
     public uint Data4;
+
+    /**
+     * For INPUT_KEY_PRESSED / INPUT_KEY_RELEASED: the PHYSICAL key position.
+     *
+     * Code carries the engine's key-code string for backwards compatibility, but that
+     * string only looks like a character - "a" is the A-POSITION, which prints Q on
+     * AZERTY. Bindings should migrate onto this field (WP-6.4); text entry must use
+     * INPUT_KEY_CHARACTER, which is layout- and IME-composed, and must never be
+     * synthesised from a key event.
+     *
+     * ScanCode.Unknown on every other event type.
+     */
+    public engine.inputs.ScanCode ScanCode = engine.inputs.ScanCode.Unknown;
 
     public string ToKey() => $"{Type}:{Code}";
 

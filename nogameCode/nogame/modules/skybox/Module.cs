@@ -28,6 +28,7 @@ namespace nogame.modules.skybox
             _eSkybox.Set(new engine.joyce.components.Skybox(1000f, 0x00000001));
             var jMaterialSkybox = new engine.joyce.Material();
             jMaterialSkybox.EmissiveTexture = new engine.joyce.Texture("skybox2noborder.png");
+            jMaterialSkybox.Flags |= engine.joyce.Material.MaterialFlags.NoDistanceFog;
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(jMaterialSkybox, jMeshSkybox), 5000f);
             _eSkybox.Set(new engine.joyce.components.Instance3(jInstanceDesc));
         }

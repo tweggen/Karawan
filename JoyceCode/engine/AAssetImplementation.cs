@@ -45,6 +45,36 @@ public abstract class AAssetImplementation : IAssetImplementation
     }
 
 
+    /// <summary>
+    /// Models that should be baked into mo-{hash} files at build time (WP-4.2),
+    /// so the shipped game can load them without Assimp.
+    ///
+    /// Populated from /resources/list entries carrying "type": "model", which is
+    /// the same one-declaration arrangement the TALE storylets use: what SHIPS and
+    /// what BAKES come from the same line of JSON, so neither can be forgotten
+    /// independently of the other.
+    /// </summary>
+    public readonly List<ModelBakeRequest> AvailableModels = new();
+
+
+    /// <summary>
+    /// One model the build pipeline should produce, with the load properties the
+    /// game will use. Properties that reach the geometry (notably Scale, Axis and
+    /// AnimAxis) are part of the bake identity - see builtin.baking.ModelFileName.
+    /// </summary>
+    public sealed class ModelBakeRequest
+    {
+        /// The uri as declared in the resource list.
+        public string Uri { get; init; }
+
+        /// The bare file name, which is what the model url resolves to at load
+        /// time and therefore what the hash is computed over.
+        public string ModelFileName { get; init; }
+
+        public SortedDictionary<string, string> Properties { get; init; } = new();
+    }
+
+
     private void _whenLoadedResources(string path, JsonNode? node)
     {
         Trace(_dc, $"Loading resources...");
@@ -78,12 +108,33 @@ public abstract class AAssetImplementation : IAssetImplementation
                     if (_traceLoadingResources)
                         Trace(_dc,$"LoadResourcesTo: Added Resource \"{tag}\" from {uri}.");
 
-                    string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uri);
-                    if (!File.Exists(pathProbe))
+                    string? type = resNode?["type"]?.GetValue<string>();
+
+                    /*
+                     * WP-4.4: models and animation sources are BUILD INPUTS. They do
+                     * not ship, so outside a bake there is no file to associate and
+                     * doing so would only produce a warning per model on every
+                     * start. During the bake (CompileMode) the association is what
+                     * lets Chushi open them, so it is kept there.
+                     */
+                    bool isBuildInput = "model" == type || "animationSource" == type;
+                    bool isCompiling = GlobalSettings.Get("joyce.CompileMode") == "true";
+
+                    if (!isBuildInput || isCompiling)
                     {
-                        Trace(_dc,$"Warning: resource file for {pathProbe} does not exist.");
+                        string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uri);
+                        if (!File.Exists(pathProbe))
+                        {
+                            Trace(_dc, $"Warning: resource file for {pathProbe} does not exist.");
+                        }
+
+                        this.AddAssociation(tag!, uri);
                     }
-                    this.AddAssociation(tag!, uri);
+
+                    if ("model" == type)
+                    {
+                        _registerModelEntry(uri, tag!, resNode!);
+                    }
                 }
             }
         }
@@ -94,6 +145,62 @@ public abstract class AAssetImplementation : IAssetImplementation
     }
 
     
+    /**
+     * Record a resource declared as "type": "model" as something to bake, and -
+     * outside CompileMode - associate the baked file so engine.Assets.Open can
+     * find it.
+     *
+     * Mirrors _registerAnimationEntry below, including the CompileMode guard:
+     * during the Chushi run the mo-{hash} file is the OUTPUT and does not exist
+     * yet, so associating it would only produce a warning per model.
+     *
+     * Optional load properties may be declared alongside:
+     *   { "uri": "...fbx", "type": "model", "modelProperties": { "Scale": "2" } }
+     * They must match what the game passes in its ModelCacheParams, because they
+     * are part of the bake identity.
+     */
+    private void _registerModelEntry(string uri, string tag, JsonNode resNode)
+    {
+        string modelFileName = Path.GetFileName(uri);
+
+        var properties = new SortedDictionary<string, string>();
+        if (resNode["modelProperties"] is JsonObject objProperties)
+        {
+            foreach (var kvp in objProperties)
+            {
+                var value = kvp.Value?.GetValue<string>();
+                if (null != value)
+                {
+                    properties[kvp.Key] = value;
+                }
+            }
+        }
+
+        AvailableModels.Add(new ModelBakeRequest
+        {
+            Uri = uri,
+            ModelFileName = modelFileName,
+            Properties = properties,
+        });
+
+        string strFileName = builtin.baking.ModelFileName.Of(modelFileName, properties);
+        Trace(_dc, $"_registerModelEntry: {uri} -> {strFileName}");
+
+        if (GlobalSettings.Get("joyce.CompileMode") != "true")
+        {
+            string uriBaked = Path.Combine(
+                GlobalSettings.Get("Engine.GeneratedResourcePath"),
+                strFileName);
+            if (!File.Exists(uriBaked))
+            {
+                Trace(_dc, $"Warning: baked model {uriBaked} does not exist.");
+            }
+
+            this.AddAssociation(strFileName, uriBaked);
+        }
+    }
+
+
     private void _registerAnimationEntry(string uriModel, string packName, string uriAnimations)
     {
         string modelFileName = Path.GetFileName(uriModel);

@@ -6,7 +6,7 @@ using Avalonia.OpenGL;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
-using Splash.Silk;
+using Splash.OpenGL;
 
 namespace Aihao.Services;
 

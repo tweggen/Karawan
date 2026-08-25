@@ -1,7 +1,9 @@
 # Mono/ARM64: a call in a field initialiser corrupts the constructor's trailing struct argument
 
-**Status:** root cause proven on device; workaround applied and **verified on device 2026-08-09**
-(ship handling normal, runaway gone)
+**Status:** reproduced in isolation on device. The surviving workaround is the **scalar-wise inertia
+repair** in `HoverModule` (verified 2026-08-09). Cleaning the constructors of `engine.physics.Object`
+is necessary but **NOT sufficient** — the runaway persisted with that class fully cleaned, so the
+corruption also enters elsewhere. Entry point still unknown; other dynamic bodies remain exposed.
 **Platform:** Android arm64-v8a only. Never reproduces on desktop x64.
 **Runtime:** .NET 9.0.13, Mono (`libmonosgen-2.0.so`), `net9.0-android36.0`, JIT (no AOT)
 **Device OS:** Linux 6.6.102-android15-8 (Android 16)
@@ -138,32 +140,57 @@ value-type parameter. Assign in each constructor body instead:
 Applied to `engine.physics.Object` (5 constructors; 3 already received an `Engine` parameter they
 were ignoring).
 
-### It takes a *real* call — intrinsics are fine
+### ⚠️ RETRACTED: "it takes a *real* call — intrinsics are fine"
 
-`Object` still has `public Vector3 BodyOffset { get; set; } = Vector3.Zero;` and
-`public Quaternion BodyRotation { get; set; } = Quaternion.Identity;`. Both are static **property**
-getters, so both are `call` in IL, and both remain in the prologue of all three
-`Vector3 bodyOffset = default` constructors. The device is nevertheless correct after the fix.
+**This section previously claimed the opposite of the truth. Falsified on device 2026-08-09.**
 
-So the JIT intrinsifies those to a zeroing before the prologue's frame shape is fixed, and only a
-call that survives as an actual `bl` triggers the corruption. Useful, because it means the
-near-universal `= new()` / `= Vector3.Zero` idioms are not all landmines — but it is an empirical
-result on one runtime version, not a guarantee.
+The claim was that `= Vector3.Zero` and `= Quaternion.Identity` are intrinsified to a zeroing and
+therefore harmless, because `Object` still had them and the device was correct. **That evidence was
+confounded**: the same build still carried the field-by-field inertia repair in `HoverModule`.
+Remove the repair and the runaway returns immediately.
+
+`AbiProbe` **case N** settles it. Its prologue contains ONLY those two static property reads — no
+generic call, no `I.Get<T>()`:
+
+```
+ABIPROBE N FAIL (intrinsic-only prologue):
+    incomingBodyOffset=<0, 0.9740994, 0>   (expected <0,0,0>)
+```
+
+Identical corruption to case M. **Any instance field or property initialiser is enough.**
+
+The lesson is methodological as much as technical: a green run only supports a claim if every other
+change that could explain it has been removed. It had not been, and the retraction cost two device
+cycles.
 
 ## Blast radius
 
 Not physics-specific. Exposure needs **both**:
 
-1. an **instance** field/property initialiser containing a call that is not intrinsified, and
+1. **any** instance field or property initialiser — not merely one containing a call, and not
+   merely a non-intrinsified one, and
 2. a constructor whose **last** parameter is a value type.
 
-Three things narrow it usefully:
+Two things still narrow it:
 
 - `static` initialisers are irrelevant — they compile into `.cctor`, not an instance prologue.
 - Constructors chaining `: this(...)` are exempt — the compiler does not re-emit initialisers.
-- Condition 2 is the one actually under our control, and `= new()` lock objects are near-universal
-  here. So the enforceable house rule is **"never make the last constructor parameter a struct"**,
-  not "avoid call initialisers".
+
+**The stricter rule invalidates the earlier sweep.** Its "list B" of 309 latent classes was
+classified against the weaker "initialiser containing a call" rule, and every `= new()` lock object
+— near-universal in this codebase — now qualifies under condition 1. That audit has to be redone,
+and given the idiom's ubiquity it is probably better answered by a defensive pattern at the physics
+choke point than by editing hundreds of classes.
+
+**A class cannot make itself safe by internal care alone.** `engine.physics.Object` was cleaned of
+every initialiser and the runaway still persisted, so the corruption also enters somewhere else.
+That is why the surviving workaround is the *scalar-wise* repair in `HoverModule`: it copies the
+seven inertia values into the live body one float at a time, in the frame where they are known
+correct. Scalars are not aggregates, so the defect cannot reach them.
+
+**Ordering rule for constructors that must take a trailing struct:**
+consume every parameter into a field or local FIRST, then do anything that calls. A call at the top
+of the body is the same hazard as one in the prologue, just one step later.
 
 Optional trailing struct parameters (`= default`) are the worst case: the value is supplied by the
 compiler at the call site, so nobody is watching it.
@@ -233,4 +260,9 @@ interop). Worth filing upstream against `dotnet/runtime` (Mono ARM64 JIT).
 1. Deploy a Debug build to an arm64 Android device.
 2. `adb logcat -s DOTNET:*` and check `ABIPROBE BUILD: probeRev=… mvid=…` matches the build under
    test — the MVID changes on every compilation, so a stale deploy is detectable.
-3. `ABIPROBE RESULT:` — case M is the signal. All other cases are controls and must pass.
+3. `ABIPROBE RESULT:` — cases **M and N are deliberate reproductions and are EXPECTED to fail**.
+   A–L are controls and must pass. News is either a control failing (broader than the known defect)
+   or M/N starting to pass (fixed upstream — revisit the workarounds).
+4. Ship check: the `Ship inertia repaired scalar-wise:` line must show a positive diagonal and
+   **zero off-diagonals**. A non-zero off-diagonal there means the repair is itself reading corrupt
+   data, and the entry point is upstream of `HoverModule`.

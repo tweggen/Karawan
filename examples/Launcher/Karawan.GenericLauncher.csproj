@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-    <TargetFramework>net9.0-windows10.0.22000.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.22000.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
@@ -35,12 +35,12 @@
     <ProjectReference Include="..\..\Boom.OpenAL\Boom.OpenAL.csproj" />
     <ProjectReference Include="..\..\Boom\Boom.csproj" />
     <ProjectReference Include="..\..\Joyce\Joyce.csproj" />
-    <ProjectReference Include="..\..\Splash.Silk\Splash.Silk.csproj" />
+    <ProjectReference Include="..\..\Splash.OpenGL\Splash.OpenGL.csproj" />
     <ProjectReference Include="..\..\Splash\Splash.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Silk.NET.Core" />
+    <!-- Silk.NET.Core removed by WP-5.4; unused here too. See Karawan.csproj. -->
     <PackageReference Include="SixLabors.ImageSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
   </ItemGroup>

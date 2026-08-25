@@ -3,9 +3,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using engine;
-using Silk.NET.Core;
-using Silk.NET.Windowing;
-using Silk.NET.Maths;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -83,14 +80,26 @@ public class DesktopMain
             return "./assets/";
         }
 
-        if (File.Exists("./models/game.launch.json") || File.Exists("./models/nogame.json"))
-        {
-            // Jetbrains Rider / direct run from project root
-            return "./models/";
-        }
+        /*
+         * Search UPWARD for the content root instead of counting "..".
+         *
+         * This used to end in a hardcoded "../../../../../models/", tuned for a CWD of
+         * <repo>/Karawan/bin/Debug/<tfm>/<rid>. `dotnet run` sets CWD to the PROJECT
+         * directory instead, so the same five levels walked out of the checkout and landed
+         * in the user's home - producing a DirectoryNotFoundException for a path nobody
+         * configured, at a distance that varied with how deep the repo sits.
+         *
+         * See engine.GameRoot for the full account.
+         */
+        string? root = engine.GameRoot.PathTo("models");
+        if (null != root) return root;
 
-        // Running from bin/Debug or similar
-        return "../../../../../models/";
+        throw new DirectoryNotFoundException(
+            "Could not locate the game content root. Searched upward from "
+            + $"'{Directory.GetCurrentDirectory()}' and from '{AppContext.BaseDirectory}' "
+            + "for models/nogame.json, models/game.launch.json or Karawan.sln, and found "
+            + "none. Run from inside the repository, or ship an 'assets' directory beside "
+            + "the executable.");
     }
 
     /// <summary>
@@ -106,14 +115,15 @@ public class DesktopMain
             return Path.GetFullPath("./assets/") + Path.DirectorySeparatorChar;
         }
 
-        if (File.Exists("./models/game.launch.json") || File.Exists("./models/nogame.json"))
-        {
-            // Jetbrains Rider / direct run from project root
-            return Path.GetFullPath("./nogame/generated/") + Path.DirectorySeparatorChar;
-        }
+        // Same upward search as _determineResourcePath. Note the old hardcoded chains here
+        // and there disagreed - four levels vs five - because each was tuned separately
+        // against a different observed layout. Neither was right for `dotnet run`.
+        string? generated = engine.GameRoot.PathTo(Path.Combine("nogame", "generated"));
+        if (null != generated) return generated;
 
-        // Running from bin/Debug or similar
-        return Path.GetFullPath("../../../../nogame/generated/") + Path.DirectorySeparatorChar;
+        throw new DirectoryNotFoundException(
+            "Could not locate the generated resource directory (nogame/generated). "
+            + "See the message from the resource-path lookup for what was searched.");
     }
 
     /// <summary>
@@ -202,61 +212,17 @@ public class DesktopMain
 #endif
 
         /*
-         * WP-3.2: desktop windowing moves from Silk to SDL3.
+         * WP-3.5: the Silk windowing fallback is GONE. SDL3 is the only desktop backend.
          *
-         * The Silk path is KEPT and selectable, because this replaces the window, the main
-         * loop and the whole input surface on the platform people actually develop on. If
-         * something misbehaves, being able to flip one setting and see whether it follows
-         * the backend is the difference between a five-minute answer and a bisect:
-         *
-         *     platform.windowBackend = silk
-         *
-         * either in the game config or via --setting platform.windowBackend=silk.
-         *
-         * It is a fallback, not a supported configuration - Phase 3 removes it once GATE-C
-         * has passed on Windows and Linux.
+         * No Initialize() step: SDL_CreateWindow and SDL_GL_CreateContext happen together in
+         * the constructor, because GetProcAddress has to be usable before Platform's load
+         * handler runs - that handler is what calls GL.GetApi.
          */
-        bool useSilkWindowing = GlobalSettings.Get("platform.windowBackend") == "silk";
+        var sdl3Backend = new Splash.OpenGL.Sdl3WindowBackend(
+            launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
 
-        engine.Engine e;
-        Splash.Silk.Sdl3WindowBackend sdl3Backend = null;
-        IWindow iWindow = null;
-
-        if (useSilkWindowing)
-        {
-            Console.WriteLine("Window backend: Silk (fallback, platform.windowBackend=silk).");
-
-            var options = WindowOptions.Default;
-            options.Size = new Vector2D<int>(1280, 720);
-            options.Title = launchConfig.Branding.WindowTitle;
-            options.FramesPerSecond = 60;
-            options.VSync = false;
-            options.ShouldSwapAutomatically = false;
-            options.WindowState = WindowState.Normal;
-            options.PreferredDepthBufferBits = 16;
-
-            iWindow = Window.Create(options);
-            iWindow.Size = new Vector2D<int>(1280, 720);
-
-            // 9. Create engine
-            e = Splash.Silk.Platform.EasyCreate(args, iWindow, out var _);
-            e.SetFullscreen(startFullscreen);
-
-            iWindow.Initialize();
-        }
-        else
-        {
-            /*
-             * No Initialize() step: SDL_CreateWindow and SDL_GL_CreateContext happen together
-             * in the constructor, because GetProcAddress has to be usable before Platform's
-             * load handler runs - that handler is what calls GL.GetApi.
-             */
-            sdl3Backend = new Splash.Silk.Sdl3WindowBackend(
-                launchConfig.Branding.WindowTitle, 1280, 720, isResizable: true);
-
-            e = Splash.Silk.Platform.EasyCreate(args, sdl3Backend, out var _);
-            e.SetFullscreen(startFullscreen);
-        }
+        engine.Engine e = Splash.OpenGL.Platform.EasyCreate(args, sdl3Backend, out var _);
+        e.SetFullscreen(startFullscreen);
 
         // 10. Set window icon
         try
@@ -266,16 +232,7 @@ public class DesktopMain
             using var img = Image.Load<Rgba32>(streamImage);
             byte[] pixelArray = new byte[img.Width * img.Height * 4];
             img.CopyPixelDataTo(pixelArray);
-
-            if (null != sdl3Backend)
-            {
-                sdl3Backend.SetWindowIcon(pixelArray, img.Width, img.Height);
-            }
-            else
-            {
-                RawImage rawImage = new RawImage(img.Width, img.Height, pixelArray.AsMemory());
-                iWindow.SetWindowIcon(ref rawImage);
-            }
+            sdl3Backend.SetWindowIcon(pixelArray, img.Width, img.Height);
         }
         catch (Exception)
         {

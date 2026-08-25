@@ -1,10 +1,20 @@
 ﻿using System;
+using MessagePack;
 
 
 namespace engine.joyce
 {
-    public class Material
+    /**
+     * WP-4.1: persisted into the baked mo-{hash} model. As with Mesh, _idHolder is
+     * process-local identity and must be regenerated rather than restored, which
+     * is what the private deserialisation constructor is for. The convenience
+     * bool properties over Flags are all derived and therefore ignored - Flags is
+     * the single authority.
+     */
+    [MessagePackObject(AllowPrivate = true)]
+    public partial class Material
     {
+        [IgnoreMember]
         private IdHolder _idHolder = new();
 
         public bool IsMergableEqual(Material o)
@@ -50,7 +60,8 @@ namespace engine.joyce
          */
         [Flags] public enum ShaderFlags
         {
-            RenderInterior = 0x00000001
+            RenderInterior = 0x00000001,
+            NoDistanceFog = 0x00000002
         }
 
         [Flags] public enum MaterialFlags
@@ -61,6 +72,7 @@ namespace engine.joyce
              * the parameters of the shaders.
              */
             AddInterior = 0x00000001,
+            NoDistanceFog = 0x00000002,
             HasTransparency = 0x00000008,
             UnmergableFlags = 0x00ffffff,
             
@@ -73,27 +85,39 @@ namespace engine.joyce
             IsBillboardTransform = 0x02000000,
             IsUnscalable = 0x04000000
         }
+        [Key(0)]
         public MaterialFlags Flags = 0;
-        
+
         /**
          * Specify the fragment shader to use.
          * If null, use the default fragment shader.
          */
+        [Key(1)]
         public string FragmentShader = null;
-        
+
         /**
          * Specify the vertex shader to use.
          * If null, use the default vertex shader.
          */
+        [Key(2)]
         public string VertexShader = null;
-        
+
+        [Key(3)]
         public Texture Texture { get; set; } = null;
+
+        [Key(4)]
         public Texture EmissiveTexture { get; set; } = null;
-        
+
+        [Key(5)]
         public uint AlbedoColor = 0x00000000;
+
+        [Key(6)]
         public uint EmissiveColor = 0x00000000;
+
+        [Key(7)]
         public uint EmissiveFactors = 0xffffffff;
-        
+
+        [IgnoreMember]
         public bool AddInterior
         {
             get => (Flags & MaterialFlags.AddInterior) != 0;
@@ -104,7 +128,8 @@ namespace engine.joyce
             }
         }
         
-        public bool IsBillboardTransform         
+        [IgnoreMember]
+        public bool IsBillboardTransform
         {
             get => (Flags & MaterialFlags.IsBillboardTransform) != 0;
             set
@@ -114,7 +139,8 @@ namespace engine.joyce
             }
         }
 
-        public bool IsUnscalable         
+        [IgnoreMember]
+        public bool IsUnscalable
         {
             get => (Flags & MaterialFlags.IsUnscalable) != 0;
             set
@@ -124,7 +150,8 @@ namespace engine.joyce
             }
         }
         
-        public bool HasTransparency         
+        [IgnoreMember]
+        public bool HasTransparency
         {
             get => (Flags & MaterialFlags.HasTransparency) != 0;
             set
@@ -134,7 +161,8 @@ namespace engine.joyce
             }
         }
         
-        public bool UploadImmediately         
+        [IgnoreMember]
+        public bool UploadImmediately
         {
             get => (Flags & MaterialFlags.UploadImmediately) != 0;
             set
@@ -143,8 +171,9 @@ namespace engine.joyce
                 else Flags &= ~MaterialFlags.UploadImmediately;
             }
         }
-        
 
+
+        [Key(8)]
         public string Name = "(unnamed)";
 
         public override string ToString()
