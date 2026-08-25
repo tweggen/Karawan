@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -119,7 +119,18 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         {
             NavJunction nj = new()
             {
-                Position = streetPoint.Pos3 + clusterDesc.Pos with { Y = navY },
+                /*
+                 * Navigation is world space, so unlike StreetPoint.Pos3 - which is the
+                 * planar octree key - this carries the junction's deck height.
+                 *
+                 * Two things then follow on their own, because lanes measure themselves
+                 * with Vector3.Distance and split themselves with Vector3.Lerp: a ramp's
+                 * length is its true sloped length rather than its plan length, so
+                 * routing cannot get a discount for climbing, and a long ramp's
+                 * intermediate junctions land part way up it.
+                 */
+                Position = streetPoint.Pos3
+                           + clusterDesc.Pos with { Y = navY + streetPoint.LevelElevation },
                 StartingLanes = new(),
                 EndingLanes = new()
             };
@@ -195,6 +206,12 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 {
                     nj = new NavJunction
                     {
+                        /*
+                         * Sidewalk junctions come from quarter delimiters, and quarters
+                         * are traced on the ground only, so these stay at ground height.
+                         * A deck has no pavement to walk on until something generates
+                         * one.
+                         */
                         Position = new Vector3(delim.StartPoint.X, 0, delim.StartPoint.Y)
                                    + clusterDesc.Pos with { Y = navY },
                         StartingLanes = new(),

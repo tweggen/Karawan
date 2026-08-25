@@ -88,7 +88,23 @@ street is a surface laid on terrain, a deck is a slab with a bottom.
 **Gate:** a bridge-free cluster renders byte-identically (compare emitted vertex
 buffers for a fixed seed); a two-level cluster renders a deck at +8 m.
 
-### WP-5b — Navigation
+### WP-5b — Navigation — **DONE**
+
+One line, because two things fall out on their own. `GenerateNavMapOperator` builds
+lanes with `Vector3.Distance` and splits long ones with `Vector3.Lerp`, so once a
+junction's `Position` carries its deck height, **a ramp's cost is automatically its
+sloped length** — routing cannot get a discount for climbing — and a long ramp's
+intermediate junctions land part way up it.
+
+Sidewalk junctions stay at ground height on purpose: they come from quarter
+delimiters, and quarters are traced on the ground only, so a deck has no pavement
+until something generates one.
+
+Not directly tested: the operator needs a booted engine. The arithmetic it performs is
+pinned instead (`StreetLevelsTests`), and the TALE suite — 200 tests over real
+pathfinding — is what demonstrates the ground-only path is unchanged.
+
+#### Original scoping
 
 `GenerateNavMapOperator` turns junctions into `NavJunction` and strokes into
 `NavLane`, and hardcodes `new Vector3(sp.Pos.X, 0f, sp.Pos.Y)` — the same planar

@@ -1,4 +1,7 @@
+using System;
+using System.Numerics;
 using engine.streets;
+using engine.streets.generation;
 using Xunit;
 
 namespace JoyceCode.Tests.engine.streets;
@@ -49,6 +52,66 @@ public class StreetLevelsTests
 
         Assert.Equal(0f, ground.LevelElevation);
         Assert.Equal(StreetLevels.DeckHeight, raised.LevelElevation);
+    }
+
+
+    /**
+     * The property routing leans on.
+     *
+     * GenerateNavMapOperator gives each junction its deck height and then measures
+     * lanes with Vector3.Distance, so a ramp is charged for climbing. If it were
+     * measured in plan instead, a route over a bridge would look cheaper than it is and
+     * traffic would prefer ramps to the flat street beside them.
+     *
+     * The operator itself needs a booted engine to run, so this pins the arithmetic it
+     * performs rather than the operator.
+     */
+    [Fact]
+    public void ARampIsChargedForItsSlopedLengthNotItsPlanLength()
+    {
+        var from = new StreetPoint() { ClusterId = 0, Level = 0 };
+        from.SetPos(0f, 0f);
+        var to = new StreetPoint() { ClusterId = 0, Level = 0 };
+        to.SetPos(200f, 0f);
+
+        var chain = new OverpassBuilder(0).Build(
+            from, to, StrokeKind.Bridge, rampFraction: 0.25f, weight: 1f);
+        var ramp = chain[0];
+
+        float planLength = Vector2.Distance(ramp.A.Pos, ramp.B.Pos);
+
+        Vector3 worldA = ramp.A.Pos3 with { Y = ramp.A.LevelElevation };
+        Vector3 worldB = ramp.B.Pos3 with { Y = ramp.B.LevelElevation };
+        float slopedLength = Vector3.Distance(worldA, worldB);
+
+        Assert.True(slopedLength > planLength,
+            $"a ramp climbing {StreetLevels.DeckHeight} m must be longer than its "
+            + $"{planLength} m plan length, got {slopedLength}");
+
+        Assert.Equal(
+            MathF.Sqrt(planLength * planLength + StreetLevels.DeckHeight * StreetLevels.DeckHeight),
+            slopedLength, 2);
+    }
+
+
+    /**
+     * A flat street is unaffected: its sloped length is its plan length, which is why
+     * elevating navigation leaves every ground-only route exactly as it was.
+     */
+    [Fact]
+    public void AGroundStreetIsUnaffectedByTheSameArithmetic()
+    {
+        var a = new StreetPoint() { ClusterId = 0, Level = 0 };
+        a.SetPos(0f, 0f);
+        var b = new StreetPoint() { ClusterId = 0, Level = 0 };
+        b.SetPos(120f, 50f);
+
+        Assert.Equal(
+            Vector2.Distance(a.Pos, b.Pos),
+            Vector3.Distance(
+                a.Pos3 with { Y = a.LevelElevation },
+                b.Pos3 with { Y = b.LevelElevation }),
+            3);
     }
 
 
