@@ -68,6 +68,11 @@ public class StreetPoint
     }
 
     
+    /**
+     * INDEX space: the coordinate the octrees are keyed on, deliberately planar even
+     * for a junction on a raised deck. See StreetLevels for why, and use
+     * LevelElevation when you want the height.
+     */
     [LiteDB.BsonIgnore]
     [JsonIgnore]
     public Vector3 Pos3
@@ -83,6 +88,19 @@ public class StreetPoint
      * existed deserialises with every junction on the ground, which is what it was.
      */
     public sbyte Level { get; set; }
+
+
+    /**
+     * Height of this junction's deck above the ground surface at this spot. Zero on
+     * the ground, which is every junction until multilayer rulesets are enabled.
+     */
+    [LiteDB.BsonIgnore]
+    [JsonIgnore]
+    public float LevelElevation
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => StreetLevels.ElevationOf(Level);
+    }
 
 
     public string Creator { get; set; }
