@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using engine.streets.generation;
 using engine.world;
 using static engine.Logger;
 
@@ -19,6 +20,15 @@ namespace engine.streets
         private List<Stroke> _listStrokesToDo;
         private StrokeStore _strokeStore;
         private generation.NetworkBuilder _networkBuilder;
+        private ICandidateConstraint[] _pipeline;
+        private BoundsConstraint _boundsConstraint;
+        private GenerationContext _ctx;
+
+        /**
+         * A constraint may rewrite a candidate and demand that everything runs again.
+         * The original loop was unbounded; this is a backstop, not a tuning knob.
+         */
+        private const int MaxRestartsPerCandidate = 32;
         private bool _traceGenerator = false;
         private string _annotation = "";
         private ClusterDesc _clusterDesc;
@@ -525,10 +535,61 @@ namespace engine.streets
         }
 
         /**
+         * Build the constraint pipeline for this run.
+         *
+         * ORDER IS BEHAVIOUR: it is exactly the order these checks appeared in the
+         * original validation loop. An earlier rejection means a later constraint never
+         * gets to rewrite the candidate. Do not rearrange.
+         */
+        private void _buildPipeline()
+        {
+            _ctx = new GenerationContext
+            {
+                MinPointToCandPointDistance = minPointToCandPointDistance,
+                MinPointToCandStrokeDistance = minPointToCandStrokeDistance,
+                MinPointToCandIntersectionDistance = minPointToCandIntersectionDistance,
+                AngleMinStrokesRad = AngleMinStrokes * (float) Math.PI / 180f,
+                IsTracing = _traceGenerator
+            };
+
+            _boundsConstraint = new BoundsConstraint(_bl, _tr);
+
+            _pipeline = new ICandidateConstraint[]
+            {
+                new MinLengthConstraint(),
+                new SnapToNearbyPointConstraint(),
+                new AlreadyConnectedConstraint(),
+                new AngleSeparationConstraint(atB: false),
+                new AngleSeparationConstraint(atB: true),
+            };
+        }
+
+
+        /**
+         * Run every constraint once, stopping at the first that has something to say.
+         */
+        private Verdict _runPipeline(Stroke cand)
+        {
+            foreach (var constraint in _pipeline)
+            {
+                Verdict verdict = constraint.Check(cand, _strokeStore, _ctx);
+                if (verdict.Kind != VerdictKind.Accept)
+                {
+                    return verdict;
+                }
+            }
+
+            return Verdict.Accept;
+        }
+
+
+        /**
          * Iterate until the queue of strokes is empty again.
          */
         public void Generate()
         {
+            _buildPipeline();
+
             int maxGenerations = (int)(_clusterDesc.Size * _clusterDesc.Size / 1000f);
             
             while (true)
@@ -563,7 +624,7 @@ namespace engine.streets
                 /*
                  * In bounds of the desired area?
                  */
-                if (!_inBounds(curr))
+                if (_boundsConstraint.Check(curr, _strokeStore, _ctx).Kind != VerdictKind.Accept)
                 {
                     if (_traceGenerator) Trace(_dc, $"curr is out of bounds: {curr.ToString()}");
                     /*
@@ -583,123 +644,45 @@ namespace engine.streets
                 bool continueCheck = true;
                 bool doAdd = true;
 
+                int restarts = 0;
+
                 while (continueCheck)
                 {
-
                     /*
-                     * This actually might happen due to intersections etc. 
+                     * Constraints 1..5. A Restart means a constraint moved an endpoint
+                     * and everything has to be judged again from the top; the remaining
+                     * inline checks below are migrated in WP-2b.
                      */
+                    Verdict verdict = _runPipeline(curr);
 
-                    /*
-                     * Is the end of the stroke too close to the beginning of the stroke?
-                     */
-                    if (Vector2.Distance(curr.A.Pos, curr.B.Pos) < minPointToCandPointDistance)
+                    if (verdict.Kind == VerdictKind.Reject)
                     {
                         if (_traceGenerator)
                         {
-                            Trace(_dc, $"Discarding candidate: is too short. {curr}");
-                        }
-                        /*
-                         * Test: If both are in store, we have an invalid entry in the store.
-                         */
-                        if (curr.A.InStore && curr.B.InStore)
-                        {
-                            // TXWTODO: Is this really invalid? Couldn't that happen due to merging both sides of a stroke?
-                            // throw new InvalidOperationException( "Generator: (test too short) Found too close points (curr.a and curr.b) both in store" );
+                            Trace(_dc, $"Discarding candidate ({verdict.Reason}): {curr}");
                         }
                         doAdd = false;
                         continueCheck = false;
-                        _cleanupFailedStrokePoints();  // Option B: Clean up points for failed stroke
                         continue;
                     }
 
-                    /*
-                     * if B is new, look if it is too close to an existing point.
-                     */
-                    if (!curr.B.InStore)
+                    if (verdict.Kind == VerdictKind.Restart)
                     {
-                        StreetPoint tooClose = _strokeStore.FindClosestBelowButNot(
-                            curr.B, minPointToCandPointDistance, curr.A );
-
-                        if( null != tooClose ) {
-                            if( _traceGenerator ) {
-                                Trace(_dc, $"StreetPoint B ({curr.B}) too close to StreetPoint ({tooClose}).");
-                            }
-
+                        if (++restarts > MaxRestartsPerCandidate)
+                        {
                             /*
-                             * if a is close to another existing point, use that one.
+                             * Unreachable for every baseline seed - if it were not, the
+                             * fingerprints would have moved when this bound was
+                             * introduced. Present so that a future constraint cannot
+                             * turn the loop into a hang.
                              */
-                            curr.B = tooClose;
-
-                            // Leave this loop.
-                            // doAdd = false;
-                            // continueCheck = false;
-                            // break;
+                            Warning(_dc, $"Restart budget exhausted for {curr}, discarding.");
+                            doAdd = false;
+                            continueCheck = false;
                             continue;
                         }
+                        continue;
                     }
-                    
-                    /*
-                     * Now test whether the given points already are connected?
-                     */
-                    if( curr.A.InStore && curr.B.InStore ) {
-                        if( _strokeStore.AreConnected(curr.A, curr.B)) {
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
-                        }
-                    }
-                    
-
-                    /*
-                     * Look if the stroke would be too close to an existing one origining from either endpoint.
-                     */
-                    {
-                        /*
-                         * Anything too close in point a?
-                         */
-                        var angles = curr.A.GetAngleArray();
-                        var closestAngle = 9.0;
-                        // its an incoming angle wrt a.
-                        var myAngle = curr.Angle;
-                        foreach( var stroke in angles ) {
-                            float candAngle = stroke.GetAngleSP(curr.A);
-                            float thisAngle = (float) Math.Abs(geom.Angles.Snorm( candAngle - myAngle ));
-                            if( thisAngle < closestAngle ) {
-                                closestAngle = thisAngle;
-                            }
-                        }
-                        if( closestAngle < (AngleMinStrokes*(float)Math.PI/180f) ) {
-                            if( _traceGenerator ) Trace(_dc, $"Discarding stroke {curr.ToStringSP(curr.A)}, angle too close {closestAngle}" );
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
-                        }
-                    }
-
-                    {
-                        /*
-                         * Anything too close in point b?
-                         */
-                        var angles = curr.B.GetAngleArray();
-                        float closestAngle = 9.0f;
-                        // its an incoming angle wrt b.
-                        float myAngle = curr.Angle + (float) Math.PI;
-                        foreach( var stroke in angles ) {
-                            var candAngle = stroke.GetAngleSP(curr.B);
-                            var thisAngle = Math.Abs(geom.Angles.Snorm( candAngle - myAngle ));
-                            if( thisAngle < closestAngle ) {
-                                closestAngle = thisAngle;
-                            }
-                        }
-                        if( closestAngle < (AngleMinStrokes*(float) Math.PI/180f) ) {
-                            if( _traceGenerator ) Trace(_dc, $"Discarding stroke {curr.ToStringSP(curr.B)}, angle too close {closestAngle}" );
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
-                        }
-                    }
-
 
                     /*
                      * Look, whether the stroke is too close to an existing point

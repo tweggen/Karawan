@@ -542,6 +542,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GenerateClusterStreetsOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Generator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\NetworkBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\Constraints.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\ICandidateConstraint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\Verdict.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Quarter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\QuarterDelim.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\QuarterGenerator.cs" />
