@@ -118,6 +118,15 @@ public class Stroke
      */
     public bool IsPrimary { get; set; }
 
+    /**
+     * Which deck this stroke occupies, matching its endpoints. Strokes on different
+     * levels may cross without meeting - that crossing IS the overpass.
+     *
+     * Additive for persistence: clusters cached before multilayer existed come back
+     * entirely on level 0.
+     */
+    public sbyte Level { get; set; }
+
 
     /**
      * The point this stroke is coming from.
@@ -508,6 +517,7 @@ public class Stroke
     {
         IsPrimary = o.IsPrimary;
         Weight = o.Weight;
+        Level = o.Level;
         Invalidate();
     }
 
@@ -570,6 +580,13 @@ public class Stroke
 
         stroke.IsPrimary = isPrimary0;
         stroke.Weight = weight0;
+
+        /*
+         * A successor grows on the deck its parent junction sits on. Changing level is
+         * the exclusive business of a ramp.
+         */
+        stroke.Level = a0.Level;
+        b0.Level = a0.Level;
 
         return stroke;
     }

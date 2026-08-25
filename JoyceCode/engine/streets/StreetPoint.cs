@@ -61,6 +61,14 @@ public class StreetPoint
     }
     
 
+    /**
+     * Which deck this junction sits on. 0 is the ground, +1 a bridge deck above it,
+     * -1 a tunnel below. Additive for persistence: a cluster cached before multilayer
+     * existed deserialises with every junction on the ground, which is what it was.
+     */
+    public sbyte Level { get; set; }
+
+
     public string Creator { get; set; }
 
     /*

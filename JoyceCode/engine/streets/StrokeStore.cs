@@ -9,6 +9,18 @@ using static engine.Logger;
 namespace engine.streets;
 
 
+/**
+ * The street graph of one cluster, with its spatial indices.
+ *
+ * MULTILAYER: strokes and junctions carry a Level. The four neighbourhood queries
+ * below all skip entries on a different level, so two streets on different decks can
+ * cross without meeting - that crossing is the overpass. Everything stays in ONE pair
+ * of octrees and the level is filtered out of the results, rather than keeping an
+ * octree per level: for the ground-only case that shipping configurations use, no
+ * entry is ever skipped and the cost is exactly what it was. Per-level indices would
+ * only pay off once several busy decks exist, and can be added then without touching
+ * any caller.
+ */
 public class StrokeStore
 {
     private static readonly engine.Dc _dc = engine.Dc.StreetGen;
@@ -60,6 +72,15 @@ public class StrokeStore
             {
                 /*
                  * We do not want to intersect with ourselves.
+                 */
+                continue;
+            }
+
+            if (stroke.Level != cand.Level)
+            {
+                /*
+                 * Different decks. They cross on the map and not in the world, which is
+                 * exactly what an overpass is. No junction, no split.
                  */
                 continue;
             }
@@ -133,7 +154,7 @@ public class StrokeStore
             for (int i = 0; i < l; ++i)
             {
                 StreetPoint cand = _tmpListNearby[i];
-                if (cand != spNot && cand != sp0)
+                if (cand != spNot && cand != sp0 && cand.Level == sp0.Level)
                 {
                     if (null == closestSP)
                     {
@@ -220,6 +241,11 @@ public class StrokeStore
                 continue;
             }
 
+            if (stroke.Level != sp.Level)
+            {
+                continue;
+            }
+
             var dist = stroke.Distance(sp.Pos);
 
             if (dist < closestDist)
@@ -280,6 +306,11 @@ public class StrokeStore
             if (sp0 == stroke.A || sp0 == stroke.B)
             {
                 if (_traceStrokes) Trace(_dc, $"Skipping point {sp0.Pos.X}, {sp0.Pos.Y}, because its part of this stroke.");
+                continue;
+            }
+
+            if (sp0.Level != stroke.Level)
+            {
                 continue;
             }
 

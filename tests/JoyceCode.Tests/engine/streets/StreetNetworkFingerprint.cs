@@ -72,6 +72,39 @@ internal static class StreetNetworkFingerprint
 
 
     /**
+     * Like V1, but distinguishing decks.
+     *
+     * V1 stays the ground-only equivalence gate and must never learn about levels:
+     * every baseline recorded before multilayer existed is expressed in it, and a
+     * bridge-free ruleset has to keep matching those numbers exactly.
+     */
+    internal static string V2(StrokeStore store)
+    {
+        var lines = new List<string>();
+
+        foreach (var stroke in store.GetStrokes())
+        {
+            string a = _q(stroke.A.Pos);
+            string b = _q(stroke.B.Pos);
+            string p = string.CompareOrdinal(a, b) <= 0 ? a : b;
+            string q = string.CompareOrdinal(a, b) <= 0 ? b : a;
+
+            lines.Add(string.Format(CultureInfo.InvariantCulture,
+                "{0}|{1}|{2:F3}|{3}|L{4}", p, q, stroke.Weight,
+                stroke.IsPrimary ? 1 : 0, stroke.Level));
+        }
+
+        lines.Sort(StringComparer.Ordinal);
+        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n", lines)));
+
+        return string.Format(CultureInfo.InvariantCulture,
+            "n={0},s={1},h={2}",
+            store.GetStreetPoints().Count, lines.Count,
+            Convert.ToHexString(hash).Substring(0, 16));
+    }
+
+
+    /**
      * Human-readable difference between two networks, for when a gate fails.
      */
     internal static string Diff(string[] expected, string[] actual, int maxLines = 20)
