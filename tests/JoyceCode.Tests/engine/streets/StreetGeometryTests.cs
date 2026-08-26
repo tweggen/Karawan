@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text.Json.Nodes;
 using engine.streets;
 using Xunit;
@@ -150,5 +152,147 @@ public class StreetGeometryTests
             Assert.Equal(ground.Vertices[i].Z, raised.Vertices[i].Z, 3);
             Assert.Equal(ground.Vertices[i].Y + StreetLevels.DeckHeight, raised.Vertices[i].Y, 3);
         }
+    }
+}
+
+
+/**
+ * Ramp surfaces: the one piece of street geometry that is not flat.
+ */
+public class RampGeometryTests
+{
+    private const float ClusterSize = 1000f;
+
+    private static (global::engine.world.ClusterDesc Cluster, StrokeStore Store, List<Stroke> Chain) _overpass()
+    {
+        var clusterDesc = StreetHarness.MakeCluster("ramps", ClusterSize);
+        var store = new StrokeStore(ClusterSize);
+
+        var from = new StreetPoint() { ClusterId = 0, Level = 0 };
+        from.SetPos(0f, 0f);
+        var to = new StreetPoint() { ClusterId = 0, Level = 0 };
+        to.SetPos(240f, 0f);
+
+        var chain = new global::engine.streets.generation.OverpassBuilder(0).Build(
+            from, to, StrokeKind.Bridge, rampFraction: 0.25f, weight: 1f);
+
+        new global::engine.streets.generation.NetworkBuilder(store).CommitChain(chain);
+        return (clusterDesc, store, chain);
+    }
+
+
+    private static float _streetBase(global::engine.world.ClusterDesc cd)
+        => cd.AverageHeight + global::engine.world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+
+
+    /**
+     * A ramp starts on the ground and finishes a deck up, and does so continuously
+     * rather than as two flat platforms.
+     */
+    [Fact]
+    public void ARampSurfaceClimbsFromOneDeckToTheNext()
+    {
+        var (cd, store, chain) = _overpass();
+        var mesh = StreetGeometryHarness.GenerateFor(cd, store, new[] { chain[0] });
+
+        Assert.NotEmpty(mesh.Vertices);
+
+        float ground = _streetBase(cd);
+        float deck = ground + StreetLevels.DeckHeight;
+
+        Assert.Equal(ground, StreetGeometryFingerprint.MinY(mesh), 2);
+        Assert.Equal(deck, StreetGeometryFingerprint.MaxY(mesh), 2);
+
+        /*
+         * Deliberately no assertion about vertices part way up: a straight ramp is
+         * emitted as a single quad, so its only vertices are at the two ends and the
+         * slope lives in the interpolation between them. That the surface really is a
+         * slope, rather than a step, is what the linearity test below establishes -
+         * before this change the same two ends both sat at ground height.
+         */
+        Assert.True(StreetGeometryFingerprint.MaxY(mesh) - StreetGeometryFingerprint.MinY(mesh)
+                    > StreetLevels.DeckHeight - 0.1f,
+            "the surface must span a whole deck height");
+    }
+
+
+    /**
+     * Height follows distance along the ramp. Checked against the ramp's own endpoints
+     * rather than against a recomputed slope, so the test does not just restate the
+     * implementation.
+     */
+    [Fact]
+    public void HeightAlongARampIsProportionalToDistanceAlongIt()
+    {
+        var (cd, store, chain) = _overpass();
+        var ramp = chain[0];
+        var mesh = StreetGeometryHarness.GenerateFor(cd, store, new[] { ramp });
+
+        float ground = _streetBase(cd);
+        float rise = StreetLevels.DeckHeight;
+        float runX = ramp.B.Pos.X - ramp.A.Pos.X;
+
+        foreach (var v in mesh.Vertices)
+        {
+            float along = Single.Clamp((v.X - ramp.A.Pos.X) / runX, 0f, 1f);
+            Assert.Equal(ground + along * rise, v.Y, 1);
+        }
+    }
+
+
+    /**
+     * A sloped surface needs a sloped normal, or it lights as though it were flat.
+     */
+    [Fact]
+    public void ARampSurfaceIsNotLitAsThoughItWereFlat()
+    {
+        var (cd, store, chain) = _overpass();
+        var mesh = StreetGeometryHarness.GenerateFor(cd, store, new[] { chain[0] });
+
+        Assert.All(mesh.Normals, n =>
+        {
+            Assert.True(n.Y > 0f, "a road surface still faces upwards");
+            Assert.True(Single.Abs(n.X) > 0.01f || Single.Abs(n.Z) > 0.01f,
+                $"a climbing surface must not have a straight-up normal, got {n}");
+            Assert.Equal(1f, n.Length(), 3);
+        });
+
+        /*
+         * The ramp climbs towards +X, so its normal leans back towards -X.
+         */
+        Assert.All(mesh.Normals, n => Assert.True(n.X < 0f,
+            $"normal should lean against the climb, got {n}"));
+    }
+
+
+    /**
+     * The deck between the two ramps is flat, and lit as such.
+     */
+    [Fact]
+    public void TheDeckBetweenTheRampsStaysFlat()
+    {
+        var (cd, store, chain) = _overpass();
+        var mesh = StreetGeometryHarness.GenerateFor(cd, store, new[] { chain[1] });
+
+        float deck = _streetBase(cd) + StreetLevels.DeckHeight;
+
+        Assert.Equal(deck, StreetGeometryFingerprint.MinY(mesh), 2);
+        Assert.Equal(deck, StreetGeometryFingerprint.MaxY(mesh), 2);
+        Assert.All(mesh.Normals, n => Assert.Equal(Vector3.UnitY, n));
+    }
+
+
+    /**
+     * And the descent leans the other way, so the two ramps are not accidentally
+     * identical.
+     */
+    [Fact]
+    public void TheDescendingRampLeansTheOtherWay()
+    {
+        var (cd, store, chain) = _overpass();
+        var mesh = StreetGeometryHarness.GenerateFor(cd, store, new[] { chain[2] });
+
+        Assert.All(mesh.Normals, n => Assert.True(n.X > 0f,
+            $"a descending ramp leans the other way, got {n}"));
     }
 }

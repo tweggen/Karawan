@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using engine;
 using JoyceCode.Tests.engine;
 using engine.joyce;
@@ -62,6 +63,34 @@ internal static class StreetGeometryHarness
      * @returns the accumulated mesh.
      */
     internal static Mesh Generate(string idString, float size) => GenerateAtLevel(idString, size, 0);
+
+
+    /**
+     * Build the geometry of a hand-made network, so that a test can set up a structure
+     * the generator does not yet produce - a ramp, for instance.
+     *
+     * @param only
+     *     Emit only these strokes. The whole store is still used for the junctions, so
+     *     the angle arrays a surface needs are populated.
+     */
+    internal static Mesh GenerateFor(
+        ClusterDesc clusterDesc, StrokeStore strokeStore, IEnumerable<Stroke> only)
+    {
+        _ensureMaterial();
+
+        var op = new GenerateClusterStreetsOperator(clusterDesc, "geometry-harness");
+        var artefact = new Artefact()
+        {
+            g = Mesh.CreateNormalsListInstance("geometry-harness-explicit")
+        };
+
+        foreach (var stroke in only)
+        {
+            op._generateStreetRun(0f, 0f, stroke, artefact);
+        }
+
+        return artefact.g;
+    }
 
 
     /**

@@ -95,13 +95,28 @@ cluster rather than following the terrain** — every vertex derives from a sing
 The fragment's physics floor is deliberately left on the ground: it is one plane for
 the whole fragment, and a raised deck needs its own collision surface (WP-5c).
 
-Remaining, as **WP-5a-ii — ramps**. A ramp's two ends are on different decks, so its
-surface has to shear along its length. That is not a one-line change: `h` is consumed
-at roughly fifteen vertex-emission sites in that function, and a sloped surface also
-needs a real normal instead of the `Vector3.UnitY` every site currently passes, or the
-lighting is wrong. Today a ramp renders as a flat platform at its lower deck. Nothing
-generates ramps until a multilayer ruleset is enabled, so this is unreachable rather
-than broken — but it must land before WP-5d.
+**WP-5a-ii — ramps — DONE.** The surface is built flat at the A end's height, exactly
+as before, and then tilted onto its slope by `_shearOntoSlope` over the vertices that
+stroke emitted. Done as a pass rather than at each of the fifteen emission sites, which
+is possible because **the UV projector's two axes are both planar**: a vertex's Y
+cannot affect its UV, so moving Y afterwards disturbs nothing else. Normals in the
+range are replaced with the slope normal, or a climbing surface lights as though it
+were flat.
+
+`hA == hB` for every flat stroke, so the pass returns immediately and the ground path
+is untouched — which the geometry gate proves rather than argues.
+
+Mutation-tested: removing the shear fails the 4 ramp tests **while all 16 ground
+geometry tests keep passing**, which is what shows the change is ramp-only; inverting
+the slope normal fails the 2 lean-direction tests.
+
+One test assumption corrected on the way: a straight ramp is emitted as a **single
+quad**, so it has no vertices part way up and "is there a vertex at mid height" cannot
+distinguish a slope from a step. Linearity against each vertex's own distance along
+the ramp is what does.
+
+Still deferred: a deck has no underside, edges or supports — it is a floating slab
+seen from below. Visible progress, and not wrong, only unfinished.
 
 Original scoping follows.
 

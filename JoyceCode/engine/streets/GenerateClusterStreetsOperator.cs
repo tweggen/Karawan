@@ -284,18 +284,26 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         Vector2 q = stroke.Unit;
         Vector3 q3 = new(q.X, 0f, q.Y);
         /*
-         * The whole surface is built from v3Cluster plus planar offsets, so raising it
-         * by the stroke's level raises every vertex of it.
+         * The whole surface is built from v3Cluster plus planar offsets, so building it
+         * at the A end's height puts every vertex of a flat stroke where it belongs.
          *
-         * NOT yet correct for a ramp, whose two ends are on different decks: it renders
-         * as a flat platform at its lower one. Doing it properly means shearing Y along
-         * the stroke at every emission site below and giving the surface a sloped
-         * normal instead of UnitY, which is WP-5a-ii. Nothing generates ramps until a
-         * multilayer ruleset is enabled, so this is unreachable today.
+         * A ramp's ends are on different decks. Rather than threading two heights
+         * through the fifteen emission sites below, the surface is built flat at hA and
+         * then sheared onto the slope afterwards, in _shearOntoSlope. That works because
+         * the UV projector's axes are both planar, so a vertex's Y cannot affect its UV
+         * - which means moving Y after the fact disturbs nothing else.
          */
-        var h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
-            + StreetLevels.ElevationOf(stroke.Level);
+        float streetBase = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+        float hA = streetBase + StreetLevels.ElevationOf(stroke.A.Level);
+        float hB = streetBase + StreetLevels.ElevationOf(stroke.B.Level);
+
+        var h = hA;
         Vector3 v3Cluster = new(cx, h, cy);
+
+        /*
+         * Everything this stroke emits lands at or after this index.
+         */
+        uint firstVertex = g.GetNextVertexIndex();
         
 
         var spA = stroke.A;
@@ -703,7 +711,66 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 g.Idx(i0 + row * 4 + 1, i0 + row * 4 + 2, i0 + row * 4 + 3);
             }
         }
+
+        _shearOntoSlope(g, firstVertex, am, q, bm - am, hA, hB);
+
         return true;
+    }
+
+
+    /**
+     * Tilt a stroke's surface from flat onto its slope.
+     *
+     * Everything above builds the surface at the A end's height, which is already right
+     * for a flat stroke and is why this is a no-op for every street on the ground. A
+     * ramp then needs each vertex lifted in proportion to how far along the stroke it
+     * lies, and the surface needs a normal that is no longer straight up, or a ramp
+     * lights as though it were flat.
+     *
+     * Done as a pass over the vertices this stroke emitted rather than at each emission
+     * site: there are about fifteen of them, and the Y of a vertex affects nothing else
+     * here - the UV projector's two axes are both planar, so UVs are unchanged by it.
+     *
+     * @param am, vAB
+     *     Start of the stroke's centre line and the vector along it, both in the same
+     *     space as the emitted vertices.
+     */
+    private void _shearOntoSlope(
+        joyce.Mesh g, uint firstVertex, in Vector3 am, in Vector2 unit, in Vector3 vAB,
+        float hA, float hB)
+    {
+        if (hA == hB)
+        {
+            return;
+        }
+
+        float length = new Vector2(vAB.X, vAB.Z).Length();
+        if (length < 0.001f)
+        {
+            return;
+        }
+
+        /*
+         * Rise over run, and the surface normal that goes with it: rotate straight up
+         * back by the slope, in the vertical plane the stroke runs along.
+         */
+        float slope = (hB - hA) / length;
+        Vector3 slopeNormal = Vector3.Normalize(new Vector3(-slope * unit.X, 1f, -slope * unit.Y));
+
+        for (int i = (int)firstVertex; i < g.Vertices.Count; ++i)
+        {
+            Vector3 v = g.Vertices[i];
+
+            float along = ((v.X - am.X) * unit.X + (v.Z - am.Z) * unit.Y) / length;
+            along = Single.Clamp(along, 0f, 1f);
+
+            g.Vertices[i] = v with { Y = hA + along * (hB - hA) };
+
+            if (null != g.Normals && i < g.Normals.Count)
+            {
+                g.Normals[i] = slopeNormal;
+            }
+        }
     }
 
 
