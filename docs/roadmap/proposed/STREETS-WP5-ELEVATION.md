@@ -118,7 +118,36 @@ assumption in a place where it *is* wrong, because navigation is world space.
 **Gate:** a ground-only navmap is unchanged; a route across a two-level cluster uses
 ramps and its length matches the 3D geometry.
 
-### WP-5c — Physics and placement
+### WP-5c — Physics and placement — **PLACEMENT DONE, COLLISION DEFERRED**
+
+Smaller than scoped, because most of the `Pos3` reads listed below turned out to be
+**already correct**, and "fixing" them would have introduced bugs:
+
+| site | verdict |
+|---|---|
+| `SpawnOperator.cs:217` | reads `.X`/`.Z` only — planar by construction |
+| `NarrationBindings.cs:148` | `Pos3 with { Y = 0f }` for a plan-distance comparison — deliberately planar |
+| `NarrationBindings.cs:151,158`, `ClusterDesc.cs:224` | feed `Fragment.PosToIndex3` — a fragment *grid index*; elevation there would be meaningless or wrong |
+| `TaxiNpcSpawnerModule.cs:63,202` | source is a quarter delimiter, and quarters are ground-only |
+| `Placer.cs:293` | **fixed** — a spawn reference position, genuinely world space |
+| `SpatialModel.cs:263` | **fixed** — but on `streetHeight`, since `pos.Y` is assigned outright a line later rather than accumulated |
+
+The lesson generalises: `Pos3` appears in three different roles — plan geometry, grid
+index, and world position — and only the third wants elevation. Adding it everywhere
+`Pos3` occurs would have broken fragment lookup.
+
+**Deck collision is deliberately deferred**, and its ordering has changed: it needs
+the deck *mesh* to exist, and a deck with no ramps (WP-5a-ii) is unreachable. Collision
+for a surface nothing can drive onto is not useful, so this now follows WP-5a-ii rather
+than preceding it.
+
+**Noticed in passing, not fixed:** `Placer.cs:304` computes
+`v3OnTerrain = ...GetWalkingPosAt(v3ReferenceAccu)` and then never uses it —
+`pod.Position` is assigned `v3ReferenceAccu`. Either a wasted terrain query or a
+missing assignment; changing it would move every placement, so it wants its own
+decision rather than being folded into this work.
+
+#### Original scoping
 
 `Placer`, `SpawnOperator`, `TaxiNpcSpawnerModule` and `NarrationBindings` all read
 `Pos3` to put something in the world. Each needs the elevation added. The collision

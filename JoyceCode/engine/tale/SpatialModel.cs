@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
 using engine.streets;
@@ -261,7 +261,12 @@ public class SpatialModel
             int locId = locationId++;
             streetPointToLocation[sp.Id] = locId;
             var pos = sp.Pos3 + cluster.Pos;
-            pos.Y = streetHeight;
+
+            /*
+             * Y is set outright rather than accumulated, so the deck height goes here
+             * rather than onto Pos3 - which is the planar octree key and must stay so.
+             */
+            pos.Y = streetHeight + sp.LevelElevation;
 
             // The street point itself is the junction center — the middle of the
             // roadway. NPCs standing there (street storylets, drifter homes, ...)
