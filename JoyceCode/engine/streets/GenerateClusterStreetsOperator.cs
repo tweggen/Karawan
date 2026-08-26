@@ -63,8 +63,14 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     /**
      * Generate a polygon representing the street point.
      */
-    private bool _generateJunction(
-        in world.Fragment worldFragment,
+    /**
+     * Emit the polygon capping one junction.
+     *
+     * Takes no Fragment: whether this junction belongs to the fragment being built is
+     * the caller's decision, hoisted out so that the geometry itself can be produced -
+     * and therefore compared - without booting an engine. See StreetGeometryTests.
+     */
+    internal bool _generateJunction(
         float cx, float cy,
         in streets.StreetPoint sp,
         Artefact a
@@ -72,14 +78,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     {
         var g = a.g;
         //var ng = a.ng;
-        
-        /*
-         * We render only street points inside our fragment.
-         */
-        if (!worldFragment.IsInsideLocal(sp.Pos.X + cx, sp.Pos.Y + cy))
-        {
-            return false;
-        }
 
         /*
          * We simple generate a polygon using the section points as edges.
@@ -252,8 +250,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     /**
       * Generate the streets between any junctions.
       */
-    private bool _generateStreetRun(
-        world.Fragment worldFragment,
+    /**
+     * Emit the road surface of one stroke. Fragment-free for the same reason as
+     * _generateJunction above.
+     */
+    internal bool _generateStreetRun(
         float cx, float cy,
         streets.Stroke stroke,
         Artefact a)
@@ -298,16 +299,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         
 
         var spA = stroke.A;
-
-        /*
-         * Before continuing, we check whether point a is inside this fragment.
-         * By convention, we only create streets that have their a point inside this
-         * fragment.
-         */
-        if (!worldFragment.IsInsideLocal(spA.Pos.X + cx, spA.Pos.Y + cy))
-        {
-            return false;
-        }
 
         var angArrA = spA.GetAngleArray();
 
@@ -752,15 +743,27 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          */
         foreach (var stroke in strokeStore.GetStrokes())
         {
-            var didCreateStreetRun = _generateStreetRun(
-                worldFragment, cx, cz, stroke, artefact);
-            if (didCreateStreetRun)
+            /*
+             * By convention we only build streets whose A point is inside this
+             * fragment, so that a stroke spanning two fragments is built exactly once.
+             */
+            if (!worldFragment.IsInsideLocal(stroke.A.Pos.X + cx, stroke.A.Pos.Y + cz))
             {
-                nIgnoredStrokes++;
+                ++nIgnoredStrokes;
+                continue;
+            }
+
+            /*
+             * These two counters were the wrong way round: a successful run was
+             * counted as ignored. They feed a trace line only.
+             */
+            if (_generateStreetRun(cx, cz, stroke, artefact))
+            {
+                ++nGeneratedStreets;
             }
             else
             {
-                ++nGeneratedStreets;
+                ++nIgnoredStrokes;
             }
         }
 
@@ -771,8 +774,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         {
             foreach (var streetPoint in strokeStore.GetStreetPoints())
             {
+                if (!worldFragment.IsInsideLocal(streetPoint.Pos.X + cx, streetPoint.Pos.Y + cz))
+                {
+                    continue;
+                }
+
                 _generateJunction(
-                    worldFragment, cx, cz, streetPoint, artefact
+                    cx, cz, streetPoint, artefact
                 );
             }
         }

@@ -51,6 +51,39 @@ rest):
 
 ## 2. What remains
 
+### WP-5a-gate — The geometry gate — **DONE**
+
+The generator has been gated since WP-0; the renderer had nothing. Every elevation
+change so far leaned on `StreetLevels.ElevationOf(0)` being exactly zero to argue the
+ground path could not have moved. WP-5a-ii changes vertex emission itself, so that
+argument stops working and this had to come first.
+
+`StreetGeometryHarness` runs the emission methods with no engine. What made that
+possible: both took a `world.Fragment` only to ask whether the thing being built
+belonged to that fragment — a caller's decision, now hoisted out. The geometry then
+depends on nothing but a cluster, a stroke store and a material.
+
+`StreetGeometryFingerprint` hashes vertices, normals and UVs in **emission order**,
+unlike the network fingerprint which sorts: a mesh is an ordered thing, since triangles
+are built from consecutive vertices.
+
+**Mutation-tested, and it found a hole.** Shifting street height by 1 cm failed 8 of 13;
+perturbing a normal and a UV in `_streetTriangle` each failed 4. But perturbing a normal
+inside the `damax > dbmin` branch — the "a and b ends overlapping" case for very short
+strokes — **passed**, because none of the four seeds reached it. Instrumenting that
+branch and scanning found `seed008@500`, now in the seed set; with it the same mutation
+fails. A degenerate path like that is exactly what a vertex-emission change breaks.
+
+**Fixed along the way, both pre-existing:** the caller's `nGeneratedStreets` /
+`nIgnoredStrokes` counters were inverted (trace-only), and `I.Register` collisions
+between test classes now go through a shared idempotent `TestContainer` — the geometry
+harness and the Assimp fixture both need `ObjectRegistry<Material>`, and whichever ran
+second used to fail with "Already registered" instead of its own result.
+
+Known limit: the gate covers the branches these five seeds reach. That is now a
+measurable property rather than an assumption, and the instrumentation recipe above is
+how to extend it.
+
 ### WP-5a — Street geometry carries elevation — **PARTLY DONE**
 
 Done: junction caps and stroke surfaces are raised by their level. This turned out to
