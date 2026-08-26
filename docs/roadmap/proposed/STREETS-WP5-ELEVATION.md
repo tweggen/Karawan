@@ -184,10 +184,28 @@ The lesson generalises: `Pos3` appears in three different roles — plan geometr
 index, and world position — and only the third wants elevation. Adding it everywhere
 `Pos3` occurs would have broken fragment lookup.
 
-**Deck collision is deliberately deferred**, and its ordering has changed: it needs
-the deck *mesh* to exist, and a deck with no ramps (WP-5a-ii) is unreachable. Collision
-for a surface nothing can drive onto is not useful, so this now follows WP-5a-ii rather
-than preceding it.
+**Deck collision — DONE** (after WP-5a-ii, per the resequencing below).
+
+A raised road gets its own oriented box, because the fragment floor is one flat slab on
+the ground and would let a vehicle through a bridge. `DeckCollider` computes the
+transform and `GenerateClusterStreetsOperator` feeds it to Bepu; the split exists so
+that the part with arithmetic in it can be tested without a physics simulation, which
+the Bepu call itself still is not.
+
+Three things it gets right that are easy to get wrong, each pinned by a test:
+the collider is as long as the **slope** rather than its shadow; the basis is right
+handed, since taking the lateral axis the other way round yields an "up" that points
+DOWN and buries the slab; and the box is dropped along the **surface normal**, not
+straight down — on a slope those differ, and only the former keeps the top face flush.
+
+Mutation-tested. The left-handed basis fails 2 tests and the plan-length mistake fails
+3 — but dropping straight down instead of along the normal **passed**, because the
+assertion measured the offset's magnitude and both are half a thickness. Checking the
+displacement as a vector catches it. A second case of an assertion that looked
+sufficient and was not.
+
+Ground clusters emit no deck colliders at all, so this costs nothing until a
+multilayer ruleset is enabled.
 
 **Noticed in passing, not fixed:** `Placer.cs:304` computes
 `v3OnTerrain = ...GetWalkingPosAt(v3ReferenceAccu)` and then never uses it —

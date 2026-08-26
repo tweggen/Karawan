@@ -954,6 +954,69 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         });
 
         /*
+         * Raised roads are not covered by the floor plane above, which is one flat
+         * slab on the ground. Each deck and ramp gets its own tilted box, or a vehicle
+         * drives through the bridge instead of over it.
+         *
+         * No stroke needs one until a multilayer ruleset is enabled, so on the ground
+         * this loop adds nothing.
+         */
+        foreach (var stroke in strokeStore.GetStrokes())
+        {
+            if (!generation.DeckCollider.IsNeededFor(stroke))
+            {
+                continue;
+            }
+
+            float streetBase = _clusterDesc.AverageHeight
+                               + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+
+            Vector3 worldA = new Vector3(stroke.A.Pos.X + cx, 0f, stroke.A.Pos.Y + cz)
+                             + worldFragment.Position
+                             with { Y = streetBase + stroke.A.LevelElevation };
+            Vector3 worldB = new Vector3(stroke.B.Pos.X + cx, 0f, stroke.B.Pos.Y + cz)
+                             + worldFragment.Position
+                             with { Y = streetBase + stroke.B.LevelElevation };
+
+            var collider = generation.DeckCollider.For(
+                worldA, worldB, stroke.StreetWidth(), 0.1f);
+
+            if (collider.Length < 0.001f)
+            {
+                continue;
+            }
+
+            listCreatePhysics.Add((IList<StaticHandle> staticHandles) =>
+            {
+                lock (worldFragment.Engine.Simulation)
+                {
+                    var deckShape = new TypedIndex()
+                    {
+                        Packed = (uint)engine.physics.actions.CreateBoxShape.Execute(
+                            worldFragment.Engine.PLog,
+                            worldFragment.Engine.Simulation,
+                            collider.Length,
+                            collider.Thickness,
+                            collider.Width,
+                            out var pDeckBody
+                        )
+                    };
+
+                    StaticHandle deckHandle = worldFragment.Engine.Simulation.Statics.Add(
+                        new StaticDescription(collider.Position, collider.Orientation, deckShape));
+
+                    return () =>
+                    {
+                        lock (worldFragment.Engine.Simulation)
+                        {
+                            worldFragment.Engine.Simulation.Statics.Remove(deckHandle);
+                        }
+                    };
+                }
+            });
+        }
+
+        /*
          * Add the entity containing the instanceDesc.
          */
         worldFragment.AddStaticInstance(
