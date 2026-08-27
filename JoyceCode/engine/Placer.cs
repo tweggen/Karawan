@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
@@ -290,7 +290,12 @@ public class Placer
         switch (plad.ReferenceObject)
         {
             case PlacementDescription.Reference.StreetPoint:
-                v3ReferenceAccu += sp.Pos3;
+                /*
+                 * Pos3 is the planar octree key, so the deck height has to be added
+                 * explicitly; something placed at a junction on a bridge belongs on the
+                 * bridge. Zero for every junction on the ground.
+                 */
+                v3ReferenceAccu += sp.Pos3 with { Y = sp.LevelElevation };
                 break;
 
             case PlacementDescription.Reference.Quarter:

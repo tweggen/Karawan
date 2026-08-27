@@ -51,7 +51,76 @@ rest):
 
 ## 2. What remains
 
-### WP-5a — Street geometry carries elevation
+### WP-5a-gate — The geometry gate — **DONE**
+
+The generator has been gated since WP-0; the renderer had nothing. Every elevation
+change so far leaned on `StreetLevels.ElevationOf(0)` being exactly zero to argue the
+ground path could not have moved. WP-5a-ii changes vertex emission itself, so that
+argument stops working and this had to come first.
+
+`StreetGeometryHarness` runs the emission methods with no engine. What made that
+possible: both took a `world.Fragment` only to ask whether the thing being built
+belonged to that fragment — a caller's decision, now hoisted out. The geometry then
+depends on nothing but a cluster, a stroke store and a material.
+
+`StreetGeometryFingerprint` hashes vertices, normals and UVs in **emission order**,
+unlike the network fingerprint which sorts: a mesh is an ordered thing, since triangles
+are built from consecutive vertices.
+
+**Mutation-tested, and it found a hole.** Shifting street height by 1 cm failed 8 of 13;
+perturbing a normal and a UV in `_streetTriangle` each failed 4. But perturbing a normal
+inside the `damax > dbmin` branch — the "a and b ends overlapping" case for very short
+strokes — **passed**, because none of the four seeds reached it. Instrumenting that
+branch and scanning found `seed008@500`, now in the seed set; with it the same mutation
+fails. A degenerate path like that is exactly what a vertex-emission change breaks.
+
+**Fixed along the way, both pre-existing:** the caller's `nGeneratedStreets` /
+`nIgnoredStrokes` counters were inverted (trace-only), and `I.Register` collisions
+between test classes now go through a shared idempotent `TestContainer` — the geometry
+harness and the Assimp fixture both need `ObjectRegistry<Material>`, and whichever ran
+second used to fail with "Already registered" instead of its own result.
+
+Known limit: the gate covers the branches these five seeds reach. That is now a
+measurable property rather than an assumption, and the instrumentation recipe above is
+how to extend it.
+
+### WP-5a — Street geometry carries elevation — **PARTLY DONE**
+
+Done: junction caps and stroke surfaces are raised by their level. This turned out to
+be two lines rather than a rewrite, because **streets are built at one flat height per
+cluster rather than following the terrain** — every vertex derives from a single
+`v3Cluster` with that height baked in, so raising it raises the whole surface.
+`GenerateClusterStreetsOperator` lines 96 and 280.
+
+The fragment's physics floor is deliberately left on the ground: it is one plane for
+the whole fragment, and a raised deck needs its own collision surface (WP-5c).
+
+**WP-5a-ii — ramps — DONE.** The surface is built flat at the A end's height, exactly
+as before, and then tilted onto its slope by `_shearOntoSlope` over the vertices that
+stroke emitted. Done as a pass rather than at each of the fifteen emission sites, which
+is possible because **the UV projector's two axes are both planar**: a vertex's Y
+cannot affect its UV, so moving Y afterwards disturbs nothing else. Normals in the
+range are replaced with the slope normal, or a climbing surface lights as though it
+were flat.
+
+`hA == hB` for every flat stroke, so the pass returns immediately and the ground path
+is untouched — which the geometry gate proves rather than argues.
+
+Mutation-tested: removing the shear fails the 4 ramp tests **while all 16 ground
+geometry tests keep passing**, which is what shows the change is ramp-only; inverting
+the slope normal fails the 2 lean-direction tests.
+
+One test assumption corrected on the way: a straight ramp is emitted as a **single
+quad**, so it has no vertices part way up and "is there a vertex at mid height" cannot
+distinguish a slope from a step. Linearity against each vertex's own distance along
+the ramp is what does.
+
+Still deferred: a deck has no underside, edges or supports — it is a floating slab
+seen from below. Visible progress, and not wrong, only unfinished.
+
+Original scoping follows.
+
+#### Original scoping
 
 `GenerateClusterStreetsOperator` builds the road surface from strokes and from
 `StreetPoint.GetSectionArray()`. Every vertex it emits needs
@@ -67,7 +136,23 @@ street is a surface laid on terrain, a deck is a slab with a bottom.
 **Gate:** a bridge-free cluster renders byte-identically (compare emitted vertex
 buffers for a fixed seed); a two-level cluster renders a deck at +8 m.
 
-### WP-5b — Navigation
+### WP-5b — Navigation — **DONE**
+
+One line, because two things fall out on their own. `GenerateNavMapOperator` builds
+lanes with `Vector3.Distance` and splits long ones with `Vector3.Lerp`, so once a
+junction's `Position` carries its deck height, **a ramp's cost is automatically its
+sloped length** — routing cannot get a discount for climbing — and a long ramp's
+intermediate junctions land part way up it.
+
+Sidewalk junctions stay at ground height on purpose: they come from quarter
+delimiters, and quarters are traced on the ground only, so a deck has no pavement
+until something generates one.
+
+Not directly tested: the operator needs a booted engine. The arithmetic it performs is
+pinned instead (`StreetLevelsTests`), and the TALE suite — 200 tests over real
+pathfinding — is what demonstrates the ground-only path is unchanged.
+
+#### Original scoping
 
 `GenerateNavMapOperator` turns junctions into `NavJunction` and strokes into
 `NavLane`, and hardcodes `new Vector3(sp.Pos.X, 0f, sp.Pos.Y)` — the same planar
@@ -81,7 +166,54 @@ assumption in a place where it *is* wrong, because navigation is world space.
 **Gate:** a ground-only navmap is unchanged; a route across a two-level cluster uses
 ramps and its length matches the 3D geometry.
 
-### WP-5c — Physics and placement
+### WP-5c — Physics and placement — **PLACEMENT DONE, COLLISION DEFERRED**
+
+Smaller than scoped, because most of the `Pos3` reads listed below turned out to be
+**already correct**, and "fixing" them would have introduced bugs:
+
+| site | verdict |
+|---|---|
+| `SpawnOperator.cs:217` | reads `.X`/`.Z` only — planar by construction |
+| `NarrationBindings.cs:148` | `Pos3 with { Y = 0f }` for a plan-distance comparison — deliberately planar |
+| `NarrationBindings.cs:151,158`, `ClusterDesc.cs:224` | feed `Fragment.PosToIndex3` — a fragment *grid index*; elevation there would be meaningless or wrong |
+| `TaxiNpcSpawnerModule.cs:63,202` | source is a quarter delimiter, and quarters are ground-only |
+| `Placer.cs:293` | **fixed** — a spawn reference position, genuinely world space |
+| `SpatialModel.cs:263` | **fixed** — but on `streetHeight`, since `pos.Y` is assigned outright a line later rather than accumulated |
+
+The lesson generalises: `Pos3` appears in three different roles — plan geometry, grid
+index, and world position — and only the third wants elevation. Adding it everywhere
+`Pos3` occurs would have broken fragment lookup.
+
+**Deck collision — DONE** (after WP-5a-ii, per the resequencing below).
+
+A raised road gets its own oriented box, because the fragment floor is one flat slab on
+the ground and would let a vehicle through a bridge. `DeckCollider` computes the
+transform and `GenerateClusterStreetsOperator` feeds it to Bepu; the split exists so
+that the part with arithmetic in it can be tested without a physics simulation, which
+the Bepu call itself still is not.
+
+Three things it gets right that are easy to get wrong, each pinned by a test:
+the collider is as long as the **slope** rather than its shadow; the basis is right
+handed, since taking the lateral axis the other way round yields an "up" that points
+DOWN and buries the slab; and the box is dropped along the **surface normal**, not
+straight down — on a slope those differ, and only the former keeps the top face flush.
+
+Mutation-tested. The left-handed basis fails 2 tests and the plan-length mistake fails
+3 — but dropping straight down instead of along the normal **passed**, because the
+assertion measured the offset's magnitude and both are half a thickness. Checking the
+displacement as a vector catches it. A second case of an assertion that looked
+sufficient and was not.
+
+Ground clusters emit no deck colliders at all, so this costs nothing until a
+multilayer ruleset is enabled.
+
+**Noticed in passing, not fixed:** `Placer.cs:304` computes
+`v3OnTerrain = ...GetWalkingPosAt(v3ReferenceAccu)` and then never uses it —
+`pod.Position` is assigned `v3ReferenceAccu`. Either a wasted terrain query or a
+missing assignment; changing it would move every placement, so it wants its own
+decision rather than being folded into this work.
+
+#### Original scoping
 
 `Placer`, `SpawnOperator`, `TaxiNpcSpawnerModule` and `NarrationBindings` all read
 `Pos3` to put something in the world. Each needs the elevation added. The collision

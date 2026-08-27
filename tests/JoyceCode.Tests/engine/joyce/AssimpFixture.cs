@@ -119,8 +119,17 @@ public static class AssimpFixture
                  * ModelCache is deliberately NOT registered: it needs a live
                  * Engine, and this test calls Fbx.LoadModelInstanceSync directly.
                  */
-                I.Register<ObjectRegistry<Material>>(() => new ObjectRegistry<Material>());
-                I.Register<ObjectRegistry<Renderbuffer>>(() => new ObjectRegistry<Renderbuffer>());
+                /*
+                 * Through TestContainer rather than I.Register directly: these two are
+                 * the services other test classes are most likely to need as well, and
+                 * I.Register throws on a second registration, so whichever test class
+                 * ran second would fail with "Already registered" instead of its own
+                 * result. See JoyceCode.Tests.engine.TestContainer.
+                 */
+                JoyceCode.Tests.engine.TestContainer.EnsureRegistered<ObjectRegistry<Material>>(
+                    () => new ObjectRegistry<Material>());
+                JoyceCode.Tests.engine.TestContainer.EnsureRegistered<ObjectRegistry<Renderbuffer>>(
+                    () => new ObjectRegistry<Renderbuffer>());
 
                 /*
                  * Order matters and mirrors Chushi: WithLoader() resolves the

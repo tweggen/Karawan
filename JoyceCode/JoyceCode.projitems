@@ -544,6 +544,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\NetworkBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\Constraints.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\ConnectComponentsPass.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\DeckCollider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\GenerationReport.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\ExpansionRule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\StreetGenConfig.cs" />

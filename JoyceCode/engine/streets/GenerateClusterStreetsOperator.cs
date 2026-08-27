@@ -63,8 +63,14 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     /**
      * Generate a polygon representing the street point.
      */
-    private bool _generateJunction(
-        in world.Fragment worldFragment,
+    /**
+     * Emit the polygon capping one junction.
+     *
+     * Takes no Fragment: whether this junction belongs to the fragment being built is
+     * the caller's decision, hoisted out so that the geometry itself can be produced -
+     * and therefore compared - without booting an engine. See StreetGeometryTests.
+     */
+    internal bool _generateJunction(
         float cx, float cy,
         in streets.StreetPoint sp,
         Artefact a
@@ -72,14 +78,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     {
         var g = a.g;
         //var ng = a.ng;
-        
-        /*
-         * We render only street points inside our fragment.
-         */
-        if (!worldFragment.IsInsideLocal(sp.Pos.X + cx, sp.Pos.Y + cy))
-        {
-            return false;
-        }
 
         /*
          * We simple generate a polygon using the section points as edges.
@@ -93,7 +91,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             return true;
         }
 
-        float h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+        /*
+         * Streets sit at one flat height across the cluster rather than following the
+         * terrain, so a deck is simply that height plus its level's elevation.
+         */
+        float h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+            + StreetLevels.ElevationOf(sp.Level);
 
         /*
          * First compute the center of the array, we need it for both
@@ -247,8 +250,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     /**
       * Generate the streets between any junctions.
       */
-    private bool _generateStreetRun(
-        world.Fragment worldFragment,
+    /**
+     * Emit the road surface of one stroke. Fragment-free for the same reason as
+     * _generateJunction above.
+     */
+    internal bool _generateStreetRun(
         float cx, float cy,
         streets.Stroke stroke,
         Artefact a)
@@ -277,21 +283,30 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         Vector3 n3 = new(n.X, 0f, n.Y);
         Vector2 q = stroke.Unit;
         Vector3 q3 = new(q.X, 0f, q.Y);
-        var h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+        /*
+         * The whole surface is built from v3Cluster plus planar offsets, so building it
+         * at the A end's height puts every vertex of a flat stroke where it belongs.
+         *
+         * A ramp's ends are on different decks. Rather than threading two heights
+         * through the fifteen emission sites below, the surface is built flat at hA and
+         * then sheared onto the slope afterwards, in _shearOntoSlope. That works because
+         * the UV projector's axes are both planar, so a vertex's Y cannot affect its UV
+         * - which means moving Y after the fact disturbs nothing else.
+         */
+        float streetBase = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+        float hA = streetBase + StreetLevels.ElevationOf(stroke.A.Level);
+        float hB = streetBase + StreetLevels.ElevationOf(stroke.B.Level);
+
+        var h = hA;
         Vector3 v3Cluster = new(cx, h, cy);
+
+        /*
+         * Everything this stroke emits lands at or after this index.
+         */
+        uint firstVertex = g.GetNextVertexIndex();
         
 
         var spA = stroke.A;
-
-        /*
-         * Before continuing, we check whether point a is inside this fragment.
-         * By convention, we only create streets that have their a point inside this
-         * fragment.
-         */
-        if (!worldFragment.IsInsideLocal(spA.Pos.X + cx, spA.Pos.Y + cy))
-        {
-            return false;
-        }
 
         var angArrA = spA.GetAngleArray();
 
@@ -696,7 +711,66 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 g.Idx(i0 + row * 4 + 1, i0 + row * 4 + 2, i0 + row * 4 + 3);
             }
         }
+
+        _shearOntoSlope(g, firstVertex, am, q, bm - am, hA, hB);
+
         return true;
+    }
+
+
+    /**
+     * Tilt a stroke's surface from flat onto its slope.
+     *
+     * Everything above builds the surface at the A end's height, which is already right
+     * for a flat stroke and is why this is a no-op for every street on the ground. A
+     * ramp then needs each vertex lifted in proportion to how far along the stroke it
+     * lies, and the surface needs a normal that is no longer straight up, or a ramp
+     * lights as though it were flat.
+     *
+     * Done as a pass over the vertices this stroke emitted rather than at each emission
+     * site: there are about fifteen of them, and the Y of a vertex affects nothing else
+     * here - the UV projector's two axes are both planar, so UVs are unchanged by it.
+     *
+     * @param am, vAB
+     *     Start of the stroke's centre line and the vector along it, both in the same
+     *     space as the emitted vertices.
+     */
+    private void _shearOntoSlope(
+        joyce.Mesh g, uint firstVertex, in Vector3 am, in Vector2 unit, in Vector3 vAB,
+        float hA, float hB)
+    {
+        if (hA == hB)
+        {
+            return;
+        }
+
+        float length = new Vector2(vAB.X, vAB.Z).Length();
+        if (length < 0.001f)
+        {
+            return;
+        }
+
+        /*
+         * Rise over run, and the surface normal that goes with it: rotate straight up
+         * back by the slope, in the vertical plane the stroke runs along.
+         */
+        float slope = (hB - hA) / length;
+        Vector3 slopeNormal = Vector3.Normalize(new Vector3(-slope * unit.X, 1f, -slope * unit.Y));
+
+        for (int i = (int)firstVertex; i < g.Vertices.Count; ++i)
+        {
+            Vector3 v = g.Vertices[i];
+
+            float along = ((v.X - am.X) * unit.X + (v.Z - am.Z) * unit.Y) / length;
+            along = Single.Clamp(along, 0f, 1f);
+
+            g.Vertices[i] = v with { Y = hA + along * (hB - hA) };
+
+            if (null != g.Normals && i < g.Normals.Count)
+            {
+                g.Normals[i] = slopeNormal;
+            }
+        }
     }
 
 
@@ -736,15 +810,27 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          */
         foreach (var stroke in strokeStore.GetStrokes())
         {
-            var didCreateStreetRun = _generateStreetRun(
-                worldFragment, cx, cz, stroke, artefact);
-            if (didCreateStreetRun)
+            /*
+             * By convention we only build streets whose A point is inside this
+             * fragment, so that a stroke spanning two fragments is built exactly once.
+             */
+            if (!worldFragment.IsInsideLocal(stroke.A.Pos.X + cx, stroke.A.Pos.Y + cz))
             {
-                nIgnoredStrokes++;
+                ++nIgnoredStrokes;
+                continue;
+            }
+
+            /*
+             * These two counters were the wrong way round: a successful run was
+             * counted as ignored. They feed a trace line only.
+             */
+            if (_generateStreetRun(cx, cz, stroke, artefact))
+            {
+                ++nGeneratedStreets;
             }
             else
             {
-                ++nGeneratedStreets;
+                ++nIgnoredStrokes;
             }
         }
 
@@ -755,8 +841,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         {
             foreach (var streetPoint in strokeStore.GetStreetPoints())
             {
+                if (!worldFragment.IsInsideLocal(streetPoint.Pos.X + cx, streetPoint.Pos.Y + cz))
+                {
+                    continue;
+                }
+
                 _generateJunction(
-                    worldFragment, cx, cz, streetPoint, artefact
+                    cx, cz, streetPoint, artefact
                 );
             }
         }
@@ -823,6 +914,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 Vector3 v3BodyOffset = new(0f, floorHeight / 2f, 0f);
 
                 // TXWTODO: We create the full fragment, now only the part containing the city
+                /*
+                 * One floor plane for the whole fragment, so it stays on the ground.
+                 * Collision for a raised deck is a separate surface and belongs to
+                 * WP-5c; without it a vehicle would drive through a bridge.
+                 */
                 Vector3 v3BoxPos = worldFragment.Position with
                 {
                     Y = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
@@ -856,6 +952,69 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 };
             }
         });
+
+        /*
+         * Raised roads are not covered by the floor plane above, which is one flat
+         * slab on the ground. Each deck and ramp gets its own tilted box, or a vehicle
+         * drives through the bridge instead of over it.
+         *
+         * No stroke needs one until a multilayer ruleset is enabled, so on the ground
+         * this loop adds nothing.
+         */
+        foreach (var stroke in strokeStore.GetStrokes())
+        {
+            if (!generation.DeckCollider.IsNeededFor(stroke))
+            {
+                continue;
+            }
+
+            float streetBase = _clusterDesc.AverageHeight
+                               + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+
+            Vector3 worldA = new Vector3(stroke.A.Pos.X + cx, 0f, stroke.A.Pos.Y + cz)
+                             + worldFragment.Position
+                             with { Y = streetBase + stroke.A.LevelElevation };
+            Vector3 worldB = new Vector3(stroke.B.Pos.X + cx, 0f, stroke.B.Pos.Y + cz)
+                             + worldFragment.Position
+                             with { Y = streetBase + stroke.B.LevelElevation };
+
+            var collider = generation.DeckCollider.For(
+                worldA, worldB, stroke.StreetWidth(), 0.1f);
+
+            if (collider.Length < 0.001f)
+            {
+                continue;
+            }
+
+            listCreatePhysics.Add((IList<StaticHandle> staticHandles) =>
+            {
+                lock (worldFragment.Engine.Simulation)
+                {
+                    var deckShape = new TypedIndex()
+                    {
+                        Packed = (uint)engine.physics.actions.CreateBoxShape.Execute(
+                            worldFragment.Engine.PLog,
+                            worldFragment.Engine.Simulation,
+                            collider.Length,
+                            collider.Thickness,
+                            collider.Width,
+                            out var pDeckBody
+                        )
+                    };
+
+                    StaticHandle deckHandle = worldFragment.Engine.Simulation.Statics.Add(
+                        new StaticDescription(collider.Position, collider.Orientation, deckShape));
+
+                    return () =>
+                    {
+                        lock (worldFragment.Engine.Simulation)
+                        {
+                            worldFragment.Engine.Simulation.Statics.Remove(deckHandle);
+                        }
+                    };
+                }
+            });
+        }
 
         /*
          * Add the entity containing the instanceDesc.
