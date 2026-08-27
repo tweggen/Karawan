@@ -122,6 +122,17 @@ public class ClusterDesc
      */
     private streets.QuarterStore _quarterStore;
 
+    /**
+     * Where the ground is under this city's junctions.
+     *
+     * Everything that emits street geometry asks this rather than reading
+     * AverageHeight directly, so that the whole city moves onto the terrain by
+     * swapping one object. Created lazily because the flat source needs
+     * AverageHeight, which ClusterBaseElevationOperator computes some time after
+     * this descriptor exists.
+     */
+    private streets.IStreetHeightSource _streetHeightSource;
+
 
     private void _setSize(float size)
     {
@@ -469,10 +480,47 @@ public class ClusterDesc
     }
 
 
-    public streets.QuarterStore QuarterStore() 
+    public streets.QuarterStore QuarterStore()
     {
         _triggerStreets();
         return _quarterStore;
+    }
+
+
+    /**
+     * Where the ground is under this city's junctions.
+     *
+     * Flat unless joyce.DisableClusterFlattening says the terrain has been left
+     * alone, in which case the junctions sample it. The two decisions are one
+     * setting on purpose: sampling terrain that has just been ironed flat would
+     * merely be a slower way of reading the average, and following terrain that is
+     * still being flattened elsewhere is the inconsistent half state.
+     */
+    public streets.IStreetHeightSource StreetHeightSource
+    {
+        get
+        {
+            lock (_lo)
+            {
+                if (null == _streetHeightSource)
+                {
+                    _streetHeightSource = streets.StreetHeightSources.For(this);
+                }
+
+                return _streetHeightSource;
+            }
+        }
+
+        /**
+         * For tests, which describe a slope as a function rather than as terrain.
+         */
+        set
+        {
+            lock (_lo)
+            {
+                _streetHeightSource = value;
+            }
+        }
     }
 
 

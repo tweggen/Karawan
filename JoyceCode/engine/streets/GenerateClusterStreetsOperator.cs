@@ -92,10 +92,17 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         }
 
         /*
-         * Streets sit at one flat height across the cluster rather than following the
-         * terrain, so a deck is simply that height plus its level's elevation.
+         * A junction is one node in the stroke graph, so it gets one height, and every
+         * stroke that meets here reads the same one. That is what keeps a non-planar
+         * network consistent: the surfaces cannot disagree at the seam because there is
+         * only one number.
+         *
+         * Ground height plus the deck's elevation above it, kept as separate terms
+         * because they answer different questions - where the terrain is, and which
+         * deck this is.
          */
-        float h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+        float h = _clusterDesc.StreetHeightSource.GroundHeightAt(sp)
+            + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
             + StreetLevels.ElevationOf(sp.Level);
 
         /*
@@ -287,15 +294,21 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          * The whole surface is built from v3Cluster plus planar offsets, so building it
          * at the A end's height puts every vertex of a flat stroke where it belongs.
          *
-         * A ramp's ends are on different decks. Rather than threading two heights
-         * through the fifteen emission sites below, the surface is built flat at hA and
-         * then sheared onto the slope afterwards, in _shearOntoSlope. That works because
-         * the UV projector's axes are both planar, so a vertex's Y cannot affect its UV
-         * - which means moving Y after the fact disturbs nothing else.
+         * The two ends differ when the stroke is a ramp between decks, and equally when
+         * it simply runs downhill - _shearOntoSlope has never known or cared which.
+         * Rather than threading two heights through the fifteen emission sites below,
+         * the surface is built flat at hA and then sheared onto the slope afterwards.
+         * That works because the UV projector's axes are both planar, so a vertex's Y
+         * cannot affect its UV - which means moving Y after the fact disturbs nothing
+         * else.
          */
-        float streetBase = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
-        float hA = streetBase + StreetLevels.ElevationOf(stroke.A.Level);
-        float hB = streetBase + StreetLevels.ElevationOf(stroke.B.Level);
+        var heightSource = _clusterDesc.StreetHeightSource;
+        float hA = heightSource.GroundHeightAt(stroke.A)
+                   + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+                   + StreetLevels.ElevationOf(stroke.A.Level);
+        float hB = heightSource.GroundHeightAt(stroke.B)
+                   + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+                   + StreetLevels.ElevationOf(stroke.B.Level);
 
         var h = hA;
         Vector3 v3Cluster = new(cx, h, cy);
@@ -916,8 +929,15 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 // TXWTODO: We create the full fragment, now only the part containing the city
                 /*
                  * One floor plane for the whole fragment, so it stays on the ground.
-                 * Collision for a raised deck is a separate surface and belongs to
-                 * WP-5c; without it a vehicle would drive through a bridge.
+                 * Collision for a raised deck is a separate surface, built below;
+                 * without it a vehicle would drive through a bridge.
+                 *
+                 * Deliberately still FLAT, and still on the cluster average, even when
+                 * the surfaces above are following the terrain. A single plane cannot
+                 * follow anything, so making a non-planar city drivable means giving
+                 * ground strokes colliders of their own rather than adjusting this one.
+                 * Until then, a terrain-following city renders in three dimensions and
+                 * is driven on in two.
                  */
                 Vector3 v3BoxPos = worldFragment.Position with
                 {
@@ -968,15 +988,29 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 continue;
             }
 
-            float streetBase = _clusterDesc.AverageHeight
-                               + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+            /*
+             * The same heights the surface was emitted at, from the same source, or the
+             * collider and the road it stands for drift apart the moment the ground
+             * stops being flat.
+             */
+            var colliderHeights = _clusterDesc.StreetHeightSource;
 
             Vector3 worldA = new Vector3(stroke.A.Pos.X + cx, 0f, stroke.A.Pos.Y + cz)
                              + worldFragment.Position
-                             with { Y = streetBase + stroke.A.LevelElevation };
+                             with
+                             {
+                                 Y = colliderHeights.GroundHeightAt(stroke.A)
+                                     + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+                                     + stroke.A.LevelElevation
+                             };
             Vector3 worldB = new Vector3(stroke.B.Pos.X + cx, 0f, stroke.B.Pos.Y + cz)
                              + worldFragment.Position
-                             with { Y = streetBase + stroke.B.LevelElevation };
+                             with
+                             {
+                                 Y = colliderHeights.GroundHeightAt(stroke.B)
+                                     + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+                                     + stroke.B.LevelElevation
+                             };
 
             var collider = generation.DeckCollider.For(
                 worldA, worldB, stroke.StreetWidth(), 0.1f);

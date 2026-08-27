@@ -1,6 +1,7 @@
 # Three-dimensional street topology
 
-**Status:** Design sketch, nothing implemented.
+**Status:** Phase A steps 1–3 landed (the seam, the flag, the terrain source). Steps 4–5
+open, and one blocking defect found on the way — see §7.
 **Follows:** the streets generator rework (WP-0 … WP-5) — levels, ramps, deck geometry,
 deck collision and both gates are in place.
 
@@ -180,7 +181,73 @@ should be planned as part of Phase A rather than discovered during it.
 
 ---
 
-## 6. What I would prototype first
+## 6. What landed, and what it cost
+
+Steps 1–3 of the staging below are in. Deliberately inert: with the flag off, the V1
+network baselines, the geometry baselines and all 200 TALE tests are unchanged.
+
+| step | state |
+|---|---|
+| 1 — height seam, flat default | **done.** `IStreetHeightSource`, `FlatStreetHeight`, `StreetHeightSources.For` |
+| 2 — flag to skip flattening | **done.** `joyce.DisableClusterFlattening` |
+| 3 — terrain source | **done.** `TerrainStreetHeight`, cached per junction |
+| 4 — gradient relaxation | open |
+| 5 — ground colliders per stroke | open |
+
+Three things worth recording.
+
+**The flattening operator also computes `AverageHeight`.** `ClusterBaseElevationOperator`
+sets `_clusterDesc.AverageHeight` at line 38 and only then flattens. Nearly thirty sites
+across streets, quarters, buildings, navigation and TALE read that field as "the height
+of the city", so unwiring the operator would put every city at zero. The flag therefore
+skips the height *write* and keeps the average. The biome write stays too — "this is
+city" is true whatever shape the ground has.
+
+**All street height already funnelled through three expressions**, so the seam was a
+small change rather than a rewrite, and `_shearOntoSlope` needed no change at all: it
+never knew whether a height difference came from a deck or a hill.
+
+**The physics floor plane is still flat, deliberately.** One plane per fragment cannot
+follow anything, so a terrain-following city currently renders in three dimensions and
+is driven on in two. That is step 5, and it is the reason `DeckCollider.IsNeededFor`
+will have to stop meaning "level != 0".
+
+---
+
+## 7. The defect this turned up, which blocks step 4
+
+`_shearOntoSlope` gives every vertex a height from its projection onto the stroke's
+**centreline**. A junction's corner points are not on the centreline. At an oblique bend
+one corner sits well before the junction centre and its partner well after it — measured
+axial positions of **0.858 and 1.142** of the stroke length at a 15° bend, on a 160 m
+stroke.
+
+So each of the two strokes meeting at a junction reads a *different* height at a corner
+both of them own, and the road splits open. Measured worst case **1.8 m at an 8 %
+grade**; the error scales linearly with gradient.
+
+It has never fired because it needs `hA != hB` **and** a bend. At a straight junction the
+corners are pure lateral offsets and project to exactly 0 and 1, and every ramp
+`OverpassBuilder` makes is straight. That is also why `RampGeometryTests` cannot see it:
+its linearity assertion computes `along` the same way the implementation does, so in this
+one respect it restates the implementation rather than checking it. Fourth instance of
+that pattern in this project.
+
+**Why it is not a tweak to the pass.** For a tilted road to meet a flat cap, the road has
+to be flat across the junction's footprint. The road currently subdivides at 0.425 and
+0.85 of its length, and at an oblique junction 0.85 is *inside* the footprint — so there
+is no way to tell an interior subdivision from a junction corner by axial position alone.
+Fixing it means changing where cross-sections are emitted, not how they are moved
+afterwards. Warping the cap instead does not work either: the two roads do not agree with
+each other at the shared corner, so there is no single height for the cap to adopt.
+
+Both properties are written down as tests — `TwoStrokesAgreeOnTheHeightOfTheJunctionTheyShare`
+and `TheJunctionCapMeetsTheStrokesThatEndThere` in `StreetHeightSourceTests`, skipped with
+the reason rather than weakened to fit.
+
+---
+
+## 8. What I would prototype first
 
 The corridor-conforming pass (§2c), because it is the only part whose fit with the
 existing operator pipeline is genuinely uncertain. Sampling and relaxation are

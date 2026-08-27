@@ -559,6 +559,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetPoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetSeeds.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetLevels.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\IStreetHeightSource.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\FlatStreetHeight.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\TerrainStreetHeight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Stroke.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeIntersection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeStore.cs" />

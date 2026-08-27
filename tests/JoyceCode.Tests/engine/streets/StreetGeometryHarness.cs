@@ -94,6 +94,60 @@ internal static class StreetGeometryHarness
 
 
     /**
+     * As Generate, but against a caller-supplied cluster - so that a test can install a
+     * height source on it first and see what the same network looks like over
+     * non-flat ground.
+     */
+    internal static Mesh GenerateWith(ClusterDesc clusterDesc, string idString, float size)
+    {
+        _ensureMaterial();
+
+        var strokeStore = StreetHarness.Generate(idString, size);
+        var op = new GenerateClusterStreetsOperator(clusterDesc, "geometry-harness");
+        var artefact = new Artefact()
+        {
+            g = Mesh.CreateNormalsListInstance("geometry-harness")
+        };
+
+        foreach (var stroke in strokeStore.GetStrokes())
+        {
+            op._generateStreetRun(0f, 0f, stroke, artefact);
+        }
+
+        foreach (var streetPoint in strokeStore.GetStreetPoints())
+        {
+            op._generateJunction(0f, 0f, streetPoint, artefact);
+        }
+
+        return artefact.g;
+    }
+
+
+    /**
+     * Emit only the caps of the given junctions, so that a test can compare a junction
+     * against the roads running into it rather than against a mesh containing both.
+     */
+    internal static Mesh GenerateJunctionsFor(
+        ClusterDesc clusterDesc, StrokeStore strokeStore, IEnumerable<StreetPoint> only)
+    {
+        _ensureMaterial();
+
+        var op = new GenerateClusterStreetsOperator(clusterDesc, "geometry-harness");
+        var artefact = new Artefact()
+        {
+            g = Mesh.CreateNormalsListInstance("geometry-harness-junctions")
+        };
+
+        foreach (var sp in only)
+        {
+            op._generateJunction(0f, 0f, sp, artefact);
+        }
+
+        return artefact.g;
+    }
+
+
+    /**
      * As Generate, but with the whole network moved onto one raised deck.
      *
      * Raising an already generated network rather than generating a multilayer one

@@ -15,11 +15,21 @@ namespace engine.elevation
         private string _strKey;
 
         /**
-         * Test operator to test operator chaining. This operator evens
-         * out everything below the average height of a city to the average.
+         * Computes a city's average ground height, and - unless told otherwise -
+         * irons the whole cluster rectangle flat to it.
          *
-         * Doesn't really make sense, just a test.
-         */ 
+         * The two jobs are joined at the hip and must not be separated by deleting
+         * this operator: ClusterDesc.AverageHeight is computed HERE, and nearly thirty
+         * sites across streets, quarters, buildings, navigation and TALE read it as
+         * "the height of the city". Unwiring the operator would leave every city at
+         * zero. So the flattening is skipped by a flag while the average is still
+         * produced.
+         *
+         * With joyce.DisableClusterFlattening=true the terrain keeps its shape and
+         * streets follow it (see engine.streets.TerrainStreetHeight). Everything else
+         * in the city still sits at the average, which is the point of the flag: it
+         * makes that visible one subsystem at a time rather than all at once.
+         */
         public void ElevationOperatorProcess(
             in IElevationProvider elevationInterface,
             in ElevationSegment esTarget
@@ -36,6 +46,15 @@ namespace engine.elevation
 
             aver /= erCluster.nHoriz * erCluster.nVert;
             _clusterDesc.AverageHeight = aver;
+
+            /*
+             * Read once rather than per pixel: this runs for every elevation segment
+             * the city touches, and the setting cannot change under us mid-city
+             * without the result being a city that is half flattened.
+             */
+            bool keepTerrain =
+                engine.GlobalSettings.Get(
+                    streets.StreetHeightSources.DisableClusterFlatteningSetting) == "true";
 
             /*
              * Now that we have the average, read the level below us.
@@ -80,21 +99,20 @@ namespace engine.elevation
                     {
                         // TXWTODO: Define this somewhere.
                         epxDest.Biome = 1;
-                        
+
                         /*
-                         * This is wihtin the range of our city. 
-                         * So flatten it.
-                         * 
-                         * Just use one plain elevation, we cannot deal yet with
-                         * different levels.
+                         * This is within the range of our city.
+                         *
+                         * The biome above is still applied when the terrain is kept:
+                         * it says "this is city", which stays true whatever shape the
+                         * ground has. Only the height is left alone.
                          */
-                        if (epxSource.Height < aver)
+                        if (!keepTerrain)
                         {
-                            // resultHeight = aver - 0 ;
-                            epxDest.Height = aver + 1.5f;
-                        }
-                        else
-                        {
+                            /*
+                             * Flatten it. Just use one plain elevation, we cannot deal
+                             * yet with different levels.
+                             */
                             epxDest.Height = aver + 1.5f;
                         }
                     }
