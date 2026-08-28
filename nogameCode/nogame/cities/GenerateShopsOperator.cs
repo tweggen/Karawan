@@ -59,6 +59,12 @@ class GenerateShopsOperator : IClusterOperator
                     (ctx.Rnd.GetFloat()-0.5f) * clusterDesc.Size);
             Vector2 v2TryGlobal = v2TryLocal + ctx.ClusterDesc.Pos2;
 
+            /*
+             * A sample COORDINATE, not a position: this asks a probability field how
+             * shoppy a spot is. Deliberately still the cluster average, because feeding
+             * it the terrain would make which shops exist depend on the ground under
+             * them - a generation change, and not one this work is about.
+             */
             float shopIntensity = funcProbab(new Vector3(v2TryGlobal.X, clusterDesc.AverageHeight, v2TryGlobal.Y));
 
             if (shopIntensity < 0.5f)
@@ -193,7 +199,8 @@ class GenerateShopsOperator : IClusterOperator
                 {
                     var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal) with
                     {
-                        Y = clusterDesc.AverageHeight + 2.5f + 1f
+                        Y = clusterDesc.GroundHeightAt(clusterDesc.Pos + v3ShopLocal)
+                            + 2.5f + 1f
                     };
                     if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
                     

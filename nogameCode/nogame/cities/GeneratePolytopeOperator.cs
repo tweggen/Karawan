@@ -66,9 +66,17 @@ public class GeneratePolytopeOperator : IFragmentOperator
                                 ,
                     MaxDistance = 800f
                 }});
+        /*
+         * Estates carry the block they belong to, so this stands on the block's pad
+         * rather than on the cluster average.
+         */
+        var v3EstateCenter = estate.GetCenter();
+        float padY = null != estate.Quarter
+            ? estate.Quarter.GroundHeightAt(new Vector2(v3EstateCenter.X, v3EstateCenter.Z))
+            : _clusterDesc.AverageHeight;
         var vPos =
             (_clusterDesc.Pos - worldFragment.Position +
-            estate.GetCenter()) with { Y = _clusterDesc.AverageHeight + 2.5f };
+            v3EstateCenter) with { Y = padY + 2.5f };
         worldFragment.AddStaticInstance(
             0x00000001,
             "nogame.furniture.polytopeStand", modelStand.ModelNodeTree.RootNode.InstanceDesc,

@@ -215,16 +215,17 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 if (!sidewalkJunctions.TryGetValue(key, out var nj))
                 {
                     /*
-                     * Sidewalk junctions come from quarter delimiters, which are corners
-                     * of a traced polygon rather than junctions, so there is no exact
-                     * height to ask for and this samples the ground under the corner.
+                     * A quarter delimiter is a section corner OF a street junction, and
+                     * carries it, so the exact junction height is available here too -
+                     * no need to sample the terrain near the corner and hope. The
+                     * pavement then meets the carriageway it runs beside.
                      *
                      * Level 0 always: quarters are traced on the ground only, so a deck
                      * has no pavement to walk on until something generates one.
                      */
                     Vector3 v3Corner = new Vector3(delim.StartPoint.X, 0f, delim.StartPoint.Y)
                                        + clusterDesc.Pos;
-                    float sidewalkY = clusterDesc.GroundHeightAt(v3Corner)
+                    float sidewalkY = heightSource.GroundHeightAt(delim.StreetPoint)
                                       + MetaGen.ClusterNavigationHeight;
 
                     nj = new NavJunction

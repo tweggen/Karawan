@@ -107,10 +107,146 @@ public class Quarter
         }
     }
 
+
+    /**
+     * A city block is a PAD: one plane, tilted to sit on its own corners.
+     *
+     * Everything a quarter carries - its floor, its buildings, its trees, its shops -
+     * asks this, so a block and the things standing on it cannot disagree about where
+     * the ground is. That is the property worth having, and it is why this is a plane
+     * rather than something that follows the terrain across the block: a plane is
+     * exactly reproducible at any point by any caller, cheaply, with no reference to
+     * the mesh.
+     *
+     * The corners are the block's own street junctions, so a block meets the streets
+     * around it to within the fit residual - small, because a relaxed street network
+     * over a block is a smooth height field, and zero when the corners happen to be
+     * coplanar (which includes every flat city).
+     *
+     * The alternative was a flat pad at the mean, which is what a terraced hillside city
+     * really looks like - but it steps at every block edge by up to half the fall across
+     * the block, and nothing renders that step. Tilting the pad removes it.
+     */
+    private bool _isPadValid;
+    private float _padA, _padB, _padC;
+
+
+    /**
+     * Height of this block's ground surface at a point, in world space.
+     *
+     * @param v2Cluster
+     *     Position in CLUSTER coordinates, the same space QuarterDelim.StartPoint is in.
+     */
+    public float GroundHeightAt(in Vector2 v2Cluster)
+    {
+        /*
+         * A flat city answers exactly, and short circuits before any arithmetic: a plane
+         * fitted to equal corner heights would come back to within a rounding error of
+         * the average rather than the average itself, and "the flat path is untouched"
+         * is a property this whole line of work is gated on.
+         */
+        if (ClusterDesc.StreetHeightSource.IsFlat)
+        {
+            return ClusterDesc.AverageHeight;
+        }
+
+        lock (_lo)
+        {
+            if (!_isPadValid)
+            {
+                _fitPadNoLock();
+            }
+
+            return _padA * v2Cluster.X + _padB * v2Cluster.Y + _padC;
+        }
+    }
+
+
+    /**
+     * Least squares plane through the corner heights.
+     *
+     * Falls back to the mean whenever the fit is not determined - fewer than three
+     * corners, or corners collinear in plan - since a singular fit would otherwise
+     * produce a wildly tilted pad from a rounding error.
+     */
+    private void _fitPadNoLock()
+    {
+        _isPadValid = true;
+        _padA = 0f;
+        _padB = 0f;
+        _padC = ClusterDesc.AverageHeight;
+
+        var source = ClusterDesc.StreetHeightSource;
+        int n = _delims.Count;
+        if (n < 1) return;
+
+        Span<float> hs = n <= 64 ? stackalloc float[n] : new float[n];
+
+        float sx = 0f, sz = 0f, sh = 0f;
+        for (int i = 0; i < n; ++i)
+        {
+            hs[i] = source.GroundHeightAt(_delims[i].StreetPoint);
+            sx += _delims[i].StartPoint.X;
+            sz += _delims[i].StartPoint.Y;
+            sh += hs[i];
+        }
+
+        float mx = sx / n, mz = sz / n, mh = sh / n;
+        _padC = mh;
+
+        if (n < 3) return;
+
+        /*
+         * Normal equations about the centroid, which keeps the numbers small and the
+         * constant term trivially the mean height.
+         */
+        float sxx = 0f, sxz = 0f, szz = 0f, sxh = 0f, szh = 0f;
+        for (int i = 0; i < n; ++i)
+        {
+            float dx = _delims[i].StartPoint.X - mx;
+            float dz = _delims[i].StartPoint.Y - mz;
+            float dh = hs[i] - mh;
+
+            sxx += dx * dx;
+            sxz += dx * dz;
+            szz += dz * dz;
+            sxh += dx * dh;
+            szh += dz * dh;
+        }
+
+        float det = sxx * szz - sxz * sxz;
+
+        /*
+         * Scaled against the spread, so the test means "collinear" rather than "small",
+         * and does not change meaning with the size of the block.
+         */
+        float scale = sxx + szz;
+        if (Single.Abs(det) < 1e-6f * scale * scale)
+        {
+            return;
+        }
+
+        _padA = (szz * sxh - sxz * szh) / det;
+        _padB = (sxx * szh - sxz * sxh) / det;
+        _padC = mh - _padA * mx - _padB * mz;
+    }
+
+
+    /**
+     * World space, for the many callers that have one rather than a cluster coordinate.
+     */
+    public float GroundHeightAtWorld(in Vector3 v3World)
+    {
+        return GroundHeightAt(new Vector2(
+            v3World.X - ClusterDesc.Pos.X,
+            v3World.Z - ClusterDesc.Pos.Z));
+    }
+
     public void AddEstate(in Estate estate)
     {
         lock (_lo)
         {
+            estate.Quarter = this;
             _estates.Add(estate);
         }
     }

@@ -136,19 +136,23 @@ public class SpatialModel
         var strokeStore = cluster.StrokeStore();
         var streetPointToLocation = new Dictionary<int, int>();
 
-        /*
-         * Quarters and estates are traced on the ground and still sit at the cluster
-         * average, so they keep this. Street points below ask the height source per
-         * junction instead, which is exact.
-         */
         var heightSource = cluster.StreetHeightSource;
-        float streetHeight = cluster.AverageHeight + MetaGen.ClusterStreetHeight + MetaGen.QuarterSidewalkOffset;
 
         var quarters = quarterStore.GetQuarters();
         for (int qi = 0; qi < quarters.Count; qi++)
         {
             var quarter = quarters[qi];
             if (quarter.IsInvalid()) continue;
+
+            /*
+             * Buildings stand on their own block's pad, so their doors are on it too.
+             * Taken at the block centre rather than per building: these are the
+             * positions NPCs walk to, and a shop entrance a few centimetres off the
+             * building it belongs to is not worth a fit per building.
+             */
+            float streetHeight = quarter.GroundHeightAt(quarter.GetCenterPoint())
+                                 + MetaGen.ClusterStreetHeight
+                                 + MetaGen.QuarterSidewalkOffset;
 
             var estates = quarter.GetEstates();
             for (int ei = 0; ei < estates.Count; ei++)

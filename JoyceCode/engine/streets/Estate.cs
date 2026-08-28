@@ -9,7 +9,17 @@ namespace engine.streets
     {
         private object _lo = new();
         
-        public required engine.world.ClusterDesc ClusterDesc; 
+        public required engine.world.ClusterDesc ClusterDesc;
+
+        /**
+         * The block this estate is part of, set when it is added to one.
+         *
+         * Estates are placed on their quarter's pad, so anything standing on an estate
+         * needs to be able to ask that quarter how high the ground is - otherwise a
+         * building and the block under it disagree.
+         */
+        public Quarter Quarter;
+
     
         private List<Vector3> _points = new();
         private List<Building> _buildings = new();

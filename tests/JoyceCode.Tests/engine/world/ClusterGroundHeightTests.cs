@@ -49,15 +49,17 @@ public class ClusterGroundHeightTests
         ["JoyceCode/engine/streets/GenerateClusterStreetsOperator.cs"] =
             "the flat fragment floor plane, emitted only when the city really is flat",
 
-        // Not converted yet: quarters and everything traced on them.
-        ["JoyceCode/engine/streets/GenerateClusterQuartersOperator.cs"] = "quarter floors",
-        ["JoyceCode/engine/tale/SpatialModel.cs"] = "quarter and estate locations",
-        ["JoyceCode/builtin/tools/QuarterLoopRouteGenerator.cs"] = "routes traced on quarters",
-        ["nogameCode/nogame/cities/GenerateHouseDescriptionsOperator.cs"] = "buildings",
-        ["nogameCode/nogame/cities/GenerateHousesOperator.cs"] = "buildings",
-        ["nogameCode/nogame/cities/GeneratePolytopeOperator.cs"] = "buildings",
-        ["nogameCode/nogame/cities/GenerateShopsOperator.cs"] = "shops, placed on quarters",
-        ["nogameCode/nogame/cities/GenerateTreesOperator.cs"] = "trees, placed on quarters",
+        // Genuinely not a position.
+        ["nogameCode/nogame/cities/GenerateShopsOperator.cs"] =
+            "a probability-field sample coordinate, not somewhere a shop is put",
+
+        // Fallback for an estate with no block, which should not happen.
+        ["nogameCode/nogame/cities/GeneratePolytopeOperator.cs"] =
+            "last resort when an estate has no quarter",
+
+        // The block pad's own fallback when its fit is undetermined.
+        ["JoyceCode/engine/streets/Quarter.cs"] =
+            "the block pad answers from it when the city is flat, and falls back to it",
 
         // Not converted yet: the intercity network, which spans clusters and has its own
         // elevation operator.

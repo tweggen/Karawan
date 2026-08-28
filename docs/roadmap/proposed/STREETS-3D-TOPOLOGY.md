@@ -1,9 +1,9 @@
 # Three-dimensional street topology
 
-**Status:** Phase A steps 1–5 landed — the seam, the flag, the terrain source, gradient
-relaxation and per-street collision — plus the junction-seam defect they turned up
-(§7). A terrain-following city now renders and drives. Quarters, buildings and the
-corridor-conforming pass (§2c) are what remain before it is playable.
+**Status:** Phase A landed — the seam, the flag, the terrain source, gradient relaxation,
+per-street collision, traffic and pedestrians, and city blocks — plus the junction-seam
+defect it turned up (§7). A terrain-following city renders, drives and is walked on. The
+corridor-conforming pass (§2c) and the intercity network are what remain.
 **Follows:** the streets generator rework (WP-0 … WP-5) — levels, ramps, deck geometry,
 deck collision and both gates are in place.
 
@@ -175,11 +175,9 @@ rule table, each can land separately, and the V2 fingerprints gate them.
 stands clear of the ground. Purely visual, and deliberately last: a floating slab is
 unfinished, not wrong.
 
-**Interaction to keep in view:** quarters, estates and buildings are traced as faces in
-plan and then placed at one height. A quarter spanning a slope needs a pad — probably
-the mean of its bounding junctions, cut or filled — and `QuarterGenerator` currently
-has no notion of height at all. Phase A will make that visible immediately, so it
-should be planned as part of Phase A rather than discovered during it.
+**Blocks, which Phase A did have to solve.** See §7c: a quarter is now a tilted planar
+pad fitted to its own corner junctions, and everything standing on it reads that same
+plane.
 
 ---
 
@@ -406,3 +404,50 @@ existing operator pipeline is genuinely uncertain. Sampling and relaxation are
 self-contained and testable against the street graph alone; if the conforming pass
 turns out not to fit, it changes the shape of the whole phase, and it is better to know
 that before the rest is built on top of it.
+
+
+---
+
+## 7c. City blocks are tilted pads (Phase A, blocks)
+
+A quarter, its floor mesh, its buildings, its trees, its shop fronts and the doors NPCs
+walk to all used one height for the whole city. `Quarter.GroundHeightAt(v2)` replaces it
+with **one plane per block**, least-squares fitted to the heights of its own corner
+junctions.
+
+**Why a plane and not a surface following the terrain.** The property that matters is not
+that a block is at some plausible height but that *everything on it agrees* about which
+height. A plane is exactly reproducible at any point by any caller — the mesh emitting a
+corner, the operator placing a house, the TALE model placing a shop door — with no
+reference to each other and no shared surface to sample. Nothing else on the table has
+that.
+
+**Why tilted and not flat.** A flat pad at the mean is what a terraced hillside city
+really looks like, and it was the first candidate. It steps at every block edge by up to
+half the fall across the block, and nothing renders that step — you would drive off a
+street into a wall that is not there. Tilting removes the step; the block meets the
+streets around it to within the fit residual, which is zero whenever the corners happen
+to be coplanar.
+
+**Measured before deciding, not assumed:** `TriangulateNonPlanarTests` pins what LibTess
+does with a non-coplanar outline — every vertex keeps its own height, no vertices are
+invented, and naming the sweep normal changes nothing. That was run first, because it
+decided whether a non-planar block floor was even on the table. It is not needed for the
+plane, and it is kept because it is the evidence for the choice.
+
+**Traps worth keeping.**
+
+- The flat path **short circuits before the fit**, because a least-squares plane through
+  equal heights does not reproduce its input bit for bit. From ten corners up, 20.1 comes
+  back as 20.1000022. The whole line of work is gated on the flat path being untouched.
+  A four-corner test fixture cannot show this — with four, or even seven, the
+  sum-then-divide happens to round-trip and a version with no short circuit passes.
+- Corners **collinear in plan** cannot determine a tilt, so the fit falls back to their
+  mean rather than solving a singular system.
+- `Estate` gained a back-reference to its `Quarter`, set in `AddEstate`, so that anything
+  standing on an estate rather than a block — a polytope, a tree — can find the pad.
+
+**Deliberately still on the average:** `GenerateShopsOperator`'s intensity sample. It is
+a probability-field *coordinate*, not a position, and feeding it the terrain would make
+which shops exist depend on the ground under them — a generation change, and not one
+this work is about.
