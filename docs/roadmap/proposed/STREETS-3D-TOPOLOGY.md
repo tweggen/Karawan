@@ -1,6 +1,7 @@
 # Three-dimensional street topology
 
-**Status:** Design sketch, nothing implemented.
+**Status:** Phase A steps 1–3 landed (the seam, the flag, the terrain source), plus the
+junction-seam defect they turned up — see §7. Steps 4–5 open.
 **Follows:** the streets generator rework (WP-0 … WP-5) — levels, ramps, deck geometry,
 deck collision and both gates are in place.
 
@@ -180,7 +181,131 @@ should be planned as part of Phase A rather than discovered during it.
 
 ---
 
-## 6. What I would prototype first
+## 6. What landed, and what it cost
+
+Steps 1–3 of the staging below are in. Deliberately inert: with the flag off, the V1
+network baselines, the geometry baselines and all 200 TALE tests are unchanged.
+
+| step | state |
+|---|---|
+| 1 — height seam, flat default | **done.** `IStreetHeightSource`, `FlatStreetHeight`, `StreetHeightSources.For` |
+| 2 — flag to skip flattening | **done.** `joyce.DisableClusterFlattening` |
+| 3 — terrain source | **done.** `TerrainStreetHeight`, cached per junction |
+| 4 — gradient relaxation | **done.** `GradeRelaxer`, `GradePolicy`, `RelaxedStreetHeight` |
+| 5 — ground colliders per stroke | open |
+
+Three things worth recording.
+
+**The flattening operator also computes `AverageHeight`.** `ClusterBaseElevationOperator`
+sets `_clusterDesc.AverageHeight` at line 38 and only then flattens. Nearly thirty sites
+across streets, quarters, buildings, navigation and TALE read that field as "the height
+of the city", so unwiring the operator would put every city at zero. The flag therefore
+skips the height *write* and keeps the average. The biome write stays too — "this is
+city" is true whatever shape the ground has.
+
+**All street height already funnelled through three expressions**, so the seam was a
+small change rather than a rewrite, and `_shearOntoSlope` needed no change at all: it
+never knew whether a height difference came from a deck or a hill.
+
+**The physics floor plane is still flat, deliberately.** One plane per fragment cannot
+follow anything, so a terrain-following city currently renders in three dimensions and
+is driven on in two. That is step 5, and it is the reason `DeckCollider.IsNeededFor`
+will have to stop meaning "level != 0".
+
+---
+
+## 7. The junction seam — found by the step-1 tests, now fixed
+
+`_shearOntoSlope` gave every vertex a height from its projection onto the stroke's
+**centreline**. A junction's corner points are not on the centreline. At an oblique bend
+one corner sits well before the junction centre and its partner well after it — measured
+axial positions of **0.858 and 1.142** of the stroke length at a 15° bend, on a 160 m
+stroke.
+
+So each of the two strokes meeting at a junction read a *different* height at a corner
+both of them owned, and the road split open. Measured worst case **1.8 m at an 8 %
+grade**, scaling linearly with gradient.
+
+It had never fired because it needs `hA != hB` **and** a bend. At a straight junction the
+corners are pure lateral offsets and project to exactly 0 and 1, and every ramp
+`OverpassBuilder` makes is straight. That is also why `RampGeometryTests` could not see
+it: its linearity assertion computes `along` the same way the implementation does, so in
+this one respect it restates the implementation rather than checking it. Fourth instance
+of that pattern in this project.
+
+**The fix.** The caller already lays a stroke out in three parts — a wedge filling the A
+junction up to `damax`, the carriageway, and a wedge filling the B junction from `dbmin`.
+Those two bounds are exactly the junction footprints, so the pass now takes them and
+holds each footprint flat at its own junction's height, spreading the rise over the
+carriageway between. A flat cap and a flat footprint meet exactly, and two strokes
+sharing a junction now agree there by construction.
+
+Ramps are **bit for bit unchanged**, which is the neat part: at a straight junction
+`damax` is 0 and `dbmin` is the full length, so the reparametrisation is the identity.
+
+The slope normal is taken over the run that actually climbs rather than the plan length,
+or a road lights as though it were shallower than it is. Every vertex including the flat
+wedges keeps that normal, so shading stays continuous across the road instead of creasing
+at the junction line.
+
+Covered by `TwoStrokesAgreeOnTheHeightOfTheJunctionTheyShare`,
+`TheJunctionCapMeetsTheStrokesThatEndThere`, `TheRoadIsFlatWhereItMeetsABentJunction`,
+`HeightRisesMonotonicallyAlongABentStroke` and `TheSlopeNormalMatchesTheGradientOfTheSurface`.
+
+---
+
+## 7a. Gradient relaxation (step 4)
+
+`GradeRelaxer.Relax(strokes, heights, policy)` is a pure function — no terrain, no
+fragments, no engine — so it is tested exhaustively and cheaply. `RelaxedStreetHeight`
+wraps `TerrainStreetHeight` and runs it once over the whole cluster, because relaxing one
+junction moves its neighbours: there is no per-junction answer until the network settles.
+
+Four decisions worth keeping:
+
+- **Only the excess comes off.** Correcting to the limit rather than to flat is what lets
+  a city keep the shape of the ground it stands on. Relaxing all the way to zero also
+  satisfies "every grade is now legal", so a test asserting only that cannot tell the two
+  apart — a mutation proved it, and `TheCorrectedGradeStopsAtTheLimitRatherThanGoingFlat`
+  now closes it.
+- **A junction resists by the heaviest street on it**, and a stroke's correction splits
+  inversely to its two ends' resistance. That is why arterials stay flat and side streets
+  fall away from them, and it is a policy over `Stroke.Weight`, which already carries the
+  hierarchy.
+- **Jacobi, with one damping divisor for the whole graph.** Per-junction damping works
+  just as well against oscillation, but then the two ends of a stroke are divided by
+  different numbers, the equal-and-opposite pair stops cancelling, and the network creeps
+  uphill. Measured 1.85 m of drift on a 50 m ridge before the change; a single divisor
+  leaves only the weighting able to move the overall level, which is intended.
+- **A stroke with no starting height is reported, not skipped.** Silently skipping would
+  leave exactly the unbuildable grade this pass exists to remove, with nothing in the log.
+
+Flat in, flat out: every stroke of a flat network is already inside any grade limit, so
+nothing is computed and the ground path cannot move.
+
+**Note for whoever writes tests here.** A `StreetPoint`'s `Id` *changes* when it joins a
+`StrokeStore` — the constructor hands out a provisional id and the store replaces it with
+a network-local one. Keying a height table before `AddStroke` therefore keys it on a stale
+id, the relaxer finds nothing, and the test silently does no work. It fails only
+sometimes, because the provisional counter is static across the whole test assembly and
+whether the two ids coincide depends on what ran first. That is how the star-junction test
+was flaky for one run.
+
+The grade numbers live in `GradePolicy` rather than in `models/nogame.streets.json`, only
+because that file's parser refuses unknown fields by design. Moving them out is a
+follow-up.
+
+---
+
+**Still open, deliberately:** the `damax > dbmin` branch — two junction footprints
+overlapping on a very short stroke — returns before the shear, so those four vertices stay
+flat at the A end's height. Harmless while everything is flat; over terrain it is a small
+mis-heighted stub at a very short stroke, and it wants its own decision rather than being
+guessed at here.
+
+---
+
+## 8. What I would prototype first
 
 The corridor-conforming pass (§2c), because it is the only part whose fit with the
 existing operator pipeline is genuinely uncertain. Sampling and relaxation are
