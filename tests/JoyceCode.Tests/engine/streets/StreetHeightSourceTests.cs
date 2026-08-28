@@ -451,7 +451,14 @@ public class StreetHeightSourceTests
         var cd = StreetHarness.MakeCluster("selection", ClusterSize);
 
         Assert.IsType<FlatStreetHeight>(StreetHeightSources.For(cd, false));
-        Assert.IsType<TerrainStreetHeight>(StreetHeightSources.For(cd, true));
+
+        /*
+         * Terrain is never used raw: the sample would carry whatever gradients the noise
+         * produced. Checking the whole chain rather than just the outer layer, since
+         * "relaxed" over the wrong thing would pass a shallower assertion.
+         */
+        var following = Assert.IsType<RelaxedStreetHeight>(StreetHeightSources.For(cd, true));
+        Assert.IsType<TerrainStreetHeight>(following.Base);
     }
 
 

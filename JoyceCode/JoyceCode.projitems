@@ -562,6 +562,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\IStreetHeightSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\FlatStreetHeight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\TerrainStreetHeight.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GradePolicy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GradeRelaxer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\RelaxedStreetHeight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Stroke.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeIntersection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeStore.cs" />

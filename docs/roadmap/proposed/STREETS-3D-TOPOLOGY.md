@@ -191,7 +191,7 @@ network baselines, the geometry baselines and all 200 TALE tests are unchanged.
 | 1 — height seam, flat default | **done.** `IStreetHeightSource`, `FlatStreetHeight`, `StreetHeightSources.For` |
 | 2 — flag to skip flattening | **done.** `joyce.DisableClusterFlattening` |
 | 3 — terrain source | **done.** `TerrainStreetHeight`, cached per junction |
-| 4 — gradient relaxation | open |
+| 4 — gradient relaxation | **done.** `GradeRelaxer`, `GradePolicy`, `RelaxedStreetHeight` |
 | 5 — ground colliders per stroke | open |
 
 Three things worth recording.
@@ -251,6 +251,51 @@ at the junction line.
 Covered by `TwoStrokesAgreeOnTheHeightOfTheJunctionTheyShare`,
 `TheJunctionCapMeetsTheStrokesThatEndThere`, `TheRoadIsFlatWhereItMeetsABentJunction`,
 `HeightRisesMonotonicallyAlongABentStroke` and `TheSlopeNormalMatchesTheGradientOfTheSurface`.
+
+---
+
+## 7a. Gradient relaxation (step 4)
+
+`GradeRelaxer.Relax(strokes, heights, policy)` is a pure function — no terrain, no
+fragments, no engine — so it is tested exhaustively and cheaply. `RelaxedStreetHeight`
+wraps `TerrainStreetHeight` and runs it once over the whole cluster, because relaxing one
+junction moves its neighbours: there is no per-junction answer until the network settles.
+
+Four decisions worth keeping:
+
+- **Only the excess comes off.** Correcting to the limit rather than to flat is what lets
+  a city keep the shape of the ground it stands on. Relaxing all the way to zero also
+  satisfies "every grade is now legal", so a test asserting only that cannot tell the two
+  apart — a mutation proved it, and `TheCorrectedGradeStopsAtTheLimitRatherThanGoingFlat`
+  now closes it.
+- **A junction resists by the heaviest street on it**, and a stroke's correction splits
+  inversely to its two ends' resistance. That is why arterials stay flat and side streets
+  fall away from them, and it is a policy over `Stroke.Weight`, which already carries the
+  hierarchy.
+- **Jacobi, with one damping divisor for the whole graph.** Per-junction damping works
+  just as well against oscillation, but then the two ends of a stroke are divided by
+  different numbers, the equal-and-opposite pair stops cancelling, and the network creeps
+  uphill. Measured 1.85 m of drift on a 50 m ridge before the change; a single divisor
+  leaves only the weighting able to move the overall level, which is intended.
+- **A stroke with no starting height is reported, not skipped.** Silently skipping would
+  leave exactly the unbuildable grade this pass exists to remove, with nothing in the log.
+
+Flat in, flat out: every stroke of a flat network is already inside any grade limit, so
+nothing is computed and the ground path cannot move.
+
+**Note for whoever writes tests here.** A `StreetPoint`'s `Id` *changes* when it joins a
+`StrokeStore` — the constructor hands out a provisional id and the store replaces it with
+a network-local one. Keying a height table before `AddStroke` therefore keys it on a stale
+id, the relaxer finds nothing, and the test silently does no work. It fails only
+sometimes, because the provisional counter is static across the whole test assembly and
+whether the two ids coincide depends on what ran first. That is how the star-junction test
+was flaky for one run.
+
+The grade numbers live in `GradePolicy` rather than in `models/nogame.streets.json`, only
+because that file's parser refuses unknown fields by design. Moving them out is a
+follow-up.
+
+---
 
 **Still open, deliberately:** the `damax > dbmin` branch — two junction footprints
 overlapping on a very short stroke — returns before the shear, so those four vertices stay

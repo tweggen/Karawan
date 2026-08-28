@@ -58,9 +58,19 @@ public static class StreetHeightSources
 
     public static IStreetHeightSource For(world.ClusterDesc clusterDesc, bool followTerrain)
     {
-        return followTerrain
-            ? new TerrainStreetHeight(clusterDesc)
-            : new FlatStreetHeight(clusterDesc);
+        if (!followTerrain)
+        {
+            return new FlatStreetHeight(clusterDesc);
+        }
+
+        /*
+         * Raw terrain would give a three-dimensional city with whatever gradients the
+         * noise happened to produce, so the sample is always relaxed before use. The
+         * two are separable and separately tested, but there is no case for shipping
+         * the unrelaxed one.
+         */
+        return new RelaxedStreetHeight(
+            clusterDesc, new TerrainStreetHeight(clusterDesc), new GradePolicy());
     }
 
 
