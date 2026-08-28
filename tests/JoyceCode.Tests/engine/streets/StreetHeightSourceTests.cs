@@ -31,7 +31,7 @@ public class StreetHeightSourceTests
      * both axes gives all three junctions different heights.
      */
     private static (global::engine.world.ClusterDesc Cluster, StrokeStore Store,
-                    Stroke First, Stroke Second, StreetPoint Shared) _bentPair()
+                    Stroke First, Stroke Second, StreetPoint Shared) _bentPair(float bend = 50f)
     {
         var clusterDesc = StreetHarness.MakeCluster("heightsource", ClusterSize);
         var store = new StrokeStore(ClusterSize);
@@ -48,7 +48,7 @@ public class StreetHeightSourceTests
         var first = Stroke.CreateByAngleFrom(clusterDesc, a, b, 0f, 160f, true, 1.0f);
         store.AddStroke(first);
 
-        var second = Stroke.CreateByAngleFrom(clusterDesc, b, c, 50f, 160f, true, 1.0f);
+        var second = Stroke.CreateByAngleFrom(clusterDesc, b, c, bend, 160f, true, 1.0f);
         store.AddStroke(second);
 
         return (clusterDesc, store, first, second, b);
@@ -102,11 +102,40 @@ public class StreetHeightSourceTests
 
 
     /**
+     * A lone stroke, both ends dead ends. Both junctions are then straight by
+     * construction - a dead end's corners come from the street normal and are purely
+     * lateral - so the road's climb runs over its whole plan length and the height at
+     * any point is unambiguous.
+     */
+    private static (global::engine.world.ClusterDesc Cluster, StrokeStore Store, Stroke Only)
+        _straightStroke()
+    {
+        var clusterDesc = StreetHarness.MakeCluster("heightsource-straight", ClusterSize);
+        var store = new StrokeStore(ClusterSize);
+
+        var a = new StreetPoint() { ClusterId = 0 };
+        a.SetPos(310f, -140f);
+        var b = new StreetPoint() { ClusterId = 0 };
+
+        var only = Stroke.CreateByAngleFrom(clusterDesc, a, b, 0f, 160f, true, 1.0f);
+        store.AddStroke(only);
+
+        return (clusterDesc, store, only);
+    }
+
+
+    /**
      * The surface follows the height field rather than sitting on a plane through it.
      *
      * Asserted against each vertex's own position along its stroke, for the reason
      * RampGeometryTests records: a straight stroke is emitted as a single quad, so
      * "is there a vertex part way up" cannot tell a slope from a step.
+     *
+     * Deliberately a stroke with two STRAIGHT ends. Where a junction bends, the road is
+     * held flat across the junction's footprint and climbs only over the carriageway
+     * between them, so "height is linear in plan distance" stops being the right claim -
+     * and restating the footprint arithmetic here would only restate the implementation.
+     * The bent case is covered by the monotonicity and junction agreement tests instead.
      */
     [Fact]
     public void AStrokeSurfaceFollowsASlopingHeightField()
@@ -120,6 +149,39 @@ public class StreetHeightSourceTests
         const float gradient = 0.04f;
         const float datum = 120f;
 
+        var (cd, store, only) = _straightStroke();
+        cd.StreetHeightSource = new FuncStreetHeight((x, z) => datum + gradient * x);
+
+        var mesh = StreetGeometryHarness.GenerateFor(cd, store, new[] { only });
+        Assert.NotEmpty(mesh.Vertices);
+
+        float hA = _base(cd) + datum + gradient * only.A.Pos.X;
+        float hB = _base(cd) + datum + gradient * only.B.Pos.X;
+        Assert.NotEqual(hA, hB);
+
+        float runX = only.B.Pos.X - only.A.Pos.X;
+        foreach (var v in mesh.Vertices)
+        {
+            float along = Single.Clamp((v.X - only.A.Pos.X) / runX, 0f, 1f);
+            Assert.Equal(hA + along * (hB - hA), v.Y, 1);
+        }
+    }
+
+
+    /**
+     * Over a bend, the road still climbs from one junction's height to the other's,
+     * never reverses, and never overshoots either end.
+     *
+     * This is what replaces "linear in plan distance" once the junction footprints are
+     * held flat: where the rise happens is the implementation's business, but that it
+     * happens once, in one direction, between exactly those two heights, is not.
+     */
+    [Fact]
+    public void HeightRisesMonotonicallyAlongABentStroke()
+    {
+        const float gradient = 0.04f;
+        const float datum = 120f;
+
         var (cd, store, first, _, _) = _bentPair();
         cd.StreetHeightSource = new FuncStreetHeight((x, z) => datum + gradient * x);
 
@@ -128,14 +190,60 @@ public class StreetHeightSourceTests
 
         float hA = _base(cd) + datum + gradient * first.A.Pos.X;
         float hB = _base(cd) + datum + gradient * first.B.Pos.X;
-        Assert.NotEqual(hA, hB);
+        Assert.True(hB > hA);
 
-        float runX = first.B.Pos.X - first.A.Pos.X;
-        foreach (var v in mesh.Vertices)
+        /*
+         * Axial distance along the stroke, which for this stroke is simply x.
+         */
+        var byDistance = mesh.Vertices.OrderBy(v => v.X).ToList();
+
+        Assert.Equal(hA, byDistance.First().Y, 2);
+        Assert.Equal(hB, byDistance.Last().Y, 2);
+
+        float previous = Single.NegativeInfinity;
+        foreach (var v in byDistance)
         {
-            float along = Single.Clamp((v.X - first.A.Pos.X) / runX, 0f, 1f);
-            Assert.Equal(hA + along * (hB - hA), v.Y, 1);
+            Assert.InRange(v.Y, hA - 0.001f, hB + 0.001f);
+            Assert.True(v.Y >= previous - 0.001f,
+                $"height must not fall back along the road: {v.Y} after {previous}");
+            previous = v.Y;
         }
+    }
+
+
+    /**
+     * The road is flat where it meets a junction, which is the property that lets it
+     * meet a flat cap at all.
+     *
+     * Stated as: the vertices nearest the junction centre in plan all sit at that
+     * junction's height. Nearest in PLAN and by the junction's own height, so this does
+     * not need to know how wide the footprint is or where the road decides to start
+     * climbing.
+     */
+    [Fact]
+    public void TheRoadIsFlatWhereItMeetsABentJunction()
+    {
+        const float gradient = 0.04f;
+        const float datum = 120f;
+
+        var (cd, store, first, _, shared) = _bentPair();
+        cd.StreetHeightSource = new FuncStreetHeight((x, z) => datum + gradient * x);
+
+        var mesh = StreetGeometryHarness.GenerateFor(cd, store, new[] { first });
+
+        float hShared = _base(cd) + datum + gradient * shared.Pos.X;
+
+        /*
+         * The corners of a bent junction straddle its centre - one before it, one after -
+         * so "the two nearest the centre" picks up both sides of the footprint.
+         */
+        var nearest = mesh.Vertices
+            .OrderBy(v => new Vector2(v.X - shared.Pos.X, v.Z - shared.Pos.Y).LengthSquared())
+            .Take(2)
+            .ToList();
+
+        Assert.Equal(2, nearest.Count);
+        Assert.All(nearest, v => Assert.Equal(hShared, v.Y, 2));
     }
 
 
@@ -159,6 +267,69 @@ public class StreetHeightSourceTests
 
 
     /**
+     * The normal must describe the surface it sits on, not merely lean somewhere.
+     *
+     * Derived from the emitted vertices rather than recomputed from the stroke: take two
+     * vertices on the part that actually climbs, measure the gradient BETWEEN them, and
+     * require the normal to be perpendicular to that. "Is it non-vertical" passes happily
+     * while the normal is tilted by the wrong amount - which it was, when the slope was
+     * taken over the full plan length while the road climbed over the shorter run
+     * between the two junction footprints.
+     */
+    [Fact]
+    public void TheSlopeNormalMatchesTheGradientOfTheSurface()
+    {
+        /*
+         * A shallow bend and a gentle gradient cannot see this. The quantity under test
+         * is the DIFFERENCE between the plan length and the run that climbs, and at a 50
+         * degree bend those differ by under a percent - small enough that a normal
+         * computed from the wrong one still looks perpendicular. A 15 degree bend pulls
+         * one junction corner back to 0.86 of the length, and a steep grade turns that
+         * into an angle a test can see.
+         */
+        const float gradient = 0.15f;
+        const float datum = 120f;
+
+        var (cd, store, first, _, _) = _bentPair(15f);
+        cd.StreetHeightSource = new FuncStreetHeight((x, z) => datum + gradient * x);
+
+        var mesh = StreetGeometryHarness.GenerateFor(cd, store, new[] { first });
+
+        float hA = _base(cd) + datum + gradient * first.A.Pos.X;
+        float hB = _base(cd) + datum + gradient * first.B.Pos.X;
+
+        /*
+         * Strictly between the two junction heights, so both are on the carriageway
+         * rather than on a flat footprint.
+         */
+        var climbing = Enumerable.Range(0, mesh.Vertices.Count)
+            .Where(i => mesh.Vertices[i].Y > hA + 0.01f && mesh.Vertices[i].Y < hB - 0.01f)
+            .ToList();
+
+        Assert.True(climbing.Count >= 2, "the road must have vertices part way up");
+
+        int lo = climbing.OrderBy(i => mesh.Vertices[i].X).First();
+        int hi = climbing.OrderBy(i => mesh.Vertices[i].X).Last();
+
+        float run = mesh.Vertices[hi].X - mesh.Vertices[lo].X;
+        float rise = mesh.Vertices[hi].Y - mesh.Vertices[lo].Y;
+        Assert.True(run > 1f, "need two vertices far enough apart to measure a gradient");
+
+        /*
+         * This stroke runs along +X, so the surface tangent along the road is simply
+         * (run, rise) in the XY plane.
+         */
+        Vector3 tangent = Vector3.Normalize(new Vector3(run, rise, 0f));
+
+        Assert.All(climbing, i =>
+            Assert.True(
+                Math.Abs(Vector3.Dot(Vector3.Normalize(mesh.Normals[i]), tangent)) < 0.001f,
+                $"normal {mesh.Normals[i]} is not perpendicular to the surface "
+                + $"(gradient {rise / run:F4})"));
+    }
+
+
+    /**
      * The junction is one node, so it has one height.
      *
      * Two strokes meeting at a junction share their section points exactly in plan -
@@ -166,27 +337,14 @@ public class StreetHeightSourceTests
      * they also share it in height, which is the property that keeps a non-planar
      * network from splitting open along its seams.
      *
-     * FAILS TODAY, deliberately left as the specification rather than weakened to fit.
-     * _shearOntoSlope gives every vertex a height from its projection onto the stroke's
-     * CENTRELINE, but a junction's corner points are not on the centreline: at an
-     * oblique bend one corner sits well before the junction centre and its partner well
-     * after it (measured: axial positions 0.858 and 1.142 of the stroke length at a 15
-     * degree bend). Each stroke therefore reads a different height at a corner both of
-     * them own, and the road splits. Measured worst case 1.8 m at an 8 % grade.
-     *
-     * It has never fired because it needs hA != hB AND a bend: at a straight junction
-     * the corners are pure lateral offsets and project to exactly 0 and 1. Every ramp
-     * OverpassBuilder makes is straight, so ramps are unaffected - which is also why
-     * RampGeometryTests cannot see this.
-     *
-     * The fix is not a tweak to this pass. The road has to be flat across its junction
-     * footprint so it can meet a flat cap, and it currently subdivides at 0.85 of its
-     * length - inside that footprint at an oblique junction. That means changing where
-     * cross sections are emitted, not how they are moved afterwards. See
-     * STREETS-3D-TOPOLOGY.md.
+     * This used to fail by up to 1.8 m on an 8 % grade. _shearOntoSlope heighted every
+     * vertex by its projection onto the stroke CENTRELINE, and a junction's corners are
+     * not on the centreline - at a 15 degree bend they project to 0.858 and 1.142 of the
+     * stroke length, so each stroke read a different height at a corner both of them
+     * owned. The pass now holds each junction footprint flat at that junction's height
+     * and spreads the rise over the carriageway between them.
      */
-    [Fact(Skip = "Known defect, see the comment: junction corners are sheared by "
-                 + "centreline projection. Needs the emission change, not a pass tweak.")]
+    [Fact]
     public void TwoStrokesAgreeOnTheHeightOfTheJunctionTheyShare()
     {
         var (cd, store, first, second, shared) = _bentPair();
@@ -217,14 +375,13 @@ public class StreetHeightSourceTests
     /**
      * The junction cap must meet the surfaces that run into it.
      *
-     * FAILS TODAY, same root cause as the test above and left for the same reason. The
-     * cap is a flat fan at the junction's one height; the roads arrive tilted and read
-     * their corner heights off their own centrelines, so cap and road part company by
-     * the same margin. Note that fixing the cap alone cannot work: the two roads do not
-     * even agree with each other at a shared corner, so there is no single height for
-     * the cap to adopt there.
+     * The cap is a flat fan at the junction's one height, so this holds exactly when the
+     * roads arriving are flat over the same footprint - which is what the shear now
+     * guarantees. Fixing the cap instead could never have worked: before the change the
+     * two roads did not agree with each other at a shared corner, so there was no single
+     * height for a cap to adopt there.
      */
-    [Fact(Skip = "Known defect, see TwoStrokesAgreeOnTheHeightOfTheJunctionTheyShare.")]
+    [Fact]
     public void TheJunctionCapMeetsTheStrokesThatEndThere()
     {
         var (cd, store, first, second, shared) = _bentPair();

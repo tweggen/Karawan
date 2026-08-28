@@ -1,7 +1,7 @@
 # Three-dimensional street topology
 
-**Status:** Phase A steps 1–3 landed (the seam, the flag, the terrain source). Steps 4–5
-open, and one blocking defect found on the way — see §7.
+**Status:** Phase A steps 1–3 landed (the seam, the flag, the terrain source), plus the
+junction-seam defect they turned up — see §7. Steps 4–5 open.
 **Follows:** the streets generator rework (WP-0 … WP-5) — levels, ramps, deck geometry,
 deck collision and both gates are in place.
 
@@ -214,36 +214,49 @@ will have to stop meaning "level != 0".
 
 ---
 
-## 7. The defect this turned up, which blocks step 4
+## 7. The junction seam — found by the step-1 tests, now fixed
 
-`_shearOntoSlope` gives every vertex a height from its projection onto the stroke's
+`_shearOntoSlope` gave every vertex a height from its projection onto the stroke's
 **centreline**. A junction's corner points are not on the centreline. At an oblique bend
 one corner sits well before the junction centre and its partner well after it — measured
 axial positions of **0.858 and 1.142** of the stroke length at a 15° bend, on a 160 m
 stroke.
 
-So each of the two strokes meeting at a junction reads a *different* height at a corner
-both of them own, and the road splits open. Measured worst case **1.8 m at an 8 %
-grade**; the error scales linearly with gradient.
+So each of the two strokes meeting at a junction read a *different* height at a corner
+both of them owned, and the road split open. Measured worst case **1.8 m at an 8 %
+grade**, scaling linearly with gradient.
 
-It has never fired because it needs `hA != hB` **and** a bend. At a straight junction the
+It had never fired because it needs `hA != hB` **and** a bend. At a straight junction the
 corners are pure lateral offsets and project to exactly 0 and 1, and every ramp
-`OverpassBuilder` makes is straight. That is also why `RampGeometryTests` cannot see it:
-its linearity assertion computes `along` the same way the implementation does, so in this
-one respect it restates the implementation rather than checking it. Fourth instance of
-that pattern in this project.
+`OverpassBuilder` makes is straight. That is also why `RampGeometryTests` could not see
+it: its linearity assertion computes `along` the same way the implementation does, so in
+this one respect it restates the implementation rather than checking it. Fourth instance
+of that pattern in this project.
 
-**Why it is not a tweak to the pass.** For a tilted road to meet a flat cap, the road has
-to be flat across the junction's footprint. The road currently subdivides at 0.425 and
-0.85 of its length, and at an oblique junction 0.85 is *inside* the footprint — so there
-is no way to tell an interior subdivision from a junction corner by axial position alone.
-Fixing it means changing where cross-sections are emitted, not how they are moved
-afterwards. Warping the cap instead does not work either: the two roads do not agree with
-each other at the shared corner, so there is no single height for the cap to adopt.
+**The fix.** The caller already lays a stroke out in three parts — a wedge filling the A
+junction up to `damax`, the carriageway, and a wedge filling the B junction from `dbmin`.
+Those two bounds are exactly the junction footprints, so the pass now takes them and
+holds each footprint flat at its own junction's height, spreading the rise over the
+carriageway between. A flat cap and a flat footprint meet exactly, and two strokes
+sharing a junction now agree there by construction.
 
-Both properties are written down as tests — `TwoStrokesAgreeOnTheHeightOfTheJunctionTheyShare`
-and `TheJunctionCapMeetsTheStrokesThatEndThere` in `StreetHeightSourceTests`, skipped with
-the reason rather than weakened to fit.
+Ramps are **bit for bit unchanged**, which is the neat part: at a straight junction
+`damax` is 0 and `dbmin` is the full length, so the reparametrisation is the identity.
+
+The slope normal is taken over the run that actually climbs rather than the plan length,
+or a road lights as though it were shallower than it is. Every vertex including the flat
+wedges keeps that normal, so shading stays continuous across the road instead of creasing
+at the junction line.
+
+Covered by `TwoStrokesAgreeOnTheHeightOfTheJunctionTheyShare`,
+`TheJunctionCapMeetsTheStrokesThatEndThere`, `TheRoadIsFlatWhereItMeetsABentJunction`,
+`HeightRisesMonotonicallyAlongABentStroke` and `TheSlopeNormalMatchesTheGradientOfTheSurface`.
+
+**Still open, deliberately:** the `damax > dbmin` branch — two junction footprints
+overlapping on a very short stroke — returns before the shear, so those four vertices stay
+flat at the A end's height. Harmless while everything is flat; over terrain it is a small
+mis-heighted stub at a very short stroke, and it wants its own decision rather than being
+guessed at here.
 
 ---
 

@@ -725,7 +725,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             }
         }
 
-        _shearOntoSlope(g, firstVertex, am, q, bm - am, hA, hB);
+        _shearOntoSlope(g, firstVertex, am, q, bm - am, hA, hB, damax, dbmin);
 
         return true;
     }
@@ -736,21 +736,43 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
      *
      * Everything above builds the surface at the A end's height, which is already right
      * for a flat stroke and is why this is a no-op for every street on the ground. A
-     * ramp then needs each vertex lifted in proportion to how far along the stroke it
-     * lies, and the surface needs a normal that is no longer straight up, or a ramp
-     * lights as though it were flat.
+     * stroke whose ends differ - a ramp between decks, or equally a street running
+     * downhill - then needs its vertices lifted, and a normal that is no longer straight
+     * up, or a climbing surface lights as though it were flat.
      *
      * Done as a pass over the vertices this stroke emitted rather than at each emission
      * site: there are about fifteen of them, and the Y of a vertex affects nothing else
      * here - the UV projector's two axes are both planar, so UVs are unchanged by it.
      *
+     * **The rise happens between the two junction footprints, not over the whole plan
+     * length**, which is the whole subtlety of this method. The caller lays the surface
+     * out in three parts: a wedge filling the A junction up to dFlatA, the carriageway
+     * proper, and a wedge filling the B junction from dFlatB. A junction cap is a flat
+     * fan at that junction's one height, so the road can only meet it if the road is
+     * flat over the same footprint - and a junction's corner points are NOT on the
+     * centre line, so heighting them by their own axial projection puts them at a height
+     * belonging to some other part of the road.
+     *
+     * That was a real tear, not a rounding error: at a 15 degree bend the two corners of
+     * one junction project to 0.858 and 1.142 of the stroke length, so the two strokes
+     * meeting there disagreed by up to 1.8 m on an 8 % grade, and the road split open.
+     *
+     * It stayed hidden because at a STRAIGHT junction the corners are pure lateral
+     * offsets, so dFlatA is 0 and dFlatB is the full length and the reparametrisation
+     * below is the identity. Every ramp OverpassBuilder makes is straight, which is why
+     * ramps never showed it and why ramps are bit for bit unchanged by this.
+     *
      * @param am, vAB
      *     Start of the stroke's centre line and the vector along it, both in the same
      *     space as the emitted vertices.
+     * @param dFlatA, dFlatB
+     *     Axial distances from am, in metres, bounding the part of the surface that
+     *     actually climbs: damax and dbmin in the caller. Outside them the surface
+     *     belongs to a junction and is held flat at that junction's height.
      */
     private void _shearOntoSlope(
         joyce.Mesh g, uint firstVertex, in Vector3 am, in Vector2 unit, in Vector3 vAB,
-        float hA, float hB)
+        float hA, float hB, float dFlatA, float dFlatB)
     {
         if (hA == hB)
         {
@@ -764,20 +786,35 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         }
 
         /*
-         * Rise over run, and the surface normal that goes with it: rotate straight up
-         * back by the slope, in the vertical plane the stroke runs along.
+         * The caller returns early when the two footprints overlap, so this is normally
+         * positive; the guard is for them merely touching, where there is no carriageway
+         * to spread the rise over and the two halves simply take their own heights.
          */
-        float slope = (hB - hA) / length;
+        float span = dFlatB - dFlatA;
+        bool hasRun = span > 0.001f;
+
+        /*
+         * Rise over run, and the surface normal that goes with it: rotate straight up
+         * back by the slope, in the vertical plane the stroke runs along. Over the run
+         * that actually climbs, which is steeper than the plan length would suggest.
+         *
+         * Applied to every vertex including the flat wedges, deliberately: shading stays
+         * continuous across the road rather than creasing at the junction line, and the
+         * junction cap it abuts is a separate surface with its own normals either way.
+         */
+        float slope = (hB - hA) / (hasRun ? span : length);
         Vector3 slopeNormal = Vector3.Normalize(new Vector3(-slope * unit.X, 1f, -slope * unit.Y));
 
         for (int i = (int)firstVertex; i < g.Vertices.Count; ++i)
         {
             Vector3 v = g.Vertices[i];
 
-            float along = ((v.X - am.X) * unit.X + (v.Z - am.Z) * unit.Y) / length;
-            along = Single.Clamp(along, 0f, 1f);
+            float d = (v.X - am.X) * unit.X + (v.Z - am.Z) * unit.Y;
+            float t = hasRun
+                ? Single.Clamp((d - dFlatA) / span, 0f, 1f)
+                : (d <= dFlatA ? 0f : 1f);
 
-            g.Vertices[i] = v with { Y = hA + along * (hB - hA) };
+            g.Vertices[i] = v with { Y = hA + t * (hB - hA) };
 
             if (null != g.Normals && i < g.Normals.Count)
             {
