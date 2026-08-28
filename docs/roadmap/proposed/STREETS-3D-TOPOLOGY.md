@@ -1,7 +1,9 @@
 # Three-dimensional street topology
 
-**Status:** Phase A steps 1–3 landed (the seam, the flag, the terrain source), plus the
-junction-seam defect they turned up — see §7. Steps 4–5 open.
+**Status:** Phase A steps 1–5 landed — the seam, the flag, the terrain source, gradient
+relaxation and per-street collision — plus the junction-seam defect they turned up
+(§7). A terrain-following city now renders and drives. Quarters, buildings and the
+corridor-conforming pass (§2c) are what remain before it is playable.
 **Follows:** the streets generator rework (WP-0 … WP-5) — levels, ramps, deck geometry,
 deck collision and both gates are in place.
 
@@ -192,7 +194,7 @@ network baselines, the geometry baselines and all 200 TALE tests are unchanged.
 | 2 — flag to skip flattening | **done.** `joyce.DisableClusterFlattening` |
 | 3 — terrain source | **done.** `TerrainStreetHeight`, cached per junction |
 | 4 — gradient relaxation | **done.** `GradeRelaxer`, `GradePolicy`, `RelaxedStreetHeight` |
-| 5 — ground colliders per stroke | open |
+| 5 — ground colliders per stroke | **done.** `IsNeededFor(stroke, groundIsFlat)`, floor plane suppressed, walking height follows |
 
 Three things worth recording.
 
@@ -207,10 +209,11 @@ city" is true whatever shape the ground has.
 small change rather than a rewrite, and `_shearOntoSlope` needed no change at all: it
 never knew whether a height difference came from a deck or a hill.
 
-**The physics floor plane is still flat, deliberately.** One plane per fragment cannot
-follow anything, so a terrain-following city currently renders in three dimensions and
-is driven on in two. That is step 5, and it is the reason `DeckCollider.IsNeededFor`
-will have to stop meaning "level != 0".
+**The physics floor plane is gone when the city follows terrain** (step 5). A flat city
+still gets one plane per fragment - cheap, complete, and exactly right because every
+street really is at that height. A terrain-following city has no height to put one at, so
+each street carries its own collider instead. Emitting both would be worse than either:
+the plane would cut through the roads it was meant to replace.
 
 ---
 
@@ -296,6 +299,46 @@ because that file's parser refuses unknown fields by design. Moving them out is 
 follow-up.
 
 ---
+
+---
+
+## 7b. Making it drivable (step 5)
+
+Three changes, and one bug that stopped being dormant.
+
+`DeckCollider.IsNeededFor(stroke, groundIsFlat)` — a stroke needs its own collider when
+it leaves the ground **or** when there is no single height a floor plane could sit at.
+The floor plane is emitted only in the flat case, so exactly one of the two mechanisms
+covers any given city.
+
+**The collider loop's missing fragment filter.** The operator runs once per fragment
+overlapping a cluster but walks the whole cluster's stroke store, so every per-stroke
+loop needs the same "only if this stroke's A point is in this fragment" guard the mesh
+loop has always had. The collider loop was written without it. Harmless while it only
+ever emitted for raised decks and no shipped ruleset makes any; a pile of duplicate
+statics the moment ordinary streets need colliders.
+`StreetFragmentOwnershipTests.EveryPerStrokeLoopIsFilteredToItsOwnFragment` scans the
+source so the next such loop cannot be written without one.
+
+**`Loader.GetWalkingHeightAt`** takes the terrain under the point rather than the cluster
+average, or the player and every NPC spawn in mid air on a hill and inside the ground in
+a valley. Note it is deliberately NOT the street height: streets are relaxed to buildable
+gradients, so they cut into hills and stand proud of dips. The two agree once a
+corridor-conforming pass (§2c) rewrites the terrain along the roads; until then this is
+right off the road and out by the cut or fill on it.
+
+`ClusterDesc.StreetHeightSource` is double-checked rather than lock-guarded, because
+`WalkController` now reaches it every frame and taking the cluster lock there would
+contend with street and quarter generation for a field written once.
+
+**Junctions get no collider of their own.** Each stroke's box spans junction centre to
+junction centre, so the boxes of the streets meeting at a junction all reach its middle
+and overlap. The outer corners of a wide junction are the gap that leaves.
+
+**Not covered by a test:** that the floor plane is suppressed when the ground is not
+flat. It is a one-line condition inside code that needs a fragment and a physics
+simulation to run; the per-stroke decision either side of it is tested, the suppression
+itself is not.
 
 **Still open, deliberately:** the `damax > dbmin` branch — two junction footprints
 overlapping on a very short stroke — returns before the shear, so those four vertices stay

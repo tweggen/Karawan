@@ -34,6 +34,22 @@ public interface IStreetHeightSource
      * they are.
      */
     float GroundHeightAt(StreetPoint sp);
+
+
+    /**
+     * True only when every junction in the city is guaranteed to come back at the same
+     * height.
+     *
+     * Physics asks, not geometry. One flat plane per fragment is a cheap and complete
+     * collision surface for a city that really is flat, and a wrong one the moment it is
+     * not - so this is what decides between that plane and a collider per street.
+     *
+     * Claimed only by a source that is flat BY CONSTRUCTION. A source that merely
+     * happens to return a constant says false and gets per-street colliders, which is
+     * the safe way round: too many colliders costs memory, too few drops a car through
+     * the world.
+     */
+    bool IsFlat { get; }
 }
 
 
@@ -74,10 +90,33 @@ public static class StreetHeightSources
     }
 
 
+    private static int _announced;
+
+
     public static IStreetHeightSource For(world.ClusterDesc clusterDesc)
     {
-        return For(
-            clusterDesc,
-            GlobalSettings.Get(DisableClusterFlatteningSetting) == "true");
+        bool followTerrain = GlobalSettings.Get(DisableClusterFlatteningSetting) == "true";
+
+        /*
+         * Say which mode the world is in, once per process.
+         *
+         * A setting that changes how every city looks and reports nothing either way is
+         * a setting you cannot tell you have failed to set - and the first thing anyone
+         * does with this one is turn it on and wonder why the world looks the same.
+         * Warning rather than Trace deliberately: this must not be filtered away by a
+         * debug category, since not seeing it is exactly the situation it explains.
+         */
+        if (0 == System.Threading.Interlocked.Exchange(ref _announced, 1))
+        {
+            Logger.Warning(
+                followTerrain
+                    ? $"{DisableClusterFlatteningSetting}=true: cities keep their terrain, "
+                      + "and streets render, drive and walk on it. Quarters and buildings "
+                      + "still sit at the cluster average."
+                    : $"{DisableClusterFlatteningSetting} is not set, so cities are "
+                      + "flattened to their average height as before.");
+        }
+
+        return For(clusterDesc, followTerrain);
     }
 }

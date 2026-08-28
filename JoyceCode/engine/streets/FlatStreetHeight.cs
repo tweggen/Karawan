@@ -17,6 +17,12 @@ public sealed class FlatStreetHeight : IStreetHeightSource
     private readonly world.ClusterDesc _clusterDesc;
 
 
+    /**
+     * The one source that is flat by construction, so the one that may say so.
+     */
+    public bool IsFlat => true;
+
+
     public float GroundHeightAt(StreetPoint sp)
     {
         return _clusterDesc.AverageHeight;
@@ -43,6 +49,14 @@ public sealed class FuncStreetHeight : IStreetHeightSource
     private readonly System.Func<float, float, float> _fHeight;
     private readonly System.Collections.Generic.Dictionary<int, float> _cache = new();
     private readonly object _lo = new();
+
+
+    /**
+     * False even when the function handed in is a constant. A test source cannot
+     * promise what it will be given, and claiming flatness wrongly would leave a city
+     * with no collision under its streets.
+     */
+    public bool IsFlat => false;
 
 
     public float GroundHeightAt(StreetPoint sp)

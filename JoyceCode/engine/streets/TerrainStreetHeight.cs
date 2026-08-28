@@ -26,6 +26,9 @@ public sealed class TerrainStreetHeight : IStreetHeightSource
     private readonly object _lo = new();
 
 
+    public bool IsFlat => false;
+
+
     public float GroundHeightAt(StreetPoint sp)
     {
         lock (_lo)

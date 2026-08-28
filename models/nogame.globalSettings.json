@@ -10,5 +10,16 @@
   "debug.option.mouseEnabled": "false",
   "debug.option.autoLogin": "false",
   "joyce.DisablePrebakedAnimations": "false",
+
+  "_comment.DisableClusterFlattening": [
+    "Set to true to stop ironing the terrain under a city flat and let the streets",
+    "follow it instead. Cities become genuinely three dimensional.",
+    "",
+    "Streets render, are driven on and are walked on. UNFINISHED elsewhere, and it",
+    "shows: quarters, buildings, trees and shops all still sit at the cluster average,",
+    "so they float over dips and sink into rises. Off by default until they catch up."
+  ],
+  "joyce.DisableClusterFlattening": "false",
+
   "test.script": ""
 }

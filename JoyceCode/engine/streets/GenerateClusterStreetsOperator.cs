@@ -956,81 +956,98 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
         List<Func<IList<StaticHandle>, Action>> listCreatePhysics = new();
 
-        listCreatePhysics.Add((IList<StaticHandle> staticHandles) =>
+        /*
+         * Two mutually exclusive ways to give a city something to drive on.
+         *
+         * A flat city gets one floor plane per fragment: cheap, complete, and exactly
+         * right because every street really is at that height. A city that follows its
+         * terrain cannot have one - there is no height to put it at, and a plane through
+         * the middle of the hills would be an invisible wall in every valley - so each
+         * street carries its own surface instead.
+         *
+         * Emitting both would be worse than either: the plane would still cut through
+         * the roads it was supposed to replace.
+         */
+        bool groundIsFlat = _clusterDesc.StreetHeightSource.IsFlat;
+
+        if (groundIsFlat)
         {
-            lock (worldFragment.Engine.Simulation)
+            listCreatePhysics.Add((IList<StaticHandle> staticHandles) =>
             {
-                float floorHeight = 0.1f;
-                Vector3 v3BodyOffset = new(0f, floorHeight / 2f, 0f);
-
-                // TXWTODO: We create the full fragment, now only the part containing the city
-                /*
-                 * One floor plane for the whole fragment, so it stays on the ground.
-                 * Collision for a raised deck is a separate surface, built below;
-                 * without it a vehicle would drive through a bridge.
-                 *
-                 * Deliberately still FLAT, and still on the cluster average, even when
-                 * the surfaces above are following the terrain. A single plane cannot
-                 * follow anything, so making a non-planar city drivable means giving
-                 * ground strokes colliders of their own rather than adjusting this one.
-                 * Until then, a terrain-following city renders in three dimensions and
-                 * is driven on in two.
-                 */
-                Vector3 v3BoxPos = worldFragment.Position with
+                lock (worldFragment.Engine.Simulation)
                 {
-                    Y = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
-                };
+                    float floorHeight = 0.1f;
+                    Vector3 v3BodyOffset = new(0f, floorHeight / 2f, 0f);
 
-                var shape = new TypedIndex()
-                {
-                    Packed = (uint)engine.physics.actions.CreateBoxShape.Execute(
-                        worldFragment.Engine.PLog,
-                        worldFragment.Engine.Simulation,
-                        world.MetaGen.FragmentSize,
-                        floorHeight,
-                        world.MetaGen.FragmentSize,
-                        out var pbody
-                    )
-                };
-
-                StaticHandle staticHandle = worldFragment.Engine.Simulation.Statics.Add(
-                    new StaticDescription(
-                        v3BoxPos - v3BodyOffset,
-                        Quaternion.Identity,
-                        shape
-                    ));
-
-                return () =>
-                {
-                    lock (worldFragment.Engine.Simulation)
+                    // TXWTODO: We create the full fragment, now only the part containing the city
+                    Vector3 v3BoxPos = worldFragment.Position with
                     {
-                        worldFragment.Engine.Simulation.Statics.Remove(staticHandle);
-                    }
-                };
-            }
-        });
+                        Y = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+                    };
+
+                    var shape = new TypedIndex()
+                    {
+                        Packed = (uint)engine.physics.actions.CreateBoxShape.Execute(
+                            worldFragment.Engine.PLog,
+                            worldFragment.Engine.Simulation,
+                            world.MetaGen.FragmentSize,
+                            floorHeight,
+                            world.MetaGen.FragmentSize,
+                            out var pbody
+                        )
+                    };
+
+                    StaticHandle staticHandle = worldFragment.Engine.Simulation.Statics.Add(
+                        new StaticDescription(
+                            v3BoxPos - v3BodyOffset,
+                            Quaternion.Identity,
+                            shape
+                        ));
+
+                    return () =>
+                    {
+                        lock (worldFragment.Engine.Simulation)
+                        {
+                            worldFragment.Engine.Simulation.Statics.Remove(staticHandle);
+                        }
+                    };
+                }
+            });
+        }
 
         /*
-         * Raised roads are not covered by the floor plane above, which is one flat
-         * slab on the ground. Each deck and ramp gets its own tilted box, or a vehicle
-         * drives through the bridge instead of over it.
+         * A tilted box under each road surface the fragment floor does not cover: every
+         * deck and ramp, and every street at all once the city follows its terrain.
+         * Without one a vehicle drives through the bridge instead of over it, or through
+         * the hillside road and out the other end.
          *
-         * No stroke needs one until a multilayer ruleset is enabled, so on the ground
-         * this loop adds nothing.
+         * Junctions get no box of their own. Each stroke's collider spans junction
+         * centre to junction centre, so the boxes of the streets meeting at a junction
+         * all reach its middle and overlap there. The outer corners of a wide junction
+         * are the gap this leaves, and closing it wants a shape per junction cap rather
+         * than a wider box per street.
          */
+        var colliderHeights = _clusterDesc.StreetHeightSource;
+
         foreach (var stroke in strokeStore.GetStrokes())
         {
-            if (!generation.DeckCollider.IsNeededFor(stroke))
+            if (!generation.DeckCollider.IsNeededFor(stroke, groundIsFlat))
             {
                 continue;
             }
 
             /*
-             * The same heights the surface was emitted at, from the same source, or the
-             * collider and the road it stands for drift apart the moment the ground
-             * stops being flat.
+             * The same convention the surfaces are built under: a stroke belongs to the
+             * fragment holding its A point, so a stroke spanning two fragments gets
+             * exactly one collider. Without this every fragment overlapping the cluster
+             * would emit a collider for every stroke in the whole city - harmless while
+             * only bridges had them and nothing had any, and a pile of duplicate statics
+             * the moment ordinary streets need them too.
              */
-            var colliderHeights = _clusterDesc.StreetHeightSource;
+            if (!worldFragment.IsInsideLocal(stroke.A.Pos.X + cx, stroke.A.Pos.Y + cz))
+            {
+                continue;
+            }
 
             Vector3 worldA = new Vector3(stroke.A.Pos.X + cx, 0f, stroke.A.Pos.Y + cz)
                              + worldFragment.Position

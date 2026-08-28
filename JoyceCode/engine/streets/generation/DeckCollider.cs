@@ -53,12 +53,21 @@ internal readonly struct DeckCollider
     /**
      * Does this stroke need a collider of its own?
      *
-     * Only what leaves the ground: everything on level 0 is already covered by the
-     * fragment floor, and adding boxes for it would be pure cost.
+     * Two ways to escape the fragment's floor plane, and both need one:
+     *
+     * - the stroke is on a raised deck, so the floor is 8 m below it;
+     * - the city follows its terrain, so there IS no single height a floor plane could
+     *   sit at, and every street needs its own surface.
+     *
+     * A flat city on the ground is the case the floor plane was built for, and there
+     * adding boxes would be pure cost.
+     *
+     * @param groundIsFlat
+     *     Whether the whole city sits at one height - IStreetHeightSource.IsFlat.
      */
-    internal static bool IsNeededFor(in Stroke stroke)
+    internal static bool IsNeededFor(in Stroke stroke, bool groundIsFlat)
     {
-        return 0 != stroke.A.Level || 0 != stroke.B.Level;
+        return !groundIsFlat || 0 != stroke.A.Level || 0 != stroke.B.Level;
     }
 
 
