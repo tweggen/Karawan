@@ -74,10 +74,32 @@ public static class StreetHeightSources
     }
 
 
+    private static int _announced;
+
+
     public static IStreetHeightSource For(world.ClusterDesc clusterDesc)
     {
-        return For(
-            clusterDesc,
-            GlobalSettings.Get(DisableClusterFlatteningSetting) == "true");
+        bool followTerrain = GlobalSettings.Get(DisableClusterFlatteningSetting) == "true";
+
+        /*
+         * Say which mode the world is in, once per process.
+         *
+         * A setting that changes how every city looks and reports nothing either way is
+         * a setting you cannot tell you have failed to set - and the first thing anyone
+         * does with this one is turn it on and wonder why the world looks the same.
+         * Warning rather than Trace deliberately: this must not be filtered away by a
+         * debug category, since not seeing it is exactly the situation it explains.
+         */
+        if (0 == System.Threading.Interlocked.Exchange(ref _announced, 1))
+        {
+            Logger.Warning(
+                followTerrain
+                    ? $"{DisableClusterFlatteningSetting}=true: cities keep their terrain "
+                      + "and streets follow it. Quarters, buildings and physics do not yet."
+                    : $"{DisableClusterFlatteningSetting} is not set, so cities are "
+                      + "flattened to their average height as before.");
+        }
+
+        return For(clusterDesc, followTerrain);
     }
 }
