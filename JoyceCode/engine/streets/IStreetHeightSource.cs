@@ -34,6 +34,22 @@ public interface IStreetHeightSource
      * they are.
      */
     float GroundHeightAt(StreetPoint sp);
+
+
+    /**
+     * True only when every junction in the city is guaranteed to come back at the same
+     * height.
+     *
+     * Physics asks, not geometry. One flat plane per fragment is a cheap and complete
+     * collision surface for a city that really is flat, and a wrong one the moment it is
+     * not - so this is what decides between that plane and a collider per street.
+     *
+     * Claimed only by a source that is flat BY CONSTRUCTION. A source that merely
+     * happens to return a constant says false and gets per-street colliders, which is
+     * the safe way round: too many colliders costs memory, too few drops a car through
+     * the world.
+     */
+    bool IsFlat { get; }
 }
 
 
@@ -94,8 +110,9 @@ public static class StreetHeightSources
         {
             Logger.Warning(
                 followTerrain
-                    ? $"{DisableClusterFlatteningSetting}=true: cities keep their terrain "
-                      + "and streets follow it. Quarters, buildings and physics do not yet."
+                    ? $"{DisableClusterFlatteningSetting}=true: cities keep their terrain, "
+                      + "and streets render, drive and walk on it. Quarters and buildings "
+                      + "still sit at the cluster average."
                     : $"{DisableClusterFlatteningSetting} is not set, so cities are "
                       + "flattened to their average height as before.");
         }

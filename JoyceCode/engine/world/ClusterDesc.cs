@@ -500,11 +500,24 @@ public class ClusterDesc
     {
         get
         {
+            /*
+             * Double checked, because this is read from hot paths - WalkController asks
+             * for a walking height every frame - and taking the cluster's lock there
+             * would contend with street and quarter generation for a field that is
+             * written once and never changes.
+             */
+            var existing = System.Threading.Volatile.Read(ref _streetHeightSource);
+            if (null != existing)
+            {
+                return existing;
+            }
+
             lock (_lo)
             {
                 if (null == _streetHeightSource)
                 {
-                    _streetHeightSource = streets.StreetHeightSources.For(this);
+                    System.Threading.Volatile.Write(
+                        ref _streetHeightSource, streets.StreetHeightSources.For(this));
                 }
 
                 return _streetHeightSource;
@@ -518,7 +531,7 @@ public class ClusterDesc
         {
             lock (_lo)
             {
-                _streetHeightSource = value;
+                System.Threading.Volatile.Write(ref _streetHeightSource, value);
             }
         }
     }

@@ -15,11 +15,9 @@
     "Set to true to stop ironing the terrain under a city flat and let the streets",
     "follow it instead. Cities become genuinely three dimensional.",
     "",
-    "UNFINISHED, and it shows: only the streets follow the ground. Quarters,",
-    "buildings, trees, shops and the walking height all still sit at the cluster",
-    "average, and the physics floor is still one flat plane per fragment - so a hilly",
-    "city renders in three dimensions and is driven on in two. Off by default until",
-    "those catch up."
+    "Streets render, are driven on and are walked on. UNFINISHED elsewhere, and it",
+    "shows: quarters, buildings, trees and shops all still sit at the cluster average,",
+    "so they float over dips and sink into rises. Off by default until they catch up."
   ],
   "joyce.DisableClusterFlattening": "false",
 

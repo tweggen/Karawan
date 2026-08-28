@@ -28,28 +28,41 @@ public class DeckColliderTests
     }
 
 
+    private static Stroke _stroke(sbyte levelA, sbyte levelB)
+    {
+        var s = new Stroke() { ClusterId = 0 };
+        s.A = _pointAt(0f, 0f, levelA);
+        s.B = _pointAt(100f, 0f, levelB);
+        return s;
+    }
+
+
     /**
-     * Ground streets are covered by the fragment floor, so giving them boxes would be
-     * pure cost.
+     * In a flat city, ground streets are covered by the fragment floor plane, so giving
+     * them boxes would be pure cost.
      */
     [Fact]
-    public void OnlyRaisedStrokesNeedACollider()
+    public void OnlyRaisedStrokesNeedAColliderInAFlatCity()
     {
-        var ground = new Stroke() { ClusterId = 0 };
-        ground.A = _pointAt(0f, 0f, 0);
-        ground.B = _pointAt(100f, 0f, 0);
-        Assert.False(DeckCollider.IsNeededFor(ground));
-
-        var deck = new Stroke() { ClusterId = 0 };
-        deck.A = _pointAt(0f, 0f, 1);
-        deck.B = _pointAt(100f, 0f, 1);
-        Assert.True(DeckCollider.IsNeededFor(deck));
-
-        var ramp = new Stroke() { ClusterId = 0 };
-        ramp.A = _pointAt(0f, 0f, 0);
-        ramp.B = _pointAt(60f, 0f, 1);
-        Assert.True(DeckCollider.IsNeededFor(ramp),
+        Assert.False(DeckCollider.IsNeededFor(_stroke(0, 0), groundIsFlat: true));
+        Assert.True(DeckCollider.IsNeededFor(_stroke(1, 1), groundIsFlat: true));
+        Assert.True(DeckCollider.IsNeededFor(_stroke(0, 1), groundIsFlat: true),
             "a ramp leaves the ground even though one end is on it");
+    }
+
+
+    /**
+     * Once the city follows its terrain there is no height a floor plane could sit at,
+     * so every street carries its own surface - including the ordinary ground ones that
+     * needed nothing before.
+     */
+    [Fact]
+    public void EveryStrokeNeedsAColliderOnceTheGroundIsNotFlat()
+    {
+        Assert.True(DeckCollider.IsNeededFor(_stroke(0, 0), groundIsFlat: false),
+            "a hillside street has no floor plane under it");
+        Assert.True(DeckCollider.IsNeededFor(_stroke(1, 1), groundIsFlat: false));
+        Assert.True(DeckCollider.IsNeededFor(_stroke(0, 1), groundIsFlat: false));
     }
 
 

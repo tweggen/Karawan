@@ -32,6 +32,13 @@ public sealed class RelaxedStreetHeight : IStreetHeightSource
     internal IStreetHeightSource Base => _base;
 
 
+    /**
+     * Relaxation only ever removes gradients, so it cannot make a non-flat network flat
+     * nor a flat one otherwise. The answer is whatever is underneath.
+     */
+    public bool IsFlat => _base.IsFlat;
+
+
     public float GroundHeightAt(StreetPoint sp)
     {
         Dictionary<int, float> heights = _ensureRelaxed();
