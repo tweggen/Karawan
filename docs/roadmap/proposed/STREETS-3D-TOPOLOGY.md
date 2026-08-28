@@ -337,6 +337,40 @@ contend with street and quarter generation for a field written once.
 junction centre, so the boxes of the streets meeting at a junction all reach its middle
 and overlap. The outer corners of a wide junction are the gap that leaves.
 
+### The ship hovers; it does not rest
+
+`HoverController` holds the player's ship `ClusterNavigationHeight` (3 m) above a single
+ground sample at its centre, driven by a velocity servo. Two consequences worth having
+written down.
+
+**The 3 m clearance is what masks uneven ground.** The sample is one point, so a ridge
+the centre misses is not seen at all; the clearance absorbs most of what would otherwise
+be an intersection, and the ship reads as levitating. Sampling around the hull and taking
+the highest would fix the clipping, and was **deliberately not done**: it raises the
+effective hover height over any uneven ground, and every constant in that controller is
+tuned against the current single sample. Not worth the retune for the clipping it buys.
+
+**The division of labour is: physics for what is built, distance-over-ground for the
+terrain.** Streets, ramps, decks, quarter floors and buildings all have colliders, so the
+solver owns them. The terrain has none — outside a city the hover loop *is* the collision.
+
+That only works if the hover loop does not overrule the solver, and it used to: it
+assigned `Pose.Position.Y` outright on every frame the ship was below the sampled ground,
+which no contact can argue with. It drove straight through a deck, and in a
+terrain-following city it hauled the ship out of every road cutting it entered — a
+cutting being below the ground beside it by definition. That is now a force, plus a
+rescue for the one case forces cannot recover from: below the ground **and falling**.
+Both conditions are needed. Depth alone catches a ship legitimately parked in a cutting;
+falling alone catches it mid-bounce.
+
+Note this changes the default flat path too, mildly: the ship may now dip below its hover
+height for a few frames rather than being snapped back. In a city the fragment floor plane
+catches it 1 m down; outside one the servo does.
+
+**Not covered by a test.** `HoverController` needs a booted engine and a physics
+simulation, and `nogameCode` has no test harness — the existing drift tests reach it by
+scanning source, which suits a cross-cutting rule and not a tuning constant.
+
 **The player's car was missed first time round, and that is what the drift test is for.**
 `HoverController` does not rest the car on anything - it drives towards
 `Loader.GetNavigationHeightAt` and hard-sets Y when it falls below - so the per-street
