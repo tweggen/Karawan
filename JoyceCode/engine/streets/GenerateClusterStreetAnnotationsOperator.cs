@@ -35,7 +35,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
     public void _createStreetPointAnnotations(Fragment worldFragment, StrokeStore strokeStore)
     {
         var streetPoints = strokeStore.GetStreetPoints();
-        float h = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight;
+        var heightSource = _clusterDesc.StreetHeightSource;
         /*
          * How high over annotation height shall they be?
          */
@@ -43,6 +43,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
         
         foreach (var sp in streetPoints)
         {
+            float h = heightSource.GroundHeightAt(sp) + MetaGen.ClusterNavigationHeight;
             Vector3 markerPos = new(sp.Pos.X + _clusterDesc.Pos.X, h + markerHeight, sp.Pos.Y + _clusterDesc.Pos.Z);
             worldFragment.Engine.QueueEntitySetupAction("streetpoint-annotation", entity =>
             {

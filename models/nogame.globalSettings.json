@@ -15,9 +15,10 @@
     "Set to true to stop ironing the terrain under a city flat and let the streets",
     "follow it instead. Cities become genuinely three dimensional.",
     "",
-    "Streets render, are driven on and are walked on. UNFINISHED elsewhere, and it",
-    "shows: quarters, buildings, trees and shops all still sit at the cluster average,",
-    "so they float over dips and sink into rises. Off by default until they catch up."
+    "Streets, traffic, pedestrians and the player's car all follow the ground.",
+    "UNFINISHED elsewhere, and it shows: quarters, buildings, trees and shops still",
+    "sit at the cluster average, so they float over dips and sink into rises. Off by",
+    "default until they catch up."
   ],
   "joyce.DisableClusterFlattening": "false",
 

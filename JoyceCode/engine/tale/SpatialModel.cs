@@ -136,6 +136,12 @@ public class SpatialModel
         var strokeStore = cluster.StrokeStore();
         var streetPointToLocation = new Dictionary<int, int>();
 
+        /*
+         * Quarters and estates are traced on the ground and still sit at the cluster
+         * average, so they keep this. Street points below ask the height source per
+         * junction instead, which is exact.
+         */
+        var heightSource = cluster.StreetHeightSource;
         float streetHeight = cluster.AverageHeight + MetaGen.ClusterStreetHeight + MetaGen.QuarterSidewalkOffset;
 
         var quarters = quarterStore.GetQuarters();
@@ -266,7 +272,10 @@ public class SpatialModel
              * Y is set outright rather than accumulated, so the deck height goes here
              * rather than onto Pos3 - which is the planar octree key and must stay so.
              */
-            pos.Y = streetHeight + sp.LevelElevation;
+            pos.Y = heightSource.GroundHeightAt(sp)
+                    + MetaGen.ClusterStreetHeight
+                    + MetaGen.QuarterSidewalkOffset
+                    + sp.LevelElevation;
 
             // The street point itself is the junction center — the middle of the
             // roadway. NPCs standing there (street storylets, drifter homes, ...)

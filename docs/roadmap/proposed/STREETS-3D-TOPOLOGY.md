@@ -320,12 +320,14 @@ statics the moment ordinary streets need colliders.
 `StreetFragmentOwnershipTests.EveryPerStrokeLoopIsFilteredToItsOwnFragment` scans the
 source so the next such loop cannot be written without one.
 
-**`Loader.GetWalkingHeightAt`** takes the terrain under the point rather than the cluster
-average, or the player and every NPC spawn in mid air on a hill and inside the ground in
-a valley. Note it is deliberately NOT the street height: streets are relaxed to buildable
-gradients, so they cut into hills and stand proud of dips. The two agree once a
-corridor-conforming pass (§2c) rewrites the terrain along the roads; until then this is
-right off the road and out by the cut or fill on it.
+**`ClusterDesc.GroundHeightAt(position)`** is the one place "where is the ground" is
+answered for anything that moves. Flat city, the average - exactly, since the terrain
+really has been ironed to it. Otherwise the terrain under the point. Deliberately NOT
+the street surface: streets are relaxed to buildable gradients, so they cut into hills
+and stand proud of dips, and the two converge only once a corridor-conforming pass (§2c)
+rewrites the ground along the roads. Where a caller has a `StreetPoint` in hand -
+`GenerateNavMapOperator`'s car lanes, `SpatialModel`, `TalePopulationGenerator`, the
+junction annotations - it asks the height source instead and gets the exact answer.
 
 `ClusterDesc.StreetHeightSource` is double-checked rather than lock-guarded, because
 `WalkController` now reaches it every frame and taking the cluster lock there would
@@ -334,6 +336,21 @@ contend with street and quarter generation for a field written once.
 **Junctions get no collider of their own.** Each stroke's box spans junction centre to
 junction centre, so the boxes of the streets meeting at a junction all reach its middle
 and overlap. The outer corners of a wide junction are the gap that leaves.
+
+**The player's car was missed first time round, and that is what the drift test is for.**
+`HoverController` does not rest the car on anything - it drives towards
+`Loader.GetNavigationHeightAt` and hard-sets Y when it falls below - so the per-street
+colliders never entered into it and the car sailed over the hills at a constant altitude,
+with nothing failing and nothing in the log.
+`ClusterGroundHeightTests.OnlyKnownSitesAssumeACityIsFlat` now scans both source trees and
+fails on any read of `AverageHeight` outside a listed set, each entry carrying its reason.
+It fails in both directions: an entry that stops matching is a converted subsystem whose
+to-do was never struck off. Verified by mutation - reverting exactly the car bug fails it.
+
+The list doubles as the outstanding work: quarters and everything traced on them
+(quarter floors, buildings, trees, shops, `SpatialModel` estates,
+`QuarterLoopRouteGenerator`), and the intercity network, which spans clusters and has its
+own elevation operator.
 
 **Not covered by a test:** that the floor plane is suppressed when the ground is not
 flat. It is a one-line condition inside code that needs a fragment and a physics

@@ -31,7 +31,8 @@ internal class Behavior : ABehavior
             qOrientation,
             vPosition with
             {
-                Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight + _height
+                Y = _clusterDesc.GroundHeightAt(vPosition)
+                    + MetaGen.ClusterNavigationHeight + _height
             }
         );
     }

@@ -111,8 +111,8 @@ public static class StreetHeightSources
             Logger.Warning(
                 followTerrain
                     ? $"{DisableClusterFlatteningSetting}=true: cities keep their terrain, "
-                      + "and streets render, drive and walk on it. Quarters and buildings "
-                      + "still sit at the cluster average."
+                      + "and streets, traffic, pedestrians and the player follow it. "
+                      + "Quarters and buildings still sit at the cluster average."
                     : $"{DisableClusterFlatteningSetting} is not set, so cities are "
                       + "flattened to their average height as before.");
         }

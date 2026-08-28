@@ -445,25 +445,13 @@ namespace engine.world
         public float GetWalkingHeightAt(ClusterDesc cd, in Vector3 v3Position)
         {
             /*
-             * A flat city has one walking height, which is the whole reason this can
-             * ignore the position it is given.
-             *
-             * Once the city keeps its terrain that stops being true, and taking the
-             * average anyway would spawn the player and every NPC in mid air on a hill
-             * and inside the ground in a valley. The terrain under the point is the
-             * honest answer: it is where the ground is.
-             *
-             * Not the STREET height, which is a different quantity - streets are relaxed
-             * to buildable gradients and so cut into hills and stand proud of dips. The
-             * two agree once a corridor-conforming pass rewrites the terrain along the
-             * roads; until then this is right off the road and out by the cut or fill on
-             * it. See STREETS-3D-TOPOLOGY.md.
+             * A flat city has one walking height, which is the whole reason this used to
+             * be able to ignore the position it is given. Once the city keeps its
+             * terrain that stops being true, and taking the average anyway would put the
+             * player and every NPC in mid air on a hill and inside the ground in a
+             * valley.
              */
-            float ground = cd.StreetHeightSource.IsFlat
-                ? cd.AverageHeight
-                : GetHeightAt(v3Position.X, v3Position.Z);
-
-            return ground
+            return cd.GroundHeightAt(v3Position)
                    + engine.world.MetaGen.ClusterStreetHeight +
                    engine.world.MetaGen.QuarterSidewalkOffset;
         }
@@ -513,7 +501,14 @@ namespace engine.world
             ClusterDesc cluster = I.Get<ClusterList>().GetClusterAt(position);
             if (cluster != null)
             {
-                return cluster.AverageHeight + MetaGen.ClusterNavigationHeight;
+                /*
+                 * This is what the player's car flies at. HoverController does not rest
+                 * the car on anything - it drives towards this height and hard-sets Y
+                 * when it falls below - so the road colliders never enter into it, and a
+                 * hilly city with this still on the average leaves the car sailing over
+                 * the streets at a constant altitude.
+                 */
+                return cluster.GroundHeightAt(position) + MetaGen.ClusterNavigationHeight;
             }
             else
             {

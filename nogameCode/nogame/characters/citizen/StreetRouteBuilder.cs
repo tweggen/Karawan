@@ -106,7 +106,12 @@ public static class StreetRouteBuilder
             var route = new SegmentRoute();
 
             // Start segment: from actual position
-            float groundHeight = startPod?.ClusterDesc?.AverageHeight ?? 0f;
+            /*
+             * Sampled at the walker's own position rather than taken as the cluster
+             * average, or the first segment of every route starts at the wrong height in
+             * a city that keeps its terrain.
+             */
+            float groundHeight = startPod?.ClusterDesc?.GroundHeightAt(fromPos) ?? 0f;
             if (startPod?.ClusterDesc != null)
             {
                 groundHeight += engine.world.MetaGen.ClusterStreetHeight +
