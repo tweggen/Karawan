@@ -44,6 +44,9 @@ public class ClusterGroundHeightTests
         ["JoyceCode/engine/elevation/ClusterBaseElevationOperator.cs"] = "computes it",
         ["JoyceCode/engine/streets/FlatStreetHeight.cs"] = "is the source that returns it",
         ["JoyceCode/engine/streets/IStreetHeightSource.cs"] = "names it in a comment",
+        ["JoyceCode/engine/physics/HoverSurfaceProbe.cs"] =
+            "names it in a comment, deriving the hover clearance from the flat city the "
+            + "whole change has to leave unchanged",
 
         // Genuinely a whole-city quantity at this site.
         ["JoyceCode/engine/streets/GenerateClusterStreetsOperator.cs"] =

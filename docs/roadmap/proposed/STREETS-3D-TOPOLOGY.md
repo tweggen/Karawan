@@ -339,7 +339,9 @@ and overlap. The outer corners of a wide junction are the gap that leaves.
 
 `HoverController` holds the player's ship `ClusterNavigationHeight` (3 m) above a single
 ground sample at its centre, driven by a velocity servo. Two consequences worth having
-written down.
+written down. (Since *The ship asks the physics world what it is over* below, that sample
+is a floor rather than the whole answer — a downward raycast can raise the target onto a
+built surface, and never lower it.)
 
 **The 3 m clearance is what masks uneven ground.** The sample is one point, so a ridge
 the centre misses is not seen at all; the clearance absorbs most of what would otherwise
@@ -432,16 +434,9 @@ Both were fixed, because they fail in different places.
   with nothing to grip, and `HoverController` already does the work a tyre would by
   cancelling the part of the velocity that is not along the nose.
 
-**Deliberately NOT fixed: the height reference itself.** Making contact *rare* rather than
-benign means asking for the height of the ROAD at a position, and there is no such query:
-`StrokeStore.GetClosestStroke`/`GetClosestPoint` take a junction or a stroke, not a point,
-and share `_tmp*` scratch buffers, so they cannot be called per frame from the logical
-thread while generation runs. Writing a thread-safe positional one would buy an answer
-that is right on a carriageway and wrong everywhere else, and §2c — the corridor-conforming
-pass, which rewrites the ground along the roads — removes the discrepancy at its source
-rather than teaching one more caller to work around it. Until then the ship rides the road
-where the road stands proud, which is not wrong to look at, and it slides rather than
-sticks.
+Neither removed the cause, and the report came back: *"I still feel the car 'sticks' to
+some street, does not hover over it. How would it know the height of the street at the
+probe point to have the car hover?"* — see the next section, which fixes that.
 
 **Deliberately NOT fixed: the ship's collision body**, which `HoverModule` documents at
 length as a cylinder of zero length — `BB.Y - BB.Y` — and which was corrected once (#48)
@@ -466,6 +461,90 @@ overlapping on a very short stroke — returns before the shear, so those four v
 flat at the A end's height. Harmless while everything is flat; over terrain it is a small
 mis-heighted stub at a very short stroke, and it wants its own decision rather than being
 guessed at here.
+
+### The ship asks the physics world what it is over
+
+The two mechanisms above made contact *benign*. They did not make it *rare*, because the
+ship was still being commanded to fly below the surface it was standing on, and the
+report came back accordingly. The mechanism the report named is the fix, and it already
+exists in the tree: **the walking player finds the floor with a downward raycast**
+(`WalkController`, the cast from head height), and there was never a reason the ship
+could not ask the same question.
+
+`HoverController._probeSurfaceBelow` casts straight down from `SurfaceProbeAbove` = 2 m
+over the ship, `SurfaceProbeBelow` = 24 m deep, and reports the top of the nearest
+surface. `engine.physics.API.RayCastSync` takes the simulation lock itself, so it is safe
+from the logical thread and must not be wrapped in another. It is one ray per frame for
+one entity, against a controller that already casts several for the walking player. The
+ray starts *above* the ship for the same reason `WalkController`'s starts at head height:
+a ray beginning inside the deck the ship is standing on begins inside a convex shape and
+reports nothing.
+
+**It is an addition, not a replacement, and that is the whole safety argument.** The ray
+sees things with COLLIDERS. The terrain has none — `Fragment._createGround` adds no
+physics at all — so over open country, off the edge of the world, and over any part of a
+city that was never built on, the ray reports nothing and the answer has to be the
+terrain height that has always been flown there. So `engine.physics.HoverSurfaceProbe`
+combines the two with a **maximum**: a built surface may raise the target, never lower
+it. That also settles the cutting, where the road is *below* the terrain beside it and
+taking the ray's answer would fly the ship down into the cutting walls.
+
+**The clearance is derived, and a flat city comes out identical.** This is the arithmetic
+the change is gated on. In a flat city every drivable surface — the fragment floor plane
+(top face at `AverageHeight + CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE`), the quarter floors
+(`ClusterStreetHeight`, the same 2 m), a deck collider on a level stroke — is at the same
+height, and the existing target is `AverageHeight + ClusterNavigationHeight`. So
+
+    SurfaceClearance = ClusterNavigationHeight - CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+
+and `surface + SurfaceClearance` reproduces the old target *exactly*, which makes the
+maximum a no-op on every frame of the default game. The tempting alternative — reusing
+`ClusterNavigationHeight` as the clearance, since it is the number that says "hover
+height" — would raise the entire flat city by 2 m.
+
+**The ray hovers over the world, not over the traffic in it.**
+`HoverSurfaceProbe.IsHoverSurface` rejects a body whose `SolidLayerMask` is *only*
+moving-kind layers (`Player`, `Npc`, either side's weapons, `Collectable`, `QuestMarker`)
+and accepts anything with a bit outside that set. Deliberately not a plain intersection
+test: a house declares no mask at all and keeps the default `Layers.All`, which intersects
+everything, so an intersection test would reject most of the city. The reason for
+excluding NPCs and vehicles at all is the servo's asymmetry — the *climb* keeps full
+authority by design, so a pedestrian walking under a parked ship would not nudge it, it
+would launch it. Things that move are the solver's business, and a contact is how a hover
+ship should learn about something that can walk away. For the same reason a collider with
+no properties is accepted only when it is `Static` or `Kinematic`: unlabelled statics are
+the city's own fabric (the floor plane and every deck collider are raw statics), while an
+unlabelled *dynamic* is a loose object, and hovering over loose objects is a pogo stick.
+`WalkController` accepts all three because a player asking whether they are about to fall
+genuinely does not care.
+
+The terrain sample has NOT gone away and still owns two things: the one-sided shove and
+the rescue both test `heightAtTarget`, not the probed target, because both are about being
+inside the hill and only the terrain can say that. A ship standing on a road the probe has
+raised the target to is not below anything; it has arrived.
+
+**What is and is not covered by a test.** The combination is arithmetic and is tested —
+`HoverSurfaceProbeTests` pins the flat-city identity on the TERM and not merely on the
+result, the fill case, the cutting case, the no-hit fallback and the layer filter. The
+cast itself and the hit filter need a booted engine and a running simulation and are NOT
+exercised; a source scan stands in for them, as it does for the friction sites, and
+asserts that the cast is the SYNC one, points down, starts above the ship, rejects the
+ship's own body, and still feeds `HoverSurfaceProbe.HoverTargetHeight`.
+
+**Superseded:** the earlier note in this section that the height reference was
+deliberately left alone because there is no thread-safe positional road query. That was
+true of `StrokeStore` — `GetClosestStroke`/`GetClosestPoint` still take a junction or a
+stroke and still share `_tmp*` scratch buffers — and it was the wrong place to look. The
+road already exists in the physics world as a collider; asking *it* needs no new
+generation-side query and gives the height of whatever the ship is really over, road or
+deck or roof. §2c (the corridor-conforming pass) is still worth doing, but it is no longer
+what this depends on.
+
+**Still open, deliberately:** the probe is one ray at the ship's centre, so the hover
+height still follows a single point and the existing tilt response still reads the
+TERRAIN two metres ahead rather than the road. Both are the same trade the single ground
+sample has always been — every constant in the controller is tuned against one sample —
+and a second ray was not added because nothing in the report needs one.
 
 ---
 

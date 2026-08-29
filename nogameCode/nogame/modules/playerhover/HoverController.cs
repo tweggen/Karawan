@@ -71,6 +71,28 @@ internal class HoverController : AController
      * through the world are both "below the ground". One of them has stopped moving.
      */
     public float RestingVerticalSpeed { get; set; } = 2f;
+
+    /**
+     * How far above the ship the downward surface probe starts, in metres.
+     *
+     * Above, for the same reason WalkController casts from the walking player's head and
+     * not from their feet: a ray that begins inside the deck the ship is standing on
+     * begins inside a convex shape and reports nothing. The ship hovers
+     * HoverSurfaceProbe.SurfaceClearance (1 m) over its surface and its collision body
+     * is a disc of zero height at its centre, so anything over a metre clears it.
+     */
+    public float SurfaceProbeAbove { get; set; } = 2f;
+
+    /**
+     * How far below the ship the probe looks, in metres.
+     *
+     * Generous on purpose. It costs nothing - the ray stops at the first thing it hits -
+     * and seeing the road early is what lets the servo aim at it during the whole
+     * descent instead of discovering it a metre out and stepping the target. Deep enough
+     * to cover the drop from a raised deck to the streets under it.
+     */
+    public float SurfaceProbeBelow { get; set; } = 24f;
+
     public float NoseDownWhileAcceleration { get; set; } = 0.5f;
     public float WingsDownWhileTurning { get; set; } = 1.5f;
 
@@ -245,6 +267,80 @@ internal class HoverController : AController
     }
 
 
+    /**
+     * Find the top of whatever built surface the ship is over, or null if there is none.
+     *
+     * The same shape WalkController uses to find the floor under the walking player,
+     * because it is the same question: the terrain has no collider, so a downward ray is
+     * the only way to be told about the things that do - a street, a ramp, a deck, a
+     * quarter floor, a roof.
+     *
+     * engine.physics.API.RayCastSync takes the simulation lock itself, so this is safe
+     * from the logical thread and must NOT be wrapped in one of its own.
+     *
+     * Returning null when nothing is hit is not a failure path: over open country there
+     * genuinely is nothing built under the ship, and the caller then flies the terrain
+     * height that has always been used there.
+     */
+    private float? _probeSurfaceBelow(Vector3 vShipPos)
+    {
+        var aPhysics = I.Get<engine.physics.API>();
+
+        Vector3 vOrigin = vShipPos with { Y = vShipPos.Y + SurfaceProbeAbove };
+        float closestCollision = Single.MaxValue;
+
+        aPhysics.RayCastSync(vOrigin, -Vector3.UnitY, SurfaceProbeAbove + SurfaceProbeBelow,
+            (BepuPhysics.Collidables.CollidableReference cRef,
+                engine.physics.CollisionProperties props, float t, Vector3 vThisCollision) =>
+            {
+                /*
+                 * Never the ship itself. Its own collision body is a disc at exactly the
+                 * point this ray passes through.
+                 */
+                if (props != null && props.Entity == _eTarget)
+                {
+                    return;
+                }
+
+                bool isSurface;
+                if (props != null)
+                {
+                    isSurface =
+                        0 != (props.Flags &
+                              engine.physics.CollisionProperties.CollisionFlags.IsTangible)
+                        && engine.physics.HoverSurfaceProbe.IsHoverSurface(props.SolidLayerMask);
+                }
+                else
+                {
+                    /*
+                     * A collider with no properties at all is the city's own fabric: the
+                     * fragment floor plane and every per-stroke deck collider are raw
+                     * statics added straight to the simulation. Static and kinematic
+                     * only, though - an unlabelled DYNAMIC body is a loose object, and
+                     * hovering over loose objects turns the ship into a pogo stick.
+                     * WalkController accepts all three because a walking player wanting
+                     * to know whether they are about to fall genuinely does not care.
+                     */
+                    isSurface =
+                        cRef.Mobility is BepuPhysics.Collidables.CollidableMobility.Static
+                            or BepuPhysics.Collidables.CollidableMobility.Kinematic;
+                }
+
+                if (isSurface && t < closestCollision)
+                {
+                    closestCollision = t;
+                }
+            });
+
+        if (closestCollision == Single.MaxValue)
+        {
+            return null;
+        }
+
+        return vOrigin.Y - closestCollision;
+    }
+
+
     protected override void OnLogicalFrame(object sender, float dt)
     {
         Vector3 vTotalImpulse = new Vector3(0f, 9.81f, 0f);
@@ -289,9 +385,26 @@ internal class HoverController : AController
         }
 
         float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
+
+        /*
+         * What the ship is actually over. heightAtTarget is the TERRAIN plus a clearance,
+         * and the terrain is not what a city is driven on: streets are relaxed to
+         * buildable gradients, so on a hillside they stand on fill and the terrain-derived
+         * height is BELOW the road the ship is riding. Aiming there means commanding a
+         * descent into the road for as long as the ship drives along it.
+         *
+         * The maximum is the whole safety argument, and HoverSurfaceProbe carries it: the
+         * ray sees colliders only, the terrain has none, so a built surface may raise the
+         * target and may never lower it. The clearance is derived so that a flat city -
+         * where the floor plane is exactly CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE up and the
+         * old target exactly ClusterNavigationHeight - comes out identical.
+         */
+        float hoverHeightAtTarget = engine.physics.HoverSurfaceProbe.HoverTargetHeight(
+            heightAtTarget, _probeSurfaceBelow(vTargetPos));
+
         {
             var properDeltaY = 0;
-            var deltaY = vTargetPos.Y - (heightAtTarget + properDeltaY);
+            var deltaY = vTargetPos.Y - (hoverHeightAtTarget + properDeltaY);
 
             /*
              * Climb at full authority, descend proportionally. The asymmetry is the
@@ -494,6 +607,12 @@ internal class HoverController : AController
          * but it also raises the effective hover height over any uneven ground, and every
          * constant in this controller is tuned against the current one. Not worth the
          * retune for the clipping it would buy.
+         *
+         * Deliberately heightAtTarget and NOT hoverHeightAtTarget. Everything below is
+         * about being inside the hill - the shove, and the rescue for a ship that has
+         * gone through the world entirely - and only the terrain sample can say that. A
+         * ship standing on a road that the probe has raised the target to is not below
+         * anything; it has arrived.
          */
         if (vTargetPos.Y < heightAtTarget)
         {
