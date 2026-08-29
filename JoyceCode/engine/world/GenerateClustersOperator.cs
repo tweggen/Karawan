@@ -287,6 +287,25 @@ public class GenerateClustersOperator : world.IWorldOperator
                     engine.elevation.Cache.LAYER_BASE + $"/000100/flattenCluster/{newKey}-{cl1.IdString}",
                     clusterElevationOperator
                 );
+
+                /*
+                 * And, where the city keeps the shape of the ground, grade that ground
+                 * toward the streets that were relaxed onto it.
+                 *
+                 * Registered only when the flag is on, so that the default world's layer
+                 * list is exactly what it has always been. The operator would do nothing
+                 * either way - it short circuits on IStreetHeightSource.IsFlat - but a
+                 * layer that is not there cannot be reached by anything, including by
+                 * the "first layer below" search that every other operator runs.
+                 */
+                if (engine.streets.StreetHeightSources.FollowsTerrain)
+                {
+                    elevationCache.ElevationCacheRegisterElevationOperator(
+                        engine.elevation.ClusterConformElevationOperator.Layer
+                        + $"/conformCluster/{newKey}-{cl1.IdString}",
+                        new elevation.ClusterConformElevationOperator(cl1, newKey)
+                    );
+                }
             }
         }
     }

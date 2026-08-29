@@ -1,9 +1,11 @@
 # Three-dimensional street topology
 
-**Status:** Phase A landed — the seam, the flag, the terrain source, gradient relaxation,
-per-street collision, traffic and pedestrians, and city blocks — plus the junction-seam
+**Status:** Phase A is complete — the seam, the flag, the terrain source, gradient
+relaxation, per-street collision, traffic and pedestrians, city blocks, and now the
+conforming pass (§2c) that makes the ground agree with the roads — plus the junction-seam
 defect it turned up (§7). A terrain-following city renders, drives and is walked on. The
-corridor-conforming pass (§2c) and the intercity network are what remain.
+intercity network is what remains of Phase A's follow-up list, and Phase B (the crossing
+policy) has not been started.
 **Follows:** the streets generator rework (WP-0 … WP-5) — levels, ramps, deck geometry,
 deck collision and both gates are in place.
 
@@ -76,7 +78,7 @@ does the bending. `Stroke.Weight` and `IsPrimary` already carry that hierarchy.
 Junction heights are shared by every stroke meeting there, so the relaxation converges
 on a network that is consistent by construction.
 
-### 2c. Conform
+### 2c. Conform — **and it is not a corridor.** *(done, see §7d)*
 
 After relaxation, `streetHeight - terrainHeight` at each junction says what the ground
 has to do:
@@ -87,28 +89,54 @@ has to do:
 | street above terrain | embankment, or a viaduct if it is large |
 | street below terrain | cutting |
 
-The elevation operator then flattens a **corridor** — a band roughly
-`streetWidth + shoulder` wide along each stroke, blended out over some distance — to
-the street height, instead of flattening the whole city rectangle. Same operator, same
-place in the pipeline, given the street graph instead of a rectangle.
+This section used to say the elevation operator flattens a **corridor** — a band roughly
+`streetWidth + shoulder` wide along each stroke, blended out over some distance. **That is
+not achievable at the resolution the elevation grid runs at, and nobody should propose it
+again without changing the grid first.**
 
-### The ordering problem, which is the real risk here
+> **The resolution finding.** `MetaGen.GroundResolution = 20` over
+> `MetaGen.FragmentSize = 400` is **one elevation sample every 20 m**. A street is 8–22 m
+> wide (`Stroke.StreetWidth`), so `streetWidth + shoulder` is *about one cell*. Cutting a
+> band that narrow into a grid that coarse does not produce a cutting; it produces
+> terracing — one row of samples dropped, with a 20 m wall on either side. The shape being
+> asked for is not representable. A real cutting, with batters and a shoulder, needs a
+> finer grid inside cities, and that is a separate and much larger change (every fragment
+> in a city gets more samples, and the terrain mesh, the cache and every operator above it
+> pay for it).
 
-Elevation operators currently run **before** streets: streets read `AverageHeight`,
-which the elevation operator computes. Making the terrain depend on the streets creates
-a cycle.
+What was built instead is **grading the city site toward the street height field**: every
+elevation sample inside the city takes a weighted mean of the street heights near it and
+is blended toward that mean, with the influence falling off over a few cells. Same
+operator, same place in the pipeline, given the street graph instead of a rectangle — it
+is only the *shape* the operator writes that changed. The result is ground a road sits
+naturally on. Sharp cuts and embankments are explicitly not attempted.
 
-The way out is two passes, and it should be decided before any code is written:
+### The ordering problem, which was the real risk here
 
-1. a coarse base elevation, roughly what exists now but *without* the flattening —
-   enough for junctions to sample;
-2. after the street graph exists, a corridor-conforming pass that rewrites the terrain
-   along the streets.
+Elevation operators run **before** streets: streets read `AverageHeight`, which the
+elevation operator computes. Making the terrain depend on the streets creates a cycle.
 
-Fragments are generated on demand and cached, so pass 2 has to be expressible as a
-fragment operator that runs after the cluster's street graph is available. That is the
-part I would prototype first, because if it does not fit the operator pipeline cleanly,
-everything above it is academic.
+The way out was already in the tree, and it is the **layer mechanism**. Elevation
+operators register at ordered layer strings and each reads the layers strictly *below* its
+own; `Loader.GetHeightAt` already took a `layer` parameter, defaulting to
+`Cache.TOP_LAYER`. So the two passes are two layers:
+
+```
+/000002/fillGrid            base terrain
+/000100/flattenCluster/...  ClusterBaseElevationOperator - average, biome, flatten
+/000150/conformCluster/...  ClusterConformElevationOperator - the conforming pass
+/000200/intercityTrails/... the intercity network
+```
+
+`TerrainStreetHeight` samples `/000150` rather than `TOP_LAYER`, which resolves to the
+flattening layer and below — the terrain as it was before any city conformed it. Street
+generation therefore cannot reach the conforming operator, and the conforming operator is
+free to ask for the street graph. Everything else — rendering, `GetWalkingHeightAt`, the
+hover probe's terrain fallback — still reads `TOP_LAYER` and sees the conformed result.
+
+Fragments are generated on demand and cached, and the pass is deterministic in the stroke
+graph rather than in what has been visited, so a fragment recomputed later comes back
+identical.
 
 ---
 
@@ -162,8 +190,8 @@ WP-2b removed the dead operands but recorded the intent. This is where it belong
 
 ## 5. Suggested sequencing
 
-**Phase A — 3D cities, no bridges.** Sample, relax, conform. Every cluster changes and
-caches are invalidated once. No crossing policy at all: shared junction heights keep
+**Phase A — 3D cities, no bridges. *Done.*** Sample, relax, conform. Every cluster changes
+and caches are invalidated once. No crossing policy at all: shared junction heights keep
 the network consistent, so there is nothing to decide. This is the big visual win and
 it is independent of everything in §4.
 
@@ -193,6 +221,7 @@ network baselines, the geometry baselines and all 200 TALE tests are unchanged.
 | 3 — terrain source | **done.** `TerrainStreetHeight`, cached per junction |
 | 4 — gradient relaxation | **done.** `GradeRelaxer`, `GradePolicy`, `RelaxedStreetHeight` |
 | 5 — ground colliders per stroke | **done.** `IsNeededFor(stroke, groundIsFlat)`, floor plane suppressed, walking height follows |
+| 6 — the ground conforms to the roads | **done.** `ClusterConformElevationOperator`, `StreetHeightField`, and a sampling layer for `TerrainStreetHeight` (§7d) |
 
 Three things worth recording.
 
@@ -548,13 +577,16 @@ and a second ray was not added because nothing in the report needs one.
 
 ---
 
-## 8. What I would prototype first
+## 8. What was prototyped first, and how it turned out
 
-The corridor-conforming pass (§2c), because it is the only part whose fit with the
-existing operator pipeline is genuinely uncertain. Sampling and relaxation are
-self-contained and testable against the street graph alone; if the conforming pass
-turns out not to fit, it changes the shape of the whole phase, and it is better to know
-that before the rest is built on top of it.
+The conforming pass (§2c), because it was the only part whose fit with the existing
+operator pipeline was genuinely uncertain. It fits, and it needed no new machinery at all:
+one more elevation operator at one more layer, plus a `layer` argument at one call site
+that `Loader.GetHeightAt` already accepted. See §7d.
+
+What did *not* survive contact was the shape it writes. The corridor was not rejected on
+taste; it is not expressible on a 20 m elevation grid, and that is recorded in §2c so
+nobody re-proposes it without changing the grid first.
 
 
 ---
@@ -602,3 +634,136 @@ plane, and it is kept because it is the evidence for the choice.
 a probability-field *coordinate*, not a position, and feeding it the terrain would make
 which shops exist depend on the ground under them — a generation change, and not one
 this work is about.
+
+---
+
+## 7d. The ground conforms to the roads (§2c, done)
+
+`ClusterConformElevationOperator` grades the city site toward the street height field, so
+that a road sits on ground rather than slicing through the hillside it crosses and
+standing proud of the dip it spans.
+
+### The layer, and why it sits below intercity
+
+The cycle dissolves through the existing layer mechanism — see §2c for the stack. The
+conforming operators register under `ClusterConformElevationOperator.Layer` =
+`/000000/000150`, one per cluster, and `TerrainStreetHeight` samples **that same constant**
+rather than `TOP_LAYER`. One constant for both halves on purpose: a layer string is read
+as "the first layer strictly below this one", so the registrations sorting *after* it and
+the flattening layer sorting *before* it are the two facts that make "streets read
+unconformed ground" true, and splitting them into two spellings is how that stops being
+true without anything failing to compile.
+
+**Below `/000200/intercityTrails`, not above.** `IntercityTrackElevationOperator` hard-sets
+the terrain to its line's own constant height along a narrow band. That is an absolute
+override and not a shape a city may smooth away — and keeping intercity last also means
+its relationship to the city terrain is exactly what it has always been: it overwrote the
+flat plateau before, and it overwrites the graded site now.
+
+**The recursion terminates, and the layer is why.** The operator needs
+`clusterDesc.StrokeStore()`, which triggers street generation, which samples junction
+heights — but through `TerrainStreetHeight`, which reads strictly *below* the conforming
+layer and therefore reaches flattening and the base grid and stops. The search
+`Cache._getNextFactoryEntryBelow` runs is a strict descent through a sorted list, so even
+where two cities overlap, the higher-keyed one may read the lower-keyed one's conformed
+ground and never the reverse. And `ClusterDesc._triggerStreets_nl` returns immediately once
+the cluster has left `Created`, so the one remaining re-entry — a cluster operator that
+reads `TOP_LAYER` while the cluster is still generating — bottoms out at depth two.
+
+### What it writes
+
+For each elevation sample, `StreetHeightField.TryHeightAt` answers with the streets'
+opinion and how strongly they hold it, and `Blend` moves the terrain that far:
+
+- **Kernel: smoothstep, `t²(3 − 2t)` with `t = 1 − d/R`.** Zero derivative at *both* ends.
+  At the far end the graded ground meets untouched terrain tangentially instead of
+  creasing along a circle around every street; at the near end the road sits in a flat pad
+  rather than on the apex of a tent. On this grid a crease lands on a single row of samples
+  and reads as exactly the terracing the corridor was rejected for.
+- **Radius: three elevation cells, 60 m.** A property of the *grid*, not of roads. Below
+  about two cells there are no samples inside the falloff to carry a ramp and what comes
+  out is the step again; and a skirt of a few tens of metres is a plausible batter for the
+  couple of metres of cut and fill `GradeRelaxer` leaves behind, so three is not merely the
+  smallest number that works. It is expressed in cells, so that refining the grid inside a
+  city has to come past it.
+- **A weighted mean of the streets in range, not the nearest one.** Nearest-wins jumps as
+  the winner changes and that seam runs down the middle of every block. Two strokes meeting
+  at a junction agree there by construction, so the mean is exact where it matters most and
+  only smooths between streets that genuinely differ.
+- **The influence is the LARGEST single weight, not the sum.** A sum exceeds one wherever
+  streets are dense and would have to be clamped, which puts a hard edge wherever the clamp
+  starts biting; the largest weight is already in [0, 1] and reaches 1 exactly on a road.
+- **The target is the ground height under the junction, with no offset.** That is the
+  quantity §7b said the two would converge on: after this pass `ClusterDesc.GroundHeightAt`
+  (the terrain) and `IStreetHeightSource.GroundHeightAt` (the relaxed junction) agree near
+  a road, so pedestrians, quarter pads and street surfaces stop disagreeing by the cut or
+  fill.
+
+**Only the height is written.** `ClusterBaseElevationOperator` wrote `Biome = 1` across the
+city rectangle below, and that still means "this is city" whatever shape the ground has.
+
+**Determinism.** Strokes are iterated in `Sid` order, as `GradeRelaxer` does, so the
+floating point addition order is fixed; the field is built once per city from the *whole*
+stroke graph rather than from the strokes overlapping the fragment being computed, so two
+neighbouring fragments cannot disagree along their shared edge and a fragment recomputed
+after a different set of neighbours comes back bit for bit identical.
+
+**Cost.** One AABB rejection per stroke per elevation sample, on a box already grown by the
+radius: 441 samples per fragment × the cluster's stroke count. For the largest city in the
+baselines (3000 m, 1875 strokes) that is about 830 000 four-comparison rejections per
+fragment, a few milliseconds, once, at generation time; a 500 m city has 29 strokes and it
+is not measurable. Deliberately *not* `StrokeStore.GetClosestStroke`/`GetClosestPoint`,
+which take a junction or a stroke rather than a position and share `_tmp*` scratch buffers.
+
+### A sample-placement bug, found and fixed here only
+
+A segment carries `GroundResolution + 1` samples spanning `FragmentSize`, so the step is
+`FragmentSize / GroundResolution` and the last sample sits on the far edge — which is
+exactly the spacing `CacheEntry.GetElevationPixelAt` reads them back at.
+`ClusterBaseElevationOperator` and `IntercityTrackElevationOperator` both divide the span
+by the sample *count* instead, placing every sample about five percent short and restarting
+the error at each fragment. **They were left alone**: each writes a constant inside a
+rectangle, so the only consequence is a city boundary ragged by a sample width, and fixing
+them would move the flat-city baseline. Here it would have put a step in the graded ground
+along every fragment seam, so the conforming pass uses the correct spacing.
+
+### What is and is not covered by a test
+
+`StreetHeightField` is pure — a list of segments, a height at each end and a distance
+falloff, with no terrain, no fragments and no engine — so the kernel, the blend and the
+positional query are tested directly, including the determinism of the iteration order.
+The write itself is tested through an extracted `Grade` that takes only elevation segments.
+
+**The flat default path is proved, not asserted**, twice over: the operator is not
+registered at all unless the flag is on (`GenerateClustersOperator`, scanned for), and the
+operator short-circuits on `IStreetHeightSource.IsFlat` before it touches `StrokeStore()`,
+which a test drives with a fake elevation provider and asserts hands every field of every
+pixel through unchanged.
+
+**The operator also checks its own AABB**, which the "first layer below" search would
+normally do for it. `Cache.ElevationCacheGetAt` runs the TOP layer's operator for *every*
+fragment in the world with the intersection test disabled (`if (true /* || …intersects */)`),
+and this is the top layer in any world with no intercity network registered above it —
+without the check, the first fragment loaded anywhere would generate a city's whole street
+graph to grade ground a kilometre away from it. Covered by a test using a *non-flat* source,
+so the flat short circuit cannot be what passes it.
+
+**Not covered:** `ElevationOperatorProcess` on a terrain-following city, which calls
+`StrokeStore()` and therefore generates a whole city and needs the `I` container, the
+engine and the elevation cache; and the layer *resolution*, which lives in the
+process-global `elevation.Cache` singleton that a test may not register operators into
+without leaking them into every other test in the assembly. Source scans and a direct test
+of the three string comparisons stand in for those.
+
+### Still open, deliberately
+
+- **The grid inside cities is still 20 m.** Real cuttings and embankments want a finer one,
+  and that is the change §2c now says must come first.
+- **The residual.** Within the radius the ground is the streets' weighted mean, so where two
+  streets genuinely differ the ground splits the difference rather than meeting each of them
+  exactly. That error is bounded by the *variation* between neighbouring relaxed streets,
+  where the error before this pass was the whole cut or fill.
+- **The two sibling operators' sample placement**, above.
+- **`ClusterBaseElevationOperator` still writes `aver + 1.5`** for the flat path while
+  `GroundHeightAt` returns `aver`. The flat path papers over the 1.5 m with `IsFlat`, and
+  untangling it would move the flat baseline for no visible gain.

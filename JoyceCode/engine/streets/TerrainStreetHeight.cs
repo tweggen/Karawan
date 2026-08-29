@@ -53,7 +53,18 @@ public sealed class TerrainStreetHeight : IStreetHeightSource
             0f,
             _clusterDesc.Pos.Z + sp.Pos.Y);
 
-        float h = I.Get<world.MetaGen>().Loader.GetHeightAt(v3World);
+        /*
+         * Explicitly NOT the top layer. ClusterConformElevationOperator grades the ground
+         * toward the streets, so a street reading the top of the stack would be reading
+         * its own answer back and the two would chase each other. A layer string is read
+         * as "the first layer strictly below this one", and the conforming operators sit
+         * on that layer - so this samples the terrain as it was before any city touched
+         * it, which is exactly the input the relaxation is supposed to have. That is the
+         * whole of the cycle break; everything else in the game still reads the top layer
+         * and sees the conformed ground.
+         */
+        float h = I.Get<world.MetaGen>().Loader.GetHeightAt(
+            v3World, elevation.ClusterConformElevationOperator.Layer);
 
         lock (_lo)
         {

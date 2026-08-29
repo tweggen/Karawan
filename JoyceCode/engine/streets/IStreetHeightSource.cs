@@ -72,6 +72,18 @@ public static class StreetHeightSources
     public const string DisableClusterFlatteningSetting = "joyce.DisableClusterFlattening";
 
 
+    /**
+     * Whether cities keep the shape of the ground they stand on.
+     *
+     * The one reading of the setting, so that the three places that turn on it - which
+     * source a city gets, whether the terrain under it is ironed flat, and whether the
+     * conforming elevation operator is registered at all - cannot come to different
+     * conclusions about the same world.
+     */
+    public static bool FollowsTerrain
+        => GlobalSettings.Get(DisableClusterFlatteningSetting) == "true";
+
+
     public static IStreetHeightSource For(world.ClusterDesc clusterDesc, bool followTerrain)
     {
         if (!followTerrain)
@@ -95,7 +107,7 @@ public static class StreetHeightSources
 
     public static IStreetHeightSource For(world.ClusterDesc clusterDesc)
     {
-        bool followTerrain = GlobalSettings.Get(DisableClusterFlatteningSetting) == "true";
+        bool followTerrain = FollowsTerrain;
 
         /*
          * Say which mode the world is in, once per process.
