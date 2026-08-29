@@ -54,11 +54,12 @@ public class Engine
     private engine.joyce.HierarchyApi _aHierarchy;
 
     private DefaultEcs.Command.EntityCommandRecorder _entityCommandRecorder;
-    #if !DEBUG
-    private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists = new();
-    #else
-    private HashSet<DefaultEcs.Entity> _setDoomedEntities = new();
-    #endif
+    /*
+     * Entities asked to stop existing, drained by _executeDoomedEntities below.
+     * Carries its own lock; see DoomedEntitySet for why dooming is idempotent and
+     * why the deduplication is not DEBUG-only.
+     */
+    private readonly DoomedEntitySet _doomedEntities = new();
 
     private bool _isSingleThreaded = true;
 
@@ -366,93 +367,27 @@ public class Engine
     
     private void _executeDoomedEntities()
     {
-#if !DEBUG
-        List<IList<DefaultEcs.Entity>> listList;
-        lock (_lo)
-        {
-            if (_listDoomedEntityLists.Count == 0)
-            {
-                return;
-            }
-
-            listList = _listDoomedEntityLists;
-            _listDoomedEntityLists = new();
-        }
-
-        if (null == listList)
+        if (!_doomedEntities.TryDrain(out var listDoomed))
         {
             return;
         }
 
-        foreach (var list in listList)
+        foreach (var entity in listDoomed)
         {
-            foreach (var entity in list)
-            {
-                entity.Dispose();
-            }
+            entity.Dispose();
         }
-#else
-        List<Entity> list = new();
-        lock (_lo)
-        {
-            list = new(_setDoomedEntities);
-            _setDoomedEntities.Clear();
-        }
-
-        foreach (var e in list)
-        {
-            e.Dispose();
-        }
-#endif
     }
 
 
     public void AddDoomedEntities(in IList<DefaultEcs.Entity> listDoomedEntities)
     {
-        lock (_lo)
-        {
-#if !DEBUG
-            _listDoomedEntityLists.Add(listDoomedEntities);
-#else
-            foreach (var e in listDoomedEntities)
-            {
-                if (!e.IsAlive)
-                {
-                    ErrorThrow<ArgumentException>($"Tried to kill an entity {e} that has not been alive anymore.");
-                }
-                if (_setDoomedEntities.Contains(e))
-                {
-                    ErrorThrow<ArgumentException>($"Entity {e} already was doomed before.");
-                }
-
-                _setDoomedEntities.Add(e);
-            }
-#endif
-        }
+        _doomedEntities.AddRange(listDoomedEntities);
     }
 
 
     public void AddDoomedEntity(DefaultEcs.Entity entity)
     {
-        lock (_lo)
-        {
-#if !DEBUG
-            List<Entity> listEntity = new List<Entity>();
-            listEntity.Add(entity);
-            _listDoomedEntityLists.Add(listEntity);
-#else
-            if (!entity.IsAlive)
-            {
-                ErrorThrow<ArgumentException>($"Tried to kill an entity {entity} that has not been alive anymore.");
-            }
-            if (_setDoomedEntities.Contains(entity))
-            {
-                ErrorThrow<ArgumentException>($"Entity {entity} already was doomed before.");
-            }
-
-            _setDoomedEntities.Add(entity);
-#endif
-        }
+        _doomedEntities.Add(entity);
     }
 
 

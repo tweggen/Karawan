@@ -41,6 +41,15 @@ internal class HoverController : AController
     public float LevelDownThrust { get; set; } = 16f;
 
     /**
+     * Time constant of the descent onto the hover height, in seconds.
+     *
+     * See engine.physics.HoverHeightServo for why the descent is proportional and the
+     * climb is not. Exposed here so it can be tuned with the two thrusts it belongs to.
+     */
+    public float LevelDownApproachTime { get; set; } =
+        engine.physics.HoverHeightServo.DefaultLevelDownApproachTime;
+
+    /**
      * How far below the ground the ship has to be before it is picked up and put back,
      * in metres.
      *
@@ -283,19 +292,22 @@ internal class HoverController : AController
         {
             var properDeltaY = 0;
             var deltaY = vTargetPos.Y - (heightAtTarget + properDeltaY);
-            const float threshDiff = 0.01f;
+
+            /*
+             * Climb at full authority, descend proportionally. The asymmetry is the
+             * point and is argued in HoverHeightServo: the descent command is the one
+             * that keeps being issued while a built surface holds the ship above the
+             * terrain sample, and at a constant full thrust it pressed the ship onto
+             * that surface hard enough that friction beat the ship's own engine.
+             */
+            float properVelocity = engine.physics.HoverHeightServo.CommandedVerticalVelocity(
+                deltaY,
+                LevelUpThrust,
+                LevelDownThrust,
+                LevelDownApproachTime,
+                engine.physics.HoverHeightServo.DefaultDeadBand);
 
             Vector3 impulse;
-            float properVelocity = 0f;
-            if (deltaY < -threshDiff)
-            {
-                properVelocity = LevelUpThrust; // 1ms-1 up.
-            }
-            else if (deltaY > threshDiff)
-            {
-                properVelocity = -LevelDownThrust; // 1ms-1 down.
-            }
-
             float deltaVelocity = properVelocity - vTargetVelocity.Y;
             float fireRate = deltaVelocity;
             impulse = new Vector3(0f, fireRate, 0f);

@@ -426,6 +426,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TransformApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\DebugCategories.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\DoomedEntitySet.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\DebugInterpolatedStringHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\DebugFilter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecApplyParallelNode.cs" />
@@ -474,6 +475,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ContactEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ContactInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\DefaultRayHitHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\HoverHeightServo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\NarrowPhaseCallbacks.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\PoseIntegratorCallbacks.cs" />

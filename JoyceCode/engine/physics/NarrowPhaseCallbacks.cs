@@ -45,15 +45,22 @@ namespace engine.physics
 
         private void _setCollisionFlags(
             CollidableReference a,
-            out bool doACollide, 
+            out bool doACollide,
             out bool doADetect,
-            out CollisionProperties.Layers aSolidLayerMask, 
-            out CollisionProperties.Layers aSensitiveLayerMask)
+            out CollisionProperties.Layers aSolidLayerMask,
+            out CollisionProperties.Layers aSensitiveLayerMask,
+            out float aFriction)
         {
             doACollide = false;
             doADetect = false;
+
+            /*
+             * A body with no properties of its own gets the friction the world has
+             * always had. Nothing about it changes.
+             */
+            aFriction = CollisionProperties.DefaultFriction;
             CollisionProperties propsA;
-            
+
             switch (a.Mobility)
             {
                 case CollidableMobility.Dynamic:
@@ -63,6 +70,7 @@ namespace engine.physics
                         doADetect = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsDetectable);
                         aSolidLayerMask = propsA.SolidLayerMask;
                         aSensitiveLayerMask = propsA.SensitiveLayerMask;
+                        aFriction = propsA.Friction;
                     }
                     else
                     {
@@ -73,7 +81,7 @@ namespace engine.physics
                     }
 
                     break;
-                
+
                 case CollidableMobility.Kinematic:
                     if(I.Get<engine.physics.API>().GetCollisionProperties(a.BodyHandle, out propsA))
                     {
@@ -81,6 +89,7 @@ namespace engine.physics
                         doADetect = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsDetectable);
                         aSolidLayerMask = propsA.SolidLayerMask;
                         aSensitiveLayerMask = propsA.SensitiveLayerMask;
+                        aFriction = propsA.Friction;
                     }
                     else
                     {
@@ -90,7 +99,7 @@ namespace engine.physics
                         aSensitiveLayerMask = 0;
                     }
                     break;
-                
+
                 default:
                 case CollidableMobility.Static:
                     if (I.Get<engine.physics.API>().GetCollisionProperties(a.StaticHandle, out propsA))
@@ -99,6 +108,7 @@ namespace engine.physics
                         doADetect = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsDetectable);
                         aSolidLayerMask = propsA.SolidLayerMask;
                         aSensitiveLayerMask = propsA.SensitiveLayerMask;
+                        aFriction = propsA.Friction;
                     }
                     else
                     {
@@ -111,23 +121,28 @@ namespace engine.physics
             }
         }
 
-        private bool _simpleShallDetect(CollidableReference a, CollidableReference b, bool alsoCollide)
+        private bool _simpleShallDetect(
+            CollidableReference a, CollidableReference b, bool alsoCollide, out float pairFriction)
         {
             /*
              * Try to obtain collision properties of either body.
              *
              * Currently, we only care about collision between dynamic and [static, kinetic] objects.
              */
-            _setCollisionFlags(a, 
-                out var doACollide, 
-                out var doADetect, 
+            _setCollisionFlags(a,
+                out var doACollide,
+                out var doADetect,
                 out var aSolidLayerMask,
-                out var aSensitiveLayerMask);
-            _setCollisionFlags(b, 
-                out var doBCollide, 
-                out var doBDetect, 
+                out var aSensitiveLayerMask,
+                out var aFriction);
+            _setCollisionFlags(b,
+                out var doBCollide,
+                out var doBDetect,
                 out var bSolidLayerMask,
-                out var bSensitiveLayerMask);
+                out var bSensitiveLayerMask,
+                out var bFriction);
+
+            pairFriction = CollisionProperties.CombineFriction(aFriction, bFriction);
 
             /*
              * it is sufficient to symmetrically detect the collision, the callback handling
@@ -174,7 +189,7 @@ namespace engine.physics
 
             //This function also exposes the speculative margin. It can be validly written to, but that is a very rare use case.
             //Most of the time, you can ignore this function's speculativeMargin parameter entirely.
-            return _simpleShallDetect(a, b, false); 
+            return _simpleShallDetect(a, b, false, out _);
             // a.Mobility == CollidableMobility.Dynamic || b.Mobility == CollidableMobility.Dynamic;
         }
 
@@ -211,19 +226,32 @@ namespace engine.physics
         {
 
             /*
-             * Setup a bogus pair material.
-
-            //The engine does not define any per-body material properties. Instead, all material lookup and blending operations are handled by the callbacks.
-            //For the purposes of this demo, we'll use the same settings for all pairs.
-            //(Note that there's no 'bounciness' or 'coefficient of restitution' property!
-            //Bounciness is handled through the contact spring settings instead. Setting See here for more details: https://github.com/bepu/bepuphysics2/issues/3 and check out the BouncinessDemo for some options.)
+             * Bepu defines no per-body material properties - all material lookup and
+             * blending is the callbacks' job - so the pair material is assembled here.
+             *
+             * Stiffness and recovery are still one setting for the whole world, which
+             * is what the demo this was copied from did and what everything has been
+             * tuned against. FRICTION IS NOT, any more.
+             *
+             * It used to be 1.0 for literally every pair, which is a wheels-on-asphalt
+             * number, and the player's ship has no wheels. A body pressed onto a
+             * surface resists tangentially with mu times its normal load, and at 1.0
+             * the ship's own maximum thrust lost that comparison: whenever anything
+             * built held it above the height its hover loop was aiming for, it was
+             * simply glued to the spot. Bodies take their coefficient from their
+             * collision properties now, and anything that does not say otherwise
+             * carries the 1.0 the world has always had.
+             *
+             * (Note there is no 'bounciness' or restitution property either; bounce is
+             * handled through the contact spring settings. See
+             * https://github.com/bepu/bepuphysics2/issues/3 and the BouncinessDemo.)
              */
-            pairMaterial.FrictionCoefficient = 1f;
             pairMaterial.MaximumRecoveryVelocity = 10;
             pairMaterial.SpringSettings = new SpringSettings(30, 1);
 
-            bool shallCollide = _simpleShallDetect(pair.A, pair.B, true);
-            
+            bool shallCollide = _simpleShallDetect(pair.A, pair.B, true, out float pairFriction);
+            pairMaterial.FrictionCoefficient = pairFriction;
+
             //The IContactManifold parameter includes functions for accessing contact data regardless of what the underlying type of the manifold is.
             //If you want to have direct access to the underlying type, you can use the manifold.Convex property and a cast like Unsafe.As<TManifold, ConvexContactManifold or NonconvexContactManifold>(ref manifold).
             _events.HandleManifold(workerIndex, pair, ref manifold);

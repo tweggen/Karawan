@@ -75,4 +75,40 @@ public class CollisionProperties
      * This is the mask of layers I am sensitive to.
      */
     [JsonInclude] public Layers SensitiveLayerMask = Layers.All;
+
+
+    /**
+     * What the world has always used, and what anything that does not say otherwise
+     * keeps using: rubber on dry asphalt, near enough.
+     *
+     * It is the right number for a body with wheels or feet and the wrong one for
+     * anything that is meant to graze a surface rather than grip it.
+     */
+    public const float DefaultFriction = 1f;
+
+
+    /**
+     * Coefficient of friction this body brings to a contact.
+     *
+     * Per body rather than per pair, because the interesting cases are all a property
+     * of ONE participant: a hover vehicle has no wheels and should slide off whatever
+     * it touches, and what it happens to touch - a road, a kerb, a wall, a pedestrian -
+     * does not change that.
+     *
+     * Lowering it does not make a body less solid. Contacts are still generated and
+     * still resolved; only the tangential part of the resolution is weakened, so the
+     * body slides along the surface instead of being held to it.
+     */
+    [JsonInclude] public float Friction = DefaultFriction;
+
+
+    /**
+     * The coefficient a contact between two bodies is resolved with.
+     *
+     * The LOWER of the two, so that a body which declares itself slippery is slippery
+     * against everything, which is the whole reason a body would declare it. Averaging
+     * or multiplying would let the surface argue, and then a hover ship would grip
+     * exactly the high friction road surface it most needs not to.
+     */
+    public static float CombineFriction(float a, float b) => Single.Min(a, b);
 }

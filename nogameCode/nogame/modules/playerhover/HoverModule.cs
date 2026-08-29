@@ -43,6 +43,20 @@ public class HoverModule : AModule, IInputPart
     
     public float MassShip { get; set; } = 500f;
 
+    /**
+     * Coefficient of friction the ship brings to a contact.
+     *
+     * A hover vehicle has nothing to grip with. The world's default is 1.0 - rubber on
+     * asphalt - and against that the ship loses: pressed onto a surface at the hover
+     * loop's descent authority it resists tangentially with more force than
+     * LinearThrust can produce, so it stops dead the moment it touches anything and
+     * stays stopped. Low enough to graze off a kerb, a wall or a road standing proud of
+     * the hill it crosses, and it costs nothing to steer with: HoverController does the
+     * work a tyre would, cancelling the part of the velocity that is not along the
+     * ship's nose itself.
+     */
+    public float FrictionShip { get; set; } = 0.05f;
+
 
     public string AnimName { get; set; } = "";
     public string ModelUrl { get; set; } = "car6.obj";
@@ -265,7 +279,8 @@ public class HoverModule : AModule, IInputPart
                         | CollisionProperties.CollisionFlags.TriggersCallbacks,
                     Name = PhysicsName,
                     SolidLayerMask = CollisionProperties.Layers.PlayerVehicle,
-                    SensitiveLayerMask = CollisionProperties.Layers.PlayerSensitive
+                    SensitiveLayerMask = CollisionProperties.Layers.PlayerSensitive,
+                    Friction = FrictionShip
                 };
             engine.physics.Object po;
             lock (_engine.Simulation)

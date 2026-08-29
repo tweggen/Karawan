@@ -389,6 +389,78 @@ flat. It is a one-line condition inside code that needs a fragment and a physics
 simulation to run; the per-stroke decision either side of it is tested, the suppression
 itself is not.
 
+### When the ship does touch, it slides
+
+Reported from play: *"when the car is touching ground, it is high friction and isn't
+realistically capable to move. In the position where it is kept hovering it looks
+better."* Hovering is the wanted state; contact was the broken one. Two mechanisms, and
+the arithmetic decides between them.
+
+**The hover height and the road disagree, and the disagreement is signed.** The hover
+loop aims at `ClusterDesc.GroundHeightAt` + `ClusterNavigationHeight` — terrain + 3 m —
+while the surface under the ship is `StreetHeightSource.GroundHeightAt(junction)` +
+`CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE` — relaxed street + 2 m. `GradeRelaxer` takes only
+the excess gradient off, so on ground steeper than 5–14 % the road cannot follow it: over
+a 50 m stroke on a hillside rising 10 m, an arterial limited to 5 % may climb 2.5 m, and
+the remaining 7.5 m becomes cut at one end and **fill** at the other. Wherever the fill
+exceeds 1 m the road stands ABOVE the height the hover loop is aiming at, and the loop
+then does the worst possible thing: it commands a descent, into the road, for as long as
+the ship drives along it. In a cutting the sign flips and the ship hovers clear — which
+is the state that "looks better", and is the same state a flat city is always in.
+
+**Friction was 1.0 for every pair in the world**, from the Bepu demo the narrow-phase
+callbacks were copied from. A body pressed onto a surface resists tangentially with μ
+times its normal load, and here the numbers cross: the descent command was a constant
+`LevelDownThrust` = 16 m/s, so a ship held above its target carried a sustained normal
+load of 500 kg × 16 m/s² = 8000 N, against a maximum forward thrust of 500 kg ×
+`LinearThrust` × 255/256 = 7470 N. Friction beat the engine. That is not "sticky", it is
+immobile, which is exactly what was reported.
+
+Both were fixed, because they fail in different places.
+
+- **`engine.physics.HoverHeightServo` makes the command asymmetric.** Climbing keeps full
+  authority — the terrain has no collider, so being slow to rise is being inside the hill
+  — but descending is trimming and is now proportional to the height error, saturating at
+  `LevelDownThrust` only beyond 2.4 m. A surface standing 1 m proud is leaned on at
+  6.7 m/s instead of 16, half a metre proud at 3.3. It also ends the undershoot: with a
+  constant command the ship was only told to stop descending once it had ARRIVED, and
+  sank 13 cm past its own hover height each time; proportional, it arrives.
+- **Friction is a property of the bodies now.** `CollisionProperties.Friction` defaults to
+  1.0, so every NPC, static and piece of debris in the world is resolved exactly as
+  before; the pair takes the LOWER of the two, so a body that declares itself slippery is
+  slippery against everything. The player's ship declares 0.05 — it is a hover vehicle
+  with nothing to grip, and `HoverController` already does the work a tyre would by
+  cancelling the part of the velocity that is not along the nose.
+
+**Deliberately NOT fixed: the height reference itself.** Making contact *rare* rather than
+benign means asking for the height of the ROAD at a position, and there is no such query:
+`StrokeStore.GetClosestStroke`/`GetClosestPoint` take a junction or a stroke, not a point,
+and share `_tmp*` scratch buffers, so they cannot be called per frame from the logical
+thread while generation runs. Writing a thread-safe positional one would buy an answer
+that is right on a carriageway and wrong everywhere else, and §2c — the corridor-conforming
+pass, which rewrites the ground along the roads — removes the discrepancy at its source
+rather than teaching one more caller to work around it. Until then the ship rides the road
+where the road stands proud, which is not wrong to look at, and it slides rather than
+sticks.
+
+**Deliberately NOT fixed: the ship's collision body**, which `HoverModule` documents at
+length as a cylinder of zero length — `BB.Y - BB.Y` — and which was corrected once (#48)
+and reverted (#49). It is relevant here: a zero-height cylinder is a flat disc of radius
+1.4 m, and it rests on a road with its whole face, which is the largest contact manifold
+and the most friction leverage the shape could possibly offer. It is still not worth
+touching. Every constant in the hover controller has been tuned against that disc, the
+angular runaway it was blamed for was never demonstrated, and this fix does not depend on
+the shape either way.
+
+**What is and is not covered by a test.** The command is arithmetic and is tested, and so
+is the closed loop the ship flies: every term touching its vertical velocity is a constant
+in `HoverController` with no dependency on the world, so `HoverHeightServoTests` integrates
+exactly those terms and catches both the undershoot and the shove. Contact resolution
+itself needs a running simulation and is not covered; what stands in for it is
+`PairFrictionTests`, which pins the default, the combination rule, and — by scanning source,
+since neither site is reachable from a test — that the callback still derives the
+coefficient from the bodies and that the ship still declares one.
+
 **Still open, deliberately:** the `damax > dbmin` branch — two junction footprints
 overlapping on a very short stroke — returns before the shear, so those four vertices stay
 flat at the A end's height. Harmless while everything is flat; over terrain it is a small
