@@ -136,13 +136,23 @@ public class SpatialModel
         var strokeStore = cluster.StrokeStore();
         var streetPointToLocation = new Dictionary<int, int>();
 
-        float streetHeight = cluster.AverageHeight + MetaGen.ClusterStreetHeight + MetaGen.QuarterSidewalkOffset;
+        var heightSource = cluster.StreetHeightSource;
 
         var quarters = quarterStore.GetQuarters();
         for (int qi = 0; qi < quarters.Count; qi++)
         {
             var quarter = quarters[qi];
             if (quarter.IsInvalid()) continue;
+
+            /*
+             * Buildings stand on their own block's pad, so their doors are on it too.
+             * Taken at the block centre rather than per building: these are the
+             * positions NPCs walk to, and a shop entrance a few centimetres off the
+             * building it belongs to is not worth a fit per building.
+             */
+            float streetHeight = quarter.GroundHeightAt(quarter.GetCenterPoint())
+                                 + MetaGen.ClusterStreetHeight
+                                 + MetaGen.QuarterSidewalkOffset;
 
             var estates = quarter.GetEstates();
             for (int ei = 0; ei < estates.Count; ei++)
@@ -266,7 +276,10 @@ public class SpatialModel
              * Y is set outright rather than accumulated, so the deck height goes here
              * rather than onto Pos3 - which is the planar octree key and must stay so.
              */
-            pos.Y = streetHeight + sp.LevelElevation;
+            pos.Y = heightSource.GroundHeightAt(sp)
+                    + MetaGen.ClusterStreetHeight
+                    + MetaGen.QuarterSidewalkOffset
+                    + sp.LevelElevation;
 
             // The street point itself is the junction center — the middle of the
             // roadway. NPCs standing there (street storylets, drifter homes, ...)

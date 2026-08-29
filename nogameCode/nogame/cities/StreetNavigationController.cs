@@ -545,10 +545,12 @@ public class StreetNavigationController : INavigator
         var v3Forward = new Vector3(_vu2LastDirection.X, 0f, _vu2LastDirection.Y);
         Matrix4x4 rot = Matrix4x4.CreateWorld(new Vector3(0f, 0f, 0f), v3Forward, vYAxis);
         orientation = Quaternion.CreateFromRotationMatrix(rot);
-        position =new Vector3(
-            _v2Pos.X + _clusterDesc.Pos.X,
-            _clusterDesc.AverageHeight + _height,
-            _v2Pos.Y + _clusterDesc.Pos.Z);
+        float x = _v2Pos.X + _clusterDesc.Pos.X;
+        float z = _v2Pos.Y + _clusterDesc.Pos.Z;
+        position = new Vector3(
+            x,
+            _clusterDesc.GroundHeightAt(new Vector3(x, 0f, z)) + _height,
+            z);
     }
 
 

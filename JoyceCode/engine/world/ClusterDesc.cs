@@ -537,6 +537,36 @@ public class ClusterDesc
     }
 
 
+    /**
+     * Height of the ground at an arbitrary point in this city, in world space.
+     *
+     * The companion to IStreetHeightSource.GroundHeightAt, for the many callers that
+     * have a position rather than a junction - a vehicle in motion, a spawn point, a
+     * route being built. Anything that puts a moving thing in the world goes through
+     * here, so that "where is the ground" is answered in ONE place and a city cannot
+     * end up with its streets on the terrain and its traffic at the average.
+     *
+     * A flat city answers from the average, which is exact: the terrain really has been
+     * ironed flat to it. Otherwise it samples the terrain.
+     *
+     * Deliberately the TERRAIN and not the street surface, even in the middle of a road.
+     * Those are different quantities - streets are relaxed to buildable gradients, so
+     * they cut into hills and stand proud of dips - and they converge only once a
+     * corridor-conforming pass rewrites the ground along the roads. Until then this is
+     * right off the road and out by the cut or fill on it, which is a small and even
+     * error rather than the whole relief of the city.
+     */
+    public float GroundHeightAt(in Vector3 v3World)
+    {
+        if (StreetHeightSource.IsFlat)
+        {
+            return AverageHeight;
+        }
+
+        return I.Get<MetaGen>().Loader.GetHeightAt(v3World.X, v3World.Z);
+    }
+
+
     public void FindStartPosition(out Vector3 v3Start, out Quaternion qStart)
     {
         var vOffset = new Vector3(0f, 0f, -3f);

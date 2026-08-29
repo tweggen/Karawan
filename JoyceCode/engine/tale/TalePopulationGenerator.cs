@@ -452,12 +452,19 @@ public class TalePopulationGenerator
         var rawPoints = strokeStore.GetStreetPoints();
         var result = new List<Vector3>(rawPoints.Count);
 
-        float groundHeight = clusterDesc.AverageHeight
-            + MetaGen.ClusterStreetHeight
-            + MetaGen.QuarterSidewalkOffset;
+        /*
+         * Per junction rather than one height for the city: these are street junctions,
+         * so the height source has the exact answer for each and there is no reason to
+         * approximate it.
+         */
+        var heightSource = clusterDesc.StreetHeightSource;
 
         foreach (var sp in rawPoints)
         {
+            float groundHeight = heightSource.GroundHeightAt(sp)
+                + MetaGen.ClusterStreetHeight
+                + MetaGen.QuarterSidewalkOffset;
+
             var worldPos = new Vector3(
                 sp.Pos.X + clusterDesc.Pos.X,
                 groundHeight,

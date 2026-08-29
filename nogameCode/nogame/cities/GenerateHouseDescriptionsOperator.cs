@@ -130,7 +130,7 @@ public class GenerateHouseDescriptionsOperator : engine.world.IFragmentOperator
                         fragPoints.Add(
                             new Vector3(
                                 p.X + cx,
-                                _clusterDesc.AverageHeight + 2.15f,
+                                quarter.GroundHeightAt(new Vector2(p.X, p.Z)) + 2.15f,
                                 p.Z + cz
                             )
                         );

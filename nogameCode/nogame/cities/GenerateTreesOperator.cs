@@ -87,7 +87,8 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                 }
 
                 // TXWTODO: The 2.15 is copied from GenerateClusterQuartersOperator
-                var inFragmentY = _clusterDesc.AverageHeight + 2.15f;
+                var inFragmentY = quarter.GroundHeightAt(
+                    new Vector2(estate.GetCenter().X, estate.GetCenter().Z)) + 2.15f;
 
                 /*
                  * Ready to add a tree if there is no house.

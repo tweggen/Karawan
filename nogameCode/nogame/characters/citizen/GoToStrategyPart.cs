@@ -58,7 +58,7 @@ public class GoToStrategyPart : AEntityStrategyPart
         float groundHeight = 0f;
         if (CurrentPosition?.ClusterDesc != null)
         {
-            groundHeight = CurrentPosition.ClusterDesc.AverageHeight +
+            groundHeight = CurrentPosition.ClusterDesc.GroundHeightAt(startPos) +
                           engine.world.MetaGen.ClusterStreetHeight +
                           engine.world.MetaGen.QuarterSidewalkOffset;
         }

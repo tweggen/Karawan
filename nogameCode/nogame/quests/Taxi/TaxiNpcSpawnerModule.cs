@@ -61,7 +61,8 @@ public class TaxiNpcSpawnerModule : AModule
     private void _spawnSingleNpcLT(ClusterDesc clusterDesc, Quarter quarter, RandomSource rnd)
     {
         Vector3 v3Local = quarter.GetDelims().First().StreetPoint.Pos3;
-        Vector3 v3World = (clusterDesc.Pos + v3Local) with { Y = clusterDesc.AverageHeight + 2f };
+        Vector3 v3World = clusterDesc.Pos + v3Local;
+        v3World.Y = clusterDesc.GroundHeightAt(v3World) + 2f;
 
         var eNpcRoot = _engine.CreateEntity($"taxi.npc {clusterDesc.Name}");
 
@@ -200,10 +201,8 @@ public class TaxiNpcSpawnerModule : AModule
                         if (_isTaxiQuestActive)
                         {
                             Vector3 v3Local = quarter.GetDelims().First().StreetPoint.Pos3;
-                            Vector3 v3World = (clusterDesc.Pos + v3Local) with
-                            {
-                                Y = clusterDesc.AverageHeight + 2f
-                            };
+                            Vector3 v3World = clusterDesc.Pos + v3Local;
+                            v3World.Y = clusterDesc.GroundHeightAt(v3World) + 2f;
                             _hiddenRecords.Add(new NpcRecord
                             {
                                 ClusterDesc = clusterDesc,

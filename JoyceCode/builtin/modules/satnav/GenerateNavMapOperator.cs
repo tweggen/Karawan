@@ -109,7 +109,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
             Cluster = ncTop
         };
 
-        float navY = clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight;
+        var heightSource = clusterDesc.StreetHeightSource;
 
         /*
          * === Car Lanes (from Strokes) ===
@@ -117,6 +117,15 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         SortedDictionary<int, NavJunction> dictJunctions = new();
         foreach (var streetPoint in clusterDesc.StrokeStore().GetStreetPoints())
         {
+            /*
+             * A car lane junction IS a street junction, so this is the one place that
+             * can ask the height source for the exact answer rather than sampling the
+             * terrain near it. Traffic then runs at the height of the road it is on,
+             * cut and fill included, instead of near it.
+             */
+            float navY = heightSource.GroundHeightAt(streetPoint)
+                         + MetaGen.ClusterNavigationHeight;
+
             NavJunction nj = new()
             {
                 /*
@@ -127,7 +136,8 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                  * with Vector3.Distance and split themselves with Vector3.Lerp: a ramp's
                  * length is its true sloped length rather than its plan length, so
                  * routing cannot get a discount for climbing, and a long ramp's
-                 * intermediate junctions land part way up it.
+                 * intermediate junctions land part way up it. A street running downhill
+                 * now gets the same treatment for the same reason.
                  */
                 Position = streetPoint.Pos3
                            + clusterDesc.Pos with { Y = navY + streetPoint.LevelElevation },
@@ -204,16 +214,23 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
                 if (!sidewalkJunctions.TryGetValue(key, out var nj))
                 {
+                    /*
+                     * A quarter delimiter is a section corner OF a street junction, and
+                     * carries it, so the exact junction height is available here too -
+                     * no need to sample the terrain near the corner and hope. The
+                     * pavement then meets the carriageway it runs beside.
+                     *
+                     * Level 0 always: quarters are traced on the ground only, so a deck
+                     * has no pavement to walk on until something generates one.
+                     */
+                    Vector3 v3Corner = new Vector3(delim.StartPoint.X, 0f, delim.StartPoint.Y)
+                                       + clusterDesc.Pos;
+                    float sidewalkY = heightSource.GroundHeightAt(delim.StreetPoint)
+                                      + MetaGen.ClusterNavigationHeight;
+
                     nj = new NavJunction
                     {
-                        /*
-                         * Sidewalk junctions come from quarter delimiters, and quarters
-                         * are traced on the ground only, so these stay at ground height.
-                         * A deck has no pavement to walk on until something generates
-                         * one.
-                         */
-                        Position = new Vector3(delim.StartPoint.X, 0, delim.StartPoint.Y)
-                                   + clusterDesc.Pos with { Y = navY },
+                        Position = v3Corner with { Y = sidewalkY },
                         StartingLanes = new(),
                         EndingLanes = new()
                     };

@@ -51,17 +51,23 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         var delimList = quarter.GetDelims();
         int n = 0;
 
-        float h = _clusterDesc.AverageHeight + world.MetaGen.ClusterStreetHeight;
-
         /*
          * Create the main poly, plus the edges.
          * The quarters are clockwise, the extrude operator expects them counterclockwise. So inverse it.
          * This happens automatically due to the coordinate change. (from y to z)
+         *
+         * Each corner takes the block's own pad height there rather than one height for
+         * the whole city, so a block on a slope tilts with the streets around it instead
+         * of standing on a plinth. The pad is a plane, so this polygon stays planar and
+         * the triangulation behind ExtrudePoly is unchanged in kind.
          */
         for (int i=0; i<delimList.Count; i++)
         {
             var delim = delimList[i];
-            
+
+            float h = quarter.GroundHeightAt(delim.StartPoint)
+                      + world.MetaGen.ClusterStreetHeight;
+
             ++n;
             edges.Add(new Vector3(cx + delim.StartPoint.X, h, cy + delim.StartPoint.Y));
         }

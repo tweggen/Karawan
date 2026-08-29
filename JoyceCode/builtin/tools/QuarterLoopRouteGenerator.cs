@@ -39,7 +39,8 @@ public class QuarterLoopRouteGenerator
             var dlThis = delims[i];
             var dlNext = delims[(i + 1) % l];
 
-            float h = ClusterDesc.AverageHeight + engine.world.MetaGen.ClusterStreetHeight +
+            float h = Quarter.GroundHeightAt(dlThis.StartPoint) +
+                      engine.world.MetaGen.ClusterStreetHeight +
                       engine.world.MetaGen.QuarterSidewalkOffset;
             var v3This = new Vector3(dlThis.StartPoint.X, h, dlThis.StartPoint.Y);
             var v3Next = new Vector3(dlNext.StartPoint.X, h, dlNext.StartPoint.Y);

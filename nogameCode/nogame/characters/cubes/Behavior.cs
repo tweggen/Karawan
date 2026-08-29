@@ -31,7 +31,8 @@ namespace nogame.characters.cubes
                 true, 0x0000ffff,
                 qOrientation, vPosition with
                 {
-                    Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight + 0.3f
+                    Y = _clusterDesc.GroundHeightAt(vPosition)
+                        + MetaGen.ClusterNavigationHeight + 0.3f
                 }
             );
         }

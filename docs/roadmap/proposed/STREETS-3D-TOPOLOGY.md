@@ -1,9 +1,9 @@
 # Three-dimensional street topology
 
-**Status:** Phase A steps 1–5 landed — the seam, the flag, the terrain source, gradient
-relaxation and per-street collision — plus the junction-seam defect they turned up
-(§7). A terrain-following city now renders and drives. Quarters, buildings and the
-corridor-conforming pass (§2c) are what remain before it is playable.
+**Status:** Phase A landed — the seam, the flag, the terrain source, gradient relaxation,
+per-street collision, traffic and pedestrians, and city blocks — plus the junction-seam
+defect it turned up (§7). A terrain-following city renders, drives and is walked on. The
+corridor-conforming pass (§2c) and the intercity network are what remain.
 **Follows:** the streets generator rework (WP-0 … WP-5) — levels, ramps, deck geometry,
 deck collision and both gates are in place.
 
@@ -175,11 +175,9 @@ rule table, each can land separately, and the V2 fingerprints gate them.
 stands clear of the ground. Purely visual, and deliberately last: a floating slab is
 unfinished, not wrong.
 
-**Interaction to keep in view:** quarters, estates and buildings are traced as faces in
-plan and then placed at one height. A quarter spanning a slope needs a pad — probably
-the mean of its bounding junctions, cut or filled — and `QuarterGenerator` currently
-has no notion of height at all. Phase A will make that visible immediately, so it
-should be planned as part of Phase A rather than discovered during it.
+**Blocks, which Phase A did have to solve.** See §7c: a quarter is now a tilted planar
+pad fitted to its own corner junctions, and everything standing on it reads that same
+plane.
 
 ---
 
@@ -320,12 +318,14 @@ statics the moment ordinary streets need colliders.
 `StreetFragmentOwnershipTests.EveryPerStrokeLoopIsFilteredToItsOwnFragment` scans the
 source so the next such loop cannot be written without one.
 
-**`Loader.GetWalkingHeightAt`** takes the terrain under the point rather than the cluster
-average, or the player and every NPC spawn in mid air on a hill and inside the ground in
-a valley. Note it is deliberately NOT the street height: streets are relaxed to buildable
-gradients, so they cut into hills and stand proud of dips. The two agree once a
-corridor-conforming pass (§2c) rewrites the terrain along the roads; until then this is
-right off the road and out by the cut or fill on it.
+**`ClusterDesc.GroundHeightAt(position)`** is the one place "where is the ground" is
+answered for anything that moves. Flat city, the average - exactly, since the terrain
+really has been ironed to it. Otherwise the terrain under the point. Deliberately NOT
+the street surface: streets are relaxed to buildable gradients, so they cut into hills
+and stand proud of dips, and the two converge only once a corridor-conforming pass (§2c)
+rewrites the ground along the roads. Where a caller has a `StreetPoint` in hand -
+`GenerateNavMapOperator`'s car lanes, `SpatialModel`, `TalePopulationGenerator`, the
+junction annotations - it asks the height source instead and gets the exact answer.
 
 `ClusterDesc.StreetHeightSource` is double-checked rather than lock-guarded, because
 `WalkController` now reaches it every frame and taking the cluster lock there would
@@ -334,6 +334,55 @@ contend with street and quarter generation for a field written once.
 **Junctions get no collider of their own.** Each stroke's box spans junction centre to
 junction centre, so the boxes of the streets meeting at a junction all reach its middle
 and overlap. The outer corners of a wide junction are the gap that leaves.
+
+### The ship hovers; it does not rest
+
+`HoverController` holds the player's ship `ClusterNavigationHeight` (3 m) above a single
+ground sample at its centre, driven by a velocity servo. Two consequences worth having
+written down.
+
+**The 3 m clearance is what masks uneven ground.** The sample is one point, so a ridge
+the centre misses is not seen at all; the clearance absorbs most of what would otherwise
+be an intersection, and the ship reads as levitating. Sampling around the hull and taking
+the highest would fix the clipping, and was **deliberately not done**: it raises the
+effective hover height over any uneven ground, and every constant in that controller is
+tuned against the current single sample. Not worth the retune for the clipping it buys.
+
+**The division of labour is: physics for what is built, distance-over-ground for the
+terrain.** Streets, ramps, decks, quarter floors and buildings all have colliders, so the
+solver owns them. The terrain has none — outside a city the hover loop *is* the collision.
+
+That only works if the hover loop does not overrule the solver, and it used to: it
+assigned `Pose.Position.Y` outright on every frame the ship was below the sampled ground,
+which no contact can argue with. It drove straight through a deck, and in a
+terrain-following city it hauled the ship out of every road cutting it entered — a
+cutting being below the ground beside it by definition. That is now a force, plus a
+rescue for the one case forces cannot recover from: below the ground **and falling**.
+Both conditions are needed. Depth alone catches a ship legitimately parked in a cutting;
+falling alone catches it mid-bounce.
+
+Note this changes the default flat path too, mildly: the ship may now dip below its hover
+height for a few frames rather than being snapped back. In a city the fragment floor plane
+catches it 1 m down; outside one the servo does.
+
+**Not covered by a test.** `HoverController` needs a booted engine and a physics
+simulation, and `nogameCode` has no test harness — the existing drift tests reach it by
+scanning source, which suits a cross-cutting rule and not a tuning constant.
+
+**The player's car was missed first time round, and that is what the drift test is for.**
+`HoverController` does not rest the car on anything - it drives towards
+`Loader.GetNavigationHeightAt` and hard-sets Y when it falls below - so the per-street
+colliders never entered into it and the car sailed over the hills at a constant altitude,
+with nothing failing and nothing in the log.
+`ClusterGroundHeightTests.OnlyKnownSitesAssumeACityIsFlat` now scans both source trees and
+fails on any read of `AverageHeight` outside a listed set, each entry carrying its reason.
+It fails in both directions: an entry that stops matching is a converted subsystem whose
+to-do was never struck off. Verified by mutation - reverting exactly the car bug fails it.
+
+The list doubles as the outstanding work: quarters and everything traced on them
+(quarter floors, buildings, trees, shops, `SpatialModel` estates,
+`QuarterLoopRouteGenerator`), and the intercity network, which spans clusters and has its
+own elevation operator.
 
 **Not covered by a test:** that the floor plane is suppressed when the ground is not
 flat. It is a one-line condition inside code that needs a fragment and a physics
@@ -355,3 +404,50 @@ existing operator pipeline is genuinely uncertain. Sampling and relaxation are
 self-contained and testable against the street graph alone; if the conforming pass
 turns out not to fit, it changes the shape of the whole phase, and it is better to know
 that before the rest is built on top of it.
+
+
+---
+
+## 7c. City blocks are tilted pads (Phase A, blocks)
+
+A quarter, its floor mesh, its buildings, its trees, its shop fronts and the doors NPCs
+walk to all used one height for the whole city. `Quarter.GroundHeightAt(v2)` replaces it
+with **one plane per block**, least-squares fitted to the heights of its own corner
+junctions.
+
+**Why a plane and not a surface following the terrain.** The property that matters is not
+that a block is at some plausible height but that *everything on it agrees* about which
+height. A plane is exactly reproducible at any point by any caller — the mesh emitting a
+corner, the operator placing a house, the TALE model placing a shop door — with no
+reference to each other and no shared surface to sample. Nothing else on the table has
+that.
+
+**Why tilted and not flat.** A flat pad at the mean is what a terraced hillside city
+really looks like, and it was the first candidate. It steps at every block edge by up to
+half the fall across the block, and nothing renders that step — you would drive off a
+street into a wall that is not there. Tilting removes the step; the block meets the
+streets around it to within the fit residual, which is zero whenever the corners happen
+to be coplanar.
+
+**Measured before deciding, not assumed:** `TriangulateNonPlanarTests` pins what LibTess
+does with a non-coplanar outline — every vertex keeps its own height, no vertices are
+invented, and naming the sweep normal changes nothing. That was run first, because it
+decided whether a non-planar block floor was even on the table. It is not needed for the
+plane, and it is kept because it is the evidence for the choice.
+
+**Traps worth keeping.**
+
+- The flat path **short circuits before the fit**, because a least-squares plane through
+  equal heights does not reproduce its input bit for bit. From ten corners up, 20.1 comes
+  back as 20.1000022. The whole line of work is gated on the flat path being untouched.
+  A four-corner test fixture cannot show this — with four, or even seven, the
+  sum-then-divide happens to round-trip and a version with no short circuit passes.
+- Corners **collinear in plan** cannot determine a tilt, so the fit falls back to their
+  mean rather than solving a singular system.
+- `Estate` gained a back-reference to its `Quarter`, set in `AddEstate`, so that anything
+  standing on an estate rather than a block — a polytope, a tree — can find the pad.
+
+**Deliberately still on the average:** `GenerateShopsOperator`'s intensity sample. It is
+a probability-field *coordinate*, not a position, and feeding it the terrain would make
+which shops exist depend on the ground under them — a generation change, and not one
+this work is about.

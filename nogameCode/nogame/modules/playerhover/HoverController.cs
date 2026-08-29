@@ -39,6 +39,29 @@ internal class HoverController : AController
     public float MaxAngularVelocity { get; set; } = 0.8f;
     public float LevelUpThrust { get; set; } = 48f;
     public float LevelDownThrust { get; set; } = 16f;
+
+    /**
+     * How far below the ground the ship has to be before it is picked up and put back,
+     * in metres.
+     *
+     * The ship hovers ClusterNavigationHeight above the ground, so a few metres under it
+     * is already well outside anything the hover loop produces. It has to be generous
+     * for a different reason though: in a city that keeps its terrain, a street in a
+     * CUTTING is legitimately below the ground beside it, and a ship driving that street
+     * is below the sampled height for as long as the cutting lasts. Rescuing it there
+     * would throw it out of the road and onto the hillside.
+     */
+    public float RescueDepth { get; set; } = 4f;
+
+    /**
+     * Vertical speed, in m/s, above which the ship counts as falling rather than
+     * resting on something.
+     *
+     * This is the test that actually separates the two cases, because depth alone
+     * cannot: a ship held by a road collider deep in a cutting and a ship falling
+     * through the world are both "below the ground". One of them has stopped moving.
+     */
+    public float RestingVerticalSpeed { get; set; } = 2f;
     public float NoseDownWhileAcceleration { get; set; } = 0.5f;
     public float WingsDownWhileTurning { get; set; } = 1.5f;
 
@@ -444,8 +467,21 @@ internal class HoverController : AController
 
 
         /*
-         * Finally, clip the height with the ground.
+         * Finally, push the ship back up off the ground.
          * To increase environment interaction, try to tilt the ship accordingly.
+         *
+         * The ground here is the TERRAIN, sampled at one point under the ship. Anything
+         * built - a street, a ramp, a bridge deck, a quarter floor, a building - has a
+         * collider of its own, so those are the solver's business and this must not
+         * argue with them. That division is the whole design: physics for the things
+         * that are there, distance-over-ground for the terrain, which has no collider at
+         * all and where this loop IS the collision.
+         *
+         * Deliberately only one sample, at the ship's centre. Sampling around the hull
+         * and taking the highest would stop the ship clipping ridges its centre misses,
+         * but it also raises the effective hover height over any uneven ground, and every
+         * constant in this controller is tuned against the current one. Not worth the
+         * retune for the clipping it would buy.
          */
         if (vTargetPos.Y < heightAtTarget)
         {
@@ -457,17 +493,38 @@ internal class HoverController : AController
                 vTargetPos + 2f * vFront);
             if (heightAtFront > heightAtTarget)
             {
-                //heightAtTarget = heightAtFront;
                 vTotalAngular += vRight * 10f * (heightAtFront - heightAtTarget);
             }
 
-            vTargetPos.Y = heightAtTarget;
-            lock (_engine.Simulation)
-            {
-                _prefTarget.Pose.Position = vTargetPos;
-            }
-
+            /*
+             * A force, so that a collider under the ship can win against it. This used to
+             * also assign Pose.Position outright on every frame it was under the ground,
+             * which no contact can argue with - it drove straight through a deck and, in
+             * a city that keeps its terrain, hauled the ship out of every road cutting it
+             * entered, since a cutting is below the ground beside it by definition.
+             */
             vTotalImpulse += new Vector3(0f, 10f, 0f);
+
+            /*
+             * The rescue, for the one case the forces cannot recover from: the ship has
+             * gone through the world and is falling with nothing beneath it. Both
+             * conditions matter. Depth alone would catch a ship legitimately parked at
+             * the bottom of a cutting; falling alone would catch it mid-bounce.
+             */
+            bool isFalling = vTargetVelocity.Y < -RestingVerticalSpeed;
+            if (isFalling && (heightAtTarget - vTargetPos.Y) > RescueDepth)
+            {
+                Warning(
+                    $"Player ship was {heightAtTarget - vTargetPos.Y:F1}m below the ground "
+                    + $"and falling at {-vTargetVelocity.Y:F1}m/s; putting it back on top.");
+
+                vTargetPos.Y = heightAtTarget;
+                lock (_engine.Simulation)
+                {
+                    _prefTarget.Pose.Position = vTargetPos;
+                    _prefTarget.Velocity.Linear = _prefTarget.Velocity.Linear with { Y = 0f };
+                }
+            }
         }
 
         /*

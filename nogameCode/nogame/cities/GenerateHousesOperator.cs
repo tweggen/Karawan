@@ -358,12 +358,19 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     /**
      * Create large-scale neon-lights for the given house geometry.
      */
+    /**
+     * @param padY
+     *     Ground height of the block this building stands on, at the building. Passed in
+     *     rather than looked up, because a sign has to sit on the same pad as the house
+     *     it is bolted to and the caller is the one holding the quarter.
+     */
     private void _createNeonSignsSubGeo(
         in Context ctx,
         in engine.joyce.MatMesh matmesh,
         in engine.streets.Building building,
         in IList<Vector3> p,
-        float h)
+        float h,
+        float padY)
     {
         var v3BuildingCenter = building.GetCenter();
         if (h < 2.9f * _storyHeight)
@@ -394,7 +401,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             pe = Vector3.Normalize(pe);
             pe *= -letterWidth;
             p0 += v3BuildingCenter;
-            p0 += (_clusterDesc.Pos - ctx.Fragment.Position) with { Y = 2.5f + _clusterDesc.AverageHeight };
+            p0 += (_clusterDesc.Pos - ctx.Fragment.Position) with { Y = 2.5f + padY };
                 
             _createNeonSignSubGeo(ctx, matmesh, p0, pe, h);
         }
@@ -416,7 +423,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             return;
         }
 
-        Vector3 vC = (_clusterDesc.Pos - worldFragment.Position) with { Y = _clusterDesc.AverageHeight };
+        Vector3 v2ClusterOffset = _clusterDesc.Pos - worldFragment.Position;
         
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
@@ -512,7 +519,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     /*
                      * We create a lindenmeyer placed at the building's center, the ground polygon
                      * being relative to it.
-                     * Z coordinate is _clusterDesc.AverageHeight + 2.15f, 
+                     * Z coordinate is the block's pad height plus 2.15f, 
                      */
                     
                     var fragPoints = new List<Vector3>();
@@ -542,7 +549,16 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         var lInstance = new LGenerator(lSystem, $"{orgPoints[0]}").Generate(8);
                         if (null != lInstance)
                         {
-                            Vector3 v3Position = new Vector3(cx, 2.5f + _clusterDesc.AverageHeight, cz)
+                            /*
+                             * On the block's own pad, at the building's own position,
+                             * so a house standing on a tilted block tilts with it
+                             * instead of hanging over the low corner.
+                             */
+                            Vector3 v3Position = new Vector3(
+                                                     cx,
+                                                     2.5f + quarter.GroundHeightAt(
+                                                         new Vector2(v3BuildingCenter.X, v3BuildingCenter.Z)),
+                                                     cz)
                                                  + v3BuildingCenter;
                             new AlphaInterpreter(lInstance).Run(ctx.Fragment, v3Position, matmesh, listCreatePhysics);
                         }
@@ -559,7 +575,10 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
                     try
                     {
-                        _createNeonSignsSubGeo(ctx, matmesh, building, fragPoints, Single.Max(20f, height));
+                        _createNeonSignsSubGeo(
+                            ctx, matmesh, building, fragPoints, Single.Max(20f, height),
+                            quarter.GroundHeightAt(
+                                new Vector2(v3BuildingCenter.X, v3BuildingCenter.Z)));
                     }
                     catch (Exception e)
                     {
@@ -570,7 +589,18 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     {
                         try
                         {
-                            _createShopFrontsSubGeo(ctx, vC, matmesh, shopFront);
+                            /*
+                             * Per building, so a shop front sits on the same pad as the
+                             * house carrying it rather than on the cluster average.
+                             */
+                            _createShopFrontsSubGeo(
+                                ctx,
+                                v2ClusterOffset with
+                                {
+                                    Y = quarter.GroundHeightAt(
+                                        new Vector2(v3BuildingCenter.X, v3BuildingCenter.Z))
+                                },
+                                matmesh, shopFront);
                         }
                         catch (Exception e)
                         {
