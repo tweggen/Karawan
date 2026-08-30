@@ -30,7 +30,14 @@ public class LocalPathfinder
     public NavCursor Start;
     public NavCursor Target;
     private RoutingPreferences? _preferences;
-    private TransportationType _transportType = TransportationType.Pedestrian;
+
+    /**
+     * Which lanes this pathfinder may use. No default: pedestrian lanes are the pavement
+     * and car lanes are the carriageway, and a route over the wrong one is drawn on the
+     * wrong surface. Satnav's Route had no default of its own and inherited the one that
+     * used to be here, so the PLAYER's route was pathfound over sidewalks.
+     */
+    private readonly TransportationType _transportType;
 
     private Dictionary<NavJunction, Node> _dictNodes = new();
     private SortedMultiValue<float, Node> _listNodes = new();
@@ -289,8 +296,8 @@ public class LocalPathfinder
 
 
     public LocalPathfinder(NavCursor ncStart, NavCursor ncTarget,
-        RoutingPreferences? preferences = null,
-        TransportationType transportType = TransportationType.Pedestrian)
+        TransportationType transportType,
+        RoutingPreferences? preferences = null)
     {
         Start = ncStart;
         Target = ncTarget;

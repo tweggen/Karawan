@@ -107,6 +107,12 @@ public class DrivingStrategy : AEntityStrategyPart
         _questTarget = new engine.quest.ToLocation()
         {
             OwnerQuestEntity = _entity,
+            /*
+             * The player is sensed by the hover ship's own physics name below, so
+             * this guideline is for a driver: it has to be routed and drawn over car
+             * lanes rather than over the pavement.
+             */
+            TransportType = engine.navigation.TransportationType.Car,
             RelativePosition = v3Target,
             SensitivePhysicsName = nogame.modules.playerhover.MainPlayModule.PhysicsStem,
             SensitiveRadius = 10f,

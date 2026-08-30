@@ -28,6 +28,38 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
 
     /**
+     * The nav junction on a block's pavement corner.
+     *
+     * A quarter delimiter is a section corner OF a street junction and carries it, so the
+     * exact junction height is available here - no need to sample the terrain near the
+     * corner and hope. The pavement then meets the carriageway it runs beside, and the NPC
+     * walking over it stands on the kerb the block's floor draws.
+     *
+     * CornerStreetPoint and not StreetPoint. A delimiter is an EDGE and its StreetPoint is
+     * the junction at the FAR end of it - 70 to 97 m away at the median of the generated
+     * cities. See QuarterDelim; the block floor takes the same pairing, which is the point.
+     *
+     * Level 0 always: quarters are traced on the ground only, so a deck has no pavement to
+     * walk on until something generates one.
+     *
+     * Here rather than inline in the operator because the operator needs a stroke store, a
+     * quarter store and the container, and is not exercised - so inline is where the wrong
+     * half of the delimiter would never be seen.
+     *
+     * @param v3ClusterPos
+     *     Where the cluster's origin is in the world. Y is ignored.
+     */
+    internal static NavJunction SidewalkJunctionFor(
+        QuarterDelim delim, Vector3 v3ClusterPos, IStreetHeightSource heightSource)
+    {
+        Vector3 v3Corner = new Vector3(delim.StartPoint.X, 0f, delim.StartPoint.Y)
+                           + v3ClusterPos;
+
+        return NavJunction.At(v3Corner, heightSource.GroundHeightAt(delim.CornerStreetPoint));
+    }
+
+
+    /**
      * Create bidirectional lanes between two junctions, subdividing if the
      * distance exceeds MaxLaneLength. Returns the number of lanes created.
      */
@@ -209,20 +241,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
                 if (!sidewalkJunctions.TryGetValue(key, out var nj))
                 {
-                    /*
-                     * A quarter delimiter is a section corner OF a street junction, and
-                     * carries it, so the exact junction height is available here too -
-                     * no need to sample the terrain near the corner and hope. The
-                     * pavement then meets the carriageway it runs beside.
-                     *
-                     * Level 0 always: quarters are traced on the ground only, so a deck
-                     * has no pavement to walk on until something generates one.
-                     */
-                    Vector3 v3Corner = new Vector3(delim.StartPoint.X, 0f, delim.StartPoint.Y)
-                                       + clusterDesc.Pos;
-
-                    nj = NavJunction.At(
-                        v3Corner, heightSource.GroundHeightAt(delim.StreetPoint));
+                    nj = SidewalkJunctionFor(delim, clusterDesc.Pos, heightSource);
                     sidewalkJunctions[key] = nj;
                     ncc.Junctions.Add(nj);
                 }

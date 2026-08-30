@@ -35,6 +35,50 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
     }
 
 
+    /**
+     * The block floor's outline: one vertex per boundary corner, at the height of the
+     * road that corner meets.
+     *
+     * The extrusion path adds QuarterSidewalkOffset on top of this, and the top face is
+     * the pavement - so the kerb is exactly that offset above the carriageway at every
+     * corner of every block, which is the whole point of taking the corner's own junction
+     * height rather than the pad's value there.
+     *
+     * That makes the outline non-planar wherever the block's corners are not coplanar,
+     * which on any slope is everywhere. LibTess keeps every vertex's own height and
+     * invents no vertices (TriangulateNonPlanarTests), and BuildStaticPhys builds convex
+     * hulls, so neither minds.
+     *
+     * Here rather than inline in the emission because inline is where nothing can check
+     * it: pairing the corner with its own delimiter's StreetPoint compiles, leaves a flat
+     * city bit for bit identical, and takes the height of a junction 70 to 97 m away.
+     *
+     * @param cx, cy
+     *     Where the cluster's origin lands in the fragment.
+     */
+    internal static List<Vector3> FloorOutlineOf(streets.Quarter quarter, float cx, float cy)
+    {
+        var delimList = quarter.GetDelims();
+        List<Vector3> edges = new(delimList.Count);
+
+        /*
+         * The quarters are clockwise, the extrude operator expects them counterclockwise.
+         * That happens automatically due to the coordinate change (from y to z).
+         */
+        for (int i = 0; i < delimList.Count; i++)
+        {
+            var delim = delimList[i];
+
+            float h = quarter.CornerGroundHeightAt(delim)
+                      + world.MetaGen.ClusterStreetHeight;
+
+            edges.Add(new Vector3(cx + delim.StartPoint.X, h, cy + delim.StartPoint.Y));
+        }
+
+        return edges;
+    }
+
+
     private bool _generateQuarterFloor(
         world.Fragment worldFragment,
         MatMesh matmesh,
@@ -44,35 +88,14 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         in IList<Func<IList<StaticHandle>, Action>> listCreatePhysics
     )
     {
-        List<Vector3> edges = new();
         List<Vector3> path = new();
 
         path.Add(new Vector3(0f, world.MetaGen.QuarterSidewalkOffset, 0f));
         var delimList = quarter.GetDelims();
-        int n = 0;
 
-        /*
-         * Create the main poly, plus the edges.
-         * The quarters are clockwise, the extrude operator expects them counterclockwise. So inverse it.
-         * This happens automatically due to the coordinate change. (from y to z)
-         *
-         * Each corner takes the block's own pad height there rather than one height for
-         * the whole city, so a block on a slope tilts with the streets around it instead
-         * of standing on a plinth. The pad is a plane, so this polygon stays planar and
-         * the triangulation behind ExtrudePoly is unchanged in kind.
-         */
-        for (int i=0; i<delimList.Count; i++)
-        {
-            var delim = delimList[i];
+        var edges = FloorOutlineOf(quarter, cx, cy);
 
-            float h = quarter.GroundHeightAt(delim.StartPoint)
-                      + world.MetaGen.ClusterStreetHeight;
-
-            ++n;
-            edges.Add(new Vector3(cx + delim.StartPoint.X, h, cy + delim.StartPoint.Y));
-        }
-
-        if (n < 3)
+        if (edges.Count < 3)
         {
             Trace(_dc, $"No delims found");
             return false;

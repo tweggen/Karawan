@@ -40,6 +40,19 @@ public class ToSomewhere : AModule
     public DefaultEcs.Entity OwnerQuestEntity { get; set; }
 
     /**
+     * How the player is expected to get there, and therefore which lanes the guideline
+     * is routed and drawn over.
+     *
+     * Required, with no default. The nav map holds car lanes down the middle of each
+     * carriageway and pedestrian lanes along the pavement, and the guideline is a ribbon
+     * centred on whichever lane the route used - so this decides which surface the player
+     * is told to drive on. It had no default here and inherited LocalPathfinder's, which
+     * was Pedestrian, so every quest guideline in the game was drawn on the sidewalk.
+     * A default that is right for one of the two is how that happens again.
+     */
+    public required navigation.TransportationType TransportType { get; set; }
+
+    /**
      * Where, relative to its parent (or to the world) shall
      * the location be positioned?
      */
@@ -220,20 +233,27 @@ public class ToSomewhere : AModule
             var eWayPoint = _engine.CreateEntity($"waypoints");
 
             I.Get<HierarchyApi>().SetParent(eWayPoint, _eRouteParent);
+
+            /*
+             * No offset. The quads are built at the surface height of their own junctions
+             * plus RouteRibbon.Lift; a blanket shift here was how the ribbon ended up half
+             * a metre over the road, since it was applied to a position that already
+             * carried the vehicle hover reference.
+             */
             I.Get<TransformApi>().SetTransforms(eWayPoint,
                 true,
                 MapCameraMask | 0x00000001,
-                Quaternion.Identity, -0.5f*Vector3.UnitY);
+                Quaternion.Identity, Vector3.Zero);
 
             var jMesh = joyce.Mesh.CreateListInstance("waypoints");
-            int idx = 0;
             foreach (var nl in listLanes)
             {
-                var v3Direction = nl.End.Position - nl.Start.Position;
-                var vu3Right = Vector3.Normalize(new(v3Direction.Z, 0f, -v3Direction.X));
+                builtin.modules.satnav.RouteRibbon.QuadFor(
+                    nl, TransportType,
+                    out var v3Origin, out var v3Across, out var v3Along);
 
                 joyce.mesh.Tools.AddQuadXYUV(jMesh,
-                    nl.Start.Position+2f*vu3Right, -4f*vu3Right, v3Direction,
+                    v3Origin, v3Across, v3Along,
                     Vector2.Zero, Vector2.Zero, Vector2.Zero
                     );
             }
@@ -378,7 +398,7 @@ public class ToSomewhere : AModule
             lock (_lo)
             {
                 _routeTarget = M<builtin.modules.satnav.Module>().CreateRoute(
-                    _wStart, _wTarget);
+                    _wStart, _wTarget, TransportType);
             }
 
             return true;

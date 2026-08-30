@@ -19,14 +19,15 @@ public class Module : AModule
     
     /**
       * Create a route from one waypoint to another.
+      *
+      * @param transportType
+      *     What is travelling it. Deliberately without a default: the nav map holds car
+      *     lanes down the carriageway and pedestrian lanes along the pavement, and a
+      *     route over the wrong ones is drawn on the wrong surface.
       */
-    public Route CreateRoute(IWaypoint wFrom, IWaypoint wTo)
+    public Route CreateRoute(
+        IWaypoint wFrom, IWaypoint wTo, engine.navigation.TransportationType transportType)
     {
-        Vector3 v3From = wFrom.GetLocation();
-        Vector3 v3To = wTo.GetLocation();
-
-        Route route = new Route(I.Get<NavMap>(), wFrom, wTo);
-        
-        return route;
+        return new Route(I.Get<NavMap>(), wFrom, wTo, transportType);
     }
 }

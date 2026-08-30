@@ -22,6 +22,35 @@ public class QuarterPadTests
 
 
     /**
+     * A ring of delimiters round a block, wired the way QuarterGenerator wires them:
+     * delimiter i LEAVES junction i and its corner is at junction i+1.
+     *
+     * Written out rather than paired up the obvious way on purpose. A fixture that gave
+     * every delimiter the same junction for both halves would let the pad read whichever
+     * of the two it liked and still pass, and reading the wrong one is the defect this
+     * file now has to be able to see.
+     */
+    internal static void AddRing(Quarter quarter, IReadOnlyList<Vector2> corners)
+    {
+        int n = corners.Count;
+        var points = new StreetPoint[n];
+        for (int i = 0; i < n; ++i)
+        {
+            points[i] = new StreetPoint() { ClusterId = 0 };
+            points[i].SetPos(corners[i].X, corners[i].Y);
+        }
+
+        for (int i = 0; i < n; ++i)
+        {
+            int next = (i + 1) % n;
+            var delim = new QuarterDelim { StreetPoint = points[i] };
+            delim.SetCorner(corners[next], points[next]);
+            quarter.AddQuarterDelim(delim);
+        }
+    }
+
+
+    /**
      * A square block whose four corners are junctions of a real store, so the pad is
      * fitted to heights the height source actually produced.
      *
@@ -38,27 +67,57 @@ public class QuarterPadTests
 
         var quarter = new Quarter { ClusterDesc = cd };
 
-        var corners = new[]
+        AddRing(quarter, new[]
         {
             new Vector2(0f, 0f),
             new Vector2(side, 0f),
             new Vector2(side, side),
             new Vector2(0f, side),
-        };
-
-        foreach (var c in corners)
-        {
-            var sp = new StreetPoint() { ClusterId = 0 };
-            sp.SetPos(c.X, c.Y);
-
-            quarter.AddQuarterDelim(new QuarterDelim
-            {
-                StartPoint = c,
-                StreetPoint = sp
-            });
-        }
+        });
 
         return quarter;
+    }
+
+
+    /**
+     * The corner of a block belongs to the junction it stands ON, and a delimiter's own
+     * StreetPoint is the junction at the other end of its edge.
+     *
+     * The pad is fitted to (corner position, corner height) pairs, so getting this wrong
+     * shifts every corner's height by a whole street's worth of slope while leaving the
+     * plan geometry, the mesh and the routing exactly right.
+     */
+    [Fact]
+    public void ThePadTakesEachCornersOwnJunction()
+    {
+        var cd = StreetHarness.MakeCluster("quarterpad-pairing", ClusterSize);
+        cd.AverageHeight = 20f;
+        cd.StreetHeightSource = new FuncStreetHeight((x, z) => 100f + 0.2f * x);
+
+        var quarter = new Quarter { ClusterDesc = cd };
+        AddRing(quarter, new[]
+        {
+            new Vector2(0f, 0f),
+            new Vector2(100f, 0f),
+            new Vector2(100f, 100f),
+            new Vector2(0f, 100f),
+        });
+
+        /*
+         * The height field varies only in X and the block is a square, so the pad
+         * reproduces it exactly - if and only if each corner took its own junction.
+         * Reading the delimiter's own StreetPoint instead rotates the four heights by one
+         * position round the block, which is 20 m of shift on this slope.
+         */
+        foreach (var d in quarter.GetDelims())
+        {
+            Assert.Equal(
+                100f + 0.2f * d.StartPoint.X,
+                quarter.CornerGroundHeightAt(d), 3);
+            Assert.Equal(
+                quarter.CornerGroundHeightAt(d),
+                quarter.GroundHeightAt(d.StartPoint), 3);
+        }
     }
 
 
@@ -83,15 +142,15 @@ public class QuarterPadTests
         cd.StreetHeightSource = new FlatStreetHeight(cd);
 
         var quarter = new Quarter { ClusterDesc = cd };
+        var corners = new List<Vector2>();
         for (int i = 0; i < 10; ++i)
         {
             float a = i * 0.897f;
-            var c = new Vector2(37.3f * MathF.Cos(a) + 111.7f, 41.9f * MathF.Sin(a) - 73.1f);
-
-            var sp = new StreetPoint() { ClusterId = 0 };
-            sp.SetPos(c.X, c.Y);
-            quarter.AddQuarterDelim(new QuarterDelim { StartPoint = c, StreetPoint = sp });
+            corners.Add(new Vector2(
+                37.3f * MathF.Cos(a) + 111.7f, 41.9f * MathF.Sin(a) - 73.1f));
         }
+
+        AddRing(quarter, corners);
 
         Assert.Equal(20.1f, quarter.GroundHeightAt(new Vector2(111.7f, -73.1f)));
         Assert.Equal(20.1f, quarter.GroundHeightAt(new Vector2(0f, 0f)));
@@ -180,16 +239,7 @@ public class QuarterPadTests
         cd.StreetHeightSource = new FuncStreetHeight((x, z) => 10f + 0.1f * x);
 
         var quarter = new Quarter { ClusterDesc = cd };
-        foreach (float x in new[] { 0f, 50f, 100f })
-        {
-            var sp = new StreetPoint() { ClusterId = 0 };
-            sp.SetPos(x, 0f);
-            quarter.AddQuarterDelim(new QuarterDelim
-            {
-                StartPoint = new Vector2(x, 0f),
-                StreetPoint = sp
-            });
-        }
+        AddRing(quarter, new[] { new Vector2(0f, 0f), new Vector2(50f, 0f), new Vector2(100f, 0f) });
 
         /*
          * Heights are 10, 15 and 20, so the mean is 15 - and it must be that everywhere,

@@ -54,7 +54,7 @@ public class NavCluster
     public List<NavJunction> ProxyJunctions = new();
 
 
-    public async Task<NavCursor> TryCreateCursor(Vector3 v3Position, TransportationType transportType = TransportationType.Pedestrian)
+    public async Task<NavCursor> TryCreateCursor(Vector3 v3Position, TransportationType transportType)
     {
         NavClusterContent ncc = null;
 
