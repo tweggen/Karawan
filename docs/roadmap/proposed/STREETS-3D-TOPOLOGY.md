@@ -1,11 +1,18 @@
 # Three-dimensional street topology
 
-**Status:** Phase A is complete — the seam, the flag, the terrain source, gradient
-relaxation, per-street collision, traffic and pedestrians, city blocks, and now the
-conforming pass (§2c) that makes the ground agree with the roads — plus the junction-seam
-defect it turned up (§7). A terrain-following city renders, drives and is walked on. The
-intercity network is what remains of Phase A's follow-up list, and Phase B (the crossing
-policy) has not been started.
+**Status:** Phase A is complete for the *road surface and everything that moves on it* —
+the seam, the flag, the terrain source, gradient relaxation, per-street collision, traffic
+and pedestrians, city blocks, the conforming pass (§2c), the kerb (§7e), the satnav
+guideline (§7f/§7g), the block topology off-by-ones (§7h/§7i) and the pavement winding
+(§7j). A terrain-following city renders, drives, is walked on and now shows its pavements.
+
+**What Phase A did NOT touch is everything that STANDS on that surface.** Buildings,
+shops, quest markers, trams and the initial coin placement were all written against a flat
+city and none of them has been revisited. Those, plus the pavement cross-slope, are
+carried in **[`CITY-3D-OPEN-POINTS.md`](CITY-3D-OPEN-POINTS.md)**, which is the file to
+read before picking this work up. The intercity network is still on Phase A's follow-up
+list, and Phase B (the crossing policy) has not been started.
+
 **Follows:** the streets generator rework (WP-0 … WP-5) — levels, ramps, deck geometry,
 deck collision and both gates are in place.
 
