@@ -193,10 +193,10 @@ public class Quarter
         for (int i = 0; i < n; ++i)
         {
             /*
-             * The corner's OWN junction. A delimiter is an edge, so _delims[i].StreetPoint
-             * is the junction at the other end of it - see QuarterDelim.
+             * The corner's own junction: a delimiter's StartPoint is a section point of
+             * its StreetPoint - see QuarterDelim, where that is one write.
              */
-            hs[i] = source.GroundHeightAt(_delims[i].CornerStreetPoint);
+            hs[i] = source.GroundHeightAt(_delims[i].StreetPoint);
             sx += _delims[i].StartPoint.X;
             sz += _delims[i].StartPoint.Y;
             sh += hs[i];
@@ -259,7 +259,7 @@ public class Quarter
      */
     public float CornerGroundHeightAt(in QuarterDelim delim)
     {
-        return ClusterDesc.StreetHeightSource.GroundHeightAt(delim.CornerStreetPoint);
+        return ClusterDesc.StreetHeightSource.GroundHeightAt(delim.StreetPoint);
     }
 
 

@@ -17,9 +17,9 @@ namespace JoyceCode.Tests.builtin.modules.satnav;
  *
  * A pedestrian crossing spans the carriageway AT a junction, between two of that
  * junction's own section points. GenerateNavMapOperator therefore has to group the
- * corners of every block by the junction each corner stands on - and a QuarterDelim is an
- * EDGE, so its own StreetPoint is the junction at the far end of it and not the one its
- * corner touches.
+ * corners of every block by the junction each corner stands on, which is the delimiter's
+ * own StreetPoint - see QuarterDelim. It filed them under the junction at the far end of
+ * the block's next edge instead, 70 to 97 m away at the median of these cities.
  *
  * The operator itself needs a stroke store, a quarter store and the container and is not
  * exercised. What is exercised is the filing it is built from, against real generated
@@ -80,10 +80,10 @@ public class PedestrianCrossingTests
     /**
      * Every corner filed under a junction is a section point of that junction.
      *
-     * This is the whole claim. A corner filed under the delimiter's own StreetPoint is a
-     * section point of a junction 70 to 97 m away at the median of these cities, so the
-     * list a junction is asked for when its crossings are drawn is a list of corners it
-     * does not touch.
+     * This is the whole claim. A corner filed under a neighbouring junction is a section
+     * point of something 70 to 97 m away at the median of these cities, so the list a
+     * junction is asked for when its crossings are drawn is a list of corners it does not
+     * touch.
      */
     [Theory]
     [InlineData("seed000", 500f)]
@@ -144,7 +144,7 @@ public class PedestrianCrossingTests
      * filed list.
      *
      * This is the operator's actual use of the list. It looks the flanking section points
-     * up by position in the city-wide corner table, so the crossing lanes themselves come
+     * up by position in the city-wide corner table, so the crossing lanes themselves came
      * out right whichever way the corners were filed - which is exactly why the wrong
      * filing survived: the list is consulted for the dead-end case and is otherwise a
      * claim nothing checked. Here it is checked.
@@ -217,25 +217,20 @@ public class PedestrianCrossingTests
 
 
     /**
-     * Which junctions get crossings at all does not change, and that is not luck.
-     *
-     * A block is a closed ring of edges, so the junctions its delimiters LEAVE and the
-     * junctions its corners STAND ON are the same set, rotated by one. That is why this
-     * correction moves no crossing lane in the default flat city: it moves corners between
-     * lists without changing which lists exist.
+     * The filing covers exactly the junctions the block's own corners stand on - it
+     * neither drops one nor invents one.
      */
     [Theory]
     [InlineData("seed000", 500f)]
     [InlineData("Yelukhdidru", 800f)]
     [InlineData("seed000", 1500f)]
-    public void TheSetOfJunctionsWithCornersIsUnchanged(string idString, float size)
+    public void TheFilingCoversExactlyTheBlocksOwnJunctions(string idString, float size)
     {
         var (cd, _, quarters) = _city(idString, size, null);
 
         var (byJunction, _) = _fileCity(cd, quarters);
 
-        var byEdge = new HashSet<int>();
-        int nRotated = 0;
+        var byCorner = new HashSet<int>();
 
         foreach (var quarter in quarters.GetQuarters())
         {
@@ -243,24 +238,11 @@ public class PedestrianCrossingTests
             var delims = quarter.GetDelims();
             if (delims.Count < 3) continue;
 
-            foreach (var d in delims) byEdge.Add(d.StreetPoint.Id);
-
-            /*
-             * The rotation itself, per block: delimiter i+1 leaves the junction
-             * delimiter i's corner stands on.
-             */
-            for (int i = 0; i < delims.Count; ++i)
-            {
-                Assert.Same(
-                    delims[(i + 1) % delims.Count].StreetPoint,
-                    delims[i].CornerStreetPoint);
-                ++nRotated;
-            }
+            foreach (var d in delims) byCorner.Add(d.StreetPoint.Id);
         }
 
-        Assert.True(nRotated > 0);
         Assert.True(byJunction.Count > 0);
-        Assert.Equal(byEdge.OrderBy(i => i), byJunction.Keys.OrderBy(i => i));
+        Assert.Equal(byCorner.OrderBy(i => i), byJunction.Keys.OrderBy(i => i));
     }
 
 
@@ -296,37 +278,4 @@ public class PedestrianCrossingTests
     }
 
 
-    /**
-     * Nothing in the satnav module takes a junction from a delimiter's own StreetPoint.
-     *
-     * The filing and the sidewalk junction's height are both hoisted out of the operator
-     * so that a wrong pairing fails a test rather than compiling - but the operator itself
-     * needs a stroke store, a quarter store and the container and is not exercised, so
-     * putting either of them back inline would put the defect back with every test still
-     * green. Both right answers are CornerStreetPoint; there is no use for the other half
-     * of a delimiter anywhere in this module.
-     */
-    [Fact]
-    public void NoJunctionInSatnavComesFromADelimitersOwnStreetPoint()
-    {
-        string root = global::engine.GameRoot.PathTo("JoyceCode");
-        Assert.False(String.IsNullOrEmpty(root), "could not locate the checkout");
-
-        string dir = System.IO.Path.Combine(root, "builtin", "modules", "satnav");
-        Assert.True(System.IO.Directory.Exists(dir), $"{dir} is not where satnav lives");
-
-        var pattern = new System.Text.RegularExpressions.Regex(@"\.StreetPoint\b");
-
-        var offenders = System.IO.Directory
-            .EnumerateFiles(dir, "*.cs", System.IO.SearchOption.AllDirectories)
-            .Where(f => pattern.IsMatch(System.IO.File.ReadAllText(f)))
-            .Select(f => System.IO.Path.GetRelativePath(root, f).Replace('\\', '/'))
-            .OrderBy(f => f, StringComparer.Ordinal)
-            .ToList();
-
-        Assert.True(0 == offenders.Count,
-            "these read a block corner's junction from the delimiter's own StreetPoint, "
-            + "which is the junction at the OTHER end of its edge - use CornerStreetPoint:"
-            + "\n  " + String.Join("\n  ", offenders));
-    }
 }

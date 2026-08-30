@@ -5,33 +5,31 @@ namespace engine.streets
     /**
      * One edge of a city block, as QuarterGenerator traces it.
      *
-     * A delimiter is an EDGE and not a corner, and the two halves of it belong to
-     * different junctions. Stroke runs from StreetPoint to the next junction round the
-     * block, and StartPoint is the block's corner AT that next junction - a section point
-     * of it, offset from its centre by roughly half the carriageway.
+     * A delimiter is a corner of the block plus the edge that LEAVES that corner:
      *
-     * That is not the reading the names invite, and reading it the other way is not
-     * visible: pairing StartPoint with StreetPoint gives a corner the height of a junction
-     * at the far end of a whole street. Measured over the generated cities that is 70 to
-     * 97 m away at the median and 135 m at the worst, against 7 to 12 m for the junction
-     * the corner really stands on. On a 1 % slope that alone sinks the pavement below the
-     * roadway at 41 % of corners.
+     * - StartPoint is the corner, a section point of StreetPoint offset outwards from it
+     *   by roughly half a carriageway;
+     * - StreetPoint is the junction the corner stands on;
+     * - Stroke is the street the edge runs along, from StreetPoint to the NEXT
+     *   delimiter's StreetPoint.
      *
-     * So the corner and the junction it belongs to are written together by SetCorner and
-     * cannot be set apart.
+     * So the block's boundary segment i runs from delims[i].StartPoint to
+     * delims[i+1].StartPoint and lies alongside delims[i].Stroke, and everything about
+     * delims[i] - its plan geometry, its height, its street and its junction - describes
+     * that one segment.
+     *
+     * That was NOT true until this became one write. The generator used to fill the
+     * delimiter in from two different steps of the trace: StartPoint from the junction the
+     * edge arrived at and StreetPoint/Stroke from the one it left, a whole street apart.
+     * Measured over the generated cities the boundary segment was 0.0 degrees off the NEXT
+     * delimiter's stroke at 4.9 to 8.9 m - half a carriageway - and 60 to 76 degrees off
+     * its own at 35 to 51 m, on 2936 of 2936 edges. Nothing about the names says which.
+     *
+     * Hence SetEdge and three private setters: the three cannot be written apart, so a
+     * delimiter cannot describe two different edges again.
      */
     public class QuarterDelim
     {
-        /**
-         * The junction this edge LEAVES.
-         */
-        public StreetPoint StreetPoint;
-
-        /**
-         * The street this edge runs along, from StreetPoint to CornerStreetPoint.
-         */
-        public Stroke Stroke;
-
         /**
          * The block's corner, in cluster plan coordinates.
          */
@@ -41,7 +39,12 @@ namespace engine.streets
          * The junction StartPoint is a section point of - the junction the block's corner
          * stands on, and therefore the one whose height it takes.
          */
-        public StreetPoint CornerStreetPoint { get; private set; }
+        public StreetPoint StreetPoint { get; private set; }
+
+        /**
+         * The street this edge runs along, leaving StreetPoint towards the next corner.
+         */
+        public Stroke Stroke { get; private set; }
 
 
         /**
@@ -49,11 +52,14 @@ namespace engine.streets
          *     A section point of spCorner, in cluster plan coordinates.
          * @param spCorner
          *     The junction it came from.
+         * @param strokeLeaving
+         *     The street leaving spCorner towards the next corner of the block.
          */
-        public void SetCorner(in Vector2 v2Corner, StreetPoint spCorner)
+        public void SetEdge(in Vector2 v2Corner, StreetPoint spCorner, Stroke strokeLeaving)
         {
             StartPoint = v2Corner;
-            CornerStreetPoint = spCorner;
+            StreetPoint = spCorner;
+            Stroke = strokeLeaving;
         }
 
 

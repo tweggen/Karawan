@@ -50,8 +50,8 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
      * hulls, so neither minds.
      *
      * Here rather than inline in the emission because inline is where nothing can check
-     * it: pairing the corner with its own delimiter's StreetPoint compiles, leaves a flat
-     * city bit for bit identical, and takes the height of a junction 70 to 97 m away.
+     * it: pairing the corner with a neighbouring delimiter's junction compiles, leaves a
+     * flat city bit for bit identical, and takes the height of a junction 70 to 97 m away.
      *
      * @param cx, cy
      *     Where the cluster's origin lands in the fragment.

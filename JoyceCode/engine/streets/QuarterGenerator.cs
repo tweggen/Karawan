@@ -470,13 +470,9 @@ namespace engine.streets
                             strokeCurrent.TraversedBA = true;
                         }
 
-                        var quarterDelim = new QuarterDelim();
-                        quarterDelim.StreetPoint = spCurr;
-                        quarterDelim.Stroke = strokeCurrent;
-
                         /*
-                         * Before we add the delimiter, we need the next stroke, because
-                         * we need the intersection of this and the next stroke.
+                         * Before we can build the delimiter, we need the next stroke,
+                         * because we need the intersection of this and the next stroke.
                          */
                         var strokeNext = spNext.GetNextAngle(strokeCurrent, followAngle, true);
                         if (null == strokeNext || strokeNext == strokeCurrent)
@@ -492,6 +488,7 @@ namespace engine.streets
                             quarter.AddDebugTag("hasDeadEnd", "true");
                         }
 
+                        var quarterDelim = new QuarterDelim();
                         {
                             var section = spNext.GetSectionPointByStroke(strokeNext, strokeCurrent);
                             if (null == section)
@@ -499,16 +496,21 @@ namespace engine.streets
                                 hasNullSection = true;
                                 quarter.AddDebugTag("hasNullSection", "true");
                             }
-                            else
-                            {
-                                /*
-                                 * The corner belongs to spNext, not to spCurr - it is a
-                                 * section point OF spNext - so the two are written
-                                 * together and the delimiter carries which junction its
-                                 * corner stands on.
-                                 */
-                                quarterDelim.SetCorner((Vector2) section, spNext);
-                            }
+
+                            /*
+                             * All three parts of this delimiter belong to spNext, and
+                             * they are written in one call so that they cannot come from
+                             * different steps of the trace again: the corner is a section
+                             * point OF spNext, and strokeNext is the street leaving spNext
+                             * towards the next corner - which is the edge the corner
+                             * starts. spCurr and strokeCurrent describe the edge that
+                             * ARRIVES here; that is the PREVIOUS delimiter.
+                             *
+                             * A missing section leaves the corner at the origin, exactly
+                             * as it did before, and the quarter is discarded below.
+                             */
+                            quarterDelim.SetEdge(
+                                section ?? Vector2.Zero, spNext, strokeNext);
                         }
                         quarter.AddQuarterDelim(quarterDelim);
                         ++nPoints;

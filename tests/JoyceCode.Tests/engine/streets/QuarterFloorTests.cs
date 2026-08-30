@@ -57,13 +57,14 @@ public class QuarterFloorTests
 
 
     /**
-     * Every corner of every block is a section point of the junction the delimiter names
-     * as its corner, and of no other.
+     * Every corner of every block is a section point of its own delimiter's junction, and
+     * of no neighbouring delimiter's.
      *
-     * This is the claim the whole fix rests on, so it is asserted over whole generated
-     * cities rather than argued: QuarterGenerator writes StreetPoint = the junction the
-     * edge leaves and the corner = a section point of the junction it arrives at, and the
-     * two are a whole street apart.
+     * This is the claim the kerb rests on, so it is asserted over whole generated cities
+     * rather than argued. The neighbours are checked too because they are the wrong
+     * answers that are actually reachable: the junctions round a block are a ring, so the
+     * one before and the one after a corner are what a re-introduced off-by-one would give
+     * it - a whole street away.
      */
     [Theory]
     [InlineData("seed000", 500f)]
@@ -74,26 +75,37 @@ public class QuarterFloorTests
         var (_, _, quarters) = _city(idString, size, (x, z) => 20f + 0.01f * x);
 
         int nCorners = 0;
-        float ownDistanceMax = 0f;
-        float otherDistanceMin = Single.MaxValue;
+        var ownDistances = new List<float>();
+        var otherDistances = new List<float>();
 
         static bool InSection(StreetPoint sp, Vector2 p)
             => sp.GetSectionArray().Any(s => (s - p).LengthSquared() < 1e-4f);
 
         foreach (var q in quarters.GetQuarters())
         {
-            foreach (var d in q.GetDelims())
-            {
-                Assert.True(InSection(d.CornerStreetPoint, d.StartPoint),
-                    $"corner {d.StartPoint} is not a section point of the junction it names");
-                Assert.False(InSection(d.StreetPoint, d.StartPoint),
-                    $"corner {d.StartPoint} is also a section point of the delimiter's own "
-                    + "StreetPoint - this city cannot tell the two apart, pick another");
+            var delims = q.GetDelims();
+            int n = delims.Count;
+            if (n < 3) continue;
 
-                ownDistanceMax = Single.Max(
-                    ownDistanceMax, (d.StartPoint - d.CornerStreetPoint.Pos).Length());
-                otherDistanceMin = Single.Min(
-                    otherDistanceMin, (d.StartPoint - d.StreetPoint.Pos).Length());
+            for (int i = 0; i < n; ++i)
+            {
+                var d = delims[i];
+                var before = delims[(i + n - 1) % n];
+                var after = delims[(i + 1) % n];
+
+                Assert.True(InSection(d.StreetPoint, d.StartPoint),
+                    $"corner {d.StartPoint} is not a section point of its own junction");
+                Assert.False(InSection(before.StreetPoint, d.StartPoint),
+                    $"corner {d.StartPoint} is also a section point of the PREVIOUS "
+                    + "delimiter's junction - this city cannot tell them apart");
+                Assert.False(InSection(after.StreetPoint, d.StartPoint),
+                    $"corner {d.StartPoint} is also a section point of the NEXT "
+                    + "delimiter's junction - this city cannot tell them apart");
+
+                ownDistances.Add((d.StartPoint - d.StreetPoint.Pos).Length());
+                otherDistances.Add(Single.Min(
+                    (d.StartPoint - before.StreetPoint.Pos).Length(),
+                    (d.StartPoint - after.StreetPoint.Pos).Length()));
                 ++nCorners;
             }
         }
@@ -102,12 +114,23 @@ public class QuarterFloorTests
 
         /*
          * A corner sits about half a carriageway from its own junction and a whole street
-         * from the delimiter's. Measured over the baselines: 7 to 12 m at the median
-         * against 70 to 97 m, so the two never overlap.
+         * from its neighbours': 7 to 12 m against 70 to 97 m at the median over the
+         * baselines. Compared as medians and not as ranges, because the ranges DO overlap
+         * - a short street brings a neighbouring junction to within 25.5 m of a corner
+         * whose own junction is 25.7 m away. Which is why the assertions above are on
+         * section-point identity and not on distance: nothing metric separates these
+         * everywhere.
          */
-        Assert.True(otherDistanceMin > ownDistanceMax,
-            $"nearest wrong junction {otherDistanceMin:F1} m, furthest right one "
-            + $"{ownDistanceMax:F1} m - they overlap, so this test proves nothing");
+        static float Median(List<float> xs)
+        {
+            xs.Sort();
+            return xs[xs.Count / 2];
+        }
+
+        Assert.True(Median(otherDistances) > 3f * Median(ownDistances),
+            $"neighbouring junctions are {Median(otherDistances):F1} m from a corner at "
+            + $"the median against {Median(ownDistances):F1} m for its own - too close "
+            + "together for this city to be evidence of anything");
     }
 
 
@@ -142,7 +165,7 @@ public class QuarterFloorTests
             for (int i = 0; i < delims.Count; ++i)
             {
                 float pavement = outline[i].Y + MetaGen.QuarterSidewalkOffset;
-                float road = _roadSurfaceAt(cd.StreetHeightSource, delims[i].CornerStreetPoint);
+                float road = _roadSurfaceAt(cd.StreetHeightSource, delims[i].StreetPoint);
 
                 Assert.Equal(MetaGen.QuarterSidewalkOffset, pavement - road, 3);
 
@@ -290,34 +313,62 @@ public class QuarterFloorTests
 
 
     /**
-     * Nothing in the engine takes a height from a delimiter's own StreetPoint.
+     * The pad sits on the corners of a real block, and on its OWN corners.
      *
-     * There is exactly one right pairing and the wrong one compiles, leaves a flat city
-     * bit for bit identical, keeps the plan geometry and the routing exactly right, and
-     * takes its height from a junction at the far end of a whole street. Both sites in the
-     * engine were of that shape before this - the block pad and the sidewalk nav junction
-     * - so the rule is worth policing rather than remembering.
+     * The pad is fitted to (corner position, corner height) pairs, so pairing a corner
+     * with a neighbouring junction still produces a plane, still leaves the plan geometry
+     * exactly right and is still invisible in a flat city - it just tilts the block the
+     * wrong way. On a fixture ring that shows up because the fixture says so; here it
+     * shows up against generated cities, which is where the pairing actually comes from.
      */
-    [Fact]
-    public void NoHeightIsTakenFromADelimitersOwnStreetPoint()
+    [Theory]
+    [InlineData("seed000", 500f)]
+    [InlineData("Yelukhdidru", 800f)]
+    [InlineData("seed000", 1500f)]
+    public void ThePadSitsOnTheCornersOfARealBlock(string idString, float size)
     {
-        string root = global::engine.GameRoot.PathTo("JoyceCode");
-        Assert.False(String.IsNullOrEmpty(root), "could not locate the checkout");
+        var (cd, _, quarters) = _city(
+            idString, size, (x, z) => 20f + 0.05f * x - 0.03f * z);
 
-        var pattern = new System.Text.RegularExpressions.Regex(
-            @"GroundHeightAt\(\s*[A-Za-z_][A-Za-z0-9_\[\]\.]*\.StreetPoint\s*\)");
+        var own = new List<float>();
+        var neighbour = new List<float>();
 
-        var offenders = System.IO.Directory
-            .EnumerateFiles(root, "*.cs", System.IO.SearchOption.AllDirectories)
-            .Where(f => pattern.IsMatch(System.IO.File.ReadAllText(f)))
-            .Select(f => System.IO.Path.GetRelativePath(root, f).Replace('\\', '/'))
-            .OrderBy(f => f, StringComparer.Ordinal)
-            .ToList();
+        foreach (var q in quarters.GetQuarters())
+        {
+            var delims = q.GetDelims();
+            int n = delims.Count;
+            if (n < 3) continue;
 
-        Assert.True(0 == offenders.Count,
-            "these take a block corner's height from the delimiter's own StreetPoint, "
-            + "which is the junction at the OTHER end of its edge - use CornerStreetPoint:"
-            + "\n  " + String.Join("\n  ", offenders));
+            for (int i = 0; i < n; ++i)
+            {
+                float pad = q.GroundHeightAt(delims[i].StartPoint);
+                own.Add(Single.Abs(pad - q.CornerGroundHeightAt(delims[i])));
+                neighbour.Add(Single.Abs(
+                    pad - q.CornerGroundHeightAt(delims[(i + 1) % n])));
+            }
+        }
+
+        Assert.True(own.Count > 0);
+
+        static float Median(List<float> xs)
+        {
+            xs.Sort();
+            return xs[xs.Count / 2];
+        }
+
+        /*
+         * Not zero: the corners of a block are not coplanar even over an exactly planar
+         * hillside, so the pad answers at a corner with a fit residual - 0.02 m at the
+         * median over these cities, which is why the FLOOR takes CornerGroundHeightAt
+         * instead. What matters here is that it is a residual and not a whole street's
+         * worth of slope.
+         */
+        Assert.True(Median(own) < 0.25f,
+            $"the pad is {Median(own):F2} m off its own corners at the median");
+        Assert.True(Median(neighbour) > 4f * Median(own),
+            $"the pad is {Median(neighbour):F2} m off the NEXT corner at the median "
+            + $"against {Median(own):F2} m off its own - too close together for this to "
+            + "be evidence that it took the right one");
     }
 
 
