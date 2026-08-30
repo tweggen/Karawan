@@ -118,10 +118,17 @@ public class Quarter
      * exactly reproducible at any point by any caller, cheaply, with no reference to
      * the mesh.
      *
-     * The corners are the block's own street junctions, so a block meets the streets
-     * around it to within the fit residual - small, because a relaxed street network
-     * over a block is a smooth height field, and zero when the corners happen to be
-     * coplanar (which includes every flat city).
+     * The corners are the block's own street junctions. The pad does NOT meet them
+     * exactly, and the residual is not negligible: a block's corners are section points
+     * displaced from their junctions by different amounts in different directions, so
+     * they are not coplanar even over an exactly planar hillside. Measured over the
+     * generated cities on a 5.8 % plane the residual is 0.02 m at the median, 0.36 m at
+     * the 99th percentile and 1.66 m at the worst corner. That is why the block's FLOOR
+     * takes CornerGroundHeightAt at its boundary rather than the pad - the kerb is where
+     * a residual is visible - and why what the pad is for is the block's interior, where
+     * the buildings are. At the block's centroid the pad is the mean of its corner
+     * heights exactly, since the fit is parametrised about that centroid, so the pad and
+     * the floor agree in the middle by construction.
      *
      * The alternative was a flat pad at the mean, which is what a terraced hillside city
      * really looks like - but it steps at every block edge by up to half the fall across
@@ -185,7 +192,11 @@ public class Quarter
         float sx = 0f, sz = 0f, sh = 0f;
         for (int i = 0; i < n; ++i)
         {
-            hs[i] = source.GroundHeightAt(_delims[i].StreetPoint);
+            /*
+             * The corner's OWN junction. A delimiter is an edge, so _delims[i].StreetPoint
+             * is the junction at the other end of it - see QuarterDelim.
+             */
+            hs[i] = source.GroundHeightAt(_delims[i].CornerStreetPoint);
             sx += _delims[i].StartPoint.X;
             sz += _delims[i].StartPoint.Y;
             sh += hs[i];
@@ -229,6 +240,26 @@ public class Quarter
         _padA = (szz * sxh - sxz * szh) / det;
         _padB = (sxx * szh - sxz * sxh) / det;
         _padC = mh - _padA * mx - _padB * mz;
+    }
+
+
+    /**
+     * Height of the ground at one of the block's own boundary corners, exactly.
+     *
+     * NOT GroundHeightAt of the same point. The pad is a plane through corners that are
+     * not coplanar, so at a corner it answers with a fit residual, and at a corner the
+     * residual is the whole problem: the block's floor is extruded from here and its top
+     * face is the pavement, so the kerb comes out as QuarterSidewalkOffset plus that
+     * residual - and wherever the residual is below minus the kerb, the pavement is under
+     * the roadway. Asking the height source for the corner's own junction makes the kerb
+     * exactly the kerb.
+     *
+     * A flat city answers with AverageHeight, exactly, because FlatStreetHeight does -
+     * there is no fit in this path to round-trip through.
+     */
+    public float CornerGroundHeightAt(in QuarterDelim delim)
+    {
+        return ClusterDesc.StreetHeightSource.GroundHeightAt(delim.CornerStreetPoint);
     }
 
 

@@ -65,6 +65,26 @@ internal static class StreetHarness
 
 
     /**
+     * Trace the city blocks of an already generated network, exactly as
+     * ClusterDesc._findQuarters does.
+     *
+     * QuarterGenerator needs nothing from the container, so a bare cluster and a stroke
+     * store are enough - which is what lets a block's floor be checked against real
+     * generated cities rather than a hand-built ring.
+     */
+    internal static QuarterStore GenerateQuarters(
+        ClusterDesc clusterDesc, StrokeStore strokeStore, string idString)
+    {
+        var quarterStore = new QuarterStore(clusterDesc);
+        var quarterGenerator = new QuarterGenerator();
+        quarterGenerator.Reset("quarters-" + idString, clusterDesc, quarterStore, strokeStore);
+        quarterGenerator.Generate();
+
+        return quarterStore;
+    }
+
+
+    /**
      * Number of connected components in the stroke graph. A healthy cluster is a
      * single component; ConnectComponentsPass (WP-2c) is what keeps it that way.
      */

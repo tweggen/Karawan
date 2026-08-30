@@ -750,9 +750,17 @@ that.
 **Why tilted and not flat.** A flat pad at the mean is what a terraced hillside city
 really looks like, and it was the first candidate. It steps at every block edge by up to
 half the fall across the block, and nothing renders that step — you would drive off a
-street into a wall that is not there. Tilting removes the step; the block meets the
-streets around it to within the fit residual, which is zero whenever the corners happen
-to be coplanar.
+street into a wall that is not there. Tilting removes the step.
+
+**What §7c originally claimed here, and what is true instead — see §7e.** It said the
+block meets the streets around it "to within the fit residual, which is zero whenever the
+corners happen to be coplanar". Measured, the corners are **never** coplanar on a slope:
+a block's corners are section points displaced from their junctions by different amounts
+in different directions, so even an exactly planar hillside gives a residual of 0.02 m at
+the median and 1.66 m at the worst corner of the 3000 m city. The block's **floor** no
+longer reads the pad at its boundary for that reason; the pad is what the block's
+*interior* stands on, which is where the buildings are, and there the two still agree —
+exactly at the centroid, by construction.
 
 **Measured before deciding, not assumed:** `TriangulateNonPlanarTests` pins what LibTess
 does with a non-coplanar outline — every vertex keeps its own height, no vertices are
@@ -909,3 +917,101 @@ of the three string comparisons stand in for those.
 - **`ClusterBaseElevationOperator` still writes `aver + 1.5`** for the flat path while
   `GroundHeightAt` returns `aver`. The flat path papers over the 1.5 m with `IsFlat`, and
   untangling it would move the flat baseline for no visible gain.
+
+---
+
+## 7e. The kerb (block boundaries meet the road exactly)
+
+Reported from play of a terrain-following city: *"sidewalks still hover in the air and/or
+are in the ground."*
+
+There is no separate sidewalk geometry. `GenerateClusterQuartersOperator` extrudes the
+block polygon up by `MetaGen.QuarterSidewalkOffset` (0.15 m); the **top face is the
+pavement and the sides are the kerb**. So the block's outline *is* the kerb line, and its
+height has to be the road's height there.
+
+### The pairing, which is what was wrong
+
+`QuarterGenerator` traces a block as a ring of **edges**, and the two halves of a
+`QuarterDelim` belong to **different junctions**:
+
+- `StreetPoint` is the junction the edge *leaves* (`spCurr`), and `Stroke` runs from it;
+- `StartPoint` is a section point of the junction the edge *arrives at* (`spNext`) — the
+  block's corner, offset outwards by roughly half a carriageway.
+
+Everything that wanted "how high is this corner" paired `StartPoint` with `StreetPoint`,
+so a corner took the height of a junction **at the far end of a whole street**. Measured
+over the generated cities, that is **70–97 m away at the median and 135 m at the worst**,
+against **7–12 m** (46 m worst) for the junction the corner really stands on; and
+**2936 of 2936 corners** across four cities are a section point of the *next* delimiter's
+junction and of no other, so there is nothing marginal about it.
+
+What it does to the kerb, measured over `seed000`/1500 m and `Yelukhdidru`/3000 m with the
+relaxed street heights the game uses:
+
+| terrain | kerb range | corners with the pavement **below** the road |
+|---|---|---|
+| flat | 0.15 m exactly | 0 % |
+| plane, 1 % | −1.12 … +1.47 m | 41–45 % |
+| plane, 5.8 % | −7.21 … +7.86 m | 48–49 % |
+| rolling, 30 m at 600 m | −20.7 … +20.7 m | 49 % |
+
+Both engine sites were of that shape: the block pad's least-squares fit, and — added one
+commit earlier — the **sidewalk `NavJunction`**, which is where an NPC's feet go. So the
+pavement and the walker were consistently wrong together, which is why neither showed up
+as a disagreement.
+
+`QuarterDelim` now carries **`CornerStreetPoint`**, written together with `StartPoint` by
+`SetCorner` (the two cannot be set apart — `StartPoint` is `get; private set;`), and a
+source scan forbids taking a height from a delimiter's own `StreetPoint`.
+
+### Snapping the boundary, and what it costs
+
+Fixing the pairing is not enough on its own. The pad is a **plane** through corners that
+are not coplanar, so it still answers at a corner with a fit residual — measured, 0.02 m
+at the median, 0.36 m at p99 and 1.66 m at the worst corner on a 5.8 % plane, which still
+inverts the kerb at 5 % of corners. So the floor's boundary takes
+`Quarter.CornerGroundHeightAt` — the corner's own junction height, exactly — and the kerb
+is exactly `QuarterSidewalkOffset` everywhere. The outline is therefore non-planar;
+`TriangulateNonPlanarTests` already pins that LibTess keeps every vertex's height and
+invents none, and `ExtrudePoly.BuildStaticPhys` builds convex hulls.
+
+**The trade, stated rather than assumed.** `Quarter.GroundHeightAt` — the pad — is still
+what buildings, trees, shop fronts and TALE doors stand on, and it is no longer exactly
+the floor. It costs nothing where it matters: the fit is parametrised about the centroid
+of the corners, so the plane **at the centroid is the mean of the corner heights
+identically**, and a triangulation of those same corner heights reads the mean there too.
+Measured over whole cities the difference at the centroid is 0.0000 m. The pad and the
+floor part company at the **kerb**, where nothing stands, by the residual above, and
+coincide in the **middle of the block**, where everything does. §7c's claim that everything
+on a block agrees is weakened exactly that far and no further.
+
+### The flat city
+
+Untouched, and by two independent routes. `Quarter.GroundHeightAt` short-circuits on
+`IsFlat` before the fit, and `FlatStreetHeight.GroundHeightAt` returns `AverageHeight`
+itself — so `CornerGroundHeightAt` and the old pad read give the same float, and every
+corner of every block still comes out at `AverageHeight + ClusterStreetHeight`. Asserted
+over whole generated cities with an average that has no exact binary form.
+
+### Covered, and not
+
+The kerb, the pairing, the outline's plan geometry and offset, the sidewalk junction's
+height and the flat city are all asserted against **real generated cities**. The mesh
+emission and `BuildStaticPhys` need a fragment and a physics world and are not exercised;
+`FloorOutlineOf` and `SidewalkJunctionFor` were hoisted out of them for that reason.
+
+### Found and NOT fixed
+
+- **The delimiter's `Stroke` and `StreetPoint` are off by one from the edge its corners
+  span.** `delims[i]`'s segment runs `StartPoint[i] → StartPoint[i+1]`, i.e. between the
+  corners of `spCurr[i+1]` and `spCurr[i+2]`, while its `Stroke` runs `spCurr[i] →
+  spCurr[i+1]`. `GenerateShopsOperator`, `Placer` and `SegmentNavigator` all read it that
+  way. Nothing about it is height, and correcting it would move NPCs and shop fronts in
+  the default flat city, which this line of work is gated against.
+- **`GenerateNavMapOperator` files each sidewalk corner under `delim.StreetPoint.Id`** for
+  crossing generation, so a pedestrian crossing is drawn between corners of *neighbouring*
+  junctions. Same off-by-one, but it is routing topology rather than height, TALE exercises
+  it heavily, and changing it would change the pedestrian network of the flat city.
+- **No deck elevation term** in the block floor. Blocks are traced on the ground only
+  (`QuarterGenerator.Generate` skips a non-zero start level), asserted rather than assumed.

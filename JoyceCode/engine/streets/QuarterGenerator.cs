@@ -501,7 +501,13 @@ namespace engine.streets
                             }
                             else
                             {
-                                quarterDelim.StartPoint = (Vector2) section;
+                                /*
+                                 * The corner belongs to spNext, not to spCurr - it is a
+                                 * section point OF spNext - so the two are written
+                                 * together and the delimiter carries which junction its
+                                 * corner stands on.
+                                 */
+                                quarterDelim.SetCorner((Vector2) section, spNext);
                             }
                         }
                         quarter.AddQuarterDelim(quarterDelim);
