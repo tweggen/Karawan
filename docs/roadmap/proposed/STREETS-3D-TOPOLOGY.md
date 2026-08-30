@@ -965,6 +965,11 @@ as a disagreement.
 `SetCorner` (the two cannot be set apart — `StartPoint` is `get; private set;`), and a
 source scan forbids taking a height from a delimiter's own `StreetPoint`.
 
+**Superseded by §7i.** That was a workaround for a delimiter that straddled two edges. §7i
+fixes the delimiter itself: `StreetPoint` *is* the corner's junction now, `CornerStreetPoint`
+and the source scan are gone, and the description of the two halves above holds only for the
+code as it stood before that.
+
 ### Snapping the boundary, and what it costs
 
 Fixing the pairing is not enough on its own. The pad is a **plane** through corners that
@@ -1004,15 +1009,13 @@ emission and `BuildStaticPhys` need a fragment and a physics world and are not e
 ### Found and NOT fixed
 
 - **The delimiter's `Stroke` and `StreetPoint` are off by one from the edge its corners
-  span.** `delims[i]`'s segment runs `StartPoint[i] → StartPoint[i+1]`, i.e. between the
-  corners of `spCurr[i+1]` and `spCurr[i+2]`, while its `Stroke` runs `spCurr[i] →
-  spCurr[i+1]`. `GenerateShopsOperator`, `Placer` and `SegmentNavigator` all read it that
-  way. Nothing about it is height, and correcting it would move NPCs and shop fronts in
-  the default flat city, which this line of work is gated against.
+  span.** *(Fixed, see §7i — where the measurement also corrected the list of consumers:
+  `GenerateShopsOperator` reads only `StartPoint` and was never a consumer of the pairing,
+  and no shop front moves. `CornerStreetPoint` folds back into `StreetPoint` there.)*
 - **`GenerateNavMapOperator` files each sidewalk corner under `delim.StreetPoint.Id`** for
-  crossing generation, so a pedestrian crossing is drawn between corners of *neighbouring*
-  junctions. Same off-by-one, but it is routing topology rather than height, TALE exercises
-  it heavily, and changing it would change the pedestrian network of the flat city.
+  crossing generation. *(Fixed, see §7h — where the measurement also corrected this
+  description: no crossing lane was actually drawn between the wrong corners, because the
+  crossing loop re-derives them by position. Only the emission order moved.)*
 - **No deck elevation term** in the block floor. Blocks are traced on the ground only
   (`QuarterGenerator.Generate` skips a non-zero start level), asserted rather than assumed.
 
@@ -1129,3 +1132,182 @@ builds through `RouteRibbon.QuadFor` and adds no offset of its own.
 
 `Vector3.Normalize` of the plan direction produces NaN for a lane with no horizontal extent.
 Pre-existing, and the generator emits no such lane.
+
+---
+
+## 7h. A pavement corner belongs to the junction it stands on (crossings)
+
+Recorded in §7e as found and not fixed, and now measured rather than argued — which
+changed what the defect is.
+
+`GenerateNavMapOperator` groups every block corner by a junction id so that pedestrian
+crossings can be drawn at each junction between the two corners flanking each arm. It filed
+each corner under `delim.StreetPoint.Id`. A `QuarterDelim` is an **edge**, so that is the
+junction at the far end of it — **70–97 m away at the median** of the generated cities,
+against **7–12 m** for the junction the corner really touches. Measured over the corner
+lists themselves: a filed corner sat **70.3–97.3 m from the junction it was filed under at
+the median and 134.9 m at the worst**; after the correction, **6.9–12.4 m at the median and
+46.5 m at the worst**, i.e. half a carriageway.
+
+### What it did NOT do, which is the part §7e got wrong
+
+**No crossing lane moves. Not one, in any of the four baseline cities.** The crossing loop
+does not use the filed list to find its corners: for a junction with three or more arms it
+asks `StreetPoint.GetSectionPointByStroke` for the two section points flanking each arm and
+looks *those* up by position in the city-wide corner table. The filed list is used only to
+decide **which junctions are considered at all**, and that set is provably unchanged — a
+block is a closed ring, so the junctions its delimiters leave and the junctions its corners
+stand on are the same set rotated by one — and by the **one-arm dead-end branch**, which
+connects every corner in the list pairwise. That branch never fires: dead-end junctions
+exist in the graph (8 / 18 / 43 / 121 of them across the four cities) but every block traced
+through one is discarded before it reaches here, so **no junction with one arm has a filed
+list at all**.
+
+| city | crossing lanes before | after | lanes only before | only after |
+|---|---|---|---|---|
+| `seed000` 500 m | 4 | 4 | 0 | 0 |
+| `Yelukhdidru` 800 m | 14 | 14 | 0 | 0 |
+| `seed000` 1500 m | 222 | 222 | 0 | 0 |
+| `Yelukhdidru` 3000 m | 1411 | 1411 | 0 | 0 |
+
+So this is a latent defect, not a live one: the list is a claim about which corners belong
+to a junction that nothing checked, standing one dead-end block away from being read.
+
+### What DOES move in the default flat city: the emission order
+
+The filing decides the order the crossing loop runs in, and therefore the order crossing
+lanes land in `NavClusterContent.Lanes` and in every junction's `StartingLanes` — which is
+what an A* breaks ties on. The dictionary was a plain `Dictionary<int, …>`, so that order
+was the insertion order, i.e. a function of which block the quarter store traced first *and*
+of which half of a delimiter the corner was filed under.
+
+It is a `SortedDictionary` now, by junction id, matching the car-lane junction table twelve
+lines above it in the same method. That makes the order a property of the cluster rather
+than of the trace, and it is the one thing here that is not invariant: **1408 of 1411
+crossing lanes in the 3000 m city and 222 of 222 in the 1500 m city come out at a different
+position in the list**, over an identical set. The TALE suite, which exercises pedestrian
+routing heavily, is 200/200 across that.
+
+### Covered
+
+`FileCornerUnderItsJunction` is hoisted out of the operator for the same reason
+`SidewalkJunctionFor` was — the operator needs a stroke store, a quarter store and the
+container and is not exercised — and for one more: **the height and the crossing filing must
+name the same junction for a corner**, and two inline reads of a delimiter is how they came
+to differ. Both are asserted against real generated cities: every filed corner is a section
+point of the junction it is filed under and no further than half a carriageway from it;
+every crossing corner the operator will look up is in that junction's own list; and the key
+set is unchanged, with the ring rotation that makes it so asserted per block.
+
+A source scan forbids **any** read of a delimiter's own `StreetPoint` anywhere under
+`builtin/modules/satnav`, because putting either the filing or the height back inline in the
+operator would restore the defect with every other test still green. That is exactly what
+the mutation run showed: re-inlining the filing fails only the scan.
+
+---
+
+## 7i. A block delimiter describes one edge
+
+The other of §7e's two "found and NOT fixed" items, and the one that actually moves the
+shipped flat city.
+
+`QuarterGenerator` traces a block as a ring and filled each `QuarterDelim` in from **two
+different steps of that trace**: `StartPoint` from the junction the step *arrived* at, and
+`StreetPoint`/`Stroke` from the one it *left*. So a delimiter described two edges a street
+apart, and which one a consumer got depended on which field it happened to read.
+
+### Measured, because it is what decided which way round to fix it
+
+Over the four baseline cities, for every boundary segment `delims[i].StartPoint →
+delims[i+1].StartPoint`:
+
+| | angle to the segment | distance to the segment's midpoint |
+|---|---|---|
+| `delims[i+1].Stroke` (the *next* delimiter's) | **0.00°** median | 4.9–8.9 m median, 10.4 max |
+| `delims[i].Stroke` (its own) | 60–76° median | 35–51 m median, 67 max |
+
+**2936 of 2936 edges**, no exceptions: a boundary segment runs alongside the *next*
+delimiter's stroke at half a carriageway, and across its own at half a street. And
+`delims[i+1].StreetPoint == delims[i].CornerStreetPoint` on all 2936, which is the identity
+the fix uses.
+
+### The fix, and why this way round and not the other
+
+`QuarterDelim` is now **corner + the edge leaving it**: `StartPoint` is the corner,
+`StreetPoint` is the junction it stands on, `Stroke` is the street from there to the next
+corner. All three are `get; private set;` and written by one `SetEdge`, so a delimiter
+cannot be assembled from two steps of the trace again — the precedent being `SetCorner` and
+`NavJunction.At`. `CornerStreetPoint`, which §7e added as a workaround for exactly this,
+folds back into `StreetPoint`: there is now one junction per delimiter and it is the right
+one, so the source scan that policed the two is gone and the three private setters stand in
+its place.
+
+The generator change is one call site: all four values — `spNext`, `strokeNext` and the
+section point — are already in hand at the same step, so the delimiter is simply built from
+the *arriving* end throughout instead of straddling.
+
+**Two repairs were possible and they are not equivalent.** The other is to move the corner
+*back* to the junction the step left, which keeps `StreetPoint`/`Stroke` where they are.
+That rotates the ring of corners by one — and the ring is the estate polygon, which
+ClipperOffset shrinks into the building, which `_addShops` walks to make shop fronts, whose
+order a random index then picks from. It moves buildings and shops. Moving the labels
+forward instead leaves the polygon **bit for bit identical**: the outline of all 2936
+corners across the four cities hashes the same before and after, so blocks, estates,
+buildings, shop fronts, shops, quarter AABBs, quarter floors and the kerb do not move at
+all.
+
+### What DOES move in the default flat city
+
+| consumer | effect | measured |
+|---|---|---|
+| `Placer` with `Reference.StreetPoint` + `AnyQuarter`, hence `car3.CharacterCreator.ChooseStreetPoint` | the junction picked for a given random draw is the next one round the block | **100 % of delimiters**, 75–106 m median, 136.5 m max |
+| `TaxiNpcSpawnerModule` (`GetDelims().First().StreetPoint.Pos3`) | same, once per taxi quarter | 75–107 m median, 136.5 m max |
+| `citizen.SpawnOperator.SpawnCharacterAt` | the nearest street point is **unchanged** (same candidate set), but its delimiter index moves one back, so the NPC starts its loop at the corner of the junction nearest the spawn instead of the next corner along | 66–89 m median, 136.3 m max |
+| `citizen.EntityStrategy` (Placer-placed NPCs) | **nothing.** `QuarterDelimIndex` is the random draw and is unchanged, and the citizen path never reads `pod.StreetPoint` | — |
+| `GenerateHouseDescriptionsOperator` | **nothing.** It averages `StreetPoint.Pos` over the whole ring, which is invariant under a rotation | ≤ 0.0002 m, floating-point summation order only |
+| `QuarterLoopRouteGenerator`, `SegmentNavigator` | the segment's `StreetPoint` and `Stroke` labels become the segment's own; nothing in the game reads either | positions unchanged |
+
+So the visible change is **where traffic and force-spawned pedestrians appear**: one
+junction round the block, in a city where every junction of a block is as good as any
+other. This is the first change in this line of work that moves the shipped flat city's
+content, and §7h moved its crossing emission order; **"the flat city is bit for bit
+unchanged" no longer holds unqualified from here.**
+
+### Consumers examined and deliberately left
+
+- **`GenerateShopsOperator`** was named as a consumer of the pairing and **is not one**. Its
+  `_hasPedestrianAccess` reads `StartPoint` only, walking the polygon ring; it never touches
+  `Stroke` or `StreetPoint`. Correct as written, before and after.
+- **`Placer`** itself is genuinely ambiguous: it wants "a street point of this quarter", the
+  candidate set is the same either way, and no consumer today reads its `StreetPoint` and
+  `QuarterDelimIndex` together. It moves as a consequence of the type being fixed, not as a
+  correction — but the pod it hands back is now internally consistent, which is what makes
+  reading the two together safe for the next caller.
+
+### Covered
+
+- `QuarterDelimTests`, against generated cities: a delimiter's stroke touches its own
+  junction and its far end **is** the next delimiter's junction (identity, not proximity);
+  the boundary segment is under 0.5° off that stroke and within half a carriageway of it;
+  and the previous delimiter's stroke — the wrong answer that used to be given — is 60°+ off
+  at the median. Plus a reflection test that none of the three properties has a public
+  setter.
+- `QuarterLoopRouteTests`: every segment of an NPC's block loop names the junction it starts
+  at and the street it runs along, and starts beside its own corner rather than the next.
+- `QuarterFloorTests` gained `ThePadSitsOnTheCornersOfARealBlock`, because the pad's
+  per-corner pairing was covered only by a fixture: reading a neighbouring junction still
+  produces a plane, still leaves the plan geometry right and is still invisible in a flat
+  city. It failed 2 tests before that and 5 after.
+
+**Metric separation does not work here and that is worth keeping.** Two arms of a junction
+can be nearly collinear, so the previous delimiter's stroke can be 0.00° off the same
+segment; and a short street brings a neighbouring junction to within 25.5 m of a corner
+whose own junction is 25.7 m away. Every discriminating assertion is therefore on identity —
+section-point membership or `Assert.Same` on the junction — with the distances and angles
+compared as medians only, to show the tests are not vacuous.
+
+### Found and NOT fixed
+
+`SegmentNavigator.NavigatorBehave` writes `_position.StreetPointId` from the **old**
+`StreetPoint` on the line before it overwrites `StreetPoint`, so the id lags the object by
+one update. Pre-existing, unrelated to the pairing, and nothing reads either.

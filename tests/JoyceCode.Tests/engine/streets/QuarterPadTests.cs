@@ -23,12 +23,14 @@ public class QuarterPadTests
 
     /**
      * A ring of delimiters round a block, wired the way QuarterGenerator wires them:
-     * delimiter i LEAVES junction i and its corner is at junction i+1.
+     * delimiter i is the corner at junction i, and the edge leaving it along the stroke
+     * from junction i to junction i+1.
      *
-     * Written out rather than paired up the obvious way on purpose. A fixture that gave
-     * every delimiter the same junction for both halves would let the pad read whichever
-     * of the two it liked and still pass, and reading the wrong one is the defect this
-     * file now has to be able to see.
+     * A distinct StreetPoint per corner rather than one shared junction, so that a pad
+     * that read the NEXT delimiter's junction - the shape the generator used to produce -
+     * fits a rotated set of heights and this file can see it. The strokes are wired too,
+     * even though the pad does not read them, so the fixture is a whole delimiter and not
+     * the half this file happens to use.
      */
     internal static void AddRing(Quarter quarter, IReadOnlyList<Vector2> corners)
     {
@@ -43,8 +45,10 @@ public class QuarterPadTests
         for (int i = 0; i < n; ++i)
         {
             int next = (i + 1) % n;
-            var delim = new QuarterDelim { StreetPoint = points[i] };
-            delim.SetCorner(corners[next], points[next]);
+            var delim = new QuarterDelim();
+            delim.SetEdge(
+                corners[i], points[i],
+                new Stroke { ClusterId = 0, A = points[i], B = points[next] });
             quarter.AddQuarterDelim(delim);
         }
     }
@@ -80,12 +84,13 @@ public class QuarterPadTests
 
 
     /**
-     * The corner of a block belongs to the junction it stands ON, and a delimiter's own
-     * StreetPoint is the junction at the other end of its edge.
+     * The corner of a block takes the height of the junction it stands ON, which is its
+     * own delimiter's StreetPoint.
      *
-     * The pad is fitted to (corner position, corner height) pairs, so getting this wrong
-     * shifts every corner's height by a whole street's worth of slope while leaving the
-     * plan geometry, the mesh and the routing exactly right.
+     * The pad is fitted to (corner position, corner height) pairs, so pairing a corner
+     * with any neighbouring junction shifts every corner's height by a whole street's
+     * worth of slope while leaving the plan geometry, the mesh and the routing exactly
+     * right.
      */
     [Fact]
     public void ThePadTakesEachCornersOwnJunction()
@@ -106,8 +111,8 @@ public class QuarterPadTests
         /*
          * The height field varies only in X and the block is a square, so the pad
          * reproduces it exactly - if and only if each corner took its own junction.
-         * Reading the delimiter's own StreetPoint instead rotates the four heights by one
-         * position round the block, which is 20 m of shift on this slope.
+         * Reading a neighbouring delimiter's StreetPoint instead rotates the four heights
+         * by one position round the block, which is 20 m of shift on this slope.
          */
         foreach (var d in quarter.GetDelims())
         {
