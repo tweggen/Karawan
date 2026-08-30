@@ -1010,9 +1010,9 @@ emission and `BuildStaticPhys` need a fragment and a physics world and are not e
   way. Nothing about it is height, and correcting it would move NPCs and shop fronts in
   the default flat city, which this line of work is gated against.
 - **`GenerateNavMapOperator` files each sidewalk corner under `delim.StreetPoint.Id`** for
-  crossing generation, so a pedestrian crossing is drawn between corners of *neighbouring*
-  junctions. Same off-by-one, but it is routing topology rather than height, TALE exercises
-  it heavily, and changing it would change the pedestrian network of the flat city.
+  crossing generation. *(Fixed, see §7h — where the measurement also corrected this
+  description: no crossing lane was actually drawn between the wrong corners, because the
+  crossing loop re-derives them by position. Only the emission order moved.)*
 - **No deck elevation term** in the block floor. Blocks are traced on the ground only
   (`QuarterGenerator.Generate` skips a non-zero start level), asserted rather than assumed.
 
@@ -1129,3 +1129,74 @@ builds through `RouteRibbon.QuadFor` and adds no offset of its own.
 
 `Vector3.Normalize` of the plan direction produces NaN for a lane with no horizontal extent.
 Pre-existing, and the generator emits no such lane.
+
+---
+
+## 7h. A pavement corner belongs to the junction it stands on (crossings)
+
+Recorded in §7e as found and not fixed, and now measured rather than argued — which
+changed what the defect is.
+
+`GenerateNavMapOperator` groups every block corner by a junction id so that pedestrian
+crossings can be drawn at each junction between the two corners flanking each arm. It filed
+each corner under `delim.StreetPoint.Id`. A `QuarterDelim` is an **edge**, so that is the
+junction at the far end of it — **70–97 m away at the median** of the generated cities,
+against **7–12 m** for the junction the corner really touches. Measured over the corner
+lists themselves: a filed corner sat **70.3–97.3 m from the junction it was filed under at
+the median and 134.9 m at the worst**; after the correction, **6.9–12.4 m at the median and
+46.5 m at the worst**, i.e. half a carriageway.
+
+### What it did NOT do, which is the part §7e got wrong
+
+**No crossing lane moves. Not one, in any of the four baseline cities.** The crossing loop
+does not use the filed list to find its corners: for a junction with three or more arms it
+asks `StreetPoint.GetSectionPointByStroke` for the two section points flanking each arm and
+looks *those* up by position in the city-wide corner table. The filed list is used only to
+decide **which junctions are considered at all**, and that set is provably unchanged — a
+block is a closed ring, so the junctions its delimiters leave and the junctions its corners
+stand on are the same set rotated by one — and by the **one-arm dead-end branch**, which
+connects every corner in the list pairwise. That branch never fires: dead-end junctions
+exist in the graph (8 / 18 / 43 / 121 of them across the four cities) but every block traced
+through one is discarded before it reaches here, so **no junction with one arm has a filed
+list at all**.
+
+| city | crossing lanes before | after | lanes only before | only after |
+|---|---|---|---|---|
+| `seed000` 500 m | 4 | 4 | 0 | 0 |
+| `Yelukhdidru` 800 m | 14 | 14 | 0 | 0 |
+| `seed000` 1500 m | 222 | 222 | 0 | 0 |
+| `Yelukhdidru` 3000 m | 1411 | 1411 | 0 | 0 |
+
+So this is a latent defect, not a live one: the list is a claim about which corners belong
+to a junction that nothing checked, standing one dead-end block away from being read.
+
+### What DOES move in the default flat city: the emission order
+
+The filing decides the order the crossing loop runs in, and therefore the order crossing
+lanes land in `NavClusterContent.Lanes` and in every junction's `StartingLanes` — which is
+what an A* breaks ties on. The dictionary was a plain `Dictionary<int, …>`, so that order
+was the insertion order, i.e. a function of which block the quarter store traced first *and*
+of which half of a delimiter the corner was filed under.
+
+It is a `SortedDictionary` now, by junction id, matching the car-lane junction table twelve
+lines above it in the same method. That makes the order a property of the cluster rather
+than of the trace, and it is the one thing here that is not invariant: **1408 of 1411
+crossing lanes in the 3000 m city and 222 of 222 in the 1500 m city come out at a different
+position in the list**, over an identical set. The TALE suite, which exercises pedestrian
+routing heavily, is 200/200 across that.
+
+### Covered
+
+`FileCornerUnderItsJunction` is hoisted out of the operator for the same reason
+`SidewalkJunctionFor` was — the operator needs a stroke store, a quarter store and the
+container and is not exercised — and for one more: **the height and the crossing filing must
+name the same junction for a corner**, and two inline reads of a delimiter is how they came
+to differ. Both are asserted against real generated cities: every filed corner is a section
+point of the junction it is filed under and no further than half a carriageway from it;
+every crossing corner the operator will look up is in that junction's own list; and the key
+set is unchanged, with the ring rotation that makes it so asserted per block.
+
+A source scan forbids **any** read of a delimiter's own `StreetPoint` anywhere under
+`builtin/modules/satnav`, because putting either the filing or the height back inline in the
+operator would restore the defect with every other test still green. That is exactly what
+the mutation run showed: re-inlining the filing fails only the scan.

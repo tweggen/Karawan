@@ -60,6 +60,43 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
 
     /**
+     * File a block's pavement corner under the junction it stands on.
+     *
+     * A crossing spans the carriageway AT a junction, between two of that junction's own
+     * section points, so the corners a junction is asked about have to be its own.
+     * CornerStreetPoint and not StreetPoint, for the same reason SidewalkJunctionFor takes
+     * it: a delimiter is an EDGE, and its StreetPoint is the junction at the FAR end - 70
+     * to 97 m away at the median of the generated cities. Filing a corner there puts it in
+     * the list of a junction it does not touch.
+     *
+     * Written out here rather than inline because the operator needs a stroke store, a
+     * quarter store and the container and is not exercised, and because the height (above)
+     * and the crossing filing must name the SAME junction for a corner. Two inline reads of
+     * a delimiter is how they came to differ in the first place.
+     */
+    internal static void FileCornerUnderItsJunction(
+        QuarterDelim delim, NavJunction nj,
+        IDictionary<int, List<NavJunction>> junctionsByStreetPoint,
+        IDictionary<int, StreetPoint> streetPointById)
+    {
+        StreetPoint sp = delim.CornerStreetPoint;
+
+        if (!junctionsByStreetPoint.TryGetValue(sp.Id, out var list))
+        {
+            list = new List<NavJunction>();
+            junctionsByStreetPoint[sp.Id] = list;
+        }
+
+        if (!list.Contains(nj))
+        {
+            list.Add(nj);
+        }
+
+        streetPointById[sp.Id] = sp;
+    }
+
+
+    /**
      * Create bidirectional lanes between two junctions, subdividing if the
      * distance exceeds MaxLaneLength. Returns the number of lanes created.
      */
@@ -222,9 +259,16 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         // Key: rounded position (1/10 unit precision) to merge coincident points.
         Dictionary<(int, int), NavJunction> sidewalkJunctions = new();
 
-        // Track which StreetPoint each sidewalk junction belongs to (for crossing generation).
-        Dictionary<int, List<NavJunction>> junctionsByStreetPoint = new();
-        Dictionary<int, StreetPoint> streetPointById = new();
+        /*
+         * Which junction's pavement corners are which, for crossing generation.
+         *
+         * Sorted by junction id, as the car-lane junctions above are, so the order the
+         * crossings come out in is a property of the cluster rather than of which block
+         * the quarter store happened to trace first. A Dictionary would enumerate in
+         * insertion order, which changes with the filing.
+         */
+        SortedDictionary<int, List<NavJunction>> junctionsByStreetPoint = new();
+        SortedDictionary<int, StreetPoint> streetPointById = new();
 
         foreach (var quarter in clusterDesc.QuarterStore().GetQuarters())
         {
@@ -248,20 +292,8 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
                 quarterJunctions.Add(nj);
 
-                // Group by StreetPoint for crossing generation
-                int spId = delim.StreetPoint.Id;
-                if (!junctionsByStreetPoint.TryGetValue(spId, out var list))
-                {
-                    list = new List<NavJunction>();
-                    junctionsByStreetPoint[spId] = list;
-                }
-                if (!list.Contains(nj))
-                {
-                    list.Add(nj);
-                }
-
-                // Store the StreetPoint for later access (idempotent write to dict)
-                streetPointById[spId] = delim.StreetPoint;
+                FileCornerUnderItsJunction(
+                    delim, nj, junctionsByStreetPoint, streetPointById);
             }
 
             // Create sidewalk lanes along each quarter edge (wrapping last→first)
