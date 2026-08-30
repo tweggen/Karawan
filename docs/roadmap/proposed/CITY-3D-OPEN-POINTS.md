@@ -62,7 +62,411 @@ distances only as medians.
 
 # Part 1 — Reported from play, not yet fixed
 
-<!-- PLACEHOLDER: items (a)-(f) are filled in below once the two investigations land. -->
+Six reports, all from one session of play on 2026-08-30, plus three defects the
+investigation turned up on the way. Every number below is measured against **real
+generated cities on the real shipped terrain** (`nogame.terrain.GroundOperator`'s
+diamond-square, seed `"mydear"`, then `GradeRelaxer` with the shipped `GradePolicy`, then
+`StreetHeightField` + `ClusterConformElevationOperator.Blend` on the real 20 m grid).
+Baselines: `seed000`/1500, `Yelukhdidru`/3000, `seed000`/800, `Yelukhdidru`/1500 — **659
+blocks, 3547 boundary edges**. Terrain baseline: gradient over one 20 m cell median
+**14.9 %**, p95 47 %; relief inside a 400 m window median **67.6 m**.
+
+**Ranked.** (c) first because it is the largest surface defect and fixing it also fixes
+one of (d)'s three causes. (a) second because it is the largest *visible* one.
+
+---
+
+## (c) The pavement is steeper sideways than lengthwise — RANK 1
+
+> *"sidewalks shall be up/downwards only in the direction of walking, not in the direction
+> to the street. I understand that we might have non-perpendicular setups."*
+
+### What the surface actually is
+
+Confirmed by measurement, not by reading the code: over all 659 blocks the tessellated cap
+has **exactly as many vertices as the input ring** (min 3, median 4–5, max 16), and **zero
+cap vertices fail to coincide with a ring vertex**.
+
+> The pavement is a single triangle fan over the block's boundary ring, spanning kerb to
+> kerb across the whole block, with **no interior vertices at all**. Between 3 and 16
+> vertices carry a block up to ~150 m across. `ExtrudePoly` is constructed with
+> `TileToTexture = false` here, so it does not subdivide the sides either — the ring is
+> the entire vocabulary.
+
+A four-cornered block with 16 m between its highest and lowest corner is therefore a
+warped quad, and which way each triangle tilts is decided by LibTess's sweep, not by
+anything geometric.
+
+**There is no sidewalk object anywhere in the codebase.** The only thing that knows a
+pavement has a width is `QuarterGenerator._createBuildings` (`engine/streets/QuarterGenerator.cs:155-184`),
+where `sidewalkWidth` = **1 / 2 / 4 / 6 m** by `downtownness` insets the building footprint
+via `ClipperOffset` with `JoinType.jtMiter`. That number is computed, used, and thrown
+away — never stored on the `Quarter`, never seen by the floor mesh.
+
+### Measured cross-slope
+
+For every boundary edge: take the midpoint, step **3 m along the inward perpendicular**
+(3 m ≈ the median `sidewalkWidth`; both walker systems stand at 1.5 m), and read the cap's
+**own triangles** barycentrically at both points.
+
+| city | along-edge slope % (med) | **cross-fall %** med / p95 / max | **drop over 3 m (m)** med / p95 / max |
+|---|---|---|---|
+| seed000/1500 | 9.5 | **10.4** / 33.1 / 178 | **0.31** / 0.99 / 5.35 |
+| Yelukhdidru/3000 | 13.1 | **13.2** / 41.8 / 255 | **0.40** / 1.25 / 7.64 |
+| seed000/800 | 8.3 | **8.2** / 33.1 / 45.6 | **0.25** / 0.99 / 1.37 |
+| Yelukhdidru/1500 | 10.6 | **11.3** / 35.1 / 353 | **0.34** / 1.05 / 10.58 |
+
+> **On 53–56 % of block edges the pavement is steeper sideways than lengthwise.** The
+> median pavement falls ~11 % across its width — one in nine — where a real footway is
+> built at 2 %. Over a 3 m pavement that is a third of a metre, **twice the kerb height**.
+
+Signed cross-fall is symmetric (p25 ≈ −11 %, p75 ≈ +12 %): it tips *toward* the road as
+often as away.
+
+### The "non-perpendicular setups" the player conceded
+
+Interior angles at block corners: median **90.1–93.5°** — the median corner is a right
+angle — but **10–16 % are sharper than 60°** (sharpest ~40°) and **7–15 % are reflex**
+(the block folds inward). A mitre at 40° projects the inset vertex ≈2.9× the pavement
+width from the corner; at reflex corners it self-intersects.
+
+That is exactly the problem `ClipperOffset` already solves, correctly, for building
+footprints, **twenty lines away in the same file**.
+
+### Proposal — three options
+
+Shared premise: **the width already exists** (`sidewalkWidth`) and **the mitre already
+exists** (`ClipperOffset`, `jtMiter`, applied to this same ring). Promote `sidewalkWidth`
+to a `Quarter` property computed once, so the floor and the building footprint offset by
+the *same* number — if they drift, the pavement and the building wall stop meeting.
+
+**Option 1 — separate pavement ribbon + separate hidden back-slope.** A closed ribbon
+between the block ring and the inset ring, each inner vertex taking its outer vertex's
+height, plus a second surface joining the ribbon to the block interior. *Cost:* ring ×2
+plus an interior surface. *Breaks:* `ExtrudePoly.BuildStaticPhys` runs
+`Triangulate.ToConvexArrays` on the polygon and builds one hull per convex piece — an
+annulus becomes 4–16 thin slabs per block, and the `area < 10f` / `Radius < 0.1f` guards
+would silently drop narrow ones on 1 m pavements. Realistically needs `BuildGeom`
+decoupled from `BuildStaticPhys` — a real refactor. *Flat city:* breaks unless gated.
+
+**Option 2 — one slab, with an inset ring of vertices at the pavement width, each inset
+vertex taking its boundary vertex's height. ← RECOMMENDED.** The strip between the two
+rings is level across by construction (every quad has two equal-height pairs); all the
+warp moves into the block interior, where the buildings stand and nobody walks.
+- *Corners:* the same `ClipperOffset` mitre. Feed the **offset result's** polygons rather
+  than a naive per-vertex offset and reflex self-intersection is handled. If the inset
+  collapses (block narrower than 2× width), fall back to today's single ring — the rule
+  `_createBuildings` already uses when no footprint remains.
+- *Cost:* ring ×2. Median 4→8 vertices, p95 10→20, max 16→32. The worst fragment's merged
+  floors go from ~339 vertices to ~680. Nothing.
+- *Breaks:* least of the three. `BuildStaticPhys` still receives one polygon;
+  `ToConvexArrays` already handles non-convex rings (every block with a reflex corner
+  exercises it today). `Quarter.GroundHeightAt` unchanged.
+- **The decisive point:** sidewalk `NavJunction`s sit *on* the outer ring corners, whose
+  heights do not move — so **every pedestrian lane height stays exactly as it is and
+  becomes correct for the first time**, because the surface 1.5 m inward is now at the
+  corner's height instead of somewhere on a warped triangle. It fixes cause 3 of (d) for
+  free, with no second correction.
+- *Flat city:* **this is the risk** — a flat city would gain the inset ring and its mesh
+  would change. **Gate the inset on `!ClusterDesc.StreetHeightSource.IsFlat`**, exactly as
+  `Quarter.GroundHeightAt`, `DeckCollider` and `JunctionCollider` already do. Then the
+  default city emits an identical ring, identical tessellation, identical indices.
+
+**Option 3 — per-edge independent quads, overlapping at corners.** Level across, but
+overlapping quads z-fight on a **16-bit** depth buffer (38 mm quantum at 50 m), and reflex
+corners leave wedge-shaped holes. Buys nothing over Option 2 and pays in shimmer.
+
+**Recommendation: Option 2, gated on `IsFlat`.** Then settle two follow-ups: where the
+width comes from (above), and **what the interior becomes** — once the strip is level the
+interior carries all 12–16 m of warp, while buildings stand on the *pad*, a different
+surface again. Making the cap's interior the pad plane outright is a separate change, and
+it is the one that makes the interior warp harmless.
+
+---
+
+## (a) Houses float and sink; shops must stay reachable — RANK 2
+
+> *"Houses are sometimes 'under' the sidewalk level in parts, sometimes in the air. I would
+> say houses must not be in the air. Shops however shall be placed only in a reachable way,
+> so that they are at the same level or above the sidewalk."*
+
+### The base is one scalar, and the code comment claiming otherwise is wrong
+
+`nogameCode/nogame/cities/GenerateHousesOperator.cs:557-561`:
+
+```csharp
+Vector3 v3Position = new Vector3(
+    cx, 2.5f + quarter.GroundHeightAt(...), cz) + v3BuildingCenter;
+```
+
+The footprint handed to the L-system (L546-551) is `new Vector3(p.X, 0f, p.Z) - v3BuildingCenter`
+— **Y forced to zero** — and `AlphaInterpreter`'s `extrudePoly` case extrudes straight up.
+So the base is a **flat horizontal polygon at one height**. The comment at L553-556 ("so a
+house standing on a tilted block tilts with it") **is false**; it takes the pad's *value*
+at one point and nothing more. Physics matches the visual, so a floating house floats in
+physics too, and the bottom segment is built `addFloor: true`, giving a floating house a
+solid visible underside.
+
+### The pad's tilt is irrelevant, because an estate *is* the block
+
+`QuarterGenerator._createBuildings` takes the estate — literally the block outline — and
+insets it by `sidewalkWidth` of only 1–6 m. **Measured footprint diagonal: median
+100–104 m, p90 258–268 m, max 456 m.** So a building's own corners sit *at* the kerb,
+where the pad and the floor have parted company by design. The pad-vs-floor residual is a
+rounding error next to this.
+
+### Measured, per building, `baseY − pavementY` at each footprint vertex
+
+| city | pavement relief **under one footprint** med / p90 / max | worst AIR per building med / p90 / max | worst BURIED med / p90 / max |
+|---|---|---|---|
+| seed000/500 | 7.4 / 7.4 / 8.6 | 4.8 / 4.8 / 5.6 | −2.5 / −2.5 / −3.0 |
+| Yelukhdidru/800 | 6.8 / 6.8 / 7.3 | 4.2 / 4.2 / 4.2 | −2.5 / −2.5 / −3.4 |
+| seed000/1500 | 10.1 / 24.9 / 41.6 | 5.4 / 11.8 / 20.8 | −4.8 / −12.4 / −20.8 |
+| Yelukhdidru/3000 | 12.9 / 27.5 / 52.8 | 6.9 / 14.1 / 33.3 | −6.2 / −13.7 / −23.4 |
+
+> **Every building in every one of these cities has both a floating corner and a buried
+> corner.** Minimum "worst air" across 149 buildings in the 3000 m city is 0.58 m; maximum
+> "worst buried" is −0.12 m. There is no clean subset to exempt.
+
+Fraction of buildings whose footprint relief is ≤ 3 m: **0.0–2.7 %**. ≤ 6 m: 9–33 %.
+
+### ⚠️ In the DEFAULT FLAT city every house is already 0.35 m in the air, today
+
+Pad = `AverageHeight`; pavement = `AverageHeight + 2.0 + 0.15`; base = `AverageHeight + 2.5`.
+The gap is currently *hidden by the shopfront quad*, which
+(`GenerateHousesOperator.cs:303`) puts its bottom at `pad + 2.05` — 0.10 m **below** the
+pavement — so it skirts the gap wherever a shopfront exists. Elsewhere it is visible and
+always has been. **Any fix that lands the base on the pavement moves every house in the
+shipped flat city by 0.35 m.**
+
+### Five height expressions disagree on the same block
+
+| thing | expression | vs. pavement on real terrain |
+|---|---|---|
+| houses, polytopes | `pad + 2.5` | ±, see table above |
+| trees | `pad + 2.15` | 0.35 m below the houses by construction |
+| shopfront geometry | `pad + 2.05` | med −0.6…+0.16, **p10 −9.7 / p90 +9.5, min −23.5, max +33.3** |
+| shop POI entity | `ClusterDesc.GroundHeightAt` (**terrain**) `+ 3.5` | med +1.2…+2.0, p99 +5.0…+7.5, min −3.8 |
+| TALE doors | `pad(**block centre**) + 2.15` | med ~0, p10 −8.9, p90 +9.4, worst +31.4 |
+
+Roughly **half the shop windows in a hillside city are below the pavement**. The shop POI
+is the only thing on a block that does not ask the quarter at all. And
+`_hasPedestrianAccess` (`GenerateShopsOperator.cs:243-273`) is **pure 2-D** — a midpoint
+within 5 m of a boundary segment — so it cannot notice any of this. Reachability bites
+because `ShopNearbyBehavior` inherits `Distance = 16f` and scores in **3-D**: ~7 m of
+vertical error leaves under 15 m of horizontal reach.
+
+### Candidates
+
+1. **Sink to the MINIMUM pavement under the footprint.** Satisfies "never in the air"
+   exactly; buries 7–13 m — **2–4 storeys of every building** — and puts every uphill
+   shopfront underground, violating the second constraint. Cheap, visually unacceptable.
+2. **Raise to the MAXIMUM + downward skirt/plinth.** Satisfies both constraints. One extra
+   `ExtrudePoly`, 3–15 quads. But the plinth height *is* the relief: median 7–13 m, max
+   53 m — a genuinely enormous retaining wall, which is what a 15 % hillside block 100 m
+   across actually requires.
+3. **Footprint-following base (per-vertex base Y).** `ExtrudePoly` already accepts a
+   non-planar ring and `Triangulate.ToMesh` keeps every vertex's height, so the *bottom*
+   L-system segment could take one directly. Gives a wedge-shaped ground floor sitting on
+   the ground. **The only candidate with a clean flat-city story** (a flat block's ring is
+   planar and the per-vertex value equals the pad). Risk: the L-system's `A` polygon is a
+   `JsonObject` parameter, so per-vertex Y must survive `From(fragPoints)` /
+   `ToVector3List` round-tripping.
+4. **Subdivide the estate into building-sized lots.** The real root cause — but 30 m lots
+   on a 15 % grade still leave ~4.5 m of relief, so it reduces the problem ~3–4× without
+   removing it, and it changes the flat city's building layout completely.
+5. **Unify the five height expressions** (independent of the above, worth doing anyway).
+   Measured, the **conformed terrain is a better predictor of the pavement than the pad
+   is**: `GetWalkingHeightAt(door) − pavement` is med 0.06, p10 −1.5, p90 +1.6, max 7.4 —
+   against ±9 for the pad-at-block-centre.
+
+**Suggested order: 3 + 5**, with the 0.35 m flat-city move made deliberately and once.
+
+---
+
+## (b) The quest marker sinks under the road
+
+Cause is exact and slightly absurd. `ToSomewhere._createTargetInstance`
+(`ToSomewhere.cs:176-183`) draws a cube scaled to `(SensitiveRadius, 3, SensitiveRadius)`
+**centred on** `RelativePosition`, so its visible bottom is `markerY − 1.5`.
+
+- **Flat city:** `GetHeightAt` inside a city returns `aver + 1.5f`
+  (`ClusterBaseElevationOperator.cs:114` — a magic constant unrelated to
+  `CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE = 2.0`). So the cube bottom lands at **road + 1.0**
+  and looks right *by coincidence*.
+- **Terrain city:** the +1.5 flattening bias is gone and the conform pass pulls terrain to
+  street ground, so the cube bottom lands at **road − 0.5**.
+
+Measured over every junction of the four baselines (quest destinations are placed at
+`StreetPoint`s):
+
+| city | markerY − road med | **cube bottom − road** med / p10 / min |
+|---|---|---|
+| seed000/500 (27 jn) | 1.01 | **−0.49** / −1.01 / −1.32 |
+| Yelukhdidru/800 (64) | 0.98 | **−0.52** / −0.97 / −4.02 |
+| seed000/1500 (274) | 1.01 | **−0.49** / −1.17 / −4.98 |
+| Yelukhdidru/3000 (1379) | 1.00 | **−0.50** / −1.34 / −9.62 |
+
+So the marker's lower half-metre is under the road at the median (0.65 m under the
+pavement), with a tail to −9.6 m — *"in parts under street/sidewalk level"*, exactly.
+Without the conform pass the same expression would give −24…+34 m, so §2c is working; the
+residual is the missing 1.5 m bias plus the 20 m grid.
+
+**Purely visual** — the goal's collision shape is a cylinder 1000 m tall.
+
+Fixes: **(A)** route the three quest strategies through `Loader.GetNavigationHeightAt` —
+changes nothing on a slope and **lowers every marker in the shipped flat city by 1.5 m**;
+**(B)** position by the marker's *bottom* against a real surface height, the shape §7g
+already used for the ribbon; **(C)** cheapest and honest — offset `_eMeshMarker` by
+`+1.5 · UnitY` in its local transform so the cube **rests on** `RelativePosition` instead
+of straddling it. (C) makes the terrain city match the flat city's look and raises flat-city
+markers by 1.5 m.
+
+---
+
+## (d) T-posed NPCs below pavement level
+
+Two unrelated defects in one sighting.
+
+### T-pose
+
+All six `EntityCreator` sites now name at least one driver, so the 2026-08-25 fix holds.
+**But naming a driver is not the same as something calling `SetAnimation`, and one site
+exploits the gap:**
+
+> **`nogame.npcs.niceday` NPCs are animated by an unretried one-shot and nothing else.**
+> Their strategy starts in `"rest"` → `RestStrategy.OnEnter` attaches `NearbyBehavior`, an
+> `ANearbyBehavior` that only drives the "E to Talk" prompt and **never calls
+> `SetAnimation`**. Their whole animation is `EntityCreator.InitialAnimName` — one call, no
+> retry. It is now *checked* (Errors with `DescribeFailure`), so a failure is loud, but
+> permanent. Same shape, lower risk: the taxi passenger, deliberately (no `Body`).
+
+Everything else self-heals (`WalkBehavior`, `IdleBehavior`, `RecoverBehavior`,
+`TaleConversationBehavior` all latch on success and report via `StuckAnimationReporter`).
+
+**Transient T-pose is possible but bounded to ~one frame:** `StrategyManager` runs
+`OnAttach`/`OnEnter` synchronously, but the first `Behave` — where `SetAnimation` happens —
+is on the next `BehaviorSystem` tick, while the mesh is already attached. One more
+sustained case: `EntityCreator._createLogical`'s catch block (L354-389) leaves a half-built
+character in the world and only hides it; if `SetVisible` itself throws you get a visible,
+behaviour-less, physics-less T-pose forever.
+
+### Below pavement level — three independent causes
+
+NPCs are `MakeKinematic`, so they go exactly where the waypoint says; nothing rests them on
+a collider. Measured at the midpoint of every block edge, 1.5 m inside the kerb (n = 3545):
+
+| walker | med | p05 | worst | below pavement |
+|---|---|---|---|---|
+| **loop walker** (`QuarterLoopRouteGenerator`, the ordinary citizen) — uses **the pad** | ≈0.00 | −1.6…−4.5 m | **−12.6 m** | **46–52 %**; by more than a kerb: **24–41 %** |
+| **satnav walker** (`PedestrianRoute`) | ≈0.00 | −0.31…−0.48 m | −12.9 m | ~50 %; \|Δ\|>0.15 m: 34–63 % |
+| **terrain walker** (`StreetRouteBuilder` ends, `GoToStrategyPart`, `GetWalkingHeightAt`) | ≈0.00 | −1.6…−2.6 m | −13.6 m | 43–51 %; by >1 m: **7.5–16 %** |
+
+1. **The loop walker is the pad's fit residual** (p05 −3.5…−6.1 m, worst −18.3 m). The
+   worst offender, and it is the *default citizen*.
+2. **The terrain walker is street-vs-terrain** (p05 −0.76…−1.48 m, worst −9.8 m). §2c
+   removes most of it but cannot, on a 20 m grid.
+3. **The satnav walker is nothing but (c)'s cross-slope** — ±0.3–0.5 m, exactly half the
+   3 m cross-fall. **Fixing (c) fixes this one outright.**
+
+---
+
+## (e) Trams — the player is right, about the *intercity* ones
+
+Both systems are **active in the shipped game** (`world.CreateTramCharacters: true`; both
+intercity operators registered unconditionally).
+
+**City tram — fine, and always was.** `characters/Tram/Behavior.cs:34-35` flies at
+`ClusterDesc.GroundHeightAt(pos) + ClusterNavigationHeight + 10`, sampling **conformed
+terrain per frame at its own position**. Measured against the road: **median 11.0 m**, p05
+9.5, p95 12.5 — a deliberate elevated line, identical to the flat city's 11 m. **Refuted:
+the city tram is not 20–30 m up.** One tail worth knowing: where a road is heavily filled
+the tram passes *below* it (min −1.5 m), because the tram reads terrain and the road reads
+relaxed street height.
+
+**Intercity tram — this is the 20–30 m, and it is pure flat-city arithmetic.**
+`characters/intercity/GenerateCharacterOperator.cs:112-113` builds two `SegmentEnd`s at
+`ClusterX.AverageHeight + 20f` and flies a **straight chord** between two constants under a
+plain `SimpleNavigationBehavior`, sampling nothing. Measured for city pairs 3–10 km apart:
+
+- `|AverageHeight(A) − AverageHeight(B)|`: median **27.3 m**, p95 66.9 m, max 87.3 m.
+- So the intercity tram runs 20 m above its track at the lower city and 20 m + that
+  difference at the higher — **median ≈ 47 m up, p95 ≈ 87 m.**
+- Its "track" (`IntercityTrackElevationOperator`) hard-sets `Line.Height =
+  min(AverageHeight(A), AverageHeight(B))` across a ~76 m band, sitting at layer
+  `/000200` **above** the conform pass so it overrides everything. Against untouched
+  terrain that band is median **−13.8 m** (a cutting), range −143…+81 m — and **no track
+  geometry is drawn at all**.
+
+So: a tram flying ~47 m over a landscape that is not flat, above an invisible flattened
+scar up to 143 m deep. `models/nogame.globalSettings.json` already admits the intercity
+network ignores all of this.
+
+---
+
+## (f) Starting coins are nowhere near the player — NOT a terrain bug
+
+`nogameCode/nogame/world/DropCoinModule.cs:24-27` drops 19 coins in a **vertical column**
+at hard-coded absolute world XZ **(164, 137)**, Y = 45…96 (57 m tall, 3 m spacing). No
+cluster, no player, no terrain, no fragment. The player starts wherever
+`ClusterDesc.FindStartPosition` finds the first building-free estate — hundreds of metres
+away. Deterministic, and it has always been this way.
+
+**Three separate things are wrong; only the first is what was noticed:**
+
+1. **Hard-coded position.** (164, 137) *is* inside the start cluster, so the coins are in
+   the right city, at a fixed spot in it.
+2. **Ordering blocks the obvious fix.** `DropCoinModule` is an `IWorldOperator` on
+   `Saver.OnCreateNewGame`, called with a brand-new `GameState` whose `PlayerPosition` is
+   still `Vector3.Zero` — the start position is resolved lazily later by
+   `PlayerPosition.GetPlayerPosition`. So the operator genuinely **cannot** ask where the
+   player starts. Either `CallOnCreateNewGame` runs after the start position resolves, or
+   `DropCoinModule` calls `ClusterDesc.FindStartPosition` itself.
+3. **A latent double-add.** `FindStartPosition` returns a **cluster-relative** position in
+   the success branch (L590-591) and `PlayerPosition._findStartPosition:29` adds
+   `startCluster.Pos` — but the "no empty estate" fallback (L622) returns
+   `Pos + vOffset`, **already absolute**, so the fallback spawns the player at
+   `2 × cluster.Pos`. `joyce/ui/Clusters.cs:38` has the mirror-image bug.
+
+**Verdict: pre-existing and independent of the terrain work.** The flag moves nothing here.
+
+---
+
+## Also found on the way — not reported, worth more than some that were
+
+### ⚠️ (g) Half of all pedestrian routes put the walker in the carriageway
+
+`builtin/modules/satnav/PedestrianRoute.WaypointFor` (`PedestrianRoute.cs:45`) returns
+`v3End + laneRight * SidewalkOffset` — **always 1.5 m to the right of travel**. Measured
+over all 3545 block edges: `−1.5 × Cross(fwd, UnitY)` is inside the block **100.0 %** of
+the time; `+1.5 ×` is inside **0.0 %** of the time. `GenerateNavMapOperator.cs:298-305`
+creates block sidewalk lanes with `_createBidirectionalLanes`, so **whichever way round
+the block the A\* routes, one of the two directions stands the walker 1.5 m outside the
+kerb — in the roadway, at pavement height.**
+
+`QuarterLoopRouteGenerator.cs:50` uses `-1.5f * vu3Right` and is correct. **The two
+pedestrian systems offset to opposite sides.** This is present in the flat city too.
+
+### ⚠️ (h) Possible 400 m-pitch cliff grid over the entire world — UNVERIFIED, verify first
+
+`nogame/terrain/ElevationBaseFactory.cs:138-149` copies the refined grid with
+`for (int x = x0; x < x1; x++)`, so the **last index is never written** and
+`ElevationSegment.Elevations[20, *]` stays at its default `Height = 0` for **every**
+fragment. `CacheEntry.GetElevationPixelAt` reads `elevations[ey+1, ex]`, so it reads that
+zero row across the last 20 m strip of each fragment. Replicated verbatim, terrain 1 m
+inside that edge samples **−4…+8 m** while the fragment centre line samples −105…+175 m.
+
+If real, that is a 400 m-pitch cliff grid over the whole world — **invisible in the flat
+city** (cluster interiors are ironed flat) and unmissable in a terrain-following one.
+**Spend ten minutes in-game before trusting or acting on this.** It is the single
+highest-leverage item on this page if it holds.
+
+### (i) The `#if false` operator and the missing drift test
+
+`GenerateHouseDescriptionsOperator.cs` is inside `#if false` from line 1 and compiles to
+nothing, despite being described in CLAUDE.md as a live consumer. And
+`CharacterAnimationDriverTests.cs` — the drift test CLAUDE.md says guards the T-pose fix —
+**exists in no commit on any branch**. Both corrected in CLAUDE.md on 2026-08-30.
 
 ---
 
@@ -146,14 +550,20 @@ lags by one update. Pre-existing. Nothing *reads* it today (the only other write
 `PositionDescription`, so it **is persisted into save games**, and a future reader would
 get a junction one step behind.
 
-## 2.7 Pedestrian standing points carry the vehicle clearance
+## 2.7 Door standing points carry the vehicle clearance
 
-`engine.tale.SpatialModel._computeStreetEntryCandidates` uses pedestrian lane
-**endpoints** as standing points, so a street location's entry candidates carry
-`ClusterNavigationHeight` (3 m, the *vehicle* hover reference) rather than the walking
-height — 0.85 m too high. `TaleSpawnOperator` spawns at it and `GoToStrategyPart` corrects
-it on the first moving frame. **Left because converting it moves NPCs in the flat city.**
-See item (b)/(d) in Part 1 — this may or may not be what the player is seeing.
+⚠️ **CLAUDE.md located this defect in the wrong function until 2026-08-30.**
+`SpatialModel._computeStreetEntryCandidates` takes lane endpoints' **XZ only** and
+overwrites Y with `junctionCenter.Y` (`SpatialModel.cs:443-448`), which is the correct
+walking height and has been since the original commit `b62c5f2f`. **Street entry
+candidates are correct.**
+
+The real site is **`_snapToPedestrianLane` (`SpatialModel.cs:357-402`)**, which returns a
+point on the lane in full 3-D and feeds **building and shop `EntryPosition`** (lines 197,
+245) — shop and home doors, not street corners. Those carry `NavJunction.Position` =
+ground + 3.0 against a walking height of ground + 2.15, i.e. **0.85 m too high**.
+`GoToStrategyPart` corrects it on the first moving frame. **Left because fixing it moves
+NPCs standing at doors in the flat city.**
 
 ## 2.8 Smaller, verified, and cheap
 

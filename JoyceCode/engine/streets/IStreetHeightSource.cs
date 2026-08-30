@@ -123,8 +123,12 @@ public static class StreetHeightSources
             Logger.Warning(
                 followTerrain
                     ? $"{DisableClusterFlatteningSetting}=true: cities keep their terrain, "
-                      + "and streets, traffic, pedestrians and the player follow it. "
-                      + "Quarters and buildings still sit at the cluster average."
+                      + "and streets, traffic, pedestrians, the player, the pavements and "
+                      + "the ground under them all follow it. What stands ON that ground "
+                      + "does not yet: buildings take one height for a footprint that is "
+                      + "nearly the whole block, and quest markers, shop fronts and "
+                      + "intercity trams still use flat-city arithmetic. See "
+                      + "docs/roadmap/proposed/CITY-3D-OPEN-POINTS.md."
                     : $"{DisableClusterFlatteningSetting} is not set, so cities are "
                       + "flattened to their average height as before.");
         }
