@@ -140,26 +140,37 @@ public class Fragment : IDisposable
     public string Key(in Index3 i3Pos) => $"fragxy-{i3Pos.I}_{i3Pos.J}_{i3Pos.K}";
 
     /**
-     * Test, wether the given world coordinate is inside the cluster.
+     * Does a position, relative to a fragment's own origin, fall inside that fragment?
+     *
+     * Half open in both axes, and that is the load bearing part: several operators emit a
+     * thing exactly once by asking which fragment its centre is in - block floors, street
+     * strokes, deck and junction colliders - so the fragments have to PARTITION the plane.
+     * Closed on both sides and a block on a boundary is drawn twice; open on both and it
+     * is drawn by nobody.
+     *
+     * Static so that the partition can be tested for what it is rather than through a
+     * fragment, which needs an engine, and so that a test cannot restate the comparison
+     * instead of exercising it.
      */
-    public bool IsInsideLocal(in Vector3 posLocal)
+    public static bool PartitionContains(in Vector3 posLocal)
     {
-
         float fsh = MetaGen.FragmentSize / 2f;
-        if (
+
+        return !(
             (posLocal.X) >= (fsh)
             || (posLocal.X) < (-fsh)
             || (posLocal.Z) >= (fsh)
             || (posLocal.Z) < (-fsh)
-        )
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
+        );
+    }
 
+
+    /**
+     * Test, wether the given world coordinate is inside the cluster.
+     */
+    public bool IsInsideLocal(in Vector3 posLocal)
+    {
+        return PartitionContains(posLocal);
     }
 
 

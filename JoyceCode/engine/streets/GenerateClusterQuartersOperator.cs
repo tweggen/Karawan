@@ -23,6 +23,35 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
     private bool _traceQuarters = false;
 
 
+    /**
+     * How far away a fragment's block floors are still drawn.
+     *
+     * This was 400 m - less than the diagonal of the very fragment the floors belong to -
+     * while GenerateClusterStreetsOperator emits the roads at 100000 m and the terrain
+     * mesh at 3000 m. So the roads ran to the horizon over ground with no pavements on
+     * it, which is half of what "I'm only seeing very few sidewalks" looks like; the
+     * other half is Triangulate.ToMesh.
+     *
+     * Derived rather than picked. DrawInstancesSystem culls on the distance from the
+     * camera to the instance's origin - a fragment's origin here - and PlayerViewer keeps
+     * fragments within LoadNSurroundingFragments in each axis, so the furthest a loaded
+     * fragment's origin can be is (N + 1/2) fragments away along each axis, with the half
+     * being the camera's own offset inside its fragment. Anything at least that far
+     * cannot cull a fragment the loader has decided to keep - which is the property
+     * worth having, since a fragment that is loaded has already paid for its geometry.
+     * Costs nothing to draw: a whole fragment's block floors merge to one mesh of a few
+     * hundred vertices (measured: 339 vertices, 765 indices at the worst fragment of the
+     * 3000 m city).
+     *
+     * One fragment of slack on top, so that the bound is not a knife edge on a distance
+     * the renderer computes in single precision from a camera position it also uses for
+     * everything else.
+     */
+    public static float MaxDrawDistance =>
+        (world.PlayerViewer.LoadNSurroundingFragments + 1.5f)
+        * world.MetaGen.FragmentSize * Single.Sqrt(2f);
+
+
     public string FragmentOperatorGetPath()
     {
         return $"5010/GenerateClusterQuartersOperator/{_myKey}/{_clusterDesc.IdString}";
@@ -97,7 +126,8 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
 
         if (edges.Count < 3)
         {
-            Trace(_dc, $"No delims found");
+            Warning(_dc, $"A block of cluster '{_clusterDesc.Name}' has only "
+                         + $"{edges.Count} corners and gets no floor.");
             return false;
         }
 
@@ -110,7 +140,14 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         }
         catch (Exception e)
         {
-            Trace(_dc, $"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+            /*
+             * Error and not Trace. A block that fails to build is a block the player
+             * cannot see, and Trace is filtered off by default - so this used to be
+             * completely silent, which is how "there are no logs" gets read as "nothing
+             * is wrong". Error and Warning are never filtered.
+             */
+            Error(_dc, $"Unable to build the floor geometry of a block in "
+                       + $"'{FragmentOperatorGetPath()}': {e}");
         }
 
         CollisionProperties props = new(){
@@ -128,7 +165,8 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         }
         catch (Exception e)
         {
-            Trace(_dc, $"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+            Error(_dc, $"Unable to build the collision surface of a block in "
+                       + $"'{FragmentOperatorGetPath()}': {e}");
         }
 
         return true;
@@ -222,12 +260,13 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         {
             // TXWTODO: Merge this, this is inefficient.
             var mmmerged = MatMesh.CreateMerged(matmesh);
-            var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged, 400f);
+            var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged, MaxDrawDistance);
             worldFragment.AddStaticInstance("engine.streets.quarters", id, listCreatePhysics);
         }
         catch (Exception e)
         {
-            Trace(_dc, $"Unknown exception: {e}");
+            Error(_dc, $"Unable to emit the block floors of "
+                       + $"'{FragmentOperatorGetPath()}': {e}");
         }
 
     });

@@ -365,8 +365,16 @@ namespace builtin.tools
                 // topPlane.Reverse();
                 /*
                  * We hard code the UV to be a bit next to zero to make up for any range problems
+                 *
+                 * The cap is perpendicular to the extrusion, so vu IS its plane and the
+                 * tessellator is told so rather than left to derive one from the polygon.
+                 * That derivation is what used to decide which way the cap faced, and for a
+                 * polygon that is not planar - a city block traced over a hillside - it
+                 * flipped: see Triangulate.ToMesh. Whether per vertex normals are wanted is
+                 * a separate question and stays with PairedNormals.
                  */
-                builtin.tools.Triangulate.ToMesh(topPlane, PairedNormals?Vector3.Normalize(_path[0]):Vector3.Zero, Vector2.One/64f, g);
+                builtin.tools.Triangulate.ToMesh(
+                    topPlane, vu, PairedNormals?vu:Vector3.Zero, Vector2.One/64f, g);
             }
 
             if (_addFloor)
@@ -385,8 +393,12 @@ namespace builtin.tools
                 bottomPlane.Reverse();
                 /*
                  * We hard code the UV to be a bit next to zero to make up for any range problems
+                 *
+                 * Same plane as the ceiling; the "clockwise" argument is what turns the face
+                 * round to look the other way.
                  */
-                builtin.tools.Triangulate.ToMesh(bottomPlane, PairedNormals?Vector3.Normalize(_path[0]):Vector3.Zero, Vector2.One/64f, g, true);
+                builtin.tools.Triangulate.ToMesh(
+                    bottomPlane, vu, PairedNormals?vu:Vector3.Zero, Vector2.One/64f, g, true);
             }
         }
 
@@ -427,6 +439,13 @@ namespace builtin.tools
             {
                 ErrorThrow( "Got a null polygon.", le => new ArgumentNullException(le) );
             }
+
+            /*
+             * Resolved here rather than in the constructor. Only the physics half needs
+             * it, and asking for it up front is what made BuildGeom - the geometry this
+             * class exists for - unreachable from a test with no engine behind it.
+             */
+            _aPhysics ??= I.Get<engine.physics.API>();
 
 
             Func<IList<StaticHandle>, Action> fCreatePhys = new((IList<StaticHandle> staticHandles) =>
@@ -642,7 +661,6 @@ namespace builtin.tools
             _inverseTexture = inverseTexture;
             _addFloor = addFloor;
             _addCeiling = addCeiling;
-            _aPhysics = I.Get<engine.physics.API>();
         }
     }
 }
