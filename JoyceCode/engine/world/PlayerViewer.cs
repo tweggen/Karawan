@@ -8,7 +8,15 @@ public class PlayerViewer : IViewer
 {
     private Engine _engine;
     
-    private static readonly int LoadNSurroundingFragments = 2;
+    /**
+     * How many fragments beyond the player's own are kept loaded, in each axis.
+     *
+     * Public because it is what bounds every "how far can this still be seen" decision in
+     * the game: anything culled closer than the loader's own reach is geometry that has
+     * been generated and paid for and then thrown away unseen. See
+     * engine.streets.GenerateClusterQuartersOperator.MaxDrawDistance.
+     */
+    public const int LoadNSurroundingFragments = 2;
 
     /**
      * Report and predict visibility for the player's entity.

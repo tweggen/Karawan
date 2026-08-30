@@ -1311,3 +1311,189 @@ compared as medians only, to show the tests are not vacuous.
 `SegmentNavigator.NavigatorBehave` writes `_position.StreetPointId` from the **old**
 `StreetPoint` on the line before it overwrites `StreetPoint`, so the id lags the object by
 one update. Pre-existing, unrelated to the pairing, and nothing reads either.
+
+---
+
+## 7j. The pavement faces upwards (why "very few sidewalks")
+
+Reported from play of a terrain-following city, after §7e put the kerb on the road:
+*"I'm afraid I'm only seeing very few sidewalks."*
+
+The suspicion going in was burial: the block floor is a **0.15 m slab**, the conforming pass
+of §7d reaches three cells (60 m) and a block is 28 m deep at the median, so the terrain in
+the middle of a block is only about half graded — and terrain that rises more than
+`ClusterStreetHeight + QuarterSidewalkOffset` = 2.15 m above the surrounding junction
+heights simply covers the pavement up.
+
+**That is real, it was measured, and it is not what the player was seeing.**
+
+### What the ground actually does, measured against the shipped terrain
+
+The terrain here is not a guess. `nogame.terrain.GroundOperator` seeds a diamond-square
+skeleton at fragment resolution over a 90 km world and `ElevationBaseFactory` refines each
+fragment through `engine.elevation.Tools.RefineSkeletonElevation` — both reachable from a
+test, so the measurement runs against the elevation grid the game really builds. Over four
+3000 m windows of it:
+
+| | |
+|---|---|
+| gradient over one 20 m cell | **15.6–16.6 % median**, 42.6–45.2 % p90, > 100 % max |
+| relief inside a 200 m window (one block) | **57–60 m median**, 81–87 m p90, 111–129 m max |
+
+So the ground under a city is genuinely mountainous at block scale, and `GradeRelaxer` has
+a lot to take out: the relaxed junction height differs from the raw terrain by 2.9–6.5 m at
+the median and up to 32 m.
+
+### Burial, quantified
+
+Sampling every block of the baselines on a 2 m grid, against terrain conformed by
+replicating `ClusterConformElevationOperator.Grade` on the real 20 m lattice and
+interpolating it as the terrain mesh does, with the floor's top face taken from the actual
+LibTess triangulation of the outline:
+
+| city | area buried | kerb rim (≤ 5 m) buried | blocks fully buried | median burial |
+|---|---|---|---|---|
+| `seed000`/500 | 1.6 % | 0.0 % | 0 of 3 | 0.33 m |
+| `Yelukhdidru`/800 | 12.4 % | 3.3 % | 0 of 10 | 1.44 m |
+| `seed000`/1500 | 24.7 % | 7.2 % | 0 of 82 | 2.30 m |
+| `Yelukhdidru`/3000 | 20.7 % | 3.6 % | 0 of 445 | 2.57 m |
+| `Yelukhdidru`/3000, elsewhere | 18.2 % | 3.1 % | 0 of 445 | 2.51 m |
+
+**No block is fully buried anywhere**, and the strip that reads as "the sidewalk" — within
+5 m of the kerb — is 3–7 % covered, because the conforming influence is ~0.95 that close to
+a road. A fifth of the block INTERIOR is under a mound, which is a real artefact and is
+where buildings stand, but it is not a missing pavement. **Deliberately not fixed** (below).
+
+### What it actually was: the top face pointed down
+
+`GlThreeD` runs `glEnable(GL_CULL_FACE)` with `glCullFace(BACK)` and `glFrontFace(CCW)`, so
+a triangle wound the wrong way round is not drawn at all. `builtin.tools.Triangulate.ToMesh`
+took **one** `v3Normal` and used it for two unrelated jobs: the plane LibTess sweeps in, and
+whether to write per-vertex normals. `ExtrudePoly` therefore passed
+`PairedNormals ? Vector3.Normalize(_path[0]) : Vector3.Zero` — and a zero normal makes
+LibTess **derive the projection plane from the polygon itself**. For a ring that is no
+longer planar, which after §7e is every block on a slope, that derivation flips.
+
+Measured over the block outlines of the baseline cities:
+
+| | facing up | facing down |
+|---|---|---|
+| `Yelukhdidru`/3000, flat | 437 | **8** |
+| `Yelukhdidru`/3000, 5.8 % plane | 234 | **211** |
+| `Yelukhdidru`/3000, rolling | 219 | **226** |
+| `seed000`/1500, 5.8 % plane | 51 | **31** |
+| with the plane named explicitly, every case | **445 / 445** | 0 |
+
+**About half of a hillside city's pavements were being culled away.** Every mesh was
+complete, every vertex was in the right place, nothing threw, and nothing was logged. The
+parent investigation had already established that "445 of 445 blocks triangulate fully" —
+which was true and was the wrong question.
+
+`GenerateClusterQuartersOperator` was the **only** `ExtrudePoly` caller with a cap that does
+not set `PairedNormals` — houses and the L-system's `extrudePoly` both do, and both have
+always named their plane. The coupling meant the one caller that said "no vertex normals
+please" was also the one caller that said "guess my plane".
+
+### The fix
+
+`Triangulate.ToMesh` takes the sweep plane and the vertex normal as **separate** arguments,
+and **refuses a zero plane** rather than falling back to the guess — a default that is right
+for one of two callers is how this recurs. `ExtrudePoly` passes `vu`, the normalised
+extrusion direction it already computes, for both the ceiling and the floor.
+
+`ExtrudePoly`'s constructor also stopped resolving `engine.physics.API` out of the `I`
+container; the lookup moved into `BuildStaticPhys`, which is the only half that needs it.
+That is why any of this is testable: `BuildGeom` — the geometry the class exists for — could
+not previously be called at all without a booted engine, which is a large part of why a
+winding bug lived in it undetected.
+
+### The other half: block floors were culled at 400 m
+
+`InstanceDesc.CreateFromMatMesh(mmmerged, 400f)`, against `100000f` for the road mesh in
+`GenerateClusterStreetsOperator` and `3000f` for the fragment's own terrain — and 400 m is
+shorter than a fragment's diagonal. `DrawInstancesSystem` culls on the camera-to-instance
+distance plus the merged AABB's radius (median 302 m, max 421 m over the 3000 m city), so
+pavements stopped at roughly 700–820 m while `PlayerViewer` keeps fragments out to 1131 m
+and the roads on them drew the whole way. Roughly nine of the twenty-five loaded fragments
+showed pavements; twenty-five showed roads.
+
+`MaxDrawDistance` is now derived from `PlayerViewer.LoadNSurroundingFragments` — the worst
+case is the camera at one corner of its own fragment and the fragment at the opposite corner
+of what the loader keeps, `(N + 1/2) × FragmentSize` along each axis — with one fragment of
+slack so the bound is not a knife edge. It cannot cull a fragment the loader has decided to
+keep, which is the property worth having: that geometry has already been generated and paid
+for. It costs nothing: a whole fragment's block floors merge to **339 vertices and 765
+indices** at the worst fragment of the 3000 m city.
+
+### Exceptions are visible now
+
+`_generateQuarterFloor` caught **every** exception from `BuildGeom` and `BuildStaticPhys`
+into a `Trace`, which is filtered off by default — so a block that failed to build produced
+no geometry and no evidence. Those are `Error` now, and a source scan walks each `catch`
+body by brace count and fails if it reports nothing or reports through `Trace`. The scan
+counts braces rather than lines on purpose: an eight-line window passed until a comment
+explaining the level pushed the `Error` call past it.
+
+### What the flat city loses, exactly
+
+Not nothing, and the delta was measured block by block rather than argued. Naming the plane
+changes the cap of **exactly the blocks that were coming out backwards** — 8 of 445 in the
+3000 m city, 1 of 82, 1 of 10, 1 of 3 — and every other block's cap comes back with the same
+vertices in the same order and the same indices. Nothing moves: the flat outline is still
+`AverageHeight + ClusterStreetHeight` at every corner (`QuarterFloorTests`), and the cap is
+still exactly that outline raised by one kerb, before and after
+(`ThePavementIsTheOutlineRaisedByExactlyOneKerb`). What changes is that eight block floors
+that were being culled are drawn.
+
+The same is true of the other `PairedNormals`-less cap in the tree, the rooftop
+`powerline(P,h)` of `nogame.cities.HouseInstanceGenerator`: over 200 random orientations, 94
+end caps change, **every one of them from facing backwards to facing forwards**, and none
+the other way. So the whole flat-city delta is "a face that was culled is now drawn"; no
+vertex moves anywhere.
+
+### Covered
+
+- `QuarterFloorFacingTests`, over all four baselines × {flat, 5.8 % plane, rolling}: every
+  triangle of every block's pavement has a positive Y normal. The flat case is not
+  redundant — eight blocks of the shipped flat city failed it.
+- `TheKerbFacesOutOfTheBlock`: the sides are wound from the ring's index order and never go
+  near the tessellator, so they are the control; tested against each edge's own outward
+  direction rather than a centroid, since no block is convex.
+- `ExtrudePolyCapTests` sweeps a powerline section along **24 non-vertical** axes and checks
+  both caps look out of the extrusion. Hard-coding `UnitY` as the cap plane is right for
+  every pavement in the game and wrong for every powerline; without this it survives.
+- `TriangulateNonPlanarTests` gained the facing assertions its earlier version was missing,
+  a `clockwise` reversal test, the zero-plane refusal, and a test that the vertex normal and
+  the sweep plane are independent.
+- `TheFragmentsPartitionThePlane` and `EveryBlockIsClaimedByExactlyOneFragment`:
+  `Fragment.IsInsideLocal`'s half-open comparison is what makes a block emit exactly once,
+  and `Fragment.PartitionContains` is now a static so a test can ask the real thing.
+- `BlockFloorsAreDrawnAsFarAsTheirFragmentIsLoaded` recomputes the loader's reach
+  independently rather than comparing against the operator's own expression.
+
+**Mutation survivors found.** (1) Widening `PartitionContains` to be closed on both sides
+survived the whole-city coverage test entirely — no generated block's centre lands exactly
+on a 400 m boundary, so a rule that would draw a block twice is invisible to any amount of
+real data; `TheFragmentsPartitionThePlane` asks about the boundary directly and catches all
+three comparison mutations. (2) Hard-coding `Vector3.UnitY` as the cap plane survived every
+pavement test; `ExtrudePolyCapTests` exists for it.
+
+### Found and NOT fixed
+
+- **Terrain buries a fifth of the block interior.** The numbers are above. Fixing it
+  properly is the change §2c already deferred: the elevation grid is one sample every 20 m
+  and a real cutting needs a finer grid inside cities. Widening
+  `StreetHeightField.RadiusInCells` would flatten the countryside around every city instead
+  of grading it, and raising the block floor above its own kerb would undo §7e. Nothing here
+  should be done piecemeal.
+- **`GenerateClusterQuartersOperator` does not skip `quarter.IsInvalid()`**, which every
+  other quarter consumer does (`GenerateHousesOperator`, `GenerateTreesOperator`,
+  `GeneratePolytopeOperator`, `SpatialModel`, `GenerateNavMapOperator`, the taxi spawner).
+  It draws more, not fewer, so it is not this bug; the baselines produce no invalid quarters
+  at all, so there is nothing to measure it against.
+- **`Triangulate.ToConvexArrays`** — the physics half — passes no normal at all and hard
+  codes `ContourOrientation.Clockwise`, so it has the same latent projection guess. It feeds
+  `ExtrudePoly.BuildStaticPhys`, which builds convex **hulls** from the polygons, and a hull
+  does not care which way its input was wound. Left alone.
+- **A 500 m city has three blocks.** Not a rendering matter, but worth writing down: the
+  block counts over the baselines are 3 / 10 / 82 / 445 for 500 / 800 / 1500 / 3000 m.
