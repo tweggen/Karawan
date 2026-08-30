@@ -46,12 +46,13 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
             for (int i = 1; i < segmentCount; i++)
             {
                 float t = (float)i / segmentCount;
-                NavJunction njIntermediate = new()
-                {
-                    Position = Vector3.Lerp(njA.Position, njB.Position, t),
-                    StartingLanes = new(),
-                    EndingLanes = new()
-                };
+
+                /*
+                 * Ground and position together - see NavJunction.Between. An
+                 * intermediate junction that kept the position and lost the ground would
+                 * look right and drop every walker crossing it.
+                 */
+                NavJunction njIntermediate = NavJunction.Between(njA, njB, t);
                 ncc.Junctions.Add(njIntermediate);
                 junctions.Insert(i, njIntermediate);
             }
@@ -123,27 +124,21 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
              * terrain near it. Traffic then runs at the height of the road it is on,
              * cut and fill included, instead of near it.
              */
-            float navY = heightSource.GroundHeightAt(streetPoint)
-                         + MetaGen.ClusterNavigationHeight;
+            float groundY = heightSource.GroundHeightAt(streetPoint)
+                            + streetPoint.LevelElevation;
 
-            NavJunction nj = new()
-            {
-                /*
-                 * Navigation is world space, so unlike StreetPoint.Pos3 - which is the
-                 * planar octree key - this carries the junction's deck height.
-                 *
-                 * Two things then follow on their own, because lanes measure themselves
-                 * with Vector3.Distance and split themselves with Vector3.Lerp: a ramp's
-                 * length is its true sloped length rather than its plan length, so
-                 * routing cannot get a discount for climbing, and a long ramp's
-                 * intermediate junctions land part way up it. A street running downhill
-                 * now gets the same treatment for the same reason.
-                 */
-                Position = streetPoint.Pos3
-                           + clusterDesc.Pos with { Y = navY + streetPoint.LevelElevation },
-                StartingLanes = new(),
-                EndingLanes = new()
-            };
+            /*
+             * Navigation is world space, so unlike StreetPoint.Pos3 - which is the planar
+             * octree key - this carries the junction's deck height.
+             *
+             * Two things then follow on their own, because lanes measure themselves with
+             * Vector3.Distance and split themselves with Vector3.Lerp: a ramp's length is
+             * its true sloped length rather than its plan length, so routing cannot get a
+             * discount for climbing, and a long ramp's intermediate junctions land part
+             * way up it. A street running downhill now gets the same treatment for the
+             * same reason.
+             */
+            NavJunction nj = NavJunction.At(streetPoint.Pos3 + clusterDesc.Pos, groundY);
             dictJunctions[streetPoint.Id] = nj;
             ncc.Junctions.Add(nj);
         }
@@ -225,15 +220,9 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                      */
                     Vector3 v3Corner = new Vector3(delim.StartPoint.X, 0f, delim.StartPoint.Y)
                                        + clusterDesc.Pos;
-                    float sidewalkY = heightSource.GroundHeightAt(delim.StreetPoint)
-                                      + MetaGen.ClusterNavigationHeight;
 
-                    nj = new NavJunction
-                    {
-                        Position = v3Corner with { Y = sidewalkY },
-                        StartingLanes = new(),
-                        EndingLanes = new()
-                    };
+                    nj = NavJunction.At(
+                        v3Corner, heightSource.GroundHeightAt(delim.StreetPoint));
                     sidewalkJunctions[key] = nj;
                     ncc.Junctions.Add(nj);
                 }

@@ -22,6 +22,27 @@ public static class StreetRouteBuilder
 {
     private static readonly engine.Dc _dc = engine.Dc.Pathfinding;
 
+
+    /**
+     * Where a walker's feet go at a position that is NOT a junction - the two ends of a
+     * route, which are wherever the walker and the destination happen to be.
+     *
+     * The terrain has to answer here, since there is no road node to ask. Everything in
+     * between comes off the lanes instead. Returns zero without a cluster, which is what
+     * it always did: a TALE pod with no ClusterDesc has no height to offer either.
+     */
+    private static float _walkingHeightAt(PositionDescription pod, Vector3 v3Position)
+    {
+        var clusterDesc = pod?.ClusterDesc;
+        if (null == clusterDesc)
+        {
+            return 0f;
+        }
+
+        return builtin.modules.satnav.desc.NavJunction.WalkingHeightOf(
+            clusterDesc.GroundHeightAt(v3Position));
+    }
+
     /// <summary>
     /// Build an async street path route from start to destination.
     /// Optionally uses routing preferences for multi-objective pathfinding.
@@ -109,17 +130,12 @@ public static class StreetRouteBuilder
             /*
              * Sampled at the walker's own position rather than taken as the cluster
              * average, or the first segment of every route starts at the wrong height in
-             * a city that keeps its terrain.
+             * a city that keeps its terrain. The walker is not standing on a lane, so
+             * this end and the destination end are the only two heights that still have
+             * to come from the terrain; everything between them comes from the lanes.
              */
-            float groundHeight = startPod?.ClusterDesc?.GroundHeightAt(fromPos) ?? 0f;
-            if (startPod?.ClusterDesc != null)
-            {
-                groundHeight += engine.world.MetaGen.ClusterStreetHeight +
-                               engine.world.MetaGen.QuarterSidewalkOffset;
-            }
-
             var startSegmentPos = fromPos;
-            startSegmentPos.Y = groundHeight;
+            startSegmentPos.Y = _walkingHeightAt(startPod, fromPos);
 
             var forward = Vector3.Normalize(toPos - fromPos);
             if (float.IsNaN(forward.X)) forward = Vector3.UnitX;
@@ -138,28 +154,38 @@ public static class StreetRouteBuilder
             // Intermediate segments: each lane end position (walking right-hand sidewalk)
             foreach (var lane in lanes)
             {
-                var laneEndPos = lane.End.Position;
-                laneEndPos.Y = groundHeight;
-
-                // Offset to right-hand sidewalk (1.5m right of lane center)
-                var laneDir = Vector3.Normalize(lane.End.Position - lane.Start.Position);
-                var laneUp = Vector3.UnitY;
-                var laneRight = Vector3.Cross(laneDir, laneUp);
-                if (laneRight.LengthSquared() < 0.001f) laneRight = Vector3.UnitX;
-
-                var sidewalkPos = laneEndPos + laneRight * 1.5f;
-
+                /*
+                 * Every waypoint keeps its OWN height, taken from the junction it is.
+                 * This used to be one number for the whole route, sampled once at the
+                 * route's start and from the TERRAIN rather than the road, so a route
+                 * across a hill came out flat and a walker climbing one sank into it.
+                 *
+                 * The junction already knows: GenerateNavMapOperator gives every car
+                 * junction the relaxed street height of the StreetPoint it IS, and every
+                 * sidewalk junction the height of the junction its quarter delimiter
+                 * belongs to. Lanes measure with Vector3.Distance and split with
+                 * Vector3.Lerp, so the interpolation between two waypoints is already
+                 * linear in the street nodes - which is exactly the cheap elevation
+                 * function an NPC needs, with no raycast anywhere.
+                 *
+                 * The waypoint itself is built by builtin.modules.satnav.PedestrianRoute,
+                 * which is in Joyce and therefore reachable from a test, unlike this file.
+                 */
                 route.Segments.Add(new SegmentEnd
                 {
-                    Position = sidewalkPos,
+                    Position = builtin.modules.satnav.PedestrianRoute.WaypointFor(lane),
                     Up = up,
                     Right = right
                 });
             }
 
             // Final segment: actual destination
+            /*
+             * Sampled at the destination, not at the start. A door on the far side of a
+             * hill is not at the height the walker set off from.
+             */
             var destPos = toPos;
-            destPos.Y = groundHeight;
+            destPos.Y = _walkingHeightAt(startPod, toPos);
 
             route.Segments.Add(new SegmentEnd
             {

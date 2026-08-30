@@ -8,18 +8,19 @@ namespace JoyceCode.Tests.engine.streets;
 
 
 /**
- * One stroke, one fragment.
+ * One stroke, one fragment. One junction, one fragment.
  *
  * GenerateClusterStreetsOperator runs once per fragment overlapping a cluster, but walks
  * the WHOLE cluster's stroke store each time. Everything it emits per stroke therefore
  * needs the same guard - "only if this stroke's A point is in this fragment" - or a
  * stroke spanning two fragments is emitted twice, and a stroke in a far corner of the
- * city is emitted once per loaded fragment.
+ * city is emitted once per loaded fragment. The per-junction loops need exactly the same
+ * guard for exactly the same reason.
  *
- * The mesh loop has had that guard from the beginning. The collider loop was written
- * without it and nobody noticed, because it only ever emitted anything for raised decks
- * and no shipped ruleset makes any. It became a pile of duplicate statics the moment
- * ordinary streets needed colliders.
+ * The mesh loops have had that guard from the beginning. The stroke COLLIDER loop was
+ * written without it and nobody noticed, because it only ever emitted anything for raised
+ * decks and no shipped ruleset makes any. It became a pile of duplicate statics the
+ * moment ordinary streets needed colliders.
  *
  * A source scan, because the thing being checked is a rule about how the file is
  * written, and the loops it applies to need a fragment and a physics simulation to run.
@@ -28,6 +29,7 @@ public class StreetFragmentOwnershipTests
 {
     private const string Guard = "IsInsideLocal";
     private const string StrokeLoop = "foreach (var stroke in strokeStore.GetStrokes())";
+    private const string JunctionLoop = "foreach (var streetPoint in strokeStore.GetStreetPoints())";
 
     /**
      * How far after the loop header the guard may appear. Generous, since a comment
@@ -47,22 +49,27 @@ public class StreetFragmentOwnershipTests
     }
 
 
-    [Fact]
-    public void EveryPerStrokeLoopIsFilteredToItsOwnFragment()
+    /**
+     * @param header
+     *     The loop header to look for.
+     * @param what
+     *     What the loop iterates, for the failure message.
+     */
+    private void _assertEveryLoopIsGuarded(string header, string what)
     {
         string[] lines = File.ReadAllLines(_operatorSource());
 
         var loops = Enumerable.Range(0, lines.Length)
-            .Where(i => lines[i].Contains(StrokeLoop))
+            .Where(i => lines[i].Contains(header))
             .ToList();
 
         /*
-         * Two today - the mesh and the colliders. If this drops to one the scan has
-         * stopped finding what it is meant to police, which is worse than a failure
+         * Two of each today - the mesh and the colliders. If either drops to one the scan
+         * has stopped finding what it is meant to police, which is worse than a failure
          * because it looks like a pass.
          */
         Assert.True(loops.Count >= 2,
-            $"expected at least two per-stroke loops, found {loops.Count} - has the loop "
+            $"expected at least two per-{what} loops, found {loops.Count} - has the loop "
             + "been rewritten in a form this scan no longer recognises?");
 
         foreach (int start in loops)
@@ -72,11 +79,21 @@ public class StreetFragmentOwnershipTests
                 .Any(i => lines[i].Contains(Guard));
 
             Assert.True(guarded,
-                $"the per-stroke loop at {Path.GetFileName(_operatorSource())}:{start + 1} "
+                $"the per-{what} loop at {Path.GetFileName(_operatorSource())}:{start + 1} "
                 + $"has no {Guard} guard within {GuardWithinLines} lines. Without it this "
-                + "fragment emits for strokes belonging to every other fragment too.");
+                + $"fragment emits for {what}s belonging to every other fragment too.");
         }
     }
+
+
+    [Fact]
+    public void EveryPerStrokeLoopIsFilteredToItsOwnFragment()
+        => _assertEveryLoopIsGuarded(StrokeLoop, "stroke");
+
+
+    [Fact]
+    public void EveryPerJunctionLoopIsFilteredToItsOwnFragment()
+        => _assertEveryLoopIsGuarded(JunctionLoop, "junction");
 
 
     /**

@@ -185,6 +185,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\LocalPathfinder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Pathfinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\PedestrianRoute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Route.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\StaticWaypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\IWaypoint.cs" />
@@ -549,6 +550,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\Constraints.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\ConnectComponentsPass.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\DeckCollider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\JunctionCollider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\GenerationReport.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\ExpansionRule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\StreetGenConfig.cs" />

@@ -362,7 +362,8 @@ contend with street and quarter generation for a field written once.
 
 **Junctions get no collider of their own.** Each stroke's box spans junction centre to
 junction centre, so the boxes of the streets meeting at a junction all reach its middle
-and overlap. The outer corners of a wide junction are the gap that leaves.
+and overlap. The outer corners of a wide junction are the gap that leaves. *Closed by
+"The junction cap gets a slab" below.*
 
 ### The ship hovers; it does not rest
 
@@ -574,6 +575,147 @@ height still follows a single point and the existing tilt response still reads t
 TERRAIN two metres ahead rather than the road. Both are the same trade the single ground
 sample has always been — every constant in the controller is tuned against one sample —
 and a second ray was not added because nothing in the report needs one.
+
+### The junction cap gets a slab
+
+Reported from play, and it is the gap recorded at the top of this section: *"The car
+still is a bit stuck on at least this junction (the surface BETWEEN the individual
+branches of a junction)."* `_generateJunction` fills that area with a fan over
+`StreetPoint.GetSectionArray()` and the fan had geometry and no collider at all, so
+`engine.streets.generation.JunctionCollider` now gives it one — under the same two
+conditions and the same fragment-ownership rule as the stroke colliders, so a flat city,
+where the fragment floor plane already covers every junction on the ground, emits nothing.
+
+**The diagnosis was half right, and the measurement is why the other half is written
+down.** The obvious story is that the wedge between two branches stands on nothing. It is
+true and it is smaller than it looks: sampling every cap of the baselines on a grid, the
+fraction covered by no stroke box at all is **0.1 % at the median** — three or more boxes
+converging on one point really do overlap across most of a junction — though about a third
+of junctions have some, and the worst junction of the 3000 m city has **92 m² of cap
+standing on nothing**. The bigger half is what the boxes put there where they *do* reach.
+`_shearOntoSlope` holds the road MESH flat over each junction footprint and spreads the
+rise over the carriageway between, precisely so that the flat cap and the road meet;
+`DeckCollider` is tilted across the stroke's whole length, junction centre to junction
+centre. So inside a junction the collider climbs while the picture is level, and two
+branches of different slope cross there and leave a ridge nothing renders. The cap reaches
+**7.6–10.6 m into its own strokes' boxes at the median and 28.4 m at the worst**, and
+`GradePolicy` allows 5 % to an arterial and 14 % to an alley: **0.4 m to 4 m** of invisible
+step, which is what a ship gets stuck on. A flat slab at the junction's one height wins
+wherever a box has climbed above the road.
+
+**The shape is the cap itself, not a disc over it.** A junction is one node with one
+height, so a horizontal disc of the cap's own radius needs no orientation and would be the
+cheapest thing that could work. Measured, the circumscribed disc is **2.75× the cap's plan
+area at the median** (a three-arm cap is a triangle, and a triangle is 2.42× its own
+circumcircle by construction), 5.3× at the 99th percentile and **34× at the worst
+junction**, where two nearly collinear strokes push a section point 42 m out and the disc
+becomes an 85 m pancake. That surplus is an *invisible apron* reaching several metres past
+the road onto ground a terrain-following city may have put well below it — the artefact
+this change exists to remove, not to introduce. So the slab is a Bepu `ConvexHull` over
+the cap's own corners, top face on the road as `DeckCollider`'s is, one hull per junction
+per fragment (about thirteen for the largest city in the baselines).
+
+**Fewer than three section points means no cap.** The mesh emits a fan over two section
+points and their own midpoint, so both of its triangles are degenerate — which is why
+`_generateJunction`'s guard reads "fewer than two" and still draws nothing at two. Nothing
+is missing there: two strokes meeting head on hand their surfaces to each other and their
+boxes overlap across the junction.
+
+**The height lives in `JunctionCollider.SurfaceHeightOf`, not at the call site**, and that
+is the one mutation that survived the first round. Reading `AverageHeight` instead of the
+junction's own relaxed height compiles, leaves a flat city bit for bit identical — so every
+other test still passed — and floats a pancake at the mean height over every junction of a
+terrain-following city, which is worse than the gap it was meant to close.
+`ClusterGroundHeightTests` cannot catch it either: the operator is already on that allow
+list for its flat floor plane, and the list is per file. The test now compares the slab
+against the cap MESH, built by a separate expression in `_generateJunction`, over a sloping
+source and with every other junction raised onto a deck — so either side drifting fails.
+
+**What is and is not covered by a test.** The decision, the arithmetic and the cap's
+agreement with the mesh are pure and are tested, and the "no slab anywhere in a flat city"
+claim is asserted over whole generated cities rather than a fixture. The Bepu emission —
+hull construction, the static, its release — needs a booted engine and a running
+simulation and is NOT exercised; the fragment-ownership guard on the new loop is held by
+the same source scan as the stroke loops, extended to per-junction loops.
+
+**Still open, deliberately:** `DeckCollider` still tilts across the junction footprints
+rather than flattening over them the way the mesh does, so under the cap the two disagree
+by the same 0.4–4 m. Making the collider follow `damax`/`dbmin` would need those two
+numbers, which are computed inside `_generateStreetRun`, and the slab covers the case from
+above. Nor is the stroke collider's own height expression routed through a checkable
+helper; the same `AverageHeight` mutation would survive there.
+
+### Nav lanes are the NPC height source
+
+Reported from play, with the design steer that fixes it: *"NPCs do not seem to honour
+street height. I believe we do not want to afford raycasting for NPCs, so we need to come
+up with a linear function for their elevation based on street nodes."*
+
+**That function already existed and was being discarded.** `GenerateNavMapOperator` gives
+every car-lane `NavJunction` the height of the `StreetPoint` it *is* — the relaxed street
+height, cut and fill included, not a terrain sample near it — and every sidewalk junction
+the height of the junction its quarter delimiter belongs to. Lanes measure themselves with
+`Vector3.Distance` and split themselves with `Vector3.Lerp`, so interpolation along a lane
+is already **linear in the street nodes, at no per-NPC cost and with no raycast anywhere**.
+Then `StreetRouteBuilder` gave every waypoint of a route ONE Y, computed once at the
+route's start and from `ClusterDesc.GroundHeightAt` — the TERRAIN — so a route across a
+hill came out flat.
+
+**The offsets are the trap, and they are why `NavJunction` now carries the ground.**
+`Position.Y` is ground + `ClusterNavigationHeight` (3 m), which is the *vehicle* hover
+reference; a walker's feet go at ground + `ClusterStreetHeight` (2 m) +
+`QuarterSidewalkOffset` (0.15 m). Subtracting one constant to add another is exactly how
+two heights drift apart with nothing failing, so the junction stores `GroundHeight` and
+each consumer adds its own offset through `NavJunction.NavigationHeightOf` /
+`WalkingHeightOf`. Every junction in the engine is now built by `NavJunction.At`,
+`NavJunction.Between` or `NavJunction.AtNavigationHeight` — a source scan enforces it,
+because an object initialiser sets whichever half its author was thinking about and leaves
+the other at zero, which is *invisible*: right position, right route, and every NPC walking
+over it dropped to 2.15 m above sea level. Both engine sites were of that shape before.
+
+**The flat-city arithmetic.** A flat city's junctions stand on `AverageHeight` exactly, so
+the lane is at `AverageHeight + 3` and the old route height was `AverageHeight + 2 + 0.15`
+= `AverageHeight + 2.15`. `WalkingHeightOf(AverageHeight)` reproduces that number, so the
+change is inert there — pinned on the term as well as on the value, since a conversion that
+was merely close would also pass a test that only compared a waypoint against its own
+junction. Reusing `ClusterNavigationHeight` because it is the number that says "how high a
+nav junction is" would put every NPC 0.85 m into the air.
+
+**`PedestrianRoute.WaypointFor` is in Joyce because `StreetRouteBuilder` is not.** The test
+assembly references `Joyce` and not `nogameCode`, so the piece that decides a waypoint —
+the lane end's own walking height, offset 1.5 m onto the right-hand sidewalk — moved into
+`builtin.modules.satnav`, where a hand-built chain of lanes over a hill can be walked
+directly. A source scan stands in for the call site.
+
+**The two ends of a route are still terrain samples**, and they are the only two: the
+walker and the destination are wherever they happen to be, not on a junction. The
+destination now samples at the DESTINATION rather than reusing the start's height, which is
+the same defect in miniature; so does `GoToStrategyPart`'s straight-line fallback, which has
+no lanes to take a height from at all.
+
+**What the other consumers turned out to be.** `NavMeshRouteGenerator` only forwards to
+`StreetRouteBuilder`. `TaleEntityStrategy`, `TaleWalkBehavior` and `WalkBehavior` never
+touch a waypoint's Y — `SegmentNavigator` lerps between segment positions in 3D, so the
+per-waypoint heights flow through on their own. `QuarterLoopRouteGenerator` was already
+correct, one `Quarter.GroundHeightAt` per waypoint since §7c. `Route.cs` synthesises a
+junction where it truncates the last lane at the target, and that one is now built through
+the factory so it carries a consistent ground height.
+
+**Found and NOT changed:** `SpatialModel._computeStreetEntryCandidates` collects pedestrian
+lane ENDPOINTS as NPCs' standing points, so a street location's entry candidates carry
+`NavJunction.Position` — the *vehicle* clearance, 0.85 m above where a walker stands.
+`TaleSpawnOperator` places a spawning NPC there, and `GoToStrategyPart` corrects it on the
+first frame it moves, so it is a spawn pop rather than a persistent error. Converting it to
+`WalkingHeight` would move NPCs in the default flat city, which this line of work is gated
+against, so it wants its own decision.
+
+**What is and is not covered by a test.** The conversions, the split-lane interpolation and
+the waypoint are pure and are tested, including that a route over a hill is not flat and
+that the same route in a flat city is unchanged. `GenerateNavMapOperator` itself needs a
+stroke store, a quarter store and the container and is NOT exercised: dropping
+`streetPoint.LevelElevation` from a car junction's ground height survives every test, which
+is tolerable only because no shipped ruleset raises a junction off the ground. Putting a
+sidewalk junction back on `AverageHeight` does fail, via `ClusterGroundHeightTests`.
 
 ---
 
