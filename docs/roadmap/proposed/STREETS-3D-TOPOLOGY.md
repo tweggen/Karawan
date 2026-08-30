@@ -1015,3 +1015,47 @@ emission and `BuildStaticPhys` need a fragment and a physics world and are not e
   it heavily, and changing it would change the pedestrian network of the flat city.
 - **No deck elevation term** in the block floor. Blocks are traced on the ground only
   (`QuarterGenerator.Generate` skips a non-zero start level), asserted rather than assumed.
+
+---
+
+## 7f. The satnav guideline is on the road (pre-existing, unrelated to elevation)
+
+Reported from play: *"Navigation guideline … is a bit off street."*
+
+`LocalPathfinder._transportType` defaulted to `TransportationType.Pedestrian`, and
+`builtin/modules/satnav/Route.cs` named no type at all — neither for the pathfinder nor for
+either `TryCreateCursor`. So the route the **player** follows, in a hover ship, was planned
+over the **pedestrian** network: the sidewalk lanes that `GenerateNavMapOperator` traces
+round every block from the quarter boundaries. The guideline ribbon is centred on whichever
+lane the route used, so it has always been drawn on the pavement. Nothing about this is
+elevation; it predates all of Phase A.
+
+**The default is gone rather than corrected.** A default that is right for one of two
+networks is how this happens again, and there is no answer that is right for both. So
+`LocalPathfinder`, `NavCluster.TryCreateCursor`, `NavClusterContent.TryCreateCursor`,
+`satnav.Module.CreateRoute` and `Route` all take the type as a required argument, and
+`engine.quest.ToSomewhere.TransportType` is `required` — a new quest navigation target
+cannot compile without saying which network it is for. All four shipped sites sense the
+player through `MainPlayModule.PhysicsStem`, the hover ship's own physics name, so all four
+are `Car`.
+
+**Both halves must be given the same type**, and getting that wrong is worse than it looks:
+`NavClusterContent.TryCreateCursor` returns `Nil` rather than a lane of the wrong kind, so a
+pedestrian cursor into a car A* does not route badly, it finds no route at all.
+
+### `RoutePlan`, and the survivor that produced it
+
+`Route.Search` hops onto the engine's logical thread, so nothing in it was exercised.
+Mutation testing found it: putting `TransportationType.Pedestrian` back at the two
+`TryCreateCursor` calls — the defect, in its exact original location — passed the entire
+suite. So the planning moved into `builtin.modules.satnav.RoutePlan` (two cursors, the A*,
+and the truncation of the last lane at the target), which needs only a `NavCluster` and is
+tested end to end over a fixture with a car lane and a pavement lane on the same street.
+`Route` keeps the thread hopping and one line, which is scanned for.
+
+The truncation went with it and gained its first test on the way.
+
+**Deliberately unchanged:** `TransportationTypeFlags`'s parameterless constructor still
+defaults to `Pedestrian`, and `NavLane.AllowedTypes` still initialises through it. That is
+"what may use this lane", a different question, and both engine emission sites pass the
+type explicitly.

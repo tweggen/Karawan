@@ -116,7 +116,7 @@ public class NavClusterContent
     }
 
 
-    public async Task<NavCursor> TryCreateCursor(Vector3 v3Position, TransportationType transportType = TransportationType.Pedestrian)
+    public async Task<NavCursor> TryCreateCursor(Vector3 v3Position, TransportationType transportType)
     {
         List<NavCluster> matchingClusters = new();
 

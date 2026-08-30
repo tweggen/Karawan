@@ -187,6 +187,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Pathfinder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\PedestrianRoute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Route.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\RoutePlan.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\StaticWaypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\IWaypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\ScreenComposer.cs" />

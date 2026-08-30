@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using builtin.modules.satnav.desc;
+using engine.navigation;
 using engine;
 using static engine.Logger;
 
@@ -17,10 +18,18 @@ public class Route : IDisposable
 
     public NavMap NavMap { get; }
 
+    /**
+     * What is travelling this route.
+     *
+     * Both the cursors and the pathfinder take it, and they have to take the SAME one: a
+     * cursor filters the lanes near a point by type and returns Nil rather than handing
+     * back a lane of the wrong kind, so a car cursor into a pedestrian pathfinder does not
+     * merely route badly, it fails to find a start at all.
+     */
+    public TransportationType TransportType { get; }
+
     private IWaypoint _a;
     private IWaypoint _b;
-
-    private LocalPathfinder _pathfinder;
 
     
     public IWaypoint A
@@ -55,73 +64,17 @@ public class Route : IDisposable
     {
         I.Get<Engine>().Run(async () =>
         {
-            Vector3 v3StartCenter = _a.GetLocation();
-            // Vector3 v3StartExtents = new(10f, 10f, 10f);
-
-            Vector3 v3EndCenter = _b.GetLocation();
-            // Vector3 v3EndExtents = new(10f, 10f, 10f);
-
-            var navCursors = await Task.WhenAll(
-                NavMap.TopCluster.TryCreateCursor(v3StartCenter),
-                NavMap.TopCluster.TryCreateCursor(v3EndCenter)
-            );
-
             try
             {
-                List<NavLane> listLanes;
-
                 /*
-                 * Plan the initial route.
+                 * The planning itself is in RoutePlan, which needs no engine and is
+                 * therefore exercised. What is left here is the thread hopping.
                  */
-                _pathfinder = new LocalPathfinder(navCursors[0], navCursors[1]);
+                var listLanes = await RoutePlan.PlanAsync(
+                    NavMap.TopCluster, _a.GetLocation(), _b.GetLocation(), TransportType);
 
-                listLanes = _pathfinder.Pathfind();
                 if (null != listLanes && listLanes.Count > 0)
                 {
-                    // Project the target onto nearby lane segments to find the
-                    // closest point on the street. Check the last two lanes to
-                    // handle the overshoot case (nearest junction past the target).
-                    int bestIdx = listLanes.Count - 1;
-                    float bestDist = float.MaxValue;
-                    Vector3 bestProj = listLanes[^1].End.Position;
-
-                    int startCheck = Math.Max(0, listLanes.Count - 2);
-                    for (int i = startCheck; i < listLanes.Count; i++)
-                    {
-                        var lane = listLanes[i];
-                        Vector3 ab = lane.End.Position - lane.Start.Position;
-                        Vector3 ap = v3EndCenter - lane.Start.Position;
-                        float abLenSq = Vector3.Dot(ab, ab);
-                        float t = abLenSq > 0f
-                            ? Math.Clamp(Vector3.Dot(ap, ab) / abLenSq, 0f, 1f)
-                            : 0f;
-                        Vector3 proj = lane.Start.Position + t * ab;
-                        float dist = (v3EndCenter - proj).Length();
-                        if (dist < bestDist)
-                        {
-                            bestDist = dist;
-                            bestIdx = i;
-                            bestProj = proj;
-                        }
-                    }
-
-                    // Remove all lanes after the closest one.
-                    while (listLanes.Count > bestIdx + 1)
-                    {
-                        listLanes.RemoveAt(listLanes.Count - 1);
-                    }
-
-                    // Truncate the closest lane to end at the projected point.
-                    NavJunction njEnd = NavJunction.AtNavigationHeight(bestProj);
-                    var bestLane = listLanes[bestIdx];
-                    listLanes[bestIdx] = new NavLane()
-                    {
-                        Start = bestLane.Start,
-                        End = njEnd,
-                        Length = (bestProj - bestLane.Start.Position).Length(),
-                        MaxSpeed = bestLane.MaxSpeed
-                    };
-
                     _engine.Run(() => onPath(listLanes));
                 }
             }
@@ -129,7 +82,6 @@ public class Route : IDisposable
             {
                 Error(_dc, $"Exception tracing path: {e}");
             }
-
         });
     }
 
@@ -150,11 +102,12 @@ public class Route : IDisposable
     }
 
 
-    public Route(NavMap nm, IWaypoint a, IWaypoint b)
+    public Route(NavMap nm, IWaypoint a, IWaypoint b, TransportationType transportType)
     {
         _engine = I.Get<Engine>();
         NavMap = nm;
         _a = a;
         _b = b;
+        TransportType = transportType;
     }
 }

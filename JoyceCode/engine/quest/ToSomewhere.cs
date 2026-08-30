@@ -40,6 +40,19 @@ public class ToSomewhere : AModule
     public DefaultEcs.Entity OwnerQuestEntity { get; set; }
 
     /**
+     * How the player is expected to get there, and therefore which lanes the guideline
+     * is routed and drawn over.
+     *
+     * Required, with no default. The nav map holds car lanes down the middle of each
+     * carriageway and pedestrian lanes along the pavement, and the guideline is a ribbon
+     * centred on whichever lane the route used - so this decides which surface the player
+     * is told to drive on. It had no default here and inherited LocalPathfinder's, which
+     * was Pedestrian, so every quest guideline in the game was drawn on the sidewalk.
+     * A default that is right for one of the two is how that happens again.
+     */
+    public required navigation.TransportationType TransportType { get; set; }
+
+    /**
      * Where, relative to its parent (or to the world) shall
      * the location be positioned?
      */
@@ -378,7 +391,7 @@ public class ToSomewhere : AModule
             lock (_lo)
             {
                 _routeTarget = M<builtin.modules.satnav.Module>().CreateRoute(
-                    _wStart, _wTarget);
+                    _wStart, _wTarget, TransportType);
             }
 
             return true;

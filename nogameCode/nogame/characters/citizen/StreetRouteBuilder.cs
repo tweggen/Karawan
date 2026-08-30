@@ -100,7 +100,7 @@ public static class StreetRouteBuilder
 
             // Pathfind between cursors with optional routing preferences
             Trace(_dc, $"{routeClass} ROUTE pathfinding from start to end...");
-            var pathfinder = new LocalPathfinder(startCursor, endCursor, preferences, transportType);
+            var pathfinder = new LocalPathfinder(startCursor, endCursor, transportType, preferences);
             var lanes = pathfinder.Pathfind();
             Trace(_dc, $"{routeClass} ROUTE pathfind returned {lanes?.Count ?? 0} lanes");
 

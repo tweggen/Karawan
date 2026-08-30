@@ -22,6 +22,12 @@ public class TrailStrategy : AEntityStrategyPart
         _questTarget = new engine.quest.TrailVehicle()
         {
             OwnerQuestEntity = _entity,
+            /*
+             * The player is sensed by the hover ship's own physics name below, so
+             * this guideline is for a driver: it has to be routed and drawn over car
+             * lanes rather than over the pavement.
+             */
+            TransportType = engine.navigation.TransportationType.Car,
             SensitivePhysicsName = nogame.modules.playerhover.MainPlayModule.PhysicsStem,
             MapCameraMask = nogame.modules.map.Module.MapCameraMask,
             ParentEntity = CarEntity,
