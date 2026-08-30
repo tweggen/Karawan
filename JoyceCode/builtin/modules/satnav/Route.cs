@@ -112,12 +112,7 @@ public class Route : IDisposable
                     }
 
                     // Truncate the closest lane to end at the projected point.
-                    NavJunction njEnd = new NavJunction()
-                    {
-                        Position = bestProj,
-                        StartingLanes = new(),
-                        EndingLanes = new()
-                    };
+                    NavJunction njEnd = NavJunction.AtNavigationHeight(bestProj);
                     var bestLane = listLanes[bestIdx];
                     listLanes[bestIdx] = new NavLane()
                     {

@@ -56,21 +56,32 @@ public class GoToStrategyPart : AEntityStrategyPart
         // (e.g. a TALE pod without ClusterDesc), fall back to the incoming position Y.
         // Never allow Y=0 as it puts NPCs below all terrain.
         float groundHeight = 0f;
+        float endGroundHeight = 0f;
         if (CurrentPosition?.ClusterDesc != null)
         {
-            groundHeight = CurrentPosition.ClusterDesc.GroundHeightAt(startPos) +
-                          engine.world.MetaGen.ClusterStreetHeight +
-                          engine.world.MetaGen.QuarterSidewalkOffset;
+            groundHeight = builtin.modules.satnav.desc.NavJunction.WalkingHeightOf(
+                CurrentPosition.ClusterDesc.GroundHeightAt(startPos));
+
+            /*
+             * Sampled at the destination rather than reusing the start's. This is only
+             * the straight-line fallback - there are no lanes here to take a height from
+             * - but "one Y for the whole route" is the same defect that made a routed
+             * walk across a hill come out flat, and it costs one more sample to not have
+             * it. Identical in a flat city, where both samples are the average.
+             */
+            endGroundHeight = builtin.modules.satnav.desc.NavJunction.WalkingHeightOf(
+                CurrentPosition.ClusterDesc.GroundHeightAt(endPos));
         }
         else if (startPos.Y != 0f)
         {
             // Position already has a valid Y — preserve it
             groundHeight = startPos.Y;
+            endGroundHeight = startPos.Y;
         }
 
         // Apply proper Y coordinate to both route points
         startPos.Y = groundHeight;
-        endPos.Y = groundHeight;
+        endPos.Y = endGroundHeight;
 
         _totalDistance = Vector3.Distance(startPos, endPos);
 

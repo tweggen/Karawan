@@ -645,6 +645,78 @@ numbers, which are computed inside `_generateStreetRun`, and the slab covers the
 above. Nor is the stroke collider's own height expression routed through a checkable
 helper; the same `AverageHeight` mutation would survive there.
 
+### Nav lanes are the NPC height source
+
+Reported from play, with the design steer that fixes it: *"NPCs do not seem to honour
+street height. I believe we do not want to afford raycasting for NPCs, so we need to come
+up with a linear function for their elevation based on street nodes."*
+
+**That function already existed and was being discarded.** `GenerateNavMapOperator` gives
+every car-lane `NavJunction` the height of the `StreetPoint` it *is* — the relaxed street
+height, cut and fill included, not a terrain sample near it — and every sidewalk junction
+the height of the junction its quarter delimiter belongs to. Lanes measure themselves with
+`Vector3.Distance` and split themselves with `Vector3.Lerp`, so interpolation along a lane
+is already **linear in the street nodes, at no per-NPC cost and with no raycast anywhere**.
+Then `StreetRouteBuilder` gave every waypoint of a route ONE Y, computed once at the
+route's start and from `ClusterDesc.GroundHeightAt` — the TERRAIN — so a route across a
+hill came out flat.
+
+**The offsets are the trap, and they are why `NavJunction` now carries the ground.**
+`Position.Y` is ground + `ClusterNavigationHeight` (3 m), which is the *vehicle* hover
+reference; a walker's feet go at ground + `ClusterStreetHeight` (2 m) +
+`QuarterSidewalkOffset` (0.15 m). Subtracting one constant to add another is exactly how
+two heights drift apart with nothing failing, so the junction stores `GroundHeight` and
+each consumer adds its own offset through `NavJunction.NavigationHeightOf` /
+`WalkingHeightOf`. Every junction in the engine is now built by `NavJunction.At`,
+`NavJunction.Between` or `NavJunction.AtNavigationHeight` — a source scan enforces it,
+because an object initialiser sets whichever half its author was thinking about and leaves
+the other at zero, which is *invisible*: right position, right route, and every NPC walking
+over it dropped to 2.15 m above sea level. Both engine sites were of that shape before.
+
+**The flat-city arithmetic.** A flat city's junctions stand on `AverageHeight` exactly, so
+the lane is at `AverageHeight + 3` and the old route height was `AverageHeight + 2 + 0.15`
+= `AverageHeight + 2.15`. `WalkingHeightOf(AverageHeight)` reproduces that number, so the
+change is inert there — pinned on the term as well as on the value, since a conversion that
+was merely close would also pass a test that only compared a waypoint against its own
+junction. Reusing `ClusterNavigationHeight` because it is the number that says "how high a
+nav junction is" would put every NPC 0.85 m into the air.
+
+**`PedestrianRoute.WaypointFor` is in Joyce because `StreetRouteBuilder` is not.** The test
+assembly references `Joyce` and not `nogameCode`, so the piece that decides a waypoint —
+the lane end's own walking height, offset 1.5 m onto the right-hand sidewalk — moved into
+`builtin.modules.satnav`, where a hand-built chain of lanes over a hill can be walked
+directly. A source scan stands in for the call site.
+
+**The two ends of a route are still terrain samples**, and they are the only two: the
+walker and the destination are wherever they happen to be, not on a junction. The
+destination now samples at the DESTINATION rather than reusing the start's height, which is
+the same defect in miniature; so does `GoToStrategyPart`'s straight-line fallback, which has
+no lanes to take a height from at all.
+
+**What the other consumers turned out to be.** `NavMeshRouteGenerator` only forwards to
+`StreetRouteBuilder`. `TaleEntityStrategy`, `TaleWalkBehavior` and `WalkBehavior` never
+touch a waypoint's Y — `SegmentNavigator` lerps between segment positions in 3D, so the
+per-waypoint heights flow through on their own. `QuarterLoopRouteGenerator` was already
+correct, one `Quarter.GroundHeightAt` per waypoint since §7c. `Route.cs` synthesises a
+junction where it truncates the last lane at the target, and that one is now built through
+the factory so it carries a consistent ground height.
+
+**Found and NOT changed:** `SpatialModel._computeStreetEntryCandidates` collects pedestrian
+lane ENDPOINTS as NPCs' standing points, so a street location's entry candidates carry
+`NavJunction.Position` — the *vehicle* clearance, 0.85 m above where a walker stands.
+`TaleSpawnOperator` places a spawning NPC there, and `GoToStrategyPart` corrects it on the
+first frame it moves, so it is a spawn pop rather than a persistent error. Converting it to
+`WalkingHeight` would move NPCs in the default flat city, which this line of work is gated
+against, so it wants its own decision.
+
+**What is and is not covered by a test.** The conversions, the split-lane interpolation and
+the waypoint are pure and are tested, including that a route over a hill is not flat and
+that the same route in a flat city is unchanged. `GenerateNavMapOperator` itself needs a
+stroke store, a quarter store and the container and is NOT exercised: dropping
+`streetPoint.LevelElevation` from a car junction's ground height survives every test, which
+is tolerable only because no shipped ruleset raises a junction off the ground. Putting a
+sidewalk junction back on `AverageHeight` does fail, via `ClusterGroundHeightTests`.
+
 ---
 
 ## 8. What was prototyped first, and how it turned out
