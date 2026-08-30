@@ -1021,11 +1021,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          * Without one a vehicle drives through the bridge instead of over it, or through
          * the hillside road and out the other end.
          *
-         * Junctions get no box of their own. Each stroke's collider spans junction
-         * centre to junction centre, so the boxes of the streets meeting at a junction
-         * all reach its middle and overlap there. The outer corners of a wide junction
-         * are the gap this leaves, and closing it wants a shape per junction cap rather
-         * than a wider box per street.
+         * The junction caps between them get a slab each, below - see JunctionCollider.
          */
         var colliderHeights = _clusterDesc.StreetHeightSource;
 
@@ -1098,6 +1094,93 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                         lock (worldFragment.Engine.Simulation)
                         {
                             worldFragment.Engine.Simulation.Statics.Remove(deckHandle);
+                        }
+                    };
+                }
+            });
+        }
+
+        /*
+         * And a slab under each junction cap, which is the area BETWEEN the branches of
+         * a junction: every stroke's box reaches the junction centre, so between two
+         * neighbouring branches there is a wedge with nothing built under it at all. Over
+         * that wedge the hover probe's ray misses everything, the ship is aimed at the
+         * terrain instead of at the road, and it catches on the edges of the converging
+         * stroke boxes.
+         *
+         * Emitted under the same conditions and the same ownership rule as the stroke
+         * colliders above, so a flat city - where the fragment floor plane already covers
+         * every junction on the ground - is untouched.
+         */
+        Vector3 v3ClusterOrigin = new Vector3(cx, 0f, cz) + worldFragment.Position;
+
+        foreach (var streetPoint in strokeStore.GetStreetPoints())
+        {
+            if (!generation.JunctionCollider.IsNeededFor(streetPoint, groundIsFlat))
+            {
+                continue;
+            }
+
+            /*
+             * A junction belongs to the fragment holding it, exactly as the junction
+             * MESH loop above decides. Without this every fragment overlapping the
+             * cluster would emit a slab for every junction in the whole city.
+             */
+            if (!worldFragment.IsInsideLocal(streetPoint.Pos.X + cx, streetPoint.Pos.Y + cz))
+            {
+                continue;
+            }
+
+            var cap = generation.JunctionCollider.For(
+                streetPoint.GetSectionArray(),
+                v3ClusterOrigin,
+                generation.JunctionCollider.SurfaceHeightOf(colliderHeights, streetPoint),
+                0.1f);
+
+            if (!cap.IsUsable)
+            {
+                continue;
+            }
+
+            listCreatePhysics.Add((IList<StaticHandle> staticHandles) =>
+            {
+                lock (worldFragment.Engine.Simulation)
+                {
+                    var simulation = worldFragment.Engine.Simulation;
+                    var bufferPool = simulation.BufferPool;
+
+                    int nPoints = cap.Points.Count;
+                    bufferPool.Take<Vector3>(nPoints, out var hullPoints);
+                    for (int i = 0; i < nPoints; ++i)
+                    {
+                        hullPoints[i] = cap.Points[i];
+                    }
+
+                    /*
+                     * The hull comes back centred on its own centroid, so the static
+                     * carries that centroid as its position - the same contract
+                     * ExtrudePoly.BuildStaticPhys builds its compounds under.
+                     */
+                    bool created = ConvexHullHelper.CreateShape(
+                        hullPoints.Slice(nPoints), bufferPool, out var v3HullCentre, out var hull);
+                    bufferPool.Return(ref hullPoints);
+
+                    if (!created)
+                    {
+                        return () => { };
+                    }
+
+                    var hullShape = simulation.Shapes.Add(hull);
+
+                    StaticHandle capHandle = simulation.Statics.Add(
+                        new StaticDescription(v3HullCentre, Quaternion.Identity, hullShape));
+
+                    return () =>
+                    {
+                        lock (worldFragment.Engine.Simulation)
+                        {
+                            worldFragment.Engine.Simulation.Statics.Remove(capHandle);
+                            hull.Dispose(bufferPool);
                         }
                     };
                 }

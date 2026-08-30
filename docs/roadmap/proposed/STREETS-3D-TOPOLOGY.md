@@ -362,7 +362,8 @@ contend with street and quarter generation for a field written once.
 
 **Junctions get no collider of their own.** Each stroke's box spans junction centre to
 junction centre, so the boxes of the streets meeting at a junction all reach its middle
-and overlap. The outer corners of a wide junction are the gap that leaves.
+and overlap. The outer corners of a wide junction are the gap that leaves. *Closed by
+"The junction cap gets a slab" below.*
 
 ### The ship hovers; it does not rest
 
@@ -574,6 +575,75 @@ height still follows a single point and the existing tilt response still reads t
 TERRAIN two metres ahead rather than the road. Both are the same trade the single ground
 sample has always been — every constant in the controller is tuned against one sample —
 and a second ray was not added because nothing in the report needs one.
+
+### The junction cap gets a slab
+
+Reported from play, and it is the gap recorded at the top of this section: *"The car
+still is a bit stuck on at least this junction (the surface BETWEEN the individual
+branches of a junction)."* `_generateJunction` fills that area with a fan over
+`StreetPoint.GetSectionArray()` and the fan had geometry and no collider at all, so
+`engine.streets.generation.JunctionCollider` now gives it one — under the same two
+conditions and the same fragment-ownership rule as the stroke colliders, so a flat city,
+where the fragment floor plane already covers every junction on the ground, emits nothing.
+
+**The diagnosis was half right, and the measurement is why the other half is written
+down.** The obvious story is that the wedge between two branches stands on nothing. It is
+true and it is smaller than it looks: sampling every cap of the baselines on a grid, the
+fraction covered by no stroke box at all is **0.1 % at the median** — three or more boxes
+converging on one point really do overlap across most of a junction — though about a third
+of junctions have some, and the worst junction of the 3000 m city has **92 m² of cap
+standing on nothing**. The bigger half is what the boxes put there where they *do* reach.
+`_shearOntoSlope` holds the road MESH flat over each junction footprint and spreads the
+rise over the carriageway between, precisely so that the flat cap and the road meet;
+`DeckCollider` is tilted across the stroke's whole length, junction centre to junction
+centre. So inside a junction the collider climbs while the picture is level, and two
+branches of different slope cross there and leave a ridge nothing renders. The cap reaches
+**7.6–10.6 m into its own strokes' boxes at the median and 28.4 m at the worst**, and
+`GradePolicy` allows 5 % to an arterial and 14 % to an alley: **0.4 m to 4 m** of invisible
+step, which is what a ship gets stuck on. A flat slab at the junction's one height wins
+wherever a box has climbed above the road.
+
+**The shape is the cap itself, not a disc over it.** A junction is one node with one
+height, so a horizontal disc of the cap's own radius needs no orientation and would be the
+cheapest thing that could work. Measured, the circumscribed disc is **2.75× the cap's plan
+area at the median** (a three-arm cap is a triangle, and a triangle is 2.42× its own
+circumcircle by construction), 5.3× at the 99th percentile and **34× at the worst
+junction**, where two nearly collinear strokes push a section point 42 m out and the disc
+becomes an 85 m pancake. That surplus is an *invisible apron* reaching several metres past
+the road onto ground a terrain-following city may have put well below it — the artefact
+this change exists to remove, not to introduce. So the slab is a Bepu `ConvexHull` over
+the cap's own corners, top face on the road as `DeckCollider`'s is, one hull per junction
+per fragment (about thirteen for the largest city in the baselines).
+
+**Fewer than three section points means no cap.** The mesh emits a fan over two section
+points and their own midpoint, so both of its triangles are degenerate — which is why
+`_generateJunction`'s guard reads "fewer than two" and still draws nothing at two. Nothing
+is missing there: two strokes meeting head on hand their surfaces to each other and their
+boxes overlap across the junction.
+
+**The height lives in `JunctionCollider.SurfaceHeightOf`, not at the call site**, and that
+is the one mutation that survived the first round. Reading `AverageHeight` instead of the
+junction's own relaxed height compiles, leaves a flat city bit for bit identical — so every
+other test still passed — and floats a pancake at the mean height over every junction of a
+terrain-following city, which is worse than the gap it was meant to close.
+`ClusterGroundHeightTests` cannot catch it either: the operator is already on that allow
+list for its flat floor plane, and the list is per file. The test now compares the slab
+against the cap MESH, built by a separate expression in `_generateJunction`, over a sloping
+source and with every other junction raised onto a deck — so either side drifting fails.
+
+**What is and is not covered by a test.** The decision, the arithmetic and the cap's
+agreement with the mesh are pure and are tested, and the "no slab anywhere in a flat city"
+claim is asserted over whole generated cities rather than a fixture. The Bepu emission —
+hull construction, the static, its release — needs a booted engine and a running
+simulation and is NOT exercised; the fragment-ownership guard on the new loop is held by
+the same source scan as the stroke loops, extended to per-junction loops.
+
+**Still open, deliberately:** `DeckCollider` still tilts across the junction footprints
+rather than flattening over them the way the mesh does, so under the cap the two disagree
+by the same 0.4–4 m. Making the collider follow `damax`/`dbmin` would need those two
+numbers, which are computed inside `_generateStreetRun`, and the slab covers the case from
+above. Nor is the stroke collider's own height expression routed through a checkable
+helper; the same `AverageHeight` mutation would survive there.
 
 ---
 
