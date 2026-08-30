@@ -365,6 +365,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Cache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\CacheEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\ClusterBaseElevationOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\ClusterConformElevationOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\ElevationPixel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\FactoryEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\IElevationProvider.cs" />
@@ -567,6 +568,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\TerrainStreetHeight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GradePolicy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GradeRelaxer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetHeightField.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\RelaxedStreetHeight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Stroke.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeIntersection.cs" />

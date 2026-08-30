@@ -52,9 +52,7 @@ namespace engine.elevation
              * the city touches, and the setting cannot change under us mid-city
              * without the result being a city that is half flattened.
              */
-            bool keepTerrain =
-                engine.GlobalSettings.Get(
-                    streets.StreetHeightSources.DisableClusterFlatteningSetting) == "true";
+            bool keepTerrain = streets.StreetHeightSources.FollowsTerrain;
 
             /*
              * Now that we have the average, read the level below us.
