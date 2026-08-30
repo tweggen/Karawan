@@ -233,20 +233,27 @@ public class ToSomewhere : AModule
             var eWayPoint = _engine.CreateEntity($"waypoints");
 
             I.Get<HierarchyApi>().SetParent(eWayPoint, _eRouteParent);
+
+            /*
+             * No offset. The quads are built at the surface height of their own junctions
+             * plus RouteRibbon.Lift; a blanket shift here was how the ribbon ended up half
+             * a metre over the road, since it was applied to a position that already
+             * carried the vehicle hover reference.
+             */
             I.Get<TransformApi>().SetTransforms(eWayPoint,
                 true,
                 MapCameraMask | 0x00000001,
-                Quaternion.Identity, -0.5f*Vector3.UnitY);
+                Quaternion.Identity, Vector3.Zero);
 
             var jMesh = joyce.Mesh.CreateListInstance("waypoints");
-            int idx = 0;
             foreach (var nl in listLanes)
             {
-                var v3Direction = nl.End.Position - nl.Start.Position;
-                var vu3Right = Vector3.Normalize(new(v3Direction.Z, 0f, -v3Direction.X));
+                builtin.modules.satnav.RouteRibbon.QuadFor(
+                    nl, TransportType,
+                    out var v3Origin, out var v3Across, out var v3Along);
 
                 joyce.mesh.Tools.AddQuadXYUV(jMesh,
-                    nl.Start.Position+2f*vu3Right, -4f*vu3Right, v3Direction,
+                    v3Origin, v3Across, v3Along,
                     Vector2.Zero, Vector2.Zero, Vector2.Zero
                     );
             }

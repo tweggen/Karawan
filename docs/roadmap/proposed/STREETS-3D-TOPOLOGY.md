@@ -1059,3 +1059,73 @@ The truncation went with it and gained its first test on the way.
 defaults to `Pedestrian`, and `NavLane.AllowedTypes` still initialises through it. That is
 "what may use this lane", a different question, and both engine emission sites pass the
 type explicitly.
+
+---
+
+## 7g. The satnav guideline lies on the road (pre-existing, unrelated to elevation)
+
+Reported from play: *"Navigation guideline is hovering in the air."* Arithmetic, and wrong
+in the flat game too.
+
+`ToSomewhere._onJunctions` built the ribbon quads at `nl.Start.Position`, which is
+`NavJunction.GroundHeight + MetaGen.ClusterNavigationHeight` — **3 m, the vehicle *hover*
+reference, not a surface** — and the parent transform then took a flat `0.5f * UnitY` off.
+Net: ground + 2.5 against a road surface at ground +
+`CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE` = ground + 2.0. Half a metre, always.
+
+The 0.5 was almost certainly a z-fighting margin. It was applied to the wrong base, so it
+became a floating ribbon instead of a lift.
+
+`builtin.modules.satnav.RouteRibbon` now owns the arithmetic: `SurfaceHeightOf` starts from
+the junction's `GroundHeight` — which is exactly why `NavJunction` carries the ground rather
+than a position with an offset baked in (§7 "Nav lanes are the NPC height source") — and
+adds the offset for whichever surface the route is over. A **car** ribbon takes
+`CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE`, the term the road mesh and `JunctionCollider` are
+built at; a **pedestrian** ribbon takes `NavJunction.WalkingHeightOf`, one kerb higher,
+because the pavement is the block floor's extruded top face. Nothing shipped asks for the
+second since §7f made every quest guideline `Car`, but a ribbon that silently used the
+carriageway height would be sunk into the kerb slab it is drawn on.
+
+The parent transform's offset is gone; a blanket shift is what turned a margin into a bug.
+
+### The lift, and why 0.1 m
+
+`Sdl3WindowBackend` asks SDL for a **16-bit** depth buffer, and the play camera runs
+near = 1, far = √3·1000 + 100. The depth quantum on a coplanar surface is then roughly
+z²/65535:
+
+| distance | quantum |
+|---|---|
+| 20 m | 6 mm |
+| 50 m | 38 mm |
+| 100 m | 0.15 m |
+| 200 m | 0.61 m |
+
+So **no fixed lift keeps a long route off the road at its far end**, and the choice is only
+about the near end — the part a driver reads. 0.1 m holds out to about 80 m and is a tenth
+of the clearance the player's own ship keeps over the same surface
+(`HoverSurfaceProbe.SurfaceClearance` = 1 m), so it cannot read as floating. Past that the
+far end of a route may shimmer against the road; that is depth precision rather than height,
+and the honest fix is a 24-bit depth buffer, which is a platform change.
+
+### The slope comes for free, and the centring was checked rather than assumed
+
+Each end of a quad takes **its own** junction's surface height and the along-vector is the
+difference of the two, so a ribbon over a climbing road climbs with it with no extra term.
+Asserted on all four corners of a quad between junctions 6 m apart in height.
+
+The 4 m quad is built as `start + (Width/2)·right` extending `−Width·right`, i.e. centred on
+the lane, which is what §7f's change makes matter — it is now centred on the *carriageway*.
+Confirmed by test (opposite Z of equal magnitude, and across ⟂ along), and the width is
+pinned on the number.
+
+### Not covered
+
+`ToSomewhere._onJunctions` itself runs inside a queued main-thread action in a module that
+needs a booted engine, a physics world and the satnav module. A source scan checks that it
+builds through `RouteRibbon.QuadFor` and adds no offset of its own.
+
+### Found and NOT fixed
+
+`Vector3.Normalize` of the plan direction produces NaN for a lane with no horizontal extent.
+Pre-existing, and the generator emits no such lane.
