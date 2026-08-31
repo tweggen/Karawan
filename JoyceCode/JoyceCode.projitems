@@ -587,6 +587,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\Unit.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterDesc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\IntercityLine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\PlayerStart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\components\Owner.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\components\MapIcon.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\CreateTerrainMeshOperator.cs" />

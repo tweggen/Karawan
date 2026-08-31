@@ -567,67 +567,19 @@ public class ClusterDesc
     }
 
 
-    public void FindStartPosition(out Vector3 v3Start, out Quaternion qStart)
+    /**
+     * Where a new game starts in this city, in ABSOLUTE world coordinates.
+     *
+     * The frame is in the return type's name because it used to differ between the two
+     * branches of this very function: the estate branch answered in cluster relative
+     * coordinates and the "no free estate" branch answered absolutely, while both call
+     * sites added Pos to whatever came back. Both branches now go through
+     * engine.world.PlayerStart, which owns the frame, the drop height and the offset.
+     */
+    public StartPose FindStartPose()
     {
-        var vOffset = new Vector3(0f, 0f, -3f);
-        v3Start = new();
-        qStart = new();
-        
-        /*
-         * Cluster relative coordinates of the start.
-         */
-        Vector3 v3ClusterStart = new();
-        
         _triggerStreets();
-        bool havePos = false;
-        foreach (var quarter in _quarterStore.GetQuarters())
-        {
-            if (quarter.IsInvalid()) continue;
-            foreach (var estate in quarter.GetEstates())
-            {
-                if (estate.GetBuildings().Count == 0)
-                {
-                    v3ClusterStart = (estate.GetCenter() + vOffset) with { Y = AverageHeight + 100f };
-                    v3Start = v3ClusterStart with { Y = AverageHeight + 100f };
-                    havePos = true;
-                    break;
-                }
-            }
-
-            if (havePos) break;
-        }
-
-        if (havePos)
-        {
-            /*
-             * We do have a start position, let's face the center of the city.
-             */
-            Vector3 vuZ = v3ClusterStart with { Y = 0f };
-            try
-            {
-                vuZ = Vector3.Normalize(vuZ);
-                qStart = Quaternion.CreateFromRotationMatrix(Matrix4x4.CreateWorld(Vector3.Zero, -vuZ, Vector3.UnitY));
-            }
-            catch (Exception e)
-            {
-                qStart = Quaternion.Identity;
-            }
-        }
-
-        if (!havePos)
-        {
-            /*
-             * If we didn't find anything, position ourselves in the center of the cluster, facing north.
-             */
-            v3Start = (Pos + vOffset) with { Y = AverageHeight + 100f };
-            qStart = Quaternion.Identity;
-        }
-        
-        if (!(Single.IsFinite(qStart.X) && Single.IsFinite(qStart.Y) && Single.IsFinite(qStart.Z) && Single.IsFinite(qStart.W)))
-        {
-            Debug.Assert(false, "Invalid quaternion!");
-            qStart = Quaternion.Identity;
-        }
+        return PlayerStart.PoseIn(this, _quarterStore);
     }
 
 

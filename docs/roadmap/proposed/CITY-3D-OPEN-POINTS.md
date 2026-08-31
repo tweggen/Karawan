@@ -6,7 +6,7 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7l, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-08-31 (§7m).
+**Last updated:** 2026-08-31 (§7n).
 
 ---
 
@@ -20,10 +20,12 @@ Turn the city three-dimensional with:
 ```
 
 It is **off by default**, and the default flat city has been kept bit-for-bit stable
-through this entire work stream, with three deliberate exceptions: §7i moved `Placer`
-reference junctions, §7j un-culled faces without moving a vertex, and §7l dropped every
-house by 0.35 m onto the pavement it had always floated above. Each was measured and
-stated before it landed rather than discovered afterwards. **Assume that invariant still
+through this entire work stream, with five deliberate exceptions: §7i moved `Placer`
+reference junctions, §7j un-culled faces without moving a vertex, §7l dropped every house by
+0.35 m onto the pavement it had always floated above, §7m dropped every quest marker by
+0.85 m onto the road, and §7n brought one end of every intercity line down onto its own
+track and moved the starting coins under the player. Each was measured and stated before it
+landed rather than discovered afterwards. **Assume that invariant still
 applies to anything you write**, and prove it with a test over whole generated cities
 rather than by argument.
 
@@ -33,15 +35,22 @@ pads, the kerb meets the carriageway exactly, cars hover on a raycast probe, NPC
 lane heights, the satnav guideline lies on the road, and the pavements face upwards.
 
 **What Phase A never touched: everything that STANDS on that surface.** Buildings, shops,
-quest markers, trams and the initial coin placement were all written against a flat city
-and none of them has been revisited. That is what Part 1 below is.
+quest markers, trams and the initial coin placement were all written against a flat city and
+none of them had been revisited. That was Part 1 below, and as of 2026-08-31 all of it is
+done bar the intercity line's own shape, which is a design decision rather than a defect.
 
 **Cleared on 2026-08-31:** (c) the pavement cross-fall, (g) the pedestrian offset, (h) the
-unwritten elevation row, **(a) houses floating and sinking**, **(b) the quest marker** and
-**(d) the T-posed NPCs below pavement level**. Nearly all of them had been written up
-wrongly here, and only measurement caught it - see the entries, which are kept rather than
-deleted because what they got wrong is the useful part. **Rank 1 of Part 1 is now (e) the
-intercity tram**, then (f) the coins.
+unwritten elevation row, **(a) houses floating and sinking**, **(b) the quest marker**,
+**(d) the T-posed NPCs below pavement level**, **(e) the intercity tram** and **(f) the
+starting coins**. Nearly all of them had been written up wrongly here, and only measurement
+caught it - see the entries, which are kept rather than deleted because what they got wrong
+is the useful part.
+
+**Part 1 IS NOW CLEAR, with one deliberate remainder: what an intercity line IS.** The
+intercity tram rides its own track; the track's own shape - graded embankment, viaduct, or
+a deliberately elevated line - is a design decision the owner has not made, and the three
+options are written out under (e) below and in §7n. Nothing else in Part 1 is outstanding,
+so the next thing on this page is Part 4.
 
 ---
 
@@ -83,8 +92,10 @@ blocks, 3547 boundary edges**. Terrain baseline: gradient over one 20 m cell med
 **Ranked.** (c) first because it is the largest surface defect and fixing it also fixes
 one of (d)'s three causes. (a) second because it is the largest *visible* one.
 
-**As of 2026-08-31 (a), (c), (g) and (h) are done**, so the live ranking is (b) the quest
-marker, then what remains of (d), then (e) the intercity tram and (f) the coins.
+**As of 2026-08-31 all nine are done**, bar the design decision under (e). Five of them
+moved the default flat city, each measured and stated before it landed: §7i's `Placer`
+reference junctions, §7j's un-culled faces, §7l's 0.35 m house drop, §7m's 0.85 m quest
+marker, and §7n's intercity tram ends and starting coins.
 
 ---
 
@@ -563,7 +574,67 @@ a collider. Measured at the midpoint of every block edge, 1.5 m inside the kerb 
 
 ---
 
-## (e) Trams — the player is right, about the *intercity* ones — RANK 1
+## ✅ (e) Trams — the intercity one rides its own track now — FIXED 2026-08-31, HALF BY DESIGN
+
+### What was built, and what this write-up got wrong
+
+**The vehicle was fixed; what the track IS was deliberately left to the owner.** Full
+write-up in [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) §7n. The three options for
+the line's own shape are written out there, measured, and **not built** - see *Still open*
+below.
+
+1. **The city tram's one known tail is gone, and nothing was done to it.** This page
+   recorded *"where a road is heavily filled the tram passes below it, min −1.5 m"*.
+   Re-measured at nine points along every stroke of all four baselines - 21105 samples -
+   the minimum is **+1.88 m** and **0.0 % of samples are below the road**, on every city.
+   Median 11.01 m, exactly as before. The number moved because §7a and §7d moved the ground
+   under it, not because anything was changed.
+2. **"Median ≈ 47 m up, p95 ≈ 87 m" is 43.5 / 86.8, and the underlying spread is 23.5 not
+   27.3.** Measured over the world the game actually builds, using the real
+   `GenerateClustersOperator._generateClusterList` rather than a reproduction: **70 cities,
+   114 lines**, `|dAverage|` median **23.53 m**, p95 66.76, max **89.34**. The vehicle above
+   its own track at the higher end: median **43.53 m**, max **109.34 m**.
+3. **"−143…+81 m" is −149.3…+134.2 m, and 63.8 % of the corridor is a cutting.** Track minus
+   untouched terrain along all 114 corridors, 21501 samples: median **−13.10 m**, p01
+   −101.5, p99 +81.9, min **−149.30**, max **+134.18**.
+4. **This page did not say that fixing it MOVES THE FLAT GAME, and it does.**
+   `ClusterDesc.AverageHeight` is computed from the unflattened ground either way -
+   `ClusterBaseElevationOperator` skips only the height write - so the defect and its fix
+   are identical in both worlds. **114 of the 228 route ends come down**, median 23.53 m,
+   max 89.34 m; the other 114 do not move; none rises. Not one of the 114 pairs has equal
+   averages, so not one line was ever right at both ends.
+5. **The half this page did not name: the fix lowers the tram INTO the landscape.** Against
+   the terrain the intercity operator does not flatten, the vehicle was above the ground
+   71.7 % of the time and now is 57.3 %. That is not a regression - it is the vehicle
+   finally being where its track is, and the track being a trench is the decision below.
+
+`engine.world.IntercityLine`;
+`tests/JoyceCode.Tests/engine/world/IntercityLineTests.cs` and `IntercityWorldHarness.cs`.
+**The clearance is derived**: for two cities of equal average the shipped expression put the
+vehicle 20 m over its track, so a matched pair does not move by a float. **No sampling was
+needed** - the track is one height for the whole line, so "the track's height at the
+vehicle's position" is that height wherever it is. **The layer ordering is unaffected**:
+`/000200/intercityTrails` stays above the city conform pass and the fix reads what that
+operator writes.
+
+### ⚠️ Still open, deliberately: what an intercity line IS
+
+The track's own shape is a design decision the owner has not made. Three options are laid
+out with their measurements in §7n and **none is built**:
+
+1. **A graded embankment**, relaxed against the terrain the way `GradeRelaxer` relaxes
+   streets. Cheapest in new machinery (the relaxer and the height field exist); the vehicle
+   then does need intermediate route points. The median terrain gradient along a corridor is
+   14.69 % over 40 m against a `GradePolicy` allowing 5–14 %, so a relaxed line hugs the
+   ground over most of its length.
+2. **A viaduct on pylons.** The only option needing geometry that does not exist - a deck
+   and pylons over ~870 km of line - and the only one that stops the network fighting the
+   terrain at all.
+3. **A deliberately elevated line**, closest to what is there. Costs approximately nothing;
+   the open question is whether the flattening ribbon should be written at all if the line
+   is in the air. **Compatible with the fix as it stands.**
+
+### The original write-up
 
 Both systems are **active in the shipped game** (`world.CreateTramCharacters: true`; both
 intercity operators registered unconditionally).
@@ -596,7 +667,60 @@ network ignores all of this.
 
 ---
 
-## (f) Starting coins are nowhere near the player — NOT a terrain bug
+## ✅ (f) Starting coins are nowhere near the player — FIXED 2026-08-31
+
+### What was built, and what this write-up got wrong
+
+Full write-up in [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) §7n.
+
+1. **"Hundreds of metres away" is 102.05 m.** The shipped world's start cluster is
+   `Yelukhdidru` at `(-5.77, 0, 10)`, `AverageHeight` 37.76, and the player appears at
+   `<92.065094, 137.76129, 209.37798>`. The column at (164, ·, 137) is 102.05 m from it in
+   plan.
+2. **The vertical shape was nearly right, and this page did not notice.** The column spans
+   `AverageHeight + 7.2 … + 61.2` and the player falls from `AverageHeight + 100`. A 57 m
+   column of coins hanging over a spawn that falls 100 m is a thing to fall THROUGH; it was
+   hanging 102 m to one side of the fall. So the column stays - 19 coins, 3 m apart, the
+   shipped count and spacing - and hangs under the start with its top 3 m below it.
+3. **The operator could not have asked even if the ordering were different.**
+   `Saver.CallOnCreateNewGame(object gs)` **never passes `gs` to its operators at all**, and
+   `AutoSave.GameState` is still null at that moment. Both are recorded in §7n as found and
+   not fixed.
+4. **`DropCoinModule` is the ONLY consumer of `OnCreateNewGame` in the whole tree.** So
+   moving when that runs was genuinely available - and was not taken, because the operator
+   asking is one line and restructuring the load path for one caller is not.
+   `engine.world.PlayerStart.Find()` resolves once and hands everyone the same answer, which
+   matters: which estate is free depends on which fragments have generated by the time it is
+   asked, and the coins and the player ask at different times.
+5. **The double add is worse than "the fallback spawns at 2 × cluster.Pos" makes it sound,
+   and it has a second way in.** Over the shipped world's 70 cities the doubled fallback
+   lands **outside its own city for 69 of the 70**, a median **36.6 km** away; the exception
+   is the start cluster, 11.5 m from the origin - so a fixture built on a city near zero,
+   which is what the test harness makes, would have shown nothing. And the branch is not
+   unreachable: `QuarterGenerator` builds on an estate as it traces it, and on
+   **seed000/500 it succeeds on all three**, so the smallest baseline city takes the
+   fallback on a freshly generated world with no fragment operator having run.
+   `FindStartPosition(out, out)` is **gone**, replaced by `FindStartPose()` returning a
+   `StartPose` whose one field is named `V3World`, so a caller that still adds `Pos` does not
+   compile.
+
+**Flat game delta:** all 19 coins move 102.05 m in plan and +35.76 m in Y. **The player does
+not move at all** - `<92.065094, 137.76129, 209.37798>` bit for bit, asserted as equality.
+The **debug cluster beam** in `joyce.ui.Clusters` drops by each city's own `Pos.Y` (median
+22.94 m, max 38.69 m, exactly 0 for the start cluster), which is the random nominal
+elevation `GenerateClustersOperator` draws and `ClusterBaseElevationOperator` then replaces.
+
+**One ordering consequence, stated:** the coin operator now triggers the start cluster's
+street generation, so its `ClusterCompletedEvent` fires during create-new-game rather than at
+preload. `TaxiNpcSpawnerModule` is subscribed by then; `TaleModule` and `Narration` are not.
+`TaleSpawnOperator` populates on demand for exactly this reason and says so in its own
+source, and `Narration`'s `quest.autoTrigger` is not set anywhere in the shipped
+configuration. TALE 200/200 unchanged.
+
+`engine.world.PlayerStart`, `engine.world.StartPose`, `ClusterDesc.FindStartPose`;
+`tests/JoyceCode.Tests/engine/world/PlayerStartTests.cs`.
+
+### The original write-up
 
 `nogameCode/nogame/world/DropCoinModule.cs:24-27` drops 19 coins in a **vertical column**
 at hard-coded absolute world XZ **(164, 137)**, Y = 45…96 (57 m tall, 3 m spacing). No
@@ -621,6 +745,7 @@ away. Deterministic, and it has always been this way.
    `2 × cluster.Pos`. `joyce/ui/Clusters.cs:38` has the mirror-image bug.
 
 **Verdict: pre-existing and independent of the terrain work.** The flag moves nothing here.
+(Correct, and confirmed.)
 
 ---
 
@@ -730,6 +855,18 @@ intercity network still reads `AverageHeight`. It is deliberately registered at
 `/000200/intercityTrails`, i.e. **above** the city conforming pass at `/000150`, so that a
 city may not smooth it away — which keeps its behaviour exactly what it was, and also
 means it does not meet a terrain-following city at the city's edge.
+
+**Still true, and now quantified** (§7n): the ribbon is median **−13.10 m** against the
+untouched terrain over all 114 lines, range −149.3…+134.2 m, 63.8 % of it a cutting, and
+**no track geometry is drawn at all**. What changed on 2026-08-31 is only that the vehicle
+rides it instead of flying a median 43.5 m over it. The three options for the ribbon itself
+are under Part 1 (e) and in §7n, and none is built.
+
+Two smaller things found beside it and left: `Line.Width = 5f` is not the width of anything
+(the band the operator writes is `2 · stepX` = 40 m either side, and `Width` is used only by
+the fine intersection test, so the operator can reject a fragment its own writing pass would
+have touched); and `IntercityTrackElevationOperator`'s AABB named `ClusterA` at both
+stations, corrected in passing and inert because only `IntersectsXZ` is ever asked.
 
 ## 2.3 `DeckCollider` tilts where the mesh flattens
 
