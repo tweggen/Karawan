@@ -26,6 +26,29 @@ namespace builtin.tools
         public bool PairedNormals { get; set; } = false;
         public bool TileToTexture { get; set; } = false;
 
+        /**
+         * An inset for the ceiling cap, one entry per polygon EDGE, or null for a cap that
+         * is a plain fan over the polygon.
+         *
+         * With this set the cap comes out as one quad along each edge, between the edge and
+         * its two inset points, plus the interior left over - which is tessellated exactly
+         * as the whole cap used to be. That matters when the polygon is NOT planar - a city
+         * block outline whose corners each sit at their own road's height, say - because
+         * the fan across such a ring warps, and where it warps is decided by the
+         * tessellator's sweep rather than by anything geometric.
+         *
+         * A rim quad has no cross-gradient exactly when each of its vertices carries the
+         * height the edge has at that vertex's own projection onto it, which is why the
+         * inset belongs to the edge and not to the corners at its ends: a point shared by
+         * two edges would have to carry two heights at once. See builtin.tools.CapInsetEdge.
+         *
+         * Positions are in the polygon's own space, i.e. before the extrusion path is added;
+         * they are raised by the same path the cap is. The count must match the polygon's or
+         * the inset is ignored. Applies to the ceiling only - the floor cap, which faces the
+         * other way, is emitted as before.
+         */
+        public IList<CapInsetEdge> CapInsetEdges { get; set; } = null;
+
         public bool SkipSmall { get; set; } = true;
 
         public bool TraceArea { get; set; } = false;
@@ -363,6 +386,26 @@ namespace builtin.tools
                 }
                 // Why? IDK, was wrong.
                 // topPlane.Reverse();
+
+                /*
+                 * With an inset the cap is a rim of quads and corner wedges plus the
+                 * interior; without one it is the fan it has always been. The interior is
+                 * tessellated through exactly the same call the whole cap used to go
+                 * through, so it is the surface it was, only smaller.
+                 */
+                List<Vector3> topInset = null;
+                if (null != CapInsetEdges && CapInsetEdges.Count == topPlane.Count
+                                          && topPlane.Count >= 3)
+                {
+                    var raised = new List<CapInsetEdge>(CapInsetEdges.Count);
+                    foreach (var e in CapInsetEdges)
+                    {
+                        raised.Add(new CapInsetEdge(e.Start + vh, e.End + vh));
+                    }
+
+                    topInset = _buildCapRim(g, topPlane, raised, vu);
+                }
+
                 /*
                  * We hard code the UV to be a bit next to zero to make up for any range problems
                  *
@@ -374,7 +417,7 @@ namespace builtin.tools
                  * a separate question and stays with PairedNormals.
                  */
                 builtin.tools.Triangulate.ToMesh(
-                    topPlane, vu, PairedNormals?vu:Vector3.Zero, Vector2.One/64f, g);
+                    topInset ?? topPlane, vu, PairedNormals?vu:Vector3.Zero, Vector2.One/64f, g);
             }
 
             if (_addFloor)
@@ -400,6 +443,93 @@ namespace builtin.tools
                 builtin.tools.Triangulate.ToMesh(
                     bottomPlane, vu, PairedNormals?vu:Vector3.Zero, Vector2.One/64f, g, true);
             }
+        }
+
+
+        /**
+         * The rim of the cap: one quad along every edge of the polygon. Returns the
+         * interior ring left over, for the caller to tessellate.
+         *
+         * A rim quad is (outer i, outer i+1, end of inset i, start of inset i). Both of its
+         * inner vertices belong to that one edge and carry the height the edge has directly
+         * across from them, so all four heights lie on the plane h = h0 + s*x and the quad
+         * is level across EXACTLY - at any corner angle, with no vertex shared between two
+         * edges and so no compromise to make. Neighbouring quads meet only at the outer
+         * corner, where both agree on the corner's own height trivially.
+         *
+         * The winding is derived from the ring's own signed area about the cap plane rather
+         * than assumed from the order the caller passes its polygon in. That is the same
+         * property Triangulate.ToMesh has - it emits counterclockwise about the plane it is
+         * given whichever way the contour runs - and it is worth having for the same reason:
+         * GlThreeD culls back faces, so a rim wound the other way round is not a shading
+         * artefact, it is a missing pavement with a complete mesh and nothing in the log.
+         * Half a hillside city's block floors went missing that way once already.
+         *
+         * The centroid is subtracted before the cross products because a cluster coordinate
+         * is up to a couple of thousand metres from its origin while the quantity being
+         * summed is an area of a few hundred square metres; the terms cancel exactly in
+         * exact arithmetic and only approximately in single precision.
+         */
+        private List<Vector3> _buildCapRim(
+            in engine.joyce.Mesh g,
+            in List<Vector3> outer,
+            in List<CapInsetEdge> inset,
+            in Vector3 vuPlane)
+        {
+            int n = outer.Count;
+
+            Vector3 centroid = Vector3.Zero;
+            foreach (var v in outer) centroid += v;
+            centroid /= n;
+
+            Vector3 v3Area = Vector3.Zero;
+            for (int i = 0; i < n; ++i)
+            {
+                v3Area += Vector3.Cross(outer[i] - centroid, outer[(i + 1) % n] - centroid);
+            }
+
+            bool isCcw = Vector3.Dot(v3Area, vuPlane) > 0f;
+
+            for (int i = 0; i < n; ++i)
+            {
+                uint i0 = g.GetNextVertexIndex();
+
+                foreach (var v in new[]
+                         {
+                             outer[i], outer[(i + 1) % n], inset[i].End, inset[i].Start
+                         })
+                {
+                    g.p(v);
+                    g.UV(Vector2.One / 64f);
+                    if (PairedNormals) g.N(vuPlane);
+                }
+
+                if (isCcw)
+                {
+                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                    g.Idx(i0 + 0, i0 + 2, i0 + 3);
+                }
+                else
+                {
+                    g.Idx(i0 + 0, i0 + 2, i0 + 1);
+                    g.Idx(i0 + 0, i0 + 3, i0 + 2);
+                }
+            }
+
+            /*
+             * The interior reaches back out to the polygon at every corner - that is the
+             * ramp where the rim pinches - and the two agree there, since both take the
+             * corner's own height.
+             */
+            var ring = new List<Vector3>(3 * n);
+            for (int i = 0; i < n; ++i)
+            {
+                ring.Add(outer[i]);
+                ring.Add(inset[i].Start);
+                ring.Add(inset[i].End);
+            }
+
+            return ring;
         }
 
 

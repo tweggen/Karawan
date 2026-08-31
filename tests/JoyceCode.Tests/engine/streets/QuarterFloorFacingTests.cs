@@ -47,11 +47,17 @@ public class QuarterFloorFacingTests
 
 
     /**
-     * The floor mesh of one block, built through the shipping path.
+     * The floor mesh of one block, with the cap as a plain fan over the outline.
      *
      * ExtrudePoly is what the operator uses, and it is used here rather than
      * re-implemented: the winding this test is about is decided inside it, so a
      * re-implementation would be testing the test.
+     *
+     * Deliberately WITHOUT the pavement inset. That is still what a flat city gets, and
+     * what any block gets whose outline is too sharp or too narrow to carry one, so the
+     * plain fan is a shipping surface and not a legacy one. The inset floor's own facing is
+     * measured over the same cities in PavementCrossFallTests, which also builds the kerb
+     * sides - they come from the outline alone and the inset does not touch them.
      */
     private static global::engine.joyce.Mesh _floorOf(Quarter q)
     {
@@ -269,8 +275,8 @@ public class QuarterFloorFacingTests
 
 
     /**
-     * The pavement is exactly the block's outline, raised - no vertex moved, none
-     * invented, none dropped.
+     * With no inset, the pavement is exactly the block's outline, raised - no vertex moved,
+     * none invented, none dropped.
      *
      * This is what makes the facing fix a facing fix. Naming the tessellation plane does
      * reorder the cap's vertices for the blocks that used to come out backwards, so
