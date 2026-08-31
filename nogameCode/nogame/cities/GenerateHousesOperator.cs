@@ -22,6 +22,13 @@ namespace nogame.cities;
  */
 public class GenerateHousesOperator : engine.world.IFragmentOperator
 {
+    /*
+     * Trace is filtered off by default, so a Trace in a catch is a silent failure - and
+     * every one of the catches below swallows a building, a sign or a shop window that
+     * the player then simply does not see. Error and Warning are never filtered.
+     */
+    private static readonly engine.Dc _dc = engine.Dc.MetaGen;
+
     private class Context
     {
         public engine.world.Fragment Fragment;
@@ -36,8 +43,26 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
      * We do assume that a texture contains a integer number of stories.
      */
     private static float _storiesPerTexture = 8f;
-    private static float _storyHeight = 3f;
-    private static float _metersPerTexture = 3f * _storiesPerTexture;
+
+    /*
+     * One copy, shared with QuarterGenerator (which sizes buildings in storeys) and with
+     * streets.generation.BuildingFooting (which snaps a shop window to one).
+     */
+    private static float _storyHeight = engine.world.MetaGen.StoryHeight;
+    private static float _metersPerTexture = _storyHeight * _storiesPerTexture;
+
+    /**
+     * How far above the block's own GROUND height the bottom edge of a shop window sits.
+     *
+     * Derived, not chosen: the window has always been drawn at pad + 2.05 while the
+     * pavement of a flat block is at pad + ClusterStreetHeight + QuarterSidewalkOffset =
+     * pad + 2.15, i.e. a tenth of a metre into the ground so that no gap shows at the
+     * bottom of the glass. Expressed here as an offset from the block's own GROUND height
+     * (2.05 above it) rather than from the pavement, so that on a flat city, where the
+     * storey index is exactly zero, every shopfront quad stays on the vertex it is on
+     * today rather than a rounding error away from it.
+     */
+    private static float _shopWindowAboveGround = 2.05f;
 
     public bool TraceHouses { get; set; } = false; 
     
@@ -176,7 +201,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         }
         catch (Exception e)
         {
-            Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+            Error(_dc, $"Unable to build the geometry of a classic house in '{FragmentOperatorGetPath()}': {e}");
         }
 
         CollisionProperties props = new(){
@@ -192,7 +217,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         }
         catch (Exception e)
         {
-            Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+            Error(_dc, $"Unable to build the collision shape of a classic house in '{FragmentOperatorGetPath()}': {e}");
         }
     }
 
@@ -270,6 +295,13 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     }
 
 
+    /**
+     * @param vOffset
+     *     Where the shopfront's own strip goes, absolutely: the cluster offset with Y
+     *     already the bottom edge of the glass. The caller decides that height, because
+     *     it is the one that knows which storey of the building this window belongs to -
+     *     see streets.generation.BuildingFooting.
+     */
     private void _createShopFrontsSubGeo(
         in Context ctx,
         in Vector3 vOffset,
@@ -300,12 +332,11 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
         var p = shopFront.GetPoints();
         var vUp = Vector3.UnitY * (_storyHeight-0.15f);
-        var vGround = Vector3.UnitY * 2.05f;
         int l = p.Count;
         for (int i = 1; i < l; ++i)
         {
             engine.joyce.mesh.Tools.AddQuadXYUV(
-                meshShopFront, vGround + vOffset + p[i-1], p[i] - p[i-1], vUp,
+                meshShopFront, vOffset + p[i-1], p[i] - p[i-1], vUp,
                 Vector2.UnitY, Vector2.UnitX, -Vector2.UnitY
             );
             matmesh.Add(materialShopFront, meshShopFront);
@@ -359,10 +390,10 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
      * Create large-scale neon-lights for the given house geometry.
      */
     /**
-     * @param padY
-     *     Ground height of the block this building stands on, at the building. Passed in
-     *     rather than looked up, because a sign has to sit on the same pad as the house
-     *     it is bolted to and the caller is the one holding the quarter.
+     * @param baseY
+     *     The level the house this sign is bolted to is founded at. Passed in rather than
+     *     looked up, because a sign that does not start where its house starts is a sign
+     *     hanging in the air beside it.
      */
     private void _createNeonSignsSubGeo(
         in Context ctx,
@@ -370,7 +401,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         in engine.streets.Building building,
         in IList<Vector3> p,
         float h,
-        float padY)
+        float baseY)
     {
         var v3BuildingCenter = building.GetCenter();
         if (h < 2.9f * _storyHeight)
@@ -401,7 +432,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             pe = Vector3.Normalize(pe);
             pe *= -letterWidth;
             p0 += v3BuildingCenter;
-            p0 += (_clusterDesc.Pos - ctx.Fragment.Position) with { Y = 2.5f + padY };
+            p0 += (_clusterDesc.Pos - ctx.Fragment.Position) with { Y = baseY };
                 
             _createNeonSignSubGeo(ctx, matmesh, p0, pe, h);
         }
@@ -514,14 +545,29 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         if (TraceHouses) Trace($"First run with building p0 {orgPoints[0]+_clusterDesc.Pos}");
                     }
                         
-                    var height = building.GetHeight();
+                    /*
+                     * Where this building stands, and how tall it has to be built to keep
+                     * the height it was designed with.
+                     *
+                     * The base is planar and at or below the block floor everywhere over
+                     * the footprint - which is the guarantee, not a heuristic: every
+                     * vertex of that floor carries one of the block's corner heights or a
+                     * blend of two of an edge's pair, so the surface cannot go below the
+                     * lowest of them. The height then adds the block's corner spread, so
+                     * the roof clears the highest corner by the design height rather than
+                     * the building being swallowed from the uphill side. Both are exactly
+                     * zero-cost on a flat block, where every corner is at one height.
+                     */
+                    float baseY = engine.streets.generation.BuildingFooting
+                        .BaseHeightOf(quarter);
+                    var height = engine.streets.generation.BuildingFooting
+                        .HeightOf(quarter, building.GetHeight());
 
                     /*
                      * We create a lindenmeyer placed at the building's center, the ground polygon
                      * being relative to it.
-                     * Z coordinate is the block's pad height plus 2.15f, 
                      */
-                    
+
                     var fragPoints = new List<Vector3>();
                     foreach (var p in orgPoints)
                     {
@@ -550,15 +596,12 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         if (null != lInstance)
                         {
                             /*
-                             * On the block's own pad, at the building's own position,
-                             * so a house standing on a tilted block tilts with it
-                             * instead of hanging over the low corner.
+                             * At the block's founding level. The footprint went to the
+                             * L-system with Y forced to zero and is extruded straight up,
+                             * so this one scalar IS the whole floor - which is the reason
+                             * it has to be a bound rather than a sample.
                              */
-                            Vector3 v3Position = new Vector3(
-                                                     cx,
-                                                     2.5f + quarter.GroundHeightAt(
-                                                         new Vector2(v3BuildingCenter.X, v3BuildingCenter.Z)),
-                                                     cz)
+                            Vector3 v3Position = new Vector3(cx, baseY, cz)
                                                  + v3BuildingCenter;
                             new AlphaInterpreter(lInstance).Run(ctx.Fragment, v3Position, matmesh, listCreatePhysics);
                         }
@@ -577,12 +620,11 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     {
                         _createNeonSignsSubGeo(
                             ctx, matmesh, building, fragPoints, Single.Max(20f, height),
-                            quarter.GroundHeightAt(
-                                new Vector2(v3BuildingCenter.X, v3BuildingCenter.Z)));
+                            baseY);
                     }
                     catch (Exception e)
                     {
-                        Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+                        Error(_dc, $"Unable to build the neon signs of a house in '{FragmentOperatorGetPath()}': {e}");
                     }
 
                     foreach (var shopFront in building.GetShopFronts())
@@ -590,21 +632,31 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         try
                         {
                             /*
-                             * Per building, so a shop front sits on the same pad as the
-                             * house carrying it rather than on the cluster average.
+                             * Per SHOPFRONT, not per building: the constraint is that a
+                             * shop be reachable from the pavement in front of IT, and one
+                             * building can span 100 m of a block whose kerb falls 13 m.
+                             * BuildingFooting answers with the block's lowest corner
+                             * raised by whole storeys until it clears that pavement, so a
+                             * row of shops steps up the hill in 3 m stages instead of
+                             * every one of them following the sample at the building's
+                             * centre underground.
                              */
                             _createShopFrontsSubGeo(
                                 ctx,
                                 v2ClusterOffset with
                                 {
-                                    Y = quarter.GroundHeightAt(
-                                        new Vector2(v3BuildingCenter.X, v3BuildingCenter.Z))
+                                    Y = engine.streets.generation.BuildingFooting
+                                            .StoreyGroundAt(
+                                                quarter,
+                                                engine.streets.generation.BuildingFooting
+                                                    .PlanOf(shopFront))
+                                        + _shopWindowAboveGround
                                 },
                                 matmesh, shopFront);
                         }
                         catch (Exception e)
                         {
-                            Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+                            Error(_dc, $"Unable to build a shopfront in '{FragmentOperatorGetPath()}': {e}");
                         }
                     }
                 }
@@ -629,7 +681,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         }
         catch (Exception e)
         {
-            Trace($"Unknown exception: {e}");
+            Error(_dc, $"Unable to add the merged house geometry of '{FragmentOperatorGetPath()}': {e}");
         }
     });
 

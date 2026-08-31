@@ -3,7 +3,7 @@
 **Status:** open ledger. This is the file to read first when picking up the
 terrain-following city work.
 **Companion:** [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) is the design and
-history document — every fix is written up there as §7a … §7j, with the measurements that
+history document — every fix is written up there as §7a … §7l, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
 **Last updated:** 2026-08-31.
@@ -20,10 +20,12 @@ Turn the city three-dimensional with:
 ```
 
 It is **off by default**, and the default flat city has been kept bit-for-bit stable
-through this entire work stream — with exactly one deliberate exception (§7i, which moved
-`Placer` reference junctions, and §7j, which un-culled faces without moving a vertex).
-**Assume that invariant still applies to anything you write**, and prove it with a test
-over whole generated cities rather than by argument.
+through this entire work stream, with three deliberate exceptions: §7i moved `Placer`
+reference junctions, §7j un-culled faces without moving a vertex, and §7l dropped every
+house by 0.35 m onto the pavement it had always floated above. Each was measured and
+stated before it landed rather than discovered afterwards. **Assume that invariant still
+applies to anything you write**, and prove it with a test over whole generated cities
+rather than by argument.
 
 **What Phase A finished:** the road surface and everything that moves on it. Streets
 follow relaxed terrain gradients, the ground conforms to the roads, blocks are tilted
@@ -34,11 +36,12 @@ lane heights, the satnav guideline lies on the road, and the pavements face upwa
 quest markers, trams and the initial coin placement were all written against a flat city
 and none of them has been revisited. That is what Part 1 below is.
 
-**Cleared on 2026-08-31:** (c) the pavement cross-fall, (g) the pedestrian offset, and
-(h) the unwritten elevation row. Two of the three had been written up wrongly here, and
-only measurement caught it - see the entries, which are kept rather than deleted because
-what they got wrong is the useful part. Ranks 1 and 2 of Part 1 are now (a) houses and
-(b) the quest marker.
+**Cleared on 2026-08-31:** (c) the pavement cross-fall, (g) the pedestrian offset, (h) the
+unwritten elevation row, and **(a) houses floating and sinking**. Three of the four had
+been written up wrongly here, and only measurement caught it - see the entries, which are
+kept rather than deleted because what they got wrong is the useful part. **Rank 1 of
+Part 1 is now (b) the quest marker**, then what remains of (d), then (e) the intercity
+tram and (f) the coins.
 
 ---
 
@@ -80,10 +83,8 @@ blocks, 3547 boundary edges**. Terrain baseline: gradient over one 20 m cell med
 **Ranked.** (c) first because it is the largest surface defect and fixing it also fixes
 one of (d)'s three causes. (a) second because it is the largest *visible* one.
 
-**As of 2026-08-31 (c), (g) and (h) are done**, so the live ranking is (a) houses, then
-(b) the quest marker, then what remains of (d), then (e) the intercity tram and (f) the
-coins. (a) is now also the item (c)'s fix hands the ball to: the pavement is level, and the
-block INTERIOR carries all of the warp that used to be spread across it.
+**As of 2026-08-31 (a), (c), (g) and (h) are done**, so the live ranking is (b) the quest
+marker, then what remains of (d), then (e) the intercity tram and (f) the coins.
 
 ---
 
@@ -124,8 +125,9 @@ block INTERIOR carries all of the warp that used to be spread across it.
 > `tests/JoyceCode.Tests/engine/streets/PavementCrossFallTests.cs`. Flat city unchanged
 > vertex for vertex and index for index (the inset is refused on `IsFlat`).
 >
-> **Still open, and named in Option 2's own follow-up:** the block INTERIOR now carries all
-> of the warp, and buildings stand on the *pad*, a third surface again. That is (a).
+> **Named in Option 2's own follow-up and now closed:** the block INTERIOR carries all of
+> the warp, and buildings stood on the *pad*, a third surface again. That was (a), fixed
+> the same day - see below.
 
 ### The original write-up
 
@@ -235,11 +237,82 @@ it is the one that makes the interior warp harmless.
 
 ---
 
-## (a) Houses float and sink; shops must stay reachable — RANK 2
+## ✅ (a) Houses float and sink; shops must stay reachable — FIXED 2026-08-31
 
 > *"Houses are sometimes 'under' the sidewalk level in parts, sometimes in the air. I would
 > say houses must not be in the air. Shops however shall be placed only in a reachable way,
 > so that they are at the same level or above the sidewalk."*
+
+### What was built, and what this write-up got wrong
+
+**Neither 3 nor 5 as written.** The owner chose **planar floors**, explicitly and with a
+reason - *"real live buildings usually have planar floors ... shopfront entries would be
+usually aligned per story and not gradually ... let's for a moment ditch the stairs and
+align to stories"* - so candidate 3, the footprint-following base, was offered and
+**rejected**. What landed is candidate 1 (*"sink to the MINIMUM pavement under the
+footprint"*), which this page dismissed as *"visually unacceptable"* and *"violating the
+second constraint"* - **and it does not violate it**, because the shops do not go down with
+the building. They snap up in whole storeys. Full write-up in
+[`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) §7l.
+
+`engine.streets.generation.BuildingFooting`;
+`tests/JoyceCode.Tests/engine/streets/BuildingFootingTests.cs` (42 tests) and
+`ShippedTerrain.cs`, which reproduces `GroundOperator`'s diamond-square, `ElevationBaseFactory`'s
+per-fragment refinement and `CacheEntry`'s own sampling rule from inside the test assembly.
+
+**What this page got wrong or left out, in order of how much it mattered:**
+
+1. **"Sink to the minimum ... buries 7-13 m, 2-4 storeys of every building" understated the
+   real cost and named the wrong one.** The cost is not that the building is buried; it is
+   that the building is *eaten*. With the design height unchanged, the roof of **64 of the
+   149 buildings of Yelukhdidru/3000 falls below the block floor somewhere over its own
+   footprint**, and the median 24 m building shows **4.54 m** above the ground at its
+   highest corner. No building vanishes entirely (0 of 149, 0 of 81), so it is not total -
+   but "a house must not be in the air" needs its converse, and `BuildingFooting.HeightOf`
+   adds the block's corner spread so the roof clears the highest corner by the design
+   height. Height added: median 8.0-14.9 m, p90 up to 30.8 m, max 55.7 m, **exactly zero on
+   a flat block**.
+2. **"...and puts every uphill shopfront underground, violating the second constraint" is
+   false, and it is the whole reason candidate 1 works.** The shopfront does not sit at the
+   base. It snaps to the lowest storey at or above the pavement **in front of that
+   shopfront** - measured, storey index median 2-4 and max 19, with `sill - localPavement`
+   median 1.2-1.9 m and **below one storey always, by construction**. The base and the shop
+   were only ever locked 0.45 m apart because one sample drove both.
+3. **The estates/buildings-per-block question this page never asked has a clean answer, and
+   it is what makes the simple bound legitimate.** A block carries **exactly one estate**
+   and an estate **at most one building** - 1 estate on each of 3/10/82/445 blocks;
+   3/3/81/149 buildings, never two on one. So the minimum over the block's own corners is
+   within **0.19-0.61 m of the exact minimum over the footprint at the median** (p90 1.5 m,
+   worst 3.74 m), and a per-footprint bound would buy that and nothing else.
+4. **The 0.35 m flat-city move is right, and it is the ONLY thing that moves.** The
+   shopfront quad, the shop POI and the TALE door are all bit-for-bit unchanged, because the
+   storey index is a difference of two GROUND heights and `ClusterStreetHeight` +
+   `QuarterSidewalkOffset` cancel out of it - so it is exactly 0 on a flat block rather than
+   the ceiling of a rounding error.
+5. **The five disagreeing height expressions are now three, and none of them is the pad.**
+   Houses, polytopes and trees are a separate matter (polytopes and trees were not touched);
+   the shop window, the shop POI and the TALE shop door all ask
+   `BuildingFooting.StoreyGroundAt` and each still adds its own constant. The shop POI is no
+   longer the one thing on a block that asks the **terrain**.
+6. **"The grey/white noise is a UV in the atlas gutter" is the wrong mechanism.** The UV -
+   `Vector2.One/64f`, constant for every cap vertex - is right. What it triggers is
+   `AddInterior`: `LIghtingFS.frag`'s `renderInterior` short-circuits only when the texel at
+   `fragTexCoord` has alpha > 0.8, and at (1/64, 1/64) it does not, so the cap runs the full
+   interior-room raymarch across a horizontal polygon. And **it is not specific to the
+   underside** - `ExtrudePoly` gives the ceiling cap the identical UV, plane and material,
+   so every building ROOF in the shipped flat city is the same construction. Deliberately
+   left: see §7l.
+7. **Measured footprint diagonals came out smaller than the 100-104 m median quoted here** -
+   median 89.3 m and max 358.9 m on Yelukhdidru/3000, against 100-104 m / 456 m. A plan-only
+   quantity, so the difference is the baseline set (500/800/1500/3000 here against
+   800/1500/1500/3000), not the measurement.
+
+**Found on the way and NOT fixed:** `GenerateHousesOperator._createLargeAdvertsSubGeo` is
+complete and **never called from anywhere**; and a one-storey building on a slope can carry
+a shop window taller than its own visible height (rare - p05 of building height is 6 m - and
+not new).
+
+### The original write-up
 
 ### The base is one scalar, and the code comment claiming otherwise is wrong
 
@@ -335,7 +408,7 @@ vertical error leaves under 15 m of horizontal reach.
 
 ---
 
-## (b) The quest marker sinks under the road
+## (b) The quest marker sinks under the road — RANK 1
 
 Cause is exact and slightly absurd. `ToSomewhere._createTargetInstance`
 (`ToSomewhere.cs:176-183`) draws a cube scaled to `(SensitiveRadius, 3, SensitiveRadius)`

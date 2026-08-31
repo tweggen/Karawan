@@ -1599,3 +1599,223 @@ cross — which rejected **435 of 445 blocks** before the number was measured.
 The block **interior** now carries all of the warp that used to be spread over the whole
 cap, and buildings stand on the *pad*, a third surface again. That is ledger item (a), and
 it is the next thing.
+
+---
+
+# §7l — A building stands on its block (2026-08-31)
+
+> Numbered §7l rather than §7k: the ledger's task note asked for "a new §7k" and that
+> number was taken the same day by the pavement fix above.
+
+Reported from play of a terrain-following city: **a building hovering in the air, with
+grey/white noise on its exposed underside.** Player at `<-210.6, 50.1, 184.3>` in
+`Yelukhdidru`. This is ledger item (a), and it is what §7k handed the ball to — once the
+pavement rim was made level across its width, the whole of a block's warp lives in the
+block INTERIOR, which is exactly where the building is.
+
+## Three compounding causes, none of them a bug you can point at
+
+1. **The base is one scalar.** `GenerateHousesOperator` handed the footprint to the
+   L-system with `Y` forced to 0 and extruded it straight up, so a single
+   `2.5f + quarter.GroundHeightAt(centroid)` IS the entire floor. The code comment
+   claiming the house "tilts with" the block was false and has been removed.
+2. **`GroundHeightAt` is the pad**, a least squares plane through the block's corner
+   heights — not the surface the building stands on. Measured on the shipped terrain the
+   residual against the real floor is median 0.00 m but p05 −3.5…−6.1 m, worst −18.3 m.
+3. **The footprint is nearly the whole block.** An estate IS the block outline, and
+   `_createBuildings` insets it by `Quarter.SidewalkWidth`, which is 1–6 m. Measured
+   footprint diagonal on the shipped terrain: median **89.3 m**, p90 239 m, max 359 m.
+
+So the sample was taken in the middle of a surface that rises 13 m across the thing
+standing on it. **Every building in every baseline city had both a corner in the air and a
+corner in the ground** — worst air median 4.3–7.1 m, worst burial median −2.6…−6.7 m.
+
+## The decision: planar floors, and why
+
+The owner's steer, and it is a design decision rather than a limitation:
+
+> *"real live buildings usually have planar floors, non-planar floors exist usually out of
+> later changes on the building. Shopfront entries would be usually aligned per story and
+> not gradually, adding stairs (in real live). Let's for a moment ditch the stairs and
+> align to stories."*
+
+A footprint-following (per-vertex) base was offered and rejected. So the base stays one
+number, and the whole of the fix is **which** number, and how it is proved.
+
+## The guarantee, and what makes it one
+
+`engine.streets.generation.BuildingFooting.BaseHeightOf` answers the block's **lowest
+corner**, raised by `ClusterStreetHeight + QuarterSidewalkOffset`. That is a bound on the
+block floor rather than a sample of it, and the bound is exact for a reason that needs no
+reference to the mesh:
+
+- an outer cap vertex is `Quarter.CornerGroundHeightAt` of its own delimiter, exactly;
+- each rim inset point carries the height its own outer EDGE has at its own projection onto
+  that edge (§7k), i.e. a convex combination of that edge's two corner heights;
+- a piecewise linear surface over those vertices is therefore bounded below by the lowest
+  corner and above by the highest.
+
+**The premise had to be checked rather than assumed, and it is the one thing that could
+leak:** if an inset point's projection ever landed *past* a corner, its height would be an
+extrapolation and could fall outside the corner range. Measured over the four baselines on
+three grounds: **projection overrun 0.0000 in t units, zero inset points outside their
+block's corner range.** `EveryCapVertexCarriesACornerHeightOfItsOwnBlock` is that check,
+and it is also the mutation guard for §7k's corner ramp — shortening the ramp to one width
+pushes the insets onto each other and rejects 435 of 445 blocks, which the test catches as
+"only 0 inset points".
+
+**The bound is taken over the whole block, and that had to be measured too.** A block
+carries **exactly one estate and at most one building** — 1 estate on every one of
+3/10/82/445 blocks, and 3/3/81/149 buildings, never two on one estate. So a footprint IS
+the block, less 1–6 m: the exact minimum of the cap over a footprint sits only
+**0.19–0.61 m above the block's own minimum at the median**, 1.5 m at p90, 3.74 m at the
+worst building of the four cities. That slack is what a smaller building on a larger block
+would be over-sunk by, so `ABlockCarriesOneEstateAndAtMostOneBuilding` fails the day that
+changes.
+
+**No margin is subtracted.** A margin would move the shipped flat city by more than the
+0.35 m below and buy nothing: `ExtrudePoly` emits the floor cap clockwise, i.e. facing
+down, so it is back-face culled from above and cannot fight the pavement for the depth
+buffer even where the two are coplanar.
+
+## What it costs — burial, measured on the shipped terrain
+
+Reproduced in `tests/.../streets/ShippedTerrain.cs`: `GroundOperator`'s diamond-square,
+seed `"mydear"`, refined per fragment exactly as `ElevationBaseFactory` does, sampled with
+`CacheEntry.GetElevationPixelAt`'s own two-triangle rule, then `GradeRelaxer` with the
+shipped `GradePolicy`. It reproduces the ledger's independently measured figures for the
+same cities to within a few per cent.
+
+`localFloor − base` at every footprint vertex:
+
+| city | n | min | p05 | med | p90 | max |
+|---|---|---|---|---|---|---|
+| seed000/500 | 16 | 0.10 | 0.10 | **4.92** | 8.58 | 9.17 |
+| Yelukhdidru/800 | 11 | 0.22 | 0.22 | **6.81** | 7.36 | 7.83 |
+| seed000/1500 | 392 | 0.11 | 0.38 | **7.12** | 20.36 | 42.95 |
+| Yelukhdidru/3000 | 788 | 0.04 | 0.35 | **9.44** | 23.34 | 53.85 |
+
+Burial is the accepted price of a planar floor on a block 150 m across whose kerb falls
+13 m. Floating is not accepted at any price.
+
+## The half of it the brief did not name: sinking eats the building
+
+Sinking to the minimum with the design height unchanged pulls the roof down with the
+floor. Measured before `HeightOf` existed: **the roof of 64 of the 149 buildings of
+Yelukhdidru/3000 fell below the block floor somewhere over its own footprint** (22 of 81,
+1 of 3, 1 of 3 in the others), and the median 24 m building showed **4.54 m** above ground
+at its highest corner. **No building disappeared entirely** — 0 of 149, 0 of 81 — so it
+was never total, but "a house must not be in the air" needs its converse.
+
+`BuildingFooting.HeightOf` adds the block's corner **spread**, so the roof stands the
+design height above the block's HIGHEST corner, which is the upper bound of the floor for
+the same reason the base is the lower one. Height added: median **8.0 / 8.9 / 11.6 /
+14.9 m**, p90 up to 30.8 m, max 55.7 m — and **exactly zero on a flat block**, where every
+corner is at one height.
+
+## Shops: snapped to a storey, never below the kerb
+
+`StoreyGroundAt` is the block's lowest corner raised by whole `MetaGen.StoryHeight` steps
+until it clears the pavement **in front of that shopfront** — not in front of its building,
+which spans a block. Storey index measured: median 2–4, max 19; `sill − localPavement`
+median 1.22–1.87 m, **below one storey always, by construction**.
+
+The storey index is a difference of two GROUND heights, and that is not tidiness:
+`ClusterStreetHeight` and `QuarterSidewalkOffset` cancel out of it, so it is exactly 0 on a
+flat block rather than the ceiling of a rounding error — which is what lets all three
+consumers stay bit for bit where they are in the shipped flat city.
+
+Three things now ask that one function, each still adding its own constant to a ground
+height:
+
+| thing | was | is |
+|---|---|---|
+| shop window | `pad + 2.05` | `storeyGround + 2.05` |
+| shop POI entity | `ClusterDesc.GroundHeightAt` (the **TERRAIN**) `+ 2.5 + 1` | `storeyGround + 2.5 + 1` |
+| TALE shop door | `pad(**block centre**) + 2.15` | `storeyGround + 2.15` |
+
+`ShopNearbyBehavior` scores in 3-D with `Distance = 16f`, so a window and an interaction
+point one storey apart cost a fifth of the horizontal reach. TALE **home** doors and every
+building `Position` now take `PavementHeightAt` at their own position instead of the pad at
+the block centre — up to 9 m out at either end of a block.
+
+## The default FLAT city moves once, by 0.35 m, and only the house moves
+
+Pad = `AverageHeight`; pavement = `AverageHeight + 2.0 + 0.15`; the base was
+`AverageHeight + 2.5`. **The flat city has floated every house by 0.35 m since the
+L-system houses were written**, hidden wherever a shopfront quad skirted the gap by sitting
+0.10 m *below* the pavement. It now stands on the pavement.
+
+Everything else is asserted as equality rather than as a tolerance, over whole generated
+cities: `HeightOf` adds exactly zero, `StoreyAt` is exactly 0, and the shopfront quad, the
+shop POI and the TALE door land on the float they land on today — Vector3 addition is
+commutative, so the shopfront's old `2.05f + pad` and the new `ground + 2.05f` are the same
+number. `AFlatCityMovesOnlyTheHouseAndOnlyByAThirdOfAMetre`.
+
+## The grey/white underside — diagnosed, deliberately not changed
+
+The brief had it as "one constant UV in a texture atlas gutter". The UV is right and the
+gutter is not the mechanism. `Triangulate.ToMesh` writes `Vector2.One/64f` for every cap
+vertex; the house materials carry `AddInterior`; and `LIghtingFS.frag`'s `renderInterior`
+short-circuits **only when the texel at `fragTexCoord` has alpha > 0.8**. At (1/64, 1/64)
+it does not, so the cap runs the full interior-room raymarch — `fix`/`fiy`/`fiz` room
+indices, a `frameNo`-driven window-lights seed — across a horizontal polygon. That is the
+noise.
+
+**It is not specific to the underside.** `ExtrudePoly` gives the ceiling cap the identical
+constant UV, the identical plane and the identical material, and `AlphaInterpreter` builds
+every L-system segment with `addFloor: true, addCeiling: true` — so **every building's ROOF
+in the shipped flat city is the same construction** and has been since the houses were
+written. Giving the caps a real planar projection would tile facade windows across every
+roof in the game; giving them their own material means threading a second material through
+`ExtrudePoly`. Both are visual, opinion-bearing changes to the default city and neither is
+this one.
+
+What this change does do is remove the sighting: the base is at or below the block floor
+over the whole footprint, so the bottom cap is under the pavement everywhere except at a
+single tangent point, and `ABuildingsBaseIsNeverAboveTheFloorUnderIt` /
+`TheBaseIsUnderTheFloorAcrossTheWholeFootprint` are that statement.
+
+## Mutation survivors
+
+Eleven mutations, all caught, none survived — but two only by a **source scan**, and that
+is worth writing down rather than counting as a pass:
+
+| mutation | caught by |
+|---|---|
+| `BaseHeightOf` takes the block's MAX corner | 12 tests |
+| `BaseHeightOf` takes the pad at the block centre | 12 |
+| `HeightOf` does not compensate | 4 |
+| `StoreyAt` floors instead of ceils | 4 |
+| `StoreyAt` always answers the ground storey | 4 |
+| `GroundAt` ignores its position | 8 |
+| the shopfront ramps with the kerb instead of snapping | 4 |
+| §7k's corner ramp is one width, without the mitre | 20 |
+| §7k's corner ramp is the mitre without the width | 9 |
+| **the house operator computes its own base again** | 3, of which only `OnlyOnePlaceDecidesWhereABuildingIsFounded` is causal |
+| **the shop POI goes back to the terrain** | 3, likewise `TheShopPoiAsksTheBlock` |
+
+The last two live in `nogameCode`, which the test assembly does not reference at all, so a
+scan is the only instrument available — the same limitation §7j hit with
+`_generateQuarterFloor`. Both scans assert the ABSENCE of the old expression as well as the
+presence of the new one, because a second, correct copy would pass any test of the value.
+
+## Found and NOT fixed
+
+- **`GenerateHousesOperator._createLargeAdvertsSubGeo` is dead code**: defined, complete,
+  never called from anywhere. It is the only consumer of the `height < 75f` rule.
+- **Polytopes and trees still stand on the pad.** `GeneratePolytopeOperator` is
+  `pad + 2.5` at the ESTATE CENTRE, which is the one place the pad is defensible - §7e
+  measured the plane at the centroid to be the mean of the corner heights *identically* -
+  so it is left. `GenerateTreesOperator` scatters over the block and does suffer the
+  residual; both would move the flat city by another 0.35 m and neither was reported.
+- **A one-storey building can carry a shop window taller than itself on a slope.** The
+  window is `StoryHeight − 0.15` tall and sits at most one storey above the local pavement,
+  so a building shorter than about 5.85 m of visible height can be overtopped by its own
+  glass. `maxHeight` allows 3 m where `minHouseSide ≤ 2 m` or downtownness < 0.3; measured,
+  p05 of building height is 6 m, so it is rare and it is not new — the same window on a 3 m
+  building already reaches within 0.6 m of the roof in the flat city today.
+- **The five catch blocks in `GenerateHousesOperator` were `Trace`**, i.e. silent by
+  default — a swallowed building, sign or shop window with nothing in the log. Converted to
+  `Error(_dc, …)` with distinct messages per site. That is a fix, listed here because it
+  was found rather than sought.

@@ -554,6 +554,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\DeckCollider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\JunctionCollider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\SidewalkRing.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\BuildingFooting.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CapInsetEdge.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\GenerationReport.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\ExpansionRule.cs" />

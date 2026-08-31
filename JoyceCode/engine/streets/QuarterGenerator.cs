@@ -19,7 +19,11 @@ namespace engine.streets
         private StrokeStore _strokeStore;
         private QuarterStore _quarterStore;
         private bool _traceGenerate = false;
-        private float _storyHeight = 3f;
+        /*
+         * One copy, shared with the shop window that has to line up with a storey of the
+         * building this sizes. See engine.world.MetaGen.StoryHeight.
+         */
+        private float _storyHeight = engine.world.MetaGen.StoryHeight;
         private string _seed0;
         
 
