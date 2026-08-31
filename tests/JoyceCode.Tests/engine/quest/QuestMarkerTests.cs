@@ -317,6 +317,52 @@ public class QuestMarkerTests
 
 
     /**
+     * ...and Loader.GetCitySurfaceHeightAt asks CitySurface, not the terrain.
+     *
+     * The mutation this exists for: replacing that method's body with
+     * `cluster.GroundHeightAt(position)` compiles and passes every other test in the file,
+     * because Loader needs the I container and the elevation cache and is not exercised
+     * anywhere. It is the same shape as §7b's JunctionCollider.SurfaceHeightOf survivor -
+     * the arithmetic is hoisted where a test can reach it, and the one line that reaches
+     * for it has to be scanned.
+     *
+     * Brace matched from the method rather than read as a line window, because an added
+     * comment is all it takes for a fixed window to stop seeing the call.
+     */
+    [Fact]
+    public void TheLoaderAsksCitySurfaceForTheCitySurface()
+    {
+        string root = global::engine.GameRoot.PathTo("JoyceCode");
+        string path = Path.Combine(root, "engine", "world", "Loader.cs");
+        Assert.True(File.Exists(path), $"could not find the loader at {path}");
+
+        string source = File.ReadAllText(path);
+
+        int idx = source.IndexOf(
+            "public float GetCitySurfaceHeightAt", StringComparison.Ordinal);
+        Assert.True(idx > 0, "Loader no longer answers for the city surface at all");
+
+        int open = source.IndexOf('{', idx);
+        int depth = 0, end = source.Length;
+        for (int i = open; i < source.Length; ++i)
+        {
+            if ('{' == source[i]) ++depth;
+            else if ('}' == source[i] && 0 == --depth)
+            {
+                end = i + 1;
+                break;
+            }
+        }
+
+        string body = source[open..end];
+
+        Assert.Contains("CitySurface.TryHeightAt", body);
+        Assert.DoesNotContain("cluster.GroundHeightAt", body);
+        Assert.DoesNotContain("ClusterNavigationHeight", body);
+    }
+
+
+    /**
      * The three quest strategies ask for the city's surface, not for the terrain.
      *
      * They live in nogameCode, which this assembly does not reference, so a scan is the
