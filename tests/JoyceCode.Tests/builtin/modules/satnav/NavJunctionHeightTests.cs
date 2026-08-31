@@ -277,10 +277,10 @@ public class NavJunctionHeightTests
 
     /**
      * The two ends of a route are not junctions - they are wherever the walker and the
-     * destination happen to be - so their heights still come from the terrain, and they
-     * are the only two that do. StreetRouteBuilder is in nogameCode and cannot be
-     * referenced from here, so this is a source scan, as it is for the friction and
-     * hover-probe sites.
+     * destination happen to be - but they are each beside a LANE, and since §7m that is
+     * where their heights come from too. Nothing on a route is a terrain sample any more.
+     * StreetRouteBuilder is in nogameCode and cannot be referenced from here, so this is a
+     * source scan, as it is for the friction and hover-probe sites.
      */
     [Fact]
     public void TheRouteBuilderTakesEveryWaypointFromItsOwnLane()
@@ -301,10 +301,18 @@ public class NavJunctionHeightTests
         Assert.DoesNotContain("destPos.Y = groundHeight", source);
 
         /*
-         * Both ends sample at their own position. Reusing the start's for the
-         * destination is the same defect in miniature.
+         * Both ends take their OWN position, and each one's own end of the route. Reusing
+         * the start's for the destination is the same defect in miniature.
+         *
+         * ⚠️ This used to read `_walkingHeightAt(startPod, fromPos)` and
+         * `_walkingHeightAt(startPod, toPos)` - the two terrain samples - under the claim
+         * above that the ends "are the only two that do" and have to. **That claim is
+         * wrong and §7m superseded it**: TryCreateCursor has already snapped each end to
+         * its nearest lane, so there IS a road node to ask at both. The terrain expression
+         * survives in the file for the case with no lane at all, which is why this is
+         * stated on the CALL rather than on the absence of the function.
          */
-        Assert.Contains("_walkingHeightAt(startPod, fromPos)", source);
-        Assert.Contains("_walkingHeightAt(startPod, toPos)", source);
+        Assert.Contains("_endWaypoint(startCursor, startPod, fromPos)", source);
+        Assert.Contains("_endWaypoint(endCursor, startPod, toPos)", source);
     }
 }

@@ -44,6 +44,44 @@ public class GoToStrategyPart : AEntityStrategyPart
     private bool _arrived;
 
 
+    /**
+     * Where a walker's feet go at a position on this pod's own block, or on the terrain
+     * where there is no block to ask.
+     *
+     * The block, when the pod names one and the position is on it: a block's pavement is
+     * the block floor's top face, and BuildingFooting.GroundAt answers from the boundary
+     * edge nearest the point, interpolated between its two corners' own junction heights.
+     * Measured over the block edges of the four baseline cities on the shipped terrain, the
+     * conformed terrain runs 5.5 m below that floor and 6.3 m above it, and is below it on
+     * 43 to 51 % of edges - because the conforming pass grades the ground toward the
+     * streets on a 20 m grid with a 60 m smoothstep, so the middle of a block is only about
+     * half way there.
+     *
+     * The AABB test is the honest limit of what this can claim: the destination of a travel
+     * may well be on a different block from the one the walker started on, and answering
+     * from the wrong block would be worse than answering from the terrain.
+     */
+    private float _walkingHeightAt(in Vector3 v3World)
+    {
+        var cd = CurrentPosition?.ClusterDesc;
+        var q = CurrentPosition?.Quarter;
+
+        if (null != cd && null != q)
+        {
+            Vector3 v3Cluster = v3World - cd.Pos;
+            var v2 = new Vector2(v3Cluster.X, v3Cluster.Z);
+
+            if (q.AABB.Contains(new Vector3(v2.X, q.AABB.Center.Y, v2.Y)))
+            {
+                return engine.streets.generation.BuildingFooting.PavementHeightAt(q, v2);
+            }
+        }
+
+        return builtin.modules.satnav.desc.NavJunction.WalkingHeightOf(
+            cd?.GroundHeightAt(v3World) ?? 0f);
+    }
+
+
     public override void OnEnter()
     {
         _arrived = false;
@@ -59,18 +97,15 @@ public class GoToStrategyPart : AEntityStrategyPart
         float endGroundHeight = 0f;
         if (CurrentPosition?.ClusterDesc != null)
         {
-            groundHeight = builtin.modules.satnav.desc.NavJunction.WalkingHeightOf(
-                CurrentPosition.ClusterDesc.GroundHeightAt(startPos));
-
             /*
-             * Sampled at the destination rather than reusing the start's. This is only
-             * the straight-line fallback - there are no lanes here to take a height from
-             * - but "one Y for the whole route" is the same defect that made a routed
-             * walk across a hill come out flat, and it costs one more sample to not have
-             * it. Identical in a flat city, where both samples are the average.
+             * Sampled at each end rather than once at the start. This is only the
+             * straight-line fallback - there are no lanes here to take a height from - but
+             * "one Y for the whole route" is the same defect that made a routed walk across
+             * a hill come out flat, and it costs one more sample to not have it. Identical
+             * in a flat city, where both samples are the average.
              */
-            endGroundHeight = builtin.modules.satnav.desc.NavJunction.WalkingHeightOf(
-                CurrentPosition.ClusterDesc.GroundHeightAt(endPos));
+            groundHeight = _walkingHeightAt(startPos);
+            endGroundHeight = _walkingHeightAt(endPos);
         }
         else if (startPos.Y != 0f)
         {

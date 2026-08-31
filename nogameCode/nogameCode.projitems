@@ -27,6 +27,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\RecoverStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\SpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\GoToStrategyPart.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\AnimationDriver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\IdleBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\StuckAnimationReporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\citizen\StayAtStrategyPart.cs" />

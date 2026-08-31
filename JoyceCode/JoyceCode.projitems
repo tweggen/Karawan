@@ -275,6 +275,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\QuestTriggeredModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\QuestCompletionModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\components\QuestInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\QuestMarker.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\ToSomewhere.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\TrailVehicle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Ref.cs" />
@@ -555,6 +556,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\JunctionCollider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\SidewalkRing.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\BuildingFooting.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\CitySurface.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CapInsetEdge.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\GenerationReport.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\ExpansionRule.cs" />

@@ -131,11 +131,16 @@ internal static class ShippedTerrain
         int i = (int)Single.Floor((x + fs / 2f) / fs);
         int k = (int)Single.Floor((z + fs / 2f) / fs);
 
-        var grid = _fragmentOf(i, k);
+        return _sample(_fragmentOf(i, k), x - i * fs, z - k * fs);
+    }
 
-        float lx = x - i * fs;
-        float lz = z - k * fs;
 
+    /**
+     * CacheEntry.GetElevationPixelAt's own two triangle rule inside one cell.
+     */
+    private static float _sample(float[,] grid, float lx, float lz)
+    {
+        float fs = MetaGen.FragmentSize;
         float step = fs / MetaGen.GroundResolution;
         int ex = (int)((lx + fs / 2f) / step);
         int ey = (int)((lz + fs / 2f) / step);
@@ -182,6 +187,100 @@ internal static class ShippedTerrain
         GradeRelaxer.Relax(strokeStore.GetStrokes(), heights, new GradePolicy());
 
         return new TableStreetHeight(heights);
+    }
+
+
+    /**
+     * The ground under a city AFTER the conforming pass, i.e. what
+     * ClusterDesc.GroundHeightAt answers in a terrain-following game.
+     *
+     * The grading itself is ClusterConformElevationOperator.Grade, called here on the same
+     * GroundResolution+1 grid over the same FragmentSize rectangle the operator is handed,
+     * and then read back with the same two triangle rule CacheEntry.GetElevationPixelAt
+     * uses - so the answer is the operator's own arithmetic on the operator's own grid,
+     * not a per point evaluation of the kernel. That difference is exactly the 20 m grid
+     * the ledger's residual is attributed to, and reproducing it is the only way to
+     * measure the residual rather than to assume it.
+     */
+    internal sealed class Conformed
+    {
+        private readonly global::engine.streets.StreetHeightField _field;
+        private readonly Vector2 _v2Origin;
+        private readonly object _lo = new();
+        private readonly Dictionary<long, float[,]> _grids = new();
+
+
+        internal Conformed(global::engine.streets.StreetHeightField field, in Vector2 v2Origin)
+        {
+            _field = field;
+            _v2Origin = v2Origin;
+        }
+
+
+        private float[,] _gridOf(int i, int k)
+        {
+            long key = ((long)i << 32) ^ (uint)k;
+            lock (_lo)
+            {
+                if (_grids.TryGetValue(key, out var cached)) return cached;
+            }
+
+            var raw = _fragmentOf(i, k);
+            int n = MetaGen.GroundResolution + 1;
+            float fs = MetaGen.FragmentSize;
+            float step = fs / MetaGen.GroundResolution;
+
+            var graded = new float[n, n];
+            for (int ez = 0; ez < n; ++ez)
+            {
+                float z = k * fs - fs / 2f + step * ez;
+                for (int ex = 0; ex < n; ++ex)
+                {
+                    float x = i * fs - fs / 2f + step * ex;
+
+                    float h = raw[ez, ex];
+                    if (_field.TryHeightAt(
+                            new Vector2(x, z) - _v2Origin, out float wanted, out float influence))
+                    {
+                        h = global::engine.streets.StreetHeightField.Blend(h, wanted, influence);
+                    }
+
+                    graded[ez, ex] = h;
+                }
+            }
+
+            lock (_lo)
+            {
+                _grids[key] = graded;
+            }
+
+            return graded;
+        }
+
+
+        internal float HeightAt(float x, float z)
+        {
+            float fs = MetaGen.FragmentSize;
+            int i = (int)Single.Floor((x + fs / 2f) / fs);
+            int k = (int)Single.Floor((z + fs / 2f) / fs);
+
+            return _sample(_gridOf(i, k), x - i * fs, z - k * fs);
+        }
+    }
+
+
+    /**
+     * The conformed ground of one city on the shipped terrain.
+     */
+    internal static Conformed ConformedOf(ClusterDesc clusterDesc, StrokeStore strokeStore)
+    {
+        var source = clusterDesc.StreetHeightSource;
+
+        var field = global::engine.streets.StreetHeightField.Build(
+            strokeStore.GetStrokes(), sp => source.GroundHeightAt(sp),
+            global::engine.streets.StreetHeightField.DefaultRadius);
+
+        return new Conformed(field, new Vector2(clusterDesc.Pos.X, clusterDesc.Pos.Z));
     }
 
 
