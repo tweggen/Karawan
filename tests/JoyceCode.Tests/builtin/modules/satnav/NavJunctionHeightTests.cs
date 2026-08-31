@@ -207,25 +207,37 @@ public class NavJunctionHeightTests
 
 
     /**
-     * The waypoint is still offset onto the right-hand sidewalk. Pulled out of
-     * StreetRouteBuilder along with the height, so it is worth pinning that the move
-     * changed nothing but the Y.
+     * The waypoint is still offset onto the sidewalk, by the lane's own kerb side.
+     *
+     * This test used to assert the offset was a fixed hand relative to travel, which was
+     * the shape of the defect PedestrianKerbSideTests describes: sidewalk lanes exist in
+     * both directions over the same ground, so a fixed hand put one of every pair in the
+     * carriageway. The offset it pins is the same 1.5 m; what has changed is what decides
+     * its direction, and a lane that names no side is now walked down its middle.
      */
     [Fact]
-    public void TheWaypointStaysOnTheRightHandSidewalk()
+    public void TheWaypointStaysOnTheSidewalk()
     {
         var njA = NavJunction.At(new Vector3(0f, 0f, 0f), 5f);
         var njB = NavJunction.At(new Vector3(100f, 0f, 0f), 5f);
 
-        Vector3 waypoint = PedestrianRoute.WaypointFor(_lane(njA, njB));
+        var lane = _lane(njA, njB);
+        lane.KerbSide = -Vector3.UnitZ;
+
+        Vector3 waypoint = PedestrianRoute.WaypointFor(lane);
+
+        Assert.Equal(100f, waypoint.X, 4);
+        Assert.Equal(-PedestrianRoute.SidewalkOffset, waypoint.Z, 4);
+        Assert.Equal(NavJunction.WalkingHeightOf(5f), waypoint.Y, 4);
 
         /*
-         * Walking along +X, right is -Z in this right handed frame, and the lane end is
-         * the junction's plan position.
+         * The reverse lane over the same ground steps to the same side, which is the whole
+         * point of the side belonging to the lane.
          */
-        Assert.Equal(100f, waypoint.X, 4);
-        Assert.Equal(PedestrianRoute.SidewalkOffset, Single.Abs(waypoint.Z), 4);
-        Assert.Equal(NavJunction.WalkingHeightOf(5f), waypoint.Y, 4);
+        var back = _lane(njB, njA);
+        back.KerbSide = lane.KerbSide;
+
+        Assert.Equal(-PedestrianRoute.SidewalkOffset, PedestrianRoute.WaypointFor(back).Z, 4);
     }
 
 

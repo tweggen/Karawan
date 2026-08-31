@@ -21,14 +21,26 @@ namespace builtin.modules.satnav;
 public static class PedestrianRoute
 {
     /**
-     * How far right of the lane centre a walker keeps. Lanes are centre lines, and two
-     * walkers on the same lane in opposite directions should pass rather than collide.
+     * How far off the lane centre a walker keeps. A sidewalk lane runs along a block's kerb
+     * line, so a walker on the centre line is standing on the kerb itself; this is how far
+     * onto the pavement they step.
      */
     public const float SidewalkOffset = 1.5f;
 
 
     /**
      * The waypoint at the far end of one lane.
+     *
+     * The offset is toward the lane's OWN kerb side, not to a fixed hand relative to travel.
+     * It used to be 1.5 m to the right of travel unconditionally, and sidewalk lanes are
+     * created in both directions over the same ground - so measured over the block edges of
+     * the generated cities, one lane of every pair put the walker 1.5 m OUTSIDE the block,
+     * in the carriageway at pavement height, whichever way round the A* happened to route.
+     * That was true in the flat city too. builtin.tools.QuarterLoopRouteGenerator, the other
+     * pedestrian system, offsets the other way and has always been right.
+     *
+     * A lane with no kerb side - every pedestrian crossing, since a crossing is in the
+     * roadway by definition - keeps the centre line.
      */
     public static Vector3 WaypointFor(NavLane lane)
     {
@@ -39,10 +51,6 @@ public static class PedestrianRoute
          */
         Vector3 v3End = lane.End.Position with { Y = lane.End.WalkingHeight };
 
-        var laneDir = Vector3.Normalize(lane.End.Position - lane.Start.Position);
-        var laneRight = Vector3.Cross(laneDir, Vector3.UnitY);
-        if (laneRight.LengthSquared() < 0.001f) laneRight = Vector3.UnitX;
-
-        return v3End + laneRight * SidewalkOffset;
+        return v3End + lane.KerbSide * SidewalkOffset;
     }
 }

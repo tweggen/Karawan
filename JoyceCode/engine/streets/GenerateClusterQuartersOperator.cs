@@ -108,6 +108,36 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
     }
 
 
+    /**
+     * The inner edge of this block's pavement, or null for a block that keeps a plain fan.
+     *
+     * Without it the block floor is a single triangle fan spanning kerb to kerb, so on a
+     * slope the pavement falls about 11 % ACROSS its width at the median - tipping toward
+     * the road as often as away, and steeper sideways than lengthwise on more than half of
+     * all block edges. With it, the strip between the two rings is level across by
+     * construction and the warp is confined to the block's interior, where the buildings
+     * are. See generation.SidewalkRing.
+     *
+     * **A flat city gets none.** Every corner of a flat block is at the same height, so
+     * there is no cross-fall to remove and an inset ring would only add vertices to a mesh
+     * this whole line of work has kept bit for bit stable. Gated the same way
+     * Quarter.GroundHeightAt, DeckCollider and JunctionCollider are.
+     *
+     * Hoisted next to FloorOutlineOf for the reason that one was: inline is where nothing
+     * can check which side of the kerb the ring came out on.
+     */
+    internal static List<builtin.tools.CapInsetEdge> PavementInsetOf(
+        streets.Quarter quarter, in IList<Vector3> outline)
+    {
+        if (quarter.ClusterDesc.StreetHeightSource.IsFlat)
+        {
+            return null;
+        }
+
+        return generation.SidewalkRing.InsetOf(outline, quarter.SidewalkWidth);
+    }
+
+
     private bool _generateQuarterFloor(
         world.Fragment worldFragment,
         MatMesh matmesh,
@@ -132,7 +162,10 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         }
 
         Mesh meshGround = new($"{worldFragment.GetId()}-quarterfloor");
-        var opExtrudePoly = new builtin.tools.ExtrudePoly(edges, path, 27, 10000f, false, false, true);
+        var opExtrudePoly = new builtin.tools.ExtrudePoly(edges, path, 27, 10000f, false, false, true)
+        {
+            CapInsetEdges = PavementInsetOf(quarter, edges)
+        };
         try
         {
             opExtrudePoly.BuildGeom(meshGround);

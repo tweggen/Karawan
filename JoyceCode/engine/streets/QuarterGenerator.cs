@@ -149,25 +149,16 @@ namespace engine.streets
                     ClusterDesc.LocationAttributes.Downtown);
 
             /*
-             * Generate a random sidewalk width.
+             * How much room to leave around the building for the pavement.
              * TXWTODO: High buildings might have a larger entrace area, don't they?
-             * This strangely is measured in tenth meters.
+             *
+             * Tenth metres, because that is the unit the polygon below is in - Clipper works
+             * in integers. The number itself belongs to the block: the block floor insets
+             * its cap by the same width so that the strip along the kerb is level across,
+             * and if the two ever disagreed the pavement and the building wall would stop
+             * meeting. See Quarter.SidewalkWidth.
              */
-            float sidewalkWidth;
-
-            if (downtownness < 0.2f)
-            {
-                sidewalkWidth = 1f*10f;
-            } else if (downtownness < 0.5f)
-            {
-                sidewalkWidth = 2f * 10f;
-            } else if (downtownness < 0.7f)
-            {
-                sidewalkWidth = 4f * 10f;
-            } else 
-            {
-                sidewalkWidth = 6f * 10f;
-            }
+            float sidewalkWidth = quarter.SidewalkWidth * 10f;
 
             List<IntPoint> polyPoints = new();
             List<List<IntPoint>> polyList = new();

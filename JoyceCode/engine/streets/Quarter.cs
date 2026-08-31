@@ -108,6 +108,55 @@ public class Quarter
     }
 
 
+    private bool _isSidewalkWidthValid;
+    private float _sidewalkWidth;
+
+
+    /**
+     * How wide this block's pavement is, in metres.
+     *
+     * Two things need this number and they have to be the SAME number: the block floor
+     * insets its cap by it, so that the strip along the kerb is level across, and
+     * QuarterGenerator._createBuildings insets the estate by it to find the building
+     * footprint. If the two ever drift apart, the pavement and the building wall stop
+     * meeting - a gap or an overlap all the way round every block.
+     *
+     * It has always been computed, used and thrown away inside _createBuildings, which is
+     * also why it is in tenth metres there: that is the unit ClipperOffset works in. Metres
+     * here, converted at the one call site that wants Clipper units.
+     *
+     * Constant per block and derived only from the cluster's downtown field at the block's
+     * centre, so it is cached rather than recomputed. Note this may not be read before the
+     * block's delimiters are complete - GetCenterPoint comes from the AABB they build.
+     */
+    public float SidewalkWidth
+    {
+        get
+        {
+            lock (_lo)
+            {
+                if (!_isSidewalkWidthValid)
+                {
+                    var c = GetCenterPoint();
+                    float downtownness = ClusterDesc.GetAttributeIntensity(
+                        ClusterDesc.Pos + new Vector3(c.X, 0f, c.Y),
+                        world.ClusterDesc.LocationAttributes.Downtown);
+
+                    _sidewalkWidth =
+                        downtownness < 0.2f ? 1f
+                        : downtownness < 0.5f ? 2f
+                        : downtownness < 0.7f ? 4f
+                        : 6f;
+
+                    _isSidewalkWidthValid = true;
+                }
+
+                return _sidewalkWidth;
+            }
+        }
+    }
+
+
     /**
      * A city block is a PAD: one plane, tilted to sit on its own corners.
      *

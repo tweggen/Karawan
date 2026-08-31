@@ -100,10 +100,65 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
      * Create bidirectional lanes between two junctions, subdividing if the
      * distance exceeds MaxLaneLength. Returns the number of lanes created.
      */
+    /**
+     * Which way a block's boundary ring turns in plan.
+     *
+     * Asked rather than assumed. Everything else about a block's geometry that needs a side
+     * derives it this way too - see engine.streets.generation.SidewalkRing - because a fixed
+     * hand is right only for as long as nobody changes the order QuarterGenerator traces in,
+     * and the cost of being wrong is every pedestrian route in the city offset into the road.
+     */
+    internal static bool _isCcwInPlan(in List<QuarterDelim> delims)
+    {
+        float area2 = 0f;
+        int n = delims.Count;
+        for (int i = 0; i < n; ++i)
+        {
+            Vector2 a = delims[i].StartPoint, b = delims[(i + 1) % n].StartPoint;
+            area2 += a.X * b.Y - b.X * a.Y;
+        }
+
+        return area2 > 0f;
+    }
+
+
+    /**
+     * The unit vector, in plan, from an edge of the ring toward the block's interior.
+     */
+    internal static Vector3 _inwardOf(in Vector2 a, in Vector2 b, bool isCcw)
+    {
+        Vector2 d = b - a;
+        float l = d.Length();
+        if (!(l > 1e-4f))
+        {
+            return Vector3.Zero;
+        }
+
+        d /= l;
+        Vector2 nrm = isCcw ? new Vector2(-d.Y, d.X) : new Vector2(d.Y, -d.X);
+
+        return new Vector3(nrm.X, 0f, nrm.Y);
+    }
+
+
     private int _createBidirectionalLanes(
         NavJunction njA, NavJunction njB,
         TransportationType allowedType,
         NavClusterContent ncc)
+        => _createBidirectionalLanes(njA, njB, allowedType, ncc, Vector3.Zero);
+
+
+    /**
+     * @param v3KerbSide
+     *     Which side of the lane the pavement is on, or zero where there is no such side.
+     *     Set on BOTH directions, because it is a property of the ground the lane covers
+     *     and not of the direction anybody walks it - see NavLane.KerbSide.
+     */
+    private int _createBidirectionalLanes(
+        NavJunction njA, NavJunction njB,
+        TransportationType allowedType,
+        NavClusterContent ncc,
+        in Vector3 v3KerbSide)
     {
         float totalLength = Vector3.Distance(njA.Position, njB.Position);
         if (totalLength < 0.01f) return 0;
@@ -139,7 +194,8 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 Start = njStart,
                 End = njEnd,
                 Length = segmentLength,
-                AllowedTypes = new TransportationTypeFlags(allowedType)
+                AllowedTypes = new TransportationTypeFlags(allowedType),
+                KerbSide = v3KerbSide
             };
             njStart.StartingLanes.Add(nlForth);
             njEnd.EndingLanes.Add(nlForth);
@@ -150,7 +206,8 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 Start = njEnd,
                 End = njStart,
                 Length = segmentLength,
-                AllowedTypes = new TransportationTypeFlags(allowedType)
+                AllowedTypes = new TransportationTypeFlags(allowedType),
+                KerbSide = v3KerbSide
             };
             njStart.EndingLanes.Add(nlBack);
             njEnd.StartingLanes.Add(nlBack);
@@ -296,14 +353,26 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                     delim, nj, junctionsByStreetPoint, streetPointById);
             }
 
-            // Create sidewalk lanes along each quarter edge (wrapping last→first)
+            /*
+             * Create sidewalk lanes along each quarter edge (wrapping last-first).
+             *
+             * Each carries which side of itself the block is on, so that a walker keeps to
+             * the pavement whichever way round the block the route sends them. The block's
+             * own winding decides it rather than a fixed hand, because nothing guarantees
+             * the tracing order and the cost of assuming is a walker in the carriageway.
+             */
+            bool isCcw = _isCcwInPlan(delims);
+
             for (int i = 0; i < quarterJunctions.Count; i++)
             {
                 var njA = quarterJunctions[i];
                 var njB = quarterJunctions[(i + 1) % quarterJunctions.Count];
                 if (njA == njB) continue;
 
-                pedestrianLaneCount += _createBidirectionalLanes(njA, njB, TransportationType.Pedestrian, ncc);
+                pedestrianLaneCount += _createBidirectionalLanes(
+                    njA, njB, TransportationType.Pedestrian, ncc,
+                    _inwardOf(delims[i].StartPoint,
+                        delims[(i + 1) % delims.Count].StartPoint, isCcw));
             }
         }
 

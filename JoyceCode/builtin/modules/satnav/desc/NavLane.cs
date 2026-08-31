@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using engine.navigation;
 
 namespace builtin.modules.satnav.desc;
@@ -17,6 +18,24 @@ public class NavLane
 
     public float MaxSpeed;
     public float Length;
+
+    /// <summary>
+    /// Unit vector, in plan, from the lane's centre line toward the surface a walker on it
+    /// should keep to - the block whose kerb this lane runs along. Zero where there is no
+    /// such side, which is every car lane and every pedestrian CROSSING: a crossing is in
+    /// the carriageway by definition and belongs on its centre line.
+    /// </summary>
+    /// <remarks>
+    /// This has to be a property of the LANE and not of the direction of travel. Lanes are
+    /// created in both directions over the same ground, so a walker offsetting to a fixed
+    /// hand relative to travel keeps to the pavement one way round the block and stands in
+    /// the road the other - which is what PedestrianRoute.WaypointFor did, offsetting 1.5 m
+    /// to the right of travel unconditionally. Measured over the block edges of the
+    /// generated cities, the right of travel is outside the block 100 % of the time for the
+    /// direction the blocks are traced in, so exactly one of each lane pair was in the
+    /// roadway - in the flat city too.
+    /// </remarks>
+    public Vector3 KerbSide { get; set; } = Vector3.Zero;
 
     /// <summary>
     /// Which transportation types can use this lane.
