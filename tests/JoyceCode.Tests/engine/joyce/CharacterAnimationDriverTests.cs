@@ -54,12 +54,17 @@ public class CharacterAnimationDriverTests
 
 
     /**
-     * Anything that could plausibly animate a character. AnimationDriver is the retry
-     * itself; SetAnimation is the call it wraps, and the walking behaviours make it
-     * directly.
+     * Anything that could plausibly animate a character: a SetAnimation call, or a call to
+     * an AnimationDriver, which is the retry that wraps it.
+     *
+     * The CALL, not the mention. Testing for the string "AnimationDriver" also matched the
+     * field declaration, so deleting the Drive call out of IdleBehavior.Behave and leaving
+     * `private AnimationDriver _driver;` behind passed - a character standing in that
+     * behaviour would have had no animation at all.
      */
     private static bool _drivesAnAnimation(string source)
-        => source.Contains("SetAnimation(") || source.Contains("AnimationDriver");
+        => Regex.IsMatch(source, @"\bSetAnimation\s*\(")
+           || Regex.IsMatch(source, @"\.\s*Drive\s*\(");
 
 
     /**
