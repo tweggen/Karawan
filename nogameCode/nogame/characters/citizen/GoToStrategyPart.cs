@@ -66,14 +66,14 @@ public class GoToStrategyPart : AEntityStrategyPart
         var cd = CurrentPosition?.ClusterDesc;
         var q = CurrentPosition?.Quarter;
 
-        if (null != cd && null != q)
+        if (null != cd)
         {
             Vector3 v3Cluster = v3World - cd.Pos;
-            var v2 = new Vector2(v3Cluster.X, v3Cluster.Z);
 
-            if (q.AABB.Contains(new Vector3(v2.X, q.AABB.Center.Y, v2.Y)))
+            if (engine.streets.generation.BuildingFooting.TryPavementHeightAt(
+                    q, new Vector2(v3Cluster.X, v3Cluster.Z), out float onBlock))
             {
-                return engine.streets.generation.BuildingFooting.PavementHeightAt(q, v2);
+                return onBlock;
             }
         }
 

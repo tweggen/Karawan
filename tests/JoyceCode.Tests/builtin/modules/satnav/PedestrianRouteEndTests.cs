@@ -270,6 +270,53 @@ public class PedestrianRouteEndTests
 
 
     /**
+     * The straight-line fallback's own decision: on this block, or not on it.
+     *
+     * GoToStrategyPart is in nogameCode, so a scan can see that it NAMES the pavement
+     * lookup and cannot see whether the branch that names it is ever taken - writing
+     * `if (false)` round that branch passed the whole suite. So the decision itself lives
+     * in BuildingFooting.TryPavementHeightAt, where it can be driven over real blocks, and
+     * the scan only has to establish that the fallback calls it.
+     */
+    [Theory]
+    [MemberData(nameof(Cities))]
+    public void TheFallbackAsksTheBlockOnItAndTheTerrainOffIt(string idString, float size)
+    {
+        var (_, _, quarters) = _city(idString, size, false);
+        int nOn = 0, nOff = 0;
+
+        foreach (var q in quarters.GetQuarters())
+        {
+            var delims = q.GetDelims();
+            if (delims.Count < 3) continue;
+
+            Assert.True(global::engine.streets.generation.BuildingFooting.TryPavementHeightAt(
+                    q, q.GetCenterPoint(), out float onBlock),
+                $"{idString}/{size}: a block does not contain its own centre");
+
+            Assert.Equal(
+                global::engine.streets.generation.BuildingFooting.PavementHeightAt(
+                    q, q.GetCenterPoint()),
+                onBlock);
+            ++nOn;
+
+            /*
+             * A kilometre away is off every block of every baseline city, and the walker
+             * has to fall back to the terrain there rather than be told this block's
+             * height at a point it does not cover.
+             */
+            Assert.False(global::engine.streets.generation.BuildingFooting.TryPavementHeightAt(
+                q, q.GetCenterPoint() + new Vector2(4000f, 4000f), out _));
+            ++nOff;
+        }
+
+        Assert.True(nOn > 0 && nOff > 0);
+        Assert.False(global::engine.streets.generation.BuildingFooting.TryPavementHeightAt(
+            null, Vector2.Zero, out _));
+    }
+
+
+    /**
      * The route builder and the straight-line fallback ask for the surface, not the terrain.
      *
      * Both live in nogameCode, which this assembly does not reference. Absence as well as
@@ -294,7 +341,7 @@ public class PedestrianRouteEndTests
         Assert.DoesNotContain("destPos.Y = _walkingHeightAt", builder);
 
         string goTo = File.ReadAllText(Path.Combine(dir, "GoToStrategyPart.cs"));
-        Assert.Contains("BuildingFooting.PavementHeightAt", goTo);
+        Assert.Contains("BuildingFooting.TryPavementHeightAt", goTo);
         Assert.DoesNotContain("ClusterDesc.GroundHeightAt(startPos)", goTo);
         Assert.DoesNotContain("ClusterDesc.GroundHeightAt(endPos)", goTo);
     }

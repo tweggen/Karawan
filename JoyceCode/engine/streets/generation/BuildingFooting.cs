@@ -176,6 +176,41 @@ public static class BuildingFooting
 
 
     /**
+     * The pavement height at a plan position, if that position is ON this block.
+     *
+     * For a caller that HAS a block but is not sure the point is on it - a walker's travel
+     * destination may well be on another one, and answering from the wrong block is worse
+     * than answering from the terrain.
+     *
+     * Here rather than at the call site because the call site is in nogameCode, which the
+     * test assembly does not reference: a scan can see that PavementHeightAt is named there
+     * and cannot see whether the branch that names it is ever taken. Writing `if (false)`
+     * around it in GoToStrategyPart passed the entire suite, which is what this exists to
+     * make impossible.
+     *
+     * The AABB rather than the polygon: a block's delimiters are a closed ring and a point
+     * in polygon test over them would be exact, but the answer for a point just outside the
+     * ring is the kerb's own height either way, and the box is what QuarterStore already
+     * indexes on.
+     */
+    public static bool TryPavementHeightAt(
+        Quarter quarter, in Vector2 v2Cluster, out float height)
+    {
+        height = 0f;
+        if (null == quarter) return false;
+
+        var aabb = quarter.AABB;
+        if (!aabb.Contains(new Vector3(v2Cluster.X, aabb.Center.Y, v2Cluster.Y)))
+        {
+            return false;
+        }
+
+        height = PavementHeightAt(quarter, v2Cluster);
+        return true;
+    }
+
+
+    /**
      * The one planar level every building on this block is founded at.
      *
      * At or below the pavement everywhere on the block, with equality only at the block's
