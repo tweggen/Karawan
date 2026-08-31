@@ -6,7 +6,7 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7j, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-08-30.
+**Last updated:** 2026-08-31.
 
 ---
 
@@ -33,6 +33,12 @@ lane heights, the satnav guideline lies on the road, and the pavements face upwa
 **What Phase A never touched: everything that STANDS on that surface.** Buildings, shops,
 quest markers, trams and the initial coin placement were all written against a flat city
 and none of them has been revisited. That is what Part 1 below is.
+
+**Cleared on 2026-08-31:** (c) the pavement cross-fall, (g) the pedestrian offset, and
+(h) the unwritten elevation row. Two of the three had been written up wrongly here, and
+only measurement caught it - see the entries, which are kept rather than deleted because
+what they got wrong is the useful part. Ranks 1 and 2 of Part 1 are now (a) houses and
+(b) the quest marker.
 
 ---
 
@@ -74,9 +80,54 @@ blocks, 3547 boundary edges**. Terrain baseline: gradient over one 20 m cell med
 **Ranked.** (c) first because it is the largest surface defect and fixing it also fixes
 one of (d)'s three causes. (a) second because it is the largest *visible* one.
 
+**As of 2026-08-31 (c), (g) and (h) are done**, so the live ranking is (a) houses, then
+(b) the quest marker, then what remains of (d), then (e) the intercity tram and (f) the
+coins. (a) is now also the item (c)'s fix hands the ball to: the pavement is level, and the
+block INTERIOR carries all of the warp that used to be spread across it.
+
 ---
 
-## (c) The pavement is steeper sideways than lengthwise — RANK 1
+## ✅ (c) The pavement is steeper sideways than lengthwise — FIXED 2026-08-31
+
+> **The recommendation below (Option 2) does not work, and was measured before being
+> discarded.** It is left in place because the reason is the whole content of the fix.
+>
+> Option 2 is one inset vertex per corner, at the mitre, taking that corner's height. A
+> mitre sits one width from BOTH edge lines, which puts it `w·cot(θ/2)` along one edge from
+> the corner and the same distance back along the other — so the two rim cells it serves
+> want two different heights for it. Given the corner's height, each cell keeps a cross-fall
+> of `s·cot(θ/2)`, and **at the median block corner of 90° that is `s` itself — the
+> along-edge slope, i.e. no improvement whatsoever**; at 40° it is nearly three times worse
+> than today. Built and measured: over the real cities it moved the median cross-fall from
+> **7.2 % to 6.7 %**. Given either cell's height instead, the surface cracks open by 0.4 m
+> on a 2 m pavement and 1.3 m on a 6 m one.
+>
+> **What actually decides it:** a rim quad has no cross-gradient exactly when every one of
+> its vertices carries the height the outer edge has *at that vertex's own projection onto
+> it* — the four heights then lie on the plane `h = h₀ + s·x`. Nothing else about the quad's
+> shape matters. The only thing forcing a compromise is one vertex serving two edges, **so
+> the edges do not share one**: each edge owns its own pair of inset points, and neighbours
+> meet only at the outer corner, where both name the corner's own height trivially.
+> Measured: **cross-fall 0.0 % at every percentile on all 2823 edges**, with 438/445 and
+> 79/82 blocks carrying a pavement. The price is that the pavement ramps back to the kerb at
+> each corner; that ramp must clear the corner's mitre and then add a width, because at
+> exactly one width the two edges' insets land on top of each other at a 90° corner — which
+> rejected 435 of 445 blocks before it was measured.
+>
+> Also note the numbers below were measured with a **3 m** step, which exceeds the pavement
+> width on most blocks (1–6 m) and so partly measures the block interior. Measured within a
+> pavement's own width the fan's cross-fall is 7.5 % median / 16 % p95 / 63 % worst, not
+> 11 % / 33 % / 178 %.
+>
+> `engine.streets.generation.SidewalkRing`, `builtin.tools.CapInsetEdge`,
+> `ExtrudePoly.CapInsetEdges`, `Quarter.SidewalkWidth`;
+> `tests/JoyceCode.Tests/engine/streets/PavementCrossFallTests.cs`. Flat city unchanged
+> vertex for vertex and index for index (the inset is refused on `IsFlat`).
+>
+> **Still open, and named in Option 2's own follow-up:** the block INTERIOR now carries all
+> of the warp, and buildings stand on the *pad*, a third surface again. That is (a).
+
+### The original write-up
 
 > *"sidewalks shall be up/downwards only in the direction of walking, not in the direction
 > to the street. I understand that we might have non-perpendicular setups."*
@@ -367,7 +418,9 @@ a collider. Measured at the midpoint of every block edge, 1.5 m inside the kerb 
 2. **The terrain walker is street-vs-terrain** (p05 −0.76…−1.48 m, worst −9.8 m). §2c
    removes most of it but cannot, on a 20 m grid.
 3. **The satnav walker is nothing but (c)'s cross-slope** — ±0.3–0.5 m, exactly half the
-   3 m cross-fall. **Fixing (c) fixes this one outright.**
+   3 m cross-fall. **Fixed 2026-08-31 with (c)**: the rim it walks on is level across, so
+   the height 1.5 m in from the kerb is the kerb's own. Note (g) below was a second,
+   independent defect in the same walker and is also fixed.
 
 ---
 
@@ -434,7 +487,7 @@ away. Deterministic, and it has always been this way.
 
 ## Also found on the way — not reported, worth more than some that were
 
-### ⚠️ (g) Half of all pedestrian routes put the walker in the carriageway
+### ✅ (g) Half of all pedestrian routes put the walker in the carriageway — FIXED 2026-08-31
 
 `builtin/modules/satnav/PedestrianRoute.WaypointFor` (`PedestrianRoute.cs:45`) returns
 `v3End + laneRight * SidewalkOffset` — **always 1.5 m to the right of travel**. Measured
@@ -447,19 +500,51 @@ kerb — in the roadway, at pavement height.**
 `QuarterLoopRouteGenerator.cs:50` uses `-1.5f * vu3Right` and is correct. **The two
 pedestrian systems offset to opposite sides.** This is present in the flat city too.
 
-### ⚠️ (h) Possible 400 m-pitch cliff grid over the entire world — UNVERIFIED, verify first
+**A sign flip is not the fix**, and that is the part worth carrying forward: both
+directions of a lane cover the same ground, so whichever hand is chosen, one of the pair is
+in the road. The side has to belong to the LANE. `NavLane.KerbSide` is a unit vector in plan
+toward the block, set on both directions when the lane is created, and zero where there is
+no such side — every car lane, and **every pedestrian crossing**, which is in the
+carriageway by definition and belongs on its centre line. Which side it is comes from the
+block's own signed area rather than a constant: all 659 baseline blocks are traced
+clockwise today, so a constant would be right, and would silently put every pedestrian
+route in the city into the road the day the tracing order changed.
+`tests/JoyceCode.Tests/builtin/modules/satnav/PedestrianKerbSideTests.cs`. Note
+`NavJunctionHeightTests.TheWaypointStaysOnTheRightHandSidewalk` had been **asserting the
+defect**.
 
-`nogame/terrain/ElevationBaseFactory.cs:138-149` copies the refined grid with
-`for (int x = x0; x < x1; x++)`, so the **last index is never written** and
-`ElevationSegment.Elevations[20, *]` stays at its default `Height = 0` for **every**
-fragment. `CacheEntry.GetElevationPixelAt` reads `elevations[ey+1, ex]`, so it reads that
-zero row across the last 20 m strip of each fragment. Replicated verbatim, terrain 1 m
-inside that edge samples **−4…+8 m** while the fragment centre line samples −105…+175 m.
+### ✅ (h) The unwritten elevation row — VERIFIED, REFUTED, and fixed 2026-08-31
 
-If real, that is a 400 m-pitch cliff grid over the whole world — **invisible in the flat
-city** (cluster interiors are ironed flat) and unmissable in a terrain-following one.
-**Spend ten minutes in-game before trusting or acting on this.** It is the single
-highest-leverage item on this page if it holds.
+The hole is real: `ElevationBaseFactory` copied its grid with one inclusive and one
+exclusive loop bound, so `Elevations[20, *]` — the last **Z** row, not column; the write
+indexed `[x, y]` while every reader indexes `[ez, ex]` — stayed at a default
+`ElevationPixel`, i.e. a height of exactly 0.
+
+**Both halves of the prediction above are wrong, and measuring took ten minutes as
+advertised.**
+
+- **There is no cliff in the drawn terrain, anywhere.** `CreateTerrainOperator` takes its
+  grid from `Cache._elevationCacheGetRectAt`, which copies global elevation indices
+  `k·gr … (k+1)·gr−1` out of each fragment — local `0…gr−1`, never local `gr` — and takes
+  the shared boundary sample from the **next fragment's local index 0**. The stitched 21×21
+  the mesh is built from is complete.
+- **No city ever showed it either.** Every operator above the base refills its whole target
+  from `GetElevationSegmentBelow`, which is that same stitcher, so
+  `ClusterBaseElevationOperator` and `ClusterConformElevationOperator` both wrote the row
+  from the neighbour. The hole survived only where the base layer IS the top layer, i.e.
+  **outside every cluster** — which is also why "invisible in the flat city" was true for
+  the wrong reason.
+- **What it did reach is `CacheEntry.GetElevationPixelAt`**, which indexes
+  `elevations[ey+1, ex]` directly. A point query in the last 20 m strip of a fragment
+  interpolated between a real height and zero — measured as a gap of well over 100 m. That
+  is `Loader.GetHeightAt`, so `ClusterDesc.GroundHeightAt`, `GetWalkingHeightAt`, the hover
+  probe's terrain fallback and debris placement all read it, and outside cities they
+  disagreed with the ground that is drawn.
+
+So it was worth fixing, but it was never "the single highest-leverage item on this page",
+and it has no bearing on cities at all.
+`tests/JoyceCode.Tests/engine/elevation/ElevationGridCoverageTests.cs` drives the real
+`Cache`, stitcher and `CacheEntry` for all four measurements and scans the loop bounds.
 
 ### (i) The `#if false` operator and the missing drift test
 

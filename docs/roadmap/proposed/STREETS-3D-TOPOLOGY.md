@@ -4,7 +4,8 @@
 the seam, the flag, the terrain source, gradient relaxation, per-street collision, traffic
 and pedestrians, city blocks, the conforming pass (§2c), the kerb (§7e), the satnav
 guideline (§7f/§7g), the block topology off-by-ones (§7h/§7i) and the pavement winding
-(§7j). A terrain-following city renders, drives, is walked on and now shows its pavements.
+(§7j, §7k). A terrain-following city renders, drives, is walked on, and its pavements are
+level across their width.
 
 **What Phase A did NOT touch is everything that STANDS on that surface.** Buildings,
 shops, quest markers, trams and the initial coin placement were all written against a flat
@@ -1504,3 +1505,97 @@ pavement test; `ExtrudePolyCapTests` exists for it.
   does not care which way its input was wound. Left alone.
 - **A 500 m city has three blocks.** Not a rendering matter, but worth writing down: the
   block counts over the baselines are 3 / 10 / 82 / 445 for 500 / 800 / 1500 / 3000 m.
+
+
+---
+
+# §7k — The pavement is level across its width (2026-08-31)
+
+Reported from play with the design steer: *"sidewalks shall be up/downwards only in the
+direction of walking, not in the direction to the street. I understand that we might have
+non-perpendicular setups."*
+
+## What the surface was
+
+There is no sidewalk object. `GenerateClusterQuartersOperator` extrudes the block polygon
+up by `QuarterSidewalkOffset`, so the **cap is the pavement**, and since §7c every corner of
+that polygon sits at its own junction's road height. The cap is a single LibTess fan over
+the ring with **no interior vertices at all** — measured, the tessellated cap has exactly as
+many vertices as the input ring, min 3, median 4–5, max 16, for a block up to 150 m across.
+So a block whose corners differ in height is a warped quad and which way each triangle tilts
+is decided by the sweep.
+
+Measured **within a pavement's own width** (0.25 w → 0.75 w in from the kerb at each edge
+midpoint, read barycentrically off the cap's own triangles) over the baselines on rolling
+ground: cross-fall **7.5 % median, 16 % p95, 63 % worst**, against an along-edge slope of
+7.0 %. The surface is tilted diagonally at about 45° to the street. A real footway is 2 %.
+
+> CITY-3D-OPEN-POINTS reported 11 % / 33 % / 178 % for the same thing. That was measured
+> with a **3 m** step, which exceeds the pavement width on most blocks (`sidewalkWidth` is
+> 1/2/4/6 m by downtownness), so it was partly measuring the block interior.
+
+## Why the obvious repair does not work
+
+The ledger's Option 2 — one inset vertex per corner, at the mitre, taking that corner's
+height — was implemented and measured before being discarded.
+
+A mitre point is one width from **both** edge lines, which places it `w·cot(θ/2)` along the
+leaving edge from the corner and the same distance back along the arriving one. Its two
+perpendicular feet on the two edges are therefore `2·w·cot(θ/2)` apart, and the two rim
+cells it serves want the outer heights at *those two different feet*. Give it either and the
+surface cracks; give it the corner's own height — the average of the two — and each cell
+keeps a cross-fall of `s·cot(θ/2)`:
+
+| interior angle | 40° | 60° | **90°** | 120° | 150° |
+|---|---|---|---|---|---|
+| cross-fall, as a multiple of the along-slope | 2.75 | 1.73 | **1.00** | 0.58 | 0.27 |
+
+The median block corner is **90.1–93.5°**, so the median case is *no improvement at all*,
+and a sharp corner is worse than today. Measured on the real cities the construction moved
+the median from 7.2 % to 6.7 %. The cross-fall is uniform over each cell, so one bad corner
+contaminates a whole 66 m edge — two triangles have only one cross-gradient between them.
+
+## The condition, stated exactly
+
+A rim quad has no cross-gradient **precisely when every one of its vertices carries the
+height the outer edge has at that vertex's own projection onto that edge**: the heights then
+all lie on the plane `h = h₀ + s·x`, whose gradient runs purely along the edge. Nothing else
+about the quad's shape matters — it need not be a parallelogram, or planar in plan, or
+anything else.
+
+The only thing that can violate it is a vertex shared between two edges, because the two
+edges project it to different places. **So the edges do not share one.** Each edge owns a
+`CapInsetEdge` — two points, both offset perpendicularly by the full width, both carrying
+that edge's own interpolated height. Neighbouring cells meet only at the outer corner, where
+the requirement is that both name the corner's height, which they trivially do.
+
+Result, measured: **cross-fall 0.0 % at every percentile, on all 2823 measured edges of the
+four baselines**, with 438 of 445 and 79 of 82 blocks carrying a pavement.
+
+## The corner ramp, and the number that had to be measured
+
+The cells meet the kerb again at each corner, so the pavement ramps back to zero width
+there and that region falls to the block interior. The ramp length is **the corner's mitre
+reach plus one width**. One width alone is wrong and unmistakably so: at a 90° corner the
+two edges' inset points then land on *exactly the same point*, and sharper than that they
+cross — which rejected **435 of 445 blocks** before the number was measured.
+
+## What else moved
+
+- **`Quarter.SidewalkWidth`**. The width was computed inside
+  `QuarterGenerator._createBuildings`, used to inset the estate, and thrown away. The floor
+  now insets its cap by the same number; if the two drifted the pavement and the building
+  wall would stop meeting all the way round every block. A source scan forbids a second copy.
+- **`ExtrudePoly.CapInsetEdges`**, null by default, ceiling only. The rim's winding is
+  derived from the ring's own signed area about the cap plane — the property
+  `Triangulate.ToMesh` already has, and worth having for the same reason §7j gives.
+- **The flat city is untouched**, asserted vertex for vertex and index for index over whole
+  generated cities: a flat block's corners are all at one height, so there is nothing to
+  remove, and `PavementInsetOf` refuses on `IsFlat` as `Quarter.GroundHeightAt`,
+  `DeckCollider` and `JunctionCollider` already do.
+
+## Found and NOT fixed
+
+The block **interior** now carries all of the warp that used to be spread over the whole
+cap, and buildings stand on the *pad*, a third surface again. That is ledger item (a), and
+it is the next thing.
