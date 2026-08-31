@@ -6,7 +6,7 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7l, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-08-31.
+**Last updated:** 2026-08-31 (§7m).
 
 ---
 
@@ -37,11 +37,11 @@ quest markers, trams and the initial coin placement were all written against a f
 and none of them has been revisited. That is what Part 1 below is.
 
 **Cleared on 2026-08-31:** (c) the pavement cross-fall, (g) the pedestrian offset, (h) the
-unwritten elevation row, and **(a) houses floating and sinking**. Three of the four had
-been written up wrongly here, and only measurement caught it - see the entries, which are
-kept rather than deleted because what they got wrong is the useful part. **Rank 1 of
-Part 1 is now (b) the quest marker**, then what remains of (d), then (e) the intercity
-tram and (f) the coins.
+unwritten elevation row, **(a) houses floating and sinking**, **(b) the quest marker** and
+**(d) the T-posed NPCs below pavement level**. Nearly all of them had been written up
+wrongly here, and only measurement caught it - see the entries, which are kept rather than
+deleted because what they got wrong is the useful part. **Rank 1 of Part 1 is now (e) the
+intercity tram**, then (f) the coins.
 
 ---
 
@@ -408,7 +408,37 @@ vertical error leaves under 15 m of horizontal reach.
 
 ---
 
-## (b) The quest marker sinks under the road — RANK 1
+## ✅ (b) The quest marker sinks under the road — FIXED 2026-08-31
+
+### What was built, and what this write-up got wrong
+
+**(B), with (C) as its mechanism** — and the reason both are needed is the one thing this
+page had wrong. Full write-up in
+[`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) §7m.
+
+1. ⚠️ **"(C) — cheapest and honest" does not meet the requirement, and it was measured
+   before being discarded.** Resting the cube on the anchor it already had leaves its bottom
+   at terrain + `ClusterNavigationHeight`, which is still **2.67 m** under the pavement at
+   the worst junction of `Yelukhdidru`/800 and of `seed000`/1500 and **8.27 m** under it at
+   the worst junction of `Yelukhdidru`/3000. Only `seed000`/500 — 27 junctions, almost no
+   relief — would have been fixed by it. The anchor had to move as well.
+2. **The flat-city cost of (B) is 0.85 m, not 1.5 m.** The bottom was at `aver + 3.0`
+   (`aver + 1.5` flattening bias, `+ 3` hover clearance, `− 1.5` for straddling) and is now
+   at `aver + 2.15`, resting on the pavement instead of hovering a metre over the road.
+   (A) would have cost 1.5 m and bought nothing.
+3. **The table above understates the tail in the other direction.** At the worst junction of
+   the 3000 m city the marker floats **10.6 m ABOVE** the pavement, because the road there
+   is in a cutting the 20 m elevation grid cannot cut. That is also why `max(surface,
+   terrain)` — the §7f hover-probe shape, the obvious safety net — was rejected: it would
+   float the marker 9 m over the road the player is driving on.
+4. **The consequence this page did not name:** `TrailVehicle` parents its marker to the CAR
+   with `RelativePosition = Vector3.Zero` and computes no height at all, so the mesh offset
+   moves it too. The fishmonger quest's marker now stands ON the car instead of around it.
+
+`engine.streets.generation.CitySurface`, `engine.quest.QuestMarker`,
+`Loader.GetCitySurfaceHeightAt`; `tests/JoyceCode.Tests/engine/quest/QuestMarkerTests.cs`.
+
+### The original write-up
 
 Cause is exact and slightly absurd. `ToSomewhere._createTargetInstance`
 (`ToSomewhere.cs:176-183`) draws a cube scaled to `(SensitiveRadius, 3, SensitiveRadius)`
@@ -436,7 +466,9 @@ pavement), with a tail to −9.6 m — *"in parts under street/sidewalk level"*,
 Without the conform pass the same expression would give −24…+34 m, so §2c is working; the
 residual is the missing 1.5 m bias plus the 20 m grid.
 
-**Purely visual** — the goal's collision shape is a cylinder 1000 m tall.
+**Purely visual** — the goal's collision shape is a cylinder 1000 m tall. **Confirmed: it
+still is**, `ShapeFactory.GetCylinderShape(SensitiveRadius, 1000f)`, and it moved down
+2.35 m with the anchor without ceasing to span everything it spanned.
 
 Fixes: **(A)** route the three quest strategies through `Loader.GetNavigationHeightAt` —
 changes nothing on a slope and **lowers every marker in the shipped flat city by 1.5 m**;
@@ -446,9 +478,42 @@ already used for the ribbon; **(C)** cheapest and honest — offset `_eMeshMarke
 of straddling it. (C) makes the terrain city match the flat city's look and raises flat-city
 markers by 1.5 m.
 
+
 ---
 
-## (d) T-posed NPCs below pavement level
+## ✅ (d) T-posed NPCs below pavement level — FIXED 2026-08-31
+
+### What was built, and what this write-up got wrong
+
+Full write-up in [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) §7m.
+
+1. **Cause 3 is not "mostly fixed", it is EXACTLY ZERO.** Re-measured after (c) at the point
+   a walker actually stands, the satnav walker is **0.00 m off the block floor at every
+   percentile from min to max, on 0.0 % of edges below it**, on all four cities. The only
+   residual anywhere is the 1 / 0 / 3 / 7 blocks §7k refuses a pavement inset.
+2. **Cause 1 is worse than measured here, because this page sampled the wrong points.** The
+   loop walker stands at CORNERS, not at edge midpoints, and the pad's residual is largest
+   there: p05 **−6.55 m** and worst **−17.78 m** on `Yelukhdidru`/3000, against the −4.5 /
+   −12.6 quoted below.
+3. **The obvious repair for cause 1 is not the best one, and it was measured.** Giving the
+   loop walker the corner's own junction height — literally the number the satnav walker
+   uses at the same corner — leaves it below the floor at **33–55 %** of corners, against
+   10–32 % for `BuildingFooting.PavementHeightAt`. The waypoint is 1.5 m in from the corner,
+   i.e. inside §7k's corner ramp, and the nearest-edge interpolation follows the ramp while
+   the corner's own value does not.
+4. ⚠️ **"The terrain has to answer, since there is no road node to ask" is false, and it was
+   a comment in the shipped source.** `TryCreateCursor` has already snapped both route ends
+   to their nearest lane. Nothing on a walker's route is a terrain sample any more.
+5. **The T-pose criterion this page proposed would have passed the broken site.** "All six
+   sites now name at least one driver" was true of the niceday NPCs throughout, and they had
+   no animation at all. The guard asserts that something *sets* an animation.
+6. ⚠️ **Found on the way and NOT fixed — roughly half the loop walker's waypoints are
+   OUTSIDE their own block.** 50–58 % are inside the ring; the rest stand 1.5 m into the
+   carriageway. It is the (g)-shaped corner effect in the other pedestrian system, it is a
+   plan-position defect rather than a height one, and moving it would move every citizen's
+   walk in the shipped flat city.
+
+### The original write-up
 
 Two unrelated defects in one sighting.
 
@@ -493,11 +558,12 @@ a collider. Measured at the midpoint of every block edge, 1.5 m inside the kerb 
 3. **The satnav walker is nothing but (c)'s cross-slope** — ±0.3–0.5 m, exactly half the
    3 m cross-fall. **Fixed 2026-08-31 with (c)**: the rim it walks on is level across, so
    the height 1.5 m in from the kerb is the kerb's own. Note (g) below was a second,
-   independent defect in the same walker and is also fixed.
+   independent defect in the same walker and is also fixed. **Verified 2026-08-31: 0.00 m at
+   every percentile.**
 
 ---
 
-## (e) Trams — the player is right, about the *intercity* ones
+## (e) Trams — the player is right, about the *intercity* ones — RANK 1
 
 Both systems are **active in the shipped game** (`world.CreateTramCharacters: true`; both
 intercity operators registered unconditionally).
@@ -619,12 +685,14 @@ and it has no bearing on cities at all.
 `tests/JoyceCode.Tests/engine/elevation/ElevationGridCoverageTests.cs` drives the real
 `Cache`, stitcher and `CacheEntry` for all four measurements and scans the loop bounds.
 
-### (i) The `#if false` operator and the missing drift test
+### ✅ (i) The `#if false` operator and the missing drift test — the test now exists
 
 `GenerateHouseDescriptionsOperator.cs` is inside `#if false` from line 1 and compiles to
 nothing, despite being described in CLAUDE.md as a live consumer. And
 `CharacterAnimationDriverTests.cs` — the drift test CLAUDE.md says guards the T-pose fix —
-**exists in no commit on any branch**. Both corrected in CLAUDE.md on 2026-08-30.
+**existed in no commit on any branch**. Both corrected in CLAUDE.md on 2026-08-30; the drift
+test was written on 2026-08-31 with (d1), and **not** to the criterion CLAUDE.md described,
+which the broken site would have passed.
 
 ---
 
