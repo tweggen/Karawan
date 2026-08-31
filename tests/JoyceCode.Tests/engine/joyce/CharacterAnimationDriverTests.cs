@@ -112,14 +112,34 @@ public class CharacterAnimationDriverTests
      * namespace-local name.
      */
     private static string _resolve(
-        Dictionary<string, List<string>> byName, string name, string fromFile)
+        Dictionary<string, List<string>> byName, string name, string fromFile,
+        string fromSource = null)
     {
         if (!byName.TryGetValue(name, out var candidates)) return null;
         if (1 == candidates.Count) return candidates[0];
 
         string dir = Path.GetDirectoryName(fromFile);
-        return candidates.FirstOrDefault(c => Path.GetDirectoryName(c) == dir)
-               ?? candidates[0];
+        var same = candidates.FirstOrDefault(c => Path.GetDirectoryName(c) == dir);
+        if (null != same) return same;
+
+        /*
+         * Then by the file's own using directives, which is what C# would do. WalkBehavior
+         * is declared twice - once for the player in modules/playerhover and once for the
+         * citizens - and the taxi quest names the citizens' one from a third directory
+         * entirely, so directory proximity alone gets it wrong.
+         */
+        if (null != fromSource)
+        {
+            foreach (Match u in Regex.Matches(fromSource, @"using\s+([A-Za-z0-9_.]+)\s*;"))
+            {
+                string asPath = u.Groups[1].Value.Replace('.', Path.DirectorySeparatorChar);
+                var viaUsing = candidates.FirstOrDefault(
+                    c => Path.GetDirectoryName(c).EndsWith(asPath, StringComparison.Ordinal));
+                if (null != viaUsing) return viaUsing;
+            }
+        }
+
+        return candidates[0];
     }
 
 
@@ -237,7 +257,7 @@ public class CharacterAnimationDriverTests
                     {
                         if (!seen.Add(name)) continue;
 
-                        string decl = _resolve(byName, name, f);
+                        string decl = _resolve(byName, name, f, source);
                         if (null == decl) continue;
 
                         if (_drivesAnAnimation(sources[decl]))
@@ -267,6 +287,78 @@ public class CharacterAnimationDriverTests
 
         Assert.True(nSites >= 6,
             $"only {nSites} EntityCreator sites found; this scan has stopped seeing them");
+    }
+
+
+    /**
+     * EVERY behaviour a character's strategy can rest it in sets an animation.
+     *
+     * The reachability test above says the site can reach A driver; it does not say that
+     * the particular behaviour the character is holding at any moment is one. Gutting
+     * IdleBehavior.Behave outright survives it, because WalkBehavior is in the same
+     * closure. So this is the stronger statement, and the one that matches the shape of
+     * every T-pose sighting so far: they have all been STATIONARY characters, sitting in a
+     * behaviour that had nothing to re-issue their clip.
+     *
+     * Restricted to strategy classes that mention a CharacterModelDescription, because
+     * those are the ones driving a character; a quest strategy that attaches a marker
+     * behaviour is a different thing and has no animation to set.
+     */
+    [Fact]
+    public void EveryBehaviourACharacterRestsInSetsAnAnimation()
+    {
+        string root = _nogameRoot();
+        var files = Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories);
+
+        var byName = new Dictionary<string, List<string>>();
+        var sources = new Dictionary<string, string>();
+        foreach (var f in files)
+        {
+            string s = _stripComments(File.ReadAllText(f));
+            sources[f] = s;
+
+            foreach (Match m in Regex.Matches(s, @"\bclass\s+([A-Za-z_][A-Za-z0-9_]*)"))
+            {
+                if (!byName.TryGetValue(m.Groups[1].Value, out var l))
+                {
+                    byName[m.Groups[1].Value] = l = new List<string>();
+                }
+
+                l.Add(f);
+            }
+        }
+
+        int nStrategies = 0, nBehaviours = 0;
+
+        foreach (var f in files)
+        {
+            string source = sources[f];
+
+            if (!source.Contains(": AEntityStrategyPart")
+                && !source.Contains(": AOneOfStrategy")) continue;
+            if (!source.Contains("CharacterModelDescription")) continue;
+
+            ++nStrategies;
+
+            foreach (Match m in Regex.Matches(source, @"\b([A-Z][A-Za-z0-9]*Behaviou?r)\b"))
+            {
+                string name = m.Groups[1].Value;
+                string decl = _resolve(byName, name, f, source);
+                if (null == decl) continue;
+
+                ++nBehaviours;
+
+                Assert.True(_drivesAnAnimation(sources[decl]),
+                    $"{Path.GetFileName(f)} can put a character into {name} "
+                    + $"({Path.GetFileName(decl)}), which never sets an animation - so a "
+                    + "character sitting in it renders in its bind pose, a T-pose, for as "
+                    + "long as it stays there");
+            }
+        }
+
+        Assert.True(nStrategies >= 7,
+            $"only {nStrategies} character strategies found; this scan has stopped seeing them");
+        Assert.True(nBehaviours >= 7, $"only {nBehaviours} behaviours reached");
     }
 
 
