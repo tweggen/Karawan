@@ -30,7 +30,7 @@
     "See docs/roadmap/proposed/CITY-3D-OPEN-POINTS.md - it has the measurements and",
     "the plans."
   ],
-  "joyce.DisableClusterFlattening": "false",
+  "joyce.DisableClusterFlattening": "true",
 
   "test.script": ""
 }
