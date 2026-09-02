@@ -167,11 +167,18 @@ public class IntercityTrackElevationOperator : IOperator
     )
     {
         _line = line;
+        /*
+         * The Y extent here is inert - ElevationOperatorIntersects only ever asks
+         * IntersectsXZ - but it named ClusterA at BOTH stations, and it named a height
+         * this operator does not write. It is the track and the vehicle over it now.
+         */
         _aabb = new();
-        _aabb.Add(line.StationA.Position with { Y=line.ClusterA.AverageHeight });
-        _aabb.Add(line.StationA.Position with { Y=line.ClusterA.AverageHeight+20f });
-        _aabb.Add(line.StationB.Position with { Y=line.ClusterA.AverageHeight });
-        _aabb.Add(line.StationB.Position with { Y=line.ClusterA.AverageHeight+20f });
+        _aabb.Add(line.StationA.Position with { Y = line.Height });
+        _aabb.Add(line.StationA.Position with
+            { Y = engine.world.IntercityLine.VehicleHeightOf(line.Height) });
+        _aabb.Add(line.StationB.Position with { Y = line.Height });
+        _aabb.Add(line.StationB.Position with
+            { Y = engine.world.IntercityLine.VehicleHeightOf(line.Height) });
         _strKey = strKey;
         // _rnd = new builtin.tools.RandomSource(strKey);
     }

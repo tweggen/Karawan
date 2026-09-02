@@ -195,12 +195,27 @@ class GenerateShopsOperator : IClusterOperator
                  * Create POI right in the middle.
                  */
                 var e = I.Get<engine.Engine>();
+
+                /*
+                 * The interaction point goes on the SAME storey as the window it belongs
+                 * to. It used to be the only thing on a block that did not ask the quarter
+                 * at all - it sampled ClusterDesc.GroundHeightAt, i.e. the TERRAIN, which
+                 * on a hillside city is neither the block floor nor the shop - and
+                 * ShopNearbyBehavior scores in 3-D with a radius of 16 m, so a shop whose
+                 * window and whose interaction point are a storey apart is a shop that
+                 * cannot be entered from in front of its own door.
+                 *
+                 * Read here rather than inside the queued action: this is generation-time
+                 * geometry, and the two must not be able to answer differently.
+                 */
+                float shopGroundY = engine.streets.generation.BuildingFooting.StoreyGroundAt(
+                    quarter, new Vector2(v3ShopLocal.X, v3ShopLocal.Z));
+
                 e.QueueEntitySetupAction("poi.shop", (DefaultEcs.Entity ePOI) =>
                 {
                     var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal) with
                     {
-                        Y = clusterDesc.GroundHeightAt(clusterDesc.Pos + v3ShopLocal)
-                            + 2.5f + 1f
+                        Y = shopGroundY + 2.5f + 1f
                     };
                     if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
                     

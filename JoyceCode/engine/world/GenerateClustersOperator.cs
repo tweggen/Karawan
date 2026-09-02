@@ -41,7 +41,7 @@ public class GenerateClustersOperator : world.IWorldOperator
      * @param acd
      *      This list of clusters will be filled with new clusterDEsc.
      */
-    private void _generateClusterList(MetaGen worldMetaGen, out IList<ClusterDesc> clusterList)
+    internal void _generateClusterList(MetaGen worldMetaGen, out IList<ClusterDesc> clusterList)
     {
         var acd = new List<ClusterDesc>();
         clusterList = acd;

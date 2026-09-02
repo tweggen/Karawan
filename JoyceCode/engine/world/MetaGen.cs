@@ -67,6 +67,17 @@ public class MetaGen
     public static float ClusterStreetHeight = 2.0f;
     public static float QuarterSidewalkOffset = 0.15f;
 
+    /**
+     * How tall one storey of a building is.
+     *
+     * One copy, because three things have to agree on it: QuarterGenerator sizes a
+     * building in storeys, nogame's house operator sizes a shop window in them, and
+     * streets.generation.BuildingFooting snaps a shopfront to the lowest storey at or
+     * above the pavement in front of it. A shop half a storey out is a shop whose window
+     * and whose interaction point are on different floors.
+     */
+    public static float StoryHeight = 3f;
+
     public Vector3 MaxPos;
     public Vector3 MinPos;
 

@@ -489,6 +489,42 @@ namespace engine.world
         
 
         /**
+         * How high the surface the city is BUILT on is at this position - the road and the
+         * pavement standing on it - as opposed to the terrain under it.
+         *
+         * For anything that must sit on the city rather than near it. GetHeightAt and
+         * GetNavigationHeightAt both answer from the terrain, and in a city that keeps its
+         * terrain the two quantities differ by whatever GradeRelaxer took out and the
+         * conforming pass could not put back on a 20 m grid: measured at every junction of
+         * the four baseline cities, the conformed terrain runs from 9.1 m above the
+         * pavement to 8.3 m below it. See streets.generation.CitySurface for what is
+         * actually asked, and for why the answer is exact at a junction and an
+         * extrapolation away from one.
+         *
+         * Outside every cluster there is nothing built, so the terrain is the surface.
+         */
+        public float GetCitySurfaceHeightAt(in Vector3 position)
+        {
+            ClusterDesc cluster = I.Get<ClusterList>().GetClusterAt(position);
+            if (null != cluster)
+            {
+                var v2Cluster = new Vector2(
+                    position.X - cluster.Pos.X, position.Z - cluster.Pos.Z);
+
+                if (streets.generation.CitySurface.TryHeightAt(
+                        cluster.StreetHeightSource,
+                        cluster.StrokeStore().GetStreetPoints(),
+                        v2Cluster, out float height, out _))
+                {
+                    return height;
+                }
+            }
+
+            return GetHeightAt(position.X, position.Z);
+        }
+
+
+        /**
          * Return the default navigational height for a given
          * position. This is the terrain's height, if no road
          * is present there.

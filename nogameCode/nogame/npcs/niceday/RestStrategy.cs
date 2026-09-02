@@ -31,10 +31,16 @@ public class RestStrategy : AEntityStrategyPart
     
     public override void OnEnter()
     {
+        /*
+         * The model description is handed over so that the behaviour can drive the idle
+         * animation. Without it a resting niceday NPC has no animation driver at all and
+         * stands in its bind pose - a T-pose - for its whole life.
+         */
         _entity.Set(new engine.behave.components.Behavior(new NearbyBehavior()
         {
             EPOI = _entity,
-            PositionDescription = PositionDescription
+            PositionDescription = PositionDescription,
+            CharacterModelDescription = CharacterModelDescription
         }));
 
         var sm = I.Get<SubscriptionManager>();

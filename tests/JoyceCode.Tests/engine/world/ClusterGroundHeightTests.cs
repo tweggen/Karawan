@@ -65,10 +65,17 @@ public class ClusterGroundHeightTests
             "the block pad answers from it when the city is flat, and falls back to it",
 
         // Not converted yet: the intercity network, which spans clusters and has its own
-        // elevation operator.
-        ["nogameCode/nogame/characters/intercity/GenerateCharacterOperator.cs"] = "intercity",
-        ["nogameCode/nogame/intercity/IntercityTrackElevationOperator.cs"] = "intercity",
-        ["nogameCode/nogame/intercity/Network.cs"] = "intercity",
+        // elevation operator. The two cities' averages are what an intercity LINE is
+        // defined on - it joins two cities, not two points of ground - and since §7n both
+        // heights it needs are computed in one place from them.
+        ["nogameCode/nogame/intercity/Network.cs"] =
+            "the line's track height is min of the two cities' averages",
+        ["JoyceCode/engine/world/IntercityLine.cs"] =
+            "derives the track and the vehicle from the two cities' averages, and says so",
+
+        // Where a new game begins: above the city as a whole, falling.
+        ["JoyceCode/engine/world/PlayerStart.cs"] =
+            "the drop point is the city's average plus 100 m, and the player falls from it",
     };
 
 

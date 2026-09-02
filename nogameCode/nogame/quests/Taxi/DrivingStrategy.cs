@@ -63,20 +63,26 @@ public class DrivingStrategy : AEntityStrategyPart
                  * Without this the passenger renders in its bind pose - a T-pose - for
                  * as long as the quest runs, standing at a street point on the sidewalk.
                  *
-                 * This is the ONLY character we create with neither an entity strategy
-                 * nor a behaviour, and every other animation driver in the game lives in
-                 * one of those two: the strategy parts attach IdleBehavior/WalkBehavior,
-                 * which set the clip and retry until it takes. Nothing here ever called
-                 * SetAnimation at all, so AnimationState.ModelAnimation stayed null,
-                 * CameraOutput substituted NullAnimationsEntry, and the vertex shader
-                 * skipped skinning entirely.
-                 *
-                 * Note IdleBehavior is NOT an option here: its OnAttach reads the Body
-                 * component, and this entity has no physics object (no
-                 * CollisionPropertiesFactory), so DefaultEcs would hand it a reference
-                 * into unused storage.
+                 * Nothing here ever called SetAnimation at all, so
+                 * AnimationState.ModelAnimation stayed null, CameraOutput substituted
+                 * NullAnimationsEntry, and the vertex shader skipped skinning entirely.
                  */
                 InitialAnimName = cmd.IdleAnimName,
+
+                /*
+                 * ...and this is what RETRIES it. InitialAnimName is one call, issued
+                 * before ModelCache has necessarily attached FromModel, so on its own it
+                 * is a coin toss rather than a driver.
+                 *
+                 * IdleBehavior is not an option here: its OnAttach takes a ref to the Body
+                 * component, and this entity has no physics object (no
+                 * CollisionPropertiesFactory), so DefaultEcs would hand it a reference into
+                 * unused storage. AnimationOnlyBehavior touches nothing else.
+                 */
+                BehaviorFactory = e => new nogame.characters.citizen.AnimationOnlyBehavior()
+                {
+                    AnimName = cmd.IdleAnimName
+                },
             };
 
             await creator.CreateAsync();
@@ -98,10 +104,21 @@ public class DrivingStrategy : AEntityStrategyPart
 
     public override void OnEnter()
     {
+        /*
+         * The height of the SURFACE the city is built on, not of the terrain under it plus
+         * the vehicle hover clearance.
+         *
+         * The marker cube rests on this position (QuestMarker), so this is where its
+         * bottom face lands. GetHeightAt is the terrain, and in a city that keeps its
+         * terrain the terrain is not the road: measured at every junction of the four
+         * baseline cities, terrain + ClusterNavigationHeight put the cube's bottom below
+         * the pavement at 88 to 93 % of them, 0.65 m at the median and 9.8 m at the worst.
+         * A quest destination is placed at a junction (engine.Placer, Reference.StreetPoint),
+         * and a junction is the one place where the built surface has an exact height.
+         */
         var v3Target = DestinationPosition with
         {
-            Y = I.Get<engine.world.MetaGen>().Loader.GetHeightAt(DestinationPosition) +
-                engine.world.MetaGen.ClusterNavigationHeight
+            Y = I.Get<engine.world.MetaGen>().Loader.GetCitySurfaceHeightAt(DestinationPosition)
         };
 
         _questTarget = new engine.quest.ToLocation()

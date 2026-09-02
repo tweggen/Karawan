@@ -367,10 +367,20 @@ public class EntityCreator
              * marker that a car drives straight through - and it was logged as a Warning,
              * one line, with no indication that a character had been left in the scene.
              *
-             * Hidden rather than disposed: the entity belongs to the caller and to its
-             * fragment Owner, and disposing someone else's entity from here risks a double
-             * dispose. Invisible-and-broken is not correct either, but it is strictly
-             * better than a visible ghost, and the Error below is what actually closes it.
+             * It used to be HIDDEN rather than removed, on the grounds that "the entity
+             * belongs to the caller and to its fragment Owner, so disposing it from here
+             * risks a double dispose". **That reason expired on 2026-08-29**, when
+             * engine.DoomedEntitySet made dooming idempotent precisely so that two owners
+             * who cannot see each other may both doom the same entity - a fragment tearing
+             * down everything it owns while a behaviour on one of them dooms itself is the
+             * case it was built for, and this is the same shape.
+             *
+             * So the half-built character is doomed as well as hidden. Hiding alone left
+             * exactly one hole open: SetVisible needs the TransformApi out of the container
+             * and takes a ref to a component, so if IT throws - which the inner catch below
+             * proves was considered possible - the result is a visible, behaviour-less,
+             * physics-less T-pose that stands there until its fragment unloads. Dooming
+             * closes it whichever way the hiding goes.
              */
             Error($"Failed to build character '{CharacterModelDescription?.ModelUrl ?? "(no model)"}' "
                   + $"at {Position} (fragment {Fragment?.NumericalId.ToString() ?? "none"}): {e}");
@@ -385,6 +395,18 @@ public class EntityCreator
             catch (Exception eHide)
             {
                 Error($"...and it could not even be hidden: {eHide.Message}");
+            }
+
+            try
+            {
+                if (_ePerson != default && _ePerson.IsAlive)
+                {
+                    _engine.AddDoomedEntity(_ePerson);
+                }
+            }
+            catch (Exception eDoom)
+            {
+                Error($"...and it could not be removed either: {eDoom.Message}");
             }
         }
 

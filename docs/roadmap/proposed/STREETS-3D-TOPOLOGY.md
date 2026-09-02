@@ -1599,3 +1599,893 @@ cross — which rejected **435 of 445 blocks** before the number was measured.
 The block **interior** now carries all of the warp that used to be spread over the whole
 cap, and buildings stand on the *pad*, a third surface again. That is ledger item (a), and
 it is the next thing.
+
+---
+
+# §7l — A building stands on its block (2026-08-31)
+
+> Numbered §7l rather than §7k: the ledger's task note asked for "a new §7k" and that
+> number was taken the same day by the pavement fix above.
+
+Reported from play of a terrain-following city: **a building hovering in the air, with
+grey/white noise on its exposed underside.** Player at `<-210.6, 50.1, 184.3>` in
+`Yelukhdidru`. This is ledger item (a), and it is what §7k handed the ball to — once the
+pavement rim was made level across its width, the whole of a block's warp lives in the
+block INTERIOR, which is exactly where the building is.
+
+## Three compounding causes, none of them a bug you can point at
+
+1. **The base is one scalar.** `GenerateHousesOperator` handed the footprint to the
+   L-system with `Y` forced to 0 and extruded it straight up, so a single
+   `2.5f + quarter.GroundHeightAt(centroid)` IS the entire floor. The code comment
+   claiming the house "tilts with" the block was false and has been removed.
+2. **`GroundHeightAt` is the pad**, a least squares plane through the block's corner
+   heights — not the surface the building stands on. Measured on the shipped terrain the
+   residual against the real floor is median 0.00 m but p05 −3.5…−6.1 m, worst −18.3 m.
+3. **The footprint is nearly the whole block.** An estate IS the block outline, and
+   `_createBuildings` insets it by `Quarter.SidewalkWidth`, which is 1–6 m. Measured
+   footprint diagonal on the shipped terrain: median **89.3 m**, p90 239 m, max 359 m.
+
+So the sample was taken in the middle of a surface that rises 13 m across the thing
+standing on it. **Every building in every baseline city had both a corner in the air and a
+corner in the ground** — worst air median 4.3–7.1 m, worst burial median −2.6…−6.7 m.
+
+## The decision: planar floors, and why
+
+The owner's steer, and it is a design decision rather than a limitation:
+
+> *"real live buildings usually have planar floors, non-planar floors exist usually out of
+> later changes on the building. Shopfront entries would be usually aligned per story and
+> not gradually, adding stairs (in real live). Let's for a moment ditch the stairs and
+> align to stories."*
+
+A footprint-following (per-vertex) base was offered and rejected. So the base stays one
+number, and the whole of the fix is **which** number, and how it is proved.
+
+## The guarantee, and what makes it one
+
+`engine.streets.generation.BuildingFooting.BaseHeightOf` answers the block's **lowest
+corner**, raised by `ClusterStreetHeight + QuarterSidewalkOffset`. That is a bound on the
+block floor rather than a sample of it, and the bound is exact for a reason that needs no
+reference to the mesh:
+
+- an outer cap vertex is `Quarter.CornerGroundHeightAt` of its own delimiter, exactly;
+- each rim inset point carries the height its own outer EDGE has at its own projection onto
+  that edge (§7k), i.e. a convex combination of that edge's two corner heights;
+- a piecewise linear surface over those vertices is therefore bounded below by the lowest
+  corner and above by the highest.
+
+**The premise had to be checked rather than assumed, and it is the one thing that could
+leak:** if an inset point's projection ever landed *past* a corner, its height would be an
+extrapolation and could fall outside the corner range. Measured over the four baselines on
+three grounds: **projection overrun 0.0000 in t units, zero inset points outside their
+block's corner range.** `EveryCapVertexCarriesACornerHeightOfItsOwnBlock` is that check,
+and it is also the mutation guard for §7k's corner ramp — shortening the ramp to one width
+pushes the insets onto each other and rejects 435 of 445 blocks, which the test catches as
+"only 0 inset points".
+
+**The bound is taken over the whole block, and that had to be measured too.** A block
+carries **exactly one estate and at most one building** — 1 estate on every one of
+3/10/82/445 blocks, and 3/3/81/149 buildings, never two on one estate. So a footprint IS
+the block, less 1–6 m: the exact minimum of the cap over a footprint sits only
+**0.19–0.61 m above the block's own minimum at the median**, 1.5 m at p90, 3.74 m at the
+worst building of the four cities. That slack is what a smaller building on a larger block
+would be over-sunk by, so `ABlockCarriesOneEstateAndAtMostOneBuilding` fails the day that
+changes.
+
+**No margin is subtracted.** A margin would move the shipped flat city by more than the
+0.35 m below and buy nothing: `ExtrudePoly` emits the floor cap clockwise, i.e. facing
+down, so it is back-face culled from above and cannot fight the pavement for the depth
+buffer even where the two are coplanar.
+
+## What it costs — burial, measured on the shipped terrain
+
+Reproduced in `tests/.../streets/ShippedTerrain.cs`: `GroundOperator`'s diamond-square,
+seed `"mydear"`, refined per fragment exactly as `ElevationBaseFactory` does, sampled with
+`CacheEntry.GetElevationPixelAt`'s own two-triangle rule, then `GradeRelaxer` with the
+shipped `GradePolicy`. It reproduces the ledger's independently measured figures for the
+same cities to within a few per cent.
+
+`localFloor − base` at every footprint vertex:
+
+| city | n | min | p05 | med | p90 | max |
+|---|---|---|---|---|---|---|
+| seed000/500 | 16 | 0.10 | 0.10 | **4.92** | 8.58 | 9.17 |
+| Yelukhdidru/800 | 11 | 0.22 | 0.22 | **6.81** | 7.36 | 7.83 |
+| seed000/1500 | 392 | 0.11 | 0.38 | **7.12** | 20.36 | 42.95 |
+| Yelukhdidru/3000 | 788 | 0.04 | 0.35 | **9.44** | 23.34 | 53.85 |
+
+Burial is the accepted price of a planar floor on a block 150 m across whose kerb falls
+13 m. Floating is not accepted at any price.
+
+## The half of it the brief did not name: sinking eats the building
+
+Sinking to the minimum with the design height unchanged pulls the roof down with the
+floor. Measured before `HeightOf` existed: **the roof of 64 of the 149 buildings of
+Yelukhdidru/3000 fell below the block floor somewhere over its own footprint** (22 of 81,
+1 of 3, 1 of 3 in the others), and the median 24 m building showed **4.54 m** above ground
+at its highest corner. **No building disappeared entirely** — 0 of 149, 0 of 81 — so it
+was never total, but "a house must not be in the air" needs its converse.
+
+`BuildingFooting.HeightOf` adds the block's corner **spread**, so the roof stands the
+design height above the block's HIGHEST corner, which is the upper bound of the floor for
+the same reason the base is the lower one. Height added: median **8.0 / 8.9 / 11.6 /
+14.9 m**, p90 up to 30.8 m, max 55.7 m — and **exactly zero on a flat block**, where every
+corner is at one height.
+
+## Shops: snapped to a storey, never below the kerb
+
+`StoreyGroundAt` is the block's lowest corner raised by whole `MetaGen.StoryHeight` steps
+until it clears the pavement **in front of that shopfront** — not in front of its building,
+which spans a block. Storey index measured: median 2–4, max 19; `sill − localPavement`
+median 1.22–1.87 m, **below one storey always, by construction**.
+
+The storey index is a difference of two GROUND heights, and that is not tidiness:
+`ClusterStreetHeight` and `QuarterSidewalkOffset` cancel out of it, so it is exactly 0 on a
+flat block rather than the ceiling of a rounding error — which is what lets all three
+consumers stay bit for bit where they are in the shipped flat city.
+
+Three things now ask that one function, each still adding its own constant to a ground
+height:
+
+| thing | was | is |
+|---|---|---|
+| shop window | `pad + 2.05` | `storeyGround + 2.05` |
+| shop POI entity | `ClusterDesc.GroundHeightAt` (the **TERRAIN**) `+ 2.5 + 1` | `storeyGround + 2.5 + 1` |
+| TALE shop door | `pad(**block centre**) + 2.15` | `storeyGround + 2.15` |
+
+`ShopNearbyBehavior` scores in 3-D with `Distance = 16f`, so a window and an interaction
+point one storey apart cost a fifth of the horizontal reach. TALE **home** doors and every
+building `Position` now take `PavementHeightAt` at their own position instead of the pad at
+the block centre — up to 9 m out at either end of a block.
+
+## The default FLAT city moves once, by 0.35 m, and only the house moves
+
+Pad = `AverageHeight`; pavement = `AverageHeight + 2.0 + 0.15`; the base was
+`AverageHeight + 2.5`. **The flat city has floated every house by 0.35 m since the
+L-system houses were written**, hidden wherever a shopfront quad skirted the gap by sitting
+0.10 m *below* the pavement. It now stands on the pavement.
+
+Everything else is asserted as equality rather than as a tolerance, over whole generated
+cities: `HeightOf` adds exactly zero, `StoreyAt` is exactly 0, and the shopfront quad, the
+shop POI and the TALE door land on the float they land on today — Vector3 addition is
+commutative, so the shopfront's old `2.05f + pad` and the new `ground + 2.05f` are the same
+number. `AFlatCityMovesOnlyTheHouseAndOnlyByAThirdOfAMetre`.
+
+## The grey/white underside — diagnosed, deliberately not changed
+
+The brief had it as "one constant UV in a texture atlas gutter". The UV is right and the
+gutter is not the mechanism. `Triangulate.ToMesh` writes `Vector2.One/64f` for every cap
+vertex; the house materials carry `AddInterior`; and `LIghtingFS.frag`'s `renderInterior`
+short-circuits **only when the texel at `fragTexCoord` has alpha > 0.8**. At (1/64, 1/64)
+it does not, so the cap runs the full interior-room raymarch — `fix`/`fiy`/`fiz` room
+indices, a `frameNo`-driven window-lights seed — across a horizontal polygon. That is the
+noise.
+
+**It is not specific to the underside.** `ExtrudePoly` gives the ceiling cap the identical
+constant UV, the identical plane and the identical material, and `AlphaInterpreter` builds
+every L-system segment with `addFloor: true, addCeiling: true` — so **every building's ROOF
+in the shipped flat city is the same construction** and has been since the houses were
+written. Giving the caps a real planar projection would tile facade windows across every
+roof in the game; giving them their own material means threading a second material through
+`ExtrudePoly`. Both are visual, opinion-bearing changes to the default city and neither is
+this one.
+
+What this change does do is remove the sighting: the base is at or below the block floor
+over the whole footprint, so the bottom cap is under the pavement everywhere except at a
+single tangent point, and `ABuildingsBaseIsNeverAboveTheFloorUnderIt` /
+`TheBaseIsUnderTheFloorAcrossTheWholeFootprint` are that statement.
+
+## Mutation survivors
+
+Eleven mutations, all caught, none survived — but two only by a **source scan**, and that
+is worth writing down rather than counting as a pass:
+
+| mutation | caught by |
+|---|---|
+| `BaseHeightOf` takes the block's MAX corner | 12 tests |
+| `BaseHeightOf` takes the pad at the block centre | 12 |
+| `HeightOf` does not compensate | 4 |
+| `StoreyAt` floors instead of ceils | 4 |
+| `StoreyAt` always answers the ground storey | 4 |
+| `GroundAt` ignores its position | 8 |
+| the shopfront ramps with the kerb instead of snapping | 4 |
+| §7k's corner ramp is one width, without the mitre | 20 |
+| §7k's corner ramp is the mitre without the width | 9 |
+| **the house operator computes its own base again** | 3, of which only `OnlyOnePlaceDecidesWhereABuildingIsFounded` is causal |
+| **the shop POI goes back to the terrain** | 3, likewise `TheShopPoiAsksTheBlock` |
+
+The last two live in `nogameCode`, which the test assembly does not reference at all, so a
+scan is the only instrument available — the same limitation §7j hit with
+`_generateQuarterFloor`. Both scans assert the ABSENCE of the old expression as well as the
+presence of the new one, because a second, correct copy would pass any test of the value.
+
+## Found and NOT fixed
+
+- **`GenerateHousesOperator._createLargeAdvertsSubGeo` is dead code**: defined, complete,
+  never called from anywhere. It is the only consumer of the `height < 75f` rule.
+- **Polytopes and trees still stand on the pad.** `GeneratePolytopeOperator` is
+  `pad + 2.5` at the ESTATE CENTRE, which is the one place the pad is defensible - §7e
+  measured the plane at the centroid to be the mean of the corner heights *identically* -
+  so it is left. `GenerateTreesOperator` scatters over the block and does suffer the
+  residual; both would move the flat city by another 0.35 m and neither was reported.
+- **A one-storey building can carry a shop window taller than itself on a slope.** The
+  window is `StoryHeight − 0.15` tall and sits at most one storey above the local pavement,
+  so a building shorter than about 5.85 m of visible height can be overtopped by its own
+  glass. `maxHeight` allows 3 m where `minHouseSide ≤ 2 m` or downtownness < 0.3; measured,
+  p05 of building height is 6 m, so it is rare and it is not new — the same window on a 3 m
+  building already reaches within 0.6 m of the roof in the flat city today.
+- **The five catch blocks in `GenerateHousesOperator` were `Trace`**, i.e. silent by
+  default — a swallowed building, sign or shop window with nothing in the log. Converted to
+  `Error(_dc, …)` with distinct messages per site. That is a fix, listed here because it
+  was found rather than sought.
+
+---
+
+# §7m — The quest marker rests on the road, and the citizen on the pavement (2026-08-31)
+
+Ledger items **(b)** and the rest of **(d)**. Both are things that STAND on the city rather
+than parts of it, and both were asking the TERRAIN how high the city is.
+
+> **Re-measure before diagnosing.** The ledger's Part 1 numbers were taken on 2026-08-30,
+> before §7k made the pavement level across its width and §7l put buildings on a bound.
+> Every figure below is a re-measurement, and one of (d)'s three causes turned out to be
+> **exactly zero** now rather than merely improved.
+
+---
+
+## (b) The quest marker — two causes, and neither is sufficient alone
+
+`ToSomewhere._createTargetInstance` drew the goal cube scaled to
+`(SensitiveRadius, 3, SensitiveRadius)` **centred on** `RelativePosition`, so its visible
+bottom was always 1.5 m below the height the quest had chosen; and the three quest
+strategies chose `Loader.GetHeightAt(pos) + ClusterNavigationHeight` — the **terrain** plus
+the **vehicle hover** clearance, neither of which is a surface.
+
+The flat city hid it by coincidence. `ClusterBaseElevationOperator` writes the ground at
+`aver + 1.5f`, a constant unrelated to `CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE = 2.0`, so the
+bottom landed exactly 1.0 m over the road and looked deliberate.
+
+**Marker bottom minus the pavement of its own junction**, over every junction of the four
+baselines on the shipped terrain with the conforming pass reproduced on its own 20 m grid:
+
+| city | n | min | p05 | med | p95 | max | **below the pavement** |
+|---|---|---|---|---|---|---|---|
+| seed000/500 | 27 | −1.47 | −1.29 | **−0.64** | 0.11 | 0.27 | **92.6 %** |
+| Yelukhdidru/800 | 64 | −4.17 | −1.78 | **−0.67** | 0.19 | 0.68 | **90.6 %** |
+| seed000/1500 | 274 | −5.13 | −2.00 | **−0.64** | 0.83 | 7.43 | **90.5 %** |
+| Yelukhdidru/3000 | 1379 | −9.77 | −2.03 | **−0.65** | 0.79 | 10.61 | **88.0 %** |
+
+Note the positive tail: at the worst junction of the 3000 m city the marker floats **10.6 m
+above** the pavement instead, because there the road is in a cutting the 20 m elevation grid
+cannot cut and the conformed terrain stands 9.1 m over its own road.
+
+### The three options, evaluated rather than picked
+
+- **(A) route the strategies through `Loader.GetNavigationHeightAt`.** This is
+  `ClusterDesc.GroundHeightAt + ClusterNavigationHeight`, i.e. **the same quantity again**,
+  differing from what shipped only by the flat city's 1.5 m bias. It changes nothing on a
+  slope and lowers every flat-city marker by 1.5 m. Rejected.
+- **(C) offset `_eMeshMarker` by `+1.5 · UnitY` so the cube rests on `RelativePosition`.**
+  The ledger called this the cheapest and honest option. **Measured, it does not meet the
+  requirement**: it leaves the bottom at terrain + 3, which is still below the pavement at
+  the worst junction of three of the four baselines — **−2.67 m** at Yelukhdidru/800 and
+  seed000/1500 and **−8.27 m** at Yelukhdidru/3000. Only seed000/500, which has 27 junctions
+  and almost no relief, would have been fixed by it.
+- **(B) position by the marker's BOTTOM against a real surface height**, the shape §7g used
+  for the ribbon. Taken — **with (C) as its mechanism**, because a cube that straddles its
+  anchor forces every caller to carry a −1.5 m fudge that has nothing to do with the world.
+
+### What the surface is, and why the answer is exact
+
+`engine.streets.generation.CitySurface` answers the built surface at a plan position from
+the **junction nearest it**, and `engine.quest.QuestMarker` owns the cube's height and the
+offset that rests it on that answer — one copy of the 3 m, because the offset is half of it.
+
+A junction is the one place in a city where "how high is the built surface here" has an
+exact answer rather than a sample near one: it is one node of the stroke graph with one
+height, and the deck, the junction cap, the kerb and every block corner meeting there read
+that same number. `HeightAtJunction` is `JunctionCollider.SurfaceHeightOf` — the cap's own
+height, already the one place that decides it — plus `QuarterSidewalkOffset`, because the
+pavements of the blocks that corner there are one kerb **above** the carriageway and so are
+the higher of the two.
+
+**And the marker really is at a junction.** `engine.Placer` with
+`Reference.StreetPoint` adds `sp.Pos3 with { Y = sp.LevelElevation }` to the cluster origin
+and nothing else, so the nearest junction is the junction it was placed at — asserted by
+**identity** (`Assert.Same`) over every junction of all four cities, never by distance, for
+the reason this work stream keeps rediscovering.
+
+The guarantee is then stated against all three surfaces a junction carries — the
+carriageway, the cap, and the pavement of every block whose corner stands on that junction,
+matched by `ReferenceEquals` on the `StreetPoint` — and holds at every junction of all four
+baselines.
+
+**Deliberately NOT `max(surface, terrain)`**, though that is the shape §7f used for the
+hover probe. At the worst junction the conformed terrain is 9.1 m above the road, inside a
+cutting the grid could not cut; taking the max would float the marker 9 m over the road the
+player is driving on. The report was that the marker sinks, and the road is what it should
+sit on.
+
+### The default FLAT city moves, by 0.85 m
+
+Anchor was `aver + 1.5 + 3 = aver + 4.5` with the bottom at `aver + 3.0`; it is now
+`aver + 2.15` with the bottom on it. **Every quest marker in the shipped flat game drops by
+0.85 m**, from hovering a metre over the road to resting on the pavement. That is the fourth
+deliberate move of the default city in this work stream, after §7i, §7j and §7l.
+
+Two consequences worth stating rather than discovering:
+
+- the goal's **collision cylinder** is at `RelativePosition` too, so it drops 2.35 m. It is
+  1000 m tall and centred, so it still spans everything it spanned before.
+- `TrailVehicle` (the fishmonger quest) parents its marker to the CAR with
+  `RelativePosition = Vector3.Zero`, and computes no height at all. The mesh offset applies
+  there too, so **that marker now stands on the car instead of around it**, 1.5 m higher.
+  Uniform on purpose: one rule for the marker's geometry.
+
+---
+
+## (d1) T-pose — naming a driver is not the same as having one
+
+All six `EntityCreator` sites name a `BehaviorFactory` or an `EntityStrategyFactory`, and
+one of them still had **no animation at all**: the niceday NPCs start in `RestStrategy`,
+which attaches `NearbyBehavior`, an `ANearbyBehavior` that drives the "E to Talk" prompt and
+never called `SetAnimation`. Their whole animation was `EntityCreator.InitialAnimName` — one
+call, issued before `ModelCache` has necessarily attached `FromModel`, with nothing to retry
+it.
+
+So the criterion CLAUDE.md credited the missing drift test with — *"the site names one of
+the three drivers"* — **would have passed on the day of the sighting**. A useful test asserts
+that something SETS AN ANIMATION.
+
+`nogame.characters.citizen.AnimationDriver` is that retry, extracted out of `IdleBehavior`
+and now used by three sites: `IdleBehavior`, niceday's `NearbyBehavior`, and a new
+`AnimationOnlyBehavior` for the **taxi passenger** — which has no `Body`, so `IdleBehavior`
+is unusable there (its `OnAttach` takes a ref to that component and DefaultEcs would hand it
+a reference into unused storage).
+
+### The half-built character is doomed now, not merely hidden
+
+`EntityCreator._createLogical`'s catch left a frozen character in the world and only made it
+invisible, on the stated grounds that *"disposing someone else's entity from here risks a
+double dispose"*. **That reason expired on 2026-08-29**, when `engine.DoomedEntitySet` made
+dooming idempotent for exactly this case — two owners that cannot see each other doming the
+same entity. Hiding alone left one hole: `SetVisible` resolves `TransformApi` out of the
+container and takes a ref to a component, and if IT throws — which the inner catch there
+proves was considered possible — the result is a visible, behaviour-less, physics-less
+T-pose that stands until its fragment unloads.
+
+---
+
+## (d2) Below pavement level — one cause was already gone
+
+Measured at the midpoint of every block edge, one `SidewalkOffset` in from the kerb, against
+the block floor's OWN triangles read barycentrically, on the shipped terrain. Blocks that
+§7k refuses a pavement inset (1 / 0 / 3 / 7 of the four cities) are excluded and named
+rather than averaged away.
+
+### 3. The satnav walker — **exactly zero, on every percentile**
+
+| city | n | min | p05 | med | p95 | max | below |
+|---|---|---|---|---|---|---|---|
+| all four | 10 / 49 / 375 / 2448 | −0.00 | **0.00** | **0.00** | **0.00** | 0.00 | **0.0 %** |
+
+The ledger had this at p05 −0.31…−0.48 m, worst −12.9 m, ~50 % below, and predicted §7k
+would fix it. **It did, completely**: a sidewalk lane runs between two block corners at
+exactly their two junction heights, and the pavement rim is now level across its width, so
+the lane's own linear interpolation IS the pavement's ground height there. Including the
+refused blocks the same measurement is min −1.21, max 0.92, 0.0–2.3 % below — that residual
+is those 11 blocks and nothing else.
+
+### 1. The loop walker — the ordinary citizen, and the worst offender
+
+`QuarterLoopRouteGenerator` took `Quarter.GroundHeightAt`, the block's **pad**: a least
+squares plane through the corner heights of a block up to 150 m across with 13 m between its
+highest and lowest corner. Measured at the loop's **own waypoints**, not at edge midpoints:
+
+| city | n | min | p05 | med | p95 | max | below |
+|---|---|---|---|---|---|---|---|
+| seed000/500 | 6 | −2.10 | −2.10 | −0.26 | 2.34 | 2.34 | 66.7 % |
+| Yelukhdidru/800 | 29 | −6.66 | −4.58 | 0.06 | 3.62 | 5.78 | 44.8 % |
+| seed000/1500 | 193 | −8.30 | −4.18 | 0.04 | 4.89 | 8.06 | 48.2 % |
+| Yelukhdidru/3000 | 1447 | **−17.78** | **−6.55** | −0.04 | 6.80 | 17.02 | 51.0 % |
+
+Worse than the ledger's −12.6 m, because the ledger sampled edge midpoints and the walker
+stands at corners, where the pad's residual is largest.
+
+It takes `BuildingFooting.PavementHeightAt` now — the §7l function, which answers from the
+boundary edge nearest the point interpolated between its two corners' own junction heights:
+
+| city | min | p05 | med | p95 | max | below |
+|---|---|---|---|---|---|---|
+| seed000/500 | −0.02 | −0.02 | 0.00 | 0.06 | 0.06 | 16.7 % |
+| Yelukhdidru/800 | −0.59 | −0.04 | 0.00 | 0.08 | 0.09 | 10.3 % |
+| seed000/1500 | −0.59 | −0.14 | 0.00 | 0.16 | 4.17 | 25.9 % |
+| Yelukhdidru/3000 | −1.43 | −0.23 | 0.00 | 0.23 | 2.90 | 31.5 % |
+
+**The obvious alternative was measured and is worse.** Taking the corner's own junction
+height — literally the number the satnav walker uses at the same corner — gives p05 −0.09 /
+−0.19 / −0.24 / −0.28 and puts the walker below the floor at **33–55 %** of corners against
+10–32 %. The waypoint is 1.5 m in from the corner, i.e. inside §7k's **corner ramp**, where
+the pavement runs back to the kerb; the nearest-edge interpolation follows that and the
+corner's own value does not. What remains — the ±0.23 m and the ~2 m tails — IS the ramp,
+and it is the honest residual of a per-corner waypoint on a ramped surface.
+
+The two systems are compared against each other at the corner itself, where they are the
+same quantity, and agree to 1e-3 m over every corner of every baseline. That disagreement is
+the shape of every defect this pair has had: §7g found them offsetting to opposite SIDES of
+the same kerb, and the height was the same story one layer down.
+
+### 2. The terrain walker — and the comment that was wrong
+
+`StreetRouteBuilder._walkingHeightAt` carried *"the terrain has to answer here, since there
+is no road node to ask."* **There is one, and the route has already found it.**
+`TryCreateCursor` snaps each end of the route to its nearest lane, and that lane's two
+junctions carry exact street heights.
+
+The terrain, at the point a walker stands:
+
+| city | n | min | p05 | med | p95 | max | below |
+|---|---|---|---|---|---|---|---|
+| seed000/500 | 10 | −0.68 | −0.68 | 0.52 | 2.52 | 2.52 | 40.0 % |
+| Yelukhdidru/800 | 49 | −2.33 | −1.53 | −0.08 | 1.47 | 2.25 | 51.0 % |
+| seed000/1500 | 375 | −5.46 | −1.85 | 0.05 | 2.27 | 6.34 | 48.5 % |
+| Yelukhdidru/3000 | 2448 | −5.34 | −1.59 | 0.04 | 1.69 | 4.49 | 48.2 % |
+
+This is not the conforming pass failing; it is the conforming pass working as designed. It
+grades the ground toward the streets with a 60 m smoothstep on a 20 m grid, and the median
+block is 28 m deep to its kerb, so in the middle of a block the weight is only ≈0.53.
+
+`builtin.modules.satnav.PedestrianRoute.EndWaypointFor` takes the lane's height at the
+position's own projection onto it, clamped, and keeps the caller's plan position — only the
+HEIGHT comes from the lane. Both route ends use it, each from **its own** cursor: the
+destination used to be given the START pod's terrain sample at the destination's
+coordinates, two ends of one hill answered by one height field. Nothing on a route is a
+terrain sample any more.
+
+`GoToStrategyPart`'s straight-line fallback has no lanes at all, so it asks the pod's own
+block through `BuildingFooting.TryPavementHeightAt` and falls back to the terrain where the
+position is not on it — which a travel destination often is not, and answering from the
+wrong block would be worse than answering from the terrain.
+
+---
+
+## The default FLAT city
+
+**One thing moves: the quest marker, by 0.85 m** (above). Everything else is asserted as
+equality over whole generated cities:
+
+- the **loop route** is unchanged float for float, position and height. On a flat block every
+  corner is at the average, so `BuildingFooting`'s edge interpolation is `h + t·0`, which is
+  `h` exactly, and the two constants are added in the order they were added before. The
+  forward direction is now taken in plan rather than at a common height — the same vector,
+  since both ends always had the same Y.
+- **route ends** do not move: `ClusterDesc.GroundHeightAt` short-circuits to `AverageHeight`
+  inside a flat cluster, and a flat lane's two junctions are at that same average.
+
+---
+
+## Mutation survivors
+
+Sixteen mutations. **Three survived and each named something real.**
+
+| mutation | outcome |
+|---|---|
+| the marker straddles its anchor again | caught, 9 tests |
+| one quest keeps `GetHeightAt + ClusterNavigationHeight` | caught, 1 |
+| the surface is the carriageway, not the pavement | caught, 8 |
+| the nearest junction is always the first one | caught, 8 |
+| the loop walker goes back to the pad | caught, 4 |
+| `EndWaypointFor` ignores its projection | caught, 8 |
+| `EndWaypointFor` moves the plan position to the lane | caught, 4 |
+| the route destination goes back to the terrain | caught, 2 |
+| `ToSomewhere` goes back to the literal cube | caught, 1 |
+| the taxi passenger loses its `BehaviorFactory` | caught, 1 |
+| `AddDoomedEntity` becomes another `SetVisible` | caught, 1 |
+| the niceday driver is deleted | caught, 3 |
+| **`GoToStrategyPart`'s pavement branch is `if (false)`** | **SURVIVED everything** |
+| **`IdleBehavior.Behave` is gutted** | **SURVIVED, twice, for two different reasons** |
+| **`Loader.GetCitySurfaceHeightAt` goes back to the terrain** | **SURVIVED everything** |
+
+1. **`if (false)` round the pavement branch.** A scan can see that `GoToStrategyPart` NAMES
+   `BuildingFooting.PavementHeightAt` and cannot see whether the branch that names it is
+   ever taken, and the file is in `nogameCode`, which the test assembly does not reference.
+   The decision moved into `BuildingFooting.TryPavementHeightAt`, where it is driven over
+   the blocks of real cities. Same lesson as §7b's `JunctionCollider.SurfaceHeightOf`: put
+   the arithmetic where a test can reach it and scan only the one line that reaches for it.
+2. **Gutting `IdleBehavior`.** The reachability test says a creation site can reach A driver,
+   and `WalkBehavior` is in the same closure — but every T-pose sighting so far has been a
+   STATIONARY character, sitting in a behaviour with nothing to re-issue its clip. So the
+   stronger statement is asserted too, per behaviour rather than per site. It then survived a
+   **second** time because the scan tested for the string `AnimationDriver`, which the field
+   declaration still contained: an animation driver is a CALL, not a mention.
+3. **`Loader.GetCitySurfaceHeightAt` reverting to `cluster.GroundHeightAt`.** `Loader` needs
+   the `I` container and the elevation cache and is exercised by nothing. Brace-scanned.
+
+A fourth, found while building the drift test rather than by mutating: **identifiers in
+COMMENTS leak a source-scan closure.** niceday's `EntityStrategy` carries a stale class
+comment reading *"uses two sub-strategies: WalkStrategy and RecoverStrategy"*, neither of
+which it has, and following it walks straight into the citizen strategy tree — so with
+comments left in, deleting the niceday animation driver outright still passed, on somebody
+else's driver, three hops away, named only in prose.
+
+---
+
+## An existing gate was superseded, not re-baselined
+
+`NavJunctionHeightTests.TheRouteBuilderTakesEveryWaypointFromItsOwnLane` asserted
+`_walkingHeightAt(startPod, fromPos)` and `_walkingHeightAt(startPod, toPos)` — the two
+terrain samples — under the claim that the route ends *"are the only two that do"* and have
+to. That claim is what this section refutes. The gate now asserts the same property (each
+end takes its OWN position and its own end of the route) on the stronger expression, and its
+comment records what it used to say. No network fingerprint and no `street-geometry.json`
+baseline moved.
+
+---
+
+## Found and NOT fixed
+
+- ⚠️ **Roughly half the loop walker's waypoints are OUTSIDE their own block.** Measured:
+  5/10, 28/49, 193/375 and 1430/2448 corner waypoints are inside the block ring — **50 to
+  58 %**. The offset is 1.5 m perpendicular to the LEAVING edge, taken at the corner, so at
+  an interior angle over 90° it lands past the arriving edge; the median block corner is
+  90.1–93.5°, which is exactly the coin toss those numbers show.
+  `PedestrianKerbSideTests` already names this effect for the satnav walker and measures
+  along the lane instead of at its end because of it. It is a plan-position defect, not a
+  height one, and moving the waypoint onto the corner's bisector would move **every
+  citizen's walk in the shipped flat city** — so it is left, stated, and ranked. The height
+  consequence is mild: outside the kerb the walker is 0.15 m above the road rather than below
+  anything.
+- **`GoToStrategyPart` can only ask the pod's own block.** A travel destination on another
+  block still falls back to the terrain. Fixing it needs a positional block lookup;
+  `QuarterStore.GuessQuarter` exists and is documented in its own source as a "fast wrong
+  implementation".
+- **The marker's guarantee is at its own position, not over its own footprint.** A taxi goal
+  has `SensitiveRadius = 10`, so the cube spans ±5 m around the junction and the road may
+  rise up to the grade policy's 14 % over that — 0.7 m at the far corner. Stating it over
+  the footprint would need the cap polygon, and no sighting has been about a marker corner.
+- **`CitySurface` degrades away from a junction**, by design and by name: everything that
+  asks it today is placed at one. A caller standing somewhere else should get a query built
+  for it rather than let this quietly become a road lookup it is not.
+
+---
+
+# §7n — The intercity tram rides its own track, and a new game starts where its coins are (2026-08-31)
+
+Ledger items **(e)** and **(f)**. Neither is a terrain defect: both are present, unchanged
+and equally wrong in the shipped flat game, and both are things standing *beside* the city
+rather than on it.
+
+> **Re-measured first, as always.** Two of the ledger's own figures for (e) moved, one of
+> them to zero, and (f)'s "hundreds of metres away" is 102 m.
+
+---
+
+## (e) The tram — the city one is fine, and its known tail is now gone too
+
+`nogame.characters.tram.Behavior` flies at `ClusterDesc.GroundHeightAt(pos) +
+ClusterNavigationHeight + 10`, sampling the **conformed** terrain per frame at its own
+position. Measured at nine points along every stroke of the four baselines, against the
+road at `StreetHeightSource.GroundHeightAt + CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE`:
+
+| city | n | min | p05 | med | p95 | max | **below the road** |
+|---|---|---|---|---|---|---|---|
+| seed000/500 | 261 | 9.38 | 10.22 | **11.01** | 12.00 | 13.68 | **0.0 %** |
+| Yelukhdidru/800 | 666 | 7.48 | 9.85 | **11.00** | 12.13 | 13.34 | **0.0 %** |
+| seed000/1500 | 3303 | 6.52 | 9.58 | **11.01** | 12.54 | 19.08 | **0.0 %** |
+| Yelukhdidru/3000 | 16875 | 1.88 | 9.50 | **11.01** | 12.57 | 22.26 | **0.0 %** |
+
+The ledger's refutation stands and its one caveat no longer does: it recorded a tail where
+*"the tram passes below the road, min −1.5 m"*, and after §7d's conforming pass and §7a's
+relaxation the minimum is **+1.88 m** and not one sample of 21105 is under the road.
+Nothing was changed for the city tram; the number moved because the ground under it did.
+
+## (e) The intercity tram — 43.5 m over its own track, in the flat game too
+
+`nogame.characters.intercity.GenerateCharacterOperator` built two `SegmentEnd`s at
+`ClusterA.AverageHeight + 20` and `ClusterB.AverageHeight + 20` and flew the straight chord
+between them under a plain `SimpleNavigationBehavior`, sampling nothing. Its track —
+`IntercityTrackElevationOperator`, a flat ribbon burned into the terrain across a ~76 m
+band — sits at `Line.Height = min(AverageHeight(A), AverageHeight(B))`, written in a
+different file from a different expression.
+
+Measured over the world the game actually builds — the real
+`GenerateClustersOperator._generateClusterList` seeded `"mydear"`, **70 cities**, and the
+network's own line selection, **114 lines**, 2.9–14.9 km long:
+
+| quantity | n | min | p05 | med | p95 | max |
+|---|---|---|---|---|---|---|
+| \|AverageHeight(A) − AverageHeight(B)\| | 114 | 0.29 | 2.21 | **23.53** | 66.76 | **89.34** |
+| vehicle above its track at the **higher** end | 114 | 20.29 | 22.21 | **43.53** | 86.76 | **109.34** |
+
+`ClusterDesc.AverageHeight` is computed from the **unflattened** ground whether or not the
+cluster is then ironed flat — `ClusterBaseElevationOperator` skips only the height write —
+so **this is identical in the shipped flat game.** Not one of the 114 pairs has equal
+averages, so not one line was ever right at both ends.
+
+### What was implemented: the vehicle's height comes from the track's
+
+`engine.world.IntercityLine` owns both numbers. `TrackHeightOf(a, b)` is the ribbon;
+`VehicleHeightOf(track)` is `track + VehicleClearance`; `RouteBetween` builds the two-ended
+looping `SegmentRoute` with **both ends at that one height**.
+
+**The clearance is derived, not chosen.** For two cities of equal average the shipped
+expression put the vehicle at that average + 20 and the track at that average, so 20 m is
+what the game already means by "the intercity line runs up there", and a matched pair does
+not move by so much as a float. That the world contains no matched pair is why the fix has
+a cost at all, and it was checked rather than assumed.
+
+**No sampling, and no navigator change — because there is nothing to sample.** The brief
+allowed for interpolating along the segment or querying the line per frame. Neither is
+needed: the track is ONE height for the whole line, so "the track's height at the vehicle's
+own position" is that height wherever the vehicle is. The chord is level and the property
+holds everywhere on it, which is what
+`IntercityLineTests.TheVehicleStaysTheClearanceAboveItsTrackAllTheWayAlong` drives — 600
+seconds of the **real** `builtin.tools.SegmentNavigator`, the same object
+`SimpleNavigationBehavior.Behave` reads its position out of, rather than an assertion about
+two endpoints. The defect was never at an endpoint: each end was individually "correct" for
+its own city and it was the chord that flew.
+
+**The layer ordering is not affected.** `IntercityTrackElevationOperator` stays at
+`/000200/intercityTrails`, above `ClusterConformElevationOperator`'s `/000150`, so a city
+still may not smooth an intercity line away. The fix reads `Line.Height`, which is what
+that operator writes, so it follows the track wherever the layering puts it.
+
+### The default FLAT game moves: one end of every line comes down
+
+**114 of the 228 route ends move, every one of them downward**, by the `|dAverage|`
+distribution above — median **23.53 m**, p95 66.76 m, max **89.34 m**. The other 114 — the
+lower end of each line — do not move at all, and the fix's height is asserted as an
+*equality* against the shipped expression at that end, because "lower than it was" is also
+satisfied by any number below it. **No end rises.** This is the fifth deliberate move of
+the default city in this work stream, after §7i, §7j, §7l and §7m.
+
+**And it is honestly a trade, which is why the rest of (e) is options and not code.**
+Against the terrain the intercity operator does *not* flatten — the hillside beside the
+80 m ribbon — the vehicle used to be above the ground 71.7 % of the time and now is 57.3 %:
+
+| | n | min | p05 | med | p95 | max | below terrain |
+|---|---|---|---|---|---|---|---|
+| before | 21501 | −105.73 | −39.18 | **20.11** | 82.87 | 164.63 | 28.3 % |
+| after | 21501 | −129.30 | −56.08 | **6.90** | 72.84 | 154.18 | **42.7 %** |
+
+That is not the vehicle getting worse; it is the vehicle finally being where its track is.
+The track itself is median **−13.10 m** against the untouched terrain (p01 −101.5, min
+−149.3, max +134.2, 63.8 % of it a cutting), so the flying tram was hiding a ribbon that is
+typically a trench and can be a 149 m gorge or a 134 m causeway, **with no track geometry
+drawn at all**. A tram in a gorge is the correct picture of the line that is there. Making
+the line itself something else is the decision below.
+
+### What an intercity line IS — three options, measured, none built
+
+The owner has not decided this and it is not a defect to be fixed, so it is written out
+rather than picked. All three keep `AverageHeight` where it is and change only what the
+`/000200` operator writes and what geometry, if any, goes with it.
+
+**1 — A graded embankment, relaxed like a street.** Run `GradeRelaxer` over the line's own
+profile against the terrain, exactly as §7a does for streets, and write the relaxed profile
+into the band instead of a constant. *What it costs:* the relaxer and the height field
+already exist; the line is a 2-node chain, so the pass is trivial. `IntercityLine` grows a
+profile instead of a scalar and `VehicleHeightOf` takes a position — the vehicle then does
+have to interpolate, which is one `Lerp` in `RouteBetween` if the route gains intermediate
+`SegmentEnd`s at, say, one per 400 m fragment. *What it does to the corridor:* the median
+terrain gradient **along** the corridor is 14.69 % over 40 m (p95 44 %, max 100.7 %), and
+the shipped `GradePolicy` allows 5–14 %, so a relaxed line is close to the ground over most
+of its length and still cuts the worst 5 %. The −149…+134 m figure collapses toward the cut
+and fill the policy permits. *Geometry needed:* none, strictly — the terrain is the track.
+*Flat city:* moves, and by more than this fix does, since the line stops being level.
+
+**2 — A viaduct on pylons at a roughly constant height above terrain.** *What it costs:*
+the most, and it is the only option that needs geometry that does not exist — a deck mesh
+and pylons along 114 lines totalling ~870 km, with a collider question attached, plus a
+fragment operator to emit them per fragment as `GenerateTracksOperator` does today. *What
+it does to the corridor:* removes it, in the sense that the ribbon stops being written at
+all — the ground would be left alone and the deck would carry the line. That is the only
+one of the three that stops the intercity network fighting the terrain instead of
+negotiating with it. *Flat city:* moves, and gains geometry it has never had.
+
+**3 — A deliberately elevated line whose ends are reconciled with their cities.** Closest
+to what is there now and closest to what §7n implements: the line is above the landscape on
+purpose, and the only thing that has to be true is that the vehicle and the ribbon agree.
+The open question it leaves is the ribbon: either stop writing it (the line is in the air,
+so why flatten the ground under it) or keep it as a right-of-way. *What it costs:*
+approximately nothing — deleting the `epxDest.Height = _line.Height` write, or raising the
+whole line by a clearance above the higher of the two cities rather than the lower. *What
+it does to the corridor:* removes the trench entirely if the write goes; leaves it as it is
+otherwise. *Flat city:* if the write goes, the ground along 870 km of corridor stops being
+flattened — the largest change of the three by area, and the only one that is purely a
+subtraction. **This is the cheapest option and the one §7n's fix is compatible with as it
+stands.**
+
+**Not built. The remainder of (e) is carried forward as an open point.**
+
+---
+
+## (f) Where a new game starts, and where its coins go
+
+`nogame.world.DropCoinModule` dropped 19 coins in a vertical column at hard coded world
+**(164, 45…99, 137)** — no cluster, no player, no terrain, no fragment. Three separate
+defects, of which only the first was reported.
+
+### 1. The hard coded position, measured
+
+The shipped world's start cluster is `Yelukhdidru`, `cluster-clusters-mydear-0`, at
+`(-5.7712326, 0, 10)`, size 1000, `AverageHeight` **37.76**. Its first estate with no
+building on it is at `(97.84, 0, 202.38)`, so the player appears at
+`<92.065094, 137.76129, 209.37798>`.
+
+- The column is **102.05 m away in plan** — inside the right city, at a fixed spot in it,
+  as the ledger said, but "hundreds of metres" is 102.
+- It spans `AverageHeight + 7.2 … AverageHeight + 61.2`, i.e. **38.8 m below the player's
+  own start at its top**. The player falls from `AverageHeight + 100` and never reaches it.
+
+**The vertical shape was nearly right and nobody noticed.** A 57 m column of coins hanging
+in the air over a spawn point that falls 100 m is a thing to fall through; it was simply
+hanging 102 m to one side of the fall.
+
+### 2. The ordering, and why the operator was told to ask instead
+
+`DropCoinModule` is the **only** consumer of `Saver.OnCreateNewGame` in the entire tree —
+checked, because the alternative was to move when that runs. It is called from
+`AutoSave._loadCreateOffline` with a brand new `GameState` whose `PlayerPosition` is
+`Vector3.Zero`, and that zero is precisely what makes `PlayerPosition.GetPlayerPosition`
+resolve a start lazily, later. Worse, `Saver.CallOnCreateNewGame(object gs)` **never passes
+`gs` to its operators at all**, and `AutoSave.GameState` is still null at that moment, so
+the operator could not read it even if it wanted to.
+
+**Chosen: the operator asks, and the answer is remembered.** Moving `CallOnCreateNewGame`
+after the start resolves would restructure the load path for one caller; having the coin
+module resolve a start of its own would put a second copy of the resolution in the tree,
+which is the shape of half the defects in this document. So `engine.world.PlayerStart` owns
+it: `Find()` resolves once and hands the same `StartPose` to everyone afterwards. That is
+not tidiness — the coins are placed at create-new-game time and the player when the hover
+module sets up, and **which estate is free depends on which fragments have been generated
+in between**, so two calls at two times are two different answers.
+
+**The one ordering consequence, stated rather than discovered:** the coin operator now
+triggers the start cluster's street generation, so `ClusterCompletedEvent` for that cluster
+fires during create-new-game instead of at preload. `TaxiNpcSpawnerModule` is already
+subscribed by then (it is a `GameSetup` dependency); `TaleModule` and `Narration` are not,
+because `Gameplay` activates afterwards. `TaleSpawnOperator` populates a cluster on demand
+for exactly this reason and says so in its own source; `Narration`'s
+`_onClusterCompletedAutoTrigger` reads `quest.autoTrigger`, which is **not set anywhere in
+the shipped configuration** — it is a test-harness setting. TALE 200/200 is unchanged.
+
+### 3. The double add, which no baseline reaches and every city would have hit
+
+`ClusterDesc.FindStartPosition` answered in **cluster relative** coordinates on the estate
+branch and in **absolute** ones on the "no free estate" branch, and both call sites —
+`PlayerPosition._findStartPosition` and `joyce.ui.Clusters` — added `cluster.Pos` to
+whatever came back. So the fallback spawned the player at `2 × cluster.Pos`: over the
+shipped world's 70 cities, a median **36.6 km** from the city it was meant to start in, and
+**outside its own city for 69 of the 70**. The exception is the start cluster, whose `Pos`
+is 11.5 m from the origin — so a fixture built on a city near zero, which is what the test
+harness makes, would have shown nothing at all.
+
+`StartPose` carries the frame in the name of its one field, `V3World`, and both branches go
+through `PlayerStart`, which owns the frame, the drop height and the offset.
+`FindStartPosition(out, out)` is gone rather than corrected, so a caller that still adds
+`Pos` does not compile.
+
+**The fallback is not hypothetical.** `QuarterGenerator` puts a building on an estate as it
+traces it, and on **seed000/500 it succeeds on all three**, so the smallest baseline city
+takes the fallback branch on a freshly generated world with no fragment operator having run
+at all. Which estate is free is a property of the generator, not of play.
+
+### The column
+
+19 coins, 3 m apart — the shipped count and the shipped spacing — hanging directly under
+the start with the top one 3 m below it, so the whole 57 m of it is inside the fall and
+above the ground. The player falls through all of them. Coins carry
+`PHYSICS_DETECTABLE | PHYSICS_CALLBACKS` and **not** `PHYSICS_TANGIBLE`, so a column in the
+flight path reports contact without pushing the ship.
+
+### The default FLAT game moves: the coins, and only the coins
+
+- **All 19 coins move 102.05 m in plan and +35.76 m in Y**, uniformly.
+- **The player does not move at all**: `<92.065094, 137.76129, 209.37798>`, bit for bit,
+  because the start cluster's `Pos.Y` is exactly 0 and the estate branch is the shipped
+  expression term for term. Asserted as such, not as a tolerance.
+- **The debug cluster beam drops by each city's own `Pos.Y`** — median 22.94 m, max
+  38.69 m, exactly 0 for the start cluster. That is the nominal elevation
+  `GenerateClustersOperator` draws at random when it lays the cities out and that
+  `ClusterBaseElevationOperator` then measures and replaces; `joyce.ui.Clusters` was adding
+  both. It is a debug beam, and being a debug beam is why nothing noticed.
+
+---
+
+## Mutation survivors
+
+Twenty-four mutations. **Three survived, and all three were then killed; a fourth survives
+and proves something.**
+
+| mutation | outcome |
+|---|---|
+| the clearance becomes zero | caught, 12 |
+| the track takes the HIGHER city | caught, 15 |
+| one route end keeps the station's own Y | caught, 11 |
+| the vehicle sits on its track | caught, 11 |
+| the vehicle takes one city's average again | caught, 2 |
+| the vehicle flies at a constant | caught, 1 |
+| the track moves under the vehicle | caught, 1 |
+| the estate branch forgets the cluster origin | caught, 3 |
+| the fallback adds the origin twice again | caught, 5 |
+| the estate offset flips | caught, 3 |
+| the facing is taken in world space | caught, 3 |
+| the coin column goes up | caught, 4 |
+| the coin column outgrows the fall | caught, 4 |
+| the coins go back to a fixed place | caught, 1 |
+| the coin module resolves its own start | caught, 2 |
+| the player resolves its own start | caught, 1 |
+| `FindStartPose` always falls back | caught, 1 |
+| the debug beam adds the origin again | caught, 1 |
+| `Find` resolves afresh every time | caught, 1 |
+| a world that is not there yet is remembered as the void | caught, 1 |
+| **`Network` scales the shared track height away** | **SURVIVED** |
+| **the estate branch adds the cluster's nominal `Pos.Y`** | **SURVIVED** |
+| **`PoseIn` stops skipping invalid blocks** | **SURVIVED** |
+| **the route direction goes back to the raw stations** | **SURVIVES, deliberately** |
+
+1. **`Height = 0f * IntercityLine.TrackHeightOf(...)`.** `nogame.intercity.Network` is in
+   nogameCode, which the test assembly does not reference, so a scan is the only
+   instrument — and a scan for `IntercityLine.TrackHeightOf(` is satisfied by a call whose
+   result is then scaled, offset or thrown away. This is §7m's *"a driver is a call, not a
+   mention"* one turn further on: **a call is not an assignment.** The scan is a
+   whitespace-insensitive regex over the whole assignment now, and the vehicle's own call
+   site is matched as the complete expression `_createIntercity(line.StationA.Position,
+   line.StationB.Position, line.Height)` for the same reason.
+2. **Adding `clusterDesc.Pos.Y` to the estate branch's height.** Every test used the real
+   start cluster, whose `Pos.Y` is 0 — so the whole fixture set was blind to the one
+   component of `Pos` the fix deliberately drops. A city at `Pos.Y = 38.69`, the world's
+   worst, now asserts the two agree.
+3. **`if (false) continue;` round the `IsInvalid` skip in `PoseIn`.** All 3 / 10 / 82 / 445
+   blocks of all four baselines come out valid, so no amount of real data distinguishes a
+   `PoseIn` that skips discarded blocks from one that does not. Same shape as §7j's
+   `Fragment.PartitionContains` survivor, and the same remedy: a real city with one block
+   marked invalid by hand and a free estate planted on it.
+4. **Taking the route direction from the raw stations instead of the levelled ends.**
+   Survives everything and always will: `vuAB` feeds only `SegmentEnd.Right`, which feeds
+   only `SegmentNavigator._defaultPosition`'s orientation, which the first `NavigatorBehave`
+   overwrites before anything reads it. The mutation is the proof that the field is dead;
+   the expression is kept in its shipped shape rather than deleted, so that the diff against
+   what shipped is only the height.
+
+---
+
+## An existing gate caught this work, and was updated rather than relaxed
+
+`ClusterGroundHeightTests.OnlyKnownSitesAssumeACityIsFlat` failed on both new files the
+moment they were written, which is what it is for. `engine.world.IntercityLine` and
+`engine.world.PlayerStart` are on the allow list with reasons — an intercity line is
+defined on two cities' averages, and a new game begins above a city as a whole. The same
+test's **stale** half then required removing two entries that no longer read it:
+`GenerateCharacterOperator` and `IntercityTrackElevationOperator`, both of which had been
+listed as "intercity, not converted yet" and now name neither city.
+
+No network fingerprint and no `street-geometry.json` baseline moved.
+
+---
+
+## Found and NOT fixed
+
+- **`Saver.CallOnCreateNewGame(object gs)` ignores its argument.** It takes the new
+  `GameState` and hands its operators nothing, so an `IWorldOperator` on that list cannot
+  see the state it is being created for even in principle. Left because the one consumer
+  now has a better source than the `GameState` would be, and changing the signature touches
+  a public engine API for no live caller.
+- **`AutoSave.GameState` is null while `OnCreateNewGame` runs.** The getter checks
+  `_isAutoSaveActive`, which is already true, so an operator that asked would get a
+  `NullReferenceException` rather than a diagnosable refusal.
+- **`IntercityTrackElevationOperator`'s AABB named `ClusterA` at both stations**, and a
+  height the operator does not write. Corrected in passing and **inert**:
+  `ElevationOperatorIntersects` only ever asks `IntersectsXZ`.
+- **`Line.Width = 5f` is not the width of anything.** The band the operator actually writes
+  is `minDist = 2 · stepX` = 40 m either side, i.e. ~80 m, while `Width` is used only by
+  `ElevationOperatorIntersects`'s fine test — so the operator can reject a fragment its own
+  writing pass would have touched. Not observed to matter, because the AABB test that runs
+  first is far coarser.
+- **Which estate is free is a race, not a place.** `FindStartPose` returns the first estate
+  with no building, and buildings arrive as fragments generate. Memoising makes everyone
+  agree with each other; it does not make the answer stable across a *session boundary*, so
+  a new game started twice in one process gets the same start and one started in two
+  processes may not.

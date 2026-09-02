@@ -187,9 +187,15 @@ public class ToSomewhere : AModule
         _eMeshMarker = _engine.CreateEntity($"quest.goal {Name} mesh marker");
         _eMeshMarker.Set(new engine.joyce.components.Instance3(_jMeshGoal.Value));
         I.Get<HierarchyApi>().SetParent(_eMeshMarker, _eMarker);
+        /*
+         * The cube RESTS on the goal instead of straddling it. Its own mesh is centred on
+         * its origin, so without the offset the visible bottom sits half the marker's
+         * height below the position the quest picked - see QuestMarker, which owns both
+         * halves of that arithmetic so they cannot part company again.
+         */
         I.Get<TransformApi>().SetTransforms(_eMeshMarker, true, 0x0000ffff, Quaternion.Identity,
-            Vector3.Zero,
-            new Vector3(SensitiveRadius, 3f, SensitiveRadius));
+            QuestMarker.RestOffset,
+            QuestMarker.ScaleFor(SensitiveRadius));
         _eMeshMarker.Set(
             new engine.behave.components.Behavior(_goalMarkerSpinBehavior.Value)
             {
