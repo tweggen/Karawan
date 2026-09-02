@@ -167,8 +167,8 @@ public static class BuildingFooting
     /**
      * The height of the pavement surface at a plan position on this block.
      *
-     * The block floor is the boundary ring raised by ClusterStreetHeight and extruded up
-     * by QuarterSidewalkOffset, and its top face IS the pavement - there is no separate
+     * The block floor is the boundary ring raised by the street offset and extruded up by
+     * QuarterSidewalkOffset, and its top face IS the pavement - there is no separate
      * sidewalk object anywhere in the codebase.
      */
     public static float PavementHeightAt(Quarter quarter, in Vector2 v2Cluster)

@@ -68,6 +68,14 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
      * The block floor's outline: one vertex per boundary corner, at the height of the
      * road that corner meets.
      *
+     * The road's own expression for that, not a second one that happens to agree: this used
+     * to read CornerGroundHeightAt plus MetaGen.ClusterStreetHeight, which is 2.0, while the
+     * carriageway and the junction cap add MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE,
+     * which is also 2.0 and is a different constant - and dropped the deck term the road
+     * carries, so a block cornering on a raised junction would have had its kerb a whole
+     * deck below the road. Zero difference in either shipped city today; one expression
+     * instead of two is the point.
+     *
      * The extrusion path adds QuarterSidewalkOffset on top of this, and the top face is
      * the pavement - so the kerb is exactly that offset above the carriageway at every
      * corner of every block, which is the whole point of taking the corner's own junction
@@ -98,8 +106,8 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         {
             var delim = delimList[i];
 
-            float h = quarter.CornerGroundHeightAt(delim)
-                      + world.MetaGen.ClusterStreetHeight;
+            float h = generation.RoadSurface.HeightAtJunction(
+                quarter.ClusterDesc.StreetHeightSource, delim.StreetPoint);
 
             edges.Add(new Vector3(cx + delim.StartPoint.X, h, cy + delim.StartPoint.Y));
         }

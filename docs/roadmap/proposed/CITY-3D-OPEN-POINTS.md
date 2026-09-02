@@ -3,31 +3,35 @@
 **Status:** open ledger. This is the file to read first when picking up the
 terrain-following city work.
 **Companion:** [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) is the design and
-history document — every fix is written up there as §7a … §7l, with the measurements that
+history document — every fix is written up there as §7a … §7o, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-08-31 (§7n).
+**Last updated:** 2026-09-02 (§7o).
 
 ---
 
 # ▶▶ RESUME HERE
 
-Turn the city three-dimensional with:
+**Part 4 has happened.** `1c54a9e4` set
 
 ```jsonc
 // models/nogame.globalSettings.json
 "joyce.DisableClusterFlattening": "true"
 ```
 
-It is **off by default**, and the default flat city has been kept bit-for-bit stable
-through this entire work stream, with five deliberate exceptions: §7i moved `Placer`
-reference junctions, §7j un-culled faces without moving a vertex, §7l dropped every house by
-0.35 m onto the pavement it had always floated above, §7m dropped every quest marker by
-0.85 m onto the road, and §7n brought one end of every intercity line down onto its own
-track and moved the starting coins under the player. Each was measured and stated before it
-landed rather than discovered afterwards. **Assume that invariant still
-applies to anything you write**, and prove it with a test over whole generated cities
-rather than by argument.
+so **the terrain-following city IS the shipped city**. The flat path still exists behind the
+flag and its gates still matter — most of them really assert *"the height seam is the only
+thing that decides height"*, which stays true and stays worth testing — but it is no longer
+the baseline being protected. Say what each city does under any change you make.
+
+Through the whole stream up to that flip the flat city was kept bit for bit stable with six
+deliberate exceptions: §7i moved `Placer` reference junctions, §7j un-culled faces without
+moving a vertex, §7l dropped every house by 0.35 m onto the pavement it had always floated
+above, §7m dropped every quest marker by 0.85 m onto the road, §7n brought one end of every
+intercity line down onto its own track and moved the starting coins under the player, and
+§7o did **not** move it at all — it is the first item here that is a pure consequence of the
+terrain-following city, exactly 0.000 m in the flat one at every percentile. Each move was
+measured and stated before it landed rather than discovered afterwards.
 
 **What Phase A finished:** the road surface and everything that moves on it. Streets
 follow relaxed terrain gradients, the ground conforms to the roads, blocks are tilted
@@ -45,6 +49,9 @@ unwritten elevation row, **(a) houses floating and sinking**, **(b) the quest ma
 starting coins**. Nearly all of them had been written up wrongly here, and only measurement
 caught it - see the entries, which are kept rather than deleted because what they got wrong
 is the useful part.
+
+**Reported since the flip (2026-09-02), and fixed:** the kerb did not rest on the
+carriageway. See **(j)** below and §7o.
 
 **Part 1 IS NOW CLEAR, with one deliberate remainder: what an intercity line IS.** The
 intercity tram rides its own track; the track's own shape - graded embankment, viaduct, or
@@ -810,6 +817,46 @@ and it has no bearing on cities at all.
 `tests/JoyceCode.Tests/engine/elevation/ElevationGridCoverageTests.cs` drives the real
 `Cache`, stitcher and `CacheEntry` for all four measurements and scans the loop bounds.
 
+### ✅ (j) The kerb did not rest on the carriageway — FIXED 2026-09-02
+
+> *"I still can observe a small gap between the bevel of the sidewalk and the street."*
+
+The first report against the terrain-following city as the **default**, and the first item
+on this page that is **exactly zero in the flat city** — 0.000 m at every percentile of all
+four baselines, so it could not have been seen before the flip. Full write-up in
+[`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) §7o.
+
+**Four candidates were measured before diagnosing and three are not it.** It is not a plan
+gap: a block corner is a section point of its junction and the two section points bounding
+one stroke lie on the same offset of its centre line, so the kerb line and the carriageway's
+edge are collinear to **0.0002 m at the median and 0.02 m at p99** over 2936 boundary edges.
+It is not a missing face and it is not z-fighting — half a metre is thirteen times the
+16-bit depth buffer's quantum at 50 m.
+
+**It is a height gap and it is the junction footprint.** `_shearOntoSlope` lifted the road by
+ONE window along the stroke's **centre line** — flat over each junction footprint, climbing
+between — while the kerb is a straight chord between two **section points**. The two agree at
+both ends, which is why §7c could fix the corners and leave this, and disagree in between:
+p05/p95 **−0.57 / +0.55 m**, worst **6.49 m**, exceeding the whole 0.15 m kerb at **27–31 %**
+of positions and half a metre at **11 %**, sign symmetric.
+
+**Each side of the road now climbs between its own two corners** — `engine.streets.generation.RoadSurface`,
+which also becomes the ONE expression for a junction's road height, replacing five copies of
+it (two of which used `MetaGen.ClusterStreetHeight` and three `CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE`,
+a different constant that is also 2.0, and two of which dropped the deck term). Exact, not
+close: at either end the chord parameter is 0 or 1, and in between the axial coordinate is an
+affine function of position along the chord. Residual **0.000–0.003 m** worst over four
+cities on four grounds. The flat city and every ramp are unchanged float for float — a
+straight junction puts both section points at the same axial distance, so both sides share
+one window and the rule reduces to what was emitted before.
+
+⚠️ **Found and NOT fixed, all plan-level and all from the same root:** 11 of 2477 block edges
+in `Yelukhdidru`/3000 are not on their own stroke's edge at all (up to 62 m off), two strokes'
+carriageways can overlap by 45 m, and 0.2 % of kerb positions are not covered by their own
+carriageway (identical in the flat city). All three come from
+`StreetPoint._computeSectionArrayNoLock`'s `dist2 > 4000` fallback for near-collinear arms,
+and moving a section point moves the block outline, the estate, the building and its shops.
+
 ### ✅ (i) The `#if false` operator and the missing drift test — the test now exists
 
 `GenerateHouseDescriptionsOperator.cs` is inside `#if false` from line 1 and compiles to
@@ -957,11 +1004,23 @@ NPCs standing at doors in the flat city.**
 
 ---
 
-# Part 4 — The decision that ends this arc
+# Part 4 — ✅ DONE (`1c54a9e4`, 2026-09-01)
 
-**Flip `joyce.DisableClusterFlattening` to `true` by default.** That should happen only
-after Part 1 is cleared — a city whose buildings float and whose trams fly is not a
-default. When it happens, the flat-city bit-for-bit invariant retires with it, and every
-test that asserts it needs re-reading rather than deleting: most of them are really
-asserting *"the height seam is the only thing that decides height"*, which stays true and
-stays worth testing.
+**`joyce.DisableClusterFlattening` is `true` by default.** The terrain-following city is the
+shipped city, and the flat-city bit-for-bit invariant has retired with it. Every test that
+asserts it was kept rather than deleted: most of them are really asserting *"the height seam
+is the only thing that decides height"*, which stays true and stays worth testing, and the
+flat path is still reachable behind the flag.
+
+**What the flip surfaced immediately:** (j) above — a defect that is exactly 0.000 m in the
+flat city and up to 6.5 m in the terrain one, and so had never been visible. Expect more of
+that shape: anything whose flat-city value is a coincidence rather than a construction.
+
+### The original write-up
+
+> **Flip `joyce.DisableClusterFlattening` to `true` by default.** That should happen only
+> after Part 1 is cleared — a city whose buildings float and whose trams fly is not a
+> default. When it happens, the flat-city bit-for-bit invariant retires with it, and every
+> test that asserts it needs re-reading rather than deleting: most of them are really
+> asserting *"the height seam is the only thing that decides height"*, which stays true and
+> stays worth testing.

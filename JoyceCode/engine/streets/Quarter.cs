@@ -297,11 +297,17 @@ public class Quarter
      *
      * NOT GroundHeightAt of the same point. The pad is a plane through corners that are
      * not coplanar, so at a corner it answers with a fit residual, and at a corner the
-     * residual is the whole problem: the block's floor is extruded from here and its top
-     * face is the pavement, so the kerb comes out as QuarterSidewalkOffset plus that
+     * residual is the whole problem: the block's floor is built from here and its top face
+     * is the pavement, so the kerb would come out as QuarterSidewalkOffset plus that
      * residual - and wherever the residual is below minus the kerb, the pavement is under
      * the roadway. Asking the height source for the corner's own junction makes the kerb
      * exactly the kerb.
+     *
+     * The GROUND, in the terms BuildingFooting works in. What the floor's own outline takes
+     * is the ROAD height at the same junction - generation.RoadSurface.HeightAtJunction,
+     * which is this plus the street offset and the deck - because the kerb has to meet a
+     * carriageway written by a different operator and a shared quantity gets one
+     * expression. The two differ only by constants that are zero on the ground.
      *
      * A flat city answers with AverageHeight, exactly, because FlatStreetHeight does -
      * there is no fit in this path to round-trip through.
