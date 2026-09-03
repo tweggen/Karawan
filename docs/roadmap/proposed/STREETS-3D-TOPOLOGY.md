@@ -2767,3 +2767,259 @@ barycentrically over five real generated cities on four grounds.
   is still inline — §2.3, unchanged, and now the only remaining inline copy of the road height
   in the streets operator is not this one but the flat city's fragment floor plane, which is
   built from `AverageHeight` and is a different quantity.
+
+---
+
+# §7p — The citizen keeps to its own pavement (2026-09-03)
+
+The last open plan-level defect in the ledger, recorded by §7m as *found and NOT fixed*:
+
+> ⚠️ **Roughly half the loop walker's waypoints are OUTSIDE their own block.** … The offset
+> is 1.5 m perpendicular to the LEAVING edge, taken at the corner, so at an interior angle
+> over 90° it lands past the arriving edge; the median block corner is 90.1–93.5°, which is
+> exactly the coin toss those numbers show.
+
+Not a terrain defect: it is **identical in the shipped flat city**, and fixing it moves that
+city too. It is the loop `QuarterLoopRouteGenerator` builds for every citizen
+`nogame.characters.citizen.CharacterCreator` makes — the commonest walker in the game.
+
+## The angle condition is the other way round, and the ledger had it backwards
+
+The measured symptom cannot distinguish the two readings, which is precisely how the
+direction of an inequality survived being written down twice: the median block corner is
+90.1–94.0°, so *either* reading predicts "about half".
+
+Worked out rather than guessed: the shipped point is `corner + 1.5·n_leaving`, so it is on
+the inward side of the **leaving** edge by construction and on the inward side of the
+**arriving** edge exactly when `n_arriving · n_leaving > 0`. That dot product is `−cos θ`
+for an interior angle θ. So it is inside for **θ > 90°** and outside for **θ < 90°** — the
+**acute** corner is the failure, not the obtuse one.
+
+Measured over the four baselines on the shipped terrain, at every corner whose two edges lie
+on their own strokes (2918 of 2936; the 18 excluded are the `dist2 > 4000` near-collinear
+fallback, §7o):
+
+| | inside | outside |
+|---|---|---|
+| **acute** (θ < 90°) | **0** | **1243** |
+| **obtuse** (θ ≥ 90°) | **1667** | **8** |
+
+and every one of those eight exceptions is a corner of **90.000–90.002°**. Which is the
+ledger's second point, also confirmed: **at exactly 90° the waypoint lands ON the kerb line**,
+where inside-or-outside is a rounding decision and not a fact about the world.
+
+## "50 % outside" is a poor description; the signed distance is the defect
+
+Signed distance from the kerb, positive inside, at the loop's own waypoints:
+
+| city | n | min | p05 | med | p95 | max | inside |
+|---|---|---|---|---|---|---|---|
+| seed000/500 | 16 | −0.55 | −0.55 | **+0.03** | 1.50 | 1.50 | 56.2 % |
+| Yelukhdidru/800 | 49 | −1.15 | −0.95 | **+0.00** | 1.50 | 1.50 | 57.1 % |
+| seed000/1500 | 394 | −1.14 | −1.06 | **+0.00** | 1.50 | 1.50 | 52.3 % |
+| Yelukhdidru/3000 | 2459 | −1.15 | −1.02 | **+0.11** | 1.50 | 1.50 | 58.2 % |
+
+**The median waypoint is on the kerb line**, and 14–38 % of them are within 5 cm of it. The
+worst excursion into the carriageway is **1.15 m**, not the 1.5 m the offset would suggest —
+because the point is 1.5 m off the leaving edge's *line*, and what it is measured against is
+whichever edge is nearest.
+
+And a walker walks the segments, not the corners. Sampled at ten positions along every
+segment, the shipped walk is outside its own block at **10.2 / 13.2 / 16.8 / 15.3 %** of
+positions, by up to the same 1.15 m.
+
+## What was built, and the two candidates that were measured and rejected
+
+**`engine.streets.generation.PavementWalk`**: the waypoint is the corner's own **mitre** —
+the one point that is `offset` from **both** of the edge lines meeting there, on the inward
+side of each — bounded in length by the block's own pavement width. It reuses
+`SidewalkRing`'s geometry rather than deriving a second copy: `InwardNormalOf`, `MitreOf`
+(hoisted out of `_mitreReach`, which was already computing exactly this vector to place
+§7k's corner ramps), `SignedArea2Of` and `ContainsInPlan` are now the one place each of
+those questions is answered.
+
+**§7k rejected the mitre for the pavement SURFACE, and that reasoning does not carry over.**
+A shared mitre vertex is bad in a mesh because the two rim cells meeting at it want two
+different heights for it. A walker is a point: it has exactly one height and shares nothing.
+
+**Rejected candidate 1 — the pavement's own inset ring (`SidewalkRing.InsetOf`), which was
+the proposed fix.** It is tempting for exactly the right reasons: it is already validated by
+`_isUsable`, it carries §7k's level-across heights, and walking on it would put the walker on
+the drawn surface *by construction*. It does not work, for two independent reasons, and both
+were measured rather than argued.
+
+1. **Its points belong to EDGES and deliberately not to corners — that is its whole design —
+   and a loop has to turn corners.** Joining consecutive inset points cuts across every
+   corner, and where a block folds inward it leaves the block entirely. Measured over the
+   four baselines, along the path: one point per corner is outside at **0.0 / 1.1 / 0.5 /
+   1.2 %** of positions by up to **11.07 m**; both points of every edge, outside at **0.0 /
+   0.3 / 0.1 / 0.3 %** by up to **6.20 m**. Against **0.0 %** for the mitre. 6–16 % of block
+   corners are reflex, so this is not an edge case.
+2. **`SegmentNavigator` cannot take two waypoints per edge.** It uses
+   `PositionDescription.QuarterDelimIndex` as a *segment* index to pick the starting segment,
+   and then writes it back as `(_idxNextSegment + count − 2) % count` and immediately does
+   `_position.Quarter.GetDelims()[_position.QuarterDelimIndex]`. Segment index and delimiter
+   index are the same number today only because the loop has exactly one segment per
+   delimiter. Doubling the waypoints indexes a delimiter list of `n` with a number up to
+   `2n−1` — an `ArgumentOutOfRangeException` on the first citizen to walk past the halfway
+   point of its own block, not a renumbering.
+
+**Rejected candidate 2 — a fixed 1.5 m along the bisector.** Measured: 100 % inside at
+waypoints and along the path, so on the primary requirement it is as good as what was built.
+It is rejected on the *width*: 1.5 m is three quarters of the way across a 2 m pavement
+(887 of the baselines' 2918 corners) and is wider than a 1 m one outright.
+
+## The offset, and the number no city can test
+
+`PavementWalk.OffsetFor(w) = min(1.5, w/2)` — half the pavement, capped at the 1.5 m that
+shipped. So the walk is *on* the pavement rather than at the edge of it, and on the 4 m and
+6 m pavements that carry 67 % of the baselines' corners **the offset is unchanged from what
+shipped**.
+
+⚠️ **The four baseline cities contain no 1 m pavement at all** — 0 of 2918 corners. Widths
+run 2 m / 4 m / 6 m, because `Quarter.SidewalkWidth` is 1 m only where downtownness is below
+0.2 and no traced block centre of any of the four is. So the narrowest pavement the game can
+build is a shape that unlimited real data cannot test — §7o's `seed008` lesson again — and it
+is covered by fixture instead (`PavementWalkTests.ANarrowPavementHoldsTheWalkerOnIt`).
+
+## What the walk is, exactly
+
+Both ends of a segment are one offset from the **same** edge line, so **the whole segment is**:
+the walk between two corners runs exactly parallel to its own kerb. Measured over the four
+baselines, the perpendicular distance to the edge being walked is at most `OffsetFor(w)`
+at **every one of the 32 098 sampled positions**, and never zero.
+
+| city | n | waypoints inside | path inside | signed distance med / min |
+|---|---|---|---|---|
+| seed000/500 | 16 | **100 %** | **100 %** | 1.50 / 1.50 |
+| Yelukhdidru/800 | 49 | **100 %** | **100 %** | 1.50 / 0.97 |
+| seed000/1500 | 394 | **100 %** | **100 %** | 1.50 / 0.72 |
+| Yelukhdidru/3000 | 2459 | **100 %** | **100 %** | 1.50 / 0.69 |
+
+**No fallback for a refused block is needed**, which is the other thing the inset ring would
+have cost. `SidewalkRing.InsetOf` refuses 1 / 0 / 3 / 7 blocks of the four, and the mitre is
+defined at every corner of every ring regardless — it needs only the corner and its two
+edges. The point is still **checked** rather than argued: a block narrow enough that one
+edge's pavement reaches across to another's keeps the kerb line itself, which is where the
+pavement is and is never in the road. That branch fires on **0 corners** of the four
+baselines and is driven by fixture.
+
+## The height, re-measured at the new position
+
+Unchanged expression — `BuildingFooting.PavementHeightAt` — but the waypoint moved, so it was
+re-measured against the block floor's **own triangles**:
+
+| city | min | p05 | med | p95 | max |
+|---|---|---|---|---|---|
+| seed000/500 | −0.22 | −0.22 | +0.03 | 0.26 | 0.26 |
+| Yelukhdidru/800 | −1.30 | −0.17 | −0.00 | 0.12 | 0.15 |
+| seed000/1500 | −1.19 | −0.24 | +0.01 | 0.23 | 9.99 |
+| Yelukhdidru/3000 | −3.41 | −0.28 | −0.00 | 0.29 | 2.75 |
+
+⚠️ **§7m's ±0.23 m for the old waypoint was conditional on the waypoint landing on a block
+floor at all, and 30–41 % of them did not** — they were over the road, where there is no
+floor to be off. `n` was 10 / 29 / 206 / 1445 there against 16 / 49 / 394 / 2459 here.
+**Every waypoint is on the block floor now**, and the residual that is left is §7k's corner
+ramp, where the cap's surface is the block interior's rather than the rim's. Taking the
+corner's own junction height instead was measured at the same points and is worse
+(p05 −0.44 / −0.52 / −0.56 / −0.60), for the same reason §7m gave.
+
+## THE DEFAULT FLAT CITY MOVES: every citizen's walk
+
+The defect is a plan defect and is identical in both cities, so the fix is too. **Every
+waypoint of every block moves in plan** — median 1.13–1.50 m, p95 3.2–3.5 m, worst **4.11 m**
+— and **0.000 m at a corner whose two edges are collinear**, where the mitre reduces to the
+shipped expression exactly. That is the sixth deliberate move of the default flat city in
+this work stream, after §7i, §7j, §7l, §7m and §7n.
+
+**Nothing moves in height in the flat city**, asserted as equality: every corner of a flat
+block is at the average, so `BuildingFooting`'s edge interpolation is `h + t·0`, and moving a
+waypoint in plan cannot move it in height. No network fingerprint and no
+`street-geometry.json` baseline moved.
+
+**What else changes.** `SegmentEnd.Right`/`Up` and `pod.Orientation` are now taken between
+two walk points rather than two corners — the same vector to a few degrees, and
+`SegmentNavigator.NavigatorBehave` overwrites the orientation on its first tick anyway
+(§7n). The pod's labels — `QuarterDelimIndex`, `QuarterDelim`, `StreetPoint`, `Stroke` — are
+untouched, and `EverySegmentNamesTheStreetItRunsAlong` still holds by identity.
+
+## Mutation survivors: two of eighteen, both provably equivalent
+
+| mutation | outcome |
+|---|---|
+| the generator goes back to the shipped offset | caught, 11 |
+| the generator passes a constant 3 m width | caught, 4 |
+| the generator passes a 100 m width | caught, 4 |
+| the generator keeps the corner | caught, 8 |
+| the walker goes back to the pad | caught, 4 |
+| the walk uses only the leaving edge | caught, 14 |
+| `OffsetFor` is always 1.5 | caught, 1 |
+| `OffsetFor` drops the 1.5 cap | caught, 6 |
+| the walk drops its containment check | caught, 1 |
+| the walk drops its length clamp | caught, 4 |
+| the walk clamps at three widths | caught, 10 |
+| the walk assumes every block is clockwise | caught, 1 |
+| the walk assumes every block is counterclockwise | caught, 17 |
+| the zero-length-edge guard is gone | caught, 1 (only after strengthening) |
+| `InwardNormalOf` flips | caught, 49 |
+| `SignedArea2Of` always says counterclockwise | caught, 50 |
+| the mitre is the average of the two normals | caught, 5 |
+| `ContainsInPlan` always says yes | caught, 7 |
+| **`MitreOf`'s two normals swapped** | **survives, and always will** |
+| **`MitreOf`'s zero-denominator guard removed** | **survives, and always will** |
+
+Both survivors are **equivalent mutants**, not holes, and both were checked rather than
+assumed. `MitreOf` is `w(n₀+n₁)/(1+n₀·n₁)`, which is symmetric in its two arguments, so
+swapping them cannot change any output. Removing the `denom < 1e-4f` guard lets a spike
+divide by zero, and the resulting non-finite vector is refused by the `Single.IsFinite`
+check on the next line — the same answer by a different route.
+
+**One lesson, and it is the old one in a new coat.** *"The zero-length-edge guard is gone"*
+survived its first attempt: `ARepeatedCornerIsLeftAlone` asserted only that the walk was
+*inside* the block, and with an arbitrary direction substituted for the missing one the
+point still lands inside a big convex block. The assertion is now **equality with the
+corner** — a containment test cannot tell a guess from a refusal. Same shape as §7m's *"an
+animation driver is a CALL, not a mention"*: the gate has to assert the thing that would be
+different, not a consequence that survives being wrong.
+
+**No source scan was needed anywhere in this fix.** `PavementWalk` and
+`QuarterLoopRouteGenerator` are both in Joyce, and the test assembly drives both directly
+over whole generated cities — §7m's *"put the arithmetic where a test can reach it"*, applied
+before the fact rather than after a survivor.
+
+## Two existing gates were superseded, not re-baselined
+
+- **`QuarterLoopRouteTests.ASegmentStartsBesideItsOwnCorner`** asserted
+  `(v2 − delims[i].StartPoint).Length() < 1.51f`, *"the 1.5 m is the step onto the
+  pavement"*. A mitre is `offset/sin(θ/2)` from its corner and so is longer than the offset
+  at every corner that turns. It now asserts the **stronger** bound the mitre is built to
+  satisfy — within the block's own `SidewalkWidth` of its corner — which is what "still on
+  the pavement" actually means. Measured: 0.5–3.6 m.
+- **`AFlatCityLoopIsUnchangedFloatForFloat`** asserted all three components equal to the
+  shipped expression. Its height half is still true and is still asserted as equality; its
+  plan half is what this section refutes. Renamed `AFlatCityLoopMovesInPlanOnlyAndNotInHeight`
+  and it now pins the size of the move in both directions, including that the least-moved
+  corner moves under 5 cm — so the collinear reduction is exercised on real data and not only
+  in a fixture.
+
+Tests: `tests/JoyceCode.Tests/engine/streets/PavementWalkTests.cs` (15) and
+`builtin/tools/QuarterLoopRouteTests.cs` (25, of which 8 are new).
+
+## Found and NOT fixed
+
+- ⚠️ **`SegmentNavigator` indexes a block's delimiters with a segment index, and that is
+  already wrong for every route that is not the block loop.**
+  `_position.Quarter.GetDelims()[_position.QuarterDelimIndex]` runs whenever the pod names a
+  Quarter, and `GoToStrategyPart` hands `SegmentNavigator` a `StreetRouteBuilder` route
+  together with the citizen's own pod — whose `Quarter` is its block. A street route longer
+  than its block has corners therefore indexes past the end of `GetDelims()`, and
+  `_setStartSegment` starts such a route partway along itself for the same reason.
+  Pre-existing, untouched here, and it is the reason the walk stayed one waypoint per corner.
+- **`PedestrianRoute.SidewalkOffset` is still a constant 1.5 m**, so the satnav walker has
+  the width half of this defect: a lane does not know its block's `SidewalkWidth`. It is not
+  visible on the baselines (no 1 m pavement, and 1.5 m ≤ w at 100 % of their corners) and it
+  is not the *side* defect §7g fixed — the satnav walker offsets along a lane, between two
+  corners, and is inside 100 % of the time. Left, stated.
+- **Half of a block's warp still lives in §7k's corner ramp, and the walk turns its corners
+  inside it.** That is the whole of the ±0.28 m height residual above. Removing it needs the
+  cap's own triangulation at generation time, which the generator does not have.

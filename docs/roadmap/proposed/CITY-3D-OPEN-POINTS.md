@@ -6,7 +6,7 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7o, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-02 (§7o).
+**Last updated:** 2026-09-03 (§7p).
 
 ---
 
@@ -52,6 +52,11 @@ is the useful part.
 
 **Reported since the flip (2026-09-02), and fixed:** the kerb did not rest on the
 carriageway. See **(j)** below and §7o.
+
+**Cleared 2026-09-03:** **(k)** — half of the ordinary citizen's walk was in the road. It was
+the last plan-level defect this page carried as *found and not fixed*, it was present and
+identical in the flat city, and **the ledger had the angle condition backwards**: it is the
+ACUTE corner that fails, not the obtuse one. See **(k)** below and §7p.
 
 **Part 1 IS NOW CLEAR, with one deliberate remainder: what an intercity line IS.** The
 intercity tram rides its own track; the track's own shape - graded embankment, viaduct, or
@@ -99,10 +104,10 @@ blocks, 3547 boundary edges**. Terrain baseline: gradient over one 20 m cell med
 **Ranked.** (c) first because it is the largest surface defect and fixing it also fixes
 one of (d)'s three causes. (a) second because it is the largest *visible* one.
 
-**As of 2026-08-31 all nine are done**, bar the design decision under (e). Five of them
+**As of 2026-09-03 all of them are done**, bar the design decision under (e). Six of them
 moved the default flat city, each measured and stated before it landed: §7i's `Placer`
 reference junctions, §7j's un-culled faces, §7l's 0.35 m house drop, §7m's 0.85 m quest
-marker, and §7n's intercity tram ends and starting coins.
+marker, §7n's intercity tram ends and starting coins, and §7p's citizen walk.
 
 ---
 
@@ -857,6 +862,62 @@ carriageway (identical in the flat city). All three come from
 `StreetPoint._computeSectionArrayNoLock`'s `dist2 > 4000` fallback for near-collinear arms,
 and moving a section point moves the block outline, the estate, the building and its shops.
 
+### ✅ (k) Half of the ordinary citizen's walk was in the road — FIXED 2026-09-03
+
+Recorded under (d) as found and not fixed, and the last plan-level item this page carried.
+Full write-up in [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) §7p.
+
+**What this page got wrong, in order of how much it mattered:**
+
+1. ⚠️ **The angle condition is the other way round.** Both this page and §7m recorded *"at an
+   interior angle over 90 degrees it lands past the arriving edge"*. It is **acute** corners
+   that fail: the shipped point is on the inward side of the arriving edge exactly when the
+   two inward normals agree, and their dot product is `-cos t`, which is positive above 90
+   degrees. Measured over the four baselines: **0 of 1243 acute corners inside, 1667 of 1675
+   obtuse ones inside**, and every one of the eight exceptions is a corner of 90.000-90.002
+   degrees. The symptom could not distinguish the two readings, since the median corner is
+   90.1-94.0 degrees and either reading predicts "about half" - which is how the direction of
+   an inequality survived being written down twice.
+2. **"The rest stand 1.5 m into the carriageway" is wrong, and the percentage was the wrong
+   statistic.** The median waypoint sat **on the kerb line** (+0.00 to +0.11 m signed), 14 to
+   38 % of them within 5 cm of it, with the worst excursion **1.15 m** rather than 1.5. Along
+   the walk rather than at its corners, 10 to 17 % of positions were outside.
+3. ⚠️ **Reusing the pavement's own inset ring - the obvious fix, and the one proposed - does
+   not work, and both reasons were measured.** `SidewalkRing`'s points belong to EDGES and
+   deliberately not to corners, and a loop turns corners: joining them cuts every corner, and
+   at the 6 to 16 % that are reflex the cut leaves the block, by up to **11.07 m** taking one
+   point per corner and **6.20 m** taking both points of each edge. And `SegmentNavigator`
+   indexes `Quarter.GetDelims()` with a SEGMENT index, so two waypoints per edge is an
+   `ArgumentOutOfRangeException`, not a renumbering.
+4. **What landed is the corner's own mitre** - `engine.streets.generation.PavementWalk` -
+   at half the block's own `SidewalkWidth`, capped at the 1.5 m that shipped, with its length
+   bounded by one pavement width. 100 % of waypoints and 100 % of sampled path positions
+   inside, on all four cities; the segment between two corners runs exactly parallel to its
+   own kerb. §7k rejected the mitre for the pavement SURFACE because a shared vertex wants
+   two heights; a walker is a point and has one.
+5. ⚠️ **No baseline city contains a 1 m pavement** - 0 of 2918 corners - so the narrowest
+   pavement the game can build is untestable from generated data. §7o's `seed008` lesson
+   again, covered by fixture.
+6. **§7m's height table for this walker was conditional.** Its ±0.23 m was measured over the
+   59 to 70 % of waypoints that landed on a block floor at all; the rest were over the road.
+   Every waypoint is on the floor now, at p05 -0.17 to -0.28 and p95 +0.12 to +0.29.
+
+**Flat-game delta: every citizen's walk moves in plan**, median 1.13-1.50 m, worst 4.11 m,
+and exactly 0.000 m where a corner's two edges are collinear. Nothing moves in height. Sixth
+deliberate move of the default flat city, after §7i, §7j, §7l, §7m and §7n.
+
+`engine.streets.generation.PavementWalk`, `SidewalkRing.MitreOf`/`InwardNormalOf`/
+`SignedArea2Of`/`ContainsInPlan`;
+`tests/JoyceCode.Tests/engine/streets/PavementWalkTests.cs` and
+`builtin/tools/QuarterLoopRouteTests.cs`.
+
+**Found and NOT fixed:** ⚠️ `SegmentNavigator` indexes a block's delimiters with a segment
+index, which is already wrong for every route that is not the block loop -
+`GoToStrategyPart` hands it a street route together with the citizen's own pod, so a route
+longer than its block has corners indexes past the end of `GetDelims()`. And
+`PedestrianRoute.SidewalkOffset` is still a constant 1.5 m, so the satnav walker keeps the
+width half of this defect (not the side half, which (g) fixed).
+
 ### ✅ (i) The `#if false` operator and the missing drift test — the test now exists
 
 `GenerateHouseDescriptionsOperator.cs` is inside `#if false` from line 1 and compiles to
@@ -959,6 +1020,20 @@ lags by one update. Pre-existing. Nothing *reads* it today (the only other write
 `Placer.cs:283` and `citizen/SpawnOperator.cs:239`) — but it is `[JsonInclude]` in
 `PositionDescription`, so it **is persisted into save games**, and a future reader would
 get a junction one step behind.
+
+## 2.9 `SegmentNavigator` indexes a block's delimiters with a segment index
+
+`JoyceCode/builtin/tools/SegmentNavigator.cs:334-340`. `_position.QuarterDelimIndex` is
+written as `(_idxNextSegment + count - 2) % count`, a **segment** index, and the next line
+does `_position.Quarter.GetDelims()[_position.QuarterDelimIndex]`. The two are the same
+number only for the block loop, which has exactly one segment per delimiter;
+`_setStartSegment` reads it back the same way.
+
+`GoToStrategyPart` hands the navigator a `StreetRouteBuilder` route together with the
+citizen's own pod, whose `Quarter` is its block - so a street route with more segments than
+its block has corners indexes past the end of `GetDelims()`, and a route with fewer starts
+partway along itself. Pre-existing, and it is why §7p kept the walk at one waypoint per
+corner rather than taking the pavement's own two-per-edge inset ring.
 
 ## 2.7 Door standing points carry the vehicle clearance
 
