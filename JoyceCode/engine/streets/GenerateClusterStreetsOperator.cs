@@ -93,17 +93,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
         /*
          * A junction is one node in the stroke graph, so it gets one height, and every
-         * stroke that meets here reads the same one. That is what keeps a non-planar
-         * network consistent: the surfaces cannot disagree at the seam because there is
-         * only one number.
-         *
-         * Ground height plus the deck's elevation above it, kept as separate terms
-         * because they answer different questions - where the terrain is, and which
-         * deck this is.
+         * stroke that meets here, every deck and cap collider, and the kerb of every block
+         * cornering here reads the same one - which is what keeps a non-planar network
+         * consistent: the surfaces cannot disagree at the seam because there is only one
+         * number. It is written once, in generation.RoadSurface, for that reason.
          */
-        float h = _clusterDesc.StreetHeightSource.GroundHeightAt(sp)
-            + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
-            + StreetLevels.ElevationOf(sp.Level);
+        float h = generation.RoadSurface.HeightAtJunction(_clusterDesc.StreetHeightSource, sp);
 
         /*
          * First compute the center of the array, we need it for both
@@ -303,12 +298,8 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          * else.
          */
         var heightSource = _clusterDesc.StreetHeightSource;
-        float hA = heightSource.GroundHeightAt(stroke.A)
-                   + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
-                   + StreetLevels.ElevationOf(stroke.A.Level);
-        float hB = heightSource.GroundHeightAt(stroke.B)
-                   + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
-                   + StreetLevels.ElevationOf(stroke.B.Level);
+        float hA = generation.RoadSurface.HeightAtJunction(heightSource, stroke.A);
+        float hB = generation.RoadSurface.HeightAtJunction(heightSource, stroke.B);
 
         var h = hA;
         Vector3 v3Cluster = new(cx, h, cy);
@@ -421,6 +412,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             br = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y) + n3 * hsw;
         }
 
+        /*
+         * The surface this stroke is about to be built flat on, and then sheared onto.
+         *
+         * Built here, from the four section points the mesh itself uses as its corners, so
+         * that the shear cannot be describing a different road from the one being emitted.
+         * al/bl and ar/br are the pairs a block edge runs between - see RoadSurface.
+         */
+        var roadSurface = generation.RoadSurface.Of(
+            new Vector2(am.X, am.Z), q,
+            new Vector2(al.X, al.Z), new Vector2(ar.X, ar.Z),
+            new Vector2(bl.X, bl.Z), new Vector2(br.X, br.Z),
+            hA, hB);
+
         // TXWTODO: Factor out the code to triangulate and texture the street part.
 
         /*
@@ -524,6 +528,15 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 g.Idx(i0 + 0, i0 + 2, i0 + 1);
                 g.Idx(i0 + 1, i0 + 2, i0 + 3);
             }
+
+            /*
+             * Sheared like any other stroke, and this used to be the one path that was not.
+             * The quad's four vertices ARE the four section points, so each lands on its own
+             * junction's height and the little filler between two overlapping junction
+             * footprints joins both caps and both kerbs instead of lying flat at the A end's
+             * height. On the flat city the shear is a no-op, as everywhere else.
+             */
+            _shearOntoSlope(g, firstVertex, roadSurface);
 
             /*
              * Which is why we do not need to render a road at all.
@@ -725,7 +738,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             }
         }
 
-        _shearOntoSlope(g, firstVertex, am, q, bm - am, hA, hB, damax, dbmin);
+        _shearOntoSlope(g, firstVertex, roadSurface);
 
         return true;
     }
@@ -744,81 +757,61 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
      * site: there are about fifteen of them, and the Y of a vertex affects nothing else
      * here - the UV projector's two axes are both planar, so UVs are unchanged by it.
      *
-     * **The rise happens between the two junction footprints, not over the whole plan
-     * length**, which is the whole subtlety of this method. The caller lays the surface
-     * out in three parts: a wedge filling the A junction up to dFlatA, the carriageway
-     * proper, and a wedge filling the B junction from dFlatB. A junction cap is a flat
-     * fan at that junction's one height, so the road can only meet it if the road is
-     * flat over the same footprint - and a junction's corner points are NOT on the
-     * centre line, so heighting them by their own axial projection puts them at a height
-     * belonging to some other part of the road.
+     * **Each SIDE of the road climbs between its own two section points**, which is the
+     * whole subtlety of this method, and it is a property of the seams rather than of the
+     * road. A junction cap is a flat fan at that junction's one height, and a block's kerb
+     * is a straight chord between two section points each at its own junction's height, so
+     * the surface has to reach BOTH exactly: the two corner vertices at each end at that
+     * end's height, and everything along a kerb line on the straight segment between them.
+     * Interpolating each side between its own pair delivers both at once, because the axial
+     * coordinate is affine along a chord.
      *
-     * That was a real tear, not a rounding error: at a 15 degree bend the two corners of
-     * one junction project to 0.858 and 1.142 of the stroke length, so the two strokes
-     * meeting there disagreed by up to 1.8 m on an 8 % grade, and the road split open.
+     * Heighting every vertex by its axial projection over the whole plan length delivers
+     * neither, and that was a real tear rather than a rounding error: at a 15 degree bend
+     * the two corners of one junction project to 0.858 and 1.142 of the stroke length, so
+     * the two strokes meeting there disagreed by up to 1.8 m on an 8 % grade and the road
+     * split open at the junction. Holding the surface flat over ONE window along the centre
+     * line - up to the further of the two A corners and from the nearer of the two B corners
+     * - fixes the junctions and leaves the kerbs: the kerb chord and that three part profile
+     * agree at both ends and nowhere in between, by up to 6.5 m on the shipped terrain. See
+     * generation.RoadSurface for the measurement.
      *
-     * It stayed hidden because at a STRAIGHT junction the corners are pure lateral
-     * offsets, so dFlatA is 0 and dFlatB is the full length and the reparametrisation
-     * below is the identity. Every ramp OverpassBuilder makes is straight, which is why
-     * ramps never showed it and why ramps are bit for bit unchanged by this.
+     * At a STRAIGHT junction both section points are at the same axial distance, so the two
+     * sides share one window and this is exactly what the single window emitted. Every ramp
+     * OverpassBuilder makes is straight, which is why ramps are unchanged float for float.
      *
-     * @param am, vAB
-     *     Start of the stroke's centre line and the vector along it, both in the same
-     *     space as the emitted vertices.
-     * @param dFlatA, dFlatB
-     *     Axial distances from am, in metres, bounding the part of the surface that
-     *     actually climbs: damax and dbmin in the caller. Outside them the surface
-     *     belongs to a junction and is held flat at that junction's height.
+     * @param surface
+     *     The four section points bounding this stroke, with its two junction heights -
+     *     built by the caller from the very corners it emitted.
      */
     private void _shearOntoSlope(
-        joyce.Mesh g, uint firstVertex, in Vector3 am, in Vector2 unit, in Vector3 vAB,
-        float hA, float hB, float dFlatA, float dFlatB)
+        joyce.Mesh g, uint firstVertex, in generation.RoadSurface surface)
     {
-        if (hA == hB)
-        {
-            return;
-        }
-
-        float length = new Vector2(vAB.X, vAB.Z).Length();
-        if (length < 0.001f)
+        if (surface.IsLevel)
         {
             return;
         }
 
         /*
-         * The caller returns early when the two footprints overlap, so this is normally
-         * positive; the guard is for them merely touching, where there is no carriageway
-         * to spread the rise over and the two halves simply take their own heights.
-         */
-        float span = dFlatB - dFlatA;
-        bool hasRun = span > 0.001f;
-
-        /*
-         * Rise over run, and the surface normal that goes with it: rotate straight up
-         * back by the slope, in the vertical plane the stroke runs along. Over the run
-         * that actually climbs, which is steeper than the plan length would suggest.
+         * The normal is per side rather than per stroke, because the two sides of a bend do
+         * not climb over the same run and so are not at the same angle. Straight up rotated
+         * back by that slope, in the vertical plane the stroke runs along; a climbing
+         * surface with a straight-up normal lights as though it were flat.
          *
-         * Applied to every vertex including the flat wedges, deliberately: shading stays
-         * continuous across the road rather than creasing at the junction line, and the
-         * junction cap it abuts is a separate surface with its own normals either way.
+         * Applied to every vertex including the wedges filling the junctions, deliberately:
+         * shading stays continuous across the road rather than creasing at the junction
+         * line, and the cap it abuts is a separate surface with its own normals either way.
          */
-        float slope = (hB - hA) / (hasRun ? span : length);
-        Vector3 slopeNormal = Vector3.Normalize(new Vector3(-slope * unit.X, 1f, -slope * unit.Y));
-
         for (int i = (int)firstVertex; i < g.Vertices.Count; ++i)
         {
             Vector3 v = g.Vertices[i];
+            Vector2 p = new(v.X, v.Z);
 
-            float d = (v.X - am.X) * unit.X + (v.Z - am.Z) * unit.Y;
-            float t = hasRun
-                ? Single.Clamp((d - dFlatA) / span, 0f, 1f)
-                : (d <= dFlatA ? 0f : 1f);
-
-            g.Vertices[i] = v with { Y = hA + t * (hB - hA) };
+            g.Vertices[i] = v with { Y = surface.HeightAt(p) };
 
             if (null != g.Normals && i < g.Normals.Count)
             {
-                g.Normals[i] = slopeNormal;
+                g.Normals[i] = surface.NormalAt(p);
             }
         }
     }
@@ -1049,17 +1042,15 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                              + worldFragment.Position
                              with
                              {
-                                 Y = colliderHeights.GroundHeightAt(stroke.A)
-                                     + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
-                                     + stroke.A.LevelElevation
+                                 Y = generation.RoadSurface.HeightAtJunction(
+                                     colliderHeights, stroke.A)
                              };
             Vector3 worldB = new Vector3(stroke.B.Pos.X + cx, 0f, stroke.B.Pos.Y + cz)
                              + worldFragment.Position
                              with
                              {
-                                 Y = colliderHeights.GroundHeightAt(stroke.B)
-                                     + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
-                                     + stroke.B.LevelElevation
+                                 Y = generation.RoadSurface.HeightAtJunction(
+                                     colliderHeights, stroke.B)
                              };
 
             var collider = generation.DeckCollider.For(
@@ -1134,7 +1125,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             var cap = generation.JunctionCollider.For(
                 streetPoint.GetSectionArray(),
                 v3ClusterOrigin,
-                generation.JunctionCollider.SurfaceHeightOf(colliderHeights, streetPoint),
+                generation.RoadSurface.HeightAtJunction(colliderHeights, streetPoint),
                 0.1f);
 
             if (!cap.IsUsable)

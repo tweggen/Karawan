@@ -69,7 +69,7 @@ public static class CitySurface
     /**
      * The world height of the highest thing built at a junction.
      *
-     * The carriageway is JunctionCollider.SurfaceHeightOf - the junction cap's own height,
+     * The carriageway is RoadSurface.HeightAtJunction - the junction cap's own height,
      * which is what the deck, the cap fan and the cap's collider are all built at - and the
      * pavements of the blocks that corner on it are exactly one kerb above that, because a
      * block floor's outline takes each corner's own junction height (§7c) and the floor is
@@ -77,7 +77,7 @@ public static class CitySurface
      * and anything resting on it clears both.
      */
     public static float HeightAtJunction(IStreetHeightSource heights, in StreetPoint sp)
-        => JunctionCollider.SurfaceHeightOf(heights, sp)
+        => RoadSurface.HeightAtJunction(heights, sp)
            + world.MetaGen.QuarterSidewalkOffset;
 
 

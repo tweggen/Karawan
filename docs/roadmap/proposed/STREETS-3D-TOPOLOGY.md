@@ -2489,3 +2489,281 @@ No network fingerprint and no `street-geometry.json` baseline moved.
   agree with each other; it does not make the answer stable across a *session boundary*, so
   a new game started twice in one process gets the same start and one started in two
   processes may not.
+
+---
+
+# §7o — The kerb rests on the carriageway (2026-09-02)
+
+Reported from play of the **now-default** terrain-following city, with a screenshot of a
+road running diagonally past a pale pavement strip:
+
+> *"I still can observe a small gap between the bevel of the sidewalk and the street."*
+
+There is no sidewalk object. `GenerateClusterQuartersOperator` extrudes a block's outline up
+by `MetaGen.QuarterSidewalkOffset` (0.15 m), so **the top face is the pavement, the sides are
+the "bevel", and the block's outline is the line along which two independently generated
+meshes — the block floor and the road — are supposed to meet.** Nothing said they did.
+
+> **This is the first round of this work in which the flat city is no longer the shipped
+> city.** `1c54a9e4` flipped `joyce.DisableClusterFlattening` to true by default. The flat
+> path and its gates still exist and still matter; what follows says what each city does.
+
+---
+
+## What the gap is: HEIGHT, and only on a slope
+
+Four candidates were measured before anything was diagnosed. Three of them are not it.
+
+### It is not a plan gap — the kerb line IS the carriageway's edge
+
+A block corner is a section point of its own junction (§7i), and the two section points
+bounding one stroke at its two ends lie on the **same offset of that stroke's centre line**:
+`StreetPoint._computeSectionArrayNoLock` offsets each arm's own line by that arm's own half
+street width, and the direction reversal between "leaving A" and "arriving at B" cancels
+against the sign of the offset. So the block edge between them is collinear with the road's
+edge by construction. Measured as the deviation of a corner from `StreetWidth()/2` off the
+centre line, over every boundary edge of the four baselines:
+
+| city | edges | median | p90 | p99 | edges > 0.25 m | > 1 m |
+|---|---|---|---|---|---|---|
+| seed000/500 | 16 | 0.0000 | 0.0000 | 0.0084 | 0 | 0 |
+| Yelukhdidru/800 | 49 | 0.0000 | 0.0000 | 0.0011 | 0 | 0 |
+| seed000/1500 | 394 | 0.0000 | 0.0001 | 0.0009 | 0 | 0 |
+| Yelukhdidru/3000 | 2477 | 0.0002 | 0.0008 | 0.0205 | **11** | **11** |
+
+The median is the 0.1 m grid `StreetPoint.SetPos` quantises junction positions onto.
+Nothing at all sits between 0.25 m and 1 m: the 11 outliers are a **separate, plan-level
+defect** (see *Found and not fixed*), not a spread.
+
+### It is not a missing face and it is not z-fighting
+
+The block floor is built `addFloor: false`, so there is no underside; but the kerb's bottom
+edge is exactly the carriageway's edge in plan, so where the two agree in height there is no
+seam to close and where they do not the gap is a real vertical one, not a coplanar shimmer.
+At the sizes measured below (median half a metre) the 16-bit depth buffer is irrelevant —
+its quantum is 38 mm at 50 m.
+
+### It IS a height gap, and it is exactly zero in the flat city
+
+Measured against the road mesh's **own triangles**, read barycentrically at nine points along
+every block edge, with the kerb's underside taken as the block floor outline's own linear
+interpolation between its two corners:
+
+| city | ground | p05 | median | p95 | worst \|Δ\| | \|Δ\| > 0.15 m | \|Δ\| > 0.5 m |
+|---|---|---|---|---|---|---|---|
+| seed000/500 | flat | 0.000 | 0.000 | 0.000 | **0.000** | 0.0 % | 0.0 % |
+| seed000/500 | shipped terrain | −0.095 | 0.000 | +0.086 | 0.352 | 6.2 % | 0.0 % |
+| Yelukhdidru/800 | flat | 0.000 | 0.000 | 0.000 | **0.000** | 0.0 % | 0.0 % |
+| Yelukhdidru/800 | shipped terrain | −0.565 | 0.000 | +0.543 | 1.447 | **28.1 %** | 11.3 % |
+| seed000/1500 | flat | 0.000 | 0.000 | 0.000 | **0.000** | 0.0 % | 0.0 % |
+| seed000/1500 | shipped terrain | −0.553 | 0.000 | +0.562 | 3.206 | **28.2 %** | 11.4 % |
+| Yelukhdidru/3000 | flat | 0.000 | 0.000 | 0.000 | **0.000** | 0.0 % | 0.0 % |
+| Yelukhdidru/3000 | shipped terrain | −0.566 | 0.000 | +0.546 | **6.491** | **30.6 %** | 11.7 % |
+
+> **The flat city is exactly 0.000 m at every percentile of every city.** So the answer to
+> *"does this exist in the flat city"* — which the brief rightly called the most useful thing
+> to establish — is **no**, and this is the first item in this ledger of which that is true
+> without qualification. It is a pure consequence of the terrain-following city, and it
+> became visible the day that became the default.
+
+The sign is symmetric: the kerb hangs over the road as often as it sinks into it. At a
+quarter to a third of positions the disagreement exceeds the whole 0.15 m kerb, which is when
+you see under the pavement rather than merely see a bad kerb; at a ninth it exceeds half a
+metre. At driving distance a 0.5 m band of terrain along the edge of a road is not subtle,
+and the worst edge of the 3000 m city shows 6.5 m.
+
+---
+
+## The cause: one window along the centre line against two chords along the kerbs
+
+`_shearOntoSlope` builds a stroke's surface flat at the A end's height and then lifts every
+vertex. It used to lift by **one window measured along the stroke's centre line**: flat at
+`hA` up to `damax` — the further along of the two section points at A — climbing to `dbmin`,
+then flat at `hB`.
+
+That window exists for a real reason, recorded in its own doc comment and re-proved by the
+mutation testing below: a junction cap is a **flat fan at that junction's one height**, so the
+road can only meet it if the road is flat over the same footprint, and heighting a corner by
+its own axial projection instead tore two strokes apart by up to 1.8 m at a 15° bend.
+
+But the kerb is not measured along the centre line. It is a **straight chord between two
+section points**, one at each junction, each carrying its own junction's height. Chord and
+window agree at both ends — which is why measuring at corners shows nothing, and why §7c
+could fix the corners and leave this — and disagree everywhere in between by
+
+```
+(damax − d_sec) / (d_secB − d_secA) · (hB − hA)
+```
+
+on whichever side's section point is the nearer of the two at that junction. With a junction
+footprint reaching 7.6–10.6 m into its stroke at the median (§7b) and a relaxed grade of
+5–14 %, that is the half metre the table shows.
+
+---
+
+## What was implemented: each side of the road climbs between its own two corners
+
+`engine.streets.generation.RoadSurface` owns it. Given a stroke's four section points and its
+two junction heights, `HeightAt(plan)` picks the kerb line the position belongs to and
+interpolates between that side's own pair.
+
+**This is exact rather than close, and for two reasons at once:**
+
+- at either end the chord parameter is 0 or 1, so a corner carries its junction's own height
+  — the property the single window existed to protect, delivered without a window;
+- in between, the axial coordinate along the stroke is an **affine** function of position
+  along the chord, so interpolating in one is interpolating in the other, and the
+  carriageway's edge is the same straight segment in space as the kerb's underside.
+
+Measured on the same nine points per block edge, over the same four cities:
+
+| city | ground | p05 | median | p95 | worst \|Δ\| | \|Δ\| > 0.15 m |
+|---|---|---|---|---|---|---|
+| seed000/500 | shipped terrain | −0.000 | 0.000 | +0.000 | **0.000** | 0.0 % |
+| Yelukhdidru/800 | shipped terrain | −0.000 | 0.000 | +0.000 | **0.000** | 0.0 % |
+| seed000/1500 | shipped terrain | −0.000 | 0.000 | +0.000 | **0.001** | 0.0 % |
+| Yelukhdidru/3000 | shipped terrain | −0.000 | 0.000 | +0.000 | **0.003** | 0.0 % |
+
+Three millimetres at the worst of 22 000 positions on a city 3 km across is single-precision
+noise, not a residual.
+
+### Which side a vertex belongs to comes from the chords, not from a sign
+
+The obvious rule — the sign of the offset from the centre line — is right 2470 times out of
+2477 and wrong where it matters. `StreetPoint`'s section array falls back to an averaged
+offset when two arms are so nearly collinear that their offset lines meet more than 63 m out,
+and such a corner can land on the far side of the centre line; **7 of the 2477 block edges of
+`Yelukhdidru`/3000 have their two ends on opposite sides.** A corner assigned to the opposite
+chord takes a height that is not its junction's, which is the defect being removed. Distance
+to the chord answers it exactly, because a point ON a chord is at distance zero from it — and
+the mutation that uses the sign instead is caught, on that city only.
+
+### THE FLAT CITY DOES NOT MOVE, and neither does any ramp
+
+`_shearOntoSlope` returns before touching a vertex when the two junction heights are equal,
+which is every stroke of a flat city. `street-geometry.json` and the network fingerprints are
+unmoved; `QuarterFloorTests.AFlatCitysFloorIsUnchanged` and
+`KerbSeamTests.AFlatCitysRoadIsUntouched` assert it as **equality**, not as a tolerance.
+
+A **straight** junction puts both section points at the same axial distance, so both sides
+share one window and the new rule reduces to exactly the old expression. Every ramp
+`OverpassBuilder` builds is straight, so `RampGeometryTests` is unchanged float for float and
+multilayer geometry is untouched.
+
+**What DOES move is the terrain-following city's carriageways**, and only their vertex
+heights and normals: no vertex moves in plan, none is added or removed, and no index changes.
+
+### The overlapping-footprint branch is sheared too, and it never was
+
+`_generateStreetRun` returns early when the two junction footprints overlap — a stroke so
+short there is no carriageway between them — after emitting a four-corner filler quad. That
+branch **skipped the shear entirely**, leaving the quad flat at the A end's height while both
+kerbs beside it climbed to the B end's. It is sheared now; its four vertices are the four
+section points, so each lands on its own junction's height.
+
+None of the four baselines contains such a stroke. `seed008`/500 does — the seed
+`StreetGeometryTests` found by instrumenting that branch — and it is in the new gate's city
+list for exactly that reason: without it, deleting the shear call there passes everything.
+
+### One expression now says how high the road is at a junction
+
+`RoadSurface.HeightAtJunction` — ground + `CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE` + the deck.
+It was written out **five times**: the junction cap's fan, the stroke's two ends, the deck
+collider's two ends, the junction collider's height (already hoisted, as
+`JunctionCollider.SurfaceHeightOf`, and now folded in), and the block floor's outline. The
+block floor's copy used `MetaGen.ClusterStreetHeight` — **a different constant that also
+happens to be 2.0** — and dropped the deck term, so a block cornering on a raised junction
+would have had its kerb a whole deck below the road it meets. Both are zero-difference in
+both shipped cities today; one expression instead of two is the point, and the
+`ClusterStreetHeight` / `CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE` pair is exactly the shape §7c
+and §7g were both bitten by.
+
+---
+
+## Mutation survivors: two of fifteen, both then killed
+
+1. ⚠️ **Deleting the shear call in the overlapping-footprint branch survived the whole
+   suite.** Not because the gate was weak but because **no baseline city contains such a
+   stroke** — the branch is reached by very short strokes only. Killed by adding `seed008`/500
+   to the gate's city list, where it fails
+   `TheCarriagewayMeetsEveryJunctionCapAtItsCorners`. This is §7j's `PartitionContains`
+   lesson once more: a case that real data does not produce is invisible to any amount of it,
+   and the remedy is to go and find data that does.
+2. ⚠️ **Removing the clamp on the chord fraction survived everything, and provably always
+   will from the operator's side.** Every vertex `_generateStreetRun` emits lies between its
+   own side's two corners — the rows run from `damax` to `dbmin`, both inside every side's
+   span, and the wedge points are at other corners' axial distances — so the clamp is dead
+   code for the emission and alive only for a caller that asks about somewhere else. Killed
+   by `RoadSurfaceTests`, which asks about somewhere else. Recorded rather than deleted:
+   "this bound cannot be reached from the shipped call site" is a thing worth knowing, and
+   the next caller will not be the operator.
+
+Killed on the first attempt: reverting to the single centre-line window (5 tests); a second,
+**still correct** copy of the junction height inside the streets operator (the source scan);
+the block floor computing the road height itself again (the source scan); `_isRight` always
+answering one side (14); height by axial projection over the whole stroke, i.e. the shape
+that predates the window (15); dropping the deck term (6); dropping the street offset (25,
+including three geometry baselines); a normal that is always straight up (4); never shearing
+at all (21); crossing the two sides at the B end (6); the side taken from the sign of the
+lateral offset (1, on the largest city only); and no guard for a side with no run
+(`RoadSurfaceTests`).
+
+---
+
+## Two existing gates were superseded, and their old text is recorded
+
+Both are in `StreetHeightSourceTests`, both were written **for** the single window, and both
+assert a property that the surface no longer has because the surface is now warped rather
+than ruled.
+
+1. `HeightRisesMonotonicallyAlongABentStroke` sorted **every** vertex of a bent stroke by
+   axial distance and required one monotone sequence, on the stated grounds that *"the road
+   was held flat over each junction's footprint and climbed over a single window between
+   them"*. The two sides of a bend do not span the same window, so interleaving them is no
+   longer a sequence at all: it fell back by 0.04 m. Now
+   `HeightRisesMonotonicallyAlongEachSideOfABentStroke`, per side, and nothing within a side
+   is weakened.
+2. `TheSlopeNormalMatchesTheGradientOfTheSurface` took the lowest and highest climbing vertex
+   of the whole stroke and required every normal perpendicular to that one gradient. Across
+   the two sides the mixture came out at **8.9 %** against the **13.1 %** each side actually
+   carries. Now measured within one side, with the requirement unchanged.
+
+`TwoStrokesAgreeOnTheHeightOfTheJunctionTheyShare`, `TheRoadIsFlatWhereItMeetsABentJunction`
+and `TheJunctionCapMeetsTheStrokesThatEndThere` — the three gates the window was built for —
+pass untouched, and all three fail under the "project over the whole stroke" mutation.
+
+**No network fingerprint and no `street-geometry.json` baseline moved.**
+
+Tests: `tests/JoyceCode.Tests/engine/streets/KerbSeamTests.cs` (27, including
+`RoadSurfaceTests`), which builds each stroke's carriageway on its own and reads it
+barycentrically over five real generated cities on four grounds.
+
+---
+
+## Found and NOT fixed
+
+- ⚠️ **11 block edges of `Yelukhdidru`/3000 are not on their own stroke's edge at all**, by
+  up to 62 m — `StreetPoint._computeSectionArrayNoLock`'s `dist2 > 4000` fallback for
+  near-collinear arms, which replaces the intersection with an averaged perpendicular offset.
+  That is a **plan** defect: those blocks' kerbs are simply somewhere else, and no height rule
+  can put them on a road they do not run along. Not fixed because moving a section point
+  moves the block outline, the estate, the `ClipperOffset` footprint, the building and its
+  shops — i.e. it moves buildings, in both shipped cities. The gate counts them and refuses
+  to let the count grow.
+- **Two strokes' carriageways can OVERLAP in plan** near the same near-collinear junctions,
+  by up to 45 m of a 75 m stroke, so "how high is the road here" has two answers differing by
+  1.6 m. Same root cause. The gate measures a block's kerb against the carriageway it
+  actually runs along, which is the honest question; the overlap itself is untouched.
+- **A carriageway's rows are emitted at exactly ±`StreetWidth()/2` while one section point of
+  `Yelukhdidru`/3000 is 0.19 m inside that**, so the surface overhangs its own boundary there
+  by a couple of decimetres and, on a 17 % grade, shows a 0.13 m step. One corner of 9878.
+  Left; the junction-cap gate asserts on the carriageway's own vertex, where the question is
+  unambiguous, and says so.
+- **0.2 % of the sampled kerb positions of `Yelukhdidru`/3000 are not covered by their own
+  stroke's carriageway at all** (48 of 22194; 8 of 3546 on `seed000`/1500; none on the other
+  two). Identical in the flat city, so it is plan coverage and pre-existing. Bounded by the
+  gate at 0.5 %.
+- **`DeckCollider` still tilts across each junction footprint**, and its own height expression
+  is still inline — §2.3, unchanged, and now the only remaining inline copy of the road height
+  in the streets operator is not this one but the flat city's fragment floor plane, which is
+  built from `AverageHeight` and is a different quantity.

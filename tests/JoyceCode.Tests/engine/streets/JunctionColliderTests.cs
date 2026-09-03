@@ -422,7 +422,7 @@ public class JunctionColliderTests
             var cap = JunctionCollider.For(
                 sp.GetSectionArray(),
                 Vector3.Zero,
-                JunctionCollider.SurfaceHeightOf(cd.StreetHeightSource, sp),
+                RoadSurface.HeightAtJunction(cd.StreetHeightSource, sp),
                 Thickness);
 
             Assert.True(cap.IsUsable);

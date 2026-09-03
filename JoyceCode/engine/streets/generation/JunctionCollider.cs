@@ -95,28 +95,6 @@ internal readonly struct JunctionCollider
 
 
     /**
-     * World height of one junction's cap.
-     *
-     * A junction is one node in the stroke graph, so it has exactly one, and every stroke
-     * meeting there reads the same number - which is what keeps a non-planar network
-     * consistent at its seams.
-     *
-     * Here rather than at the call site because that call site is inside a fragment
-     * operator, where nothing can check it: reading the city AVERAGE instead of the
-     * junction's own relaxed height compiles, keeps a flat city bit for bit identical,
-     * and puts a pancake at the mean height over every junction of a terrain-following
-     * one. It is not caught by ClusterGroundHeightTests either, since the operator is
-     * already on that allow list for its flat floor plane.
-     */
-    internal static float SurfaceHeightOf(IStreetHeightSource heightSource, in StreetPoint sp)
-    {
-        return heightSource.GroundHeightAt(sp)
-               + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
-               + sp.LevelElevation;
-    }
-
-
-    /**
      * @param sectionPoints
      *     StreetPoint.GetSectionArray(), in cluster-local plan coordinates - the same
      *     list the cap's mesh is built from, so the two cannot disagree about the shape.
