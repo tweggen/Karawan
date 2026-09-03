@@ -615,36 +615,14 @@ public class StreetPoint
                 throw new InvalidOperationException($"StreetPoint.getSectionArray(): Mismatch of angle array.");
             }
 
-            geom.Line sp = null;
-            if (prev.A == this)
-            {
-                sp = new geom.Line(prev.A.Pos, prev.B.Pos);
-            }
-            else
-            {
-                sp = new geom.Line(prev.B.Pos, prev.A.Pos);
-            }
-
-            geom.Line sc = null;
-            if (curr.A == this)
-            {
-                sc = new geom.Line(curr.A.Pos, curr.B.Pos);
-            }
-            else
-            {
-                sc = new geom.Line(curr.B.Pos, curr.A.Pos);
-            }
-
             /*
-             * Normals. 
-             * If I move from outside to this street point, the normal shall point
-             * to the left side. That means, the normal points from the current to
-             * the previous stroke.
+             * The two arms' unit directions, both pointing OUT of this junction. Taken from
+             * the strokes' own cached unit vectors rather than renormalised here, so that
+             * the section point lands on exactly the line every consumer measures against
+             * (Stroke.Normal is the same unit vector rotated).
              */
-            Vector2 np = sp.Normal();
-            // if( prev.b == this ) { np.x = -np.x; np.y = -np.y; }
-            Vector2 nc = sc.Normal();
-            // if( curr.b == this ) { nc.x = -nc.x; nc.y = -nc.y; }
+            Vector2 dp = prev.A == this ? prev.Unit : -prev.Unit;
+            Vector2 dc = curr.A == this ? curr.Unit : -curr.Unit;
 
             /*
              * Copy paste from generate street operator.
@@ -653,71 +631,24 @@ public class StreetPoint
             float currHalfStreetWidth = curr.StreetWidth() / 2.0f;
 
             /*
-             * Scale each of the normals to properly move the line.
-             * Compute the offets.
+             * The mitre of the two carriageway edges, bounded relative to the street width.
+             *
+             * This used to intersect the two offset lines through geom.Line.IntersectInfinite
+             * and substitute an averaged offset whenever the answer came back further than
+             * 63.2 m out. Both halves were wrong: the intersection is computed in absolute
+             * world coordinates and loses every significant digit when the two arms are
+             * nearly collinear - which is when this fires - and testing only the DISTANCE of
+             * the answer cannot notice a cancelled intersection that happens to land nearby.
+             * See engine.streets.generation.SectionMitre and §7q.
              */
-            float opx = np.X * (-prevHalfStreetWidth);
-            float opy = np.Y * (-prevHalfStreetWidth);
+            Vector2 newI = Pos + generation.SectionMitre.OffsetOf(
+                dp, dc, prevHalfStreetWidth, currHalfStreetWidth,
+                generation.SectionMitre.MitreLimit, out bool isClamped);
 
-            float ocx = nc.X * (currHalfStreetWidth);
-            float ocy = nc.Y * (currHalfStreetWidth);
-
-            sp.Move(opx, opy);
-            sc.Move(ocx, ocy);
-
-            Nullable<Vector2> i0 = sp.IntersectInfinite(sc);
-            Vector2 i;
-            Vector2 newI;
-
-            bool doUseSide = false;
-            if (null == i0)
+            if (isClamped)
             {
-                if (myVerbose) Trace(_dc, $"no intersect");
-                doUseSide = true;
-                // Please the compiler and assign newI a value that later is overridden.
-                newI.X = newI.Y = 0;
-            }
-            else
-            {
-                i = i0.Value;
-
-                /*
-                 * If the intersection is too far away from the streetpoint, these are pretty in-line
-                 * streets, so take their common border.
-                 */
-                float dx = i.X - Pos.X;
-                float dy = i.Y - Pos.Y;
-                float dist2 = dx * dx + dy * dy;
-                if (dist2 > 4000f)
-                {
-                    if (myVerbose) Trace(_dc, $"farout intersect");
-                    /*
-                     * If this intersection is too far away, we use the point offset by the 
-                     * average of both normals.
-                     */
-                    var n = new Vector2(nc.X - np.X, nc.Y - np.Y);
-                    n = n / n.Length();
-                    var averW = (prevHalfStreetWidth + currHalfStreetWidth) / 2f;
-                    newI = new Vector2(Pos.X + n.X * averW, Pos.Y + n.Y * averW);
-                }
-                else
-                {
-                    if (myVerbose) Trace(_dc, $"close intersect");
-                    newI = i;
-                }
-            }
-
-            if (doUseSide)
-            {
-                // Trace( 'getSectionArray(): no intersection.' );
-                /*
-                 * If the streets are parallel and the sides in line, use the offset
-                 * street point itself as an intersection, using the average street width.
-                 */
-                float averHalfStreetWidth = (prevHalfStreetWidth + currHalfStreetWidth) / 2f;
-                var osx = nc.X * averHalfStreetWidth;
-                var osy = nc.Y * averHalfStreetWidth;
-                newI = new Vector2(Pos.X + osx, Pos.Y + osy);
+                Trace(_dc, $"StreetPoint {Id}: the mitre between strokes {prev.Sid} and "
+                           + $"{curr.Sid} was cut back to the mitre limit.");
             }
 
             if (myVerbose)

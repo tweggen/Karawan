@@ -6,7 +6,7 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7o, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-03 (§7p).
+**Last updated:** 2026-09-03 (§7q).
 
 ---
 
@@ -58,6 +58,14 @@ the last plan-level defect this page carried as *found and not fixed*, it was pr
 identical in the flat city, and **the ledger had the angle condition backwards**: it is the
 ACUTE corner that fails, not the obtuse one. See **(k)** below and §7p.
 
+**Also cleared 2026-09-03:** **(l)** — a junction corner was not on either of the streets that
+meet there. Present and identical in the flat city, and **the diagnosis this page and §7o
+carried was wrong twice over**: the branch everyone blamed fires at 180°, not at a hairpin,
+and it is *right* about that case; the damage was `geom.Line.IntersectInfinite` losing every
+significant digit in absolute world coordinates. **`street-geometry.json` moved for all five
+cities and is the first geometry baseline this work stream has rewritten.** See **(l)** below
+and §7q.
+
 **Part 1 IS NOW CLEAR, with one deliberate remainder: what an intercity line IS.** The
 intercity tram rides its own track; the track's own shape - graded embankment, viaduct, or
 a deliberately elevated line - is a design decision the owner has not made, and the three
@@ -104,10 +112,11 @@ blocks, 3547 boundary edges**. Terrain baseline: gradient over one 20 m cell med
 **Ranked.** (c) first because it is the largest surface defect and fixing it also fixes
 one of (d)'s three causes. (a) second because it is the largest *visible* one.
 
-**As of 2026-09-03 all of them are done**, bar the design decision under (e). Six of them
+**As of 2026-09-03 all of them are done**, bar the design decision under (e). Seven of them
 moved the default flat city, each measured and stated before it landed: §7i's `Placer`
 reference junctions, §7j's un-culled faces, §7l's 0.35 m house drop, §7m's 0.85 m quest
-marker, §7n's intercity tram ends and starting coins, and §7p's citizen walk.
+marker, §7n's intercity tram ends and starting coins, §7p's citizen walk, and §7q's junction
+corners — the last of which is also the first to move a `street-geometry.json` baseline.
 
 ---
 
@@ -858,9 +867,9 @@ one window and the rule reduces to what was emitted before.
 ⚠️ **Found and NOT fixed, all plan-level and all from the same root:** 11 of 2477 block edges
 in `Yelukhdidru`/3000 are not on their own stroke's edge at all (up to 62 m off), two strokes'
 carriageways can overlap by 45 m, and 0.2 % of kerb positions are not covered by their own
-carriageway (identical in the flat city). All three come from
-`StreetPoint._computeSectionArrayNoLock`'s `dist2 > 4000` fallback for near-collinear arms,
-and moving a section point moves the block outline, the estate, the building and its shops.
+carriageway (identical in the flat city). All three were written down to
+`StreetPoint._computeSectionArrayNoLock`'s `dist2 > 4000` fallback for near-collinear arms.
+**⚠️ That attribution is wrong and was corrected on 2026-09-03 — see (l) below and §7q.**
 
 ### ✅ (k) Half of the ordinary citizen's walk was in the road — FIXED 2026-09-03
 
@@ -917,6 +926,64 @@ index, which is already wrong for every route that is not the block loop -
 longer than its block has corners indexes past the end of `GetDelims()`. And
 `PedestrianRoute.SidewalkOffset` is still a constant 1.5 m, so the satnav walker keeps the
 width half of this defect (not the side half, which (g) fixed).
+
+### ✅ (l) A junction corner was on neither of its own streets — FIXED 2026-09-03
+
+Recorded by §7o as *found and NOT fixed*, and the last plan-level item this page carried.
+Full write-up in [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) §7q.
+
+**What this page and §7o got wrong, in order of how much it mattered:**
+
+1. ⚠️ **The branch both blamed is innocent, and its own code comment was right.** §7o wrote
+   the eleven off-line block edges down to `_computeSectionArrayNoLock`'s `dist2 > 4000`
+   fallback *"for near-collinear arms"*, and the brief for this round reasoned it must be a
+   hairpin — two arms at a shallow angle, where the mitre `w/sin(θ/2)` runs away. Measured
+   over five generated cities and 4552 section points: **all 46 corners that take the
+   fallback, and all 427 that take the parallel branch, are at 179.9999–180.2983°**, which is
+   the *straight-through* case the shipped comment claims (*"these are pretty in-line
+   streets"*), and the averaged offset it substitutes lands **on** both edge lines there.
+2. ⚠️ **The ill-conditioned-normalise hypothesis is refuted by one number.** The fallback
+   normalises `nc − np`, whose length is `2 sin(θ/2)`; it was measured at **2.0000, its
+   maximum**, in every one of the 473 cases. The vector is as far from zero as it can be.
+3. **The defect is `geom.Line.IntersectInfinite`.** It solves by Cramer on homogeneous line
+   coordinates whose constant term is `A.Y*B.X − A.X*B.Y`; 3 km from the origin that is 2·10⁶
+   and the solve forms a difference of two products of 2·10⁸, so for two nearly parallel lines
+   every significant digit cancels. The answer comes back **6.3 to 56.3 m from the junction —
+   inside the 63.2 m guard, and accepted** — and up to **27.3 m off both of the lines it is
+   supposed to be the crossing of**.
+4. **Five of the eleven are not this at all.** Their corner is on its own edge lines to
+   10⁻⁵ m; what is wrong is that the block ring **skips a junction**, so `delims[i].Stroke`
+   is not the street that edge runs along. That is `QuarterGenerator`'s trace, it is untouched,
+   and it is the new *found and not fixed*.
+5. **Clipper's default mitre limit of 2 is not the number**, and it was measured before being
+   discarded: over 7544 corners it cuts back 888 of them — one in eight — and leaves **1018
+   block edges more than 0.25 m off their own carriageway**, which is worse than the defect.
+   The limit is 3, which cuts back 42, of which 32 are degenerate however high the limit goes.
+6. **The bevel — two corners at an over-long junction, one on each arm's own edge line — was
+   costed and not built.** It is the only construction that puts *every* corner on both lines
+   exactly, but the section array's length is contract: `QuarterGenerator` and
+   `GenerateNavMapOperator` both index arms and sections together, and every block cornering
+   on such a junction would gain a corner. For ten corners in eight cities that is not the
+   trade.
+
+**Both cities move.** Section points: median 0.00012 m, p95 0.0095, worst 56.07 m; 40 of 6084
+move more than a metre. On `Yelukhdidru`/3000, **27 blocks of 445 have a corner that moves
+more than 5 cm and six move by more than a metre** — their estate, footprint, building, shops,
+TALE locations and nav crossings with them. Seventh deliberate move of the default flat city,
+after §7i, §7j, §7l, §7m, §7n and §7p.
+
+⚠️ **`street-geometry.json` moved for all five recorded cities** — four by sub-millimetre
+rounding with every vertex and index unchanged, and `seed000@1500` by 12 vertices and 18
+indices. Old and new hashes are recorded in §7q. **No network fingerprint moved.**
+
+`engine.streets.generation.SectionMitre`, `SidewalkRing.MitreOf`;
+`tests/JoyceCode.Tests/engine/streets/SectionMitreTests.cs`.
+
+**Found and NOT fixed:** the five block rings that skip a junction (above, with three worked
+examples); kerb coverage, which is still 0.2–1.2 % and went slightly *up* on two of ten cities
+because the corrected corners move onto ground the carriageway does not reach;
+`geom.Line.IntersectInfinite` itself, which now has one caller left in the shipping tree and
+is a boolean rectangle test.
 
 ### ✅ (i) The `#if false` operator and the missing drift test — the test now exists
 

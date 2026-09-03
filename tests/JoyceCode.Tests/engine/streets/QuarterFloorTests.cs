@@ -409,7 +409,16 @@ public class QuarterFloorTests
 
             centroid /= delims.Count;
 
-            Assert.Equal(sum / delims.Count, q.GroundHeightAt(centroid), 2);
+            /*
+             * An absolute bound rather than Assert.Equal(..., 2), which ROUNDS both sides to
+             * two decimals and so straddles: a corner moving by 2e-6 m took 18.3149986 and
+             * 18.3150005 to different sides of 18.315 and failed a property that is exact.
+             * Two decimals is +-0.005, which this asserts directly; the measured worst is
+             * 0.0000 m over whole cities.
+             */
+            Assert.True(Single.Abs(sum / delims.Count - q.GroundHeightAt(centroid)) < 0.005f,
+                $"the pad at the centroid is {q.GroundHeightAt(centroid)} against a mean "
+                + $"corner height of {sum / delims.Count}");
             ++nBlocks;
         }
 
