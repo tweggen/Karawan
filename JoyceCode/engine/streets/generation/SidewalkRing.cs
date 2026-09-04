@@ -128,7 +128,7 @@ public static class SidewalkRing
         var ramps = new float[n];
         for (int i = 0; i < n; ++i)
         {
-            ramps[i] = width + _mitreReach(dirs[(i + n - 1) % n], dirs[i], isCcw, width);
+            ramps[i] = width + MitreReachOf(dirs[(i + n - 1) % n], dirs[i], isCcw, width);
         }
 
         var edges = new List<CapInsetEdge>(n);
@@ -136,7 +136,7 @@ public static class SidewalkRing
         {
             Vector2 o0 = _plan(outer[i]);
             Vector2 d = dirs[i];
-            Vector2 nrm = _inward(d, isCcw);
+            Vector2 nrm = InwardNormalOf(d, isCcw);
             float l = lens[i];
 
             float rStart = ramps[i];
@@ -194,22 +194,51 @@ public static class SidewalkRing
      * where the answer does not matter - the two edges are then almost one line and their
      * insets are almost collinear too.
      */
-    private static float _mitreReach(
+    public static float MitreReachOf(
         in Vector2 dPrev, in Vector2 dNext, bool isCcw, float width)
     {
-        Vector2 nPrev = _inward(dPrev, isCcw);
-        Vector2 nNext = _inward(dNext, isCcw);
-
-        float denom = 1f + Vector2.Dot(nPrev, nNext);
-        if (denom < 1e-4f)
+        if (!MitreOf(InwardNormalOf(dPrev, isCcw), InwardNormalOf(dNext, isCcw), width,
+                out Vector2 m))
         {
             return 3f * width;
         }
 
-        Vector2 m = width * (nPrev + nNext) / denom;
-        float reach = Single.Abs(Vector2.Dot(m, dNext));
+        return Single.Min(Single.Abs(Vector2.Dot(m, dNext)), 3f * width);
+    }
 
-        return Single.Min(reach, 3f * width);
+
+    /**
+     * The corner point of a ring offset inward by one width - the mitre.
+     *
+     * The one point that is `width` from BOTH of the edge lines meeting at a corner, on
+     * the inward side of each, expressed as an offset FROM the corner. It is the classical
+     * inset corner, and it is the same expression whichever way the corner turns: at an
+     * interior angle t its length is width/sin(t/2), so it grows without bound as the
+     * corner sharpens - which is why every caller has to bound it, and why this returns the
+     * raw vector rather than a point, so that the bound belongs to whoever knows what it is
+     * for.
+     *
+     * §7k rejected the mitre as a vertex of the pavement SURFACE, and that reasoning does
+     * not carry over to a point: a shared vertex is bad because the two rim cells it serves
+     * want two different heights for it, and a single position has exactly one height and
+     * serves nobody.
+     *
+     * @returns false for a corner that reverses on itself (t = 0), where there is no such
+     *     point at any finite distance.
+     */
+    public static bool MitreOf(
+        in Vector2 nPrev, in Vector2 nNext, float width, out Vector2 m)
+    {
+        float denom = 1f + Vector2.Dot(nPrev, nNext);
+        if (denom < 1e-4f)
+        {
+            m = Vector2.Zero;
+            return false;
+        }
+
+        m = width * (nPrev + nNext) / denom;
+
+        return Single.IsFinite(m.X) && Single.IsFinite(m.Y);
     }
 
 
@@ -222,17 +251,39 @@ public static class SidewalkRing
     /**
      * The unit normal pointing into the polygon for an edge running in direction d.
      */
-    private static Vector2 _inward(in Vector2 d, bool isCcw)
+    public static Vector2 InwardNormalOf(in Vector2 d, bool isCcw)
         => isCcw ? new Vector2(-d.Y, d.X) : new Vector2(d.Y, -d.X);
 
 
     private static float _area2(in IList<Vector3> ring)
+        => SignedArea2Of(_planOf(ring));
+
+
+    private static Vector2[] _planOf(in IList<Vector3> ring)
+    {
+        var p = new Vector2[ring.Count];
+        for (int i = 0; i < ring.Count; ++i) p[i] = _plan(ring[i]);
+
+        return p;
+    }
+
+
+    /**
+     * Twice the ring's signed area in plan - positive counterclockwise.
+     *
+     * The one place the question "which side of an edge is the inside" is answered.
+     * Deliberately derived from the ring rather than assumed from how the generator
+     * happens to trace blocks: all 659 blocks of the baseline cities come out clockwise
+     * today, so a constant would be right and would silently turn every pavement, and
+     * every walk on one, inside out the day the tracing order changed.
+     */
+    public static float SignedArea2Of(in IList<Vector2> ring)
     {
         int n = ring.Count;
         float area2 = 0f;
         for (int i = 0; i < n; ++i)
         {
-            Vector2 a = _plan(ring[i]), b = _plan(ring[(i + 1) % n]);
+            Vector2 a = ring[i], b = ring[(i + 1) % n];
             area2 += a.X * b.Y - b.X * a.Y;
         }
 
@@ -325,17 +376,26 @@ public static class SidewalkRing
     }
 
 
+    private static bool _containsInPlan(in IList<Vector3> poly, in Vector2 p)
+        => ContainsInPlan(_planOf(poly), p);
+
+
     /**
      * Crossing-number point in polygon, in plan.
+     *
+     * On the boundary the answer is a coin toss, and that is not a defect of this
+     * function: a point that lies exactly ON a block's outline is neither on the pavement
+     * nor in the road. Callers that place something have to keep clear of the line rather
+     * than ask which side of it they landed on.
      */
-    private static bool _containsInPlan(in IList<Vector3> poly, in Vector2 p)
+    public static bool ContainsInPlan(in IList<Vector2> poly, in Vector2 p)
     {
         int n = poly.Count;
         bool inside = false;
 
         for (int i = 0, j = n - 1; i < n; j = i++)
         {
-            Vector2 a = _plan(poly[i]), b = _plan(poly[j]);
+            Vector2 a = poly[i], b = poly[j];
             if (a.Y > p.Y != b.Y > p.Y
                 && p.X < (b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y) + a.X)
             {

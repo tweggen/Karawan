@@ -15,9 +15,13 @@ namespace JoyceCode.Tests.builtin.tools;
  * The walk round a block, and what each of its segments says it is.
  *
  * QuarterLoopRouteGenerator turns a block into the loop NPCs walk: one segment per
- * boundary edge, starting at that edge's corner and offset 1.5 m onto the pavement. Each
+ * boundary edge, starting beside that edge's corner and offset onto the pavement. Each
  * segment carries a PositionDescription naming the junction it leaves and the street it
  * runs along, and SegmentNavigator rewrites those from the delimiter as the walker moves.
+ *
+ * One segment per corner is not a detail of taste: SegmentNavigator indexes
+ * Quarter.GetDelims() with a SEGMENT index, so a route with two waypoints per edge asks a
+ * delimiter list of n for element 2n-1.
  *
  * Those names were one edge out. The generator labelled the segment leaving corner i with
  * delimiter i's junction and stroke, and a delimiter's junction and stroke used to belong
@@ -105,7 +109,18 @@ public class QuarterLoopRouteTests
      *
      * The plan geometry of the loop is what actually moves NPCs, and it is unchanged by
      * the delimiter correction - checked here so that "only the labels moved" is a
-     * measured claim rather than an assurance. The 1.5 m is the step onto the pavement.
+     * measured claim rather than an assurance.
+     *
+     * **Superseded, not re-baselined.** This used to read
+     *
+     *     Assert.True((v2 - delims[i].StartPoint).Length() < 1.51f, ...)
+     *
+     * on the grounds that "the 1.5 m is the step onto the pavement". The step is now the
+     * corner's own mitre, whose length is the offset divided by sin(half the interior
+     * angle) and therefore longer than the offset at every corner that turns - bounded by
+     * the block's own pavement width rather than by a constant, which is the stronger
+     * statement and the one that means "still on the pavement". Measured over the four
+     * baselines the waypoint stands 0.5 to 3.6 m from its corner.
      */
     [Theory]
     [InlineData("seed000", 500f)]
@@ -134,9 +149,10 @@ public class QuarterLoopRouteTests
                 var v3 = route.Segments[i].Position - cd.Pos;
                 var v2 = new Vector2(v3.X, v3.Z);
 
-                Assert.True((v2 - delims[i].StartPoint).Length() < 1.51f,
+                Assert.True(
+                    (v2 - delims[i].StartPoint).Length() < q.SidewalkWidth + 1e-3f,
                     $"segment {i} starts {(v2 - delims[i].StartPoint).Length():F2} m from "
-                    + "its own corner");
+                    + $"its own corner, off a {q.SidewalkWidth} m pavement");
                 Assert.True(
                     (v2 - delims[(i + 1) % n].StartPoint).Length()
                     > (v2 - delims[i].StartPoint).Length(),
@@ -147,6 +163,208 @@ public class QuarterLoopRouteTests
         }
 
         Assert.True(nSegments > 0);
+    }
+
+
+    /**
+     * Is this block edge on the carriageway its own stroke describes?
+     *
+     * StreetPoint._computeSectionArrayNoLock falls back for near collinear arms once their
+     * offset lines meet more than 63 m out, and the section points it then produces are not
+     * on their stroke's edge at all - 11 of the 2477 block edges of Yelukhdidru/3000, by up
+     * to 62 m. That is a PLAN defect in the block outline itself, it is identical in the
+     * flat city, and it is not what this file is about: those corners are named and
+     * excluded rather than averaged in. Same predicate as KerbSeamTests.
+     */
+    private static bool _isOffItsOwnStroke(QuarterDelim d, in Vector2 a, in Vector2 b)
+    {
+        if (null == d.Stroke) return true;
+
+        float Off(in Vector2 p) => Single.Abs(
+            Single.Abs(Vector2.Dot(p - d.Stroke.A.Pos, d.Stroke.Normal))
+            - d.Stroke.StreetWidth() / 2f);
+
+        return Single.Max(Off(a), Off(b)) > 1.0f;
+    }
+
+
+    /**
+     * THE gate: the ordinary citizen never leaves its own block.
+     *
+     * The block's outline IS the kerb, so a waypoint outside it stands in the carriageway
+     * at pavement height. The shipped construction offset 1.5 m perpendicular to the edge
+     * LEAVING each corner and never consulted the edge arriving at it, which puts the point
+     * inside exactly when the interior angle exceeds 90 degrees - and the median block
+     * corner is 90.1 to 94.0 degrees.
+     *
+     * Measured at the waypoints AND at ten positions along every segment, because a walker
+     * walks the segments and a construction can be right at its corners and wrong between
+     * them. The shipped expression is carried alongside as the baseline, so this cannot be
+     * satisfied by a measurement too coarse to have seen the defect.
+     */
+    [Theory]
+    [MemberData(nameof(Cities))]
+    public void TheLoopWalkerNeverLeavesItsOwnBlock(string idString, float size)
+    {
+        var (cd, _, quarters) = _terrainCity(idString, size);
+
+        int nOutside = 0, nSamples = 0, nWasOutside = 0, nWaypoints = 0;
+        float worst = 0f;
+        string worstWhere = "";
+
+        foreach (var q in quarters.GetQuarters())
+        {
+            var delims = q.GetDelims();
+            int n = delims.Count;
+            if (n < 3) continue;
+
+            var ring = new List<Vector2>(n);
+            foreach (var d in delims) ring.Add(d.StartPoint);
+
+            var route = new QuarterLoopRouteGenerator
+            {
+                ClusterDesc = cd,
+                Quarter = q
+            }.GenerateRoute();
+
+            for (int i = 0; i < n; ++i)
+            {
+                int ip = (i + n - 1) % n;
+                if (_isOffItsOwnStroke(delims[i], ring[i], ring[(i + 1) % n])
+                    || _isOffItsOwnStroke(delims[ip], ring[ip], ring[i]))
+                {
+                    continue;
+                }
+
+                Vector3 a3 = route.Segments[i].Position - cd.Pos;
+                Vector3 b3 = route.Segments[(i + 1) % n].Position - cd.Pos;
+                Vector2 a = new(a3.X, a3.Z), b = new(b3.X, b3.Z);
+
+                /*
+                 * The expression that shipped, written out so this is a comparison.
+                 */
+                Vector2 d0 = Vector2.Normalize(ring[(i + 1) % n] - ring[i]);
+                Vector2 was = ring[i] + 1.5f * new Vector2(d0.Y, -d0.X);
+                if (!global::engine.streets.generation.SidewalkRing.ContainsInPlan(ring, was))
+                {
+                    ++nWasOutside;
+                }
+
+                ++nWaypoints;
+
+                for (int k = 0; k <= 10; ++k)
+                {
+                    Vector2 p = Vector2.Lerp(a, b, k / 10f);
+                    ++nSamples;
+
+                    if (global::engine.streets.generation.SidewalkRing.ContainsInPlan(ring, p))
+                    {
+                        continue;
+                    }
+
+                    ++nOutside;
+                    float dOut = _distanceToRing(ring, p);
+                    if (dOut > worst)
+                    {
+                        worst = dOut;
+                        worstWhere = $"the block at {q.GetCenterPoint()}, segment {i} at "
+                                     + $"t={k / 10f:F1}";
+                    }
+                }
+            }
+        }
+
+        Assert.True(nWaypoints > 4, $"only {nWaypoints} corners were measurable");
+
+        Assert.True(0 == nOutside,
+            $"{idString}/{size}: {nOutside} of {nSamples} positions on the citizens' walk "
+            + $"are outside their own block, worst {worst:F2} m out at {worstWhere}");
+
+        /*
+         * ...and the shipped construction was, at a third of its corners at least. Without
+         * this the gate above passes on any city whose blocks happen to be convex enough.
+         */
+        Assert.True(nWasOutside * 10 > nWaypoints * 3,
+            $"{idString}/{size}: the shipped expression was outside at only {nWasOutside} "
+            + $"of {nWaypoints} corners, so this measurement cannot distinguish it from the "
+            + "walk and proves nothing");
+    }
+
+
+    private static float _distanceToRing(IList<Vector2> ring, in Vector2 p)
+    {
+        float best = Single.MaxValue;
+        for (int i = 0; i < ring.Count; ++i)
+        {
+            Vector2 a = ring[i], b = ring[(i + 1) % ring.Count];
+            Vector2 ab = b - a;
+            float l2 = ab.LengthSquared();
+            float t = l2 < 1e-9f ? 0f : Math.Clamp(Vector2.Dot(p - a, ab) / l2, 0f, 1f);
+            best = Single.Min(best, (p - (a + t * ab)).Length());
+        }
+
+        return best;
+    }
+
+
+    /**
+     * ...and it walks the block's OWN pavement, not a constant width of it.
+     *
+     * Both ends of a segment are one offset from the same edge line, so the whole segment
+     * is - and the offset is half the block's own SidewalkWidth, capped at the 1.5 m that
+     * shipped. A 1 m pavement cannot hold a walker 1.5 m in, and the four baseline cities
+     * contain no 1 m pavement at all, so what this gate can actually catch on real data is
+     * a walk that uses somebody else's width: half of 2 m is 1 m, and 1.5 m on a 2 m
+     * pavement is three quarters of the way across it.
+     */
+    [Theory]
+    [MemberData(nameof(Cities))]
+    public void TheLoopWalkerKeepsToTheBlocksOwnPavementWidth(string idString, float size)
+    {
+        var (cd, _, quarters) = _terrainCity(idString, size);
+        int nSamples = 0;
+
+        foreach (var q in quarters.GetQuarters())
+        {
+            var delims = q.GetDelims();
+            int n = delims.Count;
+            if (n < 3) continue;
+
+            float limit = global::engine.streets.generation.PavementWalk.OffsetFor(
+                q.SidewalkWidth);
+
+            var route = new QuarterLoopRouteGenerator
+            {
+                ClusterDesc = cd,
+                Quarter = q
+            }.GenerateRoute();
+
+            for (int i = 0; i < n; ++i)
+            {
+                Vector2 e0 = delims[i].StartPoint, e1 = delims[(i + 1) % n].StartPoint;
+                if ((e1 - e0).Length() < 1e-3f) continue;
+
+                Vector2 d = Vector2.Normalize(e1 - e0);
+
+                Vector3 a3 = route.Segments[i].Position - cd.Pos;
+                Vector3 b3 = route.Segments[(i + 1) % n].Position - cd.Pos;
+                Vector2 a = new(a3.X, a3.Z), b = new(b3.X, b3.Z);
+
+                for (int k = 0; k <= 10; ++k)
+                {
+                    Vector2 p = Vector2.Lerp(a, b, k / 10f);
+                    float perp = Single.Abs(d.X * (p.Y - e0.Y) - d.Y * (p.X - e0.X));
+                    ++nSamples;
+
+                    Assert.True(perp <= limit + 1e-2f,
+                        $"{idString}/{size}: on a {q.SidewalkWidth} m pavement the walk is "
+                        + $"{perp:F3} m from its own kerb at t={k / 10f:F1} of segment {i}, "
+                        + $"against an offset of {limit:F3}");
+                }
+            }
+        }
+
+        Assert.True(nSamples > 40);
     }
 
 
@@ -296,22 +514,35 @@ public class QuarterLoopRouteTests
 
 
     /**
-     * The default FLAT city's loop is unchanged, float for float.
+     * The default FLAT city's loop moves in PLAN, and not by a float in height.
      *
-     * Both the height and the plan position, and as EQUALITY rather than within a
+     * **Superseded, not re-baselined.** This gate used to be
+     * `AFlatCityLoopIsUnchangedFloatForFloat` and asserted all three components equal to
+     * the shipped expression
+     *
+     *     v3This - 1.5f * Cross(Normalize(v3Next - v3This), UnitY)
+     *
+     * *"Both the height and the plan position, and as EQUALITY rather than within a
      * tolerance: on a flat block every corner is at the average, so the boundary
-     * interpolation is `h + t * 0`, which is h exactly, and the two constants are added in
-     * the same order they were. The direction is taken in plan now instead of at a common
-     * height, and that too is the same vector - both ends always had the same Y.
+     * interpolation is h + t * 0, which is h exactly."*
+     *
+     * The height half of that is still true and is still asserted as equality. The plan
+     * half cannot be: the defect being fixed is a plan defect, present and identical in the
+     * flat city, so **every citizen's walk in the shipped flat city moves** - median 1.13 to
+     * 1.50 m, p95 3.2 to 3.5 m, worst 4.11 m, and exactly 0.000 m at the 5 % of corners
+     * whose two edges are collinear, where the mitre reduces to the old expression. It is
+     * the fifth deliberate move of the default flat city in this work stream, after §7i,
+     * §7j, §7l, §7m and §7n.
      */
     [Theory]
     [MemberData(nameof(Cities))]
-    public void AFlatCityLoopIsUnchangedFloatForFloat(string idString, float size)
+    public void AFlatCityLoopMovesInPlanOnlyAndNotInHeight(string idString, float size)
     {
         var (cd, quarters) = _city(idString, size);
         cd.Pos = new Vector3(1500f, 33f, -800f);
 
         int nSegments = 0;
+        var moved = new List<float>();
 
         foreach (var q in quarters.GetQuarters())
         {
@@ -343,14 +574,35 @@ public class QuarterLoopRouteTests
                     Vector3.Normalize(v3Next - v3This), Vector3.UnitY);
                 Vector3 was = v3This - 1.5f * vu3Right + cd.Pos;
 
-                Assert.Equal(was.X, route.Segments[i].Position.X);
+                /*
+                 * The height does not move at all, and as equality: every corner of a flat
+                 * block is at the average, so the boundary interpolation is h + t * 0 and
+                 * the two constants are added in the order they were added before. Moving
+                 * the waypoint in plan therefore cannot move it in height.
+                 */
                 Assert.Equal(was.Y, route.Segments[i].Position.Y);
-                Assert.Equal(was.Z, route.Segments[i].Position.Z);
+
+                var now = route.Segments[i].Position;
+                float d = new Vector2(now.X - was.X, now.Z - was.Z).Length();
+                moved.Add(d);
 
                 ++nSegments;
             }
         }
 
         Assert.True(nSegments > 0);
+
+        moved.Sort();
+        Assert.True(moved[moved.Count / 2] > 0.4f,
+            $"{idString}/{size}: the flat city's walk moved only "
+            + $"{moved[moved.Count / 2]:F3} m at the median, so either the fix is not "
+            + "applied here or this measurement cannot see it");
+        Assert.True(moved[^1] < 6.1f,
+            $"{idString}/{size}: the flat city's walk moved {moved[^1]:F2} m at the worst "
+            + "corner, which is more than any block's pavement is wide");
+        Assert.True(moved[0] < 0.05f,
+            $"{idString}/{size}: the least moved corner still moved {moved[0]:F3} m, so "
+            + "the collinear case - where the mitre reduces to the shipped expression and "
+            + "nothing at all happens - is not exercised here");
     }
 }

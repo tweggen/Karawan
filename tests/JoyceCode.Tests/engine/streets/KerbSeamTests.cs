@@ -47,12 +47,23 @@ public class KerbSeamTests
      * quantises junction positions onto - i.e. it is not a plan gap, and that was measured
      * before any height was looked at.
      *
-     * The exceptions are a separate, PLAN defect and are counted rather than tolerated:
-     * StreetPoint._computeSectionArrayNoLock falls back to an averaged offset when two arms
-     * are so nearly collinear that their offset lines meet more than 63 m out, and such a
-     * corner lands up to 62 m off the line. 11 of 2477 edges in Yelukhdidru/3000 and none at
-     * all in the other three. Nothing between 0.25 m and 1 m anywhere, so this separates the
-     * two populations rather than cutting through one.
+     * The exceptions are a separate, PLAN defect and are counted rather than tolerated.
+     *
+     * ⚠️ **This comment used to say they were all one defect, and that was wrong.** Its text
+     * was: *"StreetPoint._computeSectionArrayNoLock falls back to an averaged offset when two
+     * arms are so nearly collinear that their offset lines meet more than 63 m out, and such
+     * a corner lands up to 62 m off the line. 11 of 2477 edges in Yelukhdidru/3000 and none
+     * at all in the other three."* The count was right and the cause was not. §7q found the
+     * 11 to be two unrelated populations: six were the section point itself, off its own edge
+     * lines because `geom.Line.IntersectInfinite` loses every significant digit for two
+     * nearly parallel lines in absolute world coordinates, and those are gone; the remaining
+     * FIVE are corners whose block ring skips a junction, so `delims[i].Stroke` is not the
+     * street that edge runs along at all - a QuarterGenerator defect that no section point
+     * can fix. The distance fallback, which the old text blamed, fires only at 179.9999 to
+     * 180.2983 degrees and is right about that case.
+     *
+     * Nothing between 0.25 m and 1 m anywhere, so this separates the two populations rather
+     * than cutting through one.
      */
     private const float PlanTolerance = 0.25f;
 
@@ -78,6 +89,17 @@ public class KerbSeamTests
          * same way StreetGeometryTests found it - by instrumenting the branch and scanning.
          */
         yield return new object[] { "seed008", 500f };
+
+        /*
+         * ⚠️ `seed027`/1500 - the densest near-collinear seed of forty swept at three sizes,
+         * and where §7q's mitre limit cuts back the most corners - is deliberately NOT here.
+         * Its kerb is uncovered by its own carriageway at 1.02 % of positions, against the
+         * 0.5 % this file bounds, and it was 0.62 % before §7q as well: that is the
+         * pre-existing plan-coverage defect §7o recorded, not the seam, and admitting the
+         * city would mean tripling a bound for every city to accommodate one. It is covered
+         * instead by SectionMitreTests, which asserts the property the limit can damage -
+         * that a corner is on both of its carriageway edges - directly.
+         */
         yield return new object[] { "Yelukhdidru", 800f };
         yield return new object[] { "seed000", 1500f };
         yield return new object[] { "Yelukhdidru", 3000f };
@@ -250,10 +272,18 @@ public class KerbSeamTests
              * that a change which quietly grows either is visible rather than silently
              * absorbed into the exemption above.
              */
-            Assert.True(nOffLine <= 12,
+            /*
+             * ⚠️ Superseded, not re-baselined. This bound was `nOffLine <= 12`, *"up from the
+             * 11 the section array's near-collinear fallback produces"*. §7q removed six of
+             * those eleven by computing the mitre in local coordinates instead of
+             * intersecting two world-space lines, so the bound comes down with them; what is
+             * left is the five block rings that skip a junction, which is a different defect
+             * and is named in PlanTolerance's comment above.
+             */
+            Assert.True(nOffLine <= 5,
                 $"{idString}/{size} on {gname}: {nOffLine} block edges are not on their own "
-                + "stroke's offset line, up from the 11 the section array's near-collinear "
-                + "fallback produces - that is a PLAN defect and this gate cannot see it");
+                + "stroke's offset line, up from the 5 whose block ring skips a junction "
+                + "- that is a PLAN defect and this gate cannot see it");
 
             Assert.True(nUncovered * 200 < nSamples,
                 $"{idString}/{size} on {gname}: the road mesh does not reach the kerb at "

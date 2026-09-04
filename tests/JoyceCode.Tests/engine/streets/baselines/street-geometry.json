@@ -2,11 +2,11 @@
   "environments": {
     ".NET 10.0|X64": {
       "seeds": {
-        "seed000@500": "v=439,i=618,h=01E3B517DC2BC4C8",
-        "seed011@500": "v=343,i=480,h=51FF5A9D211A92C6",
-        "Yelukhdidru@800": "v=1148,i=1626,h=B6C0B3FC54DD99AF",
-        "seed000@1500": "v=5912,i=8457,h=53D525E3341A0D26",
-        "seed008@500": "v=421,i=594,h=197C48A833D476F4"
+        "seed000@500": "v=439,i=618,h=425494645E2939AC",
+        "seed011@500": "v=343,i=480,h=7EBC56BCD8EE7098",
+        "Yelukhdidru@800": "v=1148,i=1626,h=D56C2DBE869CC644",
+        "seed000@1500": "v=5900,i=8439,h=14DBCA63B9A9D93E",
+        "seed008@500": "v=421,i=594,h=A692D41F9EC531C1"
       }
     }
   }
