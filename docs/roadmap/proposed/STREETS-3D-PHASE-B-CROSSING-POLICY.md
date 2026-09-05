@@ -1,6 +1,7 @@
 # Phase B — the crossing policy
 
-**Status:** implementation plan, twice reviewed. **WP-B0 and WP-B1 may proceed.**
+**Status:** implementation plan, twice reviewed. **WP-B1 is DONE (2026-09-05, §7 below).**
+**WP-B0 may proceed.**
 **WP-B2 and WP-B3 are blocked** on two owner decisions (§2a) and one mechanism rework (§3a).
 **Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s).
 
@@ -171,19 +172,27 @@ Two gaps §3c did not state:
 | B0.5 | **What a merge moves** — estates, footprints, buildings, shops, TALE locations — **plus what the structure-footprint exclusion moves** (§3c). |
 | B0.6 | **D1 and D2 (§2a) put to the owner with numbers.** This AC is a decision, not an artifact. |
 
-### WP-B1 — make the built machinery real (flag off; **safe to proceed**)
+### WP-B1 — make the built machinery real (flag off) — ✅ **DONE 2026-09-05**
 
 These are live defects in shipped code and stand alone whatever happens to the rest of the phase.
 
-| AC | criterion |
-|---|---|
-| B1.1 | `ClearanceConstraint` and `SpanLengthConstraint` are **in the pipeline**, and their **placement in the order is stated** — a `Reject` before `SnapToNearbyPoint` discards a candidate that would have snapped clear. Mutation: dropping either must fail a test **driven through `Generate()` over a store already holding an overpass**, not a unit test on the constraint (they passed while out of the pipeline). |
-| B1.2 | **No ground stroke is ever split on a `Ramp`/`Bridge`/`Tunnel`**; no junction on one except the builder's. Positive control: the same candidate crossing an ordinary street **does** split. |
-| B1.3 | `ConnectComponentsPass` filters orphan candidates **by level** and goes through `NetworkBuilder`. Fixture: nearest main junction is a deck junction; control: a ground one is nearer. (As drafted it would convert a silent bad join into a **throw during world generation**.) |
-| B1.4 | The refusal lives in the **verdict** — better, the ramp is invisible to the intersection query by `Kind` — with the `_checkLevels` throw as backstop only. |
-| B1.5 | `RampClearance` is supplied **only with the flag on**: `GetRampsNear` news two lists per call, so an unconditional supply keeps fingerprints but trips `StreetCostTests`' 2 % ceiling. |
-| B1.6 | Flag off: V1, V2, `street-geometry.json` byte-identical; cost within the existing gate; TALE 200/200. |
-| B1.7 | A drift scan keeps `ElevationOf` the single deck-elevation expression (already true — this pins it). |
+| AC | criterion | how it is met |
+|---|---|---|
+| B1.1 | `ClearanceConstraint` and `SpanLengthConstraint` are **in the pipeline**, and their **placement in the order is stated**. Mutation: dropping either must fail a test **driven through `Generate()` over a store already holding an overpass**. | ✅ Placed **after `StrokeNearPointConstraint`** — the *last* constraint that can return `Restart`, which is a stronger statement than "after Snap" — and **before `IntersectionConstraint`**, span length first of the two. `TheConstraintPipelineRunsInThisOrder` asserts the whole ten-entry order by name; until now the order was pinned only by fingerprints, which say nothing about a constraint that is a no-op in a flag-off city. Dropping either fails three tests driven through `Generate()`. |
+| B1.2 | **No ground stroke is ever split on a `Ramp`/`Bridge`/`Tunnel`**; no junction on one except the builder's. Positive control: the same candidate crossing an ordinary street **does** split. | ✅ `ACandidateCrossingARampDoesNotSplitIt`, run with clearance switched **off** so that only the `Kind` invisibility is under test, plus `TheSameCandidateCrossingAnOrdinaryStreetDoesSplitIt` at identical plan geometry. |
+| B1.3 | `ConnectComponentsPass` filters orphan candidates **by level** and goes through `NetworkBuilder`. Fixture: nearest main junction is a deck junction; control: a ground one is nearer. | ✅ …and the filter is needed on **both** loops, which the plan did not say — §7.4. Seven tests in `ConnectComponentsLevelTests`. The `NetworkBuilder` half is a backstop that is **provably equivalent** given the filter — §7.7. |
+| B1.4 | The refusal lives in the **verdict** — better, the ramp is invisible to the intersection query by `Kind` — with the `_checkLevels` throw as backstop only. | ✅ `StrokeStore.IntersectsMayTouchClosest` skips `StrokeKinds.IsStructure`; `SplitStrokeAt` refuses a structure, and a split point on another deck, **before** it removes anything from the store. |
+| B1.5 | `RampClearance` is supplied **only with the flag on**. | ✅ Confirmed by mutation: supplying it unconditionally fails four tests, `StreetCostTests` among them, exactly as predicted. |
+| B1.6 | Flag off: V1, V2, `street-geometry.json` byte-identical; cost within the existing gate; TALE 200/200. | ✅ No baseline file differs from `origin/master` by a byte. V2 has no baseline of its own, so `V2AddsNothingToAFlagOffCity` shows V2 is **determined** by V1 on all eight seeds rather than recording a second file to maintain. TALE 200/200. |
+| B1.7 | A drift scan keeps `ElevationOf` the single deck-elevation expression (already true — this pins it). | ✅ Two-sided: `DeckHeight` may be named only in `StreetLevels.cs`, and each of the four consumers must contain `.LevelElevation` and must **not** contain `DeckHeight`. Plus a behavioural pin over the whole `sbyte` range, because a scan can only see names. |
+
+**The flag** is `joyce.EnableGradeSeparation`, read **once** in `ClusterDesc._generateStrokes`
+through `engine.streets.GradeSeparation.IsEnabled` and injected into `Generator` as a value,
+exactly like `RuleTable`. A scan keeps that the only read. `ClusterStorage.DbVersion` is
+**not** bumped; that is WP-B6's.
+
+Tests: `tests/JoyceCode.Tests/engine/streets/{GradeSeparationPipelineTests,ConnectComponentsLevelTests,DeckElevationDriftTests}.cs`
+— 47 new, 1211 xUnit against 1164 before, TALE 200/200.
 
 ### WP-B2 — the staged generator — **BLOCKED on §3a rework and D2**
 
@@ -235,3 +244,91 @@ unlimited real data**); **a `Trace` in a `catch` is a silent failure**.
 
 **Specific to Phase B:** this is the first change that moves the street **network** rather
 than a surface on it.
+
+---
+
+## 7. WP-B1 as built (2026-09-05) — and the seven things the plan got wrong
+
+The default city does not move: **no baseline file differs from `origin/master` by a byte**,
+1211 xUnit (1164 before) and TALE 200/200. Twenty mutations were driven; eighteen were
+killed, and the two survivors are proved equivalent below rather than excused.
+
+### 7.1 ⚠️ The biggest finding: `GetRampsNear` could not detect a crossing, so B1.1 and B1.4 are only safe TOGETHER
+
+`StrokeStore.GetRampsNear` tested four terms — each segment's two endpoints against the
+other segment. **Those four are the distance between two segments only when the segments do
+not cross.** Two segments crossing at their midpoints have all four endpoints far away and a
+true distance of zero, so the query returned nothing for the one case a ramp clearance rule
+exists for: **a street laid straight through a ramp.**
+
+That was harmless while `ClearanceConstraint` was out of the pipeline, because such a
+candidate got a `Split` verdict on the ramp instead — visibly wrong, but recorded. B1.4
+removes the split. **So wiring B1.4 without repairing this query would have produced a road
+passing clean through a ramp with nothing anywhere recording that it did** — a strictly
+worse failure than the one B1.4 fixes, and completely silent. Neither the plan nor the brief
+saw it; it surfaced because a test fixture measured the clearance independently of the
+implementation instead of mirroring it. `|| null != cand.Intersects(stroke)` is the repair;
+`AStreetLaidStraightThroughARampIsRefused` asserts all four endpoint terms clear 20 m before
+asserting the refusal, so it cannot pass for the wrong reason.
+
+### 7.2 ⚠️ `IntersectionConstraint` put every crossing junction on the ground
+
+`new StreetPoint() { ClusterId = ctx.ClusterId }` leaves `Level` at its default 0 whatever
+deck the crossing was found on. Latent today and exactly zero-cost to fix (level 0 *is* the
+default), but it would have made B1.4's own `SplitStrokeAt` level backstop fire spuriously
+on the first level-1 crossing, and behind that it is a junction filed on the wrong deck.
+
+### 7.3 ⚠️ `_createBridgeCorridor` never assigns its mid point's position — **found and NOT fixed**
+
+`mid` is computed, the `RandomSource` draw for its offset is made, and the value is **never
+assigned to `midPoint`**, so the corridor's middle junction sits at the **cluster origin**.
+Measured on `seed017@2400`, the only one of 180 clusters that reaches this branch: a
+**318 m** gap between two components is bridged by **1341.7 m + 1050.3 m** through the middle
+of the city. Pre-existing. Deliberately not fixed here: `SetPos`-ing the point moves that
+seed's recorded fingerprint, and WP-B1 may not move the default city. Marked in the source.
+
+### 7.4 ⚠️ B1.3's level filter is needed on BOTH loops, not just the partner choice
+
+The plan and the brief both said "filter the candidates by level". `_bridgeOrphanToMain` has
+**two** loops: the first decides which junction of the ORPHAN the bridge leaves from, by how
+near the main component comes to it; the second picks the partner. Filtering only the second
+still yields a level-correct bridge — leaving from the **wrong end of the orphan**, because a
+deck junction stacked over one end made that end look nearest. The mutation that drops the
+first filter survived every test until a second fixture was built for it.
+
+### 7.5 The placement answer is stronger than "after Snap"
+
+The brief's trap was "a `Reject` before `SnapToNearbyPointConstraint` throws away a candidate
+that would have snapped clear of the ramp". The correct boundary is not `Snap` but the **last
+constraint that can return `Restart`**, which is `StrokeNearPointConstraint` two entries
+later — it also rewrites the candidate's far end. So both new constraints go after it, and
+before `IntersectionConstraint` so a doomed candidate does not pay for the most expensive
+check. The whole order is now asserted by name; it had been pinned only by the eight
+fingerprints, which say nothing at all about a constraint that is a no-op in a flat city.
+
+### 7.6 The tunables had no values, so they are derived
+
+The plan named `RampClearance`, `MinSpanLength` and `MaxSpanLength` and gave none of them a
+number. Both length-like ones default to `Stroke.WidthForWeight(weightMax)` — the widest
+carriageway the ruleset can build, i.e. the separation at which two carriageways at maximum
+width just touch — which required hoisting `StreetWidth()`'s expression into a static so
+there is still only one copy of it. `MaxSpanLength` defaults to unbounded: how long a deck
+may stand up is a structural question WP-B1 deliberately does not answer.
+
+### 7.7 The two surviving mutations, both provably equivalent
+
+Routing `_createBridgeStroke` and `_createBridgeCorridor` through `NetworkBuilder` instead of
+`StrokeStore.AddStroke` **cannot be caught by any test**, and always could not: given §7.4's
+filter, both ends of a connector are on the same level by construction, so `_checkLevels`
+can never refuse a `ConnectorBridge`. It is a backstop against the filter being removed, and
+removing the filter is itself killed. Stated rather than papered over — B1.3 asks for the
+routing, and the routing is genuinely unobservable while the choice is correct.
+
+### 7.8 Found and NOT fixed
+
+- **`ConnectComponentsPass` does not run the constraint pipeline at all**, so a
+  `ConnectorBridge` may be laid straight past or through a ramp with no clearance check. Not
+  in WP-B1's ACs; the clearance tests exclude `ConnectorBridge` explicitly and say why.
+- **The corridor mid point** of §7.3.
+- **`Generator.Generate()` still ends with `_connectPass.Run()` on both exits**, which §3a
+  already records as blocking WP-B2.
