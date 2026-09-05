@@ -1,0 +1,16 @@
+{
+  "environments": {
+    ".NET 10.0|X64": {
+      "seeds": {
+        "seed017@2400": "n=785,s=1034,h=DB4DBD1743646A91",
+        "Yelukhdidru@100": "n=0,s=0,h=E3B0C44298FC1C14",
+        "seed011@500": "n=23,s=24,h=2598D46B4F3ADD31",
+        "seed000@500": "n=27,s=29,h=1D999A6E85F67336",
+        "Yelukhdidru@800": "n=64,s=74,h=F9D50294923F84F9",
+        "seed000@1500": "n=274,s=367,h=72EC726B68662BDA",
+        "Yelukhdidru@3000": "n=1379,s=1875,h=E4EFB62F70A20B92",
+        "Yelukhdidru@400": "n=12,s=11,h=184F72D16C9D8D8C"
+      }
+    }
+  }
+}

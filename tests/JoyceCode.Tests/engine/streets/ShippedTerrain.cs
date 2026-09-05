@@ -176,6 +176,18 @@ internal static class ShippedTerrain
      */
     public static IStreetHeightSource StreetHeightsOf(
         ClusterDesc clusterDesc, StrokeStore strokeStore)
+        => new TableStreetHeight(RelaxedHeightsOf(clusterDesc, strokeStore));
+
+
+    /**
+     * The same two steps, with the table itself handed back.
+     *
+     * One expression rather than two, because a second copy of "sample the terrain, then
+     * relax" in a test file is exactly how a caller comes to miss a step the production
+     * chain has - and RelaxedStreetHeight is those two lines and nothing else.
+     */
+    internal static Dictionary<int, float> RelaxedHeightsOf(
+        ClusterDesc clusterDesc, StrokeStore strokeStore)
     {
         var heights = new Dictionary<int, float>();
         foreach (var sp in strokeStore.GetStreetPoints())
@@ -186,7 +198,7 @@ internal static class ShippedTerrain
 
         GradeRelaxer.Relax(strokeStore.GetStrokes(), heights, new GradePolicy());
 
-        return new TableStreetHeight(heights);
+        return heights;
     }
 
 
@@ -282,6 +294,14 @@ internal static class ShippedTerrain
 
         return new Conformed(field, new Vector2(clusterDesc.Pos.X, clusterDesc.Pos.Z));
     }
+
+
+    /**
+     * A height source over a table somebody else has already relaxed, for a caller that
+     * needs both the table and the source.
+     */
+    internal static IStreetHeightSource SourceOf(Dictionary<int, float> heights)
+        => new TableStreetHeight(heights);
 
 
     /**

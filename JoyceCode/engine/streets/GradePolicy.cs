@@ -38,6 +38,23 @@ public sealed class GradePolicy
     public float WeightMax { get; set; } = 1.3f;
 
     /**
+     * Grade a ramp between two decks is built to, as rise over run.
+     *
+     * A ramp is the one stroke whose grade is a DESIGN rather than a consequence, so it
+     * does not interpolate over weight: whatever a structure's corridor weighs, its
+     * ramps climb at this and its profile follows.
+     *
+     * Ten percent, and it is a decision rather than a tuning constant - see §2a/D1 of
+     * STREETS-3D-PHASE-B-CROSSING-POLICY. At five percent, the grade a heavy road is
+     * held to, a ramp needs 160 m and NOTHING is buildable in any generated city. At
+     * fourteen, the grade this policy allows the lightest alley, the largest city gets
+     * 294 structures and grade separation stops being a feature and becomes the norm.
+     * Ten gives a handful per city, and is already steeper than any road the deck it
+     * leads to carries - which is how real interchanges are built.
+     */
+    public float MaxRampGrade { get; set; } = 0.10f;
+
+    /**
      * Give up after this many sweeps even if the network is still settling. A cap
      * matters more than the exact value: a pathological terrain must not be able to
      * stall cluster generation.
@@ -58,6 +75,19 @@ public sealed class GradePolicy
      */
     public float MaxGradeFor(Stroke stroke)
     {
+        /*
+         * A ramp only. Not "anything that is not a Street": ConnectorBridge strokes
+         * exist in every shipped city and are ordinary ground roads, and a Bridge or
+         * Tunnel deck spans between two junctions its ramps have already placed, so its
+         * grade is not something anybody chooses. Naming the one kind keeps the shipped
+         * city's every stroke on the interpolation below, which WP-B3a.2 pins bit for
+         * bit over eight generated cities.
+         */
+        if (StrokeKind.Ramp == stroke.Kind)
+        {
+            return MaxRampGrade;
+        }
+
         float span = WeightMax - WeightMin;
         float t = span > 1e-6f
             ? Single.Clamp((stroke.Weight - WeightMin) / span, 0f, 1f)

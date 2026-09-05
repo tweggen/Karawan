@@ -583,6 +583,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GradeRelaxer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetHeightField.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\RelaxedStreetHeight.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StructureProfile.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Stroke.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeIntersection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeStore.cs" />

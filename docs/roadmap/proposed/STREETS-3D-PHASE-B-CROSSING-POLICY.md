@@ -3,7 +3,7 @@
 **Status:** implementation plan, twice reviewed. **WP-B1 is DONE (2026-09-05, §7 below).**
 **§7.3's corridor mid point is FIXED (2026-09-05, §8) — the one change in this phase that
 deliberately moves a baseline.** **WP-B2 is DONE (2026-09-05, §9).**
-**WP-B0 may proceed.** **WP-B3a is UNBLOCKED** (§3b settled as option B, 2026-09-05); **WP-B3b** follows it.
+**WP-B0 may proceed.** **WP-B3a is DONE (2026-09-05, §10); WP-B3b is UNBLOCKED.**
 **Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s).
 
 ---
@@ -261,20 +261,20 @@ built**. What remains is the mechanism a lift needs.
 Deliberately **not** in B2: any structure placement, `OverpassBuilder` changes, or the
 interior-T-branch rule — those are WP-B3, where a lift actually happens.
 
-### WP-B3a — the height model — **UNBLOCKED** (§3b option B taken 2026-09-05)
+### WP-B3a — the height model — ✅ **DONE 2026-09-05 (§10)**
 
 The relaxer stops being able to move a structure. Nothing is placed here; fixtures stand in
 for structures, exactly as WP-B1 did — **no generated city contains one, so real data cannot
 catch anything.**
 
-| AC | criterion |
-|---|---|
-| B3a.1 | A `Ramp`/`Bridge`/`Tunnel` junction is **immovable** under relaxation; its neighbours absorb the correction. Asserted on the relaxer's output over a sloping fixture, not on the resistance map. |
-| B3a.2 | ⚠️ **Provably identity for non-structure strokes**: `MaxGradeFor(Street)` and every relaxed height in all eight seeds are **bit for bit** what they are today. The terrain city is the shipped city. |
-| B3a.3 | A pinned structure's ramp carries **exactly** the grade its profile specifies — `MaxRampGrade` = 10 % — measured on the relaxed heights, not on the intent. |
-| B3a.4 | §2c's conform pass grades the terrain to the pinned structure. **Report the residual**: how far the graded ground ends up from the structure's own profile, and how much of that the 20 m grid cannot cut (ledger 2.1). |
-| B3a.5 | Positive control: **without** pinning, the same fixture's structure junctions **do** move — otherwise B3a.1 passes when pinning is inert. |
-| B3a.6 | Flag off: every baseline byte-identical; `StreetCostTests` in its gate; TALE 200/200. |
+| AC | criterion | how it is met |
+|---|---|---|
+| B3a.1 | A `Ramp`/`Bridge`/`Tunnel` junction is **immovable** under relaxation; its neighbours absorb the correction. Asserted on the relaxer's output over a sloping fixture, not on the resistance map. | ✅ `StructureProfile.PinnedJunctionsOf` names every junction a structure touches — feet included — and `GradeRelaxer.RelaxAround` skips a stroke with two pinned ends and gives a stroke with one pinned end its **whole** excess rather than that end's share. Asserted as exact equality against the boundary value rebuilt from its two pieces. ⚠️ **"its neighbours absorb the correction" turns out to be vacuous in a real city, and why is §10.2.** |
+| B3a.2 | ⚠️ **Provably identity for non-structure strokes**: `MaxGradeFor(Street)` and every relaxed height in all eight seeds are **bit for bit** what they are today. The terrain city is the shipped city. | ✅ `street-relaxed-heights.json` — every junction's relaxed height and every stroke's permitted grade as exact float **bits**, recorded at `a135898e` before a line of WP-B3a existed, and unmoved. Plus the property in the clear: every stroke of eight cities is graded by its weight alone. |
+| B3a.3 | A pinned structure's ramp carries **exactly** the grade its profile specifies — `MaxRampGrade` = 10 % — measured on the relaxed heights, not on the intent. | ✅ On fixtures over bridges and tunnels on ground levels −1, 0, 1 and 2, and on six generated cities with a real `OverpassBuilder` chain lifted onto their longest straight-through corridor. The design itself is asserted as an **identity** in the terms it is made of, so a dropped `LevelElevation` fails on the term. |
+| B3a.4 | §2c's conform pass grades the terrain to the pinned structure. **Report the residual**: how far the graded ground ends up from the structure's own profile, and how much of that the 20 m grid cannot cut (ledger 2.1). | ✅ §10.4. ⚠️ **The 20 m grid is the smaller half** — the plan expected it to be the limit and it is not. |
+| B3a.5 | Positive control: **without** pinning, the same fixture's structure junctions **do** move — otherwise B3a.1 passes when pinning is inert. | ✅ Same geometry, same weights, same starting heights — the designed profile itself — with the three structure strokes declared `Street`. The junctions move, and left to settle the ramp comes to rest at the 5 % its corridor's weight entitles a street to. |
+| B3a.6 | Flag off: every baseline byte-identical; `StreetCostTests` in its gate; TALE 200/200. | ✅ No baseline file differs from `a135898e` by a byte. 1361 xUnit against 1275, TALE 200/200. |
 
 ### WP-B3b — placement — **blocked on B3a**
 
@@ -577,3 +577,215 @@ Three things stop that gate being vacuous, and all three were needed:
 - The linear scan in `Pop()`. Measured peak pending: 470 on `Yelukhdidru@3000`, so it is
   worth nothing to fix today and worth measuring again if a ruleset ever makes the queue
   much longer.
+
+---
+
+## 10. WP-B3a as built (2026-09-05) — and the four things the plan and the brief got wrong
+
+**No baseline moved**: `street-fingerprints.json`, `street-fingerprints-gradesep.json`,
+`street-geometry.json` and `street-cost-baseline.json` are byte-identical to `a135898e`, TALE
+is 200/200, and 1361 xUnit against 1275 before. **Twenty-four mutations were driven and all
+twenty-four killed**, three of them only after a gate was written for them — §10.6.
+
+### 10.1 What is built, and the one piece of arithmetic that matters
+
+`engine.streets.StructureProfile` — `PinnedJunctionsOf` (every junction a `Ramp`, `Bridge` or
+`Tunnel` touches) and `Design` (the height each ramp's lifted end must have). `GradePolicy`
+gains **`MaxRampGrade` = 0.10**, returned by `MaxGradeFor` for a **`Ramp` and nothing else**;
+so there is still exactly one expression for "how steep may this be", and every stroke of
+every shipped city still goes down the weight interpolation. `GradeRelaxer.Relax` becomes
+three steps: an anchor pass, the design, and the sweep — which is now `RelaxAround`, taking
+the boundary and what is left of the sweep budget.
+
+⚠️ **The table all of this writes into is GROUND height**, and a junction's road stands
+`StreetPoint.LevelElevation` above it. So the design is
+
+    heights[deck] = groundAtFoot + foot.LevelElevation ± MaxRampGrade·length − deck.LevelElevation
+
+and never `groundAtFoot ± MaxRampGrade·length`. The two agree perfectly on every structure
+whose feet are on level 0, which is every structure the game will build first — §7r's
+"every generated city sits at `Pos = Vector3.Zero`" in a new coat. It is killed by fixtures
+whose ground deck is level 1, 2 or −1.
+
+⚠️ **`resistance` is NOT the mechanism, and the plan's "immovability may be cheap" is wrong.**
+The split is `wA = rB / (rA + rB)`. An infinite resistance at ONE end gives `wA = 0` as
+wanted — but a structure's own stroke has both ends pinned, and `∞/∞` is **NaN**. Any
+finite stand-in leaves a residual correction each sweep, which B3a.3's *exact* grade
+forbids. So the boundary is an explicit set, and the sweep skips a stroke with two pinned
+ends outright.
+
+### 10.2 ⚠️ THE FINDING: a structure designed from the terrain under its feet drags the city into the noise
+
+The plan says a structure's junctions are immovable and says nothing about **what value**
+they are immovable at. The obvious reading — the height already in the table, i.e. the raw
+terrain sample — was built first and measured. Over six generated cities on the shipped
+terrain, lifting the longest straight-through corridor onto a real `OverpassBuilder` chain:
+
+| seed | foot drift from the relaxed city |
+|---|---|
+| `seed000@500` | −4.05 m, +7.22 m |
+| `seed011@500` | +4.97, +3.47 |
+| `Yelukhdidru@800` | −2.85, **−16.09** |
+| `seed000@1500` | −1.54, **−27.05** |
+| `seed017@2400` | −8.33, −9.03 |
+| `Yelukhdidru@3000` | **−14.97**, +1.74 |
+
+A foot is an ordinary junction of the ordinary city: an approach street leaves it, a block
+corners on it, a building stands on that block. Pinning it at the raw sample takes all of
+that down with it — the structure moving the city rather than standing on it, which is the
+opposite of what option B is for.
+
+**The fix is an ANCHOR PASS**, and it is not new machinery: relax the network *as if the
+structures were not there*, which is `Relax` itself over the strokes that are not part of
+one, and design from the feet that produces. It recurses no further, because the filtered
+list contains no structure. Foot drift after: **exactly 0.000 m on all twelve feet**, and
+
+> ⚠️ **adding a structure moves NOT ONE junction of the city** — 0 of 23, 0 of 27, 0 of 64,
+> 0 of 274, 0 of 785, 0 of 1379, worst 0.0000 m, asserted as exact equality.
+
+That is the property WP-B3b's own before/after measurement will rest on: "the blocks moved"
+has to mean the structure moved them.
+
+⚠️ **And it makes B3a.1's second clause vacuous, which is worth saying plainly.** Once the
+feet stand where the city already settled them, the structure's presence creates no
+over-limit stroke at all, so there is nothing for a neighbour to absorb. The boundary rules
+in `RelaxAround` are a **guarantee** that no sweep can bend a designed structure, not a step
+some city depends on — and they are therefore driven directly against `RelaxAround` (the
+production method, not a lookalike) rather than through a fixture pretending a real city
+exercises them.
+
+### 10.3 The sweep budget is one allowance, and finding that out found something older
+
+WP-B2.6 budgeted `maxGenerations` once rather than per ordering tier. The same call is made
+here: the anchor pass and the final sweep share `policy.MaxSweeps`. Without the split, a
+structure hands the whole city a **second** relaxation and it settles further — measured at
+up to **7.5 m** on `Yelukhdidru@3000`, 1021 of 1379 junctions moving, which would have made
+"adding a structure moves nothing" false for a reason having nothing to do with structures.
+
+⚠️ **Measured on the way, and pre-existing: `GradeRelaxer` exhausts its whole 32 sweep budget
+on every generated city.** `Relax` returns its sweep count precisely so "a caller that wants
+to complain about it" can, and `RelaxedStreetHeight` does not look at it. Every
+terrain-following city in the game is running an unconverged relaxation and nothing anywhere
+says so. Not fixed here — it is not WP-B3a's, and converging it would move the shipped city.
+
+One consequence of the split: on a real city the anchor pass spends the entire allowance, so
+the final sweep runs **zero** sweeps. The structure is still designed and still standing; the
+city is still exactly the city. It is the reason §10.2's "vacuous" is doubly true.
+
+### 10.4 B3a.4 — the residual, and ⚠️ the 20 m grid is the SMALLER half
+
+Measured through `ClusterConformElevationOperator.Grade`'s own arithmetic on its own
+`GroundResolution + 1` grid, read back with `CacheEntry.GetElevationPixelAt`'s own two
+triangle rule, over the shipped terrain. Split three ways, because the split is the finding:
+
+* **designed → field** — what `StreetHeightField`'s weighted **mean** asks for at that point.
+  It is not the structure's own height wherever another stroke is inside the 60 m radius, and
+  under a bridge there always is one, 8 m below.
+* **field → grid** — what the 20 m elevation grid can carry of that. This is ledger 2.1, the
+  standing §2c limit, and the thing the plan expected to dominate.
+* **designed → grid** — the total.
+
+Sampled every 5 m along the whole ramp–deck–ramp chain:
+
+| seed | total p50 / p95 / max | field part p50 / max | **grid part p50 / max** | cut demanded, min…max |
+|---|---|---|---|---|
+| `seed000@500` | 0.483 / 4.019 / 4.505 | 0.422 / 3.675 | **0.234 / 0.853** | −7.2 … +17.8 |
+| `seed011@500` | 0.970 / 2.500 / 2.519 | 0.971 / 2.805 | **0.050 / 0.305** | −5.0 … +19.6 |
+| `Yelukhdidru@800` | 1.167 / 3.292 / 3.858 | 0.579 / 2.180 | **0.511 / 2.443** | −9.1 … +24.2 |
+| `seed000@1500` | 2.010 / 4.057 / 4.379 | 1.541 / 4.000 | **0.284 / 0.955** | +1.5 … +27.1 |
+| `seed017@2400` | 2.206 / 6.003 / 6.305 | 1.838 / 5.810 | **0.245 / 0.625** | −30.2 … +9.0 |
+| `Yelukhdidru@3000` | 0.971 / 2.668 / 3.173 | 0.996 / 2.557 | **0.392 / 1.619** | −1.7 … +20.1 |
+
+**At the twelve FEET — the junctions the city actually stands on — the field term is 0.000 m
+at eleven of them and 0.216 m at the twelfth, and the whole residual is the grid: 0.006 to
+0.885 m.** Against the same six cities' own control, every ordinary junction with no
+structure anywhere: p50 0.17–0.42 m, p95 1.2–2.3 m, worst 32.3 m. **A pinned structure's feet
+sit on the graded ground better than the median junction of the city they stand in.**
+
+So the answer to B3a.4 is: **the 20 m grid is not what limits this.** It contributes
+0.05–0.51 m at the median and at most 2.44 m, and where it matters most — the feet — it is
+the only term and it is under a metre. What is left over is `StreetHeightField`'s weighted
+mean averaging the deck's designed ground against the ground road 8 m below it, which is a
+property of the field's blend and not of the elevation resolution; a finer grid would not
+touch it. That is a real input to WP-B3b, and to whether the underpass wants its ground
+excluded from the field at all.
+
+The **cut** the structure demands of the terrain — designed ground against raw noise — runs
+−30.2 to +27.1 m, which is the number ledger 2.1's warning was about; the grid carries it to
+within 2.44 m by grading the whole city site rather than cutting a corridor.
+
+### 10.5 ⚠️ The deck, not the ramp, is what WP-B3b has to refuse
+
+Both ramps climb `MaxRampGrade` from their own feet, so **whatever the two feet disagree by
+lands on the deck**, and nothing bounds it. Over the same six lifts the deck comes out at
+
+    +4.2 %   +11.4 %   +4.3 %   −4.7 %   +23.7 %   +21.6 %
+
+and 23.7 % is not a bridge, it is a ramp and a half. WP-B3a deliberately does not refuse it —
+refusing a corridor is placement — but this is the number to refuse on, and it is not the one
+§2's buildability table measures. §2 asked whether two ramps FIT in the end spans; this asks
+whether the two ends are at similar enough heights for the deck between them to be a deck.
+
+### 10.6 The mutations
+
+**Twenty-four driven, and all twenty-four killed** — three only after a gate was written for
+them, and each of the three named something the existing gates genuinely could not see.
+
+| # | mutation | killed by |
+|---|---|---|
+| 1 | `PinnedJunctionsOf` finds no structure | **44** — every flag-on gate in the file |
+| 2 | pins only a structure stroke's `A` end | 3 |
+| 3 | the design drops `foot.LevelElevation` | 5 — the level-1/2/−1 fixtures only |
+| 4 | the design drops `deck.LevelElevation` | 21 |
+| 5 | foot and deck end swapped | 19 |
+| 6 | a tunnel's ramp climbs instead of descending | 5 |
+| 7 | the climb uses a fixed grade instead of `MaxGradeFor` | 21 |
+| 8 | two ramps on one deck junction: last by Sid wins | 1 |
+| 9 | ⚠️ **the design accepts any structure, not only a `Ramp`** | **survived** — a well-formed bridge has both ends on the deck's own level, so the wider guard finds no foot and refuses anyway. Killed by `ADeckStraddlingTwoLevelsIsStillNotARamp`, a deliberately malformed deck, which is the only shape that can tell the two rules apart |
+| 10 | `MaxGradeFor` loses its ramp branch | 22 |
+| 11 | `MaxGradeFor` catches `Bridge`/`Tunnel` too | 2 |
+| 12 | `MaxGradeFor` catches anything that is not a `Street` | 13 — §0.7's `ConnectorBridge` trap |
+| 13 | a stroke with two pinned ends is corrected anyway | 14 |
+| 14 | ⚠️ **a stroke with one pinned end keeps the resistance split** | **survived twice.** First because the settled assertion cannot see it: after 32 sweeps the geometric series has run and the two rules agree to five decimals. Then, after a one-sweep test was written, **because the pinned end is `B` on one approach and `A` on the other and those are two lines** — the new test asserted only the west one. Killed by asserting both ends, which is §7q's symmetric-survivor lesson in a new place |
+| 14b | the same, on the other branch | 1 |
+| 15 | the sweep sees no boundary at all | 15 |
+| 16 | no anchor pass — design from the raw terrain | 15 |
+| 17 | the anchor pass is not filtered | infinite recursion; the test host dies part way through the run. A crash rather than an assertion, and named as such |
+| 18 | each pass gets its own sweep budget | 8 |
+| 19 | the design runs before the anchor pass | 29 |
+| 20 | the anchor pass's sweeps are not counted | 2 |
+| 21 | ⚠️ **the unheighted counter deleted** | **survived** — pre-existing behaviour with no test at all, and the brief asked for it to be kept. Killed by capturing the log through `Logger.SetLogTarget`, plus a control that a network with every height present says nothing |
+| 23 | the unheighted `Warning` never reached | 1 |
+
+
+### 10.7 What the plan got wrong
+
+- ⚠️ **§3b: "under B, `LevelElevation` stops being `[BsonIgnore]`, costing its own
+  `DbVersion` bump."** It does not and it cannot. `LevelElevation` is a getter over `Level`
+  with no setter, and `Level` is already persisted — there is nothing to un-ignore and no
+  bump is owed. `ClusterStorage.DbVersion` is untouched by WP-B3a.
+- ⚠️ **§3b: "`resistance` is already a per-junction map, so immovability may be cheap."**
+  §10.1: it is `∞/∞` on a structure's own stroke, and anything finite leaves a residual the
+  exact-grade AC forbids.
+- ⚠️ **B3a.1: "its neighbours absorb the correction."** True of the sweep, vacuous in a real
+  city — §10.2.
+- ⚠️ **B3a.4: "how much of that the 20 m grid cannot cut."** The question presumes the grid
+  is the limit. It is the smaller half everywhere and the only term at the feet, where it is
+  under a metre — §10.4.
+
+### 10.8 Found and NOT fixed
+
+- ⚠️ **`GradeRelaxer` never converges on a real city** and `RelaxedStreetHeight` discards the
+  return value that says so (§10.3). Pre-existing; converging it would move the shipped city.
+- ⚠️ **The deck span is unbounded** (§10.5). WP-B3b.
+- **`StreetHeightField` grades the ground under a deck toward a weighted mean of the deck's
+  designed ground and the road beneath it** — the whole residual above the feet (§10.4). It
+  may be that a structure's deck junctions should not contribute to the field at all; that is
+  a decision, and it belongs with whoever decides what a deck looks like.
+- **`Yelukhdidru@400` cannot carry a structure at all**: its longest straight-through
+  corridor is 112.8 m against the 160 m two ramps need at 10 %, and `Yelukhdidru@100`
+  generates nothing. Recorded by a test so that a ruleset change which quietly makes small
+  cities liftable is visible rather than silent.
+- **`StructureProfile`'s malformed-ramp branch** (a ramp that does not change level, two
+  ramps claiming one deck junction) is reachable from no builder in the tree and is covered
+  by fixtures only — deliberately, and named here so it is not mistaken for tested-by-data.
