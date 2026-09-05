@@ -3,7 +3,7 @@
 **Status:** implementation plan, twice reviewed. **WP-B1 is DONE (2026-09-05, §7 below).**
 **§7.3's corridor mid point is FIXED (2026-09-05, §8) — the one change in this phase that
 deliberately moves a baseline.** **WP-B2 is DONE (2026-09-05, §9).**
-**WP-B0 may proceed.** **WP-B3 remains blocked** on §3b.
+**WP-B0 may proceed.** **WP-B3a is UNBLOCKED** (§3b settled as option B, 2026-09-05); **WP-B3b** follows it.
 **Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s).
 
 ---
