@@ -572,6 +572,47 @@ public class KerbSeamTests
     }
 
 
+    /**
+     * ...and only one expression says where a carriageway begins and ends.
+     *
+     * The four section points bounding a stroke were read out of the two junctions' angle
+     * and section arrays inside _generateStreetRun, thirty lines of index arithmetic that
+     * the SATNAV guideline now has to agree with exactly - a ribbon built on a second
+     * derivation of the same corners agrees until one of the two is edited, and the ribbon
+     * is drawn over the road. They are RoadSurface.TryCornersOf now.
+     *
+     * A scan because the failure it guards is a second COPY, which passes every test of the
+     * value; and it asserts the absence of the old form as well as the presence of the call.
+     * The ErrorThrow is scanned for the reason the corner read is: no generated city has a
+     * malformed junction, so removing it changes no measurement anywhere and turns a named
+     * failure into a road built at the cluster origin.
+     */
+    [Fact]
+    public void OnlyOneExpressionSaysWhereACarriagewayBeginsAndEnds()
+    {
+        string path = global::engine.GameRoot.PathTo("JoyceCode")
+                      + "/engine/streets/GenerateClusterStreetsOperator.cs";
+        Assert.True(File.Exists(path), $"could not find {path}");
+
+        string source = _stripComments(File.ReadAllText(path));
+
+        Assert.Contains("RoadSurface.TryCornersOf(", source);
+        Assert.Contains("ErrorThrow(why,", source);
+
+        /*
+         * The angle array is what the corner read is indexed by, and nothing else in this
+         * file has any use for one - _generateJunction reads the section array alone, for
+         * its fan, and the collider reads it for its hull.
+         */
+        Assert.DoesNotContain("GetAngleArray()", source);
+        foreach (Match m in Regex.Matches(source, @"GetSectionArray\(\)\s*\[|secArr[AB]"))
+        {
+            Assert.Fail("GenerateClusterStreetsOperator still derives a carriageway's own "
+                        + $"corners from a section array: '{m.Value}'");
+        }
+    }
+
+
     private static string _stripComments(string source)
     {
         source = Regex.Replace(source, @"/\*.*?\*/", " ", RegexOptions.Singleline);

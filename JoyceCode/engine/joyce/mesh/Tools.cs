@@ -32,6 +32,32 @@ namespace engine.joyce.mesh
         }
         
         
+        /**
+         * A quad from its four corners, in the same order and with the same two triangles
+         * AddQuadXYUV builds: v00, v00+vx, v00+vy, v00+vx+vy.
+         *
+         * Needed wherever the four corners are not a parallelogram - a ribbon lying on a
+         * road, for instance, whose two rails climb between different pairs of points and
+         * so do not carry the same height difference at both ends.
+         */
+        public static void AddQuadCornersUV(
+            in joyce.Mesh m,
+            in Vector3 v00,
+            in Vector3 v10,
+            in Vector3 v01,
+            in Vector3 v11,
+            in Vector2 u0,
+            in Vector2 ux,
+            in Vector2 uy
+        )
+        {
+            uint idx = (uint) m.Vertices.Count;
+            m.Vertices.Add(v00); m.Vertices.Add(v10); m.Vertices.Add(v01); m.Vertices.Add(v11);
+            m.UVs.Add(u0); m.UVs.Add(u0 + ux); m.UVs.Add(u0 + uy); m.UVs.Add(u0 + ux + uy);
+            _addQuadIndicesXY(m, idx+0, idx+1, idx+2, idx+3);
+        }
+
+
         private static void _addQuadXY(
             in joyce.Mesh m, in Vector3 v0, in Vector3 vx, in Vector3 vy )
         {

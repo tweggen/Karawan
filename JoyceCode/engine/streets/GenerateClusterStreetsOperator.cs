@@ -311,8 +311,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         
 
         var spA = stroke.A;
-
-        var angArrA = spA.GetAngleArray();
+        var spB = stroke.B;
 
         /*
          * The exterior points of the street area.
@@ -325,92 +324,25 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         Vector3 am, bm;
 
         am = v3Cluster + new Vector3(spA.Pos.X, 0f, spA.Pos.Y);
-        if (_traceStreets) Trace(_dc, $"am = ({am});");
-        if (angArrA.Count > 1)
-        {
-            var idxA = angArrA.IndexOf(stroke);
-            if (idxA < 0)
-            {
-                ErrorThrow($"stroke is not in street point A.", le => new InvalidOperationException(le));
-            }
-
-            var secArrA = spA.GetSectionArray();
-            if (secArrA.Count != angArrA.Count)
-            {
-                ErrorThrow(
-                    $"for point a: Section array and length array differ in size: {secArrA.Count} != {angArrA.Count}.",
-                    le => new InvalidOperationException());
-            }
-
-            var idxNextA = (idxA + 1) % angArrA.Count;
-
-            /*
-             * now idxA is the index of this stroke.
-             * in secArr A, we will find the intersection of this stroke with the previous
-             * one at A, at the next index the intersection of this one with the next.
-             */
-
-            /*
-             * The angle array is sorted in ascending angles with regard to outgoing
-             * strokes, that is stroke.a is the point.
-             */
-            al = v3Cluster + new Vector3(secArrA[idxNextA].X, 0f, secArrA[idxNextA].Y);
-            ar = v3Cluster + new Vector3(secArrA[idxA].X, 0f, secArrA[idxA].Y);
-
-        }
-        else
-        {
-            /*
-             * This is the end of the street, we need to manually compute the endpoints
-             * using the street normal.
-             */
-            al = v3Cluster + new Vector3(spA.Pos.X, 0f, spA.Pos.Y) - n3 * hsw;
-            ar = v3Cluster + new Vector3(spA.Pos.X, 0f, spA.Pos.Y) + n3 * hsw;
-
-        }
-
-        var spB = stroke.B;
-        var angArrB = spB.GetAngleArray();
-
         bm = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y);
+        if (_traceStreets) Trace(_dc, $"am = ({am}); bm = ({bm});");
 
-        if (_traceStreets) Trace(_dc, $"bm = ({bm});");
-        if (angArrB.Count > 1)
+        /*
+         * Where this carriageway begins and ends, read from the section arrays of the two
+         * junctions - hoisted into generation.RoadSurface so that the satnav guideline can
+         * be drawn on the SAME four corners rather than on a second derivation of them.
+         * See RoadSurface.TryCornersOf, which is these thirty lines and nothing else.
+         */
+        if (!generation.RoadSurface.TryCornersOf(
+                stroke, out var v2al, out var v2ar, out var v2bl, out var v2br, out var why))
         {
-            var idxB = angArrB.IndexOf(stroke);
-            if (idxB < 0)
-            {
-                ErrorThrow($"stroke is not in street point B.", le => new InvalidOperationException(le));
-            }
-
-            var secArrB = spB.GetSectionArray();
-            if (secArrB.Count != angArrB.Count)
-            {
-                ErrorThrow(
-                    $"for point b: Section array and angle array differ in size: {secArrB.Count} != {angArrB.Count}.",
-                    le => new InvalidOperationException(le));
-            }
-
-            var idxNextB = (idxB + 1) % angArrB.Count;
-
-            /*
-             * right now there is idxB the index of this stroke in the streetpoint b.
-             * From spB's point of view, stroke is an incoming stroke.
-             *
-             * So this is the end on the street on the "other" side, left and right are
-             * from a's point of view. So we have:
-             */
-            bl = v3Cluster + new Vector3(secArrB[idxB].X, 0f, secArrB[idxB].Y);
-            br = v3Cluster + new Vector3(secArrB[idxNextB].X, 0f, secArrB[idxNextB].Y);
+            ErrorThrow(why, le => new InvalidOperationException(le));
         }
-        else
-        {
-            /*
-             * Create a street end from the normals.
-             */
-            bl = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y) - n3 * hsw;
-            br = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y) + n3 * hsw;
-        }
+
+        al = v3Cluster + new Vector3(v2al.X, 0f, v2al.Y);
+        ar = v3Cluster + new Vector3(v2ar.X, 0f, v2ar.Y);
+        bl = v3Cluster + new Vector3(v2bl.X, 0f, v2bl.Y);
+        br = v3Cluster + new Vector3(v2br.X, 0f, v2br.Y);
 
         /*
          * The surface this stroke is about to be built flat on, and then sheared onto.

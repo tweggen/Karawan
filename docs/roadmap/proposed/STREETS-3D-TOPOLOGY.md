@@ -3316,3 +3316,349 @@ Tests: `tests/JoyceCode.Tests/engine/streets/SectionMitreTests.cs` (32).
   radius and nothing left that needs it.
 - **`_isDebugPoint` and the `myVerbose` flag** are still hard-coded `false` locals in
   `StreetPoint`, one of them naming a world position from a debugging session long past.
+
+---
+
+# §7r — The satnav guideline follows the road's own profile (2026-09-05)
+
+Reported from play of the now-default terrain-following city, with the owner's own
+diagnosis attached:
+
+> *"the navmesh being partially below the street. Seems logical to me if we draw navmesh
+> streetpoint to streetpoint, without considering the flat junctions, whereas the street
+> level has a flat junction between."*
+
+**The diagnosis is right**, which is not how these have usually gone — it was wrong in
+about half of the previous rounds. What follows checks it, measures it, and says what the
+brief that came with it got wrong.
+
+---
+
+## What is actually drawn: the satnav guideline, and nothing else
+
+**There is no navmesh in the shipped game.** `engine.joyce.components.NavMesh` and its whole
+emission block in `GenerateClusterStreetsOperator` are inside `#if false`; the `//ng.p(...)`
+navmesh vertex emission inside `_generateStreetRun` is commented out;
+`engine.streets.GenerateClusterNavLanesOperator` is `#if false` from line 1 and does not even
+compile as written. Searched exhaustively: `joyce.mesh.Tools.AddQuadXYUV` and
+`Mesh.CreateListInstance` have exactly **one** caller anywhere that consumes a nav lane —
+`engine.quest.ToSomewhere._onJunctions`, which builds the quest guideline ribbon.
+
+So the thing the player is looking at is `builtin.modules.satnav.RouteRibbon`, the object §7g
+already brought down off the vehicle hover height. The brief said this was "almost certainly"
+it; it is it, and the two dead systems it warned against are dead exactly as described.
+
+---
+
+## The defect, measured
+
+A car `NavLane` runs junction centre to junction centre and everything reading it
+interpolates linearly between the two `NavJunction.GroundHeight`s — including the
+intermediate junctions `_createBidirectionalLanes` inserts every 50 m, which
+`NavJunction.Between` places by `Lerp`. So the ribbon is a straight **chord**.
+
+The road is not that shape. `_generateJunction` fills each junction with a flat fan at
+`RoadSurface.HeightAtJunction`, and §7o then gave each side of a stroke its own chord between
+its own two section points. Along a street the profile is therefore **flat, ramp, flat**, and
+chord and profile agree at the two junctions and nowhere between them: above the road over
+the first cap by `Δ·a/L` and below it over the last by `Δ·b/L`.
+
+Measured over five generated cities on the shipped terrain, at 21 points along every car lane
+and at five lateral offsets across the ribbon's own 4 m width, against the road mesh's **own
+triangles** read barycentrically:
+
+| city | lanes | positions | median | p95 | p99 | worst | below the road |
+|---|---|---|---|---|---|---|---|
+| `seed000`/500 | 130 | 13 590 | 0.076 | 0.450 | 0.565 | 0.698 | 48.0 % |
+| `seed008`/500 | 118 | 12 326 | 0.085 | 0.581 | 0.829 | 1.863 | 52.7 % |
+| `Yelukhdidru`/800 | 330 | 34 490 | 0.143 | 0.706 | 1.063 | 1.602 | 48.2 % |
+| `seed000`/1500 | 1 534 | 160 448 | 0.191 | 0.934 | 1.332 | 2.214 | 51.0 % |
+| `Yelukhdidru`/3000 | 7 306 | 762 898 | 0.155 | 0.820 | 1.223 | 2.447 | 49.0 % |
+
+Signed, it is symmetric: p05 −0.40…−0.74 m, p95 +0.28…+0.71 m. **Half of the guideline is
+inside the road it is drawn on**, and the 0.1 m lift §7g derived is used up at a quarter to
+a third of positions.
+
+> ⚠️ **The brief's estimate of "on the order of a metre" is right at p99 and its own worst
+> case is not reachable.** It reasoned from §7q leaving section points up to 27.5 m out; the
+> worst actually observed is 2.45 m, and the largest deviations are ordinary long strokes on
+> a 13 % grade rather than the pathological corners.
+
+**In the FLAT city the same measurement is exactly 0.000 m at every percentile of every
+city**, as expected and as asserted rather than assumed: all junction heights are equal, so
+`RoadSurface.IsLevel` holds, chord and profile are the same constant.
+
+---
+
+## What was implemented: the lane carries the road it runs along
+
+`NavLane.Surface` is the `engine.streets.generation.RoadSurface` of the stroke the lane runs
+along — set on both directions and on every 50 m subdivision, for the same reason `KerbSide`
+is (§7g): it describes the ground, not the direction of travel. `RouteRibbon` then takes
+every ribbon corner's height from it.
+
+**It is the same surface object the road was emitted from, not a second derivation of it.**
+The four section points bounding a carriageway were thirty lines of angle-array and
+section-array indexing inside `_generateStreetRun`; they are `RoadSurface.TryCornersOf` now,
+called by the emission and by `RoadSurface.OfStroke`, which is what the nav map builds a
+lane's surface with. That hoist is the whole mechanism: a ribbon built from its own reading
+of "where does this carriageway begin and end" agrees with the road until one of the two is
+edited, and the ribbon is drawn *on* the road, where a decimetre is the visible defect.
+
+Three things follow on their own and were checked rather than assumed:
+
+- **The ends do not move.** `RoadSurface` clamps each side's chord fraction, so a position
+  over a junction cap gets that junction's own height — and `HeightAtJunction` is
+  `GroundHeightAt(sp) + CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE + LevelElevation`, which is
+  exactly what `RouteRibbon.SurfaceHeightOf` computes from `NavJunction.GroundHeight`.
+  Asserted as **equality**, over whole cities.
+- **The flat city does not move at all** — `IsLevel` short-circuits the breakpoints, so a
+  flat city gets one quad per lane at the same four floats as before.
+- **The slope across the road comes for free**, and it is not negligible: the two kerbs climb
+  between different pairs of section points, so at a bend the carriageway carries a real
+  cross fall — measured between the two kerb lines at 0.10–0.15 m at the median, 1.0–1.2 m at
+  p95 and up to **3.59 m**. A ribbon flat across its own width would sit a fifth of that off
+  the road at each edge.
+
+### The lift is unchanged, and its reasoning is now written where it can be violated
+
+`Lift` stays 0.1 m and its derivation stays: the 16-bit depth buffer's quantum (6 mm at 20 m,
+38 mm at 50 m, 0.15 m at 100 m) makes no fixed lift work at a route's far end, so the choice
+is about the near end, and a tenth of `HoverSurfaceProbe.SurfaceClearance` cannot read as
+floating. What is added to its doc comment is the thing this round proves: **a lift is not a
+licence to be wrong by less than it** — the chord was a median 0.08–0.19 m out, i.e. more
+than the lift, and 44–51 % of positions below the road.
+
+### One quad per lane becomes one per straight piece of the road under it
+
+The profile along a lane is piecewise affine with **four** breaks — one per section point,
+because the two sides do not share theirs — so `RouteRibbon.BreaksAlong` subdivides at
+exactly those, clipped to the lane's own span. That is exact for the surface rather than
+merely finer, which uniform sampling would not be.
+
+Cost, measured: **median 3 quads per lane, p95 3, max 5** — 12 vertices at the median against
+4, and 0.98–2.5 quads per lane more than before. Over a whole 3 km city's 7 306 car lanes
+that is 17 953 quads; a *route* is a few dozen lanes, so the real cost is a few hundred
+vertices in a mesh drawn at `MaxDrawDistance` 10 000.
+
+A quad also stopped being a **parallelogram**: `AddQuadXYUV` takes a corner and two edges and
+computes the fourth corner, which forces the same cross fall at both ends of a span, and the
+cross fall varies along a stroke. `joyce.mesh.Tools.AddQuadCornersUV` takes four corners in
+the same order and builds the same two triangles.
+
+### After
+
+Same five cities, same 983 752 positions, same measurement:
+
+| city | median | p95 | p99 | worst | more than its own lift below the road |
+|---|---|---|---|---|---|
+| `seed000`/500 | **0.011** | 0.160 | 0.250 | 0.379 | 5.68 % |
+| `seed008`/500 | **0.002** | 0.161 | 0.293 | 1.246 | 3.23 % |
+| `Yelukhdidru`/800 | **0.015** | 0.175 | 0.315 | 0.687 | 7.69 % |
+| `seed000`/1500 | **0.021** | 0.248 | 0.457 | 0.938 | 9.45 % |
+| `Yelukhdidru`/3000 | **0.018** | 0.180 | 0.322 | 1.298 | 6.74 % |
+
+An order of magnitude at the median, 3.7–5.1× at p95, and signed p05/p95 of −0.05…−0.17 /
++0.10…+0.16 against −0.40…−0.74 / +0.28…+0.71.
+
+---
+
+## ⚠️ The residual is the ROAD's tessellation, and that is a finding, not an excuse
+
+It is not zero, and where the remaining 0.16–0.25 m at p95 comes from was established rather
+than assumed. **The surface reproduces the road mesh at the road's own vertices exactly**:
+over the five cities, `RoadSurface.SurfaceHeightAt` at all 32 680 emitted carriageway vertices
+is **0.000000 m off at the median and 8·10⁻⁶ m at p99**, with a tail of 0.07–0.21 m at the
+handful of section points that are not exactly half a street width off the centre line (§7o
+measured one of `Yelukhdidru`/3000's at 0.19 m inside).
+
+So the model is right and **the mesh is a coarse triangulation of it**. A carriageway's rows
+are emitted one texture length apart, and a texture length is `StreetWidth() * 4` — up to
+88 m. Each row quad is split into two triangles whose diagonal departs from the bilinear
+surface it is cut from by `s·u·(ΔR − ΔL)`, i.e. by a quarter of the difference between the
+two sides' rise over that row at the quad's centre. That is where the worst cases sit
+(`Yelukhdidru`/3000's 1.298 m is mid-lane on the centre line of a wide street), and it is a
+property of the road, not of the ribbon: it is **invisible to the kerb**, which is why §7o
+measured 0.003 m — a kerb line is where the road's vertices are.
+
+Fixing it means shorter rows, which would move `street-geometry.json` for every city and
+every seed. Not done, and recorded below.
+
+### The lateral fraction was chosen by measurement
+
+Where across the road a point is comes from the **ratio of its distances to the two kerb
+chords** rather than from its offset off the centre line divided by the half width. Both were
+built and measured; the offset form is **2.5 to 3× worse** — p95 0.29 / 0.40 / 0.44 / 0.49 /
+0.53 m against 0.15 / 0.15 / 0.17 / 0.23 / 0.16, worst 2.07 m against 1.25 — because the
+chords *are* the two lines the surface is emitted between, while the ±half-width offset is
+only approximately where they are. The ratio is also exactly 0 and exactly 1 at every emitted
+vertex, which is what lets `SurfaceHeightAt` agree with `HeightAt` identically at the kerbs
+and leaves the road mesh untouched by its existence.
+
+---
+
+## The pedestrian ribbon does NOT share the defect, and the brief was right to ask
+
+They are not symmetric, and it is not a nuance. A pavement lane runs from one block corner to
+the next, each at `heightSource.GroundHeightAt(delim.StreetPoint)`, and the block floor's
+outline is `RoadSurface.HeightAtJunction` at exactly those two junctions with the extrusion
+adding `QuarterSidewalkOffset` — so `NavJunction.WalkingHeightOf` of the chord **is** the kerb
+line, identically, and a 50 m subdivision stays on the same chord. Measured over every
+sidewalk lane matched to its own block edge — 660 / 572 / 2 156 / 101 772 samples — the
+ribbon is **2.3·10⁻⁵ m off the pavement at the worst**, 0.000000 at the median: single
+precision on 1500 m coordinates, not a residual.
+
+So `NavLane.Surface` is set on car lanes only, `RouteRibbon.SurfaceHeightAt` refuses it for a
+pedestrian ribbon explicitly, and the pedestrian path is unchanged. A **crossing** is a third
+thing again: both its ends are section points of one junction, so it is level at that
+junction's walking height and stands exactly one kerb above the flat cap it crosses — which
+is where a walker's feet go, and is deliberate.
+
+Nothing shipped draws a pedestrian ribbon at all (§7f made every quest guideline `Car`), so
+the guard is covered by a fixture rather than by a city — a guard no real data can make false
+is a guard that can be deleted without anything noticing.
+
+---
+
+## Who else reads a lane's height — searched, and it is nobody
+
+The brief asked for the scope check and the answer is narrow:
+
+- **Cars are immune, confirmed.** No car entity uses a nav lane at all: `car3.CharacterCreator`
+  places traffic from street points, and the player's ship takes its height from
+  `HoverSurfaceProbe`'s raycast against the collider (§7b/§7f). `TransportationType.Car`
+  appears in exactly four places outside the nav map, all of them quest guidelines.
+- **Pedestrians are immune, confirmed, and for two different reasons.** The ordinary citizen's
+  loop walker never touches a lane (§7p: `QuarterLoopRouteGenerator` + `PavementWalk` +
+  `BuildingFooting.PavementHeightAt`). The satnav walker does take lane Y — through
+  `PedestrianRoute.WaypointFor`, which reads `lane.End.WalkingHeight` — but that is a
+  pedestrian lane, whose chord is the kerb line exactly, as measured above.
+- **`engine.navigation.PipeController` and `RoutingGraph`** are built by `TaleModule` from the
+  **pedestrian** network only.
+- **Lane `Length`** is `Vector3.Distance` between junction positions and feeds A\* costs. The
+  chord's length differs from the true profile's by well under a percent, and a cost is not a
+  height.
+
+So the guideline is the only genuinely affected consumer, and the fix is where the symptom is.
+
+---
+
+## What each city does
+
+- **The terrain-following (shipped) city:** every quest guideline moves, by the distribution
+  in the two tables above — median 0.08–0.19 m, up to 2.45 m — from cutting across the road's
+  profile to lying on it. Nothing else moves: no lane, no junction, no route, no cost.
+- **The flat city: the guideline does not move at all.** One quad per lane, and all four
+  corners equal to the old construction's floats — asserted as `Assert.Equal` on `Vector3`,
+  over every lane of five whole generated cities, and the arithmetic is written the old way
+  (a rail at half a width, one width across) so that it is the same float and not the same
+  place to within a rounding.
+
+### ⚠️ One thing does move in the terrain city that is not the ribbon: 7–12 % of road vertices, by one ulp
+
+`RoadSurface`'s per-side interpolation goes through `Single.Lerp` instead of
+`HeightA + f·(HeightB − HeightA)`. The two differ by a unit in the last place at `f = 1` — the
+sum of a height and a difference of two heights is not the second height — and `f` is exactly
+1 at every corner of a stroke's B end and everywhere over its cap, which is where the whole
+network is supposed to meet **at one number**. Without it the ribbon's B-end corner and the
+junction's own height differ in the last bit, and the equality gate above cannot be written.
+
+Measured over the five cities on the shipped terrain: **40 of 370, 26 of 350, 86 of 972, 549
+of 4 978 and 3 188 of 26 010 emitted carriageway vertices move, by at most 7.63·10⁻⁶ m** — one
+ulp at 60 m. **No `street-geometry.json` entry and no network fingerprint moved** (the
+recorded geometry is emitted on a level source, where the shear returns before touching a
+vertex), and no baseline file was rewritten. Stated because it is a change to the shipped
+city's mesh, however small, and this stream states them before they land.
+
+---
+
+## Mutation survivors: five of thirty-eight, all then killed, and four of them named something real
+
+1. ⚠️ **Drawing only the FIRST quad of each lane passed the entire suite.** Every corner stays
+   right and only what is between them is lost — which is the defect itself — because the loop
+   was at `ToSomewhere._onJunctions`, which needs a booted engine and is covered by a source
+   scan, and **a scan sees the name of a call and not how many of its results are used**. The
+   loop moved into `RouteRibbon.MeshFor`, which needs only lanes; the call site is one line;
+   and `EveryQuadOfEveryLaneReachesTheMesh` compares the mesh's vertices against the quads
+   **in order**, not merely their count. That second half matters: swapping two corners in
+   `MeshFor` keeps the count, turns every quad inside out and faces the ribbon away from the
+   camera — §7j's culled pavements in a mesh four vertices wide — and survived the count-only
+   version.
+2. ⚠️ **Dropping the cluster offset from `RoadSurface.OfStroke` passed everything.** Every
+   generated city in every test file sits at `ClusterDesc.Pos = Vector3.Zero`, so asking a
+   carriageway in cluster coordinates about a junction in world ones is invisible to all of
+   them — while the shipped world puts 70 cities at a median 36 km out (§7n). Exactly §7n's
+   own survivor (ii) in a new coat. Killed by `ACityAwayFromTheOriginKeepsItsRibbonOnItsRoad`,
+   which builds `seed000`/1500 at (1234, −567) and measures it against its own road.
+3. **`MeshFor` ignoring the transport type** — a pedestrian route silently drawn at
+   carriageway height, one kerb into the slab it is drawn on. Killed by comparing the two
+   meshes for the same lanes and asserting the difference is `QuarterSidewalkOffset` exactly.
+4. **The `0/0` guard on the lateral fraction** survived twice. The first attempt at a fixture
+   was a carriageway with no width, which does not reach it: two coincident kerbs have the
+   same axial span, so the `hLeft == hRight` shortcut answers first. It is reachable only
+   where the two kerb lines **cross** with different spans, and it is asserted there as
+   equality with the exact blended height (35 m, 0.4 up one side and 0.3 up the other) rather
+   than as "the answer is finite" — §7p again: *a containment test cannot tell a guess from a
+   refusal*.
+5. **Deleting `_generateStreetRun`'s `ErrorThrow` for a malformed junction** passed
+   everything, and always would: no generated city has a stroke missing from its own junction's
+   angle array. Pre-existing — the code it replaced had the same throw with the same
+   reachability — and now covered two ways: `TryCornersOf` itself is driven by a fixture with
+   an orphan stroke and asserted to return `false` with a reason, and
+   `OnlyOneExpressionSaysWhereACarriagewayBeginsAndEnds` scans for the throw and for the
+   absence of any second angle-array read in the file.
+
+Killed on the first attempt: the ribbon ignoring its lane's surface, i.e. the defect restored
+(5 tests); never subdividing (10); the `IsLevel` early return removed (5); car lanes given no
+surface (15); pedestrian lanes given one (10); the lateral fraction pinned at the centre (10);
+the lateral fraction taken from the centre-line offset, i.e. the measured alternative (10);
+`SurfaceHeightAt` collapsing to `HeightAt` (5); left and right swapped at a stroke's B end
+(20) and at its A end (19); the dead-end fallback losing the half width (10); `OfStroke`
+taking the B height at both ends (20); reverting the interpolation to `hA + f·(hB − hA)`, i.e.
+the one-ulp form (1); the two rails of a quad swapped (10); breaks clamped instead of clipped
+(10); only the A-end breakpoints used (10); `BreaksAlong` measuring from the wrong end (5) or
+not sorting (3); the lift removed (6); the corner read re-inlined (1, the scan); a corner
+taking the height at the lane centre instead of its own position (2); `ContentOf` ignoring the
+cluster position (1); the surface set on one direction only (16); `_endOf` never falling back
+for a dead end (106); and `AxialAt` measuring from the wrong origin (13).
+
+---
+
+## Covered, and not
+
+Everything above is driven over **real generated cities** through the shipping code:
+`GenerateNavMapOperator.ContentOf` builds the lanes, `RouteRibbon.MeshFor` builds the ribbon,
+`StreetGeometryHarness` builds the road, and the comparison is against the road mesh's own
+triangles. `ContentOf` is new only in that its two stores are arguments — `ClusterDesc`'s own
+accessors trigger street generation through the `I` container and the cluster cache, so as
+long as they were read inside the method **nothing in the nav map operator could be driven at
+all**, which is why §7 and §7h both had to stand in with source scans.
+
+`ToSomewhere._onJunctions` still needs a booted engine and is still a scan — now for one line.
+
+Tests: `tests/JoyceCode.Tests/builtin/modules/satnav/RouteRibbonRoadTests.cs` (61 across five
+cities), plus `RouteRibbonTests` adapted to the strip form and
+`KerbSeamTests.OnlyOneExpressionSaysWhereACarriagewayBeginsAndEnds`.
+
+---
+
+## Found and NOT fixed
+
+- ⚠️ **A carriageway's rows are up to 88 m long, so the road mesh does not represent its own
+  surface.** `texlen = StreetWidth() * 4`, and each row is two triangles; against
+  `RoadSurface`, which reproduces every one of its vertices to 8·10⁻⁶ m, the emitted surface
+  deviates by up to 0.92 m mid-row on the shipped terrain. It is invisible at the kerbs (where
+  the vertices are, and where §7o measured 0.003 m) and invisible in a flat city, and it is
+  the entire remaining residual of this round. Shortening the rows would move
+  `street-geometry.json` for every recorded city, so it is a decision rather than a fix.
+- **`seed008`'s overlapping-footprint strokes have two road heights at the same place.**
+  Where two junction footprints overlap there is no carriageway between them, only the filler
+  quad and both caps, and they disagree by up to 1.25 m — which is the whole of that city's
+  worst case. §7o recorded the same thing for two overlapping *carriageways*; this is the cap
+  version of it.
+- **`RoutePlan`'s truncation junction** is built with `NavJunction.AtNavigationHeight` at a
+  projected point part way along the last lane, so its `GroundHeight` is the chord's, not the
+  road's — and the lane it belongs to is the real one, so the ribbon's last quad is right and
+  only the synthetic junction's own field is off. Nothing reads it for a height.
+- **`Vector3.Normalize` of a lane with no horizontal extent is still NaN**, unchanged from §7g,
+  and the generator still emits no such lane.

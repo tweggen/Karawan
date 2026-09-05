@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using builtin.modules.satnav;
@@ -36,6 +37,26 @@ public class RouteRibbonTests
         Length = Vector3.Distance(a.Position, b.Position),
         AllowedTypes = new TransportationTypeFlags(TransportationType.Car)
     };
+
+
+    /**
+     * The one quad a lane with no road surface under it produces, in the corner-and-two-
+     * edges form the ribbon used to be built in - so that what these assertions say about
+     * the shape is unchanged by the ribbon having become a strip of them.
+     */
+    private static void _oneQuadFor(
+        NavLane nl, TransportationType tt,
+        out Vector3 v3Origin, out Vector3 v3Across, out Vector3 v3Along)
+    {
+        var quads = new List<RouteRibbon.Quad>();
+        RouteRibbon.QuadsFor(nl, tt, quads, new List<float>());
+
+        Assert.Single(quads);
+
+        v3Origin = quads[0].V00;
+        v3Across = quads[0].V10 - quads[0].V00;
+        v3Along = quads[0].V01 - quads[0].V00;
+    }
 
 
     /**
@@ -119,7 +140,7 @@ public class RouteRibbonTests
         var njA = _junction(0f, 0f, 5f);
         var njB = _junction(100f, 0f, 5f);
 
-        RouteRibbon.QuadFor(
+        _oneQuadFor(
             _lane(njA, njB), TransportationType.Car,
             out var v3Origin, out var v3Across, out var v3Along);
 
@@ -159,7 +180,7 @@ public class RouteRibbonTests
         var njA = _junction(0f, 0f, 10f);
         var njB = _junction(100f, 0f, 16f);
 
-        RouteRibbon.QuadFor(
+        _oneQuadFor(
             _lane(njA, njB), TransportationType.Car,
             out var v3Origin, out var v3Across, out var v3Along);
 
@@ -209,9 +230,19 @@ public class RouteRibbonTests
 
         string source = File.ReadAllText(path);
 
-        Assert.Contains("RouteRibbon.QuadFor(", source);
-        Assert.Contains("nl, TransportType,", source);
+        /*
+         * The whole mesh, in one expression. It used to be a loop here, and mutation
+         * testing found that taking only the FIRST quad of each lane passed everything -
+         * every corner right, the road cut straight across between them, and a scan seeing
+         * only the name of the call. So the loop moved into RouteRibbon.MeshFor, which a
+         * test can drive over a real city, and what is left here is one line to scan for.
+         */
+        Assert.Contains(
+            "RouteRibbon.MeshFor(listLanes, TransportType);",
+            source.Replace("\r\n", "\n"));
 
+        Assert.DoesNotContain("AddQuadCornersUV", source);
+        Assert.DoesNotContain("AddQuadXYUV", source);
         Assert.DoesNotContain("-0.5f*Vector3.UnitY", source);
         Assert.DoesNotContain("nl.Start.Position+2f*vu3Right", source);
     }

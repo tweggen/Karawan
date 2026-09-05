@@ -80,6 +80,132 @@ public readonly struct RoadSurface
     }
 
 
+    /**
+     * The four corners bounding one stroke's carriageway, in the same plan space the
+     * stroke's own street points are in.
+     *
+     * Here rather than inline in GenerateClusterStreetsOperator._generateStreetRun, which
+     * is where it was written and is still its only geometry consumer, because the SATNAV
+     * guideline has to be drawn on the very same surface. A ribbon built from a second
+     * derivation of "where does this carriageway begin and end" is a ribbon that agrees
+     * with the road until one of the two is edited - and the ribbon is drawn over the road,
+     * where a disagreement of a decimetre is the whole visible defect.
+     *
+     * Left and right are from A's point of view. A stroke that is the only arm at one of
+     * its junctions has no section array to read there, so that end is taken from the
+     * stroke's own normal, exactly as the emission does.
+     *
+     * @param why
+     *     Why there are no corners, for the caller to report. The two failures are a
+     *     malformed junction - a stroke missing from its own angle array, or a section
+     *     array that does not match it - and neither is recoverable here.
+     */
+    public static bool TryCornersOf(
+        in streets.Stroke stroke,
+        out Vector2 leftA, out Vector2 rightA, out Vector2 leftB, out Vector2 rightB,
+        out string why)
+    {
+        leftA = rightA = leftB = rightB = Vector2.Zero;
+        why = null;
+
+        float hsw = stroke.StreetWidth() / 2f;
+        Vector2 n = stroke.Normal;
+
+        if (!_endOf(stroke, stroke.A, hsw, n, true, out leftA, out rightA, out why)) return false;
+        if (!_endOf(stroke, stroke.B, hsw, n, false, out leftB, out rightB, out why)) return false;
+
+        return true;
+    }
+
+
+    /**
+     * One end of a stroke's carriageway.
+     *
+     * The angle array is sorted by outgoing angle, so at A the entry AT this stroke's index
+     * is the intersection with the previous arm and the NEXT entry is the intersection with
+     * the next arm. At B the stroke is incoming, so the same two entries name the opposite
+     * sides - which is why the two ends read the array the other way round and why that is
+     * not a copy-paste slip.
+     */
+    private static bool _endOf(
+        in streets.Stroke stroke, in streets.StreetPoint sp,
+        float hsw, in Vector2 n, bool isA,
+        out Vector2 left, out Vector2 right, out string why)
+    {
+        left = right = Vector2.Zero;
+        why = null;
+
+        var angArr = sp.GetAngleArray();
+        if (angArr.Count <= 1)
+        {
+            left = sp.Pos - n * hsw;
+            right = sp.Pos + n * hsw;
+            return true;
+        }
+
+        int idx = angArr.IndexOf(stroke);
+        if (idx < 0)
+        {
+            why = $"stroke is not in street point {(isA ? "A" : "B")}.";
+            return false;
+        }
+
+        var secArr = sp.GetSectionArray();
+        if (secArr.Count != angArr.Count)
+        {
+            why = $"for point {(isA ? "a" : "b")}: Section array and angle array differ in "
+                  + $"size: {secArr.Count} != {angArr.Count}.";
+            return false;
+        }
+
+        int idxNext = (idx + 1) % angArr.Count;
+
+        if (isA)
+        {
+            left = secArr[idxNext];
+            right = secArr[idx];
+        }
+        else
+        {
+            left = secArr[idx];
+            right = secArr[idxNext];
+        }
+
+        return true;
+    }
+
+
+    /**
+     * The surface of one stroke's carriageway, in world plan coordinates.
+     *
+     * The one entry point for anything that is not the emission itself: the emission has
+     * its four corners in hand already and builds the surface from those, and everything
+     * else - the satnav guideline, and whatever comes after it - gets the same surface from
+     * the same corners rather than deriving a second one.
+     *
+     * @param v2Offset
+     *     Where the cluster's origin is, so that the surface answers in the same space the
+     *     caller's positions are in. NavJunction is world space; the emission is fragment
+     *     relative.
+     * @returns null when the junctions at either end are malformed, in which case there is
+     *     no carriageway to be on either.
+     */
+    public static RoadSurface? OfStroke(
+        in streets.Stroke stroke, streets.IStreetHeightSource heightSource, in Vector2 v2Offset)
+    {
+        if (!TryCornersOf(stroke, out var al, out var ar, out var bl, out var br, out _))
+        {
+            return null;
+        }
+
+        return Of(
+            stroke.A.Pos + v2Offset, stroke.Unit,
+            al + v2Offset, ar + v2Offset, bl + v2Offset, br + v2Offset,
+            HeightAtJunction(heightSource, stroke.A),
+            HeightAtJunction(heightSource, stroke.B));
+    }
+
+
     public readonly float HeightA;
     public readonly float HeightB;
 
@@ -176,8 +302,106 @@ public readonly struct RoadSurface
      */
     public float HeightAt(in Vector2 p)
     {
-        bool right = _isRight(p);
-        return HeightA + _fractionAt(p, right) * (HeightB - HeightA);
+        return _heightOn(p, _isRight(p));
+    }
+
+
+    /**
+     * One side's own height at a position's axial coordinate.
+     *
+     * Through Single.Lerp rather than HeightA + f * (HeightB - HeightA), because the two
+     * differ by a unit in the last place at f = 1 - the sum of a height and a difference of
+     * two heights is not the second height - and f is EXACTLY 1 at every corner of the B
+     * end and everywhere over its cap, which is where the whole network is supposed to meet
+     * at one number. Lerp is defined as a*(1-t) + b*t, so it returns HeightA and HeightB
+     * themselves at the two ends.
+     */
+    private float _heightOn(in Vector2 p, bool right)
+    {
+        return Single.Lerp(HeightA, HeightB, _fractionAt(p, right));
+    }
+
+
+    /**
+     * Where across the carriageway a plan position is: 0 on the left kerb line, 1 on the
+     * right, clamped outside them.
+     *
+     * By the ratio of the distances to the two chords rather than by an offset from the
+     * centre line, for the reason _isRight is: the chords ARE the two lines the surface is
+     * emitted between, and a point on one of them is at distance zero from it whatever the
+     * section array did. That also makes this exactly 0 or exactly 1 at every vertex the
+     * road emits, since every one of them lies on a kerb line - which is what lets
+     * SurfaceHeightAt below agree with HeightAt there rather than merely come close.
+     */
+    private float _lateralFractionAt(in Vector2 p)
+    {
+        float dl = _distanceToChord(p, _leftA, _leftB);
+        float dr = _distanceToChord(p, _rightA, _rightB);
+        float sum = dl + dr;
+
+        return sum < MinSpan ? 0.5f : Single.Clamp(dl / sum, 0f, 1f);
+    }
+
+
+    /**
+     * The height of the emitted carriageway anywhere ACROSS its width, not only on one of
+     * its two kerb lines.
+     *
+     * HeightAt answers the question the shear asks - every vertex the road emits sits on
+     * one of the two kerb lines, at exactly plus or minus half the street width off the
+     * centre - so it picks a side and is exact there. Anything drawn ON the road instead
+     * lies between the two, and the two are not at the same height: each side climbs
+     * between its own pair of section points, so at a bend the carriageway carries a real
+     * cross fall, measured over the four baseline cities on the shipped terrain at 0.10 to
+     * 0.15 m between the two kerbs at the median, 1.0 to 1.2 m at p95 and up to 3.6 m.
+     *
+     * So this is the linear blend between the two sides at the position's own lateral
+     * fraction, which is what the emitted quads interpolate between their two kerb rows.
+     * It agrees with HeightAt at the kerbs identically, and NOTHING in the emission calls
+     * it - the road mesh is untouched by its existence.
+     */
+    public float SurfaceHeightAt(in Vector2 p)
+    {
+        float hLeft = _heightOn(p, false);
+        float hRight = _heightOn(p, true);
+
+        /*
+         * The three cases where the answer is one of the two sides and not a mixture, taken
+         * before the blend rather than through it: a * (1 - u) + a * u is a rounding away
+         * from a, and this is asked at the ends of a ribbon, where the road, the junction
+         * cap and everything cornering there are supposed to meet at ONE number rather than
+         * at two that differ in the last place.
+         */
+        if (hLeft == hRight) return hLeft;
+
+        float u = _lateralFractionAt(p);
+        if (u <= 0f) return hLeft;
+        if (u >= 1f) return hRight;
+
+        return Single.Lerp(hLeft, hRight, u);
+    }
+
+
+    /**
+     * How far along the stroke a plan position is, in metres from the A junction.
+     */
+    public float AxialAt(in Vector2 p) => Vector2.Dot(p - _origin, _unit);
+
+
+    /**
+     * The axial distances at which this surface stops being one plane: the four section
+     * points, two per side, each of which is where that side's kerb stops being flat at its
+     * junction's height and starts climbing.
+     *
+     * A ribbon drawn along this stroke is piecewise affine with exactly these breaks in it,
+     * and straight between them - so subdividing there is exact rather than merely finer.
+     */
+    public void BreakpointsInto(Span<float> four)
+    {
+        four[0] = _dLeftA;
+        four[1] = _dRightA;
+        four[2] = _dLeftB;
+        four[3] = _dRightB;
     }
 
 

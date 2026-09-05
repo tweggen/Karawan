@@ -251,18 +251,14 @@ public class ToSomewhere : AModule
                 MapCameraMask | 0x00000001,
                 Quaternion.Identity, Vector3.Zero);
 
-            var jMesh = joyce.Mesh.CreateListInstance("waypoints");
-            foreach (var nl in listLanes)
-            {
-                builtin.modules.satnav.RouteRibbon.QuadFor(
-                    nl, TransportType,
-                    out var v3Origin, out var v3Across, out var v3Along);
+            /*
+             * The whole ribbon, built where it can be measured. Not a loop here: a lane's
+             * ribbon is several quads now, and drawing only the first of each keeps every
+             * corner right while cutting straight across the road between them - which is
+             * the defect itself, and which a source scan over this method cannot see.
+             */
+            var jMesh = builtin.modules.satnav.RouteRibbon.MeshFor(listLanes, TransportType);
 
-                joyce.mesh.Tools.AddQuadXYUV(jMesh,
-                    v3Origin, v3Across, v3Along,
-                    Vector2.Zero, Vector2.Zero, Vector2.Zero
-                    );
-            }
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
                 new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.ToSomewhere.materials.waypoint"),
                     jMesh), 10000f);

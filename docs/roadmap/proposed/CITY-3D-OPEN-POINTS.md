@@ -3,10 +3,10 @@
 **Status:** open ledger. This is the file to read first when picking up the
 terrain-following city work.
 **Companion:** [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) is the design and
-history document — every fix is written up there as §7a … §7o, with the measurements that
+history document — every fix is written up there as §7a … §7r, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-03 (§7q).
+**Last updated:** 2026-09-05 (§7r).
 
 ---
 
@@ -57,6 +57,14 @@ carriageway. See **(j)** below and §7o.
 the last plan-level defect this page carried as *found and not fixed*, it was present and
 identical in the flat city, and **the ledger had the angle condition backwards**: it is the
 ACUTE corner that fails, not the obtuse one. See **(k)** below and §7p.
+
+**Reported and cleared 2026-09-05:** **(m)** — the satnav guideline cut across the road's
+flat-ramp-flat profile instead of following it, below the road at half of all positions.
+**The owner's own diagnosis was right, the first time on this page that a first diagnosis
+has been**, and there is no navmesh in the shipped game at all — the three that exist are
+`#if false`. Exactly 0.000 m in the flat city. See **(m)** below and §7r. ⚠️ It leaves one
+new open item: **the road mesh does not represent its own surface**, because a carriageway's
+rows are up to 88 m long and each is two triangles.
 
 **Also cleared 2026-09-03:** **(l)** — a junction corner was not on either of the streets that
 meet there. Present and identical in the flat city, and **the diagnosis this page and §7o
@@ -984,6 +992,70 @@ examples); kerb coverage, which is still 0.2–1.2 % and went slightly *up* on t
 because the corrected corners move onto ground the carriageway does not reach;
 `geom.Line.IntersectInfinite` itself, which now has one caller left in the shipping tree and
 is a boolean rectangle test.
+
+### ✅ (m) The satnav guideline cut across the road's profile — FIXED 2026-09-05
+
+> *"the navmesh being partially below the street. Seems logical to me if we draw navmesh
+> streetpoint to streetpoint, without considering the flat junctions, whereas the street
+> level has a flat junction between."*
+
+**The owner's own diagnosis, and it is right** — the first time on this page that the first
+diagnosis has been. Full write-up in
+[`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) §7r.
+
+1. **There is no navmesh.** `engine.joyce.components.NavMesh`, its emission block in
+   `GenerateClusterStreetsOperator` and `GenerateClusterNavLanesOperator` are all inside
+   `#if false`, and the navmesh vertex emission inside `_generateStreetRun` is commented out.
+   The one thing in the tree that turns a nav lane into geometry is
+   `engine.quest.ToSomewhere._onJunctions`, i.e. the **satnav guideline** §7g brought down
+   off the hover height. Confirmed by exhausting the callers of `AddQuadXYUV` and
+   `Mesh.CreateListInstance`, not assumed.
+2. **The size, measured over five cities on the shipped terrain at 984 000 positions:**
+   median **0.076–0.191 m**, p95 0.45–0.93, p99 0.57–1.33, worst **2.45 m**, and **below the
+   road at 48–53 % of positions**. So half the guideline was inside the road, and the 0.1 m
+   lift §7g derived was used up at a quarter to a third of positions. **Exactly 0.000 m at
+   every percentile in the flat city**, like (j) and unlike everything before it.
+3. ⚠️ **A lift is not a licence to be wrong by less than it.** The median error was larger
+   than the whole lift. That is the general lesson, and it applies to every other constant
+   margin in this tree.
+4. **The fix is the §7l/§7o/§7p pattern**: a car `NavLane` now carries the
+   `engine.streets.generation.RoadSurface` its stroke's carriageway was emitted from, so
+   ribbon and road agree **by construction** rather than by two expressions being kept in
+   step. The four section points bounding a carriageway were hoisted out of
+   `_generateStreetRun` into `RoadSurface.TryCornersOf` so that both read the same ones.
+   After: median **0.002–0.021 m**, p95 0.16–0.25, p99 0.25–0.46.
+5. ⚠️ **The residual is the ROAD's own tessellation, and that is the new open item.** The
+   surface reproduces the road mesh at all 32 680 of its own vertices to 0.000000 m at the
+   median and 8·10⁻⁶ m at p99; what is left is that a carriageway's rows are
+   `StreetWidth() * 4` — up to **88 m** — long, so the two triangles a row is cut into
+   deviate from the surface they are cut from by up to **0.92 m** mid-row. Invisible at the
+   kerbs, which is why §7o measured 0.003 m. Shortening the rows moves `street-geometry.json`
+   for every recorded city, so it is a decision and not a fix.
+6. **The pedestrian ribbon does NOT share the defect**, and the two are not symmetric. A
+   pavement lane's chord IS the block floor's outline, identically — measured over 105 000
+   samples at **2.3·10⁻⁵ m worst**. A crossing is level at its junction's walking height, one
+   kerb above the cap it crosses, deliberately.
+7. **No other consumer of lane Y is affected**, searched rather than assumed: cars hover on a
+   raycast and never touch a lane; the citizen walker uses `PavementWalk` and
+   `BuildingFooting`; the satnav walker uses a *pedestrian* lane; `PipeController` is built
+   from the pedestrian network; and lane `Length` feeds a cost, not a height.
+
+**The flat city does not move** — one quad per lane at the same floats, asserted as
+`Assert.Equal` over five whole cities. ⚠️ **One thing in the terrain city does move that is
+not the ribbon:** `RoadSurface` interpolates through `Single.Lerp` now so that a corner over a
+junction cap is that junction's height *as a float*, which moves **7–12 % of emitted road
+vertices by at most 7.63·10⁻⁶ m**, one ulp at 60 m. **No `street-geometry.json` entry and no
+network fingerprint moved, and no baseline file was rewritten.**
+
+`engine.streets.generation.RoadSurface.TryCornersOf`/`OfStroke`/`SurfaceHeightAt`,
+`NavLane.Surface`, `GenerateNavMapOperator.ContentOf`, `RouteRibbon.QuadsFor`/`MeshFor`,
+`joyce.mesh.Tools.AddQuadCornersUV`;
+`tests/JoyceCode.Tests/builtin/modules/satnav/RouteRibbonRoadTests.cs`.
+
+**Found and NOT fixed:** the 88 m rows above; `seed008`'s overlapping junction footprints,
+where two caps give the road two heights 1.25 m apart at the same place; and
+`RoutePlan`'s truncation junction, whose synthetic `GroundHeight` is the chord's rather than
+the road's (nothing reads it).
 
 ### ✅ (i) The `#if false` operator and the missing drift test — the test now exists
 
