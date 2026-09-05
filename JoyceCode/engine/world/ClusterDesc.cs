@@ -366,6 +366,15 @@ public class ClusterDesc
         streetGenerator.SetAnnotation($"Cluster {Name}");
         streetGenerator.Reset("streets-" + _strKey, _strokeStore, this);
         streetGenerator.RuleTable = _loadStreetGenRuleTable();
+
+        /*
+         * The one reading of the setting. Everything below this line takes it as a
+         * value, so that grade separation can be exercised without writing to a process
+         * global - the same reason StreetHeightSources.FollowsTerrain is read here and
+         * not inside the thing it governs.
+         */
+        streetGenerator.EnableGradeSeparation = streets.GradeSeparation.IsEnabled;
+
         streets.StreetSeeds.ApplyBounds(streetGenerator, this);
         streets.StreetSeeds.AddTo(streetGenerator, this, _rnd);
         streetGenerator.Generate();

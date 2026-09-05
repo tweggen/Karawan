@@ -110,6 +110,22 @@ public class StrokeStore
                 continue;
             }
 
+            if (StrokeKinds.IsStructure(stroke.Kind))
+            {
+                /*
+                 * A ramp is recorded on the deck it LEAVES from, so unlike a bridge it
+                 * is not separated from the ground by the level test above - and the
+                 * only thing an intersection with it can produce is a split, i.e. a
+                 * junction halfway up a climb. So a structure is not visible to this
+                 * query at all: the refusal lives in the verdict rather than in the
+                 * throw that NetworkBuilder.SplitStrokeAt keeps as a backstop.
+                 *
+                 * Staying clear of a ramp in PLAN is a separate matter and belongs to
+                 * ClearanceConstraint, which runs just before this one.
+                 */
+                continue;
+            }
+
             var si = stroke.Intersects(cand);
             if (null == si)
             {
@@ -595,10 +611,20 @@ public class StrokeStore
                 continue;
             }
 
+            /*
+             * The four endpoint-to-segment distances are the distance between two
+             * segments only when they do NOT cross. Two segments crossing at their
+             * midpoints have all four endpoints far away and a true distance of zero -
+             * so as written, this query missed the one case it exists to catch: a
+             * street laid straight through a ramp. It would then not be split either,
+             * because a structure is invisible to the intersection query, and the road
+             * would simply pass through the ramp with nothing recording that it had.
+             */
             if (cand.Distance(stroke.A.Pos) <= maxDistance
                 || cand.Distance(stroke.B.Pos) <= maxDistance
                 || stroke.Distance(cand.A.Pos) <= maxDistance
-                || stroke.Distance(cand.B.Pos) <= maxDistance)
+                || stroke.Distance(cand.B.Pos) <= maxDistance
+                || null != cand.Intersects(stroke))
             {
                 found.Add(cand);
             }

@@ -34,6 +34,57 @@ namespace engine.streets
          * The ruleset to grow with. Null means the shipped defaults.
          */
         internal ExpansionRuleTable RuleTable { get; set; }
+
+        /**
+         * Whether this run may build ramps, bridges and tunnels.
+         *
+         * Injected exactly like RuleTable rather than read from GlobalSettings here:
+         * the setting is process global, so a generator that consulted it directly
+         * could not be driven both ways in one test run without leaking into whatever
+         * is generating beside it. ClusterDesc._generateStrokes does the one read of
+         * the setting and passes the answer in.
+         *
+         * Off, this run is bit for bit the ground-only generator: the two structure
+         * constraints are in the pipeline but each returns on its first line, because
+         * RampClearance stays zero and no candidate is a Bridge or a Tunnel.
+         */
+        public bool EnableGradeSeparation { get; set; } = false;
+
+        private float _rampClearance = -1f;
+
+        /**
+         * How far, in plan view, an ordinary stroke must stay from a ramp that reaches
+         * into its own deck. Supplied to the pipeline only when grade separation is on.
+         *
+         * Negative - the default - means "derive": the widest carriageway this ruleset
+         * can build, so that two carriageways at that plan separation just touch. That
+         * is a floor, not a policy; what a structure should actually reserve beside
+         * itself is WP-B2/B3's decision and is expected to set this explicitly.
+         */
+        public float RampClearance
+        {
+            get => _rampClearance >= 0f ? _rampClearance : Stroke.WidthForWeight(weightMax);
+            set => _rampClearance = value;
+        }
+
+        private float _minSpanLength = -1f;
+
+        /**
+         * Shortest bridge or tunnel deck worth building. Negative means "derive": a
+         * deck has to at least span the widest carriageway that can pass under it.
+         */
+        public float MinSpanLength
+        {
+            get => _minSpanLength >= 0f ? _minSpanLength : Stroke.WidthForWeight(weightMax);
+            set => _minSpanLength = value;
+        }
+
+        /**
+         * Longest bridge or tunnel deck. Zero means unbounded, which is what a WP-B1
+         * world gets: how long a deck may stand up is a structural question this work
+         * package deliberately does not answer.
+         */
+        public float MaxSpanLength { get; set; } = 0f;
         private ICandidateConstraint[] _pipeline;
         private BoundsConstraint _boundsConstraint;
         private GenerationContext _ctx;
@@ -149,10 +200,25 @@ namespace engine.streets
                 IsTracing = _traceGenerator
             };
 
+            /*
+             * Structure tunables are supplied ONLY with the flag on, and that is a cost
+             * decision as much as a correctness one: ClearanceConstraint short circuits
+             * on RampClearance <= 0 before it reaches the store, whereas
+             * StrokeStore.GetRampsNear allocates two lists on every call. Supplied
+             * unconditionally the network would still be identical and the allocation
+             * gate would trip.
+             */
+            if (EnableGradeSeparation)
+            {
+                _ctx.RampClearance = RampClearance;
+                _ctx.MinSpanLength = MinSpanLength;
+                _ctx.MaxSpanLength = MaxSpanLength;
+            }
+
             _boundsConstraint = new BoundsConstraint(_bl, _tr);
 
             _connectPass = new ConnectComponentsPass(
-                _strokeStore, _clusterDesc.Id, _rnd, _annotation);
+                _strokeStore, _networkBuilder, _clusterDesc.Id, _rnd, _annotation);
 
             _report = CollectReport ? new GenerationReport() : null;
 
@@ -185,6 +251,31 @@ namespace engine.streets
                 new AngleSeparationConstraint(atB: true),
                 new StrokeNearPointConstraint(),
                 new PointNearStrokeConstraint(),
+
+                /*
+                 * WHERE THE TWO STRUCTURE CONSTRAINTS GO, AND WHY.
+                 *
+                 * After StrokeNearPointConstraint, which is the last constraint that can
+                 * return Restart. Everything above may still move the candidate's far
+                 * end onto an existing junction, and a Reject placed before those would
+                 * throw away a candidate that was about to snap clear of the ramp it is
+                 * being rejected for - the rejection has to be judged on the geometry
+                 * the candidate finally has.
+                 *
+                 * Before IntersectionConstraint, which is much the most expensive check
+                 * here, so a candidate that is going to be refused does not pay for it.
+                 * Span length first of the two: it is pure arithmetic on the candidate,
+                 * while clearance queries the stroke octree.
+                 *
+                 * Neither can move a ground-only city. SpanLengthConstraint returns on
+                 * its first line for Street and ConnectorBridge, which are the only two
+                 * kinds a flag-off city contains, and ClearanceConstraint returns on its
+                 * first line whenever RampClearance is zero, which is what the flag-off
+                 * context above leaves it at.
+                 */
+                new SpanLengthConstraint(),
+                new ClearanceConstraint(),
+
                 new IntersectionConstraint(),
             };
         }

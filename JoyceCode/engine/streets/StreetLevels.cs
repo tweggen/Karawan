@@ -35,3 +35,33 @@ public static class StreetLevels
         return level * DeckHeight;
     }
 }
+
+
+/**
+ * Whether a world is allowed to build anything above or below the ground deck.
+ *
+ * The same shape as StreetHeightSources.FollowsTerrain, and for the same reason: the
+ * setting is process global, so reading it inside the generator would make every
+ * grade-separation test depend on what some other test class had set. The global is
+ * read ONCE, in ClusterDesc._generateStrokes, and handed to the Generator as a value -
+ * so a test drives the flag by setting a property on its own Generator and nothing
+ * leaks sideways.
+ *
+ * Independent of joyce.DisableClusterFlattening: a flat city may have overpasses and a
+ * terrain-following one need not.
+ */
+public static class GradeSeparation
+{
+    /**
+     * Set to "true" to let the street generator build ramps, bridges and tunnels.
+     *
+     * Off in every shipped configuration. With it off, no ruleset emits a Ramp, Bridge
+     * or Tunnel, no ramp clearance is supplied to the constraint pipeline, and the
+     * network is exactly the ground-only network it has always been.
+     */
+    public const string Setting = "joyce.EnableGradeSeparation";
+
+
+    public static bool IsEnabled
+        => GlobalSettings.Get(Setting) == "true";
+}
