@@ -1,8 +1,9 @@
 # Phase B — the crossing policy
 
 **Status:** implementation plan, twice reviewed. **WP-B1 is DONE (2026-09-05, §7 below).**
-**WP-B0 may proceed.**
-**WP-B2 is UNBLOCKED** (D1/D2 settled 2026-09-05, §2a). **WP-B3 remains blocked** on §3b.
+**§7.3's corridor mid point is FIXED (2026-09-05, §8) — the one change in this phase that
+deliberately moves a baseline.** **WP-B2 is DONE (2026-09-05, §9).**
+**WP-B0 may proceed.** **WP-B3 remains blocked** on §3b.
 **Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s).
 
 ---
@@ -213,19 +214,19 @@ exactly like `RuleTable`. A scan keeps that the only read. `ClusterStorage.DbVer
 Tests: `tests/JoyceCode.Tests/engine/streets/{GradeSeparationPipelineTests,ConnectComponentsLevelTests,DeckElevationDriftTests}.cs`
 — 47 new, 1211 xUnit against 1164 before, TALE 200/200.
 
-### WP-B2 — heavy-first ordering and the removal primitive — **UNBLOCKED by D1/D2**
+### WP-B2 — heavy-first ordering and the removal primitive — ✅ **DONE 2026-09-05 (§9)**
 
 D2 removes the arterial stage, so the re-seeding walk and the third rule table are **not
 built**. What remains is the mechanism a lift needs.
 
-| AC | criterion |
-|---|---|
-| B2.1 | **Flag off runs today's stack, unmodified** — V1, V2, `street-geometry.json` byte-identical and `StreetCostTests` within its gate, asserted *after* the ordering exists. Confirmed sufficient: ids are masked by `_assignLocalId`/`_assignLocalSid`, the RNG is one `RandomSource` per `Generator`, counters are per instance. |
-| B2.2 | Flag on, the queue orders by `Weight`, so **every heavy candidate is accepted before any branch is popped** — asserted on emission order over generated cities, not on the comparer. |
-| B2.3 | Determinism: `GenerationIsRepeatableWithinAProcess` on **V2 with the flag on**, plus a recorded V2 baseline per seed. Not "draws RNG in a stated order", which is documentation. |
-| B2.4 | `StrokeStore.RemovePoint` exists and **clears `_octreeSP` as well as `_listPoints`**. Positive control: a removed junction is no longer returned by `FindClosestBelowButNot`/`GetClosestPoint` — the ghost that would otherwise defeat the whole ordering. Mutation: leaving the octree entry must fail. |
-| B2.5 | `_connectPass.Run()` is hoisted out of `Generate()`'s two exits to a single end-of-generation call, so nothing can run between an ordering pass and the connect pass. |
-| B2.6 | `maxGenerations` is budgeted **once**, not per ordering tier. |
+| AC | criterion | how it is met |
+|---|---|---|
+| B2.1 | **Flag off runs today's stack, unmodified** — V1, V2, `street-geometry.json` byte-identical and `StreetCostTests` within its gate, asserted *after* the ordering exists. Confirmed sufficient: ids are masked by `_assignLocalId`/`_assignLocalSid`, the RNG is one `RandomSource` per `Generator`, counters are per instance. | ✅ No baseline file differs from commit 1 by a byte. `CandidateQueue.HeavyFirst` false makes `Pop()` `RemoveAt(Count - 1)` **on the same list**, not a lookalike of it. Mutation: setting `HeavyFirst` unconditionally fails 44 tests including all eight V1 baselines, all five `street-geometry.json` entries and `StreetCostTests`. |
+| B2.2 | Flag on, the queue orders by `Weight`, so **every heavy candidate is accepted before any branch is popped** — asserted on emission order over generated cities, not on the comparer. | ✅ `Generator.OnCandidatePopped` reports each candidate as it leaves the queue together with everything still waiting; over six generated cities, **no candidate is ever popped while something heavier waits**, and separately no *branch* is. Its control is the same measurement flag off, where that happens on 5–20 % of pops. |
+| B2.3 | Determinism: `GenerationIsRepeatableWithinAProcess` on **V2 with the flag on**, plus a recorded V2 baseline per seed. Not "draws RNG in a stated order", which is documentation. | ✅ `HeavyFirstGenerationIsRepeatableWithinAProcess` and `HeavyFirstGenerationMatchesRecordedBaseline` over all eight seeds; `street-fingerprints-gradesep.json` is new. |
+| B2.4 | `StrokeStore.RemovePoint` exists and **clears `_octreeSP` as well as `_listPoints`**. Positive control: a removed junction is no longer returned by `FindClosestBelowButNot`/`GetClosestPoint` — the ghost that would otherwise defeat the whole ordering. Mutation: leaving the octree entry must fail. | ✅ Both queries are asserted **through the store's own API**, before and after, and there is an end-to-end control in which a growing street is offered the chance to snap onto the removed junction. Leaving the octree entry fails 3. `PolishStreetPoints` goes through the primitive. |
+| B2.5 | `_connectPass.Run()` is hoisted out of `Generate()`'s two exits to a single end-of-generation call, so nothing can run between an ordering pass and the connect pass. | ✅ `Generate()` is `_drain()` plus one call. ⚠️ And the budget exit's copy **was reached by nothing** — §9.2. |
+| B2.6 | `maxGenerations` is budgeted **once**, not per ordering tier. | ✅ Computed once inside `_drain()`, which has one call site, and driven: on a generator whose budget genuinely binds, a second `Generate()` adds nothing, and the control resets the counter and shows the same call does keep building. |
 
 Deliberately **not** in B2: any structure placement, `OverpassBuilder` changes, or the
 interior-T-branch rule — those are WP-B3, where a lift actually happens.
@@ -412,3 +413,120 @@ the recorded fingerprint for `seed017@2400`, which is the only thing that can pi
 Tests: `tests/JoyceCode.Tests/engine/streets/ConnectComponentsCorridorTests.cs` (9). One of
 them records that **no other pinned seed reaches the corridor branch**, so that a ruleset
 change which quietly stops exercising it is visible rather than silent.
+
+---
+
+## 9. WP-B2 as built (2026-09-05) — and the three things the plan got wrong
+
+**No baseline moved**: `street-fingerprints.json`, `street-geometry.json` and
+`street-cost-baseline.json` are byte-identical to commit 1's state, TALE is 200/200, and
+1275 xUnit against 1220 before. **Thirteen mutations were driven and all thirteen were
+killed** — the first round in this work stream with no survivor, which is itself worth
+distrusting, so §9.4 says which gate killed each.
+
+### 9.1 The mechanism, and why it is one class
+
+`engine.streets.generation.CandidateQueue` replaces `Generator`'s `List<Stroke>` work
+queue. `HeavyFirst` false — every run of the shipped game — makes `Pop()`
+`RemoveAt(Count - 1)` **on the same list**, so B2.1 is not "a lookalike that agrees"; it is
+the same two lines the generator has always run. `HeavyFirst` true scans the pending list
+**backwards** for the greatest weight, so among equal weights the most recently pushed
+still wins and the queue is still a stack *within* one weight — which is what keeps a
+split's head ahead of its tail without that call site having to change.
+
+Linear per pop, and paid only with the flag on. A heap would buy it back and would need
+its own tie break; a tie break is where determinism is lost, and the cost is bounded by a
+pending list that peaks at 470 entries on the largest city.
+
+### 9.2 ⚠️ The finding: **no pinned seed reaches the generation budget**, so one of the two calls being hoisted was reached by nothing
+
+`StreetDeterminismTests` has said since it was written that `Yelukhdidru@3000` *"exercises
+the maxGenerations = Size^2/1000 budget cut-off"*. Measured while gating B2.6:
+
+| seed | `_generationCounter` at the end | budget |
+|---|---|---|
+| `seed000@1500` | 365 | 2250 |
+| `seed017@2400` | 1034 | 5760 |
+| `Yelukhdidru@3000` | **1886** | **9000** |
+
+All eight leave the drain by **the queue running dry**. So the budget exit — and its own
+copy of `_connectPass.Run()`, which is half of what B2.5 hoists — was reached by no test
+and no recorded city, and **deleting that copy would have passed every gate in this
+repository**. That is §7's *"a rule can be invisible to unlimited real data"* again, one
+turn on: here the shape the data does not have is not a ramp but an *exit*.
+
+The fixture that fixes it is available because **the budget and the growable area are
+independent**: `maxGenerations` is `ClusterDesc.Size²/1000` while where streets may grow
+comes from `SetBounds`. A 200 m cluster — budget 40 — growing inside a 2 km square hits
+the budget in a few dozen strokes. With two strokes already in the store 2.5 km apart, a
+run cut off by its budget still has to come back as one component, and only bridging can
+do that. The mutation that puts the connect pass back on the queue-empty exit alone fails
+exactly that fixture (and the scan), and nothing else.
+
+The comment in `StreetDeterminismTests` is corrected rather than deleted, and records the
+numbers.
+
+### 9.3 B2.2 is asserted where the ordering happens
+
+`Generator.OnCandidatePopped` reports each candidate as it leaves the queue, together with
+everything still waiting behind it, and the gate is that **nothing heavier is ever left
+waiting** — over six generated cities, 34 to 2592 pops each. A test that asked the queue
+how it compares two candidates would pass with the queue unwired from the accept loop
+entirely, which is precisely what happened to `ClearanceConstraint` and
+`SpanLengthConstraint` (§7).
+
+Three things stop that gate being vacuous, and all three were needed:
+
+- **the control**: the same measurement with the flag off, where a lighter candidate is
+  popped ahead of a heavier one on 5–20 % of pops. Without it the invariant could be
+  satisfied by candidates that happen to arrive in descending weight;
+- **the branch floor**: `ABranchIsNeverPoppedWhileAHeavierCandidateWaits` asserts the city
+  contains more than five branch candidates before asserting that they wait;
+- **`TheOrderingChangesTheCityThatComesOut`**: the observer could be wired to a queue the
+  accept loop ignores. It cannot survive the two orderings producing different networks —
+  and they do, on every seed that generates anything at all.
+
+### 9.4 The thirteen mutations, and which gate killed each
+
+| # | mutation | killed by |
+|---|---|---|
+| 1 | `HeavyFirst` never set | 25 — every flag-on gate and every flag-on baseline |
+| 2 | `HeavyFirst` set unconditionally | **44** — all eight V1 baselines, all five `street-geometry.json` entries, `StreetCostTests`, and a long tail of block/kerb/route gates |
+| 3 | heavy-first tie break to the **oldest** push (`>=`) | `HeavyFirstBreaksTiesTheWayTheStackWould` + 7 flag-on baselines |
+| 4 | heavy-first pops the **lightest** | 14 |
+| 5 | a split pushes its head before its tail | the flag-off baselines, `StreetCostTests` and the geometry gates |
+| 6 | the hoisted `_connectPass.Run()` deleted | `GeneratedNetworkIsStructurallySane` + every baseline |
+| 7 | the connect pass back on the **queue-empty exit only** | **3, all new**: the budget-exit fixture (both orderings) and the call-site scan |
+| 8 | `PolishStreetPoints` back to a list-only removal | 1 — `PolishStreetPointsTakesItsDeadJunctionsOutOfTheOctreeToo` |
+| 9 | the pop observer never invoked | 12 — the pop floor in every flag-on and flag-off ordering test |
+| 10 | the budget never checked | 1 — `TheBudgetIsSpentOncePerRunAndNotPerPassOverTheQueue` |
+| 11 | `RemovePoint` no longer refuses a junction that carries strokes | 1 |
+| 12 | `RemovePoint` leaves `InStore` set | 1 |
+| 13 | the connect pass runs **before** the drain | the baselines and the scan |
+| — | `RemovePoint` without `_octreeSP.Remove` | **3**, including the end-to-end generator control |
+
+### 9.5 What the plan got wrong
+
+- **§3a: "`Generate()` cannot be called twice"** — it can now, and B2.6 depends on it: a
+  second `Generate()` on a generator whose budget is spent is the shape a tiered ordering
+  would take, and asserting that it adds nothing is how the budget is shown to be one
+  allowance. What was true is the reason given: it rebuilt the pipeline and ran the
+  connect pass on both exits.
+- **§3a: "still needs the lift step and the ghost fix"** — the ghost fix is here, and the
+  plan's description of it was right but understated the *reason*. `PolishStreetPoints`
+  is not the dangerous caller; it is the harmless one, because it runs after `Generate()`
+  has returned and nothing queries the point octree afterwards. What makes the primitive
+  worth writing before WP-B3 is that **a removal that only touches the list looks
+  correct**, and the first caller that runs during generation would inherit that silently.
+- **The budget claim in the test suite**, §9.2 — not the plan's, but the plan leans on
+  `Yelukhdidru@3000` as the seed that exercises everything, and on this it does not.
+
+### 9.6 Still open, for WP-B3
+
+- `ConnectComponentsPass` still does not run the constraint pipeline (§7.8), unchanged.
+- The heavy-first city has **no `street-geometry.json` baseline** — only V2 of the
+  network. Blocks, estates and buildings on the flag-on city are unrecorded, which is
+  fine while nothing places a structure and is the first thing WP-B5 will need.
+- The linear scan in `Pop()`. Measured peak pending: 470 on `Yelukhdidru@3000`, so it is
+  worth nothing to fix today and worth measuring again if a ruleset ever makes the queue
+  much longer.
