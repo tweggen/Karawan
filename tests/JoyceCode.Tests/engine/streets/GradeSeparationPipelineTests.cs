@@ -85,7 +85,7 @@ public class GradeSeparationPipelineTests
     {
         var chain = new OverpassBuilder(0).Build(
             _pointAt(-halfSpan, 0f), _pointAt(halfSpan, 0f),
-            StrokeKind.Bridge, rampFraction: 0.25f, weight: 1.2f);
+            StrokeKind.Bridge, rampLength: 0.5f * halfSpan, weight: 1.2f, isPrimary: true);
 
         new NetworkBuilder(store).CommitChain(chain);
         return chain;

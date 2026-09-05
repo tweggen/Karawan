@@ -3,7 +3,9 @@
 **Status:** implementation plan, twice reviewed. **WP-B1 is DONE (2026-09-05, §7 below).**
 **§7.3's corridor mid point is FIXED (2026-09-05, §8) — the one change in this phase that
 deliberately moves a baseline.** **WP-B2 is DONE (2026-09-05, §9).**
-**WP-B0 may proceed.** **WP-B3a is DONE (2026-09-05, §10); WP-B3b is UNBLOCKED.**
+**WP-B0 may proceed.** **WP-B3a is DONE (2026-09-05, §10).**
+**WP-B3b is DONE (2026-09-05, §11) — structures are placed: 18 across the seven pinned
+seeds on the shipped terrain, and the flag is still off. WP-B4 and WP-B5 are unblocked.**
 **Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s).
 
 ---
@@ -789,3 +791,287 @@ them, and each of the three named something the existing gates genuinely could n
 - **`StructureProfile`'s malformed-ramp branch** (a ramp that does not change level, two
   ramps claiming one deck junction) is reachable from no builder in the tree and is covered
   by fixtures only — deliberately, and named here so it is not mistaken for tested-by-data.
+
+---
+
+## 11. WP-B3b as built (2026-09-05) — structures exist, and five things the plan and the brief got wrong
+
+**Flag off, nothing moved**: `street-fingerprints.json`, `street-geometry.json`,
+`street-cost-baseline.json` and `street-relaxed-heights.json` are byte-identical to
+`818ae1bf`, TALE is 200/200, and 1450 xUnit against 1365 before. **Flag on, the recorded V2
+fingerprint moved on six of eight seeds** — that is the point, and §11.6 records old → new.
+
+### 11.1 THE HEADLINE — what a city gets, on the shipped terrain
+
+| seed | crossings considered | **structures placed** | refused |
+|---|---|---|---|
+| `seed000@500` | 10 | **0** | ArmTooShort 5, InteriorTBranch 4, DeckGrade 1 |
+| `seed011@500` | 9 | **0** | InteriorTBranch 4, ArmTooShort 3, DeckGrade 1, Overlaps 1 |
+| `Yelukhdidru@400` | 1 | **0** | InteriorTBranch 1 |
+| `Yelukhdidru@800` | 26 | **2** | InteriorTBranch 8, Overlaps 8, ArmTooShort 4, DeckGrade 4 |
+| `seed000@1500` | 140 | **1** | InteriorTBranch 54, ArmTooShort 44, Overlaps 21, DeckGrade 20 |
+| `seed017@2400` | 366 | **6** | InteriorTBranch 159, ArmTooShort 83, Overlaps 74, DeckGrade 43, WouldDisconnect 1 |
+| `Yelukhdidru@3000` | 549 | **9** | InteriorTBranch 204, ArmTooShort 130, Overlaps 124, DeckGrade 75, DeckClearance 4, RampClearance 3 |
+
+**Eighteen structures across seven cities**, and D2's "a handful of correct structures is the
+goal" is met rather than argued about. The deck grades that came out are **−4.48 … +5.52 %**,
+against the **+4.2 / +11.4 / +4.3 / −4.7 / +23.7 / +21.6 %** §10.5 measured when nothing was
+refusing anything.
+
+**A structure is one crossing, lifted.** An interior junction whose arms include a nearly
+opposed pair of ordinary streets has that pair **replaced** by a ramp–deck–ramp chain between
+the two far ends; the junction stays exactly where it is and keeps its other arms, and the
+road that used to cross now passes underneath. The two lifted strokes are removed: keeping
+them would put a ground road and a ramp along one line, which is the single thing
+`ClearanceConstraint` exists to forbid, and would leave the at-grade crossing the structure
+was built to remove.
+
+### 11.2 ⚠️ The deck grade bound — TWO EXISTING NUMBERS AND NO NEW ONE
+
+The brief asked for a bound and a justification. `GradePolicy.MaxDeckGradeFor` is
+
+    min( MaxGradeFor(deck) , MaxRampGrade )
+
+— i.e. **the road's own limit, and never steeper than the ramps that reach it**. A deck is not
+a special kind of climb the way a ramp is; it is the road, carried in the air, so it is held
+to exactly what that road would be held to on the ground: `MaxGradeFor`'s interpolation over
+weight, 5 % for the heaviest corridor and 14 % for the lightest. The cap then binds below
+weight **0.69**, because a deck that out-climbs its own ramps is a ramp with a longer name.
+So a heavy corridor gets 5 %, a light one 10 %, and **every value in between comes from a
+number that already existed and was already argued for** — `MaxGradeFor` stays the one
+expression for "how steep may this be", which is what §10.1 built it to be.
+
+⚠️ **And it is the rule that does the work.** Over the seven seeds the deck's own grade
+refuses **144** corridors, against 3 for the ramps' plan clearance and 4 for the deck's
+vertical one. §2's corridor-fit table cannot see this at all — it asks whether two ramps FIT,
+and geometry alone still admits what it predicted: **the same cities on LEVEL ground place 1,
+1, 0, 6, 21, 49 and 88**, because there no corridor is refused for its deck grade. Nine
+against eighty-eight is the clearest statement available of what the bound is doing.
+
+### 11.3 ⚠️ THE FINDING THE PLAN DID NOT HAVE: a lift can take a city apart
+
+A grade separated crossing **has no slip roads**. The through road and the road beneath it
+stop being connected to each other at that point, and the lift removes two edges while adding
+a path between their far ends — so a junction that reached the rest of the network only
+through one of them can be cut off.
+
+On the shipped terrain this never happens: every one of the seven seeds is **one component**
+with its structures on it. **The same `seed017@2400` on level ground, where the deck grade
+refuses nothing and fifty structures go in, comes out in two pieces.** §9's *"a rule can be
+invisible to unlimited real data"* one more time, and this time the data that cannot see it is
+the terrain data the whole work package is measured on. `StructureRefusal.WouldDisconnect`
+refuses it, at a cost of one corridor in seed017 (which the deck grade was going to refuse
+anyway) and nothing anywhere else.
+
+### 11.4 The interior-T-branch rule: EXCLUSION, and what it really costs
+
+A junction with three arms loses its through pair and is left with one: a road that now ends
+nowhere, hanging off a junction that is no longer a junction. The plan offered exclusion or
+re-attachment at a foot. **Exclusion**, for two reasons: re-attaching moves the stub's
+junction by a ramp length, taking its blocks, its estate and its buildings with it, in service
+of a road that is not why the structure is being built; and what would then pass under the
+deck is a dead-end stub, i.e. nothing worth flying over. A crossing worth lifting is one where
+the road underneath goes somewhere.
+
+⚠️ **The refusal tally overstates the cost by about 2.4×, and counting it was worth doing.**
+The rule refuses 204 corridors in `Yelukhdidru@3000` — but only **85** of them have arms long
+enough to hold two ramps at all, 71 of 159 in `seed017@2400`, 23 of 54 in `seed000@1500`, and
+**0 of 4, 0 of 4 and 0 of 1** in the three small cities. So the exclusion's own cost is those
+85/71/23, before the deck grade refuses ~55 % of what survives geometry — a handful of
+structures per large city, not two hundred.
+
+### 11.5 The clearance report (old B3.5), and the deck model does not need decoupling yet
+
+Twenty crossings pass under a deck across the seven cities. Clearance runs **4.53 … 20.30 m**
+against a nominal 8, i.e. **0.57× to 2.5×**, and the spread is entirely the ground: a deck is
+pinned one deck height over the ground **at its own ends**, and what passes underneath is at
+whatever height the ground is in between. So the fixed `level · DeckHeight` model is not what
+limits this; the terrain under the crossing is.
+
+**Nothing is below `MinDeckClearance`, and that is a refusal rather than luck** — four
+corridors of `Yelukhdidru@3000` are refused for it. The floor is **derived, not chosen**:
+`MetaGen.ClusterNavigationHeight` is the height the game's own traffic flies at over the
+ground, so a deck that does not clear it is a wall across the road.
+
+### 11.6 What moved, and what did not
+
+**Flag off: not one byte.** All four recorded baseline files are identical to `818ae1bf`.
+
+**Flag on, `street-fingerprints-gradesep.json`** — recorded on a FLAT city, deliberately: on
+level ground nothing is refused for its deck grade, so the geometry rules stand alone and the
+fingerprint gates them with nothing in the way.
+
+| seed | before | after |
+|---|---|---|
+| `seed000@500` | `n=29,s=34,h=97ABED7C7FF3FA97` | `n=31,s=35,h=D18B8C78C4ADCCB7` |
+| `seed011@500` | `n=28,s=31,h=899EF900895842CC` | `n=30,s=32,h=D3AB6B3DAF7F0C95` |
+| `Yelukhdidru@400` | `n=13,s=12,h=5F724760E94FFB5B` | **unchanged** |
+| `Yelukhdidru@100` | `n=0,s=0,h=E3B0C44298FC1C14` | **unchanged** |
+| `Yelukhdidru@800` | `n=63,s=79,h=D745E1F1F870C6D1` | `n=75,s=85,h=F7C14761D85A6876` |
+| `seed000@1500` | `n=247,s=350,h=59C046B7ADE50270` | `n=289,s=371,h=9198C8462FC0DF65` |
+| `seed017@2400` | `n=613,s=883,h=1177475AC6745821` | `n=711,s=932,h=AC42116B1440395B` |
+| `Yelukhdidru@3000` | `n=930,s=1379,h=E10F9F863B39C786` | `n=1106,s=1467,h=1795C32E638B1870` |
+
+The arithmetic checks out on its face: `Yelukhdidru@3000` gains 176 junctions (88 structures ×
+two deck ends) and 88 strokes (88 × three members, less 88 × two removed arms).
+
+**`ClusterStorage.DbVersion` is NOT bumped** — that is WP-B6's.
+
+**Blocks move on the flag-on city, as §3c predicted**: quarters go 445 → 382 on
+`Yelukhdidru@3000` (a lift merges the four blocks round a crossing), and *up* on three of the
+others — 82 → 89, 221 → 228, 2 → 3 — because a ramp and a deck are themselves traced as block
+edges. That is WP-B5's subject and is recorded here rather than acted on.
+
+### 11.7 Why the refusal can be exact, which §3b said it could not be
+
+§3b: *"there is no relaxed height at generation time; `RelaxedStreetHeight` called during
+generation returns the partial store and caches it permanently."* True of
+`RelaxedStreetHeight` — and beside the point, because the quantity a refusal needs is not the
+relaxed height of the finished city. It is the **anchor** height, which §10.2 built:
+`GradeRelaxer.Relax` first relaxes the network *as if the structures were not there*. That is
+a pure function of (ground strokes, sampled terrain, policy), and the placer computes it
+directly, from the same unrelaxed `TerrainStreetHeight` the game uses, over exactly the ground
+strokes the finished network will have.
+
+So the grades refused on **are** the game's, and it is asserted rather than argued:
+`TheFinishedCityCarriesExactlyTheGradesThePlacerJudged` relaxes the finished store and finds
+every ramp at **10.000 %** and every deck at the grade the report recorded, to five decimals,
+on seven cities that were never told what answer to give.
+
+The one thing that makes this work is the **fixed point**: lifting a corridor removes its two
+arms, which changes the ground network the anchor pass runs over — so refusing one changes the
+heights for the others. The candidate set is re-measured until it stops shrinking, in memory,
+with nothing committed until it has.
+
+### 11.8 Three smaller things
+
+- **`OverpassBuilder.Build` takes a ramp LENGTH**, `RampLengthFor(policy, groundLevel,
+  deckKind)` = the climb divided by `MaxRampGrade` = 80 m. It used to take a fraction of the
+  run, which makes a long corridor's ramps steeper than a short one's — the opposite of a
+  design. Phrased through `StreetLevels.ElevationOf` rather than `DeckHeight`, so WP-B1.7's
+  single-expression scan still holds, which also makes it right for a tunnel.
+- **`IsPrimary` is carried, not asserted.** It was hard-coded `true` on all three members;
+  §0.4 says it is an orientation bit `SuccessorEmitter` flips per branch, so the chain takes
+  it off the arm it replaces. Asserted **both ways round**, because a hard-coded `false` would
+  pass a test that only ever built from a secondary road.
+- **`StrokeStore.GetStrokesNear`** is `GetRampsNear` with the kind filter lifted out, so §7.1's
+  five-term expression — the four endpoint distances *and* the crossing test — has exactly one
+  copy. A second copy of that test is how the two come to disagree, and §7.1 is a work
+  package's worth of evidence that the endpoint terms alone miss the case the rule exists for.
+
+### 11.9 ⚠️ The trap that cost the most: a junction's identity changes when it joins the store
+
+A `StreetPoint` carries a **process-global provisional id** until `_assignLocalId` gives it
+the network's own, and a network's own start at 1. So in a freshly started process a deck end
+invented by `OverpassBuilder` and a real junction of the city carry the same number — and
+every height here is looked up by that number.
+
+It surfaced as a `KeyNotFoundException` (the table was built before the commit and read
+after), which is the *harmless* half. The other half is silent: one junction answering another
+junction's question. `_reserveIdsFor` hands each invented junction the id the store itself
+would hand it, continuing from the highest issued, and
+`AnInventedJunctionNeverBorrowsAnExistingJunctionsIdentity` pins it.
+
+### 11.10 The mutations
+
+**Thirty-two driven; ONE survivor, and three needed a gate written for them.**
+
+| # | mutation | killed by |
+|---|---|---|
+| 1 | the interior-T-branch rule removed | 15 |
+| 2 | a two-arm bend counts as a crossing | 11 |
+| 3 | the deck's overhang past the crossing dropped | 5 |
+| 4 | the deck grade never refuses | 19 |
+| 5 | the ramp grade never refuses | 1 — the malformed-chain fixture, which is the only thing that can reach it |
+| 6 | the deck clearance never refuses | 5 |
+| 7 | a chain that misses what it crosses is built anyway | 1 |
+| 8 | the ramps are never checked for clearance | 5 |
+| 9 | connectivity is never checked | 4 |
+| 10 | two structures may claim one junction | 8 |
+| 11 | the fixed point runs one round | 19 |
+| 12 | ⚠️ **the invented junctions' ids are not reserved** | **survived** — see below |
+| 13 | the `Warning` deleted | 2 |
+| 14 | the anchor pass keeps the lifted arms | 14 |
+| 15 | the road a structure replaces is not removed | 15 |
+| 16 | any stroke kind is a corridor to lift | 3 — §0.7's `ConnectorBridge` trap |
+| 17 | "straight through" loosened to a dot of −0.5 | 14 |
+| 18 | candidates walked in descending junction id | 15 |
+| 19 | ⚠️ **a grade drops the deck elevation** | **survived**, then 1 — below |
+| 20 | the two crossing parameters swapped | 4 |
+| 21 | `MinDeckClearance` = 0 | 1 |
+| 22 | `IsPrimary` hard-coded `true` again | 6 |
+| 23 | the ramp length ignores the policy | 2 |
+| 24 | two ramps may swallow the whole deck | 1 |
+| 25 | any deck kind accepted | 1 |
+| 26 | the deck bound loses its ramp cap | 2 |
+| 27 | the deck bound is just the ramp grade | 12 |
+| 28 | placement runs with the flag OFF too | **43** — every flag-off baseline |
+| 29 | ⚠️ **placement runs before the connect pass** | **survived**, then 1 — below |
+| 30 | `ClusterDesc` hands over the RELAXED source | 1 |
+
+**19 — a grade that drops the deck elevation.** It survived everything, and the reason is
+worth keeping: **a DECK has both ends on one level, so the term cancels there** — the report's
+own deck grades, the refusal, and the end-to-end gate over seven cities all agree with or
+without it. Only a **ramp** joins two decks, and on a ramp the term IS the grade: 10 %
+reported as 0. The malformed-chain fixture could not see it either, because its broken "ramp"
+also has both ends on the ground. Killed by making the expression internal
+(`StructurePlacer.RoadGradeOf`) and driving it on a ramp whose two ends stand on level ground,
+where the ground says flat and the road climbs a whole deck.
+
+**29 — placement before the connect pass.** Every pinned seed places exactly the same
+structures either way, so the recorded fingerprint says nothing at all about the order. It
+still matters in both directions: `ConnectComponentsPass` does not run the constraint pipeline
+(§7.8), so a `ConnectorBridge` laid *after* a structure could cross a ramp with nothing
+checking; and a lift running after the bridging cannot disconnect what the bridging repaired.
+Killed by a call-site scan, in the shape and for the reason of B2.5's own.
+
+**12 — ⚠️ THE SURVIVOR, and it is a real hole rather than an equivalence.** The rule itself is
+gated: `ReserveIdsIn` is internal and asserted to hand out **exactly the ids the store would
+hand out**, because "no invented junction collides with an existing one" is satisfied by luck
+whenever the process-global provisional counter sits above the network's range — which in a
+test host that has already built a dozen cities it always does. **Deleting the CALL SITE still
+passes everything**, and no test in this repository can catch it: the collision needs the
+counter in a state only a freshly started process reaches, and forcing it would mean either
+allocating 65536 junctions to wrap the counter's low 16 bits or predicting its value across
+xUnit's parallel collections. Recorded rather than papered over. §7p's *"a containment test
+cannot tell a guess from a refusal"* is the same lesson: here it cannot tell a reservation from
+a lucky counter, and the difference is only visible in a process this suite never creates.
+
+### 11.11 What the plan and the brief got wrong
+
+- ⚠️ **The brief's "the buildability criterion is the measured grades — both ramps AND the
+  deck".** The deck half is exactly right and is the whole story. **The ramp half is
+  unreachable**: both ramps are designed at `MaxRampGrade` from their own feet, so on any
+  chain `OverpassBuilder` produces the measurement is 10.000 % by construction. It is kept as
+  a backstop against a chain `StructureProfile` REFUSED — and driven directly, on a
+  deliberately malformed chain, rather than counted as covered.
+- ⚠️ **The plan's §3b, "a post-relaxation refusal must un-build something already on disk".**
+  It need not: §11.7.
+- ⚠️ **Neither the plan nor the brief mentions connectivity**, and it is the one thing that
+  can make a placed structure actively harmful — §11.3.
+- ⚠️ **The brief's "~15 ramp-fit crossings per large city, and the intersection may be smaller
+  still".** The intersection is smaller, but not for the reason implied: geometry admits 88 in
+  `Yelukhdidru@3000`, and it is the deck grade rather than the fit that reduces it to nine.
+- **§10.8's "`Yelukhdidru@400` cannot carry a structure at all"** is confirmed and the refusal
+  is now visible, but for a different reason than §10.8 recorded: its one straight-through
+  crossing is a **T-branch**, and it is refused there before its arms are ever measured.
+
+### 11.12 Found and NOT fixed
+
+- ⚠️ **The placement pass samples terrain while `ClusterDesc._lo` is held.**
+  `RelaxedStreetHeight` deliberately samples outside its lock for exactly this reason, and the
+  placer cannot: it runs inside `Generate()`, which runs inside `_generateStrokes`, which runs
+  inside the lock. It is contention rather than deadlock (the elevation operators below the
+  conform layer read only plain `ClusterDesc` properties), and it is on the flag-on path only —
+  but it belongs in WP-B6's list.
+- **`GradePolicy` is constructed with defaults in two places** — `StreetHeightSources.For` and
+  `Generator` — so a tuned policy in one would not reach the other. Harmless while both are
+  defaults, which is every shipped configuration.
+- **A deck may span only ONE crossing.** §2 notes that corridor length decides how many
+  crossings one deck can cover; a multi-crossing deck is not built, deliberately, and the
+  single-crossing rule is what produced the eighteen above.
+- **Nothing joins the two roads at a lifted crossing.** A real interchange has slip roads; this
+  has none, and §11.3 is the guard rather than the fix.
+- **`StrokeStore.RemovePoint`, built by WP-B2.4 "for the lift", is not used by the lift.** The
+  interior-T-branch rule keeps every junction, so nothing is ever removed. It remains
+  `PolishStreetPoints`' one removal primitive and B2.4's reasoning still holds.

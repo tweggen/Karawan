@@ -174,7 +174,7 @@ public class RampGeometryTests
         to.SetPos(240f, 0f);
 
         var chain = new global::engine.streets.generation.OverpassBuilder(0).Build(
-            from, to, StrokeKind.Bridge, rampFraction: 0.25f, weight: 1f);
+            from, to, StrokeKind.Bridge, rampLength: 60f, weight: 1f, isPrimary: true);
 
         new global::engine.streets.generation.NetworkBuilder(store).CommitChain(chain);
         return (clusterDesc, store, chain);

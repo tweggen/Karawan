@@ -134,7 +134,7 @@ public class StructureConformResidualTests
 
         float rampLength = _shortestCorridor(policy) / 2f;
         var chain = new OverpassBuilder(cluster.Id).Build(
-            a, b, StrokeKind.Bridge, rampLength / span, weight);
+            a, b, StrokeKind.Bridge, rampLength, weight, isPrimary: true);
         Assert.Equal(3, chain.Count);
 
         foreach (var s in chain)

@@ -592,6 +592,27 @@ public class StrokeStore
      * once, so the caller decides which of its ends matter.
      */
     public IEnumerable<Stroke> GetRampsNear(in Stroke stroke, float maxDistance)
+        => _strokesNear(stroke, maxDistance, onlyRamps: true);
+
+
+    /**
+     * Every stroke, of any kind and any level, whose bounding box comes within
+     * maxDistance of the given one - and, unlike the four endpoint terms alone, one that
+     * CROSSES it.
+     *
+     * The same neighbourhood query as GetRampsNear and deliberately the same expression:
+     * §7.1 of STREETS-3D-PHASE-B-CROSSING-POLICY is a whole work package's worth of
+     * evidence that the endpoint terms on their own miss the one case a clearance rule
+     * exists for. A second copy of that test is how the two come to disagree.
+     *
+     * Level is not filtered here. What separation two strokes on different decks need is
+     * the caller's question, and a ramp is on both of its decks at once.
+     */
+    public IEnumerable<Stroke> GetStrokesNear(in Stroke stroke, float maxDistance)
+        => _strokesNear(stroke, maxDistance, onlyRamps: false);
+
+
+    private IEnumerable<Stroke> _strokesNear(in Stroke stroke, float maxDistance, bool onlyRamps)
     {
         List<Stroke> found = new();
 
@@ -606,7 +627,7 @@ public class StrokeStore
 
         foreach (var cand in nearby)
         {
-            if (cand.Kind != StrokeKind.Ramp || cand == stroke)
+            if (cand == stroke || (onlyRamps && cand.Kind != StrokeKind.Ramp))
             {
                 continue;
             }

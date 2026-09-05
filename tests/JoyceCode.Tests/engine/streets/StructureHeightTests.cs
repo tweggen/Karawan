@@ -964,7 +964,7 @@ public class StructureHeightTests
         var to = _pointAt(400f, 0f);
 
         var chain = new OverpassBuilder(cd.Id).Build(
-            from, to, deckKind, RampLength / 400f, CorridorWeight);
+            from, to, deckKind, RampLength, CorridorWeight, isPrimary: true);
         Assert.Equal(3, chain.Count);
 
         foreach (var s in chain)

@@ -95,4 +95,36 @@ public sealed class GradePolicy
 
         return MaxGradeAtMinWeight + t * (MaxGradeAtMaxWeight - MaxGradeAtMinWeight);
     }
+
+
+    /**
+     * Steepest a bridge deck or a tunnel bore may be, and the number a corridor is
+     * refused on.
+     *
+     * ⚠️ Nothing designs this. Both ramps climb MaxRampGrade from their own feet, so
+     * whatever the two feet disagree by lands on the deck - measured over six generated
+     * cities on the shipped terrain at +4.2, +11.4, +4.3, -4.7, +23.7 and +21.6 percent,
+     * and 23.7 % is not a bridge, it is a ramp and a half (§10.5). The corridor-fit table
+     * of §2 cannot see this at all: it asks whether two ramps FIT, not whether the two
+     * ends are at similar enough heights for the deck between them to be a deck.
+     *
+     * TWO EXISTING QUANTITIES, AND DELIBERATELY NO NEW NUMBER:
+     *
+     * - **the road's own limit.** A deck is not a special kind of climb the way a ramp
+     *   is; it is the road, carried in the air. So it is held to exactly what that road
+     *   would be held to on the ground - MaxGradeFor, the same interpolation over weight
+     *   every other stroke goes down, which is 5 % for the heaviest corridor and 14 % for
+     *   the lightest. Anything else would be a second expression for "how steep may this
+     *   be", which is what MaxGradeFor exists not to have.
+     * - **and never steeper than its own ramps.** A deck that out-climbs the ramps
+     *   leading to it is not a deck; it is a longer ramp with a different name. That
+     *   binds only below weight 0.69, where the interpolation is above MaxRampGrade.
+     *
+     * So a heavy corridor gets 5 %, a light one 10 %, and every value in between comes
+     * from a number that already existed and was already argued for.
+     */
+    public float MaxDeckGradeFor(Stroke stroke)
+    {
+        return Single.Min(MaxGradeFor(stroke), MaxRampGrade);
+    }
 }

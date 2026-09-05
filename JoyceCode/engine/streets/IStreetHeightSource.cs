@@ -102,6 +102,25 @@ public static class StreetHeightSources
     }
 
 
+    /**
+     * The same source with the relaxation taken off, for a caller running DURING
+     * generation.
+     *
+     * RelaxedStreetHeight's first act is to ask its cluster for the stroke store, which
+     * triggers - or waits for - the very generation that is asking. Its base is a plain
+     * terrain sample and has no such dependency, and it is also the right quantity: the
+     * placement pass relaxes the network itself, over the ground strokes the finished
+     * city will have, so what it needs underneath is the unrelaxed sample and not
+     * somebody else's relaxation of a different graph.
+     *
+     * A type test rather than a second construction, because sampling the terrain twice
+     * would mean two caches and therefore two answers at one junction - the thing
+     * IStreetHeightSource exists to prevent.
+     */
+    public static IStreetHeightSource UnrelaxedOf(IStreetHeightSource source)
+        => source is RelaxedStreetHeight relaxed ? relaxed.Base : source;
+
+
     private static int _announced;
 
 

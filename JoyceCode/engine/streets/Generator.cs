@@ -50,6 +50,39 @@ namespace engine.streets
          */
         public bool EnableGradeSeparation { get; set; } = false;
 
+        /**
+         * The UNRELAXED ground under a junction, for the placement pass.
+         *
+         * Injected as a function for the same reason the flag is injected as a value: a
+         * generator that reached for ClusterDesc.StreetHeightSource itself would reach
+         * RelaxedStreetHeight, whose first act is to ask the cluster for its stroke store
+         * - which is what is being generated. The anchor heights a refusal is judged on
+         * are computed here from this and the policy, and they are the game's own
+         * (StructurePlacer's class comment says how).
+         *
+         * Null with the flag on means nothing can be judged, and the placement pass says
+         * so loudly rather than placing nothing quietly.
+         */
+        public Func<StreetPoint, float> GroundHeightOf { get; set; }
+
+        /**
+         * How steep everything here may be. The same defaults StreetHeightSources.For
+         * hands RelaxedStreetHeight, which is what makes a refusal here agree with the
+         * heights the game later computes; settable so a test can drive a policy without
+         * a process global.
+         */
+        public GradePolicy GradePolicy { get; set; } = new();
+
+        /**
+         * What the last run's placement pass did. Null when the flag was off.
+         *
+         * Carried outside GenerationReport - which is opt-in diagnostics - because "how
+         * many structures did this city get, and why not more" is the answer this work
+         * package exists to produce, and it may not depend on somebody having asked for
+         * diagnostics.
+         */
+        public generation.StructurePlacementReport StructurePlacement { get; private set; }
+
         private float _rampClearance = -1f;
 
         /**
@@ -344,6 +377,54 @@ namespace engine.streets
             _buildPipeline();
             _drain();
             _connectPass.Run();
+            _place();
+        }
+
+
+        /**
+         * WP-B3b. Lift what the finished network permits to be lifted.
+         *
+         * AFTER the connect pass, on purpose and in both directions. The pass bridges
+         * whatever the drain left disconnected and does not run the constraint pipeline
+         * (§7.8), so a corridor judged before it could have a ConnectorBridge laid across
+         * a ramp afterwards with nothing checking. And lifting cannot disconnect anything
+         * it runs after: a chain replaces the path from one foot to the other, and the
+         * junction between them keeps at least two arms by the interior-T-branch rule, so
+         * every junction the removed arms served is still reachable.
+         *
+         * Nothing here draws from the RandomSource. That is what lets it be added at the
+         * end of a run without moving a single flag-off number, and it is deliberate: a
+         * placement policy that consumed draws would put every seed's network downstream
+         * of how many corridors happened to qualify.
+         */
+        private void _place()
+        {
+            if (!EnableGradeSeparation)
+            {
+                StructurePlacement = null;
+                return;
+            }
+
+            StructurePlacement = generation.StructurePlacer.Place(
+                _strokeStore, _clusterDesc.Id, GradePolicy, GroundHeightOf,
+                RampClearance, MinSpanLength, MaxSpanLength);
+
+            /*
+             * ⚠️ A Warning, every time, whether or not anything was placed - and not a
+             * Trace, which a debug category would filter away.
+             *
+             * "No bridges appeared" and "the policy never ran" have to be different
+             * observations. Every previous round of this work stream has hit the failure
+             * mode where they are not, and a refusal that is only counted into an opt-in
+             * report is exactly that failure mode with a report attached.
+             */
+            Warning(_dc, $"{_annotation}: grade separation: {StructurePlacement.Describe()}");
+
+            if (_report != null)
+            {
+                _report.StructuresPlaced = StructurePlacement.Placed;
+                _report.StructuresRefused = StructurePlacement.RefusedTotal;
+            }
         }
 
 
