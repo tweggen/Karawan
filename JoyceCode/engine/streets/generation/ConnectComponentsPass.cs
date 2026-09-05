@@ -297,15 +297,16 @@ internal sealed class ConnectComponentsPass
          * junctions that are), and a mid point left on the default level 0 would turn
          * each half of a level-1 corridor into a stroke joining two decks.
          *
-         * NOTE `mid` above is computed - the offset draw included - and never assigned
-         * to this point, so the corridor's middle junction sits at the CLUSTER ORIGIN.
+         * `mid` used to be computed here - the offset draw included - and never
+         * assigned, so the corridor's middle junction sat at the CLUSTER ORIGIN.
          * Measured on seed017@2400, the only one of 180 clusters that reaches this
-         * branch: a 318 m gap is bridged by 1341.7 m + 1050.3 m through the middle of
-         * the city. Pre-existing and deliberately NOT fixed in WP-B1, because
-         * SetPos-ing the point moves that cluster's recorded fingerprint and this work
-         * package may not move the default city.
+         * branch: a 318 m gap was bridged by 1341.7 m + 1050.3 m through the middle of
+         * the city. The draw was already being made, so putting the point where it was
+         * always meant to go does not shift the random sequence by one number; it moves
+         * that one cluster's geometry and nothing else's.
          */
         var midPoint = new StreetPoint { ClusterId = _clusterId, Level = fromPoint.Level };
+        midPoint.SetPos(mid);
         midPoint.PushCreator("corridor_mid");
 
         // Create two segments: from→mid, mid→to

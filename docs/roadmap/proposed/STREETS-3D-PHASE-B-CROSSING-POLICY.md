@@ -307,14 +307,15 @@ deck the crossing was found on. Latent today and exactly zero-cost to fix (level
 default), but it would have made B1.4's own `SplitStrokeAt` level backstop fire spuriously
 on the first level-1 crossing, and behind that it is a junction filed on the wrong deck.
 
-### 7.3 ⚠️ `_createBridgeCorridor` never assigns its mid point's position — **found and NOT fixed**
+### 7.3 ⚠️ `_createBridgeCorridor` never assigns its mid point's position — ✅ **FIXED 2026-09-05, see §8**
 
 `mid` is computed, the `RandomSource` draw for its offset is made, and the value is **never
 assigned to `midPoint`**, so the corridor's middle junction sits at the **cluster origin**.
 Measured on `seed017@2400`, the only one of 180 clusters that reaches this branch: a
 **318 m** gap between two components is bridged by **1341.7 m + 1050.3 m** through the middle
-of the city. Pre-existing. Deliberately not fixed here: `SetPos`-ing the point moves that
-seed's recorded fingerprint, and WP-B1 may not move the default city. Marked in the source.
+of the city. Pre-existing. Deliberately not fixed in WP-B1: `SetPos`-ing the point moves that
+seed's recorded fingerprint, and WP-B1 may not move the default city. Fixed on its own,
+ahead of WP-B2, on the owner's authorisation — §8.
 
 ### 7.4 ⚠️ B1.3's level filter is needed on BOTH loops, not just the partner choice
 
@@ -358,6 +359,56 @@ routing, and the routing is genuinely unobservable while the choice is correct.
 - **`ConnectComponentsPass` does not run the constraint pipeline at all**, so a
   `ConnectorBridge` may be laid straight past or through a ramp with no clearance check. Not
   in WP-B1's ACs; the clearance tests exclude `ConnectorBridge` explicitly and say why.
-- **The corridor mid point** of §7.3.
+- **The corridor mid point** of §7.3. ✅ fixed 2026-09-05, §8.
 - **`Generator.Generate()` still ends with `_connectPass.Run()` on both exits**, which §3a
   already records as blocking WP-B2.
+
+---
+
+## 8. The corridor mid point (2026-09-05) — §7.3 fixed on its own
+
+Done alone, ahead of WP-B2, because it is the one change in this phase that is **meant** to
+move a baseline, and doing it separately is what lets WP-B2's own "nothing moves" gate mean
+anything.
+
+**The `RandomSource` draw was already being consumed.** `offset = 40f + _rnd.GetFloat() * 40f`
+is on the line above; only the assignment of the resulting position was missing. So the
+random sequence does **not** shift, the network's shape and size are untouched, and the fix
+is a pure change of one junction's coordinates. That is visible in the fingerprint: the
+counts are identical either side of it.
+
+**What moved, per seed.** `seed017@2400` and nothing else, exactly as predicted:
+
+| seed | before | after |
+|---|---|---|
+| `seed017@2400` | `n=785,s=1034,h=27B690F7094A1DE5` | `n=785,s=1034,h=A3ACCA494D9A7A3B` |
+
+**A genuine geometry change, not a re-hash**, and measured rather than asserted: the
+canonical stroke list differs in **2 lines of 1034**, both of them the corridor's own halves,
+with the other 1032 byte-identical, `n` and `s` unchanged, and the point count unchanged. The
+mid junction moves from `(0.0, 0.0)` to `(-841.9, 822.4)` — **1178.3 m** — and the corridor
+that bridges a **318.0 m** gap goes from **1341.7 m + 1050.3 m** to **165.4 m + 165.3 m**.
+The remaining seven seeds are byte-identical, `street-geometry.json` does not record
+`seed017@2400` at all so no geometry baseline moved, and `StreetCostTests` stayed inside its
+existing 2 % gate.
+
+**⚠️ What the test has to assert, which is not what the symptom looks like.** "The mid is not
+at the cluster origin" is the *shape of the defect*, not the property, and it is wrong in both
+directions: a corridor whose two ends straddle the origin has its mid there legitimately, and
+`seed017@2400`'s corridor happens to be a kilometre away from the origin, so an origin check
+would have passed there for a reason unconnected to the defect. The property is that the mid
+stands **between** its two ends — its projection onto the chord is the chord's own midpoint —
+**and off** that chord by the offset that was drawn for it. Both halves are load bearing:
+`TheOffsetIsWhatSeparatesADrawnMidFromADefaultOne` puts the chord's midpoint exactly on the
+origin, and there the defect satisfies the *between* half on its own.
+
+**Mutations: three driven, two killed by the new tests, one killed by the fingerprint.**
+Dropping the assignment fails 3; assigning the plain chord midpoint without the perpendicular
+offset fails 3 (the offset assertion, in all three fixtures); **flipping the sign of the
+offset survives all nine corridor tests and always will** — which side of the chord a corridor
+bows to is not a property of anything, and both answers are equally correct — and is caught by
+the recorded fingerprint for `seed017@2400`, which is the only thing that can pin it.
+
+Tests: `tests/JoyceCode.Tests/engine/streets/ConnectComponentsCorridorTests.cs` (9). One of
+them records that **no other pinned seed reaches the corridor branch**, so that a ruleset
+change which quietly stops exercising it is visible rather than silent.
