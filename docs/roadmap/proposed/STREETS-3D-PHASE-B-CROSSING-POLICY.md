@@ -147,11 +147,41 @@ un-build something already on disk. Checking against unrelaxed terrain needs a m
 larger than `DeckHeight` (§7e residuals: p99 ±7–10.5 m, worst −18.3/+16.9 m), which
 swallows the check.
 
-**The change that makes it satisfiable: `GradePolicy.MaxGradeFor` becomes `Kind`-aware.**
-For a `Ramp`, permitted ground rise is `MaxRampGrade·L − DeckHeight`, so **the relaxer
-itself bounds the ramp's total grade** and pins the ground under a deck junction relative to
-its foot. A pure-function change in a class with exhaustive tests. Then B3.3 is a *relaxer
-property*, and B3.4 becomes a post-relaxation **report** (B3.5) rather than a refusal.
+#### ✅ SETTLED 2026-09-05 — option **B**: pin the structure, let the ground conform
+
+Two ways were put to the owner, and the review's own formulation was **wrong** on the way:
+
+> ⚠️ *"permitted ground rise is `MaxRampGrade·L − DeckHeight`"* is a **shrunken symmetric**
+> bound. The real constraint is an **offset interval**: `|groundRise + Δlevel·DeckHeight| ≤
+> MaxRampGrade·L`. With `M`=10 m and `d`=+8 m that is `g ∈ [−18, +2]`, not `[−2, +2]` — the
+> review's form **forbids a ramp descending a hill that falls away from it**, the easiest
+> case there is. It also ignores sign: a `Tunnel` ramp has `Δlevel = −1`.
+
+**Option A (not taken)** — teach the policy signed rise bounds (`MaxGradeFor → RiseBoundsFor`
+returning an interval) and let the relaxer clamp into it. Simple, one proven pass, but the
+relaxer then *decides* the structure's profile and can fight the placement. And the budget is
+brutal: at 10 % over 8 m the deck climb eats nearly all of it — **0 m of permitted ground
+rise at the 80 m minimum**, 2 m at 100 m, 4.5 m at the 125 m longest stroke — against
+shipped terrain running **14.9 % per 20 m cell at the median**. The relaxer would pull hard
+and, because `resistance` splits each correction between both ends, propagate into the
+neighbours.
+
+**Option B (TAKEN)** — the structure's junctions are **boundary conditions**: immovable under
+relaxation, so the relaxer moves their *neighbours* instead (`resistance` is already a
+per-junction map, so immovability may be cheap). The structure's profile is then **designed,
+exactly**, and §2c's `ClusterConformElevationOperator` grades the terrain to it — machinery
+that already exists and is proven. This matches how the rest of this workstream has gone:
+**the road is designed and the ground conforms**, not the ground bending the road.
+
+Known risk: a pinned structure on a steep hillside demands a terrain cut the **20 m
+elevation grid cannot cut** — the standing §2c limit (ledger 2.1). Measure it; do not assume.
+
+⚠️ **The guard, either option:** `MaxGradeFor` for a **`Street`** must return exactly what it
+returns today, bit for bit, or every terrain city moves — and the terrain city is now the
+shipped one. **Provably identity for non-structure strokes**, asserted over whole generated
+cities rather than argued from the code.
+
+B3.3 becomes a *relaxer property*, and B3.4 a post-relaxation **report** (B3.5), not a refusal.
 
 `ElevationOf` is **already** the one expression with four consumers, so "prepared for B" is
 largely done — but under B, `LevelElevation` stops being `[BsonIgnore]`, costing its own
@@ -231,11 +261,28 @@ built**. What remains is the mechanism a lift needs.
 Deliberately **not** in B2: any structure placement, `OverpassBuilder` changes, or the
 interior-T-branch rule — those are WP-B3, where a lift actually happens.
 
-### WP-B3 — structures — **BLOCKED on §3b only** (D1 settled: `MaxRampGrade` = 10 %)
+### WP-B3a — the height model — **UNBLOCKED** (§3b option B taken 2026-09-05)
 
-`GradePolicy.MaxGradeFor` becomes `Kind`-aware first; B3.3 then becomes a relaxer property
-on a sloping fixture, and clearance becomes a post-relaxation **report** whose distribution
-decides whether §3b option B is needed.
+The relaxer stops being able to move a structure. Nothing is placed here; fixtures stand in
+for structures, exactly as WP-B1 did — **no generated city contains one, so real data cannot
+catch anything.**
+
+| AC | criterion |
+|---|---|
+| B3a.1 | A `Ramp`/`Bridge`/`Tunnel` junction is **immovable** under relaxation; its neighbours absorb the correction. Asserted on the relaxer's output over a sloping fixture, not on the resistance map. |
+| B3a.2 | ⚠️ **Provably identity for non-structure strokes**: `MaxGradeFor(Street)` and every relaxed height in all eight seeds are **bit for bit** what they are today. The terrain city is the shipped city. |
+| B3a.3 | A pinned structure's ramp carries **exactly** the grade its profile specifies — `MaxRampGrade` = 10 % — measured on the relaxed heights, not on the intent. |
+| B3a.4 | §2c's conform pass grades the terrain to the pinned structure. **Report the residual**: how far the graded ground ends up from the structure's own profile, and how much of that the 20 m grid cannot cut (ledger 2.1). |
+| B3a.5 | Positive control: **without** pinning, the same fixture's structure junctions **do** move — otherwise B3a.1 passes when pinning is inert. |
+| B3a.6 | Flag off: every baseline byte-identical; `StreetCostTests` in its gate; TALE 200/200. |
+
+### WP-B3b — placement — **blocked on B3a**
+
+Find corridors on the existing network, decide, build via `OverpassBuilder` + `CommitChain`.
+Carries the old B3.5–B3.8: the clearance **report** whose distribution says whether the deck
+model needs decoupling after all, visible refusal (`GenerationReport` counts, a `Warning`),
+the interior-T-branch rule, `Build`'s ramp-length signature from `MaxRampGrade`, and
+`OverpassBuilder` no longer hard-coding `IsPrimary`.
 
 ### WP-B4 / B5 / B6 — hierarchy & angle / blocks / turn it on
 
