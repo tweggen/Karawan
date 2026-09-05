@@ -20,6 +20,31 @@ public class NavLane
     public float Length;
 
     /// <summary>
+    /// The carriageway this lane runs along, in world plan coordinates, or null for a lane
+    /// that is not on one - every pedestrian lane, and any junction synthesised part way
+    /// along a route.
+    /// </summary>
+    /// <remarks>
+    /// A lane's two ends carry their own junction's height and everything reading a lane
+    /// interpolates linearly between them, which is what a lane IS as a routing edge. The
+    /// road is not that shape: a junction cap is a flat fan at its junction's one height,
+    /// so the carriageway is flat over each footprint and climbs only between the section
+    /// points - flat, ramp, flat. The chord and the road therefore agree at the two
+    /// junctions and nowhere in between, above the road at one end and below it at the
+    /// other by the grade times the cap's reach into the stroke.
+    ///
+    /// That is invisible to a router, which only wants a cost, and to a car, which hovers
+    /// on a raycast against the collider. It is not invisible to anything DRAWN on the
+    /// road: the satnav guideline is a 4 m ribbon lying on the carriageway, and it sank
+    /// into it by a median 0.07 to 0.19 m and up to 9.85 m over the four baseline cities
+    /// on the shipped terrain, below the road at 43 to 50 % of positions. So the lane
+    /// carries the surface the road was actually built on - the same
+    /// engine.streets.generation.RoadSurface, from the same four section points - rather
+    /// than the ribbon deriving a second one that has to be kept in step.
+    /// </remarks>
+    public engine.streets.generation.RoadSurface? Surface { get; set; }
+
+    /// <summary>
     /// Unit vector, in plan, from the lane's centre line toward the surface a walker on it
     /// should keep to - the block whose kerb this lane runs along. Zero where there is no
     /// such side, which is every car lane and every pedestrian CROSSING: a crossing is in

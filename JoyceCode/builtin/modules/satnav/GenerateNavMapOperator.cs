@@ -141,11 +141,11 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
     }
 
 
-    private int _createBidirectionalLanes(
+    private static int _createBidirectionalLanes(
         NavJunction njA, NavJunction njB,
         TransportationType allowedType,
         NavClusterContent ncc)
-        => _createBidirectionalLanes(njA, njB, allowedType, ncc, Vector3.Zero);
+        => _createBidirectionalLanes(njA, njB, allowedType, ncc, Vector3.Zero, null);
 
 
     /**
@@ -153,12 +153,17 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
      *     Which side of the lane the pavement is on, or zero where there is no such side.
      *     Set on BOTH directions, because it is a property of the ground the lane covers
      *     and not of the direction anybody walks it - see NavLane.KerbSide.
+     * @param roadSurface
+     *     The carriageway this lane runs along, or null where it does not run along one.
+     *     Set on BOTH directions and on every subdivision, for the same reason KerbSide is:
+     *     it describes the ground, not the direction of travel - see NavLane.Surface.
      */
-    private int _createBidirectionalLanes(
+    private static int _createBidirectionalLanes(
         NavJunction njA, NavJunction njB,
         TransportationType allowedType,
         NavClusterContent ncc,
-        in Vector3 v3KerbSide)
+        in Vector3 v3KerbSide,
+        in engine.streets.generation.RoadSurface? roadSurface)
     {
         float totalLength = Vector3.Distance(njA.Position, njB.Position);
         if (totalLength < 0.01f) return 0;
@@ -195,7 +200,8 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 End = njEnd,
                 Length = segmentLength,
                 AllowedTypes = new TransportationTypeFlags(allowedType),
-                KerbSide = v3KerbSide
+                KerbSide = v3KerbSide,
+                Surface = roadSurface
             };
             njStart.StartingLanes.Add(nlForth);
             njEnd.EndingLanes.Add(nlForth);
@@ -207,7 +213,8 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 End = njStart,
                 Length = segmentLength,
                 AllowedTypes = new TransportationTypeFlags(allowedType),
-                KerbSide = v3KerbSide
+                KerbSide = v3KerbSide,
+                Surface = roadSurface
             };
             njStart.EndingLanes.Add(nlBack);
             njEnd.StartingLanes.Add(nlBack);
@@ -228,6 +235,22 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
      * Crossing lanes connect sidewalk junctions at each intersection.
      */
     private Task<NavClusterContent> _createClusterNavContentAsync(ClusterDesc clusterDesc, NavCluster ncTop)
+        => Task.FromResult(ContentOf(
+            clusterDesc, clusterDesc.StrokeStore(), clusterDesc.QuarterStore(), ncTop));
+
+
+    /**
+     * The navigation content of one cluster, from its two stores.
+     *
+     * The stores are arguments rather than being asked for here because ClusterDesc's own
+     * accessors trigger street generation through the I container and the cluster cache, so
+     * as long as they were read in this method nothing in it could be driven at all - and
+     * this is where a car lane learns which carriageway it runs along, which is exactly the
+     * kind of claim that has to be checkable against a real generated city.
+     */
+    internal static NavClusterContent ContentOf(
+        ClusterDesc clusterDesc, StrokeStore strokeStore, QuarterStore quarterStore,
+        NavCluster ncTop)
     {
         Trace(_dc, $"Loading cluster {clusterDesc.Name}");
 
@@ -237,12 +260,13 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         };
 
         var heightSource = clusterDesc.StreetHeightSource;
+        Vector2 v2Cluster = new(clusterDesc.Pos.X, clusterDesc.Pos.Z);
 
         /*
          * === Car Lanes (from Strokes) ===
          */
         SortedDictionary<int, NavJunction> dictJunctions = new();
-        foreach (var streetPoint in clusterDesc.StrokeStore().GetStreetPoints())
+        foreach (var streetPoint in strokeStore.GetStreetPoints())
         {
             /*
              * A car lane junction IS a street junction, so this is the one place that
@@ -271,7 +295,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
         int carLaneCount = 0;
         int skippedStrokes = 0;
-        var strokes = clusterDesc.StrokeStore().GetStrokes();
+        var strokes = strokeStore.GetStrokes();
 
         foreach (var stroke in strokes)
         {
@@ -297,7 +321,32 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
             try
             {
-                carLaneCount += _createBidirectionalLanes(njA, njB, TransportationType.Car, ncc);
+                /*
+                 * The carriageway this stroke's lanes run along, built from the very four
+                 * section points GenerateClusterStreetsOperator emits the road between -
+                 * see RoadSurface.OfStroke. Without it a lane is a straight chord between
+                 * two junction heights while the road under it is flat, ramp, flat, and
+                 * anything drawn on the lane sinks into the road at one end.
+                 */
+                var roadSurface = engine.streets.generation.RoadSurface.OfStroke(
+                    stroke, heightSource, v2Cluster);
+
+                if (!roadSurface.HasValue)
+                {
+                    /*
+                     * Warning rather than Trace: a lane with no carriageway falls back to a
+                     * straight chord between its two junction heights, which looks right
+                     * and is up to a metre inside the road. A category decides how much
+                     * detail to keep, never whether a problem is reported.
+                     */
+                    Warning(_dc,
+                        $"NavMap {clusterDesc.Name}: stroke {stroke.Sid} has no carriageway "
+                        + "to run along, so anything drawn on its lanes will cut across the "
+                        + "road rather than follow it.");
+                }
+
+                carLaneCount += _createBidirectionalLanes(
+                    njA, njB, TransportationType.Car, ncc, Vector3.Zero, roadSurface);
             }
             catch (Exception e)
             {
@@ -327,7 +376,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         SortedDictionary<int, List<NavJunction>> junctionsByStreetPoint = new();
         SortedDictionary<int, StreetPoint> streetPointById = new();
 
-        foreach (var quarter in clusterDesc.QuarterStore().GetQuarters())
+        foreach (var quarter in quarterStore.GetQuarters())
         {
             if (quarter.IsInvalid()) continue;
             var delims = quarter.GetDelims();
@@ -369,10 +418,17 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 var njB = quarterJunctions[(i + 1) % quarterJunctions.Count];
                 if (njA == njB) continue;
 
+                /*
+                 * No road surface: a pavement lane is not on a carriageway. Its two ends
+                 * are block corners, each at its own junction's height, and the block
+                 * floor's outline is the straight segment between exactly those two - so
+                 * the chord IS the kerb line and there is nothing here to correct.
+                 */
                 pedestrianLaneCount += _createBidirectionalLanes(
                     njA, njB, TransportationType.Pedestrian, ncc,
                     _inwardOf(delims[i].StartPoint,
-                        delims[(i + 1) % delims.Count].StartPoint, isCcw));
+                        delims[(i + 1) % delims.Count].StartPoint, isCcw),
+                    null);
             }
         }
 
@@ -460,7 +516,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
             }
         }
 
-        return Task.FromResult(ncc);
+        return ncc;
     }
 
     

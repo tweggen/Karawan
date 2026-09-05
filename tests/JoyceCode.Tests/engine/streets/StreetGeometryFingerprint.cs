@@ -21,6 +21,16 @@ namespace JoyceCode.Tests.engine.streets;
  * Vertices are hashed in emission ORDER, unlike the network fingerprint which sorts.
  * A mesh is an ordered thing: triangles are built from consecutive vertices, so two
  * meshes with the same vertices in a different order are different meshes.
+ *
+ * ⚠️ **And so are two meshes with the same vertices and different TRIANGLES, which this
+ * could not see until 2026-09-05.** It hashed the vertex list and reported the index
+ * COUNT beside the hash - so any change that kept every vertex and the number of triangles
+ * was invisible to it, including one that reverses a triangle's winding. Found by mutation
+ * testing in §7s: swapping two indices of every carriageway row passed the entire suite,
+ * and back-face culling would have removed half of every road in the game (§7j, where
+ * exactly that happened to the pavements and nothing failed). The indices are hashed with
+ * the vertices now, which is what moved every recorded hash in street-geometry.json on that
+ * date with no vertex having moved.
  */
 internal static class StreetGeometryFingerprint
 {
@@ -43,9 +53,31 @@ internal static class StreetGeometryFingerprint
     }
 
 
+    /**
+     * The triangles, three indices to a line, in emission order.
+     *
+     * Separate from CanonicalLines because that one is also used to DIFF two meshes vertex
+     * by vertex when a baseline fails, and a diff of indices against vertices lines nothing
+     * up. Both go into the hash.
+     */
+    internal static string[] TriangleLines(Mesh m)
+    {
+        if (null == m.Indices) return Array.Empty<string>();
+
+        var lines = new string[m.Indices.Count / 3];
+        for (int i = 0; i + 2 < m.Indices.Count; i += 3)
+        {
+            lines[i / 3] = string.Format(CultureInfo.InvariantCulture,
+                "{0},{1},{2}", m.Indices[i], m.Indices[i + 1], m.Indices[i + 2]);
+        }
+
+        return lines;
+    }
+
+
     internal static string Of(Mesh m)
     {
-        var lines = CanonicalLines(m);
+        var lines = CanonicalLines(m).Concat(TriangleLines(m)).ToArray();
         byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n", lines)));
 
         return string.Format(CultureInfo.InvariantCulture,
