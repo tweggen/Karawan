@@ -2,7 +2,7 @@
 
 **Status:** implementation plan, twice reviewed. **WP-B1 is DONE (2026-09-05, §7 below).**
 **WP-B0 may proceed.**
-**WP-B2 and WP-B3 are blocked** on two owner decisions (§2a) and one mechanism rework (§3a).
+**WP-B2 is UNBLOCKED** (D1/D2 settled 2026-09-05, §2a). **WP-B3 remains blocked** on §3b.
 **Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s).
 
 ---
@@ -69,17 +69,36 @@ And the shipped network has almost no hierarchy to separate: Yelukhdidru@3000 ha
 straight-through pairs at 4-arm crossings: **12** and **5**. Intersected with the 10 % row,
 the shipped ruleset yields **a handful of candidates per large city at most**.
 
-### 2a. ⚠️ Two decisions for the owner, before WP-B2
+### 2a. ✅ D1 and D2 — SETTLED 2026-09-05
 
-- **D1 — ramp grade.** Accept ramps at 10–14 %, steeper than the roads they carry? At 5 %
-  the phase produces nothing. (Real interchanges do use steeper ramps than their mainline,
-  so this is defensible — but it should be chosen, not defaulted into.)
-- **D2 — scope.** Because there are ~30 heavy strokes per city, **stage 1 is a NEW arterial
-  ruleset, not a filter over today's strokes.** That means **every flag-on city is a
-  different city before any bridge is built**, and B6.4's "genuine change vs re-hash" will
-  be dominated by that rather than by structures. Is that the intent, or should Phase B be
-  scoped to "make the machinery correct and prove one hand-built overpass survives the
-  pipeline", leaving arterial generation to its own phase?
+**D1 — `MaxRampGrade` = 10 %.** 5 % builds nothing anywhere; 14 % would put **294**
+structures in `Yelukhdidru@3000`, making grade separation the norm rather than a feature and
+using the grade `GradePolicy` reserves for the lightest alley. 10 % gives **15 / 4 / 15** —
+occasional landmark structures — and is already steeper than any road the deck carries,
+which is how real interchanges are built. It is one named constant; retuning it once there
+is something to look at is a one-line change and a re-measure.
+
+**D2 — narrow scope. No new arterial ruleset in Phase B.** Structures are placed where the
+existing network already permits them. Rationale: a new ruleset **changes every city
+wholesale before a single bridge exists**, for a feature nobody has seen; it would dominate
+B6.4 entirely ("everything changed, because the ruleset changed"); there *are* candidates
+today (~12 heavy straight-through pairs and 15 ramp-fit crossings per large city); and it
+defers the `DbVersion` bump's blast radius until the feature has proved itself. If the
+result is "three overpasses in the world and they look great", *that* is the informed
+argument for an arterial phase.
+
+#### ⚠️ D2 changes how decision §3a is realised
+
+C was chosen over a post-pass because *"no side street ever attaches where a deck will
+be"* — but that argument assumed arterials were generated first. **Under D2 there is no
+arterial stage**, so a naive reading of C collapses back into the post-pass, orphaning and
+all.
+
+**The priority-queue variant is what makes C survive D2.** Ordering the queue by `Weight`
+on the flag-on path drains heavy candidates before any branch is popped, so a structure is
+placed on a heavy corridor **before** side streets attach to it — C's actual benefit,
+without a second loop, a re-seeding walk or a third rule table. That is now WP-B2's
+mechanism, not a "worth costing first" alternative.
 
 ---
 
@@ -194,14 +213,24 @@ exactly like `RuleTable`. A scan keeps that the only read. `ClusterStorage.DbVer
 Tests: `tests/JoyceCode.Tests/engine/streets/{GradeSeparationPipelineTests,ConnectComponentsLevelTests,DeckElevationDriftTests}.cs`
 — 47 new, 1211 xUnit against 1164 before, TALE 200/200.
 
-### WP-B2 — the staged generator — **BLOCKED on §3a rework and D2**
+### WP-B2 — heavy-first ordering and the removal primitive — **UNBLOCKED by D1/D2**
 
-Must additionally specify: the stage-2 re-seeding walk (or the priority-queue variant), a
-`RemovePoint` that also clears `_octreeSP`, the interior-T-branch rule, and `Build`'s new
-ramp-length signature. B2.2's "draws RNG in a stated order" becomes a **recorded V2 baseline
-per seed with the flag on**, not documentation.
+D2 removes the arterial stage, so the re-seeding walk and the third rule table are **not
+built**. What remains is the mechanism a lift needs.
 
-### WP-B3 — structures — **BLOCKED on D1 and §3b**
+| AC | criterion |
+|---|---|
+| B2.1 | **Flag off runs today's stack, unmodified** — V1, V2, `street-geometry.json` byte-identical and `StreetCostTests` within its gate, asserted *after* the ordering exists. Confirmed sufficient: ids are masked by `_assignLocalId`/`_assignLocalSid`, the RNG is one `RandomSource` per `Generator`, counters are per instance. |
+| B2.2 | Flag on, the queue orders by `Weight`, so **every heavy candidate is accepted before any branch is popped** — asserted on emission order over generated cities, not on the comparer. |
+| B2.3 | Determinism: `GenerationIsRepeatableWithinAProcess` on **V2 with the flag on**, plus a recorded V2 baseline per seed. Not "draws RNG in a stated order", which is documentation. |
+| B2.4 | `StrokeStore.RemovePoint` exists and **clears `_octreeSP` as well as `_listPoints`**. Positive control: a removed junction is no longer returned by `FindClosestBelowButNot`/`GetClosestPoint` — the ghost that would otherwise defeat the whole ordering. Mutation: leaving the octree entry must fail. |
+| B2.5 | `_connectPass.Run()` is hoisted out of `Generate()`'s two exits to a single end-of-generation call, so nothing can run between an ordering pass and the connect pass. |
+| B2.6 | `maxGenerations` is budgeted **once**, not per ordering tier. |
+
+Deliberately **not** in B2: any structure placement, `OverpassBuilder` changes, or the
+interior-T-branch rule — those are WP-B3, where a lift actually happens.
+
+### WP-B3 — structures — **BLOCKED on §3b only** (D1 settled: `MaxRampGrade` = 10 %)
 
 `GradePolicy.MaxGradeFor` becomes `Kind`-aware first; B3.3 then becomes a relaxer property
 on a sloping fixture, and clearance becomes a post-relaxation **report** whose distribution
