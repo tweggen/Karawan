@@ -1,190 +1,258 @@
 # Phase B — the crossing policy
 
-**Status:** proposed, not started.
-**Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s) — cities follow terrain, and every
-surface that stands on them agrees with it.
-**Precedes:** Phase C — structures (deck undersides, piers, abutments). Deliberately last:
-*a floating slab is unfinished, not wrong.*
+**Status:** proposed. **Revised after review, which returned *rethink before writing code*.**
+Three design decisions are open (§3) and must be settled before WP-B1.
+**Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s).
+**Precedes:** Phase C — structures. Deliberately last: *a floating slab is unfinished, not wrong.*
 
 The question this answers: when two streets meet, do they actually **join**, or does one
 pass over the other?
 
 ---
 
-## 0. What already exists — this is a policy, not machinery
+## 0. What exists — and what the first draft of this plan got wrong
 
-Established by reading the tree, not by assumption. **WP-4's multilayer support is complete
-and tested; the only missing piece is the decision.**
+The first draft claimed *"WP-4's multilayer support is complete; the only missing piece is
+the decision."* **That is false**, and the corrections matter more than the claim did.
 
-| piece | state |
-|---|---|
-| `Stroke.Level` / `StreetPoint.Level` (`sbyte`) | built |
-| `StrokeKind` — `Street`, `Ramp`, `Bridge`, `Tunnel`, `ConnectorBridge` | built |
-| `StreetLevels.DeckHeight = 8f`, `ElevationOf(level)` | built |
-| Level filtering in every `StrokeStore` query — crossing, snapping, near-point, near-stroke | built, `MultilayerTests` |
-| `ClearanceConstraint` — a ramp occupies two decks at once | built |
-| `OverpassBuilder.Build(from, to, deckKind, rampFraction, weight)` → ramp/deck/ramp | built |
-| `NetworkBuilder.CommitChain` — atomic; a chain that fails anywhere leaves nothing | built |
-| `NetworkBuilder._checkLevels` — only a ramp may change level, adjacent decks only | built, throws |
-| Geometry, colliders, `RoadSurface`, `DeckCollider` handle ramps | built (§7o, §7s) |
-| V1 fingerprint (ground-only, omits `Level`) and V2 (includes it) | built |
+**Built and correct:** `Stroke.Level` / `StreetPoint.Level` (`sbyte`); `StrokeKind`;
+`StreetLevels.DeckHeight = 8f`; `OverpassBuilder.Build` producing an unattached
+ramp/deck/ramp chain; `NetworkBuilder.CommitChain` (atomic) and `_checkLevels` (throws
+unless only a ramp changes level, adjacent decks only); V1 omits `Level`, V2 includes it.
+`OverpassBuilder` is referenced in production by **two comments and no code**, and no
+shipped ruleset can set a level.
 
-> **`OverpassBuilder` is called from tests and from nowhere else.** No shipped ruleset
-> produces a non-zero `Level`. The machinery is finished and never fires.
+**Wrong in the first draft, each verified against the tree:**
 
-So Phase B adds: **a decision procedure, a seam to invoke it from, and a setting to turn it
-on** — and nothing else.
+1. ⚠️ **`ClearanceConstraint` and `SpanLengthConstraint` are built but NOT in the
+   pipeline.** `Generator._buildPipeline` lists eight constraints and neither is among
+   them; `GenerationContext.RampClearance` is assigned only in `MultilayerTests`.
+   Consequence: `IntersectsMayTouchClosest` filters on level, so a ground candidate
+   crossing a **ramp** — which `OverpassBuilder` records at `Level = groundLevel` — gets a
+   Split verdict on it, and `SplitStrokeAt` has no `Kind` guard and calls `AddStroke`
+   directly, **bypassing `_checkLevels`**. That yields a "Ramp" between two level-0
+   junctions, a half-length ramp climbing the full 8 m, and a ground junction with the
+   ramp surface ~4 m overhead. The rule that exists to prevent this is inert.
+2. ⚠️ **`IntersectionConstraint` is not where crossings are decided.** Measured: junctions
+   created by a split are **1 / 1 / 0 / 11 / 1** across five cities, against **2 / 11 / 64 /
+   256 / 66** four-arm crossings. Crossings form by **snapping** — a candidate's B lands
+   within 30 m of an existing junction, `SnapToNearbyPointConstraint` moves it there, and
+   the forward rule continues from that junction on the far side. **There is no moment when
+   "two streets cross"**; a crossing accretes over two candidates. The proposed seam sees
+   at most 4 % of them.
+3. **"Level filtering in every `StrokeStore` query"** — four neighbourhood queries are
+   filtered. `QueryStreetPoints` (used by `Placer`), `GetStreetPoints` and `GetStrokes` are
+   not. Harmless today; "every" is the kind of word this project has had to retract before.
+4. **`OverpassBuilder` hard-codes `IsPrimary = true`** on all three members, so a structure
+   over a secondary road silently promotes it.
+5. **`ConnectComponentsPass` is level-blind and bypasses `NetworkBuilder`** — it picks
+   orphan points from *all* points, builds `ConnectorBridge` strokes with `Level`
+   defaulting to 0, and calls `_strokeStore.AddStroke` directly, so it can join a deck
+   junction to the ground with a non-ramp and no throw. It runs **after** the queue drains,
+   i.e. after any policy. (That resolves the ordering question the first draft left open.)
+6. **`ClusterStorage.DbVersion = 1039`.** Enabling this invalidates every cached cluster.
+   Phase A's flag had no such cost — heights are computed at load. This one does, and
+   flipping without a bump leaves every already-visited city ground-only forever.
 
 ---
 
 ## 1. The distinction that must not be blurred
 
-Carried forward from `STREETS-3D-TOPOLOGY.md` §3, because it is the reason this is a policy
-over existing data:
-
-> `Level` is a **topological deck index** — *"do these two meet?"* Terrain height is
-> **continuous** — *"how far apart are they?"* Collapsing one into the other repeats the
-> `Pos3` mistake this project already made once.
+From `STREETS-3D-TOPOLOGY.md` §3: `Level` is a **topological deck index** — *"do these two
+meet?"* Terrain height is **continuous** — *"how far apart are they?"* Collapsing one into
+the other repeats the `Pos3` mistake this project already made once.
 
 **Height informs the policy; the policy sets `Level`; `Level` drives the filtering.**
 
 ---
 
-## 2. ⚠️ Buildability comes before desirability — and it may kill the phase
+## 2. Buildability — measured, and it reshapes the phase
 
-`STREETS-3D-TOPOLOGY.md` §5 sequences Phase B as *"terrain difference first, then hierarchy,
-then spacing and angle"*. **Every one of those is a question about whether a crossing
-*wants* separating. None asks whether it *can be* separated, and that is the binding
-constraint.**
+The first draft argued buildability might kill the phase, against `STREETS-3D-TOPOLOGY.md`
+§5, whose four predicates all ask whether a crossing *wants* separating and none whether it
+*can be*. **That reasoning was sound and the conclusion is sharper than it guessed — but
+the cause is not terrain, it is the ruleset.**
 
-A ramp climbs `DeckHeight = 8 m`. At a 10 % ramp grade that is **80 m of run per ramp**, so
-a structure needs roughly **200 m** end to end before the deck has any length at all. Most
-city streets are far shorter.
+`SuccessorEmitter` emits `60 + 40·w²` clamped to ≥ 75 m, so **no candidate is longer than
+128 m**. Measured over five cities, stroke length is median 75 m, max 137 m.
 
-**WP-B0 is therefore a measurement, not code**, and it gates the whole phase: over the
-shipped world, how many crossings could physically carry an overpass at a buildable ramp
-grade? If the honest answer is "a handful", the phase needs rethinking before any policy is
-written — plausible responses being a smaller `DeckHeight`, a steeper ramp grade for minor
-roads, or restricting structures to primary roads, which are the long ones.
+Roads buildable at `2·max(DeckHeight/g, 30) + 30`, Yelukhdidru/3000 (490 roads through 256
+crossings, 200 primary):
 
-**Do not write the policy before this number exists.** Building five predicates and then
-discovering that 1 % of crossings qualify is the expensive order.
+| deck / ramp grade | within ONE candidate | within the crossing span | **within the corridor** | primary corridor |
+|---|---|---|---|---|
+| 8 m / 5 % (the primary's own `GradePolicy` limit) | **0 / 490** | 0 | 306 (62 %) | 114 / 200 |
+| 8 m / 10 % | 5 (1 %) | 8 | 414 (85 %) | 166 / 200 |
+| 8 m / 14 % (the lightest alley's limit) | 297 | 326 | 469 | 191 / 200 |
+| 5 m / 10 % | 334 | 391 | 476 | 195 / 200 |
 
----
+> **A structure that replaces one candidate cannot exist at any grade the heavy road is
+> held to.** The available run is not the crossing span (median 150 m) but the **corridor**
+> — the near-straight run through several junctions, median **418–450 m**, typically
+> passing 4 — at the cost of removing one or two junctions of the primary beyond the
+> crossing's own neighbours.
 
-## 3. Work packages and their gates
+`DeckHeight = 8 m` is not the lever: it is a defensible surface-to-surface figure (≈5 m
+clear plus deck depth), and the 4 m the tests use as a floor leaves no truck clearance.
 
-Every WP lands separately. **`joyce.EnableGradeSeparation` defaults to `false` throughout
-WP-B0 … WP-B5**, so all existing baselines stay byte-identical until WP-B6 deliberately
-moves them — the same pattern `joyce.DisableClusterFlattening` used through Phase A, and it
-worked.
-
-### WP-B0 — can it be built at all?
-
-Measurement only. No production code.
-
-| AC | criterion |
-|---|---|
-| B0.1 | Over the shipped world's cities, the distribution of **candidate crossing spans** is reported — how much straight run is available end to end at each crossing an overpass could use. |
-| B0.2 | For ramp grades of 5 %, 10 % and 14 % (the `GradePolicy` range), the **fraction of crossings that could carry a structure** is reported per city and world-wide. |
-| B0.3 | The same fractions are reported **restricted to crossings where at least one arm is `IsPrimary`**, since those are the long roads. |
-| B0.4 | A written recommendation: proceed as planned, or change `DeckHeight` / ramp grade / scope first. **This AC is a decision, and it goes to the owner, not into code.** |
-
-### WP-B1 — the seam
-
-| AC | criterion |
-|---|---|
-| B1.1 | A new `VerdictKind` (working name `Structure`) carries an unattached chain from a constraint back to the driver, which validates every member through the pipeline and commits via `NetworkBuilder.CommitChain`. |
-| B1.2 | A `ICrossingPolicy` with one implementation, `NeverSeparate`, is consulted where `IntersectionConstraint` decides. `NeverSeparate` is the default. |
-| B1.3 | **With the setting off, `street-fingerprints.json` (V1 and V2), `street-geometry.json` and `street-cost-baseline.json` are byte-identical**, asserted, and TALE is 200/200. |
-| B1.4 | A chain that fails any constraint leaves the store **exactly** as it was — asserted by fingerprinting the store before and after a deliberately unbuildable proposal. |
-| B1.5 | The constraint **order** is unchanged. `ICandidateConstraint`'s own warning applies: order is part of the generated output. |
-
-### WP-B2 — buildability predicate
-
-The `can`, before any `wants`.
-
-| AC | criterion |
-|---|---|
-| B2.1 | `MaxRampGrade` is a named constant with its derivation written down, not a literal. |
-| B2.2 | A crossing whose available run is shorter than `2 · DeckHeight / MaxRampGrade` is **never** separated, asserted over whole generated cities. |
-| B2.3 | Every ramp `OverpassBuilder` produces under the policy is within `MaxRampGrade`, measured on its own emitted geometry — not on the intent. |
-
-### WP-B3 — terrain difference (free separation)
-
-| AC | criterion |
-|---|---|
-| B3.1 | Where the two relaxed junction heights already differ by a stated fraction of `DeckHeight`, the crossing separates with **shorter ramps**, because the hill has done part of the work. The saving is measured, not asserted. |
-| B3.2 | The predicate reads **relaxed street heights**, never raw terrain and never `AverageHeight`. Guarded the way §7b's `JunctionCollider.SurfaceHeightOf` is. |
-| B3.3 | In a **flat** city this predicate never fires — it is identically zero there — asserted rather than argued. |
-
-### WP-B4 — hierarchy
-
-| AC | criterion |
-|---|---|
-| B4.1 | Weight ratio and an absolute weight floor: **two alleys never separate**, whatever their ratio. |
-| B4.2 | The heavier road takes the deck and the lighter passes underneath — asserted on identity, not on which was the candidate. |
-
-### WP-B5 — spacing and angle
-
-| AC | criterion |
-|---|---|
-| B5.1 | A heavy road that already has a junction within `N` m separates instead of adding another. |
-| B5.2 | Crossing angle: an oblique crossing separates. **This resurrects a finished thought that was abandoned** — the original `PointNearStrokeConstraint` computed `angleVice`/`angleVersa` and discarded both behind `if (true \|\| …)`; WP-2b removed the dead operands and recorded the intent. |
-
-### WP-B6 — turn it on
-
-| AC | criterion |
-|---|---|
-| B6.1 | Structures per city, and their kinds, reported for the shipped world. |
-| B6.2 | **The navigable network does not fragment**: the number of connected components is unchanged, and no junction that was reachable becomes unreachable. A separated crossing removes a junction two streets used to turn at — that is the risk this phase carries. |
-| B6.3 | Every baseline that moves is recorded with old and new values, per city, and each is classified as a genuine network change rather than a re-hash. |
-| B6.4 | TALE 200/200, with the tale suite run **after** the flip, since NPC routing crosses these junctions. |
+**This changes the phase's shape, not its viability.** A structure is a **corridor lift**,
+not a crossing decision.
 
 ---
 
-## 4. Consumers to check rather than assume
+## 3. ⚠️ Three design decisions, open
 
-- **Pedestrian crossings.** `GenerateNavMapOperator` draws them per junction. A separated
-  crossing has no junction, so none should be drawn — *expected to follow automatically,
-  which is exactly the kind of expectation this project has been wrong about.* Assert it.
-- **Nav lanes over ramps.** A ramp is a stroke, so it becomes a lane. Routing must climb a
-  deck and come back down. `NavJunction` carries `GroundHeight` and consumers add their own
-  offset (§7m) — the deck elevation is `StreetLevels.ElevationOf`, a *different* term.
-  Check which of the two a lane on a deck gets.
-- **The satnav guideline.** §7r/§7s made it follow `RoadSurface`. A ramp's surface is
-  already handled (both sections say ramps are unchanged float for float) — confirm under
-  a policy that actually emits them.
-- **Blocks.** `QuarterGenerator` traces rings from strokes. What does it do when a ring
-  would close through a deck? This is the least-understood consumer and deserves its own
-  measurement.
-- **`ConnectComponentsPass`.** Runs before or after the policy? Order decides whether it
-  can repair a fragmentation the policy caused.
+These are why the review said *rethink*. Each must be settled before WP-B1.
+
+### 3a. The seam — corridor lift as a post-pass, not a `Verdict`
+
+The seam is wrong twice over: it sees ≤ 4 % of crossings (§0.2) and it cannot hold the run
+a structure needs (§2). A structure replaces **k consecutive primary strokes** with
+ramp–deck(s)–ramp, leaving the intermediate junctions on the ground with their side arms
+only. That is a **post-pass over the finished network** — a sibling of
+`ConnectComponentsPass`, run *before* it, drawing no random numbers — or a two-stage
+generator. It is not a constraint verdict.
+
+If a `Structure` verdict is nonetheless kept for the genuine split cases: re-validating
+three members through the pipeline lets `SnapToNearbyPoint` rewrite `rampUp.B` onto another
+deck's point while `deck.A` still references the old object, so the chain silently loses
+identity. Any non-Accept on any member must refuse the **whole** structure, visibly.
+
+### 3b. The deck elevation model
+
+Deck elevation is `level · DeckHeight` and every consumer adds it. Two consequences:
+
+- **B3 as first drafted is not representable.** "Free separation where the hill has already
+  done the work" needs a level *difference* for the filter and *zero* added elevation;
+  `Level = 1` adds 8 m **on top of** whatever the hill did. It is also backwards for the
+  ramp, which climbs `8 + ground(deckStart) − ground(from)` — ground rising along it makes
+  it steeper, not shallower.
+- **Nothing bounds the actual clearance in a terrain city.** The deck is 8 m above *its
+  own* ground at each deck junction and interpolated between; the crossed road is at its
+  own junctions' heights. `GradeRelaxer` knows nothing about `Kind` or `Level` — it relaxes
+  the ground under a deck junction like any other and never sees the 8 m.
+
+### 3c. Block tracing on a non-planar graph — **measured broken, not suspected**
+
+Lifting one interior crossing of `seed000/1500` and re-tracing: quarters 82 → 79, and one
+"block" has **29 delimiters**, walks `#43 Ramp → #276 Bridge → #275 Ramp` and later the
+same three reversed, passes the crossed junction **twice**, self-intersects, and contains
+the crossed road in its interior. In `Yelukhdidru/800` a block's boundary runs along a deck
+at level 1, whose corners `Quarter.CornerGroundHeightAt` puts at **ground** height, 8 m
+under the road.
+
+`QuarterGenerator` refuses only to *start* at a non-zero level; the trace loop has no
+`Kind`/`Level` check, and the deck is an edge crossing another with no vertex — face
+tracing on a non-planar graph. The fix is a **planarisation step** for block tracing (the
+plan crossing as a pseudo-vertex; the deck absent from the ground graph). That is new
+machinery and must exist before B6.
+
+Related, and already true today: only **13 of 64** interior crossings have all four blocks;
+the rest are dropped by `hasNullSection`, silently, with a `Trace`.
 
 ---
 
-## 5. How this work has gone, and what that implies here
+## 4. Work packages
 
-From `CITY-3D-OPEN-POINTS.md`, because every one of these has bitten:
+`joyce.EnableGradeSeparation` stays **off** through WP-B0 … WP-B5. It cannot be a plain
+`GlobalSettings` read — that is process-global and untestable, as the height-source comment
+records — so the policy is **injected into `Generator` like `RuleTable`**, with the global
+read once in `ClusterDesc._generateStrokes`.
 
-1. **Measure before diagnosing.** The obvious diagnosis was wrong in about half of Phase A's
-   rounds, including twice where the plausible cause was real, present, and still not what
-   the player was seeing.
-2. **Mutation-test every gate.** Every round produced a survivor and it was always the one
-   that mattered. Specifically earned: `if (false)` round a branch passes a source scan; a
-   scan matching a bare identifier is satisfied by a field declaration or a comment;
-   `X = 0f * Call(...)` passes a scan looking for the call; **a scan sees the name of a
-   call, not how many of its results are used**; **a containment test cannot tell a guess
-   from a refusal**; and **a rule can be invisible to unlimited real data** when no baseline
-   city contains the shape it governs.
-3. **A `Trace` in a `catch` is a silent failure.**
+### WP-B0 — the gate (measurement and decisions only, no production code)
 
-The third is worth restating for this phase specifically: a proposed structure that fails
-validation must be **visibly** refused, not silently dropped, or "no bridges appeared" will
-be indistinguishable from "the policy never fired".
+| AC | criterion |
+|---|---|
+| B0.1 | Report **minSide, span and corridor** distributions separately. The unit matters: span gives the wrong answer (§2). |
+| B0.2 | Buildable fractions at 5 / 10 / 14 % ramp grade, per city and world-wide, per unit. |
+| B0.3 | The same restricted to corridors whose arms are `IsPrimary`. |
+| B0.4 | **Block census**: for a sample of lifted corridors, quarters before/after, delimiters on a Ramp/Bridge/Tunnel, blocks containing a junction in their interior, self-intersecting blocks. |
+| B0.5 | **A written design note settling §3a, §3b and §3c.** This AC is a decision, and it goes to the owner. |
 
-**And one specific to Phase B:** this is the first change in the whole workstream that moves
-the **street network itself** rather than the surfaces on it. Everything downstream — blocks,
-estates, buildings, shops, TALE locations, nav — is derived from that network. The V2
-fingerprints exist for exactly this, and B6.3 is where the cost gets stated rather than
-discovered.
+### WP-B1 — make the built machinery real
+
+| AC | criterion |
+|---|---|
+| B1.1 | `ClearanceConstraint` and `SpanLengthConstraint` are **in the pipeline**, with `RampClearance` supplied. Mutation: dropping either from the pipeline must fail a test. |
+| B1.2 | **No ground stroke is ever split on a ramp**, and no junction exists on a ramp or deck except the builder's own. |
+| B1.3 | `ConnectComponentsPass` never joins two levels with a non-ramp, and goes through `NetworkBuilder`. |
+| B1.4 | `SplitStrokeAt` refuses a non-`Street` target rather than bypassing `_checkLevels`. |
+| B1.5 | With the policy off: V1, V2 and `street-geometry.json` byte-identical; **cost within the existing `StreetCostTests` gate** (it is a 2 % ceiling with tolerance, not a byte comparison); TALE 200/200. |
+| B1.6 | Constraint **order** for the eight existing checks is unchanged; the two added ones are no-ops with the flag off, asserted. |
+
+### WP-B2 — the corridor lift
+
+| AC | criterion |
+|---|---|
+| B2.1 | `MaxRampGrade` is named with its derivation written down. |
+| B2.2 | A corridor shorter than the bound is **never** lifted — **plus a positive control**: a fixture just over the bound **must** lift. (Without it the AC passes vacuously when nothing fires.) |
+| B2.3 | Every emitted ramp is within `MaxRampGrade`, measured on its **own emitted geometry**, on a **sloping** source so the ground term is non-zero. |
+| B2.4 | Successors are emitted from the structure's far foot only; no stroke has `Level ≠ 0` except Bridge/Tunnel members. Otherwise an elevated network sprouts from the deck with no way down. |
+| B2.5 | **Clearance**: vertical distance between the deck's `RoadSurface` and the crossed road's at the plan crossing, in a **terrain** city, ≥ a stated bound. Nothing guarantees this today (§3b). |
+| B2.6 | A refused structure is **visible** — `GenerationReport` gains structure and refusal counts, and a refusal is a `Warning`. "No bridges appeared" must not be indistinguishable from "the policy never fired". |
+
+### WP-B3 — hierarchy, spacing, angle
+
+| AC | criterion |
+|---|---|
+| B3.1 | Weight ratio plus an absolute floor: **two alleys never separate**. |
+| B3.2 | Which road takes the deck is asserted on `Kind` — `OverpassBuilder` always lifts the *candidate*, so "the heavier takes the deck" is `Tunnel` for the other, and that must be stated. |
+| B3.3 | A heavy road with a junction already within `N` m separates instead of adding another. |
+| B3.4 | An oblique crossing separates. **Resurrects a finished thought**: `PointNearStrokeConstraint` computed `angleVice`/`angleVersa` and discarded both behind `if (true \|\| …)`. |
+| B3.5 | Each predicate has a **positive control**; `if (false)` around any of them must fail a test. |
+
+### WP-B4 — blocks
+
+| AC | criterion |
+|---|---|
+| B4.1 | Planarisation for block tracing: no delimiter on a Ramp/Bridge/Tunnel or at level ≠ 0. |
+| B4.2 | No block contains a junction in its interior; no block self-intersects. **All three of these failed on the first lifted crossing.** |
+| B4.3 | Quarter count is explained, not merely recorded. |
+
+### WP-B5 — turn it on
+
+| AC | criterion |
+|---|---|
+| B5.1 | Structures per city and their kinds, for the shipped world. |
+| B5.2 | **Connectivity, falsifiably**: component count cannot change (a separation splits nothing), so instead — for each removed at-grade crossing, the shortest path between its four neighbours before and after, as a detour distribution; plus every junction reachable by A* over car lanes, which catches a deck lane with no ramp lane. |
+| B5.3 | `ClusterStorage.DbVersion` bumped. |
+| B5.4 | Every baseline that moves recorded old → new, per city, classified as a genuine network change or a re-hash. |
+| B5.5 | TALE 200/200 run **after** the flip. |
+
+---
+
+## 5. Consumers to check rather than assume
+
+- **TALE.** `SpatialModel.ExtractFrom` creates a `street_segment` location per `StreetPoint`
+  — **deck junctions included** — so NPCs get scheduled to stand on a bridge, with
+  `GetSectionArray()` corners nudged outward off the deck edge.
+- **`Placer` / `citizen.SpawnOperator`** nearest-junction lookups are **unfiltered** by level.
+- **`GradeRelaxer`** may relax the ground under a deck junction to a grade the ramp above
+  it cannot meet.
+- **Pedestrian crossings** — `GenerateNavMapOperator` draws them per junction; a separated
+  crossing has none. Expected to follow automatically, *which is exactly the kind of
+  expectation this project has been wrong about.* Assert it.
+- **Nav lanes over ramps** — a lane on a deck needs `StreetLevels.ElevationOf` as well as
+  `NavJunction.GroundHeight`. Check which it gets.
+- **Flat cities** — `EnableGradeSeparation` is independent of `DisableClusterFlattening`, so
+  hierarchy/spacing/angle would fire in a flat city too. Decide whether they should.
+
+---
+
+## 6. How this work has gone
+
+Every one of these has bitten in Phase A: **measure before diagnosing** (the obvious
+diagnosis was wrong in about half of the rounds); **mutation-test every gate** — `if (false)`
+round a branch passes a source scan, a scan matching a bare identifier is satisfied by a
+field declaration or a comment, `X = 0f * Call(...)` passes a scan looking for the call, a
+scan sees the name of a call but not how many of its results are used, **a containment test
+cannot tell a guess from a refusal**, and **a rule can be invisible to unlimited real data**
+when no baseline city contains the shape it governs; and **a `Trace` in a `catch` is a
+silent failure**.
+
+The review of this plan's first draft is itself the lesson restated: two of its central
+claims were wrong, and only measurement showed it.
+
+**Specific to Phase B:** this is the first change in the workstream that moves the street
+**network** rather than a surface on it. Blocks, estates, buildings, shops, TALE locations
+and nav are all derived from it.
