@@ -3636,7 +3636,7 @@ all**, which is why §7 and §7h both had to stand in with source scans.
 
 `ToSomewhere._onJunctions` still needs a booted engine and is still a scan — now for one line.
 
-Tests: `tests/JoyceCode.Tests/builtin/modules/satnav/RouteRibbonRoadTests.cs` (61 across five
+Tests: `tests/JoyceCode.Tests/builtin/modules/satnav/RouteRibbonRoadTests.cs` (60 across five
 cities), plus `RouteRibbonTests` adapted to the strip form and
 `KerbSeamTests.OnlyOneExpressionSaysWhereACarriagewayBeginsAndEnds`.
 
