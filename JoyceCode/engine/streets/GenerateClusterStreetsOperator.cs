@@ -186,6 +186,63 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     }
 
 
+    /**
+     * The most rows one texture length of carriageway may be cut into.
+     *
+     * A bound on the arithmetic rather than on the geometry: the number asked for is a
+     * texture length times the difference of the two sides' slopes over four times
+     * generation.RoadSurface.MaxSag, and a stroke whose two section points nearly coincide
+     * has a slope that is nearly unbounded. Over the five baseline cities on the shipped
+     * terrain the largest number actually asked for is 51, so this does not bind on
+     * anything the generator produces - and a city where it DID bind would be one whose road
+     * is silently coarser than MaxSag rather than one that is merely expensive, which is
+     * what RoadTessellationTests.TheDrawnRoadStaysOnItsOwnSurface would then catch.
+     */
+    internal const int MaxRowsPerTextureLength = 64;
+
+
+    /**
+     * One row of carriageway vertices: the two points where the road meets its two kerbs
+     * at a given distance along the stroke, built flat at the A end's height for
+     * _shearOntoSlope to lift afterwards.
+     *
+     * Here rather than written out twice inside the row loop because the loop now emits a
+     * variable number of rows per texture length, and the two copies it used to have - one
+     * for the row it started at and one for the row it ended at - were the same six lines
+     * with different variable names.
+     */
+    private void _streetRow(
+        joyce.Mesh g, in builtin.tools.UVProjector uvp,
+        in Vector3 vam, in Vector2 q, in Vector2 n, float hsw, float h,
+        float d, float vStart)
+    {
+        /*
+         * Direction of street, scaled by the current offset, plus street point A in
+         * fragment coordinates at the standard height.
+         */
+        var em = new Vector3(q.X, 0f, q.Y);
+        em *= d;
+        em += vam;
+
+        var elx = em.X - hsw * n.X;
+        var ely = em.Z - hsw * n.Y;
+        var erx = em.X + hsw * n.X;
+        var ery = em.Z + hsw * n.Y;
+        var uv0 = uvp.GetUV(new Vector3(elx, h, ely), 0f, vStart);
+        var uv1 = uvp.GetUV(new Vector3(erx, h, ery), 0f, vStart);
+
+        if (_traceStreets)
+            Trace(_dc,
+                $"row @{d}: el = ({elx}; {ely}); uv = ({uv0.X}; {uv0.Y}); "
+                + $"er = ({erx}; {ery}); uv = ({uv1.X}; {uv1.Y})");
+
+        g.p(elx, h, ely); g.N(Vector3.UnitY);
+        g.UV(uv0.X, uv0.Y);
+        g.p(erx, h, ery); g.N(Vector3.UnitY);
+        g.UV(uv1.X, uv1.Y);
+    }
+
+
     private void _streetTriangle(in builtin.tools.UVProjector uvp, float vStart, in Vector3 vA, in Vector3 vB,
         in Vector3 vC, in Artefact a)
     {
@@ -513,14 +570,17 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          * Emit vertex rows until we are at dbmin.
          */
         {
-            uint i0 = g.GetNextVertexIndex();
+            if (_traceStreets) Trace(_dc, $"New rect list.");
 
             /*
-             * Count the number of rows to add tris.
+             * How long a row may be before its two triangles depart from the surface they
+             * are cut from by more than generation.RoadSurface.MaxSag.
+             *
+             * Infinite for a level stroke and for a straight one - both sides climb at the
+             * same rate then - so a flat city and every ramp emit exactly the rows they
+             * always did, at exactly the same floats. See RoadSurface.MaxRowSpan.
              */
-            int nVertexRows = 0;
-
-            if (_traceStreets) Trace(_dc, $"New rect list.");
+            float maxRowSpan = roadSurface.MaxRowSpan;
 
             /*
              * We start at damax.
@@ -549,58 +609,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             while (true)
             {
                 /*
-                * Emit current row.
-                * 
-                * Direction of street ... 
-                */
-                var em = new Vector3(q.X, 0f, q.Y);
-                
-                /*
-                * ... scaled by current offset (i.e. end of start junction)
-                */
-                em *= currD;
-               
-                /*
-                * ... plus street point A in fragment coordinates with
-                * standard height.
-                */
-                em += vam;
-                var elx = em.X - hsw * n.X;
-                var ely = em.Z - hsw * n.Y;
-                var erx = em.X + hsw * n.X;
-                var ery = em.Z + hsw * n.Y;
-                var uv0 = uvp.GetUV(new Vector3(elx, h, ely), 0f, vStart);
-                var uv1 = uvp.GetUV(new Vector3(erx, h, ery), 0f, vStart);
-                if (_traceStreets)
-                    Trace(_dc,
-                        $"#$nVertexRows: el = ({elx}; {ely}); uv = ({uv0.X}; {uv0.Y}); er = ($erx; $ery); uv = ({uv1.X}; {uv1.Y})");
-
-                if (Math.Abs(uv0.Y - 1.0) < 0.00000001)
-                {
-                    if (_traceStreets) Trace(_dc, $"Too close");
-                }
-
-                g.p(elx, h, ely); g.N(Vector3.UnitY);
-                g.UV(uv0.X, uv0.Y);
-                g.p(erx, h, ery); g.N(Vector3.UnitY);
-                g.UV(uv1.X, uv1.Y);
-                
-                /*
-                * If this is the first segment, also emit navmesh                 
-                */
-                if (isFirstSegment)
-                {
-                    //ng.p(elx, h, ely); ng.N(Vector3.UnitY);
-                    //ng.UV(uv0.X, uv0.Y);
-                    //ng.p(erx, h, ery); ng.N(Vector3.UnitY);
-                    //ng.UV(uv1.X, uv1.Y);
-                    isFirstSegment = false;
-                }
-
-                /*
-                 * Emit next row (we need it twice in the end)
-                 */
-                /*
                  * Compute nextD.
                  *
                  * nextD is the minimum of
@@ -618,25 +626,59 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                     nextD = Math.Min(nextWholeD, finalD);
                 }
 
-                var fm = new Vector3(q.X, 0f, q.Y);
-                fm *= nextD;
-                fm += vam;
-                var flx = fm.X - hsw * n.X;
-                var fly = fm.Z - hsw * n.Y;
-                var frx = fm.X + hsw * n.X;
-                var fry = fm.Z + hsw * n.Y;
-                var uv2 = uvp.GetUV(new Vector3(flx, h, fly), 0f, vStart);
-                var uv3 = uvp.GetUV(new Vector3(frx, h, fry), 0f, vStart);
-                if (_traceStreets)
-                    Trace(_dc,
-                        $"#{nVertexRows}: fl = ({flx}; {fly}); uv = ({uv2.X}; {uv2.Y}); fr = ({frx}; {fry}); uv = ({uv3.X}; {uv3.Y})");
+                /*
+                 * How many rows this one texture length is cut into. One - i.e. exactly the
+                 * geometry that was emitted before - unless the two sides of the road climb
+                 * at different rates, which is what makes the surface between the two kerbs
+                 * a twisted one that two triangles cannot represent.
+                 */
+                int nSub = 1;
+                if (Single.IsFinite(maxRowSpan) && maxRowSpan > 0f)
+                {
+                    nSub = Math.Clamp(
+                        (int)Single.Ceiling((nextD - currD) / maxRowSpan),
+                        1, MaxRowsPerTextureLength);
+                }
 
-                g.p(flx, h, fly); g.N(Vector3.UnitY);
-                g.UV(uv2.X, uv2.Y);
-                g.p(frx, h, fry); g.N(Vector3.UnitY);
-                g.UV(uv3.X, uv3.Y);
+                /*
+                 * The extra rows are INSIDE one texture length, so they all take the same
+                 * vStart and the texture runs across them exactly as it ran across the
+                 * single long row: uvp.GetUV computes v from the position's own distance
+                 * along the stroke, and vStart only says which repetition of the texture
+                 * this row belongs to.
+                 */
+                uint iRow = g.GetNextVertexIndex();
+                _streetRow(g, uvp, vam, q, n, hsw, h, currD, vStart);
 
-                ++nVertexRows;
+                /*
+                * If this is the first segment, also emit navmesh
+                */
+                if (isFirstSegment)
+                {
+                    //ng.p(elx, h, ely); ng.N(Vector3.UnitY);
+                    //ng.UV(uv0.X, uv0.Y);
+                    //ng.p(erx, h, ery); ng.N(Vector3.UnitY);
+                    //ng.UV(uv1.X, uv1.Y);
+                    isFirstSegment = false;
+                }
+
+                for (int sub = 1; sub <= nSub; ++sub)
+                {
+                    /*
+                     * The last one is nextD itself rather than a fraction of the way to
+                     * it, so that an undivided row is the same float it always was.
+                     */
+                    float subD = sub == nSub
+                        ? nextD
+                        : currD + (nextD - currD) * ((float)sub / (float)nSub);
+
+                    _streetRow(g, uvp, vam, q, n, hsw, h, subD, vStart);
+
+                    uint i0 = iRow + (uint)((sub - 1) * 2);
+                    g.Idx(i0 + 1, i0 + 0, i0 + 2);
+                    g.Idx(i0 + 1, i0 + 2, i0 + 3);
+                }
+
                 vStart += 1;
 
                 /*
@@ -648,7 +690,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                     //ng.UV(uv2.X, uv2.Y);
                     //ng.p(frx, h, fry); ng.N(Vector3.UnitY);
                     //ng.UV(uv3.X, uv3.Y);
-                    
+
                     //ng.Idx(ni0 + 1, ni0 + 0, ni0 + 2);
                     //ng.Idx(ni0 + 1, ni0 + 2, ni0 + 3);
                     break;
@@ -658,15 +700,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 // TODO: Small adjustment: If nextD is too close to finalD but not equal, set it to finalD.
 
                 currD = nextD;
-            }
-
-            /*
-             * Now emit the triangles.
-             */
-            for (uint row = 0; row < nVertexRows; ++row)
-            {
-                g.Idx(i0 + row * 4 + 1, i0 + row * 4 + 0, i0 + row * 4 + 2);
-                g.Idx(i0 + row * 4 + 1, i0 + row * 4 + 2, i0 + row * 4 + 3);
             }
         }
 

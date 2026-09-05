@@ -6,7 +6,7 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7r, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-05 (§7r).
+**Last updated:** 2026-09-05 (§7s).
 
 ---
 
@@ -62,9 +62,20 @@ ACUTE corner that fails, not the obtuse one. See **(k)** below and §7p.
 flat-ramp-flat profile instead of following it, below the road at half of all positions.
 **The owner's own diagnosis was right, the first time on this page that a first diagnosis
 has been**, and there is no navmesh in the shipped game at all — the three that exist are
-`#if false`. Exactly 0.000 m in the flat city. See **(m)** below and §7r. ⚠️ It leaves one
-new open item: **the road mesh does not represent its own surface**, because a carriageway's
-rows are up to 88 m long and each is two triangles.
+`#if false`. Exactly 0.000 m in the flat city. See **(m)** below and §7r.
+
+**Cleared the same day:** **(n)** — §7r's own leftover, *the road mesh does not represent its
+own surface*. ⚠️ **The obvious reading of it was wrong twice.** It is not "rows straddle a
+kink" — **0 of 4 608 row spans contain a section point at all**, because the rows run
+between the two innermost section points by construction — and it is not row length on its
+own either: a carriageway is a hyperbolic paraboloid ruled between two kerb chords of
+different slope, so a row's error is its length **times** the two sides' slope difference,
+which is exactly zero in a flat city and on every straight stroke. The worse half was the one
+nobody had looked at, the **end wedge**, and it turned out to need no geometry at all — three
+corners admit exactly one plane, so the model was simply wrong there. ⚠️ **§7r's own claim
+that "the residual is the ROAD's tessellation, not the ribbon's" was also wrong**: with the
+road held to 0.02 m the guideline was still 0.85 m off it, all of it its own quads.
+**Nothing in `street-geometry.json` moved.** See **(n)** below and §7s.
 
 **Also cleared 2026-09-03:** **(l)** — a junction corner was not on either of the streets that
 meet there. Present and identical in the flat city, and **the diagnosis this page and §7o
@@ -1052,10 +1063,67 @@ network fingerprint moved, and no baseline file was rewritten.**
 `joyce.mesh.Tools.AddQuadCornersUV`;
 `tests/JoyceCode.Tests/builtin/modules/satnav/RouteRibbonRoadTests.cs`.
 
-**Found and NOT fixed:** the 88 m rows above; `seed008`'s overlapping junction footprints,
-where two caps give the road two heights 1.25 m apart at the same place; and
-`RoutePlan`'s truncation junction, whose synthetic `GroundHeight` is the chord's rather than
-the road's (nothing reads it).
+**Found and NOT fixed:** the 88 m rows above — ✅ **fixed 2026-09-05, see (n) below, where
+both halves of this description turned out to be wrong**: it is not row length on its own but
+row length times the two sides' slope difference, and shortening the rows did **not** move
+`street-geometry.json`, because a flat city has no slope difference to bound. `seed008`'s
+overlapping junction footprints, where two caps give the road two heights 1.25 m apart at the
+same place, are still open; so is `RoutePlan`'s truncation junction, whose synthetic
+`GroundHeight` is the chord's rather than the road's (nothing reads it).
+
+### ✅ (n) The road mesh does not represent its own surface — FIXED 2026-09-05
+
+§7r's own leftover, and the last thing between the guideline and the carriageway. Full
+write-up in [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) §7s.
+
+1. ⚠️ **"The error is concentrated where a row STRADDLES a kink" is refuted by one count:
+   0 of 4 608 row spans contain a section point strictly inside them, on any of the five
+   cities.** They cannot — the rows run from the further of the two A section points to the
+   nearer of the two B ones, which is inside both sides' climbing windows by construction. So
+   "a row AT each break" was not the fix.
+2. ⚠️ **Nor is it row length on its own.** A carriageway is ruled between two kerb chords of
+   different slope, i.e. a hyperbolic paraboloid; a row quad's two triangles depart from it by
+   `length × |slopeRight − slopeLeft| / 4`. Measured per row span, the prediction and the
+   measurement agree to three decimals at every percentile — median 0.039 m, p95 0.25 m,
+   worst 1.000 m. Because the second factor is exactly zero in a flat city and on every
+   straight stroke, the fix could be gated on it and **the flat city did not move**.
+3. ⚠️ **The worse half was the one nobody had looked at, and it needed no geometry.** The end
+   **wedge** — the single triangle between a junction's seam and the first full-width row —
+   was worse than the rows at every percentile (median 0.064 m, p95 0.36 m, worst 0.90 m).
+   Its three corners are fixed by the seams, and three corners admit exactly one plane, so
+   there was no tessellation to refine: the *model* was wrong. Now 0.00003 m, at zero vertex
+   cost.
+4. ⚠️ **§7r's "the residual is the ROAD's tessellation, not the ribbon's" is wrong.** With
+   the road held to 0.02 m the guideline was still 0.85 m off it at the worst position of
+   five cities and 0.22 m at p99 — all of it the ribbon's own 4 m-wide quads, which carry the
+   same twist in proportion to their width, and its own missing break where each of its two
+   edges crosses a junction's seam obliquely.
+5. **No vertex and no index of `street-geometry.json` moved** for any of its five recorded
+   cities, and no network fingerprint moved. The cost is 46–112 % more road vertices in the
+   terrain city (worst fragment 748 → 1 448) and a guideline of median 4 quads per lane
+   instead of 3.
+6. ⚠️ **Its five HASHES did move, and for a reason that has nothing to do with roads.**
+   Mutation testing found that swapping two indices of every carriageway row passed the whole
+   suite: `StreetGeometryFingerprint` hashed the vertices and merely *reported* the index
+   count, so it could not see a triangle turned inside out — which is §7j, where exactly that
+   happened to the pavements and nothing failed. The indices are hashed now; `v=` and `i=`
+   are identical on all five, which is the evidence that no geometry moved. Old and new
+   hashes are in §7s.
+7. **Found on the way and fixed:** `RoutePlan` replaces the truncated last lane of every
+   route with a NEW `NavLane` and copied only three of its fields, so the last lane fell back
+   to the chord — §7r's defect on the segment nearest the destination, and §7r's own note on
+   this said the lane was *"the real one"*. It is not.
+
+`RoadSurface.MaxSag`/`MaxRowSpan`/`MaxSpanAcross`/`BreakpointsBetween`,
+`GenerateClusterStreetsOperator._streetRow`, `RouteRibbon.BreaksAlong`;
+`tests/JoyceCode.Tests/engine/streets/RoadTessellationTests.cs`.
+
+**Found and NOT fixed:** the seam's obliquity inside one ribbon quad — the remedy is known
+(split that one quad along its *other* diagonal, which is the seam) and costs no vertices, but
+needs a per-quad diagonal choice `AddQuadCornersUV` does not offer; §7o's skew strokes, where
+the mesh's rows and the mesh's kerbs are two different lines, now counted and bounded rather
+than hidden behind a percentile; and `seed008`'s filler quads, which are now the worst thing
+in the measurement by a factor of three.
 
 ### ✅ (i) The `#if false` operator and the missing drift test — the test now exists
 

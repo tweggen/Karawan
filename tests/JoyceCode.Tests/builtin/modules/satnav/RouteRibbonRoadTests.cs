@@ -41,31 +41,35 @@ public class RouteRibbonRoadTests
     /**
      * How far the ribbon may be from the carriageway under it, at the 95th percentile.
      *
-     * Not zero, and the residual is not the ribbon's: the road MESH is a coarse
-     * triangulation of the very surface RoadSurface describes. Its rows are emitted one
-     * texture length apart, and a texture length is four street widths - up to 88 m - so a
-     * row quad is split into two triangles whose diagonal departs from the bilinear surface
-     * they are cut from by a quarter of the difference between the two sides' rise over that
-     * row. Measured at the road's own VERTICES the surface reproduces the mesh to
-     * 0.000000 m at the median and 8e-6 at p99 (see
-     * TheCarriagewaySurfaceReproducesEveryVertexOfTheRoadItDescribes), so this bound is
-     * the road's tessellation and nothing else.
+     * Not zero, and it is now the two tessellations rather than either model: the road is
+     * cut into rows no longer than RoadSurface.MaxRowSpan and the ribbon into quads no
+     * longer than RoadSurface.MaxSpanAcross(Width), each of which bounds its own departure
+     * from the shared surface at RoadSurface.MaxSag - so the sum is 2 * MaxSag, and that is
+     * what is observed.
      *
-     * Observed over the five cities on the shipped terrain: 0.16 / 0.16 / 0.17 / 0.25 /
-     * 0.18 m at p95, against 0.45 to 0.93 for the chord it replaces.
+     * ⚠️ **This bound used to be 0.30 m and the comment on it said "the residual is not
+     * the ribbon's". That was wrong, and only measuring both separately showed it.** The
+     * road's rows were one texture length - four street widths, up to 88 m - and departed
+     * from their own surface by up to 1.0 m mid-row; when that was bounded the guideline
+     * was still 0.85 m off the road at the worst position of five cities, every metre of it
+     * the ribbon's own long flat quads. See §7s.
+     *
+     * Observed over the five cities on the shipped terrain: 0.018 / 0.021 / 0.022 / 0.023 /
+     * 0.023 m at p95, against 0.16 to 0.25 before and 0.44 to 0.91 for the chord.
      */
-    private const float RibbonP95 = 0.30f;
+    private const float RibbonP95 = 0.035f;
 
     /**
-     * ...and at the 99th. Observed 0.24 to 0.46 m, against 0.56 to 1.33 for the chord.
+     * ...and at the 99th. Observed 0.028 to 0.065 m, against 0.24 to 0.46 before and 0.56
+     * to 1.33 for the chord.
      */
-    private const float RibbonP99 = 0.55f;
+    private const float RibbonP99 = 0.10f;
 
     /**
-     * The median, which is what the eye reads along a whole route. Observed 0.002 to
-     * 0.021 m against 0.076 to 0.191 for the chord - an order of magnitude.
+     * The median, which is what the eye reads along a whole route. Observed 0.001 to
+     * 0.007 m against 0.002 to 0.021 before and 0.076 to 0.191 for the chord.
      */
-    private const float RibbonMedian = 0.04f;
+    private const float RibbonMedian = 0.015f;
 
     /**
      * How much worse the chord this replaced has to be before this file can claim to have
@@ -314,10 +318,10 @@ public class RouteRibbonRoadTests
         /*
          * The lift exists to keep the ribbon out of the road, not to excuse being wrong by
          * less than itself - so this counts the positions where it is used up entirely.
-         * Observed 3.2 to 9.5 %, against 44 to 51 % of positions simply below the road for
-         * the chord.
+         * Observed 0.00 to 0.71 %, against 3.2 to 9.5 % before the two tessellations were
+         * bounded and 44 to 51 % of positions simply below the road for the chord.
          */
-        Assert.True(nBuried * 8 < devRibbon.Count,
+        Assert.True(nBuried * 50 < devRibbon.Count,
             $"{idString}/{size}: the guideline is more than its own lift below the road at "
             + $"{100f * nBuried / devRibbon.Count:F1} % of positions");
 
@@ -351,6 +355,8 @@ public class RouteRibbonRoadTests
         var city = _city(idString, size, false);
 
         var errors = new List<float>();
+        var skewErrors = new List<float>();
+        int nSkewStrokes = 0, nStrokes = 0;
 
         foreach (var stroke in city.Strokes.GetStrokes())
         {
@@ -359,28 +365,75 @@ public class RouteRibbonRoadTests
             Assert.True(surface.HasValue,
                 $"{idString}/{size}: stroke {stroke.Sid} emits a carriageway but has none");
 
+            ++nStrokes;
+            bool skew = _isSkew(stroke);
+            if (skew) ++nSkewStrokes;
+
             foreach (var v in city.ByStroke[stroke].Vertices)
             {
-                errors.Add(Single.Abs(
-                    surface.Value.SurfaceHeightAt(new Vector2(v.X, v.Z)) - v.Y));
+                float e = Single.Abs(
+                    surface.Value.SurfaceHeightAt(new Vector2(v.X, v.Z)) - v.Y);
+                (skew ? skewErrors : errors).Add(e);
             }
         }
 
         Assert.True(errors.Count > 300, $"{idString}/{size}: {errors.Count} vertices is too few");
 
+        /*
+         * On every stroke whose section points ARE half a street width off its centre line,
+         * the surface reproduces every emitted vertex - not at p99 but at the maximum.
+         * Observed 0.00004 m at the worst of 63 000 such vertices over five cities.
+         */
         Assert.Equal(0f, _pct(errors, 0.5f), 5);
-        Assert.True(_pct(errors, 0.99f) < 1e-3f,
-            $"{idString}/{size}: the surface is {_pct(errors, 0.99f):F6} m off the road's own "
-            + "vertices at p99");
+        Assert.True(_pct(errors, 1f) < 1e-3f,
+            $"{idString}/{size}: the surface is {_pct(errors, 1f):F6} m off the road's own "
+            + "vertex on a stroke whose kerbs are where its rows are");
 
         /*
-         * The tail is the handful of section points that are not exactly half a street
+         * ⚠️ **The rest is §7o's own recorded defect and this test used to hide it behind a
+         * percentile.** A handful of strokes have a section point that is not half a street
          * width off the centre line - §7o measured one of Yelukhdidru/3000's at 0.19 m
-         * inside - where the lateral fraction is not exactly 0 or 1 and the two sides are
-         * blended a little. Bounded, not zero.
+         * inside - while the ROWS are emitted at exactly plus or minus half a width, so on
+         * those strokes the mesh's own rows are not on the mesh's own kerb chords and the
+         * surface has to blend the two sides a little at a vertex. The count is small (0, 2,
+         * 0, 8 and 12 strokes of 29, 30, 74, 367 and 1875) and does not grow, but the number
+         * of VERTICES carrying it does - §7s cut the rows finer, which put more vertices on
+         * the same wrong lines and pushed the old p99 past its bound without anything having
+         * become less true. Named and bounded instead of averaged away.
          */
-        Assert.True(_pct(errors, 1f) < 0.25f,
-            $"{idString}/{size}: the surface is {_pct(errors, 1f):F4} m off a road vertex");
+        Assert.True(nSkewStrokes * 10 <= nStrokes,
+            $"{idString}/{size}: {nSkewStrokes} of {nStrokes} strokes have a section point "
+            + "that is not half a street width off their own centre line");
+
+        if (skewErrors.Count > 0)
+        {
+            Assert.True(_pct(skewErrors, 1f) < 0.25f,
+                $"{idString}/{size}: the surface is {_pct(skewErrors, 1f):F4} m off a road "
+                + "vertex even on a stroke whose kerbs are not where its rows are");
+        }
+    }
+
+
+    /**
+     * Whether a stroke's four section points sit at exactly plus or minus half its street
+     * width off its own centre line, which is where its rows are emitted.
+     */
+    private static bool _isSkew(Stroke stroke)
+    {
+        if (!RoadSurface.TryCornersOf(stroke, out var al, out var ar, out var bl, out var br,
+                out _)) return true;
+
+        float hsw = stroke.StreetWidth() / 2f;
+
+        foreach (var (p, sign) in new[] { (al, -1f), (ar, 1f), (bl, -1f), (br, 1f) })
+        {
+            if (Single.Abs(Vector2.Dot(p - stroke.A.Pos, stroke.Normal) - sign * hsw) >= 1e-3f)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
@@ -589,11 +642,71 @@ public class RouteRibbonRoadTests
 
 
     /**
+     * A lane's breaks include BOTH of the ribbon's edges' own crossings of each seam.
+     *
+     * A junction's seam runs across the road at an angle, so the two edges of a 4 m strip
+     * cross it at two different distances along the stroke, and a quad that bends at only
+     * one of them ramps straight through the kink on the other edge. Measured over the five
+     * cities that one missing break was the whole tail of the guideline's error - 0.85 m at
+     * the worst position, 0.22 m at p99 - and yet **giving both edges the same lateral
+     * fraction passed every distribution in this file**, because the tail is 0.1 % of
+     * positions. So it is asserted here as equality with the two exact crossings, on a
+     * fixture where they are 4 m apart: §7p's *"a containment test cannot tell a guess from
+     * a refusal"*.
+     */
+    [Fact]
+    public void ALanesBreaksIncludeBothEdgesOwnCrossingOfEachSeam()
+    {
+        /*
+         * A 10 m carriageway from x = 0 to x = 100, bent at both ends: its two A section
+         * points are 10 m apart along the stroke and so are its two B ones.
+         */
+        var surface = RoadSurface.Of(
+            Vector2.Zero, Vector2.UnitX,
+            new Vector2(10f, -5f), new Vector2(20f, 5f),
+            new Vector2(90f, -5f), new Vector2(80f, 5f),
+            20f, 50f);
+
+        var nl = new NavLane
+        {
+            Start = NavJunction.At(Vector3.Zero, 0f),
+            End = NavJunction.At(new Vector3(100f, 0f, 0f), 0f),
+            Length = 100f,
+            Surface = surface
+        };
+
+        var breaks = new List<float>();
+        RouteRibbon.BreaksAlong(nl, breaks);
+
+        /*
+         * The ribbon is 4 m of a 10 m road, so its two edges are at lateral fractions 0.3
+         * and 0.7 - and each seam runs from one section point to the other, so they cross it
+         * at 13 and 17 m, and at 87 and 83 m.
+         */
+        foreach (float d in new[] { 13f, 17f, 83f, 87f })
+        {
+            Assert.True(breaks.Any(t => Single.Abs(t - d / 100f) < 1e-3f),
+                $"no break at {d} m, where one edge of the ribbon crosses a seam; "
+                + "breaks are at " + string.Join(", ", breaks.Select(t => $"{t * 100f:F2}")));
+        }
+    }
+
+
+    /**
      * A bent stroke's ribbon bends with the road; a level one is a single quad.
      *
      * The count is a property worth pinning because it is what a "just draw one quad and
      * take the surface height at its corners" shortcut would quietly lose: the corners
      * would be right and everything between them would cut straight across the profile.
+     *
+     * ⚠️ **This test used to require at most 5 quads per lane, on the stated grounds that
+     * "a stroke has only four section points to break at". Both halves are now wrong** -
+     * see §7s. A lane also breaks where each of the ribbon's two EDGES crosses a junction's
+     * seam, which is not a section point and is a different distance for each edge, and
+     * then again as often as it takes to keep its own quads within RoadSurface.MaxSag of
+     * the twisted surface they are drawn on. Observed: median 4 quads per lane, p95 5 to 9,
+     * max 40 - against a median of 3 and a max of 5. The bound is now the arithmetic cap,
+     * and it is asserted NOT to bind.
      */
     [Theory]
     [MemberData(nameof(Cities))]
@@ -615,9 +728,15 @@ public class RouteRibbonRoadTests
             nTotalQuads += quads.Count;
             if (quads.Count > 1) ++nBroken;
 
-            Assert.True(quads.Count <= 5,
-                $"{idString}/{size}: a lane came out in {quads.Count} quads, and a stroke "
-                + "has only four section points to break at");
+            /*
+             * Strictly under the cap, not at it: RouteRibbon.MaxQuadsPerLane exists so that
+             * a stroke whose two section points nearly coincide cannot ask for an unbounded
+             * number, and a city that reaches it is a city whose ribbon is silently coarser
+             * than MaxSag rather than one that is merely expensive.
+             */
+            Assert.True(quads.Count < RouteRibbon.MaxQuadsPerLane,
+                $"{idString}/{size}: a lane came out in {quads.Count} quads, which is the "
+                + "arithmetic cap - so the bound on its own sag was not what decided it");
         }
 
         /*
@@ -630,9 +749,12 @@ public class RouteRibbonRoadTests
 
         /*
          * What it costs, in the currency the report is paid in: four vertices per quad.
-         * Observed 2.1 to 2.5 quads per lane over the five cities.
+         * Observed 3.1 to 4.6 quads per lane over the five cities, against 2.1 to 2.5
+         * before the ribbon bounded its own sag. A whole 3 km city's car lanes come to
+         * 33 539 quads; a ROUTE is a few dozen lanes, so a guideline costs a few hundred
+         * vertices.
          */
-        Assert.True(nTotalQuads < 3 * nCar,
+        Assert.True(nTotalQuads < 6 * nCar,
             $"{idString}/{size}: {nTotalQuads} quads for {nCar} lanes is more than the "
             + "profile has corners");
     }

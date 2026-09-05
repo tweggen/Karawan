@@ -137,6 +137,19 @@ internal static class RouteRibbon
      * ones outside it are dropped rather than clamped - a break at the very end of a span
      * is not a break.
      *
+     * ...and then within each of those pieces, as many more as it takes to keep the ribbon's
+     * OWN quads on the surface. Between two section points the road is a hyperbolic
+     * paraboloid - the two kerbs climb at different rates, so the cross fall varies along
+     * the stroke - and a quad split into two triangles departs from such a surface by a
+     * quarter of the twist it spans. The road bounds that for its own rows
+     * (RoadSurface.MaxRowSpan); a ribbon quad is 4 m of the same surface and carries 4 m
+     * worth of the same twist, and until this was added it did not bound it at all. It was
+     * measured, with the road already held to RoadSurface.MaxSag: the guideline was still
+     * 0.85 m off the carriageway at the worst position of five cities and 0.22 m at p99,
+     * every metre of it the ribbon's own quads and none of it the road's.
+     *
+     * The two are cut at different distances on purpose - see RoadSurface.MaxSpanAcross.
+     *
      * A LEVEL surface has no breaks at all and gets none, which is what keeps a flat city's
      * ribbon the same four vertices per lane it has always been.
      */
@@ -153,8 +166,20 @@ internal static class RouteRibbon
         float span = dEnd - dStart;
         if (Single.Abs(span) < engine.streets.generation.RoadSurface.MinSpan) return;
 
-        Span<float> breaks = stackalloc float[4];
-        surface.BreakpointsInto(breaks);
+        /*
+         * The two edges of the ribbon, half a width either side of the lane, because where
+         * each of them crosses a junction's seam is a break in the surface along it and the
+         * two cross in different places.
+         */
+        Vector3 v3Along = nl.End.Position - nl.Start.Position;
+        Vector3 vu3Right = Vector3.Normalize(new(v3Along.Z, 0f, -v3Along.X));
+        Vector3 v3Mid = nl.Start.Position + 0.5f * v3Along;
+        Vector3 v3Rail0 = v3Mid + (Width / 2f) * vu3Right;
+        Vector3 v3Rail1 = v3Mid - (Width / 2f) * vu3Right;
+
+        Span<float> breaks = stackalloc float[engine.streets.generation.RoadSurface.NBreakpoints];
+        surface.BreakpointsBetween(
+            new Vector2(v3Rail0.X, v3Rail0.Z), new Vector2(v3Rail1.X, v3Rail1.Z), breaks);
 
         for (int i = 0; i < breaks.Length; ++i)
         {
@@ -168,6 +193,65 @@ internal static class RouteRibbon
         for (int i = into.Count - 1; i > 0; --i)
         {
             if (into[i] - into[i - 1] < 1e-4f) into.RemoveAt(i);
+        }
+
+        _subdivideAlong(surface, into, span);
+    }
+
+
+    /**
+     * The most quads one lane's ribbon may be cut into.
+     *
+     * A bound on the arithmetic and not on the geometry, exactly as
+     * GenerateClusterStreetsOperator.MaxRowsPerTextureLength is: what is asked for is a
+     * lane's length over RoadSurface.MaxSpanAcross, and a stroke whose two section points
+     * nearly coincide on one side has a nearly unbounded slope there. Over the five
+     * baseline cities on the shipped terrain the most quads a lane actually comes out in is
+     * 40, so this does not bind - and ALaneOverAClimbingRoadIsBrokenWhereTheRoadBreaks
+     * asserts strictly below it, since a lane that reached the cap would be one whose ribbon
+     * is silently coarser than MaxSag rather than one that is merely expensive.
+     */
+    internal const int MaxQuadsPerLane = 64;
+
+
+    /**
+     * Insert enough extra breaks that no piece of the ribbon spans more of the surface's
+     * twist than MaxSpanAcross allows.
+     *
+     * @param span
+     *     The lane's own axial extent along the stroke, signed - a lane may run either way
+     *     along its carriageway, and only its magnitude matters here.
+     */
+    private static void _subdivideAlong(
+        in engine.streets.generation.RoadSurface surface, List<float> into, float span)
+    {
+        float maxSpan = surface.MaxSpanAcross(Width);
+        if (!Single.IsFinite(maxSpan) || maxSpan <= 0f) return;
+
+        float axial = Single.Abs(span);
+
+        /*
+         * Built into a second list and swapped back, because the extra breaks belong
+         * BETWEEN the ones already there and a list cannot be walked while it grows.
+         */
+        var pieces = new List<float>(into);
+        into.Clear();
+
+        float t0 = 0f;
+        for (int i = 0; i <= pieces.Count; ++i)
+        {
+            float t1 = i < pieces.Count ? pieces[i] : 1f;
+
+            int nSub = Math.Clamp(
+                (int)Single.Ceiling((t1 - t0) * axial / maxSpan), 1, MaxQuadsPerLane);
+
+            for (int sub = 1; sub < nSub; ++sub)
+            {
+                into.Add(t0 + (t1 - t0) * ((float)sub / (float)nSub));
+            }
+
+            if (i < pieces.Count) into.Add(t1);
+            t0 = t1;
         }
     }
 

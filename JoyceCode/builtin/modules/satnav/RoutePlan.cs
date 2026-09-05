@@ -99,7 +99,28 @@ internal static class RoutePlan
             Start = bestLane.Start,
             End = njEnd,
             Length = (bestProj - bestLane.Start.Position).Length(),
-            MaxSpeed = bestLane.MaxSpeed
+            MaxSpeed = bestLane.MaxSpeed,
+
+            /*
+             * ⚠️ The truncated lane is the SAME piece of road, shortened - so it runs along
+             * the same carriageway, and losing this made the LAST lane of every route fall
+             * back to the chord between its two junctions: exactly the defect §7r removed
+             * from all the other lanes, on the segment nearest the destination.
+             *
+             * §7r's own note on this junction said the opposite - *"the lane it belongs to
+             * is the real one, so the ribbon's last quad is right and only the synthetic
+             * junction's own field is off"* - and it is not the real one, it is a new
+             * object with a new lane's defaults.
+             *
+             * Nothing moves in a flat city: a level surface answers one height everywhere,
+             * which is what the chord between two equal junction heights answered before.
+             *
+             * KerbSide and AllowedTypes are deliberately NOT copied here, and that is a
+             * separate open defect rather than an oversight - restoring a pedestrian lane's
+             * kerb side would move the satnav walker's last waypoint by 1.5 m in the SHIPPED
+             * FLAT city (§7g), which is a move to be measured and stated on its own.
+             */
+            Surface = bestLane.Surface
         };
     }
 }

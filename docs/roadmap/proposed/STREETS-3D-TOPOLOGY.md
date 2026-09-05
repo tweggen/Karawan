@@ -3662,3 +3662,444 @@ cities), plus `RouteRibbonTests` adapted to the strip form and
   only the synthetic junction's own field is off. Nothing reads it for a height.
 - **`Vector3.Normalize` of a lane with no horizontal extent is still NaN**, unchanged from §7g,
   and the generator still emits no such lane.
+
+---
+
+# §7s — The road mesh represents its own surface (2026-09-05)
+
+§7r's one *found and NOT fixed*, and the last item in the chain between the satnav
+guideline and the carriageway it is drawn on:
+
+> **The road mesh does not represent its own surface.** `RoadSurface` reproduces all
+> 32 680 emitted carriageway vertices to 0.000000 m median / 8·10⁻⁶ m p99, so the surface
+> definition is exact — but a carriageway's vertex rows are placed one texture length
+> apart, `StreetWidth() * 4`, i.e. **up to 88 m**, and each row-to-row span is two
+> triangles.
+
+The owner authorised the consequence in advance: *"It's fine if street-geometry.json would
+be changed."* **In the event no vertex and no index of it moved** — the flat city emits
+exactly the mesh it always did, and the reason is the whole shape of the fix. Its five
+recorded **hashes** did move, for an unrelated reason found by the mutation testing below:
+the fingerprint never covered the index values at all. Old and new are recorded under *What
+each city does*.
+
+---
+
+## Where the error actually comes from — the brief's hypothesis is REFUTED
+
+The brief proposed, explicitly as a hypothesis to be measured rather than inherited:
+
+> *the error is concentrated where a row STRADDLES a kink, not spread along the row … If
+> that holds, the fix is not "shorter rows" but "a row AT each break".*
+
+**It does not hold, and one count refutes it: over the five cities, 0 of 4 608 row spans
+contain a section point strictly inside them.** They cannot. `_generateStreetRun` runs its
+rows from `damax` — the further along of the two section points at A — to `dbmin`, the
+nearer of the two at B, and each side's climbing window is `[dal, dbl]` or `[dar, dbr]`, so
+`[damax, dbmin]` lies inside **both**. Every row span is entirely within one affine piece of
+both rails by construction. The measurement was run before anything was changed and the
+count is exactly zero on every city.
+
+### What it is instead: the surface is TWISTED, and twist is length times slope difference
+
+A carriageway is a **ruled** surface. At every axial distance the road runs straight from
+its left kerb to its right one, and §7o gave each kerb its own chord between its own two
+section points — so the two rails have different slopes whenever the two spans differ, i.e.
+whenever the stroke's ends are skewed. A surface ruled between two straight lines of
+different slope is a hyperbolic paraboloid, and no triangulation reproduces one exactly.
+
+For a row quad the twist is `τ = L · (slopeRight − slopeLeft)`; the two triangles it is cut
+into depart from the surface by **`|τ| / 4`**, at the midpoint of the diagonal they share,
+in **one** direction over the whole quad — a diagonal ridge or valley across the
+carriageway, not a wobble.
+
+Measured over the five cities on the shipped terrain, per row span:
+
+| city | rows | row length m med / p95 / max | \|slopeR − slopeL\| med / p95 / max | \|τ\| med / p95 / max | predicted \|τ\|/4 med / p95 / max |
+|---|---|---|---|---|---|
+| `seed000`/500 | 49 | — | 0.0048 / 0.0395 / 0.0628 | — | 0.038 / 0.253 / **0.311** |
+| `seed008`/500 | 43 | 45.1 / 75.2 / 75.2 | 0.0010 / 0.0577 / 0.1315 | 0.043 / 0.937 / 1.302 | 0.011 / 0.234 / **0.326** |
+| `Yelukhdidru`/800 | 132 | 42.4 / 66.3 / 75.2 | 0.0044 / 0.0214 / 0.0612 | 0.149 / 0.855 / 2.516 | 0.037 / 0.214 / **0.629** |
+| `seed000`/1500 | 694 | 35.3 / 61.4 / 74.9 | 0.0072 / 0.0427 / 0.1132 | 0.172 / 1.404 / 3.292 | 0.043 / 0.351 / **0.823** |
+| `Yelukhdidru`/3000 | 3 690 | 32.9 / 39.9 / 75.2 | 0.0061 / 0.0346 / 0.1896 | 0.175 / 1.009 / 4.000 | 0.044 / 0.252 / **1.000** |
+
+and the prediction is the measurement: sampling each emitted triangle barycentrically and
+comparing against `RoadSurface.SurfaceHeightAt` gives per row quad **median 0.039 m, p95
+0.25 m, worst 1.000 m** — the same numbers to three decimal places at every percentile. So
+row length matters, **but only in proportion to the slope difference**, which is exactly
+zero in a flat city (both slopes are 0) and exactly zero on a straight stroke (both spans
+are equal). That is what makes a gate possible at all.
+
+### ⚠️ And the worse half is the END WEDGE, which nobody had looked at
+
+Between a junction's **seam** — the straight line joining its two section points, beyond
+which there is no carriageway at all, only the flat cap — and the first row that spans the
+full width, the carriageway is a single **triangle**: `_streetTriangle(al, cl, ar)`. That is
+where a kink is genuinely straddled, because over it one rail is still flat on its cap while
+the other has started to climb. Measured per wedge triangle against the surface:
+
+| city | wedges | median | p95 | p99 | worst |
+|---|---|---|---|---|---|
+| `seed000`/500 | 44 | — | — | — | **0.362** |
+| `seed008`/500 | 36 | 0.046 | 0.242 | 0.328 | **0.328** |
+| `Yelukhdidru`/800 | 119 | 0.081 | 0.368 | 0.487 | **0.549** |
+| `seed000`/1500 | 627 | 0.070 | 0.410 | 0.742 | **0.884** |
+| `Yelukhdidru`/3000 | 3 323 | 0.064 | 0.356 | 0.538 | **0.898** |
+
+**Worse than the rows at every percentile**, on every city — median 0.064 against 0.039, p95
+0.36 against 0.25 — and 30 % of a carriageway's triangles are wedges. Any fix that shortened
+rows and left the wedges alone would have moved p95 from 0.25 to 0.36 and called it done.
+
+The third population, for completeness: `seed008`'s two **filler quads**, emitted where two
+junction footprints overlap and there is no carriageway between them, are **1.25 m and
+1.59 m** off — §7r's other open item, untouched here and still open.
+
+---
+
+## What was implemented: a plane where the surface is a plane, and a bound where it is not
+
+### The wedge is a PLANE, and that is exact rather than fine
+
+The wedge's three corners are fixed by the seams: two on the seam at the junction's own
+height, one on the kerb of whichever side is already climbing. **Three corners admit exactly
+one linear surface**, so there is no tessellation choice to make there and nothing to
+converge to — the plane *is* the surface, and the model was simply wrong to say otherwise.
+`RoadSurface.SurfaceHeightAt` now answers with that plane over each end wedge, and with the
+junction's own height beyond the seam, which the plane itself gives *along* the seam so the
+two join without a step.
+
+It costs **nothing**: no vertex, no index, no change to `HeightAt` — which is what the shear
+calls, and which already answered each rail's own height at every emitted vertex. Measured
+after: **0.00000 to 0.00003 m** per wedge triangle over the five cities, against up to
+0.898 m before. Asserted at 10⁻³ m rather than at the row bound, because "the plane" and "a
+fine enough approximation" are different claims and only the tighter number distinguishes
+them.
+
+### The rows are cut until they are within a stated bound
+
+`RoadSurface.MaxSag = 0.02 m` — how far the emitted road may depart from the surface it is
+cut from — and `MaxRowSpan = 4 · MaxSag / |slopeRight − slopeLeft|`, which is
+`Single.PositiveInfinity` exactly when the two slopes are equal. `_generateStreetRun` cuts
+each texture length into `ceil(span / MaxRowSpan)` rows.
+
+**The number is derived rather than chosen.** It is one fifth of `RouteRibbon.Lift`, the
+only quantity in this chain that has a derivation of its own (§7g: the 16-bit depth buffer),
+so the road's own contribution leaves the guideline four fifths of its clearance; and it is
+below the depth quantum at 36 m, i.e. below what can be resolved at the distance from which
+the middle of a carriageway is seen.
+
+Three details, each of which is the difference between this working and not:
+
+- **The extra rows are inside one texture length and take the same `vStart`.**
+  `UVProjector.GetUV` computes `v` from the position's own distance along the stroke minus a
+  whole-tile offset, so an extra row at an arbitrary distance is harmless **if and only if**
+  it keeps that offset. The loop used to increment it once per emitted row, which was the
+  same thing while every row was a whole tile; incrementing it per sub-row instead restarts
+  the texture at each one. Verified rather than assumed, and asserted: within a stroke, `v`
+  advances at one rate per metre whatever the rows are cut at.
+- **Rows are shared within a subdivided span and still duplicated between spans.** Sharing
+  across spans would be cheaper and would change the un-subdivided case's vertex list, which
+  is the flat city.
+- **The last sub-row is `nextD` itself**, not `currD + (nextD − currD) · 1`, so an
+  undivided row is the same float it always was rather than the same place to within a
+  rounding — §7n's lesson, and the mutation below that proves it matters.
+
+### ⚠️ The guideline had the SAME defect, and §7r said it did not
+
+§7r attributed its whole residual to the road: *"the residual is the ROAD's tessellation,
+not the ribbon's"*. **That is wrong, and only measuring the two separately showed it.** With
+the carriageway held to `MaxSag`, the guideline was still
+
+| city | median | p95 | p99 | worst | more than its own lift below the road |
+|---|---|---|---|---|---|
+| `seed000`/500 | 0.006 | 0.035 | 0.101 | 0.232 | 0.46 % |
+| `seed008`/500 | 0.002 | 0.031 | 0.178 | 1.246 | 0.71 % |
+| `Yelukhdidru`/800 | 0.008 | 0.054 | 0.168 | 0.460 | 1.45 % |
+| `seed000`/1500 | 0.010 | 0.076 | 0.223 | 0.851 | 1.82 % |
+| `Yelukhdidru`/3000 | 0.010 | 0.067 | 0.176 | 0.793 | 1.33 % |
+
+— every metre of it the ribbon's own quads. A ribbon quad is 4 m of the same twisted
+surface, split into the same two triangles, and it spanned the whole distance between two
+section points. So `RoadSurface.MaxSpanAcross(across)` generalises `MaxRowSpan`: a strip
+covering a fraction `f` of the road's width carries `f` of the twist and may span `1/f` as
+far. `RouteRibbon.BreaksAlong` bounds itself with it.
+
+**The two are cut at different distances on purpose.** A ribbon that derived where the
+road's rows are would agree with the road until one of the two was edited — the trap §7r
+exists to avoid. The price is that the worst case is the sum, `2 · MaxSag`, and that is what
+is observed.
+
+### ⚠️ Four section points are not enough breaks for a strip, and that was the tail
+
+The remaining 0.85 m was not twist at all. Over a wedge the surface is the plane on one side
+of the seam and the junction's height on the other, and **the seam runs across the road at
+an angle** — so a strip down the middle of the carriageway crosses it strictly between the
+two section points, and each of the strip's two edges crosses it somewhere else again. A
+quad that bends only at the section points ramps straight through the kink.
+`RoadSurface.BreakpointsBetween` takes the strip's two edges and returns **six** distances:
+`daMax`, `dbMin`, and each edge's own crossing of each seam. That is what took the worst
+case from 0.85 m to 0.29 m and p99 from 0.15 m to 0.032 m.
+
+### ⚠️ And the LAST lane of every route was not following the road at all
+
+Found while checking §7r's other open item rather than by measurement.
+`RoutePlan.PlanAsync` truncates the last lane at the target and **replaces it with a new
+`NavLane`**, copying only `Start`, `Length` and `MaxSpeed` — so the new lane carried no
+`Surface`, and `RouteRibbon.SurfaceHeightAt` fell back to the chord between its two
+junctions. That is exactly the defect §7r removed from every other lane, on the segment
+nearest the destination, i.e. the one the driver is looking at when it matters.
+
+§7r recorded this junction as harmless and said why: *"the lane it belongs to is the real
+one, so the ribbon's last quad is right and only the synthetic junction's own field is off"*.
+**It is not the real one; it is a new object with a new lane's defaults.** One line, and
+nothing moves in a flat city because a level surface answers one height everywhere, which is
+what a chord between two equal junction heights answered before.
+
+`KerbSide` and `AllowedTypes` are lost the same way and are deliberately NOT restored here:
+a pedestrian route's truncated last lane therefore keeps the lane centre line rather than
+stepping onto the pavement (§7g), and putting that back would move the satnav walker's last
+waypoint by 1.5 m in the **shipped flat city** — a move to be measured and stated on its own
+rather than smuggled in with this one. Recorded below.
+
+---
+
+## After
+
+Same five cities
+Per road triangle, against `RoadSurface`, over the five cities on the shipped terrain
+(excluding the two populations named above — §7o's skew strokes and `seed008`'s filler
+quads):
+
+| city | row quads: med / p95 | end wedges: med / worst |
+|---|---|---|
+| `seed000`/500 | 0.0193 / 0.0199 | 0.00000 / **0.00001** |
+| `seed008`/500 | 0.0181 / 0.0199 | 0.00001 / **0.00401** |
+| `Yelukhdidru`/800 | 0.0185 / 0.0199 | 0.00000 / **0.00001** |
+| `seed000`/1500 | 0.0191 / 0.0199 | 0.00001 / **0.00003** |
+| `Yelukhdidru`/3000 | 0.0186 / 0.0199 | 0.00001 / **0.00003** |
+
+with the worst of every triangle of every stroke **under 0.021 m** — the gate's own bound,
+asserted per triangle rather than at a percentile — against 1.000 m for a row and 0.898 m for
+a wedge before. The bound binds by design: each sub-row is cut as long as it is allowed to
+be, so the median moved only from 0.039 to 0.019 while the worst moved by a factor of fifty.
+(The two populations the gate excludes still show through in an unfiltered sample: §7o's skew
+strokes at up to 0.233 m and `seed008`'s filler quads at 1.59 m, both named below.)
+
+And the guideline, the consumer this whole chain exists for, measured by
+`RouteRibbonRoadTests` over 983 000 positions against the road mesh's **own** triangles:
+
+| city | median | p95 | p99 | worst | more than its own lift below the road |
+|---|---|---|---|---|---|
+| `seed000`/500 | **0.0039** | 0.0209 | 0.0280 | 0.081 | **0.00 %** |
+| `seed008`/500 | **0.0011** | 0.0179 | 0.0650 | 1.246 | 0.71 % |
+| `Yelukhdidru`/800 | **0.0053** | 0.0215 | 0.0286 | 0.174 | **0.03 %** |
+| `seed000`/1500 | **0.0063** | 0.0230 | 0.0323 | 0.290 | **0.09 %** |
+| `Yelukhdidru`/3000 | **0.0070** | 0.0233 | 0.0313 | 0.386 | **0.12 %** |
+
+against §7r's 0.002–0.021 / 0.16–0.25 / 0.24–0.46 / 0.38–1.30 and **3.2–9.5 %** buried. p95
+is 7–11× better, p99 4.5–14×, and the fraction of the guideline actually inside the road it
+is drawn on falls by a factor of 8 to 60. `seed008`'s 1.246 m is its overlapping-footprint
+filler quad, unchanged and still open.
+
+---
+
+## The cost
+
+| city | road vertices before → after | road indices before → after | worst FRAGMENT's road vertices |
+|---|---|---|---|
+| `seed000`/500 | 370 → **638** (+72 %) | 468 → 1 272 | 124 → **188** |
+| `seed008`/500 | 350 → **510** (+46 %) | 438 → 918 | 180 → **312** |
+| `Yelukhdidru`/800 | 972 → **1 776** (+83 %) | 1 236 → 3 648 | 274 → **552** |
+| `seed000`/1500 | 4 978 → **10 568** (+112 %) | 6 366 → 23 136 | 532 → **1 298** |
+| `Yelukhdidru`/3000 | 26 010 → **50 382** (+94 %) | 33 390 → 106 506 | 748 → **1 448** |
+
+22 to 29 vertices per stroke against 12 to 17. For scale, §7j measured the worst fragment's
+merged block floors at ~339 vertices; the road mesh is drawn at `MaxDrawDistance` 100 000,
+so every loaded fragment draws its own, and the worst of them roughly doubles.
+
+The guideline's own cost: **median 4 quads per lane, p95 5 to 9, max 40**, against a median
+of 3 and a max of 5. A whole 3 km city's 7 306 car lanes come to 33 539 quads, but a
+*route* is a few dozen lanes, so a guideline costs a few hundred vertices.
+
+Both subdivisions carry an arithmetic cap — `MaxRowsPerTextureLength = 64` and
+`MaxQuadsPerLane = 64` — because what is asked for is a length over a slope difference and a
+stroke whose two section points nearly coincide has a nearly unbounded slope. Neither binds:
+the most actually asked for over the five cities is **51 rows** and **40 quads**, and both
+tests assert strictly below the cap, since a city that reaches it is a city whose surface is
+silently coarser than `MaxSag` rather than one that is merely expensive.
+
+---
+
+## What each city does
+
+- **The terrain-following (shipped) city:** every carriageway is cut into more rows and
+  every quest guideline into more quads; the road's departure from its own surface goes from
+  up to 1.00 m to 0.020 m and the guideline's from up to 1.30 m to 0.39 m. **No vertex
+  moves** — the rows that were emitted before are still emitted, at the same floats, with new
+  ones between them, and `_shearOntoSlope` heights every vertex from the same unchanged
+  `HeightAt`.
+- **The flat city does not move at all, and this is the first round of the stream since the
+  flip whose flat-city story is bit for bit.** `MaxRowSpan` is infinite exactly when the two
+  sides climb at the same rate, and in a flat city both rates are zero, so no row is
+  subdivided and no ribbon quad is split. **Every one of `street-geometry.json`'s five
+  recorded cities keeps its vertex count and its index count exactly** — `v=439,i=618`,
+  `v=343,i=480`, `v=1148,i=1626`, `v=5900,i=8439`, `v=421,i=594`, unchanged — and
+  `GeometryMatchesRecordedBaseline` passed untouched against the old hashes before the
+  fingerprint itself was strengthened.
+
+### ⚠️ `street-geometry.json`'s five hashes DID move, and not because the geometry did
+
+Mutation testing found that **swapping two indices of every carriageway row passed the
+entire suite**, geometry baseline included. `StreetGeometryFingerprint` hashed the vertex
+list — position, normal, UV — and reported the index COUNT beside the hash, but never the
+index VALUES. So any change that kept every vertex and the number of triangles was invisible
+to it, including one that reverses a triangle's winding: §7j is the round where exactly that
+happened to the block floors, half a hillside city's pavements were culled away, and nothing
+failed.
+
+The indices are hashed with the vertices now. That moved every recorded hash **with `v=` and
+`i=` identical on all five**, which is the whole evidence that the geometry itself did not
+move:
+
+| city | old | new |
+|---|---|---|
+| `seed000@500` | `v=439,i=618,h=425494645E2939AC` | `v=439,i=618,h=111513A7931F7D25` |
+| `seed011@500` | `v=343,i=480,h=7EBC56BCD8EE7098` | `v=343,i=480,h=EAD539C45B34A856` |
+| `Yelukhdidru@800` | `v=1148,i=1626,h=D56C2DBE869CC644` | `v=1148,i=1626,h=3186E65937B8BDF3` |
+| `seed000@1500` | `v=5900,i=8439,h=14DBCA63B9A9D93E` | `v=5900,i=8439,h=A1E2E34665C544B6` |
+| `seed008@500` | `v=421,i=594,h=A692D41F9EC531C1` | `v=421,i=594,h=1EDB46E33561F333` |
+
+This is the one baseline rewrite of this round, and it is a gate getting stronger rather
+than a city moving.
+- **Every ramp is unchanged float for float** for the same reason at one remove:
+  `OverpassBuilder` builds every ramp straight, so its two sides span the same axial window
+  and their slopes are equal even though the stroke climbs.
+- **No network fingerprint moved.** Nothing here touches the stroke graph, the section
+  arrays, the block outlines or any position in plan.
+
+---
+
+## Mutation survivors: two of twenty-nine, and the two that were killed second are the finding
+
+⚠️ **Four of the first round's five survivors were real holes, and one of them was a hole in
+the geometry baseline itself.**
+
+1. ⚠️ **Swapping two indices of every carriageway row passed the entire suite,
+   `street-geometry.json` included.** `StreetGeometryFingerprint` hashed the vertex list and
+   reported the index COUNT beside the hash, so it could not see a triangle change that kept
+   the vertices and the count — including one that reverses a winding, which is §7j's culled
+   pavements in the road's own mesh. The indices are hashed now; both winding mutations fail
+   five tests each, and dropping the indices from the hash again fails five. **This is the
+   round's most useful finding and it is not about roads.**
+2. ⚠️ **Forcing the wedge planes on where two junction footprints OVERLAP passed everything,
+   `seed008` included.** The branch is reached by that one seed's short strokes, whose filler
+   quad the measurement already excludes as a known open defect, so real data cannot break a
+   rule about it. Killed by a fixture: `AnOverlappingCarriagewayGetsNoWedgePlanes` asserts
+   equality with the exact blend of the two rails.
+3. ⚠️ **Giving both edges of the ribbon the same lateral fraction — i.e. one seam crossing
+   instead of two — passed every distribution in `RouteRibbonRoadTests`,** because the
+   difference is 0.1 % of positions and a percentile cannot see it. Killed twice, at both
+   levels, by equality with the exact crossings:
+   `RoadTessellationTests.EachEdgeOfAStripGetsItsOwnCrossingOfEachSeam` on the surface and
+   `RouteRibbonRoadTests.ALanesBreaksIncludeBothEdgesOwnCrossingOfEachSeam` on the lane.
+   §7p's *"a containment test cannot tell a guess from a refusal"* in its third coat.
+4. **Dropping the truncated last lane's `Surface`** — the defect described above — was not
+   in the first round at all; it was found by reading §7r's open items and is covered by
+   `TheTruncatedLastLaneStillCarriesItsOwnCarriageway`.
+
+**The two that survive:**
+
+1. ⚠️ **Taking the ribbon's two edge points at the lane's START rather than at its midpoint
+   survives, and always will on this geometry.** The two edges' lateral fractions are what
+   decide their seam crossings, and the two kerb chords are parallel to within the 0.1 m grid
+   junction positions are quantised to — so the fraction is the same anywhere along the lane
+   and only the *count* of distinct crossings is load-bearing. The mutation that collapses
+   the two edges onto one point, which is the thing that matters, fails.
+2. **Computing the last sub-row as `currD + (nextD − currD) · 1` instead of as `nextD`
+   itself survives, and it is one unit in the last place.** It cannot be recovered from any
+   measurement of the mesh: the row's distance is read back out of a vertex that was built as
+   `origin + unit · d` and then projected again, which loses more precision than the ulp;
+   and `street-geometry.json` rounds coordinates to the millimetre by design, so that a
+   baseline is stable across runtimes. Written the exact way regardless, for §7n's reason —
+   *the same float, not the same place to within a rounding* — and recorded rather than
+   pretended to be caught.
+
+Killed on the first attempt: `MaxSag` loosened to 1 m, i.e. the defect restored (8 tests);
+`MaxRowSpan` forced infinite (14); `MaxSpanAcross` ignoring its argument, i.e. the ribbon
+bounding itself by the road's full width (3); the wedge-plane branch removed, i.e. §7r's
+blend restored (16); the A seam test's sign flipped (28) and the B one's (27);
+`_climbsLeftAtA` inverted (23) and `_climbsLeftAtB` (22); `_crossA` sign flipped (21) and
+`_crossB` (21); the wedge's lateral fraction not mirrored for a right-climbing side (20); the
+carriageway's width hard-coded to 1 m (3); the seam breakpoints replaced by the four section
+points, i.e. §7r's own breaks (4); `nSub` forced to 1 (13); `MaxRowsPerTextureLength` cut to 1
+so the cap binds (13); `vStart` incremented per sub-row, i.e. the texture restarted at every
+extra row (10); a row emitted 5 cm from where it belongs (19); the ribbon's own subdivision
+removed (3); `MaxQuadsPerLane` cut to 4 so that cap binds (5); and — after the four fixes
+above — both windings, both single-crossing mutations, the overlapping-wedge mutation, the
+truncated lane's lost surface and the fingerprint's lost indices.
+
+---
+
+## Two existing gates superseded, and their old text recorded
+
+1. `RouteRibbonRoadTests.ALaneOverAClimbingRoadIsBrokenWhereTheRoadBreaks` required at most
+   five quads per lane, on the stated grounds that *"a stroke has only four section points to
+   break at"*. **Both halves are now wrong**: a lane also breaks where each of the ribbon's
+   two edges crosses a seam, which is not a section point and is a different distance for
+   each edge, and then again as often as its own sag requires. The bound is now the
+   arithmetic cap, asserted *not* to bind, and the cost bound moved from `3 · nCar` to
+   `6 · nCar`.
+2. `RouteRibbonRoadTests.TheCarriagewaySurfaceReproducesEveryVertexOfTheRoadItDescribes`
+   asserted `p99 < 1e-3` with a comment reading *"The tail is the handful of section points
+   that are not exactly half a street width off the centre line … Bounded, not zero."* It now
+   splits the two populations by name: on every stroke whose section points **are** half a
+   width off its centre line the surface reproduces every vertex at the **maximum**, 0.00004 m
+   over 63 000 vertices; the rest are §7o's own recorded defect — the mesh's rows and the
+   mesh's kerbs being two different lines — counted (0, 2, 0, 8 and 12 strokes of 29, 30, 74,
+   367 and 1 875), bounded at one stroke in ten and at 0.25 m, and no longer hidden behind a
+   percentile. ⚠️ **That percentile is how this round nearly passed unnoticed**: cutting the
+   rows finer put more vertices on the same wrong lines, which moved p99 past its bound
+   without anything having become less true.
+
+3. `StreetGeometryFingerprint` itself, above: it reported an index count and hashed only the
+   vertices, and its own doc comment said *"a mesh is an ordered thing: triangles are built
+   from consecutive vertices, so two meshes with the same vertices in a different order are
+   different meshes"* — which is true and was only half of what it needed to check.
+
+Tests: `tests/JoyceCode.Tests/engine/streets/RoadTessellationTests.cs` (28 over five cities
+including `seed008`/500), plus `RouteRibbonRoadTests` (68) and
+`SatnavRouteTransportTests.TheTruncatedLastLaneStillCarriesItsOwnCarriageway`. A green run is
+1164 xUnit against 1134 before.
+
+---
+
+## Found and NOT fixed
+
+- ⚠️ **The last of the guideline's tail is the seam's own obliquity inside one quad, and the
+  remedy is known and was not built.** Between an edge's seam crossing and the other edge's,
+  the surface is the wedge plane on one side of a **diagonal** and the junction's height on
+  the other, and two triangles cut by the *other* diagonal cannot represent that. The
+  diagonal in question **is** the quad's own — it runs from one edge's crossing corner to the
+  other's — so splitting that one quad along it would be exact at zero vertex cost. It needs
+  a per-quad choice of diagonal, `joyce.mesh.Tools.AddQuadCornersUV` has a fixed one, and
+  reordering the corners flips the winding (§7j, and §7r's own first survivor). Worth 0.29 to
+  0.39 m at the worst position of the two largest cities, 0.032 m at p99, and 0.09–0.12 % of
+  positions.
+- **`seed008`'s overlapping junction footprints are unchanged**, and are now the worst thing
+  in the measurement by a factor of three: the filler quad is 1.25–1.59 m off the surface,
+  the two caps give the road two heights 1.25 m apart at one place, and the wedge planes are
+  deliberately not applied there because the two wedge regions would overlap. §7r's item,
+  still open.
+- **§7o's skew strokes are unchanged and are now measured rather than averaged.** A
+  carriageway's rows are emitted at exactly ±`StreetWidth()/2` off the centre line while its
+  section points are wherever the section array put them, so on 0/2/0/8/12 strokes of the
+  five cities the mesh's rows and the mesh's kerbs are two different lines and no surface can
+  be on both. Up to 0.208 m at a road vertex. Fixing it would move the road's PLAN geometry,
+  hence `street-geometry.json`, hence the flat city — a different decision from this one.
+- **`RoutePlan`'s truncated last lane still loses its `KerbSide` and its `AllowedTypes`**,
+  along with the `Surface` this round restored. The `KerbSide` half is a real defect with a
+  measurable cost: a pedestrian route's last waypoint keeps the lane centre line instead of
+  stepping 1.5 m onto the pavement, which is §7g's defect on one segment, and putting it back
+  moves the satnav walker in the shipped **flat** city. Left for a round that measures it.
+- **`RoutePlan`'s truncation junction** still carries the chord's `GroundHeight` rather than
+  the road's, unchanged from §7r; nothing reads it for a height.

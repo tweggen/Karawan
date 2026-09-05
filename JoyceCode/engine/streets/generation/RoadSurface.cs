@@ -55,6 +55,33 @@ public readonly struct RoadSurface
 
 
     /**
+     * How far the emitted road may depart from the surface it is cut from, in metres,
+     * between one of its vertex rows and the next.
+     *
+     * A carriageway is a RULED surface: at every axial distance the road runs straight
+     * from its left kerb to its right one, and the two kerbs climb between different pairs
+     * of section points, so the two rails have different slopes. A surface ruled between
+     * two straight lines of different slope is a hyperbolic paraboloid, which no
+     * triangulation reproduces exactly - a row quad of length L is split into two
+     * triangles that depart from it by L*|slopeRight - slopeLeft| / 4 at the midpoint of
+     * their shared diagonal, in one direction over the whole quad.
+     *
+     * Rows used to be emitted one texture length apart and a texture length is four street
+     * widths, up to 88 m, so on the shipped terrain the drawn road stood up to 1.0 m off
+     * its own surface halfway along a row - measured over five generated cities, per row
+     * quad, median 0.04 m and p95 0.25 m. That was the entire remaining residual between
+     * the satnav guideline and the road it is drawn on.
+     *
+     * The number is one fifth of RouteRibbon.Lift, the only quantity in this chain with a
+     * derivation of its own: the guideline is lifted 0.1 m off the road, so bounding the
+     * road's own departure at a fifth of that leaves the guideline four fifths of its
+     * clearance. It is also below the 16-bit depth buffer's quantum at 36 m, i.e. below
+     * what can be resolved at the distance from which a carriageway's middle is seen.
+     */
+    public const float MaxSag = 0.02f;
+
+
+    /**
      * World height of the road at one junction.
      *
      * A junction is one node of the stroke graph, so it has exactly ONE, and the junction
@@ -215,11 +242,70 @@ public readonly struct RoadSurface
     private readonly Vector2 _leftA, _leftB, _rightA, _rightB;
     private readonly float _dLeftA, _dLeftB, _dRightA, _dRightB;
 
+    /**
+     * The two end wedges: the axial range each covers, which side climbs across it, and
+     * by how much the two rails differ in height where that wedge meets the rows. See
+     * SurfaceHeightAt.
+     */
+    private readonly float _daMax, _dbMin;
+    private readonly float _width;
+    private readonly bool _hasWedges;
+    private readonly bool _climbsLeftAtA, _climbsLeftAtB;
+    private readonly float _crossA, _crossB;
+
 
     /**
      * True when the whole surface is at one height, so nothing needs shearing at all.
      */
     public bool IsLevel => HeightA == HeightB;
+
+
+    /**
+     * The longest row a carriageway may be cut into before its two triangles depart from
+     * this surface by more than MaxSag.
+     *
+     * Infinite - i.e. no subdivision at all - exactly when the two sides climb at the same
+     * rate, which covers every stroke of a flat city (both slopes are zero) and every
+     * straight one (both sides span the same axial window), so both keep the mesh they had.
+     */
+    public float MaxRowSpan => MaxSpanAcross(Width);
+
+
+    /**
+     * How far apart the two kerb chords are, i.e. how wide the carriageway is.
+     */
+    public float Width => _width;
+
+
+    /**
+     * The longest span a quad may cover along this surface before its two triangles depart
+     * from it by more than MaxSag, when the quad is only `across` metres wide rather than
+     * the whole carriageway.
+     *
+     * The satnav guideline is such a quad: 4 m of a road 8 to 22 m wide, drawn over the
+     * same twisted surface and split into the same two triangles, so it has the same defect
+     * in the same proportion - a strip covering a fraction f of the width carries f of the
+     * twist. It is NOT enough for the road to be right if the thing drawn on the road is a
+     * long flat quad, and that was measured: with the carriageway held to MaxSag the
+     * guideline was still 0.85 m off it at the worst of five cities, all of it the
+     * guideline's own quads.
+     *
+     * Both consumers bound their own sag by the same number rather than one reproducing the
+     * other's row positions - a ribbon that derives where the road's rows are is a ribbon
+     * that agrees with the road until one of the two is edited, which is the trap §7r was
+     * built to avoid. The price is that the two are cut in different places, so the worst
+     * case is the sum: 2 * MaxSag.
+     */
+    public float MaxSpanAcross(float across)
+    {
+        float twist = Single.Abs(SlopeOn(true) - SlopeOn(false));
+        if (twist < 1e-9f) return Single.PositiveInfinity;
+
+        float fraction = _width < MinSpan ? 1f : Single.Clamp(across / _width, 0f, 1f);
+        if (fraction < 1e-6f) return Single.PositiveInfinity;
+
+        return 4f * MaxSag / (twist * fraction);
+    }
 
 
     /**
@@ -263,6 +349,36 @@ public readonly struct RoadSurface
 
         HeightA = heightA;
         HeightB = heightB;
+
+        _width = _distanceToChord(leftA, rightA, rightB);
+
+        _daMax = Single.Max(_dLeftA, _dRightA);
+        _dbMin = Single.Min(_dLeftB, _dRightB);
+
+        /*
+         * Where the two junction footprints overlap there is no carriageway between them
+         * at all, only a four-corner filler quad, and the two wedges would cover the same
+         * ground. Left as the plain blend there, which is what it has always been.
+         */
+        _hasWedges = _daMax <= _dbMin;
+
+        /*
+         * Over the A wedge the side whose corner is the NEARER of the two is already
+         * climbing while the other is still on its junction's cap, and vice versa at B.
+         */
+        _climbsLeftAtA = _dLeftA <= _dRightA;
+        _climbsLeftAtB = _dLeftB >= _dRightB;
+
+        float spanL = _dLeftB - _dLeftA;
+        float spanR = _dRightB - _dRightA;
+        float dh = heightB - heightA;
+        float slopeL = Single.Abs(spanL) < MinSpan ? 0f : dh / spanL;
+        float slopeR = Single.Abs(spanR) < MinSpan ? 0f : dh / spanR;
+
+        _crossA = (_climbsLeftAtA ? slopeL : slopeR)
+                  * (_daMax - (_climbsLeftAtA ? _dLeftA : _dRightA));
+        _crossB = (_climbsLeftAtB ? slopeL : slopeR)
+                  * ((_climbsLeftAtB ? _dLeftB : _dRightB) - _dbMin);
     }
 
 
@@ -318,7 +434,13 @@ public readonly struct RoadSurface
      */
     private float _heightOn(in Vector2 p, bool right)
     {
-        return Single.Lerp(HeightA, HeightB, _fractionAt(p, right));
+        return _heightAtAxial(Vector2.Dot(p - _origin, _unit), right);
+    }
+
+
+    private float _heightAtAxial(float d, bool right)
+    {
+        return Single.Lerp(HeightA, HeightB, _fractionAtAxial(d, right));
     }
 
 
@@ -355,13 +477,59 @@ public readonly struct RoadSurface
      * cross fall, measured over the four baseline cities on the shipped terrain at 0.10 to
      * 0.15 m between the two kerbs at the median, 1.0 to 1.2 m at p95 and up to 3.6 m.
      *
-     * So this is the linear blend between the two sides at the position's own lateral
-     * fraction, which is what the emitted quads interpolate between their two kerb rows.
-     * It agrees with HeightAt at the kerbs identically, and NOTHING in the emission calls
-     * it - the road mesh is untouched by its existence.
+     * So over the rows this is the linear blend between the two sides at the position's own
+     * lateral fraction, which is what the emitted quads interpolate between their two kerb
+     * rows. It agrees with HeightAt at the kerbs identically, and NOTHING in the emission
+     * calls it - the road mesh is untouched by its existence.
+     *
+     * **Over each END WEDGE it is a PLANE, and that is not an approximation.** Between a
+     * junction's seam - the straight line joining its two section points, where the
+     * carriageway meets the flat cap - and the first row that spans the full width, the
+     * carriageway is a TRIANGLE: two corners on the seam at the junction's own height, and
+     * one on the kerb of whichever side is already climbing. Three corners admit exactly
+     * one linear surface, so there is no tessellation choice to be made and no
+     * approximation to converge to; the plane IS the surface there. The blend is not, and
+     * it was measured against the emitted triangles at up to 0.90 m - worse at every
+     * percentile than the row twist, and for a reason the rows do not share: over the wedge
+     * one rail is still flat on its cap, so the surface's cross fall varies from zero at
+     * the seam to its full value at the first full row, and a blend that follows it
+     * bulges away from the one plane the three corners allow.
+     *
+     * Beyond a seam there is no carriageway, only the cap, so the answer there is that
+     * junction's own height - which the plane itself gives along the seam, so the two join
+     * without a step.
      */
     public float SurfaceHeightAt(in Vector2 p)
     {
+        if (_hasWedges)
+        {
+            float d = Vector2.Dot(p - _origin, _unit);
+
+            if (d <= _daMax)
+            {
+                float uA = _lateralFractionAt(p);
+
+                /*
+                 * Which side of the A junction's seam. Positive is the carriageway; zero is
+                 * the seam itself, where the plane below already answers HeightA.
+                 */
+                if ((d - _dLeftA) - (_dRightA - _dLeftA) * uA <= 0f) return HeightA;
+
+                return _heightAtAxial(d, !_climbsLeftAtA)
+                       - _crossA * (_climbsLeftAtA ? uA : 1f - uA);
+            }
+
+            if (d >= _dbMin)
+            {
+                float uB = _lateralFractionAt(p);
+
+                if ((d - _dLeftB) - (_dRightB - _dLeftB) * uB >= 0f) return HeightB;
+
+                return _heightAtAxial(d, !_climbsLeftAtB)
+                       + _crossB * (_climbsLeftAtB ? uB : 1f - uB);
+            }
+        }
+
         float hLeft = _heightOn(p, false);
         float hRight = _heightOn(p, true);
 
@@ -389,19 +557,58 @@ public readonly struct RoadSurface
 
 
     /**
-     * The axial distances at which this surface stops being one plane: the four section
-     * points, two per side, each of which is where that side's kerb stops being flat at its
-     * junction's height and starts climbing.
-     *
-     * A ribbon drawn along this stroke is piecewise affine with exactly these breaks in it,
-     * and straight between them - so subdividing there is exact rather than merely finer.
+     * How many axial distances BreakpointsBetween writes.
      */
-    public void BreakpointsInto(Span<float> four)
+    public const int NBreakpoints = 6;
+
+
+    /**
+     * The axial distances at which this surface stops being one plane along a strip running
+     * between two given lines - a quad drawn on the road, i.e. the satnav guideline.
+     *
+     * ⚠️ **The four section points are not enough, and a strip 4 m wide is exactly where
+     * that shows.** Two of the breaks ARE section points: `daMax`, where the A wedge's plane
+     * gives way to the rows, and `dbMin`, where the rows give way to the B wedge's. The
+     * other two are not a distance at all until a line is named: a junction's SEAM - the
+     * straight line joining its two section points, beyond which there is no carriageway,
+     * only the flat cap - runs across the road at an angle, so each line along the road
+     * crosses it somewhere else. A strip down the middle of the carriageway crosses both
+     * seams strictly between the section points, and a quad that bends only at the section
+     * points ramps straight through the kink instead. Measured over five cities with the
+     * road itself already held to MaxSag, that one missing break was the whole tail of the
+     * guideline's error: 0.79 m at the worst position and 0.15 m at p99.
+     *
+     * @param rail0, rail1
+     *     One plan point on each of the strip's two edges. Their lateral fractions are what
+     *     decide where each crosses the two seams; the union of the two edges' breaks is
+     *     returned, so BOTH edges are affine between consecutive entries and the quads
+     *     between them stay rectangular.
+     */
+    public void BreakpointsBetween(in Vector2 rail0, in Vector2 rail1, Span<float> six)
     {
-        four[0] = _dLeftA;
-        four[1] = _dRightA;
-        four[2] = _dLeftB;
-        four[3] = _dRightB;
+        float u0 = _lateralFractionAt(rail0);
+        float u1 = _lateralFractionAt(rail1);
+
+        six[0] = Single.Lerp(_dLeftA, _dRightA, u0);
+        six[1] = Single.Lerp(_dLeftA, _dRightA, u1);
+        six[2] = _daMax;
+        six[3] = _dbMin;
+        six[4] = Single.Lerp(_dLeftB, _dRightB, u0);
+        six[5] = Single.Lerp(_dLeftB, _dRightB, u1);
+
+        if (_hasWedges) return;
+
+        /*
+         * Where the two junction footprints overlap there are no wedge planes and no rows,
+         * so the seams are not breaks - the surface there is the plain blend it always was,
+         * which bends at the four section points and nowhere else.
+         */
+        six[0] = _dLeftA;
+        six[1] = _dRightA;
+        six[2] = _dLeftB;
+        six[3] = _dRightB;
+        six[4] = _dLeftA;
+        six[5] = _dRightA;
     }
 
 
@@ -428,8 +635,11 @@ public readonly struct RoadSurface
 
 
     private float _fractionAt(in Vector2 p, bool right)
+        => _fractionAtAxial(Vector2.Dot(p - _origin, _unit), right);
+
+
+    private float _fractionAtAxial(float d, bool right)
     {
-        float d = Vector2.Dot(p - _origin, _unit);
         float dA = right ? _dRightA : _dLeftA;
         float dB = right ? _dRightB : _dLeftB;
         float span = dB - dA;
