@@ -550,6 +550,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GenerateClusterStreetsOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Generator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\NetworkBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\CandidateQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\Constraints.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\ConnectComponentsPass.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\generation\DeckCollider.cs" />

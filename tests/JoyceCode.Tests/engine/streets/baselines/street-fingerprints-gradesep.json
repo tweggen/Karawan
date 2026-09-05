@@ -1,0 +1,20 @@
+{
+  "_note": "StreetNetworkFingerprint.V2 of the network generated with joyce.EnableGradeSeparation ON. WP-B2: the flag orders the candidate queue by weight. The flag-off baselines in street-fingerprints.json are what say the default city did not move; this file is what pins the city the ordering builds.",
+  "_regenerate": "JOYCE_STREET_BASELINE_WRITE=1 dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj",
+  "_recordedFromCommit": "WP-B2, on top of d6509575355e58fb06ad7fd7e0e4959f4fa24773",
+  "_warning": "Keyed by runtime+architecture: float output is not guaranteed identical across runtimes. Add your environment's stamp rather than overwriting another.",
+  "environments": {
+    ".NET 10.0|X64": {
+      "seeds": {
+        "Yelukhdidru@3000": "n=930,s=1379,h=E10F9F863B39C786",
+        "seed000@500": "n=29,s=34,h=97ABED7C7FF3FA97",
+        "Yelukhdidru@400": "n=13,s=12,h=5F724760E94FFB5B",
+        "Yelukhdidru@100": "n=0,s=0,h=E3B0C44298FC1C14",
+        "seed011@500": "n=28,s=31,h=899EF900895842CC",
+        "seed000@1500": "n=247,s=350,h=59C046B7ADE50270",
+        "seed017@2400": "n=613,s=883,h=1177475AC6745821",
+        "Yelukhdidru@800": "n=63,s=79,h=D745E1F1F870C6D1"
+      }
+    }
+  }
+}

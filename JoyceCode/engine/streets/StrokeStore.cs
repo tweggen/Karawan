@@ -674,15 +674,53 @@ public class StrokeStore
 
 
     /**
+     * Take a junction out of this network entirely.
+     *
+     * THE POINT OF THIS METHOD IS THE OCTREE, not the list. Dropping a junction from
+     * _listPoints alone leaves it in _octreeSP, where it goes on answering
+     * FindClosestBelowButNot and GetClosestPoint - the two queries the generator uses to
+     * decide whether a candidate should snap onto an existing junction. A junction that
+     * is not in the network but still wins those queries is a ghost: candidates snap onto
+     * a point no stroke touches, and the resulting stroke ends nowhere. PolishStreetPoints
+     * did exactly that, harmlessly only because it runs after generation has finished.
+     * Nothing that removes a junction DURING generation could have used it.
+     *
+     * Refuses a junction that still carries strokes. Removing one would leave those
+     * strokes' endpoints pointing at a point the store does not have, which is a broken
+     * graph rather than a smaller one - take the strokes out first.
+     */
+    public void RemovePoint(in StreetPoint sp)
+    {
+        if (!sp.InStore)
+        {
+            ErrorThrow($"Cannot remove point {sp}: it is not in a store.",
+                m => new InvalidOperationException(m));
+        }
+
+        if (sp.HasStrokes())
+        {
+            ErrorThrow(
+                $"Cannot remove point {sp}: it still carries strokes, whose endpoints "
+                + $"would then name a junction this network does not have.",
+                m => new InvalidOperationException(m));
+        }
+
+        _octreeSP.Remove(sp);
+        _listPoints.Remove(sp);
+        sp.InStore = false;
+    }
+
+
+    /**
      * Validate the set of street points if all street points meet the required conditions.
      * Required conditions are
      * - street point has connected strokes.
      */
     public void PolishStreetPoints()
     {
-        List<int> deadPoints = new();
+        List<StreetPoint> deadPoints = new();
         int l = _listPoints.Count;
-        
+
         /*
          * Note that we are adding the streetpoints from the last to the first.
          */
@@ -692,14 +730,22 @@ public class StrokeStore
             if (false
                 || !sp.HasStrokes())
             {
-                deadPoints.Add(i);
+                deadPoints.Add(sp);
             }
         }
 
-        foreach (var idx in deadPoints)
+        foreach (var sp in deadPoints)
         {
-            Trace($"Removing point @{idx} in cluster.");
-            _listPoints.RemoveAt(idx);
+            /*
+             * Through RemovePoint, so the junction leaves the octree as well. This used
+             * to remove it from the list only, which is survivable exactly because this
+             * runs after Generate() has returned and nothing queries the point octree
+             * afterwards - but it is the shape of the defect that would defeat any
+             * removal during generation, so there is one removal primitive and this uses
+             * it.
+             */
+            Trace(_dc, $"Removing strokeless point {sp} from cluster.");
+            RemovePoint(sp);
         }
     }
     

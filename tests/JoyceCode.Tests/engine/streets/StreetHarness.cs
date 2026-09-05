@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using engine.streets;
@@ -48,6 +49,30 @@ internal static class StreetHarness
      *     Ruleset to grow with, or null for the built-in defaults.
      */
     internal static StrokeStore Generate(string idString, float size, ExpansionRuleTable ruleTable)
+        => Generate(idString, size, ruleTable, gradeSeparation: false, onCandidatePopped: null);
+
+
+    /**
+     * The same cluster with grade separation enabled, which under WP-B2 means one thing
+     * only: the candidate queue drains heaviest first.
+     */
+    internal static StrokeStore GenerateHeavyFirst(string idString, float size)
+        => Generate(idString, size, null, gradeSeparation: true, onCandidatePopped: null);
+
+
+    /**
+     * @param gradeSeparation
+     *     Whether this run may build structures, and - WP-B2 - orders its queue by
+     *     weight. Exactly what ClusterDesc._generateStrokes passes in from the
+     *     joyce.EnableGradeSeparation setting.
+     * @param onCandidatePopped
+     *     Observer called with each candidate as it leaves the generator's queue and
+     *     everything still waiting behind it. The heavy-first ordering is a property of
+     *     that order and of nothing else visible from outside.
+     */
+    internal static StrokeStore Generate(
+        string idString, float size, ExpansionRuleTable ruleTable, bool gradeSeparation,
+        Action<Stroke, IReadOnlyList<Stroke>> onCandidatePopped)
     {
         var clusterDesc = MakeCluster(idString, size);
         var strokeStore = new StrokeStore(size);
@@ -56,6 +81,8 @@ internal static class StreetHarness
         streetGenerator.SetAnnotation($"Cluster {clusterDesc.Name}");
         streetGenerator.Reset("streets-" + idString, strokeStore, clusterDesc);
         streetGenerator.RuleTable = ruleTable;
+        streetGenerator.EnableGradeSeparation = gradeSeparation;
+        streetGenerator.OnCandidatePopped = onCandidatePopped;
         StreetSeeds.ApplyBounds(streetGenerator, clusterDesc);
         StreetSeeds.AddTo(streetGenerator, clusterDesc, clusterDesc.Rnd);
         streetGenerator.Generate();

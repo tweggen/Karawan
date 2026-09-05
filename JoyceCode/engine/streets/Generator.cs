@@ -17,7 +17,7 @@ namespace engine.streets
             Trace(_dc, $"{_annotation}: {message}");
         }
 
-        private List<Stroke> _listStrokesToDo;
+        private CandidateQueue _queue;
         private StrokeStore _strokeStore;
         private generation.NetworkBuilder _networkBuilder;
         private ConnectComponentsPass _connectPass;
@@ -161,14 +161,13 @@ namespace engine.streets
 
         private bool _haveStrokesToDo()
         {
-            return _listStrokesToDo.Count > 0;
+            return _queue.Count > 0;
         }
 
         private Stroke _popStrokeToDo()
         {
-            var idx = _listStrokesToDo.Count - 1;
-            Stroke stroke = _listStrokesToDo[idx];
-            _listStrokesToDo.RemoveAt(idx);
+            Stroke stroke = _queue.Pop();
+            OnCandidatePopped?.Invoke(stroke, _queue.Pending);
             return stroke;
         }
 
@@ -176,9 +175,23 @@ namespace engine.streets
         {
             if (_inBounds(stroke))
             {
-                _listStrokesToDo.Add(stroke);
+                _queue.Push(stroke);
             }
         }
+
+
+        /**
+         * Called with each candidate as it leaves the queue, together with everything
+         * still waiting behind it.
+         *
+         * The heavy-first ordering is a property of the order candidates actually leave
+         * the queue in, and there is no other way to observe that from outside. Asking
+         * the queue's comparer instead would pass with the queue unwired from the
+         * generator entirely - which is exactly how WP-B1 found two constraints that had
+         * had passing tests for months while sitting outside the pipeline. Null costs
+         * nothing.
+         */
+        internal Action<Stroke, IReadOnlyList<Stroke>> OnCandidatePopped { get; set; }
 
 
         /**
@@ -214,6 +227,21 @@ namespace engine.streets
                 _ctx.MinSpanLength = MinSpanLength;
                 _ctx.MaxSpanLength = MaxSpanLength;
             }
+
+            /*
+             * HEAVY FIRST, and only with the flag on.
+             *
+             * A structure has to be placed on a heavy corridor before side streets
+             * attach to it, or lifting the corridor orphans whatever has already grown
+             * off its interior. Draining the queue by weight is what buys that: a branch
+             * is emitted from an already accepted stroke and drawn from a weight group
+             * whose decrease probability is 190 of 256, so the corridor is finished
+             * before its own branches are judged.
+             *
+             * Off, CandidateQueue.Pop is RemoveAt(Count - 1) and nothing else, which is
+             * the stack this generator has always been.
+             */
+            _queue.HeavyFirst = EnableGradeSeparation;
 
             _boundsConstraint = new BoundsConstraint(_bl, _tr);
 
@@ -300,14 +328,36 @@ namespace engine.streets
 
 
         /**
-         * Iterate until the queue of strokes is empty again.
+         * Grow the network, then reattach whatever it left disconnected.
+         *
+         * The connect pass used to be called on BOTH of the drain loop's exits, which is
+         * one call per Generate() either way but leaves nothing that can run after the
+         * drain and before the bridging. WP-B2 needs that gap to exist, so the loop is
+         * _drain() and the pass is called once, here.
+         *
+         * ConnectComponentsPass draws from the RandomSource, so it has to stay at the
+         * same point in the sequence of draws it has always been at - the very end of a
+         * run - which is what makes this a pure hoist and not a re-ordering.
          */
         public void Generate()
         {
             _buildPipeline();
+            _drain();
+            _connectPass.Run();
+        }
 
+
+        /**
+         * Iterate until the queue of candidates is empty, or the budget is spent.
+         *
+         * The budget is the cluster's own, computed once per run: it counts strokes
+         * judged, not passes over the queue, so nothing that reorders the queue may
+         * hand out a fresh allowance.
+         */
+        private void _drain()
+        {
             int maxGenerations = (int)(_clusterDesc.Size * _clusterDesc.Size / 1000f);
-            
+
             while (true)
             {
 
@@ -315,7 +365,6 @@ namespace engine.streets
                 {
                     Trace(_dc, $"Returning: max generations reached.");
                     if (_report != null) Trace(_dc, $"{_annotation}: {_report.Describe()}");
-                    _connectPass.Run();
                     return;
                 }
 
@@ -323,7 +372,6 @@ namespace engine.streets
                 {
                     Trace(_dc, $"Returning: no more streets to do.");
                     if (_report != null) Trace(_dc, $"{_annotation}: {_report.Describe()}");
-                    _connectPass.Run();
                     return;
                 }
 
@@ -447,11 +495,16 @@ namespace engine.streets
                             currTail.A = intersectionStreetPoint;
                             currTail.B = oldCurrB;
 
-                            // As this is a stack, first the continuation, then the head.
-                            _listStrokesToDo.Add(currTail);
+                            /*
+                             * First the continuation, then the head. The queue pops the
+                             * later of two equal weights, and a split's two halves carry
+                             * the candidate's own weight, so the head comes out first
+                             * under the heavy-first ordering exactly as it does off it.
+                             */
+                            _queue.Push(currTail);
                         }
 
-                        _listStrokesToDo.Add(curr);
+                        _queue.Push(curr);
                         _generationCounter++;
 
                         // Leave this loop.
@@ -506,7 +559,7 @@ namespace engine.streets
         
 
         public void AddStartingStroke(in Stroke stroke0){
-            _listStrokesToDo.Add(stroke0);
+            _queue.Push(stroke0);
         }
 
         
@@ -516,7 +569,7 @@ namespace engine.streets
             in ClusterDesc clusterDesc
         ) {
             _rnd = new builtin.tools.RandomSource(seed0);
-            _listStrokesToDo = new List<Stroke>();
+            _queue = new CandidateQueue();
             _strokeStore = strokeStore;
             _networkBuilder = new generation.NetworkBuilder(strokeStore);
             _clusterDesc = clusterDesc;
