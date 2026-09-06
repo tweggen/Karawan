@@ -1229,6 +1229,22 @@ its inset and the building on it go across whatever the chord ran over.
 - the junction **cap** is not a second cause: 2 and 8 extra cases, all already overlapping a
   stroke box.
 
+⚠️ **WHAT THE STREET IS — the owner's follow-up names it**: *"the road stem went right into
+a building… I don't know if it was a legitimate dead end, at least not legitimate judging
+from the building on it."* Both halves are one thing, and §7t.2 already contains the reason:
+a face is pinched at a junction **because a dead-end spur cuts a slit into the block**, the
+truncation drops the slit, and the estate becomes a solid polygon over ground the spur
+occupies. It **is** a legitimate dead end; the building on it is not. The spurs whose stub
+carriageway lies under a building are **146** and **190** — the very counts above, so **it
+is one class, not two**. ⚠️ **And the obvious second mechanism is EMPTY**: *"a spur enclosed
+by a block whose ring closed correctly"* would need no chord and would be a separate defect
+with a separate fix, and it happens to **0 of 9840 spurs flag off and 2 of 8100 flag on**;
+every other enclosed spur (222 / 272) is inside a **broken** block. ⚠️ **That also re-reads
+§14.2**, which found *"four junctions inside three blocks of `Yelukhdidru@3000` and two
+inside two of `seed017@2400`"* and called them unrelated: those two seeds carry 3 and 2
+broken rings, and 0 spurs of the world sit inside a block that closed, so §14.2's six are
+**this defect seen from the other side**.
+
 ⚠️ **AND IT IS NOT A ONE-LINE FIX.** Completing the walk properly gives a face that visits a
 junction twice (274 of 274) and contains a junction with fewer than two block arms (219 of
 219, 272 of 274) — i.e. a face `hasNullSection` **discards**. So terminating correctly does
@@ -1242,27 +1258,38 @@ dead-end spurs and every face touching one is refused. Pre-existing and silent.
 
 **THE DECISION.**
 
+The 0-and-2 count above is what separates them: **(a) removes essentially the whole
+reported class**, and (b) is a larger change wanted for its own reasons rather than for
+this one.
+
 - **(a) Terminate on the directed edge.** One line, correct by construction. Costs 219 /
   272 blocks (0.6 % / 0.8 %) as holes in the pavement instead of buildings across roads.
   Moves **no recorded baseline file** — `street-geometry.json` pins five cities and only
   `seed008@500` carries one, flag on, which nothing records — but moves the block census in
-  `BlockGraphTests` on four flag-on seeds and two flag-off ones.
+  `BlockGraphTests` on four flag-on seeds and two flag-off ones. **Leaves behind**: the 0/2
+  spurs in a closed block, the 10/1 sliver overlaps, and the whole 33 %.
 - **(b) Peel the block graph to its 2-core first**, so a dead-end spur is not a block edge
   at all. The face then has no pinch, the ring closes **and the block stands**, going round
-  the spur; it also recovers much of the 33 %. But the spur is then inside the block and
-  needs excluding from the estate exactly as a ramp already is
-  (`BlockGraph.ExcludeStructures`), and it changes far more of the city.
-  `BlockGraphTests` already computes a 2-core for its own assertion.
+  the spur; it also recovers much of the 33 %. ⚠️ **But it cannot be done without the estate
+  exclusion, and that is not optional**: a 2-cored block contains its spurs by construction,
+  so without subtracting them the way `BlockGraph.ExcludeStructures` already subtracts a
+  ramp, (b) produces **exactly the reported picture on far more blocks than the 222 that
+  have it today**. With the exclusion it is strictly better than (a); without it, strictly
+  worse. `BlockGraphTests` already computes a 2-core for its own assertion.
 
 ⚠️ **What is NOT established: the sighting itself.** The start city
-(`cluster-clusters-mydear-0`, 1000 m, named `Yelukhdidru`) has **no broken ring and no
-building over a street in either flag state**. Its objects at the two reported positions
-are named in §7t.7; the one anomaly there is junction `#24 (287.2, 225.4)`, a one-armed
-dead end whose face is discarded, so the whole quadrant north-east of the player has no
-block, no estate and no pavement — the 33 % above, at the sighting. **The class is
-established and the instance is not.** Ask the owner for the screenshot's heading.
+(`cluster-clusters-mydear-0`, 1000 m, named `Yelukhdidru`) has **no broken ring, no building
+over a street, and no spur inside any block, in either flag state**; the nearest building to
+any of its twenty dead-end tips is **43 m** away. Its objects at the two reported positions
+are named in §7t.7. **The reproduction was then checked rather than trusted** — the first
+cluster is hard-coded `Size = 1000f`, generation reads only `Size`, `Id` and a fresh `Rnd`,
+the shipped ruleset is value-identical to the defaults with a gate saying so, and
+`HouseInstanceGenerator` only ever *shrinks* its footprint, so the drawn house is inside the
+polygon every measurement uses. **The class is established and the instance is not.** Ask
+the owner for the screenshot's heading, and whether the position and the picture are from
+the same session.
 
-Gate: `tests/JoyceCode.Tests/engine/streets/BlockRingClosureTests.cs` (17), which records
+Gate: `tests/JoyceCode.Tests/engine/streets/BlockRingClosureTests.cs` (19), which records
 every number above so that whichever repair is chosen has to move them deliberately.
 
 ---

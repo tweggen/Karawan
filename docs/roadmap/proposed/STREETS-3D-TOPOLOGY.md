@@ -4217,6 +4217,43 @@ Two things measured and refuted along the way:
   stroke 808, #549→#655). It is a second and far smaller mechanism, recorded and **not**
   explained.
 
+## §7t.3a ⚠️ WHAT THE STREET IS: the dead-end spur the truncation cut out of the block
+
+The owner's follow-up settles the shape:
+
+> *"the road stem went right into a building, that's what caught my attention. I don't know
+> if it was a legitimate dead end, at least not legitimate judging from the building on
+> it."*
+
+Both halves are one thing, and §7t.2 already contains the reason. A face is pinched at a
+junction **because** a dead-end spur cuts a slit into the block. The truncation drops the
+slit. The estate is then a solid polygon over ground the spur occupies, and the building
+goes on top of it. So it *is* a legitimate dead end, and the building on it is not.
+
+Measured over the shipped world, the spurs whose stub carriageway lies under a building are
+**146** and **190** — the very counts of §7t.3. **It is one class, not two.**
+
+⚠️ **And the obvious second mechanism is empty.** *"A spur enclosed by a block whose ring
+closed correctly"* would need no chord, no wrap-edge break and no truncation, and would be
+a separate defect with a separate fix. Measured:
+
+| | flag off | flag on |
+|---|---|---|
+| dead-end spurs | 9 840 | 8 100 |
+| ...inside a block whose ring **closes** | **0** | **2** |
+| ...inside a block whose ring is **broken** | 222 | 272 |
+| ...whose stub carriageway is under a building | **146** | **190** |
+| tip depth inside the building, p05 / p50 / p95 | −58.5 / −29.9 / −21.4 m | −56.2 / −26.6 / −10.0 m |
+
+Zero and two, of nearly ten thousand. So the truncation is not one of two ways this
+picture arises, it is essentially the only one — which is what decides §7t.5 below.
+
+⚠️ **It also re-reads §14.2 of the Phase B plan.** That section found *"four junctions
+inside three blocks of `Yelukhdidru@3000` and two inside two of `seed017@2400`, flag off"*
+and called them pre-existing and unrelated dead-end spurs. Those two seeds carry **3** and
+**2** broken rings (§7t.6), and 0 of the world's 9 840 spurs sit inside a block that closed
+— so §14.2's six junctions are **this defect seen from the other side**, not a separate one.
+
 ## §7t.4 ⚠️ The context is two orders of magnitude larger than the defect
 
 | | flag off | flag on |
@@ -4254,19 +4291,25 @@ The early termination is a **discard that failed to happen**: it cuts the spur o
 ring before the trace can see it, so the face is never refused. §11.4's shape inverted —
 not a refusal that looks like a result, but a result that should have been a refusal.
 
-Two answers, and the choice is the owner's:
+Two answers, and the choice is the owner's. §7t.3a is what separates them: because 0 and 2
+spurs sit inside a block that closed, **(a) removes essentially the whole reported class**,
+and (b) is a larger change wanted for its own reasons rather than for this one.
 
 - **(a) Terminate on the directed edge.** One line. Correct by construction, and every gate
   in this file then says what it should. Costs 219 / 272 blocks — 0.6 % / 0.8 % of the city
-  — as holes in the pavement rather than as buildings across roads. It does not touch the
-  33 % already being discarded.
+  — as holes in the pavement rather than as buildings across roads. **What it leaves
+  behind**: the 0 / 2 spurs inside a closed block, the 10 / 1 sliver overlaps of §7t.3, and
+  the whole 33 % of §7t.4, which it does not touch.
 - **(b) Peel the block graph to its 2-core first.** Iteratively drop every junction with
   fewer than two block arms, so a dead-end spur is not a block edge at all. The face then
   has no pinch, the ring closes, **and the block stands** — correctly, going round the spur
-  rather than across it. It also recovers a large part of the 33 %. But the spur is then
-  *inside* the block, so it needs excluding from the estate exactly the way a ramp already
-  is (`BlockGraph.ExcludeStructures`), and it changes far more of the city than the 219.
-  `BlockGraphTests` already computes a 2-core for its own assertion, so the machinery exists.
+  rather than across it. It also recovers a large part of the 33 %. ⚠️ **But it cannot be
+  done without the estate exclusion, and that is not optional here**: a 2-cored block
+  contains its spurs by construction, so without subtracting them from the estate the way
+  `BlockGraph.ExcludeStructures` already subtracts a ramp, (b) produces **exactly the
+  reported picture on far more blocks than the 222 that have it today**. With the
+  exclusion it is strictly better than (a); without it, strictly worse.
+  `BlockGraphTests` already computes a 2-core for its own assertion, so that half exists.
 
 ## §7t.6 What this would move in the recorded baselines
 
@@ -4294,9 +4337,9 @@ and the flag-off census on `seed017@2400` and `Yelukhdidru@3000`.
 
 ## §7t.7 ⚠️ What is NOT established: the sighting itself
 
-The start city carries **no broken ring and no building over a street, in either flag
-state**. Its blocks near the two sightings were enumerated by name and every one of them
-closes:
+The start city carries **no broken ring, no building over a street, and no spur inside any
+block, in either flag state**. Its blocks near the two sightings were enumerated by name
+and every one of them closes:
 
 - the player stands on the carriageway of stroke `sid=102`, `#4 (239.7, 229.1)` →
   `#59 (279.8, 148.9)` with the flag on, and of `sid=24`, `#21 (246.1, 157.0)` →
@@ -4308,39 +4351,53 @@ closes:
   discarded for `hasNullSection`, so the whole quadrant north-east of the player has **no
   block, no estate and no pavement at all** — §7t.4's third of the city, at the sighting.
 
-So the class is established and the instance is not. A dead-end stub running into an
-unpaved void is a different picture from a road running into a building, and this write-up
-does not claim the two are the same thing. Whoever picks this up should ask the owner for
-the screenshot's heading.
+**The reproduction was then checked rather than trusted**, because a faithful-looking
+harness that builds a different city would explain all of this: `_generateClusterList`
+hard-codes the first cluster at `Size = 1000f` and `Pos = (-10·rnd, 0, 10)`; street
+generation reads only `Size`, `Id` and a **fresh** `ClusterDesc.Rnd` (nothing consumes it
+first); the shipped ruleset is value-identical to `ExpansionRuleTable.Defaults()` and there
+is a gate saying so; `PolishStreetPoints` only removes strokeless junctions; and
+`HouseInstanceGenerator` only ever `Extend(-ShrinkAmount)`s its footprint, so the drawn
+house is contained in the polygon every measurement here uses. The start city this file
+measures **is** the one the game builds.
+
+So the class is established and the instance is not. **Every metric that describes the
+report is zero in the start city**, and the nearest building to any of its twenty dead-end
+tips is 43 m away. Either the reported coordinates and the screenshot are from different
+moments, or there is a mechanism outside the block → estate → building pipeline that this
+round did not reach. Whoever picks this up should ask the owner for the screenshot's
+heading, and for confirmation that the position and the picture are from the same session.
 
 ## §7t.8 The mutations
 
 Five driven against `QuarterGenerator`, restoring with `cp` + `touch` so MSBuild actually
 rebuilds (§15's lesson). Failures are against
-`tests/JoyceCode.Tests/engine/streets/BlockRingClosureTests.cs` alone (17 assertions).
+`tests/JoyceCode.Tests/engine/streets/BlockRingClosureTests.cs` alone (19 assertions).
 
 | # | mutation | failures |
 |---|---|---|
-| 1 | terminate on the directed edge — i.e. the fix under §7t.5(a) | **12** |
-| 2 | the `hasNullSection` discard removed | **16** |
-| 3 | a one-armed junction still gets a corner (`ArmCountOf < 1`) | **16** |
-| 4 | the delimiter names the ARRIVING stroke — §7e's defect, back again | **13** |
+| 1 | terminate on the directed edge — i.e. the fix under §7t.5(a) | **14** |
+| 2 | the `hasNullSection` discard removed | **18** |
+| 3 | a one-armed junction still gets a corner (`ArmCountOf < 1`) | **18** |
+| 4 | the delimiter names the ARRIVING stroke — §7e's defect, back again | **14** |
 | 5 | the block trace may start on a structure | ⚠️ **survived** |
 
-**1 is the one that matters.** The proposed fix is not a silent no-op: it moves twelve of
-these seventeen assertions, which is what makes §7t.5's table a decision rather than a
+**1 is the one that matters.** The proposed fix is not a silent no-op: it moves fourteen of
+these nineteen assertions, which is what makes §7t.5's table a decision rather than a
 guess.
 
 ⚠️ **5 survives this file, and it should — it is WP-B5's rule, not this one's.** Driven
 against `BlockGraphTests` as well it fails **6**, including
 `TheBlockTraceNeverTouchesAStructure`, which reads `Stroke.TraversedAB`/`TraversedBA` — the
 trace's own record of where it went — rather than inspecting what it produced. Recorded
-here so that nobody reads this file's seventeen green assertions as covering the structure
-filter; they do not.
+here so that nobody reads this file's green assertions as covering the structure filter;
+they do not.
 
 ## §7t.9 Found and NOT fixed
 
 - **The defect itself**, pending the decision in §7t.5.
 - **A third of all faces are discarded** (§7t.4), silently, with a `Trace`.
 - **The 1881 m² flag-on outlier on a ring that closes** (§7t.3), unexplained.
+- **The 0 / 2 spurs inside a block that closed** (§7t.3a) — no chord is involved, so §7t.5(a)
+  does not reach them.
 - **The sighting is not reproduced** (§7t.7).

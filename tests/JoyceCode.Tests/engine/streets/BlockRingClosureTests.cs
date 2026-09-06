@@ -360,6 +360,90 @@ public class BlockRingClosureTests
 
 
     /**
+     * ⚠️ WHAT THE STREET RUNNING INTO THE BUILDING IS: the dead-end spur the broken ring
+     * cut out of its own outline.
+     *
+     * The owner's follow-up — *"the road stem went right into a building… I don't know if
+     * it was a legitimate dead end, at least not legitimate judging from the building on
+     * it"* — names the shape exactly, and the two halves are one thing. A face is pinched
+     * at a junction precisely BECAUSE a dead-end spur cuts a slit into the block; the
+     * truncation drops the slit; the estate is then a solid polygon over ground the spur
+     * occupies; and the building goes on top of it.
+     *
+     * Measured over the shipped world: the spurs whose stub carriageway lies under a
+     * building are **146 and 190** — the very counts of
+     * ABuildingOnABrokenRingStandsOnAStreet. It is one class, not two.
+     *
+     * ⚠️ AND THE OBVIOUS SECOND MECHANISM IS EMPTY. *"A spur enclosed by a block whose ring
+     * closed correctly"* needs no chord and no truncation and would be a separate defect
+     * with a separate fix — measured, it happens to **0** spurs of 9840 with the flag off
+     * and **2** of 8100 with it on. Every one of the 222 / 272 enclosed spurs bar those two
+     * is inside a block whose ring is BROKEN.
+     *
+     * That is what settles the choice in CompletingTheWalkWouldDiscardTheBlockAltogether:
+     * discarding the truncated faces removes essentially the whole class, and peeling the
+     * block graph to its 2-core is not needed to reach it.
+     *
+     * ⚠️ It also re-reads §14.2. That section found *"four junctions inside three blocks of
+     * Yelukhdidru@3000 and two inside two of seed017@2400, flag off"* and called them
+     * pre-existing and unrelated. They are inside BROKEN blocks - those two seeds carry 3
+     * and 2 of them - so they are this defect seen from the other side, not a separate one.
+     */
+    [Theory]
+    //                    spurs  in a closed block  in a broken block  stub under a building
+    [InlineData(false, 9840, 0, 222, 146)]
+    [InlineData(true, 8100, 2, 272, 190)]
+    public void TheStreetThatRunsIntoTheBuildingIsADeadEndSpur(
+        bool gradeSeparation, int spurs, int inClosed, int inBroken, int underABuilding)
+    {
+        int nSpurs = 0, nInClosed = 0, nInBroken = 0, nUnder = 0;
+
+        foreach (var city in World(gradeSeparation))
+        {
+            var blocks = city.Quarters.GetQuarters()
+                .Select(q => (Q: q,
+                    Ring: q.GetDelims()
+                        .Select(d => new Vector2(d.StartPoint.X, d.StartPoint.Y)).ToList(),
+                    Closed: _firstOpenEdge(q) < 0))
+                .ToList();
+
+            foreach (var sp in city.Store.GetStreetPoints())
+            {
+                if (1 != BlockGraph.ArmCountOf(sp)) continue;
+
+                ++nSpurs;
+
+                var stub = sp.GetAngleArray().First(BlockGraph.IsBlockEdge);
+                var foot = BlockGraph.FootprintOf(stub, 0f);
+                bool closed = false, broken = false, under = false;
+
+                foreach (var (q, ring, isClosed) in blocks)
+                {
+                    if (!_insidePlan(ring, sp.Pos)) continue;
+
+                    if (isClosed) closed = true; else broken = true;
+
+                    foreach (var e in q.GetEstates())
+                    foreach (var b in e.GetBuildings())
+                    {
+                        if (_overlapArea(b.GetPoints(), foot) > 0.5) under = true;
+                    }
+                }
+
+                if (closed) ++nInClosed;
+                if (broken) ++nInBroken;
+                if (under) ++nUnder;
+            }
+        }
+
+        Assert.Equal(spurs, nSpurs);
+        Assert.Equal(inClosed, nInClosed);
+        Assert.Equal(inBroken, nInBroken);
+        Assert.Equal(underABuilding, nUnder);
+    }
+
+
+    /**
      * The context this sits in, and it is larger than the defect by two orders of
      * magnitude: a THIRD of the street graph's directed block edges are in faces that get
      * thrown away for hasNullSection, so a third of the city has no block, no estate, no
@@ -485,6 +569,26 @@ public class BlockRingClosureTests
         }
 
         return null;
+    }
+
+
+    /**
+     * Whether a plan position is inside a block's outline.
+     */
+    private static bool _insidePlan(List<Vector2> ring, in Vector2 p)
+    {
+        bool inside = false;
+        for (int i = 0, j = ring.Count - 1; i < ring.Count; j = i++)
+        {
+            if ((ring[i].Y > p.Y) != (ring[j].Y > p.Y)
+                && p.X < (ring[j].X - ring[i].X) * (p.Y - ring[i].Y) / (ring[j].Y - ring[i].Y)
+                         + ring[i].X)
+            {
+                inside = !inside;
+            }
+        }
+
+        return inside;
     }
 
 
