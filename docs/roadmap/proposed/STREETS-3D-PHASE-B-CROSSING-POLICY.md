@@ -4,8 +4,11 @@
 **§7.3's corridor mid point is FIXED (2026-09-05, §8) — the one change in this phase that
 deliberately moves a baseline.** **WP-B2 is DONE (2026-09-05, §9).**
 **WP-B0 may proceed.** **WP-B3a is DONE (2026-09-05, §10).**
-**WP-B3b is DONE (2026-09-05, §11) — structures are placed: 18 across the seven pinned
-seeds on the shipped terrain, and the flag is still off. WP-B4 and WP-B5 are unblocked.**
+**WP-B3b is DONE (2026-09-05, §11) — structures are placed.**
+**The relaxation converges (2026-09-06, §12), which re-measured every number above it.**
+**WP-B4 is DONE (2026-09-06, §13) — the crossing has to be worth lifting: 20 structures
+across the seven pinned seeds on the shipped terrain, and the flag is still off. WP-B5 is
+unblocked; two decisions in §13.2 and §13.4 are the owner's.**
 **Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s).
 
 ---
@@ -286,9 +289,21 @@ model needs decoupling after all, visible refusal (`GenerationReport` counts, a 
 the interior-T-branch rule, `Build`'s ramp-length signature from `MaxRampGrade`, and
 `OverpassBuilder` no longer hard-coding `IsPrimary`.
 
-### WP-B4 / B5 / B6 — hierarchy & angle / blocks / turn it on
+### WP-B4 — hierarchy, the deck, spacing and angle — ✅ **DONE 2026-09-06 (§13)**
 
-Unchanged in intent. B4 measures hierarchy by `Weight`. B5 adds the structure-footprint
+The plan's original tables, kept because §13 answers them one by one:
+
+| AC | criterion | how it is met |
+|---|---|---|
+| B4.1 | Weight ratio **and** an absolute weight floor: two alleys never separate, whatever their ratio. | ⚠️ **Half.** The floor is shipped, derived from `GradePolicy.WeightMin`, and is refused by **0 of 667** real crossings - because a flag-on city has no alley in it at all (§13.2). The **ratio is NOT shipped as a refusal**, with the measurement that says why and the decision left to the owner. |
+| B4.2 | The heavier road takes the deck and the lighter passes underneath - asserted on identity, not on which was the candidate. | ✅ Asserted on `Kind` and on the deck's `Level`: `Bridge` when the corridor is the heavier, **`Tunnel`** when the road it crosses is. Until now every structure was a bridge whatever the two weighed (§13.6). |
+| B4.3 | A heavy road that already has a junction within `N` m separates instead of adding another. | ✅ `N` is the ruleset's own longest street, 127.5 m, and it is a **walk through bends** rather than an arm length. ⚠️ Its whole window is 28 m wide (§13.3). |
+| B4.4 | Crossing angle: an oblique crossing separates. **This resurrects a finished thought that was abandoned.** | ⚠️ Resurrected, and **it says the opposite of what this line says it says** - the abandoned code discarded the near-PARALLEL case. §13.4 has both readings and both counts. |
+| B4.5 | Every predicate has a positive control: `if (false)` around any of them must fail a test. | ✅ Twenty-two mutations, one survivor - §13.8. |
+
+### WP-B5 / B6 — blocks / turn it on
+
+Unchanged in intent. B5 adds the structure-footprint
 exclusion and the two-decks rule. B6 records that the `DbVersion` bump **deletes the whole
 `worldcache`** (cluster list included — verify it regenerates identically) and that
 **save games resolve strokes by id with `FirstOrDefault`**, so a regenerated network
@@ -1390,3 +1405,305 @@ network"; both are corrected in place with the old claim kept, and `STREETS-3D-T
   is now one of the numbers that would differ if they ever diverged.
 - **The 20 m conform grid, `Yelukhdidru@400`'s uncarryable corridor, the unbounded deck span
   and everything else in §10.8 and §11.12** are untouched by this round.
+
+---
+
+## 13. WP-B4 as built (2026-09-06) — worth lifting, and five things the plan and the brief got wrong
+
+WP-B3b decided whether a structure **can** stand at a crossing. WP-B4 is the four predicates
+that ask whether the crossing is **worth** separating: hierarchy, which road takes the deck,
+junction spacing, crossing angle.
+
+**Flag off, nothing moved**: `street-fingerprints.json`, `street-geometry.json`,
+`street-cost-baseline.json` and `street-relaxed-heights.json` are byte-identical to
+`9a3d37c4`, TALE is 200/200, and 1532 xUnit against 1488 before. **Flag on, four of the
+eight recorded V2 fingerprints moved** — §13.7 has old → new.
+
+### 13.1 THE HEADLINE — the count after each predicate, added one at a time
+
+Structures over the seven pinned seeds, on the shipped terrain, per seed
+`seed000@500 / seed011@500 / Yelukhdidru@400 / @800 / seed000@1500 / seed017@2400 /
+Yelukhdidru@3000`:
+
+| policy | per seed | total | tunnels |
+|---|---|---|---|
+| WP-B3b as it stood | 0/0/0/2/2/4/11 | **19** | 0 |
+| + B4.1 hierarchy (floor) | 0/0/0/2/2/4/11 | **19** | 0 |
+| + B4.2 the heavier road takes the deck | 0/0/0/2/2/4/9 | **17** | 2 |
+| + B4.3 junction spacing | 0/0/0/2/3/3/9 | **17** | 1 |
+| + B4.4 obliquity — **all four** | 0/0/0/2/3/5/10 | **20** | 1 |
+
+Each predicate alone, from the same starting point: B4.1 → 19, B4.2 → 17, B4.3 → 19,
+B4.4 → 22.
+
+⚠️ **THE FEARED COLLAPSE DID NOT HAPPEN, AND THE REASON IS NOT THAT THE PREDICATES ARE
+WEAK.** The brief expected a hierarchy predicate to take 19 to nearly zero. It takes it to
+19, because **the hierarchy it was to measure does not exist in the city that carries
+structures** (§13.2). And the total ends up *above* where it started, because a refusal can
+free a junction for a neighbour (§13.5).
+
+### 13.2 ⚠️ THE BIGGEST FINDING: a heavy-first city has no alleys in it at all
+
+The brief's premise, and §2's: *"the weight distribution is brutal — 1308 of 1875 strokes in
+Yelukhdidru@3000 sit at exactly 0.200, 94 % below 0.5, and only ~35 reach 1.0"*. True — **of
+the FLAG-OFF city**. The city that can carry a structure is the flag-on one, and it is a
+different city:
+
+| seed | flag off | flag on |
+|---|---|---|
+| `seed000@1500` | 367 strokes, p50 **0.630**, min 0.333, 48 at ≥ 1.0 | 371, p50 **1.200**, min 0.972, 364 at ≥ 1.0 |
+| `seed017@2400` | 1034, **494 at exactly 0.200**, p50 0.207, 22 at ≥ 1.0 | 932, **0 at 0.200**, min 0.852, 852 at ≥ 1.0 |
+| `Yelukhdidru@3000` | 1875, **1308 at exactly 0.200**, p50 0.200, 35 at ≥ 1.0 | 1467, **0 at 0.200**, min 0.786, 1406 at ≥ 1.0 |
+
+**Not one stroke of any flag-on city sits at `WeightMin`.** WP-B2's heavy-first ordering does
+not merely decide *when* a candidate is judged — the heavy candidates drain first, fill the
+space, and the light branches behind them are refused by the ordinary proximity rules when
+their turn finally comes. §9 recorded that the ordering *changes the city that comes out*;
+that it changes what the city is **made of** was not recorded anywhere, and WP-B4 found it
+only by going looking for an alley and failing to find one.
+
+Two consequences, and both are the answer to a question the brief asked:
+
+- **The absolute floor does the work in principle and nothing in practice.** *"Two alleys
+  never separate"* is refused by **0 of 667** crossings across the seven cities. It is not
+  wrong, it is invisible to real data — §9's lesson again — so it is gated by fixtures both
+  ways round and the invisibility is itself asserted.
+- ⚠️ **The ratio cannot express hierarchy on this ruleset, because there is none to
+  express.** At the 667 crossings that reach the test the corridor's weight runs
+  **0.85 … 1.30** (p50 1.20) and the road beneath **0.87 … 1.30**, so the ratio between them
+  is **1.00 … 1.37, p50 1.08**. Measured cost of shipping it as a refusal, of the nineteen:
+  ≥ 1.0001 (refuse a tie) leaves **10**, ≥ 1.05 leaves 8, ≥ 1.1 leaves 6, ≥ 1.25 leaves
+  **0**. That is not a hierarchy filter, it is the ±10 % jitter of `SuccessorEmitter`'s
+  weight draw dressed as one.
+
+**So the ratio is NOT shipped as a refusal, and that is a deviation from B4.1 stated rather
+than smuggled.** Two reasons, one measured and one structural: the numbers above, and that
+refusing a crossing of two *equal* roads refuses the classic interchange — a motorway
+crossing a motorway is the most separated junction there is. What the ratio does instead is
+decide **which** road takes the deck, which is B4.2, and the same comparison serves it.
+
+### 13.3 B4.3 — the spacing bound is the ruleset's own, and the window it leaves is 27.8 m
+
+`Generator.MaxJunctionSpacing` derives from `EmitterSettings.LengthAtWeight` at
+`weightMax` — **the longest street the ruleset lays**, `127.5 m` for the shipped numbers
+(⚠️ 127.5 and not the 127.6 the arithmetic gives on paper: the emitter truncates to a
+decimetre and `1.3f * 1.3f` is a hair under 1.69). A junction farther away than any single
+street the ruleset can lay is a road that is not being interrupted here, and an ordinary
+at-grade junction serves it. That expression now has exactly one copy, read by
+`SuccessorEmitter` to emit and by the placer to bound.
+
+⚠️ **The window this rule can act in is 27.8 metres wide, and that is the ruleset's doing.**
+The same corridor must hold an 80 m ramp plus the deck's 19.7 m overhang, so a crossing is
+worth lifting between **99.7 m and 127.5 m** of junction spacing and nowhere else. Below
+99.7 `ArmTooShort` has already refused it; above 127.5 this rule does. Measured over the
+seven cities: junction spacing at a crossing runs 30.4 … 267.6 m with p50 106.5, and **63**
+corridors are refused for it.
+
+⚠️ **And it has to be a WALK, not `min(armA.Length, armB.Length)`.** A `StreetPoint` with
+two arms is a **bend**: nothing crosses there and nothing stops, so the walk goes through
+it. Measured over the 667 crossings that reach the test, the two answers have medians
+**106.5 m against 83.4 m** and maxima **267.6 m against 128.1 m** — and the arm-length
+reading cannot say anything `ArmTooShort` has not already said, since it is bounded below by
+the same 99.7 m and above by what the ruleset can lay. The walk terminates on distance
+rather than on step count, because the question is never "how far exactly" but "farther than
+this".
+
+⚠️ **A street CAN be longer than the bound, by up to one snap.** `SnapToNearbyPointConstraint`
+may move a candidate's far end onto an existing junction up to
+`minPointToCandPointDistance` = 30 m away, which is the only thing that lengthens a stroke
+after it has been emitted: measured, the longest street in the seven cities is **148.4 m**
+against the emitted bound of 127.5. `NoStreetExceedsTheBoundExceptByASnap` asserts exactly
+that and no more, because "no street is longer than 127.5 m" is a claim that is not true.
+
+### 13.4 ⚠️ B4.4 — the resurrected thought says the OPPOSITE of what the plan says it says
+
+The brief: *"an oblique crossing separates. ⚠️ This resurrects a finished thought: the
+original `PointNearStrokeConstraint` computed `angleVice`/`angleVersa` and threw both away
+behind `if (true || …)`; WP-2b removed the dead operands but recorded the intent. Find that
+history before writing new trigonometry."*
+
+Found, at `634c9613^`:
+
+```csharp
+float angleVice  = Single.Abs(geom.Angles.Snorm(curr.Angle - si.StrokeExists.Angle));
+float angleVersa = Single.Abs(geom.Angles.Snorm(Single.Pi + angleVice));
+if (true || angleVice < (Single.Pi/4f) || angleVersa < (Single.Pi/4f)) {
+    /* Discarding stroke ..., point b too close to stroke */
+```
+
+under a comment reading *"We might want to check here, if it is perpendicular to the stroke
+as opposed to parallel. If it is perpendicular, we might be able to keep it, it might be a
+meaningful route."*
+
+`angleVersa` is `pi - angleVice`, so the condition is **"within a quarter turn of
+parallel"**, and what it guarded was a **discard**. The abandoned thought kept the
+perpendicular case and threw the parallel one away — the opposite of *"an oblique crossing
+separates"*.
+
+**Geometry agrees with the code and not with the plan.** A deck crossing at angle `t`
+shadows the road beneath it over `width / sin t`, so at a quarter turn it already covers one
+and a half road widths and below that the deck is running *along* the road rather than over
+it. So `StructurePlacer.MaxObliqueDot = cos(pi/4)`, the original's own threshold, refusing a
+crossing within a quarter turn of parallel: **64 corridors** over the seven cities, and
+**not one** of the twenty structures they get is inside it.
+
+⚠️ **What the plan's own reading costs, measured rather than argued about.** Invert the rule
+— only an oblique crossing separates — and the first thing refused is the plain four-arm
+crossroads, which is this work package's own positive control and the shape every textbook
+overpass has. Over the seven cities that reading leaves **ONE** structure against twenty:
+71 of the 667 crossings that reach the test are within a quarter turn of parallel, and one
+of the nineteen WP-B3b placed was. **This is the one WP-B4 decision that is the owner's
+rather than the data's** — the counts for other thresholds, as a *requirement* on obliquity,
+are 45° → 1, 50° → 2, 55° → 3, 60° → 7, 65° → 10, 70° → 13 of nineteen.
+
+The angle is measured against the **chord** the structure will stand on, not against either
+arm: a corridor is only straight to within `MinStraightDot`, and the deck runs foot to foot.
+A bent corridor's chord lies *between* its two arms, so no single fixture can disagree with
+both — there are two, mirror images, and each kills one arm reading (§7q's symmetric-survivor
+lesson honoured rather than re-learned).
+
+### 13.5 ⚠️ A REFUSAL PREDICATE THAT INCREASES THE NUMBER OF STRUCTURES
+
+B4.4 refuses 64 corridors and the total goes **17 → 20**. B4.4 alone takes 19 → **22**.
+
+The mechanism is `OverlapsAStructure`. Candidates are walked by junction id and greedily
+claim the junctions and strokes they need; a corridor refused for its own sake never claims
+anything, and a neighbour that was being refused for the overlap gets them instead. Over
+the seven seeds that refusal falls from **228 to 164** while the new refusals account for
+127. So "how many corridors did the policy refuse" and "how many structures did the city
+lose" are different questions with different answers, and only the second one is the yield.
+
+This is also why the three new predicates are judged **before** the claim checks: they are
+properties of the crossing alone — its two weights, its own neighbourhood, its own angles —
+so their tallies do not move when a decision elsewhere changes.
+
+### 13.6 B4.2 — which road takes the deck, and what shipped before it
+
+**Plainly: every structure WP-B3b built was a `Bridge` carrying the corridor over,
+whatever the two roads weighed.** The corridor is the road that runs straight through, and
+`OverpassBuilder` was always asked for a bridge.
+
+The heavier road takes the deck. The structure is always built ON the corridor — that is the
+road with room for ramps — so this is a statement about the **kind**: a `Bridge` when the
+corridor is the heavier, a `Tunnel` when the road it crosses is. Equal weights keep the
+bridge: a span is the cheaper structure and it is what shipped. Asserted on `Kind` and on
+the deck's `Level`, never on which road was the candidate.
+
+Result: **22 of the 134 structures the seven flat cities get are tunnels**, and 1 of the 20
+on the shipped terrain. The terrain number is small because the terrain refuses most
+corridors on the deck's grade long before their weights are compared.
+
+⚠️ **A tunnel's clearance is the same question mirrored, and it is the one place the two
+kinds are not symmetric.** Over a bridge deck the road beneath must fit under it; over a
+tunnel bore the ordinary road passes above. So the measurement changes sign — and it is a
+**signed** quantity rather than a magnitude, because a bore twelve metres over the road
+above it is not a tunnel and a deck twelve metres under the road below it is not a bridge.
+`MinDeckClearance` refuses both.
+
+### 13.7 What moved, and what did not
+
+**Flag off: not one byte.** All four recorded baseline files are identical to `9a3d37c4`.
+
+**Flag on, `street-fingerprints-gradesep.json`** — recorded on a FLAT city, per §11.6:
+
+| seed | before | after |
+|---|---|---|
+| `seed000@500` | `n=31,s=35,h=D18B8C78C4ADCCB7` | **unchanged** |
+| `seed011@500` | `n=30,s=32,h=D3AB6B3DAF7F0C95` | **unchanged** |
+| `Yelukhdidru@400` | `n=13,s=12,h=5F724760E94FFB5B` | **unchanged** |
+| `Yelukhdidru@100` | `n=0,s=0,h=E3B0C44298FC1C14` | **unchanged** |
+| `Yelukhdidru@800` | `n=75,s=85,h=F7C14761D85A6876` | `n=73,s=84,h=099A56648102AD93` |
+| `seed000@1500` | `n=289,s=371,h=9198C8462FC0DF65` | `n=287,s=370,h=4C8B911460734E31` |
+| `seed017@2400` | `n=711,s=932,h=AC42116B1440395B` | `n=697,s=925,h=2336010F09CDA1DE` |
+| `Yelukhdidru@3000` | `n=1106,s=1467,h=1795C32E638B1870` | `n=1060,s=1444,h=188C09DF977D80D2` |
+
+The flat cities place **134** structures where they placed 166, so the four seeds that move
+lose a structure or two each and the four that do not have no crossing WP-B4 changes its
+mind about. **`ClusterStorage.DbVersion` is NOT bumped** — that is WP-B6's.
+
+Terrain, after: deck grades **−5.71 … +4.82 %**, 23 crossings pass under a structure over
+**3.39 … 27.52 m**, every city still **one component**.
+
+### 13.8 The mutations
+
+**Twenty-seven driven; TWO survivors, one provably equivalent and one that named dead code.** The interesting thing about the list is what it took to
+get there: three of the fixtures below exist only because a mutation walked through the
+first version of them.
+
+| # | mutation | failures |
+|---|---|---|
+| 1 | the hierarchy floor deleted | 2 |
+| 2 | the floor reads only the corridor's weight | 1 |
+| 3 | the floor reads only the road beneath | 2 |
+| 4 | the floor takes the lighter of the two | 3 |
+| 5 | the floor is strict rather than inclusive | 2 |
+| 6 | always a bridge — i.e. what WP-B3b shipped | 12 |
+| 7 | always a tunnel | 22 |
+| 8 | the LIGHTER road takes the deck | 16 |
+| 9 | a tie goes to the tunnel | 20 |
+| 10 | the clearance sign is always positive | 14 |
+| 11 | the clearance is a magnitude rather than signed | 1 |
+| 12 | the spacing rule deleted | 19 |
+| 13 | spacing is the arm length, not the walk | 17 |
+| 14 | spacing takes the farther of the two directions | 22 |
+| 15 | the walk stops at every point, bend or not | 17 |
+| 16 | the obliquity rule deleted | 17 |
+| 17 | the threshold is a third of a turn rather than a quarter | 24 |
+| 18 | the angle is measured from the west arm, not the chord | 5 |
+| 18b | the angle is measured from the east arm | 2 |
+| 19 | the spacing bound is `newLengthMin` | 30 |
+| 20 | `LengthAtWeight` loses its floor | 24 |
+| 21 | the bridge and tunnel counters swapped | 10 |
+| 22 | the three predicates run after the claim checks | 2 |
+| 23 | the walk has no early distance return | ⚠️ **survived — equivalent** |
+| 24 | the walk does not notice coming back round the ring | ⚠️ **survived — the branch was dead** |
+| 25 | the road beneath is judged by its lightest arm | 6 |
+| 26 | the chain takes the weight of the road beneath | 10 |
+
+**11 is the one the fixtures had to be built for.** `abs(deck − ground)` accepts a bore
+twelve metres OVER the road above it and a deck twelve metres UNDER the road below it, and
+the ordinary tunnel and bridge fixtures cannot see the difference — both refuse either way,
+because a two-metre shortfall is a shortfall whichever sign it has. It is killed by two
+fixtures whose structure is on the wrong side of what it passes by a wide margin.
+
+**18 and 18b are §7q's symmetric-survivor lesson honoured rather than re-learned.** A bent
+corridor's chord lies *between* its two arms, so a single fixture can only ever disagree
+with one of them; there are two, mirror images, and each kills one arm reading. One fixture
+would have left the other alive.
+
+**22 costs only two tests, and that is the honest size of it.** Judging the three
+predicates after the claim checks changes which corridors are refused *for what*, not
+usually whether they are refused, so the yield mostly survives it — what it breaks is the
+tallies, which is exactly the property the order exists for (§13.5).
+
+**23 survives and always will.** The walk returns as soon as it is past the distance it was
+asked about, and every caller compares the answer against exactly that distance — the
+placer against `maxJunctionSpacing`, the test against `Single.MaxValue`, which the early
+return can never reach. It is a bound on the work, not on the answer, and it is written the
+way it is because the question the method answers is *"farther than this?"* and not *"how
+far?"*.
+
+⚠️ **24 survived and named something: the "have I come back round to m" test was DEAD
+CODE.** m is a crossing with at least three arms by construction, so the arm-count test
+fires the moment the walk arrives back at it. **Deleted rather than given a fixture** — the
+only way to reach it is to hand the method something production never produces, and §7q made
+exactly this call about its own unreachable fallback. What bounds the walk is the distance
+test and the iteration guard, which is what mutation 23 is about.
+
+### 13.9 Found and NOT fixed
+
+- ⚠️ **Two decisions are the owner's, and both are written up with numbers rather than
+  opinions**: whether a **weight ratio** should refuse a crossing at all (§13.2 — it costs
+  19 → 10 / 8 / 6 / 0 structures at 1.0001 / 1.05 / 1.1 / 1.25, on a ruleset whose crossings
+  differ by at most 1.37), and which way round the **obliquity** rule points (§13.4 — as
+  shipped it refuses the near-parallel crossing, which is what the code it resurrects
+  actually did; the plan's own wording refuses everything squarer and leaves one structure
+  in the world).
+- ⚠️ **`joyce.EnableGradeSeparation` changes what a city is MADE OF** (§13.2), which is a
+  WP-B2 property nothing recorded and which WP-B6 has to state when the flag goes on: the
+  flag-on city is not the shipped city with bridges added, it is a city of arterials.
+- **The spacing rule's whole admitting window is 27.8 m wide** (§13.3). It is not a defect
+  of the rule but of how close the ruleset's longest street is to the length of two ramps,
+  and it is the first thing an arterial ruleset would change.
+- **A structure is still one crossing, one deck, no slip roads**, and everything in §10.8,
+  §11.12 and §12.10 is untouched by this round.

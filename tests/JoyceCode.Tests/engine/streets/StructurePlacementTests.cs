@@ -51,22 +51,25 @@ public class StructurePlacementTests
      * Recorded here rather than in a baseline file because these are the answer this
      * work package exists to produce and they should be read, not diffed.
      *
-     * ⚠️ RE-MEASURED 2026-09-06, when GradeRelaxer was made to converge. The anchor pass
-     * IS that relaxation, so the heights a corridor's two feet stand at are the heights
-     * it now settles on rather than the heights 32 damped sweeps had got to - and the
-     * deck's grade is what those two feet disagree by. Old row for old row:
+     * ⚠️ RE-MEASURED TWICE. First on 2026-09-06 when GradeRelaxer was made to converge -
+     * the anchor pass IS that relaxation, so a corridor's two feet stand at different
+     * heights and the deck between them is a different deck. Then again for WP-B4, which
+     * asks whether a crossing is WORTH lifting at all. Row for row:
      *
-     *     seed000@500      10,  0,  1  ->  unchanged
-     *     seed011@500       9,  0,  1  ->  unchanged
-     *     Yelukhdidru@400   1,  0,  0  ->  unchanged
-     *     Yelukhdidru@800  26,  2,  4  ->  unchanged
-     *     seed000@1500    140,  1, 20  ->  140,  2, 18
-     *     seed017@2400    366,  6, 43  ->  366,  4, 43
-     *     Yelukhdidru@3000 549, 9, 75  ->  549, 11, 73
+     *                     B3b       relaxer      WP-B4
+     *     seed000@500      10, 0, 1  unchanged    10,  0,  1
+     *     seed011@500       9, 0, 1  unchanged     9,  0,  1
+     *     Yelukhdidru@400   1, 0, 0  unchanged     1,  0,  0
+     *     Yelukhdidru@800  26, 2, 4  unchanged    26,  2,  3
+     *     seed000@1500    140, 1, 20  140, 2, 18  140,  3, 16
+     *     seed017@2400    366, 6, 43  366, 4, 43  366,  5, 35
+     *     Yelukhdidru@3000 549, 9, 75  549,11, 73  549, 10, 50
      *
-     * Eighteen structures became nineteen, and it is not a uniform shift in either
-     * direction - which is the honest shape of it: a settled city is a different set of
-     * foot heights, not a flatter one.
+     * ⚠️ AND THE TOTAL WENT UP RATHER THAN DOWN: nineteen structures became TWENTY, out
+     * of four predicates every one of which only ever REFUSES. §13.5 has the mechanism -
+     * a corridor refused for its own sake stops claiming the junctions it stood on, and
+     * a neighbouring corridor that was being refused for OverlapsAStructure gets them.
+     * Over the seven seeds that refusal falls from 228 to 164.
      */
     public static IEnumerable<object[]> TerrainYield => new List<object[]>
     {
@@ -74,10 +77,10 @@ public class StructurePlacementTests
         new object[] { "seed000",     500f,   10,  0,  1 },
         new object[] { "seed011",     500f,    9,  0,  1 },
         new object[] { "Yelukhdidru", 400f,    1,  0,  0 },
-        new object[] { "Yelukhdidru", 800f,   26,  2,  4 },
-        new object[] { "seed000",     1500f, 140,  2, 18 },
-        new object[] { "seed017",     2400f, 366,  4, 43 },
-        new object[] { "Yelukhdidru", 3000f, 549, 11, 73 },
+        new object[] { "Yelukhdidru", 800f,   26,  2,  3 },
+        new object[] { "seed000",     1500f, 140,  3, 16 },
+        new object[] { "seed017",     2400f, 366,  5, 35 },
+        new object[] { "Yelukhdidru", 3000f, 549, 10, 50 },
     };
 
 
@@ -143,7 +146,17 @@ public class StructurePlacementTests
         report.Refused.TryGetValue(StructureRefusal.DeckGrade, out int refusedForGrade);
         Assert.Equal(deckGradeRefusals, refusedForGrade);
 
-        Assert.Equal(placed, store.GetStrokes().Count(s => s.Kind == StrokeKind.Bridge));
+        /*
+         * A structure is a bridge OR a tunnel now (WP-B4.2), so the count that has to
+         * match is the two together - and the split between them is asserted separately,
+         * because "placed == bridges + tunnels" is satisfied by a rule that never builds
+         * a tunnel.
+         */
+        Assert.Equal(placed, report.Bridges + report.Tunnels);
+        Assert.Equal(placed, store.GetStrokes().Count(
+            s => s.Kind == StrokeKind.Bridge || s.Kind == StrokeKind.Tunnel));
+        Assert.Equal(report.Bridges, store.GetStrokes().Count(s => s.Kind == StrokeKind.Bridge));
+        Assert.Equal(report.Tunnels, store.GetStrokes().Count(s => s.Kind == StrokeKind.Tunnel));
         Assert.Equal(2 * placed, store.GetStrokes().Count(s => s.Kind == StrokeKind.Ramp));
     }
 
@@ -157,11 +170,10 @@ public class StructurePlacementTests
      * to eleven. Over these seeds the deck's own grade refuses 140 corridors against 3
      * for the ramps' plan clearance and 7 for the deck's vertical one.
      *
-     * ⚠️ 144 and 7 before GradeRelaxer was made to converge (2026-09-06). The deck
-     * refusal loosened by four and the clearance refusal tightened by three, which is
-     * the same story from both ends: a settled city puts a corridor's two feet at
-     * different heights than an unsettled one, so some decks became decks and some
-     * became too low over the road they cross.
+     * ⚠️ 144 and 7 before GradeRelaxer was made to converge (2026-09-06), then 140 and
+     * 10, and 106 and 10 once WP-B4 started refusing crossings before their heights were
+     * ever looked at. All three counts say the same thing: the deck's own grade is what
+     * separates the terrain city from the flat one.
      */
     [Fact]
     public void TheDeckGradeIsWhatRefusesMostCorridors()
@@ -180,7 +192,7 @@ public class StructurePlacementTests
             }
         }
 
-        Assert.Equal(140, deck);
+        Assert.Equal(106, deck);
         Assert.Equal(10, other);
     }
 
@@ -215,7 +227,7 @@ public class StructurePlacementTests
         }
 
         var decks = store.GetStrokes()
-            .Where(s => s.Kind == StrokeKind.Bridge)
+            .Where(s => _isDeck(s))
             .Select(s => _roadGradeOf(s, heights))
             .OrderBy(g => g)
             .ToList();
@@ -224,7 +236,7 @@ public class StructurePlacementTests
             report.DeckGrades.OrderBy(g => g).Select(g => MathF.Round(g, 5)),
             decks.Select(g => MathF.Round(g, 5)));
 
-        foreach (var deck in store.GetStrokes().Where(s => s.Kind == StrokeKind.Bridge))
+        foreach (var deck in store.GetStrokes().Where(s => _isDeck(s)))
         {
             Assert.True(
                 Single.Abs(_roadGradeOf(deck, heights)) <= policy.MaxDeckGradeFor(deck),
@@ -265,8 +277,14 @@ public class StructurePlacementTests
              */
             var heights = _finalHeights(cluster, store);
 
-            foreach (var deck in store.GetStrokes().Where(s => s.Kind == StrokeKind.Bridge))
+            foreach (var deck in store.GetStrokes().Where(s => _isDeck(s)))
             {
+                /*
+                 * A tunnel is the same question mirrored: the ordinary road is the one
+                 * on top, so the clearance is measured the other way round.
+                 */
+                float sign = deck.Kind == StrokeKind.Tunnel ? -1f : 1f;
+
                 foreach (var under in store.GetStrokes())
                 {
                     if (under.Level != 0 || StrokeKinds.IsStructure(under.Kind)) continue;
@@ -276,9 +294,10 @@ public class StructurePlacementTests
 
                     float onDeck = _at(deck, si.ScaleExists, heights);
                     float onGround = _at(under, si.ScaleCand, heights);
+                    float clearance = sign * (onDeck - onGround);
 
-                    Assert.True(onDeck - onGround >= StructurePlacer.MinDeckClearance,
-                        $"a deck stands {onDeck - onGround:F2} m over the road it crosses");
+                    Assert.True(clearance >= StructurePlacer.MinDeckClearance,
+                        $"a deck stands {clearance:F2} m clear of the road it crosses");
                 }
             }
         }
@@ -290,7 +309,7 @@ public class StructurePlacementTests
          * settled city passes traffic under a deck with less to spare than an unsettled
          * one did. Still the ground rather than the model: the nominal is 8 m.
          */
-        Assert.Equal(24, all.Count);
+        Assert.Equal(23, all.Count);
         Assert.Equal(3.39f, all.Min(), 2);
         Assert.Equal(27.52f, all.Max(), 2);
 
@@ -302,6 +321,10 @@ public class StructurePlacementTests
             "if nearly every clearance were the nominal 8 m this measurement would be "
             + "reporting the constant back rather than the terrain");
     }
+
+
+    private static bool _isDeck(Stroke s)
+        => s.Kind == StrokeKind.Bridge || s.Kind == StrokeKind.Tunnel;
 
 
     private static float _at(Stroke s, float t, Dictionary<int, float> heights)
@@ -387,7 +410,7 @@ public class StructurePlacementTests
         var (_, generator) = StreetHarness.GenerateHeavyFirstReporting("Yelukhdidru", 3000f, null);
         var report = generator.StructurePlacement;
 
-        Assert.Equal(88, report.Placed);
+        Assert.Equal(65, report.Placed);
         Assert.False(report.Refused.ContainsKey(StructureRefusal.DeckGrade));
         Assert.False(report.Refused.ContainsKey(StructureRefusal.DeckClearance));
 
@@ -472,7 +495,7 @@ public class StructurePlacementTests
 
         var f = _cross();
         var report = StructurePlacer.Place(
-            f.Store, 0, new GradePolicy(), null, 19.7f, 10f, 0f);
+            f.Store, 0, new GradePolicy(), null, 19.7f, 10f, 0f, FixtureSpacing);
 
         Assert.Equal(0, report.Placed);
         Assert.True(log.Saw("no ground height source was supplied"));
@@ -586,12 +609,23 @@ public class StructurePlacementTests
     }
 
 
+    /**
+     * ⚠️ WP-B4.3's own number, stated rather than defaulted.
+     *
+     * A fixture's through arms are 200 m because they have to hold an 80 m ramp and the
+     * deck's overhang, so its junctions stand farther apart than the shipped ruleset
+     * ever puts them and the spacing rule would refuse every fixture below. The rule's
+     * own fixtures set this deliberately; everything else says "not this rule's turn".
+     */
+    private const float FixtureSpacing = 1000f;
+
+
     private static StructurePlacementReport _place(
         Cross f, float rampClearance = 19.7f, float minSpan = 10f, float maxSpan = 0f,
-        GradePolicy policy = null)
+        GradePolicy policy = null, float maxJunctionSpacing = FixtureSpacing)
         => StructurePlacer.Place(
             f.Store, 0, policy ?? new GradePolicy(), f.GroundAt,
-            rampClearance, minSpan, maxSpan);
+            rampClearance, minSpan, maxSpan, maxJunctionSpacing);
 
 
     /**
@@ -660,11 +694,12 @@ public class StructurePlacementTests
     [Theory]
     [InlineData("Yelukhdidru", 3000f, 204, 85)]
     /*
-     * ⚠️ seed017@2400's second number was 71 until 2026-09-06. It is counted on the
-     * FINISHED store, so which arms are still there depends on which corridors were
-     * lifted - and a converged relaxation lifts a different four.
+     * ⚠️ seed017@2400's second number was 71 until 2026-09-06 and 70 until WP-B4. It is
+     * counted on the FINISHED store, so which arms are still there depends on which
+     * corridors were lifted - a converged relaxation lifts a different four, and WP-B4
+     * lifts a different five again.
      */
-    [InlineData("seed017", 2400f, 159, 70)]
+    [InlineData("seed017", 2400f, 159, 69)]
     [InlineData("seed000", 1500f, 54, 23)]
     [InlineData("seed000", 500f, 4, 0)]
     public void TheTBranchExclusionCostsFarFewerCorridorsThanItRefuses(
@@ -930,9 +965,16 @@ public class StructurePlacementTests
      * The two feet are 16.8 m apart in height over a 240 m deck, which is 7 %: inside a
      * light street's bound of 10 % and outside a heavy one's of 5 %.
      */
+    /*
+     * ⚠️ 0.25 and not 0.2, since WP-B4.1: a crossing where BOTH roads are at the
+     * ruleset's lightest weight is refused before its heights are looked at, and 0.2 is
+     * that weight. The deck bound is the same at both - MaxGradeFor is 13.6 % at 0.25 and
+     * the MaxRampGrade cap takes it to 10 % either way - so the fixture still says what
+     * it said.
+     */
     [Theory]
     [InlineData(1.3f, 0)]
-    [InlineData(0.2f, 1)]
+    [InlineData(0.25f, 1)]
     public void TheSameCorridorIsRefusedAsAnArterialAndBuiltAsAnAlley(float weight, int placed)
     {
         var f = _cross(weight: weight);
@@ -1108,7 +1150,7 @@ public class StructurePlacementTests
         _street(store, south1, south2, RingWeight);
 
         var report = StructurePlacer.Place(
-            store, 0, new GradePolicy(), _ => 0f, 19.7f, 10f, 0f);
+            store, 0, new GradePolicy(), _ => 0f, 19.7f, 10f, 0f, FixtureSpacing);
 
         Assert.Equal(2, report.Considered);
         Assert.Equal(1, report.Placed);
@@ -1138,7 +1180,7 @@ public class StructurePlacementTests
 
         var report = StructurePlacer.Place(
             store, 0, new GradePolicy(), _ => 0f, rampClearance: 0f, minSpanLength: 1f,
-            maxSpanLength: 0f);
+            maxSpanLength: 0f, maxJunctionSpacing: FixtureSpacing);
 
         Assert.Equal(1, report.Considered);
         Assert.Equal(1, report.Refused[StructureRefusal.NotAStructure]);
@@ -1240,7 +1282,7 @@ public class StructurePlacementTests
         _street(store, m, _pointAt(140f, -110f), 1.0f);
 
         var report = StructurePlacer.Place(
-            store, 0, new GradePolicy(), _ => 0f, 19.7f, 10f, 0f);
+            store, 0, new GradePolicy(), _ => 0f, 19.7f, 10f, 0f, FixtureSpacing);
 
         Assert.Equal(0, report.Considered);
         Assert.Equal(0, report.Placed);
@@ -1406,7 +1448,7 @@ public class StructurePlacementTests
      * looks for a fragment naming its own cluster or its own message; what other classes
      * log during the window is captured and ignored.
      */
-    private sealed class LogCapture : global::engine.ILogTarget, IDisposable
+    internal sealed class LogCapture : global::engine.ILogTarget, IDisposable
     {
         private readonly List<string> _lines = new();
         private readonly object _lo = new();

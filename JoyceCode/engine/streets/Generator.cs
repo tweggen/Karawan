@@ -118,6 +118,36 @@ namespace engine.streets
          * package deliberately does not answer.
          */
         public float MaxSpanLength { get; set; } = 0f;
+
+        private float _maxJunctionSpacing = -1f;
+
+        /**
+         * WP-B4.3. How far the corridor's nearest junction may be for a crossing to be
+         * worth lifting, in metres.
+         *
+         * Negative - the default - means "derive", and the derivation is the ruleset's
+         * own: the LONGEST STREET THIS RULESET LAYS, which is
+         * EmitterSettings.LengthAtWeight at the heaviest weight, 127.5 m for the shipped
+         * numbers - the emitter truncates to a decimetre and 1.3f squared is a hair under
+         * 1.69, so it is not the 127.6 the arithmetic gives on paper. A junction
+         * farther away than any single street the ruleset can lay is a road that is not
+         * being interrupted here, and a crossing on it is one an ordinary at-grade
+         * junction serves perfectly well.
+         *
+         * ⚠️ It is a NARROW window, 27.8 m wide, and that is the ruleset's doing rather
+         * than this rule's: the same corridor must hold a ramp plus the deck's overhang,
+         * 99.7 m with the shipped numbers, so the whole band in which a crossing is both
+         * worth lifting and able to be is 99.7 to 127.5 m. §13.3 measures what it costs.
+         */
+        public float MaxJunctionSpacing
+        {
+            get => _maxJunctionSpacing >= 0f
+                ? _maxJunctionSpacing
+                : generation.EmitterSettings.LengthAtWeight(
+                    newStrokeMinimum, newStrokeSquaredWeight, newLengthMin, weightMax);
+            set => _maxJunctionSpacing = value;
+        }
+
         private ICandidateConstraint[] _pipeline;
         private BoundsConstraint _boundsConstraint;
         private GenerationContext _ctx;
@@ -407,7 +437,7 @@ namespace engine.streets
 
             StructurePlacement = generation.StructurePlacer.Place(
                 _strokeStore, _clusterDesc.Id, GradePolicy, GroundHeightOf,
-                RampClearance, MinSpanLength, MaxSpanLength);
+                RampClearance, MinSpanLength, MaxSpanLength, MaxJunctionSpacing);
 
             /*
              * ⚠️ A Warning, every time, whether or not anything was placed - and not a

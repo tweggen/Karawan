@@ -6,7 +6,7 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7r, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-06 (the relaxation converges — Phase B §12).
+**Last updated:** 2026-09-06 (WP-B4, worth lifting — Phase B §13).
 
 ---
 
@@ -1289,10 +1289,25 @@ NPCs standing at doors in the flat city.**
 
 # Part 3 — Not elevation work, but open and worth knowing
 
-- **Phase B (the crossing policy) has not been started.** `StreetLevels.ElevationOf(stroke.A.Level)`
-  is already in the height expression and **no shipped ruleset produces a non-zero `Level`** —
-  that is the hook for bridges, tunnels and multi-level junctions, i.e. the layered 3D this
-  whole work stream was the prerequisite for.
+- **Phase B (the crossing policy) is under way and still behind its flag.** WP-B1 … WP-B4
+  are done; `joyce.EnableGradeSeparation` is off in every shipped configuration, so **no
+  shipped ruleset produces a non-zero `Level`** and the default city is byte-identical.
+  With the flag ON the seven pinned cities get **20 structures** on the shipped terrain
+  (19 bridges and one tunnel) and 134 on level ground. WP-B5 (blocks) and WP-B6 (turn it
+  on, and the `DbVersion` bump) remain. Full history in
+  [`STREETS-3D-PHASE-B-CROSSING-POLICY.md`](STREETS-3D-PHASE-B-CROSSING-POLICY.md) §7 … §13.
+- ⚠️ **Two WP-B4 decisions are the OWNER's and are written up in §13.2 and §13.4**, with
+  numbers rather than opinions: whether a *weight ratio* should refuse a crossing at all
+  (it costs 19 → 10/8/6/0 structures at ratios of 1.0001/1.05/1.1/1.25, and the ruleset's
+  crossings only ever differ by 1.00 … 1.37), and which way round the *obliquity* rule
+  points (as shipped it refuses crossings within a quarter turn of parallel, which is what
+  the abandoned code it resurrects actually did; the plan's own wording would refuse
+  everything squarer and leaves ONE structure in the world).
+- ⚠️ **`joyce.EnableGradeSeparation` changes what a city is MADE OF, not just its order.**
+  With it on the heavy candidates drain first and fill the space, so `Yelukhdidru@3000`
+  goes from 1875 strokes with 1308 of them at the ruleset's minimum weight to 1467 strokes
+  with **none** at it and a lightest weight of 0.786. Anything reasoning about the weight
+  distribution has to say which city it means — §13.2.
 - **Debug filter migration** is ~54 % done (307/571 logger calls); ~264 remain.
 - **Routing Phase D**: D2 (multi-objective A* integration) and D4 (behavioural variety) pending.
 - **TALE-SOCIAL Phase D5 tuning**: five concerns documented in

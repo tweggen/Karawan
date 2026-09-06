@@ -72,6 +72,25 @@ public enum StructureRefusal
     OverlapsAStructure,
 
     /**
+     * WP-B4.1. Neither the corridor nor the road beneath it is more than the lightest
+     * street this ruleset builds. Two alleys crossing is a crossing, not an interchange.
+     */
+    BothRoadsAreMinor,
+
+    /**
+     * WP-B4.3. The corridor's nearest junction is farther away than the longest street
+     * this ruleset lays, so nothing here is being interrupted often enough to be worth
+     * flying over.
+     */
+    JunctionsFarApart,
+
+    /**
+     * WP-B4.4. A road under the deck lies within a quarter turn of the corridor, so the
+     * deck would run ALONG it rather than over it.
+     */
+    CrossingTooOblique,
+
+    /**
      * ⚠️ Lifting this corridor would leave part of the city unreachable.
      *
      * A grade separated crossing has no slip roads: the through road and the road
@@ -97,6 +116,14 @@ public sealed class StructurePlacementReport
     public int Placed;
 
     public readonly Dictionary<StructureRefusal, int> Refused = new();
+
+    /**
+     * How many of the placed structures carry the corridor OVER the road it crosses,
+     * and how many carry it under - WP-B4.2's whole visible effect. A tunnel appears
+     * exactly where the road beneath weighs more than the corridor.
+     */
+    public int Bridges;
+    public int Tunnels;
 
     /**
      * Deck grade of each structure that was built, as rise over run.
@@ -127,8 +154,9 @@ public sealed class StructurePlacementReport
 
         if (Placed > 0)
         {
+            sb.Append($" ({Bridges} over, {Tunnels} under");
             sb.Append(
-                $" (deck grade {DeckGrades.Min():P1}..{DeckGrades.Max():P1}");
+                $", deck grade {DeckGrades.Min():P1}..{DeckGrades.Max():P1}");
             if (Clearances.Count > 0)
             {
                 sb.Append($", clearance {Clearances.Min():F2}..{Clearances.Max():F2} m");
@@ -202,6 +230,35 @@ public static class StructurePlacer
 
 
     /**
+     * ⚠️ WP-B4.4. How nearly parallel a road under the deck may be to the corridor
+     * before the corridor is not flying OVER it at all.
+     *
+     * A quarter turn, and the number is RESURRECTED rather than chosen. The original
+     * PointNearStrokeConstraint computed
+     *
+     *     angleVice  = |Snorm(cand.Angle - existing.Angle)|
+     *     angleVersa = |Snorm(pi + angleVice)|     (which is pi - angleVice)
+     *     if (true || angleVice < pi/4 || angleVersa < pi/4) { discard }
+     *
+     * over a comment reading "we might want to check here, if it is perpendicular to the
+     * stroke as opposed to parallel. If it is perpendicular, we might be able to keep it,
+     * it might be a meaningful route." WP-2b removed the dead operands and recorded the
+     * intent; this is that intent, with its own threshold, doing its own job.
+     *
+     * ⚠️ AND IT SAYS THE OPPOSITE OF WHAT THE PLAN SAYS IT SAYS. The plan's B5.2 reads
+     * "an oblique crossing separates". The code it cites discards the near-PARALLEL case
+     * and keeps the perpendicular one, and geometry agrees with the code: a deck crossing
+     * at an angle t shadows the road beneath it over width/sin(t), so at a quarter turn
+     * it already covers one and a half road widths and below that it is running along the
+     * road rather than over it. Measured, taking the plan's reading instead - refuse
+     * everything that is NOT oblique - leaves ONE structure in the seven pinned cities
+     * and refuses the plain four-arm crossroads that is this work package's own positive
+     * control. §13.4 has both counts.
+     */
+    public static readonly float MaxObliqueDot = MathF.Cos(MathF.PI / 4f);
+
+
+    /**
      * Least vertical distance between a deck and the road under it.
      *
      * DERIVED, not chosen: MetaGen.ClusterNavigationHeight is the height the game's own
@@ -244,10 +301,17 @@ public static class StructurePlacer
      *     a policy that silently does nothing is the failure mode this whole work stream
      *     keeps hitting.
      */
+    /**
+     * @param maxJunctionSpacing
+     *     WP-B4.3. How far away the corridor's nearest junction may be and the crossing
+     *     still be worth lifting, in metres. Generator.MaxJunctionSpacing derives it from
+     *     the ruleset - the longest street the ruleset lays.
+     */
     public static StructurePlacementReport Place(
         StrokeStore store, int clusterId, GradePolicy policy,
         Func<StreetPoint, float> groundHeightOf,
-        float rampClearance, float minSpanLength, float maxSpanLength)
+        float rampClearance, float minSpanLength, float maxSpanLength,
+        float maxJunctionSpacing)
     {
         var report = new StructurePlacementReport();
 
@@ -260,7 +324,8 @@ public static class StructurePlacer
         }
 
         var candidates = _findCandidates(
-            store, clusterId, policy, rampClearance, minSpanLength, maxSpanLength, report);
+            store, clusterId, policy, rampClearance, minSpanLength, maxSpanLength,
+            maxJunctionSpacing, report);
 
         /*
          * ⚠️ THE FIXED POINT, and it is what makes the refusal exact rather than close.
@@ -341,6 +406,7 @@ public static class StructurePlacer
             builder.CommitChain(c.Chain);
 
             ++report.Placed;
+            if (c.Deck.Kind == StrokeKind.Tunnel) ++report.Tunnels; else ++report.Bridges;
             report.DeckGrades.Add(measured[i].DeckGrade);
             report.Clearances.AddRange(measured[i].Clearances);
         }
@@ -356,7 +422,7 @@ public static class StructurePlacer
     private static List<Candidate> _findCandidates(
         StrokeStore store, int clusterId, GradePolicy policy,
         float rampClearance, float minSpanLength, float maxSpanLength,
-        StructurePlacementReport report)
+        float maxJunctionSpacing, StructurePlacementReport report)
     {
         var accepted = new List<Candidate>();
 
@@ -394,6 +460,36 @@ public static class StructurePlacer
                 continue;
             }
 
+            /*
+             * ---------------------------------------------------- WP-B4, and it asks a
+             * different question from everything below it: not CAN this crossing be
+             * lifted, but is it WORTH lifting. All three are properties of the crossing
+             * alone - its two weights, its own neighbourhood, its own angles - so they
+             * are judged before anything that depends on what another corridor was
+             * allowed to claim, and their tallies do not move when a decision elsewhere
+             * changes.
+             */
+            float corridorWeight = Single.Max(armA.Weight, armB.Weight);
+            float underWeight = under.Max(s => s.Weight);
+
+            if (Single.Max(corridorWeight, underWeight) <= policy.WeightMin)
+            {
+                report.Refuse(StructureRefusal.BothRoadsAreMinor);
+                continue;
+            }
+
+            if (NearestJunctionAlong(m, armA, armB, maxJunctionSpacing) > maxJunctionSpacing)
+            {
+                report.Refuse(StructureRefusal.JunctionsFarApart);
+                continue;
+            }
+
+            if (_crossesTooObliquely(m, armA, armB, under))
+            {
+                report.Refuse(StructureRefusal.CrossingTooOblique);
+                continue;
+            }
+
             if (claimedPoints.Contains(m.Id)
                 || claimedStrokes.Contains(armA) || claimedStrokes.Contains(armB))
             {
@@ -411,8 +507,27 @@ public static class StructurePlacer
                 continue;
             }
 
+            /*
+             * ⚠️ WP-B4.2 - WHICH ROAD TAKES THE DECK, and until now the answer was "the
+             * one that happens to run straight through", whatever the two weighed.
+             *
+             * The heavier road takes the deck. The structure is always built ON the
+             * corridor, because the corridor is the road that has room for ramps, so
+             * "the heavier road takes the deck" is a statement about the KIND: the
+             * corridor goes over on a Bridge when it is the heavier, and dives under on
+             * a Tunnel when the road it crosses is. Equal weights keep the bridge - a
+             * span is the cheaper structure of the two, and it is what shipped.
+             *
+             * Weight and nothing else. IsPrimary is an orientation bit that
+             * SuccessorEmitter flips per branch (§0.4) and 46-66 % of a city's strokes
+             * carry it.
+             */
+            StrokeKind deckKind = corridorWeight >= underWeight
+                ? StrokeKind.Bridge
+                : StrokeKind.Tunnel;
+
             float rampLength =
-                OverpassBuilder.RampLengthFor(policy, m.Level, StrokeKind.Bridge);
+                OverpassBuilder.RampLengthFor(policy, m.Level, deckKind);
 
             /*
              * The deck has to reach past the junction it flies over, and by enough that
@@ -434,8 +549,7 @@ public static class StructurePlacer
              * the road being replaced rather than asserted.
              */
             var chain = new OverpassBuilder(clusterId).Build(
-                footA, footB, StrokeKind.Bridge, rampLength,
-                Single.Max(armA.Weight, armB.Weight), armA.IsPrimary);
+                footA, footB, deckKind, rampLength, corridorWeight, armA.IsPrimary);
 
             if (null == chain)
             {
@@ -712,6 +826,115 @@ public static class StructurePlacer
     }
 
 
+    /**
+     * ⚠️ WP-B4.3 - how far along the corridor its nearest JUNCTION is, in the nearer of
+     * the two directions.
+     *
+     * A StreetPoint with exactly two arms is a BEND in one road, not a junction: nothing
+     * crosses there and nothing stops there, so the walk goes through it. That is the
+     * whole reason this is a walk rather than `Single.Min(armA.Length, armB.Length)` -
+     * measured over the seven pinned cities the two answers differ at the median by 23 m
+     * and at the top end by 140, and the arm length on its own cannot say anything the
+     * ArmTooShort rule has not already said.
+     *
+     * The walk stops as soon as it is past the distance being asked about, which is what
+     * bounds it: the question is never "how far exactly" but "farther than this".
+     *
+     * @param limit
+     *     Stop once the walk is past this. The answer is then only known to exceed it,
+     *     which is all the caller asked.
+     */
+    internal static float NearestJunctionAlong(
+        StreetPoint m, Stroke armA, Stroke armB, float limit)
+        => Single.Min(_walkToJunction(m, armA, limit), _walkToJunction(m, armB, limit));
+
+
+    private static float _walkToJunction(StreetPoint m, Stroke arm, float limit)
+    {
+        float d = 0f;
+        StreetPoint at = m;
+        Stroke came = arm;
+
+        /*
+         * A backstop and not a rule: a closed ring of bends with no junction on it at all
+         * would otherwise walk for ever, and the distance test below usually ends the
+         * walk within two or three steps.
+         */
+        for (int guard = 0; guard < 1024; ++guard)
+        {
+            d += came.Length;
+            if (d > limit)
+            {
+                return d;
+            }
+
+            StreetPoint next = came.A == at ? came.B : came.A;
+
+            /*
+             * ⚠️ No "have I come all the way round to m" test, and a mutation is why. One
+             * was written, it survived, and the reason it survived is that it is
+             * unreachable: m is a crossing with at least three arms by construction, so
+             * the arm-count test below fires the moment the walk arrives back at it.
+             * Deleted rather than given a fixture that could only reach it by handing this
+             * method something production never produces - §7q's unreachable fallback, the
+             * same decision. What bounds this walk is the distance test above and the
+             * guard.
+             */
+            var arms = next.GetAngleArray();
+            if (null == arms || arms.Count != 2)
+            {
+                return d;
+            }
+
+            came = arms[0] == came ? arms[1] : arms[0];
+            at = next;
+        }
+
+        return d;
+    }
+
+
+    /**
+     * ⚠️ WP-B4.4 - whether a road under the deck lies within a quarter turn of the
+     * corridor, i.e. whether the deck would run ALONG it instead of over it.
+     *
+     * Measured against the corridor's CHORD - the line foot to foot, which is where the
+     * structure will actually stand - and not against either arm, because a corridor is
+     * only straight to within MinStraightDot and the deck follows the chord.
+     */
+    private static bool _crossesTooObliquely(
+        StreetPoint m, Stroke armA, Stroke armB, List<Stroke> under)
+    {
+        StreetPoint pa = armA.A == m ? armA.B : armA.A;
+        StreetPoint pb = armB.A == m ? armB.B : armB.A;
+
+        Vector2 chord = pb.Pos - pa.Pos;
+        if (!(chord.LengthSquared() > 0f))
+        {
+            return false;
+        }
+
+        Vector2 corridor = Vector2.Normalize(chord);
+
+        foreach (var u in under)
+        {
+            StreetPoint pu = u.A == m ? u.B : u.A;
+            Vector2 du = pu.Pos - m.Pos;
+            if (!(du.LengthSquared() > 0f))
+            {
+                continue;
+            }
+
+            if (Single.Abs(Vector2.Dot(corridor, Vector2.Normalize(du))) > MaxObliqueDot)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
     private static bool _sharesAJunction(Stroke x, Stroke y)
         => x.A == y.A || x.A == y.B || x.B == y.A || x.B == y.B;
 
@@ -942,6 +1165,16 @@ public static class StructurePlacer
     {
         Stroke deck = c.Deck;
 
+        /*
+         * ⚠️ A TUNNEL IS THE SAME QUESTION MIRRORED. Over a bridge deck the road beneath
+         * has to fit under the deck; over a tunnel bore the deck is beneath and the
+         * ordinary road is what passes above it. So the clearance is measured from
+         * whichever of the two is on top, and a NEGATIVE answer - the structure on the
+         * wrong side of what it is supposed to miss - is refused by the same
+         * MinDeckClearance test that refuses a deck too low.
+         */
+        float sign = deck.Kind == StrokeKind.Tunnel ? -1f : 1f;
+
         foreach (var other in c.Under)
         {
             var si = deck.Intersects(other);
@@ -957,7 +1190,7 @@ public static class StructurePlacer
             float onDeck = _roadHeightAlong(deck, si.ScaleExists, heights);
             float onGround = _roadHeightAlong(other, si.ScaleCand, heights);
 
-            yield return onDeck - onGround;
+            yield return sign * (onDeck - onGround);
         }
     }
 
