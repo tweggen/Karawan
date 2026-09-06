@@ -97,6 +97,30 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
 
 
     /**
+     * The arms of a junction a pedestrian crossing may be drawn across, in the angle
+     * array's own order.
+     *
+     * A crossing spans the carriageway between two pavement corners, and a ramp, bridge
+     * or tunnel has neither pavement nor corner - so a crossing across one would put
+     * walkers on a structure, and a crossing measured from one lands on a mitre that is
+     * not a pavement corner at all. The block graph's own predicate decides, so that
+     * "which arms bound a block" and "which arms may be crossed" are one rule.
+     *
+     * Every arm of every junction of every city with joyce.EnableGradeSeparation off.
+     */
+    internal static List<Stroke> BlockArmsOf(StreetPoint sp)
+    {
+        var arms = new List<Stroke>();
+        foreach (var s in sp.GetAngleArray())
+        {
+            if (engine.streets.generation.BlockGraph.IsBlockEdge(s)) arms.Add(s);
+        }
+
+        return arms;
+    }
+
+
+    /**
      * Create bidirectional lanes between two junctions, subdividing if the
      * distance exceeds MaxLaneLength. Returns the number of lanes created.
      */
@@ -443,7 +467,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         foreach (var (spId, junctions) in junctionsByStreetPoint)
         {
             var sp = streetPointById[spId];
-            var arms = sp.GetAngleArray();
+            var arms = BlockArmsOf(sp);
             int n = arms.Count;
 
             if (n == 0) continue;
@@ -468,15 +492,30 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 var prev = arms[(i - 1 + n) % n];
                 var next = arms[(i + 1) % n];
 
-                // Section points flanking this arm
-                var ptA = sp.GetSectionPointByStroke(curr, prev);   // right side of arm
-                var ptB = sp.GetSectionPointByStroke(next, curr);   // left side of arm
-
-                if (ptA == null || ptB == null) continue;
+                /*
+                 * The two pavement corners flanking this arm.
+                 *
+                 * ⚠️ NOT GetSectionPointByStroke, and for exactly the reason
+                 * QuarterGenerator stopped using it (§14.3): that map is keyed on pairs of
+                 * arms adjacent in the junction's SECTION ARRAY, which is the junction cap
+                 * and therefore contains the ramp leaving a foot. So at a foot every
+                 * ordinary arm is paired with the ramp instead of with the ordinary arm on
+                 * the far side of it, the lookup finds no pavement corner there and the
+                 * crossing is dropped - measured before this was written, 70 of 103
+                 * crossings at the junctions that carry a structure arm, silently.
+                 *
+                 * StreetPoint.SectionPointBetween is the one expression for that corner
+                 * and it is what QuarterGenerator files the pavement corner from, so the
+                 * two agree by construction. Where the two arms ARE adjacent - every
+                 * junction of every city with the flag off - it is the same float the
+                 * section map holds, because the section array is filled from it.
+                 */
+                Vector2 ptA = sp.SectionPointBetween(prev, curr);   // right side of arm
+                Vector2 ptB = sp.SectionPointBetween(curr, next);   // left side of arm
 
                 // Look up the pre-built NavJunctions via the position-keyed dictionary
-                var keyA = ((int)(ptA.Value.X * 10), (int)(ptA.Value.Y * 10));
-                var keyB = ((int)(ptB.Value.X * 10), (int)(ptB.Value.Y * 10));
+                var keyA = ((int)(ptA.X * 10), (int)(ptA.Y * 10));
+                var keyB = ((int)(ptB.X * 10), (int)(ptB.Y * 10));
 
                 if (!sidewalkJunctions.TryGetValue(keyA, out var njA)) continue;
                 if (!sidewalkJunctions.TryGetValue(keyB, out var njB)) continue;

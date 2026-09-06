@@ -97,10 +97,18 @@ public class BlockGraphTests
     public static IEnumerable<object[]> FlagOnCensus => new List<object[]>
     {
         //                         flat: q/e/b/shops        terrain: q/e/b/shops
+        //
+        // ⚠️ Yelukhdidru@800's terrain shop count moved 389 -> 339 in WP-B6, and it is
+        // the only census number in this table that did. One of its estates is pinched
+        // enough that the pavement inset splits it in two, with no structure anywhere
+        // near it; _createBuildings used to concatenate both pieces into one
+        // self-crossing ring and hang shop fronts off the whole perimeter. See
+        // BlockGraph.LargestOf. Nothing in the FLAG-OFF census moves - 0 of 763 estates
+        // there split at all.
         new object[] { "seed000",     500f,   2,   2,  2,    0,     3,   3,   3,   51 },
         new object[] { "seed011",     500f,   3,   3,  3,   83,     3,   3,   3,   83 },
         new object[] { "Yelukhdidru", 400f,   0,   0,  0,    0,     0,   0,   0,    0 },
-        new object[] { "Yelukhdidru", 800f,   7,   7,  6,  251,    11,  11,   7,  389 },
+        new object[] { "Yelukhdidru", 800f,   7,   7,  6,  251,    11,  11,   7,  339 },
         new object[] { "seed000",     1500f, 61,  61, 57,  914,    85,  85,  81, 1525 },
         new object[] { "seed017",     2400f,165, 165, 80, 1050,   233, 233, 118, 2076 },
         new object[] { "Yelukhdidru", 3000f,282, 282, 81, 1273,   379, 379, 111, 2023 },
@@ -1183,6 +1191,68 @@ public class BlockGraphTests
         }
 
         return false;
+    }
+
+
+    /*
+     * ================================================== a split inset ================
+     */
+
+    /**
+     * WP-B6 triage item 3 — when the pavement inset splits a block on its own.
+     *
+     * QuarterGenerator._createBuildings concatenates every polygon of the inset into one
+     * ring, which is a self-crossing outline the moment there are two of them. WP-B5 made
+     * ExcludeStructures return at most one polygon, which covers a split caused by
+     * subtracting a structure; a block pinched to less than two pavement widths across its
+     * middle splits without any structure being involved, and that is what LargestOf is.
+     *
+     * Driven on two rings so that "the largest" is a choice and not the only answer.
+     */
+    [Fact]
+    public void ASplitInsetIsResolvedToItsLargestPiece()
+    {
+        var small = new List<IntPoint>
+        {
+            new(0, 0), new(100, 0), new(100, 100), new(0, 100)
+        };
+        var large = new List<IntPoint>
+        {
+            new(1000, 0), new(1400, 0), new(1400, 400), new(1000, 400)
+        };
+
+        var chosen = BlockGraph.LargestOf(new List<List<IntPoint>> { small, large });
+
+        Assert.Single(chosen);
+        Assert.Same(large, chosen[0]);
+
+        var otherOrder = BlockGraph.LargestOf(new List<List<IntPoint>> { large, small });
+
+        Assert.Single(otherOrder);
+        Assert.Same(large, otherOrder[0]);
+    }
+
+
+    /**
+     * With nothing to choose between, the very list handed in comes back.
+     *
+     * Not "a list holding the same polygon": the same object, so that a block whose inset
+     * did not split runs exactly the code it ran before this existed. Measured, that is
+     * every estate of every flag-off city - 0 of 763 over the seven pinned seeds split.
+     */
+    [Fact]
+    public void AnUnsplitInsetIsTheVeryListItWas()
+    {
+        var one = new List<List<IntPoint>>
+        {
+            new() { new IntPoint(0, 0), new IntPoint(100, 0), new IntPoint(100, 100) }
+        };
+
+        Assert.Same(one, BlockGraph.LargestOf(one));
+
+        var none = new List<List<IntPoint>>();
+
+        Assert.Same(none, BlockGraph.LargestOf(none));
     }
 
 

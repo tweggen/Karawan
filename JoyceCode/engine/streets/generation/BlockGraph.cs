@@ -64,6 +64,32 @@ public static class BlockGraph
 
 
     /**
+     * Whether anything may stand at this junction.
+     *
+     * A deck end carries nothing but structure members - a ramp and the deck it holds up -
+     * so it is a point in the air with no pavement, no block cornering on it and no way
+     * up to it on foot. Every other junction has at least one ordinary road leaving it and
+     * is a place in the city.
+     *
+     * ⚠️ Not only the deck ends, measured: one junction of Yelukhdidru@3000 is a ramp FOOT
+     * on the ground whose single ordinary street was the corridor arm the lift took away,
+     * so it too carries nothing a block can run along. It is refused for the same reason
+     * and it is the same statement - nothing corners here - which is why this is phrased
+     * about arms and not about height.
+     *
+     * Phrased as "has at least one block arm" rather than "Level == 0" deliberately: it is
+     * the same question the block trace asks, so a junction is buildable-on exactly when a
+     * block can corner on it, and the two cannot drift apart. It is also independent of
+     * which level the ground happens to be, which Level == 0 is not.
+     *
+     * TRUE FOR EVERY JUNCTION OF EVERY CITY WITH joyce.EnableGradeSeparation OFF, since
+     * such a city has no structure member in it at all and PolishStreetPoints has already
+     * removed every junction with no stroke.
+     */
+    public static bool StandsOnTheGround(StreetPoint sp) => ArmCountOf(sp) > 0;
+
+
+    /**
      * ⚠️ THE LAND A STRUCTURE TAKES OUT OF THE BLOCK IT NOW STANDS IN.
      *
      * Merging the blocks either side of a lifted corridor leaves the structure INSIDE
@@ -126,6 +152,37 @@ public static class BlockGraph
         var solution = new List<List<IntPoint>>();
         clipper.Execute(ClipType.ctDifference, solution, PolyFillType.pftNonZero,
             PolyFillType.pftNonZero);
+
+        return LargestOf(solution);
+    }
+
+
+    /**
+     * The one piece of a footprint that a building is designed on.
+     *
+     * ⚠️ QuarterGenerator._createBuildings concatenates EVERY polygon it is given into one
+     * ring - its own TXWTODO says so and it has done it since it was written. That is
+     * harmless while the answer is one polygon and nonsense the moment it is two: the
+     * result is a single self-crossing outline, and a building is designed on it.
+     *
+     * Two things produce two pieces. A structure subtracted from the estate can split it -
+     * that is ExcludeStructures above. And the pavement inset can split a block on its own,
+     * where a block is pinched to less than two pavement widths somewhere across its
+     * middle: measured, that happens on 0 of 763 estates over the seven pinned cities with
+     * joyce.EnableGradeSeparation off, and on 4 of 714 with it on, in blocks with no
+     * structure anywhere near them. So it is a pre-existing defect that the flag makes
+     * reachable, and the same answer serves both.
+     *
+     * Returns the SAME list it was handed whenever there is nothing to choose between, so
+     * a city that never splits an inset - which is every flag-off city measured - runs
+     * exactly the code it ran before rather than an equal-looking rebuild of it.
+     */
+    public static List<List<IntPoint>> LargestOf(List<List<IntPoint>> solution)
+    {
+        if (solution.Count <= 1)
+        {
+            return solution;
+        }
 
         List<IntPoint> largest = null;
         double largestArea = 0.0;

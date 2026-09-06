@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using builtin.tools;
 using engine.streets;
@@ -13,6 +14,32 @@ public class Placer
 {
     private Lazy<ClusterList> _clusterList = new(I.Get<ClusterList>());
     private Lazy<engine.world.Loader> _worldLoader = new(I.Get<engine.world.MetaGen>().Loader);
+
+
+    /**
+     * The junctions of a cluster that something may be placed at.
+     *
+     * ⚠️ Not the deck ends. With joyce.EnableGradeSeparation on, a lifted corridor invents
+     * two junctions in the air carrying nothing but a ramp and the deck it holds up;
+     * placing anything at one puts it on a bridge with no pavement, no block and no way up
+     * to it on foot. The other branch of the street point lookup cannot reach them at all,
+     * because it draws from a quarter's delimiters and no block corners on a deck end - so
+     * the random branch is the one that has to say it.
+     *
+     * A static of its own rather than a line inside _tryPlacingOnce, because Placer needs
+     * the ClusterList and the world loader out of the container and cannot be constructed
+     * from a test at all, and a rule nothing can drive is a rule a source scan asserts the
+     * NAME of.
+     *
+     * The order and the contents are unchanged for every junction that stays, so a city
+     * with the flag off - where BlockGraph.StandsOnTheGround is true of all of them - draws
+     * exactly the junction it drew before, out of a list of the same length in the same
+     * order.
+     */
+    public static IReadOnlyList<StreetPoint> GroundJunctionsOf(
+        IReadOnlyList<StreetPoint> listStreetPoints)
+        => listStreetPoints
+            .Where(streets.generation.BlockGraph.StandsOnTheGround).ToList();
 
 
     /**
@@ -246,6 +273,9 @@ public class Placer
                 {
                     listStreetPoints = cd.StrokeStore().GetStreetPoints();
                 }
+
+                listStreetPoints = GroundJunctionsOf(listStreetPoints);
+
                 int l = listStreetPoints.Count;
                 if (0 == l) return false;
                 sp = listStreetPoints[_rnd.GetInt(l)];
