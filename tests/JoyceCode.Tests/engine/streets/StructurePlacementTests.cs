@@ -50,6 +50,23 @@ public class StructurePlacementTests
      *
      * Recorded here rather than in a baseline file because these are the answer this
      * work package exists to produce and they should be read, not diffed.
+     *
+     * ⚠️ RE-MEASURED 2026-09-06, when GradeRelaxer was made to converge. The anchor pass
+     * IS that relaxation, so the heights a corridor's two feet stand at are the heights
+     * it now settles on rather than the heights 32 damped sweeps had got to - and the
+     * deck's grade is what those two feet disagree by. Old row for old row:
+     *
+     *     seed000@500      10,  0,  1  ->  unchanged
+     *     seed011@500       9,  0,  1  ->  unchanged
+     *     Yelukhdidru@400   1,  0,  0  ->  unchanged
+     *     Yelukhdidru@800  26,  2,  4  ->  unchanged
+     *     seed000@1500    140,  1, 20  ->  140,  2, 18
+     *     seed017@2400    366,  6, 43  ->  366,  4, 43
+     *     Yelukhdidru@3000 549, 9, 75  ->  549, 11, 73
+     *
+     * Eighteen structures became nineteen, and it is not a uniform shift in either
+     * direction - which is the honest shape of it: a settled city is a different set of
+     * foot heights, not a flatter one.
      */
     public static IEnumerable<object[]> TerrainYield => new List<object[]>
     {
@@ -58,9 +75,9 @@ public class StructurePlacementTests
         new object[] { "seed011",     500f,    9,  0,  1 },
         new object[] { "Yelukhdidru", 400f,    1,  0,  0 },
         new object[] { "Yelukhdidru", 800f,   26,  2,  4 },
-        new object[] { "seed000",     1500f, 140,  1, 20 },
-        new object[] { "seed017",     2400f, 366,  6, 43 },
-        new object[] { "Yelukhdidru", 3000f, 549,  9, 75 },
+        new object[] { "seed000",     1500f, 140,  2, 18 },
+        new object[] { "seed017",     2400f, 366,  4, 43 },
+        new object[] { "Yelukhdidru", 3000f, 549, 11, 73 },
     };
 
 
@@ -109,9 +126,9 @@ public class StructurePlacementTests
      * ⚠️ THE HEADLINE: how many structures a city gets, and how many corridors were
      * refused.
      *
-     * Nine on the largest city, six on the next, one, two, and none at all on the three
-     * small ones - out of 549, 366, 140, 26, 10, 9 and 1 crossings looked at. That is
-     * D2's "a handful of correct structures per city" measured rather than hoped for.
+     * Eleven on the largest city, four on the next, two, two, and none at all on the
+     * three small ones - out of 549, 366, 140, 26, 10, 9 and 1 crossings looked at. That
+     * is D2's "a handful of correct structures per city" measured rather than hoped for.
      */
     [Theory]
     [MemberData(nameof(TerrainYield))]
@@ -137,8 +154,14 @@ public class StructurePlacementTests
      * §2's corridor-fit table asks whether two ramps FIT and predicted 15 buildable
      * crossings in the largest city. Geometry alone still admits that many - the flat
      * city below places 88 - and it is the DECK's grade that takes the terrain city down
-     * to nine. Over these seeds the deck's own grade refuses 144 corridors against 3 for
-     * the ramps' plan clearance and 4 for the deck's vertical one.
+     * to eleven. Over these seeds the deck's own grade refuses 140 corridors against 3
+     * for the ramps' plan clearance and 7 for the deck's vertical one.
+     *
+     * ⚠️ 144 and 7 before GradeRelaxer was made to converge (2026-09-06). The deck
+     * refusal loosened by four and the clearance refusal tightened by three, which is
+     * the same story from both ends: a settled city puts a corridor's two feet at
+     * different heights than an unsettled one, so some decks became decks and some
+     * became too low over the road they cross.
      */
     [Fact]
     public void TheDeckGradeIsWhatRefusesMostCorridors()
@@ -157,8 +180,8 @@ public class StructurePlacementTests
             }
         }
 
-        Assert.Equal(144, deck);
-        Assert.Equal(7, other);
+        Assert.Equal(140, deck);
+        Assert.Equal(10, other);
     }
 
 
@@ -260,9 +283,16 @@ public class StructurePlacementTests
             }
         }
 
-        Assert.Equal(20, all.Count);
-        Assert.Equal(4.53f, all.Min(), 2);
-        Assert.Equal(20.30f, all.Max(), 2);
+        /*
+         * ⚠️ 20 crossings over the range 4.53 ... 20.30 m before GradeRelaxer was made to
+         * converge (2026-09-06). More decks, and a wider spread in BOTH directions - the
+         * lowest is now 3.39 m, which is 1.13x MinDeckClearance rather than 1.51x, so a
+         * settled city passes traffic under a deck with less to spare than an unsettled
+         * one did. Still the ground rather than the model: the nominal is 8 m.
+         */
+        Assert.Equal(24, all.Count);
+        Assert.Equal(3.39f, all.Min(), 2);
+        Assert.Equal(27.52f, all.Max(), 2);
 
         /*
          * The nominal is one deck height, and the ground under a crossing is very rarely
@@ -629,7 +659,12 @@ public class StructurePlacementTests
      */
     [Theory]
     [InlineData("Yelukhdidru", 3000f, 204, 85)]
-    [InlineData("seed017", 2400f, 159, 71)]
+    /*
+     * ⚠️ seed017@2400's second number was 71 until 2026-09-06. It is counted on the
+     * FINISHED store, so which arms are still there depends on which corridors were
+     * lifted - and a converged relaxation lifts a different four.
+     */
+    [InlineData("seed017", 2400f, 159, 70)]
     [InlineData("seed000", 1500f, 54, 23)]
     [InlineData("seed000", 500f, 4, 0)]
     public void TheTBranchExclusionCostsFarFewerCorridorsThanItRefuses(

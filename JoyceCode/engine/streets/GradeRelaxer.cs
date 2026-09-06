@@ -21,10 +21,34 @@ namespace engine.streets;
  * every street meeting there at once and the network cannot come apart. It also makes
  * the relaxation converge on something consistent rather than fighting itself.
  *
- * Jacobi rather than Gauss-Seidel: corrections are accumulated over a whole sweep and
- * applied together, so the result does not depend on the order strokes are visited.
- * Strokes are still walked in a fixed order (by Sid) so that floating point addition
- * order is fixed too - the arithmetic-identity rule this project generates cities under.
+ * **Successive projection, not Jacobi**, and that is a 2026-09-06 correction of a design
+ * this file used to argue for. Each over-limit stroke is corrected as it is visited, to
+ * exactly its own limit, and the next stroke reads the height that correction produced.
+ * Strokes are walked in a fixed order (by Sid), so a given graph and given starting
+ * heights give one answer - the arithmetic-identity rule this project generates cities
+ * under - but the answer does depend on that order in a way a Jacobi sweep's did not.
+ *
+ * That property was given up deliberately, and measured before it was: accumulating a
+ * whole sweep and applying it through a single global divisor DOES make the answer
+ * independent of the visiting order, and it never arrives. Measured over the eight seeds
+ * StreetDeterminismTests pins, on the shipped terrain, with "arrived" meaning no stroke
+ * more than ConvergenceEpsilon over its own limit:
+ *
+ *     Jacobi, one global divisor (what shipped)   82 ... 1106 sweeps
+ *     Jacobi, divided by each junction's degree   44 ...  488
+ *     Jacobi, divided by its ACTIVE strokes       28 ...  260
+ *     this                                        11 ...   85
+ *
+ * - all four with the same exit rule and no tolerance skip, so that the only thing being
+ * compared is the damping; the skip below takes this one to 11 ... 80 - against a budget
+ * of 32. So the city that shipped was not an order-independent answer;
+ * it was 3 % of the way to one, and the four rules agree on the answer they reach to
+ * within a decimetre at the median - they differ only in whether they get there.
+ *
+ * The one thing successive projection cannot do is overshoot: a correction is applied to
+ * one stroke, and that stroke is then exactly at its limit. That is why there is no
+ * damping factor here at all - the global divisor a Jacobi sweep needed is gone rather
+ * than retuned.
  *
  * **This is a boundary value problem, and it has boundaries.** A grade separated
  * structure is built to a profile rather than draped over the ground, so the junctions a
@@ -60,7 +84,9 @@ public static class GradeRelaxer
      * @returns
      *     How many sweeps were used. Reaching policy.MaxSweeps means the network had
      *     not settled - useful to a caller that wants to complain about it, and the
-     *     reason this is not void.
+     *     reason this is not void. RelaxedStreetHeight.TableFor is that caller;
+     *     between this pass being written and 2026-09-06 there was none, and every
+     *     terrain-following city in the game ran an unconverged relaxation in silence.
      */
     public static int Relax(
         IEnumerable<Stroke> strokes, Dictionary<int, float> heights, GradePolicy policy)
@@ -135,14 +161,15 @@ public static class GradeRelaxer
      * driven directly, on the production method rather than on a lookalike of it.
      *
      * ⚠️ In the flag-off game the boundary is always empty. And with a boundary, what
-     * measurement says is this: GradeRelaxer exhausts its whole 32 sweep budget on every
-     * real city (pre-existing, and RelaxedStreetHeight does not look at the return value
-     * that says so), so the anchor pass leaves nothing of the allowance and this call
-     * does no sweep at all; on a network small enough for the anchor to converge, there
-     * is nothing over its limit left for it to correct. The boundary rules below are
-     * therefore a GUARANTEE that no sweep can bend a designed structure rather than a
-     * step some city depends on - which is why they are driven here directly, and why
-     * saying so is better than implying that a generated city exercises them.
+     * measurement says is this: the anchor pass converges, so what reaches this call is a
+     * network in which the only strokes that could be over a limit are the structure's
+     * own - and those have both ends pinned. So this runs one sweep, finds nothing it may
+     * move, and stops. (Until 2026-09-06 the reason was different and worse: the anchor
+     * pass burned the entire 32 sweep budget without converging, so this call got no
+     * allowance at all.) The boundary rules below are therefore a GUARANTEE that no sweep
+     * can bend a designed structure rather than a step some city depends on - which is
+     * why they are driven here directly, and why saying so is better than implying that a
+     * generated city exercises them.
      *
      * @param ordered
      *     Strokes with both endpoints, already ordered by Sid.
@@ -165,41 +192,36 @@ public static class GradeRelaxer
          * the arterial would end up following the terrain after all.
          */
         var resistance = new Dictionary<int, float>();
-        var degree = new Dictionary<int, int>();
         foreach (var s in ordered)
         {
             _raiseTo(resistance, s.A.Id, s.Weight);
             _raiseTo(resistance, s.B.Id, s.Weight);
-            _bump(degree, s.A.Id);
-            _bump(degree, s.B.Id);
         }
-
-        /*
-         * One damping factor for the whole graph, not one per junction.
-         *
-         * Damping at all is what stops the sweep oscillating: a junction on a ridge is
-         * pushed down by every street running off it, and applying all of those in full
-         * overshoots past the valley. Dividing by each junction's OWN degree would damp
-         * it just as well - but then the two ends of a stroke get divided by different
-         * numbers, the equal and opposite pair no longer cancels, and the network as a
-         * whole creeps uphill or down. A single divisor keeps every pair balanced, so
-         * the only thing that can move the overall level is the weighting, which is
-         * supposed to.
-         */
-        int busiest = 1;
-        foreach (var d in degree.Values)
-        {
-            if (d > busiest) busiest = d;
-        }
-
-        var delta = new Dictionary<int, float>();
 
         int nUnheighted = 0;
 
         int sweep = 0;
         for (; sweep < maxSweeps; ++sweep)
         {
-            delta.Clear();
+            /*
+             * The largest amount, in metres of rise, by which a stroke this sweep
+             * CORRECTED was over its own limit.
+             *
+             * A stroke within ConvergenceEpsilon of its limit is left alone rather than
+             * corrected by a fraction of a centimetre, which is what makes "settled" and
+             * "this sweep changed nothing" the same statement. They have to be the same
+             * statement: the anchor pass and the sweep after it are two calls, and if the
+             * settled one still applied its last millimetres then adding a structure to a
+             * city would move junctions on the far side of it - measured at 4.3 mm before
+             * the tolerance was applied here rather than only to the exit test.
+             *
+             * "Corrected" is the other load bearing word. A stroke with both ends pinned
+             * is a structure's own deck and nothing here may move it; a stroke whose
+             * endpoint has no starting height cannot be relaxed either. Waiting for those
+             * would burn the whole budget every time a corridor is lifted, since a deck's
+             * grade is whatever its two feet disagree by and is not bounded here (§10.5).
+             */
+            float worst = 0f;
 
             foreach (var s in ordered)
             {
@@ -226,10 +248,27 @@ public static class GradeRelaxer
                 float rise = hB - hA;
                 float limit = policy.MaxGradeFor(s) * length;
 
-                if (Single.Abs(rise) <= limit)
+                float over = Single.Abs(rise) - limit;
+                if (over < policy.ConvergenceEpsilon)
                 {
                     continue;
                 }
+
+                bool pinA = pinned.Contains(s.A.Id);
+                bool pinB = pinned.Contains(s.B.Id);
+
+                if (pinA && pinB)
+                {
+                    /*
+                     * A structure's own stroke. Both ends are designed, so there is
+                     * nothing here to correct and nowhere to put a correction - and,
+                     * per the comment on `worst`, nothing here for convergence to wait
+                     * for either.
+                     */
+                    continue;
+                }
+
+                if (over > worst) worst = over;
 
                 /*
                  * Only the excess is taken out. Correcting to the limit rather than to
@@ -248,18 +287,11 @@ public static class GradeRelaxer
                 float wA = total > 1e-6f ? rB / total : 0.5f;
                 float wB = 1f - wA;
 
-                bool pinA = pinned.Contains(s.A.Id);
-                bool pinB = pinned.Contains(s.B.Id);
-
-                if (pinA && pinB)
-                {
-                    /*
-                     * A structure's own stroke. Both ends are designed, so there is
-                     * nothing here to correct and nowhere to put a correction.
-                     */
-                    continue;
-                }
-
+                /*
+                 * Applied here rather than accumulated, which is the whole change: after
+                 * these two lines this stroke is at exactly its limit, and the strokes
+                 * visited after it in this sweep read the heights that produced.
+                 */
                 if (pinA)
                 {
                     /*
@@ -268,30 +300,25 @@ public static class GradeRelaxer
                      * and the stroke over its limit until the geometric series had run -
                      * which is not the same thing as "the neighbours absorb it".
                      */
-                    _add(delta, s.B.Id, -excess);
+                    heights[s.B.Id] = hB - excess;
                 }
                 else if (pinB)
                 {
-                    _add(delta, s.A.Id, excess);
+                    heights[s.A.Id] = hA + excess;
                 }
                 else
                 {
-                    _add(delta, s.A.Id, wA * excess);
-                    _add(delta, s.B.Id, -wB * excess);
+                    heights[s.A.Id] = hA + wA * excess;
+                    heights[s.B.Id] = hB - wB * excess;
                 }
             }
 
-            float largest = 0f;
-            foreach (var entry in delta.OrderBy(e => e.Key))
-            {
-                float move = entry.Value / busiest;
-                heights[entry.Key] += move;
-
-                float magnitude = Single.Abs(move);
-                if (magnitude > largest) largest = magnitude;
-            }
-
-            if (largest < policy.ConvergenceEpsilon)
+            /*
+             * A corrected stroke was ConvergenceEpsilon or more over its limit, so this
+             * is exactly "the sweep changed nothing" - which is the statement a caller
+             * needs, and a stronger one than "the corrections have got small".
+             */
+            if (0f == worst)
             {
                 ++sweep;
                 break;
@@ -323,14 +350,4 @@ public static class GradeRelaxer
     }
 
 
-    private static void _add(Dictionary<int, float> d, int key, float value)
-    {
-        d[key] = d.TryGetValue(key, out float existing) ? existing + value : value;
-    }
-
-
-    private static void _bump(Dictionary<int, int> d, int key)
-    {
-        d[key] = d.TryGetValue(key, out int existing) ? existing + 1 : 1;
-    }
 }

@@ -239,11 +239,15 @@ public class StructureHeightTests
         /*
          * Driven through the sweep itself rather than through Relax, because Relax
          * anchors first and an anchored network has no unbuildable approach left for
-         * the sweep to fix. The sweep is reached with an unsettled approach and a pinned
-         * foot in every real city - MaxSweeps is 32 and the anchor pass over a
-         * thousand-junction graph does not converge in 32 - but that is a property of
-         * a city's size rather than something a six-junction fixture can show, so the
-         * boundary rule is measured where it lives.
+         * the sweep to fix.
+         *
+         * ⚠️ This comment used to go on: "The sweep is reached with an unsettled approach
+         * and a pinned foot in every real city - MaxSweeps is 32 and the anchor pass over
+         * a thousand-junction graph does not converge in 32". That was true and is the
+         * defect the 2026-09-06 round removed. The anchor pass settles now, so the sweep
+         * after it is reached with nothing to do on any real city, and the boundary rule
+         * below is a GUARANTEE rather than a step some city depends on - which is exactly
+         * why it is driven here directly instead of through a generated city.
          */
         var ordered = f.Store.GetStrokes().OrderBy(s => s.Sid).ToList();
         var heights = new Dictionary<int, float>(f.Terrain);
@@ -277,14 +281,22 @@ public class StructureHeightTests
      *
      * Arithmetic, so that "absorb" means something a test can fail on. The west approach
      * is 300 m at weight 1.3, which the policy holds to 5 %, so a limit of 15 m; it
-     * starts 60 m out of level, an excess of 45 m; the fixture's busiest junction has two
-     * strokes, so one sweep applies half of whatever it was given. Handing the free end
-     * the whole excess puts it at -60 + 22.5; handing it its half share - both ends carry
-     * weight 1.3, so the split is 50/50 - would put it at -60 + 11.25, and the stroke
-     * would creep to its limit over a dozen sweeps instead of reaching it.
+     * starts 60 m out of level, an excess of 45 m. Handing the free end the whole excess
+     * puts it at -60 + 45; handing it its half share - both ends carry weight 1.3, so the
+     * split is 50/50 - would put it at -60 + 22.5, and the stroke would creep to its
+     * limit over a dozen sweeps instead of reaching it.
      *
-     * Which is why the settled version of this cannot catch it: after 32 sweeps the
-     * geometric series has run and both rules agree to five decimal places.
+     * Which is why the settled version of this cannot catch it: once the sweep has run
+     * out its course both rules agree to five decimal places.
+     *
+     * ⚠️ SUPERSEDED 2026-09-06, and the old text is kept because it names something that
+     * is no longer true. It read "the fixture's busiest junction has two strokes, so one
+     * sweep applies half of whatever it was given", and asserted `-60 + 45/2` and
+     * `100 - 77/2`. That halving was the global damping divisor a Jacobi sweep needed;
+     * GradeRelaxer is a successive projection now and cannot overshoot, so there is no
+     * divisor and one sweep puts the free end exactly where the limit is. The property
+     * being tested - whole excess, not the split share - is the same one, and the factor
+     * of two it used to carry belonged to the old mechanism rather than to it.
      *
      * ⚠️ BOTH approaches, because the pinned end is `B` on one of them and `A` on the
      * other and those are two lines of code. Asserting only the west one leaves the east
@@ -308,13 +320,13 @@ public class StructureHeightTests
         GradeRelaxer.RelaxAround(
             ordered, heights, policy, StructureProfile.PinnedJunctionsOf(ordered), 1);
 
-        Assert.Equal(-60f + 45f / 2f, heights[f.West.Id], 3);
+        Assert.Equal(-60f + 45f, heights[f.West.Id], 3);
 
         /*
          * The east approach is 300 m from a foot at 8 m to ground at 100 m: 92 m of rise
-         * against a 15 m limit, an excess of 77, halved by the same damping.
+         * against a 15 m limit, an excess of 77.
          */
-        Assert.Equal(100f - 77f / 2f, heights[f.East.Id], 3);
+        Assert.Equal(100f - 77f, heights[f.East.Id], 3);
     }
 
 
@@ -611,10 +623,15 @@ public class StructureHeightTests
      * The sweep budget is one allowance over the whole relaxation, not one per pass.
      *
      * WP-B2.6 made the same call about the generation budget. Here it is what makes
-     * AddingAStructureDoesNotMoveTheCityAroundIt true on a real city: GradeRelaxer
-     * exhausts all 32 sweeps on every generated network, so an anchor pass with its own
-     * allowance would hand the whole city a second relaxation and settle it further -
-     * measured at up to 7.5 m on Yelukhdidru@3000 before the budget was shared.
+     * AddingAStructureDoesNotMoveTheCityAroundIt true on a real city: an anchor pass with
+     * its own allowance would hand the whole city a second relaxation and settle it
+     * further - measured at up to 7.5 m on Yelukhdidru@3000 before the budget was shared.
+     *
+     * ⚠️ The reason it mattered used to be stated as "GradeRelaxer exhausts all 32 sweeps
+     * on every generated network". It no longer does (2026-09-06), and the split matters
+     * for a different reason now: a settled anchor pass leaves nothing over its limit, so
+     * a second allowance would be spent on nothing - but a city that DID run out would get
+     * two budgets instead of one and be reported as having used neither.
      */
     [Theory]
     [InlineData(1)]

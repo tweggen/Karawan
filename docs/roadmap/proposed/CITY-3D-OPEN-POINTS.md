@@ -6,7 +6,7 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7r, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-05 (§7s).
+**Last updated:** 2026-09-06 (the relaxation converges — Phase B §12).
 
 ---
 
@@ -84,6 +84,22 @@ and it is *right* about that case; the damage was `geom.Line.IntersectInfinite` 
 significant digit in absolute world coordinates. **`street-geometry.json` moved for all five
 cities and is the first geometry baseline this work stream has rewritten.** See **(l)** below
 and §7q.
+
+**Cleared 2026-09-06, and it is the biggest single move this page has recorded:** the
+**gradient relaxation never converged**. `GradeRelaxer` spent all 32 of its sweeps on every
+generated city and `RelaxedStreetHeight` threw away the return value that said so, so since
+the flip every city in the game was standing on an unconverged relaxation — **8 to 743
+strokes per city steeper than their own weight permits, the worst at 31.2 % against a policy
+maximum of 14 %**. ⚠️ **It was not oscillating and nothing was in conflict**: it decreased
+monotonically on every sweep of every seed and simply needed 82 to 1106 of them. ⚠️ **And the
+exit test was measuring the wrong quantity** — the size of the last correction rather than
+whether any road was still too steep — which is why "converged" and "buildable" had come
+apart. The pass is a successive projection now (11–80 sweeps, budget 256, and 3.3× faster
+than the sweep it replaces), exhausting the budget is a `Warning` naming the city, and
+**every junction of every terrain city moved: median 0.29–1.21 m, p95 1.3–7.2 m, worst
+16.5 m, with mean drift within 6 cm of zero**. The flat city did not move at all. Full
+write-up in **Phase B §12**; `STREETS-3D-TOPOLOGY.md` §7a's damping bullet is superseded
+there.
 
 **Part 1 IS NOW CLEAR, with one deliberate remainder: what an intercity line IS.** The
 intercity tram rides its own track; the track's own shape - graded embankment, viaduct, or

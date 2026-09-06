@@ -1075,3 +1075,318 @@ a lucky counter, and the difference is only visible in a process this suite neve
 - **`StrokeStore.RemovePoint`, built by WP-B2.4 "for the lift", is not used by the lift.** The
   interior-T-branch rule keeps every junction, so nothing is ever removed. It remains
   `PolishStreetPoints`' one removal primitive and B2.4's reasoning still holds.
+
+---
+
+## 12. The relaxation converges (2026-09-06) — §10.8's first entry, and four things the brief got wrong
+
+`GradeRelaxer` exhausted its whole 32-sweep budget on every generated city and
+`RelaxedStreetHeight` discarded the return value that said so. Since `1c54a9e4` the
+terrain-following city **is** the shipped city, so every city in the game was being built on
+an unconverged relaxation, silently, and had been for as long as the pass had existed.
+Recorded in §10.3/§10.8 as found-and-not-fixed on the grounds that converging it moves the
+shipped city; the owner has now authorised that move.
+
+**What moved:** `street-relaxed-heights.json` and nothing else. `street-fingerprints.json`,
+`street-fingerprints-gradesep.json`, `street-geometry.json` and `street-cost-baseline.json`
+are byte-identical, because all four record the FLAT city and a flat city has no over-limit
+stroke to correct. `ClusterStorage.DbVersion` is untouched — that is WP-B6's.
+
+### 12.1 What the non-convergence actually was — monotone, and not close
+
+The brief asked whether the largest correction decreases monotonically, plateaus, or
+oscillates. **Monotone, with no exceptions at all**: over the seven non-empty seeds the
+largest correction in a sweep decreased on *every* sweep — **0 increases in 50 to 308
+sweeps**. It was not stuck and it was not oscillating; it was a geometric decay with an
+asymptotic ratio of 0.47 to 0.93 per sweep, i.e. **far too slow and nothing else**.
+
+⚠️ **But "how many sweeps does it need" has two answers, and the smaller one is the wrong
+question.** Measured to the criterion the code actually used — *the largest correction
+applied in a sweep is under a centimetre* — it needs 50 to 308. Measured to the criterion
+this pass exists to guarantee — *no stroke is more than a centimetre of rise over its own
+limit* — the same rule needs **82 to 1106**. The gap is the finding: a damped sweep's
+corrections shrink geometrically whether or not the network has become buildable, so the
+old exit test called `Yelukhdidru@3000` settled with **312 of its 1875 strokes still over
+their limit**, one of them by 0.58 m. **The convergence test was measuring the wrong
+quantity**, and that was not in the brief's list of possibilities.
+
+**What the shipped city actually had**, per seed, at the 32-sweep cut-off (strokes over their
+own limit by more than a centimetre / worst grade / worst excess in metres of rise):
+
+| seed | over limit | worst grade | worst excess |
+|---|---|---|---|
+| `seed000@500` | 8 of 29 | 7.8 % | 0.39 m |
+| `seed011@500` | 10 of 24 | 10.0 % | 0.42 m |
+| `Yelukhdidru@400` | 9 of 11 | 12.2 % | 0.73 m |
+| `Yelukhdidru@800` | 39 of 74 | 11.0 % | 1.07 m |
+| `seed000@1500` | 179 of 367 | 18.6 % | 7.08 m |
+| `seed017@2400` | 417 of 1034 | 24.1 % | 7.03 m |
+| `Yelukhdidru@3000` | **743 of 1875** | **31.2 %** | **7.88 m** |
+
+`GradePolicy` allows 5 % to a weight-1.3 arterial and 14 % to the lightest alley, so 31.2 %
+is not a rounding error — it is more than twice the steepest street the ruleset admits, and
+it was in the shipped game.
+
+### 12.2 ⚠️ The brief's hypothesis: half right, and it does not help
+
+> *a single global `busiest` divisor over-damps every junction except the busiest one, so
+> convergence is linear and slow rather than absent. The standard formulation divides each
+> junction's accumulated correction by its own stroke count.*
+
+The diagnosis is right and **the remedy is not enough**. Three Jacobi variants and the rule
+that landed, all with the same exit test (worst residual excess under `ConvergenceEpsilon`)
+and no tolerance skip, so the only thing being compared is the damping:
+
+| rule | sweeps needed, min … max over the seven seeds |
+|---|---|
+| Jacobi, one global divisor (what shipped) | 82 … **1106** |
+| Jacobi, divided by each junction's static degree | 44 … 488 |
+| Jacobi, divided by its **active** strokes this sweep | 28 … 260 |
+| **successive projection (what landed)** | **11 … 85** |
+
+Per-junction damping is roughly **2.3× faster and still 8× over budget**. And the code
+comment it would have replaced was right too: it warned that dividing the two ends of a
+stroke by different numbers stops the pair cancelling and creeps the network uphill —
+measured, mean height drift **+0.33 m** on `Yelukhdidru@3000` and **+1.27 m** on
+`Yelukhdidru@400`, against ±0.001 m for the global divisor. So the hypothesis buys a
+factor of two and costs a metre of drift.
+
+⚠️ **Over-relaxation was tried and is worse than useless here.** ω of 1.5, 1.9, 2.5 and 4
+all improve the rate and none gets a Jacobi sweep inside the budget (`Yelukhdidru@3000`
+needs 133 at ω = 4); at ω = 6 and 8 it **diverges**, reaching 10²⁰ within thirty sweeps on
+five of seven seeds. There is no ω that both converges and fits.
+
+⚠️ **And "just raise `MaxSweeps`" — the naive fix the brief warned against — is naive for a
+reason nobody had, which is that it is not 4× but 35×.** The 1106 above is what the shipped
+rule needs on the largest city.
+
+### 12.3 What landed: successive projection, and it removes a constant rather than adding one
+
+`GradeRelaxer.RelaxAround` corrects each over-limit stroke **as it is visited**, to exactly
+its own limit, splitting the correction between the two ends by resistance exactly as
+before; the strokes visited after it read the heights that produced. The
+accumulate-a-whole-sweep-then-divide-by-`busiest` machinery is gone — **`busiest`, the
+`degree` map, the `delta` dictionary and its per-sweep `OrderBy` all deleted** — because a
+projection that touches one stroke at a time cannot overshoot, and overshoot is the only
+thing damping was ever for.
+
+Two other changes, both of which use an existing number rather than a new one:
+
+- **`ConvergenceEpsilon` now measures the residual excess, not the correction applied.** The
+  same 0.01 m; the question it answers is *is any road steeper than the policy allows*
+  instead of *have the corrections got small*. §12.1 is why.
+- **A stroke within `ConvergenceEpsilon` of its limit is left alone.** The tolerance does
+  both jobs, which makes "settled" and "this sweep changed nothing" the *same statement*.
+  ⚠️ **That is not cosmetic**: `Relax` is two calls on a city with a structure in it (the
+  anchor pass, then the sweep around the boundary), and with the tolerance applied only to
+  the exit test the settled anchor pass still applied its last millimetres, so
+  `AddingAStructureMovesNoOtherJunctionOfTheCity` failed by up to **4.3 mm** on junctions
+  the far side of the city from the structure. Applying it to the correction as well
+  restores exact equality.
+
+**`GradePolicy.MaxSweeps` 32 → 256.** Not a licence to iterate: the measured worst case is
+80 (`Yelukhdidru@3000`, the largest city the game builds) and 256 is three times that. The
+per-seed counts are pinned by `TheSweepsAShippedCityNeedsAreRecorded` so that a ruleset
+change which quietly doubles them is visible long before it hits the cap.
+
+**It is also cheaper.** Timed over 20 runs on `Yelukhdidru@3000`: **12.55 ms → 3.80 ms**,
+because a projection sweep has no dictionary to build and no `OrderBy` over 1379 entries to
+run 32 times.
+
+**And the report exists.** `RelaxedStreetHeight.TableFor` is the production expression —
+sample every junction, relax, and `Warning` naming the cluster, its size and its stroke
+count if the budget ran out. It is a `Warning` and not a `Trace` because a debug category
+decides how much *detail* to keep and never whether a problem is reported. Extracted as a
+static taking its inputs because `_ensureRelaxed` reaches `ClusterDesc.StrokeStore()`, which
+needs `ClusterStorage`, `MetaGen` and the event queue in the container; the two lines left
+outside it are held by a call-expression scan.
+
+⚠️ **Deliberately NOT also a property on the class.** An `Exhausted` field only this class
+could read would be state nothing drives, and the fact is observable where it belongs — in
+the log, which is what the test asserts on.
+
+### 12.4 What it cost: the order the strokes are visited in
+
+This is the one property the round gave up, and it was given up on measurement.
+`GradeRelaxerTests.TheOrderStrokesAreVisitedInDoesNotMatter` asserted it explicitly, with a
+comment naming Gauss-Seidel as the thing that would lose it.
+
+Measured: relaxing the same city with the stroke list reversed moves junctions by **0.36 to
+0.80 m at the median and 6.8 to 10.5 m at the worst** on the four largest seeds. That is
+real. It is also smaller than what the property was buying: the shipped answer stood **up to
+15.9 m** from where its own algorithm would have taken it, so what was being protected was
+the order-independence of a number that was not the answer. And the four rules in §12.2's
+table agree on the answer they reach to within a decimetre at the median — they differ only
+in whether they get there.
+
+⚠️ **The old gate would still have PASSED**, which is why it is replaced rather than deleted:
+a six-stroke chain of equal weights is symmetric enough that both directions land on the
+same heights. A gate that says something untrue and does not fail is worse than no gate.
+`OneVisitingOrderGivesOneAnswer` replaces it (one fixed `Sid` order, one answer, exact
+equality) and `ADifferentSidOrderIsADifferentAnswer` states the loss where it can fail — the
+same star built with its spokes created in the opposite order, which is the only way a test
+can renumber `Sid`s.
+
+### 12.5 The blast radius, measured
+
+**Every junction of every terrain city moves.** New heights against old, per seed:
+
+| seed | junctions moved | p50 | p95 | worst | mean drift |
+|---|---|---|---|---|---|
+| `seed000@500` | 26 / 27 | 0.51 m | 1.28 m | 1.34 m | +0.002 m |
+| `seed011@500` | 23 / 23 | 0.29 m | 1.52 m | 3.24 m | +0.008 m |
+| `Yelukhdidru@400` | 11 / 12 | 0.67 m | 1.87 m | 1.87 m | −0.000 m |
+| `Yelukhdidru@800` | 60 / 64 | 0.56 m | 1.45 m | 1.89 m | −0.015 m |
+| `seed000@1500` | 259 / 274 | 1.21 m | 7.22 m | **13.86 m** | −0.062 m |
+| `seed017@2400` | 679 / 785 | 0.48 m | 4.47 m | 10.17 m | +0.011 m |
+| `Yelukhdidru@3000` | 1146 / 1379 | 0.61 m | 5.37 m | **16.53 m** | +0.016 m |
+
+Substantial rather than cosmetic — a median junction moves half a metre and the worst moves
+sixteen — and the **mean drift is within 6 cm of zero everywhere**, so the city settled
+rather than sliding down the mountain. Through the heights this reaches blocks, buildings,
+shops, TALE locations, nav lanes and the conform pass, none of which has a baseline of its
+own for the terrain city.
+
+**After: every stroke of every seed is inside its own limit.** 0 over, worst excess 0.00 m,
+against the table in §12.1.
+
+**The flat city does not move**, asserted as exact equality over whole generated cities
+rather than argued: 0 junctions of 27 / 23 / 12 / 64 / 274 / 785 / 1379 changed, and the
+relaxation exits after one sweep having found nothing to do.
+
+### 12.6 ⚠️ The structures WP-B3b places change, and not in one direction
+
+The anchor pass **is** this relaxation, so a corridor's two feet stand at different heights
+and the deck between them is a different deck. Per seed, considered / placed / refused for
+deck grade:
+
+| seed | before | after |
+|---|---|---|
+| `seed000@500` | 10 / 0 / 1 | unchanged |
+| `seed011@500` | 9 / 0 / 1 | unchanged |
+| `Yelukhdidru@400` | 1 / 0 / 0 | unchanged |
+| `Yelukhdidru@800` | 26 / 2 / 4 | unchanged |
+| `seed000@1500` | 140 / 1 / 20 | 140 / **2** / **18** |
+| `seed017@2400` | 366 / 6 / 43 | 366 / **4** / 43 |
+| `Yelukhdidru@3000` | 549 / 9 / 75 | 549 / **11** / **73** |
+
+**Eighteen structures became nineteen** — and it is not a uniform shift, which is the honest
+shape of it: a settled city is a different set of foot heights, not a flatter one. Deck
+grades of what was built move from −4.48 … +5.52 % to **−5.32 … +4.82 %**; the deck-grade
+refusal loosens from 144 to **140** and the clearance refusals tighten from 7 to **10**.
+
+⚠️ **The clearance under a deck got tighter at the bottom end**: 24 crossings pass under a
+deck instead of 20, over **3.39 … 27.52 m** against 4.53 … 20.30 m. 3.39 m is 1.13×
+`MinDeckClearance` where the old worst was 1.51×, so a settled city passes traffic under a
+deck with less to spare. Nothing is below the minimum; it is worth knowing.
+
+Every terrain city still comes out in **one component**, and `seed017@2400` now refuses one
+corridor for `WouldDisconnect` on the shipped terrain — §11.3 said that rule had only ever
+fired on level ground.
+
+### 12.7 The mutations
+
+**Twenty driven, eighteen killed, one survivor that is provably equivalent, and one that
+could not be compiled** — which is itself a result. One of the eighteen was killed only on
+the second attempt, and it is the interesting one.
+
+| # | mutation | outcome |
+|---|---|---|
+| 1 | correct anything over the limit, no tolerance skip | 31 failed |
+| 2 | exit on `worst < ConvergenceEpsilon` instead of `0f == worst` | ⚠️ **survived — equivalent** |
+| 3 | `MaxSweeps` back to 32 | 13 failed |
+| 4 | the `B` end of an unpinned stroke not corrected | 49 failed |
+| 5 | re-introduce a damping factor of ½ | 22 failed |
+| 6 | `worst` never updated | 49 failed |
+| 7 | `sweeps > MaxSweeps` instead of `>=` | 1 failed |
+| 8 | the exhaustion `Warning` deleted | 1 failed |
+| 9 | the report does not name the city | 1 failed |
+| 10 | a both-pinned stroke corrected anyway | 24 failed |
+| 11 | pinned `A`: the free end takes only its share | 1 failed |
+| 12 | the resistance split replaced by half and half | 12 failed |
+| 13 | the anchor pass gets its own allowance | 2 failed |
+| 14 | the tolerance ten times looser | 22 failed |
+| 15 | the sweep count discarded again | 1 failed |
+| 16 | pinned `B`: the free end takes only its share | 1 failed |
+| 17 | the report demoted from `Warning` to `Trace` | **does not compile** |
+| 18 | the height source bypasses `TableFor` | 1 failed (the scan) |
+| 19 | the sweep loop stops after one sweep | 48 failed |
+| 20 | a stroke too short to have a grade corrected too | ⚠️ **survived the first round** |
+
+**(2) is equivalent and provably so.** With the tolerance skip in place, a stroke is only
+corrected when it is `ConvergenceEpsilon` or more over its limit, so `worst` is either
+exactly 0 or at least `ConvergenceEpsilon` and the two tests cannot disagree. It is written
+as `0f == worst` regardless, because that is the statement being made — *this sweep changed
+nothing* — and because removing the skip then makes the loop never converge and be reported,
+which is loud, where the epsilon form would quietly exit early again.
+
+⚠️ **(20) is the survivor that named something, and it took three attempts to write a
+fixture for it.** Widening `if (length < 0.001f)` to `if (length < 0f)` passed the whole
+suite, because nothing in the tree can produce a stroke inside that guard's band — and the
+reasons are worth having: an *exactly* zero length stroke never reaches the guard, since
+`Stroke.Length` throws below 1e-6 m and the relaxer reads `s.Length` on the line above;
+`StreetPoint.SetPos` quantises to a **0.1 m** grid, a hundred times the guard's ceiling; and
+`StrokeStore.AddPoint` refuses a point "considerably close" to one it already has. The
+guard's whole reachable surface is a caller writing `StreetPoint.Pos` directly and handing
+the strokes to `Relax` as a plain list, which is what `AStrokeTooShortToHaveAGradeIsLeftAlone`
+does. Not harmless if it ever were reached: the limit is grade times length, so such a stroke
+is over its limit by whatever its two ends differ by and drags them together every sweep.
+
+⚠️ **(17) is the most interesting non-result: the report CANNOT be demoted to a `Trace`.**
+`Trace` has a `ref DebugInterpolatedStringHandler` overload that an interpolated argument
+prefers, so `Trace(_dc, $"..." + ...)` does not compile at all — `error CS1620: Argument 2
+must be passed with the 'ref' keyword`. The CLAUDE.md entry about the suppressed
+`Warning(Dc, $"...")` overload is the same machinery seen from the other side: here it makes
+the wrong log level unwritable.
+
+**(11) and (16) are the §7q symmetric-survivor lesson honoured rather than re-learned** —
+the pinned end is `A` on one approach and `B` on the other, two separate lines, and
+`AFreeEndTakesTheWholeExcessAndNotItsShare` asserts both.
+
+### 12.8 Two existing gates superseded, old text recorded
+
+- **`GradeRelaxerTests.TheOrderStrokesAreVisitedInDoesNotMatter`** → §12.4. Old text:
+  *"Visiting order must not change the answer, which is what Jacobi buys and what a
+  Gauss-Seidel version of the same loop would quietly lose."*
+- **`StructureHeightTests.AFreeEndTakesTheWholeExcessAndNotItsShare`** asserted
+  `-60 + 45/2` and `100 - 77/2`, with a comment reading *"the fixture's busiest junction has
+  two strokes, so one sweep applies half of whatever it was given"*. The halving was the
+  damping divisor; there is none, so it is `-60 + 45` and `100 - 77` and one sweep now puts
+  the free end exactly on the limit. **The property under test is unchanged** — whole
+  excess, not the split share — and the factor of two belonged to the mechanism.
+
+Two comments elsewhere said "GradeRelaxer exhausts all 32 sweeps on every generated
+network"; both are corrected in place with the old claim kept, and `STREETS-3D-TOPOLOGY.md`
+§7a's *"Jacobi, with one damping divisor for the whole graph"* bullet is superseded there.
+
+### 12.9 What the brief got wrong
+
+- ⚠️ **"Does `largest` oscillate?"** No, and it never could: it decreased on every one of
+  50–308 sweeps on every seed. The failure mode was slowness, full stop.
+- ⚠️ **"Is there a stroke or junction that never settles — two limits in conflict, or a
+  stroke whose limit cannot be met at all?"** No. The system is a set of difference
+  constraints `|h_B − h_A| ≤ L`, which is always feasible (all heights equal satisfies it),
+  and run with the exit test disabled the shipped rule does reach feasibility — at 500 to
+  5000 sweeps. Nothing is in conflict; the budget was three per cent of what the rule
+  needed. **What looked like a stuck configuration in the first measurement was the exit
+  test firing early** (§12.1).
+- ⚠️ **"Per-junction damping converges far faster and is also the more correct
+  formulation."** 2.3×, not far, and it introduces the drift the original comment warned
+  about — §12.2. Neither the hypothesis nor the code comment it disputes was wrong; both
+  were arguing about a sweep that never finished.
+- ⚠️ **"`street-fingerprints-gradesep.json` may move."** It cannot: it records
+  `GenerateHeavyFirst`, which builds on FLAT ground, and so does `street-geometry.json`. The
+  terrain city has exactly one baseline — `street-relaxed-heights.json` — and it is the only
+  file that moved.
+
+### 12.10 Found and NOT fixed
+
+- **A ruleset with a genuinely pathological site would now spend 256 sweeps before saying
+  so.** At 3.8 ms per 80 sweeps on 1875 strokes that is ~12 ms, once, at generation time —
+  costed and accepted, and the `Warning` names the cluster so it is findable.
+- **The tolerance leaves a stroke up to 1 cm of rise over its limit**, by construction and
+  by name. Over a 100 m street that is 0.01 % of grade.
+- **`GradePolicy` is still constructed with defaults in two places** (§11.12) and `MaxSweeps`
+  is now one of the numbers that would differ if they ever diverged.
+- **The 20 m conform grid, `Yelukhdidru@400`'s uncarryable corridor, the unbounded deck span
+  and everything else in §10.8 and §11.12** are untouched by this round.

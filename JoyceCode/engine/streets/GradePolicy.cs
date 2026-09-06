@@ -58,12 +58,33 @@ public sealed class GradePolicy
      * Give up after this many sweeps even if the network is still settling. A cap
      * matters more than the exact value: a pathological terrain must not be able to
      * stall cluster generation.
+     *
+     * ⚠️ It was 32 until 2026-09-06, and every terrain-following city in the game -
+     * which is the shipped city - spent all 32 without settling and said nothing about
+     * it. Measured over the eight seeds StreetDeterminismTests pins, the sweeps
+     * GradeRelaxer's successive projection needs to bring every stroke within a
+     * centimetre of its own limit are 11, 14, 18, 28, 51, 57 and 80 - the last being
+     * Yelukhdidru@3000, the largest city the game builds. 256 is three times that.
+     *
+     * It is not a licence to iterate: the sweep rule that shipped needed 82 to 1106
+     * sweeps for the same result, so raising this number on its own would have been eight
+     * times the budget for a quarter of the job. It buys headroom over a measured worst
+     * case, and exhausting it is now reported - RelaxedStreetHeight is the caller that
+     * complains.
      */
-    public int MaxSweeps { get; set; } = 32;
+    public int MaxSweeps { get; set; } = 256;
 
     /**
-     * Stop once the largest correction in a sweep is smaller than this, in metres.
-     * A centimetre is far below anything visible on a road surface.
+     * Settled when no stroke the sweep is allowed to move is more than this many metres
+     * of rise over its own limit. A centimetre is far below anything visible on a road
+     * surface.
+     *
+     * ⚠️ This used to be compared against the largest CORRECTION a sweep applied, which
+     * is a different question and a weaker one: a damped sweep's corrections shrink
+     * geometrically whether or not the network has become buildable, so the old rule
+     * called Yelukhdidru@3000 settled with 312 of its 1875 strokes still over their
+     * limit, one of them by 0.58 m of rise. What this pass exists to guarantee is the
+     * limit, so the limit is what it measures.
      */
     public float ConvergenceEpsilon { get; set; } = 0.01f;
 
