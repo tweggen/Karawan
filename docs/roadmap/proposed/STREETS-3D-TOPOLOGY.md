@@ -4113,3 +4113,234 @@ including `seed008`/500), plus `RouteRibbonRoadTests` (68) and
   moves the satnav walker in the shipped **flat** city. Left for a round that measures it.
 - **`RoutePlan`'s truncation junction** still carries the chord's `GroundHeight` rather than
   the road's, unchanged from §7r; nothing reads it for a height.
+
+---
+
+# §7t — A block outline is not always made of streets (measured 2026-09-06, NOT fixed)
+
+Reported from play of the shipped world — `joyce.DisableClusterFlattening=true` **and**
+`joyce.EnableGradeSeparation=true`, both defaults:
+
+> *"I do see a street trunk running off into a building, forward in direction of the
+> viewer."*
+
+Player at `<262.81406, 48.246273, 209.27583>`, city `Yelukhdidru`, which is the start
+cluster `cluster-clusters-mydear-0` — 1000 m, at `(-5.77, 0, 10)`, so local
+`(268.6, 199.3)`. A second sighting followed at `<249.48778, 48.565266, 193.55681>`, local
+`(255.3, 183.6)`, twenty metres away.
+
+**Cause established, size measured, fix NOT made**: the repair is a decision about what the
+city should look like, and §7t.5 is the number that decision needs.
+
+## §7t.1 ⚠️ Both obvious suspects are refuted, and the second one by a measurement
+
+**Grade separation is not the cause.** The owner re-ran with
+`joyce.EnableGradeSeparation=false` and the defect still appears. Independently, over the
+seventy cities of the shipped world:
+
+> **Not one building anywhere overlaps a `Ramp`, `Bridge` or `Tunnel` carriageway, by any
+> area, with the flag either way** — 24 293 buildings against 0 structure strokes flag off,
+> 22 036 against **2 211** flag on.
+
+That is worth saying on its own: WP-B5's structure-footprint exclusion (§14.4) was measured
+over the seven pinned seeds, which hold **20** structures. It holds over the world's **737**
+as well. The brief's strongest hypothesis — *"zero overlap was established on 2.7 % of the
+population"* — is a correct worry with a clean answer.
+
+**The terrain-following city is not the cause either.** The flag-off plan network is the
+**same graph on all seventy cities** whether the ground under it is flat or the shipped
+terrain, asserted junction position by junction position: the height source reaches
+`Generator` only through `GroundHeightOf`, which nothing but the structure placement pass
+reads, and that pass does not run with the flag off. So every flag-off count below is a
+count taken on the **flat city**, and this predates the entire three-dimensional-city work
+stream.
+
+## §7t.2 THE DEFECT — a block's last edge is a chord, not a street
+
+`QuarterGenerator.Generate()` walks a face of the street graph and stops here:
+
+```csharp
+if (spNext == spStart) break;
+```
+
+That is a **vertex** test. A face walk must stop on the (junction, outgoing stroke) **pair**
+it started from, because a face can pass through one junction twice — which is exactly what
+a face does when a dead-end spur cuts a slit into a block. When the doubly-visited junction
+happens to be the one the walk started at, the walk stops half way round.
+
+The ring is then closed by a straight chord from the last delimiter back to the first. That
+chord is not a street. Over the shipped world:
+
+| | flag off (= the flat city) | flag on |
+|---|---|---|
+| quarters | 36 327 | 33 432 |
+| rings that do not close | **219** | **274** |
+| ...broken at the wrap-around edge and nowhere else | **219 of 219** | **274 of 274** |
+| chord length, p50 / p95 / worst | 75.0 / 99.9 / 119.5 m | 117.5 / 129.8 / 147.3 m |
+
+⚠️ **The "wrap-around edge and nowhere else" line is the diagnosis, in one number.** §7e's
+defect — a delimiter filled from two different steps of the trace — looked exactly like
+this and was broken at *every* edge. This one is broken only at the edge the walk never
+traversed, which is the edge the termination invented.
+
+The test is on **identity** — the two `StreetPoint` objects of `delims[i].Stroke` against
+`delims[i].StreetPoint` and `delims[i+1].StreetPoint` — not on distance, for §7e's reason:
+two junctions of one city can be metres apart, so a metric test cannot tell a skipped
+junction from a short street.
+
+## §7t.3 What it costs: the building stands on the street
+
+The estate is that outline, `_createBuildings` insets it by the pavement width, and the
+building goes on whatever the chord ran over.
+
+| | flag off | flag on |
+|---|---|---|
+| broken rings carrying a building | 146 | 191 |
+| ...of which the building is over a `Street` carriageway | **146** | **190** |
+| overlap area p50 / p95 / worst | 622 / 1025 / **2042 m²** | 1503 / 2088 / **2458 m²** |
+| cities affected, of 70 | 49 | 51 |
+
+⚠️ **The control is the point.** *"Every broken ring's building is on a street"* would also
+be satisfied by a city in which every building is on a street. Over all 24 293 / 22 036
+buildings of the world, the blocks whose ring **does** close contribute **10** and **1** —
+and the ten flag-off ones are 1 to 13 m² slivers at a corner, three orders of magnitude
+below the broken-ring cases. So the correspondence is 146/156 and 190/191, not a
+correlation.
+
+Two things measured and refuted along the way:
+
+- **The junction cap is not it.** Widening the test from the stroke rectangle to each
+  junction's own section-array cap — §7q's near-collinear corners can push a section point
+  tens of metres out — adds **2** cases flag off and **8** flag on, and every one of them
+  already overlapped a stroke box. Nothing is caused by the cap alone.
+- **One flag-on outlier at 1881 m² sits on a ring that closes** (`cluster-clusters-mydear-969`,
+  stroke 808, #549→#655). It is a second and far smaller mechanism, recorded and **not**
+  explained.
+
+## §7t.4 ⚠️ The context is two orders of magnitude larger than the defect
+
+| | flag off | flag on |
+|---|---|---|
+| directed block edges | 304 150 | 228 348 |
+| ...that land in a stored quarter | 203 037 | 163 558 |
+| ...**in faces discarded for `hasNullSection`** | **101 113 (33.2 %)** | **64 790 (28.4 %)** |
+| junctions with exactly one block arm (dead-end spurs) | 9 840 of 111 254 | 8 100 of 78 149 |
+
+**A third of the street graph's faces produce no block at all** — no estate, no building,
+no pavement — because they touch a dead-end spur, and a junction with fewer than two block
+arms has no corner. That is pre-existing, untouched here, and it is the reason the fix is a
+decision rather than a line.
+
+## §7t.5 ⚠️ THE FINDING THAT MAKES THIS A DESIGN DECISION
+
+Walk the same faces again with the termination the walk should have had, and look at what
+comes back:
+
+| | flag off | flag on |
+|---|---|---|
+| broken rings | 219 | 274 |
+| ...the completed walk terminates | 219 | 274 |
+| ...visits a junction more than once | **219** | **274** |
+| ...contains a junction with fewer than two block arms | **219** | **272** |
+
+Every completed face is pinched at a junction, and essentially every one of them contains a
+dead-end spur — which is precisely what `hasNullSection` **discards**.
+
+> **So terminating correctly does not repair these blocks. It deletes them.** 219 blocks of
+> the flat city and 272 of the shipped one would stop existing, leaving no estate, no
+> building and no pavement where one is drawn today.
+
+The early termination is a **discard that failed to happen**: it cuts the spur out of the
+ring before the trace can see it, so the face is never refused. §11.4's shape inverted —
+not a refusal that looks like a result, but a result that should have been a refusal.
+
+Two answers, and the choice is the owner's:
+
+- **(a) Terminate on the directed edge.** One line. Correct by construction, and every gate
+  in this file then says what it should. Costs 219 / 272 blocks — 0.6 % / 0.8 % of the city
+  — as holes in the pavement rather than as buildings across roads. It does not touch the
+  33 % already being discarded.
+- **(b) Peel the block graph to its 2-core first.** Iteratively drop every junction with
+  fewer than two block arms, so a dead-end spur is not a block edge at all. The face then
+  has no pinch, the ring closes, **and the block stands** — correctly, going round the spur
+  rather than across it. It also recovers a large part of the 33 %. But the spur is then
+  *inside* the block, so it needs excluding from the estate exactly the way a ramp already
+  is (`BlockGraph.ExcludeStructures`), and it changes far more of the city than the 219.
+  `BlockGraphTests` already computes a 2-core for its own assertion, so the machinery exists.
+
+## §7t.6 What this would move in the recorded baselines
+
+The seven pinned seeds are a fixture, not the world, and between them carry **ten** of
+these — reading the defect off them would have found three cities in seven and called it
+rare, against 49 of 70 in the world.
+
+| seed | quarters / broken, flag off | quarters / broken, flag on |
+|---|---|---|
+| `seed000@500` | 3 / 0 | 2 / 0 |
+| `seed011@500` | 2 / 0 | 3 / 0 |
+| `Yelukhdidru@400` | 0 / 0 | 0 / 0 |
+| `Yelukhdidru@800` | 10 / 0 | 7 / 0 |
+| `seed000@1500` | 82 / 0 | 61 / **1** |
+| `seed017@2400` | 221 / **2** | 165 / **2** |
+| `Yelukhdidru@3000` | 445 / **3** | 282 / **4** |
+| `seed008@500` | 4 / 0 | 5 / **1** |
+
+`street-geometry.json` pins block geometry for `seed000@500`, `seed011@500`,
+`Yelukhdidru@800`, `seed000@1500` and `seed008@500` — **of those, only `seed008@500`
+carries one at all, and only with the flag on**, which no baseline records. So a fix of
+kind (a) moves **no recorded baseline file**; it moves the flag-on block census in
+`BlockGraphTests` on `seed000@1500`, `seed017@2400`, `Yelukhdidru@3000` and `seed008@500`,
+and the flag-off census on `seed017@2400` and `Yelukhdidru@3000`.
+
+## §7t.7 ⚠️ What is NOT established: the sighting itself
+
+The start city carries **no broken ring and no building over a street, in either flag
+state**. Its blocks near the two sightings were enumerated by name and every one of them
+closes:
+
+- the player stands on the carriageway of stroke `sid=102`, `#4 (239.7, 229.1)` →
+  `#59 (279.8, 148.9)` with the flag on, and of `sid=24`, `#21 (246.1, 157.0)` →
+  `#23 (271.1, 198.6)` with it off — 5.8 m off its centre line, i.e. on the road;
+- the nearest building corner is `(256, 195)`, 11.1 m from `sid=24`'s centre line against
+  the 11.2 m its half-width plus pavement asks for. It is where it should be;
+- what IS anomalous there, flag off, is **junction `#24` at `(287.2, 225.4)`, a one-armed
+  dead end** 32 m away, reached by the 31 m stub `sid=25`. The face containing that stub is
+  discarded for `hasNullSection`, so the whole quadrant north-east of the player has **no
+  block, no estate and no pavement at all** — §7t.4's third of the city, at the sighting.
+
+So the class is established and the instance is not. A dead-end stub running into an
+unpaved void is a different picture from a road running into a building, and this write-up
+does not claim the two are the same thing. Whoever picks this up should ask the owner for
+the screenshot's heading.
+
+## §7t.8 The mutations
+
+Five driven against `QuarterGenerator`, restoring with `cp` + `touch` so MSBuild actually
+rebuilds (§15's lesson). Failures are against
+`tests/JoyceCode.Tests/engine/streets/BlockRingClosureTests.cs` alone (17 assertions).
+
+| # | mutation | failures |
+|---|---|---|
+| 1 | terminate on the directed edge — i.e. the fix under §7t.5(a) | **12** |
+| 2 | the `hasNullSection` discard removed | **16** |
+| 3 | a one-armed junction still gets a corner (`ArmCountOf < 1`) | **16** |
+| 4 | the delimiter names the ARRIVING stroke — §7e's defect, back again | **13** |
+| 5 | the block trace may start on a structure | ⚠️ **survived** |
+
+**1 is the one that matters.** The proposed fix is not a silent no-op: it moves twelve of
+these seventeen assertions, which is what makes §7t.5's table a decision rather than a
+guess.
+
+⚠️ **5 survives this file, and it should — it is WP-B5's rule, not this one's.** Driven
+against `BlockGraphTests` as well it fails **6**, including
+`TheBlockTraceNeverTouchesAStructure`, which reads `Stroke.TraversedAB`/`TraversedBA` — the
+trace's own record of where it went — rather than inspecting what it produced. Recorded
+here so that nobody reads this file's seventeen green assertions as covering the structure
+filter; they do not.
+
+## §7t.9 Found and NOT fixed
+
+- **The defect itself**, pending the decision in §7t.5.
+- **A third of all faces are discarded** (§7t.4), silently, with a `Trace`.
+- **The 1881 m² flag-on outlier on a ring that closes** (§7t.3), unexplained.
+- **The sighting is not reproduced** (§7t.7).

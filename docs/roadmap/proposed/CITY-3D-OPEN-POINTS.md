@@ -3,10 +3,12 @@
 **Status:** open ledger. This is the file to read first when picking up the
 terrain-following city work.
 **Companion:** [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) is the design and
-history document — every fix is written up there as §7a … §7r, with the measurements that
+history document — every fix is written up there as §7a … §7t, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-06 (WP-B6 — grade separation is ON and Phase B is complete, §15).
+**Last updated:** 2026-09-06 (item **(o)** — a block outline is not always made of streets;
+reported from play, cause established, **NOT fixed**, see Part 1b and `STREETS-3D-TOPOLOGY.md`
+§7t. Earlier the same day: WP-B6 — grade separation is ON and Phase B is complete, §15).
 
 ---
 
@@ -1181,6 +1183,87 @@ nothing, despite being described in CLAUDE.md as a live consumer. And
 **existed in no commit on any branch**. Both corrected in CLAUDE.md on 2026-08-30; the drift
 test was written on 2026-08-31 with (d1), and **not** to the criterion CLAUDE.md described,
 which the broken site would have passed.
+
+---
+
+# Part 1b — Reported 2026-09-06, OPEN
+
+## ⚠️ (o) A block outline is not always made of streets, so a building stands on one
+
+Reported from play of the shipped world (both flags on their defaults):
+
+> *"I do see a street trunk running off into a building, forward in direction of the
+> viewer."*
+
+**Cause established, size measured, NOT fixed — the repair is a design decision.** Full
+write-up and every number in `STREETS-3D-TOPOLOGY.md` §7t.
+
+**Both obvious suspects are refuted.** Grade separation is not it — the owner re-ran with
+`joyce.EnableGradeSeparation=false` and it still appears, and independently **not one
+building of the seventy shipped cities overlaps a `Ramp`, `Bridge` or `Tunnel` by any area
+with the flag either way**, against 2211 structure strokes (so WP-B5's §14.4 exclusion,
+measured on 20 structures, holds over the world's 737). Nor is the terrain-following city:
+the flag-off plan network is the **same graph on all seventy cities** flat or on the
+shipped terrain, asserted position by position, so every flag-off count here is the **flat
+city** and this predates the whole work stream on this page.
+
+**What is wrong.** `QuarterGenerator.Generate()` stops its face walk on `spNext == spStart`
+— a **vertex** test, where a face walk must stop on the (junction, outgoing stroke) **pair**
+it started from. A face passes through one junction twice whenever a dead-end spur cuts a
+slit into a block; when that junction is the one the walk started at, the walk stops half
+way round and the ring is closed by a straight **chord** back to the first delimiter. That
+chord is not a street — median 75 m flag off, 117 m flag on, up to 147 m — and the estate,
+its inset and the building on it go across whatever the chord ran over.
+
+**Measured over the shipped world** (`GenerateClustersOperator`'s own cluster list, seeded
+`"mydear"`, on the shipped terrain), flag off → flag on:
+
+- rings that do not close: **219 of 36 327** → **274 of 33 432**, and **every one of them
+  is broken at the wrap-around edge and nowhere else** (219/219, 274/274) — which is what
+  separates this from §7e, whose delimiters were wrong at *every* edge;
+- of the broken rings that carry a building, the building is over a `Street` carriageway in
+  **146 of 146** and **190 of 191** cases, p50 622 → 1503 m², worst 2042 → 2458 m², in
+  **49 → 51 of the 70 cities**;
+- the control: blocks whose ring **does** close contribute **10** and **1**, and the ten
+  are 1–13 m² corner slivers. So this is a correspondence, not a correlation.
+- the junction **cap** is not a second cause: 2 and 8 extra cases, all already overlapping a
+  stroke box.
+
+⚠️ **AND IT IS NOT A ONE-LINE FIX.** Completing the walk properly gives a face that visits a
+junction twice (274 of 274) and contains a junction with fewer than two block arms (219 of
+219, 272 of 274) — i.e. a face `hasNullSection` **discards**. So terminating correctly does
+not repair these blocks, it **deletes** them: 219 / 272 blocks become holes with no estate,
+no building and no pavement. The early termination is a *discard that failed to happen*.
+
+⚠️ **The context is two orders of magnitude bigger.** **A third of the street graph's
+directed block edges are already in faces that get thrown away** — 101 113 of 304 150
+(33.2 %) flag off, 64 790 of 228 348 (28.4 %) flag on — because 8.8 % of junctions are
+dead-end spurs and every face touching one is refused. Pre-existing and silent.
+
+**THE DECISION.**
+
+- **(a) Terminate on the directed edge.** One line, correct by construction. Costs 219 /
+  272 blocks (0.6 % / 0.8 %) as holes in the pavement instead of buildings across roads.
+  Moves **no recorded baseline file** — `street-geometry.json` pins five cities and only
+  `seed008@500` carries one, flag on, which nothing records — but moves the block census in
+  `BlockGraphTests` on four flag-on seeds and two flag-off ones.
+- **(b) Peel the block graph to its 2-core first**, so a dead-end spur is not a block edge
+  at all. The face then has no pinch, the ring closes **and the block stands**, going round
+  the spur; it also recovers much of the 33 %. But the spur is then inside the block and
+  needs excluding from the estate exactly as a ramp already is
+  (`BlockGraph.ExcludeStructures`), and it changes far more of the city.
+  `BlockGraphTests` already computes a 2-core for its own assertion.
+
+⚠️ **What is NOT established: the sighting itself.** The start city
+(`cluster-clusters-mydear-0`, 1000 m, named `Yelukhdidru`) has **no broken ring and no
+building over a street in either flag state**. Its objects at the two reported positions
+are named in §7t.7; the one anomaly there is junction `#24 (287.2, 225.4)`, a one-armed
+dead end whose face is discarded, so the whole quadrant north-east of the player has no
+block, no estate and no pavement — the 33 % above, at the sighting. **The class is
+established and the instance is not.** Ask the owner for the screenshot's heading.
+
+Gate: `tests/JoyceCode.Tests/engine/streets/BlockRingClosureTests.cs` (17), which records
+every number above so that whichever repair is chosen has to move them deliberately.
 
 ---
 
