@@ -6,7 +6,7 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7r, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-06 (WP-B4, worth lifting — Phase B §13).
+**Last updated:** 2026-09-06 (WP-B5, blocks — Phase B §14).
 
 ---
 
@@ -100,6 +100,24 @@ than the sweep it replaces), exhausting the budget is a `Warning` naming the cit
 16.5 m, with mean drift within 6 cm of zero**. The flat city did not move at all. Full
 write-up in **Phase B §12**; `STREETS-3D-TOPOLOGY.md` §7a's damping bullet is superseded
 there.
+
+**Cleared 2026-09-06, the last work package before the flag can be turned on:**
+**city blocks are traced over a network that is no longer planar.** A deck and the road
+under it cross where they do not meet, and the block trace followed the deck: on the
+flag-on cities that was 118 block edges lying on `Ramp`/`Bridge`/`Tunnel` strokes, 78 block
+corners standing on junctions at `Level = 1`, and ten self-crossing block outlines in
+`Yelukhdidru@3000` alone. A structure is out of the block graph now and every one of
+those counts is zero. ⚠️ **Three things this ledger and the plan had wrong.** *"The blocks merge, so there
+are fewer of them"* — **the block count goes UP** on four of seven flat cities, because
+tracing through a ramp used to produce faces that were then discarded whole and silently
+for `hasNullSection`, and those come back. *"No block contains a junction in its interior"*
+— **not true of the shipped city and never was**: `Yelukhdidru@3000` has four such
+junctions today, all on dead-end spurs, so the property that can actually be asserted is
+about the block graph's 2-core. And the corner a block turns at **is not in the section
+map** at a ramp's foot, because the map pairs arms that are adjacent in the junction CAP
+and a ramp's carriageway is part of that cap — skipping structures without noticing would
+have thrown away a block at every foot in the city. Nothing moved, with the flag off **or
+on**. Full write-up in **Phase B §14**.
 
 **Part 1 IS NOW CLEAR, with one deliberate remainder: what an intercity line IS.** The
 intercity tram rides its own track; the track's own shape - graded embankment, viaduct, or

@@ -72,6 +72,28 @@ public enum StructureRefusal
     OverlapsAStructure,
 
     /**
+     * ⚠️ WP-B5. This structure would cross another one in plan.
+     *
+     * Two decks over the same spot are both at Level = 1, so they cross without meeting
+     * and there is no junction where they do - a crossroads in the air with nothing
+     * joining it. The alternative is to send one of them to level 2, and on this ruleset
+     * that is not an alternative at all: the climb doubles, so RampLengthFor asks for
+     * 160 m of arm plus the deck's overhang, and the LONGEST STROKE OF ANY OF THE SEVEN
+     * PINNED CITIES IS 179.2 m with the flag on - one stroke, in a city that places no
+     * structure at all - so ArmTooShort would refuse every one of them anyway. Refusing
+     * is therefore the same outcome named honestly.
+     *
+     * ⚠️ It refuses NOTHING on any city the ruleset builds - not one corridor in any of
+     * the seven pinned seeds, flat or on the shipped terrain, and none of the 402
+     * structure strokes the flat cities carry crosses another. That is §9's "a rule can
+     * be invisible to unlimited real data" for the third time in this phase, and unlike
+     * WP-B4.1's weight floor it is invisible because OverlapsAStructure and
+     * _rampsAreClear between them already keep two structures apart in every case this
+     * ruleset produces. It is gated by fixtures both ways round.
+     */
+    CrossesAnotherStructure,
+
+    /**
      * WP-B4.1. Neither the corridor nor the road beneath it is more than the lightest
      * street this ruleset builds. Two alleys crossing is a crossing, not an interchange.
      */
@@ -590,6 +612,18 @@ public static class StructurePlacer
                 continue;
             }
 
+            /*
+             * ⚠️ WP-B5's second gap. Two structures may not cross each other in plan -
+             * see StructureRefusal.CrossesAnotherStructure. Judged with the claim checks
+             * rather than with WP-B4's three, because it is a property of what an earlier
+             * corridor was allowed to build and not of this crossing on its own.
+             */
+            if (!_isClearOfOtherStructures(candidate, accepted))
+            {
+                report.Refuse(StructureRefusal.CrossesAnotherStructure);
+                continue;
+            }
+
             if (!_rampsAreClear(
                     store, candidate, rampClearance, claimedStrokes, accepted))
             {
@@ -755,6 +789,73 @@ public static class StructurePlacer
      */
     private static bool _isOrdinaryGroundStreet(Stroke s, StreetPoint m)
         => s.Kind == StrokeKind.Street && s.Level == m.Level;
+
+
+    /**
+     * ⚠️ Whether this chain crosses, in plan, any structure already accepted.
+     *
+     * A crossing and not a proximity, deliberately: the ramps' plan separation from
+     * everything else is _rampsAreClear's job and is measured with the same
+     * RampClearance every ordinary street is held to. What this adds is the DECK, which
+     * nothing else looks at - a deck is only ever checked against the roads it flies
+     * over, vertically. Two decks over the same spot are both at Level = 1 and there is
+     * no junction where they meet.
+     *
+     * Every member against every member, because a bridge deck crossing another
+     * structure's ramp is the same defect: the ramp climbs through the deck's level
+     * somewhere along its run, so "which of them is higher there" has no answer.
+     *
+     * Structures accepted earlier in this pass are not in the store yet, so no store
+     * query can see them - the same reason _rampsAreClear carries its own loop over
+     * `accepted`. There is nothing else to look at: placement runs once per network, on
+     * a store that contains no structure when it starts.
+     */
+    private static bool _isClearOfOtherStructures(Candidate candidate, List<Candidate> accepted)
+    {
+        foreach (var earlier in accepted)
+        {
+            if (!ChainsAreClear(candidate.Chain, earlier.Chain))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Whether two ramp-deck-ramp chains keep out of each other's way in plan.
+     *
+     * ⚠️ EVERY MEMBER AGAINST EVERY MEMBER, and internal so that a test can drive the
+     * pairs a generated city does not produce. A mutation that compared only the two
+     * DECKS survived the whole suite, because the fixture that makes two corridors cross
+     * at all necessarily crosses them deck to deck - a deck crossing another structure's
+     * RAMP needs a chain shape the placer cannot be talked into building. It is the same
+     * defect: the ramp climbs through the deck's level somewhere along its run, so "which
+     * of the two is higher there" has no answer.
+     */
+    internal static bool ChainsAreClear(
+        IReadOnlyList<Stroke> chain, IReadOnlyList<Stroke> other)
+    {
+        foreach (var member in other)
+        {
+            foreach (var mine in chain)
+            {
+                if (_sharesAJunction(mine, member))
+                {
+                    continue;
+                }
+
+                if (null != mine.Intersects(member))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 
 
     /**

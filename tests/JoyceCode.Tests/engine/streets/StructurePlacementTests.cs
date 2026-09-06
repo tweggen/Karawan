@@ -1442,21 +1442,34 @@ public class StructurePlacementTests
 
 
     /**
-     * A log target that keeps what was written to it.
+     * A log target that keeps what THIS TEST wrote to it.
      *
-     * engine.Logger.SetLogTarget is a process global, so every assertion made on it here
-     * looks for a fragment naming its own cluster or its own message; what other classes
-     * log during the window is captured and ignored.
+     * ⚠️ engine.Logger.SetLogTarget is a process global and xUnit runs collections in
+     * parallel, so a capture installed here also receives whatever another test class is
+     * logging at that moment. Matching on "a fragment naming its own cluster", which is
+     * what this used to rely on, is not enough for an assertion that a line is ABSENT:
+     * the seeds are shared, so a flag-ON city generated concurrently under the same
+     * cluster name writes the very line a flag-off test is asserting it never sees. That
+     * is a gate that fails at random rather than one that fails when something is wrong.
+     *
+     * A test body runs on one thread and generation here is synchronous on it, so the
+     * capturing thread's id is exactly the filter that is wanted.
      */
     internal sealed class LogCapture : global::engine.ILogTarget, IDisposable
     {
         private readonly List<string> _lines = new();
         private readonly object _lo = new();
+        private readonly int _threadId = Environment.CurrentManagedThreadId;
 
         internal LogCapture() => global::engine.Logger.SetLogTarget(this);
 
         public void AddLogEntry(in global::engine.Logger.Level level, in string logEntry)
         {
+            if (Environment.CurrentManagedThreadId != _threadId)
+            {
+                return;
+            }
+
             lock (_lo)
             {
                 _lines.Add($"{level}|{logEntry}");

@@ -7,8 +7,12 @@ deliberately moves a baseline.** **WP-B2 is DONE (2026-09-05, §9).**
 **WP-B3b is DONE (2026-09-05, §11) — structures are placed.**
 **The relaxation converges (2026-09-06, §12), which re-measured every number above it.**
 **WP-B4 is DONE (2026-09-06, §13) — the crossing has to be worth lifting: 20 structures
-across the seven pinned seeds on the shipped terrain, and the flag is still off. WP-B5 is
-unblocked; two decisions in §13.2 and §13.4 are the owner's.**
+across the seven pinned seeds on the shipped terrain, and the flag is still off. Two
+decisions in §13.2 and §13.4 are the owner's.**
+**WP-B5 is DONE (2026-09-06, §14) — a deck and its ramps are absent from the block graph,
+a structure's footprint is excluded from the estate it now stands in, and two structures
+may not cross. Flag off AND flag on, not one baseline byte moved. WP-B6 is unblocked and
+is the only thing left in Phase B.**
 **Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s).
 
 ---
@@ -301,13 +305,26 @@ The plan's original tables, kept because §13 answers them one by one:
 | B4.4 | Crossing angle: an oblique crossing separates. **This resurrects a finished thought that was abandoned.** | ⚠️ Resurrected, and **it says the opposite of what this line says it says** - the abandoned code discarded the near-PARALLEL case. §13.4 has both readings and both counts. |
 | B4.5 | Every predicate has a positive control: `if (false)` around any of them must fail a test. | ✅ Twenty-two mutations, one survivor - §13.8. |
 
-### WP-B5 / B6 — blocks / turn it on
+### WP-B5 — blocks — ✅ **DONE 2026-09-06 (§14)**
 
-Unchanged in intent. B5 adds the structure-footprint
-exclusion and the two-decks rule. B6 records that the `DbVersion` bump **deletes the whole
+| AC | criterion | how it is met |
+|---|---|---|
+| B5.1 | A `Ramp`/`Bridge`/`Tunnel` is absent from the block graph, and blocks merge across a lifted corridor. | ✅ `BlockGraph.IsBlockEdge` names the three kinds; the trace refuses to START on one and refuses to LEAVE a junction along one, and a mutation that removes either half alone is caught by a different set of tests. |
+| B5.2 | The block census before and after, per city — **what the merge costs**. | ✅ §14.1. ⚠️ **The block count goes UP on four of seven flat cities**, because the faces the old trace discarded for `hasNullSection` come back and outnumber the merges. |
+| B5.3 | Three properties asserted, not counted: no delimiter on a structure or at `Level != 0`, no block containing a junction in its interior, no self-intersecting block. | ✅ §14.2 — and ⚠️ **the second one is not true of the shipped city**, so it is asserted on the block graph's 2-core instead, which is exactly the junctions on a cycle. |
+| B5.4 | A structure-footprint exclusion on the estate, and **measure what it moves**. | ✅ §14.4. 39 of 229 buildings in the flat cities stood on a structure's carriageway, worst by 5841 m²; zero after. It moves shop fronts and no buildings. |
+| B5.5 | The two-decks rule decided and costed. | ✅ **Refuse** — level 2 needs 179.7 m of arm against a longest stroke of 179.2 m anywhere, so `ArmTooShort` would refuse it regardless (§14.5). Cost: **0 corridors**, gated by fixtures both ways round. |
+| B5.6 | Flag off: every baseline byte-identical; `StreetCostTests` in its gate; TALE 200/200. | ✅ And flag ON too — WP-B5 changes nothing about the network itself. 1613 xUnit against 1532, TALE 200/200. |
+
+### WP-B6 — turn it on
+
+Unchanged in intent. B6 records that the `DbVersion` bump **deletes the whole
 `worldcache`** (cluster list included — verify it regenerates identically) and that
 **save games resolve strokes by id with `FirstOrDefault`**, so a regenerated network
-silently resolves the same id to a different stroke.
+silently resolves the same id to a different stroke. §14.9 adds two consumers that are
+still wrong with the flag on: TALE makes a location on every deck end, and
+`GenerateNavMapOperator` draws a pedestrian crossing that pairs an ordinary arm with a
+ramp.
 
 ---
 
@@ -1707,3 +1724,300 @@ test and the iteration guard, which is what mutation 23 is about.
   and it is the first thing an arterial ruleset would change.
 - **A structure is still one crossing, one deck, no slip roads**, and everything in §10.8,
   §11.12 and §12.10 is untouched by this round.
+
+---
+
+## 14. WP-B5 as built (2026-09-06) — blocks, and six things the plan and the brief got wrong
+
+Blocks are traced over the ground network only. **Flag off, nothing moved**:
+`street-fingerprints.json`, `street-fingerprints-gradesep.json`, `street-geometry.json`,
+`street-cost-baseline.json` and `street-relaxed-heights.json` are byte-identical to
+`095dc891`, TALE is 200/200, and 1613 xUnit against 1532 before. **Flag on, not one
+fingerprint moved either** — see §14.6, which is itself one of the findings.
+
+### 14.1 THE HEADLINE — what the merge costs, and ⚠️ IT IS NOT A COST
+
+§3c promised a number for "blocks merge across a lifted corridor" and nobody had produced
+one. Quarters per city, on the WP-B4 network, before and after this work package:
+
+| seed | flat, before → after | terrain, before → after |
+|---|---|---|
+| `seed000@500` | 2 → **2** | 3 → **3** |
+| `seed011@500` | 3 → **3** | 3 → **3** |
+| `Yelukhdidru@400` | 0 → **0** | 0 → **0** |
+| `Yelukhdidru@800` | 8 → **7** | 11 → **11** |
+| `seed000@1500` | 54 → **61** | 85 → **85** |
+| `seed017@2400` | 152 → **165** | 232 → **233** |
+| `Yelukhdidru@3000` | 264 → **282** | 378 → **379** |
+
+⚠️ **The count goes UP on four of the seven flat cities and never down by more than one**,
+which is the opposite of what "blocks merge" sounds like and of what §11.6 predicted when
+it recorded 445 → 382 on `Yelukhdidru@3000`. Two effects, and the second is the larger:
+
+- a lift **does** merge the two blocks either side of its corridor — that is real, and it
+  is why `Yelukhdidru@800` loses one;
+- but tracing straight **through** a ramp produced faces that were then discarded whole,
+  silently, for `hasNullSection` — the trace wandered onto a deck, reached a deck end with
+  one arm, and threw the face away. Those blocks come back.
+
+So the honest statement is not "the merge costs N blocks". **Two opposite effects act on
+the same count and the recovery is the larger of the two**, and nothing in the block count
+alone can separate them — what says the merge is real is that no block runs along a
+structure any more (§14.2), not that the count went down. Estates track quarters exactly
+(one estate per block, always). Buildings and shops, same cities, before → after:
+
+| seed | flat buildings | flat shops | terrain buildings | terrain shops |
+|---|---|---|---|---|
+| `seed000@500` | 2 → 2 | 0 → 0 | 3 → 3 | 51 → 51 |
+| `seed011@500` | 3 → 3 | 83 → 83 | 3 → 3 | 83 → 83 |
+| `Yelukhdidru@400` | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| `Yelukhdidru@800` | 6 → 6 | 301 → **251** | 7 → 7 | 389 → 389 |
+| `seed000@1500` | 50 → **57** | 558 → **914** | 81 → 81 | 1554 → **1525** |
+| `seed017@2400` | 74 → **80** | 922 → **1050** | 119 → **118** | 2076 → 2076 |
+| `Yelukhdidru@3000` | 77 → **81** | 1088 → **1273** | 111 → 111 | 1869 → **2023** |
+
+For reference, the same seven cities with the flag OFF — which is a different city
+altogether (§13.2), not a comparison: 3/2/0/10/82/221/445 quarters, 3/2/0/3/81/134/148
+buildings, 69/40/0/113/1336/3015/2904 shops. Those are unchanged to the last unit and are
+now asserted per seed by `TheFlagOffBlockCensusIsUnchanged`, because no baseline file
+records a block census and `street-geometry.json` covers only five of the seven.
+
+### 14.2 The three properties, asserted
+
+The brief's requirement, and each of them failed on the fixture that settled §3c.
+
+| property | flag off | flag on, flat | flag on, terrain |
+|---|---|---|---|
+| a delimiter on a `Ramp`/`Bridge`/`Tunnel` | 0 | **0** (was 118 in 24 blocks on `Yelukhdidru@3000`) | **0** (was 31 in 9) |
+| a delimiter at `Level != 0` | 0 | **0** (was 78) | **0** (was 20) |
+| a block whose outline crosses itself | 0 | **0** (was 10 / 8 / 1) | **0** (was 4 / 2) |
+| a junction on a CYCLE inside a block | 0 | **0** | **0** |
+
+⚠️ **The third of those needed re-stating before it could be asserted, and the brief's
+phrasing — "no block contains a junction in its interior" — is NOT TRUE and never was.**
+Measured on the flag-OFF cities before touching anything: `Yelukhdidru@3000` has four
+junctions inside three of its blocks and `seed017@2400` two inside two. They are **dead-end
+spurs whose own face was discarded for `hasNullSection`**, one of them a two-armed bend on
+a two-stroke stub — pre-existing, unrelated, and a gate phrased the brief's way would have
+failed on the shipped city before any structure existed. Trap 3 of the brief, in a place
+the brief did not expect it.
+
+Two further kinds of junction stand inside a block legitimately once structures exist: a
+**deck end**, which carries no block edge at all and is inside the merged block by
+construction — that is what a viaduct standing in a block means — and the **dead-end
+spurs** above, of which the flag-on cities simply have more.
+
+So the property that is both true and strong is **the block graph's 2-CORE**: peel every
+junction with fewer than two block-graph arms until none is left, and what remains is
+exactly the junctions that lie on a cycle. **No block may swallow one of those**, because
+that is a road the face jumped over instead of turning at — which is precisely §3c's
+sixteen-corner face traversing the ground road on both sides. Zero on all seven seeds,
+both flags, both grounds, with the 2-core running 7 to 1201 junctions.
+
+### 14.3 ⚠️ THE FINDING: the corner a block turns at is NOT in the section map
+
+`QuarterGenerator` asked `StreetPoint.GetSectionPointByStroke` for each corner, and that
+map is keyed on pairs of arms **adjacent in the junction's section array**. The section
+array is the junction CAP — and a ramp leaving a foot has a carriageway, so it is in it.
+
+So at every ramp foot the two ordinary arms a block turns between are **not adjacent
+there**, the lookup misses, and `hasNullSection` throws the block away. Skipping structures
+in the walk without noticing this would have discarded a block at every foot in the city —
+silently, with a `Trace`, presenting as "there are fewer blocks now", which is exactly what
+this work package was expected to produce anyway. It is §11.4's shape one more time: a
+refusal that looks like a result.
+
+The corner is the **mitre of the two arms the block actually turns between**, and it needs
+no new trigonometry: `StreetPoint.SectionPointBetween` is the expression
+`_computeSectionArrayNoLock` was already using, hoisted out of its loop and made public, so
+the section array is now filled **from it**. Where the two arms are adjacent — every
+junction of every flag-off city — it is therefore the same float, by construction rather
+than by agreement, and that is asserted as exact equality over every adjacent pair of every
+junction of the seven cities.
+
+And the "no corner here" rule moves with it: it is **fewer than two BLOCK arms**, not
+"the key is missing". Measured before relying on it, over the seven flag-off cities: the
+number of junctions with an empty section array **equals** the number with fewer than two
+arms, exactly, on every seed. So flag off the two rules are the same rule.
+
+### 14.4 The exclusion: the structure ends up inside the block, and something builds on it
+
+§3c's first gap. The estate is the block outline, `_createBuildings` insets it by the
+pavement width, and with the corridor merged the ramps and the deck are inside it.
+Measured with the merge in place and the exclusion not yet written:
+
+**39 of 229 buildings in the seven flat cities stood on a structure's carriageway** —
+1 / 0 / 0 / 0 / 12 / 12 / 14 per seed, the worst overlapping by **5841 m²** — and 6 of 323
+on the shipped terrain, worst 1885 m². A building under a deck 8 m up, or straddling a
+ramp.
+
+`BlockGraph.ExcludeStructures` subtracts each structure member's carriageway, widened by
+**the block's own `SidewalkWidth`** — the same number the estate is already inset by, so
+the strip left beside a ramp is the strip left beside any other road, and no new constant
+is introduced. After: **zero overlap, by any area, on every building of every city**.
+
+⚠️ **What it moves is SHOPS and not buildings.** Not one building is removed - the cut
+reshapes the footprint and `mn` never falls to zero - so the counts in §14.1 change only
+through the shop fronts a shorter perimeter carries: −50 on `Yelukhdidru@800`, −140 on
+`seed000@1500`, −82 on `seed017@2400`, −182 on `Yelukhdidru@3000` flat; −22 and −66 on the
+terrain. That is the whole measurable cost of the exclusion.
+
+⚠️ **And it exposed something older.** `_createBuildings` concatenates **every polygon** of
+the inset solution into one ring — its own TXWTODO says so and it has done it since it was
+written. Harmless while an inset of a simple polygon yields at most one piece; nonsense the
+moment a subtraction splits a block in two, which produces a single self-crossing outline
+and a building designed on it. `ExcludeStructures` returns at most one polygon, the
+largest, chosen where the split happens. Not fixed for the general case: an inset that
+splits on its own still concatenates.
+
+The no-op path is an **identity**: given nothing to exclude, `ExcludeStructures` returns
+the very list it was handed, so a flag-off city runs the code it always ran rather than an
+equal-looking rebuild of it.
+
+### 14.5 ⚠️ The two-decks rule — REFUSE, and the arithmetic decides it rather than taste
+
+§3c's second gap: two decks over the same area are both at `Level = 1`, so they cross
+without meeting and no junction joins them. The plan offered refusal or sending one to
+level 2.
+
+**Level 2 is not an alternative on this ruleset, and it is one line of arithmetic.** The
+climb doubles, so `OverpassBuilder.RampLengthFor` asks for `2·DeckHeight / MaxRampGrade` =
+**160 m** of ramp, and with the deck's overhang the corridor needs **179.7 m** of arm at
+each end. **The longest stroke in ANY of the seven pinned cities with the flag on is
+179.2 m** — one stroke, in `Yelukhdidru@400`, a city that places no structure at all.
+`ArmTooShort` would refuse every level-2 corridor there is, so refusing outright is the
+same outcome named honestly. Pinned by `ALevelTwoDeckWouldNeedMoreArmThanAnyPinnedCityHas`
+so that a ruleset which starts laying longer streets makes this decision visible again.
+
+`StructureRefusal.CrossesAnotherStructure` refuses a candidate whose chain crosses, in
+plan, any member of an accepted one. Every member against every member, not just deck
+against deck: a bridge deck crossing another structure's ramp is the same defect, because
+the ramp climbs through the deck's level somewhere along its run and "which is higher
+there" has no answer. It is judged with the claim checks rather than with WP-B4's three,
+because it is a property of what an earlier corridor was allowed to build.
+
+⚠️ **IT REFUSES NOTHING. not one corridor in any of the seven seeds, flat or on the
+shipped terrain, and none of the 402 structure strokes the flat cities carry crosses
+another.** §9's *"a rule can be invisible to unlimited real data"* for the third time in
+this phase — and unlike §13.2's weight floor, which is invisible because the ruleset makes
+no alleys, this one is invisible because `OverlapsAStructure` and `_rampsAreClear` between
+them already keep two structures apart in every case the ruleset produces. It is gated by a
+fixture both ways round (two corridors whose decks cross: one built, one refused; the same
+fixture with one corridor slid 300 m east: both built), and the invisibility is itself
+asserted so that the day it starts costing something, the cost is visible.
+
+**No structure count changed anywhere** — 134 flat, 20 on terrain, exactly as WP-B4 left
+them.
+
+### 14.6 What moved, and what did not
+
+**Flag off: not one byte**, and now also not one block, estate, building or shop front.
+
+⚠️ **Flag ON: not one byte either, and that is worth saying.** WP-B5 changes only what is
+traced over the finished network — the network itself, its structures, its heights and its
+grades are untouched — so `street-fingerprints-gradesep.json` is unmoved on all eight
+seeds. Every previous work package in this phase moved it. **`ClusterStorage.DbVersion` is
+NOT bumped**; that is WP-B6's.
+
+### 14.7 The mutations
+
+**Twenty-three driven; no survivors in the final state — but THREE survived their first
+gate, and each of the three named something.**
+
+| # | mutation | failures |
+|---|---|---|
+| 1 | `IsBlockEdge` always true — structures back in the block graph | 18 |
+| 2 | `IsBlockEdge` is "is a `Street`" — §0.7's `ConnectorBridge` trap | 8 |
+| 3 | ⚠️ the start-loop filter removed | **survived**, then 6 — below |
+| 4 | the `GetNextAngle` filter removed | 22 |
+| 5 | `ArmCountOf` counts every arm, not the block ones | 3 |
+| 6 | the block corner's two arms swapped | 30 |
+| 7 | the section array's two arms swapped | 67 |
+| 8 | the structure-footprint exclusion deleted | 8 |
+| 9 | the SMALLEST remaining piece of a split estate is kept | 5 |
+| 10 | `ExcludeStructures` does not filter non-structures | 1 |
+| 11 | a footprint is the bare carriageway, no margin | 6 |
+| 12 | a footprint reaches sideways only, not along | 5 |
+| 13 | no structure is ever found near a block | 8 |
+| 14 | every structure of the city is offered to every block | 2 |
+| 15 | two structures may cross | 1 |
+| 16 | ⚠️ only the two DECKS are compared | **survived**, then 1 — below |
+| 17 | the crossing check ignores what an earlier chain built | 1 |
+| 18 | `BlockGraph.Accept` is not `IsBlockEdge` | 25 |
+| 19 | the walk's filter is applied to the outgoing arms only | 30 |
+| 20 | the walk's filter is applied to the incoming arms only | 35 |
+| 21 | the block trace gathers no structures at all | 8 |
+| 22 | a junction with one block arm still gets a corner | 63 |
+| 23 | `ChainsAreClear` drops its shared-junction test | 1 |
+| — | ⚠️ the structure list cached in a field and not refreshed | **survived, and the field was DELETED** — below |
+
+**3 — refusing to START a trace on a structure survived, and the reason is worth having.**
+The walk goes out along the ramp, finds no block arm at the deck end, turns round, arrives
+back at the junction it started from — and `spNext == spStart` **breaks the loop there**,
+before any ordinary stroke has been traversed. So the face is discarded and nothing else
+is harmed; the guard is a guard and not a mechanism. It is killed by
+`TheBlockTraceNeverTouchesAStructure`, which reads `Stroke.TraversedAB`/`TraversedBA` —
+the trace's own record of where it went — rather than inspecting what it produced.
+
+**16 — comparing only the two decks survived, and no fixture built out of two whole
+corridors can kill it.** Making two corridors cross at all crosses them deck to deck,
+because a deck is the middle of its own chain; a deck crossing another structure's *ramp*
+needs a shape the placer cannot be talked into building. `ChainsAreClear` is `internal` for
+that reason and is driven directly, with **two** cases — my deck across their ramp and my
+ramp across their deck — because either one alone leaves the other alive (§7q).
+
+**⚠️ The one that could not be killed, so the code went instead.** The structure list was a
+field filled in `Reset()`, and a mutation that dropped the reset passed everything: the one
+production call site and the test harness both construct a fresh `QuarterGenerator`, so no
+test in this repository can reach a stale field. Rather than write a test for a call
+nothing makes, the field is gone — the list is a local gathered at the top of `Generate()`
+and passed down — and the mutation is no longer expressible. Same decision as §13.8's dead
+branch, one step further: there, unreachable code was deleted; here, unreachable *state*
+was.
+
+**⚠️ And the new tests found a pre-existing flake rather than causing one.**
+`LogCapture` installs itself through `engine.Logger.SetLogTarget`, which is a process
+global, while xUnit runs collections in parallel — so
+`AFlagOffCityHasNoPlacementPassAtAll`, which asserts a line is **absent**, sees whatever a
+concurrently generated FLAG-ON city of the same seed name is writing at that moment. Its
+own class comment says assertions "look for a fragment naming their own cluster", which is
+sufficient for presence and not for absence. It now keeps only what was written on the
+capturing thread. That is a gate that used to fail at random instead of when something was
+wrong.
+
+### 14.8 What the plan and the brief got wrong
+
+- ⚠️ **"blocks MERGE across a lifted corridor" — true, and the block count goes UP** (§14.1).
+  What the merge costs is not what the block count does.
+- ⚠️ **§11.6's "quarters go 445 → 382 on `Yelukhdidru@3000`"** was measured with the trace
+  running through ramps and decks, so it is not a measurement of anything that now exists.
+  On the WP-B4 network the same city goes 264 → 282.
+- ⚠️ **The brief's "no block contains a junction in its interior"** is not true of the
+  shipped city and never was — §14.2. Six junctions across two flag-off seeds.
+- ⚠️ **Neither the plan nor the brief mentions the SECTION MAP**, and skipping structures in
+  the walk without it would have discarded a block at every ramp foot, silently — §14.3.
+- ⚠️ **"§3c's fix is `GetNextAngle`"** is half of it. Refusing to START a trace on a
+  structure is the other half, and a mutation that removes either one alone is caught by a
+  different set of tests.
+- ⚠️ **"Two decks over the same area are both at `Level = 1`, so `IntersectionConstraint`
+  splits one at level 1."** `IntersectionConstraint` runs during the drain and placement
+  runs after it, so no candidate street ever meets a deck and that path cannot be reached.
+  The exposure is entirely between two PLACED structures, which is a different rule in a
+  different file — and it fires on nothing.
+
+### 14.9 Found and NOT fixed
+
+- **`SpatialModel.ExtractFrom` still makes a TALE `street_segment` location per
+  `StreetPoint`, deck ends included**, and even adds `LevelElevation` to their height, so a
+  flag-on city offers NPCs a location standing on a bridge deck with no way up to it. §5
+  listed it as a consumer to check; checked, confirmed, and it belongs to WP-B6.
+- **`GenerateNavMapOperator` still draws a pedestrian crossing per junction** from the
+  section map, which at a foot pairs each ordinary arm with the RAMP. Not touched here;
+  §5's third bullet, still open.
+- **`_createBuildings` still concatenates every polygon of its inset**, for the case where
+  the inset itself splits a block (§14.4).
+- **A merged block is bigger, and building height is derived from `minHouseSide`**, so a
+  lifted corridor makes the buildings beside it taller. Measured only as the counts in
+  §14.1; nobody has looked at whether it looks right, and nothing will until the flag goes
+  on.
+- **Everything in §10.8, §11.12, §12.10 and §13.9** is untouched by this round.
