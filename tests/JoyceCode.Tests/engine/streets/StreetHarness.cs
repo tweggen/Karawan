@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using engine.streets;
@@ -48,18 +49,91 @@ internal static class StreetHarness
      *     Ruleset to grow with, or null for the built-in defaults.
      */
     internal static StrokeStore Generate(string idString, float size, ExpansionRuleTable ruleTable)
+        => Generate(idString, size, ruleTable, gradeSeparation: false, onCandidatePopped: null);
+
+
+    /**
+     * The same cluster with grade separation enabled: the candidate queue drains
+     * heaviest first (WP-B2) and the finished network then has structures placed on it
+     * (WP-B3b).
+     *
+     * The ground under it is FLAT here, which is not a shortcut - it is the flat game
+     * with the flag on, which §5 says is a world the setting is allowed to describe. It
+     * is also the strictest gate for placement, because on level ground every corridor's
+     * deck grade is zero and nothing is refused for it, so the geometry rules stand
+     * alone. What the shipped terrain does to the same corridors is measured separately,
+     * over ShippedTerrain, in StructurePlacementTests.
+     */
+    internal static StrokeStore GenerateHeavyFirst(string idString, float size)
+        => Generate(idString, size, null, gradeSeparation: true, onCandidatePopped: null);
+
+
+    /**
+     * ...and the generator that built it, for a caller that wants its placement report.
+     */
+    internal static (StrokeStore Store, Generator Generator) GenerateHeavyFirstReporting(
+        string idString, float size, Func<StreetPoint, float> groundHeightOf)
     {
         var clusterDesc = MakeCluster(idString, size);
-        var strokeStore = new StrokeStore(size);
+        var store = _generate(clusterDesc, idString, null, true, null, groundHeightOf,
+            out var generator);
+        return (store, generator);
+    }
+
+
+    /**
+     * @param gradeSeparation
+     *     Whether this run may build structures, and - WP-B2 - orders its queue by
+     *     weight. Exactly what ClusterDesc._generateStrokes passes in from the
+     *     joyce.EnableGradeSeparation setting.
+     * @param onCandidatePopped
+     *     Observer called with each candidate as it leaves the generator's queue and
+     *     everything still waiting behind it. The heavy-first ordering is a property of
+     *     that order and of nothing else visible from outside.
+     */
+    internal static StrokeStore Generate(
+        string idString, float size, ExpansionRuleTable ruleTable, bool gradeSeparation,
+        Action<Stroke, IReadOnlyList<Stroke>> onCandidatePopped)
+    {
+        var clusterDesc = MakeCluster(idString, size);
+        return _generate(
+            clusterDesc, idString, ruleTable, gradeSeparation, onCandidatePopped,
+            groundHeightOf: null, out _);
+    }
+
+
+    /**
+     * @param groundHeightOf
+     *     Ground under a junction for the placement pass, or null to mirror what
+     *     ClusterDesc._generateStrokes does with a FLAT cluster - which is what
+     *     MakeCluster builds, AverageHeight and all.
+     */
+    private static StrokeStore _generate(
+        ClusterDesc clusterDesc, string idString, ExpansionRuleTable ruleTable,
+        bool gradeSeparation, Action<Stroke, IReadOnlyList<Stroke>> onCandidatePopped,
+        Func<StreetPoint, float> groundHeightOf, out Generator generator)
+    {
+        var strokeStore = new StrokeStore(clusterDesc.Size);
 
         var streetGenerator = new Generator();
         streetGenerator.SetAnnotation($"Cluster {clusterDesc.Name}");
         streetGenerator.Reset("streets-" + idString, strokeStore, clusterDesc);
         streetGenerator.RuleTable = ruleTable;
+        streetGenerator.EnableGradeSeparation = gradeSeparation;
+        streetGenerator.OnCandidatePopped = onCandidatePopped;
+
+        /*
+         * Exactly ClusterDesc._generateStrokes' own line, so that the harness cannot
+         * drift into testing a lookalike of the height the game would supply.
+         */
+        streetGenerator.GroundHeightOf = groundHeightOf
+            ?? StreetHeightSources.UnrelaxedOf(new FlatStreetHeight(clusterDesc)).GroundHeightAt;
+
         StreetSeeds.ApplyBounds(streetGenerator, clusterDesc);
         StreetSeeds.AddTo(streetGenerator, clusterDesc, clusterDesc.Rnd);
         streetGenerator.Generate();
 
+        generator = streetGenerator;
         return strokeStore;
     }
 

@@ -6,7 +6,7 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7r, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-05 (§7s).
+**Last updated:** 2026-09-06 (WP-B6 — grade separation is ON and Phase B is complete, §15).
 
 ---
 
@@ -84,6 +84,54 @@ and it is *right* about that case; the damage was `geom.Line.IntersectInfinite` 
 significant digit in absolute world coordinates. **`street-geometry.json` moved for all five
 cities and is the first geometry baseline this work stream has rewritten.** See **(l)** below
 and §7q.
+
+**Cleared 2026-09-06, and it is the biggest single move this page has recorded:** the
+**gradient relaxation never converged**. `GradeRelaxer` spent all 32 of its sweeps on every
+generated city and `RelaxedStreetHeight` threw away the return value that said so, so since
+the flip every city in the game was standing on an unconverged relaxation — **8 to 743
+strokes per city steeper than their own weight permits, the worst at 31.2 % against a policy
+maximum of 14 %**. ⚠️ **It was not oscillating and nothing was in conflict**: it decreased
+monotonically on every sweep of every seed and simply needed 82 to 1106 of them. ⚠️ **And the
+exit test was measuring the wrong quantity** — the size of the last correction rather than
+whether any road was still too steep — which is why "converged" and "buildable" had come
+apart. The pass is a successive projection now (11–80 sweeps, budget 256, and 3.3× faster
+than the sweep it replaces), exhausting the budget is a `Warning` naming the city, and
+**every junction of every terrain city moved: median 0.29–1.21 m, p95 1.3–7.2 m, worst
+16.5 m, with mean drift within 6 cm of zero**. The flat city did not move at all. Full
+write-up in **Phase B §12**; `STREETS-3D-TOPOLOGY.md` §7a's damping bullet is superseded
+there.
+
+**Cleared 2026-09-06, the last work package before the flag can be turned on:**
+**city blocks are traced over a network that is no longer planar.** A deck and the road
+under it cross where they do not meet, and the block trace followed the deck: on the
+flag-on cities that was 118 block edges lying on `Ramp`/`Bridge`/`Tunnel` strokes, 78 block
+corners standing on junctions at `Level = 1`, and ten self-crossing block outlines in
+`Yelukhdidru@3000` alone. A structure is out of the block graph now and every one of
+those counts is zero. ⚠️ **Three things this ledger and the plan had wrong.** *"The blocks merge, so there
+are fewer of them"* — **the block count goes UP** on four of seven flat cities, because
+tracing through a ramp used to produce faces that were then discarded whole and silently
+for `hasNullSection`, and those come back. *"No block contains a junction in its interior"*
+— **not true of the shipped city and never was**: `Yelukhdidru@3000` has four such
+junctions today, all on dead-end spurs, so the property that can actually be asserted is
+about the block graph's 2-core. And the corner a block turns at **is not in the section
+map** at a ramp's foot, because the map pairs arms that are adjacent in the junction CAP
+and a ramp's carriageway is part of that cap — skipping structures without noticing would
+have thrown away a block at every foot in the city. Nothing moved, with the flag off **or
+on**. Full write-up in **Phase B §14**.
+
+**⚠️ THE FLAG IS ON, AND THE CITY THE GAME BUILDS IS A DIFFERENT CITY (2026-09-06,
+Phase B §15).** `joyce.EnableGradeSeparation` defaults to **true** and
+`ClusterStorage.DbVersion` is **1040**, which deletes every cached world. The shipped world
+gets **737 structures — 643 bridges and 94 tunnels — in 60 of its 70 cities**, 8 to 23 per
+large city, every city still in one component. It is **not the old city with bridges added**:
+the heavy-first queue builds a city of arterials with no stroke at the ruleset's minimum
+weight in it (§13.2), so every block, building, shop, TALE location and nav lane moves. An
+**existing save game silently resolves the same junction id to a different junction** — 429
+of 1379 ids simply gone on `Yelukhdidru@3000`, the median survivor 1430 m away — because
+`StreetPointConverter` looks them up with `FirstOrDefault`; invalidating saves means bumping
+`DBStorage.DbVersion`, which deletes them, and that is the owner's call. **A deck is drawn as
+a road in the air with nothing under it and no slip roads** — the intended floating slab,
+Phase C's subject. Full write-up in **Phase B §15**.
 
 **Part 1 IS NOW CLEAR, with one deliberate remainder: what an intercity line IS.** The
 intercity tram rides its own track; the track's own shape - graded embankment, viaduct, or
@@ -1273,10 +1321,32 @@ NPCs standing at doors in the flat city.**
 
 # Part 3 — Not elevation work, but open and worth knowing
 
-- **Phase B (the crossing policy) has not been started.** `StreetLevels.ElevationOf(stroke.A.Level)`
-  is already in the height expression and **no shipped ruleset produces a non-zero `Level`** —
-  that is the hook for bridges, tunnels and multi-level junctions, i.e. the layered 3D this
-  whole work stream was the prerequisite for.
+- ✅ **Phase B (the crossing policy) is COMPLETE and the flag is ON (2026-09-06).**
+  WP-B0 … WP-B6 are all done. `joyce.EnableGradeSeparation` defaults to true and
+  `ClusterStorage.DbVersion` is 1040. The shipped world gets **737 structures** (643
+  bridges, 94 tunnels) across 70 cities; the seven pinned seeds get 20, so reading the
+  phase off them understates the world thirty-five fold. Full history in
+  [`STREETS-3D-PHASE-B-CROSSING-POLICY.md`](STREETS-3D-PHASE-B-CROSSING-POLICY.md)
+  §7 … §15.
+- ⚠️ **Open after the flip, all recorded with numbers in §15.13**: a ramp may come down at a
+  dead end (one junction in the pinned seeds); two deck ends of forty are targeted onto the
+  road underneath, because `NavCluster.TryCreateCursor` has no notion of level; a pedestrian
+  crossing at a ramp foot passes over the ramp mouth, at most 1.26 m above it;
+  `DBStorage._readCollection` **drops any collection it cannot deserialise, silently**, and
+  `ClusterDesc` is one — so the cluster list has never been cached at all; and an existing
+  save resolves junction ids to different junctions.
+- ⚠️ **Two WP-B4 decisions are the OWNER's and are written up in §13.2 and §13.4**, with
+  numbers rather than opinions: whether a *weight ratio* should refuse a crossing at all
+  (it costs 19 → 10/8/6/0 structures at ratios of 1.0001/1.05/1.1/1.25, and the ruleset's
+  crossings only ever differ by 1.00 … 1.37), and which way round the *obliquity* rule
+  points (as shipped it refuses crossings within a quarter turn of parallel, which is what
+  the abandoned code it resurrects actually did; the plan's own wording would refuse
+  everything squarer and leaves ONE structure in the world).
+- ⚠️ **`joyce.EnableGradeSeparation` changes what a city is MADE OF, not just its order.**
+  With it on the heavy candidates drain first and fill the space, so `Yelukhdidru@3000`
+  goes from 1875 strokes with 1308 of them at the ruleset's minimum weight to 1467 strokes
+  with **none** at it and a lightest weight of 0.786. Anything reasoning about the weight
+  distribution has to say which city it means — §13.2.
 - **Debug filter migration** is ~54 % done (307/571 logger calls); ~264 remain.
 - **Routing Phase D**: D2 (multi-objective A* integration) and D4 (behavioural variety) pending.
 - **TALE-SOCIAL Phase D5 tuning**: five concerns documented in

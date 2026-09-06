@@ -279,6 +279,23 @@ public class StreetPoint
      * stroke.
      */
     public Stroke GetNextAngle(in Stroke strokeCurrent, float angle, bool clockwise)
+        => GetNextAngle(strokeCurrent, angle, clockwise, null);
+
+
+    /**
+     * Given the angle from another incoming stroke, find the next outgoing stroke.
+     *
+     * @param accept
+     *     Which arms this walk may leave on, or null for all of them. The block trace
+     *     hands in the block graph's own predicate, so that a face is never followed out
+     *     of a junction along a ramp; see engine.streets.generation.BlockGraph.
+     *
+     *     A filter rather than a second copy of the arithmetic below, because the angle
+     *     arithmetic is what decides which face is being traced and two copies of it is
+     *     how the two come to disagree.
+     */
+    public Stroke GetNextAngle(
+        in Stroke strokeCurrent, float angle, bool clockwise, Func<Stroke, bool> accept)
     {
         lock (_lo)
         {
@@ -313,6 +330,11 @@ public class StreetPoint
             {
                 foreach (var stroke in _listStartingStrokes)
                 {
+                    if (null != accept && !accept(stroke))
+                    {
+                        continue;
+                    }
+
                     var currAngle = geom.Angles.Snorm(stroke.Angle);
                     /*
                      * Note, that we need to use the unsigned angle.
@@ -364,6 +386,11 @@ public class StreetPoint
             {
                 foreach (var stroke in _listEndingStrokes)
                 {
+                    if (null != accept && !accept(stroke))
+                    {
+                        continue;
+                    }
+
                     /*
                      * Note the offset.
                      */
@@ -566,6 +593,64 @@ public class StreetPoint
         return false;
     }
 
+    /**
+     * Where the carriageway edges of two of this junction's arms meet - the corner a
+     * block standing in the wedge between them takes.
+     *
+     * ⚠️ This is the ONE expression for that corner, and it is public because the block
+     * graph needs it for a pair of arms that are NOT adjacent in the section array. A
+     * junction that a structure leaves has the structure's own carriageway between two
+     * of its ordinary arms, so the section array - which is the junction CAP, and the
+     * ramp's carriageway is part of it - pairs each ordinary arm with the ramp and not
+     * with the ordinary arm on the far side of it. The city block turns straight across
+     * that wedge, because a viaduct does not bound a city block (§3c), and its corner is
+     * the mitre of the two arms it actually turns between.
+     *
+     * When the two arms ARE adjacent this returns exactly what GetSectionPointByStroke
+     * returns, by construction rather than by agreement: _computeSectionArrayNoLock
+     * fills the array from this method.
+     *
+     * The two arms' unit directions both point OUT of this junction, and are taken from
+     * the strokes' own cached unit vectors rather than renormalised here, so that the
+     * corner lands on exactly the line every consumer measures against (Stroke.Normal is
+     * the same unit vector rotated).
+     *
+     * The mitre used to be an intersection of the two offset lines through
+     * geom.Line.IntersectInfinite, with an averaged offset substituted whenever the
+     * answer came back further than 63.2 m out. Both halves were wrong: the intersection
+     * is computed in absolute world coordinates and loses every significant digit when
+     * the two arms are nearly collinear - which is when this fires - and testing only the
+     * DISTANCE of the answer cannot notice a cancelled intersection that happens to land
+     * nearby. See engine.streets.generation.SectionMitre and §7q.
+     *
+     * @param prev
+     *     The arm the wedge starts at, in the angle array's own order.
+     * @param curr
+     *     The arm it ends at. The two are NOT interchangeable when they carry different
+     *     widths.
+     */
+    public Vector2 SectionPointBetween(in Stroke prev, in Stroke curr)
+    {
+        Vector2 dp = prev.A == this ? prev.Unit : -prev.Unit;
+        Vector2 dc = curr.A == this ? curr.Unit : -curr.Unit;
+
+        float prevHalfStreetWidth = prev.StreetWidth() / 2.0f;
+        float currHalfStreetWidth = curr.StreetWidth() / 2.0f;
+
+        Vector2 newI = Pos + generation.SectionMitre.OffsetOf(
+            dp, dc, prevHalfStreetWidth, currHalfStreetWidth,
+            generation.SectionMitre.MitreLimit, out bool isClamped);
+
+        if (isClamped)
+        {
+            Trace(_dc, $"StreetPoint {Id}: the mitre between strokes {prev.Sid} and "
+                       + $"{curr.Sid} was cut back to the mitre limit.");
+        }
+
+        return newI;
+    }
+
+
     private void _computeSectionArrayNoLock()
     {
         var myVerbose = false;
@@ -615,41 +700,7 @@ public class StreetPoint
                 throw new InvalidOperationException($"StreetPoint.getSectionArray(): Mismatch of angle array.");
             }
 
-            /*
-             * The two arms' unit directions, both pointing OUT of this junction. Taken from
-             * the strokes' own cached unit vectors rather than renormalised here, so that
-             * the section point lands on exactly the line every consumer measures against
-             * (Stroke.Normal is the same unit vector rotated).
-             */
-            Vector2 dp = prev.A == this ? prev.Unit : -prev.Unit;
-            Vector2 dc = curr.A == this ? curr.Unit : -curr.Unit;
-
-            /*
-             * Copy paste from generate street operator.
-             */
-            float prevHalfStreetWidth = prev.StreetWidth() / 2.0f;
-            float currHalfStreetWidth = curr.StreetWidth() / 2.0f;
-
-            /*
-             * The mitre of the two carriageway edges, bounded relative to the street width.
-             *
-             * This used to intersect the two offset lines through geom.Line.IntersectInfinite
-             * and substitute an averaged offset whenever the answer came back further than
-             * 63.2 m out. Both halves were wrong: the intersection is computed in absolute
-             * world coordinates and loses every significant digit when the two arms are
-             * nearly collinear - which is when this fires - and testing only the DISTANCE of
-             * the answer cannot notice a cancelled intersection that happens to land nearby.
-             * See engine.streets.generation.SectionMitre and §7q.
-             */
-            Vector2 newI = Pos + generation.SectionMitre.OffsetOf(
-                dp, dc, prevHalfStreetWidth, currHalfStreetWidth,
-                generation.SectionMitre.MitreLimit, out bool isClamped);
-
-            if (isClamped)
-            {
-                Trace(_dc, $"StreetPoint {Id}: the mitre between strokes {prev.Sid} and "
-                           + $"{curr.Sid} was cut back to the mitre limit.");
-            }
+            Vector2 newI = SectionPointBetween(prev, curr);
 
             if (myVerbose)
             {

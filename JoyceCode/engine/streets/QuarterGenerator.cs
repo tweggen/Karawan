@@ -120,7 +120,53 @@ namespace engine.streets
         }
 
 
-        private void _createBuildings(in Quarter quarter, in Estate estate)
+        /**
+         * The structure members whose footprint can reach into this block.
+         *
+         * Bounded by the block's own AABB grown by the widest thing a footprint adds to
+         * a carriageway, so that a block nowhere near a structure is not merely
+         * unaffected but does not go through the difference at all - which is what keeps
+         * the "largest polygon" choice in BlockGraph.ExcludeStructures away from blocks
+         * that have no structure to exclude.
+         *
+         * @param structures
+         *     Every ramp, bridge and tunnel in this network - empty in every city built
+         *     with joyce.EnableGradeSeparation off. Handed down from Generate() rather
+         *     than cached in a field, because a field is something a second Generate()
+         *     would have to remember to refresh and nothing would notice if it did not.
+         */
+        private static IEnumerable<Stroke> _structuresIn(
+            Quarter quarter, List<Stroke> structures)
+        {
+            if (0 == structures.Count)
+            {
+                yield break;
+            }
+
+            var aabb = quarter.AABB;
+
+            foreach (var s in structures)
+            {
+                float reach = s.StreetWidth() / 2f + quarter.SidewalkWidth;
+
+                float minX = Single.Min(s.A.Pos.X, s.B.Pos.X) - reach;
+                float maxX = Single.Max(s.A.Pos.X, s.B.Pos.X) + reach;
+                float minY = Single.Min(s.A.Pos.Y, s.B.Pos.Y) - reach;
+                float maxY = Single.Max(s.A.Pos.Y, s.B.Pos.Y) + reach;
+
+                if (maxX < aabb.AA.X || minX > aabb.BB.X
+                                     || maxY < aabb.AA.Z || minY > aabb.BB.Z)
+                {
+                    continue;
+                }
+
+                yield return s;
+            }
+        }
+
+
+        private void _createBuildings(
+            in Quarter quarter, in Estate estate, List<Stroke> structures)
         {
             var v2QuarterCenter = quarter.GetCenterPoint();
 
@@ -177,6 +223,32 @@ namespace engine.streets
                 List<List<IntPoint>> solution2 = new();
 
                 clipperOffset.Execute(ref solution2, -sidewalkWidth);
+
+                /*
+                 * ⚠️ A lifted corridor leaves its ramps and its deck INSIDE this block,
+                 * because the blocks either side of it merged when the structure left the
+                 * block graph. Nothing else here knows that: the estate is the outline,
+                 * the inset above is the building footprint, and a building would be put
+                 * under the deck or across the ramp. So the structure's own carriageway,
+                 * widened by this block's own pavement width, is taken out of the
+                 * footprint before anything is designed on it.
+                 *
+                 * Returns the same list when this block has no structure in it, which is
+                 * every block of every city with joyce.EnableGradeSeparation off.
+                 */
+                solution2 = generation.BlockGraph.ExcludeStructures(
+                    solution2, _structuresIn(quarter, structures), quarter.SidewalkWidth);
+
+                /*
+                 * ⚠️ And one piece even when no structure was involved. The loop below
+                 * concatenates every polygon it is given into a single ring, which is a
+                 * self-crossing outline the moment the inset above splits a pinched block
+                 * in two. Measured: 0 of 763 estates over the seven pinned cities with the
+                 * flag off, 4 of 714 with it on - so this is the same rule ExcludeStructures
+                 * already applies to its own split, applied where the split can also happen
+                 * without it. It returns the same list when there is nothing to choose.
+                 */
+                solution2 = generation.BlockGraph.LargestOf(solution2);
 
                 var strPoints = "";
 
@@ -326,6 +398,9 @@ namespace engine.streets
         {
 
             _strokeStore.ClearTraversed();
+            var structures = _strokeStore.GetStrokes()
+                .FindAll(s => StrokeKinds.IsStructure(s.Kind));
+
             var points = _strokeStore.GetStreetPoints();
             foreach (var spStart in points)
             {
@@ -345,6 +420,17 @@ namespace engine.streets
                 var angleStrokes = spStart.GetAngleArray();
                 foreach (var stroke in angleStrokes)
                 {
+                    /*
+                     * A ramp, bridge or tunnel is not an edge of a city block. Refusing
+                     * to START on one is only half of it - see the GetNextAngle call
+                     * below, which is what stops a face being followed OUT of a foot
+                     * along a ramp and back down the far side of the deck.
+                     */
+                    if (!generation.BlockGraph.IsBlockEdge(stroke))
+                    {
+                        continue;
+                    }
+
                     StreetPoint? spDest = null;
                     // Which direction?
                     var isAlreadyTraversed = false;
@@ -469,7 +555,8 @@ namespace engine.streets
                          * Before we can build the delimiter, we need the next stroke,
                          * because we need the intersection of this and the next stroke.
                          */
-                        var strokeNext = spNext.GetNextAngle(strokeCurrent, followAngle, true);
+                        var strokeNext = spNext.GetNextAngle(
+                            strokeCurrent, followAngle, true, generation.BlockGraph.Accept);
                         if (null == strokeNext || strokeNext == strokeCurrent)
                         {
                             if (_traceGenerate) trace($"QuarterGenerator(): Followed same stroke back because there is no other angle.");
@@ -485,7 +572,35 @@ namespace engine.streets
 
                         var quarterDelim = new QuarterDelim();
                         {
-                            var section = spNext.GetSectionPointByStroke(strokeNext, strokeCurrent);
+                            /*
+                             * The corner where this block turns off strokeCurrent onto
+                             * strokeNext.
+                             *
+                             * ⚠️ NOT GetSectionPointByStroke, and the difference only
+                             * shows once a structure exists. That map is keyed on pairs
+                             * of arms ADJACENT in the junction's section array, and the
+                             * section array is the junction CAP - a ramp leaving a foot
+                             * has a carriageway and is part of it. So at a foot the two
+                             * ordinary arms this block turns between are not adjacent
+                             * there, the lookup misses, and the block would be silently
+                             * discarded as hasNullSection. The corner is the mitre of the
+                             * two arms the block actually turns between, from the one
+                             * expression that answers that; where the two arms ARE
+                             * adjacent - every junction of every city with the flag off -
+                             * it is the same float the map holds, because the map is
+                             * filled from it.
+                             *
+                             * A junction with fewer than two BLOCK arms has no corner, in
+                             * exactly the way a one-armed junction has never had one: the
+                             * section array of such a junction is empty, which is measured
+                             * rather than assumed - over the seven pinned cities the count
+                             * of junctions with an empty section array equals the count
+                             * with fewer than two arms, exactly.
+                             */
+                            Vector2? section =
+                                generation.BlockGraph.ArmCountOf(spNext) < 2
+                                    ? null
+                                    : spNext.SectionPointBetween(strokeCurrent, strokeNext);
                             if (null == section)
                             {
                                 hasNullSection = true;
@@ -558,7 +673,7 @@ namespace engine.streets
                             if (true)
                             {
                                 quarter.AddDebugTag("shallHaveBuildings", "true");
-                                _createBuildings(quarter, estate);
+                                _createBuildings(quarter, estate, structures);
                             }
 
                             quarter.AddEstate(estate);

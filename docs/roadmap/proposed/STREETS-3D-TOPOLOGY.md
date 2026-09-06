@@ -310,11 +310,21 @@ Four decisions worth keeping:
   inversely to its two ends' resistance. That is why arterials stay flat and side streets
   fall away from them, and it is a policy over `Stroke.Weight`, which already carries the
   hierarchy.
-- **Jacobi, with one damping divisor for the whole graph.** Per-junction damping works
-  just as well against oscillation, but then the two ends of a stroke are divided by
-  different numbers, the equal-and-opposite pair stops cancelling, and the network creeps
-  uphill. Measured 1.85 m of drift on a 50 m ridge before the change; a single divisor
-  leaves only the weighting able to move the overall level, which is intended.
+- ⚠️ **~~Jacobi, with one damping divisor for the whole graph.~~ SUPERSEDED 2026-09-06 —
+  see Phase B §12.** The original text read: *"Per-junction damping works just as well
+  against oscillation, but then the two ends of a stroke are divided by different numbers,
+  the equal-and-opposite pair stops cancelling, and the network creeps uphill. Measured
+  1.85 m of drift on a 50 m ridge before the change; a single divisor leaves only the
+  weighting able to move the overall level, which is intended."* Every clause of that is
+  still true — per-junction damping was re-measured and does creep, by up to 1.27 m of mean
+  height on a small city — **and the whole argument was moot, because the sweep it defends
+  never finished.** It needed 82 to 1106 sweeps against a budget of 32, so every
+  terrain-following city in the game was built on an unconverged relaxation with 8 to 743
+  strokes still steeper than their own weight permits. The pass is a **successive
+  projection** now: each over-limit stroke is corrected as it is visited, to exactly its
+  limit, which cannot overshoot and therefore needs no damping divisor at all. It settles
+  in 11 to 80 sweeps against a budget of 256. The cost is that the answer now depends on
+  the (fixed, `Sid`) order strokes are visited in.
 - **A stroke with no starting height is reported, not skipped.** Silently skipping would
   leave exactly the unbuildable grade this pass exists to remove, with nothing in the log.
 

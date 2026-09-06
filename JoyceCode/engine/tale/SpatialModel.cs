@@ -127,6 +127,39 @@ public class SpatialModel
     }
 
 
+    /**
+     * The junctions of a cluster that get a street_segment location.
+     *
+     * ⚠️ A DECK END IS NOT A PLACE. With joyce.EnableGradeSeparation on, a lifted corridor
+     * invents two junctions in the air carrying nothing but a ramp and the deck it holds
+     * up. Nothing corners on them, no pavement reaches them and no pedestrian route
+     * touches them - so a street location there is an NPC standing on a bridge deck with
+     * no way up, scheduled to spend hours of game time on it, and TALE assigns homes and
+     * workplaces to street locations.
+     *
+     * engine.streets.generation.BlockGraph.StandsOnTheGround is the one expression for
+     * "anything may stand here", and it is true of every junction of every city with the
+     * flag off - so this returns exactly the junctions this model has always been built
+     * from. The routes follow on their own: a route needs both of its ends filed as
+     * locations, and a structure member has an end that is not.
+     *
+     * A static of its own because ExtractFrom needs ClusterDesc.StrokeStore(), which
+     * reaches the I container, so nothing in it can be driven from a test - and a rule
+     * nothing can drive is a rule a source scan asserts the NAME of.
+     */
+    internal static List<StreetPoint> StreetLocationJunctionsOf(
+        IReadOnlyList<StreetPoint> streetPoints)
+    {
+        var kept = new List<StreetPoint>();
+        foreach (var sp in streetPoints)
+        {
+            if (streets.generation.BlockGraph.StandsOnTheGround(sp)) kept.Add(sp);
+        }
+
+        return kept;
+    }
+
+
     public static SpatialModel ExtractFrom(ClusterDesc cluster, builtin.modules.satnav.desc.NavCluster navCluster = null)
     {
         var model = new SpatialModel();
@@ -296,8 +329,7 @@ public class SpatialModel
             }
         }
 
-        var streetPoints = strokeStore.GetStreetPoints();
-        model.StreetPointCount = streetPoints.Count;
+        var streetPoints = StreetLocationJunctionsOf(strokeStore.GetStreetPoints());
         foreach (var sp in streetPoints)
         {
             int locId = locationId++;
@@ -336,6 +368,12 @@ public class SpatialModel
             });
         }
         
+        /*
+         * The street locations that were actually made, which is every junction of a
+         * flag-off city and every junction but the deck ends of a flag-on one.
+         */
+        model.StreetPointCount = streetPointToLocation.Count;
+
         var strokes = strokeStore.GetStrokes();
         foreach (var stroke in strokes)
         {

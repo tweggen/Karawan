@@ -34,23 +34,73 @@ internal sealed class OverpassBuilder
 
 
     /**
+     * Which deck a structure of this kind puts its span on, relative to its feet.
+     */
+    internal static sbyte DeckLevelOf(sbyte groundLevel, StrokeKind deckKind)
+        => deckKind == StrokeKind.Tunnel
+            ? (sbyte)(groundLevel - 1)
+            : (sbyte)(groundLevel + 1);
+
+
+    /**
+     * How long each ramp of such a structure has to be.
+     *
+     * A ramp is the one stroke whose grade is designed rather than inherited, so its
+     * length is not a fraction of anything: it is exactly the climb divided by the grade
+     * the policy builds ramps at. Build used to take a fraction of the run instead,
+     * which makes a long corridor's ramps steeper than a short one's - the opposite of
+     * what a design is.
+     *
+     * Phrased in StreetPoint.LevelElevation's own expression rather than in the deck
+     * height, because how high a deck stands is StreetLevels.ElevationOf and is allowed
+     * exactly one copy (WP-B1.7). That also makes this right for a tunnel, whose climb
+     * is downwards, and for a structure between any two adjacent decks.
+     */
+    internal static float RampLengthFor(GradePolicy policy, sbyte groundLevel, StrokeKind deckKind)
+    {
+        sbyte deckLevel = DeckLevelOf(groundLevel, deckKind);
+
+        return Single.Abs(
+                   StreetLevels.ElevationOf(deckLevel) - StreetLevels.ElevationOf(groundLevel))
+               / policy.MaxRampGrade;
+    }
+
+
+    /**
      * @param from, to
      *     Junctions on the same deck. Both may already be in the store.
      * @param deckKind
      *     StrokeKind.Bridge to go over, StrokeKind.Tunnel to go under.
-     * @param rampFraction
-     *     How much of the total run each ramp takes, 0..0.5. The deck gets the rest.
+     * @param rampLength
+     *     How long each ramp is, in metres - RampLengthFor. Both ramps together must
+     *     leave a deck between them.
      * @param weight
      *     Carried onto every member of the chain.
+     * @param isPrimary
+     *     The orientation bit of the road this structure replaces. NOT hierarchy:
+     *     Stroke.IsPrimary is a "primary or secondary direction" that SuccessorEmitter
+     *     flips per branch, and 46-66 % of a city's strokes carry it (§0.4). It used to
+     *     be hard-coded true here, so a structure asserted something about the road it
+     *     was built from rather than carrying it.
      * @returns
      *     Three unattached strokes: ramp, deck, ramp. Null when the arguments cannot
      *     describe a structure at all.
      */
     internal List<Stroke> Build(
-        StreetPoint from, StreetPoint to, StrokeKind deckKind, float rampFraction, float weight)
+        StreetPoint from, StreetPoint to, StrokeKind deckKind, float rampLength, float weight,
+        bool isPrimary)
     {
         if (null == from || null == to)
         {
+            return null;
+        }
+
+        if (deckKind != StrokeKind.Bridge && deckKind != StrokeKind.Tunnel)
+        {
+            /*
+             * The span is what makes this a structure. A chain whose middle member is an
+             * ordinary street would be two ramps climbing to nothing.
+             */
             return null;
         }
 
@@ -63,17 +113,25 @@ internal sealed class OverpassBuilder
             return null;
         }
 
-        if (rampFraction <= 0f || rampFraction >= 0.5f)
+        Vector2 span = to.Pos - from.Pos;
+        float run = span.Length();
+
+        if (!(rampLength > 0f) || !(run > 0f))
         {
             return null;
         }
 
-        sbyte groundLevel = from.Level;
-        sbyte deckLevel = deckKind == StrokeKind.Tunnel
-            ? (sbyte)(groundLevel - 1)
-            : (sbyte)(groundLevel + 1);
+        float rampFraction = rampLength / run;
+        if (rampFraction >= 0.5f)
+        {
+            /*
+             * The two ramps would meet or overlap, which leaves no deck between them.
+             */
+            return null;
+        }
 
-        Vector2 span = to.Pos - from.Pos;
+        sbyte groundLevel = from.Level;
+        sbyte deckLevel = DeckLevelOf(groundLevel, deckKind);
 
         var deckStart = new StreetPoint() { ClusterId = _clusterId, Level = deckLevel };
         deckStart.SetPos(from.Pos + span * rampFraction);
@@ -94,20 +152,24 @@ internal sealed class OverpassBuilder
 
         return new List<Stroke>
         {
-            _member(from, deckStart, StrokeKind.Ramp, groundLevel, weight, "overpass_ramp_up"),
-            _member(deckStart, deckEnd, deckKind, deckLevel, weight, "overpass_deck"),
-            _member(deckEnd, to, StrokeKind.Ramp, groundLevel, weight, "overpass_ramp_down"),
+            _member(from, deckStart, StrokeKind.Ramp, groundLevel, weight, isPrimary,
+                "overpass_ramp_up"),
+            _member(deckStart, deckEnd, deckKind, deckLevel, weight, isPrimary,
+                "overpass_deck"),
+            _member(deckEnd, to, StrokeKind.Ramp, groundLevel, weight, isPrimary,
+                "overpass_ramp_down"),
         };
     }
 
 
     private Stroke _member(
-        StreetPoint a, StreetPoint b, StrokeKind kind, sbyte level, float weight, string creator)
+        StreetPoint a, StreetPoint b, StrokeKind kind, sbyte level, float weight, bool isPrimary,
+        string creator)
     {
         var stroke = new Stroke()
         {
             ClusterId = _clusterId,
-            IsPrimary = true,
+            IsPrimary = isPrimary,
             Weight = weight,
             Kind = kind,
 

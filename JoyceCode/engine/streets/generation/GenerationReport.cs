@@ -26,6 +26,15 @@ internal sealed class GenerationReport
     internal int Splits;
     internal int RestartBudgetExhausted;
 
+    /**
+     * WP-B3b. What the placement pass did, folded in so that one line describes a run.
+     *
+     * Both are reported even when zero, because zero placed is the answer this feature
+     * produces most of the time and it has to be distinguishable from not having looked.
+     */
+    internal int StructuresPlaced;
+    internal int StructuresRefused;
+
 
     internal void CountRejection(string reason)
     {
@@ -42,6 +51,12 @@ internal sealed class GenerationReport
         if (RestartBudgetExhausted > 0)
         {
             sb.Append($", RESTART BUDGET EXHAUSTED {RestartBudgetExhausted}x");
+        }
+
+        if (StructuresPlaced > 0 || StructuresRefused > 0)
+        {
+            sb.Append(
+                $", structures {StructuresPlaced} placed / {StructuresRefused} refused");
         }
 
         foreach (var kv in _rejectionsByReason.OrderByDescending(kv => kv.Value))

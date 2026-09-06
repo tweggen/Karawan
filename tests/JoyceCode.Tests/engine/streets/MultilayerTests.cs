@@ -255,7 +255,7 @@ public class OverpassTests
     {
         return new OverpassBuilder(0).Build(
             _pointAt(0f, 0f, 0), _pointAt(200f, 0f, 0),
-            StrokeKind.Bridge, rampFraction: 0.25f, weight: 1f);
+            StrokeKind.Bridge, rampLength: 50f, weight: 1f, isPrimary: true);
     }
 
 
@@ -291,7 +291,7 @@ public class OverpassTests
     {
         var chain = new OverpassBuilder(0).Build(
             _pointAt(0f, 0f, 0), _pointAt(200f, 0f, 0),
-            StrokeKind.Tunnel, rampFraction: 0.25f, weight: 1f);
+            StrokeKind.Tunnel, rampLength: 50f, weight: 1f, isPrimary: true);
 
         Assert.Equal((sbyte)-1, chain[1].A.Level);
         Assert.Equal(StrokeKind.Tunnel, chain[1].Kind);
@@ -460,14 +460,14 @@ public class OverpassTests
          * 20 cm structure is built happily here for exactly that reason.
          */
         Assert.Null(new OverpassBuilder(0).Build(
-            _pointAt(0f, 0f, 0), _pointAt(0.1f, 0f, 0), StrokeKind.Bridge, 0.25f, 1f));
+            _pointAt(0f, 0f, 0), _pointAt(0.1f, 0f, 0), StrokeKind.Bridge, 0.025f, 1f, true));
 
         /* feet on different decks */
         Assert.Null(new OverpassBuilder(0).Build(
-            _pointAt(0f, 0f, 0), _pointAt(200f, 0f, 1), StrokeKind.Bridge, 0.25f, 1f));
+            _pointAt(0f, 0f, 0), _pointAt(200f, 0f, 1), StrokeKind.Bridge, 50f, 1f, true));
 
         /* a ramp fraction that leaves no deck */
         Assert.Null(new OverpassBuilder(0).Build(
-            _pointAt(0f, 0f, 0), _pointAt(200f, 0f, 0), StrokeKind.Bridge, 0.5f, 1f));
+            _pointAt(0f, 0f, 0), _pointAt(200f, 0f, 0), StrokeKind.Bridge, 100f, 1f, true));
     }
 }

@@ -366,6 +366,29 @@ public class ClusterDesc
         streetGenerator.SetAnnotation($"Cluster {Name}");
         streetGenerator.Reset("streets-" + _strKey, _strokeStore, this);
         streetGenerator.RuleTable = _loadStreetGenRuleTable();
+
+        /*
+         * The one reading of the setting. Everything below this line takes it as a
+         * value, so that grade separation can be exercised without writing to a process
+         * global - the same reason StreetHeightSources.FollowsTerrain is read here and
+         * not inside the thing it governs.
+         */
+        streetGenerator.EnableGradeSeparation = streets.GradeSeparation.IsEnabled;
+
+        /*
+         * Where the ground is, for the placement pass - which has to judge a corridor on
+         * the grades the structure would actually have, and therefore needs heights while
+         * the network is still being built.
+         *
+         * Deliberately the UNRELAXED source: asking StreetHeightSource itself would reach
+         * RelaxedStreetHeight, whose first act is to call StrokeStore() on this very
+         * cluster. Reading the property here only CONSTRUCTS the chain, which is free;
+         * nothing samples until the placement pass asks, and by then it asks the terrain
+         * directly.
+         */
+        streetGenerator.GroundHeightOf =
+            streets.StreetHeightSources.UnrelaxedOf(StreetHeightSource).GroundHeightAt;
+
         streets.StreetSeeds.ApplyBounds(streetGenerator, this);
         streets.StreetSeeds.AddTo(streetGenerator, this, _rnd);
         streetGenerator.Generate();
