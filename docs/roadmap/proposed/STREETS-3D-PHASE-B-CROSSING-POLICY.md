@@ -11,8 +11,10 @@ across the seven pinned seeds on the shipped terrain, and the flag is still off.
 decisions in §13.2 and §13.4 are the owner's.**
 **WP-B5 is DONE (2026-09-06, §14) — a deck and its ramps are absent from the block graph,
 a structure's footprint is excluded from the estate it now stands in, and two structures
-may not cross. Flag off AND flag on, not one baseline byte moved. WP-B6 is unblocked and
-is the only thing left in Phase B.**
+may not cross. Flag off AND flag on, not one baseline byte moved.**
+**✅ WP-B6 is DONE (2026-09-06, §15) and PHASE B IS COMPLETE: `joyce.EnableGradeSeparation`
+defaults to true, `ClusterStorage.DbVersion` is 1040, and the shipped world gets 737
+structures — 643 bridges and 94 tunnels — across its 70 cities.**
 **Follows:** Phase A (`STREETS-3D-TOPOLOGY.md` §7a … §7s).
 
 ---
@@ -316,7 +318,7 @@ The plan's original tables, kept because §13 answers them one by one:
 | B5.5 | The two-decks rule decided and costed. | ✅ **Refuse** — level 2 needs 179.7 m of arm against a longest stroke of 179.2 m anywhere, so `ArmTooShort` would refuse it regardless (§14.5). Cost: **0 corridors**, gated by fixtures both ways round. |
 | B5.6 | Flag off: every baseline byte-identical; `StreetCostTests` in its gate; TALE 200/200. | ✅ And flag ON too — WP-B5 changes nothing about the network itself. 1613 xUnit against 1532, TALE 200/200. |
 
-### WP-B6 — turn it on
+### WP-B6 — turn it on — ✅ **DONE 2026-09-06 (§15)**
 
 Unchanged in intent. B6 records that the `DbVersion` bump **deletes the whole
 `worldcache`** (cluster list included — verify it regenerates identically) and that
@@ -2021,3 +2023,317 @@ wrong.
   §14.1; nobody has looked at whether it looks right, and nothing will until the flag goes
   on.
 - **Everything in §10.8, §11.12, §12.10 and §13.9** is untouched by this round.
+
+---
+
+## 15. WP-B6 as built (2026-09-06) — the flag is on, and five things the plan and the brief got wrong
+
+`joyce.EnableGradeSeparation` defaults to **true** and `ClusterStorage.DbVersion` is
+**1039 → 1040**. Phase B is complete.
+
+Two commits: the ship-blocker triage that had to come first, and the flip itself.
+
+### 15.1 THE HEADLINE — the shipped world, not the pinned seeds
+
+`GenerateClustersOperator._generateClusterList` seeded `"mydear"` lays **70** cities of
+800 to 3800 m. The seven pinned seeds run 400 to 3000 and are a fixture, not the world.
+Over the world the game actually builds, on the shipped terrain:
+
+> **737 structures — 643 bridges and 94 tunnels — in 60 of the 70 cities.**
+
+8 to 23 per large city; the ten with none are the small ones, where no crossing has the
+99.7 m of arm two ramps and a deck need (§13.3). Every one of the seventy comes out in
+**one component**. Recorded as exact equalities in
+`ShippedWorldStructureTests.TheShippedWorldGetsThisManyStructures`, because this is the
+number the whole phase exists to produce.
+
+For scale, the pinned seeds give **20**. Reading the phase off them would have understated
+the world by a factor of thirty-five.
+
+### 15.2 ⚠️ The triage: the brief's ship blocker does not happen, and the one that does is its opposite
+
+The brief judged *"`GenerateNavMapOperator` draws a pedestrian crossing pairing an ordinary
+arm with a ramp, which puts walkers on a structure"* a ship blocker. Measured before
+anything was changed, on the four terrain seeds that carry structures: the operator
+**attempted 33** such crossings and **emitted none of them**. WP-B5 moved the pavement
+corner off the section-array mitre (§14.3), so the lookup that turns a section point into a
+pavement corner misses and the crossing is dropped on a `continue`.
+
+The same miss dropped the **ordinary** crossings at those junctions: **24 of 103 emitted**,
+against **55 %** of every other crossing in the same cities. So the real defect is a walker
+who cannot cross the road at a junction with a ramp on it — not a walker on a bridge — and
+it is silent.
+
+One rule fixes both: the crossing loop walks the **block arms** and takes each corner from
+`StreetPoint.SectionPointBetween`, which is what `QuarterGenerator` files the pavement
+corner from. A structure is then neither crossable nor measurable-from, and the two
+ordinary arms either side of one are adjacent in that ring so their mitre **is** the block's
+corner. After: **42 of 75**, the city's own rate, and 0 attempted across a structure.
+
+Flag off the two rules are the same float **by construction** — the section array is filled
+from `SectionPointBetween` — and the crossing lane count is unchanged on all seven seeds:
+**8 / 0 / 0 / 28 / 444 / 1398 / 2822**.
+
+### 15.3 The other four, and why three of them are not fixed
+
+| # | item | verdict |
+|---|---|---|
+| 2 | TALE makes a `street_segment` location per `StreetPoint`, deck ends included | **fixed** |
+| 5 | `Placer`'s nearest-junction lookup is unfiltered by level | **fixed** |
+| 3 | `_createBuildings` concatenates every polygon when the inset splits | **fixed** |
+| 4 | merged blocks make the buildings beside them taller | ⚠️ **refuted by measurement** |
+
+**2 and 5 are one predicate.** `BlockGraph.StandsOnTheGround` — *has at least one block
+arm* — is what the block trace already asks, so "a thing may stand here" and "a block may
+corner here" cannot drift apart. It is true of every junction of every flag-off city, so
+both filters are the identity there, asserted on the **list**, element by element and in
+order. ⚠️ Sorting `Placer`'s filtered list by junction id **passed all 1677 tests**, because
+`GetStreetPoints()` already comes back in id order; the other branch of that lookup is
+`QueryStreetPoints` out of the octree, so the order is now asserted on a deliberately
+unsorted list.
+
+⚠️ **And it is not only the deck ends.** One junction of `Yelukhdidru@3000` is a ramp
+**foot** at level 0 whose single ordinary street was the corridor arm the lift took away —
+so a ramp comes down at a dead end. Recorded, not fixed: refusing such a corridor is
+placement policy and would move every flag-on baseline.
+
+**3 is pre-existing and the flag makes it reachable.** `_createBuildings` concatenates every
+polygon of the pavement inset into one ring, which is a self-crossing outline the moment
+there are two. Measured: **0 of 763 estates flag off, 4 of 714 flag on**.
+`BlockGraph.LargestOf` is what `ExcludeStructures` already did, applied where the split
+happens without a structure, and it returns the very list it was handed when there is
+nothing to choose.
+
+⚠️ **4 is false.** The flag-on city's block corner spread is **smaller** at every
+percentile — p50 13.86 → 8.59 m, worst **63.21 → 29.91 m** on `Yelukhdidru@3000` — and the
+blocks that contain a structure sit at p50 13.57, max 19.13, inside the flag-off city's own
+range. A merged block is bigger in plan and *flatter*, because the flag-on city is a city of
+arterials with more, more regular blocks (§13.2). No fix; the premise was wrong.
+
+⚠️ **What is left, and is not a ship blocker**: a crossing at a foot passes over the ramp
+mouth — **0 / 2 / 4 / 14** lanes over the four seeds, meeting the ramp at most **1.26 m**
+above its foot, i.e. a kerb and a bit. That is the block geometry WP-B5 settled (the
+pavement corner is the mitre *across* the ramp mouth), not the nav operator, and moving it
+moves every flag-on baseline.
+
+### 15.4 B6.2 — the detour, because the component count cannot see a lift
+
+A separation removes the crossing's two arms and adds a ramp–deck–ramp path between their
+far ends, so **the graph stays connected by construction** and "still one component" is
+true of a policy that did nothing. The falsifiable statement is distance.
+
+For each lifted crossing, the shortest path between every pair of its own neighbours,
+before and after. "Before" is not a second generation run: it is the finished network with
+every structure taken out and the removed arms put back, which is exactly what the placer
+did to it — a stroke is a straight segment, so the removed arm had precisely the length of
+the chord between its two junctions. `StructurePlacementReport.Lifts` records the crossing
+and its two feet by id so the "before" can be rebuilt exactly.
+
+Over the 264 ordered pairs of the four seeds that carry structures:
+
+| statistic | detour |
+|---|---|
+| p50 | **1.00×** |
+| p95 | 2.63× |
+| p99 | 3.21× |
+| worst | **3.67×** |
+| cut off entirely | **0** |
+
+Per seed the worst is 2.97 / 2.58 / 3.67 / 2.80. So a lift is local: most of a crossing's
+neighbours were never joined *through* the crossing, and the pairs that pay are the two feet
+and each foot against the road underneath. **Nobody is ever cut off, and nobody has to go
+more than three and a half times as far.**
+
+### 15.5 B6.2 — reachability, and ⚠️ three weaker forms of the gate that all passed
+
+Every junction of a flag-on city is reachable over car lanes. ⚠️ **Asking the LANES which
+junctions exist cannot say that**: a rule that skipped a structure by `Kind` — which several
+rules in this phase legitimately do — emits no lane for a ramp or a deck, the deck ends
+simply do not appear in the set, and the reachability assertion passes over the smaller set
+it was handed. The expected set comes from the **store**, and every junction of it must
+carry a car lane.
+
+A real A* (`LocalPathfinder`, the one `RoutePlan` uses) is then driven from a ground
+junction to each deck end. ⚠️ **Three weaker forms of "it got there" all passed with every
+structure stroke denied a lane**: *a route exists* (the cursor snaps the target onto the
+nearest lane and the road under a deck is right there in plan); *the route's highest
+junction is within a metre of the deck* (a route across a hillside climbs more than eight
+metres on its own); and *some lane ends at the deck's own plan position*, which fails on
+the **unmutated** code because `TruncateAtTarget` replaces a route's last lane. What holds
+is that some lane of the route **lies on** a ramp, deck or bore.
+
+⚠️ **And it is 38 of 40, not 40 of 40.** Two deck ends of `Yelukhdidru@3000` are targeted
+onto the road underneath instead: `NavCluster.TryCreateCursor` takes the nearest lane to a
+position and has no notion that a bridge is not the road below it. Found here, recorded
+rather than fixed — it belongs with whoever gives the satnav a level.
+
+### 15.6 B6.3 — ⚠️ the cluster list is not in the world cache at all
+
+`DBStorage._open` deletes the FILE when its `UserVersion` is below the version asked for,
+and `GenerateClustersOperator` stores the cluster list in that same file — so the bump was
+expected to throw the seventy cities away with the streets. Verified rather than assumed,
+and the answer is odder than the question:
+
+> `ClusterDesc` serialises its `StreetHeightSource`, and `FlatStreetHeight` has no
+> parameterless constructor, so LiteDB writes the seventy cities happily and throws on the
+> way back — and `DBStorage._readCollection`'s inner catch then **drops the collection** and
+> returns false **with no log line of any kind, not even a `Trace`**.
+
+So every start has always regenerated the cluster list; the bump cannot lose what was never
+kept. What makes the world stable across it is that `_generateClusterList` is a **pure
+function of its seed**, asserted over all seventy cities field by field. The deletion itself
+is driven through `DBStorage` on a marker collection, with a control that a cache at the
+current version survives being opened.
+
+Not fixed: making `ClusterDesc` round-trip is a change to what it persists and belongs with
+whoever wants the cache to work. `TheWorldCacheCannotHoldAClusterListAtAll` fails the day it
+starts working, which is when the bump's blast radius becomes real.
+
+### 15.7 B6.4 — what moved
+
+**No recorded baseline file moved at all**: `street-fingerprints.json`,
+`street-fingerprints-gradesep.json`, `street-geometry.json`, `street-cost-baseline.json` and
+`street-relaxed-heights.json` are byte-identical to `b0b86634`. That is not luck and it is
+worth saying why: every one of them drives `Generator` directly and sets
+`EnableGradeSeparation` as a property, while the setting itself is read in exactly one place,
+`ClusterDesc._generateStrokes`, which no unit test reaches (§7's own rule, still holding).
+
+One recorded number moved, and it is in a test rather than a baseline file: the **flag-on**
+block census, `Yelukhdidru@800` terrain shops **389 → 339**, which is §15.3's split inset.
+Nothing in the flag-off census moves.
+
+**What moves in the GAME is everything**, and it is not a baseline anybody records: the
+flag-on city is a different city, not the old one with bridges added (§13.2).
+
+### 15.8 B6.5 — ⚠️ TALE is 200/200 and it does not exercise a flag-on city
+
+Run after the flip: **200/200**. But the claim it was asked to support — *"its locations sit
+on these blocks and its NPCs route over these lanes"* — is **not true of the test suite**,
+measured: across all 401 logs of a full parallel run there is not one `grade separation:`
+line, which `Generator` emits as a `Warning` for every city it builds, and not one
+`SPATIAL MODEL for cluster` line. The TALE suite boots the engine with the shipped
+configuration — so the flag *is* loaded — and then runs entirely on synthetic DES spatial
+models. It is a real regression check on the configuration and on TALE itself, and it says
+nothing about a city with a bridge in it.
+
+The gate that does say something about that is `GroundJunctionTests`, which drives
+`SpatialModel.StreetLocationJunctionsOf` over real flag-on generated cities.
+
+### 15.9 ⚠️ What an existing save game does
+
+A save stores a street point as `(ClusterId, Id)` and a stroke as `(ClusterId, Sid)`;
+`StreetPointConverter` and `StrokeConverter` look them up in the **regenerated** store with
+`StrokeStore.GetStreetPoint` / `GetStroke`, which are `FirstOrDefault`. So an id that no
+longer exists comes back as **null with no error at all**, and one that does exist comes
+back as whichever junction now carries that number.
+
+It is not a near miss. Per seed, junctions before → after, ids gone, ids still in the same
+place:
+
+| seed | before | after | gone | unmoved |
+|---|---|---|---|---|
+| `seed000@500` | 27 | 29 | 0 | 5 |
+| `seed011@500` | 23 | 28 | 0 | 4 |
+| `Yelukhdidru@400` | 12 | 13 | 0 | 2 |
+| `Yelukhdidru@800` | 64 | 67 | 0 | 15 |
+| `seed000@1500` | 274 | 253 | 21 | 3 |
+| `seed017@2400` | 785 | 623 | 162 | 2 |
+| `Yelukhdidru@3000` | **1379** | **950** | **429** | **2** |
+
+On the largest city the median surviving id resolves **1430.8 m** away and the worst
+**3614.6 m**.
+
+**Nothing here fixes it, deliberately.** The version that would invalidate a save is
+`DBStorage.DbVersion`, which also governs `gamestate.db`, so bumping it deletes every
+player's save outright. That is a decision with a cost either way and it is the owner's;
+`AnExistingSaveResolvesTheSameIdToADifferentJunction` makes the size of it a number.
+
+### 15.10 What a deck looks like today
+
+`GenerateClusterStreetsOperator` reads no `Kind` at all, so a deck is drawn exactly like any
+other road: a carriageway with kerbs, at `level · DeckHeight` = 8 m, **with nothing under
+it**. No piers, no abutments, no soffit — from below, a slab of road hanging in the air with
+the sky visible between it and the ground, and the ordinary road running underneath it
+unchanged. A ramp is a road climbing at 10 % out of a junction with nothing holding it up
+either. That is the intended "floating slab" and it is Phase C's subject, not a defect.
+
+The two roads are not joined at a lifted crossing — there are no slip roads — and
+`WouldDisconnect` (§11.3) is the guard rather than the fix.
+
+### 15.11 The mutations
+
+**Twenty-five driven across the two commits; twenty-four killed, one provably equivalent.**
+Three were killed only after a gate was written or strengthened for them, and those three
+are the interesting ones (§15.3, §15.5).
+
+| # | mutation | failures |
+|---|---|---|
+| 1 | `StandsOnTheGround` always true | 12 |
+| 2 | ...counts every arm, not the block ones | 12 |
+| 3 | `Placer.GroundJunctionsOf` returns its argument | 4 |
+| 4 | `SpatialModel.StreetLocationJunctionsOf` keeps everything | 4 |
+| 5 | `BlockArmsOf` returns every arm | 11 |
+| 6 | the crossing corner back to `GetSectionPointByStroke` | 6 |
+| 7 | `BlockArmsOf` reverses the ring | 23 |
+| 8 | `LargestOf` keeps the smallest piece | 6 |
+| 9 | `LargestOf` rebuilds the list it was given | 1 |
+| 10 | the `LargestOf` call site deleted | 1 |
+| 11 | `StandsOnTheGround` phrased as `Level == 0` | 3 |
+| 12 | ⚠️ `GroundJunctionsOf` sorts by junction id | **survived**, then 1 — §15.3 |
+| 13 | `StreetLocationJunctionsOf` sorts by junction id | 1 |
+| 14 | the `GroundJunctionsOf` call site deleted | 1 |
+| 15 | the `StreetLocationJunctionsOf` call site deleted | 1 |
+| 16 | the setting removed from the shipped JSON | 1 |
+| 17 | the setting set to `"false"` | 1 |
+| 18 | `ClusterStorage.DbVersion` back to 1039 | 1 |
+| 19 | `Lifts` never recorded | 5 |
+| 20 | `Lifts` records the crossing where a foot belongs | 1 |
+| 21 | `Lifts` records the crossing twice | 4 |
+| 22 | ⚠️ `Lifts` swaps its two feet | **survived — equivalent** |
+| 23 | ⚠️ no car lane for a structure stroke | **survived twice**, then 8 — §15.5 |
+| 24 | the lifted arms are not removed from the store | 40 |
+
+**22 is equivalent and provably so.** Both feet are restored the same way and both are
+neighbours of the crossing; which one is called `A` is not a property of anything. §8's
+sign-of-the-offset survivor and §7q's symmetric-survivor lesson, a third time.
+
+⚠️ **A methodological note that cost a full-suite run.** The mutation harness restored each
+file with `mv`, which carries the backup's older timestamp — so MSBuild saw a source older
+than the mutant binary and did not rebuild, leaving the mutant in place for the next run.
+Every result above was re-taken with a `touch` after the restore. A mutation harness that
+does not force a rebuild reports whatever was built last.
+
+### 15.12 What the plan and the brief got wrong
+
+- ⚠️ **The brief's ship blocker.** *"A crossing whose far side is a ramp puts walkers on a
+  structure"* — 33 attempted, 0 emitted, and the defect is the 79 ordinary crossings the
+  same miss threw away (§15.2).
+- ⚠️ **"Merged blocks make the buildings beside them taller."** The flag-on city's corner
+  spread is smaller at every percentile (§15.3).
+- ⚠️ **"The bump deletes the whole `worldcache`, cluster list included — verify it comes
+  back identical."** It does, and for a reason nobody expected: the cluster list was never
+  in the cache, because `ClusterDesc` cannot be deserialised and the failure silently drops
+  the collection (§15.6).
+- ⚠️ **B6.5's "TALE's locations sit on these blocks and its NPCs route over these lanes."**
+  Not in the test suite: it never generates a city (§15.8).
+- ⚠️ **B6.2's "component count cannot change, so measure detours instead"** is right, and
+  the reachability half needed the stronger form: three weaker versions of "the A* got onto
+  the deck" all pass with no structure lanes at all (§15.5).
+
+### 15.13 Found and NOT fixed
+
+- **A ramp may come down at a dead end** — one junction of `Yelukhdidru@3000` (§15.3).
+- **Two deck ends of forty are targeted onto the road underneath** by
+  `NavCluster.TryCreateCursor` (§15.5).
+- **A crossing at a foot passes over the ramp mouth**, at most 1.26 m above it (§15.3).
+- **`DBStorage._readCollection` drops a collection it cannot deserialise, silently**, and
+  `ClusterDesc` is such a collection (§15.6).
+- **An existing save resolves junction ids to different junctions** (§15.9).
+- **A deck has nothing under it and no slip roads** (§15.10) — Phase C.
+- **Everything in §10.8, §11.12, §12.10 and §13.9** is untouched by this round.
+
+### 15.14 Phase B is complete
+
+WP-B0 … WP-B6 are all done. What Phase B deliberately did **not** do, restated so the next
+phase starts from it: no arterial ruleset (D2), no slip roads, no multi-crossing deck, no
+level 2, and nothing that draws what holds a structure up.

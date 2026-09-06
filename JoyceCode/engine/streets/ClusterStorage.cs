@@ -10,8 +10,22 @@ public class ClusterStorage
     
     private engine.EntityMap<engine.streets.StreetPoint> _mapStreetPoints = new();
 
-    public const int DbVersion = 1039;
-    
+    /**
+     * ⚠️ BUMPING THIS DELETES THE WHOLE worldcache FILE, not just the street collections.
+     *
+     * DBStorage._open deletes the file outright when its UserVersion is below the version
+     * asked for, and GenerateClustersOperator stores the CLUSTER LIST in that same file -
+     * so a bump throws away every player's and every developer's cached world, cities
+     * included, and the next start regenerates all of it.
+     *
+     * 1040 is WP-B6, joyce.EnableGradeSeparation becoming the default: strokes carry a
+     * Kind and a Level that the stored network did not have, and a cached city built
+     * without them would come back as a flat network in a game that now expects bridges.
+     * The cluster list itself is a pure function of its seed and comes back identical -
+     * asserted, not assumed, by ClusterListSurvivesTests.
+     */
+    public const int DbVersion = 1040;
+
     public const string DbName = "worldcache";
 
     public bool TryLoadClusterStreets(ClusterDesc clusterDesc)

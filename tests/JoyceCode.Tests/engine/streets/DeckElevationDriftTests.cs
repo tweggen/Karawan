@@ -267,4 +267,34 @@ public class DeckElevationDriftTests
     {
         Assert.False(new Generator().EnableGradeSeparation);
     }
+
+
+    /**
+     * ⚠️ WP-B6: the shipped configuration turns it ON.
+     *
+     * The code default above stays false - a Generator nobody has told anything is still a
+     * ground-only generator, which is what every fixture in this suite relies on. What
+     * ships is the setting, and this is the one file that decides it, so this is the one
+     * assertion that says the game builds bridges.
+     *
+     * Read out of the JSON rather than out of GlobalSettings: nothing in this assembly
+     * loads the configuration, and a test that set the global would leak into every other
+     * test in the process - which is the whole reason the flag is read once and passed as
+     * a value (see above).
+     */
+    [Fact]
+    public void TheShippedConfigurationTurnsGradeSeparationOn()
+    {
+        string path = Path.Combine(_repoRoot(), "models", "nogame.globalSettings.json");
+        var json = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(path));
+
+        var value = json[GradeSeparation.Setting];
+
+        Assert.True(null != value,
+            $"{GradeSeparation.Setting} is not in models/nogame.globalSettings.json at all, "
+            + "so the shipped game builds no structure - and GradeSeparation.IsEnabled "
+            + "compares against the string \"true\", so an absent key is silently off.");
+
+        Assert.Equal("true", value.GetValue<string>());
+    }
 }

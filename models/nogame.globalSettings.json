@@ -35,5 +35,31 @@
   ],
   "joyce.DisableClusterFlattening": "true",
 
+  "_comment.EnableGradeSeparation": [
+    "Set to true to let the street generator build ramps, bridges and tunnels, so that",
+    "a crossing worth separating is flown over rather than signalled.",
+    "",
+    "This is now the DEFAULT. Set it to false to get the flat, ground-only network back;",
+    "that path still exists, is still what every recorded street baseline records, and",
+    "is still tested.",
+    "",
+    "⚠️ It does not add bridges to the city you had. The candidate queue drains heaviest",
+    "first, so the heavy roads fill the space and the light branches behind them are",
+    "refused: the flag-on city is a city of arterials, with no stroke at the ruleset's",
+    "minimum weight in it at all. Every block, building, shop, TALE location and nav lane",
+    "moves with it.",
+    "",
+    "The shipped world gets 737 structures across its 70 cities - 643 bridges and 94",
+    "tunnels, in 60 of them, 8 to 23 per large city.",
+    "",
+    "Still open, and deliberately so: nothing draws what holds a deck up, so a bridge is",
+    "a road in the air with nothing under it until Phase C; there are no slip roads, so",
+    "the two roads at a lifted crossing are not joined to each other; and a ramp may come",
+    "down at a dead end.",
+    "",
+    "See docs/roadmap/proposed/STREETS-3D-PHASE-B-CROSSING-POLICY.md §15."
+  ],
+  "joyce.EnableGradeSeparation": "true",
+
   "test.script": ""
 }

@@ -158,6 +158,21 @@ public sealed class StructurePlacementReport
     public readonly List<float> Clearances = new();
 
 
+    /**
+     * One at-grade crossing that was removed, by junction id: the crossing itself and the
+     * two far ends the ramps now come down at.
+     *
+     * Recorded because "the network is still one component" is not a statement about a
+     * grade separated crossing at all - a lift adds a path between the two far ends while
+     * removing the two arms, so nothing is ever disconnected by it and the component count
+     * cannot see the thing that changed. What DID change is how far it now is from one of
+     * the crossing's neighbours to another, and that needs to know which crossing was
+     * lifted and where its feet are. Ids rather than objects: they are read after the
+     * commit, when a junction's identity is the network's own (§11.9).
+     */
+    public readonly List<(int Crossing, int FootA, int FootB)> Lifts = new();
+
+
     public int RefusedTotal => Refused.Values.Sum();
 
 
@@ -428,6 +443,7 @@ public static class StructurePlacer
             builder.CommitChain(c.Chain);
 
             ++report.Placed;
+            report.Lifts.Add((c.Crossing.Id, c.FootA.Id, c.FootB.Id));
             if (c.Deck.Kind == StrokeKind.Tunnel) ++report.Tunnels; else ++report.Bridges;
             report.DeckGrades.Add(measured[i].DeckGrade);
             report.Clearances.AddRange(measured[i].Clearances);
