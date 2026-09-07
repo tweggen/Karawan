@@ -435,7 +435,7 @@ public class QuarterLoopRouteTests
             int n = delims.Count;
             if (n < 3) continue;
 
-            var tris = BlockFloor.CapOf(q);
+            var tris = DrawnBlockFloor.CapOf(q);
             if (0 == tris.Count) continue;
 
             var route = new QuarterLoopRouteGenerator
@@ -448,7 +448,7 @@ public class QuarterLoopRouteTests
             {
                 Vector3 w = route.Segments[i].Position - cd.Pos;
 
-                float? h = BlockFloor.SurfaceAt(tris, new Vector2(w.X, w.Z));
+                float? h = DrawnBlockFloor.SurfaceAt(tris, new Vector2(w.X, w.Z));
                 if (!h.HasValue) continue;
 
                 now.Add(w.Y - h.Value);
@@ -460,8 +460,8 @@ public class QuarterLoopRouteTests
 
         Assert.True(now.Count > 4, $"only {now.Count} waypoints landed on a block floor");
 
-        float p05 = BlockFloor.Percentile(now, 0.05f);
-        float p95 = BlockFloor.Percentile(now, 0.95f);
+        float p05 = DrawnBlockFloor.Percentile(now, 0.05f);
+        float p95 = DrawnBlockFloor.Percentile(now, 0.95f);
 
         Assert.True(p05 > -0.5f && p95 < 0.5f,
             $"{idString}/{size}: the loop walker is {p05:F2} m below the block floor at p05 "
@@ -471,9 +471,9 @@ public class QuarterLoopRouteTests
          * ...and the pad is not. Without this the assertion above would also pass on a flat
          * city, or on any measurement too coarse to see the difference.
          */
-        Assert.True(BlockFloor.Percentile(pad, 0.05f) < -1.5f,
+        Assert.True(DrawnBlockFloor.Percentile(pad, 0.05f) < -1.5f,
             $"{idString}/{size}: the pad was only "
-            + $"{BlockFloor.Percentile(pad, 0.05f):F2} m below the floor at p05, so this "
+            + $"{DrawnBlockFloor.Percentile(pad, 0.05f):F2} m below the floor at p05, so this "
             + "measurement cannot distinguish it from the pavement and proves nothing");
     }
 

@@ -77,72 +77,6 @@ public class BuildingFootingTests
         { "shipped terrain", "a 5.8 % plane", "rolling ground" };
 
 
-    /**
-     * The block floor as the operator emits it, as a list of its cap's own triangles.
-     */
-    private static List<(Vector3 a, Vector3 b, Vector3 c)> _capOf(
-        Quarter q, IList<Vector3> outline, IList<CapInsetEdge> inset)
-    {
-        var path = new List<Vector3> { new(0f, MetaGen.QuarterSidewalkOffset, 0f) };
-        var mesh = new global::engine.joyce.Mesh("floor");
-        new ExtrudePoly(outline, path, 27, 10000f, false, false, true)
-        {
-            CapInsetEdges = inset
-        }.BuildGeom(mesh);
-
-        float up = MetaGen.QuarterSidewalkOffset;
-        var wanted = new List<Vector3>();
-        foreach (var v in outline) wanted.Add(v + new Vector3(0f, up, 0f));
-        if (null != inset)
-        {
-            foreach (var e in inset)
-            {
-                wanted.Add(e.Start + new Vector3(0f, up, 0f));
-                wanted.Add(e.End + new Vector3(0f, up, 0f));
-            }
-        }
-
-        bool IsCap(Vector3 v) => wanted.Any(w => (w - v).Length() < 1e-3f);
-
-        var tris = new List<(Vector3, Vector3, Vector3)>();
-        for (int i = 0; i + 2 < mesh.Indices.Count; i += 3)
-        {
-            Vector3 a = mesh.Vertices[(int)mesh.Indices[i]];
-            Vector3 b = mesh.Vertices[(int)mesh.Indices[i + 1]];
-            Vector3 c = mesh.Vertices[(int)mesh.Indices[i + 2]];
-            if (IsCap(a) && IsCap(b) && IsCap(c)) tris.Add((a, b, c));
-        }
-
-        return tris;
-    }
-
-
-    /**
-     * The floor surface's height at a plan position, read off its own triangles, or null
-     * where the position is not covered by the cap.
-     */
-    private static float? _surfaceAt(
-        List<(Vector3 a, Vector3 b, Vector3 c)> tris, Vector2 p)
-    {
-        foreach (var (a, b, c) in tris)
-        {
-            Vector2 pa = new(a.X, a.Z), pb = new(b.X, b.Z), pc = new(c.X, c.Z);
-
-            float d = (pb.Y - pc.Y) * (pa.X - pc.X) + (pc.X - pb.X) * (pa.Y - pc.Y);
-            if (Single.Abs(d) < 1e-9f) continue;
-
-            float l1 = ((pb.Y - pc.Y) * (p.X - pc.X) + (pc.X - pb.X) * (p.Y - pc.Y)) / d;
-            float l2 = ((pc.Y - pa.Y) * (p.X - pc.X) + (pa.X - pc.X) * (p.Y - pc.Y)) / d;
-            float l3 = 1f - l1 - l2;
-            if (l1 < -1e-4f || l2 < -1e-4f || l3 < -1e-4f) continue;
-
-            return l1 * a.Y + l2 * b.Y + l3 * c.Y;
-        }
-
-        return null;
-    }
-
-
     private static IEnumerable<(Quarter Q, List<Vector3> Outline,
         List<CapInsetEdge> Inset, Building B)> _buildingsOf(QuarterStore quarters)
     {
@@ -183,12 +117,12 @@ public class BuildingFootingTests
 
             foreach (var (q, outline, inset, b) in _buildingsOf(quarters))
             {
-                float baseY = BuildingFooting.BaseHeightOf(q);
-                var tris = _capOf(q, outline, inset);
+                float baseY = BuildingFooting.BaseHeightOf(q, b);
+                var tris = DrawnBlockFloor.CapOf(outline, inset);
 
                 foreach (var p in b.GetPoints())
                 {
-                    float? h = _surfaceAt(tris, new Vector2(p.X, p.Z));
+                    float? h = DrawnBlockFloor.SurfaceAt(tris, new Vector2(p.X, p.Z));
                     if (!h.HasValue) continue;
 
                     ++nChecked;
@@ -213,6 +147,19 @@ public class BuildingFootingTests
      * A bound that held at the vertices and failed in between would be a bound on the
      * wrong thing. It cannot happen for a piecewise linear surface, which is exactly why
      * this is worth stating: it is the property the whole construction rests on.
+     *
+     * ⚠️ SUPERSEDED FROM WP-O3 (§7w), NOT RE-BASELINED - and the change is in the sampling
+     * rather than in the assertion. It used to walk each footprint corner toward the
+     * footprint's CENTRE in eighths:
+     *
+     *     Vector3 v = Vector3.Lerp(pts[i], centre, k / 8f);
+     *
+     * A building footprint is a block outline inset by a pavement width and is very often
+     * not convex, so that segment leaves the footprint - which did not matter while the
+     * bound was the whole BLOCK's, and is a false failure the moment the bound belongs to
+     * the piece. The samples are filtered to the footprint's own interior now, and a
+     * regular grid is used as well as the spokes so the interior is covered rather than
+     * merely crossed.
      */
     [Theory]
     [MemberData(nameof(Cities))]
@@ -223,26 +170,44 @@ public class BuildingFootingTests
 
         foreach (var (q, outline, inset, b) in _buildingsOf(quarters))
         {
-            float baseY = BuildingFooting.BaseHeightOf(q);
-            var tris = _capOf(q, outline, inset);
+            float baseY = BuildingFooting.BaseHeightOf(q, b);
+            var tris = DrawnBlockFloor.CapOf(outline, inset);
 
             var pts = b.GetPoints();
             var centre = b.GetCenter();
+            var poly = pts.Select(p => new Vector2(p.X, p.Z)).ToList();
 
+            var samples = new List<Vector2>();
             for (int i = 0; i < pts.Count; ++i)
             {
                 for (int k = 1; k < 8; ++k)
                 {
                     Vector3 v = Vector3.Lerp(pts[i], centre, k / 8f);
-                    float? h = _surfaceAt(tris, new Vector2(v.X, v.Z));
-                    if (!h.HasValue) continue;
-
-                    ++nChecked;
-                    Assert.True(baseY <= h.Value + 1e-3f,
-                        $"{idString}/{size}: the building on the block at "
-                        + $"{q.GetCenterPoint()} is {baseY - h.Value:F3} m above its own "
-                        + $"floor at {v}");
+                    samples.Add(new Vector2(v.X, v.Z));
                 }
+            }
+
+            float x0 = poly.Min(p => p.X), x1 = poly.Max(p => p.X);
+            float y0 = poly.Min(p => p.Y), y1 = poly.Max(p => p.Y);
+            for (int i = 1; i < 16; ++i)
+            for (int k = 1; k < 16; ++k)
+            {
+                samples.Add(new Vector2(
+                    x0 + (x1 - x0) * i / 16f, y0 + (y1 - y0) * k / 16f));
+            }
+
+            foreach (var p in samples)
+            {
+                if (!DrawnBlockFloor.Contains(poly, p)) continue;
+
+                float? h = DrawnBlockFloor.SurfaceAt(tris, p);
+                if (!h.HasValue) continue;
+
+                ++nChecked;
+                Assert.True(baseY <= h.Value + 1e-3f,
+                    $"{idString}/{size}: the building on the block at "
+                    + $"{q.GetCenterPoint()} is {baseY - h.Value:F3} m above its own "
+                    + $"floor at {p}");
             }
         }
 
@@ -316,34 +281,74 @@ public class BuildingFootingTests
 
 
     /**
-     * The base IS the lowest pavement on the block, and not merely somewhere below it.
+     * The base IS the lowest pavement over this building's own footprint, and not merely
+     * somewhere below it.
      *
      * Stated on identity rather than on a distance: sinking every building to sea level
-     * would satisfy the guarantee above and nothing else. Also measured against a real
-     * spread, so it cannot be satisfied by a city whose corners happen to agree.
+     * would satisfy the guarantee above and nothing else. The identity is against the floor
+     * as DrawnBlockFloor reads it back out of the mesh the operator emits, sampled over the
+     * footprint, so it cannot be satisfied by a second copy of the production expression.
+     *
+     * ⚠️ SUPERSEDED FROM WP-O3 (§7w), NOT RE-BASELINED. This was
+     * TheBaseIsTheLowestPavementOnTheBlock, and it asserted
+     *
+     *     Assert.Equal(lo + MetaGen.ClusterStreetHeight + MetaGen.QuarterSidewalkOffset,
+     *                  BuildingFooting.BaseHeightOf(q), 3);
+     *
+     * over the block's own corner range, with the comment "the base IS the lowest pavement
+     * on the block". A block carries several buildings since WP-O2 and each is founded on
+     * its own piece of ground, so that identity is no longer the rule; what replaces it is
+     * an identity against the surface, which is strictly stronger.
+     *
+     * The block-wide corner range survives as the FALLBACK and as a sanity bound - no
+     * building may be founded below its block's lowest corner either - and both are
+     * asserted here.
      */
     [Theory]
     [MemberData(nameof(Cities))]
-    public void TheBaseIsTheLowestPavementOnTheBlock(string idString, float size)
+    public void TheBaseIsTheLowestPavementOverTheFootprint(string idString, float size)
     {
         var (_, quarters) = _city(idString, size, "shipped terrain");
-        int nSpread = 0;
+        int nSpread = 0, nTight = 0, nChecked = 0;
 
-        foreach (var q in quarters.GetQuarters())
+        foreach (var (q, outline, inset, b) in _buildingsOf(quarters))
         {
-            var delims = q.GetDelims();
-            if (delims.Count < 3) continue;
-
             float lo = Single.MaxValue, hi = Single.MinValue;
-            foreach (var d in delims)
+            foreach (var d in q.GetDelims())
             {
                 lo = Single.Min(lo, q.CornerGroundHeightAt(d));
                 hi = Single.Max(hi, q.CornerGroundHeightAt(d));
             }
 
-            Assert.Equal(
-                lo + MetaGen.ClusterStreetHeight + MetaGen.QuarterSidewalkOffset,
-                BuildingFooting.BaseHeightOf(q), 3);
+            float baseY = BuildingFooting.BaseHeightOf(q, b);
+            ++nChecked;
+
+            /*
+             * The old rule survives as a bound: the floor cannot leave the block's corner
+             * range, so neither may its minimum over any piece of the block.
+             */
+            Assert.InRange(
+                baseY,
+                lo + MetaGen.ClusterStreetHeight + MetaGen.QuarterSidewalkOffset - 1e-3f,
+                hi + MetaGen.ClusterStreetHeight + MetaGen.QuarterSidewalkOffset + 1e-3f);
+
+            /*
+             * And it IS the lowest point of the drawn floor over this footprint, as an
+             * IDENTITY against DrawnBlockFloor's own enumeration over the triangles it
+             * reads back out of the emitted mesh. A tolerance would be satisfied by any
+             * expression that happens to answer low, and a distribution would be satisfied
+             * by the block-wide bound on most blocks.
+             */
+            var tris = DrawnBlockFloor.CapOf(outline, inset);
+            var poly = b.GetPoints().Select(p => new Vector2(p.X, p.Z)).ToList();
+            var (dLo, dHi) = DrawnBlockFloor.BoundsOver(tris, poly);
+
+            if (dLo < Single.MaxValue)
+            {
+                ++nTight;
+                Assert.Equal(dLo, baseY, 3);
+                Assert.Equal(dHi - dLo, BuildingFooting.HeightOf(q, b, 0f), 3);
+            }
 
             if (hi - lo > 3f) ++nSpread;
         }
@@ -351,6 +356,10 @@ public class BuildingFootingTests
         Assert.True(nSpread > 0,
             $"no block of {idString}/{size} on the shipped terrain has 3 m between its "
             + "highest and lowest corner, so this proves nothing about a slope");
+
+        Assert.True(nTight > nChecked / 2,
+            $"only {nTight} of {nChecked} buildings of {idString}/{size} have a footprint "
+            + "the drawn floor covers at all, so the identity above proves too little");
     }
 
 
@@ -375,15 +384,15 @@ public class BuildingFootingTests
 
             foreach (var (q, outline, inset, b) in _buildingsOf(quarters))
             {
-                float baseY = BuildingFooting.BaseHeightOf(q);
+                float baseY = BuildingFooting.BaseHeightOf(q, b);
                 float design = b.GetHeight();
-                float roof = baseY + BuildingFooting.HeightOf(q, design);
+                float roof = baseY + BuildingFooting.HeightOf(q, b, design);
 
-                var tris = _capOf(q, outline, inset);
+                var tris = DrawnBlockFloor.CapOf(outline, inset);
 
                 foreach (var p in b.GetPoints())
                 {
-                    float? h = _surfaceAt(tris, new Vector2(p.X, p.Z));
+                    float? h = DrawnBlockFloor.SurfaceAt(tris, new Vector2(p.X, p.Z));
                     if (!h.HasValue) continue;
 
                     ++nChecked;
@@ -424,7 +433,7 @@ public class BuildingFootingTests
                 {
                     Vector2 plan = BuildingFooting.PlanOf(sf);
 
-                    float sill = BuildingFooting.StoreyGroundAt(q, plan)
+                    float sill = BuildingFooting.StoreyGroundAt(q, b, plan)
                                  + MetaGen.ClusterStreetHeight
                                  + MetaGen.QuarterSidewalkOffset;
                     float pavement = BuildingFooting.PavementHeightAt(q, plan);
@@ -474,7 +483,7 @@ public class BuildingFootingTests
             foreach (var sf in b.GetShopFronts())
             {
                 Vector2 plan = BuildingFooting.PlanOf(sf);
-                float g = BuildingFooting.StoreyGroundAt(q, plan);
+                float g = BuildingFooting.StoreyGroundAt(q, b, plan);
 
                 /*
                  * The three expressions the three sites actually use, so that a change to
@@ -526,8 +535,6 @@ public class BuildingFootingTests
             if (delims.Count < 3) continue;
             ++nBlocks;
 
-            float baseY = BuildingFooting.BaseHeightOf(q);
-
             /*
              * The expression that shipped, at the building centre, against the one that
              * ships now.
@@ -535,25 +542,38 @@ public class BuildingFootingTests
             foreach (var est in q.GetEstates())
             foreach (var b in est.GetBuildings())
             {
+                float baseY = BuildingFooting.BaseHeightOf(q, b);
                 var c = b.GetCenter();
                 float wasY = 2.5f + q.GroundHeightAt(new Vector2(c.X, c.Z));
 
                 Assert.Equal(0.35f, wasY - baseY, 4);
 
-                Assert.Equal(b.GetHeight(), BuildingFooting.HeightOf(q, b.GetHeight()));
+                /*
+                 * ⚠️ EXACTLY, not to four decimals: WP-O3 reads the base off the block
+                 * floor's own cap, and a flat cap is at the cluster's own average height at
+                 * every one of its vertices and at every point between them. Anything that
+                 * blended three equal heights as a weighted SUM would come back a unit in
+                 * the last place away, and the storey index below would be the ceiling of
+                 * that rather than zero.
+                 */
+                Assert.Equal(
+                    cd.AverageHeight + MetaGen.ClusterStreetHeight
+                    + MetaGen.QuarterSidewalkOffset, baseY);
+
+                Assert.Equal(b.GetHeight(), BuildingFooting.HeightOf(q, b, b.GetHeight()));
 
                 foreach (var sf in b.GetShopFronts())
                 {
                     Vector2 plan = BuildingFooting.PlanOf(sf);
 
-                    Assert.Equal(0, BuildingFooting.StoreyAt(q, plan));
+                    Assert.Equal(0, BuildingFooting.StoreyAt(q, b, plan));
 
                     /*
                      * Bit for bit: the shopfront quad, the shop POI and the TALE door.
                      * Vector3 addition is commutative, so the shopfront's old
                      * `2.05f + pad` and the new `ground + 2.05f` are the same float.
                      */
-                    float g = BuildingFooting.StoreyGroundAt(q, plan);
+                    float g = BuildingFooting.StoreyGroundAt(q, b, plan);
 
                     Assert.Equal(2.05f + cd.AverageHeight, g + 2.05f);
                     Assert.Equal(
@@ -596,7 +616,7 @@ public class BuildingFootingTests
             var inset = GenerateClusterQuartersOperator.PavementInsetOf(q, outline);
             if (null == inset) continue;
 
-            var tris = _capOf(q, outline, inset);
+            var tris = DrawnBlockFloor.CapOf(outline, inset);
             int n = outline.Count;
 
             for (int i = 0; i < n; ++i)
@@ -614,7 +634,7 @@ public class BuildingFootingTests
 
                 Vector2 p = mid + 0.5f * toInset;
 
-                float? h = _surfaceAt(tris, p);
+                float? h = DrawnBlockFloor.SurfaceAt(tris, p);
                 if (!h.HasValue) continue;
 
                 errors.Add(Single.Abs(h.Value - BuildingFooting.PavementHeightAt(q, p)));
@@ -698,6 +718,183 @@ public class BuildingFootingTests
 
 
     /**
+     * ⚠️ THE SURFACE BuildingFooting FOUNDS A BUILDING ON IS THE ONE THE FLOOR IS DRAWN AS,
+     * PLUS TWO CONSTANTS, EXACTLY.
+     *
+     * generation.BlockFloor carries GROUND heights and the emitted cap carries the road
+     * offset and the kerb on top, so the two are one surface at an offset - which is what
+     * lets the storey index be a difference of ground heights with no constant in it while
+     * the base is still the drawn floor. Asserted at every vertex of the emitted cap, on
+     * three grounds, because a surface that agreed to a tolerance would be a second model
+     * of the floor rather than the floor.
+     *
+     * The two sides come from different calls: DrawnBlockFloor runs the whole of
+     * ExtrudePoly.BuildGeom and picks the cap out of the mesh by position, BlockFloor asks
+     * ExtrudePoly.BuildCap for the cap directly.
+     */
+    [Theory]
+    [MemberData(nameof(Cities))]
+    public void TheDrawnFloorIsThisSurfacePlusTwoConstants(string idString, float size)
+    {
+        foreach (var ground in _grounds)
+        {
+            var (_, quarters) = _city(idString, size, ground);
+            int nChecked = 0;
+
+            foreach (var q in quarters.GetQuarters())
+            {
+                var outline = GenerateClusterQuartersOperator.FloorOutlineOf(q, 0f, 0f);
+                if (outline.Count < 3) continue;
+
+                var inset = GenerateClusterQuartersOperator.PavementInsetOf(q, outline);
+                var drawn = DrawnBlockFloor.CapOf(outline, inset);
+                var floor = BlockFloor.Of(q);
+
+                Assert.NotNull(floor);
+
+                foreach (var (a, b, c) in drawn)
+                foreach (var v in new[] { a, b, c })
+                {
+                    Assert.True(floor.TryHeightAt(new Vector2(v.X, v.Z), out float g),
+                        $"{idString}/{size} on {ground}: the cap of the block at "
+                        + $"{q.GetCenterPoint()} is drawn at {v} and BlockFloor does not "
+                        + "cover that position at all");
+
+                    /*
+                     * As an absolute difference and not Assert.Equal(.., 3), which ROUNDS
+                     * both sides - two values a millionth apart land on opposite sides of a
+                     * decimal and the gate fails for nothing. §7q's own lesson.
+                     */
+                    float delta = v.Y - (g + MetaGen.ClusterStreetHeight
+                                           + MetaGen.QuarterSidewalkOffset);
+
+                    Assert.True(Single.Abs(delta) < 1e-3f,
+                        $"{idString}/{size} on {ground}: the block at {q.GetCenterPoint()} "
+                        + $"is drawn at {v.Y:F4} where BlockFloor says "
+                        + $"{g + MetaGen.ClusterStreetHeight + MetaGen.QuarterSidewalkOffset:F4}");
+
+                    ++nChecked;
+                }
+            }
+
+            Assert.True(nChecked > 100, $"only {nChecked} cap vertices on {ground}");
+        }
+    }
+
+
+    /**
+     * ⚠️ THE CAP'S OWN CORNERS INSIDE A POLYGON ARE PART OF THE ANSWER, DRIVEN DIRECTLY.
+     *
+     * The extremes of a surface that is affine on each triangle are at the corners of the
+     * region's intersection with one of them, and one of those three kinds of corner is a
+     * TRIANGLE corner inside the region. It fires on nothing the game builds - a cap has no
+     * vertex in the block's interior, and a footprint is the block outline inset by exactly
+     * the width the pavement's inner edge stands at, so
+     * BuildingFootingWorldTests.NoCornerOfTheFloorIsInsideAFootprint counts zero over
+     * seventy cities. Deleting the term consequently passes every other gate here and there,
+     * which is what mutation testing found.
+     *
+     * So it is driven with a polygon that has no other candidate in it at all: the block's
+     * bounding box, grown by a metre. None of ITS corners is on the cap, and no cap edge
+     * crosses its boundary, so the only thing that can answer is the cap's own corners - and
+     * the answer has to be the block's corner range exactly, since the outline's corners are
+     * cap vertices carrying exactly those heights.
+     */
+    [Theory]
+    [MemberData(nameof(Cities))]
+    public void OnlyTheCapsOwnCornersCanAnswerForAPolygon(string idString, float size)
+    {
+        var (_, quarters) = _city(idString, size, "shipped terrain");
+        int nChecked = 0;
+
+        foreach (var q in quarters.GetQuarters())
+        {
+            var floor = BlockFloor.Of(q);
+            if (null == floor) continue;
+
+            float x0 = Single.MaxValue, y0 = Single.MaxValue;
+            float x1 = Single.MinValue, y1 = Single.MinValue;
+            foreach (var d in q.GetDelims())
+            {
+                x0 = Single.Min(x0, d.StartPoint.X); x1 = Single.Max(x1, d.StartPoint.X);
+                y0 = Single.Min(y0, d.StartPoint.Y); y1 = Single.Max(y1, d.StartPoint.Y);
+            }
+
+            var box = new List<Vector3>
+            {
+                new(x0 - 1f, 0f, y0 - 1f), new(x1 + 1f, 0f, y0 - 1f),
+                new(x1 + 1f, 0f, y1 + 1f), new(x0 - 1f, 0f, y1 + 1f)
+            };
+
+            Assert.True(floor.TryBoundsOver(box, out float lo, out float hi),
+                $"{idString}/{size}: the block at {q.GetCenterPoint()} answers nothing for "
+                + "a polygon that contains the whole of it, so the cap's own corners are "
+                + "not being counted at all");
+
+            Assert.Equal(BuildingFooting.MinGroundOf(q), lo);
+            Assert.Equal(BuildingFooting.MaxGroundOf(q), hi);
+
+            ++nChecked;
+        }
+
+        Assert.True(nChecked > 0, $"no block of {idString}/{size} has a floor");
+    }
+
+
+    /**
+     * ⚠️ THE RULE WP-O3 WAS BRIEFED TO BUILD IS NOT A BOUND, AND HERE IS WHAT IT COSTS.
+     *
+     * "The lowest of the piece's own boundary heights" - BuildingFooting.GroundAt at each
+     * footprint corner, which is the block's boundary ring read at that corner - is the
+     * obvious per-piece rule and the one this work package set out to build. It is not a
+     * bound on the floor: the cap's interior is one tessellation of the ring inside the
+     * pavement rim, and a triangle may run clean across the block and carry the height of a
+     * corner the piece never comes near underneath it.
+     *
+     * Recorded as counts on the pinned baselines rather than described, so that a later
+     * simplification back to the cheap rule fails here. The world-wide figure is in
+     * BuildingFootingWorldTests.
+     */
+    [Theory]
+    //                                    buildings it floats, and the worst of them
+    [InlineData("seed000", 500f, 0, 0f, 0f)]
+    [InlineData("Yelukhdidru", 800f, 2, 0.4f, 0.6f)]
+    [InlineData("seed000", 1500f, 28, 1.4f, 1.6f)]
+    [InlineData("Yelukhdidru", 3000f, 45, 9.7f, 9.9f)]
+    public void TheObviousPerPieceBoundFloatsABuilding(
+        string idString, float size, int expectedFloating, float worstLo, float worstHi)
+    {
+        var (_, quarters) = _city(idString, size, "shipped terrain");
+        int nFloating = 0, nChecked = 0;
+        float worst = 0f;
+
+        foreach (var (q, outline, inset, b) in _buildingsOf(quarters))
+        {
+            var drawn = DrawnBlockFloor.CapOf(outline, inset);
+            var poly = b.GetPoints().Select(p => new Vector2(p.X, p.Z)).ToList();
+            var (dLo, _) = DrawnBlockFloor.BoundsOver(drawn, poly);
+            if (dLo == Single.MaxValue) continue;
+
+            float floorMin = dLo - MetaGen.ClusterStreetHeight - MetaGen.QuarterSidewalkOffset;
+
+            float naive = Single.MaxValue;
+            foreach (var v in poly) naive = Single.Min(naive, BuildingFooting.GroundAt(q, v));
+
+            ++nChecked;
+            if (naive > floorMin + 1e-3f)
+            {
+                ++nFloating;
+                worst = Single.Max(worst, naive - floorMin);
+            }
+        }
+
+        Assert.True(nChecked > 0);
+        Assert.Equal(expectedFloating, nFloating);
+        Assert.InRange(worst, worstLo, worstHi);
+    }
+
+
+    /**
      * Only one place decides where a building on a block is founded.
      *
      * The house operator used to compute its own base from the pad plus a constant, and
@@ -721,6 +918,18 @@ public class BuildingFootingTests
         Assert.Contains("BuildingFooting", source);
         Assert.DoesNotContain("quarter.GroundHeightAt", source);
         Assert.DoesNotContain("2.5f +", source);
+
+        /*
+         * ⚠️ AND IT FOUNDS EACH BUILDING ON ITS OWN PIECE. The block-wide overload is gone,
+         * so a call site that has only a Quarter does not compile - but nothing in the type
+         * system stops a site from handing over SOME building of the block instead of the
+         * one it is drawing, and on a block with two estates that is the whole defect back
+         * again with a different sign. The scan names the variable the loop is over.
+         */
+        Assert.Contains(".BaseHeightOf(quarter, building)", source);
+        Assert.Contains(".HeightOf(quarter, building, building.GetHeight())", source);
+        Assert.Contains("StoreyGroundAt(\n                                                quarter, building,",
+            source.Replace("\r\n", "\n"));
     }
 
 
@@ -743,5 +952,14 @@ public class BuildingFootingTests
 
         Assert.Contains("BuildingFooting.StoreyGroundAt", source);
         Assert.DoesNotContain("clusterDesc.GroundHeightAt", source);
+
+        /*
+         * ...on the storey of the building the shopfront belongs to, which this operator
+         * has to carry out of the loop that picked it. Naming the variable rather than
+         * merely the call, for the reason above.
+         */
+        Assert.Contains("StoreyGroundAt(\n                    quarter, shopBuilding,",
+            source.Replace("\r\n", "\n"));
+        Assert.Contains("shopBuilding = myBuilding;", source);
     }
 }

@@ -387,37 +387,17 @@ namespace builtin.tools
                 // Why? IDK, was wrong.
                 // topPlane.Reverse();
 
-                /*
-                 * With an inset the cap is a rim of quads and corner wedges plus the
-                 * interior; without one it is the fan it has always been. The interior is
-                 * tessellated through exactly the same call the whole cap used to go
-                 * through, so it is the surface it was, only smaller.
-                 */
-                List<Vector3> topInset = null;
-                if (null != CapInsetEdges && CapInsetEdges.Count == topPlane.Count
-                                          && topPlane.Count >= 3)
+                List<CapInsetEdge> raised = null;
+                if (null != CapInsetEdges)
                 {
-                    var raised = new List<CapInsetEdge>(CapInsetEdges.Count);
+                    raised = new List<CapInsetEdge>(CapInsetEdges.Count);
                     foreach (var e in CapInsetEdges)
                     {
                         raised.Add(new CapInsetEdge(e.Start + vh, e.End + vh));
                     }
-
-                    topInset = _buildCapRim(g, topPlane, raised, vu);
                 }
 
-                /*
-                 * We hard code the UV to be a bit next to zero to make up for any range problems
-                 *
-                 * The cap is perpendicular to the extrusion, so vu IS its plane and the
-                 * tessellator is told so rather than left to derive one from the polygon.
-                 * That derivation is what used to decide which way the cap faced, and for a
-                 * polygon that is not planar - a city block traced over a hillside - it
-                 * flipped: see Triangulate.ToMesh. Whether per vertex normals are wanted is
-                 * a separate question and stays with PairedNormals.
-                 */
-                builtin.tools.Triangulate.ToMesh(
-                    topInset ?? topPlane, vu, PairedNormals?vu:Vector3.Zero, Vector2.One/64f, g);
+                BuildCap(g, topPlane, raised, vu, PairedNormals);
             }
 
             if (_addFloor)
@@ -447,6 +427,50 @@ namespace builtin.tools
 
 
         /**
+         * The whole ceiling cap of an extrusion, into the mesh.
+         *
+         * With an inset the cap is a rim of quads and corner wedges plus the interior;
+         * without one it is the fan it has always been. The interior is tessellated
+         * through exactly the same call the whole cap used to go through, so it is the
+         * surface it was, only smaller.
+         *
+         * ⚠️ STATIC, AND CALLED FROM OUTSIDE BuildGeom ON PURPOSE. A building's floor is
+         * founded on the block floor's cap (streets.generation.BlockFloor), so something
+         * other than the renderer has to be able to ask what that cap IS. A second
+         * derivation of "the rim is a quad per edge and the interior is what is left" is
+         * a surface that agrees with the drawn one until one of the two is edited, which
+         * is the whole shape of §7r and §7s; there is one expression instead.
+         *
+         * The polygon and the inset arrive already raised by the extrusion path.
+         *
+         * We hard code the UV to be a bit next to zero to make up for any range problems.
+         * The cap is perpendicular to the extrusion, so vuPlane IS its plane and the
+         * tessellator is told so rather than left to derive one from the polygon. That
+         * derivation is what used to decide which way the cap faced, and for a polygon
+         * that is not planar - a city block traced over a hillside - it flipped: see
+         * Triangulate.ToMesh. Whether per vertex normals are wanted is a separate
+         * question and stays with PairedNormals.
+         */
+        public static void BuildCap(
+            in engine.joyce.Mesh g,
+            in List<Vector3> outer,
+            in List<CapInsetEdge> inset,
+            in Vector3 vuPlane,
+            bool pairedNormals)
+        {
+            List<Vector3> topInset = null;
+            if (null != inset && inset.Count == outer.Count && outer.Count >= 3)
+            {
+                topInset = _buildCapRim(g, outer, inset, vuPlane, pairedNormals);
+            }
+
+            builtin.tools.Triangulate.ToMesh(
+                topInset ?? outer, vuPlane, pairedNormals ? vuPlane : Vector3.Zero,
+                Vector2.One / 64f, g);
+        }
+
+
+        /**
          * The rim of the cap: one quad along every edge of the polygon. Returns the
          * interior ring left over, for the caller to tessellate.
          *
@@ -470,11 +494,12 @@ namespace builtin.tools
          * summed is an area of a few hundred square metres; the terms cancel exactly in
          * exact arithmetic and only approximately in single precision.
          */
-        private List<Vector3> _buildCapRim(
+        private static List<Vector3> _buildCapRim(
             in engine.joyce.Mesh g,
             in List<Vector3> outer,
             in List<CapInsetEdge> inset,
-            in Vector3 vuPlane)
+            in Vector3 vuPlane,
+            bool pairedNormals)
         {
             int n = outer.Count;
 
@@ -501,7 +526,7 @@ namespace builtin.tools
                 {
                     g.p(v);
                     g.UV(Vector2.One / 64f);
-                    if (PairedNormals) g.N(vuPlane);
+                    if (pairedNormals) g.N(vuPlane);
                 }
 
                 if (isCcw)

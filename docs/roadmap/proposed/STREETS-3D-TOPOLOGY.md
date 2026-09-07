@@ -4698,7 +4698,7 @@ Ledger item (o), repair **(b)**, first of three work packages. The owner chose (
 closes AND the block stands, going round the spur — then subtract the spur from the estate
 and keep every polygon the inset returns.* WP-O1 is the peel and the termination.
 Deliberately NOT here: the estate subtraction, `_createBuildings`' polygon concatenation,
-and `BuildingFooting`. Those are WP-O2 and WP-O3.
+and `BuildingFooting`. Those are WP-O2 (§7v) and WP-O3 (§7w).
 
 ## §7u.1 What was built
 
@@ -4986,7 +4986,7 @@ being cut short by a chord — and left the spur **inside** the block with nothi
 it, which is why it made the reported symptom twenty times worse on purpose. WP-O2 is the
 subtraction and the polygon count. Deliberately NOT here: `BuildingFooting.BaseHeightOf`,
 which is still the **block's** lowest corner and is now wrong for a block carrying two
-estates. That is WP-O3.
+estates. That is WP-O3 (§7w).
 
 ## §7v.1 What was built
 
@@ -5275,3 +5275,292 @@ gate cases retired: **1780 xUnit** against 1763, TALE 200/200).
 - Everything in §7u.11 that WP-O2 does not reach: the block corner across a skipped arm and
   the kerb leaving the carriageway there, the outer face rule's silence about a nested
   component, and §7t.7's unanswered question about the original sighting.
+
+---
+
+# §7w — WP-O3: a building is founded on its own piece of ground (2026-09-07, FIXED)
+
+Ledger item (o), repair **(b)**, last of three work packages. WP-O1 (§7u) peeled the block
+graph to its 2-core, WP-O2 (§7v) subtracted the dead-end spur from the estate and gave every
+remaining polygon its own building — and left `BuildingFooting` founding all of them on the
+**block's** lowest corner, which is the bound the class was written round when a block
+carried one estate and at most one building. WP-O3 makes the bound belong to the piece.
+
+**The owner's design decision is untouched**: floors are planar, shopfronts align per storey,
+and a footprint-following base was offered in ledger item (a) and rejected. This work package
+changes *which* single scalar a planar floor sits at, and nothing else.
+
+## §7w.1 ⚠️ THE BRIEF'S OWN FIX IS NOT A BOUND, AND THAT IS THE FINDING
+
+The brief asked for the bound to be re-established for a piece whose boundary is no longer
+all block corners: *"WP-O2's subtraction introduces boundary vertices that are not block
+corners… their heights come from somewhere. Say where, and prove or measure the bound holds.
+If it does not, that is the finding and it decides the shape of the fix."*
+
+**It does not hold, and the reason is not the subtraction at all.** Ledger item (a)'s
+argument is that every vertex of the block floor's cap carries a corner height or a blend of
+two of one edge's pair, so a piecewise linear surface over them cannot leave the block's
+corner range. That is a statement about the **whole block** and it says nothing whatever
+about a sub-region of it: the cap's INTERIOR is one tessellation of the ring left inside the
+pavement rim, and the tessellator is free to run a triangle clean across the block, so the
+height of a corner the piece never comes near appears underneath it.
+
+Measured, taking the lowest of a piece's own boundary heights — `BuildingFooting.GroundAt`
+at each footprint corner, which is exactly the rule the brief describes:
+
+| the cheap per-piece rule | flag off | flag on |
+|---|---|---|
+| footprint corners it leaves in the air, of 192 676 / 149 556 | **5402** | **4842** |
+| worst float, over the seventy shipped cities | **1.58 m** | **5.61 m** |
+| buildings it floats on the four pinned baselines | 0 / 2 / 28 / **45** | — |
+| worst float on the pinned baselines (`Yelukhdidru@3000`) | **9.77 m** | — |
+
+A 9.77 m float is the reported sighting of ledger item (a) put back. So the rule had to
+change shape: **the answer is read off the surface**, not modelled from the corners.
+
+## §7w.2 What was built
+
+- **`engine.streets.generation.BlockFloor`** — a block's floor as the cap it is DRAWN as,
+  in GROUND terms, cached on the `Quarter` beside its pad. `TryBoundsOver(polygon)` answers
+  the EXACT lowest and highest the floor gets over a plan polygon, by the standard
+  enumeration for a function that is affine on each triangle: at the polygon's own corners,
+  at the cap's corners inside the polygon, and where the two boundaries cross.
+- **`builtin.tools.ExtrudePoly.BuildCap`** — the ceiling-cap construction hoisted out of
+  `BuildGeom` into a static, so that `BlockFloor` asks for the cap through the very call the
+  block floor is emitted through. A second derivation of *"the rim is a quad per edge and
+  the interior is what is left"* would agree with the drawn floor until one of the two was
+  edited, which is §7r's and §7s's shape exactly.
+- **`BuildingFooting`** — `MinGroundOf`, `MaxGroundOf`, `BaseHeightOf`, `HeightOf`,
+  `StoreyAt` and `StoreyGroundAt` all take the `Building` now. **The block-wide overloads of
+  `BaseHeightOf`, `HeightOf`, `StoreyAt` and `StoreyGroundAt` are deleted**, so a call site
+  that has only a `Quarter` does not compile — §7f's `FindStartPose` rule. `MinGroundOf(q)`
+  and `MaxGroundOf(q)` survive as the block's corner range, which is the fallback and the
+  sanity bound.
+- Call sites: `GenerateHousesOperator` (base, height, shopfront), `GenerateShopsOperator`
+  (the POI's storey, which needed the chosen building carried out of the loop that picked
+  it), `SpatialModel` (the TALE shop door).
+- **The per-building range is cached on the `Building`**, the way the cap is cached on the
+  `Quarter`: the exact range of a piecewise linear surface over a polygon is not free, the
+  footprint and the block's height source are both fixed once the block is traced, and the
+  base, the height and each shopfront's storey all ask for it. Measured, without it the
+  whole-world gates take over two minutes instead of 42 s.
+
+⚠️ **THE SURFACE IS IN GROUND TERMS AND THAT IS LOAD BEARING.** The drawn cap is this
+surface plus `ClusterStreetHeight` plus `QuarterSidewalkOffset`, vertex for vertex — asserted
+as such over three grounds — and it is built that way round rather than by subtracting the
+two constants from the drawn cap, because the storey index is a difference of two GROUND
+heights with no constant in it, which is what makes it exactly zero on a flat city, and
+because `(g + 2) − 2` is not `g` in single precision. The tessellation is decided by the plan
+and the plane only, so a constant height offset cannot change which triangles come out; that
+is what makes the relationship an equality rather than an approximation.
+
+⚠️ **AND THE BLEND IS WRITTEN AS AN OFFSET FROM ONE CORNER**, `c + l₁(a−c) + l₂(b−c)`, not as
+`l₁a + l₂b + l₃c`. The three weights add to one only to within a rounding error, so the
+weighted sum over a LEVEL triangle comes back a unit in the last place away from the level it
+is at — and `StoreyAt`'s `rise > 0f` then makes every shop in the flat city one storey up.
+The mutation that writes it the other way fails 5.
+
+## §7w.3 The headline: what the block-wide bound cost, and what is left of it
+
+Over the seventy shipped cities on the shipped terrain, per building, the **over-sink** — how
+far the floor's own minimum over that footprint stands above the block's lowest corner, i.e.
+exactly what the block-wide bound sank it by and exactly what this removes:
+
+| over-sink, all buildings | flag off (27 403) | flag on (26 054) |
+|---|---|---|
+| p05 / p50 / p90 / p95 | 0.045 / **0.445** / 1.302 / 1.692 m | 0.028 / **0.256** / 0.897 / 1.375 m |
+| worst | **15.20 m** | **33.09 m** |
+| below the block's lowest corner | 0 | 0 |
+
+and per block that carries more than one building, the worst of its buildings — which is
+§7t.10.7's *"extra burial imposed on the higher piece"* seen through the pieces WP-O2
+actually builds rather than through a nearest-corner reconstruction:
+
+| the higher piece of a split block | flag off | flag on |
+|---|---|---|
+| blocks with more than one building | **13** | **793** |
+| p05 / p50 / p95 / worst | 0.70 / **5.84** / 15.20 / 15.20 m | 0.65 / **5.00** / 15.66 / 33.09 m |
+| over 0.5 m / 2 m / 5 m | 13 / 10 / **8** | 775 / 602 / **397** |
+| **after** | **0.000 m** | **0.000 m** |
+
+⚠️ **§7t.10.7 PREDICTED 7.46 / 6.21 m AT THE MEDIAN AND 21.2 / 28.1 m AT THE WORST, and the
+production pieces give 5.84 / 5.00 and 15.2 / 33.1.** The medians come in about 20 % lower
+because §7t.10.7 assigned each block corner to the piece it was nearest to, while a piece's
+real floor minimum is on its own boundary and generally above its nearest corner. The
+flag-on **worst** comes in *higher* than predicted, 33.1 m against 28.1 — a split block whose
+two halves are 33 m apart in ground height, which the reconstruction did not have.
+
+⚠️ **AND THE STANDARD THE CLASS COMMENT SET IS ONLY HALF MET BY THE WORLD.** Ledger item (a)
+recorded *"0.19–0.61 m at the median, 3.74 m at the worst building of the four cities"*. The
+median lands inside that band — 0.256 / 0.445 m — but the worst over seventy cities is
+**15.2 / 33.1 m**, four to nine times the four-city worst. The old comment's median was a
+fair description of the world and its worst was not, which is what the coverage buys.
+
+**Afterwards the over-sink is zero by construction**, because the base IS the minimum. That
+is not a tolerance being met, it is the quantity ceasing to exist.
+
+## §7w.4 The guarantee, over the whole shipped world
+
+**No corner of any building's footprint stands above the floor under it**: 0 of 192 676 flag
+off and 0 of 149 556 flag on, worst float exactly 0.000 m, over seventy cities. Every block
+of both worlds has a floor to be founded on — 40 891 and 37 609 caps built, **0 fallbacks**.
+
+On the four pinned baselines the same guarantee is asserted against `DrawnBlockFloor`, which
+reads the cap back out of the mesh `ExtrudePoly.BuildGeom` emits and picks it out by vertex
+position — a different call from the one production uses — and it is asserted as an
+**IDENTITY**: `BaseHeightOf` equals that independent enumeration's minimum, and
+`HeightOf(…, 0)` equals its spread. A tolerance would be satisfied by anything that answers
+low; the block-wide bound would satisfy a distribution on most blocks.
+
+## §7w.5 ⚠️ THE THING THAT MOVED THAT NOBODY ASKED ABOUT: a shop's storey
+
+`StoreyGroundAt` snaps a shopfront to whole storeys **above a reference**, and until WP-O2
+"the block's lowest corner" and "the building's own floor" were the same sentence. They are
+not any more, and the difference is the over-sink above.
+
+Reverting the storey reference to the block-wide minimum **passes every other gate in this
+work package**, because both references are below the pavement in front of the shop and both
+keep the shop within one storey OF THE PAVEMENT — which is what the reachability gates ask.
+What it breaks is the alignment to the building: a shop window at an arbitrary height inside
+its own second storey, by a median 0.26–0.45 m and up to 33 m. The mutation survived its
+first round and named the gate: **a shop's sill is a whole number of storeys above its own
+building's base**, 0 of **572 404 / 527 807** shopfronts off the grid.
+
+## §7w.6 ⚠️ ONE TERM OF THE MINIMUM CANNOT BE KILLED BY ANY AMOUNT OF REAL DATA
+
+The exact minimum of a piecewise linear surface over a region needs three kinds of candidate,
+and the middle one — the **cap's own corners inside the region** — decides nothing the game
+builds. Deleting it passes every gate over seventy cities.
+
+⚠️ **AND THE OBVIOUS EXPLANATION IS WRONG, WHICH IS WHY THIS IS A COUNT AND NOT A ZERO.**
+*"A cap has no vertex inside a footprint"* sounds right — every cap vertex is on the block's
+outline or on the pavement's inner edge, and a footprint is that outline inset by exactly the
+width the inner edge stands at, so the two coincide rather than nest. It is not true:
+**164 924 cap corners are inside a footprint flag off and 114 207 flag on**. They are inside
+because they are **on** the footprint's boundary and Clipper works in whole decimetres, so
+which side they land on is a rounding decision.
+
+⚠️ **NOR IS *"it is never the minimum"* TRUE**: **432 of them ARE the minimum flag off and
+414 flag on**. What holds is one step weaker again, and it is the one that matters — such a
+vertex lies **on** the footprint's boundary, so a crossing of the two boundaries answers with
+the same height at the same place, and dropping the term changes no answer anywhere. Two
+guesses at the reason, both refuted by a count, before the third one held.
+
+Kept, and driven directly: `OnlyTheCapsOwnCornersCanAnswerForAPolygon` hands `TryBoundsOver`
+the block's own bounding box grown by a metre, which has no other candidate in it — none of
+its corners is on the cap and no cap edge crosses its boundary — and asserts the answer is
+the block's corner range exactly. §7o's *"data you do not have cannot catch anything"*, met
+with a fixture rather than a deletion (§13.8's decision goes the other way only for code that
+is both unreachable and ineffective).
+
+## §7w.7 What each city does
+
+**THE FLAT CITY DOES NOT MOVE AT ALL**, and it cannot: every vertex of a flat block's cap is
+at the cluster's own average height and the blend of equal heights is that height exactly, so
+`MinGroundOf` and `MaxGroundOf` answer `AverageHeight` whatever polygon they are given.
+Asserted as equality on the four baselines — the base is `AverageHeight + ClusterStreetHeight
++ QuarterSidewalkOffset` exactly, `HeightOf` is the design height exactly, the storey index
+is exactly 0, and the shopfront quad, the shop POI and the TALE door land on the floats they
+land on today.
+
+The terrain city moves every building that stands on a block whose floor is not level under
+it, which is nearly all of them: the base rises by the over-sink of §7w.3 — median 0.26–0.45 m,
+up to 33 m — and the roof rises with it, since `HeightOf` now adds the floor's spread over the
+footprint rather than the block's whole corner spread.
+
+## §7w.8 ⚠️ NOT ONE BASELINE FILE MOVED, and `ClusterStorage.DbVersion` is NOT bumped
+
+`street-fingerprints.json`, `street-fingerprints-gradesep.json`, `street-geometry.json`,
+`street-cost-baseline.json` and `street-relaxed-heights.json` are byte-identical to
+`36f4acd1`. The first two, the fourth and the fifth record the stroke NETWORK, which nothing
+here touches. `street-geometry.json` records the **road mesh**, which
+`GenerateClusterStreetsOperator` builds from the section arrays; the block floor is a
+different operator and is not recorded anywhere, and in any case no vertex of it moves — this
+work package reads the cap, it does not change it.
+
+`ClusterStorage.DbVersion` stays 1040: it persists `Stroke` and `StreetPoint` only, and
+`ClusterDesc._triggerStreets` calls `_findQuarters()` on every start whether the strokes came
+from the cache or from the generator. No player's `worldcache` needs deleting.
+
+## §7w.9 The mutations
+
+Fourteen, driven against the production expressions, restored with `cp` + `touch` so MSBuild
+rebuilds (§15). Failures are against `BuildingFootingTests` + `BuildingFootingWorldTests`.
+
+| # | mutation | failures |
+|---|---|---|
+| 1 | the floor is never consulted — the block range answers always (WP-O2's rule back) | **8** |
+| 2 | `TryBoundsOver` skips the crossings of the two boundaries | **11** |
+| 3 | `TryBoundsOver` skips the cap's own corners inside the polygon | ⚠️ **survived**, then **4** |
+| 4 | `TryBoundsOver` skips the polygon's own corners | **23** |
+| 5 | the barycentric blend is a weighted sum of three heights again | **5** |
+| 6 | the cap is built with no pavement inset | **25** |
+| 7 | `HeightOf` adds the BLOCK's corner spread again | **4** |
+| 8 | the storey index is measured from the block's lowest corner again | ⚠️ **survived**, then **2** |
+| 9 | the shops operator names the block's first building, not the shopfront's own | **1** (the scan) |
+| 10 | the ground outline takes the block's PAD, not each corner's own junction | **32** |
+| 11 | a crossing anywhere on the footprint edge's infinite line | **8** |
+| 12 | the first triangle whose BOX contains the point answers | **24** |
+| 13 | `ExtrudePoly.BuildCap` emits no rim at all | **17** |
+| 14 | the per-building footing cache is never read | ⚠️ **survives** |
+
+**ONE SURVIVOR OF FOURTEEN, AND IT IS PROVABLY EQUIVALENT.** 14 makes `_boundsOf` recompute
+the range every time instead of reading what it stored on the `Building`, and the two are the
+same expression over the same immutable footprint and the same immutable height source — no
+output can differ, and no test can be written that would tell them apart. It is a performance
+measure and it is a real one: without it `StoreyGroundAt` runs the exact enumeration twice per
+shopfront, and the whole-world gates go from 42 s to over two minutes.
+
+**The two that survived their first round are both findings** — 3 is §7w.6 and 8 is §7w.5.
+
+**9 is worth naming as well**: it is killed by a **source scan only**, because
+`GenerateShopsOperator` lives in `nogameCode`, which the test assembly does not reference; and
+the scan names the **variable** rather than the call, since a call whose argument is the wrong
+building compiles and passes everything (§7m's *"a driver is a call, not a mention"*, one turn
+further on — a call is not the right ARGUMENT either).
+
+## §7w.10 Gates superseded, with their old text
+
+- `BuildingFootingTests.TheBaseIsTheLowestPavementOnTheBlock` →
+  `TheBaseIsTheLowestPavementOverTheFootprint`. It asserted
+  `Assert.Equal(lo + ClusterStreetHeight + QuarterSidewalkOffset, BaseHeightOf(q), 3)` over
+  the block's corner range. The block's corner range survives as a bound and as the fallback,
+  both asserted; the identity is now against the drawn surface, which is strictly stronger.
+- `BuildingFootingTests.TheBaseIsUnderTheFloorAcrossTheWholeFootprint` — the **sampling**
+  changed and the assertion did not. It walked each footprint corner toward the footprint's
+  centre in eighths, `Vector3.Lerp(pts[i], centre, k / 8f)`; a footprint is a block outline
+  inset by a pavement width and is very often not convex, so that segment leaves the
+  footprint. That did not matter while the bound was the whole block's and is a false failure
+  the moment it belongs to the piece. Samples are filtered to the footprint's interior now,
+  and a grid is added to the spokes.
+- `BuildingFootingTests.ABlockCarriesOneEstateAndThatEstateMayCarrySeveral` keeps its counts;
+  its ⚠️ note that the coupling is WP-O3's is now answered rather than pending.
+- `JoyceCode.Tests.engine.streets.BlockFloor` → `DrawnBlockFloor`, renamed rather than folded
+  into the production class: it reads the whole emitted mesh and picks the cap out of it by
+  position, so it is an independent reading of what is drawn, and every identity in §7w.4 is
+  against it.
+
+Tests: `tests/JoyceCode.Tests/engine/streets/BuildingFootingWorldTests.cs` (10 new) and
+`BuildingFootingTests.cs` (14 new against two gate cases reshaped): **1804 xUnit** against
+1780, TALE 200/200.
+
+## §7w.11 Found and NOT fixed
+
+- ⚠️ **The block floor's interior is a tessellation artefact and it is metres deep.** The
+  finding in §7w.1 is not only about the bound. The gap it measures — between the lowest
+  height anywhere on a footprint's own boundary and the lowest the floor actually gets over
+  that footprint — is **9.77 m at the worst building of `Yelukhdidru@3000`** and 1.58 / 5.61 m
+  at the worst of the seventy shipped cities. That gap is the interior tessellation: LibTess
+  ran a triangle across the block and carried a distant corner's height under the middle of
+  the piece. §7c confined the cross-fall to the block's interior on purpose and this is what
+  the interior looks like from underneath. Nothing here changes it — the footing follows the
+  floor, which is correct — but the floor itself is worth a round.
+- **The over-sink's worst case is 33 m** (§7w.3), i.e. one flag-on block whose two buildings
+  stand 33 m apart in ground height. Nothing looks at whether a block that steep should carry
+  two buildings at all.
+- Everything in §7v.13 that WP-O3 does not reach: the 13 flag-off corner slivers, the three
+  self-touching outlines, the 121 / 10 blocks losing land to a neighbour's corridor with its
+  1180 m² outlier, the **522 flag-on blocks with no buildable land at all**, and §7u.5's block
+  corner across a skipped arm.
+- §7t.7's unanswered question about the original sighting: the class is established and the
+  instance never was.

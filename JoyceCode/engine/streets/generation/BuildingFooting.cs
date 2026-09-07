@@ -17,8 +17,10 @@ namespace engine.streets.generation;
  * buildings have level floors, and a shopfront is aligned per storey rather than ramped
  * gradually along the pavement. A footprint-following base was considered and rejected.
  *
- * **Why the block's own corners are enough.** Everything on a block hangs off the heights
- * of its corner junctions:
+ * **Over the building's own footprint, read off the floor's own surface** (WP-O3, §7w).
+ * Until WP-O2 a block carried exactly ONE estate and at most ONE building, and the bound
+ * was the block's LOWEST CORNER: sound, because everything on a block hangs off the heights
+ * of its corner junctions -
  *
  *   - the block floor's outline takes each corner's own junction height exactly
  *     (Quarter.CornerGroundHeightAt, see GenerateClusterQuartersOperator.FloorOutlineOf);
@@ -29,20 +31,34 @@ namespace engine.streets.generation;
  *     projection falls outside its edge and no inset height falls outside the block's
  *     corner range, on any of them.
  *
- * So every vertex of the floor's cap carries a corner height or a blend of two, and a
- * piecewise linear surface over those vertices is bounded below by the LOWEST corner and
- * above by the highest. The bound needs no reference to the mesh, holds for any height
- * source, and is exact.
+ * - so every vertex of the floor's cap carries a corner height or a blend of two, and a
+ * piecewise linear surface over those vertices cannot leave the block's corner range. It
+ * was tight because an estate IS the block outline inset by Quarter.SidewalkWidth (1-6 m),
+ * so a footprint spanned essentially the whole block: the exact minimum of the cap over a
+ * footprint sat only 0.19-0.61 m above the bound at the median and 3.7 m at the worst
+ * building of the four baseline cities.
  *
- * **Over the whole block rather than over the building's own footprint**, because measured
- * over the baselines a block carries exactly ONE estate and an estate at most ONE building
- * - 1x82, 1x445 estates per block; 149 buildings on 445 blocks, never two on one. An
- * estate IS the block outline inset by Quarter.SidewalkWidth (1-6 m), so a footprint spans
- * essentially the whole block: the exact minimum of the cap over a footprint sits only
- * 0.19-0.61 m above this bound at the median, 1.5 m at p90, 3.7 m at the worst building of
- * the four cities. Should blocks ever carry several buildings, that slack becomes the
- * amount by which a small building on a large block is over-sunk, and the bound has to be
- * taken over the footprint instead.
+ * WP-O2 gives every piece of a block's buildable land its own building, and that slack
+ * becomes the amount by which the higher piece of a split block is over-sunk: a median
+ * 6-7 m and up to 28 m over the shipped world (§7t.10.7). That is what WP-O3 repairs.
+ *
+ * ⚠️ **AND THE OBVIOUS PER-PIECE BOUND IS NOT A BOUND.** The corner argument says a
+ * piecewise linear surface over the CAP's vertices cannot leave the BLOCK's corner range.
+ * It says nothing whatever about a sub-region of the block, because the cap's interior is
+ * one tessellation of the ring left inside the pavement rim and the tessellator is free to
+ * run a triangle clean across the block. Measured over the four baseline cities on the
+ * shipped terrain, taking the lowest of a piece's own boundary heights - the obvious
+ * per-piece rule - floats 0 / 2 / 28 / 45 buildings, by up to 9.77 m, and nothing local to
+ * the piece can see it coming.
+ *
+ * So the answer is read off the surface itself. generation.BlockFloor is the cap the floor
+ * is DRAWN as, through the same ExtrudePoly.BuildCap the emission goes through, and
+ * MinGroundOf takes its EXACT minimum over the footprint - at the footprint's corners, at
+ * the cap's corners inside the footprint, and where the two boundaries cross. That is the
+ * tightest bound there is; it is a bound rather than a sample because it is a minimum over
+ * the whole footprint rather than a reading at one point of it. A block with no cap, and a
+ * footprint that does not meet its block's cap, fall back to the block's corner range,
+ * which is the old rule - still sound, still loose.
  *
  * **What it costs, measured on the shipped diamond-square terrain with the shipped grade
  * policy** - burial at a footprint vertex, i.e. how far the block floor is above the base
@@ -119,6 +135,51 @@ public static class BuildingFooting
         }
 
         return bestH;
+    }
+
+
+    /**
+     * The lowest ground height the block floor reaches over one building's footprint.
+     *
+     * The bound a building is founded on. Read off the floor's own cap
+     * (generation.BlockFloor), which is the only thing that can see a tessellation running
+     * across the block, and never above the surface anywhere over the footprint.
+     *
+     * Falls back to the block's own lowest corner - the rule that shipped before WP-O3 -
+     * for a block whose cap cannot be built and for a footprint that does not meet it. That
+     * is still a sound bound for exactly the reason given on the class; it is merely the
+     * loose one.
+     */
+    public static float MinGroundOf(Quarter quarter, Building building)
+        => _boundsOf(quarter, building).Lo;
+
+
+    /**
+     * The highest ground height the block floor reaches over one building's footprint.
+     */
+    public static float MaxGroundOf(Quarter quarter, Building building)
+        => _boundsOf(quarter, building).Hi;
+
+
+    private static (float Lo, float Hi) _boundsOf(Quarter quarter, Building building)
+    {
+        if (null != building && building.TryGetFooting(out float was, out float wasHi))
+        {
+            return (was, wasHi);
+        }
+
+        var floor = BlockFloor.Of(quarter);
+        if (null != floor && null != building
+            && floor.TryBoundsOver(building.GetPoints(), out float lo, out float hi))
+        {
+            building.SetFooting(lo, hi);
+            return (lo, hi);
+        }
+
+        (float loBlock, float hiBlock) = (MinGroundOf(quarter), MaxGroundOf(quarter));
+        building?.SetFooting(loBlock, hiBlock);
+
+        return (loBlock, hiBlock);
     }
 
 
@@ -211,35 +272,44 @@ public static class BuildingFooting
 
 
     /**
-     * The one planar level every building on this block is founded at.
+     * The one planar level this building is founded at.
      *
-     * At or below the pavement everywhere on the block, with equality only at the block's
-     * lowest corner - where the two surfaces are tangent at a point rather than coplanar,
-     * so there is nothing for the depth buffer to fight over. No margin is subtracted: a
-     * margin would move the shipped flat city by more than the 0.35 m this change already
-     * costs it, and would buy nothing, since the building's own floor cap faces DOWN
-     * (ExtrudePoly emits it clockwise) and is culled from above in any case.
+     * At or below the pavement everywhere over its own footprint, with equality only at the
+     * lowest point the floor reaches there - where the two surfaces are tangent at a point
+     * rather than coplanar, so there is nothing for the depth buffer to fight over. No
+     * margin is subtracted: a margin would move the shipped flat city by more than the
+     * 0.35 m the original change already cost it, and would buy nothing, since the
+     * building's own floor cap faces DOWN (ExtrudePoly emits it clockwise) and is culled
+     * from above in any case.
+     *
+     * ⚠️ PER BUILDING AND NOT PER BLOCK, and there is deliberately no block-wide overload
+     * left to call: a block carries several buildings since WP-O2, and founding all of them
+     * at the block's lowest corner buries the higher ones by a median 6-7 m. A caller that
+     * still has only a Quarter does not compile.
      */
-    public static float BaseHeightOf(Quarter quarter)
-        => _pavementOf(MinGroundOf(quarter));
+    public static float BaseHeightOf(Quarter quarter, Building building)
+        => _pavementOf(MinGroundOf(quarter, building));
 
 
     /**
      * The height to build a house of the given design height to, so that it still stands
      * that height above the ground.
      *
-     * Sinking the base to the block's lowest corner would otherwise swallow the building
-     * from the uphill side: measured on the shipped terrain, without this the roof of
-     * 64 of 149 buildings in Yelukhdidru/3000 falls below the block floor somewhere over
-     * its own footprint, and the median 24 m building shows 4.5 m above the ground at its
-     * highest corner. Adding the block's corner spread puts the roof exactly its design
-     * height above the block's HIGHEST corner, which is the upper bound of the floor
-     * surface for the same reason the base is the lower one.
+     * Sinking the base to the lowest ground under the footprint would otherwise swallow the
+     * building from the uphill side: measured on the shipped terrain, without this the roof
+     * of 64 of 149 buildings in Yelukhdidru/3000 fell below the block floor somewhere over
+     * its own footprint, and the median 24 m building showed 4.5 m above the ground at its
+     * highest corner. Adding the floor's own spread over the footprint puts the roof
+     * exactly its design height above the HIGHEST ground it stands on, for the same reason
+     * the base is the lowest.
      *
-     * Exactly zero on a flat block, where every corner is at one height.
+     * Exactly zero on a flat block, where the whole floor is at one height.
      */
-    public static float HeightOf(Quarter quarter, float designHeight)
-        => designHeight + (MaxGroundOf(quarter) - MinGroundOf(quarter));
+    public static float HeightOf(Quarter quarter, Building building, float designHeight)
+    {
+        var (lo, hi) = _boundsOf(quarter, building);
+        return designHeight + (hi - lo);
+    }
 
 
     /**
@@ -259,9 +329,9 @@ public static class BuildingFooting
      * ceiling of a rounding error, which is what keeps every shopfront in the shipped flat
      * city on the vertex it is on today.
      */
-    public static int StoreyAt(Quarter quarter, in Vector2 v2Cluster)
+    public static int StoreyAt(Quarter quarter, Building building, in Vector2 v2Cluster)
     {
-        float rise = GroundAt(quarter, v2Cluster) - MinGroundOf(quarter);
+        float rise = GroundAt(quarter, v2Cluster) - MinGroundOf(quarter, building);
         if (!(rise > 0f))
         {
             return 0;
@@ -272,8 +342,9 @@ public static class BuildingFooting
 
 
     /**
-     * The ground height a shopfront at a plan position is aligned to: the block's lowest
-     * corner, raised by whole storeys until it clears the pavement in front of the shop.
+     * The ground height a shopfront at a plan position is aligned to: its own building's
+     * founding level, raised by whole storeys until it clears the pavement in front of the
+     * shop.
      *
      * Returned as a GROUND height, in the same terms Quarter.CornerGroundHeightAt answers
      * in, so that a caller which today adds its own constant to a ground height keeps
@@ -281,8 +352,10 @@ public static class BuildingFooting
      * the TALE door each stay bit for bit where they are in the flat city while all three
      * follow the same storey on a slope.
      */
-    public static float StoreyGroundAt(Quarter quarter, in Vector2 v2Cluster)
-        => MinGroundOf(quarter) + StoreyAt(quarter, v2Cluster) * StoryHeight;
+    public static float StoreyGroundAt(
+        Quarter quarter, Building building, in Vector2 v2Cluster)
+        => MinGroundOf(quarter, building)
+           + StoreyAt(quarter, building, v2Cluster) * StoryHeight;
 
 
     /**
