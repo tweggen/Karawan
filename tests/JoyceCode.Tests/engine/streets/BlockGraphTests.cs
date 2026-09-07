@@ -408,7 +408,7 @@ public class BlockGraphTests
         foreach (var (label, store) in cities)
         {
             var c = _censusOf(idString, size, store);
-            var core = _twoCoreOf(store);
+            var core = TwoCoreOf(store);
 
             foreach (var q in c.Quarters.GetQuarters())
             {
@@ -1108,8 +1108,12 @@ public class BlockGraphTests
     /**
      * The junctions of the block graph that lie on a cycle: peel every junction with
      * fewer than two block-graph arms until none is left.
+     *
+     * Shared with SpurBlocks, which reconstructs the blocks §7t.5(b) would give the city
+     * out of exactly this set - internal rather than copied, so that "the 2-core" means
+     * one thing in both files.
      */
-    private static HashSet<int> _twoCoreOf(StrokeStore store)
+    internal static HashSet<int> TwoCoreOf(StrokeStore store)
     {
         var degree = new Dictionary<int, int>();
         var adjacency = new Dictionary<int, List<int>>();

@@ -53,7 +53,7 @@ public class BlockRingClosureTests
 {
     private static readonly object _lo = new();
 
-    private sealed class City
+    internal sealed class City
     {
         internal ClusterDesc Cluster;
         internal StrokeStore Store;
@@ -70,7 +70,7 @@ public class BlockRingClosureTests
      * this is the seventy cities the game lays out rather than the seven pinned fixture
      * seeds - which carry only 10 of these between them (ThePinnedSeedsCarryThisMany).
      */
-    private static List<City> World(bool gradeSeparation)
+    internal static List<City> World(bool gradeSeparation)
     {
         lock (_lo)
         {
@@ -590,6 +590,20 @@ public class BlockRingClosureTests
 
         return inside;
     }
+
+
+    /**
+     * The two measurements above, for the file that measures what a 2-cored block would
+     * do with the same spurs (BlockSpurEstateTests). Exposed rather than copied, so that
+     * "this ring does not close" and "this junction is inside that ring" mean the same
+     * thing in both files - both are identity/geometry rules that a second copy could
+     * quietly weaken.
+     */
+    internal static bool RingIsBroken(Quarter q) => _firstOpenEdge(q) >= 0;
+
+
+    internal static bool InsidePlan(List<Vector2> ring, in Vector2 p)
+        => _insidePlan(ring, p);
 
 
     private static (int, int, int, int) _boxOf(List<IntPoint> poly)

@@ -4132,6 +4132,13 @@ cluster `cluster-clusters-mydear-0` — 1000 m, at `(-5.77, 0, 10)`, so local
 **Cause established, size measured, fix NOT made**: the repair is a decision about what the
 city should look like, and §7t.5 is the number that decision needs.
 
+⚠️ **A SECOND ROUND OF MEASUREMENT FOLLOWED, and it is §7t.10 at the end of this file.**
+The owner proposed a notch-or-split policy on top of §7t.5's repair (b); the answer is
+**mostly-notch (99.6 % / 96.6 %)**, it needs **no threshold constant**, and it turns out the
+decision is **twenty times larger** than the 222 / 272 counted here — repair (b) creates
+4 778 / 4 439 blocks where 4 559 / 4 167 holes are drawn today. Read §7t.10 before acting on
+§7t.5.
+
 ## §7t.1 ⚠️ Both obvious suspects are refuted, and the second one by a measurement
 
 **Grade separation is not the cause.** The owner re-ran with
@@ -4401,3 +4408,283 @@ they do not.
 - **The 0 / 2 spurs inside a block that closed** (§7t.3a) — no chord is involved, so §7t.5(a)
   does not reach them.
 - **The sighting is not reproduced** (§7t.7).
+
+---
+
+# §7t.10 — Notch or split? The 2-cored block, measured (2026-09-07, MEASUREMENT ONLY)
+
+Second round on ledger item (o). Nothing is fixed, no file under `JoyceCode/` is touched,
+no baseline moves and `ClusterStorage.DbVersion` is untouched. The owner proposed a third
+policy on top of §7t.5's repair **(b)**:
+
+> when a dead-end spur cuts a slit into a city block, decide by a heuristic whether that
+> block carries ONE estate with a notch cut out of it, or TWO estates, one either side of
+> the spur.
+
+…together with a structural claim that the heuristic needs no new constant:
+
+> a dead-end spur cannot split a polygon by subtraction alone — the corridor stops at the
+> tip, so land wraps round the tip and one polygon comes back with a slot in it — **but**
+> the estate is the block inset by `Quarter.SidewalkWidth` on every side, so a neck
+> narrower than 2 × `SidewalkWidth` insets to nothing and Clipper returns TWO polygons by
+> itself. Inset, then count polygons.
+
+**The conclusion is right and the reasoning is half wrong**, which is §7t.10.3 below.
+
+Measured over the shipped world — the real `GenerateClustersOperator._generateClusterList`
+seeded `"mydear"`, 70 cities — with `joyce.EnableGradeSeparation` both ways, injected into
+`Generator` as `StreetHarness` already does and never read from the process global. The
+2-core is `BlockGraphTests.TwoCoreOf`, hoisted to `internal` rather than copied; the world
+is `BlockRingClosureTests.World`, reused rather than rebuilt; the new geometry is
+`tests/JoyceCode.Tests/engine/streets/SpurBlocks.cs` and the assertions are
+`BlockSpurEstateTests.cs`.
+
+## §7t.10.1 ⚠️ THE BLAST RADIUS IS TWENTY TIMES WHAT §7t's NUMBERS SUGGEST
+
+§7t.3a counted **222 / 272** spurs inside a stored block and 0 / 2 inside one whose ring
+closes. That is a count of the blocks the game *stores*, and §7t.4 is the reason it is
+small: a third of all faces are discarded for `hasNullSection`, so most spurs stand in
+ground that has no block on it at all. Peeling to the 2-core gives **every** one of them a
+block.
+
+| | flag off (= the flat city) | flag on |
+|---|---|---|
+| 2-cored interior faces | 40 891 | 37 609 |
+| ...with no spur inside (i.e. the city as it stands) | 36 113 | 33 170 |
+| **...with at least one dead-end spur inside** | **4 778** | **4 439** |
+| ...whose spur is inside a stored quarter today | 219 | 272 |
+| ...of those, the quarter's ring is broken | 219 | 271 |
+| **...whose spur is in NO stored quarter today (a hole)** | **4 559** | **4 167** |
+| dead-end spurs | 9 840 | 8 100 |
+| ...inside a 2-cored face | 6 422 | 5 498 |
+| stored quarters today | 36 327 | 33 432 |
+
+> **Repair (b) is not a repair of 222 blocks. It creates 4 778 / 4 439, of which 4 559 /
+> 4 167 are holes in the pavement today.** That is §7t.4's third of the city read forwards,
+> and it is the size of the decision.
+
+⚠️ **The control that says the reconstruction is not a lookalike**: away from the spurs the
+2-cored face and the block the game stores are the *same* face. 36 113 spur-free 2-cored
+faces against 36 108 stored quarters whose ring closes — **five apart** — and 33 170
+against 33 158, **twelve apart**. And the 219 / 272 that do exist today are exactly §7t's
+broken rings, counted independently in a second file.
+
+## §7t.10.2 ⚠️ THE HEADLINE: THE POLICY IS MOSTLY-NOTCH, AND IT IS NOT CLOSE
+
+For each of those blocks: build the estate exactly as `_createBuildings` does — the ring in
+Clipper's tenth metres, `ClipperOffset` inwards by the block's own `Quarter.SidewalkWidth` —
+then subtract each spur corridor's carriageway widened by that same `SidewalkWidth`, which
+is the rule `BlockGraph.ExcludeStructures` already applies to a ramp. Count the polygons.
+
+| pieces the estate comes back in | flag off | flag on |
+|---|---|---|
+| **one — a notch** | **4 757** | **4 289** |
+| two | 21 | 142 |
+| three | 0 | 8 |
+| none | 0 | 0 |
+| ...of the splits, the INSET ALONE already split the block | 1 | 43 |
+
+**99.6 % and 96.6 % notch.** So this is not a balance to be struck: it is a rule with a
+rare exception, and the exception announces itself — Clipper returns two polygons.
+
+⚠️ **43 of the 150 flag-on splits are not the spur's doing.** The pavement inset splits
+those blocks on its own, which is §14.4's pre-existing pinch (4 of 714 on the pinned seeds)
+seen over the world; `BlockGraph.LargestOf` throws the second piece away today.
+
+⚠️ **The ORDER of the two steps decides eight times as many blocks as the geometry does.**
+`_createBuildings` insets first and `ExcludeStructures` subtracts afterwards, which is what
+is counted above. Subtracting first and insetting the remainder insets the *notch* as well,
+widening it by a second pavement width: **163 / 646** blocks come back in two and 14 / 113
+in three or more. If (b) is built it goes where `ExcludeStructures` already is, and this is
+the number that says the choice is not cosmetic.
+
+`BlockGraph.ExcludeStructures` itself **cannot be called** on a spur: it filters its clips
+on `StrokeKinds.IsStructure`, so handing it a `Street` returns the estate untouched. The two
+lines it would run are replicated in `SpurBlocks` over `BlockGraph.FootprintOf` — the
+production expression for "a carriageway widened by a margin" — with the same `ClipType`
+and the same fill rules. `LargestOf` is deliberately **not** replicated: discarding every
+piece but the biggest is the question being asked.
+
+## §7t.10.3 ⚠️ THE STRUCTURAL CLAIM IS HALF WRONG, AND SAYING SO IS THE POINT
+
+**Clause one — *"a dead-end spur cannot split a polygon by subtraction alone"* — is false,
+narrowly.** Subtract each spur's **bare** carriageway from the block outline, margin zero,
+no inset:
+
+| | flag off | flag on |
+|---|---|---|
+| two polygons from the bare carriageway alone | **9** of 4 778 | **11** of 4 439 |
+| ...in a block with more than one spur root on its ring | 5 of 9 | 3 of 11 |
+| two polygons from the carriageway widened by one pavement width, still no inset | 13 | 25 |
+| three or more | 0 | 1 |
+
+True 9 998 times in 10 000, and not universally. The exceptions are what they sound like: a
+block holding several spur trees whose carriageways meet in the middle, and a spur whose own
+carriageway is wide enough to reach the block's far side. Neither needs a new rule, because
+both come back as two polygons and the rule is to count polygons — but *"cannot"* is the
+wrong word.
+
+**Clause two names the wrong mechanism.** The claim is that the land bridge is
+(tip → block boundary) − 2 × `SidewalkWidth` and that the estate splits when that goes
+negative. Measured along the spur's own direction:
+
+| | flag off | flag on |
+|---|---|---|
+| blocks in ONE piece whose axial gap is ≤ 0 | **0** of 4 757 | **0** of 4 289 |
+| axial gap on those, p05 / p50 / p95 | 20.2 / 51.6 / 114.2 m | 16.8 / 43.2 / 112.3 m |
+| blocks that SPLIT whose axial gap is > 0 | **12** of 21 | **139** of 150 |
+| ...the narrowest gate between the two pieces lies beyond the tip | 7 of 21 | 78 of 150 |
+
+The half that holds is the one that matters for correctness: **no block comes back in one
+piece with its tip land bridge closed.** But the split, when it happens, is the land bridge
+round the tip in only 7 of 21 and 78 of 150 cases. The rest are pinched somewhere along the
+corridor's flank — a spur running close to a block edge, or two spurs running towards each
+other.
+
+> **It does not change the answer, and that is why it was measured.** The rule is still
+> "inset, then count polygons", and counting polygons does not care where the split is.
+> What is refuted is the *reasoning*, and a rule believed for a reason that is false is one
+> ruleset change away from being believed for nothing.
+
+## §7t.10.4 ⚠️ NO THRESHOLD IS NEEDED, AND ONLY THE MINORITY VERDICT IS FRAGILE
+
+Both halves of the rule **are** `Quarter.SidewalkWidth` — the estate is inset by it and the
+corridor is widened by it — so moving that one number moves the whole rule. How far it has
+to move before the answer changes is the entire sensitivity of the policy, wherever in the
+block the narrowest place happens to be. Bisected per block:
+
+| how much the pavement width would have to change | flag off | flag on |
+|---|---|---|
+| **notch → split**, p50 | +9.4 m | +7.1 m |
+| ...within 0.5 m | 6 of 4 757 | 91 of 4 289 |
+| ...within 1 m | 14 | 184 |
+| ...within 2 m | 41 | 413 |
+| ...never splits, up to a 32 m cap | 117 | 122 |
+| **split → notch**, p50 | −2.21 m | −0.73 m |
+| ...within 0.1 m | **3 of 21** | **15 of 150** |
+| ...within 0.25 m | 3 | 34 |
+| ...within 0.5 m | **4 of 21** | **58 of 150** |
+| ...within 1 m | 5 | 86 |
+
+> **A block that comes back as one piece is nowhere near the decision. A block that comes
+> back as two often is**: 4 of 21 and 58 of 150 become one estate again on half a metre of
+> pavement, and 15 of the flag-on splits turn on a single decimetre.
+
+That is an argument for the notch being the **default** and the split being the exception it
+already is, and against reading any individual split as a design statement. **No threshold
+constant is needed beyond the inset that already exists** — but the split verdict should be
+understood as "the geometry insisted", not "the city chose".
+
+## §7t.10.5 The second estate is worth having, when there is one
+
+| the smaller of the two pieces | flag off | flag on |
+|---|---|---|
+| area p05 / p50 / p95 | 310 / **2 412** / 13 120 m² | 36 / **1 671** / 13 058 m² |
+| `minHouseSide` p05 / p50 / p95 | 0.71 / **19.3** / 40.0 m | 1.20 / **18.1** / 70.2 m |
+| capped to one storey by `minHouseSide <= 2` | 2 of 21 | 11 of 150 |
+| ...or by `downtownness < 0.3` anyway | 2 | 0 |
+| under 100 m² | 1 | 20 |
+| **empty (`mn == 0`)** | **0** | **0** |
+
+A median second estate is comparable with a whole ordinary block, and nothing ever comes
+back with no points at all, so `_createBuildings`' `mn == 0` return is never reached. The
+tail is real and small.
+
+## §7t.10.6 A quarter of these blocks hold more than one spur
+
+| | flag off | flag on |
+|---|---|---|
+| one spur tip inside | 3 617 | 3 628 |
+| **more than one** | **1 161** | **811** |
+| most in one block | 8 | 9 |
+| spur roots on their block's ring | 6 220 | 5 333 |
+| ...the ring passes through that root twice | 3 | 1 |
+| 2-cored rings that revisit any junction | 21 | 5 |
+
+A policy phrased as *"one estate either side of the spur"* would therefore have to mean
+three or more estates a quarter of the time, and it has no way to say which side is which.
+Counting polygons has no such problem — the geometry answers "how many estates", not the
+policy. That is the third reason to prefer it.
+
+The pinch §7t.2 is about is all but gone from the 2-cored ring, which is what peeling is for.
+
+## §7t.10.7 ⚠️ THE COUPLING, CHECKED RATHER THAN ARGUED: two estates need two footings
+
+`BuildingFooting.BaseHeightOf` answers the **block's** lowest corner and everything on the
+block stands on it. Its justification is written into the class and is about to stop being
+true — *"a block carries exactly one estate and at most one building"*, which is what made
+the block-wide minimum only 0.19–0.61 m below the exact footprint minimum at the median.
+
+Split the block in two and the higher piece is buried by the difference between the two
+pieces' own lowest corners. Measured on the **shipped terrain** (`ShippedTerrain`'s
+relaxation, i.e. what `RelaxedStreetHeight` over `TerrainStreetHeight` answers in the game),
+corners assigned to the piece they are nearest to:
+
+| extra burial imposed on the higher piece | flag off | flag on |
+|---|---|---|
+| p05 / p50 / p95 / worst | 0.73 / **7.46** / 18.39 / **21.17 m** | 0.61 / **6.21** / 16.10 / **28.08 m** |
+| over 0.5 m | 20 of 21 | 145 of 150 |
+| over 2 m | 17 | 123 |
+| over 5 m | 12 | 84 |
+
+> **A "two estates" policy cannot be built without giving each estate its own footing.** On
+> a flat city this coupling costs exactly nothing, which is why it had to be measured on the
+> ground the game ships.
+
+## §7t.10.8 The mutations
+
+Five driven against the production expressions this measurement reads, restored with `cp` +
+`touch` so MSBuild rebuilds (§15). Failures are against `BlockSpurEstateTests` (18
+assertions).
+
+| # | mutation | file | failures |
+|---|---|---|---|
+| 1 | `FootprintOf` ignores its margin | `BlockGraph.cs` | **13** |
+| 2 | `Quarter.SidewalkWidth` is a constant 2 m | `Quarter.cs` | **14** |
+| 3 | `ArmCountOf` counts every arm, not only block arms | `BlockGraph.cs` | **6** |
+| 4 | the block walk terminates on the directed edge — §7t.5(a) itself | `QuarterGenerator.cs` | **2** |
+| 5 | a section point is the junction's own position | `StreetPoint.cs` | **18** |
+
+**None survived.** 4 is the interesting one: the proposed repair (a) moves exactly the two
+assertions about which spurs are inside a stored quarter and nothing else, which is what
+says this file measures the 2-core rather than today's blocks. 3 fails on the flag-on half
+only, since a flag-off city has no structure arm for the filter to remove.
+
+## §7t.10.9 What this round moved
+
+**Nothing.** No file under `JoyceCode/` is touched; `street-fingerprints.json`,
+`street-fingerprints-gradesep.json`, `street-geometry.json`, `street-cost-baseline.json` and
+`street-relaxed-heights.json` are untouched; `ClusterStorage.DbVersion` is untouched. Tests:
+`tests/JoyceCode.Tests/engine/streets/{SpurBlocks,BlockSpurEstateTests}.cs` (18 new; **1744
+xUnit** against 1726, TALE 200/200). `BlockGraphTests._twoCoreOf` became
+`BlockGraphTests.TwoCoreOf` and `BlockRingClosureTests` grew `World`, `RingIsBroken` and
+`InsidePlan` as `internal`, so that both files ask the same questions rather than two copies
+of them.
+
+## §7t.10.10 The answer, in one paragraph
+
+**Mostly-notch, overwhelmingly.** 99.6 % / 96.6 % of these blocks come back as one estate
+with a slot cut out of it, and the split is a rare exception the geometry announces by
+itself. **No threshold constant is needed** beyond the `Quarter.SidewalkWidth` the estate is
+already inset by — inset, then count polygons — provided the subtraction goes where
+`ExcludeStructures` already is, *after* the inset and not before it. **The second estate is
+worth having when it appears** (median 2 412 / 1 671 m², one storey in only 2 / 11 cases),
+but it comes with a coupling that is not optional: `BuildingFooting.BaseHeightOf` would bury
+the higher piece by a median 6–7 m and up to 28 m. And **the decision is much larger than
+§7t's counts made it look** — repair (b) creates 4 778 / 4 439 blocks where 4 559 / 4 167
+holes are drawn today.
+
+## §7t.10.11 Found and NOT fixed
+
+- Everything in §7t.9, unchanged: the defect itself, the 33 % of discarded faces, the
+  1881 m² outlier, the 0 / 2 spurs inside a closed block, and the unreproduced sighting.
+- **`BuildingFooting.BaseHeightOf` is block-wide** and its stated justification stops being
+  true the moment a block carries two estates (§7t.10.7).
+- **`_createBuildings` still concatenates every polygon** into one ring, so any (b) that
+  produced two pieces without also fixing that would design one self-crossing building
+  across both — the same TXWTODO §14.4 already names.
+- **The 43 flag-on blocks whose pavement inset splits them with no spur involved** are
+  §14.4's pre-existing defect over the world rather than the seven pinned seeds, and nothing
+  records them.
+- **The order of inset and subtraction is worth eight times the geometry**, and nothing in
+  the tree states which order is intended (§7t.10.2).

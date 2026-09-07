@@ -6,9 +6,12 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7t, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-06 (item **(o)** — a block outline is not always made of streets;
-reported from play, cause established, **NOT fixed**, see Part 1b and `STREETS-3D-TOPOLOGY.md`
-§7t. Earlier the same day: WP-B6 — grade separation is ON and Phase B is complete, §15).
+**Last updated:** 2026-09-07 (item **(o)**, second round — notch or split, measured: the
+answer is **mostly-notch, 99.6 % / 96.6 %**, it needs **no threshold constant**, and repair
+(b) turns out to touch **4778 / 4439 blocks** rather than the 222 / 272 the first round
+counted. Still **NOT fixed**; see Part 1b and `STREETS-3D-TOPOLOGY.md` §7t.10. 2026-09-06:
+item (o) reported from play and its cause established, §7t; and WP-B6 — grade separation is
+ON and Phase B is complete, §15).
 
 ---
 
@@ -1291,6 +1294,52 @@ the same session.
 
 Gate: `tests/JoyceCode.Tests/engine/streets/BlockRingClosureTests.cs` (19), which records
 every number above so that whichever repair is chosen has to move them deliberately.
+
+### ⚠️ Second round, 2026-09-07: notch or split, and how big (b) really is
+
+The owner proposed a third policy on top of repair **(b)** — when a spur cuts a slit into a
+block, decide per block whether the estate is ONE piece with a notch or TWO pieces either
+side of the spur — with the claim that this needs no new constant because the pavement inset
+already decides it. **Measured, still not fixed; every number in `STREETS-3D-TOPOLOGY.md`
+§7t.10.**
+
+- **Mostly-notch, and it is not close.** Built exactly as `_createBuildings` builds it (inset
+  by the block's own `SidewalkWidth`, then the spur corridor widened by the same width
+  subtracted, `ExcludeStructures`' own rule): **one piece on 4757 of 4778 blocks flag off and
+  4289 of 4439 flag on** — 99.6 % / 96.6 %. Two on 21 / 142, three on 0 / 8, empty on 0 / 0.
+- **No threshold constant is needed** — inset, then count polygons — **but the ORDER is
+  worth eight times the geometry.** Subtracting first and insetting the remainder insets the
+  notch too and splits **163 / 646** blocks. If (b) is built it goes where
+  `ExcludeStructures` already is, *after* the inset. Nothing in the tree states which order
+  is intended.
+- ⚠️ **(b) is twenty times bigger than the 222 / 272 above.** Those count spurs inside a
+  *stored* block, and a third of all faces are discarded, so most spurs stand in ground with
+  no block at all. The 2-core gives every one a block: **4778 / 4439 blocks, of which 4559 /
+  4167 are holes in the pavement today.** The control: 36 113 spur-free 2-cored faces against
+  36 108 stored quarters whose ring closes — five apart, and twelve on the flag-on city.
+- ⚠️ **The structural claim is half wrong and the conclusion survives it.** The bare
+  carriageway alone, no inset, already splits **9 / 11** blocks, so *"a dead-end spur cannot
+  split a polygon by subtraction alone"* is not universal. And no one-piece block has its tip
+  land bridge closed (0 of 4757, 0 of 4289) — the half that matters — but **12 of 21 and 139
+  of 150 splits happen with the tip gap wide open**, pinched along the corridor's flank
+  instead. Counting polygons does not care where the split is; the reasoning was wrong, the
+  rule is not.
+- **Only the split verdict is fragile.** A notch needs the pavement +9.4 / +7.1 m wider at
+  the median to become two; a split needs only −2.21 / −0.73 m, and **4 of 21 and 58 of 150
+  flip on half a metre**, 3 and 15 on a decimetre. So the notch is the default and a split is
+  the geometry insisting.
+- **The second estate is worth having** (median 2412 / 1671 m², one storey in 2 / 11 cases,
+  `mn == 0` never reached) — ⚠️ **but `BuildingFooting.BaseHeightOf` takes the BLOCK's lowest
+  corner** on the stated grounds that a block carries one estate, and splitting buries the
+  higher piece by a median **7.46 / 6.21 m**, worst 21.2 / 28.1 m. Two estates need two
+  footings; on a flat city this costs nothing, which is why it was measured on the shipped
+  terrain.
+- **A quarter of these blocks hold more than one spur** (1161 / 811, up to 8 and 9 tips), so
+  *"one estate either side"* would mean three or more estates a quarter of the time with no
+  way to say which side is which.
+
+Gate: `tests/JoyceCode.Tests/engine/streets/{SpurBlocks,BlockSpurEstateTests}.cs` (18).
+Nothing under `JoyceCode/` was touched.
 
 ---
 
