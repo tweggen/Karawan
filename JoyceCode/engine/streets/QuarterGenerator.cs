@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Numerics;
 using System.Collections.Generic;
 using builtin.tools;
@@ -393,6 +394,12 @@ namespace engine.streets
          * - for every stroke (starting and ending) at this endpoint, follow it
          *   to create a quarter, unless it already has been traversed. Mark it
          *   traversed afterwards.
+         *
+         * ⚠️ THE FACE IS TRACED OVER THE BLOCK GRAPH'S 2-CORE (§7t/§7u). Every junction
+         * with fewer than two block arms is peeled away first, so a dead-end spur is not
+         * a block edge at all and cannot cut a slit into the face beside it. See
+         * generation.BlockGraph.TwoCoreOf for why, and for what it costs until WP-O2
+         * subtracts the spur from the estate.
          */
         public void Generate()
         {
@@ -400,6 +407,9 @@ namespace engine.streets
             _strokeStore.ClearTraversed();
             var structures = _strokeStore.GetStrokes()
                 .FindAll(s => StrokeKinds.IsStructure(s.Kind));
+
+            var core = generation.BlockGraph.TwoCoreOf(_strokeStore);
+            var accept = generation.BlockGraph.AcceptWithin(core);
 
             var points = _strokeStore.GetStreetPoints();
             foreach (var spStart in points)
@@ -421,12 +431,14 @@ namespace engine.streets
                 foreach (var stroke in angleStrokes)
                 {
                     /*
-                     * A ramp, bridge or tunnel is not an edge of a city block. Refusing
-                     * to START on one is only half of it - see the GetNextAngle call
-                     * below, which is what stops a face being followed OUT of a foot
-                     * along a ramp and back down the far side of the deck.
+                     * A ramp, bridge or tunnel is not an edge of a city block, and
+                     * neither is a street leading off the 2-core - a dead-end spur, or
+                     * the tree of streets hanging off one. Refusing to START on such an
+                     * arm is only half of it - see the GetNextAngle call below, which
+                     * takes the same predicate and is what stops a face being followed
+                     * OUT along one and turned round at its far end.
                      */
-                    if (!generation.BlockGraph.IsBlockEdge(stroke))
+                    if (!accept(stroke))
                     {
                         continue;
                     }
@@ -471,14 +483,11 @@ namespace engine.streets
                      */
                     var spCurr = spStart;
                     var strokeCurrent = stroke;
-                    var solestroke = false;
 
                     var quarter = new Quarter() { ClusterDesc = _clusterDesc };
                     var hasNullSection = false;
                     var hasDeadEnd = false;
                     var nPoints = 0;
-                    var sumOfAngles = 0.0;
-                    Stroke? previousStroke;
 
                     while (true)
                     {
@@ -519,7 +528,6 @@ namespace engine.streets
                          * following.
                          */
                         var followAngle = geom.Angles.Snorm(strokeCurrent.Angle + ((!isAB) ? (float)Math.PI : 0f));
-                        sumOfAngles += followAngle;
 
                         /*
                          * Hint what we are doing.
@@ -527,12 +535,10 @@ namespace engine.streets
                         if (_traceGenerate) trace($"QuarterGenerator(): Following angle {followAngle} ({geom.Angles.Snorm(followAngle + (float)Math.PI)}) from {isAB} ${spNext.Pos}");
 
                         /*
-                         * In every iteration: Follow strokeCurrent from spCurr.
-                         * If spCurr is spStart, terminate (case 1).
-                         * Look for the next stroke clockwise to strokeCurrent.
-                         * If it is strokeCurrent, terminate (case 2).
-                         * add the new spCurr to the Quarter.
-                         * repeat.
+                         * In every iteration: Follow strokeCurrent from spCurr, look for
+                         * the next stroke clockwise to it, add the corner between the two
+                         * to the Quarter, and repeat until we are back on the DIRECTED
+                         * EDGE we set out along.
                          */
                         if (isAB)
                         {
@@ -556,9 +562,16 @@ namespace engine.streets
                          * because we need the intersection of this and the next stroke.
                          */
                         var strokeNext = spNext.GetNextAngle(
-                            strokeCurrent, followAngle, true, generation.BlockGraph.Accept);
+                            strokeCurrent, followAngle, true, accept);
                         if (null == strokeNext || strokeNext == strokeCurrent)
                         {
+                            /*
+                             * Unreachable once the graph is peeled to its 2-core: every
+                             * junction left in it has at least two arms to other junctions
+                             * left in it, so there is always another one to turn onto.
+                             * Kept as the backstop it always was, and asserted to fire on
+                             * no face of any city.
+                             */
                             if (_traceGenerate) trace($"QuarterGenerator(): Followed same stroke back because there is no other angle.");
                             /*
                              * So follow myself back in the other direction.
@@ -625,7 +638,23 @@ namespace engine.streets
                         quarter.AddQuarterDelim(quarterDelim);
                         ++nPoints;
 
-                        if (spNext == spStart)
+                        /*
+                         * ⚠️ THE (JUNCTION, OUTGOING STROKE) PAIR, NOT THE JUNCTION.
+                         *
+                         * A face walk closes when it is about to repeat the directed edge
+                         * it set out along; arriving back at the starting JUNCTION is not
+                         * the same statement, because a face may pass through one junction
+                         * twice. Stopping there closed the ring with a straight chord
+                         * across the block instead of a street - 219 rings of the flat
+                         * city and 274 of the shipped one, every one of them broken at
+                         * this very edge and nowhere else (§7t.2).
+                         *
+                         * The 2-core removes the case that made this fire - a face is
+                         * pinched at a junction only because a dead-end spur cuts a slit
+                         * into it - so this is correctness rather than repair, and it is
+                         * kept for that: it is what a face walk terminates on.
+                         */
+                        if (spNext == spStart && strokeNext == stroke)
                         {
                             if (_traceGenerate) trace($"QuarterGenerator(): Reached start again.");
                             break;
@@ -638,52 +667,72 @@ namespace engine.streets
                         spCurr = spNext;
                     }
 
-                    if (solestroke)
+                    /*
+                     * ⚠️ THE OUTSIDE IS DETECTED EXPLICITLY NOW, and it has to be.
+                     *
+                     * The old comment here read "most likely, the outside does have dead
+                     * ends, so do not add them as quarters" - which was true and was an
+                     * accident: the outer face of a component ran through some dead-end
+                     * spur on the city's edge and was refused as hasNullSection. Peel the
+                     * spurs away and the outer face becomes a perfectly good closed ring
+                     * of junctions that all have corners, so without a rule of its own it
+                     * would be stored as one city block covering the whole city.
+                     *
+                     * The rule is the winding: this walk always turns to the next arm
+                     * clockwise, so every interior face comes out one way round and the
+                     * single outer face of each component the other.
+                     */
+                    var ring = quarter.GetDelims().Select(d => d.StartPoint).ToList();
+                    if (!generation.BlockGraph.IsInteriorFace(ring))
                     {
-                        if (_traceGenerate) trace($"QuarterGenerator(): Leaving loop because this is a single stroke.");
+                        if (_traceGenerate) trace($"QuarterGenerator.generate(): Outer face.");
+                    }
+                    else if (hasNullSection)
+                    {
+                        /*
+                         * A junction on this ring has fewer than two block arms, so it has
+                         * no corner. This used to discard a THIRD of all faces (§7t.4) and
+                         * over the 2-core it discards none: every junction left in the core
+                         * has at least two arms inside it, so the guard above never fires.
+                         *
+                         * ⚠️ Mutation testing says so out loud - deleting this branch passes
+                         * every gate, and it is the one survivor of eleven. It is kept as
+                         * the backstop it always was rather than deleted, because it is the
+                         * only thing between a loosened peel and a corner left at the
+                         * origin; what says it is unreachable rather than untested is
+                         * TwoCoreBlockTests' Euler gate, which counts the blocks a
+                         * component may have and would see one go missing.
+                         */
+                        if (_traceGenerate) trace($"QuarterGenerator.generate(): Has null section.");
                     }
                     else
                     {
-                        // TXWTODO: We do not explicitely detect the "outside". 
-                        // TXWTODO: We can't properly handle dead ends.
                         /*
-                         * However, most likely, the "outside" does have dead ends, so do not add them as quarters.
+                         * Now create the root estate.
                          */
-                        if (hasNullSection)
+                        var estate = new Estate() { ClusterDesc = _clusterDesc };
+                        List<Vector3> estatePoints = new();
+                        foreach (var delim in quarter.GetDelims())
                         {
-                            if (_traceGenerate) trace($"QuarterGenerator.generate(): Has null section.");
-                        }
-                        else
-                        {
-                            /*
-                             * Now create the root estate.
-                             */
-                            var estate = new Estate() { ClusterDesc = _clusterDesc };
-                            List<Vector3> estatePoints = new();
-                            foreach (var delim in quarter.GetDelims())
-                            {
-                                estatePoints.Add(new Vector3(delim.StartPoint.X, 0, delim.StartPoint.Y));
-                            }
-                         
-                            estate.AddPoints(estatePoints);
-
-                            /*
-                             * Create the building(s) on that estate
-                             */
-                            if (true)
-                            {
-                                quarter.AddDebugTag("shallHaveBuildings", "true");
-                                _createBuildings(quarter, estate, structures);
-                            }
-
-                            quarter.AddEstate(estate);
-                            if (_traceGenerate) trace($"QuarterGenerator.generate(): Adding quarter.");
-                            quarter.Polish();
-                            var cp = quarter.GetCenterPoint();
-                            quarter.AddDebugTag("centerPoint", $"x: {cp.X}, y: {cp.Y}");
-                            _quarterStore.Add(quarter);
+                            estatePoints.Add(new Vector3(delim.StartPoint.X, 0, delim.StartPoint.Y));
                         }
 
+                        estate.AddPoints(estatePoints);
+
+                        /*
+                         * Create the building(s) on that estate
+                         */
+                        {
+                            quarter.AddDebugTag("shallHaveBuildings", "true");
+                            _createBuildings(quarter, estate, structures);
+                        }
+
+                        quarter.AddEstate(estate);
+                        if (_traceGenerate) trace($"QuarterGenerator.generate(): Adding quarter.");
+                        quarter.Polish();
+                        var cp = quarter.GetCenterPoint();
+                        quarter.AddDebugTag("centerPoint", $"x: {cp.X}, y: {cp.Y}");
+                        _quarterStore.Add(quarter);
                     }
                 }
             }

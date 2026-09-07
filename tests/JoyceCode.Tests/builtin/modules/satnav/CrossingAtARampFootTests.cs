@@ -65,10 +65,15 @@ public class CrossingAtARampFootTests
     public static IEnumerable<object[]> SeedsWithStructures => new List<object[]>
     {
         //                                   blockArms  crossingsEmittedThere
+        //
+        // ⚠️ The crossing counts were SUPERSEDED BY WP-O1 (§7u), NOT RE-BASELINED: they
+        // were 2 / 4 / 8 / 28. The peel gives the faces round a foot blocks they did not
+        // have, so more of the foot's own pavement corners exist for a crossing to be drawn
+        // between. The block-arm counts are the block GRAPH's and do not move.
         new object[] { "Yelukhdidru", 800f,     12,       2 },
-        new object[] { "seed000",     1500f,     8,       4 },
+        new object[] { "seed000",     1500f,     8,       6 },
         new object[] { "seed017",     2400f,     8,       8 },
-        new object[] { "Yelukhdidru", 3000f,    47,      28 },
+        new object[] { "Yelukhdidru", 3000f,    47,      37 },
     };
 
 
@@ -310,12 +315,17 @@ public class CrossingAtARampFootTests
      * does, and the number says whether it stays that way. Measured: the worst of the
      * sixteen meets its ramp 1.26 m above the foot, i.e. a kerb and a bit, on a ramp that
      * needs 80 m to reach its deck.
+     *
+     * ⚠️ Counts SUPERSEDED BY WP-O1 (§7u), NOT RE-BASELINED: they were 0 / 2 / 4 / 14
+     * lanes and 0.00 / 1.05 / 0.95 / 1.27 m of rise. The peel gives a foot's neighbouring
+     * faces blocks they did not have, so more of a foot's corners exist to draw a crossing
+     * between. The rise is unchanged where it was already measured.
      */
     [Theory]
     [InlineData("Yelukhdidru", 800f, 0, 0.0f)]
-    [InlineData("seed000", 1500f, 2, 1.05f)]
+    [InlineData("seed000", 1500f, 4, 1.05f)]
     [InlineData("seed017", 2400f, 4, 0.95f)]
-    [InlineData("Yelukhdidru", 3000f, 14, 1.27f)]
+    [InlineData("Yelukhdidru", 3000f, 16, 1.27f)]
     public void ACrossingAtAFootPassesTheRampMouthAtGroundLevel(
         string idString, float size, int expectedLanes, float worstRampRise)
     {
@@ -385,22 +395,30 @@ public class CrossingAtARampFootTests
 
 
     /**
-     * Flag off, the city gets exactly the crossings it always got.
+     * Flag off, the crossing lanes of the whole city, recorded.
      *
      * The two rules agree by construction on a city with no structure in it - the section
      * array is filled FROM SectionPointBetween, so where two arms are adjacent the mitre
      * is the same float the section map holds - and this is that claim measured over whole
      * generated cities rather than argued from the code.
+     *
+     * ⚠️ SUPERSEDED BY WP-O1 (§7u), NOT RE-BASELINED. This was called
+     * AFlagOffCityGetsExactlyTheCrossingLanesItAlwaysGot and held 8 / 0 / 0 / 28 / 444 /
+     * 1398 / 2822. WP-O1 peels the block graph to its 2-core, so faces that were being
+     * discarded whole for hasNullSection come back as blocks and their corners are filed
+     * as pavement junctions - and a crossing is drawn between two pavement corners of one
+     * junction. More blocks, more corners, more crossings. Nothing about the crossing rule
+     * itself moved; what moved is how much of the city has pavement at all.
      */
     [Theory]
     [InlineData("seed000", 500f, 8)]
     [InlineData("seed011", 500f, 0)]
     [InlineData("Yelukhdidru", 400f, 0)]
-    [InlineData("Yelukhdidru", 800f, 28)]
-    [InlineData("seed000", 1500f, 444)]
-    [InlineData("seed017", 2400f, 1398)]
-    [InlineData("Yelukhdidru", 3000f, 2822)]
-    public void AFlagOffCityGetsExactlyTheCrossingLanesItAlwaysGot(
+    [InlineData("Yelukhdidru", 800f, 36)]
+    [InlineData("seed000", 1500f, 650)]
+    [InlineData("seed017", 2400f, 1926)]
+    [InlineData("Yelukhdidru", 3000f, 3876)]
+    public void AFlagOffCityGetsTheseCrossingLanes(
         string idString, float size, int expectedCrossingLanes)
     {
         var city = _city(idString, size, gradeSeparation: false);

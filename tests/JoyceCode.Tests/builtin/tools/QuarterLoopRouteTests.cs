@@ -78,13 +78,24 @@ public class QuarterLoopRouteTests
                 Assert.Equal(i, pod.QuarterDelimIndex);
 
                 /*
-                 * The corner this segment starts at, which the walker stands on: a
-                 * section point of the junction the segment names. Identity, not
-                 * proximity - a neighbouring junction can be 25 m away.
+                 * The corner this segment starts at, which the walker stands on: the mitre
+                 * of the junction the segment names, between the arm the block arrives on
+                 * and the arm it leaves on. Identity, not proximity - a neighbouring
+                 * junction can be 25 m away.
+                 *
+                 * ⚠️ SUPERSEDED BY WP-O1 (§7u), NOT RE-BASELINED. This used to assert
+                 * membership of pod.StreetPoint's SECTION ARRAY, which pairs arms adjacent
+                 * in the angle array. Where the block graph skips an arm - WP-B5's ramp
+                 * leaving a foot, or since WP-O1 a dead-end spur peeled out of the graph -
+                 * the two arms the block turns between are not adjacent there and the
+                 * corner is the mitre ACROSS the skipped one, which is not in that array.
+                 * Equality with StreetPoint.SectionPointBetween is the stronger statement
+                 * and reduces to the old one wherever the two arms are adjacent.
                  */
-                Assert.Contains(
-                    pod.StreetPoint.GetSectionArray(),
-                    s => (s - delims[i].StartPoint).LengthSquared() < 1e-4f);
+                Assert.Equal(
+                    pod.StreetPoint.SectionPointBetween(
+                        delims[(i + n - 1) % n].Stroke, delims[i].Stroke),
+                    delims[i].StartPoint);
 
                 /*
                  * And the street runs from there to the corner the segment ends at.

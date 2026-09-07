@@ -313,11 +313,26 @@ public class PavementCrossFallTests
      * already. The rim's winding is derived from the ring's own signed area about the cap
      * plane rather than assumed, and this is what says the derivation is right on real
      * blocks rather than on a square.
+     *
+     * ⚠️ SUPERSEDED BY WP-O1 (§7u), NOT RE-BASELINED, by the same hair as
+     * QuarterFloorFacingTests.EveryBlocksPavementFacesUpward: "nrm.Y > 0" becomes
+     * "nrm.Y >= 0", with the exactly-zero ones counted and confined. A block that turns
+     * across an arm the block graph skips - WP-B5's ramp foot, or since WP-O1 a dead-end
+     * spur peeled out of the graph - takes its corner from the mitre spanning that arm, and
+     * where the two arms either side of the skipped one are collinear that mitre lands on
+     * the same kerb line as its two neighbours. Three plan-collinear corners.
+     *
+     * nrm.Y is then EXACTLY 0 and never negative, measured: the triangle has zero plan area
+     * and is a vertical sliver rather than a back-facing pavement, so nothing is culled and
+     * the property this file exists for is unweakened. It is also not new - the flag-ON
+     * cities have had it since WP-B5 and this Theory builds a FLAG-OFF one.
      */
     [Theory]
     [MemberData(nameof(Cities))]
     public void EveryPavementTriangleFacesUpward(string idString, float size)
     {
+        int nVertical = 0;
+
         foreach (var (tname, fHeight) in _slopes())
         {
             var (_, quarters) = _city(idString, size, fHeight);
@@ -329,22 +344,48 @@ public class PavementCrossFallTests
                 if (outline.Count < 3) continue;
 
                 var inset = GenerateClusterQuartersOperator.PavementInsetOf(q, outline);
+                bool skips = BlockGraphTests.TurnsAcrossASkippedArm(q);
 
                 foreach (var (a, b, c) in _capTriangles(FloorOf(q), outline, inset))
                 {
                     Vector3 nrm = Vector3.Cross(b - a, c - a);
                     if (nrm.LengthSquared() < 1e-12f) continue;
 
-                    Assert.True(nrm.Y > 0f,
+                    Assert.True(nrm.Y >= 0f,
                         $"{idString}/{size} on {tname}: a pavement triangle of the block at "
                         + $"{q.GetCenterPoint()} faces down and is culled away");
+
+                    if (0f == nrm.Y)
+                    {
+                        Assert.True(skips,
+                            $"{idString}/{size} on {tname}: a pavement triangle of the "
+                            + $"block at {q.GetCenterPoint()} stands vertical and this "
+                            + "block turns across no skipped arm");
+                        ++nVertical;
+                    }
+
                     ++nTriangles;
                 }
             }
 
             Assert.True(nTriangles > 0);
         }
+
+        Assert.Equal(_vertical(idString, size), nVertical);
     }
+
+
+    /**
+     * Vertical pavement triangles at a corner across a skipped arm, summed over the three
+     * grounds. Zero on every city but the two large ones.
+     */
+    private static int _vertical(string idString, float size)
+        => (idString, size) switch
+        {
+            ("seed000", 1500f) => 4,
+            ("Yelukhdidru", 3000f) => 18,
+            _ => 0
+        };
 
 
     /**

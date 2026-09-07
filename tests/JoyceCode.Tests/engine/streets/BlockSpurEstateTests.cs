@@ -118,18 +118,30 @@ public class BlockSpurEstateTests
      * §7t's broken rings, which is the control that says the two files are counting the
      * same thing.
      *
-     * ⚠️ AND THE SPUR-FREE FACES ARE THE CITY AS IT STANDS. 36113 2-cored faces with no
-     * spur in them against 36108 stored quarters whose ring closes - five apart in the
-     * flat city and twelve in the shipped one. So the reconstruction is not a lookalike
-     * of the block trace: where no spur is involved it reproduces it.
+     * ⚠️ SUPERSEDED IN PART BY WP-O1 (§7u), NOT RE-BASELINED. When this was written the
+     * production trace still ran over the whole block graph, so a spur was inside a stored
+     * quarter on only 219 / 272 of these blocks and 4559 / 4167 were holes in the pavement.
+     * WP-O1 peeled the block graph to its 2-core, which is exactly what this file
+     * reconstructed, so those two counts are now "all of them" and "none". What it held:
+     *
+     *      in a stored quarter today         219      272
+     *      ...whose ring is broken           219      271
+     *      in NO stored quarter (a hole)    4559     4167
+     *      spur-free faces against stored      5       12  (i.e. five/twelve apart)
+     *
+     * ⚠️ THE CONTROL IS STRONGER NOW AND IT IS THE POINT OF KEEPING THIS FILE. The
+     * reconstruction here is written independently of QuarterGenerator - its own face walk
+     * over its own copy of the accept rule - so "every 2-cored face is a stored quarter,
+     * and every stored quarter is a 2-cored face" says the production trace and this
+     * measurement agree face for face. That is what makes every notch/split number below
+     * a statement about the city the game now builds rather than about a hypothetical.
      */
     [Theory]
-    //                  faces  spur-free  blocks  in a stored  broken  holes  tips  inside
-    [InlineData(false, 40891, 36113, 4778, 219, 219, 4559, 9840, 6422, 5)]
-    [InlineData(true, 37609, 33170, 4439, 272, 271, 4167, 8100, 5498, 12)]
-    public void TheTwoCoreGivesABlockToGroundThatHasNoneToday(
-        bool gradeSeparation, int faces, int spurFree, int blocks, int inStored,
-        int inBroken, int holes, int tips, int tipsInside, int spurFreeAgainstStored)
+    //                  faces  spur-free  blocks   tips  inside
+    [InlineData(false, 40891, 36113, 4778, 9840, 6422)]
+    [InlineData(true, 37609, 33170, 4439, 8100, 5498)]
+    public void TheTwoCoreGivesABlockToGroundThatHadNoneBeforeWpO1(
+        bool gradeSeparation, int faces, int spurFree, int blocks, int tips, int tipsInside)
     {
         var m = World(gradeSeparation);
 
@@ -141,17 +153,17 @@ public class BlockSpurEstateTests
         Assert.Equal(tips, m.Tips);
         Assert.Equal(tipsInside, m.TipsInsideAFace);
 
-        Assert.Equal(inStored, m.Blocks.Count(b => b.InAStoredBlock));
-        Assert.Equal(inBroken, m.Blocks.Count(b => b.InABrokenStoredBlock));
-        Assert.Equal(holes, m.Blocks.Count(b => !b.InAStoredBlock));
-
         /*
-         * The control: away from the spurs the 2-cored face and the block the game stores
-         * are the same face, so the two counts have to be within a handful of each other.
-         * Without this line every number above would be satisfied by a walk that traced
-         * something else entirely.
+         * Every one of these blocks is a block the game stores now, none of them stands in
+         * a broken ring because there are none, and the reconstruction has exactly as many
+         * faces as the production trace has quarters.
          */
-        Assert.Equal(spurFreeAgainstStored, Math.Abs(spurFree - m.ClosedStoredQuarters));
+        Assert.Equal(blocks, m.Blocks.Count(b => b.InAStoredBlock));
+        Assert.Equal(0, m.Blocks.Count(b => b.InABrokenStoredBlock));
+        Assert.Equal(0, m.Blocks.Count(b => !b.InAStoredBlock));
+
+        Assert.Equal(m.StoredQuarters, m.CoreFaces);
+        Assert.Equal(m.StoredQuarters, m.ClosedStoredQuarters);
     }
 
 

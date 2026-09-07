@@ -13,41 +13,75 @@ namespace JoyceCode.Tests.engine.streets;
 
 
 /**
- * ⚠️ A CITY BLOCK'S OUTLINE IS NOT ALWAYS MADE OF STREETS, AND A BUILDING THEN STANDS ON
- * ONE.
+ * ⚠️ THE SHIPPED WORLD, WITH ITS BLOCKS TRACED - and the record of the defect §7t found
+ * in it.
  *
+ * A CITY BLOCK'S OUTLINE WAS NOT ALWAYS MADE OF STREETS, AND A BUILDING THEN STOOD ON ONE.
  * Reported from play - "I do see a street trunk running off into a building" - and
- * measured here rather than fixed, because the fix is a design decision and the size of it
- * is what the decision needs (see CompletingTheWalkWouldDiscardTheBlockAltogether below).
+ * measured here rather than fixed, because the fix was a design decision and the size of
+ * it was what the decision needed.
  *
- * ⚠️ NOT grade separation, and not the terrain-following city either. Both were the
- * obvious suspects and both are refuted by measurement in this file: the counts are
- * recorded with joyce.EnableGradeSeparation BOTH ways, and TheFlagOffNetworkIsTheFlatCity
- * shows the flag-off plan network is the same graph on all seventy cities whether the
- * ground is flat or the shipped terrain - so everything measured flag-off is the flat city
- * and predates the whole three-dimensional-city work stream.
- *
- * WHAT IS WRONG. QuarterGenerator.Generate() walks a face of the street graph and stops
- * when it arrives back at the junction it started from:
+ * QuarterGenerator.Generate() walked a face of the street graph and stopped when it
+ * arrived back at the junction it started from:
  *
  *     if (spNext == spStart) break;
  *
- * That is a VERTEX test. A face walk has to stop on the (junction, outgoing stroke) PAIR it
- * started from, because a face may pass through one junction twice - which is exactly what
- * a face does when a dead-end spur cuts a slit into a block. When the doubly-visited
- * junction happens to be the one the walk started at, the walk stops half way round, and
- * the ring is then closed by a straight chord from the last delimiter back to the first.
- * That chord is not a street: it is a line across the block, median 75 m long and up to
- * 147 m, and it can cross roads. The estate is that outline, _createBuildings insets it by
- * the pavement width, and the building is put across whatever the chord ran over.
+ * That is a VERTEX test. A face walk has to stop on the (junction, outgoing stroke) PAIR
+ * it started from, because a face may pass through one junction twice - which is exactly
+ * what a face does when a dead-end spur cuts a slit into a block. When the doubly-visited
+ * junction happened to be the one the walk started at, the walk stopped half way round and
+ * the ring was closed by a straight chord from the last delimiter back to the first. That
+ * chord is not a street: median 75 m long and up to 147 m, and it can cross roads. The
+ * estate was that outline, _createBuildings inset it, and the building went across
+ * whatever the chord ran over.
  *
- * ⚠️ THE ODD PART IS THAT SUCH A FACE IS SUPPOSED TO BE THROWN AWAY. A junction with
- * fewer than two block arms has no corner, the quarter is tagged hasNullSection and
- * discarded - which is what happens to a THIRD of all faces (see
- * AThirdOfTheBlockEdgesAreInFacesNobodyBuildsOn). The early termination cuts the spur out
- * of the ring before the trace can see it, so the discard never happens. It is §11.4's
- * shape inverted: not a refusal that looks like a result, but a result that should have
- * been a refusal.
+ * ⚠️ FIXED BY WP-O1 (§7u), AND THE GATES MOVED RATHER THAN BEING RE-BASELINED. The block
+ * graph is peeled to its 2-core before a face is walked, so a dead-end spur is not a block
+ * edge, the face has no pinch, the ring closes and the block stands. What this file
+ * recorded, and where each number now lives:
+ *
+ *      ABlockRingIsClosedByStreetsExceptWhenItIsNot
+ *          quarters 36327 / 33432, rings that do not close 219 / 274, every one of them
+ *          broken at the WRAP-AROUND edge and nowhere else (219/219, 274/274) - which is
+ *          what separated this from §7e, whose delimiters were wrong at every edge.
+ *          -> TwoCoreBlockTests.EveryBlockRingIsClosedByStreets, 40891 / 37609 and zero.
+ *
+ *      ABuildingOnABrokenRingStandsOnAStreet
+ *          146 of 146 and 190 of 191 broken-ring buildings over a Street carriageway,
+ *          against 10 and 1 on blocks whose ring closed - the control that made it a
+ *          correspondence rather than a correlation.
+ *          -> TwoCoreBlockTests.TheSpurIsInsideTheBlockAndTheBuildingIsStillOnIt, where
+ *          it is 3247 / 2986 and is WP-O2's positive control.
+ *
+ *      TheStreetThatRunsIntoTheBuildingIsADeadEndSpur
+ *          9840 / 8100 spurs, 0 / 2 inside a block whose ring closed, 222 / 272 inside a
+ *          broken one, 146 / 190 with the stub under a building. The 0-and-2 is what said
+ *          the truncation was essentially the only mechanism.
+ *          -> the same gate, where every spur inside a block is now inside a closed one.
+ *
+ *      AThirdOfTheBlockEdgesAreInFacesNobodyBuildsOn
+ *          304150 / 228348 directed block edges, 203037 / 163558 in a stored quarter, so
+ *          33.2 % / 28.4 % in faces discarded for hasNullSection.
+ *          -> TwoCoreBlockTests.MostOfTheBlockGraphIsInABlockNow, 85.6 % / 86.8 % in a
+ *          block and 5.0 % / 4.7 % discarded, all of it the outside of the city.
+ *
+ *      CompletingTheWalkWouldDiscardTheBlockAltogether
+ *          the counterfactual that made this a decision: walked with the termination it
+ *          should have had, 219 / 274 of those faces completed, 219 / 274 revisited a
+ *          junction and 219 / 272 contained one with fewer than two block arms - i.e. a
+ *          face hasNullSection DISCARDS. Terminating correctly would have deleted the
+ *          blocks rather than repairing them, which is why repair (b) peels first.
+ *          -> no successor: with the peel there is no such face to walk.
+ *
+ *      ThePinnedSeedsCarryThisMany
+ *          quarters/broken per seed, 3/0, 2/0, 0/0, 10/0, 82/0, 221/2, 445/3 flag off and
+ *          2/0, 3/0, 0/0, 7/0, 61/1, 165/2, 282/4, 5/1 flag on.
+ *          -> TwoCoreBlockTests.ThePinnedSeedsGetTheseBlocks, which carries the old counts
+ *          beside the new ones.
+ *
+ * What stays here is the world itself - seventy cities with their blocks traced, shared
+ * with SpurBlocks and BlockSpurEstateTests - and the one measurement that is about the
+ * world rather than about the defect.
  */
 public class BlockRingClosureTests
 {
@@ -68,7 +102,7 @@ public class BlockRingClosureTests
      *
      * The cluster list is GenerateClustersOperator's own, seeded as MetaGen seeds it, so
      * this is the seventy cities the game lays out rather than the seven pinned fixture
-     * seeds - which carry only 10 of these between them (ThePinnedSeedsCarryThisMany).
+     * seeds - which carried only 10 of §7t's broken rings between them.
      */
     internal static List<City> World(bool gradeSeparation)
     {
@@ -175,402 +209,8 @@ public class BlockRingClosureTests
 
 
     /*
-     * ============================================== the defect =======================
-     */
-
-    /**
-     * ⚠️ HOW MANY BLOCK OUTLINES ARE NOT MADE OF STREETS, over the world the game builds.
-     *
-     * Recorded as exact equalities, in the idiom of
-     * ShippedWorldStructureTests.TheShippedWorldGetsThisManyStructures: these are the
-     * numbers a fix has to move, and a ruleset change that moves them should be read
-     * rather than silently tolerated.
-     *
-     * ⚠️ AND EVERY ONE OF THEM IS BROKEN AT THE WRAP-AROUND EDGE AND NOWHERE ELSE - 219 of
-     * 219 and 274 of 274. That is what says the cause is the termination condition and not,
-     * say, a delimiter written from two steps of the trace (§7e, which looked exactly like
-     * this and was broken at every edge).
-     */
-    [Theory]
-    //                       quarters  broken
-    [InlineData(false, 36327, 219)]
-    [InlineData(true, 33432, 274)]
-    public void ABlockRingIsClosedByStreetsExceptWhenItIsNot(
-        bool gradeSeparation, int expectedQuarters, int expectedBroken)
-    {
-        int nQuarters = 0, nBroken = 0, nAtWrap = 0;
-
-        foreach (var city in World(gradeSeparation))
-        {
-            foreach (var q in city.Quarters.GetQuarters())
-            {
-                ++nQuarters;
-                int open = _firstOpenEdge(q);
-                if (open < 0) continue;
-
-                ++nBroken;
-                if (open == q.GetDelims().Count - 1) ++nAtWrap;
-            }
-        }
-
-        Assert.Equal(expectedQuarters, nQuarters);
-        Assert.Equal(expectedBroken, nBroken);
-
-        /*
-         * The whole diagnosis in one number: the only edge that is ever open is the one
-         * that closes the ring, i.e. the one the walk never traversed.
-         */
-        Assert.Equal(nBroken, nAtWrap);
-    }
-
-
-    /**
-     * ⚠️ WHAT IT COSTS: the building on that block stands on a street.
-     *
-     * Of the broken rings that carry a building at all, every one puts it across an
-     * ordinary Street's carriageway - 146 of 146 with the flag off and 190 of 191 with it
-     * on - by a median 622 and 1503 square metres.
-     *
-     * ⚠️ THE CONTROL IS THE POINT. Without it "every broken ring's building is on a
-     * street" would also be satisfied by a city in which every building is on a street.
-     * Measured over all 24293 / 22036 buildings of the world, the blocks whose ring DOES
-     * close contribute 10 and 1 - and the ten flag-off ones are 1 to 13 square metre
-     * slivers at a corner, three orders of magnitude below the broken-ring cases. The one
-     * flag-on outlier at 1881 square metres is recorded and NOT explained; it is a second,
-     * far smaller mechanism and it is left open.
-     */
-    [Theory]
-    //                     broken-ring buildings   of which on a street   closed-ring cases
-    [InlineData(false, 146, 146, 10)]
-    [InlineData(true, 191, 190, 1)]
-    public void ABuildingOnABrokenRingStandsOnAStreet(
-        bool gradeSeparation, int onBroken, int onBrokenOverStreet, int onClosed)
-    {
-        int nOnBroken = 0, nOnBrokenOverStreet = 0, nOnClosedOverStreet = 0;
-
-        foreach (var city in World(gradeSeparation))
-        {
-            var boxes = city.Store.GetStrokes()
-                .Select(s => (Poly: BlockGraph.FootprintOf(s, 0f), s.A.Pos, s.B.Pos))
-                .Select(t => (t.Poly, Box: _boxOf(t.Poly)))
-                .ToList();
-
-            foreach (var q in city.Quarters.GetQuarters())
-            {
-                bool broken = _firstOpenEdge(q) >= 0;
-
-                foreach (var e in q.GetEstates())
-                foreach (var b in e.GetBuildings())
-                {
-                    if (broken) ++nOnBroken;
-
-                    var pts = b.GetPoints();
-                    var bbox = _boxOf(pts.Select(
-                        v => new IntPoint((int)(v.X * 10f), (int)(v.Z * 10f))).ToList());
-
-                    bool over = false;
-                    foreach (var (poly, box) in boxes)
-                    {
-                        if (!_hit(bbox, box)) continue;
-                        if (_overlapArea(pts, poly) > 0.5) { over = true; break; }
-                    }
-
-                    if (!over) continue;
-                    if (broken) ++nOnBrokenOverStreet; else ++nOnClosedOverStreet;
-                }
-            }
-        }
-
-        Assert.Equal(onBroken, nOnBroken);
-        Assert.Equal(onBrokenOverStreet, nOnBrokenOverStreet);
-        Assert.Equal(onClosed, nOnClosedOverStreet);
-    }
-
-
-    /**
-     * ⚠️ AND IT IS NOT A ONE-LINE FIX, WHICH IS WHY THIS IS RECORDED RATHER THAN REPAIRED.
-     *
-     * Walk the same face again with the termination the walk should have - the starting
-     * (junction, stroke) pair rather than the starting junction - and look at what comes
-     * back. Every one of them closes, every one of them visits a junction twice, and
-     * essentially every one of them contains a junction with fewer than two block arms:
-     * a dead-end spur. Such a face is exactly what the existing hasNullSection rule
-     * DISCARDS.
-     *
-     * So terminating correctly does not repair these blocks, it deletes them: 219 blocks
-     * of the flag-off world and 272 of the flag-on one would stop existing, leaving no
-     * estate, no building and no pavement where one is drawn today. Whether that or
-     * something larger - peeling the block graph to its 2-core so a spur is not a block
-     * edge at all, and then excluding it from the estate the way a ramp already is - is
-     * the right answer is a decision about what the city should look like.
-     */
-    [Theory]
-    //                    broken  completed  revisit a junction  would be discarded
-    [InlineData(false, 219, 219, 219, 219)]
-    [InlineData(true, 274, 274, 274, 272)]
-    public void CompletingTheWalkWouldDiscardTheBlockAltogether(
-        bool gradeSeparation, int broken, int completed, int revisiting, int discarded)
-    {
-        int nBroken = 0, nCompleted = 0, nRevisiting = 0, nDiscarded = 0;
-
-        foreach (var city in World(gradeSeparation))
-        {
-            foreach (var q in city.Quarters.GetQuarters())
-            {
-                var d = q.GetDelims();
-                if (_firstOpenEdge(q) < 0) continue;
-
-                ++nBroken;
-
-                /*
-                 * The walk started at the LAST delimiter's junction - that is where
-                 * spNext == spStart fired - and left it along the stroke whose far end is
-                 * the first delimiter's junction.
-                 */
-                var spStart = d[^1].StreetPoint;
-                var second = d[0].StreetPoint;
-                var first = spStart.GetAngleArray().FirstOrDefault(
-                    s => BlockGraph.IsBlockEdge(s)
-                         && ((s.A == spStart && s.B == second)
-                             || (s.B == spStart && s.A == second)));
-
-                Assert.NotNull(first);
-
-                var path = _walkFace(spStart, first);
-                Assert.NotNull(path);
-
-                ++nCompleted;
-                if (path.Count != path.Distinct().Count()) ++nRevisiting;
-                if (path.Any(sp => BlockGraph.ArmCountOf(sp) < 2)) ++nDiscarded;
-
-                /*
-                 * ...and the completed face is strictly bigger than the truncated ring,
-                 * which is what says the truncation lost something rather than merely
-                 * naming it differently.
-                 */
-                Assert.True(path.Count > d.Count);
-            }
-        }
-
-        Assert.Equal(broken, nBroken);
-        Assert.Equal(completed, nCompleted);
-        Assert.Equal(revisiting, nRevisiting);
-        Assert.Equal(discarded, nDiscarded);
-    }
-
-
-    /**
-     * ⚠️ WHAT THE STREET RUNNING INTO THE BUILDING IS: the dead-end spur the broken ring
-     * cut out of its own outline.
-     *
-     * The owner's follow-up — *"the road stem went right into a building… I don't know if
-     * it was a legitimate dead end, at least not legitimate judging from the building on
-     * it"* — names the shape exactly, and the two halves are one thing. A face is pinched
-     * at a junction precisely BECAUSE a dead-end spur cuts a slit into the block; the
-     * truncation drops the slit; the estate is then a solid polygon over ground the spur
-     * occupies; and the building goes on top of it.
-     *
-     * Measured over the shipped world: the spurs whose stub carriageway lies under a
-     * building are **146 and 190** — the very counts of
-     * ABuildingOnABrokenRingStandsOnAStreet. It is one class, not two.
-     *
-     * ⚠️ AND THE OBVIOUS SECOND MECHANISM IS EMPTY. *"A spur enclosed by a block whose ring
-     * closed correctly"* needs no chord and no truncation and would be a separate defect
-     * with a separate fix — measured, it happens to **0** spurs of 9840 with the flag off
-     * and **2** of 8100 with it on. Every one of the 222 / 272 enclosed spurs bar those two
-     * is inside a block whose ring is BROKEN.
-     *
-     * That is what settles the choice in CompletingTheWalkWouldDiscardTheBlockAltogether:
-     * discarding the truncated faces removes essentially the whole class, and peeling the
-     * block graph to its 2-core is not needed to reach it.
-     *
-     * ⚠️ It also re-reads §14.2. That section found *"four junctions inside three blocks of
-     * Yelukhdidru@3000 and two inside two of seed017@2400, flag off"* and called them
-     * pre-existing and unrelated. They are inside BROKEN blocks - those two seeds carry 3
-     * and 2 of them - so they are this defect seen from the other side, not a separate one.
-     */
-    [Theory]
-    //                    spurs  in a closed block  in a broken block  stub under a building
-    [InlineData(false, 9840, 0, 222, 146)]
-    [InlineData(true, 8100, 2, 272, 190)]
-    public void TheStreetThatRunsIntoTheBuildingIsADeadEndSpur(
-        bool gradeSeparation, int spurs, int inClosed, int inBroken, int underABuilding)
-    {
-        int nSpurs = 0, nInClosed = 0, nInBroken = 0, nUnder = 0;
-
-        foreach (var city in World(gradeSeparation))
-        {
-            var blocks = city.Quarters.GetQuarters()
-                .Select(q => (Q: q,
-                    Ring: q.GetDelims()
-                        .Select(d => new Vector2(d.StartPoint.X, d.StartPoint.Y)).ToList(),
-                    Closed: _firstOpenEdge(q) < 0))
-                .ToList();
-
-            foreach (var sp in city.Store.GetStreetPoints())
-            {
-                if (1 != BlockGraph.ArmCountOf(sp)) continue;
-
-                ++nSpurs;
-
-                var stub = sp.GetAngleArray().First(BlockGraph.IsBlockEdge);
-                var foot = BlockGraph.FootprintOf(stub, 0f);
-                bool closed = false, broken = false, under = false;
-
-                foreach (var (q, ring, isClosed) in blocks)
-                {
-                    if (!_insidePlan(ring, sp.Pos)) continue;
-
-                    if (isClosed) closed = true; else broken = true;
-
-                    foreach (var e in q.GetEstates())
-                    foreach (var b in e.GetBuildings())
-                    {
-                        if (_overlapArea(b.GetPoints(), foot) > 0.5) under = true;
-                    }
-                }
-
-                if (closed) ++nInClosed;
-                if (broken) ++nInBroken;
-                if (under) ++nUnder;
-            }
-        }
-
-        Assert.Equal(spurs, nSpurs);
-        Assert.Equal(inClosed, nInClosed);
-        Assert.Equal(inBroken, nInBroken);
-        Assert.Equal(underABuilding, nUnder);
-    }
-
-
-    /**
-     * The context this sits in, and it is larger than the defect by two orders of
-     * magnitude: a THIRD of the street graph's directed block edges are in faces that get
-     * thrown away for hasNullSection, so a third of the city has no block, no estate, no
-     * building and no pavement. 8.8 % of junctions are dead-end spurs and every face
-     * touching one is discarded.
-     *
-     * Pre-existing, untouched here, and recorded because the fix chosen for the ring will
-     * be a decision about this number.
-     */
-    [Theory]
-    //                   directed block edges  in stored quarters   one-armed junctions
-    [InlineData(false, 304150, 203037, 9840)]
-    [InlineData(true, 228348, 163558, 8100)]
-    public void AThirdOfTheBlockEdgesAreInFacesNobodyBuildsOn(
-        bool gradeSeparation, int directed, int stored, int spurs)
-    {
-        int nDirected = 0, nStored = 0, nSpurs = 0;
-
-        foreach (var city in World(gradeSeparation))
-        {
-            nDirected += 2 * city.Store.GetStrokes().Count(BlockGraph.IsBlockEdge);
-            foreach (var q in city.Quarters.GetQuarters()) nStored += q.GetDelims().Count;
-            foreach (var sp in city.Store.GetStreetPoints())
-            {
-                if (1 == BlockGraph.ArmCountOf(sp)) ++nSpurs;
-            }
-        }
-
-        Assert.Equal(directed, nDirected);
-        Assert.Equal(stored, nStored);
-        Assert.Equal(spurs, nSpurs);
-    }
-
-
-    /**
-     * ⚠️ WHAT A FIX WOULD MOVE IN THE RECORDED BASELINES.
-     *
-     * The seven pinned seeds are a fixture, not the world, and between them they carry ten
-     * of these - so reading the defect off them would have found three cities in seven and
-     * called it rare. street-geometry.json pins block geometry for seed000@500,
-     * seed011@500, Yelukhdidru@800, seed000@1500 and seed008@500: of those, only
-     * seed008@500 carries one at all, and only with the flag on.
-     *
-     * Recorded per seed so that whoever repairs this knows, before starting, exactly which
-     * recorded baseline moves.
-     */
-    public static IEnumerable<object[]> PinnedSeeds => new List<object[]>
-    {
-        //                                 quarters/broken off    quarters/broken on
-        new object[] { "seed000", 500f, 3, 0, 2, 0 },
-        new object[] { "seed011", 500f, 2, 0, 3, 0 },
-        new object[] { "Yelukhdidru", 400f, 0, 0, 0, 0 },
-        new object[] { "Yelukhdidru", 800f, 10, 0, 7, 0 },
-        new object[] { "seed000", 1500f, 82, 0, 61, 1 },
-        new object[] { "seed017", 2400f, 221, 2, 165, 2 },
-        new object[] { "Yelukhdidru", 3000f, 445, 3, 282, 4 },
-        new object[] { "seed008", 500f, 4, 0, 5, 1 },
-    };
-
-
-    [Theory]
-    [MemberData(nameof(PinnedSeeds))]
-    public void ThePinnedSeedsCarryThisMany(
-        string idString, float size,
-        int quartersOff, int brokenOff, int quartersOn, int brokenOn)
-    {
-        foreach (bool gradeSeparation in new[] { false, true })
-        {
-            var cluster = StreetHarness.MakeCluster(idString, size);
-            var store = gradeSeparation
-                ? StreetHarness.GenerateHeavyFirst(idString, size)
-                : StreetHarness.Generate(idString, size);
-            var quarters = StreetHarness.GenerateQuarters(cluster, store, idString);
-
-            int nBroken = quarters.GetQuarters().Count(q => _firstOpenEdge(q) >= 0);
-
-            Assert.Equal(gradeSeparation ? quartersOn : quartersOff,
-                quarters.GetQuarters().Count);
-            Assert.Equal(gradeSeparation ? brokenOn : brokenOff, nBroken);
-        }
-    }
-
-
-    /*
      * ============================================== plumbing =========================
      */
-
-    /**
-     * One face of the block graph, walked from (spStart, first) and terminating on that
-     * DIRECTED EDGE rather than on spStart alone. Returns the junctions in order, or null
-     * if it ran away.
-     *
-     * A copy of QuarterGenerator's own walk, deliberately: the point is to measure what a
-     * different termination condition would produce, and that cannot be asked of the
-     * production code without changing it.
-     */
-    private static List<StreetPoint> _walkFace(StreetPoint spStart, Stroke first)
-    {
-        var visited = new List<StreetPoint>();
-        var spCurr = spStart;
-        var strokeCurrent = first;
-
-        for (int n = 0; n < 4000; ++n)
-        {
-            StreetPoint spNext;
-            bool isAB;
-            if (strokeCurrent.A == spCurr) { isAB = true; spNext = strokeCurrent.B; }
-            else if (strokeCurrent.B == spCurr) { isAB = false; spNext = strokeCurrent.A; }
-            else return null;
-
-            float followAngle = global::engine.geom.Angles.Snorm(
-                strokeCurrent.Angle + (!isAB ? (float)Math.PI : 0f));
-
-            var strokeNext = spNext.GetNextAngle(
-                strokeCurrent, followAngle, true, BlockGraph.Accept) ?? strokeCurrent;
-
-            visited.Add(spNext);
-
-            if (spNext == spStart && strokeNext == first) return visited;
-
-            strokeCurrent = strokeNext;
-            spCurr = spNext;
-        }
-
-        return null;
-    }
-
 
     /**
      * Whether a plan position is inside a block's outline.

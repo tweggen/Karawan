@@ -4688,3 +4688,290 @@ holes are drawn today.
   records them.
 - **The order of inset and subtraction is worth eight times the geometry**, and nothing in
   the tree states which order is intended (§7t.10.2).
+
+---
+
+# §7u — WP-O1: the block trace runs over the 2-core (2026-09-07, FIXED)
+
+Ledger item (o), repair **(b)**, first of three work packages. The owner chose (b) in full:
+*peel the block graph to its 2-core so a dead-end spur is not a block edge — the ring then
+closes AND the block stands, going round the spur — then subtract the spur from the estate
+and keep every polygon the inset returns.* WP-O1 is the peel and the termination.
+Deliberately NOT here: the estate subtraction, `_createBuildings`' polygon concatenation,
+and `BuildingFooting`. Those are WP-O2 and WP-O3.
+
+## §7u.1 What was built
+
+`engine.streets.generation.BlockGraph` gains three expressions, and `QuarterGenerator`
+uses all three:
+
+- **`TwoCoreOf(store)`** — peel every junction with fewer than two block arms, iteratively
+  until a fixed point (peeling one spur can leave its neighbour with one arm). Returns the
+  `StreetPoint` objects, by reference, so the trap of §11 — *a junction's identity changes
+  when it joins the store* — cannot be walked into.
+- **`AcceptWithin(core)`** — `IsBlockEdge(s) && core.Contains(s.A) && core.Contains(s.B)`.
+  One delegate per city, used both as the trace's start filter and as
+  `StreetPoint.GetNextAngle`'s filter, so the two cannot disagree about what a block arm
+  is.
+- **`IsInteriorFace(ring)`** — see §7u.3.
+
+`QuarterGenerator.Generate()` then terminates on the **(junction, outgoing stroke) pair**:
+
+```csharp
+if (spNext == spStart && strokeNext == stroke)
+```
+
+`BlockGraphTests.TwoCoreOf` is now a view of the production expression rather than a second
+copy of it (`BlockGraph.TwoCoreOf(store).Select(sp => sp.Id)`), which is what §7e's whole
+lesson is about. Two dead locals went with the rewrite — `solestroke`, never true, and
+`sumOfAngles`, computed and never read.
+
+## §7u.2 The headline: the defect closes, and a third of the city comes back
+
+| | flag off (= the flat city) | flag on |
+|---|---|---|
+| quarters | 36 327 → **40 891** | 33 432 → **37 609** |
+| rings that do not close | 219 → **0** | 274 → **0** |
+| directed block edges in a stored block | 203 037 (66.8 %) → **260 283 (85.6 %)** | 163 558 (71.6 %) → **198 275 (86.8 %)** |
+| ...on an arm the peel removed | — | — |
+| | 28 596 (9.4 %) | 19 246 (8.4 %) |
+| ...**in a discarded face** | 101 113 (**33.2 %**) → **15 271 (5.0 %)** | 64 790 (**28.4 %**) → **10 827 (4.7 %)** |
+
+§7t.4's third of the street graph was faces refused for `hasNullSection`. What is discarded
+now is the **outer face of each of the seventy components and nothing else** — 5.0 % and
+4.7 % of the directed block edges, i.e. the outside of the city. The rest of the old 33 %
+either became a block or stopped being a block edge at all.
+
+⚠️ **The quarter count lands exactly on §7t.10.1's prediction** — 40 891 and 37 609 were
+that section's *"2-cored interior faces"*, measured by an independently written face walk in
+`SpurBlocks`. That is the control that says the production trace and the measurement agree
+face for face, and `BlockSpurEstateTests` now asserts it as an equality rather than as
+"within five".
+
+## §7u.3 ⚠️ THE OUTER FACE NEEDED A RULE OF ITS OWN, and nothing in the plan said so
+
+`QuarterGenerator` never had a rule for the outside. Its comment said so:
+
+> `// TXWTODO: We do not explicitely detect the "outside".`
+> `/* However, most likely, the "outside" does have dead ends, so do not add them as quarters. */`
+
+That was true and it was an **accident**. The outer face of a component ran through some
+dead-end spur on the city's edge, so it was refused as `hasNullSection`. Peel the spurs away
+and the outer face becomes a perfectly good closed ring of junctions that all have corners —
+and without a rule of its own the generator stores **one city block per connected component
+covering the entire city**, with an estate and a building on it.
+
+The rule is the winding. The walk always turns to the next arm clockwise, so every interior
+face comes out one way round and the single outer face of each component the other.
+Measured over the seventy cities: **exactly 70 faces of 40 961 wind the other way flag off
+and 70 of 37 679 flag on** — one per component — and in every city the largest face by area
+is one of them.
+
+⚠️ **It is NOT `SidewalkRing.SignedArea2Of`, and that is measured rather than argued.** That
+expression accumulates absolute coordinates in float, which is right for a pavement ring a
+few tens of metres across. A face ring may run round a 3800 m city, where the products reach
+4·10⁶ and one float step is a quarter of a square metre; the shipped world puts seventy
+cities at a median 36 km out. `IsInteriorFace` translates to the ring's own first corner and
+accumulates in double. **The mutation that replaces it with `SidewalkRing.SignedArea2Of`
+fails 3.**
+
+## §7u.4 ⚠️ WP-O1 ALONE MAKES THE REPORTED SYMPTOM WORSE, by twenty times
+
+A 2-cored block contains its spurs by construction and nothing here subtracts them from the
+estate. That is why the three work packages are ordered this way, and the cost is measured
+rather than left to be discovered:
+
+| | flag off | flag on |
+|---|---|---|
+| dead-end spurs | 9 840 | 8 100 |
+| ...inside a stored block | 222 → **6 422** | 272 → **5 498** |
+| ...**whose stub carriageway is under a building** | 146 → **4 328** | 190 → **3 696** |
+| buildings | 24 293 → **27 384** | 22 036 → **24 858** |
+| ...**over a `Street` carriageway** | 156 → **3 247** | 191 → **2 986** |
+| overlap p50 / p95 / worst | 622 / 1025 / 2042 → **654 / 956 / 2215 m²** | 1503 / 2088 / 2458 → **1609 / 2205 / 2525 m²** |
+| cities affected, of 70 | 49 → **69** | 51 → **68** |
+
+`TwoCoreBlockTests.TheSpurIsInsideTheBlockAndTheBuildingIsStillOnIt` asserts every one of
+these, and it is WP-O2's positive control: the estate exclusion has to drive the last row to
+zero and move the rest deliberately.
+
+## §7u.5 ⚠️ THE FINDING: the block corner across a skipped arm is NOT WP-O1's, and six gates could not see it
+
+Five property gates broke, and every one of them broke for one reason. A junction's section
+array pairs arms **adjacent in the angle array**. When the block graph skips an arm, the two
+arms the block turns between are not adjacent there, so the corner is the mitre **across**
+the skipped arm — geometrically right (it lies on both arms' carriageway edge lines, which is
+`SectionMitre`'s own guarantee), and not one of the junction's section points.
+
+⚠️ **WP-B5 §14.3 established exactly this for a ramp leaving a foot, and it has been in the
+shipped flag-on city since 2026-09-06.** What made it invisible is that
+`QuarterFloorTests`, `QuarterFloorFacingTests`, `PavementCrossFallTests`, `KerbSeamTests`,
+`PedestrianCrossingTests` and `QuarterLoopRouteTests` all build a **flag-off** city, where
+nothing skipped an arm — and `BlockGraphTests.NoBlockOutlineCrossesItself` does not include
+`seed008@500`, the one pinned seed that already had a self-crossing outline from it. WP-O1
+gives the flag-off city skipped arms too, so the class becomes visible where the gates look.
+**It was measured on the pre-WP-O1 tree with the flag on, not inferred**, by restoring both
+production files and re-running.
+
+| pinned seed, flat | corners across a skipped arm, flag off | flag on |
+|---|---|---|
+| `seed000@500` | 0 of 16 | 0 → 6 of 32 |
+| `seed011@500` | 0 of 8 | 0 of 12 |
+| `Yelukhdidru@800` | 0 → 1 of 56 | 2 of 36 |
+| `seed000@1500` | 0 → 14 of 523 | 27 → 36 of 416 |
+| `seed017@2400` | 0 → 38 of 1629 | 76 → 100 of 1197 |
+| `Yelukhdidru@3000` | 0 → 68 of 3153 | 110 → 155 of 1988 |
+| world | **6 223 of 260 283 (2.4 %)** | **6 481 of 198 275 (3.3 %)** |
+
+Three consequences, each measured:
+
+**(a) The pavement is not culled. It stands vertical.** Where the two arms either side of the
+skipped one are collinear — a spur hanging off the middle of a straight street — the mitre
+lands on the same kerb line as the corners either side of it, giving three plan-collinear
+corners. ⚠️ **The triangle's normal `Y` is then EXACTLY 0.000000, on every ground, never
+negative**: zero plan area, a vertical sliver rather than a back-facing pavement. **The §7j
+class this repository has a reported symptom for is intact** and both gates now assert
+`n.Y >= 0` unconditionally, with the exactly-zero ones counted (1 block flag-off on
+`seed000@1500` and 2 on `Yelukhdidru@3000`, worth up to 735 m² of edge-on wall on rolling
+ground).
+
+**(b) The kerb leaves the carriageway there, and NOT only on that edge.** `RoadSurface` ends
+a carriageway at the section points (`TryCornersOf` reads the section array), so along an
+edge whose corner is the mitre across a skipped arm the kerb runs past the end of its own
+road. ⚠️ **The mitre also lies on the NEIGHBOURING stroke's kerb line, at a different
+distance along it from where that road ends**, so the neighbouring edge's endpoint moves and
+its interpolation parameter stops matching the road's chord parameter — measured, a
+per-EDGE exclusion still left 0.433 m on the edge next to a skipped corner, which is why
+`KerbSeamTests` excludes at the block level. ⚠️ **This is a real weakening and it is said out
+loud: 22 % of the sampled kerb on `Yelukhdidru@3000` and 25 % on `seed000@1500` now carry a
+2 m bound instead of the 1 cm the rest keeps**, worst measured **1.674 m** on rolling ground.
+
+**(c) A self-crossing outline, once.** At a reflex wedge the mitre stands as far out as
+`SectionMitre.MitreLimit` allows — three average half widths, up to 33 m on a wide street —
+which can poke it out of its own block. Flag off it is **0 on every pinned seed**; flag on it
+is 1 on `Yelukhdidru@3000` flat and terrain, against **1 on `seed008@500` before WP-O1**.
+The gate now asserts the property — a self-crossing outline only ever happens where the block
+turns across a skipped arm — and records the count.
+
+## §7u.6 What each city does, per pinned seed
+
+Block / estate / building / shop census, old → new. `seed000@500` and `seed011@500` do not
+move at all flag off, which is the control: they have no spur whose face was being discarded.
+
+| seed | flag off | flag on, flat | flag on, terrain |
+|---|---|---|---|
+| `seed000@500` | 3,3,3,69 → **3,3,3,69** | 2,2,2,0 → **4,4,4,0** | 3,3,3,51 → **6,6,6,282** |
+| `seed011@500` | 2,2,2,40 → **2,2,2,40** | 3,3,3,83 → **3,3,3,83** | 3,3,3,83 → **4,4,4,190** |
+| `Yelukhdidru@400` | 0 → **0** | 0 → **0** | 0 → **0** |
+| `Yelukhdidru@800` | 10,10,3,113 → **11,11,4,198** | 7,7,6,251 → **8,8,6,251** | 11,11,7,339 → **14,14,8,339** |
+| `seed000@1500` | 82,82,81,1336 → **94,94,93,2006** | 61,61,57,914 → **73,73,69,1669** | 85,85,81,1525 → **98,98,94,1950** |
+| `seed017@2400` | 221,221,134,3015 → **250,250,150,4055** | 165,165,80,1050 → **189,189,95,2572** | 233,233,118,2076 → **261,261,131,3061** |
+| `Yelukhdidru@3000` | 445,445,148,2904 → **497,497,164,3571** | 282,282,81,1273 → **327,327,100,1894** | 379,379,111,2023 → **431,431,126,2023** |
+| `seed008@500` | 4,4,4,41 → **4,4,4,41** | 5,5,5,97 → **5,5,5,97** | — → **7,7,6,203** |
+
+## §7u.7 ⚠️ NOT ONE BASELINE FILE MOVED, INCLUDING THE ONE THE BRIEF EXPECTED TO
+
+The owner authorised a `street-geometry.json` change. **It needs none.**
+`street-fingerprints.json`, `street-fingerprints-gradesep.json`, `street-geometry.json`,
+`street-cost-baseline.json` and `street-relaxed-heights.json` are byte-identical to
+`ddf9a6e2`. The first two, the fourth and the fifth record the stroke NETWORK, which the
+block trace does not touch — expected. `street-geometry.json` records the **road mesh**,
+which `GenerateClusterStreetsOperator` builds from the section arrays and not from the
+quarters, so it does not move either. Every recorded number that did move is a block census
+in a test file, and none of those is a baseline JSON.
+
+**`ClusterStorage.DbVersion` is NOT bumped, checked rather than assumed.** It persists
+`Stroke` and `StreetPoint` only; `ClusterDesc._triggerStreets` calls `_findQuarters()` on
+every start whether the strokes came from the cache or from the generator, so nothing
+persisted changes shape and no player's `worldcache` needs deleting.
+
+## §7u.8 The gate that is worth more than the counts: Euler
+
+`TwoCoreBlockTests.TheBlocksAreEveryFaceOfTheCoreButTheOutsideOfEachComponent` asserts
+
+> quarters == E − V + C
+
+over the 2-core, per seed and per flag state. It is an arithmetic statement about the graph
+and knows nothing about how `QuarterGenerator` walks it, so it says at once that no face is
+missed, that no face is discarded for `hasNullSection` or a dead end, and that the outer face
+— and only the outer face — is refused. It is what makes the surviving mutation below an
+equivalence rather than a hole.
+
+## §7u.9 The mutations
+
+Eleven driven against `BlockGraph.cs` and `QuarterGenerator.cs`, restored with `cp` + `touch`
+so MSBuild rebuilds (§15). Failures are against `TwoCoreBlockTests` + `BlockGraphTests`,
+120 assertions.
+
+| # | mutation | failures |
+|---|---|---|
+| 1 | the peel is a single pass | **20** |
+| 2 | the peel drops `degree < 1` instead of `< 2` | **35** |
+| 3 | `AcceptWithin` ignores the core | **29** |
+| 4 | `AcceptWithin` checks only the `A` end | **28** |
+| 5 | terminate on the junction, not the directed edge — §7t.5(a) | **4** |
+| 6 | `IsInteriorFace` accepts every face | **43** |
+| 7 | `IsInteriorFace`'s sign flipped | **45** |
+| 8 | `IsInteriorFace` is `SidewalkRing.SignedArea2Of` | **3** |
+| 9 | the `hasNullSection` discard removed | ⚠️ **survived** |
+| 10 | nothing is ever peeled | **39** |
+| 11 | the peel counts structure arms too | **25** |
+
+**9 is the one survivor and it is provably equivalent given the peel**, not a hole:
+`hasNullSection` is set only where `BlockGraph.ArmCountOf(spNext) < 2`, and every junction
+left in the core has at least two arms inside it. It used to discard a third of all faces
+(§7t.4) and now discards none. It is **kept rather than deleted** — it is the only thing
+between a loosened peel and a corner left at the origin — and what says it is unreachable
+rather than untested is the Euler gate, which would see a block go missing.
+
+**5 is worth reading twice.** Reverting the termination to the vertex test still fails 4,
+because the peel does not remove a **bridge**: an edge whose two ends both lie on cycles
+survives a 2-core, and the face beside it runs along it twice. 31 stored blocks flag off and
+10 flag on have a ring that passes through one junction twice, so the directed-edge test is
+load bearing on real cities and not only on the fixture. The fixture is a small square inside
+a big one joined by a single street — an annulus with a slit — and it is in
+`AFaceThatPassesThroughOneJunctionTwiceIsStillWalkedWhole`.
+
+## §7u.10 Gates superseded, with their old text
+
+None re-baselined silently; each carries what it used to say in its own doc comment.
+
+- `BlockGraphTests.FlagOffCensus` / `FlagOnCensus` — the two census tables (§7u.6).
+- `BlockGraphTests.NoBlockOutlineCrossesItself` → `ABlockOutlineCrossesItselfOnlyWhereItTurnsAcrossASkippedArm`. Was *"zero on every seed with either flag, flat or on terrain"*; it was not, and `seed008@500` is why.
+- `BlockRingClosureTests` — five Theories deleted, their numbers and their successors written into the file header: `ABlockRingIsClosedByStreetsExceptWhenItIsNot`, `ABuildingOnABrokenRingStandsOnAStreet`, `TheStreetThatRunsIntoTheBuildingIsADeadEndSpur`, `AThirdOfTheBlockEdgesAreInFacesNobodyBuildsOn`, `CompletingTheWalkWouldDiscardTheBlockAltogether`, `ThePinnedSeedsCarryThisMany`. What stays is the world harness and `TheFlagOffNetworkIsTheFlatCity`.
+- `BlockSpurEstateTests.TheTwoCoreGivesABlockToGroundThatHasNoneToday` → `...ThatHadNoneBeforeWpO1`. Its "in a stored quarter / broken / hole" counts were 219/219/4559 and 272/271/4167; they are now all / none / none, and the control it lost is replaced by the stronger `CoreFaces == StoredQuarters`.
+- `QuarterFloorTests.ACornerIsASectionPointOfItsOwnJunctionAndNoOther` → `ACornerIsTheMitreOfItsOwnJunctionAndNoOther`. Membership of the section array becomes exact equality with `StreetPoint.SectionPointBetween`, which is strictly stronger and reduces to the old statement wherever the two arms are adjacent.
+- `QuarterFloorFacingTests.EveryBlocksPavementFacesUpward` and `PavementCrossFallTests.EveryPavementTriangleFacesUpward` — `n.Y > 0` becomes `n.Y >= 0`, with the exactly-zero ones counted and confined to blocks that turn across a skipped arm.
+- `KerbSeamTests.TheKerbRestsOnTheCarriagewayAlongEveryBlockEdge` — a third population, §7u.5(b).
+- `PedestrianCrossingTests.ACornerIsFiledUnderTheJunctionItStandsOn` — *"within 5 cm of a section point of the junction it is filed under"* becomes that, or within 40 m of the junction itself, capped at one corner in twenty. The off-by-one this gate exists for was 70–97 m.
+- `QuarterLoopRouteTests.EverySegmentNamesTheStreetItRunsAlong` — section-array membership becomes equality with `SectionPointBetween`, as in `QuarterFloorTests`.
+- `CrossingAtARampFootTests.AFlagOffCityGetsExactlyTheCrossingLanesItAlwaysGot` → `AFlagOffCityGetsTheseCrossingLanes`; 8/0/0/28/444/1398/2822 → 8/0/0/36/650/1926/3876. `ARampFootStillGetsItsPedestrianCrossings` 2/4/8/28 → 2/6/8/37, `ACrossingAtAFootPassesTheRampMouthAtGroundLevel` 0/2/4/14 → 0/4/4/16. More blocks means more pavement corners means more crossings; the crossing rule itself did not move.
+
+Tests: `tests/JoyceCode.Tests/engine/streets/TwoCoreBlockTests.cs` (37 new; **1763 xUnit**
+against 1744, TALE 200/200).
+
+## §7u.11 Found and NOT fixed
+
+- **The reported symptom is worse until WP-O2** (§7u.4), by construction and by design.
+- ⚠️ **The block corner across a skipped arm** (§7u.5) — the kerb leaving the carriageway
+  at a spur mouth or a ramp mouth, the vertical pavement sliver, and the one self-crossing
+  outline. Pre-existing in the flag-on city since WP-B5 and now in the flag-off one too. The
+  repair is known and is not small: `RoadSurface.TryCornersOf` would have to end a
+  carriageway at the corner the BLOCK turns at rather than at the section point, which moves
+  the road mesh and therefore `street-geometry.json`. Not WP-O1's.
+- **The outer face of a component is refused by its winding**, which is correct for a planar
+  embedding and says nothing about a component nested inside another one's block. No such
+  city exists today; nothing checks for one.
+- Everything in §7t.9 and §7t.10.11 that WP-O1 does not reach: the 1881 m² outlier on a ring
+  that closed (now a ring like any other), `BuildingFooting.BaseHeightOf`'s block-wide bound,
+  `_createBuildings` concatenating every polygon, the 43 flag-on blocks the inset splits on
+  its own, and the inset/subtract order.
+- ⚠️ **THE SIGHTING IS NOW REPRODUCIBLE AT THE START CITY, WHICH IS THE OPPOSITE OF §7t.7.**
+  That section established that `cluster-clusters-mydear-0` — 1000 m, named `Yelukhdidru`,
+  where the player stood — had **no broken ring, no building over a street and no spur inside
+  any block, in either flag state**, and that the class was established while the instance
+  was not. After WP-O1 it has **42 quarters and 5 buildings over a `Street` carriageway flag
+  off, worst 1231 m², and 28 quarters and 4 flag on, worst 1630 m²**, over 19 and 21 dead-end
+  spurs. So WP-O1 alone puts the reported picture *at the reported place*, and WP-O2 is what
+  takes it away again. It does not settle whether the original sighting was this mechanism —
+  it was not, in that city, before today — and §7t.7's question for the owner still stands.

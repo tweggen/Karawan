@@ -90,6 +90,140 @@ public static class BlockGraph
 
 
     /**
+     * ⚠️ THE JUNCTIONS A CITY BLOCK MAY CORNER ON: THE 2-CORE OF THE BLOCK GRAPH.
+     *
+     * Peel every junction with fewer than two block arms, iteratively until nothing is
+     * left to peel - peeling one dead-end spur can leave its own neighbour with a single
+     * arm, so one pass is not enough. What survives is exactly the set of junctions that
+     * lie on a cycle, i.e. the junctions a closed ring can be traced through.
+     *
+     * ⚠️ WHY THE TRACE NEEDS THIS AND NOT MERELY A BETTER TERMINATION CONDITION (§7t).
+     * A dead-end spur cuts a SLIT into the face beside it: the face walks out along the
+     * spur, round its tip and back, so it passes through the spur's root junction twice.
+     * QuarterGenerator used to stop its walk on `spNext == spStart`, a VERTEX test, so
+     * whenever that doubly-visited junction was the one the walk started at the walk
+     * stopped half way round and the ring was closed by a straight chord across the
+     * block - a chord that is not a street, median 75 m long and up to 147 m, with the
+     * estate, its inset and the building on it laid across whatever it ran over. That is
+     * the defect reported from play.
+     *
+     * Terminating on the directed edge instead makes the walk correct and produces a face
+     * that the hasNullSection rule then DISCARDS, because it contains a junction with
+     * fewer than two block arms: 219 blocks of the flat city and 272 of the shipped one
+     * would become holes in the pavement. Peeling first is the other answer, and the one
+     * chosen: a spur is not a block edge at all, so the face has no pinch, the ring closes
+     * AND the block stands, going round the spur instead of across it. It also recovers
+     * most of the third of all faces that were being discarded silently (§7t.4).
+     *
+     * ⚠️ THE SPUR IS THEN INSIDE THE BLOCK, by construction, and nothing here subtracts
+     * it from the estate. That is WP-O2, and until it lands a building may be designed
+     * over a spur on more blocks than carried one before - measured and recorded rather
+     * than left to be discovered. This is the same shape as WP-B5's merged block holding
+     * the ramp that merged it, and the same answer will serve: BlockGraph.ExcludeStructures'
+     * own rule, the carriageway widened by the block's own pavement width.
+     */
+    public static HashSet<StreetPoint> TwoCoreOf(StrokeStore store)
+    {
+        var degree = new Dictionary<StreetPoint, int>();
+        var adjacency = new Dictionary<StreetPoint, List<StreetPoint>>();
+
+        foreach (var sp in store.GetStreetPoints())
+        {
+            degree[sp] = 0;
+            adjacency[sp] = new List<StreetPoint>();
+        }
+
+        foreach (var s in store.GetStrokes())
+        {
+            if (!IsBlockEdge(s)) continue;
+            if (!degree.ContainsKey(s.A) || !degree.ContainsKey(s.B)) continue;
+
+            ++degree[s.A];
+            ++degree[s.B];
+            adjacency[s.A].Add(s.B);
+            adjacency[s.B].Add(s.A);
+        }
+
+        var live = new HashSet<StreetPoint>(degree.Keys);
+
+        var peel = new Queue<StreetPoint>();
+        foreach (var sp in live)
+        {
+            if (degree[sp] < 2) peel.Enqueue(sp);
+        }
+
+        while (peel.Count > 0)
+        {
+            var sp = peel.Dequeue();
+            if (!live.Remove(sp)) continue;
+
+            foreach (var neighbour in adjacency[sp])
+            {
+                if (!live.Contains(neighbour)) continue;
+
+                if (--degree[neighbour] < 2) peel.Enqueue(neighbour);
+            }
+        }
+
+        return live;
+    }
+
+
+    /**
+     * Which arms a block trace may run along, given the 2-core it was peeled to.
+     *
+     * A block edge whose far end was peeled away is not part of any ring, so it is
+     * refused here rather than being walked out along and turned round at - which is what
+     * used to cut the slit the truncation then dropped. One delegate per city, handed to
+     * StreetPoint.GetNextAngle and used for the trace's own start filter, so that the two
+     * cannot disagree about what a block arm is.
+     */
+    public static Func<Stroke, bool> AcceptWithin(HashSet<StreetPoint> core)
+        => s => IsBlockEdge(s) && core.Contains(s.A) && core.Contains(s.B);
+
+
+    /**
+     * ⚠️ WHETHER A TRACED FACE IS THE INSIDE OF A CITY BLOCK OR THE OUTSIDE OF THE CITY.
+     *
+     * A face traversal that always turns to the next arm clockwise gives every interior
+     * face one winding and the single outer face of each connected component the other -
+     * so one face per component is the whole city seen from outside, and it is the biggest
+     * face there is. Measured over the seventy shipped cities: exactly 70 faces of 40961
+     * come back with the opposite sign flag off and 70 of 37679 flag on, one per component,
+     * and in every city the largest face by area is one of them.
+     *
+     * ⚠️ THIS RULE IS NEW AND IT IS LOAD BEARING. Until the peel, the outer face was
+     * discarded for a reason that had nothing to do with being outside: it ran through a
+     * dead-end spur somewhere on the city's edge, so it was refused as hasNullSection.
+     * With the spurs peeled away the outer face is a perfectly good closed ring of
+     * junctions that all have corners, and without this it would be stored as a city block
+     * covering the entire city.
+     *
+     * ⚠️ NOT SidewalkRing.SignedArea2Of, which answers the same question about a
+     * PAVEMENT ring. That one accumulates absolute coordinates in float, which is right
+     * for a ring a few tens of metres across and not for a face ring that may run round a
+     * 3800 m city: the products then reach 4e6, where a float step is a quarter of a
+     * square metre and a small block's whole area is noise. This one translates to the
+     * ring's own first corner and accumulates in double. The two agree in sign on every
+     * block of every pinned city, which is asserted rather than assumed.
+     */
+    public static bool IsInteriorFace(IList<Vector2> ring)
+    {
+        if (ring.Count < 3) return false;
+
+        Vector2 o = ring[0];
+        double area2 = 0.0;
+        for (int i = 0; i < ring.Count; ++i)
+        {
+            Vector2 a = ring[i], b = ring[(i + 1) % ring.Count];
+            area2 += (double)(a.X - o.X) * (b.Y - o.Y) - (double)(b.X - o.X) * (a.Y - o.Y);
+        }
+
+        return area2 < 0.0;
+    }
+
+
+    /**
      * ⚠️ THE LAND A STRUCTURE TAKES OUT OF THE BLOCK IT NOW STANDS IN.
      *
      * Merging the blocks either side of a lifted corridor leaves the structure INSIDE

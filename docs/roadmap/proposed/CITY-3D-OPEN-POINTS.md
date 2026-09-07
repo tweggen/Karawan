@@ -3,15 +3,19 @@
 **Status:** open ledger. This is the file to read first when picking up the
 terrain-following city work.
 **Companion:** [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) is the design and
-history document — every fix is written up there as §7a … §7t, with the measurements that
+history document — every fix is written up there as §7a … §7u, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-07 (item **(o)**, second round — notch or split, measured: the
-answer is **mostly-notch, 99.6 % / 96.6 %**, it needs **no threshold constant**, and repair
-(b) turns out to touch **4778 / 4439 blocks** rather than the 222 / 272 the first round
-counted. Still **NOT fixed**; see Part 1b and `STREETS-3D-TOPOLOGY.md` §7t.10. 2026-09-06:
-item (o) reported from play and its cause established, §7t; and WP-B6 — grade separation is
-ON and Phase B is complete, §15).
+**Last updated:** 2026-09-07 (item **(o)**, **WP-O1 LANDED**: the block trace runs over the
+block graph's 2-core and a face walk terminates on the directed edge, so no block ring is
+closed by a chord any more — 219 → 0 and 274 → 0 — and a third of the city that was being
+discarded silently comes back. ⚠️ **WP-O1 ALONE MAKES THE REPORTED SYMPTOM TWENTY TIMES
+WORSE**, deliberately and by construction: 3247 / 2986 buildings stand over a road against
+156 / 191, because the spur is now inside the block and WP-O2's estate exclusion is what
+takes it out. See Part 1b and `STREETS-3D-TOPOLOGY.md` §7u. Earlier the same day: the
+notch-or-split measurement, §7t.10 — **mostly-notch, 99.6 % / 96.6 %**, **no threshold
+constant**. 2026-09-06: item (o) reported from play and its cause established, §7t; and
+WP-B6 — grade separation is ON and Phase B is complete, §15).
 
 ---
 
@@ -56,7 +60,9 @@ caught it - see the entries, which are kept rather than deleted because what the
 is the useful part.
 
 **Reported since the flip (2026-09-02), and fixed:** the kerb did not rest on the
-carriageway. See **(j)** below and §7o.
+carriageway. See **(j)** below and §7o. And **(o)**, the street trunk running into a
+building — its cause closed by WP-O1 on 2026-09-07, with WP-O2 and WP-O3 still to come and
+the symptom deliberately larger until WP-O2 lands.
 
 **Cleared 2026-09-03:** **(k)** — half of the ordinary citizen's walk was in the road. It was
 the last plan-level defect this page carried as *found and not fixed*, it was present and
@@ -1191,7 +1197,7 @@ which the broken site would have passed.
 
 # Part 1b — Reported 2026-09-06, OPEN
 
-## ⚠️ (o) A block outline is not always made of streets, so a building stands on one
+## 🔶 (o) A block outline is not always made of streets, so a building stands on one — WP-O1 DONE 2026-09-07, WP-O2 AND WP-O3 OPEN
 
 Reported from play of the shipped world (both flags on their defaults):
 
@@ -1340,6 +1346,75 @@ already decides it. **Measured, still not fixed; every number in `STREETS-3D-TOP
 
 Gate: `tests/JoyceCode.Tests/engine/streets/{SpurBlocks,BlockSpurEstateTests}.cs` (18).
 Nothing under `JoyceCode/` was touched.
+
+### ✅ WP-O1, 2026-09-07: the block trace runs over the 2-core — and the symptom is WORSE on purpose
+
+The owner chose repair **(b)** in full, as three work packages. **WP-O1 is the peel and the
+termination; the estate subtraction (WP-O2) and the footing (WP-O3) are not in it.** Every
+number in `STREETS-3D-TOPOLOGY.md` §7u.
+
+- **The defect closes.** `BlockGraph.TwoCoreOf` peels every junction with fewer than two
+  block arms, iteratively; `AcceptWithin` is the one predicate the trace's start filter and
+  `GetNextAngle` both take; and the walk terminates on the **(junction, outgoing stroke)
+  pair**. Rings that do not close: **219 → 0** flag off, **274 → 0** flag on.
+- **A third of the city comes back.** Directed block edges in a stored block go
+  **203 037 (66.8 %) → 260 283 (85.6 %)** and **163 558 (71.6 %) → 198 275 (86.8 %)**;
+  what is discarded falls from **33.2 % → 5.0 %** and **28.4 % → 4.7 %**, and what is left is
+  the outer face of each of the seventy components and nothing else. Quarters
+  **36 327 → 40 891** and **33 432 → 37 609**, exactly §7t.10.1's prediction from an
+  independently written face walk.
+- ⚠️ **THE OUTER FACE NEEDED A RULE OF ITS OWN and nothing in the plan said so.** It used to
+  be refused for a reason unrelated to being outside — it ran through some spur on the city's
+  edge, so `hasNullSection` caught it. Peel the spurs away and it is a perfectly good closed
+  ring; without `BlockGraph.IsInteriorFace` the generator stores one "city block" per
+  component covering the whole city. The rule is the winding, measured: exactly 70 faces of
+  40 961 wind the other way, one per component, and each is the largest face in its city.
+  Deliberately not `SidewalkRing.SignedArea2Of` — float, untranslated, and the world puts
+  cities 36 km out; the mutation that swaps it in fails 3.
+- ⚠️ **WP-O1 ALONE MAKES THE REPORTED SYMPTOM TWENTY TIMES WORSE, and that is the plan.** A
+  2-cored block contains its spurs and nothing subtracts them yet: buildings over a `Street`
+  carriageway **156 → 3247** flag off and **191 → 2986** flag on, spurs with their stub under
+  a building **146 → 4328** and **190 → 3696**, in **69** and **68** of the 70 cities. That is
+  WP-O2's positive control, asserted in `TwoCoreBlockTests`.
+- ⚠️ **AND IT IS NOW REPRODUCIBLE AT THE START CITY, which §7t.7 said it was not.**
+  `cluster-clusters-mydear-0` had no building over a street in either flag state; it now has
+  **5 flag off (worst 1231 m²) and 4 flag on (worst 1630 m²)** over 19 and 21 spurs. WP-O2
+  takes it away again. It still does not explain the ORIGINAL sighting, which predates today.
+- ⚠️ **THE FINDING: the block corner across a skipped arm is not WP-O1's, and six gates could
+  not see it.** Where the block graph skips an arm the two arms a block turns between are not
+  adjacent in the junction's angle array, so the corner is the mitre ACROSS the skipped one
+  and is not a section point at all. **WP-B5 §14.3 established that for a ramp foot and it has
+  shipped since 2026-09-06**; it was invisible because `QuarterFloorTests`,
+  `QuarterFloorFacingTests`, `PavementCrossFallTests`, `KerbSeamTests`,
+  `PedestrianCrossingTests` and `QuarterLoopRouteTests` all build a **flag-off** city, and
+  `NoBlockOutlineCrossesItself` omits `seed008@500`, the one pinned seed that already had a
+  self-crossing outline from it. Measured on the pre-WP-O1 tree, not inferred. Three
+  consequences: the pavement stands **vertical, never back-facing** (`n.Y` is exactly
+  0.000000, so the §7j class is intact); the **kerb leaves the carriageway** at such a corner
+  and at its NEIGHBOUR too, so 22–25 % of the sampled kerb now carries a 2 m bound instead of
+  1 cm, worst 1.674 m; and one self-crossing outline flag on. **Found and NOT fixed** — the
+  repair is `RoadSurface.TryCornersOf` ending a carriageway at the corner the block turns at,
+  which moves the road mesh and `street-geometry.json`.
+- **NOT ONE BASELINE FILE MOVED**, including `street-geometry.json`, which the owner had
+  authorised: it pins the ROAD mesh, built from the section arrays and not from the quarters.
+  **`ClusterStorage.DbVersion` is NOT bumped**, checked: only `Stroke` and `StreetPoint` are
+  persisted and `_findQuarters()` runs on every start regardless.
+- **The gate worth more than the counts is Euler**: `quarters == E − V + C` over the 2-core,
+  per seed and per flag, which says at once that no face is missed, none is discarded for
+  `hasNullSection`, and only the outside is refused.
+- **Mutations: eleven, one survivor** — deleting the `hasNullSection` discard, which the peel
+  makes unreachable (kept as the backstop it always was; the Euler gate is what proves it
+  equivalent rather than untested). Reverting the termination to the vertex test still fails
+  **4**, because the peel does not remove a **bridge**: 31 stored blocks flag off and 10 flag
+  on have a ring that passes through one junction twice.
+- **Ten gates superseded with their old text recorded**, listed in §7u.10. Tests:
+  `tests/JoyceCode.Tests/engine/streets/TwoCoreBlockTests.cs` (37 new; **1763 xUnit** against
+  1744, TALE 200/200).
+
+**Still open: WP-O2** (subtract the spur corridor from the estate the way
+`BlockGraph.ExcludeStructures` subtracts a ramp, AFTER the inset, keeping every polygon the
+inset returns — §7t.10 measured all of it) **and WP-O3** (`BuildingFooting.BaseHeightOf` per
+estate rather than per block).
 
 ---
 
