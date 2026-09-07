@@ -6,16 +6,19 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7u, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-07 (item **(o)**, **WP-O1 LANDED**: the block trace runs over the
-block graph's 2-core and a face walk terminates on the directed edge, so no block ring is
-closed by a chord any more — 219 → 0 and 274 → 0 — and a third of the city that was being
-discarded silently comes back. ⚠️ **WP-O1 ALONE MAKES THE REPORTED SYMPTOM TWENTY TIMES
-WORSE**, deliberately and by construction: 3247 / 2986 buildings stand over a road against
-156 / 191, because the spur is now inside the block and WP-O2's estate exclusion is what
-takes it out. See Part 1b and `STREETS-3D-TOPOLOGY.md` §7u. Earlier the same day: the
-notch-or-split measurement, §7t.10 — **mostly-notch, 99.6 % / 96.6 %**, **no threshold
-constant**. 2026-09-06: item (o) reported from play and its cause established, §7t; and
-WP-B6 — grade separation is ON and Phase B is complete, §15).
+**Last updated:** 2026-09-07 (item **(o)**, **WP-O2 LANDED and THE REPORT CLOSES**: the
+dead-end spur comes out of the estate the way `ExcludeStructures` takes out a ramp, after the
+inset and with no new constant, and every polygon that is left gets its own building.
+Buildings over a `Street` carriageway **3247 → 13** flag off and **2986 → 0** flag on, **none
+of them on a spur**, and the start city goes from 5 and 4 to **0 and 0**. ⚠️ **The 13 that
+remain are §7t's own pre-existing class** — 0.9–13.4 m² slivers where an estate meets a street
+its own block runs along, which §7t counted at 10 and 1 before any of this. See Part 1b and
+`STREETS-3D-TOPOLOGY.md` §7v. Earlier the same day: **WP-O1**, the block trace over the
+2-core — no ring closed by a chord any more, 219 → 0 and 274 → 0, and a third of the city that
+was being discarded silently comes back (§7u); and the notch-or-split measurement, §7t.10 —
+**mostly-notch, 99.6 % / 96.6 %**, **no threshold constant**. 2026-09-06: item (o) reported
+from play and its cause established, §7t; and WP-B6 — grade separation is ON and Phase B is
+complete, §15).
 
 ---
 
@@ -61,8 +64,8 @@ is the useful part.
 
 **Reported since the flip (2026-09-02), and fixed:** the kerb did not rest on the
 carriageway. See **(j)** below and §7o. And **(o)**, the street trunk running into a
-building — its cause closed by WP-O1 on 2026-09-07, with WP-O2 and WP-O3 still to come and
-the symptom deliberately larger until WP-O2 lands.
+building — its cause closed by WP-O1 and its symptom by WP-O2, both on 2026-09-07, with
+WP-O3 (`BuildingFooting` per estate rather than per block) still to come.
 
 **Cleared 2026-09-03:** **(k)** — half of the ordinary citizen's walk was in the road. It was
 the last plan-level defect this page carried as *found and not fixed*, it was present and
@@ -1197,7 +1200,7 @@ which the broken site would have passed.
 
 # Part 1b — Reported 2026-09-06, OPEN
 
-## 🔶 (o) A block outline is not always made of streets, so a building stands on one — WP-O1 DONE 2026-09-07, WP-O2 AND WP-O3 OPEN
+## 🔶 (o) A block outline is not always made of streets, so a building stands on one — WP-O1 AND WP-O2 DONE 2026-09-07, WP-O3 OPEN
 
 Reported from play of the shipped world (both flags on their defaults):
 
@@ -1411,10 +1414,71 @@ number in `STREETS-3D-TOPOLOGY.md` §7u.
   `tests/JoyceCode.Tests/engine/streets/TwoCoreBlockTests.cs` (37 new; **1763 xUnit** against
   1744, TALE 200/200).
 
-**Still open: WP-O2** (subtract the spur corridor from the estate the way
-`BlockGraph.ExcludeStructures` subtracts a ramp, AFTER the inset, keeping every polygon the
-inset returns — §7t.10 measured all of it) **and WP-O3** (`BuildingFooting.BaseHeightOf` per
-estate rather than per block).
+### ✅ WP-O2, 2026-09-07: the spur comes out of the estate — THE REPORT CLOSES
+
+Every number in `STREETS-3D-TOPOLOGY.md` §7v.
+
+- **The reported symptom is gone.** Buildings over a `Street` carriageway: **3247 → 13** flag
+  off and **2986 → 0** flag on, and **0 of them are on a spur** in either state. Spurs whose
+  stub carriageway lies under a building: **4328 → 0** and **3696 → 0**. Buildings over a
+  `Ramp`, `Bridge` or `Tunnel`: 0 → 0. **The start city — `cluster-clusters-mydear-0`, the
+  city the owner plays — goes from 5 and 4 to 0 and 0.**
+- ⚠️ **WHAT IS LEFT IS NOT THIS CLASS, and §7t already counted it.** The 13 flag-off
+  residuals all overlap a street their own block **runs along**, by **0.9–13.4 m²**, on
+  blocks with a 2 m pavement. §7t measured exactly this before WP-O1 and called it *"1–13 m²
+  corner slivers"* on blocks whose ring closed — **10 flag off and 1 flag on**. Same size,
+  same shape, same rate against 12 % more blocks. It is the estate's inset meeting the
+  carriageway rectangle near a junction and it predates all of this. The gate names it
+  rather than rounding it into zero.
+- **How it is done, with no new constant.** `BlockGraph.SpurCorridorsOf` names every block
+  edge the peel removed — the exact complement of `AcceptWithin`, asserted per stroke, so a
+  road the trace runs along is never subtracted and a road it refuses always is.
+  `BlockGraph.ExcludeCarriageways` is the one expression for *this road is not buildable
+  land*, and `ExcludeStructures` is now its structure-filtered wrapper: a ramp and a spur are
+  removed by the same two lines with the same margin, the block's own `SidewalkWidth`.
+  `QuarterGenerator.BuildableLandOf` is inset → subtract → count polygons, and
+  `_createBuildings` designs **one building per polygon**. `BlockGraph.LargestOf`, the
+  concatenation and its `TXWTODO` are deleted.
+- **Mostly-notch, and the flag-off half lands on §7t.10's prediction.** Blocks that hold a
+  spur come back in one piece **4757 of 4780** flag off, against §7t.10's independently
+  reconstructed **4757 of 4778** — two blocks apart, which is the control saying the
+  measurement and the shipped rule are the same rule. ⚠️ **The flag-on half does not land on
+  it and the reason is stated**: §7t.10 subtracted only the spur, while a flag-on block may
+  also hold a ramp, a deck or a bore, and **348** of these blocks are already in more than one
+  piece before a spur is subtracted at all.
+- ⚠️ **THE ORDER IS THE ONE THING THAT COULD HAVE BEEN GOT WRONG SILENTLY.** Both orders drive
+  the report to zero; they differ only in how often the block splits — 21/150 against 163/646.
+  It is gated as a **threshold**: on a square block the shallowest spur that still leaves one
+  piece is (tip → boundary) − 2 × `SidewalkWidth` this way and − 3 × the other, measured, and
+  the same fixture pins the corridor margin.
+- ⚠️ **TWO THINGS REMOVING `LargestOf` COULD HAVE GOT WRONG.** (a) Clipper's flat path list
+  puts a **hole** in the same list as its piece, so "one building per polygon" would have put
+  a house exactly on the road that made the hole — `ExcludeCarriageways` takes a `PolyTree`'s
+  top-level contours and **0 holes** is asserted over both worlds. (b) A building might not be
+  a piece at all, so the gate is an **identity**: its points ARE one of `BuildableLandOf`'s
+  polygons, reversed, corner for corner. 0 exceptions.
+- **Recorded and NOT asserted at zero:** 1 building of 27 403 flag off and 2 of 26 054 flag on
+  have an outline that **touches itself** — a Clipper pinch at the decimetre, and two of the
+  three come back identically with no spur subtracted, so it is the inset's own pinch.
+- **NOT ONE BASELINE FILE MOVED** and **`ClusterStorage.DbVersion` is NOT bumped**, both
+  re-checked rather than carried over from WP-O1. Quarters and estates do not move on any
+  pinned seed; buildings and shops do (flag-on `Yelukhdidru@3000` flat 100 → 173 buildings,
+  which is `LargestOf` going away rather than the spur).
+- **Mutations: eleven, none surviving in the final state — and the two that were expected to
+  survive are both findings.** ⚠️ *the flat path list instead of the PolyTree's contours*
+  survived the first round, because the two are the same list exactly when the hole count is
+  zero — the very thing the gate asserts, so no real data can kill it; a fixture with a road
+  that stops short of the block on BOTH sides now reaches the branch. ⚠️ And *ignoring the
+  AABB prefilter* was predicted to be an equivalence and is not: `ExcludeCarriageways` hands
+  back the SAME list when there is nothing to subtract, and once a distant structure gets past
+  the filter that short-circuit stops firing and Clipper re-emits the contour.
+
+**Still open: WP-O3.** ⚠️ `BuildingFooting.BaseHeightOf` takes the **block's** lowest corner,
+justified in its own class by *"a block carries exactly one estate and at most one building"* —
+**which WP-O2 falsifies on 13 blocks flag off and 793 flag on.** §7t.10.7 measured the cost on
+the shipped terrain: the higher piece is buried by a median **7.46 / 6.21 m** and up to
+**28.1 m**, and **exactly zero on a flat city**. It does not make any WP-O2 gate dishonest —
+those are all plan geometry — but it is the last of the three.
 
 ---
 

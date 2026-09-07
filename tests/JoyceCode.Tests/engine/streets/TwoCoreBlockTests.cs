@@ -26,12 +26,13 @@ namespace JoyceCode.Tests.engine.streets;
  * block graph, iteratively, so a spur is not a block edge at all. The face then has no
  * pinch, the ring closes AND the block stands, going round the spur.
  *
- * ⚠️ THIS WORK PACKAGE ALONE MAKES THE REPORTED SYMPTOM WORSE AND THAT IS DELIBERATE. A
- * 2-cored block contains its spurs by construction and nothing here subtracts them from
- * the estate, so a building stands over a street on twenty times as many blocks as before
- * - 3247 against 156 flag off, 2986 against 191 flag on. That is measured and asserted
- * below rather than left to be discovered, and it is WP-O2's positive control: the
- * estate exclusion is what drives it to zero.
+ * ⚠️ THIS WORK PACKAGE ALONE MADE THE REPORTED SYMPTOM WORSE AND THAT WAS DELIBERATE. A
+ * 2-cored block contains its spurs by construction and WP-O1 does not subtract them from
+ * the estate, so a building stood over a street on twenty times as many blocks as before -
+ * 3247 against 156 flag off, 2986 against 191 flag on. That was measured and asserted here
+ * rather than left to be discovered, and it was WP-O2's positive control; WP-O2 (§7v) has
+ * since driven it to zero, and the Theory that recorded it is spent and deleted, its text
+ * kept where it stood.
  *
  * ⚠️ THE OUTER FACE NEEDED A RULE OF ITS OWN, which nothing in the plan anticipated. It
  * used to be discarded for a reason unrelated to being outside - it ran through some
@@ -368,84 +369,33 @@ public class TwoCoreBlockTests
      * ============================================== what it costs ====================
      */
 
-    /**
-     * ⚠️ WP-O2's POSITIVE CONTROL, AND IT IS EXPECTED TO BE LARGE.
+    /*
+     * ⚠️ WP-O2's POSITIVE CONTROL LIVED HERE AND HAS BEEN SPENT.
      *
-     * A 2-cored block contains its spurs by construction, and nothing subtracts them from
-     * the estate yet. So the reported symptom - a street trunk running into a building -
-     * happens on far more blocks than the 146 / 190 §7t.3 counted: it is the whole
-     * population of spurs that now stand inside a block rather than in ground with no
-     * block on it.
+     * TheSpurIsInsideTheBlockAndTheBuildingIsStillOnIt recorded what shipping WP-O1 on its
+     * own cost, so that the estate exclusion had to move it deliberately rather than
+     * discover it:
      *
-     * Recorded here so that WP-O2's estate exclusion has to move these numbers
-     * deliberately, and so that the cost of shipping WP-O1 on its own is written down
-     * rather than discovered.
+     *     "A 2-cored block contains its spurs by construction, and nothing subtracts them
+     *      from the estate yet. So the reported symptom - a street trunk running into a
+     *      building - happens on far more blocks than the 146 / 190 §7t.3 counted: it is
+     *      the whole population of spurs that now stand inside a block rather than in
+     *      ground with no block on it."
      *
-     *      spurs inside a block   146 -> 4328 flag off, 190 -> 3696 flag on
-     *      buildings over a road  156 -> 3247 flag off, 191 -> 2986 flag on
+     *      spurs                  9840 flag off, 8100 flag on
+     *      inside a block         6422             5498
+     *      stub under a building  146 -> 4328      190 -> 3696
+     *      buildings             27384            24858
+     *      over a road            156 -> 3247      191 -> 2986
+     *
+     * WP-O2 (§7v) drove the two arrows to ZERO, which is the report closing, and it is
+     * asserted in SpurEstateTests.NoBuildingStandsOnASpurOrAStructure - together with the
+     * spur and building counts above as its controls, unmoved, so that "no building on a
+     * road" cannot be satisfied by the population going away. The Theory is deleted rather
+     * than left asserting zeros beside it: it walks all seventy cities against every
+     * carriageway of each and took 2 m 20 s, and there is no second question it answers.
      */
-    [Theory]
-    //                     spurs  inside a block  under a building  buildings  over a road
-    [InlineData(false, 9840, 6422, 4328, 27384, 3247)]
-    [InlineData(true, 8100, 5498, 3696, 24858, 2986)]
-    public void TheSpurIsInsideTheBlockAndTheBuildingIsStillOnIt(
-        bool gradeSeparation,
-        int spurs, int inside, int under, int buildings, int overARoad)
-    {
-        int nSpurs = 0, nInside = 0, nUnder = 0, nBuildings = 0, nOver = 0;
 
-        foreach (var city in BlockRingClosureTests.World(gradeSeparation))
-        {
-            var boxes = city.Store.GetStrokes()
-                .Where(s => s.Kind == StrokeKind.Street)
-                .Select(s => BlockGraph.FootprintOf(s, 0f))
-                .ToList();
-
-            var blocks = city.Quarters.GetQuarters()
-                .Select(q => (Ring: q.GetDelims().Select(d => d.StartPoint).ToList(), Q: q))
-                .ToList();
-
-            foreach (var (_, q) in blocks)
-            foreach (var e in q.GetEstates())
-            foreach (var b in e.GetBuildings())
-            {
-                ++nBuildings;
-                if (boxes.Any(p => _overlapArea(b.GetPoints(), p) > 0.5)) ++nOver;
-            }
-
-            foreach (var sp in city.Store.GetStreetPoints())
-            {
-                if (1 != BlockGraph.ArmCountOf(sp)) continue;
-
-                ++nSpurs;
-
-                var stub = sp.GetAngleArray().First(BlockGraph.IsBlockEdge);
-                var foot = BlockGraph.FootprintOf(stub, 0f);
-                bool isInside = false, isUnder = false;
-
-                foreach (var (ring, q) in blocks)
-                {
-                    if (!BlockRingClosureTests.InsidePlan(ring, sp.Pos)) continue;
-
-                    isInside = true;
-                    foreach (var est in q.GetEstates())
-                    foreach (var b in est.GetBuildings())
-                    {
-                        if (_overlapArea(b.GetPoints(), foot) > 0.5) isUnder = true;
-                    }
-                }
-
-                if (isInside) ++nInside;
-                if (isUnder) ++nUnder;
-            }
-        }
-
-        Assert.Equal(spurs, nSpurs);
-        Assert.Equal(inside, nInside);
-        Assert.Equal(under, nUnder);
-        Assert.Equal(buildings, nBuildings);
-        Assert.Equal(overARoad, nOver);
-    }
 
 
     /**
@@ -660,22 +610,4 @@ public class TwoCoreBlockTests
         return s;
     }
 
-
-    private static double _overlapArea(List<Vector3> building, List<IntPoint> footprint)
-    {
-        var poly = building
-            .Select(v => new IntPoint((int)(v.X * 10f), (int)(v.Z * 10f))).ToList();
-
-        var clipper = new Clipper();
-        clipper.AddPath(poly, PolyType.ptSubject, true);
-        clipper.AddPath(footprint, PolyType.ptClip, true);
-
-        var solution = new List<List<IntPoint>>();
-        clipper.Execute(ClipType.ctIntersection, solution,
-            PolyFillType.pftNonZero, PolyFillType.pftNonZero);
-
-        double area = 0.0;
-        foreach (var p in solution) area += Math.Abs(Clipper.Area(p)) / 100.0;
-        return area;
-    }
 }

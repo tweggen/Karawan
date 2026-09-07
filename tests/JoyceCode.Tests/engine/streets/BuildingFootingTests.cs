@@ -633,20 +633,50 @@ public class BuildingFootingTests
 
 
     /**
-     * A block carries one estate, and an estate at most one building.
+     * ⚠️ A BLOCK CARRIES ONE ESTATE, AND THAT ESTATE MAY NOW CARRY SEVERAL BUILDINGS - SO
+     * THE JUSTIFICATION FOR THE BLOCK-WIDE BOUND HAS STOPPED BEING TRUE.
      *
-     * This is what makes the block-wide bound the right one rather than a lazy one: a
-     * footprint IS the block, inset by 1-6 m. The day a block carries several buildings
-     * this test fails, and the bound has to be taken over each footprint instead - which
-     * is a real difference, since the exact minimum over a footprint sits up to 3.7 m
-     * above the block's own minimum on the worst building measured.
+     * SUPERSEDED BY WP-O2 (§7v), NOT RE-BASELINED. This was
+     * ABlockCarriesOneEstateAndAtMostOneBuilding and it asserted
+     * `est.GetBuildings().Count <= 1`, with the comment:
+     *
+     *     "This is what makes the block-wide bound the right one rather than a lazy one: a
+     *      footprint IS the block, inset by 1-6 m. The day a block carries several
+     *      buildings this test fails, and the bound has to be taken over each footprint
+     *      instead - which is a real difference, since the exact minimum over a footprint
+     *      sits up to 3.7 m above the block's own minimum on the worst building measured."
+     *
+     * That day is today, and the gate did exactly what it was written to do: WP-O2 gives
+     * every piece of a block's buildable land its own building, so a block whose estate the
+     * pavement inset, a structure or a dead-end spur splits carries two or three. This test
+     * now records how many and says whose problem it is, rather than asserting a premise the
+     * shipped generator no longer honours.
+     *
+     * ⚠️ WHAT IT COSTS, AND IT IS NOT SMALL. BuildingFooting.BaseHeightOf answers the
+     * BLOCK's lowest corner; §7t.10.7 measured the extra burial imposed on the higher piece
+     * of a split block over the shipped world at a median 7.46 m flag off and 6.21 m flag on,
+     * worst 21.2 and 28.1 m, over 5 m on 12 of 21 and 84 of 150 blocks. It is EXACTLY ZERO on
+     * a flat city, which is why it has to be measured on the ground the game ships.
+     *
+     * ⚠️ THAT IS WP-O3 AND IT IS NOT WP-O2's. The bound is still a bound - a building is
+     * still never above the floor under it, which ABuildingsBaseIsNeverAboveTheFloorUnderIt
+     * asserts unchanged - it is merely looser than it needs to be for the smaller piece.
+     *
+     * ONE ESTATE PER BLOCK IS STILL ASSERTED and is still load bearing: GenerateShopsOperator
+     * and GenerateTreesOperator both walk a block's estates, and PlayerStart.PoseIn puts a new
+     * game on the first estate with no building.
      */
     [Theory]
-    [MemberData(nameof(Cities))]
-    public void ABlockCarriesOneEstateAndAtMostOneBuilding(string idString, float size)
+    //                                     estates with >1 building  most on one
+    [InlineData("seed000", 500f, 0, 1)]
+    [InlineData("Yelukhdidru", 800f, 0, 1)]
+    [InlineData("seed000", 1500f, 1, 2)]
+    [InlineData("Yelukhdidru", 3000f, 1, 2)]
+    public void ABlockCarriesOneEstateAndThatEstateMayCarrySeveral(
+        string idString, float size, int expectedMulti, int expectedMost)
     {
         var (_, quarters) = _city(idString, size, "shipped terrain");
-        int nBuildings = 0;
+        int nBuildings = 0, nMulti = 0, most = 0;
 
         foreach (var q in quarters.GetQuarters())
         {
@@ -654,16 +684,16 @@ public class BuildingFootingTests
 
             foreach (var est in q.GetEstates())
             {
-                Assert.True(est.GetBuildings().Count <= 1,
-                    $"{idString}/{size}: an estate of the block at {q.GetCenterPoint()} "
-                    + $"carries {est.GetBuildings().Count} buildings, so "
-                    + "BuildingFooting's bound over the whole block over-sinks the "
-                    + "smaller ones and has to be taken over each footprint");
-                nBuildings += est.GetBuildings().Count;
+                int here = est.GetBuildings().Count;
+                nBuildings += here;
+                if (here > 1) ++nMulti;
+                most = Math.Max(most, here);
             }
         }
 
         Assert.True(nBuildings > 0);
+        Assert.Equal(expectedMulti, nMulti);
+        Assert.Equal(expectedMost, most);
     }
 
 
