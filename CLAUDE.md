@@ -148,7 +148,7 @@ dotnet build TestRunner/TestRunner.csproj -c Release
 Three xUnit tests (`BakedAnimationLayoutTests` ×2, `BakedModelEquivalenceTests`) read
 baked assets from `nogame/generated/` and fail until the asset pipeline has run at
 least once — which the `TestRunner` build above does. A green run is currently
-1763 xUnit + 200 TALE.
+1804 xUnit + 200 TALE.
 
 **Build notes:**
 - The `nogame/generated/` directory is auto-created by an `EnsureGeneratedDirectory` MSBuild target before asset compilation. If you see build errors about missing generated files, verify this target runs first.
