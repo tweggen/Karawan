@@ -166,13 +166,27 @@ public class BlockGraphTests
         // self-crossing ring and hang shop fronts off the whole perimeter, and
         // BlockGraph.LargestOf then kept only the larger piece. WP-O2 gives each piece its
         // own building instead, and the count moves again - 339 -> 406.
+        //
+        // ⚠️ SUPERSEDED IN ITS BUILDING COLUMNS BY §7y, old values recorded here rather
+        // than re-baselined silently: the owner's ten square metre floor
+        // (engine.world.MetaGen.MinBuildingArea) takes a building off three of these seven
+        // seeds, on both grounds, and moves NO shop count and no quarter or estate count
+        // anywhere in the table.
+        //
+        //      seed000@1500   flat 86 -> 83    terrain 98 -> 95
+        //      seed017@2400   flat 148 -> 146  terrain 138 -> 136
+        //      Yelukhdidru@3000 flat 173 -> 170 terrain 137 -> 134
+        //
+        // The shops do not move because a matchbox has no side long enough for _addShops'
+        // 5 m shopfront - over the seventy shipped cities the 195 buildings removed carried
+        // 13 shopfronts between them, and none of those is on a pinned seed.
         new object[] { "seed000",     500f,   4,   4,  6,   92,     6,   6,   6,  320 },
         new object[] { "seed011",     500f,   3,   3,  3,   83,     4,   4,   4,  223 },
         new object[] { "Yelukhdidru", 400f,   0,   0,  0,    0,     0,   0,   0,    0 },
         new object[] { "Yelukhdidru", 800f,   8,   8,  7,  319,    14,  14,  10,  406 },
-        new object[] { "seed000",     1500f, 73,  73, 86, 1717,    98,  98,  98, 2104 },
-        new object[] { "seed017",     2400f,189, 189,148, 3389,   261, 261, 138, 3437 },
-        new object[] { "Yelukhdidru", 3000f,327, 327,173, 3985,   431, 431, 137, 2327 },
+        new object[] { "seed000",     1500f, 73,  73, 83, 1717,    98,  98,  95, 2104 },
+        new object[] { "seed017",     2400f,189, 189,146, 3389,   261, 261, 136, 3437 },
+        new object[] { "Yelukhdidru", 3000f,327, 327,170, 3985,   431, 431, 134, 2327 },
     };
 
 

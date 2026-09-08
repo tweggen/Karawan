@@ -78,6 +78,31 @@ public class MetaGen
      */
     public static float StoryHeight = 3f;
 
+    /**
+     * The smallest piece of ground anybody builds a building on, in square metres.
+     *
+     * ⚠️ AN OWNER-GIVEN REAL-WORLD NUMBER, in the same sense StoryHeight above is one, and
+     * it is beside StoryHeight for that reason rather than because two subsystems read it:
+     * these are the two dimensions of "what a building is" that the generator is not free
+     * to derive. The owner's words, 2026-09-08:
+     *
+     *      "I think it's safe to assume that in real world, the smallest buildings (apart
+     *      from temporary things like tents) would be a 10m2 building, in the context of
+     *      slums or small convenience stores, but not really in city centers."
+     *
+     * Do not tune it and do not scale it with downtownness without saying so. The second
+     * half of that sentence is an observation about where such buildings occur and not an
+     * instruction to make the floor depend on where the block is - measured, the floor
+     * fires on about 1 % of downtown blocks and 0.4 % of outlying ones, so it binds a
+     * little MORE downtown rather than less, and it is a flat floor everywhere (§7y.1).
+     *
+     * It is an AREA and nothing else, which is what was asked for. Area alone does not
+     * bound a sliver - see §7y.6, where fourteen buildings of the shipped world are under
+     * two metres thick and every one of them clears this floor several times over - and
+     * whether a minimum WIDTH is wanted too is a separate decision that has not been made.
+     */
+    public static float MinBuildingArea = 10f;
+
     public Vector3 MaxPos;
     public Vector3 MinPos;
 

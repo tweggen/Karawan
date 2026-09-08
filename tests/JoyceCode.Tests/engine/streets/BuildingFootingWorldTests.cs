@@ -258,8 +258,13 @@ public class BuildingFootingWorldTests
      */
     [Theory]
     //                 footprint corners it would leave in the air, and the worst of them
-    [InlineData(false, 5402, 1.5f, 1.7f)]
-    [InlineData(true, 4842, 5.5f, 5.7f)]
+    //
+    // ⚠️ Superseded by §7y in its counts only, old text 5402 / 4842: the owner's ten square
+    // metre floor takes 16 and 195 matchboxes out of the world, and a matchbox has corners
+    // like anything else, so the population this counts over shrinks. The worst float and
+    // the finding are unchanged.
+    [InlineData(false, 5392, 1.5f, 1.7f)]
+    [InlineData(true, 4785, 5.5f, 5.7f)]
     public void TheObviousPerPieceBoundIsNotABound(
         bool gradeSeparation, int expectedFloating, float worstLo, float worstHi)
     {
@@ -297,8 +302,14 @@ public class BuildingFootingWorldTests
      */
     [Theory]
     //             blocks>1  median   worst    split median  >0.5m >2m  >5m
+    //
+    // ⚠️ Superseded by §7y in its flag-on block count and its over-half count, old text
+    // 793, 775, 602 and 397: the ten square metre floor takes two flag-on blocks from two
+    // buildings to one - the same two throughout - so 791, 773, 600 and 395. Both of them
+    // were over five metres of over-sink, which is what a matchbox beside a real building
+    // on a slope looks like.
     [InlineData(false, 13, 0.40f, 0.50f, 15.0f, 15.4f, 5.5f, 6.2f, 13, 10, 8)]
-    [InlineData(true, 793, 0.20f, 0.30f, 32.9f, 33.3f, 4.6f, 5.4f, 775, 602, 397)]
+    [InlineData(true, 791, 0.20f, 0.30f, 32.9f, 33.3f, 4.6f, 5.4f, 773, 600, 395)]
     public void TheBlockWideBoundOverSankTheHigherPieceOfASplitBlock(
         bool gradeSeparation, int expectedSplitBlocks,
         float medianLo, float medianHi, float worstLo, float worstHi,
@@ -356,8 +367,12 @@ public class BuildingFootingWorldTests
      */
     [Theory]
     //                 shopfronts, of which off their own building's storey grid
-    [InlineData(false, 572404, 0)]
-    [InlineData(true, 527807, 0)]
+    //
+    // ⚠️ Superseded by §7y in its totals, old text 572404 / 527807: a removed matchbox takes
+    // its shopfronts with it and they are 2 and 13 of half a million, because a shopfront is
+    // 5 m of perimeter and a matchbox rarely has one.
+    [InlineData(false, 572402, 0)]
+    [InlineData(true, 527794, 0)]
     public void AShopIsOnAWholeStoreyOfItsOwnBuilding(
         bool gradeSeparation, int expectedShopfronts, int expectedOff)
     {
@@ -400,8 +415,14 @@ public class BuildingFootingWorldTests
      */
     [Theory]
     //                 cap corners inside a footprint, of which tie the minimum
+    //
+    // ⚠️ Superseded by §7y in its flag-on count, old text 114207. It goes UP by three rather
+    // than down, which is the §7y.5 finding seen from another file: the flag-on world loses
+    // 195 matchboxes, whose footprints are far too small to contain a cap vertex, and gains
+    // one 1450 m² building on a block whose good piece used to lose its design draw to the
+    // matchbox in front of it. The flag-off count does not move at all.
     [InlineData(false, 164924, 432)]
-    [InlineData(true, 114207, 414)]
+    [InlineData(true, 114210, 414)]
     public void ACornerOfTheFloorInsideAFootprintIsAlwaysOnItsBoundary(
         bool gradeSeparation, int expectedInside, int expectedDeciding)
     {

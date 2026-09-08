@@ -3,10 +3,20 @@
 **Status:** open ledger. This is the file to read first when picking up the
 terrain-following city work.
 **Companion:** [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) is the design and
-history document — every fix is written up there as §7a … §7w, with the measurements that
+history document — every fix is written up there as §7a … §7y, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-08 (**measurement only**: the last open number under item (o) — the
+**Last updated:** 2026-09-08 (**the owner's ten square metre floor**: a piece of buildable land
+under `engine.world.MetaGen.MinBuildingArea` = 10 m² gets **no building**, which closes §7x.8's
+matchboxes — buildings under a square metre **4 / 53 → 0**, smallest building anywhere
+0.030 / 0.005 → **11.92 / 10.05 m²**, at a cost of **16 and 194** buildings and **2 and 13**
+shopfronts of half a million. ⚠️ **The brief's expectation was backwards**: the floor binds
+**more** downtown, not less — flag off it fires **only** downtown — so it ships flat everywhere
+and the table in §7y.1 is why. ⚠️ **And a 1450 m² building APPEARS** on one flag-on block,
+because refusing before the 30 % design draw hands the good piece the draw its matchbox
+neighbour used to take. No baseline moved, no `DbVersion` bump, the player start does not move.
+`STREETS-3D-TOPOLOGY.md` §7y. Earlier the same day, **measurement only**: the last open number
+under item (o) — the
 **522 flag-on blocks with no buildable land** against 9 flag off — turns out to be **correct
 behaviour**. Every one of them is a block that is **entirely pavement**, the equivalence is
 exact in both directions over all 78 500 blocks, and **every one is emptied by the pavement
@@ -1583,7 +1593,8 @@ of ground, over seventy cities, on both flags, with 0 footprint corners in the a
   1180 m² flag-off outlier;
 - ✅ **522 flag-on blocks with no buildable land at all** against 9 flag off — **measured
   2026-09-08 and they are CORRECT**: every one is a block that is entirely pavement. See the
-  section below and `STREETS-3D-TOPOLOGY.md` §7x;
+  section below and `STREETS-3D-TOPOLOGY.md` §7x. ✅ **And the matchbox on the other side of
+  that same cliff is gone the same day** — the owner set a ten square metre floor, §7y;
 - ⚠️ **the block floor's interior is a tessellation artefact and it is metres deep** — the
   finding behind §7w.1, not merely a fact about the bound. The gap between the lowest height
   anywhere on a footprint's own boundary and the lowest the floor actually gets over that
@@ -1668,9 +1679,95 @@ be built on is a design decision** and is the owner's, exactly as §7t.5 was; §
 (no baseline file moves; `BlockGraphTests`' two census tables, `SpurEstateTests` and
 `BuildingFootingWorldTests` would have to be re-taken; it would be the first threshold
 constant this rule carries, which §7t.10 and §7v were built to avoid).
+✅ **The owner decided the same day and it is the section below.**
 
 Gate: `tests/JoyceCode.Tests/engine/streets/EmptyBlockTests.cs` (18 new; **1830 xUnit**
 against 1812, TALE 200/200).
+
+---
+
+### ✅ 2026-09-08: a piece of land under ten square metres carries no building
+
+§7x.8's matchboxes, closed by an owner decision rather than by a derivation. In the owner's
+words: *"I think it's safe to assume that in real world, the smallest buildings (apart from
+temporary things like tents) would be a 10m2 building, in the context of slums or small
+convenience stores, but not really in city centers."* Full write-up and every number in
+`STREETS-3D-TOPOLOGY.md` §7y.
+
+**What was built.** `engine.world.MetaGen.MinBuildingArea = 10f`, beside `MetaGen.StoryHeight`
+because they are the same kind of number — the two dimensions of *what a building is* that the
+generator is not free to derive — with the owner's sentence quoted on it. And
+`QuarterGenerator.CanCarryABuilding`, **one predicate**: the loop's own
+`if (0 == polygon.Count)` is this rule with its threshold at zero, so it is replaced rather
+than joined, and a polygon with no points, two points or no area falls out of the same
+expression. The `estateTooSmall` debug tag follows the predicate, deliberately.
+
+⚠️ **THE BRIEF'S EXPECTATION IS BACKWARDS AND THIS IS THE FINDING.** *"A downtown block is
+large enough that the floor will rarely bind anyway"* — measured, the refusal rate rises with
+downtownness in both flag states, and **flag off it fires only downtown**: 0 of 13 444 blocks
+below downtownness 0.5, 18 of 14 251 above 0.7. Flag on it is 0.39 % below 0.3 against
+**1.01 %** above 0.7. The mechanism is §7x's — a 6 m pavement exists only above downtownness
+0.7 and the heaviest roads are downtown — so the owner's *"not really in city centers"*
+describes the real world and not this generator: the matchboxes were **concentrated** in the
+centres and the floor removes them exactly there. It ships **flat everywhere** anyway, because
+at one per cent of blocks there is nothing a second rule would fix.
+
+**What it costs, both flag states (grade separation is the default, so flag on is shipped):**
+
+| | flag off | flag on |
+|---|---|---|
+| pieces of land refused | **20** of 40 914 | **310** of 38 797 |
+| buildings | 27 403 → **27 387** | 26 054 → **25 860** |
+| blocks carrying a building | 27 390 → **27 374** | 25 216 → **25 025** |
+| shopfronts | 572 404 → **572 402** | 527 807 → **527 794** |
+| smallest building anywhere | 0.030 → **11.92 m²** | 0.005 → **10.05 m²** |
+| `estateTooSmall` | 9 → **29** | 522 → **828** |
+
+The refused land is a median 4.00 / 2.65 m², nowhere near the boundary, and the smallest
+survivor is a twentieth of a square metre over the floor — so it is a floor and not a filter
+with a margin.
+
+⚠️ **AND A 1450 m² BUILDING APPEARS, which nobody asked about.** The flag-on total falls by
+**194** while 195 buildings were removed. Refusing before the 30 % design draw — which is where
+the `mn == 0` gate already was — means a refused piece no longer consumes that draw. Three
+flag-on blocks in the world hold both a refused piece and a good one; on
+`cluster-clusters-mydear-580` the 1450 m² piece had lost its own draw to a 3.5 m² matchbox that
+won one, and now takes it. Measured by rebuilding the world at `91244e45` and diffing block by
+block, and visible independently as `ACornerOfTheFloorInsideAFootprintIsAlwaysOnItsBoundary`
+going **up** by three.
+
+**The knock-on is nothing new.** A building-less block is the ordinary case — 13 517 and 12 584
+of them, because `_designBuilding` refuses 30 % on a draw — so this adds 16 and 191 to
+thousands and reaches no branch that was not already reached on every start. All six consumers
+handle it; `PlayerStart.PoseIn` is the one that could have moved the player and **does not**,
+because the start city has no piece under the floor in either flag state (asserted on the
+float). **No baseline file moved** (all five byte-identical to `7755a7b1`) and
+**`ClusterStorage.DbVersion` is not bumped** — quarters, estates and buildings are rebuilt from
+the stored stroke network on every start.
+
+⚠️ **RECORDED AND NOT ACTED ON: area alone does not bound a sliver.** Fourteen flag-on
+buildings are under **two metres thick**, the thinnest **0.32 m** with a 95.7 m perimeter round
+17.2 m² of floor, and the largest of them has 83 m² — no area threshold reaches that shape.
+A minimum WIDTH is a second owner decision. If it is ever taken, the instrument is the
+outline's own half-width and **not** `minHouseSide`, which is short at a mitred corner far more
+often than on a sliver: 1439 / 725 blocks have a building with a side under 2 m and they are
+ordinary fat buildings.
+
+Gate: `tests/JoyceCode.Tests/engine/streets/MinBuildingAreaTests.cs` (17 new; **1847 xUnit**
+against 1830, TALE 200/200). Twelve mutations, **none survived**; ⚠️ two of them are killed by
+exactly one fixture each and by no amount of real data — `>` for `>=` (the world's smallest
+survivor is 10.05 m² and its largest refusal 9.98) and a missing `Math.Abs` (every piece is
+wound the same way).
+
+✅ ⚠️ **Fixed on the way, and the entry above had it wrong**:
+`DBStorageCollectionTests.AnUnreadableCollectionSaysWhatItIsThrowingAway` is **not** a
+`LogCapture` race. It asserted that LiteDB's exception names `FlatStreetHeight`, and in the
+**shipped** configuration a `ClusterDesc` gets a `RelaxedStreetHeight` — which of the two
+depends on `StreetHeightSources.FollowsTerrain`, i.e. on whether some **other** test in the
+assembly has loaded the game's global settings first. So it passed or failed on the run order:
+near-always red in a tree that has baked assets under `nogame/generated/` and never red in one
+without, which is why it was seen once and called intermittent. The gate takes the type off the
+objects it is about to store now.
 
 ---
 

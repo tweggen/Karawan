@@ -45,11 +45,14 @@ namespace JoyceCode.Tests.engine.streets;
  * control that says so without appealing to that: in the TEN cities that get no structure
  * at all with the flag on, the rate still goes from 0 of 441 blocks to 4 of 355.
  *
- * ⚠️ THE ONE THING THAT IS NOT CORRECT IS ON THE OTHER SIDE OF THE SAME CLIFF, and it is
- * recorded rather than asserted at zero: 53 blocks flag on and 4 flag off carry a building
- * standing on less than one square metre, the smallest on 0.005 m², all of them one storey on
- * the same kind of tiny triangle. The rule refuses a block with 0 m² of land and accepts one
- * with 50 cm². See AMatchboxStandsOnTheOtherSideOfTheSameCliff.
+ * ⚠️ THE ONE THING THAT WAS NOT CORRECT IS ON THE OTHER SIDE OF THE SAME CLIFF, and it was
+ * recorded here rather than asserted at zero: 53 blocks flag on and 4 flag off carried a
+ * building standing on less than one square metre, the smallest on 0.005 m², all of them one
+ * storey on the same kind of tiny triangle - because the rule refused a block with 0 m² of
+ * land and accepted one with 50 cm². ✅ FIXED 2026-09-08 (§7y): the owner set a floor of ten
+ * square metres, `engine.world.MetaGen.MinBuildingArea`, and MinBuildingAreaTests is where
+ * that lives. AMatchboxStandsOnTheOtherSideOfTheSameCliff below keeps the old numbers beside
+ * the new ones rather than being deleted.
  */
 public class EmptyBlockTests
 {
@@ -491,10 +494,11 @@ public class EmptyBlockTests
     /**
      * ⚠️ THE GENERATOR ALREADY RECORDS EVERY ONE OF THEM, AND NOTHING HAS EVER READ IT.
      *
-     * _createBuildings tags a block `estateTooSmall` when its buildable land comes back with
-     * no points, and it has done since the file was written. The tag is exactly the set this
-     * file is about - 0 disagreements in either direction over 78 500 blocks - so "which
-     * blocks have no buildable land" was answerable from the debug map all along.
+     * _createBuildings tags a block `estateTooSmall` when not one piece of its buildable
+     * land can carry a building, and it has done since the file was written. Every one of
+     * the blocks this file is about is in that set - 0 blocks with no land at all that the
+     * generator failed to tag, over 78 500 blocks - so "which blocks have no buildable land"
+     * was answerable from the debug map all along.
      *
      * The other tag, `estateWithoutPoints`, is the null return for a block whose outline has
      * no points at all, and it fires on nothing.
@@ -504,18 +508,38 @@ public class EmptyBlockTests
      * exactly 9 and exactly 522 blocks `estateTooSmall`, every one of them with a
      * byte-identical outline to one of these, and not one of them carried a building there
      * either. WP-O1/O2/O3 neither created these blocks nor took a building off one.
+     *
+     * ⚠️ SUPERSEDED BY §7y AND THE OLD TEXT IS KEPT, because what this asserted stopped
+     * being true when the owner's ten square metre floor landed. It used to read:
+     *
+     *      [InlineData(false, 9)] [InlineData(true, 522)]
+     *      Assert.Equal(tagged, all.Count(b => b.TooSmall));
+     *      Assert.Equal(0, all.Count(b => b.TooSmall != (0 == b.Pieces)));
+     *
+     * i.e. the tag was exactly "this block has no buildable land", with 0 disagreements in
+     * BOTH directions. `estateTooSmall` now follows QuarterGenerator.CanCarryABuilding, so
+     * it also covers the 20 and 306 blocks whose only land is under the floor - 29 and 828
+     * altogether, which MinBuildingAreaTests pins. What survives here unchanged is the half
+     * that is about THIS file's population: every block with no land at all is tagged. The
+     * other direction moved to
+     * MinBuildingAreaTests.TheGeneratorRecordsTheRefusalWithTheSamePredicateItMakesItWith.
      */
     [Theory]
-    //                 estateTooSmall (also the pre-(o) count)
-    [InlineData(false, 9)]
-    [InlineData(true, 522)]
+    //                 estateTooSmall (also the pre-(o) count)  the whole tag today
+    [InlineData(false, 9, 29)]
+    [InlineData(true, 522, 828)]
     public void TheGeneratorAlreadyTagsThemAndTheCountIsOlderThanLedgerItemO(
-        bool gradeSeparation, int tagged)
+        bool gradeSeparation, int noLand, int tagged)
     {
         var all = World(gradeSeparation).Blocks;
 
+        Assert.Equal(noLand, all.Count(b => 0 == b.Pieces));
         Assert.Equal(tagged, all.Count(b => b.TooSmall));
-        Assert.Equal(0, all.Count(b => b.TooSmall != (0 == b.Pieces)));
+
+        /*
+         * Every block with no land at all is tagged; the rest of the tag is the floor.
+         */
+        Assert.Equal(0, all.Count(b => 0 == b.Pieces && !b.TooSmall));
     }
 
 
@@ -543,41 +567,51 @@ public class EmptyBlockTests
 
 
     /**
-     * ⚠️ RECORDED AND DELIBERATELY NOT ASSERTED AT ZERO: A MATCHBOX STANDS ON THE OTHER SIDE
-     * OF THE SAME CLIFF.
+     * ⚠️ THE MATCHBOX ON THE OTHER SIDE OF THE SAME CLIFF IS GONE, AND THIS IS WHERE IT WAS
+     * RECORDED.
      *
-     * The rule refuses a block with 0 m² of buildable land and accepts one with 0.005 m².
-     * Over the seventy cities, 4 blocks flag off and 53 flag on carry a building whose
-     * footprint is under ONE SQUARE METRE, and 8 / 126 under four - the smallest 0.005 m²,
-     * i.e. fifty square centimetres, three metres tall. They stand on exactly the same
-     * population as the 531: tiny triangles of a median 124 m² whose half-width is barely over
-     * their pavement width. `_designBuilding`'s `minHouseSide <= 2.0f` catches them for HEIGHT
-     * and holds every one of them to a single storey - asserted here as the implication rather
-     * than as a bound, because the NEXT branch of that same chain caps at two storeys and a
-     * bound of 6 m cannot tell the two apart - and there is nothing that catches them for
-     * existence. `_addShops` gives them no shopfront only because no side reaches its 5 m.
+     * The rule used to refuse a block with 0 m² of buildable land and accept one with
+     * 0.005 m². This gate counted what that cost - 4 blocks flag off and 53 flag on carrying
+     * a building under ONE SQUARE METRE, 8 / 126 under four, the smallest fifty square
+     * centimetres and three metres tall - and left it deliberately unasserted at zero,
+     * because whether a block needs a minimum area to be built on was the owner's decision
+     * and not this file's.
      *
-     * So the interesting number in this whole investigation is not the 522 - those are
-     * right - it is the 53 either side of a boundary that nothing chose. Whether a block
-     * should need a minimum area to be built on at all is a design decision and is left to
-     * the owner exactly as §7t.5 was; this records its size.
+     * ⚠️ THE DECISION WAS MADE ON 2026-09-08 AND THIS GATE IS SUPERSEDED BY IT (§7y). Its
+     * old text, which is now false in both flag states:
+     *
+     *      [InlineData(false, 4, 8, 0.01, 0.05, 1445)]
+     *      [InlineData(true, 53, 126, 0.001, 0.01, 814)]
+     *      Assert.Equal(underOne, withA.Count(b => b.MinBuildingArea < 1.0));
+     *      Assert.Equal(underFour, withA.Count(b => b.MinBuildingArea < 4.0));
+     *      Assert.InRange(withA.Min(b => b.MinBuildingArea), smallLo, smallHi);
+     *
+     * engine.world.MetaGen.MinBuildingArea is ten square metres and the counts are zero;
+     * MinBuildingAreaTests.NoBuildingStandsOnLessThanTenSquareMetres is the successor, and
+     * it carries the smallest building there now is - 11.92 m² flag off and 10.05 m² flag
+     * on - so that a zero cannot be met by a world with no buildings in it.
+     *
+     * ⚠️ WHAT DOES NOT MOVE IS THE SECOND HALF, and it is kept here because it is the reason
+     * this class needed a rule of its own: `_designBuilding`'s `minHouseSide <= 2.0f` catches
+     * a matchbox for HEIGHT and never for existence. It still holds every building with a
+     * side under 2 m to a single storey - and the population is unchanged in the flag-off
+     * world and barely moved flag on, because a short SIDE is a mitred corner far more often
+     * than it is a small building.
      */
     [Theory]
-    //                 under 1 m²  under 4 m²  smallest lo/hi   one-storey blocks
-    [InlineData(false, 4, 8, 0.01, 0.05, 1445)]
-    [InlineData(true, 53, 126, 0.001, 0.01, 814)]
+    //                 no building below the floor  one-storey blocks (was 1445 / 814)
+    [InlineData(false, 11.9, 12.0, 1439)]
+    [InlineData(true, 10.0, 10.1, 725)]
     public void AMatchboxStandsOnTheOtherSideOfTheSameCliff(
-        bool gradeSeparation, int underOne, int underFour, double smallLo, double smallHi,
-        int narrow)
+        bool gradeSeparation, double smallLo, double smallHi, int narrow)
     {
         var withA = World(gradeSeparation).Blocks.Where(b => b.Buildings > 0).ToList();
 
-        Assert.Equal(underOne, withA.Count(b => b.MinBuildingArea < 1.0));
-        Assert.Equal(underFour, withA.Count(b => b.MinBuildingArea < 4.0));
+        Assert.Equal(0, withA.Count(b => b.MinBuildingArea < MetaGen.MinBuildingArea));
         Assert.InRange(withA.Min(b => b.MinBuildingArea), smallLo, smallHi);
 
         /*
-         * ...and the only rule that says anything about them at all: a building whose
+         * ...and the only rule that ever said anything about them at all: a building whose
          * shortest side is 2 m or less is exactly one storey, everywhere in the world. The
          * implication rather than a height bound, because _designBuilding's next branch caps
          * at TWO storeys and a bound of 6 m would be satisfied by that one too.

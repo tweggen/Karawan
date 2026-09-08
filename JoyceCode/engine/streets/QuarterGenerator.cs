@@ -273,6 +273,31 @@ namespace engine.streets
 
 
         /**
+         * ⚠️ CAN THIS PIECE OF BUILDABLE LAND CARRY A BUILDING AT ALL? One predicate,
+         * because there has only ever been one question here.
+         *
+         * The loop below used to ask "does this polygon have any points", which is the
+         * same rule with its threshold at zero: it refused a piece of 0 m² and accepted
+         * one of 0.005 m², i.e. fifty square centimetres, and built a three metre tower on
+         * it. §7x counted 4 such buildings under a square metre flag off and 53 flag on,
+         * standing on the tiny triangles between three roads, and nothing anywhere held
+         * them to existing - _designBuilding's minHouseSide <= 2.0f holds them to one
+         * STOREY, which is a different question.
+         *
+         * The floor is engine.world.MetaGen.MinBuildingArea, an owner-given real-world
+         * number (see it for the decision in the owner's own words). A piece below it is
+         * left as what it already is - pavement - exactly as a piece of no area is.
+         *
+         * Clipper works in tenth metres, so its own area comes back in hundredths of a
+         * square metre; the comparison is scaled rather than the area, so that a polygon
+         * with no points, two points or a zero area is refused by the same expression and
+         * not by a special case beside it.
+         */
+        internal static bool CanCarryABuilding(List<IntPoint> land)
+            => Math.Abs(Clipper.Area(land)) >= 100.0 * world.MetaGen.MinBuildingArea;
+
+
+        /**
          * Design what stands on one block, on every piece of buildable land it has.
          *
          * ⚠️ ONE BUILDING PER POLYGON, and until WP-O2 every polygon of the inset was
@@ -341,7 +366,11 @@ namespace engine.streets
                  */
                 foreach (var polygon in solution2)
                 {
-                    if (0 == polygon.Count)
+                    /*
+                     * ⚠️ One predicate, and it used to be "0 == polygon.Count" - the same
+                     * rule with its threshold at zero. See CanCarryABuilding.
+                     */
+                    if (!CanCarryABuilding(polygon))
                     {
                         continue;
                     }
@@ -387,6 +416,15 @@ namespace engine.streets
                 }
                 if (0 == nPoints)
                 {
+                    /*
+                     * ⚠️ Not one piece of this block's land can carry a building - which
+                     * since §7y means "none of them reaches MetaGen.MinBuildingArea" and
+                     * used to mean "there are no pieces at all". The tag moves with the
+                     * predicate deliberately: it is the generator's own record of the
+                     * refusal, and two records of one rule is how the two would drift.
+                     * §7x measured the old set - 9 blocks flag off and 522 flag on, every
+                     * one of them a traffic island entirely inside its own pavement.
+                     */
                     quarter.AddDebugTag("estateTooSmall", "true");
                 }
             } else

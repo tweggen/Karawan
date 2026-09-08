@@ -167,8 +167,22 @@ public class DBStorageCollectionTests
      * The line has to carry three things, and each is asserted separately because each was
      * separately absent: WHICH type could not be read (a log line naming no type sends the
      * reader nowhere), that data is being DISCARDED rather than merely not returned, and
-     * the underlying exception - here LiteDB naming FlatStreetHeight, which is the actual
-     * repair anybody would make.
+     * the underlying exception - LiteDB naming the street height source it cannot
+     * construct, which is the actual repair anybody would make.
+     *
+     * ⚠️ SUPERSEDED 2026-09-08 (§7y.10), AND THE OLD TEXT NAMED THE WRONG TYPE. It read
+     *
+     *      Assert.Contains("FlatStreetHeight", line, StringComparison.Ordinal);
+     *
+     * which is right only when joyce.DisableClusterFlattening is unset - and it is set in
+     * the shipped configuration, where a cluster gets a RelaxedStreetHeight instead. Which
+     * of the two a ClusterDesc has depends on whether some OTHER test in the assembly has
+     * loaded the game's global settings first, so this test passed or failed on the run
+     * order, near-deterministically in a tree with baked assets and never in one without.
+     * §7x.11 recorded it as a LogCapture race on the strength of it being intermittent;
+     * that diagnosis was wrong - the capture is fine and it is the process-global
+     * GlobalSettings that varies. The type is taken off the very objects being stored now,
+     * which is an identity rather than a guess and is right under either setting.
      *
      * It is an Error and not a Trace: a category filter decides how much detail to keep,
      * and seventy cities being deleted is not detail. It is not a Warning either - nothing
@@ -190,6 +204,15 @@ public class DBStorageCollectionTests
              */
             var clusters = _shippedClusterList();
             Assert.Equal(70, clusters.Count);
+
+            /*
+             * The type LiteDB will choke on, read off the object that is about to be
+             * stored rather than assumed - see the note above. Realised here, outside the
+             * capture window, because asking for it is what emits the
+             * DisableClusterFlattening Warning.
+             */
+            string sourceType = clusters[0].StreetHeightSource.GetType().Name;
+
             Assert.True(storage.StoreCollection(DbName, clusters));
 
             using (var db = new LiteDatabase(_pathOf(DbName), storage.Mapper))
@@ -211,7 +234,7 @@ public class DBStorageCollectionTests
 
             Assert.Contains("engine.world.ClusterDesc", line, StringComparison.Ordinal);
             Assert.Contains("DISCARDING the 70 stored document(s)", line, StringComparison.Ordinal);
-            Assert.Contains("FlatStreetHeight", line, StringComparison.Ordinal);
+            Assert.Contains(sourceType, line, StringComparison.Ordinal);
             Assert.Contains(_dcTag, line, StringComparison.Ordinal);
 
             /*
