@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Numerics;
 using System.Collections.Generic;
 using builtin.tools;
@@ -121,31 +122,42 @@ namespace engine.streets
 
 
         /**
-         * The structure members whose footprint can reach into this block.
+         * The carriageways whose footprint can reach into this block.
          *
          * Bounded by the block's own AABB grown by the widest thing a footprint adds to
-         * a carriageway, so that a block nowhere near a structure is not merely
-         * unaffected but does not go through the difference at all - which is what keeps
-         * the "largest polygon" choice in BlockGraph.ExcludeStructures away from blocks
-         * that have no structure to exclude.
+         * a carriageway, so that a block nowhere near one is not merely unaffected but
+         * does not go through the difference at all.
          *
-         * @param structures
+         * ⚠️ THE BOX RATHER THAN THE OUTLINE, deliberately, and it is not the same
+         * question. "Is this road inside this block" would be a point-in-polygon test on
+         * the ring; what is asked here is "does this road's own footprint reach into this
+         * block's land", and the answer to that is the difference itself. A spur hangs off
+         * a junction that is ON some block's ring, so its carriageway widened by a pavement
+         * width pokes a little way past that junction into the block on the other side -
+         * and that ground is road there too, so it is right for it to come out of that
+         * estate as well. Measured over the seventy shipped cities: a block that holds no
+         * spur of its own loses land to one on 121 blocks flag off and 10 flag on, a median
+         * 1.0 m² off a corner, and where a road's box reaches a block it does not touch the
+         * difference is a no-op.
+         *
+         * @param strokes
          *     Every ramp, bridge and tunnel in this network - empty in every city built
-         *     with joyce.EnableGradeSeparation off. Handed down from Generate() rather
-         *     than cached in a field, because a field is something a second Generate()
-         *     would have to remember to refresh and nothing would notice if it did not.
+         *     with joyce.EnableGradeSeparation off - or every spur corridor the peel took
+         *     out of the block graph. Handed down from Generate() rather than cached in a
+         *     field, because a field is something a second Generate() would have to
+         *     remember to refresh and nothing would notice if it did not.
          */
-        private static IEnumerable<Stroke> _structuresIn(
-            Quarter quarter, List<Stroke> structures)
+        internal static IEnumerable<Stroke> Reaching(
+            Quarter quarter, List<Stroke> strokes)
         {
-            if (0 == structures.Count)
+            if (0 == strokes.Count)
             {
                 yield break;
             }
 
             var aabb = quarter.AABB;
 
-            foreach (var s in structures)
+            foreach (var s in strokes)
             {
                 float reach = s.StreetWidth() / 2f + quarter.SidewalkWidth;
 
@@ -165,8 +177,126 @@ namespace engine.streets
         }
 
 
+        /**
+         * ⚠️ THE BUILDABLE LAND OF ONE CITY BLOCK: inset, then subtract, then count the
+         * polygons.
+         *
+         * That is the whole of the notch-or-split rule §7t.10 measured and it carries no
+         * threshold and no new constant. The estate is the block's outline; leaving room
+         * for the pavement insets it by the block's own Quarter.SidewalkWidth (which the
+         * block floor also insets its cap by, so that the pavement and the building wall
+         * meet); and any carriageway standing inside the block - a lifted structure, or a
+         * dead-end spur the peel took out of the block graph - is taken out of the result,
+         * widened by that same pavement width.
+         *
+         * A shallow spur then leaves ONE polygon with a slot cut out of it and a deep one
+         * leaves TWO, because the neck between them was narrower than two pavement widths
+         * and the inset the estate was always going to get closed it. Nothing here decides
+         * which; the geometry does, and the caller designs one building per polygon.
+         *
+         * ⚠️ THE ORDER OF THE TWO STEPS IS WORTH EIGHT TIMES THE GEOMETRY. Subtracting
+         * before the inset insets the notch as well, widening it by a second pavement
+         * width: measured over the seventy shipped cities, 163 / 646 blocks come back in
+         * two pieces that way against 21 / 150 this way, from identical geometry
+         * (§7t.10.2). Nothing in the tree stated which order was intended before WP-O2;
+         * this is the one that does.
+         *
+         * Returns null when the block's outline has no points at all, which is what the
+         * caller records as "estateWithoutPoints".
+         *
+         * Internal so that a test can ask a real generated block what land it has without
+         * a second copy of these three steps - the reconstruction in SpurBlocks was that
+         * copy, and its whole value was being written independently of this.
+         */
+        internal static List<List<IntPoint>> BuildableLandOf(
+            in Quarter quarter, in Estate estate,
+            List<Stroke> structures, List<Stroke> spurs)
+        {
+            List<IntPoint> polyPoints = new();
+            List<List<IntPoint>> polyList = new();
+            polyList.Add(polyPoints);
+            var clipperOffset = new ClipperOffset();
+            foreach(var point in estate.GetPoints()) {
+                polyPoints.Add( new IntPoint((int)(point.X*10f), (int)(point.Z*10f) ) );
+            }
+
+            if (0 == polyPoints.Count)
+            {
+                return null;
+            }
+
+            clipperOffset.AddPaths(polyList, JoinType.jtMiter, EndType.etClosedPolygon);
+            List<List<IntPoint>> solution2 = new();
+
+            /*
+             * How much room to leave around the building for the pavement.
+             * TXWTODO: High buildings might have a larger entrace area, don't they?
+             *
+             * Tenth metres, because that is the unit the polygon above is in - Clipper works
+             * in integers. The number itself belongs to the block: the block floor insets
+             * its cap by the same width so that the strip along the kerb is level across,
+             * and if the two ever disagreed the pavement and the building wall would stop
+             * meeting. See Quarter.SidewalkWidth.
+             */
+            clipperOffset.Execute(ref solution2, -quarter.SidewalkWidth * 10f);
+
+            /*
+             * ⚠️ A lifted corridor leaves its ramps and its deck INSIDE this block,
+             * because the blocks either side of it merged when the structure left the
+             * block graph. Nothing else here knows that: the estate is the outline,
+             * the inset above is the building footprint, and a building would be put
+             * under the deck or across the ramp.
+             *
+             * Returns the same list when this block has no structure in it, which is
+             * every block of every city with joyce.EnableGradeSeparation off.
+             */
+            solution2 = generation.BlockGraph.ExcludeStructures(
+                solution2, Reaching(quarter, structures), quarter.SidewalkWidth);
+
+            /*
+             * ⚠️ AND THE DEAD-END SPUR STANDING IN THIS BLOCK, which is the same rule
+             * and the same margin (§7u, WP-O2). The block graph is peeled to its
+             * 2-core before a face is traced, so a spur is not a block edge and the
+             * ring closes round it rather than being cut short by a chord - and the
+             * spur is then INSIDE the block, exactly as a lifted corridor is. Without
+             * this the estate is laid over it and a building is designed across a
+             * street: measured over the seventy shipped cities, on 3247 blocks flag
+             * off and 2986 flag on, which is the reported symptom.
+             *
+             * Returns the same list when no spur reaches this block.
+             */
+            solution2 = generation.BlockGraph.ExcludeCarriageways(
+                solution2, Reaching(quarter, spurs), quarter.SidewalkWidth);
+
+            return solution2;
+        }
+
+
+        /**
+         * Design what stands on one block, on every piece of buildable land it has.
+         *
+         * ⚠️ ONE BUILDING PER POLYGON, and until WP-O2 every polygon of the inset was
+         * concatenated into a single ring - the TXWTODO that used to sit on the loop below
+         * said so, and it has been there since the file was written. That is harmless
+         * while the answer is one polygon and nonsense the moment it is two: the ring
+         * self-crosses, minHouseSide is measured across the gap between two pieces rather
+         * than along either of them, and one building is designed over both.
+         *
+         * The pieces come from the geometry rather than from a policy, which is the whole
+         * of §7t.10's answer: the estate is the block inset by its own pavement width, a
+         * shallow notch leaves one polygon and a neck narrower than two pavement widths
+         * insets to nothing and Clipper returns two. No threshold and no new constant -
+         * "inset, then count polygons".
+         *
+         * A block with exactly one piece runs the sequence it always ran, draw for draw:
+         * the 30 % refusal, the height and the shopping test are consumed inside the loop
+         * in the order they were consumed outside it. A second piece takes three more
+         * draws of the block's own RandomSource, so the estates on one block do not all
+         * make the same decisions.
+         */
         private void _createBuildings(
-            in Quarter quarter, in Estate estate, List<Stroke> structures)
+            in Quarter quarter, in Estate estate, List<Stroke> structures,
+            List<Stroke> spurs)
         {
             var v2QuarterCenter = quarter.GetCenterPoint();
 
@@ -186,108 +316,76 @@ namespace engine.streets
              * We also derive attributes of the house from the size of the estate.
              */
 
-            List<Vector3> p = new();
-
-            var mn = 0;
-
-            float minHouseSide = Single.MaxValue;
-
-            float maxHeight;
             float downtownness =
                 _clusterDesc.GetAttributeIntensity(
                      _clusterDesc.Pos + new Vector3(v2QuarterCenter.X, 0f, v2QuarterCenter.Y),
                     ClusterDesc.LocationAttributes.Downtown);
 
-            /*
-             * How much room to leave around the building for the pavement.
-             * TXWTODO: High buildings might have a larger entrace area, don't they?
-             *
-             * Tenth metres, because that is the unit the polygon below is in - Clipper works
-             * in integers. The number itself belongs to the block: the block floor insets
-             * its cap by the same width so that the strip along the kerb is level across,
-             * and if the two ever disagreed the pavement and the building wall would stop
-             * meeting. See Quarter.SidewalkWidth.
-             */
-            float sidewalkWidth = quarter.SidewalkWidth * 10f;
+            var solution2 = BuildableLandOf(quarter, estate, structures, spurs);
 
-            List<IntPoint> polyPoints = new();
-            List<List<IntPoint>> polyList = new();
-            polyList.Add(polyPoints);
-            var clipperOffset = new ClipperOffset();
-            foreach(var point in estate.GetPoints()) {
-                polyPoints.Add( new IntPoint((int)(point.X*10f), (int)(point.Z*10f) ) );
-            }
-
-            if( polyPoints.Count>0 ) { 
-                clipperOffset.AddPaths(polyList, JoinType.jtMiter, EndType.etClosedPolygon);
-                List<List<IntPoint>> solution2 = new();
-
-                clipperOffset.Execute(ref solution2, -sidewalkWidth);
-
-                /*
-                 * ⚠️ A lifted corridor leaves its ramps and its deck INSIDE this block,
-                 * because the blocks either side of it merged when the structure left the
-                 * block graph. Nothing else here knows that: the estate is the outline,
-                 * the inset above is the building footprint, and a building would be put
-                 * under the deck or across the ramp. So the structure's own carriageway,
-                 * widened by this block's own pavement width, is taken out of the
-                 * footprint before anything is designed on it.
-                 *
-                 * Returns the same list when this block has no structure in it, which is
-                 * every block of every city with joyce.EnableGradeSeparation off.
-                 */
-                solution2 = generation.BlockGraph.ExcludeStructures(
-                    solution2, _structuresIn(quarter, structures), quarter.SidewalkWidth);
-
-                /*
-                 * ⚠️ And one piece even when no structure was involved. The loop below
-                 * concatenates every polygon it is given into a single ring, which is a
-                 * self-crossing outline the moment the inset above splits a pinched block
-                 * in two. Measured: 0 of 763 estates over the seven pinned cities with the
-                 * flag off, 4 of 714 with it on - so this is the same rule ExcludeStructures
-                 * already applies to its own split, applied where the split can also happen
-                 * without it. It returns the same list when there is nothing to choose.
-                 */
-                solution2 = generation.BlockGraph.LargestOf(solution2);
-
+            if (null != solution2)
+            {
                 var strPoints = "";
+                int nPoints = 0;
 
-                foreach(var polygon in solution2)
+                /*
+                 * ⚠️ ONE BUILDING PER POLYGON. This loop used to concatenate every polygon
+                 * into one ring - "TXWTODO: What if we would have multiple polygons?" -
+                 * and design a single self-crossing building across the lot. There are
+                 * three ways to get more than one: the pavement inset can pinch a block in
+                 * two on its own, a structure can cut one in two, and a spur can. §7t.10
+                 * measured the last of those over the world and found the estate comes back
+                 * in one piece on 99.6 % / 96.6 % of the blocks that hold a spur, so the
+                 * second estate is the exception the geometry announces rather than a
+                 * policy with a threshold in it.
+                 */
+                foreach (var polygon in solution2)
                 {
-                    foreach(var point in polygon)
+                    if (0 == polygon.Count)
+                    {
+                        continue;
+                    }
+
+                    List<Vector3> p = new();
+                    foreach (var point in polygon)
                     {
                         float x = point.X / 10f;
                         float y = point.Y / 10f;
                         // trace( 'x: $x, y: $y' );
                         p.Add(new Vector3(x, 0f, y));
                         strPoints += $"( $x, $y ), ";
-                        ++mn;
                     }
-                    if (mn > 0)
-                    {
-                        /*
-                         * TXWTODO: What if we would have multiple polygons?
-                         */
-                        for(int i=0; i<mn; ++i)
-                        {
-                            Vector3 v0 = p[i];
-                            Vector3 v1 = p[(i + 1) % mn];
-                            v1 -= v0;
-                            float sideLength = v1.Length();
-                            if (sideLength < minHouseSide) minHouseSide = sideLength;
-                        }
-                    }
+
+                    nPoints += p.Count;
 
                     /*
                      * Now, compute the length of each of the sides and store them.
                      * We derive design decitions from the lengths.
+                     *
+                     * ⚠️ Round THIS polygon rather than round the concatenation of all of
+                     * them: the step from the last corner of one piece to the first corner
+                     * of the next is not a side of anything, and it was being measured as
+                     * the shortest one.
                      */
+                    int mn = p.Count;
+                    float minHouseSide = Single.MaxValue;
+                    for (int i = 0; i < mn; ++i)
+                    {
+                        Vector3 v0 = p[i];
+                        Vector3 v1 = p[(i + 1) % mn];
+                        v1 -= v0;
+                        float sideLength = v1.Length();
+                        if (sideLength < minHouseSide) minHouseSide = sideLength;
+                    }
+
+                    _designBuilding(quarter, estate, p, minHouseSide, downtownness, rndQuarter);
                 }
+
                 if (strPoints.Length > 0)
                 {
                     quarter.AddDebugTag("quarterPoints", strPoints);
                 }
-                if (0 == mn)
+                if (0 == nPoints)
                 {
                     quarter.AddDebugTag("estateTooSmall", "true");
                 }
@@ -296,12 +394,21 @@ namespace engine.streets
                 // trace( 'no house[0]' );
                 quarter.AddDebugTag("estateWithoutPoints", "true");
             }
+        }
 
-            if (mn == 0)
-            {
-                return;
-            }
 
+        /**
+         * Design one building on one piece of buildable land.
+         *
+         * The draws are taken in the order they were taken when this was straight-line
+         * code inside _createBuildings, so a block with a single piece of land - which is
+         * every block of the shipped flat city that has no spur and no structure in it -
+         * consumes exactly the sequence it always consumed.
+         */
+        private void _designBuilding(
+            in Quarter quarter, in Estate estate, List<Vector3> p,
+            float minHouseSide, float downtownness, RandomSource rndQuarter)
+        {
             /*
              * But do not build everywhere. Trivial: Remove 30% of the buildings.
              */
@@ -321,6 +428,7 @@ namespace engine.streets
              * We have the concave polygon, create a collection of convex polygons
              */
 
+            float maxHeight;
             var building = new streets.Building() { ClusterDesc = _clusterDesc };
             building.AddPoints(p);
             if (minHouseSide <= 2.0f || downtownness < 0.3f)
@@ -369,7 +477,7 @@ namespace engine.streets
              * - [sphere on top]
              * - [antenna on top]
              */
-            
+
             /*
              * Now generate shops if we are supposed to have storefronts.
              * We store shops as a path in front of a building.
@@ -393,6 +501,12 @@ namespace engine.streets
          * - for every stroke (starting and ending) at this endpoint, follow it
          *   to create a quarter, unless it already has been traversed. Mark it
          *   traversed afterwards.
+         *
+         * ⚠️ THE FACE IS TRACED OVER THE BLOCK GRAPH'S 2-CORE (§7t/§7u). Every junction
+         * with fewer than two block arms is peeled away first, so a dead-end spur is not
+         * a block edge at all and cannot cut a slit into the face beside it. See
+         * generation.BlockGraph.TwoCoreOf for why, and for what it costs until WP-O2
+         * subtracts the spur from the estate.
          */
         public void Generate()
         {
@@ -400,6 +514,17 @@ namespace engine.streets
             _strokeStore.ClearTraversed();
             var structures = _strokeStore.GetStrokes()
                 .FindAll(s => StrokeKinds.IsStructure(s.Kind));
+
+            var core = generation.BlockGraph.TwoCoreOf(_strokeStore);
+            var accept = generation.BlockGraph.AcceptWithin(core);
+
+            /*
+             * The other half of the peel: whatever accept refuses as a block arm stands
+             * INSIDE a block instead, so it comes out of that block's estate the way a
+             * ramp does. Gathered once per city, from the same core, and handed down -
+             * a field would be something a second Generate() had to remember to refresh.
+             */
+            var spurs = generation.BlockGraph.SpurCorridorsOf(_strokeStore, core);
 
             var points = _strokeStore.GetStreetPoints();
             foreach (var spStart in points)
@@ -421,12 +546,14 @@ namespace engine.streets
                 foreach (var stroke in angleStrokes)
                 {
                     /*
-                     * A ramp, bridge or tunnel is not an edge of a city block. Refusing
-                     * to START on one is only half of it - see the GetNextAngle call
-                     * below, which is what stops a face being followed OUT of a foot
-                     * along a ramp and back down the far side of the deck.
+                     * A ramp, bridge or tunnel is not an edge of a city block, and
+                     * neither is a street leading off the 2-core - a dead-end spur, or
+                     * the tree of streets hanging off one. Refusing to START on such an
+                     * arm is only half of it - see the GetNextAngle call below, which
+                     * takes the same predicate and is what stops a face being followed
+                     * OUT along one and turned round at its far end.
                      */
-                    if (!generation.BlockGraph.IsBlockEdge(stroke))
+                    if (!accept(stroke))
                     {
                         continue;
                     }
@@ -471,14 +598,11 @@ namespace engine.streets
                      */
                     var spCurr = spStart;
                     var strokeCurrent = stroke;
-                    var solestroke = false;
 
                     var quarter = new Quarter() { ClusterDesc = _clusterDesc };
                     var hasNullSection = false;
                     var hasDeadEnd = false;
                     var nPoints = 0;
-                    var sumOfAngles = 0.0;
-                    Stroke? previousStroke;
 
                     while (true)
                     {
@@ -519,7 +643,6 @@ namespace engine.streets
                          * following.
                          */
                         var followAngle = geom.Angles.Snorm(strokeCurrent.Angle + ((!isAB) ? (float)Math.PI : 0f));
-                        sumOfAngles += followAngle;
 
                         /*
                          * Hint what we are doing.
@@ -527,12 +650,10 @@ namespace engine.streets
                         if (_traceGenerate) trace($"QuarterGenerator(): Following angle {followAngle} ({geom.Angles.Snorm(followAngle + (float)Math.PI)}) from {isAB} ${spNext.Pos}");
 
                         /*
-                         * In every iteration: Follow strokeCurrent from spCurr.
-                         * If spCurr is spStart, terminate (case 1).
-                         * Look for the next stroke clockwise to strokeCurrent.
-                         * If it is strokeCurrent, terminate (case 2).
-                         * add the new spCurr to the Quarter.
-                         * repeat.
+                         * In every iteration: Follow strokeCurrent from spCurr, look for
+                         * the next stroke clockwise to it, add the corner between the two
+                         * to the Quarter, and repeat until we are back on the DIRECTED
+                         * EDGE we set out along.
                          */
                         if (isAB)
                         {
@@ -556,9 +677,16 @@ namespace engine.streets
                          * because we need the intersection of this and the next stroke.
                          */
                         var strokeNext = spNext.GetNextAngle(
-                            strokeCurrent, followAngle, true, generation.BlockGraph.Accept);
+                            strokeCurrent, followAngle, true, accept);
                         if (null == strokeNext || strokeNext == strokeCurrent)
                         {
+                            /*
+                             * Unreachable once the graph is peeled to its 2-core: every
+                             * junction left in it has at least two arms to other junctions
+                             * left in it, so there is always another one to turn onto.
+                             * Kept as the backstop it always was, and asserted to fire on
+                             * no face of any city.
+                             */
                             if (_traceGenerate) trace($"QuarterGenerator(): Followed same stroke back because there is no other angle.");
                             /*
                              * So follow myself back in the other direction.
@@ -625,7 +753,23 @@ namespace engine.streets
                         quarter.AddQuarterDelim(quarterDelim);
                         ++nPoints;
 
-                        if (spNext == spStart)
+                        /*
+                         * ⚠️ THE (JUNCTION, OUTGOING STROKE) PAIR, NOT THE JUNCTION.
+                         *
+                         * A face walk closes when it is about to repeat the directed edge
+                         * it set out along; arriving back at the starting JUNCTION is not
+                         * the same statement, because a face may pass through one junction
+                         * twice. Stopping there closed the ring with a straight chord
+                         * across the block instead of a street - 219 rings of the flat
+                         * city and 274 of the shipped one, every one of them broken at
+                         * this very edge and nowhere else (§7t.2).
+                         *
+                         * The 2-core removes the case that made this fire - a face is
+                         * pinched at a junction only because a dead-end spur cuts a slit
+                         * into it - so this is correctness rather than repair, and it is
+                         * kept for that: it is what a face walk terminates on.
+                         */
+                        if (spNext == spStart && strokeNext == stroke)
                         {
                             if (_traceGenerate) trace($"QuarterGenerator(): Reached start again.");
                             break;
@@ -638,52 +782,72 @@ namespace engine.streets
                         spCurr = spNext;
                     }
 
-                    if (solestroke)
+                    /*
+                     * ⚠️ THE OUTSIDE IS DETECTED EXPLICITLY NOW, and it has to be.
+                     *
+                     * The old comment here read "most likely, the outside does have dead
+                     * ends, so do not add them as quarters" - which was true and was an
+                     * accident: the outer face of a component ran through some dead-end
+                     * spur on the city's edge and was refused as hasNullSection. Peel the
+                     * spurs away and the outer face becomes a perfectly good closed ring
+                     * of junctions that all have corners, so without a rule of its own it
+                     * would be stored as one city block covering the whole city.
+                     *
+                     * The rule is the winding: this walk always turns to the next arm
+                     * clockwise, so every interior face comes out one way round and the
+                     * single outer face of each component the other.
+                     */
+                    var ring = quarter.GetDelims().Select(d => d.StartPoint).ToList();
+                    if (!generation.BlockGraph.IsInteriorFace(ring))
                     {
-                        if (_traceGenerate) trace($"QuarterGenerator(): Leaving loop because this is a single stroke.");
+                        if (_traceGenerate) trace($"QuarterGenerator.generate(): Outer face.");
+                    }
+                    else if (hasNullSection)
+                    {
+                        /*
+                         * A junction on this ring has fewer than two block arms, so it has
+                         * no corner. This used to discard a THIRD of all faces (§7t.4) and
+                         * over the 2-core it discards none: every junction left in the core
+                         * has at least two arms inside it, so the guard above never fires.
+                         *
+                         * ⚠️ Mutation testing says so out loud - deleting this branch passes
+                         * every gate, and it is the one survivor of eleven. It is kept as
+                         * the backstop it always was rather than deleted, because it is the
+                         * only thing between a loosened peel and a corner left at the
+                         * origin; what says it is unreachable rather than untested is
+                         * TwoCoreBlockTests' Euler gate, which counts the blocks a
+                         * component may have and would see one go missing.
+                         */
+                        if (_traceGenerate) trace($"QuarterGenerator.generate(): Has null section.");
                     }
                     else
                     {
-                        // TXWTODO: We do not explicitely detect the "outside". 
-                        // TXWTODO: We can't properly handle dead ends.
                         /*
-                         * However, most likely, the "outside" does have dead ends, so do not add them as quarters.
+                         * Now create the root estate.
                          */
-                        if (hasNullSection)
+                        var estate = new Estate() { ClusterDesc = _clusterDesc };
+                        List<Vector3> estatePoints = new();
+                        foreach (var delim in quarter.GetDelims())
                         {
-                            if (_traceGenerate) trace($"QuarterGenerator.generate(): Has null section.");
-                        }
-                        else
-                        {
-                            /*
-                             * Now create the root estate.
-                             */
-                            var estate = new Estate() { ClusterDesc = _clusterDesc };
-                            List<Vector3> estatePoints = new();
-                            foreach (var delim in quarter.GetDelims())
-                            {
-                                estatePoints.Add(new Vector3(delim.StartPoint.X, 0, delim.StartPoint.Y));
-                            }
-                         
-                            estate.AddPoints(estatePoints);
-
-                            /*
-                             * Create the building(s) on that estate
-                             */
-                            if (true)
-                            {
-                                quarter.AddDebugTag("shallHaveBuildings", "true");
-                                _createBuildings(quarter, estate, structures);
-                            }
-
-                            quarter.AddEstate(estate);
-                            if (_traceGenerate) trace($"QuarterGenerator.generate(): Adding quarter.");
-                            quarter.Polish();
-                            var cp = quarter.GetCenterPoint();
-                            quarter.AddDebugTag("centerPoint", $"x: {cp.X}, y: {cp.Y}");
-                            _quarterStore.Add(quarter);
+                            estatePoints.Add(new Vector3(delim.StartPoint.X, 0, delim.StartPoint.Y));
                         }
 
+                        estate.AddPoints(estatePoints);
+
+                        /*
+                         * Create the building(s) on that estate
+                         */
+                        {
+                            quarter.AddDebugTag("shallHaveBuildings", "true");
+                            _createBuildings(quarter, estate, structures, spurs);
+                        }
+
+                        quarter.AddEstate(estate);
+                        if (_traceGenerate) trace($"QuarterGenerator.generate(): Adding quarter.");
+                        quarter.Polish();
+                        var cp = quarter.GetCenterPoint();
+                        quarter.AddDebugTag("centerPoint", $"x: {cp.X}, y: {cp.Y}");
+                        _quarterStore.Add(quarter);
                     }
                 }
             }

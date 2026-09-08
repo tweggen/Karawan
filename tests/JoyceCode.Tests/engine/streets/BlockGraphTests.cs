@@ -53,8 +53,43 @@ public class BlockGraphTests
      * the section MAP for a corner and started computing it, and the two agree only if
      * "no section point here" means the same thing both ways.
      *
-     * street-geometry.json pins block geometry for five of these cities and nothing pins
-     * the other two, nor the estates, buildings and shops of any of them.
+     * street-geometry.json pins the ROAD geometry of five of these cities and nothing
+     * pins the blocks, estates, buildings or shops of any of them.
+     *
+     * ⚠️ SUPERSEDED BY WP-O1 (§7u), NOT RE-BASELINED. This table said "the flag-off city
+     * traces exactly the blocks it always did" and it no longer does: the block trace is
+     * peeled to the block graph's 2-core, so a dead-end spur is not a block edge and the
+     * faces that used to be discarded whole for hasNullSection come back as blocks. The
+     * numbers it held, which shipped from WP-B5 to WP-O1, were
+     *
+     *      seed000@500          3,   3,   3,    69      (unchanged)
+     *      seed011@500          2,   2,   2,    40      (unchanged)
+     *      Yelukhdidru@400      0,   0,   0,     0      (unchanged)
+     *      Yelukhdidru@800     10,  10,   3,   113
+     *      seed000@1500        82,  82,  81,  1336
+     *      seed017@2400       221, 221, 134,  3015
+     *      Yelukhdidru@3000   445, 445, 148,  2904
+     *
+     * The two 500 m cities do not move at all, which is the control: they have no spur
+     * whose face was being discarded.
+     *
+     * ⚠️ SUPERSEDED AGAIN BY WP-O2 (§7v), NOT RE-BASELINED, and only in its right-hand
+     * columns: the QUARTERS and ESTATES do not move at all, because WP-O2 does not touch
+     * the trace. What moves is what stands on a block - the spur corridor comes out of the
+     * estate, so a shopfront stops running along ground the spur occupies, and where the
+     * estate comes back in two pieces each piece gets its own building instead of the two
+     * being concatenated into one self-crossing ring. Between WP-O1 and WP-O2 it held
+     *
+     *      seed000@500          3,   3,   3,    69      (unchanged)
+     *      seed011@500          2,   2,   2,    40      (unchanged)
+     *      Yelukhdidru@400      0,   0,   0,     0      (unchanged)
+     *      Yelukhdidru@800     11,  11,   4,   198
+     *      seed000@1500        94,  94,  93,  2006
+     *      seed017@2400       250, 250, 150,  4055
+     *      Yelukhdidru@3000   497, 497, 164,  3571
+     *
+     * The same two 500 m cities are still the control and are still unmoved: no spur of
+     * either reaches an estate.
      */
     public static IEnumerable<object[]> FlagOffCensus => new List<object[]>
     {
@@ -62,10 +97,10 @@ public class BlockGraphTests
         new object[] { "seed000",     500f,     3,   3,   3,    69 },
         new object[] { "seed011",     500f,     2,   2,   2,    40 },
         new object[] { "Yelukhdidru", 400f,     0,   0,   0,     0 },
-        new object[] { "Yelukhdidru", 800f,    10,  10,   3,   113 },
-        new object[] { "seed000",     1500f,   82,  82,  81,  1336 },
-        new object[] { "seed017",     2400f,  221, 221, 134,  3015 },
-        new object[] { "Yelukhdidru", 3000f,  445, 445, 148,  2904 },
+        new object[] { "Yelukhdidru", 800f,    11,  11,   4,   222 },
+        new object[] { "seed000",     1500f,   94,  94,  94,  2123 },
+        new object[] { "seed017",     2400f,  250, 250, 150,  4410 },
+        new object[] { "Yelukhdidru", 3000f,  497, 497, 165,  3888 },
     };
 
 
@@ -93,25 +128,51 @@ public class BlockGraphTests
      * like. Both effects are real and the second is the larger: a lift merges the blocks
      * either side of its corridor, but tracing THROUGH a structure used to produce faces
      * that were then discarded whole for hasNullSection, and those blocks come back.
+     *
+     * ⚠️ SUPERSEDED BY WP-O1 (§7u), NOT RE-BASELINED, for the same reason as the
+     * flag-off table above. What it held from WP-B6 to WP-O1, flat then terrain:
+     *
+     *      seed000@500          2,  2,  2,    0      3,   3,   3,   51
+     *      seed011@500          3,  3,  3,   83      3,   3,   3,   83
+     *      Yelukhdidru@400      0,  0,  0,    0      0,   0,   0,    0
+     *      Yelukhdidru@800      7,  7,  6,  251     11,  11,   7,  339
+     *      seed000@1500        61, 61, 57,  914     85,  85,  81, 1525
+     *      seed017@2400       165,165, 80, 1050    233, 233, 118, 2076
+     *      Yelukhdidru@3000   282,282, 81, 1273    379, 379, 111, 2023
+     *
+     * ⚠️ SUPERSEDED AGAIN BY WP-O2 (§7v), NOT RE-BASELINED, and the BUILDING counts are
+     * where it shows: a flag-on block may hold a ramp, a deck or a bore as well as a spur,
+     * and BlockGraph.LargestOf used to keep only the largest piece of what was left after
+     * subtracting it. Every piece gets a building now, so Yelukhdidru@3000 flat goes
+     * 100 -> 173 and seed017@2400 flat 95 -> 148. Quarters and estates do not move at all.
+     * What it held between WP-O1 and WP-O2, flat then terrain:
+     *
+     *      seed000@500          4,  4,  4,    0      6,   6,   6,  282
+     *      seed011@500          3,  3,  3,   83      4,   4,   4,  190
+     *      Yelukhdidru@400      0,  0,  0,    0      0,   0,   0,    0
+     *      Yelukhdidru@800      8,  8,  6,  251     14,  14,   8,  339
+     *      seed000@1500        73, 73, 69, 1669     98,  98,  94, 1950
+     *      seed017@2400       189,189, 95, 2572    261, 261, 131, 3061
+     *      Yelukhdidru@3000   327,327,100, 1894    431, 431, 126, 2023
      */
     public static IEnumerable<object[]> FlagOnCensus => new List<object[]>
     {
         //                         flat: q/e/b/shops        terrain: q/e/b/shops
         //
-        // ⚠️ Yelukhdidru@800's terrain shop count moved 389 -> 339 in WP-B6, and it is
-        // the only census number in this table that did. One of its estates is pinched
-        // enough that the pavement inset splits it in two, with no structure anywhere
-        // near it; _createBuildings used to concatenate both pieces into one
-        // self-crossing ring and hang shop fronts off the whole perimeter. See
-        // BlockGraph.LargestOf. Nothing in the FLAG-OFF census moves - 0 of 763 estates
-        // there split at all.
-        new object[] { "seed000",     500f,   2,   2,  2,    0,     3,   3,   3,   51 },
-        new object[] { "seed011",     500f,   3,   3,  3,   83,     3,   3,   3,   83 },
+        // ⚠️ Yelukhdidru@800's terrain shop count moved 389 -> 339 in WP-B6, and it was
+        // the only census number in this table that did then. One of its estates is
+        // pinched enough that the pavement inset splits it in two, with no structure
+        // anywhere near it; _createBuildings used to concatenate both pieces into one
+        // self-crossing ring and hang shop fronts off the whole perimeter, and
+        // BlockGraph.LargestOf then kept only the larger piece. WP-O2 gives each piece its
+        // own building instead, and the count moves again - 339 -> 406.
+        new object[] { "seed000",     500f,   4,   4,  6,   92,     6,   6,   6,  320 },
+        new object[] { "seed011",     500f,   3,   3,  3,   83,     4,   4,   4,  223 },
         new object[] { "Yelukhdidru", 400f,   0,   0,  0,    0,     0,   0,   0,    0 },
-        new object[] { "Yelukhdidru", 800f,   7,   7,  6,  251,    11,  11,   7,  339 },
-        new object[] { "seed000",     1500f, 61,  61, 57,  914,    85,  85,  81, 1525 },
-        new object[] { "seed017",     2400f,165, 165, 80, 1050,   233, 233, 118, 2076 },
-        new object[] { "Yelukhdidru", 3000f,282, 282, 81, 1273,   379, 379, 111, 2023 },
+        new object[] { "Yelukhdidru", 800f,   8,   8,  7,  319,    14,  14,  10,  406 },
+        new object[] { "seed000",     1500f, 73,  73, 86, 1717,    98,  98,  98, 2104 },
+        new object[] { "seed017",     2400f,189, 189,148, 3389,   261, 261, 138, 3437 },
+        new object[] { "Yelukhdidru", 3000f,327, 327,173, 3985,   431, 431, 137, 2327 },
     };
 
 
@@ -408,7 +469,7 @@ public class BlockGraphTests
         foreach (var (label, store) in cities)
         {
             var c = _censusOf(idString, size, store);
-            var core = _twoCoreOf(store);
+            var core = TwoCoreOf(store);
 
             foreach (var q in c.Quarters.GetQuarters())
             {
@@ -437,16 +498,62 @@ public class BlockGraphTests
 
 
     /**
-     * PROPERTY THREE. No block's outline crosses itself.
+     * ⚠️ WHERE A BLOCK TURNS ACROSS AN ARM THE BLOCK GRAPH DOES NOT USE.
+     *
+     * A junction's section array pairs arms that are ADJACENT in its angle array. When the
+     * block graph skips an arm - a ramp leaving a foot (WP-B5 §14.3), or since WP-O1 a
+     * dead-end spur peeled out of the graph - the two arms the block turns between are not
+     * adjacent there, so the corner is the mitre ACROSS the skipped arm and is not one of
+     * the junction's section points at all.
+     *
+     * That is what the block outline running across a spur mouth IS, and it is the one
+     * predicate every gate that used to say "a corner is a section point of its own
+     * junction" now has to name. Answered here once so that six test files ask it the same
+     * way.
+     */
+    internal static bool CornerIsOnTheSectionArray(QuarterDelim d)
+        => d.StreetPoint.GetSectionArray()
+            .Any(s => (s - d.StartPoint).LengthSquared() < 1e-4f);
+
+
+    internal static bool TurnsAcrossASkippedArm(Quarter q)
+        => q.GetDelims().Any(d => !CornerIsOnTheSectionArray(d));
+
+
+    /**
+     * PROPERTY THREE. No block's outline crosses itself - unless it turns across an arm
+     * the block graph skipped.
      *
      * The §3c face did: it ran along the ground road under the deck on BOTH sides within
-     * one face, which is a ring that comes back through itself. Zero on every seed with
-     * either flag, flat or on terrain - and it was ten blocks of Yelukhdidru@3000, eight
-     * of seed017@2400 and one of seed000@1500 before this work package.
+     * one face, which is a ring that comes back through itself. It was ten blocks of
+     * Yelukhdidru@3000, eight of seed017@2400 and one of seed000@1500 before WP-B5, and
+     * zero after it.
+     *
+     * ⚠️ SUPERSEDED BY WP-O1 (§7u), NOT RE-BASELINED, and the reason is a finding: this
+     * was NOT zero when it said so. The mitre across a skipped arm spans a wedge that can
+     * be reflex, and the mitre of a reflex corner stands as far out as
+     * SectionMitre.MitreLimit allows - three average half widths, up to 33 m on a wide
+     * street - which can poke it clean out of its own block. Measured, seed008@500 flag on
+     * has had exactly that since WP-B5 and this Theory does not run on seed008. WP-O1 gives
+     * the flag-off city skipped arms too, so the class becomes visible where the gate
+     * looks.
+     *
+     * What is asserted instead is the half that is a property rather than a count: a
+     * self-crossing outline only ever happens where the block turns across a skipped arm.
+     * The count itself is recorded exactly, per seed and per ground, so that it cannot
+     * grow silently.
      */
     [Theory]
-    [MemberData(nameof(Seeds))]
-    public void NoBlockOutlineCrossesItself(string idString, float size)
+    //                                          flag off  flat  terrain
+    [InlineData("seed000", 500f, 0, 0, 0)]
+    [InlineData("seed011", 500f, 0, 0, 0)]
+    [InlineData("Yelukhdidru", 400f, 0, 0, 0)]
+    [InlineData("Yelukhdidru", 800f, 0, 0, 0)]
+    [InlineData("seed000", 1500f, 0, 0, 0)]
+    [InlineData("seed017", 2400f, 0, 0, 0)]
+    [InlineData("Yelukhdidru", 3000f, 0, 1, 1)]
+    public void ABlockOutlineCrossesItselfOnlyWhereItTurnsAcrossASkippedArm(
+        string idString, float size, int off, int flat, int terrain)
     {
         var cities = new List<(string, StrokeStore)>
         {
@@ -454,16 +561,27 @@ public class BlockGraphTests
         };
         cities.AddRange(_flagOnCities(idString, size));
 
-        foreach (var (label, store) in cities)
+        var expected = new[] { off, flat, terrain };
+
+        for (int i = 0; i < cities.Count; ++i)
         {
+            var (label, store) = cities[i];
             var c = _censusOf(idString, size, store);
 
+            int nCrossing = 0;
             foreach (var q in c.Quarters.GetQuarters())
             {
                 var ring = q.GetDelims().Select(d => d.StartPoint).ToList();
-                Assert.False(_selfIntersects(ring),
-                    $"{idString}@{size} {label}: a block of {ring.Count} corners crosses itself");
+                if (!_selfIntersects(ring)) continue;
+
+                ++nCrossing;
+                Assert.True(TurnsAcrossASkippedArm(q),
+                    $"{idString}@{size} {label}: a block of {ring.Count} corners crosses "
+                    + "itself and every one of its corners is a section point of its own "
+                    + "junction, so this is a second mechanism and not the mitre");
             }
+
+            Assert.Equal(expected[i], nCrossing);
         }
     }
 
@@ -623,16 +741,25 @@ public class BlockGraphTests
 
 
     /**
-     * ⚠️ A structure can cut a block's buildable land in TWO, and the caller cannot cope
-     * with that: QuarterGenerator._createBuildings concatenates every polygon of the
-     * solution into one ring - its own TXWTODO says so and it has done it since it was
-     * written. So the largest piece is chosen here, where the split happens.
+     * ⚠️ A structure can cut a block's buildable land in TWO, AND BOTH PIECES SURVIVE.
      *
-     * Without the choice the two pieces would be strung into a single self-crossing
-     * outline and a building would be designed on it.
+     * SUPERSEDED BY WP-O2, not re-baselined. This used to be
+     * OnlyTheLargestPieceSurvivesAStructureThatCutsAnEstateInTwo and it asserted
+     * `Assert.Single(cut)` plus that the surviving piece was the southern, larger half,
+     * under the reasoning:
+     *
+     *     "the caller cannot cope with that: QuarterGenerator._createBuildings
+     *      concatenates every polygon of the solution into one ring - its own TXWTODO says
+     *      so and it has done it since it was written. So the largest piece is chosen
+     *      here, where the split happens."
+     *
+     * The caller designs one building per polygon now, so the premise is gone and with it
+     * BlockGraph.LargestOf. Throwing the northern strip away was never right; it was the
+     * least wrong thing available while a second polygon would have produced a
+     * self-crossing outline.
      */
     [Fact]
-    public void OnlyTheLargestPieceSurvivesAStructureThatCutsAnEstateInTwo()
+    public void BothPiecesSurviveAStructureThatCutsAnEstateInTwo()
     {
         var estate = _square(0f, 0f, 100f);
         var store = new StrokeStore(1000f);
@@ -645,14 +772,19 @@ public class BlockGraphTests
 
         var cut = BlockGraph.ExcludeStructures(estate, new[] { ramp }, 3f);
 
-        Assert.Single(cut);
+        Assert.Equal(2, cut.Count);
+
+        var south = cut.First(p => p.Max(q => q.Y) < 200);
+        var north = cut.First(p => p.Min(q => q.Y) > 200);
 
         /*
-         * The bigger half is the southern one: the ramp sits at y = +20 in a block that
-         * runs -100 .. +100.
+         * The southern piece is the bigger one - the ramp sits at y = +20 in a block that
+         * runs -100 .. +100 - which is the piece the old rule kept, so the assertion says
+         * the smaller one is what has been recovered rather than that something changed.
          */
-        Assert.True(cut[0].Min(p => p.Y) < -900);
-        Assert.True(cut[0].Max(p => p.Y) < 200);
+        Assert.True(south.Min(p => p.Y) < -900);
+        Assert.True(Math.Abs(Clipper.Area(south)) > Math.Abs(Clipper.Area(north)));
+        Assert.True(north.Max(p => p.Y) > 900);
     }
 
 
@@ -1108,51 +1240,15 @@ public class BlockGraphTests
     /**
      * The junctions of the block graph that lie on a cycle: peel every junction with
      * fewer than two block-graph arms until none is left.
+     *
+     * ⚠️ THIS USED TO BE THE RULE ITSELF and is now a view of the production one. WP-O1
+     * moved the 2-core into BlockGraph.TwoCoreOf, because the block trace is peeled to it
+     * before it walks a face; keeping a second copy here is how §7e happened. The
+     * junction ids are what this file and SpurBlocks index by, so that is the only thing
+     * left here.
      */
-    private static HashSet<int> _twoCoreOf(StrokeStore store)
-    {
-        var degree = new Dictionary<int, int>();
-        var adjacency = new Dictionary<int, List<int>>();
-
-        foreach (var sp in store.GetStreetPoints())
-        {
-            degree[sp.Id] = 0;
-            adjacency[sp.Id] = new List<int>();
-        }
-
-        foreach (var s in store.GetStrokes())
-        {
-            if (!BlockGraph.IsBlockEdge(s)) continue;
-            if (!degree.ContainsKey(s.A.Id) || !degree.ContainsKey(s.B.Id)) continue;
-
-            ++degree[s.A.Id];
-            ++degree[s.B.Id];
-            adjacency[s.A.Id].Add(s.B.Id);
-            adjacency[s.B.Id].Add(s.A.Id);
-        }
-
-        var live = new HashSet<int>(degree.Keys);
-        bool changed = true;
-        while (changed)
-        {
-            changed = false;
-            foreach (int id in live.ToList())
-            {
-                if (degree[id] >= 2) continue;
-
-                live.Remove(id);
-                foreach (int neighbour in adjacency[id])
-                {
-                    if (live.Contains(neighbour)) --degree[neighbour];
-                }
-
-                degree[id] = 0;
-                changed = true;
-            }
-        }
-
-        return live;
-    }
+    internal static HashSet<int> TwoCoreOf(StrokeStore store)
+        => new HashSet<int>(BlockGraph.TwoCoreOf(store).Select(sp => sp.Id));
 
 
     private static bool _containsInPlan(List<Vector2> ring, Vector2 p)
@@ -1198,62 +1294,36 @@ public class BlockGraphTests
      * ================================================== a split inset ================
      */
 
-    /**
-     * WP-B6 triage item 3 — when the pavement inset splits a block on its own.
+    /*
+     * ⚠️ TWO GATES DELETED BY WP-O2 ALONG WITH BlockGraph.LargestOf, their text recorded
+     * here rather than dropped.
      *
-     * QuarterGenerator._createBuildings concatenates every polygon of the inset into one
-     * ring, which is a self-crossing outline the moment there are two of them. WP-B5 made
-     * ExcludeStructures return at most one polygon, which covers a split caused by
-     * subtracting a structure; a block pinched to less than two pavement widths across its
-     * middle splits without any structure being involved, and that is what LargestOf is.
+     *   ASplitInsetIsResolvedToItsLargestPiece
+     *       "WP-B6 triage item 3 - when the pavement inset splits a block on its own.
+     *        QuarterGenerator._createBuildings concatenates every polygon of the inset into
+     *        one ring, which is a self-crossing outline the moment there are two of them.
+     *        WP-B5 made ExcludeStructures return at most one polygon, which covers a split
+     *        caused by subtracting a structure; a block pinched to less than two pavement
+     *        widths across its middle splits without any structure being involved, and that
+     *        is what LargestOf is."
+     *       It drove LargestOf on a small ring and a large one, in both orders, and
+     *       asserted the large one came back by reference.
      *
-     * Driven on two rings so that "the largest" is a choice and not the only answer.
+     *   AnUnsplitInsetIsTheVeryListItWas
+     *       "With nothing to choose between, the very list handed in comes back. Not 'a
+     *        list holding the same polygon': the same object, so that a block whose inset
+     *        did not split runs exactly the code it ran before this existed. Measured, that
+     *        is every estate of every flag-off city - 0 of 763 over the seven pinned seeds
+     *        split."
+     *
+     * The premise both rested on - the caller cannot cope with two polygons - is what WP-O2
+     * removed: _createBuildings designs one building per polygon. Discarding the smaller
+     * piece is exactly the thing that had to stop, so the expression is deleted rather than
+     * left unreferenced. Its identity half survives in ExcludingNothingReturnsTheSameEstate
+     * and in NothingToSubtractIsTheVeryListItWas, which is where "the flag-off city runs the
+     * code it always ran" is now asserted.
      */
-    [Fact]
-    public void ASplitInsetIsResolvedToItsLargestPiece()
-    {
-        var small = new List<IntPoint>
-        {
-            new(0, 0), new(100, 0), new(100, 100), new(0, 100)
-        };
-        var large = new List<IntPoint>
-        {
-            new(1000, 0), new(1400, 0), new(1400, 400), new(1000, 400)
-        };
 
-        var chosen = BlockGraph.LargestOf(new List<List<IntPoint>> { small, large });
-
-        Assert.Single(chosen);
-        Assert.Same(large, chosen[0]);
-
-        var otherOrder = BlockGraph.LargestOf(new List<List<IntPoint>> { large, small });
-
-        Assert.Single(otherOrder);
-        Assert.Same(large, otherOrder[0]);
-    }
-
-
-    /**
-     * With nothing to choose between, the very list handed in comes back.
-     *
-     * Not "a list holding the same polygon": the same object, so that a block whose inset
-     * did not split runs exactly the code it ran before this existed. Measured, that is
-     * every estate of every flag-off city - 0 of 763 over the seven pinned seeds split.
-     */
-    [Fact]
-    public void AnUnsplitInsetIsTheVeryListItWas()
-    {
-        var one = new List<List<IntPoint>>
-        {
-            new() { new IntPoint(0, 0), new IntPoint(100, 0), new IntPoint(100, 100) }
-        };
-
-        Assert.Same(one, BlockGraph.LargestOf(one));
-
-        var none = new List<List<IntPoint>>();
-
-        Assert.Same(none, BlockGraph.LargestOf(none));
-    }
 
 
     private static bool _segmentsCross(Vector2 a, Vector2 b, Vector2 c, Vector2 d)

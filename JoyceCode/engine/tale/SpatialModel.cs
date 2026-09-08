@@ -240,7 +240,8 @@ public class SpatialModel
                              */
                             float shopHeight =
                                 streets.generation.BuildingFooting.StoreyGroundAt(
-                                    quarter, streets.generation.BuildingFooting.PlanOf(sf))
+                                    quarter, building,
+                                    streets.generation.BuildingFooting.PlanOf(sf))
                                 + MetaGen.ClusterStreetHeight
                                 + MetaGen.QuarterSidewalkOffset;
 

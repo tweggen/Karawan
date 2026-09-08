@@ -550,18 +550,21 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                      * the height it was designed with.
                      *
                      * The base is planar and at or below the block floor everywhere over
-                     * the footprint - which is the guarantee, not a heuristic: every
-                     * vertex of that floor carries one of the block's corner heights or a
-                     * blend of two of an edge's pair, so the surface cannot go below the
-                     * lowest of them. The height then adds the block's corner spread, so
-                     * the roof clears the highest corner by the design height rather than
-                     * the building being swallowed from the uphill side. Both are exactly
-                     * zero-cost on a flat block, where every corner is at one height.
+                     * THIS BUILDING's own footprint - which is the guarantee, not a
+                     * heuristic: it is the exact minimum of the floor's own cap over the
+                     * footprint. The height then adds that cap's spread over the same
+                     * footprint, so the roof clears the highest ground under it by the
+                     * design height rather than the building being swallowed from the
+                     * uphill side. Both are exactly zero-cost on a flat block.
+                     *
+                     * Per building since WP-O2 gave every piece of a block's buildable land
+                     * one: the block-wide bound this used to take buries the higher piece of
+                     * a split block by a median 6-7 m.
                      */
                     float baseY = engine.streets.generation.BuildingFooting
-                        .BaseHeightOf(quarter);
+                        .BaseHeightOf(quarter, building);
                     var height = engine.streets.generation.BuildingFooting
-                        .HeightOf(quarter, building.GetHeight());
+                        .HeightOf(quarter, building, building.GetHeight());
 
                     /*
                      * We create a lindenmeyer placed at the building's center, the ground polygon
@@ -635,9 +638,9 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                              * Per SHOPFRONT, not per building: the constraint is that a
                              * shop be reachable from the pavement in front of IT, and one
                              * building can span 100 m of a block whose kerb falls 13 m.
-                             * BuildingFooting answers with the block's lowest corner
-                             * raised by whole storeys until it clears that pavement, so a
-                             * row of shops steps up the hill in 3 m stages instead of
+                             * BuildingFooting answers with this building's own founding
+                             * level raised by whole storeys until it clears that pavement,
+                             * so a row of shops steps up the hill in 3 m stages instead of
                              * every one of them following the sample at the building's
                              * centre underground.
                              */
@@ -647,7 +650,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                                 {
                                     Y = engine.streets.generation.BuildingFooting
                                             .StoreyGroundAt(
-                                                quarter,
+                                                quarter, building,
                                                 engine.streets.generation.BuildingFooting
                                                     .PlanOf(shopFront))
                                         + _shopWindowAboveGround

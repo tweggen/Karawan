@@ -22,6 +22,43 @@ public class Building
     private float _height = 1f;
 
 
+    private bool _hasFooting;
+    private float _footingLo, _footingHi;
+
+
+    /**
+     * The lowest and highest the block floor gets over this building's own footprint, once
+     * somebody has worked it out.
+     *
+     * Cached here rather than recomputed, the way the block's floor is cached on its
+     * Quarter: it is the EXACT range of a piecewise linear surface over a polygon
+     * (generation.BlockFloor.TryBoundsOver), which is not free, and everything on the
+     * building asks for it - the base, the height, and each shopfront's storey twice over.
+     * The footprint and the block's height source are both fixed once the block is traced,
+     * so there is nothing here to invalidate.
+     */
+    internal bool TryGetFooting(out float lo, out float hi)
+    {
+        lock (_lo)
+        {
+            lo = _footingLo;
+            hi = _footingHi;
+            return _hasFooting;
+        }
+    }
+
+
+    internal void SetFooting(float lo, float hi)
+    {
+        lock (_lo)
+        {
+            _footingLo = lo;
+            _footingHi = hi;
+            _hasFooting = true;
+        }
+    }
+
+
     public List<ShopFront> GetShopFronts()
     {
         lock (_lo)

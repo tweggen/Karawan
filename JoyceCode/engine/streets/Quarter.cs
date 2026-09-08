@@ -318,6 +318,36 @@ public class Quarter
     }
 
 
+    private generation.BlockFloor _blockFloor;
+    private bool _hasBlockFloor;
+
+
+    /**
+     * This block's floor, as the surface it is drawn as, or null for a block with no cap.
+     *
+     * Cached the way the pad above is, and for the same reason: the outline of a block does
+     * not change once it has been traced, and the answer costs one tessellation. Without it
+     * every building, every shopfront and every TALE door on a block would tessellate it
+     * again.
+     *
+     * See generation.BlockFloor for why a building has to be founded on this rather than on
+     * the block's corner heights.
+     */
+    internal generation.BlockFloor GetBlockFloor()
+    {
+        lock (_lo)
+        {
+            if (!_hasBlockFloor)
+            {
+                _hasBlockFloor = true;
+                _blockFloor = generation.BlockFloor.Build(this);
+            }
+
+            return _blockFloor;
+        }
+    }
+
+
     /**
      * World space, for the many callers that have one rather than a cluster coordinate.
      */

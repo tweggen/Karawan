@@ -119,7 +119,7 @@ public class PedestrianRouteEndTests
              */
             if (null == inset) continue;
 
-            var tris = BlockFloor.CapOf(outline, inset);
+            var tris = DrawnBlockFloor.CapOf(outline, inset);
             if (0 == tris.Count) continue;
 
             for (int i = 0; i < n; ++i)
@@ -130,7 +130,7 @@ public class PedestrianRouteEndTests
                 Vector3 mid = 0.5f * (nl.Start.Position + nl.End.Position)
                               + PedestrianRoute.SidewalkOffset * nl.KerbSide;
 
-                float? h = BlockFloor.SurfaceAt(tris, new Vector2(mid.X, mid.Z));
+                float? h = DrawnBlockFloor.SurfaceAt(tris, new Vector2(mid.X, mid.Z));
                 if (!h.HasValue) continue;
 
                 Vector3 w = PedestrianRoute.EndWaypointFor(nl, mid);
@@ -151,8 +151,8 @@ public class PedestrianRouteEndTests
 
         Assert.True(lane.Count > 8, $"only {lane.Count} block edges measured");
 
-        float p05 = BlockFloor.Percentile(lane, 0.05f);
-        float p95 = BlockFloor.Percentile(lane, 0.95f);
+        float p05 = DrawnBlockFloor.Percentile(lane, 0.05f);
+        float p95 = DrawnBlockFloor.Percentile(lane, 0.95f);
 
         Assert.True(p05 > -0.01f && p95 < 0.01f,
             $"{idString}/{size}: a route end taken off its lane is {p05:F3} m below the "

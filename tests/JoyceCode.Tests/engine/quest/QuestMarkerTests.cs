@@ -226,7 +226,7 @@ public class QuestMarkerTests
                     worstRested, terrain + MetaGen.ClusterNavigationHeight - pavement);
             }
 
-            Assert.True(BlockFloor.Percentile(wasBelow, 0.5f) < -0.1f,
+            Assert.True(DrawnBlockFloor.Percentile(wasBelow, 0.5f) < -0.1f,
                 $"{idString}/{size}: the marker that shipped was not under the pavement at "
                 + "the median junction, so this file cannot distinguish the terrain from "
                 + "the road and everything else it asserts is vacuous");

@@ -57,24 +57,42 @@ public class QuarterFloorTests
 
 
     /**
-     * Every corner of every block is a section point of its own delimiter's junction, and
-     * of no neighbouring delimiter's.
+     * Every corner of every block is the mitre, AT ITS OWN JUNCTION, between the two block
+     * arms it turns between - and is not a section point of any neighbouring delimiter's
+     * junction.
      *
      * This is the claim the kerb rests on, so it is asserted over whole generated cities
      * rather than argued. The neighbours are checked too because they are the wrong
      * answers that are actually reachable: the junctions round a block are a ring, so the
      * one before and the one after a corner are what a re-introduced off-by-one would give
      * it - a whole street away.
+     *
+     * ⚠️ SUPERSEDED BY WP-O1 (§7u), NOT RE-BASELINED. This used to say "a section point of
+     * its own junction", asserted as membership of that junction's section array, and that
+     * is no longer true of every corner: the section array pairs arms ADJACENT in the angle
+     * array, and where the block graph skips an arm the two arms the block turns between
+     * are not adjacent there. WP-B5 §14.3 established that for a ramp leaving a foot; WP-O1
+     * makes it happen at a dead-end spur peeled out of the block graph, which is what the
+     * block outline running across a spur mouth is.
+     *
+     * What replaces it is stronger, not weaker: the corner is asserted to be EXACTLY
+     * StreetPoint.SectionPointBetween of the two arms - the expression QuarterGenerator
+     * files it from and the expression _computeSectionArrayNoLock fills the section array
+     * from - so where the two arms ARE adjacent the old statement follows by construction,
+     * and where they are not, the corner is still pinned to a float rather than to a set.
+     * The count of corners that are not in the array is recorded exactly.
      */
     [Theory]
-    [InlineData("seed000", 500f)]
-    [InlineData("Yelukhdidru", 800f)]
-    [InlineData("seed000", 1500f)]
-    public void ACornerIsASectionPointOfItsOwnJunctionAndNoOther(string idString, float size)
+    //                                        corners across a skipped arm
+    [InlineData("seed000", 500f, 0)]
+    [InlineData("Yelukhdidru", 800f, 1)]
+    [InlineData("seed000", 1500f, 14)]
+    public void ACornerIsTheMitreOfItsOwnJunctionAndNoOther(
+        string idString, float size, int expectedSkipped)
     {
         var (_, _, quarters) = _city(idString, size, (x, z) => 20f + 0.01f * x);
 
-        int nCorners = 0;
+        int nCorners = 0, nSkipped = 0;
         var ownDistances = new List<float>();
         var otherDistances = new List<float>();
 
@@ -93,8 +111,16 @@ public class QuarterFloorTests
                 var before = delims[(i + n - 1) % n];
                 var after = delims[(i + 1) % n];
 
-                Assert.True(InSection(d.StreetPoint, d.StartPoint),
-                    $"corner {d.StartPoint} is not a section point of its own junction");
+                /*
+                 * The corner IS the mitre between the arm that arrives and the arm that
+                 * leaves, at this delimiter's own junction. Exact equality.
+                 */
+                Assert.Equal(
+                    d.StreetPoint.SectionPointBetween(before.Stroke, d.Stroke),
+                    d.StartPoint);
+
+                if (!InSection(d.StreetPoint, d.StartPoint)) ++nSkipped;
+
                 Assert.False(InSection(before.StreetPoint, d.StartPoint),
                     $"corner {d.StartPoint} is also a section point of the PREVIOUS "
                     + "delimiter's junction - this city cannot tell them apart");
@@ -111,6 +137,7 @@ public class QuarterFloorTests
         }
 
         Assert.True(nCorners > 0);
+        Assert.Equal(expectedSkipped, nSkipped);
 
         /*
          * A corner sits about half a carriageway from its own junction and a whole street

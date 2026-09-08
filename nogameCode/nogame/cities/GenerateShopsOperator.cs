@@ -123,6 +123,13 @@ class GenerateShopsOperator : IClusterOperator
             int nBuildings = buildings.Count;
             int buildingStartIdx = (int)(ctx.Rnd.GetFloat() * nBuildings);
             IList<engine.streets.ShopFront> shopFronts = null;
+
+            /*
+             * Which building the shopfront belongs to, and not merely which block: a block
+             * carries several buildings since WP-O2 and each is founded on its own piece of
+             * ground, so the storey a shop is on is a question about the building.
+             */
+            engine.streets.Building shopBuilding = null;
             for (int buildingOfs = 0; buildingOfs < nBuildings; buildingOfs++)
             {
                 int buildingIdx = (buildingStartIdx + buildingOfs) % nBuildings;
@@ -130,6 +137,7 @@ class GenerateShopsOperator : IClusterOperator
                 shopFronts = myBuilding.GetShopFronts();
                 if (null != shopFronts && shopFronts.Count > 0)
                 {
+                    shopBuilding = myBuilding;
                     break;
                 }
             }
@@ -209,7 +217,7 @@ class GenerateShopsOperator : IClusterOperator
                  * geometry, and the two must not be able to answer differently.
                  */
                 float shopGroundY = engine.streets.generation.BuildingFooting.StoreyGroundAt(
-                    quarter, new Vector2(v3ShopLocal.X, v3ShopLocal.Z));
+                    quarter, shopBuilding, new Vector2(v3ShopLocal.X, v3ShopLocal.Z));
 
                 e.QueueEntitySetupAction("poi.shop", (DefaultEcs.Entity ePOI) =>
                 {
