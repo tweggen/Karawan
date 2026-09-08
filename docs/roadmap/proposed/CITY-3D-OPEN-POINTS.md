@@ -6,7 +6,19 @@ terrain-following city work.
 history document — every fix is written up there as §7a … §7w, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-07 (item **(o)** is **CLOSED**, and **PART 1b IS CLEAR**. **WP-O3**:
+**Last updated:** 2026-09-08 (**measurement only**: the last open number under item (o) — the
+**522 flag-on blocks with no buildable land** against 9 flag off — turns out to be **correct
+behaviour**. Every one of them is a block that is **entirely pavement**, the equivalence is
+exact in both directions over all 78 500 blocks, and **every one is emptied by the pavement
+inset alone**: no structure and no spur subtraction empties a block anywhere. **Ledger item (o)
+did not make them** — `6c228797^`, restored into a worktree, produced exactly 9 and exactly 522
+with byte-identical outlines and no building on any of them. **9 → 522 is the heavy-first
+city's roads** (median street 9.85 → 18.82 m), not its structures, and the ten structure-free
+flag-on cities are the control. ⚠️ **What IS wrong is on the other side of the same cliff**:
+4 / 53 blocks carry a building under one square metre, smallest 0.005 m² — an owner decision,
+costed in §7x.9. `STREETS-3D-TOPOLOGY.md` §7x.
+
+2026-09-07: item **(o)** is **CLOSED**, and **PART 1b IS CLEAR**. **WP-O3**:
 a building is founded on its own piece of ground rather than on the block's lowest corner —
 and ⚠️ **the per-piece bound the work package was briefed to build is not a bound at all**,
 because the block floor's INTERIOR is one tessellation of the ring inside the pavement rim and
@@ -1569,8 +1581,9 @@ of ground, over seventy cities, on both flags, with 0 footprint corners in the a
   spur involved;
 - **121 / 10 blocks losing a median 1.0 m² to a neighbour's corridor**, with one unexplained
   1180 m² flag-off outlier;
-- ⚠️ **522 flag-on blocks with no buildable land at all** against 9 flag off, which nothing
-  looks at;
+- ✅ **522 flag-on blocks with no buildable land at all** against 9 flag off — **measured
+  2026-09-08 and they are CORRECT**: every one is a block that is entirely pavement. See the
+  section below and `STREETS-3D-TOPOLOGY.md` §7x;
 - ⚠️ **the block floor's interior is a tessellation artefact and it is metres deep** — the
   finding behind §7w.1, not merely a fact about the bound. The gap between the lowest height
   anywhere on a footprint's own boundary and the lowest the floor actually gets over that
@@ -1586,6 +1599,81 @@ of ground, over seventy cities, on both flags, with 0 footprint corners in the a
   start city as well, so if the sighting recurs it is something else.
 
 ---
+
+### ✅ 2026-09-08: the blocks with no buildable land are traffic islands — MEASUREMENT ONLY
+
+The last open number under (o). WP-O2 recorded *"522 flag-on blocks have no buildable land at
+all after their structures are subtracted, against 9 flag off; nothing looks at what a block
+with no estate should be"* on the strength of one cell of one table. Measured now — **not one
+byte under `JoyceCode/` changed, no baseline moved, `ClusterStorage.DbVersion` untouched.**
+Full write-up and every number in `STREETS-3D-TOPOLOGY.md` §7x.
+
+⚠️ **THE ANSWER IS THAT THEY ARE CORRECT, and the sentence they were recorded under is wrong
+in both of its halves.**
+
+**They are blocks that are entirely pavement.** The equivalence is exact over all 78 500
+blocks of both worlds, in **both directions with 0 exceptions**: the buildable land is empty
+exactly when the block's own half-width — the widest uniform inset its outline survives — is
+under its `Quarter.SidewalkWidth`. They are small triangles between three roads, median
+**68 m² flag on** against a block median of 7692, narrowest width a median **7.0 m** where the
+pavement asks for 12, **517 of 522 with three corners**. The largest is a 1136 m² ribbon 11 m
+wide and 100 m long between two parallel arterials — a boulevard median. A traffic island is
+what that is, and a paved island with no building is what the generator makes of it.
+
+⚠️ **NOT "after their structures are subtracted": every one of the 531 is emptied by the
+PAVEMENT INSET ALONE.** Asked four ways through `QuarterGenerator.BuildableLandOf` itself:
+empty after the inset with nothing subtracted on **9 / 522**, emptied by a structure
+carriageway on **0 / 0**, by a spur corridor on **0 / 0**, and **there is no block anywhere
+whose land the inset leaves and a subtraction then takes away (0 / 0)**.
+
+⚠️ **AND LEDGER ITEM (o) DID NOT MAKE THEM — measured by restoring `6c228797^` into a
+worktree, not reasoned about.** That tree tagged **exactly 9 and exactly 522** blocks
+`estateTooSmall`, every one with a byte-identical outline to one of today's, and **not one of
+them carried a building there either**. No regression: WP-O1/O2/O3 neither created these
+blocks nor took a building off one. What a *player* saw change was **WP-B6** on 2026-09-06,
+when grade separation became the default.
+
+⚠️ **9 → 522 is the heavy-first city's ROADS, not its structures.** The street graph's own
+face is never small — the smallest of the 531 is **471 / 486 m²**, and on **all 531** that face
+is wide enough for the pavement. What eats it is the carriageway: `outline half-width = face
+half-width − street width / 2`, and the world's median street is **18.82 m flag on against
+9.85 flag off**. That is §13's *"a heavy-first city has no alleys in it"* followed through to
+what stands on the network for the first time. **The control**: the ten cities that get no
+structure at all with the flag on still go from **0 empty blocks of 441 flag off to 4 of 355
+flag on**; and 515 of the 522 have no structure whose footprint even reaches them.
+
+**Nothing could stand there anyway.** The most generous relaxation that keeps the block's
+shape recovers a median **0.75 m²** and leaves **516 of 522** capped to one storey by
+`minHouseSide <= 2`. **Two expressions already agree and one has been writing it down all
+along**: `_createBuildings` tags exactly this set `estateTooSmall` (0 disagreements) and
+nothing has ever read it, and §7c's `SidewalkRing.InsetOf` refuses all 531 through a rule
+written for another purpose entirely.
+
+**What a player sees**: a small paved triangle with nothing on it, which is right. No shops
+and no TALE building locations, and no nav consequence — `Placer` and `GenerateNavMapOperator`
+read quarters and junctions rather than estates, so an island is an ordinary block to both. Two consumers do reach it — `GenerateTreesOperator`
+plants on 30 % of building-less estates at 1.6 m² per tree over the *whole block outline*, so
+one of these would get ~43 trees standing on pavement; and `PlayerStart.PoseIn` starts a new
+game on the first building-less estate of the start city, which one of these is by
+construction — **`cluster-clusters-mydear-0` has none of them in either flag state**, so that
+branch cannot be reached today and nothing protects it.
+
+⚠️ **THE ONE THING THAT IS WRONG IS ON THE OTHER SIDE OF THE SAME CLIFF, and it is recorded
+rather than fixed.** The rule refuses a block with 0 m² of land and accepts one with
+**0.005 m²**: **4 blocks flag off and 53 flag on carry a building under one square metre**
+(8 / 126 under four, 91 / 733 under a hundred), the smallest fifty square centimetres and
+three metres tall, on exactly the same tiny triangles. `minHouseSide <= 2.0f` holds them to
+one storey and nothing holds them to existing. **Whether a block should need a minimum area to
+be built on is a design decision** and is the owner's, exactly as §7t.5 was; §7x.9 costs it
+(no baseline file moves; `BlockGraphTests`' two census tables, `SpurEstateTests` and
+`BuildingFootingWorldTests` would have to be re-taken; it would be the first threshold
+constant this rule carries, which §7t.10 and §7v were built to avoid).
+
+Gate: `tests/JoyceCode.Tests/engine/streets/EmptyBlockTests.cs` (18 new; **1830 xUnit**
+against 1812, TALE 200/200).
+
+---
+
 
 # Part 2 — Carried over, known and deliberately deferred
 
