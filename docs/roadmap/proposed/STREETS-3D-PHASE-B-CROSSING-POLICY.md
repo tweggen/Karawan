@@ -2326,8 +2326,8 @@ does not force a rebuild reports whatever was built last.
 - **Two deck ends of forty are targeted onto the road underneath** by
   `NavCluster.TryCreateCursor` (§15.5).
 - **A crossing at a foot passes over the ramp mouth**, at most 1.26 m above it (§15.3).
-- **`DBStorage._readCollection` drops a collection it cannot deserialise, silently**, and
-  `ClusterDesc` is such a collection (§15.6).
+- ~~**`DBStorage._readCollection` drops a collection it cannot deserialise, silently**, and
+  `ClusterDesc` is such a collection (§15.6).~~ ✅ **Reported since 2026-09-08 — §16.**
 - **An existing save resolves junction ids to different junctions** (§15.9).
 - **A deck has nothing under it and no slip roads** (§15.10) — Phase C.
 - **Everything in §10.8, §11.12, §12.10 and §13.9** is untouched by this round.
@@ -2337,3 +2337,190 @@ does not force a rebuild reports whatever was built last.
 WP-B0 … WP-B6 are all done. What Phase B deliberately did **not** do, restated so the next
 phase starts from it: no arterial ruleset (D2), no slip roads, no multi-crossing deck, no
 level 2, and nothing that draws what holds a structure up.
+
+## 16. The world cache says when it throws something away (2026-09-08) — §15.6's silence, closed
+
+§15.6's *found and NOT fixed*. No behaviour changes: what was already happening is now
+reported. `ClusterStorage.DbVersion` stays 1040, `DBStorage.DbVersion` stays 3, and all
+five recorded baseline files are byte-identical to `7755a7b1`.
+
+### 16.1 Both readings verified before acting, and both were right
+
+The brief asked for the two catches to be checked rather than trusted. They were driven,
+not read:
+
+- **The inner catch.** The seventy cities of the shipped world, written through the shipped
+  `DBStorage` and read back through it: `raw count = 70`, the typed read throws
+  `LiteException: Failed to create instance for type 'engine.streets.FlatStreetHeight' …
+  Checks if the class has a public constructor with no parameters`, the collection is
+  dropped (`collections after = []`), `LoadCollection` returns false, and the capture of
+  **every level** of the log shows *nothing at all* — not one line.
+- **The outer catch.** `Error($"Unable to load collection {c.GetType()}: {e}")`, with `c`
+  the `out` parameter, `null` on entry and assigned only at `c = new List<ObjType>(…)`
+  **inside** the inner `try`. There is no path to the outer catch on which `c` is non-null:
+  the only statement after that assignment is `haveIt = true`, which cannot throw. Driven:
+  `System.NullReferenceException … at engine.DBStorage._readCollection … DBStorage.cs:line
+  152`. The handler raised an exception of its own, threw the real one away, and propagated
+  out of a method whose contract is to return `false`. So that `Error` had never printed
+  either.
+
+⚠️ **A THIRD INSTANCE OF THE SAME DEFECT, in the same file and unconditional**:
+`_writeCollection`'s null guard read `c.GetType()` in the branch that runs exactly when `c`
+is null. It raised an `NRE` before `ErrorThrow` was reached — no log line, and the caller
+got a `NullReferenceException` where the method's own contract says `ArgumentException`.
+Fixed with the other two; all three now name the type from `typeof(ObjType)`, which cannot
+be null and is the **element** type (`c.GetType()` would have printed `List\`1` even when
+it worked).
+
+### 16.2 ⚠️ Is dropping the collection the right recovery? Half of it is, and the measurement says which half
+
+**For the whole-collection read, yes.** Both callers regenerate on a `false` return —
+`GenerateClustersOperator._findClusters` lays the seventy cities again and
+`nogame.config.Module._loadGameConfig` writes a fresh `GameConfig` — so discarding an
+unreadable collection costs nothing, while keeping it means failing identically on every
+start for the life of the install and occupying the file for ever. Keep-and-refuse buys
+nothing there.
+
+⚠️ **But the drop is applied where it is not defensible, and that is a finding of this
+round rather than a change.** The inner `try` covers two different things: materialising
+the stored documents, **and translating the caller's predicate**. LiteDB cannot translate
+every expression that compiles, so a query bug on our side reaches the same catch — and
+**measured, a two-document collection with intact data and an untranslatable predicate is
+deleted in its entirety** (`before: [Good] count=2` → `after: []`). Nothing was wrong with
+the data; the fault was entirely ours, and the recovery destroyed the player's data for it.
+
+Not changed, for two stated reasons. It is **latent**: both `LoadCollection` call sites in
+the tree use the no-predicate overload and nothing anywhere passes a predicate. And
+changing *when stored data is destroyed* has every player's `worldcache` and `gameconfig`
+behind it — a decision to hand over, not to take in a round about making failures visible.
+`AQueryThatCannotBeTranslatedStillDestroysTheStoredData` records it and fails the day it is
+repaired, with a message saying that is the good outcome.
+
+The report is emitted **before** the drop, deliberately: `DropCollection`/`Commit` can
+throw (measured, they do on a disposed database), and reporting afterwards would lose the
+cause behind the failure to act on it — which looks like a different bug entirely.
+
+### 16.3 ⚠️ No live-database route to the outer catch was found, and it is kept anyway
+
+`GetCollection<T>()` and `Count()` were driven with a generic type, a type with no
+parameterless constructor, and a collection name LiteDB ought to refuse
+(`KeyValuePair\`2`, `"bad name!"`); **every one of them succeeded**. The only throws found
+are on a **disposed** database — `Count()` gives `ObjectDisposedException` while
+`GetCollection()` still succeeds, which is the shape that lands in the outer catch exactly.
+
+So the outer catch is a **backstop**, not a live path. It is kept rather than deleted
+(§7q's decision for an unreachable fallback) because unlike that one it cannot be shown
+impossible: an IO or corruption fault inside `Count()` is entirely plausible. What it gets
+instead is a gate that it reports rather than replacing the fault with one of its own, and
+`_readCollection` is `internal` for it, the way `BlockGraph.ChainsAreClear` was — the state
+that reaches this handler cannot be handed in through any public entry point, since
+`WithOpen` owns the database's lifetime and the action only ever sees a live one.
+
+### 16.4 What the lines say
+
+`Error(_dc, …)` in both places — the category prefixes them and they always emit. `Trace`
+would have been the silence again with extra steps, and `Warning` would have said *this is
+fine*; a cache that cannot read back what it just wrote is not fine.
+
+The drop line carries the type, whether a predicate was in play, **how many documents are
+being destroyed**, and the underlying exception:
+
+```
+[Database] Unable to read collection engine.world.ClusterDesc - DISCARDING the 70 stored
+document(s), they will have to be regenerated: LiteDB.LiteException: Failed to create
+instance for type 'engine.streets.FlatStreetHeight' …
+```
+
+The zero-count branch **stays a `Trace`**: a first start has no cache, both callers
+regenerate happily, and an Error in front of every player on every fresh install is the
+same defect with its sign flipped. `AnAbsentCollectionIsNotReportedAsAFailure` is the
+control for that, and `AHealthyCollectionRoundTripsAndSaysNothing` for the other direction
+— asserted over every level at or above `Warning`, so it cannot be satisfied by moving the
+noise to a different string.
+
+### 16.5 ⚠️ The test collection runs alone, and the reason is §14's flake seen from the other side
+
+Every property here is observable only as a log line, and `Logger.SetLogTarget` is a
+process global. §14's remedy — keep only what was written on the capturing thread — is
+applied, and it is **not sufficient**: filtering what comes *in* does not stop another
+class calling `SetLogTarget` and taking the target away mid-test, and `Logger` offers no
+way to read the installed target back and notice. So the class joins a
+`[CollectionDefinition(DisableParallelization = true)]` collection, which is xUnit's
+statement that it does not run in parallel with any other collection either — the same
+mechanism the "assimp" collection uses for the same reason.
+
+**The structural fix, for whoever gets there**: one shared collection joined by every class
+that installs a log target — today `StructureHeightTests`, `GradeConvergenceTests` and
+`StructurePlacementTests`, all under `engine/streets/`, all owned by concurrent work at the
+time this was written. `StructureHeightTests`' own comment says *"nothing else in the
+assembly installs one at all"*, which stopped being true when the second one was written.
+
+### 16.6 The mutations
+
+**Fifteen driven against `DBStorage.cs`, none survived**, restoring with `cp`+`touch` so
+MSBuild rebuilds (§15's lesson).
+
+| # | Mutation | Killed by |
+|---|---|---|
+| 1 | the drop's `Error` deleted — the original defect restored | 3 |
+| 2 | demoted to `Trace(_dc, …)` | ⚠️ **does not compile** |
+| 2b | demoted to a `Trace` written as one interpolated string | 2 |
+| 3 | reported **after** the drop instead of before | 1 |
+| 4 | the line names no type | 1 |
+| 5 | the line does not say what is discarded | 3 |
+| 6 | the line hides that a predicate was in play | 1 |
+| 7 | outer catch back to `c.GetType()` | 1 |
+| 8 | outer catch silent | 1 |
+| 9 | outer catch drops the exception | 1 |
+| 10 | `_writeCollection`'s guard back to `c.GetType()` | 1 |
+| 11 | an absent cache reported as an `Error` | 1 |
+| 12 | the document count hard-coded | 2 |
+| 13 | the drop removed altogether (keep-and-refuse) | 3, incl. `ClusterCacheVersionTests` |
+| 14 | the healthy path reports as well | 1 |
+| 15 | the count is wrong | 2 |
+
+⚠️ **Mutation 2 is worth more than its row**: `Trace(_dc, "…" + … + "…")` gives **`CS1620:
+Argument 2 must be passed with the 'ref' keyword`**, because `Trace`'s
+`ref DebugInterpolatedStringHandler` overload wins overload resolution and a concatenation
+is not an interpolated string literal. That is the §12 entry's *"a Warning cannot be
+demoted because it does not compile"* seen from the other side — and it is a property of
+**this message's shape**, not a general guarantee, which is why 2b (a single interpolated
+string, which does compile) was driven separately.
+
+Mutation 13 is the one that says the drop policy itself is gated in both directions:
+removing the drop fails this file *and* `ClusterCacheVersionTests.TheWorldCacheCannotHoldA
+ClusterListAtAll`, which asserts the collection is gone.
+
+### 16.7 What moved
+
+**Nothing that is stored, and no baseline.** `street-fingerprints.json`,
+`street-fingerprints-gradesep.json`, `street-geometry.json`, `street-cost-baseline.json`
+and `street-relaxed-heights.json` are byte-identical to `7755a7b1`. `DBStorage.DbVersion`
+stays **3** and `ClusterStorage.DbVersion` stays **1040**, asserted rather than stated —
+⚠️ `DBStorage.DbVersion` also governs `gamestate.db`, so a bump there deletes every
+player's **save**, and this change alters neither what is written nor how it is read.
+
+Tests: `tests/JoyceCode.Tests/engine/DBStorageCollectionTests.cs` (8 new; **1812** xUnit
+against 1804, TALE 200/200). The full run measured **1830**, because a concurrent branch's
+block-measurement file was present in the working tree; 1830 − 18 − 8 = 1804.
+
+### 16.8 Found and NOT fixed
+
+- ⚠️ **The predicate path destroys intact data** (§16.2) — latent, recorded, and the
+  decision handed over.
+- **`ClusterDesc` still does not round-trip.** Making it do so is a change to what it
+  persists and a `ClusterStorage.DbVersion` bump, exactly as §15.6 left it. The one-line
+  shape — a parameterless constructor on `FlatStreetHeight` — is cheap to write and
+  expensive to ship: the cluster list would then genuinely be cached, and the next bump
+  would genuinely destroy seventy cities that today are regenerated for free.
+- **`GenerateClustersOperator._findClusters` wraps its `LoadCollection` in `catch
+  (System.Exception e) { }`** — an empty catch, in the caller, one silence outward from
+  the one this round closed.
+- **`_readObject`'s `Error` carries no category**, and `WithOpen`'s three do not either;
+  left alone to keep this diff to the lines that were wrong.
+- ⚠️ **The inner catch drops `typeof(ObjType).Name` while the read used
+  `Mapper.ResolveCollectionName`.** They agree for every type in the tree because the
+  default resolver *is* `type.Name`, so this is latent — but a custom resolver would make
+  the drop miss its own collection and the read fail identically for ever.
+- **Every class that installs a log target should share one non-parallel collection**
+  (§16.5).

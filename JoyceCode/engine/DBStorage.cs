@@ -108,7 +108,33 @@ public class DBStorage : engine.AModule
     }
     
 
-    private bool _readCollection<ObjType>(
+    /**
+     * Read a stored collection back, or say why not.
+     *
+     * ⚠️ BOTH catches here used to be silent, in two different ways, and both are the
+     * suppressed-Warning lesson again: a failure nobody is told about is a failure that
+     * costs somebody a round of investigation.
+     *
+     * The INNER catch DELETES the collection and returns false. That is the right repair
+     * for data that cannot be read - see the block comment on the catch - but it was done
+     * without a word of any level, not even a Trace. WP-B6 found what that hides:
+     * ClusterDesc serialises its StreetHeightSource, FlatStreetHeight has no parameterless
+     * constructor, and so the seventy cities of the shipped world have been written to the
+     * cache and thrown away again on every single start since the cache was written, in
+     * total silence. It only came to light because somebody went looking for something
+     * else.
+     *
+     * The OUTER catch was worse than silent: it read `c.GetType()`, and `c` is the out
+     * parameter, set to null on entry and assigned only on the success path INSIDE the
+     * inner try - so on every path that can reach the outer catch `c` is null, and the
+     * handler raised a NullReferenceException of its own, discarding the real exception
+     * and propagating out of _readCollection instead of reporting anything. Measured, not
+     * reasoned: DBStorage.cs:152, NullReferenceException, on a database whose Count()
+     * throws. It has therefore never printed either. The type is named from typeof, which
+     * cannot be null and is the ELEMENT type - what `c.GetType()` would have printed even
+     * on a non-null value is List`1, which names nothing anybody wants to know.
+     */
+    internal bool _readCollection<ObjType>(
         LiteDatabase db,
         Expression<Func<ObjType, bool>>? predicate,
         out IEnumerable<ObjType> c) where ObjType : class
@@ -118,8 +144,13 @@ public class DBStorage : engine.AModule
         try
         {
             var col = db.GetCollection<ObjType>();
-            if (0 == col.Count())
+            var nStored = col.Count();
+            if (0 == nStored)
             {
+                /*
+                 * An absent cache is the ordinary case on a first start and is not a
+                 * failure, so this one stays a Trace.
+                 */
                 Trace(_dc, $"No collection found for {typeof(ObjType)}");
                 return false;
             }
@@ -141,15 +172,36 @@ public class DBStorage : engine.AModule
             catch (Exception e)
             {
                 /*
-                 * If we have an exception here we better delete this collection.
+                 * If we have an exception here we better delete this collection: it cannot
+                 * be read, every caller regenerates what it could not load, and a stored
+                 * collection that fails identically on every start for the life of the
+                 * install is a permanent fault rather than a cache.
+                 *
+                 * ⚠️ REPORTED BEFORE IT IS DROPPED, deliberately. If DropCollection or
+                 * Commit throws, the outer catch reports THAT, and the cause of the drop is
+                 * already in the log rather than lost behind it.
+                 *
+                 * ⚠️ AND THIS IS NOT ALWAYS THE DATA'S FAULT, which is why the line names
+                 * the predicate. This try covers materialising the documents AND
+                 * translating the caller's predicate, and LiteDB cannot translate every
+                 * expression that compiles - so a query bug on our side deletes intact
+                 * stored data. Measured: a two-document collection, an untranslatable
+                 * predicate, and the collection is gone. Nothing in the tree passes a
+                 * predicate to LoadCollection today, so it is latent; changing when data is
+                 * destroyed has every player's worldcache and gameconfig behind it and is
+                 * not this change's to make.
                  */
+                Error(_dc,
+                    $"Unable to read collection {typeof(ObjType)}"
+                    + (null == predicate ? "" : " with a predicate (which may itself be what failed)")
+                    + $" - DISCARDING the {nStored} stored document(s), they will have to be regenerated: {e}");
                 db.DropCollection(typeof(ObjType).Name);
                 db.Commit();
             }
         }
         catch (Exception e)
         {
-            Error($"Unable to load collection {c.GetType()}: {e}");
+            Error(_dc, $"Unable to load collection {typeof(ObjType)}: {e}");
         }
 
         return haveIt;
@@ -163,7 +215,14 @@ public class DBStorage : engine.AModule
     {
         if (c == null)
         {
-            ErrorThrow($"The collection we store {c.GetType()} os null.", m => new ArgumentException(m));
+            /*
+             * ⚠️ THE SAME DEFECT AS THE OUTER CATCH ABOVE, and here it was unconditional:
+             * this branch runs exactly when c IS null, and it then read c.GetType(). So it
+             * raised a NullReferenceException before ErrorThrow was ever called - no log
+             * line, and the wrong exception type reaching the caller. typeof(ObjType) is
+             * the element type and cannot be null.
+             */
+            ErrorThrow($"The collection we store of {typeof(ObjType)} is null.", m => new ArgumentException(m));
             return;
         }
         var col = db.GetCollection<ObjType>();
