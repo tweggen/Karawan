@@ -261,10 +261,11 @@ public class BuildingFootingWorldTests
     //
     // ⚠️ Superseded by §7y in its counts only, old text 5402 / 4842: the owner's ten square
     // metre floor takes 16 and 195 matchboxes out of the world, and a matchbox has corners
-    // like anything else, so the population this counts over shrinks. The worst float and
-    // the finding are unchanged.
+    // like anything else, so the population this counts over shrinks. ⚠️ And by §7z in its
+    // flag-on count only, old text 4785: fourteen more ribbons go, and three of their
+    // corners were in the air. The worst float and the finding are unchanged under both.
     [InlineData(false, 5392, 1.5f, 1.7f)]
-    [InlineData(true, 4785, 5.5f, 5.7f)]
+    [InlineData(true, 4782, 5.5f, 5.7f)]
     public void TheObviousPerPieceBoundIsNotABound(
         bool gradeSeparation, int expectedFloating, float worstLo, float worstHi)
     {
@@ -307,9 +308,11 @@ public class BuildingFootingWorldTests
     // 793, 775, 602 and 397: the ten square metre floor takes two flag-on blocks from two
     // buildings to one - the same two throughout - so 791, 773, 600 and 395. Both of them
     // were over five metres of over-sink, which is what a matchbox beside a real building
-    // on a slope looks like.
+    // on a slope looks like. ⚠️ And by §7z, old text 791, 773, 600 and 395: its two metre
+    // width floor takes one more flag-on block from two buildings to one, again the same
+    // block in all four columns and again over five metres.
     [InlineData(false, 13, 0.40f, 0.50f, 15.0f, 15.4f, 5.5f, 6.2f, 13, 10, 8)]
-    [InlineData(true, 791, 0.20f, 0.30f, 32.9f, 33.3f, 4.6f, 5.4f, 773, 600, 395)]
+    [InlineData(true, 790, 0.20f, 0.30f, 32.9f, 33.3f, 4.6f, 5.4f, 772, 599, 394)]
     public void TheBlockWideBoundOverSankTheHigherPieceOfASplitBlock(
         bool gradeSeparation, int expectedSplitBlocks,
         float medianLo, float medianHi, float worstLo, float worstHi,
@@ -370,9 +373,12 @@ public class BuildingFootingWorldTests
     //
     // ⚠️ Superseded by §7y in its totals, old text 572404 / 527807: a removed matchbox takes
     // its shopfronts with it and they are 2 and 13 of half a million, because a shopfront is
-    // 5 m of perimeter and a matchbox rarely has one.
+    // 5 m of perimeter and a matchbox rarely has one. ⚠️ And by §7z in its flag-on total,
+    // old text 527794: a RIBBON is the opposite case - a shopfront is 5 m of perimeter and a
+    // ribbon is nearly all perimeter - so its fourteen buildings take 271 shopfronts with
+    // them, twenty times what the area floor's 195 buildings cost (§7z.6).
     [InlineData(false, 572402, 0)]
-    [InlineData(true, 527794, 0)]
+    [InlineData(true, 527523, 0)]
     public void AShopIsOnAWholeStoreyOfItsOwnBuilding(
         bool gradeSeparation, int expectedShopfronts, int expectedOff)
     {
@@ -416,13 +422,20 @@ public class BuildingFootingWorldTests
     [Theory]
     //                 cap corners inside a footprint, of which tie the minimum
     //
-    // ⚠️ Superseded by §7y in its flag-on count, old text 114207. It goes UP by three rather
+    // ⚠️ Superseded by §7y in its flag-on count, old text 114207. It went UP by three rather
     // than down, which is the §7y.5 finding seen from another file: the flag-on world loses
     // 195 matchboxes, whose footprints are far too small to contain a cap vertex, and gains
     // one 1450 m² building on a block whose good piece used to lose its design draw to the
     // matchbox in front of it. The flag-off count does not move at all.
+    //
+    // ⚠️ AND BY §7z, WHICH PUTS IT BACK - 114210 -> 114207, the same three - because that
+    // finding has a sign this time. The width floor removes fourteen ribbons, whose
+    // footprints are far too thin to contain a cap vertex, and the draw shift takes a
+    // 28 411 m² building off `cluster-clusters-mydear-505` while giving a 155 m² one to
+    // `-190`. That the number lands exactly back where §7y found it is a coincidence of
+    // three and three; §7z.5 has the block-by-block diff.
     [InlineData(false, 164924, 432)]
-    [InlineData(true, 114210, 414)]
+    [InlineData(true, 114207, 414)]
     public void ACornerOfTheFloorInsideAFootprintIsAlwaysOnItsBoundary(
         bool gradeSeparation, int expectedInside, int expectedDeciding)
     {

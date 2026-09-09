@@ -6224,3 +6224,378 @@ against 1830, TALE 200/200.
   row after it. **This is a superseded gate and its old text is in the file**; it is recorded
   here rather than in §7y.9 because it is nothing to do with the ten square metre floor.
 - Everything in §7x.11 that this does not reach.
+
+---
+
+# §7z — A piece of land under two metres across carries no building (2026-09-09, FIXED)
+
+§7y shipped the owner's ten square metre floor and reported, without acting on it, the half
+of *what is a building* that an area cannot answer:
+
+> **Area alone does not bound a sliver.** 14 flag-on buildings are under **2 m thick**,
+> thinnest **0.32 m with a 95.7 m perimeter over 17.2 m²**; the largest thin one has
+> **83 m²**, so no area threshold reaches them. And `minHouseSide` is the wrong instrument:
+> it is short at a mitred corner on **1439 / 725** blocks of ordinary fat buildings. A
+> minimum width is a second owner decision.
+
+The owner asked for it on 2026-09-09 and left the number to be derived. This section is that
+decision implemented, the derivation that produced the number, and what it moved.
+
+## §7z.1 ⚠️ THE DERIVATION HOLDS, AND THE ONE THING TO LEAD WITH IS THAT IT IS A FLOOR AND NOT THE NATURAL BREAK
+
+The brief's derivation was `MetaGen.MinBuildingWidth = 2f`, from `_designBuilding`'s
+`minHouseSide <= 2.0f` — the tree has held a building whose shortest side is 2 m or less to a
+**single storey** since long before any of this work, so the same magnitude in the same
+domain deciding existence rather than height. It was checked before it was adopted, and it
+survives the check: **refusing at two metres takes no plainly reasonable building anywhere.**
+
+Cumulative count of flag-on buildings below a thickness, measured over the seventy shipped
+cities *before* the rule (flag off the whole column is zero — see §7z.3):
+
+| thickness | buildings below it | what they are |
+|---|---|---|
+| < 2.00 m | **14** | §7y's ribbons, 0.32 … 1.99 m thick, perimeters 27.8 … 172 m |
+| < 2.25 m | 16 | two more ribbons: 140 m² over a **206 m** perimeter, and 137 m² over 179 m |
+| < 2.50 m | 18 | two more, 19.9 m² and 79.4 m², both still strips |
+| < 2.75 m | **37** | ⚠️ the cliff — the compact triangles begin at 2.560 m |
+| < 3.00 m | 67 | |
+
+⚠️ **THE CLIFF IS AT ABOUT 2.55 m AND THE FLOOR IS AT 2.00, AND THE HALF METRE BETWEEN THEM
+IS THE HONEST COST OF THIS ROUND.** Four ribbons stand in it and survive; the worst is
+**140.36 m² of floor 2.17 m thick round a 206.3 m perimeter**, which is a sliver by any
+reading. What arrives immediately above them is not more ribbons: it is a run of
+three-cornered buildings of 10.05 … 11.9 m² with 15 m perimeters, sitting exactly on
+`MetaGen.MinBuildingArea` — nineteen of them in the quarter metre from 2.50 to 2.75 against
+four in the whole half metre below.
+
+The arithmetic says why they are there and why the two numbers cannot both be pushed up: an
+**equilateral triangle of exactly 10 m² is 2.77 m thick**. So any width floor much over 2.5
+starts refusing the smallest building the owner's own area rule permits, and the two rules
+would begin to fight. Two metres is derived, is safely below that, and is what shipped;
+moving it up to 2.5 would take the four remaining ribbons and is an owner decision, not a
+free tightening.
+
+## §7z.2 What was built: one constant, one expression, one predicate
+
+**`engine.world.MetaGen.MinBuildingWidth = 2f`**, beside `MinBuildingArea` and `StoryHeight`,
+with the derivation written on it rather than presented as taste — including the sentence
+that it is a floor and not the break, so that the next reader does not raise it by half a
+metre thinking it free.
+
+**`engine.streets.generation.BlockGraph.SurvivesInsetBy(poly, metres)`** is the instrument,
+and it is **§7x's own expression hoisted into production rather than a second copy**. §7x
+defined a block's half-width as *"the widest uniform inset its outline survives"* and used it
+to establish that a block with no buildable land is one that is entirely pavement — 0
+exceptions in either direction over 78 500 blocks. That measurement is this predicate binary
+searched; this rule is the predicate at one radius. It goes through the very `ClipperOffset`
+the estate's own inset goes through (`jtMiter`, `etClosedPolygon`, tenth metres), so *wide
+enough for the pavement* and *wide enough for a building* are the same code asked twice.
+
+⚠️ **AND THE JOIN TYPE IS PART OF THAT AND NOT AN IMPLEMENTATION DETAIL, which mutation 10
+found rather than a reading of the function.** "Does a disc of radius r fit inside" is a
+*round* erosion; a mitred inset is the same thing exactly for a **convex** polygon and not at
+a reflex corner, where a mitre cuts a point in where a round join arcs. Swapping `jtMiter` for
+`jtRound` passes the whole 1865-case suite over 79 711 real pieces — no city block
+distinguishes them — so the brief's "does a disc fit" framing is the intuition and the mitre
+is the rule, because the mitre is what the estate's own inset does. It is gated by a fixture
+rather than left as a survivor: a **dart** of 10.50 m² — a triangle with a notch cut into its
+base, `(0,0) (3.0,2.5) (6.0,0) (3.0,6.0)` in metres — clears the area floor, survives a
+**round** inset of one metre and does **not** survive the mitred one.
+
+**`QuarterGenerator.CanCarryABuilding`** gains a second term rather than a second gate:
+
+```csharp
+internal static bool CanCarryABuilding(List<IntPoint> land)
+    => Math.Abs(Clipper.Area(land)) >= 100.0 * world.MetaGen.MinBuildingArea
+       && generation.BlockGraph.SurvivesInsetBy(
+           land, 0.5f * world.MetaGen.MinBuildingWidth);
+```
+
+⚠️ **THE TWO TERMS ARE INDEPENDENT AND NEITHER SUBSUMES THE OTHER**, which is why they are
+two terms and not one dressed as the other: the disc the width rule insists on has an area of
+π·1² ≈ **3.14 m²**, well under ten. A 1 m × 20 m ribbon clears the area floor and fails the
+width one; a 2.2 m square clears the width floor and fails the area one. Both directions are
+fixtures, because the shipped world only ever exercises one of them at a time.
+
+⚠️ **AND THE TWO HALVES NEED DIFFERENT CARE FOR WINDING, checked rather than assumed.**
+`Clipper.Area` is signed and the area term carries a `Math.Abs` that §7y drove a mirrored pair
+through. `ClipperOffset` fixes the orientation of what it is handed **before** it offsets, so
+a mirrored polygon shrinks rather than growing and the width term needs nothing — adding a
+normalisation is a provably equivalent line (mutation 14). It is recorded as a fixture anyway,
+because *"a negative delta grows a clockwise path"* is true of some offsetters and would put a
+building on every sliver in the world without failing anything else.
+
+⚠️ **AND THE BOUNDARIES POINT OPPOSITE WAYS.** The area floor is **inclusive**: a piece of
+exactly 10.00 m² is built on. The width floor is **exclusive**, and not by a comparison
+operator — there is none — but because a strip exactly two metres across inset by one metre
+encloses nothing and Clipper returns no contour for a result of no area. A strip 2.1 m across
+survives. That leaves one decimetre of slack, which is Clipper's own grid; no real data can
+pin either side of it, since the thinnest surviving piece in the world is 2.17 m across and
+the thickest refused one 1.99 m.
+
+The `estateTooSmall` debug tag follows the predicate, as it did at §7y: it now means *not one
+piece of this block's land is big enough OR wide enough to carry a building*.
+
+## §7z.3 ⚠️ THE HEADLINE: 21 pieces flag on, NOT ONE FLAG OFF
+
+| | flag off | flag on |
+|---|---|---|
+| pieces of buildable land | 40 914 | 38 797 |
+| …refused for **width** | **0** | **21** |
+| …refused for area (§7y, unmoved) | 20 | 310 |
+| of which carried a building | **0** | **14** |
+| buildings, before → after | 27 387 → **27 387** | 25 860 → **25 846** |
+| blocks carrying a building | 27 374 → **27 374** | 25 025 → **25 012** |
+| blocks with more than one building | 13 → 13 | 791 → **790** |
+| shopfronts | 572 402 → **572 402** | 527 794 → **527 523** |
+| thinnest building in the world | 2.90 → **2.90 m** | 0.32 → **2.17 m** |
+| smallest building in the world | 11.92 → **11.92 m²** | 10.05 → **10.05 m²** |
+| `estateTooSmall` | 29 → **29** | 828 → **846** |
+
+**14 removed against §7y.6's predicted 14** — the number that says this is the rule that was
+asked for rather than a rule that happens to be shaped like it. The piece count is 21 rather
+than 14 because seven of those pieces had already lost their own 30 % design draw and carried
+nothing; refusing them still matters, because it is where §7z.5 comes from.
+
+The refused shapes are the argument for the instrument, and they are not near the boundary of
+the *area* rule at all: **12.75 m² to 93.97 m² of floor**, perimeters **27.8 m to 172 m**,
+thickness 0.32 m to 1.99 m. The largest of them clears the owner's area floor **nine times
+over**.
+
+⚠️ **THE FLAT CITY DOES NOT MOVE BY A SINGLE BUILDING, AND THAT IS ASSERTED RATHER THAN
+ARGUED.** Not one piece of land in any of the seventy flag-off cities is under two metres
+across, so every flag-off count above is byte-for-byte §7y's — verified block by block against
+`88fde8ac` rebuilt in a worktree, all 40 891 blocks carrying an identical list of building
+areas. **Grade separation is the shipped default, so the flag-on column is the game.**
+
+That makes this §9's lesson for the fifth time in this work stream — *a rule can be invisible
+to unlimited real data* — and what drives it on that ground is the fixtures of §7z.2, with the
+invisibility itself asserted (`TheFlatCityDoesNotMove`).
+
+## §7z.4 What a removed ribbon takes with it, and it is not proportional to its area
+
+**271 shopfronts of 527 794**, against the **13** that §7y's 195 removed matchboxes cost.
+
+`_addShops` walks a building's own perimeter at 5 m a shopfront, so it sizes the shop count by
+**perimeter** while everything else about a building is sized by area — which is §7y.10's own
+open item, and a ribbon is the case that makes it expensive. The thinnest of these carried
+about nineteen 5 m shopfronts on a wall **0.32 m thick** that a player could not have walked
+into; §7y.10 had named exactly that building as the reason the decision was worth taking.
+
+Everything downstream of a shopfront goes with it — the shop window, the shop POI, the TALE
+shop door, the nogame shop. `SpatialModel.ExtractFrom` gives a building with no shop **one**
+home/warehouse/office location and a building with shops **one location per shop-tagged
+shopfront**, so the 14 buildings and the 271 shopfronts take theirs with them either way. **No consumer reaches a new
+branch**: a block with an estate and no building is the ordinary case and always was (13 517
+flag off and 12 597 flag on), because `_designBuilding` refuses 30 % of pieces on a draw, so
+this adds 13 blocks to a population of twelve thousand. §7y.4 searched all six consumers and
+that search is unchanged.
+
+`PlayerStart.PoseIn` is the one that could have moved the player and does not: the start city
+has no piece of land under either floor in either flag state, and the start pose is asserted
+on the float.
+
+## §7z.5 ⚠️ THE FINDING NOBODY ASKED ABOUT: §7y.5 HAS A SIGN, AND HERE IT IS NEGATIVE
+
+§7y found that refusing a piece **before** `_designBuilding`'s 30 % draw hands the pieces
+behind it the draws their neighbour used to take, and that this **gave** one flag-on block a
+1450 m² building where a 3.5 m² one had stood. The same mechanism can take one away, and here
+it does.
+
+Measured by building the world at `88fde8ac` and at this tree and diffing them **block by
+block** over all 37 609 flag-on blocks, not inferred from the totals. Fifteen blocks differ:
+
+| block | before | after | |
+|---|---|---|---|
+| twelve blocks | one ribbon each | *(none)* | the ribbons |
+| `cluster-clusters-mydear-1432` (−299.5, −815.8) | 46.84, **47 573.45** | 47 573.45 | ribbon only |
+| `cluster-clusters-mydear-190` (−212.7, −340.1) | **36.59** | **154.94** | ⚠️ **gained** |
+| `cluster-clusters-mydear-505` (−115.4, −106.9) | **28 411.36** | *(none)* | ⚠️ **LOST** |
+
+So the flag-on total falls by exactly 14 — the fourteen ribbons — and **that clean number is a
+coincidence of one gain cancelling one loss, not a subtraction.** Block `-505` held a 49.31 m²
+ribbon and a 28 411 m² piece; the ribbon used to lose its draw and the big piece to win one,
+and with the ribbon refused before it draws, the big piece takes the ribbon's draw and loses
+it. It is one of the largest buildings in the world and it is gone.
+
+⚠️ **This is not a defect and it is not repairable without moving the refusal behind the
+draw**, which is the shape §7y.8's mutation 7 fails on and this round's mutation 12 fails on
+again: a block's draw sequence is a function of which pieces reach the draw, so *any* rule
+that removes a piece moves it. Mixed blocks — holding both a refused piece and an accepted one
+— go from **3 to 6**, all flag on; flag off there are none at all, because every refused piece
+there is the only piece its block has.
+
+It is visible from a different file, which is the control that says it is real:
+`BuildingFootingWorldTests.ACornerOfTheFloorInsideAFootprintIsAlwaysOnItsBoundary` goes
+**114 210 → 114 207** flag on, *down* by three where §7y moved it *up* by three, while the
+flag-off count does not move. That it lands exactly back on §7y's pre-change number is a
+coincidence of three and three.
+
+## §7z.6 `minHouseSide` would have been wrong by two orders of magnitude
+
+Measured over the world **after** this rule, so it is a statement about what a `minHouseSide`
+refusal would have deleted rather than about what it did: **1442 flag-off and 921 flag-on
+buildings still have a side of 2 m or less**, and they are ordinary fat buildings — a mitred
+corner is short. The width rule removed **0 and 14**.
+
+(§7y's own 1439 / 725 counted the *blocks* whose smallest building has a short side, which is
+a different measure of the same population; that count moves to 1439 / **713**, because
+thirteen of the fourteen ribbons happened to be their block's smallest building.)
+
+The ratio between 921 and 14 is the whole argument for asking the question as a half-width,
+and `TheShortestSideIsNotTheWidth` asserts it so that the economy of reusing the number
+`_designBuilding` already has cannot be taken later without failing a gate.
+
+## §7z.7 What did NOT move
+
+- **NOT ONE BASELINE FILE MOVED.** `street-fingerprints.json`,
+  `street-fingerprints-gradesep.json`, `street-geometry.json`, `street-cost-baseline.json` and
+  `street-relaxed-heights.json` are byte-identical to `7755a7b1` — checked with
+  `git hash-object`, and their own gates pass. Four record the **stroke network** and
+  `street-geometry.json` records the **road mesh**, built from the junctions' section arrays
+  and not from the quarters. WP-O1, WP-O2, WP-O3 and §7y each re-checked exactly this; it
+  holds for the same reason a fifth time.
+- **`ClusterStorage.DbVersion` is NOT bumped** (still 1040). Only `Stroke` and `StreetPoint`
+  are persisted and `ClusterDesc` calls `_findQuarters()` on every start whether the strokes
+  came from the cache or not, so a quarter, an estate and a building are rebuilt every time.
+- **Quarters and estates do not move anywhere**, on any pinned seed or in either world: the
+  rule is downstream of the block trace and downstream of `BuildableLandOf`.
+- **`BlockGraphTests`' two census tables do not move at all**, either column, on any of the
+  seven pinned seeds — none of them carries a ribbon. §7y moved three of them.
+- **The player start does not move**, in either flag state, on the float.
+
+## §7z.8 The mutations
+
+Fourteen, driven against `MetaGen.cs`, `BlockGraph.cs` and `QuarterGenerator.cs`, restored
+with `cp` **plus `touch`** so MSBuild rebuilds (§15's lesson). Failures are against the whole
+suite (1865 cases before the fixture mutation 10 asked for, 1866 after).
+
+| # | mutation | failures |
+|---|---|---|
+| 1 | the width term is dropped, i.e. the §7y rule | **21** |
+| 2 | `MetaGen.MinBuildingWidth` is zero | **24** |
+| 3 | the floor is one metre | **23** |
+| 4 | the floor is four metres | **40** |
+| 5 | the radius is the whole width rather than half of it | **37** |
+| 6 | `SurvivesInsetBy` offsets outward | **30** |
+| 7 | the units are metres, so the floor is 0.2 m | **30** |
+| 8 | the fewer-than-three-points guard is gone | ⚠️ **survived** |
+| 9 | a solution LIST that is not empty counts as a piece | ⚠️ **survived** |
+| 10 | the join is `jtRound` rather than the estate inset's `jtMiter` | ⚠️ **survived, then 1** |
+| 11 | either term is enough (`\|\|` for `&&`) | **39** |
+| 12 | the width refusal happens AFTER the 30 % design draw | **11** |
+| 13 | a refused piece stops the whole block (`break` for `continue`) | **13** |
+| 14 | the winding is normalised before offsetting | ⚠️ **survived** |
+
+⚠️ **THREE SURVIVORS, ALL THREE PROVABLE EQUIVALENCES INSIDE CLIPPER — `SurvivesInsetBy`
+cannot be handed a degenerate path, cannot be handed back one, and cannot be handed a path
+whose winding matters.**
+
+- **8** — `ClipperOffset.AddPath` returns immediately for an `etClosedPolygon` path with fewer
+  than three points, so the guard answers the same as Clipper does. It is kept as the backstop
+  it reads as (and as what makes the answer independent of that internal early return) rather
+  than deleted, and the fixture that drives it — an empty path and a two-point path — passes
+  either way, which is what says the equivalence rather than the coverage.
+- **9** — Clipper's union output never contains an empty path, so *some path is non-empty* and
+  *the list is non-empty* agree on every input there is. The loop is written the long way
+  because it is §7x's own expression and because the short way is only correct by a property
+  of a library.
+- **14** — `ClipperOffset` runs its own `FixOrientations` before it offsets, so a mirrored
+  polygon shrinks rather than growing and normalising in front of it is a no-op. It is the
+  measured counterpart to the `Math.Abs` the AREA term genuinely needs, and the fixture
+  (`AMirroredPieceIsTheSamePieceOfGround`) records the property rather than gating it.
+
+None of the three is a hole: no output of the production predicate can differ under any.
+
+⚠️ **AND ONE MORE SURVIVED ITS FIRST ROUND, WHICH IS THE FINDING OF THIS TABLE — 10.** The
+brief's framing was *does a disc of `MinBuildingWidth / 2` fit inside*, and that is a **round**
+erosion; swapping `jtMiter` for `jtRound` passed the whole suite, so no city block in either
+world distinguishes the two. The rule is the estate's own mitred inset, for §7z.2's reason,
+and it is now gated by the **dart** fixture — 10.50 m² of floor, clearing the area floor,
+surviving a round inset of a metre and not the mitred one — which kills it on exactly one
+case. It is §7o's *"data you do not have cannot catch anything"* in a new place: here the data
+exists in unlimited quantity and simply does not separate the two rules.
+
+**12 and 13 are the two ways of getting §7z.5 wrong** and they fail on 11 and 13 cases — 12
+puts the refusal behind the design draw, which is the version that does not exist, and 13
+makes one refused piece take the rest of its block with it.
+
+## §7z.9 Gates superseded, with their old text
+
+- **`MinBuildingAreaTests.ATenSquareMetreFloorDoesNotBoundASliver`** — §7y's own record of the
+  thing this section removes, and the gate this change makes false. Old text:
+
+      [InlineData(false, 0, 0.0, 0.0)]
+      [InlineData(true, 14, 0.30, 0.35)]
+      Assert.Equal(thin, m.Thin.Count);
+      Assert.InRange(2.0 * m.Thin.Min(t => t.HalfWidth), thinnestLo, thinnestHi);
+      Assert.Equal(0, m.Thin.Count(t => t.Area < MetaGen.MinBuildingArea));
+
+  Its successor is `AreaAloneStillDoesNotBoundASliverAndTheSecondTermDoes` in the same file,
+  which keeps the half that is about **area** — the 21 pieces the width term refuses have
+  12.75 to 93.97 m² of floor, so no area threshold could have reached them — and asserts the
+  thin count at zero. `MinBuildingWidthTests.NoBuildingIsUnderTwoMetresAcross` carries the
+  zero and the thinnest survivor.
+
+- **`MinBuildingAreaTests.World`** — everything that file counts is now the **area term**
+  specifically rather than the whole predicate, so that §7y's recorded numbers keep meaning
+  what they said. `TheFloorBindsMoreDowntownAndNotLess` and
+  `AGoodPieceOfLandGetsTheDrawTheMatchboxUsedToTake` therefore do **not** move; the four that
+  are about the world do: buildings 25 860 → **25 846**, blocks with a building 25 025 →
+  **25 012**, shopfronts 527 794 → **527 523**, building-less blocks 12 584 → **12 597**,
+  blocks with more than one building 791 → **790**, `estateTooSmall` 828 → **846**.
+
+- **`MinBuildingAreaTests.TheFloorIsInclusiveAndTheBoundaryIsExact`** — its fixtures were
+  10 m × 1 m and 99.9 m × 0.1 m rectangles, which the width term now refuses whatever their
+  area. Every rectangle in it is at least 2.1 m across now (4 × 2.5 m for exactly ten square
+  metres, 3.7 × 2.7 m for a hundredth under), so the area term is still the only one deciding,
+  and the fixture asserts that the width term accepts them.
+
+- **`EmptyBlockTests.TheGeneratorAlreadyTagsThemAndTheCountIsOlderThanLedgerItemO`**
+  828 → **846** flag on, unmoved flag off — and
+  **`AMatchboxStandsOnTheOtherSideOfTheSameCliff`** 725 → **713**, unmoved flag off, whose
+  second half (*shortest side ≤ 2 m ⟹ exactly one storey*) is unchanged as a rule and is now
+  also the argument for §7z.6.
+
+- **`SpurEstateTests.NoBuildingStandsOnASpurOrAStructure`** (buildings 25 860 → **25 846**;
+  the 13 flag-off corner slivers do not move — none of them is a ribbon) and
+  **`EveryBuildingIsOnePieceOfItsBlocksBuildableLand`** (blocks with more than one building
+  791 → **790**; the three self-touching outlines do not move).
+
+- **`BuildingFootingWorldTests`** — four theories, flag-on columns only:
+  `AShopIsOnAWholeStoreyOfItsOwnBuilding` 527 794 → **527 523**;
+  `TheObviousPerPieceBoundIsNotABound` 4785 → **4782**;
+  `TheBlockWideBoundOverSankTheHigherPieceOfASplitBlock` 791 / 773 / 600 / 395 → **790 / 772 /
+  599 / 394**, the same block throughout; and
+  `ACornerOfTheFloorInsideAFootprintIsAlwaysOnItsBoundary` 114 210 → **114 207**, which is
+  §7z.5 seen from another file.
+
+- **`EmptyBlockTests._halfWidthOf` and `MinBuildingAreaTests._halfWidthOf`/`_survivesInsetBy`**
+  are deleted as expressions and delegate to `BlockGraph.SurvivesInsetBy` and to
+  `MinBuildingWidthTests.HalfWidthOf`. There were two copies of the half-width search in the
+  tree and no copy in production; there is one of each now, and
+  `TheSearchAndThePredicateAgreeOnEveryPieceOfTheWorld` asserts they answer the same at the
+  threshold over all 79 711 pieces.
+
+Tests: `tests/JoyceCode.Tests/engine/streets/MinBuildingWidthTests.cs` (19 new): **1866 xUnit**
+against 1847, TALE 200/200.
+
+## §7z.10 Found and NOT fixed
+
+- ⚠️ **The four ribbons between 2.0 and 2.5 m**, §7z.1 — the worst 140 m² of floor 2.17 m
+  thick round a 206 m perimeter. They are the difference between a derived floor and the
+  distribution's own break, they are named rather than removed, and moving the floor to 2.5
+  is an owner decision that would still not reach the compact 10 m² triangles at 2.56.
+- ⚠️ **`_addShops` sizes a building's shop count by PERIMETER**, which is §7y.10's item and is
+  what made §7z.4's number 271 rather than 13. A 2.17 m thick building 60 m long still gets
+  about two dozen shopfronts along a wall nobody can walk into; the width floor makes that
+  rarer and does not change the rule.
+- **The 28 411 m² building of §7z.5**, which is a consequence of where the refusal sits and
+  not a defect, and would be traded for a different one by moving it.
+- **Nothing names a block that cannot be built on.** `Quarter.QuarterAttributes` still has no
+  way to say *this block carries no building because there is no room*, so `estateTooSmall`
+  remains a debug string — now of 29 and 846 blocks.
+- **`GenerateTreesOperator` plants over the block OUTLINE** at 1.6 m² per tree, so the 13
+  blocks that just lost their building become tree candidates at that density — §7x.11's item,
+  reachable on a few more blocks.
+- Everything in §7y.10 that this does not reach.

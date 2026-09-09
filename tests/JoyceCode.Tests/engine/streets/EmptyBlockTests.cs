@@ -523,11 +523,15 @@ public class EmptyBlockTests
      * that is about THIS file's population: every block with no land at all is tagged. The
      * other direction moved to
      * MinBuildingAreaTests.TheGeneratorRecordsTheRefusalWithTheSamePredicateItMakesItWith.
+     *
+     * ⚠️ AND MOVED AGAIN BY §7z, which gave the predicate its second term: 828 -> 846, the
+     * eighteen more blocks whose only land is under two metres across. The flag-off number
+     * does not move, because no piece of land in any flag-off city is that thin.
      */
     [Theory]
     //                 estateTooSmall (also the pre-(o) count)  the whole tag today
     [InlineData(false, 9, 29)]
-    [InlineData(true, 522, 828)]
+    [InlineData(true, 522, 846)]
     public void TheGeneratorAlreadyTagsThemAndTheCountIsOlderThanLedgerItemO(
         bool gradeSeparation, int noLand, int tagged)
     {
@@ -597,11 +601,18 @@ public class EmptyBlockTests
      * side under 2 m to a single storey - and the population is unchanged in the flag-off
      * world and barely moved flag on, because a short SIDE is a mitred corner far more often
      * than it is a small building.
+     *
+     * ⚠️ §7z THEN MADE THAT LAST SENTENCE THE ARGUMENT FOR ITS OWN INSTRUMENT and moved this
+     * count once more, 725 -> 713 flag on, because thirteen of the fourteen ribbons it
+     * removed happened to be their block's smallest building and to have a short side too.
+     * The flag-off 1439 does not move at all. That the two populations are 713 and 14 is
+     * exactly why the width rule is asked as a half-width and not as `minHouseSide` - see
+     * MinBuildingWidthTests.TheShortestSideIsNotTheWidth.
      */
     [Theory]
-    //                 no building below the floor  one-storey blocks (was 1445 / 814)
+    //                 no building below the floor  one-storey blocks (was 1445 / 814, 725)
     [InlineData(false, 11.9, 12.0, 1439)]
-    [InlineData(true, 10.0, 10.1, 725)]
+    [InlineData(true, 10.0, 10.1, 713)]
     public void AMatchboxStandsOnTheOtherSideOfTheSameCliff(
         bool gradeSeparation, double smallLo, double smallHi, int narrow)
     {
@@ -647,23 +658,18 @@ public class EmptyBlockTests
 
     /**
      * The widest uniform inset this outline still survives, in metres - half the polygon's
-     * own narrowest width. Binary searched to half a millimetre through the very
-     * ClipperOffset the estate's inset goes through, so "wide enough for the pavement" and
-     * "the pavement leaves something" are the same question asked of the same code.
+     * own narrowest width. Binary searched through the very ClipperOffset the estate's inset
+     * goes through, so "wide enough for the pavement" and "the pavement leaves something"
+     * are the same question asked of the same code.
+     *
+     * ⚠️ ONE COPY, and since §7z it is a production expression: the same measurement decides
+     * whether a piece of buildable land is wide enough to carry a building at all, against
+     * MetaGen.MinBuildingWidth, so `BlockGraph.SurvivesInsetBy` is what both go through and
+     * MinBuildingWidthTests.HalfWidthOf is the search over it. This file used to carry its
+     * own copy.
      */
     private static float _halfWidthOf(IList<Vector3> outline)
-    {
-        if (outline.Count < 3) return 0f;
-
-        float lo = 0f, hi = 512f;
-        for (int i = 0; i < 20; ++i)
-        {
-            float mid = 0.5f * (lo + hi);
-            if (_insetBy(outline, mid).Any(p => p.Count > 0)) lo = mid; else hi = mid;
-        }
-
-        return lo;
-    }
+        => (float)MinBuildingWidthTests.HalfWidthOf(outline);
 
 
     private static List<List<IntPoint>> _insetBy(IList<Vector3> outline, float d)

@@ -97,11 +97,47 @@ public class MetaGen
      * little MORE downtown rather than less, and it is a flat floor everywhere (§7y.1).
      *
      * It is an AREA and nothing else, which is what was asked for. Area alone does not
-     * bound a sliver - see §7y.6, where fourteen buildings of the shipped world are under
-     * two metres thick and every one of them clears this floor several times over - and
-     * whether a minimum WIDTH is wanted too is a separate decision that has not been made.
+     * bound a sliver - §7y.6 counted fourteen buildings of the shipped world under two
+     * metres thick, the thinnest 0.32 m thick with a 95.7 m perimeter round 17.2 m² of
+     * floor, and every one of them clears this floor several times over. That is the
+     * second decision and it is MinBuildingWidth below.
      */
     public static float MinBuildingArea = 10f;
+
+    /**
+     * The narrowest a building may be, in metres, measured across rather than along.
+     *
+     * ⚠️ THE SECOND HALF OF "WHAT IS A BUILDING", asked for by the owner on 2026-09-09 with
+     * the number left to be derived, and derived rather than chosen (§7z.1):
+     *
+     *   - `QuarterGenerator._designBuilding` has held a building whose shortest side is
+     *     2.0 m or less to a SINGLE STOREY since long before any of this work. The tree
+     *     already states that below two metres of side, a thing is barely a building; this
+     *     is the same magnitude in the same domain, deciding existence where that decides
+     *     height.
+     *   - Measured over the seventy shipped cities, that is where the sliver population
+     *     ends. Fourteen flag-on buildings are under 2 m thick and every one of them is a
+     *     ribbon - the thinnest 0.32 m over a 95.7 m perimeter. Flag off there are none at
+     *     all, so this floor does not move the flat city by a single building.
+     *
+     * ⚠️ IT IS A FLOOR AND NOT THE NATURAL BREAK, which is said out loud because the two
+     * are half a metre apart. The distribution's own cliff is at about 2.55 m: four more
+     * ribbons stand between 2.0 and 2.5 m (the worst 140 m² of floor 2.17 m thick round a
+     * 206 m perimeter), and immediately above them begins the run of perfectly good compact
+     * triangles that sit exactly on MinBuildingArea - an equilateral triangle of 10 m² is
+     * 2.77 m thick, so anything much over 2.5 would start refusing the smallest building
+     * the owner's own area rule permits. Two metres is the derived number and is safely
+     * below that; moving it is an owner decision.
+     *
+     * The instrument is NOT minHouseSide. A polygon's shortest SIDE is short at a mitred
+     * corner as often as on a sliver - 1442 flag-off and 921 flag-on BUILDINGS still have a
+     * side under 2 m after this rule and they are ordinary fat ones, against the 0 and 14
+     * it removed - so the question is asked as "does this piece of land survive being inset
+     * by MinBuildingWidth / 2 all round", through
+     * streets.generation.BlockGraph.SurvivesInsetBy, which is §7x's half-width expression
+     * at one radius.
+     */
+    public static float MinBuildingWidth = 2f;
 
     public Vector3 MaxPos;
     public Vector3 MinPos;

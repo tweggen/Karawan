@@ -292,9 +292,28 @@ namespace engine.streets
          * square metre; the comparison is scaled rather than the area, so that a polygon
          * with no points, two points or a zero area is refused by the same expression and
          * not by a special case beside it.
+         *
+         * ⚠️ AND HOW WIDE IT IS, WHICH AREA DOES NOT SAY (§7z). The thinnest building of
+         * the shipped world was 0.32 m thick with a 95.7 m perimeter round 17.2 m² of
+         * floor - seventy per cent clear of the area floor, and no area threshold a city
+         * would survive can reach that shape. So the second half of the question is
+         * MetaGen.MinBuildingWidth, asked as "does this piece survive being inset by half
+         * that width all round" - §7x's own half-width expression at one radius, and the
+         * estate's own mitred inset rather than an exact disc erosion (see it).
+         *
+         * ⚠️ THE TWO ARE INDEPENDENT AND NEITHER SUBSUMES THE OTHER, which is why they are
+         * two terms of one predicate rather than one of them dressed as the other: the
+         * disc the width rule asks for has an area of π·1² ≈ 3.14 m², well under ten, so a
+         * 20 m² ribbon passes the area floor and fails the width one, and a 5 m² square is
+         * 2.24 m on a side, so it passes the width floor and fails the area one.
+         *
+         * The area term is asked first because it is arithmetic on points already in hand
+         * and the width term is a ClipperOffset.
          */
         internal static bool CanCarryABuilding(List<IntPoint> land)
-            => Math.Abs(Clipper.Area(land)) >= 100.0 * world.MetaGen.MinBuildingArea;
+            => Math.Abs(Clipper.Area(land)) >= 100.0 * world.MetaGen.MinBuildingArea
+               && generation.BlockGraph.SurvivesInsetBy(
+                   land, 0.5f * world.MetaGen.MinBuildingWidth);
 
 
         /**
@@ -418,8 +437,9 @@ namespace engine.streets
                 {
                     /*
                      * ⚠️ Not one piece of this block's land can carry a building - which
-                     * since §7y means "none of them reaches MetaGen.MinBuildingArea" and
-                     * used to mean "there are no pieces at all". The tag moves with the
+                     * since §7y means "none of them reaches MetaGen.MinBuildingArea",
+                     * since §7z "or MetaGen.MinBuildingWidth across", and used to mean
+                     * "there are no pieces at all". The tag moves with the
                      * predicate deliberately: it is the generator's own record of the
                      * refusal, and two records of one rule is how the two would drift.
                      * §7x measured the old set - 9 blocks flag off and 522 flag on, every

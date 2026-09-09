@@ -283,10 +283,13 @@ public class SpurEstateTests
     //
     // ⚠️ The building column is superseded by §7y and its old text is 27403 / 26054: the
     // owner's ten square metre floor removes 16 and 195 matchboxes and one flag-on block
-    // gains a 1450 m² building it used to lose to one (§7y.5), so the totals are 27387 and
-    // 25860. The sliver count does not move - none of the 13 is a matchbox.
+    // gains a 1450 m² building it used to lose to one (§7y.5), so the totals were 27387 and
+    // 25860. ⚠️ AND BY §7z, whose two metre width floor removes fourteen more flag-on
+    // ribbons - 25860 -> 25846 - while the flag-off world does not move by a building,
+    // because no piece of land in it is under two metres across. The sliver count does not
+    // move under either: none of the 13 is a matchbox and none of them is a ribbon.
     [InlineData(false, 9840, 6422, 27387, 13)]
-    [InlineData(true, 8100, 5498, 25860, 0)]
+    [InlineData(true, 8100, 5498, 25846, 0)]
     public void NoBuildingStandsOnASpurOrAStructure(
         bool gradeSeparation, int spurs, int inside, int buildings, int slivers)
     {
@@ -526,7 +529,7 @@ public class SpurEstateTests
      * two, and an area cannot tell it from a building on the largest.
      *
      * ⚠️ AND ONE THING THAT IS NOT ASSERTED AT ZERO: 1 building of 27387 flag off and 2 of
-     * 25860 flag on have an outline that touches itself. Those are pinches at Clipper's own
+     * 25846 flag on have an outline that touches itself. Those are pinches at Clipper's own
      * decimetre - two parts of one contour meeting within 0.1 m where the inset all but
      * split the block - and Clipper returns them as one self-touching path rather than two
      * polygons (Clipper.SimplifyPolygon splits the flag-off one in two). Two of the three
@@ -538,13 +541,14 @@ public class SpurEstateTests
      *      [InlineData(false, 13, 1)] [InlineData(true, 793, 2)]
      *
      * and the owner's ten square metre floor takes two flag-on blocks from two buildings to
-     * one, so "blocks with more than one building" is 791. The self-touching count does not
-     * move: neither of those outlines is a matchbox.
+     * one, so "blocks with more than one building" was 791. ⚠️ §7z's width floor takes one
+     * more - 790 - and the self-touching count does not move under either: none of those
+     * outlines is a matchbox and none is a ribbon.
      */
     [Theory]
     //                blocks with >1 building  self-touching outlines
     [InlineData(false, 13, 1)]
-    [InlineData(true, 791, 2)]
+    [InlineData(true, 790, 2)]
     public void EveryBuildingIsOnePieceOfItsBlocksBuildableLand(
         bool gradeSeparation, int multi, int selfTouching)
     {

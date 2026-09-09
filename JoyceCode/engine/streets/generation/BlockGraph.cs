@@ -408,6 +408,64 @@ public static class BlockGraph
 
 
     /**
+     * ⚠️ IS THIS POLYGON STILL ANYTHING WHEN IT IS INSET BY `metres` ALL ROUND? One
+     * expression, and it is §7x's: "the widest uniform inset an outline survives" is this
+     * predicate binary searched, and this is it at one radius.
+     *
+     * §7x used it to say what a block with no buildable land IS - the buildable land is
+     * empty exactly when the block's own half-width is under its Quarter.SidewalkWidth,
+     * 0 exceptions in either direction over 78 500 blocks - and §7z uses it on a piece of
+     * that land, against MetaGen.MinBuildingWidth / 2, to say whether a building may stand
+     * on it. Same question, two scales; there is one copy of it because there was never
+     * more than one question.
+     *
+     * ⚠️ THE JOIN IS THE ESTATE'S OWN MITRE AND THAT IS THE POINT OF THE FUNCTION rather
+     * than an implementation detail: it goes through the very ClipperOffset call
+     * QuarterGenerator.BuildableLandOf insets the estate with (jtMiter, etClosedPolygon,
+     * tenth metres), so "wide enough for the pavement" and "the pavement leaves something"
+     * are the same code asked twice rather than two rules that agree.
+     *
+     * So this is "does a disc of radius `metres` fit inside" only as far as a mitred inset
+     * is a disc erosion, which it is exactly for a CONVEX polygon and not at a reflex
+     * corner, where a mitre cuts a point in where a round join would arc. The difference is
+     * real and no city block distinguishes the two - MinBuildingWidthTests pins it with a
+     * 10.5 m² dart that survives a round inset of a metre and not a mitred one.
+     *
+     * ⚠️ WINDING DOES NOT MATTER HERE AND IT WAS CHECKED RATHER THAN ASSUMED, which is the
+     * opposite of the area half of the same predicate: Clipper.Area is signed and needs a
+     * Math.Abs round it, while ClipperOffset fixes the orientation of what it is handed
+     * before it offsets, so a mirrored polygon shrinks rather than growing. Driven both
+     * ways round in MinBuildingWidthTests.
+     *
+     * A polygon with fewer than three points encloses nothing. ClipperOffset refuses such a
+     * closed path itself, so the guard is a statement rather than a mechanism and the
+     * mutation that deletes it survives, provably equivalently (§7z.8).
+     */
+    public static bool SurvivesInsetBy(List<IntPoint> poly, float metres)
+    {
+        if (poly.Count < 3)
+        {
+            return false;
+        }
+
+        var offset = new ClipperOffset();
+        offset.AddPath(poly, JoinType.jtMiter, EndType.etClosedPolygon);
+        var solution = new List<List<IntPoint>>();
+        offset.Execute(ref solution, -metres * 10f);
+
+        foreach (var p in solution)
+        {
+            if (p.Count > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
      * The plan footprint of one structure member: its carriageway, widened by margin on
      * every side.
      *

@@ -40,11 +40,16 @@ namespace JoyceCode.Tests.engine.streets;
  * outline downtown is what gets eaten. A flat floor is right; it is simply doing most of
  * its work exactly where the owner said such buildings do not belong.
  *
- * ⚠️ AND AREA ALONE DOES NOT BOUND A SLIVER, which is recorded and NOT asserted at zero
- * because a minimum width is a second decision the owner has not made. Fourteen buildings
- * of the flag-on world are under two metres THICK - the thinnest 0.32 m thick with a 95.7 m
- * perimeter over 17.2 m² of floor - and every one of them clears this floor comfortably.
- * See ATenSquareMetreFloorDoesNotBoundASliver.
+ * ⚠️ AND AREA ALONE DOES NOT BOUND A SLIVER. §7y recorded fourteen flag-on buildings under
+ * two metres THICK - the thinnest 0.32 m thick with a 95.7 m perimeter over 17.2 m² of
+ * floor - every one of them clearing this floor comfortably, and left the width to a second
+ * owner decision. That decision was taken on 2026-09-09: `MetaGen.MinBuildingWidth` is the
+ * second term of the same predicate, and `MinBuildingWidthTests` is where it lives.
+ *
+ * ⚠️ SO EVERYTHING THIS FILE COUNTS IS THE AREA TERM SPECIFICALLY, not the whole predicate,
+ * and `World` says how the two are separated. The numbers §7y recorded are unchanged where
+ * they are about the area floor and moved where they are about the world - see
+ * AreaAloneStillDoesNotBoundASliverAndTheSecondTermDoes for the retired half of one gate.
  */
 public class MinBuildingAreaTests
 {
@@ -56,6 +61,8 @@ public class MinBuildingAreaTests
     {
         internal int Blocks, Buildings, ShopFronts, BlocksWithABuilding, BlocksWithMoreThanOne;
         internal int Pieces, PiecesRefused, BlocksAllRefused, BlocksNoLandAtAll, Tagged;
+        internal int PiecesRefusedForWidth;
+        internal List<double> WidthRefusedAreas = new();
         internal double SmallestBuilding = Double.MaxValue;
         internal int BuildingsUnderTheFloor;
         internal List<double> RefusedAreas = new();
@@ -112,20 +119,39 @@ public class MinBuildingAreaTests
                     var pieces = (null == land ? new List<List<IntPoint>>() : land)
                         .Where(p => p.Count > 0).ToList();
 
-                    int refused = 0;
+                    /*
+                     * ⚠️ THE AREA TERM, NOT THE WHOLE PREDICATE, since §7z gave
+                     * CanCarryABuilding a second term. Everything this file counts is
+                     * about the ten square metre floor, so a piece that is over the floor
+                     * and refused for being too NARROW is not one of its refusals - it is
+                     * MinBuildingWidthTests', and it is counted here only to say how many
+                     * there are. The predicate is still read rather than copied: a piece
+                     * is refused for area exactly when the predicate refuses it and its
+                     * area is under the floor.
+                     */
+                    int refused = 0, refusedAtAll = 0;
                     foreach (var piece in pieces)
                     {
                         ++m.Pieces;
                         if (QuarterGenerator.CanCarryABuilding(piece)) continue;
 
+                        ++refusedAtAll;
+                        double area = Math.Abs(Clipper.Area(piece)) / 100.0;
+                        if (area >= MetaGen.MinBuildingArea)
+                        {
+                            ++m.PiecesRefusedForWidth;
+                            m.WidthRefusedAreas.Add(area);
+                            continue;
+                        }
+
                         ++refused;
                         ++m.PiecesRefused;
-                        m.RefusedAreas.Add(Math.Abs(Clipper.Area(piece)) / 100.0);
+                        m.RefusedAreas.Add(area);
                         m.RefusedDowntownness.Add(downtownness);
                     }
 
                     if (0 == pieces.Count) ++m.BlocksNoLandAtAll;
-                    if (refused == pieces.Count) ++m.BlocksAllRefused;
+                    if (refusedAtAll == pieces.Count) ++m.BlocksAllRefused;
                     if (q.GetDebugString().Contains("estateTooSmall")) ++m.Tagged;
 
                     var buildings = q.GetEstates().SelectMany(e => e.GetBuildings()).ToList();
@@ -194,7 +220,7 @@ public class MinBuildingAreaTests
     [Theory]
     //                 buildings  smallest lo/hi (m²)
     [InlineData(false, 27387, 11.9, 12.0)]
-    [InlineData(true, 25860, 10.0, 10.1)]
+    [InlineData(true, 25846, 10.0, 10.1)]
     public void NoBuildingStandsOnLessThanTenSquareMetres(
         bool gradeSeparation, int buildings, double smallLo, double smallHi)
     {
@@ -236,7 +262,7 @@ public class MinBuildingAreaTests
     [Theory]
     //                 pieces  refused  blocks with a building  refused-area p50 lo/hi
     [InlineData(false, 40914, 20, 27374, 3.0, 5.0)]
-    [InlineData(true, 38797, 310, 25025, 2.0, 3.5)]
+    [InlineData(true, 38797, 310, 25012, 2.0, 3.5)]
     public void WhatTheFloorTakesAwayIsTheMatchboxPopulation(
         bool gradeSeparation, int pieces, int refused, int withABuilding,
         double p50Lo, double p50Hi)
@@ -365,11 +391,16 @@ public class MinBuildingAreaTests
      * building", which is the same sentence with the same predicate in it. The old set is
      * still inside the new one and is still exactly the blocks with no land, so the number
      * §7x pinned survives as a subset rather than being overwritten.
+     *
+     * ⚠️ SUPERSEDED IN ITS FLAG-ON COUNT BY §7z, old text 828: the predicate gained a width
+     * term, so the tag gained the eighteen blocks whose only land is under two metres
+     * across. That it follows the predicate rather than one of its terms is the property,
+     * and it is what makes this number move at all.
      */
     [Theory]
-    //                 tagged  of which no land at all (§7x's own count)
+    //                 tagged (was 828 flag on)  of which no land at all (§7x's own count)
     [InlineData(false, 29, 9)]
-    [InlineData(true, 828, 522)]
+    [InlineData(true, 846, 522)]
     public void TheGeneratorRecordsTheRefusalWithTheSamePredicateItMakesItWith(
         bool gradeSeparation, int tagged, int noLandAtAll)
     {
@@ -403,11 +434,16 @@ public class MinBuildingAreaTests
      * 11 871 of them before this change, because `_designBuilding` refuses 30 % of blocks
      * on a random draw - so this adds 16 and 191 to a population of thousands and reaches
      * no branch that was not already reached on every start.
+     *
+     * ⚠️ SUPERSEDED IN ITS FLAG-ON COLUMNS BY §7z, old text 527 794 / 12 584 / 791: its two
+     * metre width floor takes 14 more buildings and, because a ribbon is nearly all
+     * perimeter, **271** more shopfronts - twenty times what these 195 matchboxes cost. See
+     * MinBuildingWidthTests.ARemovedRibbonTakesAnExpensiveNumberOfShopfronts.
      */
     [Theory]
     //                 shopfronts  building-less blocks  blocks with more than one building
     [InlineData(false, 572402, 13517, 13)]
-    [InlineData(true, 527794, 12584, 791)]
+    [InlineData(true, 527523, 12597, 790)]
     public void ARemovedBuildingTakesItsShopfrontsAndNothingElse(
         bool gradeSeparation, int shopFronts, int buildingLess, int several)
     {
@@ -456,46 +492,47 @@ public class MinBuildingAreaTests
      */
 
     /**
-     * ⚠️ RECORDED AND DELIBERATELY NOT ASSERTED AT ZERO: TEN SQUARE METRES OF AREA DOES NOT
-     * BOUND A SLIVER, AND FOURTEEN BUILDINGS OF THE FLAG-ON WORLD ARE UNDER TWO METRES
-     * THICK.
+     * ⚠️ AREA STILL DOES NOT BOUND A SLIVER - THE SECOND TERM DOES, AND THIS IS WHERE THE
+     * TWO ARE SEPARATED.
      *
-     * Area is what the owner specified and area is what shipped. It does not answer the
-     * other half of "what is a building": the thinnest building in the world is 0.32 m
-     * thick, with a 95.7 m perimeter round 17.2 m² of floor, and it clears this floor
-     * seventy per cent over. An area floor cannot reach that shape at any threshold a city
-     * would survive - one of them has 83 m² of floor and is 1.6 m thick.
+     * §7y recorded fourteen flag-on buildings under two metres thick, every one of them
+     * clearing this floor comfortably, and left the decision to the owner. §7z made it:
+     * `MetaGen.MinBuildingWidth` is the second term of the same predicate, and the count is
+     * now zero. What this gate keeps is the half that is about AREA, and it is the half
+     * that says the two rules are independent rather than one dressed as the other: the 21
+     * pieces the width term refuses have 12.75 to 93.97 m² of floor between them, so no
+     * area threshold a city would survive could have reached any of them.
      *
-     * ⚠️ AND `minHouseSide` IS THE WRONG INSTRUMENT FOR IT, which is why this is measured
-     * with a half-width and not with the number `_designBuilding` already has. A polygon's
-     * shortest SIDE is short at a mitred corner as well as on a sliver: 934 flag-on and
-     * 1442 flag-off buildings have a side under two metres and are perfectly fat, which is
-     * the same population §7x found `minHouseSide <= 2.0f` holding to one storey. The
-     * measurement that separates them is the widest inset the outline survives, binary
-     * searched through the same ClipperOffset the estate's own inset goes through.
+     * ⚠️ SUPERSEDED, and its old text, which asserted the defect:
      *
-     * Whether a minimum WIDTH is wanted as well is a second owner decision and is not made
-     * here. This is its size.
+     *      [InlineData(false, 0, 0.0, 0.0)]
+     *      [InlineData(true, 14, 0.30, 0.35)]
+     *      Assert.Equal(thin, m.Thin.Count);
+     *      Assert.InRange(2.0 * m.Thin.Min(t => t.HalfWidth), thinnestLo, thinnestHi);
+     *
+     * The successor is MinBuildingWidthTests.NoBuildingIsUnderTwoMetresAcross, which carries
+     * the zero and the thinnest survivor there is.
      */
     [Theory]
-    //                 under 2 m thick  thinnest lo/hi (m, full width)
+    //                 pieces the WIDTH term refuses  smallest of them lo/hi (m²)
     [InlineData(false, 0, 0.0, 0.0)]
-    [InlineData(true, 14, 0.30, 0.35)]
-    public void ATenSquareMetreFloorDoesNotBoundASliver(
-        bool gradeSeparation, int thin, double thinnestLo, double thinnestHi)
+    [InlineData(true, 21, 12.7, 12.8)]
+    public void AreaAloneStillDoesNotBoundASliverAndTheSecondTermDoes(
+        bool gradeSeparation, int refusedForWidth, double smallestLo, double smallestHi)
     {
         var m = World(gradeSeparation);
 
-        Assert.Equal(thin, m.Thin.Count);
-        if (0 == thin) return;
+        Assert.Empty(m.Thin);
+        Assert.Equal(refusedForWidth, m.PiecesRefusedForWidth);
 
-        Assert.InRange(2.0 * m.Thin.Min(t => t.HalfWidth), thinnestLo, thinnestHi);
+        if (0 == refusedForWidth) return;
 
         /*
-         * ...and every one of them clears the area floor, so no area threshold that keeps
-         * a city standing would remove them.
+         * ...and the whole of that population is over the area floor, which is what makes
+         * it a second rule rather than a tighter first one.
          */
-        Assert.Equal(0, m.Thin.Count(t => t.Area < MetaGen.MinBuildingArea));
+        Assert.InRange(m.WidthRefusedAreas.Min(), smallestLo, smallestHi);
+        Assert.Equal(0, m.WidthRefusedAreas.Count(a => a < MetaGen.MinBuildingArea));
     }
 
 
@@ -508,27 +545,36 @@ public class MinBuildingAreaTests
      * with polygons whose Clipper area is exactly the floor and exactly one hundredth of a
      * square metre under it.
      *
-     * Clipper works in tenth metres and integers, so a rectangle 10 m by 1 m has an area of
+     * Clipper works in tenth metres and integers, so a rectangle 4 m by 2.5 m has an area of
      * exactly 1000 in its units and the comparison has no rounding in it anywhere. No
      * amount of real data can pin this: the world's smallest survivor is 10.05 m² and its
      * largest refusal 9.98 m², so ">= floor" and "> floor" agree on every block there is.
+     *
+     * ⚠️ EVERY RECTANGLE HERE IS AT LEAST 2.1 m ACROSS, deliberately, so that the AREA term
+     * is the only one deciding. Since §7z the predicate has a width term too, and the
+     * fixtures this test used to use - 10 m by 1 m, and 99.9 m by 0.1 m - are refused by
+     * that one whatever their area is. The width term's own boundary is
+     * MinBuildingWidthTests.TheWidthFloorIsExclusiveAtTheBoundaryAndTheGridIsADecimetre,
+     * and it is EXCLUSIVE where this one is inclusive.
      */
     [Fact]
     public void TheFloorIsInclusiveAndTheBoundaryIsExact()
     {
         Assert.Equal(10f, MetaGen.MinBuildingArea);
 
-        Assert.True(QuarterGenerator.CanCarryABuilding(_rect(100, 10)),
+        Assert.True(QuarterGenerator.CanCarryABuilding(_rect(40, 25)),
             "exactly ten square metres has to be enough");
-        Assert.False(QuarterGenerator.CanCarryABuilding(_rect(100, 9)),
-            "nine square metres has to be refused");
+        Assert.False(QuarterGenerator.CanCarryABuilding(_rect(40, 24)),
+            "nine point six square metres has to be refused");
 
         /*
          * ...and a hundredth of a square metre under the floor, which is one unit of
          * Clipper's own grid squared and the finest a difference here can be.
          */
-        var justUnder = _rect(999, 1);
+        var justUnder = _rect(37, 27);
         Assert.InRange(Math.Abs(Clipper.Area(justUnder)) / 100.0, 9.98, 10.0);
+        Assert.True(BlockGraph.SurvivesInsetBy(justUnder, 0.5f * MetaGen.MinBuildingWidth),
+            "the fixture has to be wide enough for the width term to accept it");
         Assert.False(QuarterGenerator.CanCarryABuilding(justUnder));
     }
 
@@ -614,40 +660,21 @@ public class MinBuildingAreaTests
 
 
     /**
-     * Half the polygon's own narrowest width, in metres: the widest uniform inset it still
-     * survives, binary searched to a tenth of a millimetre through the very ClipperOffset
-     * the estate's inset goes through. EmptyBlockTests measures a block the same way.
+     * Half the polygon's own narrowest width, in metres, and whether it survives one
+     * particular inset.
+     *
+     * ⚠️ ONE COPY EACH, and since §7z both are production expressions: the width half of
+     * `CanCarryABuilding` asks exactly "does this piece survive an inset of
+     * MetaGen.MinBuildingWidth / 2", so `BlockGraph.SurvivesInsetBy` is the predicate and
+     * MinBuildingWidthTests.HalfWidthOf is the search over it. This file and EmptyBlockTests
+     * used to carry a copy each.
      */
     private static double _halfWidthOf(IList<Vector3> outline)
-    {
-        if (outline.Count < 3) return 0.0;
-
-        double lo = 0.0, hi = 256.0;
-        for (int i = 0; i < 22; ++i)
-        {
-            double mid = 0.5 * (lo + hi);
-            if (_survivesInsetBy(outline, mid)) lo = mid; else hi = mid;
-        }
-
-        return lo;
-    }
+        => MinBuildingWidthTests.HalfWidthOf(outline);
 
 
-    /** Does this outline still enclose anything when it is inset by d metres? */
     private static bool _survivesInsetBy(IList<Vector3> outline, double d)
-    {
-        if (outline.Count < 3) return false;
-
-        var poly = outline
-            .Select(p => new IntPoint((int)(p.X * 10f), (int)(p.Z * 10f))).ToList();
-
-        var offset = new ClipperOffset();
-        offset.AddPath(poly, JoinType.jtMiter, EndType.etClosedPolygon);
-        var solution = new List<List<IntPoint>>();
-        offset.Execute(ref solution, -d * 10.0);
-
-        return solution.Any(p => p.Count > 0);
-    }
+        => BlockGraph.SurvivesInsetBy(MinBuildingWidthTests.AsPath(outline), (float)d);
 
 
     private static double _median(IEnumerable<double> values)

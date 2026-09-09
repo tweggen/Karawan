@@ -3,10 +3,22 @@
 **Status:** open ledger. This is the file to read first when picking up the
 terrain-following city work.
 **Companion:** [`STREETS-3D-TOPOLOGY.md`](STREETS-3D-TOPOLOGY.md) is the design and
-history document — every fix is written up there as §7a … §7y, with the measurements that
+history document — every fix is written up there as §7a … §7z, with the measurements that
 drove it. This file is only *what is still wrong* and *what to do about it*.
 
-**Last updated:** 2026-09-08 (**the owner's ten square metre floor**: a piece of buildable land
+**Last updated:** 2026-09-09 (**the owner's two metre width floor**: a piece of buildable land
+narrower than `engine.world.MetaGen.MinBuildingWidth` = 2 m gets **no building**, which closes
+§7y.6's slivers — buildings under two metres thick **0 / 14 → 0 / 0**, thinnest building
+anywhere 2.90 / 0.32 → **2.90 / 2.17 m**, at a cost of **0 and 14** buildings and **0 and 271**
+shopfronts. ⚠️ **The number is derived** — `_designBuilding` has capped a building with a 2 m
+side at one storey since long before this work — **and it is a floor, not the distribution's
+break**, which is at ~2.55 m where the compact 10 m² triangles begin; four ribbons survive in
+between and that is said out loud. ⚠️ **The flat city does not move by a single building.**
+⚠️ **And §7y.5 has a sign**: the draw shift **takes a 28 411 m² building away** where §7y saw it
+give a 1450 m² one, so the −14 is one gain cancelling one loss. The instrument is §7x's
+half-width hoisted into production, **not** `minHouseSide`, which after the rule is still short
+on 1442 / 921 perfectly fat buildings. No baseline moved, no `DbVersion` bump.
+`STREETS-3D-TOPOLOGY.md` §7z. The day before, **the owner's ten square metre floor**: a piece of buildable land
 under `engine.world.MetaGen.MinBuildingArea` = 10 m² gets **no building**, which closes §7x.8's
 matchboxes — buildings under a square metre **4 / 53 → 0**, smallest building anywhere
 0.030 / 0.005 → **11.92 / 10.05 m²**, at a cost of **16 and 194** buildings and **2 and 13**
@@ -1752,6 +1764,8 @@ A minimum WIDTH is a second owner decision. If it is ever taken, the instrument 
 outline's own half-width and **not** `minHouseSide`, which is short at a mitred corner far more
 often than on a sliver: 1439 / 725 blocks have a building with a side under 2 m and they are
 ordinary fat buildings.
+✅ **The owner decided the next day and it is the section below — including the instrument,
+which is exactly the half-width this paragraph named.**
 
 Gate: `tests/JoyceCode.Tests/engine/streets/MinBuildingAreaTests.cs` (17 new; **1847 xUnit**
 against 1830, TALE 200/200). Twelve mutations, **none survived**; ⚠️ two of them are killed by
@@ -1768,6 +1782,82 @@ assembly has loaded the game's global settings first. So it passed or failed on 
 near-always red in a tree that has baked assets under `nogame/generated/` and never red in one
 without, which is why it was seen once and called intermittent. The gate takes the type off the
 objects it is about to store now.
+
+---
+
+### ✅ 2026-09-09: a piece of land under two metres across carries no building
+
+§7y's own *found and not fixed* — *"area alone does not bound a sliver"* — closed by the
+owner's second decision, with the number left to be derived. Full write-up and every number in
+`STREETS-3D-TOPOLOGY.md` §7z.
+
+**The number, derived and checked before it was adopted.**
+`engine.world.MetaGen.MinBuildingWidth = 2f`, from `_designBuilding`'s `minHouseSide <= 2.0f`
+— the tree has held a building whose shortest side is 2 m or less to a **single storey** since
+long before this work, so the same magnitude in the same domain deciding existence rather than
+height. ⚠️ **And it is a FLOOR, not the distribution's break, which is the thing to lead with.**
+The cliff is at about **2.55 m**: four ribbons stand between 2.0 and 2.5 and survive (the worst
+**140 m² of floor 2.17 m thick round a 206 m perimeter**), and immediately above them begins the
+run of perfectly good compact triangles sitting exactly on `MinBuildingArea` — an equilateral
+triangle of 10 m² is **2.77 m** thick, so a floor much over 2.5 would refuse the smallest
+building the owner's own area rule permits. Two metres is safely below that; moving it up is an
+owner decision, not a free tightening.
+
+**The instrument is §7x's half-width, hoisted into production.**
+`engine.streets.generation.BlockGraph.SurvivesInsetBy` — *does this polygon survive being inset
+by r all round* — through the very `ClipperOffset` the estate's own inset goes through. §7x's
+half-width is that predicate binary searched; there were **two copies of the search in the test
+tree and none in production**, and there is one of each now.
+`QuarterGenerator.CanCarryABuilding` gains a **second term of one predicate**, not a third gate:
+⚠️ the two are independent and neither subsumes the other — the disc the width rule asks for has
+an area of π ≈ **3.14 m²**, so a 20 m² ribbon passes area and fails width and a 2.2 m square
+passes width and fails area, both as fixtures.
+
+**What it costs (grade separation is the default, so flag on is shipped):**
+
+| | flag off | flag on |
+|---|---|---|
+| pieces of land refused for width | **0** of 40 914 | **21** of 38 797 |
+| buildings | 27 387 → **27 387** | 25 860 → **25 846** |
+| blocks carrying a building | 27 374 → **27 374** | 25 025 → **25 012** |
+| shopfronts | 572 402 → **572 402** | 527 794 → **527 523** |
+| thinnest building anywhere | 2.90 → **2.90 m** | 0.32 → **2.17 m** |
+| `estateTooSmall` | 29 → **29** | 828 → **846** |
+
+**14 removed against §7y.6's predicted 14.** ⚠️ **The flat city does not move by a single
+building** — no piece of land in any flag-off city is that thin — verified block by block
+against `88fde8ac` rebuilt in a worktree, all 40 891 blocks identical. That makes it §9's
+lesson for the fifth time: a rule invisible to unlimited real data, driven by fixture.
+
+⚠️ **A ribbon is expensive in shopfronts and cheap in area**: 271 shopfronts go, against the 13
+that §7y's 195 matchboxes cost, because `_addShops` sizes a building's shop count by
+**perimeter**. The thinnest carried about nineteen 5 m shopfronts on a wall 0.32 m thick.
+
+⚠️ **AND §7y.5 HAS A SIGN.** Refusing before the 30 % design draw hands the pieces behind a
+refused one the draws their neighbour used to take. §7y saw that **give** a block a 1450 m²
+building; here it **takes a 28 411 m² one away** from `cluster-clusters-mydear-505` while giving
+a 155 m² one to `-190`. So the total falling by exactly 14 is one gain cancelling one loss, not
+a subtraction — measured block by block, and visible independently as
+`ACornerOfTheFloorInsideAFootprintIsAlwaysOnItsBoundary` going **down** by the same three §7y
+took it up.
+
+⚠️ **`minHouseSide` would have been wrong by two orders of magnitude**, which is now a gate
+rather than a note: after the rule, **1442 flag-off and 921 flag-on** buildings still have a
+side of 2 m or less and are ordinary fat buildings, against the 0 and 14 the width rule removed.
+
+**No baseline file moved** (all five byte-identical to `7755a7b1`), **`ClusterStorage.DbVersion`
+is not bumped**, quarters and estates do not move anywhere, `BlockGraphTests`' two censuses do
+not move at all, and the player start does not move.
+
+Gate: `tests/JoyceCode.Tests/engine/streets/MinBuildingWidthTests.cs` (19 new; **1866 xUnit**
+against 1847, TALE 200/200). Fourteen mutations, **three survivors, all provable equivalences
+inside Clipper** (the fewer-than-three-points guard, which `ClipperOffset` enforces itself; "a
+non-empty solution LIST", which its union output can never contradict; and a winding
+normalisation, which its own `FixOrientations` makes redundant). ⚠️ **A fourth survived its
+first round and named something**: swapping the estate's `jtMiter` for a `jtRound` join passes
+over all 79 711 real pieces, so *does a disc fit* is the intuition and *the estate's own mitred
+inset* is the rule — killed by a fixture, a 10.5 m² dart that survives a round inset of a metre
+and not a mitred one.
 
 ---
 
