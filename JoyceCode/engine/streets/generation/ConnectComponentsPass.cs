@@ -28,15 +28,19 @@ internal sealed class ConnectComponentsPass
     private static readonly engine.Dc _dc = engine.Dc.StreetGen;
 
     private readonly StrokeStore _strokeStore;
+    private readonly NetworkBuilder _networkBuilder;
     private readonly int _clusterId;
     private readonly RandomSource _rnd;
     private readonly string _annotation;
 
 
     internal ConnectComponentsPass(
-        StrokeStore strokeStore, int clusterId, RandomSource rnd, string annotation)
+        StrokeStore strokeStore, NetworkBuilder networkBuilder,
+        int clusterId, RandomSource rnd, string annotation)
     {
         _strokeStore = strokeStore;
+        _networkBuilder = networkBuilder
+            ?? throw new ArgumentNullException(nameof(networkBuilder));
         _clusterId = clusterId;
         _rnd = rnd;
         _annotation = annotation;
@@ -170,6 +174,18 @@ internal sealed class ConnectComponentsPass
             float minDist = float.MaxValue;
             foreach (var mainPoint in main)
             {
+                /*
+                 * Distance here is PLAN distance, and two junctions on different decks
+                 * can be stacked exactly on top of one another - that stacking is what
+                 * an overpass is. Joining them would be a road climbing eight metres
+                 * through the air over no distance at all, which NetworkBuilder refuses
+                 * outright; so a candidate on another deck is not a candidate.
+                 *
+                 * Every junction of a ground-only city is on level 0, so this admits
+                 * exactly the set it always did there.
+                 */
+                if (mainPoint.Level != hullPoint.Level) continue;
+
                 float dist = Vector2.Distance(hullPoint.Pos, mainPoint.Pos);
                 if (dist < minDist)
                     minDist = dist;
@@ -190,6 +206,8 @@ internal sealed class ConnectComponentsPass
 
         foreach (var mainPoint in main)
         {
+            if (mainPoint.Level != bestOrphanPoint.Level) continue;
+
             float dist = Vector2.Distance(mainPoint.Pos, bestOrphanPoint.Pos);
             if (dist < minMainDist && !orphan.Contains(mainPoint))
             {
@@ -198,7 +216,20 @@ internal sealed class ConnectComponentsPass
             }
         }
 
-        if (bestMainPoint == null) return false;
+        if (bestMainPoint == null)
+        {
+            /*
+             * Refusing to bridge leaves the orphan disconnected, which is visible and
+             * survivable; guessing a partner on another deck is not. Reported rather
+             * than traced: a bundle that never reattaches is a real defect in whatever
+             * ruleset produced it, and a Trace is filtered off by default.
+             */
+            Warning(_dc,
+                $"{_annotation}: no junction on level {bestOrphanPoint.Level} to bridge "
+                + $"an orphan bundle of {orphan.Count} junctions to; leaving it "
+                + $"disconnected.");
+            return false;
+        }
 
         // Create bridge stroke(s)
         float bridgeDistance = Vector2.Distance(bestOrphanPoint.Pos, bestMainPoint.Pos);
@@ -234,7 +265,13 @@ internal sealed class ConnectComponentsPass
             Kind = StrokeKind.ConnectorBridge
         };
         bridge.PushCreator("orphan_bridge");
-        _strokeStore.AddStroke(bridge);
+
+        /*
+         * Through NetworkBuilder rather than straight into the store. This pass used to
+         * be the one place that added strokes without the level rules ever being
+         * consulted.
+         */
+        _networkBuilder.Commit(bridge);
     }
 
     /// <summary>
@@ -254,8 +291,22 @@ internal sealed class ConnectComponentsPass
         float offset = 40f + _rnd.GetFloat() * 40f;  // Random curve amount
         mid += perpendicular * offset;
 
-        // Create intermediate point
-        var midPoint = new StreetPoint { ClusterId = _clusterId };
+        /*
+         * Create intermediate point. On the deck its two ends are on: both ends of a
+         * corridor are on the same level by construction (the caller only pairs
+         * junctions that are), and a mid point left on the default level 0 would turn
+         * each half of a level-1 corridor into a stroke joining two decks.
+         *
+         * `mid` used to be computed here - the offset draw included - and never
+         * assigned, so the corridor's middle junction sat at the CLUSTER ORIGIN.
+         * Measured on seed017@2400, the only one of 180 clusters that reaches this
+         * branch: a 318 m gap was bridged by 1341.7 m + 1050.3 m through the middle of
+         * the city. The draw was already being made, so putting the point where it was
+         * always meant to go does not shift the random sequence by one number; it moves
+         * that one cluster's geometry and nothing else's.
+         */
+        var midPoint = new StreetPoint { ClusterId = _clusterId, Level = fromPoint.Level };
+        midPoint.SetPos(mid);
         midPoint.PushCreator("corridor_mid");
 
         // Create two segments: from→mid, mid→to
@@ -281,8 +332,12 @@ internal sealed class ConnectComponentsPass
         };
         seg2.PushCreator("corridor_seg2");
 
-        _strokeStore.AddStroke(seg1);
-        _strokeStore.AddStroke(seg2);
+        /*
+         * CommitChain adds them in list order, so the store and both octrees see
+         * exactly the sequence they always have; what it adds is that neither half goes
+         * in unless both are admissible.
+         */
+        _networkBuilder.CommitChain(new List<Stroke> { seg1, seg2 });
     }
 
     /// <summary>

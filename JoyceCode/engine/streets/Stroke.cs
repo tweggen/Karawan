@@ -84,6 +84,36 @@ public enum StrokeKind : byte
 }
 
 
+/**
+ * What a stroke kind means to the rules that build the network.
+ *
+ * There is exactly one predicate here and it names its three kinds explicitly, because
+ * the tempting shorthand - "anything that is not a Street" - is WRONG in the shipped
+ * game. ConnectComponentsPass lays down ConnectorBridge strokes in ordinary flat
+ * cities, one to three per city (seed011@500 has three, seed017@2400 three,
+ * seed000@1500 two, Yelukhdidru@800 one), and they are ordinary ground roads in every
+ * respect: they may be split, they carry blocks, they are part of the network a
+ * pedestrian walks. A rule phrased against "non-Street" changes the default city.
+ */
+public static class StrokeKinds
+{
+    /**
+     * Part of a grade-separated structure: the ramp that climbs between two decks, and
+     * the bridge or tunnel span the ramps lead onto.
+     *
+     * A structure carries no junction other than the ones its builder gave it. A
+     * junction in the middle of a ramp is a road joining a climb halfway up; a junction
+     * on a bridge deck is a crossroads in the air with nothing under it.
+     */
+    public static bool IsStructure(StrokeKind kind)
+    {
+        return kind == StrokeKind.Ramp
+               || kind == StrokeKind.Bridge
+               || kind == StrokeKind.Tunnel;
+    }
+}
+
+
 public class Stroke
 {
     static private object _classLock = new();
@@ -414,11 +444,24 @@ public class Stroke
 #if false
             return 20f;
 #else
-        var w = Weight;
+        return WidthForWeight(Weight);
+#endif
+    }
+
+
+    /**
+     * The same expression, answerable without a stroke in hand.
+     *
+     * Hoisted so that a rule which needs to know how wide the widest carriageway a
+     * ruleset can build is - the plan-view room a structure has to leave beside itself -
+     * reads the width off the one expression rather than restating it.
+     */
+    public static float WidthForWeight(float weight)
+    {
+        var w = weight;
         //w = w - 0.5;
         if (w < 0f) w = 0f;
         return 8f + w * 9f;
-#endif
     }
 
 

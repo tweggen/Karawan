@@ -24,10 +24,21 @@ public class PickupStrategy : AEntityStrategyPart
 
     public override void OnEnter()
     {
+        /*
+         * The height of the SURFACE the city is built on, not of the terrain under it plus
+         * the vehicle hover clearance.
+         *
+         * The marker cube rests on this position (QuestMarker), so this is where its
+         * bottom face lands. GetHeightAt is the terrain, and in a city that keeps its
+         * terrain the terrain is not the road: measured at every junction of the four
+         * baseline cities, terrain + ClusterNavigationHeight put the cube's bottom below
+         * the pavement at 88 to 93 % of them, 0.65 m at the median and 9.8 m at the worst.
+         * A quest destination is placed at a junction (engine.Placer, Reference.StreetPoint),
+         * and a junction is the one place where the built surface has an exact height.
+         */
         var v3Target = GuestPosition with
         {
-            Y = I.Get<engine.world.MetaGen>().Loader.GetHeightAt(GuestPosition) +
-                engine.world.MetaGen.ClusterNavigationHeight
+            Y = I.Get<engine.world.MetaGen>().Loader.GetCitySurfaceHeightAt(GuestPosition)
         };
 
         _questTarget = new engine.quest.ToLocation()

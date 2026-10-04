@@ -27,34 +27,15 @@ public class GenerateCharacterOperator : IWorldOperator
      * Create the actual route of the intercity. This right now will follow
      * the direct connection from A to B, we only compute the height required.
      */
-    private async void _createIntercity(Vector3 caPos, Vector3 cbPos, float relpos)
+    private async void _createIntercity(Vector3 caPos, Vector3 cbPos, float trackHeight)
     {
         /*
-         * Read all data we need to scale our drawing.
+         * Both ends take the track's own height plus the vehicle clearance, so the
+         * vehicle rides its own track instead of flying a chord between two cities'
+         * average heights - which put it a median 44 m over the ribbon it runs on.
          */
-        Vector3 vuAB = Vector3.Normalize(cbPos - caPos);
-        Vector3 vuUp = new Vector3(0f, 1f, 0f);
+        SegmentRoute sr = engine.world.IntercityLine.RouteBetween(caPos, cbPos, trackHeight);
 
-        SegmentRoute sr = new()
-        {
-            Segments = new()
-            {
-                new()
-                {
-                    Position = caPos,
-                    Up = vuUp,
-                    Right = Vector3.Cross(vuAB, vuUp)
-                },
-                new()
-                {
-                    Position = cbPos,
-                    Up = vuUp,
-                    Right = Vector3.Cross(-vuAB, vuUp)
-                }
-            },
-            LoopSegments = true
-        };
-        
         SegmentNavigator segnav = new SegmentNavigator()
         {
             SegmentRoute = sr,
@@ -109,9 +90,7 @@ public class GenerateCharacterOperator : IWorldOperator
 
         foreach (var line in lines)
         {
-            Vector3 caPos = line.StationA.Position with { Y = line.ClusterA.AverageHeight + 20f };
-            Vector3 cbPos = line.StationB.Position with { Y = line.ClusterB.AverageHeight + 20f };
-            _createIntercity(caPos, cbPos, 0.5f);
+            _createIntercity(line.StationA.Position, line.StationB.Position, line.Height);
         }
     });
 

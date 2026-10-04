@@ -134,14 +134,40 @@ namespace nogame.terrain
 
             /*
              * Create the entire default ElevationPixel info from the local array.
+             *
+             * Both loops are inclusive. A segment carries GroundResolution + 1 samples per
+             * dimension, the last of which is the boundary shared with the next fragment,
+             * and leaving it out does not leave a gap - it leaves a row of default
+             * ElevationPixel, i.e. a height of exactly zero.
+             *
+             * That went unnoticed for a long time because almost nothing reads it. The
+             * terrain mesh comes from Cache._elevationCacheGetRectAt, which stitches
+             * indices k*gr .. (k+1)*gr-1 out of each fragment and takes the boundary sample
+             * from the NEXT fragment's index 0, so the drawn ground never touched this row;
+             * and every operator above the base layer refills its whole target from
+             * GetElevationSegmentBelow, which is that same stitcher, so inside a city the
+             * row was written from the neighbour. What was left is
+             * CacheEntry.GetElevationPixelAt, which reads elevations[ey+1, ex] directly:
+             * outside every cluster, a point query in the last 20 m strip of a fragment
+             * interpolated between a real height and zero. That is Loader.GetHeightAt, so
+             * ClusterDesc.GroundHeightAt, GetWalkingHeightAt, the hover probe's terrain
+             * fallback and debris placement all read it.
+             *
+             * Note the index order: the array is [ez, ex] for every reader, so y indexes
+             * rows and x indexes columns. The two were the other way round here, which is
+             * why the dimension the exclusive loop dropped was the last Z row rather than
+             * the last X column.
+             *
+             * JoyceCode.Tests ElevationGridCoverageTests measures all of the above against
+             * the real cache, and scans this loop so the row cannot go missing again.
              */
             for (int y=y0; y<=y1; y++)
             {
-                for (int x = x0; x < x1; x++)
+                for (int x = x0; x <= x1; x++)
                 {
-                    elevationSegment.Elevations[x, y] = new ElevationPixel()
+                    elevationSegment.Elevations[y, x] = new ElevationPixel()
                     {
-                        Height = localElevations[x, y],
+                        Height = localElevations[y, x],
                         Biome = 0,
                         Flags1 = 0
                     };

@@ -154,6 +154,33 @@ internal sealed class NetworkBuilder
         }
 
         /*
+         * The backstop, not the mechanism.
+         *
+         * A split adds a junction to an existing stroke, and a structure may not carry
+         * one: a junction halfway up a ramp is a road joining a climb, and a junction on
+         * a bridge deck is a crossroads in the air. What actually prevents it is that
+         * StrokeStore.IntersectsMayTouchClosest does not report a structure at all, so
+         * no Split verdict naming one can be produced. This is here because splitting
+         * used to reach AddStroke directly, bypassing _checkLevels entirely, so nothing
+         * in this class would have noticed.
+         */
+        if (StrokeKinds.IsStructure(existing.Kind))
+        {
+            ErrorThrow(
+                $"Cannot split {existing} of kind {existing.Kind}: a ramp, bridge or "
+                + $"tunnel carries no junction other than the ones its builder gave it.",
+                m => new InvalidOperationException(m));
+        }
+
+        if (at.Level != existing.Level)
+        {
+            ErrorThrow(
+                $"Cannot split stroke {existing} on level {existing.Level} at point {at} "
+                + $"on level {at.Level}: the two halves would each join two decks.",
+                m => new InvalidOperationException(m));
+        }
+
+        /*
          * We must not modify the topology of the graph directly. Remove the edge
          * first, then modify the nodes, then re-add.
          */

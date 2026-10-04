@@ -179,7 +179,8 @@ public class Network
             ClusterB = clusterB,
             StationA = stationA,
             StationB = stationB,
-            Height = Single.Min(clusterA.AverageHeight, clusterB.AverageHeight)
+            Height = engine.world.IntercityLine.TrackHeightOf(
+                clusterA.AverageHeight, clusterB.AverageHeight)
         };
 
         _mapLines.Add(ld.Hash(), line);

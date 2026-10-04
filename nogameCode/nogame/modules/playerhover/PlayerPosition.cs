@@ -16,28 +16,20 @@ public class PlayerPosition : AModule
 
     /**
      * Find and return a suitable start position for the player.
-     * We know there is a cluster around 0/0, so find it, and find an estate
-     * within without a house build upon it.
+     *
+     * engine.world.PlayerStart owns this, because the coins a new game is seeded with
+     * must appear at the same place and are placed by a different module at a different
+     * time. It also owns the frame: this function used to add the start cluster's own
+     * origin to a position that already carried it in one of the two branches below it.
      */
     private void _findStartPosition(out Vector3 v3Start, out Quaternion qStart)
     {
-        ClusterDesc startCluster = I.Get<ClusterList>().GetClusterAt(Vector3.Zero);
-        if (null != startCluster)
-        {
-            
-            startCluster.FindStartPosition(out v3Start, out qStart);
-            v3Start += startCluster.Pos;
-            Trace($"Startposition is {v3Start} {qStart}");
-        }
-        else
-        {
-            v3Start = new Vector3(0f, 200f, 0f);
-            qStart = Quaternion.Identity;
-            Trace($"No start cluster found, using default startposition is {v3Start} {qStart}");
-        }
+        StartPose pose = PlayerStart.Find();
+        v3Start = pose.V3World;
+        qStart = pose.QOrientation;
     }
 
-    
+
     public void GetPlayerPosition(out Vector3 Position, out Quaternion Orientation)
     {
         var gameState = M<AutoSave>().GameState;

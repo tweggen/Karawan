@@ -26,6 +26,34 @@ internal sealed class EmitterSettings
      */
     internal Vector2 BottomLeft;
     internal Vector2 TopRight;
+
+
+    /**
+     * How long a street this ruleset lays at the given weight.
+     *
+     * ⚠️ THE ONE EXPRESSION, and it has two readers now. SuccessorEmitter uses it to
+     * emit; Generator.MaxJunctionSpacing uses it at weightMax to derive how far apart
+     * junctions may be before WP-B4.3 stops calling a road interrupted - because "the
+     * longest street this ruleset lays" is a statement about the ruleset and there may
+     * not be two ideas of what it is. Written exactly as the emitter wrote it, floor,
+     * clamp and all, so no generated city moves by a float.
+     */
+    internal static float LengthAtWeight(
+        float newStrokeMinimum, float newStrokeSquaredWeight, float newLengthMin, float weight)
+    {
+        float newLength = (int)((newStrokeMinimum
+                                 + newStrokeSquaredWeight * (weight * weight)) * 10f) / 10f;
+        if (newLength < newLengthMin)
+        {
+            newLength = newLengthMin;
+        }
+
+        return newLength;
+    }
+
+
+    internal float LengthAtWeight(float weight)
+        => LengthAtWeight(NewStrokeMinimum, NewStrokeSquaredWeight, NewLengthMin, weight);
 }
 
 
@@ -131,12 +159,7 @@ internal sealed class SuccessorEmitter
             float groupWeight = _computeWeight(
                 curr.Weight, groups[g].DecreaseProbability, groups[g].IncreaseProbability);
 
-            float newLength = (int)((_s.NewStrokeMinimum
-                + _s.NewStrokeSquaredWeight * (groupWeight * groupWeight)) * 10f) / 10f;
-            if (newLength < _s.NewLengthMin)
-            {
-                newLength = _s.NewLengthMin;
-            }
+            float newLength = _s.LengthAtWeight(groupWeight);
 
             for (int i = 0; i < rules.Length; ++i)
             {

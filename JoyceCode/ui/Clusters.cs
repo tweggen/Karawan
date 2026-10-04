@@ -35,8 +35,8 @@ public class Clusters : APart
                 {
                     _engine.QueueMainThreadAction(() =>
                     {
-                        clusterDesc.FindStartPosition(out var v3Start, out var qStart);
-                        _engine.BeamTo(v3Start + clusterDesc.Pos, qStart);
+                        var pose = clusterDesc.FindStartPose();
+                        _engine.BeamTo(pose.V3World, pose.QOrientation);
                     });
                 }
 

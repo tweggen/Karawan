@@ -169,15 +169,25 @@ public class StreetHeightSourceTests
 
 
     /**
-     * Over a bend, the road still climbs from one junction's height to the other's,
+     * Over a bend, each SIDE of the road climbs from one junction's height to the other's,
      * never reverses, and never overshoots either end.
      *
-     * This is what replaces "linear in plan distance" once the junction footprints are
-     * held flat: where the rise happens is the implementation's business, but that it
-     * happens once, in one direction, between exactly those two heights, is not.
+     * This is what replaces "linear in plan distance" once a bend is involved: where the
+     * rise happens is the implementation's business, but that it happens once, in one
+     * direction, between exactly those two heights, is not.
+     *
+     * **Superseded, per side.** It used to read "over a bend, the road still climbs ...",
+     * sorting EVERY vertex by axial distance and requiring one monotone sequence, on the
+     * grounds that the road was held flat over each junction's footprint and climbed over a
+     * single window between them. The two sides of a bend do not span the same window - at a
+     * 50 degree bend one junction's corners project to 0.79 and 1.21 of the stroke length -
+     * and a road that climbs over one window meets the kerb chord of neither block beside
+     * it. Each side now climbs between its own two section points, so the surface is warped
+     * and a single sequence over both sides is no longer the right claim: it fell back by
+     * 0.04 m here, purely from interleaving the two. Within one side nothing is weakened.
      */
     [Fact]
-    public void HeightRisesMonotonicallyAlongABentStroke()
+    public void HeightRisesMonotonicallyAlongEachSideOfABentStroke()
     {
         const float gradient = 0.04f;
         const float datum = 120f;
@@ -192,21 +202,31 @@ public class StreetHeightSourceTests
         float hB = _base(cd) + datum + gradient * first.B.Pos.X;
         Assert.True(hB > hA);
 
-        /*
-         * Axial distance along the stroke, which for this stroke is simply x.
-         */
-        var byDistance = mesh.Vertices.OrderBy(v => v.X).ToList();
-
-        Assert.Equal(hA, byDistance.First().Y, 2);
-        Assert.Equal(hB, byDistance.Last().Y, 2);
-
-        float previous = Single.NegativeInfinity;
-        foreach (var v in byDistance)
+        foreach (float side in new[] { -1f, 1f })
         {
-            Assert.InRange(v.Y, hA - 0.001f, hB + 0.001f);
-            Assert.True(v.Y >= previous - 0.001f,
-                $"height must not fall back along the road: {v.Y} after {previous}");
-            previous = v.Y;
+            /*
+             * Axial distance along the stroke, which for this stroke is simply x, and the
+             * lateral offset, which is simply z about the centre line.
+             */
+            var byDistance = mesh.Vertices
+                .Where(v => side * (v.Z - first.A.Pos.Y) > 0f)
+                .OrderBy(v => v.X)
+                .ToList();
+
+            Assert.True(byDistance.Count >= 2,
+                $"the side at {side} carries {byDistance.Count} vertices");
+
+            Assert.Equal(hA, byDistance.First().Y, 2);
+            Assert.Equal(hB, byDistance.Last().Y, 2);
+
+            float previous = Single.NegativeInfinity;
+            foreach (var v in byDistance)
+            {
+                Assert.InRange(v.Y, hA - 0.001f, hB + 0.001f);
+                Assert.True(v.Y >= previous - 0.001f,
+                    $"height must not fall back along the road: {v.Y} after {previous}");
+                previous = v.Y;
+            }
         }
     }
 
@@ -275,6 +295,13 @@ public class StreetHeightSourceTests
      * while the normal is tilted by the wrong amount - which it was, when the slope was
      * taken over the full plan length while the road climbed over the shorter run
      * between the two junction footprints.
+     *
+     * **Superseded, per side, for the reason the monotonicity test above was.** It used to
+     * take the lowest and highest climbing vertex of the WHOLE stroke and require every
+     * normal perpendicular to that one gradient. The two sides of a bend climb over
+     * different runs, so they are at different angles and there is no single gradient for
+     * both: measured across them the mixture came out at 8.9 % against the 13.1 % each side
+     * actually carries. Measured within one side, the requirement is what it was.
      */
     [Fact]
     public void TheSlopeNormalMatchesTheGradientOfTheSurface()
@@ -298,34 +325,45 @@ public class StreetHeightSourceTests
         float hA = _base(cd) + datum + gradient * first.A.Pos.X;
         float hB = _base(cd) + datum + gradient * first.B.Pos.X;
 
-        /*
-         * Strictly between the two junction heights, so both are on the carriageway
-         * rather than on a flat footprint.
-         */
-        var climbing = Enumerable.Range(0, mesh.Vertices.Count)
-            .Where(i => mesh.Vertices[i].Y > hA + 0.01f && mesh.Vertices[i].Y < hB - 0.01f)
-            .ToList();
+        int nSides = 0;
 
-        Assert.True(climbing.Count >= 2, "the road must have vertices part way up");
+        foreach (float side in new[] { -1f, 1f })
+        {
+            /*
+             * Strictly between the two junction heights, so both are on the carriageway
+             * rather than on a flat footprint, and on one side of the centre line, so the
+             * gradient measured is one surface's rather than a mixture of two.
+             */
+            var climbing = Enumerable.Range(0, mesh.Vertices.Count)
+                .Where(i => mesh.Vertices[i].Y > hA + 0.01f && mesh.Vertices[i].Y < hB - 0.01f)
+                .Where(i => side * (mesh.Vertices[i].Z - first.A.Pos.Y) > 0f)
+                .ToList();
 
-        int lo = climbing.OrderBy(i => mesh.Vertices[i].X).First();
-        int hi = climbing.OrderBy(i => mesh.Vertices[i].X).Last();
+            if (climbing.Count < 2) continue;
 
-        float run = mesh.Vertices[hi].X - mesh.Vertices[lo].X;
-        float rise = mesh.Vertices[hi].Y - mesh.Vertices[lo].Y;
-        Assert.True(run > 1f, "need two vertices far enough apart to measure a gradient");
+            int lo = climbing.OrderBy(i => mesh.Vertices[i].X).First();
+            int hi = climbing.OrderBy(i => mesh.Vertices[i].X).Last();
 
-        /*
-         * This stroke runs along +X, so the surface tangent along the road is simply
-         * (run, rise) in the XY plane.
-         */
-        Vector3 tangent = Vector3.Normalize(new Vector3(run, rise, 0f));
+            float run = mesh.Vertices[hi].X - mesh.Vertices[lo].X;
+            float rise = mesh.Vertices[hi].Y - mesh.Vertices[lo].Y;
+            if (run <= 1f) continue;
 
-        Assert.All(climbing, i =>
-            Assert.True(
-                Math.Abs(Vector3.Dot(Vector3.Normalize(mesh.Normals[i]), tangent)) < 0.001f,
-                $"normal {mesh.Normals[i]} is not perpendicular to the surface "
-                + $"(gradient {rise / run:F4})"));
+            ++nSides;
+
+            /*
+             * This stroke runs along +X, so the surface tangent along the road is simply
+             * (run, rise) in the XY plane.
+             */
+            Vector3 tangent = Vector3.Normalize(new Vector3(run, rise, 0f));
+
+            Assert.All(climbing, i =>
+                Assert.True(
+                    Math.Abs(Vector3.Dot(Vector3.Normalize(mesh.Normals[i]), tangent)) < 0.001f,
+                    $"normal {mesh.Normals[i]} is not perpendicular to the surface "
+                    + $"(gradient {rise / run:F4})"));
+        }
+
+        Assert.True(nSides > 0, "the road must have vertices part way up");
     }
 
 

@@ -110,6 +110,22 @@ public class StrokeStore
                 continue;
             }
 
+            if (StrokeKinds.IsStructure(stroke.Kind))
+            {
+                /*
+                 * A ramp is recorded on the deck it LEAVES from, so unlike a bridge it
+                 * is not separated from the ground by the level test above - and the
+                 * only thing an intersection with it can produce is a split, i.e. a
+                 * junction halfway up a climb. So a structure is not visible to this
+                 * query at all: the refusal lives in the verdict rather than in the
+                 * throw that NetworkBuilder.SplitStrokeAt keeps as a backstop.
+                 *
+                 * Staying clear of a ramp in PLAN is a separate matter and belongs to
+                 * ClearanceConstraint, which runs just before this one.
+                 */
+                continue;
+            }
+
             var si = stroke.Intersects(cand);
             if (null == si)
             {
@@ -576,6 +592,27 @@ public class StrokeStore
      * once, so the caller decides which of its ends matter.
      */
     public IEnumerable<Stroke> GetRampsNear(in Stroke stroke, float maxDistance)
+        => _strokesNear(stroke, maxDistance, onlyRamps: true);
+
+
+    /**
+     * Every stroke, of any kind and any level, whose bounding box comes within
+     * maxDistance of the given one - and, unlike the four endpoint terms alone, one that
+     * CROSSES it.
+     *
+     * The same neighbourhood query as GetRampsNear and deliberately the same expression:
+     * §7.1 of STREETS-3D-PHASE-B-CROSSING-POLICY is a whole work package's worth of
+     * evidence that the endpoint terms on their own miss the one case a clearance rule
+     * exists for. A second copy of that test is how the two come to disagree.
+     *
+     * Level is not filtered here. What separation two strokes on different decks need is
+     * the caller's question, and a ramp is on both of its decks at once.
+     */
+    public IEnumerable<Stroke> GetStrokesNear(in Stroke stroke, float maxDistance)
+        => _strokesNear(stroke, maxDistance, onlyRamps: false);
+
+
+    private IEnumerable<Stroke> _strokesNear(in Stroke stroke, float maxDistance, bool onlyRamps)
     {
         List<Stroke> found = new();
 
@@ -590,15 +627,25 @@ public class StrokeStore
 
         foreach (var cand in nearby)
         {
-            if (cand.Kind != StrokeKind.Ramp || cand == stroke)
+            if (cand == stroke || (onlyRamps && cand.Kind != StrokeKind.Ramp))
             {
                 continue;
             }
 
+            /*
+             * The four endpoint-to-segment distances are the distance between two
+             * segments only when they do NOT cross. Two segments crossing at their
+             * midpoints have all four endpoints far away and a true distance of zero -
+             * so as written, this query missed the one case it exists to catch: a
+             * street laid straight through a ramp. It would then not be split either,
+             * because a structure is invisible to the intersection query, and the road
+             * would simply pass through the ramp with nothing recording that it had.
+             */
             if (cand.Distance(stroke.A.Pos) <= maxDistance
                 || cand.Distance(stroke.B.Pos) <= maxDistance
                 || stroke.Distance(cand.A.Pos) <= maxDistance
-                || stroke.Distance(cand.B.Pos) <= maxDistance)
+                || stroke.Distance(cand.B.Pos) <= maxDistance
+                || null != cand.Intersects(stroke))
             {
                 found.Add(cand);
             }
@@ -648,15 +695,53 @@ public class StrokeStore
 
 
     /**
+     * Take a junction out of this network entirely.
+     *
+     * THE POINT OF THIS METHOD IS THE OCTREE, not the list. Dropping a junction from
+     * _listPoints alone leaves it in _octreeSP, where it goes on answering
+     * FindClosestBelowButNot and GetClosestPoint - the two queries the generator uses to
+     * decide whether a candidate should snap onto an existing junction. A junction that
+     * is not in the network but still wins those queries is a ghost: candidates snap onto
+     * a point no stroke touches, and the resulting stroke ends nowhere. PolishStreetPoints
+     * did exactly that, harmlessly only because it runs after generation has finished.
+     * Nothing that removes a junction DURING generation could have used it.
+     *
+     * Refuses a junction that still carries strokes. Removing one would leave those
+     * strokes' endpoints pointing at a point the store does not have, which is a broken
+     * graph rather than a smaller one - take the strokes out first.
+     */
+    public void RemovePoint(in StreetPoint sp)
+    {
+        if (!sp.InStore)
+        {
+            ErrorThrow($"Cannot remove point {sp}: it is not in a store.",
+                m => new InvalidOperationException(m));
+        }
+
+        if (sp.HasStrokes())
+        {
+            ErrorThrow(
+                $"Cannot remove point {sp}: it still carries strokes, whose endpoints "
+                + $"would then name a junction this network does not have.",
+                m => new InvalidOperationException(m));
+        }
+
+        _octreeSP.Remove(sp);
+        _listPoints.Remove(sp);
+        sp.InStore = false;
+    }
+
+
+    /**
      * Validate the set of street points if all street points meet the required conditions.
      * Required conditions are
      * - street point has connected strokes.
      */
     public void PolishStreetPoints()
     {
-        List<int> deadPoints = new();
+        List<StreetPoint> deadPoints = new();
         int l = _listPoints.Count;
-        
+
         /*
          * Note that we are adding the streetpoints from the last to the first.
          */
@@ -666,14 +751,22 @@ public class StrokeStore
             if (false
                 || !sp.HasStrokes())
             {
-                deadPoints.Add(i);
+                deadPoints.Add(sp);
             }
         }
 
-        foreach (var idx in deadPoints)
+        foreach (var sp in deadPoints)
         {
-            Trace($"Removing point @{idx} in cluster.");
-            _listPoints.RemoveAt(idx);
+            /*
+             * Through RemovePoint, so the junction leaves the octree as well. This used
+             * to remove it from the list only, which is survivable exactly because this
+             * runs after Generate() has returned and nothing queries the point octree
+             * afterwards - but it is the shape of the defect that would defeat any
+             * removal during generation, so there is one removal primitive and this uses
+             * it.
+             */
+            Trace(_dc, $"Removing strokeless point {sp} from cluster.");
+            RemovePoint(sp);
         }
     }
     

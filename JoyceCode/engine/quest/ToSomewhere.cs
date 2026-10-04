@@ -187,9 +187,15 @@ public class ToSomewhere : AModule
         _eMeshMarker = _engine.CreateEntity($"quest.goal {Name} mesh marker");
         _eMeshMarker.Set(new engine.joyce.components.Instance3(_jMeshGoal.Value));
         I.Get<HierarchyApi>().SetParent(_eMeshMarker, _eMarker);
+        /*
+         * The cube RESTS on the goal instead of straddling it. Its own mesh is centred on
+         * its origin, so without the offset the visible bottom sits half the marker's
+         * height below the position the quest picked - see QuestMarker, which owns both
+         * halves of that arithmetic so they cannot part company again.
+         */
         I.Get<TransformApi>().SetTransforms(_eMeshMarker, true, 0x0000ffff, Quaternion.Identity,
-            Vector3.Zero,
-            new Vector3(SensitiveRadius, 3f, SensitiveRadius));
+            QuestMarker.RestOffset,
+            QuestMarker.ScaleFor(SensitiveRadius));
         _eMeshMarker.Set(
             new engine.behave.components.Behavior(_goalMarkerSpinBehavior.Value)
             {
@@ -245,18 +251,14 @@ public class ToSomewhere : AModule
                 MapCameraMask | 0x00000001,
                 Quaternion.Identity, Vector3.Zero);
 
-            var jMesh = joyce.Mesh.CreateListInstance("waypoints");
-            foreach (var nl in listLanes)
-            {
-                builtin.modules.satnav.RouteRibbon.QuadFor(
-                    nl, TransportType,
-                    out var v3Origin, out var v3Across, out var v3Along);
+            /*
+             * The whole ribbon, built where it can be measured. Not a loop here: a lane's
+             * ribbon is several quads now, and drawing only the first of each keeps every
+             * corner right while cutting straight across the road between them - which is
+             * the defect itself, and which a source scan over this method cannot see.
+             */
+            var jMesh = builtin.modules.satnav.RouteRibbon.MeshFor(listLanes, TransportType);
 
-                joyce.mesh.Tools.AddQuadXYUV(jMesh,
-                    v3Origin, v3Across, v3Along,
-                    Vector2.Zero, Vector2.Zero, Vector2.Zero
-                    );
-            }
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
                 new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.ToSomewhere.materials.waypoint"),
                     jMesh), 10000f);

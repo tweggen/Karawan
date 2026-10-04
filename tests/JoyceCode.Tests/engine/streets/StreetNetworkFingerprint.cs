@@ -80,6 +80,21 @@ internal static class StreetNetworkFingerprint
      */
     internal static string V2(StrokeStore store)
     {
+        var lines = CanonicalLinesV2(store);
+        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n", lines)));
+
+        return string.Format(CultureInfo.InvariantCulture,
+            "n={0},s={1},h={2}",
+            store.GetStreetPoints().Count, lines.Length,
+            Convert.ToHexString(hash).Substring(0, 16));
+    }
+
+
+    /**
+     * The lines V2 hashes, for when a gate has to say HOW a network drifted.
+     */
+    internal static string[] CanonicalLinesV2(StrokeStore store)
+    {
         var lines = new List<string>();
 
         foreach (var stroke in store.GetStrokes())
@@ -95,12 +110,7 @@ internal static class StreetNetworkFingerprint
         }
 
         lines.Sort(StringComparer.Ordinal);
-        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n", lines)));
-
-        return string.Format(CultureInfo.InvariantCulture,
-            "n={0},s={1},h={2}",
-            store.GetStreetPoints().Count, lines.Count,
-            Convert.ToHexString(hash).Substring(0, 16));
+        return lines.ToArray();
     }
 
 

@@ -108,6 +108,55 @@ public class Quarter
     }
 
 
+    private bool _isSidewalkWidthValid;
+    private float _sidewalkWidth;
+
+
+    /**
+     * How wide this block's pavement is, in metres.
+     *
+     * Two things need this number and they have to be the SAME number: the block floor
+     * insets its cap by it, so that the strip along the kerb is level across, and
+     * QuarterGenerator._createBuildings insets the estate by it to find the building
+     * footprint. If the two ever drift apart, the pavement and the building wall stop
+     * meeting - a gap or an overlap all the way round every block.
+     *
+     * It has always been computed, used and thrown away inside _createBuildings, which is
+     * also why it is in tenth metres there: that is the unit ClipperOffset works in. Metres
+     * here, converted at the one call site that wants Clipper units.
+     *
+     * Constant per block and derived only from the cluster's downtown field at the block's
+     * centre, so it is cached rather than recomputed. Note this may not be read before the
+     * block's delimiters are complete - GetCenterPoint comes from the AABB they build.
+     */
+    public float SidewalkWidth
+    {
+        get
+        {
+            lock (_lo)
+            {
+                if (!_isSidewalkWidthValid)
+                {
+                    var c = GetCenterPoint();
+                    float downtownness = ClusterDesc.GetAttributeIntensity(
+                        ClusterDesc.Pos + new Vector3(c.X, 0f, c.Y),
+                        world.ClusterDesc.LocationAttributes.Downtown);
+
+                    _sidewalkWidth =
+                        downtownness < 0.2f ? 1f
+                        : downtownness < 0.5f ? 2f
+                        : downtownness < 0.7f ? 4f
+                        : 6f;
+
+                    _isSidewalkWidthValid = true;
+                }
+
+                return _sidewalkWidth;
+            }
+        }
+    }
+
+
     /**
      * A city block is a PAD: one plane, tilted to sit on its own corners.
      *
@@ -248,11 +297,17 @@ public class Quarter
      *
      * NOT GroundHeightAt of the same point. The pad is a plane through corners that are
      * not coplanar, so at a corner it answers with a fit residual, and at a corner the
-     * residual is the whole problem: the block's floor is extruded from here and its top
-     * face is the pavement, so the kerb comes out as QuarterSidewalkOffset plus that
+     * residual is the whole problem: the block's floor is built from here and its top face
+     * is the pavement, so the kerb would come out as QuarterSidewalkOffset plus that
      * residual - and wherever the residual is below minus the kerb, the pavement is under
      * the roadway. Asking the height source for the corner's own junction makes the kerb
      * exactly the kerb.
+     *
+     * The GROUND, in the terms BuildingFooting works in. What the floor's own outline takes
+     * is the ROAD height at the same junction - generation.RoadSurface.HeightAtJunction,
+     * which is this plus the street offset and the deck - because the kerb has to meet a
+     * carriageway written by a different operator and a shared quantity gets one
+     * expression. The two differ only by constants that are zero on the ground.
      *
      * A flat city answers with AverageHeight, exactly, because FlatStreetHeight does -
      * there is no fit in this path to round-trip through.
@@ -260,6 +315,36 @@ public class Quarter
     public float CornerGroundHeightAt(in QuarterDelim delim)
     {
         return ClusterDesc.StreetHeightSource.GroundHeightAt(delim.StreetPoint);
+    }
+
+
+    private generation.BlockFloor _blockFloor;
+    private bool _hasBlockFloor;
+
+
+    /**
+     * This block's floor, as the surface it is drawn as, or null for a block with no cap.
+     *
+     * Cached the way the pad above is, and for the same reason: the outline of a block does
+     * not change once it has been traced, and the answer costs one tessellation. Without it
+     * every building, every shopfront and every TALE door on a block would tessellate it
+     * again.
+     *
+     * See generation.BlockFloor for why a building has to be founded on this rather than on
+     * the block's corner heights.
+     */
+    internal generation.BlockFloor GetBlockFloor()
+    {
+        lock (_lo)
+        {
+            if (!_hasBlockFloor)
+            {
+                _hasBlockFloor = true;
+                _blockFloor = generation.BlockFloor.Build(this);
+            }
+
+            return _blockFloor;
+        }
     }
 
 

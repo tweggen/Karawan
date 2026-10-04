@@ -17,7 +17,7 @@ namespace engine.streets
             Trace(_dc, $"{_annotation}: {message}");
         }
 
-        private List<Stroke> _listStrokesToDo;
+        private CandidateQueue _queue;
         private StrokeStore _strokeStore;
         private generation.NetworkBuilder _networkBuilder;
         private ConnectComponentsPass _connectPass;
@@ -34,6 +34,120 @@ namespace engine.streets
          * The ruleset to grow with. Null means the shipped defaults.
          */
         internal ExpansionRuleTable RuleTable { get; set; }
+
+        /**
+         * Whether this run may build ramps, bridges and tunnels.
+         *
+         * Injected exactly like RuleTable rather than read from GlobalSettings here:
+         * the setting is process global, so a generator that consulted it directly
+         * could not be driven both ways in one test run without leaking into whatever
+         * is generating beside it. ClusterDesc._generateStrokes does the one read of
+         * the setting and passes the answer in.
+         *
+         * Off, this run is bit for bit the ground-only generator: the two structure
+         * constraints are in the pipeline but each returns on its first line, because
+         * RampClearance stays zero and no candidate is a Bridge or a Tunnel.
+         */
+        public bool EnableGradeSeparation { get; set; } = false;
+
+        /**
+         * The UNRELAXED ground under a junction, for the placement pass.
+         *
+         * Injected as a function for the same reason the flag is injected as a value: a
+         * generator that reached for ClusterDesc.StreetHeightSource itself would reach
+         * RelaxedStreetHeight, whose first act is to ask the cluster for its stroke store
+         * - which is what is being generated. The anchor heights a refusal is judged on
+         * are computed here from this and the policy, and they are the game's own
+         * (StructurePlacer's class comment says how).
+         *
+         * Null with the flag on means nothing can be judged, and the placement pass says
+         * so loudly rather than placing nothing quietly.
+         */
+        public Func<StreetPoint, float> GroundHeightOf { get; set; }
+
+        /**
+         * How steep everything here may be. The same defaults StreetHeightSources.For
+         * hands RelaxedStreetHeight, which is what makes a refusal here agree with the
+         * heights the game later computes; settable so a test can drive a policy without
+         * a process global.
+         */
+        public GradePolicy GradePolicy { get; set; } = new();
+
+        /**
+         * What the last run's placement pass did. Null when the flag was off.
+         *
+         * Carried outside GenerationReport - which is opt-in diagnostics - because "how
+         * many structures did this city get, and why not more" is the answer this work
+         * package exists to produce, and it may not depend on somebody having asked for
+         * diagnostics.
+         */
+        public generation.StructurePlacementReport StructurePlacement { get; private set; }
+
+        private float _rampClearance = -1f;
+
+        /**
+         * How far, in plan view, an ordinary stroke must stay from a ramp that reaches
+         * into its own deck. Supplied to the pipeline only when grade separation is on.
+         *
+         * Negative - the default - means "derive": the widest carriageway this ruleset
+         * can build, so that two carriageways at that plan separation just touch. That
+         * is a floor, not a policy; what a structure should actually reserve beside
+         * itself is WP-B2/B3's decision and is expected to set this explicitly.
+         */
+        public float RampClearance
+        {
+            get => _rampClearance >= 0f ? _rampClearance : Stroke.WidthForWeight(weightMax);
+            set => _rampClearance = value;
+        }
+
+        private float _minSpanLength = -1f;
+
+        /**
+         * Shortest bridge or tunnel deck worth building. Negative means "derive": a
+         * deck has to at least span the widest carriageway that can pass under it.
+         */
+        public float MinSpanLength
+        {
+            get => _minSpanLength >= 0f ? _minSpanLength : Stroke.WidthForWeight(weightMax);
+            set => _minSpanLength = value;
+        }
+
+        /**
+         * Longest bridge or tunnel deck. Zero means unbounded, which is what a WP-B1
+         * world gets: how long a deck may stand up is a structural question this work
+         * package deliberately does not answer.
+         */
+        public float MaxSpanLength { get; set; } = 0f;
+
+        private float _maxJunctionSpacing = -1f;
+
+        /**
+         * WP-B4.3. How far the corridor's nearest junction may be for a crossing to be
+         * worth lifting, in metres.
+         *
+         * Negative - the default - means "derive", and the derivation is the ruleset's
+         * own: the LONGEST STREET THIS RULESET LAYS, which is
+         * EmitterSettings.LengthAtWeight at the heaviest weight, 127.5 m for the shipped
+         * numbers - the emitter truncates to a decimetre and 1.3f squared is a hair under
+         * 1.69, so it is not the 127.6 the arithmetic gives on paper. A junction
+         * farther away than any single street the ruleset can lay is a road that is not
+         * being interrupted here, and a crossing on it is one an ordinary at-grade
+         * junction serves perfectly well.
+         *
+         * ⚠️ It is a NARROW window, 27.8 m wide, and that is the ruleset's doing rather
+         * than this rule's: the same corridor must hold a ramp plus the deck's overhang,
+         * 99.7 m with the shipped numbers, so the whole band in which a crossing is both
+         * worth lifting and able to be is 99.7 to 127.5 m. §13.3 measures what it costs.
+         */
+        public float MaxJunctionSpacing
+        {
+            get => _maxJunctionSpacing >= 0f
+                ? _maxJunctionSpacing
+                : generation.EmitterSettings.LengthAtWeight(
+                    newStrokeMinimum, newStrokeSquaredWeight, newLengthMin, weightMax);
+            set => _maxJunctionSpacing = value;
+        }
+
         private ICandidateConstraint[] _pipeline;
         private BoundsConstraint _boundsConstraint;
         private GenerationContext _ctx;
@@ -110,14 +224,13 @@ namespace engine.streets
 
         private bool _haveStrokesToDo()
         {
-            return _listStrokesToDo.Count > 0;
+            return _queue.Count > 0;
         }
 
         private Stroke _popStrokeToDo()
         {
-            var idx = _listStrokesToDo.Count - 1;
-            Stroke stroke = _listStrokesToDo[idx];
-            _listStrokesToDo.RemoveAt(idx);
+            Stroke stroke = _queue.Pop();
+            OnCandidatePopped?.Invoke(stroke, _queue.Pending);
             return stroke;
         }
 
@@ -125,9 +238,23 @@ namespace engine.streets
         {
             if (_inBounds(stroke))
             {
-                _listStrokesToDo.Add(stroke);
+                _queue.Push(stroke);
             }
         }
+
+
+        /**
+         * Called with each candidate as it leaves the queue, together with everything
+         * still waiting behind it.
+         *
+         * The heavy-first ordering is a property of the order candidates actually leave
+         * the queue in, and there is no other way to observe that from outside. Asking
+         * the queue's comparer instead would pass with the queue unwired from the
+         * generator entirely - which is exactly how WP-B1 found two constraints that had
+         * had passing tests for months while sitting outside the pipeline. Null costs
+         * nothing.
+         */
+        internal Action<Stroke, IReadOnlyList<Stroke>> OnCandidatePopped { get; set; }
 
 
         /**
@@ -149,10 +276,40 @@ namespace engine.streets
                 IsTracing = _traceGenerator
             };
 
+            /*
+             * Structure tunables are supplied ONLY with the flag on, and that is a cost
+             * decision as much as a correctness one: ClearanceConstraint short circuits
+             * on RampClearance <= 0 before it reaches the store, whereas
+             * StrokeStore.GetRampsNear allocates two lists on every call. Supplied
+             * unconditionally the network would still be identical and the allocation
+             * gate would trip.
+             */
+            if (EnableGradeSeparation)
+            {
+                _ctx.RampClearance = RampClearance;
+                _ctx.MinSpanLength = MinSpanLength;
+                _ctx.MaxSpanLength = MaxSpanLength;
+            }
+
+            /*
+             * HEAVY FIRST, and only with the flag on.
+             *
+             * A structure has to be placed on a heavy corridor before side streets
+             * attach to it, or lifting the corridor orphans whatever has already grown
+             * off its interior. Draining the queue by weight is what buys that: a branch
+             * is emitted from an already accepted stroke and drawn from a weight group
+             * whose decrease probability is 190 of 256, so the corridor is finished
+             * before its own branches are judged.
+             *
+             * Off, CandidateQueue.Pop is RemoveAt(Count - 1) and nothing else, which is
+             * the stack this generator has always been.
+             */
+            _queue.HeavyFirst = EnableGradeSeparation;
+
             _boundsConstraint = new BoundsConstraint(_bl, _tr);
 
             _connectPass = new ConnectComponentsPass(
-                _strokeStore, _clusterDesc.Id, _rnd, _annotation);
+                _strokeStore, _networkBuilder, _clusterDesc.Id, _rnd, _annotation);
 
             _report = CollectReport ? new GenerationReport() : null;
 
@@ -185,6 +342,31 @@ namespace engine.streets
                 new AngleSeparationConstraint(atB: true),
                 new StrokeNearPointConstraint(),
                 new PointNearStrokeConstraint(),
+
+                /*
+                 * WHERE THE TWO STRUCTURE CONSTRAINTS GO, AND WHY.
+                 *
+                 * After StrokeNearPointConstraint, which is the last constraint that can
+                 * return Restart. Everything above may still move the candidate's far
+                 * end onto an existing junction, and a Reject placed before those would
+                 * throw away a candidate that was about to snap clear of the ramp it is
+                 * being rejected for - the rejection has to be judged on the geometry
+                 * the candidate finally has.
+                 *
+                 * Before IntersectionConstraint, which is much the most expensive check
+                 * here, so a candidate that is going to be refused does not pay for it.
+                 * Span length first of the two: it is pure arithmetic on the candidate,
+                 * while clearance queries the stroke octree.
+                 *
+                 * Neither can move a ground-only city. SpanLengthConstraint returns on
+                 * its first line for Street and ConnectorBridge, which are the only two
+                 * kinds a flag-off city contains, and ClearanceConstraint returns on its
+                 * first line whenever RampClearance is zero, which is what the flag-off
+                 * context above leaves it at.
+                 */
+                new SpanLengthConstraint(),
+                new ClearanceConstraint(),
+
                 new IntersectionConstraint(),
             };
         }
@@ -209,14 +391,84 @@ namespace engine.streets
 
 
         /**
-         * Iterate until the queue of strokes is empty again.
+         * Grow the network, then reattach whatever it left disconnected.
+         *
+         * The connect pass used to be called on BOTH of the drain loop's exits, which is
+         * one call per Generate() either way but leaves nothing that can run after the
+         * drain and before the bridging. WP-B2 needs that gap to exist, so the loop is
+         * _drain() and the pass is called once, here.
+         *
+         * ConnectComponentsPass draws from the RandomSource, so it has to stay at the
+         * same point in the sequence of draws it has always been at - the very end of a
+         * run - which is what makes this a pure hoist and not a re-ordering.
          */
         public void Generate()
         {
             _buildPipeline();
+            _drain();
+            _connectPass.Run();
+            _place();
+        }
 
+
+        /**
+         * WP-B3b. Lift what the finished network permits to be lifted.
+         *
+         * AFTER the connect pass, on purpose and in both directions. The pass bridges
+         * whatever the drain left disconnected and does not run the constraint pipeline
+         * (§7.8), so a corridor judged before it could have a ConnectorBridge laid across
+         * a ramp afterwards with nothing checking. And lifting cannot disconnect anything
+         * it runs after: a chain replaces the path from one foot to the other, and the
+         * junction between them keeps at least two arms by the interior-T-branch rule, so
+         * every junction the removed arms served is still reachable.
+         *
+         * Nothing here draws from the RandomSource. That is what lets it be added at the
+         * end of a run without moving a single flag-off number, and it is deliberate: a
+         * placement policy that consumed draws would put every seed's network downstream
+         * of how many corridors happened to qualify.
+         */
+        private void _place()
+        {
+            if (!EnableGradeSeparation)
+            {
+                StructurePlacement = null;
+                return;
+            }
+
+            StructurePlacement = generation.StructurePlacer.Place(
+                _strokeStore, _clusterDesc.Id, GradePolicy, GroundHeightOf,
+                RampClearance, MinSpanLength, MaxSpanLength, MaxJunctionSpacing);
+
+            /*
+             * ⚠️ A Warning, every time, whether or not anything was placed - and not a
+             * Trace, which a debug category would filter away.
+             *
+             * "No bridges appeared" and "the policy never ran" have to be different
+             * observations. Every previous round of this work stream has hit the failure
+             * mode where they are not, and a refusal that is only counted into an opt-in
+             * report is exactly that failure mode with a report attached.
+             */
+            Warning(_dc, $"{_annotation}: grade separation: {StructurePlacement.Describe()}");
+
+            if (_report != null)
+            {
+                _report.StructuresPlaced = StructurePlacement.Placed;
+                _report.StructuresRefused = StructurePlacement.RefusedTotal;
+            }
+        }
+
+
+        /**
+         * Iterate until the queue of candidates is empty, or the budget is spent.
+         *
+         * The budget is the cluster's own, computed once per run: it counts strokes
+         * judged, not passes over the queue, so nothing that reorders the queue may
+         * hand out a fresh allowance.
+         */
+        private void _drain()
+        {
             int maxGenerations = (int)(_clusterDesc.Size * _clusterDesc.Size / 1000f);
-            
+
             while (true)
             {
 
@@ -224,7 +476,6 @@ namespace engine.streets
                 {
                     Trace(_dc, $"Returning: max generations reached.");
                     if (_report != null) Trace(_dc, $"{_annotation}: {_report.Describe()}");
-                    _connectPass.Run();
                     return;
                 }
 
@@ -232,7 +483,6 @@ namespace engine.streets
                 {
                     Trace(_dc, $"Returning: no more streets to do.");
                     if (_report != null) Trace(_dc, $"{_annotation}: {_report.Describe()}");
-                    _connectPass.Run();
                     return;
                 }
 
@@ -356,11 +606,16 @@ namespace engine.streets
                             currTail.A = intersectionStreetPoint;
                             currTail.B = oldCurrB;
 
-                            // As this is a stack, first the continuation, then the head.
-                            _listStrokesToDo.Add(currTail);
+                            /*
+                             * First the continuation, then the head. The queue pops the
+                             * later of two equal weights, and a split's two halves carry
+                             * the candidate's own weight, so the head comes out first
+                             * under the heavy-first ordering exactly as it does off it.
+                             */
+                            _queue.Push(currTail);
                         }
 
-                        _listStrokesToDo.Add(curr);
+                        _queue.Push(curr);
                         _generationCounter++;
 
                         // Leave this loop.
@@ -415,7 +670,7 @@ namespace engine.streets
         
 
         public void AddStartingStroke(in Stroke stroke0){
-            _listStrokesToDo.Add(stroke0);
+            _queue.Push(stroke0);
         }
 
         
@@ -425,7 +680,7 @@ namespace engine.streets
             in ClusterDesc clusterDesc
         ) {
             _rnd = new builtin.tools.RandomSource(seed0);
-            _listStrokesToDo = new List<Stroke>();
+            _queue = new CandidateQueue();
             _strokeStore = strokeStore;
             _networkBuilder = new generation.NetworkBuilder(strokeStore);
             _clusterDesc = clusterDesc;

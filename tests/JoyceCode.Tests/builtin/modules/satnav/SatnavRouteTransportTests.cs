@@ -139,6 +139,68 @@ public class SatnavRouteTransportTests
 
 
     /**
+     * The truncated last lane still describes the road it runs along.
+     *
+     * ⚠️ RoutePlan replaces the lane containing the target with a NEW NavLane ending at a
+     * projected point, and that new lane used to carry none of the old one's description -
+     * so the LAST lane of every route fell back to the chord between its two junctions,
+     * which is exactly the defect §7r removed from all the others, on the segment nearest
+     * the destination. §7r recorded this junction as harmless on the stated grounds that
+     * *"the lane it belongs to is the real one"*; it is not the real one.
+     *
+     * Asserted on what the surface ANSWERS rather than on the struct, because a copied
+     * reference and a re-derived surface would both satisfy "not null" and only one of them
+     * is the road the mesh was emitted from.
+     */
+    [Fact]
+    public async Task TheTruncatedLastLaneStillCarriesItsOwnCarriageway()
+    {
+        var (nc, car, _) = _street();
+
+        /*
+         * A carriageway that is NOT level, so that "kept the surface" and "fell back to the
+         * chord" are two different numbers: the two sides span different windows, so the
+         * middle of the lane is not the middle of the two junction heights.
+         */
+        var surface = global::engine.streets.generation.RoadSurface.Of(
+            Vector2.Zero, Vector2.UnitX,
+            new Vector2(10f, -5f), new Vector2(40f, 5f),
+            new Vector2(280f, -5f), new Vector2(290f, 5f),
+            20f, 50f);
+
+        foreach (var l in car) l.Surface = surface;
+
+        var lanes = await _route(
+            nc, _over(10f, CarLaneZ), _over(250f, CarLaneZ), TransportationType.Car);
+
+        Assert.NotEmpty(lanes);
+        var last = lanes[^1];
+
+        Assert.True(last.Surface.HasValue,
+            "the truncated last lane lost the carriageway it runs along");
+
+        Vector2 v2Mid = new(
+            0.5f * (last.Start.Position.X + last.End.Position.X),
+            0.5f * (last.Start.Position.Z + last.End.Position.Z));
+
+        Assert.Equal(
+            surface.SurfaceHeightAt(v2Mid), last.Surface.Value.SurfaceHeightAt(v2Mid), 4);
+
+        /*
+         * ...and the ribbon over it is what that surface says, not the chord between the
+         * lane's two junctions - which is a different number here by construction.
+         */
+        float chord = Single.Lerp(
+            RouteRibbon.SurfaceHeightOf(last.Start, TransportationType.Car),
+            RouteRibbon.SurfaceHeightOf(last.End, TransportationType.Car),
+            0.5f);
+
+        Assert.NotEqual(chord, RouteRibbon.SurfaceHeightAt(
+            last, new Vector3(v2Mid.X, 0f, v2Mid.Y), 0.5f, TransportationType.Car), 2);
+    }
+
+
+    /**
      * The reported defect. Asked to route a driver, the satnav used to plan over the
      * pavement, because Route named no transport type and LocalPathfinder's default was
      * Pedestrian - so the guideline was drawn along the kerb rather than down the road.

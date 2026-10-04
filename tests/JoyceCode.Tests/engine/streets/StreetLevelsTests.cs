@@ -75,7 +75,7 @@ public class StreetLevelsTests
         to.SetPos(200f, 0f);
 
         var chain = new OverpassBuilder(0).Build(
-            from, to, StrokeKind.Bridge, rampFraction: 0.25f, weight: 1f);
+            from, to, StrokeKind.Bridge, rampLength: 50f, weight: 1f, isPrimary: true);
         var ramp = chain[0];
 
         float planLength = Vector2.Distance(ramp.A.Pos, ramp.B.Pos);

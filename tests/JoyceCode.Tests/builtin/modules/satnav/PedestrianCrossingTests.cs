@@ -96,7 +96,7 @@ public class PedestrianCrossingTests
 
         var (byJunction, junctionById) = _fileCity(cd, quarters);
 
-        int nFiled = 0;
+        int nFiled = 0, nSkipped = 0;
         float worst = 0f;
 
         foreach (var (spId, list) in byJunction)
@@ -117,9 +117,28 @@ public class PedestrianCrossingTests
                     ? Single.MaxValue
                     : sections.Min(s => (s - v2Corner).Length());
 
-                Assert.True(nearest < 0.05f,
-                    $"corner {v2Corner} is filed under junction {spId} at {sp.Pos} but is "
-                    + $"{nearest:F1} m from that junction's nearest section point");
+                /*
+                 * ⚠️ SUPERSEDED BY WP-O1 (§7u), NOT RE-BASELINED. This asserted that every
+                 * filed corner is a section point of the junction it is filed under, within
+                 * 5 cm. That is no longer true of every corner and the reason is not a
+                 * filing error: where the block graph skips an arm - WP-B5's ramp leaving a
+                 * foot, or since WP-O1 a dead-end spur peeled out of the graph - the two
+                 * arms the block turns between are not adjacent in the angle array, so the
+                 * corner is the mitre ACROSS the skipped arm and is not in the section
+                 * array at all.
+                 *
+                 * The filing is still right, and that is what is asserted: such a corner is
+                 * still nearer to its own junction than a whole street, which is the
+                 * off-by-one this gate was written to catch (70-97 m at the median before
+                 * §7e's fix, 7-12 m after it).
+                 */
+                if (nearest >= 0.05f)
+                {
+                    ++nSkipped;
+                    Assert.True((v2Corner - sp.Pos).Length() < 40f,
+                        $"corner {v2Corner} is filed under junction {spId} at {sp.Pos} and "
+                        + "is not a section point of it either");
+                }
 
                 worst = Single.Max(worst, (v2Corner - sp.Pos).Length());
                 ++nFiled;
@@ -127,6 +146,14 @@ public class PedestrianCrossingTests
         }
 
         Assert.True(nFiled > 0);
+
+        /*
+         * At most one corner in twenty is the mitre across a skipped arm; the rest are
+         * section points as they always were.
+         */
+        Assert.True(nSkipped * 20 <= nFiled,
+            $"{nSkipped} of {nFiled} filed corners are not section points of their own "
+            + "junction, which is too many for the rest to prove anything");
 
         /*
          * And the numbers are the ones the fix rests on: a corner stands about half a

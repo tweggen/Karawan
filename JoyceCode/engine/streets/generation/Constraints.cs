@@ -285,7 +285,13 @@ internal sealed class IntersectionConstraint : ICandidateConstraint
 
         Stroke intersectingStroke = intersection.StrokeExists;
 
-        var splitPoint = new StreetPoint() { ClusterId = ctx.ClusterId };
+        /*
+         * The crossing is on the candidate's own deck - the store only reports a
+         * stroke on the same level - so the junction it becomes is too. Level 0 is the
+         * default, so this is a no-op for a ground-only city and is written out because
+         * the alternative is a level-1 crossing quietly producing a ground junction.
+         */
+        var splitPoint = new StreetPoint() { ClusterId = ctx.ClusterId, Level = cand.Level };
         splitPoint.SetPos(intersection.Pos);
         splitPoint.PushCreator("intersection");
 

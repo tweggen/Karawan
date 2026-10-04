@@ -68,6 +68,14 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
      * The block floor's outline: one vertex per boundary corner, at the height of the
      * road that corner meets.
      *
+     * The road's own expression for that, not a second one that happens to agree: this used
+     * to read CornerGroundHeightAt plus MetaGen.ClusterStreetHeight, which is 2.0, while the
+     * carriageway and the junction cap add MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE,
+     * which is also 2.0 and is a different constant - and dropped the deck term the road
+     * carries, so a block cornering on a raised junction would have had its kerb a whole
+     * deck below the road. Zero difference in either shipped city today; one expression
+     * instead of two is the point.
+     *
      * The extrusion path adds QuarterSidewalkOffset on top of this, and the top face is
      * the pavement - so the kerb is exactly that offset above the carriageway at every
      * corner of every block, which is the whole point of taking the corner's own junction
@@ -98,13 +106,43 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         {
             var delim = delimList[i];
 
-            float h = quarter.CornerGroundHeightAt(delim)
-                      + world.MetaGen.ClusterStreetHeight;
+            float h = generation.RoadSurface.HeightAtJunction(
+                quarter.ClusterDesc.StreetHeightSource, delim.StreetPoint);
 
             edges.Add(new Vector3(cx + delim.StartPoint.X, h, cy + delim.StartPoint.Y));
         }
 
         return edges;
+    }
+
+
+    /**
+     * The inner edge of this block's pavement, or null for a block that keeps a plain fan.
+     *
+     * Without it the block floor is a single triangle fan spanning kerb to kerb, so on a
+     * slope the pavement falls about 11 % ACROSS its width at the median - tipping toward
+     * the road as often as away, and steeper sideways than lengthwise on more than half of
+     * all block edges. With it, the strip between the two rings is level across by
+     * construction and the warp is confined to the block's interior, where the buildings
+     * are. See generation.SidewalkRing.
+     *
+     * **A flat city gets none.** Every corner of a flat block is at the same height, so
+     * there is no cross-fall to remove and an inset ring would only add vertices to a mesh
+     * this whole line of work has kept bit for bit stable. Gated the same way
+     * Quarter.GroundHeightAt, DeckCollider and JunctionCollider are.
+     *
+     * Hoisted next to FloorOutlineOf for the reason that one was: inline is where nothing
+     * can check which side of the kerb the ring came out on.
+     */
+    internal static List<builtin.tools.CapInsetEdge> PavementInsetOf(
+        streets.Quarter quarter, in IList<Vector3> outline)
+    {
+        if (quarter.ClusterDesc.StreetHeightSource.IsFlat)
+        {
+            return null;
+        }
+
+        return generation.SidewalkRing.InsetOf(outline, quarter.SidewalkWidth);
     }
 
 
@@ -132,7 +170,10 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         }
 
         Mesh meshGround = new($"{worldFragment.GetId()}-quarterfloor");
-        var opExtrudePoly = new builtin.tools.ExtrudePoly(edges, path, 27, 10000f, false, false, true);
+        var opExtrudePoly = new builtin.tools.ExtrudePoly(edges, path, 27, 10000f, false, false, true)
+        {
+            CapInsetEdges = PavementInsetOf(quarter, edges)
+        };
         try
         {
             opExtrudePoly.BuildGeom(meshGround);

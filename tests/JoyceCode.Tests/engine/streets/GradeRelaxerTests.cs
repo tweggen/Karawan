@@ -253,26 +253,102 @@ public class GradeRelaxerTests
 
 
     /**
-     * Visiting order must not change the answer, which is what Jacobi buys and what a
-     * Gauss-Seidel version of the same loop would quietly lose.
+     * ⚠️ SUPERSEDED 2026-09-06, and this is the one property the round gave up.
+     *
+     * It used to be `TheOrderStrokesAreVisitedInDoesNotMatter`, and it read: "Visiting
+     * order must not change the answer, which is what Jacobi buys and what a Gauss-Seidel
+     * version of the same loop would quietly lose." It asserted the forward and reversed
+     * runs equal to four decimals, and it is exactly what a successive projection loses.
+     *
+     * It was given up on measurement rather than on taste. An accumulate-and-damp sweep
+     * does buy order independence and it never arrives: on the eight seeds
+     * StreetDeterminismTests pins it needed 82 to 1106 sweeps against a budget of 32, so
+     * what shipped was not an order-independent answer, it was 3 % of the way to one, with
+     * up to 743 strokes of a city still unbuildable. What order independence costs, also
+     * measured: reversing the visiting order moves junctions by 0.36 to 0.80 m at the
+     * median and 6.8 to 10.5 m at the worst on the four largest seeds. That is the honest
+     * size of what was traded, and it is smaller than the 15.9 m the shipped answer stood
+     * from its own algorithm's limit.
+     *
+     * ⚠️ It would still PASS on this fixture, which is why it is replaced rather than
+     * deleted: a six stroke chain of equal weights is symmetric enough that both
+     * directions land on the same heights, so leaving it in place would have left a gate
+     * that says something untrue and does not fail. What replaces it is the property the
+     * generator actually depends on - one fixed order, one answer, every time.
      */
     [Fact]
-    public void TheOrderStrokesAreVisitedInDoesNotMatter()
+    public void OneVisitingOrderGivesOneAnswer()
     {
         var (store, points) = _chain(6, 90f, 0.6f);
         float[] rough = { 0f, 45f, 12f, 70f, 20f, 5f, 55f };
 
-        var forward = _heights(points, rough);
-        var backward = _heights(points, rough);
+        var first = _heights(points, rough);
+        var second = _heights(points, rough);
 
-        GradeRelaxer.Relax(store.GetStrokes(), forward, new GradePolicy());
+        /*
+         * Shuffled on the way in, because Relax orders by Sid itself and that ordering is
+         * the thing being relied on. Handing it the same strokes in a different sequence
+         * and getting a different city would mean the fixed order was not fixed.
+         */
+        GradeRelaxer.Relax(store.GetStrokes(), first, new GradePolicy());
         GradeRelaxer.Relax(
-            store.GetStrokes().AsEnumerable().Reverse().ToList(), backward, new GradePolicy());
+            store.GetStrokes().AsEnumerable().Reverse().ToList(), second, new GradePolicy());
 
         foreach (var sp in points)
         {
-            Assert.Equal(forward[sp.Id], backward[sp.Id], 4);
+            Assert.Equal(first[sp.Id], second[sp.Id]);
         }
+    }
+
+
+    /**
+     * ...and the same thing said where it can fail: the answer does depend on the order
+     * the strokes are given Sids in, and by metres rather than by rounding.
+     *
+     * Stated as a test so that nobody reads the one above as "order does not matter". A
+     * chain of equal weights cannot show it; a star whose spokes pull the hub different
+     * ways can, because whichever spoke is corrected first sets the hub for the rest.
+     */
+    [Fact]
+    public void ADifferentSidOrderIsADifferentAnswer()
+    {
+        /*
+         * The same star twice, with the spokes CREATED in opposite orders - which is the
+         * only way a test can renumber Sids, since Relax sorts by them and reversing the
+         * list handed in changes nothing at all.
+         */
+        (float Hub, float[] Spokes) Run(bool reversed)
+        {
+            var cd = StreetHarness.MakeCluster("relax-order", ClusterSize);
+            var store = new StrokeStore(ClusterSize);
+
+            var hub = _pointAt(0f, 0f);
+            var spokes = new StreetPoint[4];
+            var starts = new[] { 0f, 55f, 0f, 55f };
+
+            for (int k = 0; k < 4; ++k)
+            {
+                int i = reversed ? 3 - k : k;
+                spokes[i] = _pointAt(0f, 0f);
+                store.AddStroke(Stroke.CreateByAngleFrom(
+                    cd, hub, spokes[i], i * 90f, 100f, true, 0.5f));
+            }
+
+            var h = new Dictionary<int, float> { [hub.Id] = 90f };
+            for (int i = 0; i < 4; ++i)
+            {
+                h[spokes[i].Id] = starts[i];
+            }
+
+            GradeRelaxer.Relax(store.GetStrokes(), h, new GradePolicy());
+            return (h[hub.Id], spokes.Select(s => h[s.Id]).ToArray());
+        }
+
+        var forward = Run(false);
+        var backward = Run(true);
+
+        Assert.NotEqual(forward.Hub, backward.Hub);
+        Assert.NotEqual(90f, forward.Hub);
     }
 
 
@@ -311,11 +387,14 @@ public class GradeRelaxerTests
     /**
      * A junction where many steep streets meet still settles.
      *
-     * The case damping exists for. Every spoke of a star wants to pull the hub the same
-     * way, so applying all of them in full moves it several times as far as any one of
-     * them asked, past the target and back again. A chain cannot show this - its
-     * junctions have two strokes and they usually pull against each other - which is why
-     * removing the damping passed the rough-profile test.
+     * The case damping used to exist for. Every spoke of a star wants to pull the hub the
+     * same way, and an accumulate-then-apply sweep that applied all of them in full moved
+     * it several times as far as any one of them asked, past the target and back again. A
+     * chain cannot show that - its junctions have two strokes and they usually pull
+     * against each other - which is why removing the damping passed the rough-profile
+     * test. Successive projection cannot overshoot at all, so there is no damping factor
+     * left to remove; this fixture stays because "a hub with six steep spokes settles" is
+     * still the case a sweep is most likely to be wrong about.
      */
     [Fact]
     public void AStarJunctionWithManySteepSpokesStillSettles()

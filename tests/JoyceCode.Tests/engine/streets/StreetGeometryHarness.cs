@@ -94,6 +94,38 @@ internal static class StreetGeometryHarness
 
 
     /**
+     * The surface of every stroke, each on its own, keyed by the stroke that emitted it.
+     *
+     * One mesh per stroke rather than one for the network, because near two nearly
+     * collinear arms the section array falls back to an averaged offset and the two
+     * strokes' polygons then OVERLAP - so "the road's height here" is ambiguous in a
+     * combined mesh, and a test asking whether a block's kerb rests on ITS carriageway has
+     * to be able to say which carriageway it means.
+     */
+    internal static Dictionary<Stroke, Mesh> GenerateEachStroke(
+        ClusterDesc clusterDesc, StrokeStore strokeStore)
+    {
+        _ensureMaterial();
+
+        var op = new GenerateClusterStreetsOperator(clusterDesc, "geometry-harness");
+        var byStroke = new Dictionary<Stroke, Mesh>();
+
+        foreach (var stroke in strokeStore.GetStrokes())
+        {
+            var artefact = new Artefact()
+            {
+                g = Mesh.CreateNormalsListInstance($"geometry-harness-{stroke.Sid}")
+            };
+
+            op._generateStreetRun(0f, 0f, stroke, artefact);
+            byStroke[stroke] = artefact.g;
+        }
+
+        return byStroke;
+    }
+
+
+    /**
      * As Generate, but against a caller-supplied cluster - so that a test can install a
      * height source on it first and see what the same network looks like over
      * non-flat ground.

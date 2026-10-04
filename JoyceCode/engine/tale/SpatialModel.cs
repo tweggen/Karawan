@@ -127,6 +127,39 @@ public class SpatialModel
     }
 
 
+    /**
+     * The junctions of a cluster that get a street_segment location.
+     *
+     * ⚠️ A DECK END IS NOT A PLACE. With joyce.EnableGradeSeparation on, a lifted corridor
+     * invents two junctions in the air carrying nothing but a ramp and the deck it holds
+     * up. Nothing corners on them, no pavement reaches them and no pedestrian route
+     * touches them - so a street location there is an NPC standing on a bridge deck with
+     * no way up, scheduled to spend hours of game time on it, and TALE assigns homes and
+     * workplaces to street locations.
+     *
+     * engine.streets.generation.BlockGraph.StandsOnTheGround is the one expression for
+     * "anything may stand here", and it is true of every junction of every city with the
+     * flag off - so this returns exactly the junctions this model has always been built
+     * from. The routes follow on their own: a route needs both of its ends filed as
+     * locations, and a structure member has an end that is not.
+     *
+     * A static of its own because ExtractFrom needs ClusterDesc.StrokeStore(), which
+     * reaches the I container, so nothing in it can be driven from a test - and a rule
+     * nothing can drive is a rule a source scan asserts the NAME of.
+     */
+    internal static List<StreetPoint> StreetLocationJunctionsOf(
+        IReadOnlyList<StreetPoint> streetPoints)
+    {
+        var kept = new List<StreetPoint>();
+        foreach (var sp in streetPoints)
+        {
+            if (streets.generation.BlockGraph.StandsOnTheGround(sp)) kept.Add(sp);
+        }
+
+        return kept;
+    }
+
+
     public static SpatialModel ExtractFrom(ClusterDesc cluster, builtin.modules.satnav.desc.NavCluster navCluster = null)
     {
         var model = new SpatialModel();
@@ -144,16 +177,6 @@ public class SpatialModel
             var quarter = quarters[qi];
             if (quarter.IsInvalid()) continue;
 
-            /*
-             * Buildings stand on their own block's pad, so their doors are on it too.
-             * Taken at the block centre rather than per building: these are the
-             * positions NPCs walk to, and a shop entrance a few centimetres off the
-             * building it belongs to is not worth a fit per building.
-             */
-            float streetHeight = quarter.GroundHeightAt(quarter.GetCenterPoint())
-                                 + MetaGen.ClusterStreetHeight
-                                 + MetaGen.QuarterSidewalkOffset;
-
             var estates = quarter.GetEstates();
             for (int ei = 0; ei < estates.Count; ei++)
             {
@@ -164,6 +187,24 @@ public class SpatialModel
                 {
                     var building = buildings[bi];
                     model.BuildingCount++;
+
+                    /*
+                     * A door stands on the PAVEMENT in front of it, and where that is
+                     * depends on where round the block you are: a block is up to 150 m
+                     * across and its kerb falls 13 m over that on the shipped terrain.
+                     * This used to be the pad - a least squares plane through the corner
+                     * heights - sampled once at the block CENTRE, so every door on a
+                     * block got one height, out by up to 9 m at either end of it.
+                     * BuildingFooting.PavementHeightAt reads the block's own boundary at
+                     * the door's own position instead, which is exactly the surface the
+                     * rim of the block floor carries there.
+                     *
+                     * A flat block answers with the cluster's own flat height at every
+                     * corner, so this is the same number the pad gave, arrived at the
+                     * same way.
+                     */
+                    float streetHeight = streets.generation.BuildingFooting.PavementHeightAt(
+                        quarter, _plan(building.GetCenter()));
 
                     var shopFronts = building.GetShopFronts();
                     bool hasShop = false;
@@ -191,9 +232,22 @@ public class SpatialModel
                                 _ => "shop"
                             };
 
+                            /*
+                             * The door of a shop is on the shop's own storey, not on the
+                             * pavement: the window is snapped up in whole storeys until it
+                             * clears the kerb in front of it, and an entrance a storey
+                             * below its own window is an entrance in the wall.
+                             */
+                            float shopHeight =
+                                streets.generation.BuildingFooting.StoreyGroundAt(
+                                    quarter, building,
+                                    streets.generation.BuildingFooting.PlanOf(sf))
+                                + MetaGen.ClusterStreetHeight
+                                + MetaGen.QuarterSidewalkOffset;
+
                             var buildingCenter = building.GetCenter() + cluster.Pos;
-                            buildingCenter.Y = streetHeight;
-                            var entryPos = ComputeShopEntryPosition(sf, cluster, streetHeight);
+                            buildingCenter.Y = shopHeight;
+                            var entryPos = ComputeShopEntryPosition(sf, cluster, shopHeight);
                             var (snappedEntry, isReachable) = _snapToPedestrianLane(navCluster, entryPos);
 
                             model.Locations.Add(new Location
@@ -237,7 +291,19 @@ public class SpatialModel
                             var direction = Vector3.Normalize(buildingCenter - perimeterPoint);
                             // Move a small distance from perimeter towards center to avoid exact edge
                             var offset = direction * 2f; // 2 meter offset from edge
-                            entryPos = new Vector3(perimeterPoint.X + offset.X, streetHeight, perimeterPoint.Z + offset.Z);
+                            /*
+                             * The door's own pavement height, not the building centre's:
+                             * these two are up to a block apart, and a block's kerb falls
+                             * 13 m across itself on the shipped terrain.
+                             */
+                            entryPos = new Vector3(
+                                perimeterPoint.X + offset.X,
+                                streets.generation.BuildingFooting.PavementHeightAt(
+                                    quarter,
+                                    new Vector2(
+                                        perimeterPoint.X + offset.X - cluster.Pos.X,
+                                        perimeterPoint.Z + offset.Z - cluster.Pos.Z)),
+                                perimeterPoint.Z + offset.Z);
                         }
                         else
                         {
@@ -264,8 +330,7 @@ public class SpatialModel
             }
         }
 
-        var streetPoints = strokeStore.GetStreetPoints();
-        model.StreetPointCount = streetPoints.Count;
+        var streetPoints = StreetLocationJunctionsOf(strokeStore.GetStreetPoints());
         foreach (var sp in streetPoints)
         {
             int locId = locationId++;
@@ -304,6 +369,12 @@ public class SpatialModel
             });
         }
         
+        /*
+         * The street locations that were actually made, which is every junction of a
+         * flag-off city and every junction but the deck ends of a flag-on one.
+         */
+        model.StreetPointCount = streetPointToLocation.Count;
+
         var strokes = strokeStore.GetStrokes();
         foreach (var stroke in strokes)
         {
@@ -552,6 +623,13 @@ public class SpatialModel
         }
         return result;
     }
+
+
+    /**
+     * A cluster-space position's plan coordinates, which is what the block's boundary is
+     * described in.
+     */
+    private static Vector2 _plan(in Vector3 v3Cluster) => new(v3Cluster.X, v3Cluster.Z);
 
 
     private static Vector3 ComputeShopEntryPosition(ShopFront shopFront, ClusterDesc cluster, float streetHeight)
