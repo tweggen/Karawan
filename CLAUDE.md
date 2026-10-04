@@ -46,7 +46,7 @@ Each of these cost a debugging round; the story behind each is in `STATUS-LOG.md
 - **Generated asset names (`mo-`/`ac-` hashes) are derived in two places** — `Tooling/Cmdline/GameConfig` and `JoyceCode` — on purpose; change both together.
 - **`AnimationBatch.FrameNos` carries the GLOBAL baked frame number** (`FirstFrame` + local frame); every renderer strategy depends on it. Baked clips are laid out alphabetically, and bone order is contract.
 - **`Wuka.csproj` imports the resource manifest at evaluation time**, so a newly declared asset needs two builds before it stages into the APK.
-- **Input bindings live in `models/nogame.bindings.json`, stored by `ScanCode`** (a position, not a character), with no fallback copy in code. Gamepad stick/trigger indices are contract with `Sdl3WindowBackend._onGamepadAxis`.
+- **Input bindings live in `models/nogame.bindings.json`, stored by `ScanCode`** (a position, not a character), with no fallback copy in code. Gamepad stick/trigger indices are contract with `Sdl3WindowBackend._onGamepadAxis`. **Anything that drives an action without being a control (touch buttons) pushes `INPUT_ACTION_PRESSED`/`_RELEASED` with the action id, never a fake key event** — key events resolve only by `ScanCode`, and a synthetic one has none.
 
 **Streets & navigation**
 - **Say `Ramp`/`Bridge`/`Tunnel`, never "non-`Street`"** — `ConnectorBridge` strokes are ordinary ground roads; `StrokeKinds.IsStructure` is the one expression.
