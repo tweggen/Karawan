@@ -49,6 +49,11 @@ After implementation completes:
 - Key systems or subsystems
 - Configuration system or registries
 
+CLAUDE.md is loaded in full by every agent session, so it carries only the
+**current state** and the **rules** — one or two lines each. The full write-up of
+a fix or work package (measurements, what was found and not fixed) goes at the
+top of `docs/main/docs/STATUS-LOG.md`.
+
 #### b) **Subsystem-specific documentation** — Update design/spec docs for the affected area:
 - If modifying **TALE narrative system**: See `PROCESS_TALE.md` for paths
 - If modifying **Joyce engine core**: Update `docs/engine/*.md` if they exist
