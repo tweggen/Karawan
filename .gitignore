@@ -369,3 +369,7 @@ imgui.ini
 
 # Cursor MCP config (may contain secrets)
 .cursor/mcp.json
+
+# thinktank: generated briefing and your own Claude Code memory (CYB-219)
+.claude/thinktank-briefing.md
+CLAUDE.local.md
