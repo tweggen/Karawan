@@ -212,10 +212,15 @@ public class InputController : engine.AController, engine.IInputPart
     }
 
 
-    private void _onKeyDown(Event ev)
-    {
-        string? action = _keyActionOf(ev);
+    private void _onKeyDown(Event ev) => _onActionPressed(_keyActionOf(ev));
 
+
+    /**
+     * Shared by the keyboard (through the bindings) and the on-screen touch buttons
+     * (INPUT_ACTION_PRESSED, which names the action itself).
+     */
+    private void _onActionPressed(string? action)
+    {
         lock (_lo)
         {
             _controllerState.LastInput = DateTime.UtcNow;
@@ -246,10 +251,11 @@ public class InputController : engine.AController, engine.IInputPart
     }
 
 
-    private void _onKeyUp(Event ev)
-    {
-        string? action = _keyActionOf(ev);
+    private void _onKeyUp(Event ev) => _onActionReleased(_keyActionOf(ev));
 
+
+    private void _onActionReleased(string? action)
+    {
         lock (_lo)
         {
             _controllerState.LastInput = DateTime.UtcNow;
@@ -936,6 +942,8 @@ public class InputController : engine.AController, engine.IInputPart
 
         if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _onKeyDown(ev);
         if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _onKeyUp(ev);
+        if (ev.Type.StartsWith(Event.INPUT_ACTION_PRESSED)) _onActionPressed(ev.Code);
+        if (ev.Type.StartsWith(Event.INPUT_ACTION_RELEASED)) _onActionReleased(ev.Code);
 
         if (ev.Type.StartsWith(Event.INPUT_FINGER_PRESSED)) _fingerStateHandler.OnFingerPressed(ev);
         if (ev.Type.StartsWith(Event.INPUT_FINGER_RELEASED)) _fingerStateHandler.OnFingerReleased(ev);

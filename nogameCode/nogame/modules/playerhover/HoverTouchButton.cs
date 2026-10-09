@@ -40,18 +40,23 @@ public class HoverTouchButton : AModule
         if (GlobalSettings.Get("debug.option.forceTouchInterface") == "true"
             || GlobalSettings.Get("splash.touchControls") == "true")
         {
+            /*
+             * The drive buttons emit the ACTION, not a fake key: a key event needs a
+             * ScanCode to resolve against the bindings, and a touch button has none.
+             * See Event.INPUT_ACTION_PRESSED.
+             */
             _engine.QueueMainThreadAction(() =>
             {
                 _buttons.Add(TouchButtons.CreateButton("but_left.png", 
                     0, 
                     TouchButtons.ButtonsPerColumn - 2,
                     (entity, ev, pos) =>
-                        new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "a")));
+                        new Event(ev.IsPressed ? Event.INPUT_ACTION_PRESSED : Event.INPUT_ACTION_RELEASED, "walkleft")));
                 _buttons.Add(TouchButtons.CreateButton("but_right.png", 
                     1, 
                     TouchButtons.ButtonsPerColumn - 2,
                     (entity, ev, pos) =>
-                        new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "d")));
+                        new Event(ev.IsPressed ? Event.INPUT_ACTION_PRESSED : Event.INPUT_ACTION_RELEASED, "walkright")));
                 _buttons.Add(TouchButtons.CreateButton("but_getinout.png", 
                     TouchButtons.ButtonsPerRow - 2, 
                     TouchButtons.ButtonsPerColumn - 3,
@@ -62,12 +67,12 @@ public class HoverTouchButton : AModule
                     TouchButtons.ButtonsPerRow - 2,
                     TouchButtons.ButtonsPerColumn - 2,
                     (entity, ev, pos) =>
-                        new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "w")));
+                        new Event(ev.IsPressed ? Event.INPUT_ACTION_PRESSED : Event.INPUT_ACTION_RELEASED, "walkforward")));
                 _buttons.Add(TouchButtons.CreateButton("but_brake.png", 
                     TouchButtons.ButtonsPerRow - 3,
                     TouchButtons.ButtonsPerColumn - 2,
                     (entity, ev, pos) =>
-                        new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "s")));
+                        new Event(ev.IsPressed ? Event.INPUT_ACTION_PRESSED : Event.INPUT_ACTION_RELEASED, "walkbackward")));
             });
         }
     }

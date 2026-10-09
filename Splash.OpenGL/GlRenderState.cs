@@ -23,6 +23,26 @@ public class GlRenderState
     private BufferObject<Matrix4x4>? _bufferBakedFrame;
 
     private int _uboAnimIndex = -1;
+
+    /*
+     * What is bound at uniform-buffer binding 0, as far as we know. Null after a frame
+     * boundary or after the bound buffer was deleted (deleting a bound buffer reverts the
+     * binding to zero).
+     */
+    private BufferObject<Matrix4x4>? _boundBoneMatricesUBO;
+
+    /*
+     * A zero-filled buffer the size of the shader's BoneMatrices block, bound whenever no
+     * animation frame is. See EnsureBoneMatricesUBOBound.
+     */
+    private BufferObject<Matrix4x4>? _uboPlaceholder;
+
+    /*
+     * Staging for one frame's bones, padded to MaxBones. The UBO must be at least as large
+     * as the block it backs (GL_UNIFORM_BLOCK_DATA_SIZE, 120 mat4 = 7680 bytes); a buffer
+     * holding only the model's nBones matrices is undefined behaviour on GLES.
+     */
+    private readonly Matrix4x4[] _frameStaging = new Matrix4x4[engine.joyce.Constants.MaxBones];
     
     private int _silkAnimMethod = -1;
     
@@ -70,14 +90,18 @@ public class GlRenderState
                 if (_bufferBakedFrame != null)
                 {
                     // TXWTODO: Add to frame disposals.
+                    if (_boundBoneMatricesUBO == _bufferBakedFrame)
+                    {
+                        _boundBoneMatricesUBO = null;
+                    }
                     _bufferBakedFrame.Dispose();
                     _bufferBakedFrame = null;
                 }
 
-                Span<Matrix4x4> span = allBakedMatrices.AsSpan().Slice(offset, nBones);
+                int nCopy = Math.Min(nBones, _frameStaging.Length);
+                allBakedMatrices.AsSpan().Slice(offset, nCopy).CopyTo(_frameStaging);
 
-                // Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
-                _bufferBakedFrame = new BufferObject<Matrix4x4>(_gl, span, BufferTargetARB.UniformBuffer);
+                _bufferBakedFrame = new BufferObject<Matrix4x4>(_gl, _frameStaging, BufferTargetARB.UniformBuffer);
                 _modelAnimation = modelAnimation;
                 _frameno = frameno;
                 _isBoundModelBakedFrame = false;
@@ -95,7 +119,46 @@ public class GlRenderState
             }
 
             _bufferBakedFrame.BindBufferBase(0);
+            _boundBoneMatricesUBO = _bufferBakedFrame;
         }
+    }
+
+
+    /**
+     * Make sure uniform-buffer binding 0 holds a valid, full-size buffer.
+     *
+     * Under the UBO animation strategy (GLES, desktop GL below 4.3) the vertex shader's
+     * BoneMatrices block is ACTIVE in every program - skinning is selected at runtime by
+     * iVertexFlags, so the compiler cannot drop it - and GLES requires a buffer behind
+     * every active block for every draw, used or not. Only skinned draws ever bound one,
+     * so a screen with no animated character (the start menu) drew with nothing bound:
+     * "Program does not have a valid uniform buffer object ... for active uniform block",
+     * once per draw call on Android. Desktop NVIDIA tolerates it silently.
+     *
+     * Non-skinned draws do not read the block, so whatever is already bound - the last
+     * animation frame - is fine; only an empty binding is not.
+     */
+    public void EnsureBoneMatricesUBOBound()
+    {
+        if (_boundBoneMatricesUBO != null)
+        {
+            return;
+        }
+
+        var buffer = _bufferBakedFrame;
+        if (null == buffer)
+        {
+            if (null == _uboPlaceholder)
+            {
+                _uboPlaceholder = new BufferObject<Matrix4x4>(
+                    _gl, new Matrix4x4[engine.joyce.Constants.MaxBones], BufferTargetARB.UniformBuffer);
+            }
+
+            buffer = _uboPlaceholder;
+        }
+
+        buffer.BindBufferBase(0);
+        _boundBoneMatricesUBO = buffer;
     }
     
     
@@ -118,6 +181,7 @@ public class GlRenderState
     {
         _lastProgramEntry = null;
         _isBoundModelBakedFrame = false;
+        _boundBoneMatricesUBO = null;
         _modelAnimation = null;
         BoneMatrices = null;
         Texture0.ResetCachedState();

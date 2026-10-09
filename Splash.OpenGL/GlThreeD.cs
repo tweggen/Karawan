@@ -415,6 +415,11 @@ public class GlThreeD : IThreeD
         _loadMaterialToShader(sh, skMaterialEntry);
         GlDbg.Check(gl);
 
+        if (AnimStrategy == GLAnimBuffers.AnimUBO)
+        {
+            _silkRenderState.EnsureBoneMatricesUBOBound();
+        }
+
         /*
          * Load the mesh, if it changed since the last call.
          */

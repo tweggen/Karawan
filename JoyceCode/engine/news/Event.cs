@@ -39,6 +39,20 @@ public class Event
     public const string INPUT_BUTTON_RELEASED = "input.button.released";
 
     /*
+     * An action driven directly by something that is not a bindable control - the
+     * on-screen touch buttons. Code is the action id from nogame.bindings.json
+     * ("walkforward"), without the angle brackets of INPUT_BUTTON_*.
+     *
+     * A separate type rather than a synthetic key: a key event resolves through its
+     * ScanCode, which a touch button does not have. And a separate type rather than
+     * INPUT_BUTTON_* "<walkforward>": every key press is ALSO pushed as that logical
+     * event, and widgets consume the raw key (w/s for menu navigation) but not its
+     * logical twin, so reading the twin would move the car behind an open menu.
+     */
+    public const string INPUT_ACTION_PRESSED = "input.action.pressed";
+    public const string INPUT_ACTION_RELEASED = "input.action.released";
+
+    /*
      * Device arrival and departure (WP-6.3 step 3). Code carries the device name.
      *
      * These are on the QUEUE, and IContext deliberately has no OnConnectionChanged event,
