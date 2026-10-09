@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Globalization;
 using System.Numerics;
 using System.Security.AccessControl;
 using BepuPhysics;
@@ -71,6 +72,10 @@ public class FollowCameraController : AController, IInputPart
 
     private float _previousZoomDistance = 33f;
 
+    /**
+     * Multiplier on the zoom distance recommended by the game for the current way of
+     * moving (see ZoomDistanceFor). 1.0 until the game says otherwise.
+     */
     private float _scaleFactor = 1.0f;
     
     public static string EventTypeRequestMode = "builtin.controllers.followCameraController.RequestMode";
@@ -170,16 +175,30 @@ public class FollowCameraController : AController, IInputPart
     private Vector3 _vCarrotVelocity;
     private bool _traceControllers;
 
+    /**
+     * The distance the camera wants to be from the carrot for a given zoom state.
+     *
+     * zoomState is the 0..1 wheel position, mapped quadratically onto
+     * [minDistance, maxDistance] so the first turns of the wheel move the camera by
+     * little and the last by a lot. scale is what the game recommends for the way the
+     * player is currently moving (MainPlayModule sends 0.25 on foot and 1.0 in the
+     * hover through EventTypeRecommendDistance) and it multiplies the WHOLE distance,
+     * minimum included: on foot the closest the wheel can go has to be closer than the
+     * closest the hover can go, and a scale that only shrank the range above the
+     * minimum would have both modes meet at the same 5 m with the wheel turned in.
+     */
+    public static float ZoomDistanceFor(float zoomState, float scale, float minDistance, float maxDistance)
+    {
+        float zoomFactor = zoomState * zoomState;
+        return scale * (minDistance + zoomFactor * (maxDistance - minDistance));
+    }
+
+
     private float _zoomDistance()
     {
         if (_isInputEnabled)
         {
-            /*
-             * Compute a distance from the zoom state.
-             * TXWTODO: Remove the magic numbers.
-             */
-            float zoomFactor = _zoomState * _zoomState;
-            float zoomDistance = ZOOM_MIN_DISTANCE + zoomFactor * (ZOOM_MAX_DISTANCE-ZOOM_MIN_DISTANCE);
+            float zoomDistance = ZoomDistanceFor(_zoomState, _scaleFactor, ZOOM_MIN_DISTANCE, ZOOM_MAX_DISTANCE);
             zoomDistance = (1f - ZOOM_SLERP_AMOUNT) * _previousZoomDistance + zoomDistance * ZOOM_SLERP_AMOUNT;
             return zoomDistance;
         }
@@ -1080,9 +1099,20 @@ public class FollowCameraController : AController, IInputPart
     }
 
 
+    /**
+     * The recommendation travels as text ("0.25"). It is parsed with the invariant
+     * culture on purpose: Convert.ToDouble reads it in the CURRENT culture, and on a
+     * German Windows "0.25" is twenty-five (the point is a thousands separator there),
+     * which would put the foot camera 25 times further away instead of 4 times closer.
+     * That defect was invisible for as long as _scaleFactor was never read.
+     */
+    public static float ParseRecommendedDistance(string code)
+        => float.Parse(code, NumberStyles.Float, CultureInfo.InvariantCulture);
+
+
     private void _onRecommendDistance(Event ev)
     {
-        _scaleFactor = (float) Convert.ToDouble(ev.Code);
+        _scaleFactor = ParseRecommendedDistance(ev.Code);
     }
     
     
