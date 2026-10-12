@@ -76,6 +76,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapIntercityProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapTerrainProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\AutoSave.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\ServerErrorText.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\daynite\FogColor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\daynite\Controller.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\debugger\DebuggerToggle.cs" />

@@ -30,7 +30,25 @@ public class Scene : AModule, IScene
 
     private bool _isCleared = false;
     private bool _shallHideTitle = false;
-    private bool _isStartingGame = false;
+
+    /*
+     * Where the login screen is. Idle accepts a login request; Connecting
+     * ignores further ones and shows a running seconds counter so a stall
+     * is visible; Loading means the game state is there and the loading
+     * scene takes over. A failure returns to Idle so the player can retry
+     * by any method.
+     */
+    private enum LoginState { Idle, Connecting, Loading }
+    private LoginState _loginState = LoginState.Idle;
+    private string _loginActivity = "";
+    private DateTime _loginStartedAt;
+    private int _loginSecondsShown = -1;
+    private bool _isGameSetupActive = false;
+
+    /*
+     * After this long, the status line admits that this is taking long.
+     */
+    private const int LoginSlowSeconds = 20;
   
     private bool _isAnimRunning = false;
     private float _t;
@@ -96,6 +114,7 @@ public class Scene : AModule, IScene
     public void SceneOnLogicalFrame(float dt)
     {
         _animateTitle(dt);
+        _tickLoginStatus();
     }
 
     private bool _hideTitle()
@@ -139,13 +158,16 @@ public class Scene : AModule, IScene
     }
 
 
-    private void _displayLoginStatus(string status)
+    /**
+     * Must be called on the logical thread.
+     */
+    private void _setLoginWidget(string id, string attr, object value)
     {
         try
         {
-            if (M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText))
+            if (M<Factory>().Layer("pausemenu").GetChild(id, out var widget))
             {
-                wMenuLoginStatusText["text"] = status;
+                widget[attr] = value;
             }
         }
         catch (Exception)
@@ -153,29 +175,108 @@ public class Scene : AModule, IScene
             // Login menu UI may not be available (e.g., auto-login mode)
         }
     }
+
+
+    private void _displayLoginStatus(string status, string hint = "")
+    {
+        _engine.RunMainThread(() =>
+        {
+            _setLoginWidget("menuLoginStatusText", "text", status);
+            _setLoginWidget("menuLoginHintText", "text", hint);
+        });
+    }
+
+
+    private void _displayStartButtonBusy(bool isBusy)
+    {
+        _engine.RunMainThread(() =>
+        {
+            _setLoginWidget("ui.loginStart", "text", isBusy ? "WAIT" : "START");
+            _setLoginWidget("ui.loginStart", "fillColor", isBusy ? "#444444" : "#448822");
+        });
+    }
+
+
+    /**
+     * Claim the login screen for one attempt. Returns false if an attempt
+     * is already under way; the visible counter already tells the player so.
+     */
+    private bool _tryBeginLogin(string activity)
+    {
+        lock (_lo)
+        {
+            if (_loginState != LoginState.Idle) return false;
+            _loginState = LoginState.Connecting;
+            _loginActivity = activity;
+            _loginStartedAt = DateTime.Now;
+            _loginSecondsShown = -1;
+        }
+
+        _displayLoginStatus($"{activity}...");
+        _displayStartButtonBusy(true);
+        return true;
+    }
+
+
+    private void _tickLoginStatus()
+    {
+        string activity;
+        int seconds;
+        lock (_lo)
+        {
+            if (_loginState != LoginState.Connecting) return;
+            seconds = (int)(DateTime.Now - _loginStartedAt).TotalSeconds;
+            if (seconds == _loginSecondsShown) return;
+            _loginSecondsShown = seconds;
+            activity = _loginActivity;
+        }
+
+        _displayLoginStatus(
+            $"{activity}... {seconds}s",
+            seconds >= LoginSlowSeconds ? "this is taking long, the server may be slow or unreachable." : "");
+    }
     
 
     private void _onAutoSaveSetup(GameState gs)
     {
         /*
-         * Remember how we logged in for next time.
+         * From here on the game is being set up, so the login screen takes
+         * no more requests, not even after a failure: a half-started game
+         * cannot be started a second time.
          */
-        if (M<AutoSave>().SyncOnline)
+        lock (_lo)
         {
-            M<nogame.config.Module>().GameConfig.LoginMode = (int) GameConfig.Mode.LoginGlobally;
+            _loginState = LoginState.Loading;
         }
-        else
+
+        try
         {
-            M<nogame.config.Module>().GameConfig.LoginMode = (int) GameConfig.Mode.LoginLocally;
+            /*
+             * Remember how we logged in for next time.
+             */
+            if (M<AutoSave>().SyncOnline)
+            {
+                M<nogame.config.Module>().GameConfig.LoginMode = (int) GameConfig.Mode.LoginGlobally;
+            }
+            else
+            {
+                M<nogame.config.Module>().GameConfig.LoginMode = (int) GameConfig.Mode.LoginLocally;
+            }
+            M<nogame.config.Module>().Save();
+
+            /*
+             * After we have a game state, start the gameplay.
+             */
+            M<Gameplay>().ModuleActivate();
         }
-        M<nogame.config.Module>().Save();
-        
-        /*
-         * After we have a game state, start the gameplay.
-         */
-        M<Gameplay>().ModuleActivate();
-        
-        _displayLoginStatus("logged in.");
+        catch (Exception e)
+        {
+            Error($"Unable to start the game: {e}");
+            _displayLoginStatus($"unable to start the game: {ServerErrorText.Describe(e)}", "please restart the game.");
+            return;
+        }
+
+        _displayLoginStatus(M<AutoSave>().SyncOnline ? "logged in." : "game loaded.");
 
         _engine.QueueMainThreadAction(() =>
         {
@@ -201,9 +302,24 @@ public class Scene : AModule, IScene
     }
 
 
+    /**
+     * Called on any thread. Autosave is inactive again at this point, so
+     * the player may retry with the same or another method.
+     */
     private void _onAutoSaveError(string errorText)
     {
-        _displayLoginStatus("error logging in.");
+        bool wasOnline = M<AutoSave>().SyncOnline;
+        lock (_lo)
+        {
+            _loginState = LoginState.Idle;
+        }
+
+        _displayLoginStatus(
+            errorText,
+            wasOnline
+                ? "check eMail and password and retry, or choose local machine to play offline."
+                : "select a login method to try again.");
+        _displayStartButtonBusy(false);
     }
     
 
@@ -214,8 +330,14 @@ public class Scene : AModule, IScene
          * setupup game state setup tools.
          *
          * TXWTODO: Shouldn't they be required on reset only?
+         *
+         * A failed attempt leaves it active; a retry must not activate it twice.
          */
-        M<GameSetup>().ModuleActivate();
+        if (!_isGameSetupActive)
+        {
+            _isGameSetupActive = true;
+            M<GameSetup>().ModuleActivate();
+        }
         
         /*
          * Give us a short delay to render some frames.
@@ -230,61 +352,73 @@ public class Scene : AModule, IScene
 
     private void _onLoginLocally(Event ev)
     {
-        lock (_lo)
-        {
-            if (_isStartingGame) return;
-            _isStartingGame = true;
-        }
-        
-        I.Get<AutoSave>().SyncOnline = false; 
+        if (!_tryBeginLogin("loading the local game")) return;
+
+        I.Get<AutoSave>().SyncOnline = false;
 
         _startGame(false);
     }
-    
+
 
     private void _onLoginGlobally(Event ev)
     {
-        lock (_lo)
-        {
-            if (_isStartingGame) return;
-            _isStartingGame = true;
-        }
+        if (!_tryBeginLogin("logging in to the global machine")) return;
 
         I.Get<AutoSave>().SyncOnline = true;
 
-        _displayLoginStatus("logging in...");
-        
         _startGame(false);
     }
 
 
+    /**
+     * The big START button is for touch screens: it starts whichever login
+     * method the menu has selected, which is the last-used one unless the
+     * player moved the selection.
+     */
     private void _onStartButton(Event ev)
     {
-        lock (_lo)
+        bool loginLocally = M<nogame.config.Module>().GameConfig.LoginMode == (int)GameConfig.Mode.LoginLocally;
+        try
         {
-            if (_isStartingGame) return;
-            _isStartingGame = true;
+            var wRoot = M<Factory>().Layer("pausemenu");
+            var wFocussed = wRoot.GetFocussedChild();
+            if (null != wFocussed)
+            {
+                if (wRoot.GetChild("ui.loginGlobally", out var wGlobally) && wFocussed == wGlobally)
+                {
+                    loginLocally = false;
+                }
+                else if (wRoot.GetChild("ui.loginLocally", out var wLocally) && wFocussed == wLocally)
+                {
+                    loginLocally = true;
+                }
+            }
         }
-        
-        // TXWTOOD: Start the game.
+        catch (Exception)
+        {
+            // No menu, keep the remembered mode.
+        }
+
+        if (loginLocally)
+        {
+            _onLoginLocally(ev);
+        }
+        else
+        {
+            _onLoginGlobally(ev);
+        }
     }
-    
+
 
     private void _onNewGlobally(Event ev)
     {
-        lock (_lo)
-        {
-            if (_isStartingGame) return;
-            _isStartingGame = true;
-        }
+        if (!_tryBeginLogin("logging in to start a new global game")) return;
 
         I.Get<AutoSave>().SyncOnline = true;
 
-        _displayLoginStatus("logging in...");
-            
         _startGame(true);
     }
-    
+
 
     public void SceneKickoff()
     {
@@ -484,7 +618,7 @@ public class Scene : AModule, IScene
             {
                 var timeline = I.Get<engine.Timeline>();
                 timeline.SetMarker(TimepointTitlesongStarted, DateTime.Now);
-                _isStartingGame = true;
+                _tryBeginLogin("starting");
 
                 // Preload MetaGen (normally scheduled from _onTitleSongStarted)
                 _preload();

@@ -28,6 +28,7 @@ public class AutoSave : engine.AModule
 
     private bool _syncOnline = false;
     private bool _isAutoSaveActive = false;
+    private bool _isInitialLoadPending = false;
 
 
     private DefaultEcs.Entity _eSaveOnlineDisplay; 
@@ -59,6 +60,19 @@ public class AutoSave : engine.AModule
 
     public string GameServer { get; set; } = "https://silicondesert.io";
     public int SaveInterval { get; set; } = 60;
+
+    /**
+     * Upper bounds for one server call. The default HttpClient timeout
+     * of 100s left the login screen looking dead for well over a minute.
+     */
+    public TimeSpan LoginTimeout { get; set; } = TimeSpan.FromSeconds(15);
+    public TimeSpan ApiTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+    /**
+     * Retries of a transient failure (no answer, 5xx) while the player
+     * waits on the login screen; background saves keep retrying longer.
+     */
+    public int InitialLoginRetries { get; set; } = 2;
 
     
 
@@ -204,66 +218,114 @@ public class AutoSave : engine.AModule
     }
     
     
-    private void _performApiCall(Func<HttpRequestMessage> httpRequestMessageFunc, string webToken, Action<HttpResponseMessage> onResponse, Action<string> onError)
+    /**
+     * Run an async server interaction without losing its faults: whatever
+     * escapes the body is handed to onException instead of vanishing in an
+     * unobserved task.
+     */
+    private static void _runGuarded(Func<Task> body, Action<Exception> onException)
     {
-        HttpRequestMessage httpRequestMessage = httpRequestMessageFunc();
-        if (httpRequestMessage.Headers.Contains("x-nassau-token"))
+        Task.Run(async () =>
         {
-            httpRequestMessage.Headers.Remove("x-nassau-token");
-        }
-        httpRequestMessage.Headers.Add("x-nassau-token", webToken);
-           
-        I.Get<HttpClient>()
-            
-            .SendAsync(httpRequestMessage)
-            .ContinueWith(
-                async (responseTask) =>
+            try
+            {
+                await body();
+            }
+            catch (Exception e)
+            {
+                try
                 {
-                    var knownWebToken = M<nogame.config.Module>().GameConfig.WebToken;
+                    onException(e);
+                }
+                catch (Exception eHandler)
+                {
+                    Error($"Exception while handling server call failure {e}: {eHandler}");
+                }
+            }
+        });
+    }
 
-                    HttpResponseMessage httpResponseMessage = await responseTask;
-                    if (httpResponseMessage.StatusCode == HttpStatusCode.Forbidden || httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized) 
-                    {
-                        if (string.IsNullOrEmpty(knownWebToken))
-                        {
-                            Error($"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, even with a fresh token.");
-                        }
-                        else
-                        {
-                            _setLoggedIn(false);
-                            _setAuthenticating(false);
-                            M<nogame.config.Module>().GameConfig.WebToken = "";
-                            M<nogame.config.Module>().Save();
-                            Error($"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, using an existing token. Fetching new token.");
-                            _withWebToken(httpRequestMessageFunc, onResponse, onError, 5);
-                        }
-                    }
-                    else
-                    {
-                        _setAuthenticating(false);
-                        Trace($"Saving web token.");
-                        M<nogame.config.Module>().GameConfig.WebToken = webToken;
-                        M<nogame.config.Module>().Save();
-                        _setLoggedIn(true);
-         
-                        if (httpResponseMessage.IsSuccessStatusCode)
-                        {
-                            Trace($"Done calling {httpRequestMessage.RequestUri}");
 
-                            onResponse(httpResponseMessage);
-                        }
-                        else 
-                        {
-                            string textResponse = await httpResponseMessage.Content.ReadAsStringAsync();
-                            Trace($"Error while saving: {textResponse}");
-                            
-                            onResponse(httpResponseMessage);
-                        }
-                    }
-                });
+    private static bool _isTransient(Exception e) =>
+        e is HttpRequestException or OperationCanceledException
+        || e is AggregateException { InnerException: HttpRequestException or OperationCanceledException };
+
+
+    private void _performApiCall(Func<HttpRequestMessage> httpRequestMessageFunc, string webToken, Action<HttpResponseMessage> onResponse, Action<string> onError, int nRetries)
+    {
+        _runGuarded(async () =>
+        {
+            HttpRequestMessage httpRequestMessage = httpRequestMessageFunc();
+            if (httpRequestMessage.Headers.Contains("x-nassau-token"))
+            {
+                httpRequestMessage.Headers.Remove("x-nassau-token");
+            }
+            httpRequestMessage.Headers.Add("x-nassau-token", webToken);
+
+            var knownWebToken = M<nogame.config.Module>().GameConfig.WebToken;
+
+            HttpResponseMessage httpResponseMessage;
+            using (var cts = new System.Threading.CancellationTokenSource(ApiTimeout))
+            {
+                httpResponseMessage = await I.Get<HttpClient>().SendAsync(httpRequestMessage, cts.Token);
+            }
+
+            if (httpResponseMessage.StatusCode == HttpStatusCode.Forbidden || httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized) 
+            {
+                if (string.IsNullOrEmpty(knownWebToken))
+                {
+                    _setAuthenticating(false);
+                    string textResponse = await httpResponseMessage.Content.ReadAsStringAsync();
+                    Error($"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, even with a fresh token.");
+                    onError($"access refused: {ServerErrorText.Describe(httpResponseMessage.StatusCode, httpResponseMessage.ReasonPhrase, textResponse)}");
+                }
+                else
+                {
+                    _setLoggedIn(false);
+                    _setAuthenticating(false);
+                    M<nogame.config.Module>().GameConfig.WebToken = "";
+                    M<nogame.config.Module>().Save();
+                    Error($"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, using an existing token. Fetching new token.");
+                    _withWebToken(httpRequestMessageFunc, onResponse, onError, nRetries);
+                }
+            }
+            else
+            {
+                _setAuthenticating(false);
+                Trace($"Saving web token.");
+                M<nogame.config.Module>().GameConfig.WebToken = webToken;
+                M<nogame.config.Module>().Save();
+                _setLoggedIn(true);
+     
+                if (httpResponseMessage.IsSuccessStatusCode)
+                {
+                    Trace($"Done calling {httpRequestMessage.RequestUri}");
+                }
+                else 
+                {
+                    string textResponse = await httpResponseMessage.Content.ReadAsStringAsync();
+                    Trace($"Error while saving: {textResponse}");
+                }
+
+                onResponse(httpResponseMessage);
+            }
+        }, e =>
+        {
+            _setAuthenticating(false);
+            Warning($"Server call failed: {e}");
+            onError(ServerErrorText.Describe(e));
+        });
     }
     
 
+    /**
+     * Call the server with a web token, logging in first if we have none.
+     *
+     * Every way this can fail ends in exactly one onError call: missing
+     * credentials, a login the server rejects (with the server's message),
+     * an unreachable server or a timeout. Only transient failures (no
+     * answer, 5xx) are retried; a rejected login is not.
+     */
     private void _withWebToken(
         Func<HttpRequestMessage> httpRequestMessageFunc,
         Action<HttpResponseMessage> onResponse,
@@ -273,81 +335,101 @@ public class AutoSave : engine.AModule
     {
         string webToken = M<nogame.config.Module>().GameConfig.WebToken;
 
-        if (string.IsNullOrEmpty(webToken))
-        {
-            _setAuthenticating(true);
-            var gc = M<nogame.config.Module>().GameConfig;
-            if (!string.IsNullOrEmpty(gc.Username) && !string.IsNullOrEmpty(gc.Password))
-            {
-                var loginObject = new
-                {
-                    user = new
-                    {
-                        email = gc.Username,
-                        password = gc.Password
-                    }
-                };
-                I.Get<HttpClient>()
-                    .PostAsync(
-                        $"{GameServer}/api/public/users/log_in", 
-                         JsonContent.Create(loginObject))
-                    .ContinueWith(
-                        async (responseTask) =>
-                        {
-                            var responseMessage = await responseTask;
-                            string jsonResponse = await responseMessage.Content.ReadAsStringAsync();
-                            
-                            var objResponse = JsonSerializer.Deserialize<LoginResult>(jsonResponse);
-
-                            if (objResponse.GetType() == typeof(LoginResult) && !string.IsNullOrEmpty(objResponse.token))
-                            {
-                                webToken = objResponse.token;
-                                _setAuthenticating(false);
-                                Trace($"GetToken response is {webToken}");
-                                try
-                                {
-                                    _performApiCall(httpRequestMessageFunc, webToken, onResponse, onError);
-                                }
-                                catch (UnauthorizedAccessException ex)
-                                {
-                                    Error($"performApiCall raised an UnautorizedAccessException: {ex}");
-                                }
-                                catch (Exception ex)
-                                {
-                                    Error($"Error calling api: {ex}");
-                                }
-                            }
-                            else
-                            {
-                                if (nRetries > 0)
-                                {
-                                    Trace($"GetToken error, retrying ({nRetries} retries left): {jsonResponse}");
-                                    Task.Delay(2000)
-                                        .ContinueWith(t => _withWebToken(httpRequestMessageFunc, onResponse, onError, nRetries - 1));
-                                } 
-                                else
-                                {
-                                    _setAuthenticating(false);
-                                    onResponse(responseMessage);
-                                    onError("login failed");
-                                    Trace($"GetToken error.");
-                                }
-                            }
-                        });
-            }
-        }
-        else
+        if (!string.IsNullOrEmpty(webToken))
         {
             _setAuthenticating(false);
-            try
+            _performApiCall(httpRequestMessageFunc, webToken, onResponse, onError, nRetries);
+            return;
+        }
+
+        var gc = M<nogame.config.Module>().GameConfig;
+        if (string.IsNullOrEmpty(gc.Username) || string.IsNullOrEmpty(gc.Password))
+        {
+            _setAuthenticating(false);
+            onError("enter eMail and password to log in");
+            return;
+        }
+
+        _setAuthenticating(true);
+        var loginObject = new
+        {
+            user = new
             {
-                _performApiCall(httpRequestMessageFunc, webToken, onResponse, onError);
+                email = gc.Username,
+                password = gc.Password
             }
-            catch (Exception ex)
+        };
+
+        void retryOrFail(string reason)
+        {
+            if (nRetries > 0)
             {
-                Error($"Error calling api: {ex}");
+                Warning($"Login attempt failed ({reason}), retrying, {nRetries} retries left.");
+                Task.Delay(2000)
+                    .ContinueWith(t => _withWebToken(httpRequestMessageFunc, onResponse, onError, nRetries - 1));
+            }
+            else
+            {
+                _setAuthenticating(false);
+                onError($"login failed: {reason}");
             }
         }
+
+        _runGuarded(async () =>
+        {
+            HttpResponseMessage responseMessage;
+            string jsonResponse;
+            using (var cts = new System.Threading.CancellationTokenSource(LoginTimeout))
+            {
+                responseMessage = await I.Get<HttpClient>().PostAsync(
+                    $"{GameServer}/api/public/users/log_in",
+                    JsonContent.Create(loginObject),
+                    cts.Token);
+                jsonResponse = await responseMessage.Content.ReadAsStringAsync(cts.Token);
+            }
+
+            if (responseMessage.IsSuccessStatusCode)
+            {
+                LoginResult objResponse = null;
+                try
+                {
+                    objResponse = JsonSerializer.Deserialize<LoginResult>(jsonResponse);
+                }
+                catch (JsonException)
+                {
+                }
+
+                if (!string.IsNullOrEmpty(objResponse?.token))
+                {
+                    _setAuthenticating(false);
+                    _performApiCall(httpRequestMessageFunc, objResponse.token, onResponse, onError, nRetries);
+                    return;
+                }
+            }
+
+            string reason = ServerErrorText.Describe(responseMessage.StatusCode, responseMessage.ReasonPhrase, jsonResponse);
+            if ((int)responseMessage.StatusCode >= 500)
+            {
+                retryOrFail(reason);
+            }
+            else
+            {
+                _setAuthenticating(false);
+                onError($"login failed: {reason}");
+            }
+        }, e =>
+        {
+            if (_isTransient(e))
+            {
+                retryOrFail(ServerErrorText.Describe(e));
+            }
+            else
+            {
+                _setAuthenticating(false);
+                Warning($"Login failed: {e}");
+                onError($"login failed: {ServerErrorText.Describe(e)}");
+            }
+        });
     }
 
 
@@ -381,30 +463,46 @@ public class AutoSave : engine.AModule
             {
                 Content = JsonContent.Create(saveGameObject)
             };
-        }, _onSaveGameResponse, _ => { }, 5);
+        }, _onSaveGameResponse, (reason) =>
+        {
+            Warning($"Cloud save failed: {reason}");
+            _setSaving(false);
+        }, 5);
     }
     
 
+    /**
+     * async void: a fault escaping here would kill the process, so it is
+     * caught and logged.
+     */
     private async void _doSave()
     {
-        _setSaving(true);
+        try
+        {
+            _setSaving(true);
 
-        var jnAllEntities = await M<builtin.EntitySaver>().SaveAll();
-        
-        var gs = _gameState;
-        gs.Entities = JsonSerializer.Serialize(
-            jnAllEntities,
-            new JsonSerializerOptions()
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = false
-            }
-        );
+            var jnAllEntities = await M<builtin.EntitySaver>().SaveAll();
 
-        //Trace($"Saving entities json: {gs.Entities}");
-        M<DBStorage>().SaveGameState(gs);
-        
-        _triggerCloudSave(gs);
+            var gs = _gameState;
+            gs.Entities = JsonSerializer.Serialize(
+                jnAllEntities,
+                new JsonSerializerOptions()
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = false
+                }
+            );
+
+            //Trace($"Saving entities json: {gs.Entities}");
+            M<DBStorage>().SaveGameState(gs);
+
+            _triggerCloudSave(gs);
+        }
+        catch (Exception e)
+        {
+            Error($"Unable to save the game: {e}");
+            _setSaving(false);
+        }
     }
     
 
@@ -416,7 +514,10 @@ public class AutoSave : engine.AModule
 
     private void _stopAutoSave()
     {
-        _saveTimer.Enabled = false;
+        if (null != _saveTimer)
+        {
+            _saveTimer.Enabled = false;
+        }
     }
     
     
@@ -516,37 +617,61 @@ public class AutoSave : engine.AModule
     }
 
 
+    /**
+     * The login worked. An account without an online save (no save in
+     * the answer, or 404) continues with the local game state; any other
+     * failure is reported, never silently replaced by the local game.
+     */
     private async Task _onLoadGameResponse(
         HttpResponseMessage httpResponseMessage,
-        Action<GameState> onInitialLoad)
+        Action<GameState> onInitialLoad,
+        Action<string> onError)
     {
-        bool haveGameState = false;
-        if (httpResponseMessage.IsSuccessStatusCode)
+        try
         {
-            string strSave = await httpResponseMessage.Content.ReadAsStringAsync();
-            // Trace($"Load game response is {strSave}");
-            var save = JsonSerializer.Deserialize<SaveGameGetResult>(strSave);
-            var gs = JsonSerializer.Deserialize<GameState>(save.save.gamedata);
-            if (null != gs)
+            bool haveGameState = false;
+            if (httpResponseMessage.IsSuccessStatusCode)
             {
-                if (!gs.IsValid())
+                string strSave = await httpResponseMessage.Content.ReadAsStringAsync();
+                // Trace($"Load game response is {strSave}");
+                var save = JsonSerializer.Deserialize<SaveGameGetResult>(strSave);
+                if (!string.IsNullOrEmpty(save?.save?.gamedata))
                 {
-                    gs.Fix();
-                }
+                    var gs = JsonSerializer.Deserialize<GameState>(save.save.gamedata);
+                    if (null != gs)
+                    {
+                        if (!gs.IsValid())
+                        {
+                            gs.Fix();
+                        }
 
-                _gameState = gs;
-                haveGameState = true;
-                
-                await _restoreEntityAndConfigFromLoad(gs);
+                        _gameState = gs;
+                        haveGameState = true;
+
+                        await _restoreEntityAndConfigFromLoad(gs);
+                    }
+                }
+            }
+            else if (httpResponseMessage.StatusCode != HttpStatusCode.NotFound)
+            {
+                string textResponse = await httpResponseMessage.Content.ReadAsStringAsync();
+                onError($"online save: {ServerErrorText.Describe(httpResponseMessage.StatusCode, httpResponseMessage.ReasonPhrase, textResponse)}");
+                return;
+            }
+
+            if (!haveGameState)
+            {
+                Trace($"Using fallback to local gamestate");
+                await _loadCreateOffline();
             }
         }
-
-        if (!haveGameState)
+        catch (Exception e)
         {
-            Trace($"Using fallback to local gamestate");
-            await _loadCreateOffline();
+            Warning($"Unable to load the online save: {e}");
+            onError($"online save: {ServerErrorText.Describe(e)}");
+            return;
         }
-        
+
         await _engine.TaskMainThread(() =>
         {
             onInitialLoad(_gameState);
@@ -579,7 +704,7 @@ public class AutoSave : engine.AModule
      * No previous save game could be found, the offline game
      * state is loaded or a new one is created.
      */
-    private async Task _triggerInitialOnlineLoad(bool reset, Action<GameState> onInitialLoad, Action<string> onError)
+    private void _triggerInitialOnlineLoad(bool reset, Action<GameState> onInitialLoad, Action<string> onError)
     {
         if (!reset)
         {
@@ -588,15 +713,46 @@ public class AutoSave : engine.AModule
                 return new HttpRequestMessage(
                     HttpMethod.Get,
                     $"{GameServer}/api/auth/save_game?gameTitle=silicondesert2");
-            }, (response) => _onLoadGameResponse(response, onInitialLoad), 
+            }, (response) => _onLoadGameResponse(response, onInitialLoad, onError), 
                 onError,
-                5);
+                InitialLoginRetries);
         }
         else
         {
+            /*
+             * "new (globally)" destroys the online save, so make sure the
+             * login works before creating anything: fetching the old save
+             * is the cheapest call that proves the credentials.
+             */
+            _withWebToken(() =>
+                {
+                    return new HttpRequestMessage(
+                        HttpMethod.Get,
+                        $"{GameServer}/api/auth/save_game?gameTitle=silicondesert2");
+                }, (response) =>
+                {
+                    if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        _ = _createNewOnline(onInitialLoad, onError);
+                    }
+                    else
+                    {
+                        onError($"server not ready: {ServerErrorText.Describe(response.StatusCode, response.ReasonPhrase, null)}");
+                    }
+                },
+                onError,
+                InitialLoginRetries);
+        }
+    }
+
+
+    private async Task _createNewOnline(Action<GameState> onInitialLoad, Action<string> onError)
+    {
+        try
+        {
             Trace($"Reset game.");
             var gameState = new GameState();
-            
+
             /*
              * Well, this is supposed to be started from just about anywhere, as it might want
              * to use logical thread operations.
@@ -612,20 +768,35 @@ public class AutoSave : engine.AModule
             _doSave();
 
             _afterCreate(gameState);
-            
-            _engine.Run(() =>
-            {
-                onInitialLoad(gameState);
-                _startAutoSave();
-            });
-            
         }
+        catch (Exception e)
+        {
+            Warning($"Unable to create a new game: {e}");
+            onError($"new game: {ServerErrorText.Describe(e)}");
+            return;
+        }
+
+        await _engine.TaskMainThread(() =>
+        {
+            onInitialLoad(_gameState);
+        });
+
+        _startAutoSave();
     }
     
 
-    private async Task _triggerInitialOfflineLoad(Action<GameState> onInitialLoad, Action<string> _onError)
+    private async Task _triggerInitialOfflineLoad(Action<GameState> onInitialLoad, Action<string> onError)
     {
-        await _loadCreateOffline();
+        try
+        {
+            await _loadCreateOffline();
+        }
+        catch (Exception e)
+        {
+            Warning($"Unable to load the local game: {e}");
+            onError($"local game: {ServerErrorText.Describe(e)}");
+            return;
+        }
         
         await _engine.TaskMainThread(() =>
         {
@@ -644,7 +815,7 @@ public class AutoSave : engine.AModule
         }
         else
         { 
-            _triggerInitialOfflineLoad(onInitialLoad, onError);
+            _ = _triggerInitialOfflineLoad(onInitialLoad, onError);
         }
     }
     
@@ -665,6 +836,13 @@ public class AutoSave : engine.AModule
     }
     
 
+    /**
+     * Load or create the game state, then start saving periodically.
+     *
+     * Exactly one of onInitialLoad (on the logical thread) or onError (on
+     * any thread) is called. After onError, autosave is inactive again, so
+     * the caller may change SyncOnline and call StartAutoSave once more.
+     */
     public void StartAutoSave(bool reset, Action<GameState> onInitialLoad, Action<string> onError)
     {
         lock (_lo)
@@ -674,9 +852,44 @@ public class AutoSave : engine.AModule
                 ErrorThrow<InvalidOperationException>($"Autosave already was active.");
             }
             _isAutoSaveActive = true;
+            _isInitialLoadPending = true;
+        }
+
+        void onLoaded(GameState gs)
+        {
+            lock (_lo)
+            {
+                if (!_isInitialLoadPending) return;
+                _isInitialLoadPending = false;
+            }
+
+            /*
+             * This runs inside TaskMainThread, whose task never completes if
+             * the action throws; the caller owns reporting its own failures.
+             */
+            try
+            {
+                onInitialLoad(gs);
+            }
+            catch (Exception e)
+            {
+                Error($"Exception in the initial load callback: {e}");
+            }
+        }
+
+        void onFailed(string reason)
+        {
+            lock (_lo)
+            {
+                if (!_isInitialLoadPending) return;
+                _isInitialLoadPending = false;
+                _isAutoSaveActive = false;
+            }
+            Warning($"Initial load failed: {reason}");
+            onError(reason);
         }
         
-        _triggerInitialLoad(reset, onInitialLoad, onError);
+        _triggerInitialLoad(reset, onLoaded, onFailed);
     }
     
 
