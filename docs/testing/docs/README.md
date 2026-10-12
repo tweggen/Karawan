@@ -21,6 +21,9 @@ See [../../tale/docs/tests/](../../tale/docs/tests/) for:
 
 Running the suite: [RUN_TESTS_GUIDE.md](RUN_TESTS_GUIDE.md). The earlier TALE test plan, framework and quick-start docs are archived in [../../tale/archive/](../../tale/archive/) (`TALE_TESTS_*.md`).
 
+### 🔌 **Login against a local exli** — [LOGIN_SERVER_HARNESS.md](LOGIN_SERVER_HARNESS.md)
+The game's login and online save against the exli backend on your machine: throwaway database, exli's tests, an end-to-end client run
+
 ### 🧪 **Test driver** — [EXPECT_IMPLEMENTATION.md](EXPECT_IMPLEMENTATION.md) (as built), [EXPECT_ENGINE.md](EXPECT_ENGINE.md) (original proposal)
 
 ## Common Commands
