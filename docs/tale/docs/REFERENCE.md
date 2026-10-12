@@ -16,7 +16,7 @@ Every NPC gets a flat `Dictionary<string, float>` (range 0.0–1.0). No class hi
 
 `morality` (0.0–1.0, default ~0.6–0.8) represents how far an NPC will go before resorting to illegitimate means. Drifts downward under sustained desperation; drifts upward through positive social contact.
 
-Specific roles may add entries (e.g., `inventory_stress` for merchants). Trust is per-relationship (`trust_<npcId>`), not global — the base `trust` property is a default/average.
+Specific roles may add entries (e.g., `inventory_stress` for merchants). Trust is per-relationship (`NpcSchedule.Trust`, keyed by NPC id; -1 is the player), not global — the base `trust` property is a default/average.
 
 ---
 
@@ -70,7 +70,7 @@ Assigned deterministically from NPC seed. Roles are initial tendencies, not perm
 
 ## Simulation Tiers
 
-From `NPC_STORIES_DESIGN.md`:
+From `design/NPC_STORIES.md`:
 
 | Tier | Range | Simulation | Cost |
 |------|-------|------------|------|
@@ -106,7 +106,7 @@ NPC populations are deterministic from the cluster seed. This enables on-demand 
 ```
 World Seed: "mydear"
   → Cluster Seed: "cluster-clusters-mydear-[clusterIndex]"
-    → NPC Seed: Hash(clusterSeed, npcIndex)
+    → NPC Seed: clusterSeed + "-npc-" + npcIndex
 ```
 
 Each NPC's seed is computed **independently** (not sequentially from a shared RNG), so skipping one NPC does not affect any other NPC's generation. This is critical for the deviation skip mask.
@@ -114,7 +114,7 @@ Each NPC's seed is computed **independently** (not sequentially from a shared RN
 ### What the Seed Determines
 
 From a single NPC seed, the following are deterministic:
-- **Role** (Worker, Merchant, Socialite, Drifter, Authority)
+- **Role** (worker, merchant, socialite, drifter, authority, nightworker, hustler, reveler — `TalePopulationGenerator.Roles`)
 - **Home location** (assigned from cluster's residential locations)
 - **Workplace location** (assigned from cluster's work locations)
 - **Social venue preferences** (assigned from cluster's social venues)
@@ -170,10 +170,10 @@ NPCs form relationships through repeated interaction:
 
 | Tier | Trust Range | Behavior |
 |------|-------------|----------|
-| **Stranger** | 0.0–0.2 | No voluntary interaction, may interact if co-located by chance |
-| **Acquaintance** | 0.2–0.5 | Greet, brief chat, aware of each other's existence |
-| **Friend** | 0.5–0.8 | Ask for help, share information, seek out deliberately |
-| **Ally/Rival** | 0.8–1.0 / special | Deep entanglement, mutual obligations, story-driving |
+| **Stranger** | 0.0–0.15 | No voluntary interaction, may interact if co-located by chance |
+| **Acquaintance** | 0.15–0.4 | Greet, brief chat, aware of each other's existence |
+| **Friend** | 0.4–0.7 | Ask for help, share information, seek out deliberately |
+| **Ally/Rival** | 0.7–1.0 / special | Deep entanglement, mutual obligations, story-driving |
 
 ---
 
@@ -182,7 +182,7 @@ NPCs form relationships through repeated interaction:
 | System | File |
 |--------|------|
 | Engine entry | `Karawan/DesktopMain.cs` |
-| Headless engine | `Splash.Silk/Platform.cs` → `EasyCreateHeadless()` |
+| Headless engine | `Splash.OpenGL/Platform.cs` → `EasyCreateHeadless()` |
 | MetaGen pipeline | `JoyceCode/engine/world/MetaGen.cs` |
 | Fragment loader | `JoyceCode/engine/world/Loader.cs` |
 | Cluster data | `JoyceCode/engine/world/ClusterDesc.cs` |

@@ -35,7 +35,7 @@ public interface ITestEventSource
 public interface ITestEventSink
 {
     /// Inject an event into the host application.
-    Task InjectEvent(TestEvent testEvent);
+    Task InjectEventAsync(TestEvent testEvent);
 }
 
 /// A test event — a named event with optional typed payload.
@@ -72,12 +72,12 @@ Internally, `TestSession` uses:
 - `TaskCompletionSource` for converting event arrival into awaitable futures
 - `CancellationTokenSource` for timeout enforcement
 
-### Karawan Integration: `Joyce.TestDriver`
+### Karawan Integration: `engine.testing` (TestDriverModule)
 
 An engine-level module that bridges `ExpectEngine` to the Joyce event system:
 
 - Implements `ITestEventSource` by subscribing to the engine's `EventQueue`
-- Implements `ITestEventSink` by pushing events via `Engine.QueueMainThreadAction`
+- Implements `ITestEventSink` by pushing events via `EventQueue.Push` (thread-safe)
 - Activates when an environment variable or CLI flag is set (e.g., `JOYCE_TEST_SCRIPT`)
 - Loads test scripts from the asset system (works on both desktop and Android)
 - Reports results via process exit code and structured log output
@@ -98,7 +98,7 @@ An engine-level module that bridges `ExpectEngine` to the Joyce event system:
       "comment": "Wait for the main scene to start"
     },
     {
-      "expect": { "type": "narration.scriptStarted", "code": "main" },
+      "expect": { "type": "narration.script.started", "code": "main" },
       "timeout": 10,
       "comment": "Narration should auto-start"
     },
@@ -107,7 +107,7 @@ An engine-level module that bridges `ExpectEngine` to the Joyce event system:
       "comment": "Advance the narration"
     },
     {
-      "expect": { "type": "narration.nodeReached" },
+      "expect": { "type": "narration.node.reached" },
       "timeout": 5
     },
     {
@@ -128,7 +128,7 @@ An engine-level module that bridges `ExpectEngine` to the Joyce event system:
 ### Android
 - Test scripts are loaded as assets through the existing asset system
 - No filesystem access assumptions in the generic library
-- `Joyce.TestDriver` handles platform-specific script loading
+- `TestDriverModule` handles platform-specific script loading
 - Results reported via logcat and/or a results file written to app-accessible storage
 
 ### Desktop (Windows/macOS/Linux)
@@ -151,7 +151,7 @@ None provides a standalone, host-agnostic expect framework for event-driven appl
 ## Project Structure
 
 ```
-ExpectEngine/                  — NuGet-able library (netstandard2.1 / net9.0)
+ExpectEngine/                  — NuGet-able library (net10.0)
   ITestEventSource.cs
   ITestEventSink.cs
   TestEvent.cs
@@ -159,7 +159,7 @@ ExpectEngine/                  — NuGet-able library (netstandard2.1 / net9.0)
   TestResult.cs
   ScriptRunner.cs              — JSON test script interpreter
 ExpectEngine.Tests/            — xUnit tests for the library
-Joyce/TestDriver/              — Karawan integration module
+JoyceCode/engine/testing/      — Karawan integration module
   TestDriverModule.cs          — AModule, bridges EventQueue <-> ExpectEngine
   JoyceTestEventSource.cs
   JoyceTestEventSink.cs

@@ -252,7 +252,7 @@ Key API:
 - `RegisterQuest(string questId, Func<Engine, Entity, Task> factory)` — registers an async factory
 - `HasQuest(string questId)` — checks if a quest is registered
 - `TriggerQuest(string questId, bool activate)` — creates entity, runs factory, activates
-- `DeactivateQuest(Entity eQuest)` — deactivates, removes Strategy, disposes entity, saves
+- `DeactivateQuest(Entity eQuest, bool isSuccess = true)` — deactivates, removes Strategy, disposes entity, saves, publishes `QuestDeactivatedEvent`
 
 Quest registration lives in `NarrationBindings._registerQuestFactories()`:
 

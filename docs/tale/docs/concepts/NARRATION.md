@@ -160,5 +160,5 @@ The narration manager enforces a state machine for script priority:
 
 - **Idle** -> any state
 - **Conversation** -> any state (interruptible)
-- **Narration** -> Narration or ScriptedScene only
+- **Narration** -> Narration, ScriptedScene, Conversation (player talks to an NPC) or Idle
 - **ScriptedScene** -> ScriptedScene only

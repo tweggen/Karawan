@@ -65,7 +65,7 @@ All tests passed!
 |--------|---------|-----------------|
 | ✓ PASS | Test passed | Event stream confirmed, validation successful |
 | ✗ FAIL | Test failed | Validation error or unexpected event sequence |
-| ⏱ TIMEOUT | Test exceeded 30 seconds | May indicate slow system or test issue |
+| ⏱ TIMEOUT | Test exceeded 65 seconds | May indicate slow system or test issue |
 | ✗ ERROR | Test crashed | Check `/tmp/tale_test_results.txt` for details |
 
 ### Example Output
@@ -85,12 +85,12 @@ cat /tmp/tale_test_results.txt
 ### Run Single Test with Full Output
 ```bash
 JOYCE_TEST_SCRIPT="tests/tale/phase0-des/01-initialization.json" \
-  ./TestRunner/bin/Release/net9.0/TestRunner 2>&1 | tail -100
+  ./TestRunner/bin/Release/net10.0/TestRunner 2>&1 | tail -100
 ```
 
 ### Check TestRunner Binary
 ```bash
-ls -lh TestRunner/bin/Release/net9.0/TestRunner
+ls -lh TestRunner/bin/Release/net10.0/TestRunner
 # Should show the executable with correct permissions
 ```
 
@@ -132,7 +132,7 @@ find models/tests/tale -name "*.json" | wc -l
 ## Performance Notes
 
 - **Total Runtime**: ~2-5 minutes for all 62 tests (depends on system)
-- **Per-Test Timeout**: 30 seconds
+- **Per-Test Timeout**: 65 seconds (TestRunner itself waits 60, `JOYCE_TEST_TIMEOUT`)
 - **Resource Usage**: Minimal (headless, no graphics)
 
 ## Troubleshooting
@@ -144,7 +144,7 @@ dotnet build TestRunner/TestRunner.csproj -c Release -p:EnableSourceLink=false
 ```
 
 ### All Tests Timeout
-- Check TestRunner binary is executable: `ls -lx TestRunner/bin/Release/net9.0/TestRunner`
+- Check TestRunner binary is executable: `ls -lx TestRunner/bin/Release/net10.0/TestRunner`
 - Verify test scripts exist: `ls models/tests/tale/phase*/`
 - Try single test: `./run_tests.sh 01-initialization.json`
 
@@ -186,12 +186,12 @@ To run tests in CI/CD pipeline:
 After running tests successfully:
 
 1. **Review Test Specifications**:
-   - `docs/tale/TALE_TEST_SCRIPTS_PHASE_0.md`
-   - `docs/tale/TALE_TEST_SCRIPTS_PHASE_1.md`
-   - `docs/tale/TALE_TEST_SCRIPTS_PHASE_3.md`
+   - `docs/tale/docs/tests/PHASE_0.md`
+   - `docs/tale/docs/tests/PHASE_1.md`
+   - `docs/tale/docs/tests/PHASE_3.md`
 
 2. **Expand Phase 2-5 Tests**:
-   - Read `docs/tale/PHASES_1_2_4_5_SKELETON.md`
+   - Read `docs/tale/archive/TALE_TEST_SCRIPTS_PHASES_1_2_4_5_SKELETON.md`
    - Create detailed specs for Phase 2-5
    - Implement 20+ JSON test scripts per phase
 
@@ -201,9 +201,9 @@ After running tests successfully:
 
 ## Support
 
-- **Test Framework**: See `docs/tale/EXPECT_ENGINE_IMPLEMENTATION.md`
+- **Test Framework**: See `docs/testing/docs/EXPECT_IMPLEMENTATION.md`
 - **Test Harness**: See `TestRunner/README.md`
-- **Documentation**: See `docs/tale/OVERVIEW.md`
+- **Documentation**: See `docs/tale/docs/OVERVIEW.md`
 
 ---
 

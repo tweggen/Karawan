@@ -12,7 +12,7 @@ This separation allows rapid feedback during development while maintaining compr
 
 **Purpose**: Quick functional validation of core systems
 **Simulation Duration**: 60 days (fast feedback)
-**Run Time**: ~5 minutes for all 192 tests
+**Run Time**: ~5 minutes for all 200 tests
 **When to Run**: After code changes, CI/CD pipeline
 
 ### Usage
@@ -54,7 +54,7 @@ This separation allows rapid feedback during development while maintaining compr
 | C3 | Mood/Tone Branches | 6 | NPC mood functions, wealth labels, tone-aware dialogue | 60 days |
 | C4 | Trust, Memory & Quest Hooks | 9 | Trust accumulation, player memory facts, conversation cooldown | 60 days |
 
-**Total**: 192 regression tests
+**Total**: 200 regression tests
 
 ## Recalibration Tests (`run_recalibration_tests.sh`)
 
@@ -96,16 +96,16 @@ The test runner uses the `TALE_SIM_DAYS` environment variable:
 
 ```bash
 # Default: 60 days (regression)
-JOYCE_TEST_SCRIPT="tests/tale/phase0-des/01-init.json" \
-  dotnet TestRunner/bin/Release/net9.0/TestRunner.dll
+JOYCE_TEST_SCRIPT="tests/tale/phase0-des/01-initialization.json" \
+  dotnet TestRunner/bin/Release/net10.0/TestRunner.dll
 
 # Custom duration (e.g., 365 days for recalibration)
 TALE_SIM_DAYS=365 JOYCE_TEST_SCRIPT="tests/tale/phase6/..." \
-  dotnet TestRunner/bin/Release/net9.0/TestRunner.dll
+  dotnet TestRunner/bin/Release/net10.0/TestRunner.dll
 
 # Full year-plus analysis
 TALE_SIM_DAYS=730 JOYCE_TEST_SCRIPT="tests/tale/phase6/..." \
-  dotnet TestRunner/bin/Release/net9.0/TestRunner.dll
+  dotnet TestRunner/bin/Release/net10.0/TestRunner.dll
 ```
 
 ## Testing Workflow
@@ -185,7 +185,7 @@ Duration: ~46 minutes estimated
 - **Regression**: 60 days × 10 NPCs = ~16,900 events per test
 - **Recalibration**: 365 days × 50 NPCs = ~100,000+ events per test
 - Single test typically takes: 2-5 seconds (60 days), 15-60 seconds (365 days)
-- Parallel execution: Tests run sequentially (test framework limitation)
+- Parallel execution: `run_tests.sh` runs tests sequentially; `run_tests_parallel.sh` (same filters) runs one TestRunner process per test across all CPU cores
 
 ## Troubleshooting
 

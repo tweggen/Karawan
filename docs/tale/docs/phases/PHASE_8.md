@@ -1,6 +1,6 @@
 # TALE Phase 8: Occupation-Based Character Model Assignment
 
-> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/RoleDefinition.cs:58`, `models/nogame.roles.json:126`, `nogameCode/nogame/characters/citizen/CharacterModelDescriptionFactory.cs:30`, `nogameCode/nogame/characters/citizen/TaleSpawnOperator.cs:315-324` - **Verified:** 2026-07-21
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/RoleDefinition.cs:58`, `models/nogame.roles.json:126`, `nogameCode/nogame/characters/citizen/CharacterModelDescriptionFactory.cs:30`, `nogameCode/nogame/characters/citizen/TaleSpawnOperator.cs:322-331` - **Verified:** 2026-07-21
 
 
 **Status:** ✅ Implementation Complete (2026-03-20)
@@ -61,7 +61,7 @@ When spawning a TALE NPC:
 | `office_worker` | `man_business_Rig.fbx`, `man_scientist_Rig.fbx`, `woman_doctor_Rig.fbx`, `woman_actionhero_Rig.fbx` |
 | `authority` | `man_police_Rig.fbx`, `woman_police_Rig.fbx` |
 | `socialite` | `man_casual_Rig.fbx`, `man_business_Rig.fbx`, `woman_actionhero_Rig.fbx`, `woman_race_car_driver_Rig.fbx` |
-| `drifter`, `worker` (legacy) | *(no `models` field → falls back to full pool)* |
+| `drifter`, `worker` (legacy), `nightworker`, `hustler`, `reveler` | *(no `models` field → falls back to full pool)* |
 
 ## Build & Test Status
 
@@ -74,7 +74,7 @@ When spawning a TALE NPC:
 1. **JoyceCode/engine/tale/RoleDefinition.cs** — Added `Models` property
 2. **models/nogame.roles.json** — Added `"models"` arrays to all 9 role definitions
 3. **nogameCode/nogame/characters/citizen/CharacterModelDescriptionFactory.cs** — Added optional `models` parameter to `CreateCitizen()`
-4. **nogameCode/nogame/characters/citizen/TaleSpawnOperator.cs** — Look up role's model pool in line 166-169
+4. **nogameCode/nogame/characters/citizen/TaleSpawnOperator.cs** — Look up role's model pool (now lines 322-331)
 5. **CLAUDE.md** — Updated Phase 8 status
 
 ## Visual Behavior

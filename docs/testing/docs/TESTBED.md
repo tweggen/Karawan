@@ -26,11 +26,11 @@ As of March 2026, the TALE system uses a **two-tier testing approach** to balanc
 
 **Purpose**: Quick functional validation of core TALE systems
 **Simulation Duration**: 60 days (fast feedback)
-**Total Time**: ~5 minutes for all 171 tests
+**Total Time**: ~5 minutes for all 200 tests
 **When to Run**: After every code change, in CI/CD pipeline
-**Status**: ✅ All 171 tests passing across 7 phases
+**Status**: ✅ All 200 tests passing across 11 phases
 
-The regression test suite consists of 171 JSON test scripts organized by phase:
+The regression test suite consists of 200 JSON test scripts organized by phase:
 - **Phase 0** (20 tests): DES engine core — event queue, scheduling, properties
 - **Phase 1** (20 tests): Storylet system — selection, preconditions, postconditions
 - **Phase 2** (20 tests): Strategy system — multi-phase state machines
@@ -38,8 +38,9 @@ The regression test suite consists of 171 JSON test scripts organized by phase:
 - **Phase 4** (20 tests): Quest/player system — quest mechanics
 - **Phase 5** (20 tests): Escalation/interrupts — interrupt scopes, branches
 - **Phase 6** (49 tests): Population management — generation, deviance, persistence
+- **Phases C1–C4** (29 tests): Conversation — infrastructure, storylet dialogue, tone, trust/memory
 
-See `docs/TESTING.md` for complete testing documentation and usage guide.
+See `docs/testing/docs/TESTING_STRATEGY.md` for complete testing documentation and usage guide.
 
 ### Recalibration Tests (`./run_recalibration_tests.sh`)
 
@@ -122,7 +123,7 @@ After world generation, the DES mode does **not** use the engine frame loop at a
 
 ```
 Testbed/                          # New console project
-├── Testbed.csproj                # References Joyce, JoyceCode, nogame, nogameCode, Splash.Silk
+├── Testbed.csproj                # References Joyce, nogame, Splash, Splash.OpenGL
 ├── TestbedMain.cs                # Entry point: world gen, then DES or continuous mode
 ├── ClusterViewer.cs              # IViewer that covers all fragments in a target cluster
 │
@@ -199,8 +200,8 @@ All structural operators run. The metaGen config (`nogame.metaGen.json`) execute
 |----------|------|--------|
 | `CreateTerrainOperator` | Yes | Terrain elevation — required by all placement |
 | `CreateTerrainMeshOperator` | Yes | Terrain mesh data (operators may depend on fragment mesh state) |
-| `GenerateClusterStreetsOperator` | Yes | Triggers `ClusterDesc._triggerStreets()` which generates streets, quarters, buildings, and shopfronts. **This is where the entire spatial data model is created.** |
-| `GenerateHousesOperator` | Yes | Building 3D geometry. Shopfront data exists before this runs (created by `QuarterGenerator` inside `_triggerStreets()`), but this operator reads shopfront tags to apply building types. Run it for fidelity. |
+| `GenerateClusterStreetsOperator` | Yes | Triggers `ClusterDesc._triggerStreets_nl()` which generates streets, quarters, buildings, and shopfronts. **This is where the entire spatial data model is created.** |
+| `GenerateHousesOperator` | Yes | Building 3D geometry. Shopfront data exists before this runs (created by `QuarterGenerator` inside `_triggerStreets_nl()`), but this operator reads shopfront tags to apply building types. Run it for fidelity. |
 | `GenerateClusterQuartersOperator` | Yes | Quarter floor geometry |
 | `GenerateClusterStreetAnnotationsOperator` | Optional | Street signs/markings — pure visual, safe to skip via config condition |
 | `GenerateTreesOperator` | Optional | Visual — safe to skip via config condition |
@@ -413,7 +414,7 @@ public class ClusterViewer : IViewer
 }
 ```
 
-This ensures `SpawnController` sees all cluster fragments as `Visible3dNow` and populates them via `CitizenSpawnOperator`.
+This ensures `SpawnController` sees all cluster fragments as `Visible3dNow` and populates them via the citizen `SpawnOperator` (`nogame.characters.citizen`).
 
 **Fragment persistence**: The `ClusterViewer` stays registered permanently, preventing `Loader._purgeFragments()` from unloading cluster fragments during simulation.
 

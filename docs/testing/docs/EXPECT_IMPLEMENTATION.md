@@ -12,7 +12,7 @@ A generic, host-agnostic library with zero engine dependencies. Uses `System.Thr
 
 | File | Purpose |
 |------|---------|
-| `ExpectEngine.csproj` | net9.0 project, zero external dependencies |
+| `ExpectEngine.csproj` | net10.0 project, zero external dependencies |
 | `TestEvent.cs` | Host-agnostic event: Type (string), Code (string), Payload (object), Timestamp |
 | `TestResult.cs` | Outcome enum (Pass/Fail/Timeout/Error), message, step index, elapsed time, log |
 | `ITestEventSource.cs` | Interface for host to provide events: `IDisposable Subscribe(Action<TestEvent>)` |
@@ -54,7 +54,7 @@ Verifies the critical startup path:
 ### Activation
 The `TestDriverModule` activates on every game start but returns immediately (no-op) unless one of these is set:
 - **GlobalSettings** `test.script` — path to a JSON test script
-- **Environment variable** `JOYCE_TEST_SCRIPT` — same, overrides globalSettings
+- **Environment variable** `JOYCE_TEST_SCRIPT` — same, used only when globalSettings `test.script` is empty
 
 ### Event Tapping
 `JoyceTestEventSource` subscribes at the root `PathNode` of the `SubscriptionManager` (empty path ""). This causes it to receive ALL events before any specific path subscribers. It never sets `IsHandled`, so events flow through normally — the test driver is purely an observer.

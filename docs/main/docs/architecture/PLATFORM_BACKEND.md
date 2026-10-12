@@ -13,6 +13,12 @@ Explicitly *not* the renderer design, the ECS, or the game.
 — work packages, executable acceptance criteria, and the agent-orchestration protocol. This document
 is the *why*; that one is the *how*.
 
+**Reading note:** §1–§8 describe the repository as audited on 2026-08-04 and the plan as proposed
+then. Paths such as `Splash.Silk/…` and the Silk.NET packages named there are the pre-migration
+state; Silk.NET has since been removed from every shipping project — the renderer is now
+`Splash.OpenGL/` (`GlThreeD`, `Platform.cs`, `Sdl3WindowBackend`) and the GL binding is
+`Splash.API.OpenGL/`, generated from `gl.xml`.
+
 > There has never been a recorded decision in this repo about Silk.NET, rendering backends, or
 > porting. That absence is itself part of the finding — it is how the present situation accumulated
 > unexamined. The closest existing statement is `README.md:267-268`: *"Splash is the second renderer
@@ -43,7 +49,7 @@ Two distinct problems, often conflated:
 Android 15+. The deadline was extended to 31 May 2026 and **has passed**. Silk's
 `Silk.NET.Windowing.Sdl.aar` ships an SDL2 that is not 16 KB-aligned, and the binary is byte-identical
 between 2.22.0 and 2.23.0. `Wuka/ANDROID_NATIVE_LIBS.md:114-115` records the remedy as **"Upstream"** —
-i.e. there is no local fix. Android publishing is blocked today.
+i.e. there is no local fix. Android publishing was blocked at the time of the audit.
 
 **2b. A chronic cost.** Recurring breakage attributed to Silk.NET across 3.5 years.
 
@@ -336,7 +342,9 @@ emitting **the same type and member names already in use**, so the ~4,100 LOC of
 edits. Scope is bounded and known (§3d). Include a `GLCheck`-compatible error path
 (`Splash.Silk/GLCheck.cs` exists) and keep the `INativeContext`-equivalent seam so Aihao's
 Avalonia-hosted context still works. Detach the ImGui backend by inlining `ImGuiFontConfig`;
-`ImGui.NET` itself is not a Silk dependency and stays. Then rename `Splash.Silk` → `Splash.GL`.
+`ImGui.NET` itself is not a Silk dependency and stays. Then rename `Splash.Silk` → `Splash.GL`
+(done differently: WP-5.4 renamed `Splash.Silk` to `Splash.OpenGL`; the generated binding is
+`Splash.API.OpenGL`).
 
 Deliberately last: least urgent (GL is spec-frozen, so nothing rots while waiting) and most
 mechanical, so it must not sit in front of the Play blocker.

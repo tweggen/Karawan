@@ -21,14 +21,15 @@ Three things about this setup are not obvious and will bite:
    loading. See non-negotiables N5/N8 in
    `docs/roadmap/proposed/IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`.
 
-2. **Two packages are legitimately referenced at two different versions**, and CPM allows only
+2. **One package is legitimately referenced at two different versions**, and CPM allows only
    one central version each. The odd one out uses `VersionOverride` at its call site:
    | Package | Central | Override |
    |---|---|---|
    | `SixLabors.ImageSharp` | 3.1.10 (`Karawan`, `examples/Launcher`) | `Splash.OpenGL` → 3.0.1 |
-   | `SkiaSharp.NativeAssets.Linux` | 2.88.7 (`Karawan`, `examples/Launcher`) | `Tooling/Cmdline` → 3.119.1 |
-   Unifying either one would change what resolves. Don't "tidy" them without deciding that
-   deliberately.
+   Unifying it would change what resolves. Don't "tidy" it without deciding that
+   deliberately. (`SkiaSharp.NativeAssets.Linux` used to be the second one; the four SkiaSharp
+   packages now share one central version and must move together — see the comment in
+   `Directory.Packages.props`.)
 
 3. **CPM silently disables MAUI's implicit package references.**
    `Microsoft.Maui.Sdk`'s `BundledVersions.targets` sets
@@ -81,15 +82,18 @@ The ordering between `GatherTexturesHost` and `CompileAssetsHost` is **load-bear
 
 `PackTexturesTask` and `CompileAssetsTask` both use `Process.Start(Executable, args)` where `Executable` points at a *published* binary:
 
-- `..\Tooling\Cmdline\bin\Debug\net9.0\$(HostRid)\publish\joycecmd.exe`
-- `..\Chushi\bin\Debug\net9.0\$(HostRid)\publish\Chushi.exe`
+- `..\Tooling\Cmdline\bin\Debug\net10.0\$(HostRid)\publish\joycecmd(.exe)`
+- `..\Chushi\bin\Debug\net10.0\$(HostRid)\publish\Chushi(.exe)`
+
+(resolved by the `ResolveJoyceTools` target in `nogame.csproj`, which warns when only a build for
+another framework is found)
 
 **Implication for dev workflow:** if you edit `Tooling/Cmdline/*.cs`, you have **two** outputs to refresh:
 
 1. The netstandard2.0 task DLL (used by `Res2TargetTask`):  
    `dotnet build Tooling/Cmdline/Cmdline.csproj -c Debug -f netstandard2.0 -r win-x64`
-2. The net9.0 published exe (used by `PackTexturesTask`):  
-   `dotnet publish Tooling/Cmdline/Cmdline.csproj -c Debug -f net9.0 -r win-x64 --self-contained`
+2. The net10.0 published exe (used by `PackTexturesTask`):  
+   `dotnet publish Tooling/Cmdline/Cmdline.csproj -c Debug -f net10.0 -r win-x64 --self-contained`
 
 A bare `dotnet build nogame.csproj` will refresh (1) incrementally but does **not** publish (2). I have observed `PackTextures` running stale code while `Res2Target` runs current code in the same build invocation — symptoms look like the BFS works for one task and not the other. Always re-publish after touching Cmdline source.
 
@@ -302,14 +306,14 @@ Two ways to make files reachable that way, both of which also get them into the 
 | `__include__` in a parent config | The content belongs in the merged config tree (narration scripts, roles, interactions) | Automatic via `Mix.AdditionalFiles` |
 | An entry in `models/nogame.resources.json` | The file is opened as a standalone document at runtime (storylets) | Explicit `uri`, optional `type` |
 
-The storylets use the second: 14 entries tagged `"type": "taleStorylet"`. That one declaration does double duty — the resource compiler ships the files, and `TaleModule._collectStoryletTags` filters `/resources/list` on that same type to learn what to open, so what ships and what loads cannot drift apart. `tests/JoyceCode.Tests/engine/tale/TaleStoryletResourceTests.cs` fails the build if a file in `models/tale/` is missing from the list, if a declared file doesn't exist, or if a basename collides with another resource (Android flattens every asset to its basename).
+The storylets use the second: 14 entries tagged `"type": "taleStorylet"`. That one declaration does double duty — the resource compiler ships the files, and `StoryletLibrary.CollectDeclaredTags` (called from `TaleModule.OnModuleActivate`) filters `/resources/list` on that same type to learn what to open, so what ships and what loads cannot drift apart. `tests/JoyceCode.Tests/engine/tale/TaleStoryletResourceTests.cs` fails the build if a file in `models/tale/` is missing from the list, if a declared file doesn't exist, or if a basename collides with another resource (Android flattens every asset to its basename).
 
 ### Symptom: a manifest entry is regenerated but the APK still lacks the file
 
 `Wuka.csproj` does `<Import Project="../nogame/generated/AndroidResources.xml" />`. MSBuild evaluates `Import` at **project-evaluation time**, before any target in that build runs — so a build that regenerates the manifest is still using the copy that existed when it started. The first build after adding an asset updates the manifest; the **second** build stages it into `Wuka/obj/…/assets/`. Verify with:
 
 ```bash
-ls Wuka/obj/Debug/net9.0-android36.0/assets/ | wc -l
+ls Wuka/obj/Debug/net10.0-android36.0/assets/ | wc -l
 ```
 
 ### The generated manifest must NOT carry an `Sdk` attribute
@@ -364,7 +368,7 @@ it *references*, so the string is present either way. `scripts/check-apk.py` par
 dangling superclasses — it names the genuinely missing class rather than the one in the crash:
 
 ```bash
-python scripts/check-apk.py Wuka/bin/Release/net9.0-android36.0/android-arm64/de.nassau_records.silicondesert2-Signed.apk
+python scripts/check-apk.py Wuka/bin/Release/net10.0-android36.0/android-arm64/de.nassau_records.silicondesert2-Signed.apk
 ```
 
 Worth running after any change to `AndroidJavaSource`, native libraries, or package references —
@@ -373,11 +377,11 @@ work package to `libSDL3.so`; see the comment in `Wuka.csproj`).
 
 ### Symptom: build-task A behaves differently from build-task B in the same build
 
-A and B almost certainly run from different binaries. `Res2TargetTask` runs the netstandard2.0 task DLL in-process; `PackTexturesTask` and `CompileAssetsTask` spawn a published net9.0 executable child process. After editing Cmdline source, refresh **both** outputs.
+A and B almost certainly run from different binaries. `Res2TargetTask` runs the netstandard2.0 task DLL in-process; `PackTexturesTask` and `CompileAssetsTask` spawn a published net10.0 executable child process. After editing Cmdline source, refresh **both** outputs.
 
 ```bash
 dotnet build-server shutdown
-dotnet publish Tooling/Cmdline/Cmdline.csproj -c Debug -f net9.0 -r win-x64 --self-contained
+dotnet publish Tooling/Cmdline/Cmdline.csproj -c Debug -f net10.0 -r win-x64 --self-contained
 dotnet build   Tooling/Cmdline/Cmdline.csproj -c Debug -f netstandard2.0 -r win-x64 --no-incremental
 rm nogame/generated/AndroidResources.xml nogame/generated/InnoResources.iss
 dotnet build nogame/nogame.csproj

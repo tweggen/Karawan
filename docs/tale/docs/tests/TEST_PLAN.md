@@ -6,7 +6,7 @@ This document outlines a comprehensive testing strategy for the TALE narrative e
 
 **Test Framework**: ExpectEngine (system.threading.Channels, lock-free event tapping)
 **Script Location**: `models/tests/tale/`
-**Execution**: `JOYCE_TEST_SCRIPT=tests/tale/phase-X/script-name.json dotnet run ...`
+**Execution**: `JOYCE_TEST_SCRIPT=tests/tale/phaseN-<name>/script-name.json dotnet run ...`
 
 ---
 
@@ -180,8 +180,8 @@ models/tests/tale/
 **Objective**: Validate request emission, claiming, fulfillment, abstract resolution, and event logging.
 
 **Status**: All 22/22 tests passing as of 2026-03-14. Fixed issues:
-1. `node_arrival` event Code now uses storylet ID instead of location ID (TestRunner/TestRunnerMain.cs:323)
-2. Signal emission added on direct (Tier-2) claim completion (DesSimulation.cs:389-391)
+1. `node_arrival` event Code now uses storylet ID instead of location ID (TestRunner/TestRunnerMain.cs:691)
+2. Signal emission added on direct (Tier-2) claim completion (DesSimulation.cs:510-512)
 3. Debug console output removed from TestEventLogger for cleaner test output
 
 ### Test Categories (20+ scripts)
@@ -322,7 +322,7 @@ Run Phase 3 tests:
 # Run all Phase 3 tests
 for script in models/tests/tale/phase3-interactions/*.json; do
   JOYCE_TEST_SCRIPT="tests/tale/phase3-interactions/$(basename $script)" \
-    ./TestRunner/bin/Release/net9.0/TestRunner
+    ./TestRunner/bin/Release/net10.0/TestRunner
   if [ $? -ne 0 ]; then
     echo "FAILED: $script"
     exit 1
@@ -389,12 +389,12 @@ Each JSON script includes:
 
 ## File Organization
 
-This document (`TALE_TEST_PLAN.md`) outlines the strategy.
+This document (`TEST_PLAN.md`) outlines the strategy.
 
 Actual test script implementations split across:
-- `TALE_TEST_SCRIPTS_PHASE_0.md` — 20 DES engine tests
-- `TALE_TEST_SCRIPTS_PHASE_1.md` — 20+ storylet tests
-- `TALE_TEST_SCRIPTS_PHASE_2.md` — 20+ strategy tests
-- `TALE_TEST_SCRIPTS_PHASE_3.md` — 20+ interaction tests (with JSON script files)
-- `TALE_TEST_SCRIPTS_PHASE_4.md` — 20+ player integration tests
-- `TALE_TEST_SCRIPTS_PHASE_5.md` — 20+ escalation tests
+- `PHASE_0.md` — 20 DES engine tests
+- `PHASE_1.md` — 20+ storylet tests
+- `PHASE_2.md` — 20+ strategy tests
+- `PHASE_3.md` — 20+ interaction tests (with JSON script files)
+- `PHASE_4.md` — 20+ player integration tests
+- `PHASE_5.md` — 20+ escalation tests

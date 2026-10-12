@@ -69,13 +69,15 @@ When disabled: `handler.IsEnabled = false` → `AppendLiteral`/`AppendFormatted`
 
 ### Categories
 
-12 predefined categories in `Dc` enum:
+28 predefined categories in `Dc` enum:
 - Pathfinding, TaleManager, SpatialModel, MetaGen, SpawnController
 - StreetGen, NavMap, Physics, AssetLoading, Casette, Animation, ClickModule
+- Narration, Database, UI, Input, Tools, Map, World, Engine, Framework
+- TaleSpawn, TaleEntity, CitizenStrategy, CitizenNavigation, Satnav, FbxModel, TaleSocial
 
 To add a new category:
 1. Add entry to `Dc` enum (before `_Count`, update `_Count`)
-2. Add `"debug.category.newname": "false"` to `nogame.globalSettings.json`
+2. Add `"debug.category.newname": false` to `nogame.properties.json`
 3. Use `Trace(Dc.NewName, $"...")` at call sites
 
 ---
@@ -131,11 +133,12 @@ Debug categories fit the Properties design perfectly: they change at runtime via
 // From Logger.cs (using static engine.Logger):
 public static void Trace(engine.Dc category, ref engine.DebugInterpolatedStringHandler message)
 public static void Wonder(engine.Dc category, ref engine.DebugInterpolatedStringHandler message)
-public static void Warning(engine.Dc category, ref engine.DebugInterpolatedStringHandler message)
+public static void Warning(engine.Dc category, in string message)  // prefixes [category], always emits
+public static void Error(engine.Dc category, in string message)    // prefixes [category], always emits
 public static bool Is(engine.Dc category)  // Forwarding to DebugFilter.Is()
 ```
 
-Note: `Error()` is excluded — errors always emit regardless of category.
+Note: only `Trace` and `Wonder` are filtered. `Warning` and `Error` always emit regardless of category; their `Dc` overloads only prefix the category. There is deliberately no filtered `Warning(Dc, ref DebugInterpolatedStringHandler)` overload — one existed and silently suppressed every `Warning(_dc, $"...")` call site (`tests/JoyceCode.Tests/engine/LoggerFilteringTests.cs` guards against its return).
 
 ### Call Site Patterns
 
@@ -234,7 +237,7 @@ Improvement: ~40% due to zero allocation overhead when disabled
 - `JoyceCode/engine/DebugFilter.cs` — Core filtering logic
 - `JoyceCode/engine/Logger.cs` — New overloads + delegation
 - `JoyceCode/engine/Props.cs` — Startup wiring via `_whenLoaded`
-- `models/nogame.properties.json` — 12 category config entries as boolean properties
+- `models/nogame.properties.json` — category config entries as boolean properties
 
 ---
 

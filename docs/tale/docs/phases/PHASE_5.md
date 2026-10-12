@@ -212,7 +212,7 @@ Run DES for 365 days. Check:
 
 **Tests**:
 - 20 Phase 5 test scripts in `models/tests/tale/phase5-escalation/` (all passing)
-- `docs/tale/TALE_TEST_SCRIPTS_PHASE_5.md` — Complete test specifications
+- `docs/tale/docs/tests/PHASE_5.md` — Complete test specifications
 
 ### Validation Results
 

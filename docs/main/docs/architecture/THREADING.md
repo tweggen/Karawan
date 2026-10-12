@@ -8,7 +8,7 @@ worker pool from deadlocking on small-core devices.
 | Thread | Constraint | Entry points |
 |--------|-----------|--------------|
 | **Logical thread** | Only thread allowed to touch the DefaultEcs world (`DefaultEcs.Entity.OkThread`). Must **never block**. | `Engine.QueueMainThreadAction`, `Engine.QueueEventHandler`, `Engine.QueueEntitySetupAction`, `Engine.QueueCleanupAction`, `Engine.RunMainThread` (inlines when already on the logical thread), `Engine.TaskMainThread` (returns a `Task`) |
-| **Platform thread** | Owns the OpenGL context; all GL calls happen here. Provided by the platform layer (Silk.NET window loop). | Splash renderer internals |
+| **Platform thread** | Owns the OpenGL context; all GL calls happen here. Provided by the platform layer (SDL3 window loop, `Sdl3WindowBackend`). | Splash renderer internals |
 | **Worker pool** | General-purpose tasks, capped concurrency (see below). | `Engine.Run(...)`, `Engine.TF` (a `TaskFactory` bound to the capped scheduler) |
 | Audio etc. | Subsystem-specific threads, out of scope here. | |
 

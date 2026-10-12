@@ -12,12 +12,12 @@ Android IME uses a composing region for autocorrect/prediction. SDL translates I
 
 ### Custom InputConnection (KarawanInputConnection)
 
-`KarawanInputConnection` wraps SDL's `IInputConnection` and intercepts IME operations directly:
+`KarawanInputConnection` derives from Android's `BaseInputConnection` (SDL's surface provides no connection to wrap) and intercepts IME operations directly:
 
 - **`CommitText`** — emits `INPUT_TEXT_REPLACE` event (deletes composing region + inserts committed text atomically)
 - **`SetComposingText`** — tracks composing length only (no preview in text field)
 - **`DeleteSurroundingText`** — emits proper backspace/delete events for real text deletion
-- **`SendKeyEvent`** — delegates to SDL's connection for physical key handling
+- **`SendKeyEvent`** — not overridden; `BaseInputConnection` dispatches it to the surface and hence into SDL's key handling
 
 This replaces SDL's broken backspace+retype translation with clean, atomic text operations.
 
@@ -59,8 +59,8 @@ Override `OnCreateInputConnection()` in `GameSurface.cs`:
 ### Event Flow (Desktop)
 
 ```
-Platform._onKeyChar(IKeyboard, char)
-  -> control char filtering
+Sdl3WindowBackend: SDL_EVENT_TEXT_INPUT
+  -> OnKeyCharacter(text) -> Platform
   -> EventQueue.Push(INPUT_KEY_CHARACTER event)
   -> Engine._onLogicalFrame() processes event queue
   -> Widget.HandleInputEvent() dispatches to focussed widget
@@ -86,9 +86,11 @@ InputWidgetImplementation.OnPropertyChanged("focussed", true)
   -> Engine.EnableKeyboard()                 (CountedEnabler pattern)
   -> Platform.KeyboardEnabled = true
   -> _setKeyboardEnabled(true)
-  -> IKeyboard.BeginInput()                  (Silk.NET -> SDL_StartTextInput)
+  -> IWindowBackend.SetKeyboardVisible(true) (Sdl3WindowBackend)
+  -> Desktop: SDL_StartTextInput(window)
+  -> Android: SoftKeyboardHandler -> AndroidSoftKeyboard.SetVisible (deliberately not SDL_StartTextInput)
   -> Android: GameSurface.OnCreateInputConnection() called
-  -> Returns KarawanInputConnection (text) or SDL's connection (email/password/number)
+  -> Returns KarawanInputConnection, with input type flags from the widget's inputType
 ```
 
 ### Key Classes
@@ -102,12 +104,14 @@ InputWidgetImplementation.OnPropertyChanged("focussed", true)
 | OSDText | JoyceCode/engine/draw/components/OSDText.cs | Component with Position, Size, GaugeValue (cursor pos) |
 | Engine | JoyceCode/engine/Engine.cs | EnableKeyboard/DisableKeyboard, SetKeyboardInputType |
 | IPlatform | JoyceCode/engine/IPlatform.cs | Interface: `KeyboardEnabled`, `KeyboardInputType` |
-| Platform | Splash.OpenGL/Platform.cs | Calls Silk.NET BeginInput/EndInput, control char filtering |
+| Platform | Splash.OpenGL/Platform.cs | Forwards keyboard enable/disable to the window backend, pushes INPUT_KEY_CHARACTER |
+| Sdl3WindowBackend | Splash.OpenGL/Sdl3WindowBackend.cs | SDL3 text input events, `SetKeyboardVisible` |
+| AndroidSoftKeyboard | Wuka/Platforms/Android/AndroidSoftKeyboard.cs | Raises/dismisses the on-screen keyboard against the game surface |
 | GameSurface | Wuka/Platforms/Android/GameSurface.cs | Android SDL surface, input type selection |
 
 ## Future: Input Field Position Awareness
 
-Currently **no position information** flows from the input field to the platform layer. `IKeyboard.BeginInput()` takes no arguments. The input widget knows its position (via `OSDText.Position` and `OSDText.Size`) but this is only used for rendering.
+Currently **no position information** flows from the input field to the platform layer. `IWindowBackend.SetKeyboardVisible(bool)` takes no position. The input widget knows its position (via `OSDText.Position` and `OSDText.Size`) but this is only used for rendering.
 
 A future enhancement could:
 

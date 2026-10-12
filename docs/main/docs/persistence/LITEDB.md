@@ -2,7 +2,7 @@
 
 ## Overview
 
-LiteDB 5.0.15 is used as an embedded document database for local persistence. The system manages 3 separate database files storing game state, configuration, and world generation data.
+LiteDB 6.0.0-prerelease.80 is used as an embedded document database for local persistence. The system manages 3 separate database files storing game state, configuration, and world generation data.
 
 ## Database Files
 
@@ -12,7 +12,7 @@ All stored at `GlobalSettings["Engine.RWPath"]` + `{name}.db`:
 |----------|---------|---------|
 | `gamestate.db` | 3 | Player save data |
 | `gameconfig.db` | 3 | Login/config persistence |
-| `worldcache.db` | 1029 | Cached procedural street networks |
+| `worldcache.db` | 1040 | Cached procedural street networks |
 
 ## File Paths by Platform
 
@@ -55,6 +55,8 @@ No differences. Database initialization is identical in both modes.
 | `FollowedQuestId` | string | null | Quest currently followed for satnav/markers |
 | `FollowedQuestIds` | List\<string\> | [] | All followed quest IDs (redundant with entity persistence, kept for quick access) |
 | `WorldModifications` | List\<string\> | [] | World modification descriptors (e.g. "destroyed:building:cluster3:42") |
+| `TaleDeviations` | string | "" | Serialized TALE NPC schedule deviations (JSON) |
+| `TaleSocialState` | string | "" | Serialized TALE social state (JSON) |
 | `Entities` | string | "" | JSON-serialized all persistable entity components |
 | `GameNow` | DateTime | GameT0 | In-game clock/time |
 | `NumberCubes` | int | 0 | Collectible count |
