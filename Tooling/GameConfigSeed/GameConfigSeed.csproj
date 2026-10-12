@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Writes the game's login config (gameconfig.db) into an RW path, so a
+    desktop run with its RW path overridden can log in against a local exli without the
+    login screen, or with a deliberately broken web token. A test aid only;
+    see docs/testing/docs/LOGIN_SERVER_HARNESS.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The real class, so the stored shape cannot drift from the game's. -->
+    <Compile Include="../../nogameCode/nogame/config/GameConfig.cs" Link="GameConfig.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LiteDB" />
+  </ItemGroup>
+
+</Project>

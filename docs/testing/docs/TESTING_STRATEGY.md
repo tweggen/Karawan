@@ -8,6 +8,8 @@ The TALE test suite is split into two categories:
 
 This separation allows rapid feedback during development while maintaining comprehensive validation for parameter tuning.
 
+Outside TALE: the game's login and online save are tested against a local exli backend, see [LOGIN_SERVER_HARNESS.md](LOGIN_SERVER_HARNESS.md).
+
 ## Regression Tests (`run_tests.sh`)
 
 **Purpose**: Quick functional validation of core systems

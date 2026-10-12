@@ -82,11 +82,11 @@ For old clients, S2 changes row 8 from 500 to 403: a stored garbage token is cle
 
 ## Verification
 
-The local setup below (throwaway Postgres, exli test-port override, local exli with a seeded user) is built as its own ticket, **KAR-424**; KAR-423 depends on it.
+The local setup below (throwaway Postgres, exli test-port override, local exli with a seeded user) was built in **KAR-424**: see `docs/testing/docs/LOGIN_SERVER_HARNESS.md`.
 
-1. **exli unit/controller tests:** in `../exli`, `bash start-dockers.sh` (Postgres; the script is in the repo root, not in `exli/`). Then in `../exli/exli`: `mix deps.get`, `mix ecto.create && mix ecto.migrate`, `mix test`. The new API tests pass and the existing auth tests still pass.
+1. **exli unit/controller tests:** `cd ../exli && ./test-local.sh`. Do not use `start-dockers.sh`: it binds 5432. The new API tests pass, and so do the existing auth tests and the KAR-424 smoke test.
 2. **Client unit tests:** `ServerErrorTextTests` covers every row. The full xUnit suite must show no new failures against master. Master currently has 26 street-generation failures (measured 2026-10-12 in a clean worktree; see thinktank `testing`), while CLAUDE.md still claims a green 1804. Reconciling that is a separate item, not part of this plan.
-3. **End to end:** run exli locally (`mix phx.server`, port **4100**) with the `GameServer` property override above. With `debug_errors: true`, a local 500 renders as an HTML debug page, so the local run verifies the **post-S2** behaviour only (row 8 before S2 is known from the code). Check on the login screen: wrong password (quoted 401 message, no retry delay), unknown email (same), no save yet (local game starts), garbage token in the config (403 → token cleared → login succeeds), server stopped (`server not reachable` after the retries), a successful login, and whether the longest messages fit the 560 px status line (this sets C1's cap).
+3. **End to end:** run exli locally (`../exli/dev-local.sh`, port **4100**, seeded user) with the `GameServer` property override above; `Tooling/GameConfigSeed` presets a garbage token. With `debug_errors: true`, a local 500 renders as an HTML debug page, so the local run verifies the **post-S2** behaviour only (row 8 before S2 is known from the code). Check on the login screen: wrong password (quoted 401 message, no retry delay), unknown email (same), no save yet (local game starts), garbage token in the config (403 → token cleared → login succeeds), server stopped (`server not reachable` after the retries), a successful login, and whether the longest messages fit the 560 px status line (this sets C1's cap).
 4. **Prod, after deploying exli:** a wrong-password login against `silicondesert.io` from the new client and from the shipped Android build.
 
 ## Docs to update on completion
