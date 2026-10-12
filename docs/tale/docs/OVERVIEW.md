@@ -4,16 +4,16 @@ This directory contains implementation tasks and comprehensive test suites for t
 
 ## Organization
 
-- **Implementation**: Phase files (PHASE_0.md, PHASE_3.md, etc.) with detailed implementation plans
-- **Testing**: Detailed test specifications (TALE_TEST_SCRIPTS_PHASE_X.md) + JSON test scripts (models/tests/tale/phaseX-*)
+- **Implementation**: Phase files (`phases/PHASE_0A.md`, `phases/PHASE_3.md`, etc.) with detailed implementation plans
+- **Testing**: Detailed test specifications (`tests/PHASE_X.md`) + JSON test scripts (models/tests/tale/phaseX-*)
 - **Reference**: REFERENCE.md with shared concepts (properties, verbs, interaction primitives, roles)
-- **Quick Start**: TESTING_QUICK_START.md for test execution and current status
+- **Quick Start**: `tests/QUICK_START.md` for test execution and current status
 
 ## Reading Order
 
 1. **For Implementation**: Read `REFERENCE.md` first, then phase files in sequence
-2. **For Testing**: Read `TESTING_QUICK_START.md` for current status, then TALE_TEST_SCRIPTS_PHASE_X.md for test details
-3. **For Test Execution**: See TESTING_QUICK_START.md for bash scripts and execution examples
+2. **For Testing**: Read `tests/QUICK_START.md` for current status, then `tests/PHASE_X.md` for test details
+3. **For Test Execution**: See `tests/QUICK_START.md` for bash scripts and execution examples
 
 ## Phase Implementation & Testing Status
 
@@ -48,16 +48,16 @@ PHASE_D   Multi-Objective Routing        ── ✅ COMPLETE (2026-03-25)
 
 | Phase | Specs | Scripts | Validation | Status |
 |-------|-------|---------|-----------|--------|
-| **Phase 0** | ✅ TALE_TEST_SCRIPTS_PHASE_0.md | ✅ 20 JSON (phase0-des/) | ✅ **20/20 PASS** | **COMPLETE** |
-| **Phase 1** | ✅ TALE_TEST_SCRIPTS_PHASE_1.md | ✅ 20 JSON (phase1-storylets/) | ✅ **20/20 PASS** | **COMPLETE** |
-| **Phase 2** | ✅ TALE_TEST_SCRIPTS_PHASE_2.md | ✅ 20 JSON (phase2-strategies/) | ✅ **20/20 PASS** | **COMPLETE** |
-| **Phase 3** | ✅ TALE_TEST_SCRIPTS_PHASE_3.md | ✅ 22 JSON (phase3-interactions/) | ✅ **22/22 PASS** | **COMPLETE** |
-| **Phase 4** | ✅ TALE_TEST_SCRIPTS_PHASE_4.md | ✅ 20 JSON (phase4-player/) | ✅ **20/20 PASS** | **COMPLETE** |
-| **Phase 5** | ✅ TALE_TEST_SCRIPTS_PHASE_5.md | ✅ 20 JSON (phase5-escalation/) | ✅ **20/20 PASS** | **COMPLETE** |
-| **Phase 6** | ✅ TALE_TEST_SCRIPTS_PHASE_6.md | ✅ 49 JSON (phase6-population/) | ✅ **49/49 PASS** | **COMPLETE** |
-| **Phase 7** | ✅ TALE_TEST_SCRIPTS_PHASE_7.md | ✅ 102 JSON (phase7-spatial/) | ✅ **102/102 PASS** | **COMPLETE** |
+| **Phase 0** | ✅ tests/PHASE_0.md | ✅ 20 JSON (phase0-des/) | ✅ **20/20 PASS** | **COMPLETE** |
+| **Phase 1** | ✅ tests/PHASE_1.md | ✅ 20 JSON (phase1-storylets/) | ✅ **20/20 PASS** | **COMPLETE** |
+| **Phase 2** | ✅ tests/PHASE_2.md | ✅ 20 JSON (phase2-strategies/) | ✅ **20/20 PASS** | **COMPLETE** |
+| **Phase 3** | ✅ tests/PHASE_3.md | ✅ 22 JSON (phase3-interactions/) | ✅ **22/22 PASS** | **COMPLETE** |
+| **Phase 4** | ✅ tests/PHASE_4.md | ✅ 20 JSON (phase4-player/) | ✅ **20/20 PASS** | **COMPLETE** |
+| **Phase 5** | ✅ tests/PHASE_5.md | ✅ 20 JSON (phase5-escalation/) | ✅ **20/20 PASS** | **COMPLETE** |
+| **Phase 6** | ✅ tests/PHASE_6.md | ✅ 49 JSON (phase6-population/) | ✅ **49/49 PASS** | **COMPLETE** |
+| **Phase 7** | ✅ tests/PHASE_7.md | ✅ 102 JSON (phase7-spatial/) | ✅ **102/102 PASS** | **COMPLETE** |
 | **Phase 8** | ✅ Documentation | ✅ Integrated in Phase 7 tests | ✅ **49/49 PASS** | **COMPLETE** |
-| **Phase D** | ✅ PHASE_D.md | Integrated (no new tests) | ✅ **171/171 PASS** | **COMPLETE** |
+| **Phase D** | ✅ `docs/navigation/docs/MULTI-OBJECTIVE-ROUTING.md` | Integrated (no new tests) | ✅ **171/171 PASS** | **COMPLETE** |
 
 ### Test Suite Summary
 
@@ -89,12 +89,12 @@ PHASE_D   Multi-Objective Routing        ── ✅ COMPLETE (2026-03-25)
 | 3 | 1 + 0B (interaction pool needs DES + storylets) | **Complete** |
 | 4 | 2 + 3 (player needs visible NPCs + interaction pool) | **Complete** |
 | 5 | 3 (branching needs interaction pool) | **Complete** |
-| 6A | 0-5 (needs TaleManager, StoryletLibrary, NpcSchedule) | Not started |
-| 6B | 6A (needs population generator to hook into cluster) | Not started |
-| 6C | 6B (needs populated TaleManager to query) | Not started |
-| 6D | 6C (needs working spawn/despawn to track interactions) | Not started |
-| 6E | 6D (needs deviation flags to know what to persist) | Not started |
-| 6F | 6A-6E (reworks TaleManager role based on full pipeline) | Not started |
+| 6A | 0-5 (needs TaleManager, StoryletLibrary, NpcSchedule) | **Complete** |
+| 6B | 6A (needs population generator to hook into cluster) | **Complete** |
+| 6C | 6B (needs populated TaleManager to query) | **Complete** |
+| 6D | 6C (needs working spawn/despawn to track interactions) | **Complete** |
+| 6E | 6D (needs deviation flags to know what to persist) | **Complete** |
+| 6F | 6A-6E (reworks TaleManager role based on full pipeline) | **Complete** |
 
 **Current Status**: Phases 0-8 + Phase D complete, Phase 7C (street pathfinding) complete. All 171+ regression tests passing (phases 0-8, Phase D). Phase 7C fix: identified and resolved critical _currentPosition tracking bug causing 0m distance calculations (commit f9b3a88d). Next phases available: Phase 7D (building occupancy), Phase 7B (building role tagging), Phase E (dynamic safety zones), Phase F (learned routes), Phase G (traffic modeling).
 
@@ -102,25 +102,25 @@ PHASE_D   Multi-Objective Routing        ── ✅ COMPLETE (2026-03-25)
 
 ### Implementation & Concepts
 - **REFERENCE.md** — Shared concepts (properties, verbs, roles, interaction primitives, simulation tiers, seed generation, deviation tracking)
-- **PHASE_0.md** — DES engine implementation (complete)
-- **PHASE_3.md** — NPC-NPC interaction system implementation (complete)
-- **PHASES_1_2_4_5_SKELETON.md** — Outlines for Phases 1, 2, 4, 5
-- **PHASE_6.md** — Production integration: seed-based population, cluster lifecycle, spawn rework, deviation persistence (complete)
-- **PHASE_7.md** — Spatial grounding & navigation: per-cluster models, entry points, street pathfinding, building occupancy, fragment position tracking (complete)
-- **PHASE_7B.md** — Building role tagging: semantic building types, explicit tag system, generator operators (planned)
-- **PHASE_8.md** — Realistic occupation schedules: role-based shifts, district-based character distribution (complete)
-- **PHASE_D.md** — Multi-objective routing: NPC goals (Fast/OnTime/Scenic/Safe), role-based preferences, deadline-aware urgency (complete)
+- **phases/PHASE_0A.md … PHASE_0C.md** — DES engine implementation (complete)
+- **phases/PHASE_3.md** — NPC-NPC interaction system implementation (complete)
+- **phases/PHASE_1.md, PHASE_2.md, PHASE_4.md, PHASE_5.md** — Phases 1, 2, 4, 5
+- **phases/PHASE_6.md** — Production integration: seed-based population, cluster lifecycle, spawn rework, deviation persistence (complete)
+- **phases/PHASE_7.md** — Spatial grounding & navigation: per-cluster models, entry points, street pathfinding, building occupancy, fragment position tracking (complete)
+- **`../plans/done/PHASE_7B-BUILDING-ROLE-TAGGING.md`** — Building role tagging: semantic building types, explicit tag system, generator operators (planned)
+- **phases/PHASE_8.md** — Realistic occupation schedules: role-based shifts, district-based character distribution (complete)
+- **`docs/navigation/docs/MULTI-OBJECTIVE-ROUTING.md`** (formerly PHASE_D.md) — Multi-objective routing: NPC goals (Fast/OnTime/Scenic/Safe), role-based preferences, deadline-aware urgency (complete)
 
 ### Testing Framework
-- **TESTING_QUICK_START.md** — Current status, execution guide, priorities (start here)
-- **TALE_TESTING_FRAMEWORK.md** — Framework design and structure
-- **TALE_TEST_PLAN.md** — Master strategy for all tests
-- **TALE_TEST_SCRIPTS_PHASE_0.md** — 20 detailed DES engine test specifications
-- **TALE_TEST_SCRIPTS_PHASE_1.md** — 20 detailed Storylet system test specifications
-- **TALE_TEST_SCRIPTS_PHASE_3.md** — 22 detailed NPC-NPC interaction test specifications
-- **TALE_TEST_SCRIPTS_PHASE_6.md** — 49 detailed population/lifecycle/persistence test specifications
-- **TALE_TEST_SCRIPTS_PHASE_7.md** — 102 detailed spatial grounding & navigation test specifications
-- **EXPECT_ENGINE_IMPLEMENTATION.md** — ExpectEngine framework details
+- **tests/QUICK_START.md** — Current status, execution guide, priorities (start here)
+- **tests/FRAMEWORK.md** — Framework design and structure
+- **tests/TEST_PLAN.md** — Master strategy for all tests
+- **tests/PHASE_0.md** — 20 detailed DES engine test specifications
+- **tests/PHASE_1.md** — 20 detailed Storylet system test specifications
+- **tests/PHASE_3.md** — 22 detailed NPC-NPC interaction test specifications
+- **tests/PHASE_6.md** — 49 detailed population/lifecycle/persistence test specifications
+- **tests/PHASE_7.md** — 102 detailed spatial grounding & navigation test specifications
+- **`docs/testing/docs/EXPECT_IMPLEMENTATION.md`** — ExpectEngine framework details
 
 ### Test Scripts
 - **Phase 0 Tests**: `models/tests/tale/phase0-des/` (20 JSON scripts)
@@ -144,17 +144,17 @@ PHASE_D   Multi-Objective Routing        ── ✅ COMPLETE (2026-03-25)
 - **Story content**: JSON data files in `models/tale/` — storylet definitions, role-specific content
   - Main files: merchant.json, worker.json, drifter.json, socialite.json, authority.json, universal.json
   - Interaction storylets consolidated into above files
-- **Design documents**: `docs/` — NPC_STORIES_DESIGN.md, TESTBED_PLAN.md, TALE_CONCEPT.md, etc.
+- **Design documents**: `docs/tale/docs/` — design/NPC_STORIES.md, CONCEPT.md, ARCHITECTURE.md, etc.; testbed in `docs/testing/docs/TESTBED.md`
 
 ## The Iteration Loop
 
 ### Implementation Phase
-Every phase follows: **write content -> run testbed -> read metrics -> adjust -> re-run**. The testbed (Phase 0) exists to make this loop fast. Claude Code can execute this loop autonomously — see `PHASE_0C.md` for the automated iteration protocol.
+Every phase follows: **write content -> run testbed -> read metrics -> adjust -> re-run**. The testbed (Phase 0) exists to make this loop fast. Claude Code can execute this loop autonomously — see `phases/PHASE_0C.md` for the automated iteration protocol.
 
 ### Testing Phase (Current)
 The testing framework validates each phase's implementation:
 
-1. **Read test specification** (`TALE_TEST_SCRIPTS_PHASE_X.md`)
+1. **Read test specification** (`tests/PHASE_X.md`)
 2. **Run test suite** (20+ JSON scripts per phase)
 3. **Verify event sequences** (JSONL logging)
 4. **Check metrics** (fulfillment rates, encounter distribution, etc.)
@@ -190,23 +190,23 @@ Run all tests:
 # Run all Phase 0 tests
 for script in models/tests/tale/phase0-des/*.json; do
   JOYCE_TEST_SCRIPT="tests/tale/phase0-des/$(basename $script)" \
-    ./TestRunner/bin/Release/net9.0/TestRunner || exit 1
+    ./TestRunner/bin/Release/net10.0/TestRunner || exit 1
 done
 
 # Run all Phase 1 tests
 for script in models/tests/tale/phase1-storylets/*.json; do
   JOYCE_TEST_SCRIPT="tests/tale/phase1-storylets/$(basename $script)" \
-    ./TestRunner/bin/Release/net9.0/TestRunner || exit 1
+    ./TestRunner/bin/Release/net10.0/TestRunner || exit 1
 done
 
 # Run all Phase 3 tests
 for script in models/tests/tale/phase3-interactions/*.json; do
   JOYCE_TEST_SCRIPT="tests/tale/phase3-interactions/$(basename $script)" \
-    ./TestRunner/bin/Release/net9.0/TestRunner || exit 1
+    ./TestRunner/bin/Release/net10.0/TestRunner || exit 1
 done
 
-# Or run all 62 tests at once
+# Or run all tests at once
 ./run_tests.sh all
 ```
 
-See `TESTING_QUICK_START.md` for full execution guide and current status.
+See `tests/QUICK_START.md` for full execution guide and current status.

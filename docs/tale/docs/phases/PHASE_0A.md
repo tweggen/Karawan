@@ -13,7 +13,7 @@ Create a console project that boots the engine headlessly, generates a cluster (
 
 ### 1. Testbed Console Project
 
-Create `Testbed/Testbed.csproj` referencing: Joyce, JoyceCode, nogame, nogameCode, Splash.Silk.
+Create `Testbed/Testbed.csproj` referencing: Joyce, JoyceCode, nogame, nogameCode, Splash.OpenGL.
 
 `TestbedMain.cs` bootstrap sequence (modeled on `Karawan/DesktopMain.cs`):
 

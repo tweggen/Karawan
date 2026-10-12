@@ -6,33 +6,33 @@ The TALE test documentation consists of detailed test specifications across 7 ph
 
 ## Current Documentation Structure
 
-### Planning Documents (`docs/tale/TALE_TEST_PLAN.md`)
+### Planning Documents (`docs/tale/docs/tests/TEST_PLAN.md`)
 - High-level test philosophy
 - Framework requirements (ExpectEngine)
 - Overall test metrics and success criteria
 - Phase-by-phase overview with test counts
 
-### Phase-Specific Specifications (`docs/tale/TALE_TEST_SCRIPTS_PHASE_*.md`)
+### Phase-Specific Specifications (`docs/tale/docs/tests/PHASE_*.md`)
 - Detailed specification for each phase's test scripts
-- 7 files total (Phase 0-7, some with sub-phases)
+- 9 files total (Phase 0-7 and Phase C)
 - Structure: test objectives, preconditions, expected outcomes, test steps
 - **Problem**: Specifications can become stale as implementation evolves
 
-### Phase Design Documents (`docs/tale/PHASE_*.md`)
+### Phase Design Documents (`docs/tale/docs/phases/PHASE_*.md`)
 - Architectural design for each phase
 - Implementation details
 - Key classes and methods
 - Rationale for design decisions
 
 ### Actual Test Implementations (`models/tests/tale/phase*/`)
-- 171+ JSON test scripts (60-day regression suite)
+- 200 JSON test scripts in the 60-day regression suite (`./run_tests.sh all`); Phase 7's 102 scripts are not part of it
 - Each script follows ExpectEngine format
 - **Source of Truth**: These are the authoritative test specifications
 
 ## The Challenge
 
 As of March 2026, we have:
-1. **Detailed prose specifications** in `TALE_TEST_SCRIPTS_PHASE_*.md` (written upfront)
+1. **Detailed prose specifications** in `tests/PHASE_*.md` (written upfront)
 2. **Actual JSON test implementations** in `models/tests/tale/` (living, evolving)
 3. **Design documentation** in `PHASE_*.md` files
 
@@ -62,7 +62,7 @@ Maintain documentation-as-source-of-truth by:
    - Identify actual event types used
    - Note actual timeout values
 
-2. **Update `TALE_TEST_SCRIPTS_PHASE_*.md`** with:
+2. **Update `tests/PHASE_*.md`** with:
    - Accurate test counts and categories
    - References to actual test filenames (e.g., "See `01-initialization.json`")
    - Actual preconditions from test setup
@@ -80,13 +80,13 @@ Maintain documentation-as-source-of-truth by:
 
 1. Create JSON test script in `models/tests/tale/phase*/`
 2. Document in relevant `PHASE_*.md` design doc
-3. **Don't immediately update `TALE_TEST_SCRIPTS_PHASE_*.md`** prose
+3. **Don't immediately update `tests/PHASE_*.md`** prose
    - Instead: Add a note in the phase's `README.md` (auto-generated if needed)
    - Or: Update the count at the top of the spec file
    - Keep detailed specs in prose only for foundational tests
 
 4. **Quarterly update cycle**:
-   - Once per quarter (or per major phase), audit `TALE_TEST_SCRIPTS_*.md`
+   - Once per quarter (or per major phase), audit `tests/PHASE_*.md`
    - Update test counts, categories, descriptions
    - Verify assertions still match implementation
    - Document any significant changes since last update
@@ -95,7 +95,7 @@ Maintain documentation-as-source-of-truth by:
 
 1. Update JSON test script
 2. If change is significant (different preconditions, event types, assertions):
-   - Update corresponding section in `TALE_TEST_SCRIPTS_PHASE_*.md`
+   - Update corresponding section in `tests/PHASE_*.md`
    - Add note: "Updated MM/DD/YYYY to reflect..."
    - Link to commit that changed test
 
@@ -120,10 +120,10 @@ This phase is validated by the regression test suite Phase X:
 | Initialization | 3 | `01-initialization.json`, `02-npc-creation.json`, `03-spatial-model.json` | DES core setup |
 | Event Queue | 4 | `04-event-queue-order.json` through `07-long-simulation.json` | Event scheduling and ordering |
 
-See `docs/tale/TALE_TEST_SCRIPTS_PHASE_0.md` for detailed specifications.
+See `docs/tale/docs/tests/PHASE_0.md` for detailed specifications.
 ```
 
-#### In `TALE_TEST_SCRIPTS_PHASE_X.md` (Spec Documents)
+#### In `tests/PHASE_X.md` (Spec Documents)
 
 Add references to actual implementations:
 
@@ -154,7 +154,7 @@ Include auto-generated summary:
 **Regression Duration**: 60 days
 **Recalibration Duration**: 365 days
 
-See `docs/tale/TALE_TEST_SCRIPTS_PHASE_0.md` for detailed specifications.
+See `docs/tale/docs/tests/PHASE_0.md` for detailed specifications.
 ```
 
 ### Phase 4: Automated Verification
@@ -166,7 +166,7 @@ Create a simple script to verify consistency:
 
 for phase in 0 1 2 3 4 5 6 7; do
   actual=$(ls models/tests/tale/phase$phase/*.json 2>/dev/null | wc -l)
-  documented=$(grep -E "^Total.*:.*[0-9]" docs/tale/PHASE_$phase.md 2>/dev/null | head -1)
+  documented=$(grep -E "^Total.*:.*[0-9]" docs/tale/docs/phases/PHASE_$phase.md 2>/dev/null | head -1)
   echo "Phase $phase: $actual tests"
 done
 ```
@@ -185,7 +185,7 @@ Result: Easy to spot documentation drift at a glance.
 - Add test coverage section if missing
 
 ### Monthly
-- Review `TALE_TEST_SCRIPTS_PHASE_*.md` for any major divergences
+- Review `tests/PHASE_*.md` for any major divergences
 - If discrepancies found: decide whether to:
   - Update prose spec to match implementation (common case)
   - Update implementation to match spec (rare, indicates spec was intentional)
@@ -226,11 +226,11 @@ When significant changes are made, update the spec like this:
 
 When a new phase is added:
 
-1. Create `docs/tale/PHASE_N.md` — Architecture & Design
-2. Create `docs/tale/TALE_TEST_SCRIPTS_PHASE_N.md` — Detailed Specs
+1. Create `docs/tale/docs/phases/PHASE_N.md` — Architecture & Design
+2. Create `docs/tale/docs/tests/PHASE_N.md` — Detailed Specs
 3. Create `models/tests/tale/phaseN-*/README.md` — Test Summary
-4. Link from `docs/tale/TALE_TEST_PLAN.md`
-5. Update `TESTBED_PLAN.md` with new phase
+4. Link from `docs/tale/docs/tests/TEST_PLAN.md`
+5. Update `docs/testing/docs/TESTBED.md` with new phase
 
 ## Handling Documentation Gaps
 
@@ -259,7 +259,7 @@ When a new phase is added:
 **Action**: Write spec and implementation **in parallel**:
 
 1. Design phase (PHASE_N.md): What we want to validate
-2. Spec phase (TALE_TEST_SCRIPTS_PHASE_N.md): How we'll test it
+2. Spec phase (tests/PHASE_N.md): How we'll test it
 3. Implementation (models/tests/tale/phaseN-*/): JSON test scripts
 4. Keep all three in sync
 
@@ -283,18 +283,18 @@ cp models/tests/tale/phase6-population/49-save-file-size-bounded.json \
 # Edit JSON...
 
 # 2. Update design doc
-# Edit docs/tale/PHASE_6.md - add bullet under "Persistence" section
+# Edit docs/tale/docs/phases/PHASE_6.md - add bullet under "Persistence" section
 
 # 3. Commit
 git add models/tests/tale/phase6-population/50-load-restore-verify.json
-git add docs/tale/PHASE_6.md
+git add docs/tale/docs/phases/PHASE_6.md
 git commit -m "Add test 50: Load/restore verification
 
 Tests that saved deviations correctly restore state.
 Covers edge case where deviated NPC list is empty."
 
 # 4. Quarterly: update spec doc
-# (Wait for 3-4 tests to accumulate, then batch update TALE_TEST_SCRIPTS_PHASE_6.md)
+# (Wait for 3-4 tests to accumulate, then batch update tests/PHASE_6.md)
 ```
 
 ## Conclusion

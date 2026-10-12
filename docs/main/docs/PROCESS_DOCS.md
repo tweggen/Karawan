@@ -44,7 +44,7 @@ folder with one lonely file in it.
 | Domain | Docs | What it covers |
 |---|---:|---|
 | `tale` | 55 | The TALE narrative system: storylets, DES simulation, population, conversations, social/factions. Absorbs narration and TALE test specs. |
-| `main` | 12 | Catch-all for below-bar subsystems: rendering, animation, engine core, build, persistence, platforms, quest, and this doc-process guide. |
+| `main` | 16 | Catch-all for below-bar subsystems: rendering, animation, engine core, build, persistence, platforms, quest, and this doc-process guide. |
 | `navigation` | 11 | Routing, pathfinding, navmesh, traffic, pipes/flow — merged near-synonyms. |
 | `testing` | 7 | Test infrastructure that is not TALE-content-specific: the ExpectEngine harness, tier model, testbed, runner guides. |
 | `debug-infra` | 4 | The `DebugFilter`/`Dc` category logging system and its migration. The one domain with genuinely in-flight work. |

@@ -23,17 +23,17 @@ You now have a **complete and validated test suite** for the TALE narrative engi
 
 ## Main Documents (Read in This Order)
 
-1. **TALE_TESTING_FRAMEWORK.md** (YOU ARE HERE)
+1. **QUICK_START.md** (YOU ARE HERE)
    - Navigation guide, file structure, execution examples
    - Quick summary of all 5 companion documents
    - Success metrics
 
-2. **TALE_TEST_PLAN.md**
+2. **TEST_PLAN.md**
    - 120+ test overview
    - Organization by phase and category
    - CI roadmap
 
-3. **TALE_TEST_SCRIPTS_PHASE_3.md** ← PRIORITY #1
+3. **PHASE_3.md** ← PRIORITY #1
    - 22 detailed test specifications
    - Full JSON structure + preconditions + expected outcomes
    - Ready to code
@@ -52,7 +52,7 @@ You now have a **complete and validated test suite** for the TALE narrative engi
 ### ✅ DONE (Already Committed)
 - Phase 3 implementation code (InteractionPool, InteractionRequest, InteractionSignal)
 - Phase 3 JSON storylets (10 files, consolidated into main role files)
-- Phase 3 test specs (TALE_TEST_SCRIPTS_PHASE_3.md)
+- Phase 3 test specs (PHASE_3.md)
 - Phase 3 test scripts (22 JSON files in models/tests/tale/phase3-interactions/)
 - Phase 3 Testbed validation:
   - ✅ Interaction storylets consolidated into merchant.json, worker.json, drifter.json, socialite.json, authority.json, universal.json
@@ -70,14 +70,14 @@ You now have a **complete and validated test suite** for the TALE narrative engi
 
 ### ✅ DONE — Phase 0 Tests (Detailed Specs & Scripts Complete)
 **Status**: 20 JSON test scripts implemented, all validated with jq
-- Created detailed TALE_TEST_SCRIPTS_PHASE_0.md with full specifications
+- Created detailed PHASE_0.md with full specifications
 - Implemented all 20 JSON scripts in models/tests/tale/phase0-des/
 - Organized into 6 categories: initialization, scheduling, properties, encounters, relationships, metrics
 - Test priorities: 6 critical, 9 high, 2 medium
 
 ### ✅ DONE — Phase 1 Tests (Detailed Specs & Scripts Complete)
 **Status**: 20 JSON test scripts implemented, all validated with jq
-- Created detailed TALE_TEST_SCRIPTS_PHASE_1.md with full specifications
+- Created detailed PHASE_1.md with full specifications
 - Implemented all 20 JSON scripts in models/tests/tale/phase1-storylets/
 - Organized into 5 categories: library, preconditions, selection, postconditions, complex
 - Test priorities: 2 critical, 11 high, 5 medium, 2 low
@@ -118,7 +118,7 @@ Use the `run_tests.sh` script for easy test execution:
 To run a single test directly:
 ```bash
 JOYCE_TEST_SCRIPT="tests/tale/phase0-des/01-initialization.json" \
-  ./TestRunner/bin/Release/net9.0/TestRunner
+  ./TestRunner/bin/Release/net10.0/TestRunner
 ```
 
 #### Test Output
@@ -131,7 +131,7 @@ JOYCE_TEST_SCRIPT="tests/tale/phase0-des/01-initialization.json" \
 
 - ✓ PASS: Test executed and validation passed
 - ✗ FAIL: Test ran but validation failed
-- ⏱ TIMEOUT: Test exceeded 30-second timeout
+- ⏱ TIMEOUT: Test exceeded the 65-second timeout
 - Event stream confirmed: TestDriverModule activated and processing events
 
 ### 🟡 PRIORITY 2 — Expand & Implement Phase 2 Tests
@@ -170,10 +170,10 @@ Steps:
 
 ```
 TALE Testing Framework (YOU ARE HERE)
-├── TALE_TEST_PLAN.md
+├── TEST_PLAN.md
 │   └── Master strategy for all 120+ tests
 │
-├── TALE_TEST_SCRIPTS_PHASE_3.md ← START HERE FOR IMPLEMENTATION
+├── PHASE_3.md ← START HERE FOR IMPLEMENTATION
 │   └── 22 detailed test specs (ready to code)
 │
 ├── TALE_TEST_SCRIPTS_PHASE_0_SKELETON.md
@@ -241,7 +241,7 @@ dotnet build TestRunner/TestRunner.csproj -c Release -p:EnableSourceLink=false
 ### Run Single Test
 ```bash
 JOYCE_TEST_SCRIPT="tests/tale/phase0-des/01-initialization.json" \
-  ./TestRunner/bin/Release/net9.0/TestRunner
+  ./TestRunner/bin/Release/net10.0/TestRunner
 ```
 
 ### Testbed Integration Test
@@ -262,29 +262,29 @@ dotnet run --project Testbed -- --days 30 --events-file events.jsonl
 - [ ] Phase 3 formal test execution (running all 22 scripts in sequence)
 
 ### Phase 0 (COMPLETE ✅)
-- [x] Phase 0 tests expanded to detailed specs (TALE_TEST_SCRIPTS_PHASE_0.md)
+- [x] Phase 0 tests expanded to detailed specs (PHASE_0.md)
 - [x] Phase 0 tests implemented (20 JSON files in models/tests/tale/phase0-des/)
 - [ ] Phase 0 tests executed and all passing
 
 ### Phase 1 (COMPLETE ✅)
-- [x] Phase 1 tests expanded to detailed specs (TALE_TEST_SCRIPTS_PHASE_1.md)
+- [x] Phase 1 tests expanded to detailed specs (PHASE_1.md)
 - [x] Phase 1 tests implemented (20 JSON files in models/tests/tale/phase1-storylets/)
 - [ ] Phase 1 tests executed and all passing
 
 ### Phases 2, 4, 5 (OUTLINE → DETAILED → IMPLEMENT)
 
 **Phase 2 (Strategy-to-Story Bridge) — PRIORITY 2**
-- [ ] Phase 2 tests expanded to detailed specs (TALE_TEST_SCRIPTS_PHASE_2.md)
+- [ ] Phase 2 tests expanded to detailed specs (PHASE_2.md)
 - [ ] Phase 2 tests implemented (20 JSON files in models/tests/tale/phase2-strategies/)
 - [ ] Phase 2 tests all passing
 
 **Phase 4 (Player Interaction) — PRIORITY 4**
-- [ ] Phase 4 tests expanded to detailed specs (TALE_TEST_SCRIPTS_PHASE_4.md)
+- [ ] Phase 4 tests expanded to detailed specs (PHASE_4.md)
 - [ ] Phase 4 tests implemented (20 JSON files)
 - [ ] Phase 4 tests all passing
 
 **Phase 5 (Advanced Mechanics) — PRIORITY 5**
-- [ ] Phase 5 tests expanded to detailed specs (TALE_TEST_SCRIPTS_PHASE_5.md)
+- [ ] Phase 5 tests expanded to detailed specs (PHASE_5.md)
 - [ ] Phase 5 tests implemented (20 JSON files)
 - [ ] Phase 5 tests all passing
 
@@ -323,7 +323,7 @@ dotnet run --project Testbed -- --days 30 --events-file events.jsonl
   - `models/tests/startup-smoke.json` (example test)
 
 - **Documentation**:
-  - `docs/EXPECT_ENGINE_IMPLEMENTATION.md` (framework details)
+  - `docs/testing/docs/EXPECT_IMPLEMENTATION.md` (framework details)
   - `docs/tale/` (this entire directory)
 
 ---
@@ -345,10 +345,10 @@ dotnet run --project Testbed -- --days 30 --events-file events.jsonl
 ## Contact / Questions
 
 If implementing tests and encounter issues:
-1. Check the detailed spec in TALE_TEST_SCRIPTS_PHASE_X.md
+1. Check the detailed spec in PHASE_X.md
 2. Verify event types in JsonlEventLogger.cs
 3. Verify Testbed generates expected events (run manually with `--days 1`)
-4. Check ExpectEngine API (TestSession methods in EXPECT_ENGINE_IMPLEMENTATION.md)
+4. Check ExpectEngine API (TestSession methods in docs/testing/docs/EXPECT_IMPLEMENTATION.md)
 
 ---
 
@@ -363,7 +363,7 @@ The `TestRunner` project is a dedicated test harness that:
 5. Captures test results and exits cleanly
 
 **Location**: `TestRunner/TestRunner.csproj`
-**Built to**: `TestRunner/bin/Release/net9.0/TestRunner`
+**Built to**: `TestRunner/bin/Release/net10.0/TestRunner`
 
 ### Test Script Execution Flow
 ```

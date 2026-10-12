@@ -15,7 +15,7 @@ Multi-tier testing strategy proposal (smoke, standard, full, recalibration)
 
 ## For TALE-Specific Testing
 
-See [../tale/tests/](../tale/tests/) for:
+See [../../tale/docs/tests/](../../tale/docs/tests/) for:
 - Test specifications per phase
 - Test documentation strategy & audit cycle
 - Quick start guide for running tests
@@ -24,7 +24,7 @@ See [../tale/tests/](../tale/tests/) for:
 
 ```bash
 # Run tests
-./run_tests.sh all          # All 192 tests (60 days)
+./run_tests.sh all          # All 200 tests (60 days)
 ./run_tests.sh phaseN       # Specific phase
 ./run_tests.sh smoke        # Quick validation (~1 min)
 
@@ -43,15 +43,15 @@ See [../tale/tests/](../tale/tests/) for:
 | Tier | Duration | Count | When | Time |
 |------|----------|-------|------|------|
 | Smoke | 10 days | 10 | Before commit | ~1 min |
-| Standard | 60 days | 192 | Before push | ~5 min |
-| Full | 120 days | 192 | Pre-merge | ~15-20 min |
+| Standard | 60 days | 200 | Before push | ~5 min |
+| Full | 120 days | 200 | Pre-merge | ~15-20 min |
 | Recalibration | 365+ days | (phase-specific) | Parameter tuning | 30 min - 2 hrs |
 
 ## See Also
 
-- [../tale/](../tale/) — TALE narrative system & phases
+- [../../tale/](../../tale/) — TALE narrative system & phases
 - [PROCESS_TALE.md](../../tale/docs/PROCESS_TALE.md) — TALE development process (includes test commands)
-- [PROCESS.md](../PROCESS.md) — Generic development process
+- [PROCESS.md](../../../PROCESS.md) — Generic development process
 
 ---
 

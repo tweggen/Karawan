@@ -7,14 +7,14 @@ The TALE system is a comprehensive narrative simulation engine that powers NPC b
 ### For New Developers
 1. Start with [OVERVIEW.md](OVERVIEW.md) — System overview
 2. Read [ARCHITECTURE.md](ARCHITECTURE.md) — System design and components
-3. See [../PROCESS_TALE.md](PROCESS_TALE.md) for development workflow
+3. See [PROCESS_TALE.md](PROCESS_TALE.md) for development workflow
 
 ### By Category
 
 #### 📚 **Phase Documentation** — [phases/](phases/)
-Implementation roadmap across 19 phases (0-8, C1-C4, D)
+Implementation roadmap across phases 0-8, C1-C4 and TALE-SOCIAL D/E
 
-- [PHASE_0.md](phases/PHASE_0.md) — DES Engine (testbed infrastructure)
+- [PHASE_0A.md](phases/PHASE_0A.md) … [PHASE_0C.md](phases/PHASE_0C.md) — DES Engine (testbed infrastructure)
 - [PHASE_1.md](phases/PHASE_1.md) — Storylet System
 - [PHASE_2.md](phases/PHASE_2.md) — Strategies
 - [PHASE_C.md](../plans/done/PHASE_C-NPC-CONVERSATIONS.md) — NPC Conversations
@@ -54,7 +54,7 @@ Foundational, theoretical, and architectural concepts
 ## Development Workflow
 
 **To implement a new feature:**
-1. Read [../PROCESS_TALE.md](PROCESS_TALE.md) for TALE-specific process
+1. Read [PROCESS_TALE.md](PROCESS_TALE.md) for TALE-specific process
 2. Check relevant [PHASE_*.md](phases/) design doc
 3. Review [tests/PHASE_*.md](tests/) for test specifications
 4. Add/modify tests in `models/tests/tale/phaseN-*/`
@@ -63,36 +63,36 @@ Foundational, theoretical, and architectural concepts
 **To add a test:**
 ```bash
 1. Create: models/tests/tale/phaseN-*/NN-name.json
-2. Update: docs/tale/phases/PHASE_N.md
+2. Update: docs/tale/docs/phases/PHASE_N.md
 3. Run: ./run_tests.sh phaseN
-4. (Quarterly) Update: docs/tale/tests/PHASE_N.md
+4. (Quarterly) Update: docs/tale/docs/tests/PHASE_N.md
 ```
 
 ## Current Status
 
-- ✅ **Phase 0-8**: Core simulation engine complete (179 tests)
+- ✅ **Phase 0-8**: Core simulation engine complete (273 tests, 102 of them in `phase7-spatial/`)
 - ✅ **Phase C1-C4**: NPC conversation system complete (29 tests)
 - 🔄 **Phase D**: Multi-objective pathfinding & behavioral variety (in progress)
 
-**Total:** 212 test files, 192 in standard regression suite (60-day simulations)
+**Total:** 302 test files, 200 in standard regression suite (60-day simulations)
 
 ## Where Things Are
 
 | What | Where |
 |------|-------|
-| Phase implementation code | `nogameCode/nogame/modules/tale/` |
+| Phase implementation code | `JoyceCode/engine/tale/` (engine), `nogameCode/nogame/modules/tale/` (game module) |
 | Test specifications | `models/tests/tale/phaseN-*/` |
 | Test runner script | `./run_tests.sh` |
 | Development process | `PROCESS_TALE.md` |
 | Generic process | `PROCESS.md` |
-| Doc organization | `PROCESS_DOCS.md` |
+| Doc organization | `docs/main/docs/PROCESS_DOCS.md` |
 
 ## See Also
 
-- [../ARCHITECTURE/](../ARCHITECTURE/) — Other system architectures (rendering, physics, audio)
-- [../SYSTEMS/](../SYSTEMS/) — Other feature systems (world generation, quests, persistence)
-- [../TESTING/](../TESTING/) — Testing infrastructure for all subsystems
-- [../roadmap/](../roadmap/) — Project planning and progress
+- [../../main/docs/architecture/](../../main/docs/architecture/) — Other system architectures (rendering, physics, audio)
+- [../../SYSTEMS/](../../SYSTEMS/) — Other feature systems (world generation, quests, persistence)
+- [../../testing/docs/](../../testing/docs/) — Testing infrastructure for all subsystems
+- [../../roadmap/](../../roadmap/) — Project planning and progress
 
 ---
 

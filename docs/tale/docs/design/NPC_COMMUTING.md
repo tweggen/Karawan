@@ -120,9 +120,9 @@ Multiple NPCs spawn at identical home coordinates:
 
 ```csharp
 // Simplified pseudocode:
-candidates = filter(all_locations, role, preferred_type)
+candidates = filter(pedestrian_reachable_locations, role, preferred_type)
 if (candidates.empty)
-    candidates = all_locations  // Fallback: any location
+    candidates = pedestrian_reachable_locations  // Fallback: any reachable location
 return random(candidates)  // ← Clustering happens here
 ```
 
@@ -131,9 +131,9 @@ return random(candidates)  // ← Clustering happens here
 ### Role-to-Location Type Mapping
 - `worker` / `authority` / `nightworker` → prefer `office` or `warehouse` ✓
 - `merchant` → prefer `shop`
-- `socialite` / `reveler` → prefer `social_venue`
+- `reveler` → prefer `social_venue`; `socialite` → `street_segment` (workplace) / `social_venue` (venue)
 - `drifter` / `hustler` → prefer `street_segment`
-- Fallback for all → random from all locations
+- Fallback for all → random from all pedestrian-reachable locations
 
 ---
 
@@ -169,7 +169,7 @@ return random(candidates)  // ← Clustering happens here
 - `JoyceCode/engine/tale/TalePopulationGenerator.cs` — Location assignment logic
 - `JoyceCode/engine/tale/SpatialModel.cs` — Building extraction and location types
 - `nogameCode/nogame/characters/citizen/TaleSpawnOperator.cs` — NPC materialization
-- `JoyceCode/engine/tale/TaleEntityStrategy.cs` — Live game NPC behavior
+- `nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs` — Live game NPC behavior
 
 ### Test Data Location
 - Game logs show real NPC assignments during cluster population

@@ -122,7 +122,7 @@ This demonstrates scalability from a small base.
 
 ## 9. NPC-Centric Application
 
-The TALE system is designed to drive **per-NPC story arcs**, not a single global narrative. See `NPC_STORIES_DESIGN.md` for the full design. Key implications for the TALE system:
+The TALE system is designed to drive **per-NPC story arcs**, not a single global narrative. See `design/NPC_STORIES.md` for the full design. Key implications for the TALE system:
 
 - Each NPC carries its own narrative state (active arcs, emotional trajectory, motif instances).
 - Storylets are evaluated per-NPC against that NPC's entity properties and world context.

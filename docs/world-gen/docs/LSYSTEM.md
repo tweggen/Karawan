@@ -101,8 +101,8 @@ L-Systems are defined in JSON with three main sections: seed, rules, and macros.
 
 ```json
 {
-  "definitions": {
-    "tree1": {
+  "lsystems": [
+    {
       "name": "tree1",
       "seed": {
         "parts": [
@@ -134,7 +134,7 @@ L-Systems are defined in JSON with three main sections: seed, rules, and macros.
         }
       ]
     }
-  }
+  ]
 }
 ```
 
@@ -259,8 +259,8 @@ For parametric configurations:
 - **L-System definitions**: `models/nogame.lsystems.json`
 - **Expression evaluator**: `JoyceCode/builtin/tools/Lindenmayer/Expressions/`
 - **JSON loader**: `JoyceCode/builtin/tools/Lindenmayer/LSystemLoader.cs`
-- **Editor ViewModels**: `Aihao/ViewModels/LSystem/`
-- **Editor Views**: `Aihao/Views/LSystemEditor.axaml`
+- **Editor ViewModels**: `Aihao/Aihao/ViewModels/LSystem/`
+- **Editor Views**: `Aihao/Aihao/Views/LSystemEditor.axaml`
 
 ## Example: Creating a New Tree
 

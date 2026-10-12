@@ -146,10 +146,10 @@ Updated to accept routing preferences and apply cost multipliers:
 private RoutingPreferences? _preferences;
 private TransportationType _transportType;
 
-// Constructor now accepts preferences
+// Constructor now accepts preferences (the transport type is required, no default)
 public LocalPathfinder(NavCursor ncStart, NavCursor ncTarget,
-    RoutingPreferences? preferences = null,
-    TransportationType transportType = TransportationType.Pedestrian)
+    TransportationType transportType,
+    RoutingPreferences? preferences = null)
 {
     Start = ncStart;
     Target = ncTarget;
@@ -205,7 +205,7 @@ public static async Task<SegmentRoute> BuildAsync(Vector3 fromPos, Vector3 toPos
     CancellationToken cancellationToken = default)
 {
     // ...
-    var pathfinder = new LocalPathfinder(startCursor, endCursor, preferences, transportType);
+    var pathfinder = new LocalPathfinder(startCursor, endCursor, transportType, preferences);
     var lanes = pathfinder.Pathfind();
     // ...
 }

@@ -445,7 +445,7 @@ Join conditions:
 
 ## 3. Runtime flow (revised)
 
-The runtime processes each actively simulated NPC (Tier 2 + story-pinned) independently. See `NPC_STORIES_DESIGN.md` for simulation tier definitions.
+The runtime processes each actively simulated NPC (Tier 2 + story-pinned) independently. See `design/NPC_STORIES.md` for simulation tier definitions.
 
 ### 3.1 Per-NPC tick (on node arrival or interrupt)
 

@@ -214,11 +214,11 @@ neither reachable on ARM64 today:**
 
 **Value-type-adjacent, unproven but same shape** — 4-byte enums trailing a call initialiser:
 `builtin/modules/satnav/LocalPathfinder.cs:291` (optional `TransportationType`, the high-risk
-form), `Splash/MeshBatch.cs:145` (hot render path), `Splash.Silk/SkTexture.cs:719`.
+form), `Splash/MeshBatch.cs:145` (hot render path), `Splash.OpenGL/SkTexture.cs:681` (then `Splash.Silk/`).
 
 **Latent — 309 classes** have a call initialiser but no trailing value-type parameter; 117 of them
 declare a constructor and are one signature change away. Includes `engine/Engine.cs`,
-`engine/physics/API.cs`, `engine/world/Fragment.cs`, `Splash.Silk/Platform.cs`.
+`engine/physics/API.cs`, `engine/world/Fragment.cs`, `Splash.OpenGL/Platform.cs` (then `Splash.Silk/`).
 
 **Most fragile declaration in the tree:**
 `engine/navigation/TemporalConstraintState.cs:8` —

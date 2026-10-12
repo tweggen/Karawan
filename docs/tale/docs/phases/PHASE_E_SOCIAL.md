@@ -3,7 +3,7 @@
 > **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/CommunityDetector.cs:23`, `ClusterSocialState.cs:14,64`, `RuntimeSocialEvolver.cs:36,94`, `GroupActions.cs:23`, `TaleManager.cs:414,497,540`, `nogameCode/nogame/modules/tale/GroupNameGenerator.cs:12` - **Verified:** 2026-07-21
 
 
-**Status:** In progress (E1–E4 implemented; E5 narration/co-location and E6 save-game persistence pending)
+**Status:** Complete (E1–E6 implemented)
 **Plan:** `docs/roadmap/proposed/IMPLEMENTATION-PLAN-TALE-SOCIAL-PHASE-E.md`
 **Predecessor:** `PHASE_D_SOCIAL.md` (scenario pre-computation)
 
@@ -95,7 +95,7 @@ In-session persistence landed with E2 (snapshots); this adds the durable layer:
 
 ## Operational gotchas (hard-won)
 
-1. **The bake runs the *published* Chushi binary** (`Chushi/bin/Debug/net9.0/{rid}/publish/`). After any Chushi/JoyceCode change that affects the bake: `dotnet publish Chushi/Chushi.csproj -c Debug -r osx-arm64`.
+1. **The bake runs the *published* Chushi binary** (`dotnet build` does not refresh it). After any Chushi/JoyceCode change that affects the bake: `bash Chushi/build.sh`.
 2. **`sc-*` files must be deleted manually** to force a re-bake — `_IsScenarioUpToDate` watches config/tale JSON, not code.
 3. **`models/tale/*.json` are runtime inputs to the TALE test suite** (TestRunner loads them live). Editing them while `./run_tests.sh` runs crashes the suite mid-run (observed: `float.Parse("leave")` FormatException from an old binary + new JSON). Never edit models/ or rebuild binaries during a gate run.
 4. `Trace(Dc, ...)` takes an interpolated-string handler — string concatenation (`$"..." + string.Join(...)`) does not compile; fold everything into one interpolated string.
@@ -104,9 +104,9 @@ In-session persistence landed with E2 (snapshots); this adds the durable layer:
 
 | Action | Command |
 |---|---|
-| Unit tests (90) | `dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj` |
+| Unit tests | `dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj` |
 | TALE regression | `./run_tests.sh standard` (~25 min; smoke for quick checks) |
-| Re-bake scenarios | publish Chushi → delete `nogame/generated/sc-*` → `dotnet build nogame/nogame.csproj` |
+| Re-bake scenarios | `bash Chushi/build.sh` → delete `nogame/generated/sc-*` → `dotnet build nogame/nogame.csproj` |
 | Watch factions live | set `debug.category.talesocial` in GlobalSettings; watch tick + re-detect trace lines |
 
 ## Live-game verification checklist

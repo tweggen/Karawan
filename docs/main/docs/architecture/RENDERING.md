@@ -38,7 +38,7 @@ Cameras are ECS entities with `Camera3` and `Transform3ToWorld` components. Each
 
 ### GPU Rendering (Render Thread)
 
-`SilkRenderer.RenderFrame()` processes each `RenderPart` in order:
+`GlRenderer.RenderFrame()` processes each `RenderPart` in order:
 
 1. **BeginRenderFrame**: Resets cached shader/material/texture state.
 2. For each RenderPart:
@@ -58,7 +58,7 @@ Materials are uploaded on-demand during rendering via `FillMaterialEntry()`:
 
 ### Texture Binding State
 
-`SilkTextureChannelState` manages per-channel texture binding with caching:
+`GlTextureChannelState` manages per-channel texture binding with caching:
 - `_currentSkTexture` tracks what's currently bound to avoid redundant GL calls.
 - `_useTexture(null)` binds a 1x1 transparent black fallback texture.
 - `ResetCachedState()` invalidates the cache at frame boundaries (needed when external code like GlStateSaver may have changed GL state).
@@ -97,7 +97,7 @@ During the login/logos screen, only these cameras are active:
 A Y-flipped duplicate of the OSD/login content appeared overlaid on the login screen.
 
 ### Root Cause
-`SilkTextureChannelState.ResetCachedState()` set `_currentSkTexture = null` without binding the transparent fallback texture. When `_useTexture(null)` was subsequently called (for materials whose textures hadn't been uploaded yet, like the ScreenComposer's rootscene_3d texture before the root scene starts), the check `_currentSkTexture != skTexture` evaluated to `null != null = false`, so no texture rebinding occurred. The GL texture unit retained whatever was bound in the previous frame — typically the OSD framebuffer texture. The ScreenComposer then rendered this stale OSD content through its Y-flip transform, creating a mirrored overlay.
+`GlTextureChannelState.ResetCachedState()` (then named `SilkTextureChannelState`) set `_currentSkTexture = null` without binding the transparent fallback texture. When `_useTexture(null)` was subsequently called (for materials whose textures hadn't been uploaded yet, like the ScreenComposer's rootscene_3d texture before the root scene starts), the check `_currentSkTexture != skTexture` evaluated to `null != null = false`, so no texture rebinding occurred. The GL texture unit retained whatever was bound in the previous frame — typically the OSD framebuffer texture. The ScreenComposer then rendered this stale OSD content through its Y-flip transform, creating a mirrored overlay.
 
 ### Fix
 `ResetCachedState()` now actively binds the transparent fallback texture before clearing the cache, ensuring a known GL state at frame boundaries.
