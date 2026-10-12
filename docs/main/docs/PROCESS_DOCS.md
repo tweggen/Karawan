@@ -4,7 +4,7 @@ This document defines the standard structure for Karawan documentation, so it
 stays navigable as the project grows.
 
 > **Status:** current — describes the domain-first layout adopted 2026-07-21.
-> **Last Updated:** 2026-07-23
+> **Last Updated:** 2026-10-12
 
 ---
 
@@ -25,7 +25,12 @@ docs/
 │   ├── docs/            # living reference: architecture, test specs, concepts, design
 │   └── archive/         # history: completion reports, one-off investigations, superseded plans
 │
-└── main/                # the catch-all domain (see below)
+├── main/                # the catch-all domain (see below)
+│
+└── roadmap/             # cross-domain programmes (see "Cross-domain roadmap" below)
+    ├── proposed/
+    ├── planned/
+    └── done/
 ```
 
 `docs/` may nest one more level for grouping inside a bucket when a domain is
@@ -55,6 +60,16 @@ it clears the bar*. When a fifth rendering doc and its first real plan appear,
 `rendering` graduates out of `main` into its own domain — the promotion is
 cheap because everything already lives under `main/docs/rendering/` etc.
 
+### Cross-domain roadmap: `docs/roadmap/`
+
+`docs/roadmap/{proposed,planned,done}/` is a sanctioned location, not a
+leftover. It holds roadmap, plan and status work that spans several domains or
+is driven as one programme — e.g. the three-dimensional city
+(`CITY-3D-OPEN-POINTS.md`, `STREETS-3D-TOPOLOGY.md`) and the platform backend
+(`IMPLEMENTATION-PLAN-PLATFORM-BACKEND.md`, `PLATFORM-BACKEND-STATUS.md`, the
+`WP-*` work-package docs and their tool folders). `CLAUDE.md` links into it
+directly. Work that belongs to one domain still goes to that domain's `plans/`.
+
 Process files sit where their domain does:
 
 | File | Location |
@@ -71,6 +86,8 @@ Process files sit where their domain does:
 1. Which domain is it about?
    Match it to a domain in the table above. If nothing fits, and you can already
    see ≥ 3 docs + ≥ 1 plan coming, propose a new domain. Otherwise → main.
+   A plan or status ledger for a programme spanning several domains
+   → docs/roadmap/{proposed,planned,done}/ instead.
 
 2. Which purpose is it?
    Does it propose work to do?
@@ -168,7 +185,8 @@ todo-vs-proposed judgment call, rather than being guessed at:
 | `SYSTEMS/README.md` | `docs/SYSTEMS/` | keep as an index, or drop? |
 
 See `docs/_migration/REVIEW.md` for the full framing of each. When resolved,
-the empty `docs/roadmap/` and `docs/SYSTEMS/` trees can be removed.
+the `docs/SYSTEMS/` tree can be removed. `docs/roadmap/` stays — it is the
+cross-domain roadmap location (see above), not a tree waiting to be emptied.
 
 ---
 
@@ -176,7 +194,8 @@ the empty `docs/roadmap/` and `docs/SYSTEMS/` trees can be removed.
 
 Run a doc-structure audit each quarter:
 
-- [ ] No documents in `docs/` root or `docs/roadmap/` that should be in a domain
+- [ ] No documents in `docs/` root that should be in a domain
+- [ ] `docs/roadmap/` holds only cross-domain programmes; single-domain plans have moved to that domain's `plans/`
 - [ ] Domain bar still holds — has anything in `main` grown past ≥ 3 docs + ≥ 1 plan?
 - [ ] `plans/done` holds executed plans, not completion reports (those belong in `archive`)
 - [ ] Cross-references resolve (no links to files that moved or never existed)
@@ -219,6 +238,7 @@ broken links — lives in `docs/_migration/REVIEW.md`.
 
 ## Document history
 
+- **2026-10-12**: `docs/roadmap/` sanctioned as the cross-domain roadmap location; no longer slated for removal, quarterly review adjusted.
 - **2026-07-23**: Rewritten to document the domain-first layout as built.
 - **2026-04-10**: Created initial PROCESS_DOCS.md proposing a purpose-first structure
   (superseded — the structure actually adopted is domain-first).

@@ -18,7 +18,10 @@ Multi-tier testing strategy proposal (smoke, standard, full, recalibration)
 See [../../tale/docs/tests/](../../tale/docs/tests/) for:
 - Test specifications per phase
 - Test documentation strategy & audit cycle
-- Quick start guide for running tests
+
+Running the suite: [RUN_TESTS_GUIDE.md](RUN_TESTS_GUIDE.md). The earlier TALE test plan, framework and quick-start docs are archived in [../../tale/archive/](../../tale/archive/) (`TALE_TESTS_*.md`).
+
+### 🧪 **Test driver** — [EXPECT_IMPLEMENTATION.md](EXPECT_IMPLEMENTATION.md) (as built), [EXPECT_ENGINE.md](EXPECT_ENGINE.md) (original proposal)
 
 ## Common Commands
 
@@ -27,16 +30,19 @@ See [../../tale/docs/tests/](../../tale/docs/tests/) for:
 ./run_tests.sh all          # All 200 tests (60 days)
 ./run_tests.sh phaseN       # Specific phase
 ./run_tests.sh smoke        # Quick validation (~1 min)
+./run_tests_parallel.sh all # Same filters, all cores
 
 # For recalibration
-./run_recalibration_tests.sh phaseN  # 365+ day simulations
+./run_recalibration_tests.sh phaseN  # 365+ day simulations (currently does not start — open, tracked separately)
 ```
+
+CI (`.github/workflows/ci.yml`) runs the xUnit suite `tests/JoyceCode.Tests` only; the TALE suite is run locally.
 
 ## Test Organization
 
 **Location:** `models/tests/tale/phaseN-*/`
 **Format:** JSON test specifications
-**Framework:** TestRunner.cs (C#, headless)
+**Framework:** `TestRunner/` (C#, headless) + ExpectEngine
 
 ## Test Tiers
 
@@ -55,4 +61,4 @@ See [../../tale/docs/tests/](../../tale/docs/tests/) for:
 
 ---
 
-**Last Updated:** 2026-04-10
+**Last Updated:** 2026-10-12

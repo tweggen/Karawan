@@ -1,5 +1,7 @@
 # TALE Testing Framework — Complete Reference
 
+> **Archived 2026-10-12.** Phase-3-era planning document (formerly `docs/tale/docs/tests/`); its test counts, phase status and commands are out of date. For the current suite see `docs/testing/docs/RUN_TESTS_GUIDE.md`, `docs/tale/docs/PROCESS_TALE.md` and `docs/tale/docs/tests/PHASE_*.md`.
+
 ## Overview
 
 A comprehensive testing strategy for the **TALE narrative engine** using the **ExpectEngine** framework. This document provides navigation and summary of all testing documents.

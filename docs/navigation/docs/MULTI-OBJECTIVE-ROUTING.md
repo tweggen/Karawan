@@ -1,9 +1,6 @@
 # Phase D: Multi-Objective Routing (NPCs Take Different Routes)
 
-> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/tale/NpcGoal.cs:6-37`, `RoutingPreferences.cs:10,45-69`, `JoyceCode/builtin/modules/satnav/LocalPathfinder.cs:32,63-88`, `JoyceCode/engine/tale/TalePopulationGenerator.cs:395-439`; Scenic/Safe multipliers are placeholders returning 1.0f (`RoutingPreferences.cs:99-125`) - **Verified:** 2026-07-21
-
-
-**Status**: IMPLEMENTATION COMPLETE (2026-03-25)
+> **Status:** partially-implemented - **Implemented as:** `JoyceCode/engine/tale/NpcGoal.cs:6-37`, `RoutingPreferences.cs:10,45-69`, `JoyceCode/builtin/modules/satnav/LocalPathfinder.cs:32,63-88`, `JoyceCode/engine/tale/TalePopulationGenerator.cs:395-439`; Scenic/Safe multipliers are placeholders returning 1.0f (`RoutingPreferences.cs:99-125`); multi-objective A* (D-2) and role-based preferences (D-4) are still in flight - **Verified:** 2026-10-12
 
 **Prerequisite**: Phase C (Dynamic flow modeling via pipe system, A* pathfinding infrastructure)
 
@@ -25,9 +22,9 @@ Phase D introduces **multi-objective routing**: A* pathfinding with role-based c
 
 ## Design Principles
 
-1. **Goals drive costs**: Each goal adjusts NavLane costs via multipliers. Fast minimizes time, OnTime penalizes blockedlanes near deadline, Scenic favors visually interesting areas, Safe avoids danger.
+1. **Goals drive costs**: Each goal adjusts NavLane costs via multipliers. Fast minimizes time, OnTime penalizes closed lanes near the deadline; Scenic (visually interesting areas) and Safe (avoid danger) are placeholders that do not change costs yet.
 2. **Role-based initialization**: NPCs receive goal-appropriate routing preferences at creation time (workers get OnTime, socialites get Scenic, etc.), not dynamically.
-3. **Urgency is dynamic**: While goal persists, urgency (0.0–1.0) updates each frame based on deadline proximity, allowing more aggressive routing as deadlines approach.
+3. **Urgency is dynamic**: While goal persists, urgency (0.0–1.0) is refreshed at the start of each travel leg from deadline proximity, allowing more aggressive routing as deadlines approach.
 4. **Pluggable via interface**: `IRouteGenerator` supports swapping routing implementations (NavMesh, transit, cars) without changing NPC strategy code.
 5. **Graceful fallback**: If pathfinding fails (timeout, no route), NPCs walk straight-line. No blocking.
 
@@ -37,8 +34,8 @@ Phase D introduces **multi-objective routing**: A* pathfinding with role-based c
 
 - **RoutingPreferences**: Class holding NPC goal, deadline, scenery/safety weights, urgency level.
 - **NpcGoal**: Enum: Fast, OnTime, Scenic, Safe, Custom. Defines routing strategy.
-- **Cost multiplier**: Value (typically 0.5–2.0) applied to a NavLane's base cost during A*. Enables goal-driven preferences.
-- **Urgency**: Float 0.0–1.0, computed from deadline - now. Higher urgency = more aggressive routing.
+- **Cost multiplier**: Value (currently 1.0–1.5) applied to a NavLane's base cost during A*. Enables goal-driven preferences.
+- **Urgency**: Float 0.0–1.0, a step function of minutes until the deadline. Higher urgency = more aggressive routing.
 - **DeadlineTime**: DateTime when NPC must arrive for scheduled activity (set by schedule).
 
 ---
@@ -61,74 +58,15 @@ public enum NpcGoal
 
 ### RoutingPreferences.cs (NEW)
 
-Core class for routing logic:
-```csharp
-public class RoutingPreferences
-{
-    public NpcGoal Goal { get; set; } = NpcGoal.Fast;
-    public DateTime? DeadlineTime { get; set; }
-    public float SceneryWeight { get; set; } = 0.5f;  // Bias toward scenic lanes
-    public float SafetyWeight { get; set; } = 0.5f;   // Bias against danger
-    public float Urgency { get; set; } = 0.0f;        // 0.0–1.0
+`JoyceCode/engine/tale/RoutingPreferences.cs` holds `Goal` (default `Fast`), `DeadlineTime`, `SceneryWeight` / `SafetyWeight` (default 0.5) and `Urgency` (0–1), plus `IsLate`. `ComputeCostMultiplier(lane, type)` returns:
 
-    /// <summary>
-    /// Compute cost multiplier for a lane based on goal and current state.
-    /// </summary>
-    public float ComputeCostMultiplier(NavLane lane, TransportationType type)
-    {
-        float multiplier = 1.0f;
+| Goal | Multiplier |
+|---|---|
+| Fast, Custom | 1.0 |
+| OnTime | 1.0 unless a deadline is set **and** `Urgency >= 0.5`; then a lane whose temporal constraint is closed (`lane.QueryConstraint(DateTime.Now)` — wall clock, not game time — `!CanAccess`) costs 1.2×, or 1.5× when it stays closed for more than 30 s |
+| Scenic, Safe | 1.0 — placeholders; there is no scenic or danger data on `NavLane` yet, so the weights have no effect |
 
-        switch (Goal)
-        {
-            case NpcGoal.Fast:
-                // Prefer short routes; no modulation
-                break;
-
-            case NpcGoal.OnTime:
-                // Penalize blocked lanes, especially when late
-                if (lane.IsBlocked)
-                    multiplier = 1.2f + Urgency * 0.3f;  // Up to 1.5x cost if running very late
-                break;
-
-            case NpcGoal.Scenic:
-                // Prefer lanes marked scenic; lower cost for scenic lanes
-                if (lane.Tags.Contains("scenic"))
-                    multiplier = Math.Max(0.5f, 1.0f - SceneryWeight * 0.5f);
-                break;
-
-            case NpcGoal.Safe:
-                // Prefer lanes away from danger zones
-                if (lane.Tags.Contains("danger"))
-                    multiplier = 1.5f + SafetyWeight * 0.5f;
-                break;
-        }
-
-        return multiplier;
-    }
-
-    /// <summary>
-    /// Update urgency based on current time and deadline.
-    /// </summary>
-    public void UpdateUrgency(DateTime currentTime)
-    {
-        if (!DeadlineTime.HasValue)
-        {
-            Urgency = 0.0f;
-            return;
-        }
-
-        var timeRemaining = (DeadlineTime.Value - currentTime).TotalSeconds;
-        if (timeRemaining <= 0)
-            Urgency = 1.0f;  // Past deadline: maximum urgency
-        else if (timeRemaining > 300)  // 5 minutes
-            Urgency = 0.0f;  // Plenty of time
-        else
-            Urgency = (float)(1.0 - timeRemaining / 300.0);  // Linear 0–1 as deadline approaches
-    }
-
-    public bool IsLate => DeadlineTime != null && DateTime.Now > DeadlineTime.Value;
-}
-```
+`UpdateUrgency(currentTime)` is a step function over minutes until `DeadlineTime`: past the deadline 1.0, under 5 min 0.9, under 15 min 0.7, under 30 min 0.5, otherwise 0.2; no deadline gives 0.0. OnTime therefore only bites in the last 30 minutes.
 
 **Files**:
 - `JoyceCode/engine/tale/NpcGoal.cs` — NEW
@@ -227,6 +165,8 @@ public async Task<SegmentRoute> GetRouteAsync(Vector3 fromPos, Vector3 toPos, Po
 }
 ```
 
+The `TransportationType.Pedestrian` defaults on `GetRouteAsync` / `BuildAsync` are still in the code, against the CLAUDE.md rule that routing names its transport type — open, tracked separately.
+
 **Files Modified**:
 - `JoyceCode/builtin/modules/satnav/LocalPathfinder.cs`
 - `JoyceCode/engine/tale/IRouteGenerator.cs`
@@ -264,8 +204,10 @@ private void UpdateRoutingPreferences(DateTime currentTime)
     _routingPreferences.UpdateUrgency(currentTime);
 }
 
-// _advanceAndTravel passes preferences to route generator
-private async void _advanceAndTravel()
+// _travelToCurrentDestination (called once per travel leg, from
+// _advanceAndTravelAsync and after a collapse from _resumeTravelAsync)
+// refreshes urgency and passes preferences to the route generator
+private async Task _travelToCurrentDestination(DateTime gameNow)
 {
     // ...
     UpdateRoutingPreferences(gameNow);
@@ -362,9 +304,9 @@ public RoutingPreferences RoutingPreferences { get; set; } = new();
 
 ## Phase D-5: Integration & Regression Testing
 
-**Status**: PENDING (awaiting test results from `./run_tests.sh all`)
+**Status**: open — no result for this phase is recorded here.
 
-All 171 regression tests (phases 0–8) should continue to pass, confirming that multi-objective routing integrates without breaking existing NPC scheduling, TALE narrative, or navigation systems.
+The TALE regression suite (`./run_tests.sh all`) should continue to pass, confirming that multi-objective routing integrates without breaking existing NPC scheduling, TALE narrative, or navigation systems.
 
 ---
 
@@ -399,7 +341,7 @@ All 171 regression tests (phases 0–8) should continue to pass, confirming that
 ## Implementation Notes
 
 1. **Backward Compatibility**: All preference parameters are optional with sensible defaults (Fast goal, no deadline, neutral weights). Existing code paths continue to work.
-2. **Performance**: Preference updates happen every 10 seconds in TaleEntityStrategy.UpdateRoutingPreferences, not per-frame, to avoid pathfinding overhead.
+2. **Performance**: Urgency is refreshed once per travel leg (`UpdateRoutingPreferences` in `_travelToCurrentDestination`, right before the route request), not per frame or on a timer.
 3. **Fallback Behavior**: If NavMesh routing is unavailable, NPCs use straight-line movement (GoToStrategyPart handles this).
 4. **Testing**: Unit tests for RoutingPreferences verify goal-specific multiplier logic; regression tests verify no breakage in NPC lifecycle.
 
@@ -420,11 +362,11 @@ All 171 regression tests (phases 0–8) should continue to pass, confirming that
 | Term | Definition |
 |------|-----------|
 | A* Pathfinding | Graph search algorithm finding lowest-cost path; cost = distance + heuristic |
-| Cost Multiplier | Factor (0.5–2.0) applied to NavLane cost during A*; enables goal-based routing |
+| Cost Multiplier | Factor (currently 1.0–1.5) applied to NavLane cost during A*; enables goal-based routing |
 | Deadline | DateTime by which NPC must arrive; drives OnTime goal urgency |
 | DeadlineTime | RoutingPreferences field holding the deadline DateTime |
 | Goal | Enum (Fast, OnTime, Scenic, Safe) defining NPC routing strategy |
 | NavLane | Graph edge (street segment); A* explores edges weighted by cost |
 | Routing Preferences | Class holding goal, deadline, weights, urgency; passed to pathfinder |
-| Urgency | Float 0.0–1.0 computed from deadline – now; modulates cost multipliers |
+| Urgency | Float 0.0–1.0, step function of minutes to the deadline; gates the OnTime multiplier |
 

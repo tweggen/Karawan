@@ -24,7 +24,8 @@ Implementation roadmap across phases 0-8, C1-C4 and TALE-SOCIAL D/E
 Test specifications and testing infrastructure
 
 - [STRATEGY.md](tests/STRATEGY.md) — Test documentation maintenance (quarterly audit)
-- [QUICK_START.md](tests/QUICK_START.md) — Quick reference for test commands
+- [PHASE_C.md](tests/PHASE_C.md) — Test specs for C1–C4
+- Test commands: [PROCESS_TALE.md](PROCESS_TALE.md); superseded test planning docs are in [../archive/](../archive/) (`TALE_TESTS_*.md`)
 - [PHASE_0.md](tests/PHASE_0.md) — Test specs for Phase 0
 - [Full test list](tests/)
 
@@ -70,9 +71,12 @@ Foundational, theoretical, and architectural concepts
 
 ## Current Status
 
-- ✅ **Phase 0-8**: Core simulation engine complete (273 tests, 102 of them in `phase7-spatial/`)
+Live status: `CLAUDE.md` ("Current State"); history: `docs/main/docs/STATUS-LOG.md`.
+
+- ✅ **Phase 0-8**: Core simulation engine complete (273 test files, 102 of them in `phase7-spatial/`, which no `run_tests.sh` tier runs — open, tracked separately)
 - ✅ **Phase C1-C4**: NPC conversation system complete (29 tests)
-- 🔄 **Phase D**: Multi-objective pathfinding & behavioral variety (in progress)
+- ✅ **TALE-SOCIAL D1-D5 and E**: scenario pre-computation and living factions complete ([PHASE_D_SOCIAL.md](phases/PHASE_D_SOCIAL.md), [PHASE_E_SOCIAL.md](phases/PHASE_E_SOCIAL.md)); tested by xUnit in `tests/JoyceCode.Tests/engine/tale/`. Acting on the five D5 tuning concerns is in flight.
+- ⚠️ **Routing Phase D** (multi-objective pathfinding, [MULTI-OBJECTIVE-ROUTING.md](../../navigation/docs/MULTI-OBJECTIVE-ROUTING.md)) is a *separate* workstream that shares the letter: D2 (multi-objective A*) and D4 (role-based preferences) are in flight.
 
 **Total:** 302 test files, 200 in standard regression suite (60-day simulations)
 
@@ -96,4 +100,4 @@ Foundational, theoretical, and architectural concepts
 
 ---
 
-**Last Updated:** 2026-04-10
+**Last Updated:** 2026-10-12

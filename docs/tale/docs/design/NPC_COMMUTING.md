@@ -1,5 +1,11 @@
 # NPC Commuting & Population Density Design Challenge
 
+> ⚠️ **Note (2026-10-12): the measurements below predate the Aug–Sep 2026 city rework** (blocks
+> traced over the `BlockGraph` 2-core, one building per piece of buildable land, terrain-following
+> and grade-separated city — see `docs/roadmap/proposed/CITY-3D-OPEN-POINTS.md`). The home counts,
+> diagnostics and open questions here have not been re-measured on the current city; that is open
+> and tracked separately. Read them as history until then.
+
 **Date:** 2026-03-23
 **Status:** Design phase - no implementation yet
 **Owner:** Next Claude instance
