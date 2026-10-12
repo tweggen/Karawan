@@ -6,7 +6,7 @@ This document supplements `PROCESS.md` with TALE-specific paths, test organizati
 - Adding a new TALE test
 - Modifying TALE narrative or simulation code
 - Updating TALE documentation
-- Working with phases (Phase 0-8, C1-C4, etc.)
+- Working with phases (Phase 0-8, C1-C4, TALE-SOCIAL D/E)
 
 ---
 
@@ -26,14 +26,22 @@ Run tests at different levels depending on your change:
 ```bash
 ./run_tests.sh all    # ~5 minutes (same as 'standard')
 # All 200 tests with 60-day simulations
-# Currently: Phase 0-6 (171) + C1-C4 (29) = 200 test files (phase7-spatial is not in 'all')
+# Currently: Phase 0-6 (171) + C1-C4 (29) = 200 test files
+# phase7-spatial (102) is in no tier and has no phaseN filter — open, tracked separately
 # See docs/testing/docs/TESTING_STRATEGY.md for full list
 ```
 
 **Pre-Merge (Full Regression)**:
 ```bash
 ./run_tests.sh full   # ~15-20 minutes
-# All tests with 120-day simulations
+# Same 200 tests with 120-day simulations
+```
+
+**TALE-SOCIAL D/E (xUnit, not `run_tests.sh`)**:
+```bash
+dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj
+# engine/tale/bake/* (D: scenario bake/apply/statistics), engine/tale/* (E: CommunityDetector,
+# ClusterSocialState, RuntimeSocialEvolver, GroupActions, ...)
 ```
 
 **Parameter Tuning (Recalibration)**:
@@ -86,10 +94,9 @@ docs/tale/
 │   ├── phases/PHASE_N.md               # Phase design docs (0A-0C, 1-8, D_SOCIAL, E_SOCIAL)
 │   ├── tests/PHASE_N.md                # Detailed test specifications per phase (PHASE_C.md for C1-C4)
 │   ├── tests/STRATEGY.md               # How to maintain test docs (quarterly audit cycle)
-│   ├── tests/QUICK_START.md            # Quick reference for test commands
 │   ├── concepts/ and design/           # Narration, NPC stories, commuting, strategy architecture
 ├── plans/{proposed,done}/              # Phase plans (e.g. done/PHASE_7B-*, done/PHASE_C-*)
-└── archive/                            # Superseded documents
+└── archive/                            # Superseded documents (incl. TALE_TESTS_{FRAMEWORK,TEST_PLAN,QUICK_START}.md)
 ```
 
 ### When to Update Which Docs
@@ -208,13 +215,17 @@ The TALE system maintains detailed test documentation that needs periodic refres
 | 4 | Quests | 20 | ✅ Complete |
 | 5 | Escalation | 20 | ✅ Complete |
 | 6 | Population | 49 | ✅ Complete |
-| 7 | Spatial Grounding | 102 (`phase7-spatial/`, not in `all`) | ✅ Complete |
+| 7 | Spatial Grounding | 102 (`phase7-spatial/`, in no tier — open, tracked separately) | ✅ Complete |
 | 7B | Building Role Tagging | (integrated) | ✅ Complete |
 | 8 | Occupations | (integrated) | ✅ Complete |
 | C1 | Conversation Infrastructure | 8 | ✅ Complete |
 | C2 | Storylet-Specific Dialogue | 6 | ✅ Complete |
 | C3 | Mood/Tone Branches | 6 | ✅ Complete |
 | C4 | Trust, Memory & Hooks | 9 | ✅ Complete |
+| SOCIAL D1–D5 | Scenario pre-computation (bake, apply, statistics) | xUnit, `tests/JoyceCode.Tests/engine/tale/bake/` | ✅ Complete |
+| SOCIAL E | Living factions | xUnit, `tests/JoyceCode.Tests/engine/tale/` | ✅ Complete |
 
 **Total TALE tests: 302 test files**
 **Standard regression suite: 200 tests (60-day simulations)**
+
+Routing Phase D (`docs/navigation/docs/MULTI-OBJECTIVE-ROUTING.md`) is a separate workstream, not a TALE phase.

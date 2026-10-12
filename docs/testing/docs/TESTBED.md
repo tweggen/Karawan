@@ -27,7 +27,7 @@ As of March 2026, the TALE system uses a **two-tier testing approach** to balanc
 **Purpose**: Quick functional validation of core TALE systems
 **Simulation Duration**: 60 days (fast feedback)
 **Total Time**: ~5 minutes for all 200 tests
-**When to Run**: After every code change, in CI/CD pipeline
+**When to Run**: After every code change (locally — CI does not run it)
 **Status**: ✅ All 200 tests passing across 11 phases
 
 The regression test suite consists of 200 JSON test scripts organized by phase:
@@ -40,7 +40,7 @@ The regression test suite consists of 200 JSON test scripts organized by phase:
 - **Phase 6** (49 tests): Population management — generation, deviance, persistence
 - **Phases C1–C4** (29 tests): Conversation — infrastructure, storylet dialogue, tone, trust/memory
 
-See `docs/testing/docs/TESTING_STRATEGY.md` for complete testing documentation and usage guide.
+The runner also has a `smoke` tier (10 scripts, 10-day sims), a `full` tier (the same 200, 120-day sims) and `run_tests_parallel.sh` with the same filters. See `docs/testing/docs/TESTING_STRATEGY.md` and `RUN_TESTS_GUIDE.md` for complete usage.
 
 ### Recalibration Tests (`./run_recalibration_tests.sh`)
 
@@ -48,7 +48,7 @@ See `docs/testing/docs/TESTING_STRATEGY.md` for complete testing documentation a
 **Simulation Duration**: 365 days (1 year, configurable via `TALE_SIM_DAYS`)
 **Total Time**: ~2-4 hours for all tests
 **When to Run**: When adjusting NPC parameters, verifying economic models, tuning probability constants
-**Status**: ✅ Framework ready, test scripts pending
+**Status**: ⚠️ `phase7-spatial` holds 102 scripts, but the script as checked in does not start (it hard-codes the `net9.0` TestRunner path) — open, tracked separately
 
 The recalibration test suite focuses on phases with emergent behavior:
 - **Phase 4**: Quest completion rates, quest pattern stability over long term
@@ -91,10 +91,7 @@ Both test suites use the **ExpectEngine framework**, a custom JSON-based test sp
 ./run_recalibration_tests.sh all
 ```
 
-**CI/CD Pipeline**:
-- **On PR**: `./run_tests.sh all` (5 min, gates merge)
-- **Nightly**: `./run_recalibration_tests.sh all` (4+ hours, reports trends)
-- **Before Release**: Both suites + manual gameplay validation
+**CI**: `.github/workflows/ci.yml` (since 2026-08-15, on push to `master` and on PRs) checks the generated GL binding, builds, and runs the xUnit suite `tests/JoyceCode.Tests`. It does **not** run the TALE suite or the recalibration runner, and there is no nightly job: `./run_tests.sh all` is a local gate before commit.
 
 ---
 
@@ -121,64 +118,51 @@ After world generation, the DES mode does **not** use the engine frame loop at a
 
 ### Project Structure
 
+The DES and the spatial model are production code in `JoyceCode/engine/tale/` (namespace `engine.tale`): `DesSimulation`, `EventQueue`, `NpcSchedule`, `EncounterResolver`, `SpatialModel` (with `Location`), `JsonlEventLogger`, `SimMetrics`, `StoryletLibrary`/`StoryletSelector`, `InteractionPool`, `RelationshipTracker`. The `Testbed/` console project is a flat, thin driver around them:
+
 ```
-Testbed/                          # New console project
-├── Testbed.csproj                # References Joyce, nogame, Splash, Splash.OpenGL
-├── TestbedMain.cs                # Entry point: world gen, then DES or continuous mode
-├── ClusterViewer.cs              # IViewer that covers all fragments in a target cluster
-│
-├── spatial/                      # Spatial model extracted from generated world
-│   ├── SpatialModel.cs           # Locations, routes, travel times — derived from ClusterDesc data
-│   ├── Location.cs               # A place: building, shop, street segment, home, workplace
-│   └── Route.cs                  # Connection between locations with travel time and street segments
-│
-├── des/                          # Discrete Event Simulation (= production Tier 3 system)
-│   ├── EventQueue.cs             # Priority queue (min-heap) ordered by game time
-│   ├── NpcSchedule.cs            # Current storylet, destination, departure/arrival times
-│   ├── EncounterResolver.cs      # Probabilistic encounter computation from overlapping schedules
-│   └── DesSimulation.cs          # Main DES loop: pop event → advance story → compute encounters → push next
-│
-├── logging/                      # Output and analysis
-│   ├── InteractionGraphLogger.cs # Records interaction graph (nodes + edges)
-│   ├── SimulationMetrics.cs      # Aggregates per-day statistics
-│   └── TextTraceLogger.cs        # Streaming text trace output
-│
-└── TestbedRootModule.cs          # Stripped module tree for world generation phase
+Testbed/
+├── Testbed.csproj                       # References Joyce, nogame, Splash, Splash.OpenGL
+├── TestbedMain.cs                       # Entry point: CLI, headless bootstrap, world gen, DES run, metrics
+├── ClusterViewer.cs                     # IViewer that covers all fragments in the target cluster
+├── AssetImplementation.cs               # Filesystem asset access for the headless run
+├── NpcAssigner.cs                       # Seeded home/workplace/social-venue assignment from the spatial model
+├── StreetGenerationDiagnostics.cs       # --diagnose-streets
+├── StreetGenerationNavMapValidator.cs   # --validate-streets
+├── StreetGenerationAnalysis.cs          # street-generation analysis helpers
+├── PathfindingDiagnostics.cs            # --test-pathfinding
+├── SpatialModel.cs                      # stub: "moved to engine.tale"
+└── testbed_targets.json                 # target metrics checked after the run
 ```
+
+There is no `spatial/`, `des/` or `logging/` subtree and no root module of its own.
 
 ---
 
 ## Bootstrap Sequence
 
-Modeled on `DesktopMain.cs` (lines 116-238), stripping renderer-dependent steps:
+As implemented in `Testbed/TestbedMain.cs` (`Main`):
 
 ```
-1.  GlobalSettings: set resource path, GL version (for headless platform init)
-2.  Register TextureCatalogue (operators reference materials even headlessly)
-3.  Register casette.Loader with real nogame.json config
-4.  AssetImplementation.WithLoader() — filesystem asset access
-5.  Loader.InterpretConfig() — parse implementations, global settings
-6.  Platform.EasyCreateHeadless() — creates Engine without window
-7.  engine.ExecuteLogicalThreadOnly() — logical thread, no render loop
-8.  engine.CallOnPlatformAvailable() — unlock frame scheduling
-9.  Register ConsoleLogger
-10. Skip: audio (Boom.ISoundAPI), window creation, icon loading
-11. Loader.StartGame() — activates root module (TestbedRootModule)
+1.  Parse CLI flags (see CLI Interface)
+2.  GlobalSettings: OpenGL API version (410 on macOS, 430 elsewhere), engine.NailLogicalFPS
+3.  Resolve models/ and nogame/generated/ by walking up from the working directory;
+    load LaunchConfig and apply it to GlobalSettings
+4.  Register TextureCatalogue (operators reference materials even headlessly)
+5.  Register casette.Loader with the real game config (nogame.json)
+6.  AssetImplementation.WithLoader() — filesystem asset access
+7.  Loader.InterpretConfig() — parse implementations, global settings
+8.  Props: switch off trees, polytopes, street annotations, cube and tram characters
+9.  Splash.OpenGL.Platform.EasyCreateHeadless() — Engine without window
+10. engine.ExecuteLogicalThreadOnly(); engine.CallOnPlatformAvailable()
+11. Register ConsoleLogger
+12. On the main thread: SetupMetaGen.PrepareMetaGen(e); take ClusterList[0] as target;
+    add a ClusterViewer to the world loader and WorldLoaderProvideFragments()
+13. Either run a diagnostic flag and exit, or SpatialModel.ExtractFrom(cluster) →
+    NpcAssigner.Assign → DesSimulation → metrics JSON → exit code
 ```
 
-### TestbedRootModule
-
-A stripped variant of `nogame.Main` that activates only:
-
-| Module | Why |
-|--------|-----|
-| `nogame.config.Module` | Mix config, properties |
-| `nogame.modules.World` | MetaGen, Loader, fragment loading |
-| `nogame.modules.daynite.Controller` | Game time (with accelerated `RealSecondsPerGameDay`) |
-| `engine.behave.SpawnController` | Character spawning |
-| TALE narrative module (Phase 1+) | Story graph ticking, interaction pool |
-
-**Excluded**: `ScreenComposer`, `InputEventPipeline`, `InputController`, `AutoSave`, UI modules, quest log UI, audio modules, map/satnav rendering.
+No root module is started (`Loader.StartGame()` is never called) and there is no `TestbedRootModule`: the game's module tree is not activated at all; world generation is driven directly through `SetupMetaGen` and the world loader. Audio, window and input are never created.
 
 ---
 
@@ -857,7 +841,9 @@ Stored in a configuration file (`testbed_targets.json`) so the testbed can self-
 The testbed compares its output against these targets and:
 1. Prints `"pass": true/false` in the metrics JSON
 2. Populates the `"warnings"` array with specific violations
-3. Returns exit code 0 (pass) or 1 (fail) — usable in CI or automated loops
+3. Returns exit code 0 (pass) or 1 (fail) — usable in automated loops (CI does not run the testbed)
+
+The checked-in `Testbed/testbed_targets.json` carries looser values than the example above (e.g. `routine_completion_rate` max 1.00, `escalation_first_conflict_day` max 60). It is looked up from `--targets`, then next to the binary, the working directory and `Testbed/`.
 
 ---
 
@@ -870,7 +856,7 @@ The testbed is designed as a closed-loop system that Claude Code can operate:
 ```
 1. Claude reads testbed_targets.json (knows what "good" looks like)
 2. Claude reads current storylet library + encounter parameters
-3. Claude runs: dotnet run --project Testbed -- --days 365 --seed 42
+3. Claude runs: dotnet run --project Testbed/Testbed.csproj -- --days 365 --seed 42 --quiet
 4. Claude reads metrics JSON from stdout
 5. Claude checks "pass" field and "warnings" array
 6. If pass: done (or run with different seeds to confirm stability)
@@ -888,13 +874,13 @@ The testbed is designed as a closed-loop system that Claude Code can operate:
 
 | Adjustment Type | Files | Example |
 |----------------|-------|---------|
-| Encounter probabilities | `testbed_params.json` | Lower venue probability from 0.07 to 0.05 |
-| Storylet preconditions | `storylets/*.json` | Change `work_manual` hunger threshold from 0.8 to 0.9 |
-| Storylet postconditions | `storylets/*.json` | Reduce anger accumulation from argue: 0.2 → 0.15 |
-| Property mutation rates | `storylets/*.json` | Slow hunger growth: +0.08/hour → +0.06/hour |
-| Role schedule templates | `roles/*.json` | Give merchants a longer lunch break (less time at shop = fewer interruptions) |
-| New storylets | `storylets/*.json` | Add `evening_stroll` for merchants with nothing to do after shop closes |
-| Interaction thresholds | `testbed_params.json` | Lower greet_min_trust from 0.3 to 0.2 (more acquaintances form) |
+| Encounter probabilities | source (no parameter file exists; `testbed_params.json` was planned, not built) | Lower venue probability from 0.07 to 0.05 |
+| Storylet preconditions | `models/tale/*.json` | Change `work_manual` hunger threshold from 0.8 to 0.9 |
+| Storylet postconditions | `models/tale/*.json` | Reduce anger accumulation from argue: 0.2 → 0.15 |
+| Property mutation rates | `models/tale/*.json` | Slow hunger growth: +0.08/hour → +0.06/hour |
+| Role schedule templates | role definitions (`engine.tale.RoleRegistry`) | Give merchants a longer lunch break (less time at shop = fewer interruptions) |
+| New storylets | `models/tale/*.json` | Add `evening_stroll` for merchants with nothing to do after shop closes |
+| Interaction thresholds | source / interaction type definitions | Lower greet_min_trust from 0.3 to 0.2 (more acquaintances form) |
 
 ### Stability Validation
 
@@ -902,7 +888,7 @@ A single seed can produce misleading results. After finding parameters that pass
 
 ```bash
 for seed in 42 137 256 999 1337; do
-  dotnet run --project Testbed -- --days 365 --seed $seed
+  dotnet run --project Testbed/Testbed.csproj -- --days 365 --seed $seed --quiet
 done
 ```
 
@@ -910,24 +896,27 @@ All seeds must pass. If one fails, the parameters are overfit to a specific worl
 
 ### CLI Interface
 
+Flags parsed by `TestbedMain.ParseArgs`; anything else is passed on to the engine.
+
 ```
-dotnet run --project Testbed -- [options]
+dotnet run --project Testbed/Testbed.csproj -- [options]
 
 Options:
-  --days N              Simulated days (default: 365)
-  --seed N              World + NPC seed (default: 42)
-  --cluster N           Cluster index to simulate (default: 0, largest)
-  --npcs N              Override NPC count (default: from spawn operators)
-  --params FILE         Parameter file (default: testbed_params.json)
-  --targets FILE        Target metrics file (default: testbed_targets.json)
+  --days N              Simulated days (default: 7)
+  --seed N              NPC assignment seed (default: 42)
+  --npcs N              NPC count (default: 500)
   --traces N            Number of sample NPCs to trace (default: 5)
-  --trace-file FILE     Trace output file (default: traces.log)
-  --graph-file FILE     Graph output file (default: graph.json)
-  --quiet               Suppress trace output, only emit metrics JSON to stdout
-  --batch FILE          Batch mode: read parameter sweep from FILE, output CSV
+  --events-file FILE    JSONL event log (default: events.jsonl; "none" disables)
+  --trace-file FILE     Trace output file (default: traces.log; "none" disables)
+  --graph-file FILE     Graph output file (default: graph.json; "none" disables)
+  --targets FILE        Target metrics file (default: testbed_targets.json, see Target Metrics)
+  --quiet               Suppress progress output on stderr; stdout carries only the metrics JSON
+  --diagnose-streets    Run street-generation diagnostics over all clusters, then exit
+  --validate-streets    Validate nav-map connectivity of every cluster, then exit
+  --test-pathfinding    Run pathfinding route diagnostics on the first cluster, then exit
 ```
 
-In quiet mode, the only stdout is the metrics JSON — ideal for Claude Code to parse.
+The target is always the first cluster (`cluster_index` 0); there is no `--cluster`, `--params` or `--batch` (see Phase C). Progress and the cluster statistics go to stderr (`--quiet` silences the Testbed's own progress lines); the metrics JSON is written to stdout.
 
 ---
 
@@ -959,7 +948,9 @@ In quiet mode, the only stdout is the metrics JSON — ideal for Claude Code to 
 
 **Deliverable**: Run 1 simulated year (500 NPCs), produce interaction graph + metrics in seconds.
 
-### Testbed Phase C — Probability Tuning (parallel with TALE Phase 2-3)
+### Testbed Phase C — Probability Tuning (parallel with TALE Phase 2-3) — **not built**
+
+No probability CLI knobs, batch mode or CSV output exist; the encounter probabilities are `EncounterResolver` fields with code defaults (`P_Venue` 0.07, `P_Street` 0.015, ...).
 
 **Goal**: Sweep interaction probability parameters, find sweet spot.
 
@@ -971,7 +962,9 @@ In quiet mode, the only stdout is the metrics JSON — ideal for Claude Code to 
 
 **Deliverable**: Parameter recommendations backed by empirical data. Visualizable interaction graphs.
 
-### Testbed Phase D — Continuous Spatial Validation (parallel with TALE Phase 2)
+### Testbed Phase D — Continuous Spatial Validation (parallel with TALE Phase 2) — **not built**
+
+The Testbed has no continuous (per-frame) mode; it runs the DES only.
 
 **Goal**: Validate DES encounter probabilities against per-frame spatial simulation.
 
@@ -1003,4 +996,4 @@ This means:
 - DES code lives in **JoyceCode or nogameCode**, not in the Testbed project
 - The Testbed project is a thin driver: world generation → spatial model extraction → DES execution → logging
 - Every parameter change or storylet library update is validated by running the testbed before testing in-game
-- The DES is the **continuous integration environment** for the TALE system
+- The DES is the validation environment for the TALE system (run locally via `run_tests.sh` / the Testbed; not part of CI)

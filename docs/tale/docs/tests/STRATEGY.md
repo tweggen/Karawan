@@ -6,7 +6,7 @@ The TALE test documentation consists of detailed test specifications across 7 ph
 
 ## Current Documentation Structure
 
-### Planning Documents (`docs/tale/docs/tests/TEST_PLAN.md`)
+### Planning Documents (archived: `docs/tale/archive/TALE_TESTS_TEST_PLAN.md`)
 - High-level test philosophy
 - Framework requirements (ExpectEngine)
 - Overall test metrics and success criteria
@@ -229,7 +229,7 @@ When a new phase is added:
 1. Create `docs/tale/docs/phases/PHASE_N.md` — Architecture & Design
 2. Create `docs/tale/docs/tests/PHASE_N.md` — Detailed Specs
 3. Create `models/tests/tale/phaseN-*/README.md` — Test Summary
-4. Link from `docs/tale/docs/tests/TEST_PLAN.md`
+4. Link from `docs/tale/docs/tests/STRATEGY.md` (the test plan is archived as `docs/tale/archive/TALE_TESTS_TEST_PLAN.md`)
 5. Update `docs/testing/docs/TESTBED.md` with new phase
 
 ## Handling Documentation Gaps

@@ -1,5 +1,7 @@
 # Quest System Refactor: From Subsystem to ECS Components + Strategy
 
+> **Status:** complete — Phases 1–7 shipped (Phase 7, the followed quest, extends the original plan). The sub-objective hierarchy sketched below was **not implemented**; no quest has child sub-objective entities.
+
 ## Goal
 
 Replace the bespoke quest subsystem (`IQuest`, `quest.Manager`, `AModule`-based quests) with a pure ECS approach: a `QuestComponent` for quest identity/metadata, the existing `Strategy` component for state machines, and the existing hierarchy system for quest-to-sub-objective relationships.
@@ -46,7 +48,7 @@ public struct QuestInfo
 
 Key design choices:
 - **Struct, not class.** Follows the engine's ECS convention (see `Transform3`, `Behavior`, `Creator`).
-- **`[IsPersistable]` + `[JsonInclude]`** on all fields. Serialization works identically to every other component. No custom `ICreator` needed per quest.
+- **`[IsPersistable]` + `[JsonInclude]`** on all fields. Serialization works identically to every other component. A quest whose `Strategy` must be rebuilt on load still needs an `ICreator` (the Taxi quest has `TaxiQuestCreator`, see Phase 4).
 - **`State` as byte.** Each quest type defines its own enum and casts. The component doesn't need to know the enum — it just persists the value.
 - **No `IQuest` reference.** The component is pure data. Behavior comes from the `Strategy` component.
 
@@ -62,7 +64,9 @@ Quest Entity
 └── EntityName         — for lookup by name
 ```
 
-A multi-phase quest with sub-objectives uses hierarchy:
+> **Not implemented.** The sub-objective hierarchy below was the plan; no quest creates child entities with their own `QuestInfo`, and the quest log lists only top-level quests. The Taxi quest shipped as one entity (Phase 4).
+
+A multi-phase quest with sub-objectives would use hierarchy:
 
 ```
 Quest Entity ("Taxi Fare")
@@ -83,14 +87,15 @@ The hierarchy system handles parent-child lifetime automatically (`HierarchyApi.
 
 ### Quest State Machine
 
-Each quest type implements an `AOneOfStrategy` subclass. Example for the Taxi quest:
+Each quest type implements an `AOneOfStrategy` subclass. The Taxi quest as shipped:
 
 ```
 TaxiQuestStrategy : AOneOfStrategy
-├── "pickup"   → PickupPhaseStrategy : AEntityStrategyPart
-├── "driving"  → DrivingPhaseStrategy : AEntityStrategyPart
-└── "complete" → CompletePhaseStrategy : AEntityStrategyPart
+├── "pickup"   → PickupStrategy : AEntityStrategyPart
+└── "driving"  → DrivingStrategy : AEntityStrategyPart
 ```
+
+There is no "complete" phase: when `driving` gives up, the controller calls `QuestFactory.DeactivateQuest` (see Completion flow).
 
 Each phase strategy follows the established NPC pattern:
 - `OnEnter()`: create `ToLocation`/`TrailVehicle` marker, subscribe to events, attach `Behavior`
@@ -108,7 +113,7 @@ var activeQuests = engine.GetEcsWorld().GetEntities()
     .Where(e => e.Get<QuestInfo>().IsActive);
 ```
 
-Sub-objectives: query children of a quest entity that also have `QuestInfo`.
+Sub-objectives: not implemented (see Entity Structure).
 
 ### Quest Triggering
 
@@ -175,40 +180,19 @@ The narration JSON format stays identical:
 **Files deleted:**
 - `nogameCode/nogame/quests/HelloFishmonger/Quest.cs` — old IQuest/AModule/ICreator implementation
 
-### Phase 4: Migrate Taxi quest (multi-phase)
+### Phase 4: Migrate Taxi quest (multi-phase) — COMPLETE
 
-This is the payoff — the quest that motivated this refactor.
+This was the payoff — the quest that motivated this refactor. It shipped with a simpler design than planned: two phases, no "complete" phase and no sub-objective entities.
 
-**Files to create:**
-- `nogameCode/nogame/quests/Taxi/TaxiQuestStrategy.cs` — `AOneOfStrategy` with three phases
-- `nogameCode/nogame/quests/Taxi/PickupPhaseStrategy.cs` — `AEntityStrategyPart`
-  - `OnEnter`: create guest marker at pickup location, subscribe to arrival event
-  - `OnExit`: remove marker
-  - On arrival: `Controller.GiveUpStrategy(this)` → parent transitions to "driving"
+**Files** (`nogameCode/nogame/quests/Taxi/`):
+- `TaxiQuestStrategy.cs` — `AOneOfStrategy` with `"pickup"` → `"driving"`; takes a start phase so a load can resume mid-quest. When `pickup` gives up it sets `TaxiQuestData.Phase = 1` and triggers `driving`; when `driving` gives up it calls `QuestFactory.DeactivateQuest`.
+- `PickupStrategy.cs` — `ToLocation` marker at the guest position (car-routed, `OwnerQuestEntity` set); on arrival gives up.
+- `DrivingStrategy.cs` — `ToLocation` marker at the destination plus a waiting person there; on arrival force-spawns a walking citizen at the destination and gives up.
+- `TaxiQuestData.cs` — `[IsPersistable]` component: `GuestPosition`, `DestinationPosition`, `Phase` (0 = pickup, 1 = driving).
+- `TaxiQuestCreator.cs` — `ICreator`: on save writes the active phase into `TaxiQuestData.Phase`; on load rebuilds `TaxiQuestStrategy` from `TaxiQuestData` and pushes `QuestTriggeredEvent`.
+- `TaxiNpcSpawnerModule.cs` — places taxi NPC markers (about one quarter in ten per cluster); touching one hides the other markers and triggers `nogame.quests.Taxi.Quest`; the markers return on `QuestDeactivatedEvent`. It owns and registers the `TaxiQuestCreator`.
 
-- `nogameCode/nogame/quests/Taxi/DrivingPhaseStrategy.cs` — `AEntityStrategyPart`
-  - `OnEnter`: create destination marker via `ToLocation`, hide passenger
-  - `OnExit`: remove marker
-  - On arrival: `Controller.GiveUpStrategy(this)` → parent transitions to "complete"
-
-- `nogameCode/nogame/quests/Taxi/CompletePhaseStrategy.cs` — `AEntityStrategyPart`
-  - `OnEnter`: play completion effect, spawn passenger at destination, deactivate quest
-  - `OnExit`: cleanup
-
-**Quest hierarchy:**
-```
-Taxi Quest Entity
-├── QuestInfo { Title="Taxi Fare" }
-├── Strategy → TaxiQuestStrategy
-├── Child: Pickup sub-objective entity
-│   └── QuestInfo { Title="Pick up passenger" }
-└── Child: Destination sub-objective entity
-    └── QuestInfo { Title="Drive to destination" }
-```
-
-The `TaxiQuestStrategy.GiveUpStrategy()` updates child `QuestInfo.State` as phases transition.
-
-**Validation:** Full three-phase quest works. Sub-objectives visible in quest log query. Save/load across phases.
+The factory in `NarrationBindings._registerQuestFactories()` places a destination 100–300 m from the player (street point, current cluster) and starts the strategy directly in `"driving"` (`Phase = 1`), since the player has already met the passenger at the marker. The `"pickup"` phase is reached only through a strategy started in it.
 
 ### Phase 5: Remove old quest infrastructure — COMPLETE
 
@@ -241,6 +225,14 @@ The `TaxiQuestStrategy.GiveUpStrategy()` updates child `QuestInfo.State` as phas
 - `nogameCode/nogameCode.projitems` — added compile entry for `QuestLuaBindings.cs`
 - `nogameCode/nogame/Main.cs` — registered `questlog` Lua binding namespace via `AddDefaultBinding`
 - `models/menu/menu.xml` — added "Quest Log..." option in pause menu and `menuQuestLog` view with `<for>` loop over `questlog:getQuestList()`
+
+### Phase 7: Followed quest — COMPLETE
+
+At most one active quest is *followed*; only it shows its goal marker and satnav route.
+
+- `ISatnavService` (`JoyceCode/engine/quest/ISatnavService.cs`) / `SatnavService` (`nogameCode/nogame/quest/SatnavService.cs`): `FollowedQuestId`, `IsFollowed(entity)`, `FollowQuest(id)`, `UnfollowQuest()`; fires `QuestFollowedEvent` / `QuestUnfollowedEvent`. It auto-follows a triggered quest when none is followed and, when the followed quest is deactivated, follows the next active one. `FollowedQuestId` is persisted in `GameState` and restored after load.
+- `ToSomewhere.OwnerQuestEntity`: when set, the marker and route exist only while the owning quest is followed; unset keeps the legacy always-shown behaviour. The Taxi phases set it.
+- Quest Log: `QuestLuaBindings` adds `followed` to `getQuestList()` and `followQuest(id)`, `unfollowQuest()`, `isFollowed(id)`; `models/menu/menu.xml` shows Follow / Unfollow per quest.
 
 ---
 
@@ -282,7 +274,7 @@ When converting a quest from the old system to the new one:
 - [ ] Move `OnModuleActivate()` logic into `OnEnter()` of the start strategy
 - [ ] Move `OnModuleDeactivate()` logic into `OnExit()` of the relevant strategy
 - [ ] Move `SetupEntityFrom()` / `SaveEntityTo()` logic — most of it should be unnecessary if components are `[IsPersistable]`
-- [ ] Replace `I.Get<quest.Manager>().DeactivateQuest(this)` with setting `QuestInfo.IsActive = false` and removing the `Strategy` component (or transitioning to a "complete" state)
+- [ ] Replace `I.Get<quest.Manager>().DeactivateQuest(this)` with `I.Get<QuestFactory>().DeactivateQuest(_entity)` from the controller's `GiveUpStrategy`
 - [ ] Replace narration trigger calls
 - [ ] Test: trigger → active → complete cycle
 - [ ] Test: save during quest → load → quest resumes correctly
@@ -294,7 +286,7 @@ When converting a quest from the old system to the new one:
 
 ### Event paths for quest strategies
 
-Follow the NPC pattern. Define event paths as static methods on the strategy:
+Follow the NPC pattern. Define event paths as static methods on the strategy (illustrative — the shipped quests react to `ToLocation.OnReachTarget` instead and define no such paths):
 
 ```csharp
 public class TaxiQuestStrategy : AOneOfStrategy
@@ -347,11 +339,12 @@ public class NavigateStrategy : AEntityStrategyPart
 
 When a quest completes:
 1. The final strategy part calls `Controller.GiveUpStrategy(this)`
-2. The `AOneOfStrategy.GiveUpStrategy()` implementation:
-   - Sets `QuestInfo.IsActive = false` on the quest entity
-   - Optionally triggers narration
-   - Optionally removes the `Strategy` component to fully deactivate
-   - Optionally disposes the quest entity if it's not needed anymore
+2. The quest's `AOneOfStrategy.GiveUpStrategy()` calls `I.Get<QuestFactory>().DeactivateQuest(_entity)` (Taxi first calls `TriggerStrategy(null)`)
+3. `DeactivateQuest(eQuest, isSuccess = true)` queues onto the main thread and there:
+   - sets `QuestInfo.IsActive = false`
+   - removes the `Strategy` component (`StrategyManager` runs `OnExit` + `OnDetach`)
+   - disposes the quest entity and saves the game
+   - pushes `QuestDeactivatedEvent` (quest id, title, success), which `SatnavService` and e.g. `TaxiNpcSpawnerModule` react to
 
 ---
 

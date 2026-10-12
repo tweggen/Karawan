@@ -7,6 +7,12 @@ corruption also enters elsewhere. Entry point still unknown; other dynamic bodie
 **Platform:** Android arm64-v8a only. Never reproduces on desktop x64.
 **Runtime:** .NET 9.0.13, Mono (`libmonosgen-2.0.so`), `net9.0-android36.0`, JIT (no AOT)
 **Device OS:** Linux 6.6.102-android15-8 (Android 16)
+**Current runtime (since WP-6.2, 2026-08-10):** CoreCLR is the default Android runtime and the TFM
+is `net10.0-android36.0`; Mono stays selectable with `-p:WukaCoreClr=false` (`Wuka/Wuka.csproj`).
+The comment there records that on .NET 10 both runtimes passed every `AbiProbe` case, M and N
+included, on device. Not re-evaluated: whether the defect can still occur under either runtime, and
+whether the `HoverModule` repair and the startup `AbiProbe.RunOnce()` (still called from
+`CreateDynamic.Execute`) are still needed. Both remain in the code.
 **Found:** 2026-08-09
 
 ---

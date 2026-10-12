@@ -31,13 +31,11 @@ Three things about this setup are not obvious and will bite:
    packages now share one central version and must move together — see the comment in
    `Directory.Packages.props`.)
 
-3. **CPM silently disables MAUI's implicit package references.**
-   `Microsoft.Maui.Sdk`'s `BundledVersions.targets` sets
-   `DisableMauiImplicitPackageReferences=true` whenever `ManagePackageVersionsCentrally` is
-   `true`. So `<UseMaui>true</UseMaui>` in `Wuka.csproj` **stops pulling in
-   `Microsoft.Maui.Controls` at all** — with no warning and no error; the package simply
-   vanishes from `dotnet list package`. `Wuka.csproj` therefore declares it explicitly. If a
-   future MAUI package goes missing after a workload update, this is the first thing to check.
+3. **History: the MAUI workaround is gone.** While `Wuka.csproj` had `<UseMaui>true</UseMaui>`,
+   CPM silently disabled MAUI's implicit package references, so `Microsoft.Maui.Controls` had to
+   be declared explicitly. WP-6.1 (`595b5296`) removed MAUI (`UseMaui` is now `false`) and the
+   workaround went with it. `Xamarin.AndroidX.Core`, which used to arrive transitively via MAUI,
+   is now an explicit `PackageReference` in `Wuka.csproj`.
 
 `Aihao.old/` is dead code and opts out entirely via its own `Aihao.old/Directory.Packages.props`
 setting `ManagePackageVersionsCentrally=false` — NuGet resolves the *nearest* such file walking
@@ -153,7 +151,7 @@ models/nogame.narration.json
 
 `GameConfig._loadGameConfigFile` then iterates `_mix.AdditionalFiles` and inserts each into `MapResources`. `Res2Target` walks `MapResources` and emits two manifests:
 
-- `nogame/generated/AndroidResources.xml` — `<AndroidAsset Include="…" LogicalName="basename"/>` entries the MAUI Android app reads.
+- `nogame/generated/AndroidResources.xml` — `<AndroidAsset Include="…" LogicalName="basename"/>` entries the Android app (`Wuka`) reads.
 - `nogame/generated/InnoResources.iss` — `Source: …; DestDir: {app}\assets\;` entries the Windows Inno Setup installer copies.
 
 **Recursive include discovery does work.** If level-2 (or deeper) includes are missing from the manifest, suspect a stale `nogame/generated/` or stale published binary, not a BFS bug.
@@ -321,7 +319,7 @@ ls Wuka/obj/Debug/net10.0-android36.0/assets/ | wc -l
 `AndroidResourceWriter` opens the file with a bare `<Project>`, deliberately. Give it
 `Sdk="Microsoft.NET.Sdk"` and MSBuild re-imports the SDK at the `<Import>` site — two `MSB4011`
 warnings, the second of which reports that *Wuka.csproj's own* bottom `Sdk.targets` import is the
-one being ignored. The .NET SDK and the Android/MAUI workloads then land in the middle of
+one being ignored. The .NET SDK and the Android workload then land in the middle of
 Wuka.csproj, and every static `ItemGroup` in them sees only the items declared **above** the
 import: the `libSDL3`/`libmain`/`libopenal` natives, the `AndroidResource` icons, every
 `PackageReference` and every `ProjectReference` are all below it. `dotnet build` survives this

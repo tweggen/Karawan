@@ -2,7 +2,14 @@
 
 **Status:** **ACCEPTED — implemented 2026-08-14.** Phases 0–5 are complete and merged; outcomes are
 recorded against every §9 claim and every §11 challenge below. Two things this document proposed
-were **not** done and say so: no CI exists, and ANGLE was never evaluated.
+were **not** done and say so: no CI existed at acceptance, and ANGLE was never evaluated.
+**Outcome note (2026-08-15):** KI-17 was addressed the day after acceptance by
+`.github/workflows/ci.yml` (commit `318996cf`). It runs on push to `master` and on pull requests,
+checks that the generated GL binding and tracer reproduce byte-for-byte from the pinned `gl.xml`,
+publishes the build tools, bakes the assets, builds, and runs the xUnit suite
+(`tests/JoyceCode.Tests`) on `ubuntu-24.04`. It does **not** run the TALE scenario suite
+(`run_tests.sh`), and builds on no Windows, macOS or Android runner. The §8 CI gates (16 KB
+alignment asserts, XA0141/XA4301 as errors, zero-Silk assert) are not part of it.
 **Date:** 2026-08-04 · **Accepted:** 2026-08-14
 **Author:** drafted with Claude Code, from a repo audit; conclusions revised twice under challenge
 (see §10).
@@ -396,7 +403,7 @@ extrapolated. **Assumed** = taken on external authority and not verified here.
 | 8 | `KarawanInputConnection.cs` / `GameSurface.cs` port to SDL3 | **assumed — weakest point** | ✅ **confirmed on hardware**, and **far smaller than feared**. Both files were already SDL3-aware; nothing needed porting. The actual defect was that *nothing raised the keyboard at all* (KI-10). The claim called "the single most likely point of failure in this whole plan" cost one seam and two null guards. |
 | 9 | Assimp binding/native skew is a struct-layout problem | **measured** | ⬜ **moot, not verified.** Phase 4 removed Assimp from the runtime, so the skew can no longer occur, but the mechanism was never independently retested. §11's "lower stakes" note was right that the pin had already neutralised it — the real payoff was size and load time. |
 | 10 | Phase 4 is tractable because the infra exists | **estimated** | ✅ **confirmed, and the recommended spike was the right call.** The `Mesh`+`Skeleton` spike answered the open question immediately: every shared/cyclic edge in the `Model` graph is *derivable*, so no DTO layer was needed. The plan called WP-4.1 "the bulk of the effort"; it was not. |
-| 11 | GitHub Actions is free for this repo on all runners | **measured** | ⬜ **untested — no CI was ever stood up.** WP-1.1 added one workflow for native builds; nothing else. This is KI-17 and the largest structural gap left. |
+| 11 | GitHub Actions is free for this repo on all runners | **measured** | ⬜ **untested — no CI was ever stood up.** WP-1.1 added one workflow for native builds; nothing else. This is KI-17 and the largest structural gap left. **Update 2026-08-15:** KI-17 addressed by `ci.yml` (see Status); it runs on `ubuntu-24.04` only, so the claim about *all* runners is still not exercised by it. |
 | 12 | The abstraction is the durable asset | **measured** | ✅ **confirmed emphatically.** Windowing, input, audio, the GL binding and model import were *all* replaced underneath `Splash/`, across five phases, without the renderer design changing. This is the claim the whole document rests on and it is the one the work most clearly validated. |
 
 **Questions a reviewer should press on:**
@@ -439,6 +446,10 @@ reasoning matters more than the conclusion.
   continued deliberately, treating it as schedule relief rather than a change of direction. The
   decision this document argued for was carried out; the *reasons* it gave were not always the
   reasons that turned out to matter — see 11b.
+- **Outcome note, 2026-08-15** — the "no CI" gap (KI-17) was closed by `.github/workflows/ci.yml`
+  (`318996cf`): generated-file reproducibility, build, asset bake and xUnit suite on `ubuntu-24.04`,
+  on push to `master` and on pull requests. The TALE suite and the §8 CI gates remain outside it.
+  ANGLE (11d) is unchanged.
 
 ---
 
@@ -493,6 +504,10 @@ since the DLL cannot rot but the generator must be re-understood by future-you o
 > *enforces* that — it is a command someone remembers to run, and it has already caught two real
 > drifts (#89/#90, and the WP-5.4 rename). The reviewer's concern is answered by discipline, which
 > is exactly the weaker form of answer.
+>
+> **Update 2026-08-15:** no longer discipline alone — `ci.yml`'s `generated` job regenerates both
+> files from the pinned `gl.xml` on every pull request and every push to `master`, and fails if the
+> checked-in files differ.
 
 **11c. Claim 3 (§9) is understated, and the ~500 LOC generator estimate is probably 2–4× optimistic.**
 Matching "the same type and member names" is not the hard part. `SilkThreeD.cs` call sites depend on

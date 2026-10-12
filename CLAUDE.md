@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .NET 9.0. It runs on Windows, Linux, macOS, and Android.
+Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .NET 10.0. It runs on Windows, Linux, macOS, and Android.
 
 ## Quick Start (For New Instances)
 
@@ -24,7 +24,7 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 - **City blocks** are traced over `BlockGraph`'s 2-core; dead-end spurs are subtracted from estates; each piece of buildable land gets its own building, founded on the block floor as drawn (`BlockFloor`). Buildings have **planar floors and storey-aligned shopfronts** — the owner's explicit choice; a footprint-following base was rejected.
 - **Open owner decisions**: what an intercity line IS (graded embankment, viaduct on pylons, or deliberately elevated line) — ledger item (e).
 - **Known and NOT fixed, worth knowing before you trust a save**: `DBStorage._readCollection` drops a collection that fails to deserialise with no log line at all; an existing save resolves street junction ids to *different* junctions after regeneration (`FirstOrDefault` in `StreetPointConverter`/`StrokeConverter`). Invalidating saves means bumping `DBStorage.DbVersion`, which also deletes `gamestate.db`.
-- ✅ **Silk.NET exit complete** (Platform Phases 0–5): SDL3 + hand-written P/Invoke, models baked at build time, GL binding generated from `gl.xml`. State and open items (GATE-C Linux never run; no CI — KI-17) in `docs/roadmap/proposed/PLATFORM-BACKEND-STATUS.md`.
+- ✅ **Silk.NET exit complete** (Platform Phases 0–5): SDL3 + hand-written P/Invoke, models baked at build time, GL binding generated from `gl.xml`. State and open items (GATE-C Linux never run) in `docs/roadmap/proposed/PLATFORM-BACKEND-STATUS.md`. CI exists since 2026-08-15 (`.github/workflows/ci.yml`, KI-17): on push to master and on PRs it checks the generated GL binding reproduces, builds, and runs the xUnit suite — it does **not** run the TALE suite.
 - ✅ TALE Phases 0–8, C1–C4, TALE-SOCIAL D1–D5 and E (living factions) complete; design in `docs/tale/docs/`, Phase D/E detail in `docs/tale/docs/phases/PHASE_D_SOCIAL.md` and `PHASE_E_SOCIAL.md`.
 - 🔄 **In flight**: Debug Filter migration (~54 % of logger calls migrated to `Dc` categories); routing Phase D D2 (multi-objective A*) and D4 (role-based preferences); acting on the five TALE-SOCIAL D5 tuning concerns. ⚠️ "Phase D" is overloaded — routing Phase D and TALE-SOCIAL Phase D are separate workstreams.
 
@@ -60,10 +60,10 @@ Each of these cost a debugging round; the story behind each is in `STATUS-LOG.md
 - **Storylets ship as `"type": "taleStorylet"` resources** in `models/nogame.resources.json`; that one declaration decides both what ships and what loads.
 
 **Common First Tasks:**
-- **Adding a test**: Create JSON in `models/tests/tale/phaseN-*/`, update `docs/tale/PHASE_N.md`, run `./run_tests.sh phaseN`
+- **Adding a test**: Create JSON in `models/tests/tale/phaseN-*/`, update `docs/tale/docs/phases/PHASE_N.md`, run `./run_tests.sh phaseN`
 - **Tuning parameters**: Run `./run_recalibration_tests.sh phaseN` with `TALE_SIM_DAYS=365`
 - **New phase**: Use `EnterPlanMode`, create plan in `docs/roadmap/proposed/`, follow PROCESS.md
-- **Debugging**: Check `docs/tale/PHASE_N.md` for design, read actual test JSON for specs
+- **Debugging**: Check `docs/tale/docs/phases/PHASE_N.md` for design, read actual test JSON for specs
 
 **Key Rules (from PROCESS.md):**
 - Documentation updates are MANDATORY (not optional)
@@ -131,7 +131,7 @@ The engine uses **DefaultEcs** (Entity-Component-System). Entities are composed 
 | **BoomCode** (.shproj) | Shared audio code |
 | **nogame** + **nogameCode** (.shproj) | Game-specific logic for Silicon Desert 2 |
 | **Karawan** | Desktop launcher (`DesktopMain.cs`) |
-| **Wuka** | Android MAUI app (packages nogame + native libs) |
+| **Wuka** | Android app (packages nogame + native libs). No longer MAUI (WP-6.1, `UseMaui=false`); runs on CoreCLR by default, Mono selectable (WP-6.2) |
 | **Aihao** | Avalonia-based game editor IDE |
 | **Chushi** | Asset compiler (console tool, also used as MSBuild task) |
 | **Mazu** | Animation compiler |

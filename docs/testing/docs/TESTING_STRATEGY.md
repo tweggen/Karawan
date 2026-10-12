@@ -13,13 +13,26 @@ This separation allows rapid feedback during development while maintaining compr
 **Purpose**: Quick functional validation of core systems
 **Simulation Duration**: 60 days (fast feedback)
 **Run Time**: ~5 minutes for all 200 tests
-**When to Run**: After code changes, CI/CD pipeline
+**When to Run**: After code changes (not run by CI — see *Continuous Integration*)
+
+### Tiers
+
+| Filter | Tests | `TALE_SIM_DAYS` | Notes |
+|--------|-------|-----------------|-------|
+| `smoke` | 10, listed in `models/tests/tale/.smoke-tests` | 10 | ~1 minute |
+| `standard` (= `all`, the default) | 200, all scripts in the 11 phase dirs below | 60 | the regression gate |
+| `full` | same 200 | 120 | |
+| `bugfix` | entity-level behaviour checks (`JOYCE_TEST_SCRIPT=entity-behavior-tests`, `BehaviorBugfixTests` in TestRunner) | — | not DES scripts |
+
+`phase7-spatial` (102 scripts) is in no `run_tests.sh` tier; only `run_recalibration_tests.sh` names it.
 
 ### Usage
 
 ```bash
-# Run all regression tests (all phases)
+# Run all regression tests (all phases); same as 'standard'
 ./run_tests.sh all
+./run_tests.sh smoke            # 10-day smoke tier
+./run_tests.sh full             # 120-day tier
 
 # Run specific phase
 ./run_tests.sh phase0           # DES Engine
@@ -34,8 +47,11 @@ This separation allows rapid feedback during development while maintaining compr
 ./run_tests.sh phaseC3          # Mood/Tone Branches
 ./run_tests.sh phaseC4          # Trust, Memory & Quest Hooks
 
-# Run specific test
+# Run specific test (first file under models/tests/tale whose name ends in the argument)
 ./run_tests.sh 01-initialization.json
+
+# Same filters, one TestRunner process per test across all cores
+./run_tests_parallel.sh all
 ```
 
 ### Test Phases
@@ -57,6 +73,8 @@ This separation allows rapid feedback during development while maintaining compr
 **Total**: 200 regression tests
 
 ## Recalibration Tests (`run_recalibration_tests.sh`)
+
+> ⚠️ `run_recalibration_tests.sh` hard-codes `TestRunner/bin/Release/net9.0/TestRunner.dll` (no fallback to the current `net10.0` output) and executes the `.dll` without `dotnet`, so as checked in it stops at "TestRunner not found". Open, tracked separately together with the unrun `phase7-spatial` scripts. Running TestRunner directly with `TALE_SIM_DAYS=365` (below) works.
 
 **Purpose**: Verify emergent structures and equilibrium behavior
 **Simulation Duration**: 365 days (1 year, configurable)
@@ -129,9 +147,9 @@ TALE_SIM_DAYS=730 JOYCE_TEST_SCRIPT="tests/tale/phase6/..." \
 ```
 
 ### Continuous Integration
-- **Push/PR triggers**: `./run_tests.sh all` (5 minutes)
-- **Nightly/Weekly jobs**: `./run_recalibration_tests.sh all` (4+ hours)
-- **Before release**: Both suites, plus manual testing
+CI exists since 2026-08-15 (`.github/workflows/ci.yml`, on push to `master` and on every PR). It checks that the generated GL binding reproduces, builds, bakes the assets and runs the **xUnit suite** (`tests/JoyceCode.Tests`) only.
+
+**The TALE suite is not in CI**: run `./run_tests.sh all` (or `./run_tests_parallel.sh all`) locally before committing, as PROCESS.md requires. No nightly recalibration job exists.
 
 ## Test Structure
 
@@ -162,8 +180,8 @@ Phase: phase0-des
   [phase0-des] 01-initialization.json ... ✓ PASS
   ...
 === Summary ===
-Passed: 171/171
-Failed: 0/171
+Passed: 200/200
+Failed: 0/200
 All tests passed!
 ```
 

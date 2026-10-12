@@ -1,5 +1,7 @@
 # ExpectEngine: Event-Driven System Testing
 
+> **Original proposal.** This is the design as proposed; the API sketches, the Lua format and the project tree below are the plan, not the shipped code. What was built — and how it is activated today (through `TestRunner`, not the game) — is in [EXPECT_IMPLEMENTATION.md](EXPECT_IMPLEMENTATION.md). Known differences: `TestEvent` is a sealed class with a `Timestamp`, not a record; `TestSession` has `Log`, `CreateResult` and `Dispose` instead of `Complete`; there is no `ExpectEngine.Tests` project.
+
 ## Problem
 
 The Karawan/Joyce game engine has no automated system-level tests. The game already supports non-interactive startup (via `globalSettings.json` flags like `debug.option.autoLogin`), but there is no way to verify that the game reaches expected states, handles events correctly, or completes key flows without manual observation.
@@ -118,7 +120,7 @@ An engine-level module that bridges `ExpectEngine` to the Joyce event system:
 }
 ```
 
-**Lua** (optional, more powerful for conditionals/loops):
+**Lua** (future work — not implemented; JSON is the only script format):
 - Uses a **separate Lua state** from the game's scripting — no interference
 - Lua bindings expose `expect()`, `inject()`, `awaitCondition()`, `quit()`
 - Useful for complex multi-branch test scenarios
@@ -134,7 +136,7 @@ An engine-level module that bridges `ExpectEngine` to the Joyce event system:
 ### Desktop (Windows/macOS/Linux)
 - Test scripts loaded from filesystem paths
 - Results via process exit code (0 = pass, nonzero = fail) and stdout
-- CI-friendly: xUnit tests can launch the game process, pass a test script, and assert on exit code
+- CI-friendly (future work — not implemented): xUnit tests could launch the game process, pass a test script, and assert on exit code. CI today runs only the in-process xUnit suite `tests/JoyceCode.Tests`
 
 ## Prior Art
 
@@ -148,7 +150,7 @@ An engine-level module that bridges `ExpectEngine` to the Joyce event system:
 
 None provides a standalone, host-agnostic expect framework for event-driven applications.
 
-## Project Structure
+## Project Structure (as proposed)
 
 ```
 ExpectEngine/                  — NuGet-able library (net10.0)
@@ -158,7 +160,7 @@ ExpectEngine/                  — NuGet-able library (net10.0)
   TestSession.cs
   TestResult.cs
   ScriptRunner.cs              — JSON test script interpreter
-ExpectEngine.Tests/            — xUnit tests for the library
+ExpectEngine.Tests/            — xUnit tests for the library (never created)
 JoyceCode/engine/testing/      — Karawan integration module
   TestDriverModule.cs          — AModule, bridges EventQueue <-> ExpectEngine
   JoyceTestEventSource.cs
