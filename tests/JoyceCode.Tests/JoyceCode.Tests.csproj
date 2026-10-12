@@ -53,4 +53,12 @@
     <Compile Remove="engine\navigation\**\*.cs" />
   </ItemGroup>
 
+  <!--
+    nogame is not referenced (it drags in the whole game). ServerErrorText
+    depends on System.* only, so it is compiled in directly.
+  -->
+  <ItemGroup>
+    <Compile Include="..\..\nogameCode\nogame\modules\ServerErrorText.cs" Link="nogame\ServerErrorText.cs" />
+  </ItemGroup>
+
 </Project>
