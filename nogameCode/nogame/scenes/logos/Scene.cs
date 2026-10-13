@@ -177,11 +177,16 @@ public class Scene : AModule, IScene
     }
 
 
+    /**
+     * The one place a status text is clipped: OSD text does not wrap, so
+     * whatever the prefix and the server's message add up to must fit.
+     */
     private void _displayLoginStatus(string status, string hint = "")
     {
+        string statusLine = ServerErrorText.StatusLine(status);
         _engine.RunMainThread(() =>
         {
-            _setLoginWidget("menuLoginStatusText", "text", status);
+            _setLoginWidget("menuLoginStatusText", "text", statusLine);
             _setLoginWidget("menuLoginHintText", "text", hint);
         });
     }
