@@ -157,7 +157,7 @@ Registered types for round-trip serialization:
 
 - Interval: 60 seconds (configurable via `SaveInterval` property)
 - Flow: `EntitySaver.SaveAll()` -> update `GameState.Entities` -> `DBStorage.SaveGameState()` -> optional cloud sync to `silicondesert.io`
-- On load: tries cloud first (if online), falls back to local, creates new game if no save exists
+- On load: tries cloud first (if online); only exli's own "no save yet" 404 falls back to the local game state (or a new game). Any other failure is reported on the login screen, never replaced by the local game. The full client/server contract: [GAME_SERVER_API.md](GAME_SERVER_API.md)
 
 ## Key Files
 

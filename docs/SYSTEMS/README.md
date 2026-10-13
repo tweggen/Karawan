@@ -26,6 +26,7 @@ Quest mechanics and lifecycle
 Save/load and data storage systems
 
 - [LITEDB.md](../main/docs/persistence/LITEDB.md) — LiteDB storage implementation
+- [GAME_SERVER_API.md](../main/docs/persistence/GAME_SERVER_API.md) — online login and cloud save: what exli answers and what the game shows
 
 ### 📱 **Platforms** — [../main/docs/platforms/](../main/docs/platforms/)
 Platform-specific features and concerns

@@ -43,8 +43,8 @@ cd ../exli
 ```
 
 `test/exli_web/api/game_api_smoke_test.exs` pins the game's path on a good
-day: log in for a token, store a save, read it back. How errors are answered
-is KAR-423's to test.
+day: log in for a token, store a save, read it back.
+`test/exli_web/controllers/api_test.exs` pins every error answer (KAR-423).
 
 ## The game against a local exli
 
@@ -98,18 +98,27 @@ periodic `POST /api/auth/save_game` → 200.
 | Server unreachable | stop `dev-local.sh` (Ctrl-C) and log in |
 | Long server messages | check that they fit the 560 px status line (OSD text does not wrap) |
 
-What the server answers today, measured 2026-10-12 against `dev-local.sh`.
-`LOGIN-SERVER-ERRORS.md` has the full table, and KAR-423 changes it:
+What the server answers and what the game shows for each case is in
+`docs/main/docs/persistence/GAME_SERVER_API.md` (since KAR-423: 401 for a
+wrong login, 403 for any bad token, 404 `{"error": "no saved game yet"}`).
 
-- wrong password: **200** with the plain text "I'm sorry, I do not recognize you.";
-- garbage token: **500** (`MatchError` in `ApiUserPlug`). The game shows
-  "online save: server answered 500 Internal Server Error" and keeps the bad
-  token;
-- no save: **404** with "Hi …, I'm afraid you didn't save any game yet."
+Two cases need a stand-in:
 
-Locally, exli runs with `debug_errors: true`, so a 500 comes back as an HTML
-debug page. Production renders it through `ErrorJSON`. A local run therefore
-shows the client's fallback text for a 500, not production's.
+- **A 404 that is not exli's** (Traefik during a redeploy): point
+  `GameServer` at `http://localhost:4101` and run
+  `python3 -m http.server 4101 --bind 127.0.0.1` in an empty directory;
+  seed a token so the game skips the login and asks for the save directly.
+- **The old server:** `git stash -u` exli's changes (or check out the old
+  commit) before `./dev-local.sh`; mix recompiles on start.
+
+Locally, exli runs with `debug_errors: true`, so an unexpected 500 comes back
+as an HTML debug page. Production renders it through `ErrorJSON`. A local run
+therefore shows the client's fallback text for such a 500, not production's.
+
+`dev-local.sh` stops on Ctrl-C. To stop it from a script, send SIGINT to its
+child (`pkill -INT -P <pid of dev-local.sh>`): the script waits on the
+`docker run` client, which forwards the signal, and its cleanup trap then
+removes both containers. A SIGINT to the script alone waits until mix exits.
 
 ## Not covered
 

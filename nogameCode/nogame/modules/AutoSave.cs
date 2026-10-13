@@ -21,6 +21,8 @@ namespace nogame.modules;
  */
 public class AutoSave : engine.AModule
 {
+    private static readonly engine.Dc _dc = engine.Dc.Database;
+
     private System.Timers.Timer _saveTimer;
 
 
@@ -202,7 +204,7 @@ public class AutoSave : engine.AModule
 
     private void _setAuthenticating(bool isAuthenticating)
     {
-        Trace($"Called _setAuthenticating with {isAuthenticating}");
+        Trace(_dc, $"Called _setAuthenticating with {isAuthenticating}");
         lock (_lo)
         {
             if (_isAuthenticating == isAuthenticating)
@@ -210,7 +212,7 @@ public class AutoSave : engine.AModule
                 return;
             }
 
-            Trace($"Setting isAuthenticating to {isAuthenticating}");
+            Trace(_dc, $"Setting isAuthenticating to {isAuthenticating}");
             _isAuthenticating = isAuthenticating;
         }
 
@@ -239,7 +241,7 @@ public class AutoSave : engine.AModule
                 }
                 catch (Exception eHandler)
                 {
-                    Error($"Exception while handling server call failure {e}: {eHandler}");
+                    Error(_dc, $"Exception while handling server call failure {e}: {eHandler}");
                 }
             }
         });
@@ -251,8 +253,21 @@ public class AutoSave : engine.AModule
         || e is AggregateException { InnerException: HttpRequestException or OperationCanceledException };
 
 
+    /**
+     * Call the server with the given token. A 401/403 drops a stored token
+     * and logs in again. Transient failures (no answer, 5xx) are retried
+     * like a login is, so a returning player gets the same retries a new
+     * one does.
+     */
     private void _performApiCall(Func<HttpRequestMessage> httpRequestMessageFunc, string webToken, Action<HttpResponseMessage> onResponse, Action<string> onError, int nRetries)
     {
+        void retry(string reason)
+        {
+            Warning(_dc, $"Server call failed ({reason}), retrying, {nRetries} retries left.");
+            Task.Delay(2000)
+                .ContinueWith(t => _performApiCall(httpRequestMessageFunc, webToken, onResponse, onError, nRetries - 1));
+        }
+
         _runGuarded(async () =>
         {
             HttpRequestMessage httpRequestMessage = httpRequestMessageFunc();
@@ -270,13 +285,19 @@ public class AutoSave : engine.AModule
                 httpResponseMessage = await I.Get<HttpClient>().SendAsync(httpRequestMessage, cts.Token);
             }
 
+            if ((int)httpResponseMessage.StatusCode >= 500 && nRetries > 0)
+            {
+                retry($"{(int)httpResponseMessage.StatusCode} {httpResponseMessage.ReasonPhrase}");
+                return;
+            }
+
             if (httpResponseMessage.StatusCode == HttpStatusCode.Forbidden || httpResponseMessage.StatusCode == HttpStatusCode.Unauthorized) 
             {
                 if (string.IsNullOrEmpty(knownWebToken))
                 {
                     _setAuthenticating(false);
                     string textResponse = await httpResponseMessage.Content.ReadAsStringAsync();
-                    Error($"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, even with a fresh token.");
+                    Error(_dc, $"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, even with a fresh token.");
                     onError($"access refused: {ServerErrorText.Describe(httpResponseMessage.StatusCode, httpResponseMessage.ReasonPhrase, textResponse)}");
                 }
                 else
@@ -285,34 +306,40 @@ public class AutoSave : engine.AModule
                     _setAuthenticating(false);
                     M<nogame.config.Module>().GameConfig.WebToken = "";
                     M<nogame.config.Module>().Save();
-                    Error($"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, using an existing token. Fetching new token.");
+                    Error(_dc, $"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, using an existing token. Fetching new token.");
                     _withWebToken(httpRequestMessageFunc, onResponse, onError, nRetries);
                 }
             }
             else
             {
                 _setAuthenticating(false);
-                Trace($"Saving web token.");
+                Trace(_dc, $"Saving web token.");
                 M<nogame.config.Module>().GameConfig.WebToken = webToken;
                 M<nogame.config.Module>().Save();
                 _setLoggedIn(true);
      
                 if (httpResponseMessage.IsSuccessStatusCode)
                 {
-                    Trace($"Done calling {httpRequestMessage.RequestUri}");
+                    Trace(_dc, $"Done calling {httpRequestMessage.RequestUri}");
                 }
                 else 
                 {
                     string textResponse = await httpResponseMessage.Content.ReadAsStringAsync();
-                    Trace($"Error while saving: {textResponse}");
+                    Trace(_dc, $"Error while saving: {textResponse}");
                 }
 
                 onResponse(httpResponseMessage);
             }
         }, e =>
         {
+            if (_isTransient(e) && nRetries > 0)
+            {
+                retry(ServerErrorText.Describe(e));
+                return;
+            }
+
             _setAuthenticating(false);
-            Warning($"Server call failed: {e}");
+            Warning(_dc, $"Server call failed: {e}");
             onError(ServerErrorText.Describe(e));
         });
     }
@@ -364,7 +391,7 @@ public class AutoSave : engine.AModule
         {
             if (nRetries > 0)
             {
-                Warning($"Login attempt failed ({reason}), retrying, {nRetries} retries left.");
+                Warning(_dc, $"Login attempt failed ({reason}), retrying, {nRetries} retries left.");
                 Task.Delay(2000)
                     .ContinueWith(t => _withWebToken(httpRequestMessageFunc, onResponse, onError, nRetries - 1));
             }
@@ -407,15 +434,18 @@ public class AutoSave : engine.AModule
                 }
             }
 
-            string reason = ServerErrorText.Describe(responseMessage.StatusCode, responseMessage.ReasonPhrase, jsonResponse);
             if ((int)responseMessage.StatusCode >= 500)
             {
-                retryOrFail(reason);
+                retryOrFail(ServerErrorText.Describe(responseMessage.StatusCode, responseMessage.ReasonPhrase, jsonResponse));
             }
             else
             {
+                /*
+                 * exli answers a wrong eMail or password with 401; there is
+                 * nothing to retry.
+                 */
                 _setAuthenticating(false);
-                onError($"login failed: {reason}");
+                onError(ServerErrorText.DescribeLogin(responseMessage.StatusCode, responseMessage.ReasonPhrase, jsonResponse));
             }
         }, e =>
         {
@@ -426,18 +456,39 @@ public class AutoSave : engine.AModule
             else
             {
                 _setAuthenticating(false);
-                Warning($"Login failed: {e}");
+                Warning(_dc, $"Login failed: {e}");
                 onError($"login failed: {ServerErrorText.Describe(e)}");
             }
         });
     }
 
 
+    /**
+     * async void: a fault escaping here would kill the process, so it is
+     * caught and logged.
+     */
     private async void _onSaveGameResponse(HttpResponseMessage response)
     {
-        string textResponse = await response.Content.ReadAsStringAsync();
-        Trace($"Save game text result {textResponse}.");
-        _setSaving(false);
+        try
+        {
+            string textResponse = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                Trace(_dc, $"Save game text result {textResponse}.");
+            }
+            else
+            {
+                Warning(_dc, $"Cloud save failed: {ServerErrorText.Describe(response.StatusCode, response.ReasonPhrase, textResponse)}");
+            }
+        }
+        catch (Exception e)
+        {
+            Warning(_dc, $"Cloud save failed: {ServerErrorText.Describe(e)}");
+        }
+        finally
+        {
+            _setSaving(false);
+        }
     }
 
 
@@ -452,7 +503,7 @@ public class AutoSave : engine.AModule
             gamedata = JsonSerializer.Serialize(gs)
         };
 
-//        Trace($"Save game data is {saveGameObject.gamedata}");
+//        Trace(_dc, $"Save game data is {saveGameObject.gamedata}");
 
         _withWebToken(() =>
         {
@@ -465,7 +516,7 @@ public class AutoSave : engine.AModule
             };
         }, _onSaveGameResponse, (reason) =>
         {
-            Warning($"Cloud save failed: {reason}");
+            Warning(_dc, $"Cloud save failed: {reason}");
             _setSaving(false);
         }, 5);
     }
@@ -493,14 +544,14 @@ public class AutoSave : engine.AModule
                 }
             );
 
-            //Trace($"Saving entities json: {gs.Entities}");
+            //Trace(_dc, $"Saving entities json: {gs.Entities}");
             M<DBStorage>().SaveGameState(gs);
 
             _triggerCloudSave(gs);
         }
         catch (Exception e)
         {
-            Error($"Unable to save the game: {e}");
+            Error(_dc, $"Unable to save the game: {e}");
             _setSaving(false);
         }
     }
@@ -549,7 +600,7 @@ public class AutoSave : engine.AModule
         }
         catch (Exception e)
         {
-            Error($"Unable to restore entites from game state: {e}.");
+            Error(_dc, $"Unable to restore entites from game state: {e}.");
         }
 
         _afterCreateOrLoad(gs);
@@ -566,7 +617,7 @@ public class AutoSave : engine.AModule
         bool haveGameState = M<DBStorage>().LoadGameState(out GameState gameState);
         if (false == haveGameState)
         {
-            Trace($"Creating new gamestate");
+            Trace(_dc, $"Creating new gamestate");
             gameState = new GameState();
             
             /*
@@ -587,10 +638,10 @@ public class AutoSave : engine.AModule
         }
         else
         {
-            Trace($"Loading existing gamestate");
+            Trace(_dc, $"Loading existing gamestate");
             if (!gameState.IsValid())
             {
-                Trace($"... fixing existing gamestate");
+                Trace(_dc, $"... fixing existing gamestate");
                 gameState.Fix();
             }
 
@@ -612,15 +663,16 @@ public class AutoSave : engine.AModule
         if (httpResponseMessage.IsSuccessStatusCode)
         {
             string strSaves = await httpResponseMessage.Content.ReadAsStringAsync();
-            Trace($"Saves response is {strSaves}");
+            Trace(_dc, $"Saves response is {strSaves}");
         }
     }
 
 
     /**
      * The login worked. An account without an online save (no save in
-     * the answer, or 404) continues with the local game state; any other
-     * failure is reported, never silently replaced by the local game.
+     * the answer, or exli's own 404) continues with the local game state;
+     * any other failure is reported, never silently replaced by the local
+     * game.
      */
     private async Task _onLoadGameResponse(
         HttpResponseMessage httpResponseMessage,
@@ -633,7 +685,7 @@ public class AutoSave : engine.AModule
             if (httpResponseMessage.IsSuccessStatusCode)
             {
                 string strSave = await httpResponseMessage.Content.ReadAsStringAsync();
-                // Trace($"Load game response is {strSave}");
+                // Trace(_dc, $"Load game response is {strSave}");
                 var save = JsonSerializer.Deserialize<SaveGameGetResult>(strSave);
                 if (!string.IsNullOrEmpty(save?.save?.gamedata))
                 {
@@ -652,22 +704,31 @@ public class AutoSave : engine.AModule
                     }
                 }
             }
-            else if (httpResponseMessage.StatusCode != HttpStatusCode.NotFound)
+            else
             {
+                /*
+                 * exli's SaveGameController.index answers 404 for an account
+                 * that has no save yet. A 404 from anything else, such as the
+                 * proxy while exli redeploys, is an error: the player may
+                 * well have an online save.
+                 */
                 string textResponse = await httpResponseMessage.Content.ReadAsStringAsync();
-                onError($"online save: {ServerErrorText.Describe(httpResponseMessage.StatusCode, httpResponseMessage.ReasonPhrase, textResponse)}");
-                return;
+                if (!ServerErrorText.IsNoSaveYet(httpResponseMessage.StatusCode, textResponse))
+                {
+                    onError($"online save: {ServerErrorText.Describe(httpResponseMessage.StatusCode, httpResponseMessage.ReasonPhrase, textResponse)}");
+                    return;
+                }
             }
 
             if (!haveGameState)
             {
-                Trace($"Using fallback to local gamestate");
+                Trace(_dc, $"Using fallback to local gamestate");
                 await _loadCreateOffline();
             }
         }
         catch (Exception e)
         {
-            Warning($"Unable to load the online save: {e}");
+            Warning(_dc, $"Unable to load the online save: {e}");
             onError($"online save: {ServerErrorText.Describe(e)}");
             return;
         }
@@ -729,19 +790,36 @@ public class AutoSave : engine.AModule
                     return new HttpRequestMessage(
                         HttpMethod.Get,
                         $"{GameServer}/api/auth/save_game?gameTitle=silicondesert2");
-                }, (response) =>
-                {
-                    if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotFound)
-                    {
-                        _ = _createNewOnline(onInitialLoad, onError);
-                    }
-                    else
-                    {
-                        onError($"server not ready: {ServerErrorText.Describe(response.StatusCode, response.ReasonPhrase, null)}");
-                    }
-                },
+                }, (response) => _ = _onResetProbeResponse(response, onInitialLoad, onError),
                 onError,
                 InitialLoginRetries);
+        }
+    }
+
+
+    private async Task _onResetProbeResponse(
+        HttpResponseMessage response,
+        Action<GameState> onInitialLoad,
+        Action<string> onError)
+    {
+        string textResponse;
+        try
+        {
+            textResponse = await response.Content.ReadAsStringAsync();
+        }
+        catch (Exception e)
+        {
+            onError($"server not ready: {ServerErrorText.Describe(e)}");
+            return;
+        }
+
+        if (response.IsSuccessStatusCode || ServerErrorText.IsNoSaveYet(response.StatusCode, textResponse))
+        {
+            await _createNewOnline(onInitialLoad, onError);
+        }
+        else
+        {
+            onError($"server not ready: {ServerErrorText.Describe(response.StatusCode, response.ReasonPhrase, textResponse)}");
         }
     }
 
@@ -750,7 +828,7 @@ public class AutoSave : engine.AModule
     {
         try
         {
-            Trace($"Reset game.");
+            Trace(_dc, $"Reset game.");
             var gameState = new GameState();
 
             /*
@@ -771,7 +849,7 @@ public class AutoSave : engine.AModule
         }
         catch (Exception e)
         {
-            Warning($"Unable to create a new game: {e}");
+            Warning(_dc, $"Unable to create a new game: {e}");
             onError($"new game: {ServerErrorText.Describe(e)}");
             return;
         }
@@ -793,7 +871,7 @@ public class AutoSave : engine.AModule
         }
         catch (Exception e)
         {
-            Warning($"Unable to load the local game: {e}");
+            Warning(_dc, $"Unable to load the local game: {e}");
             onError($"local game: {ServerErrorText.Describe(e)}");
             return;
         }
@@ -873,7 +951,7 @@ public class AutoSave : engine.AModule
             }
             catch (Exception e)
             {
-                Error($"Exception in the initial load callback: {e}");
+                Error(_dc, $"Exception in the initial load callback: {e}");
             }
         }
 
@@ -885,7 +963,7 @@ public class AutoSave : engine.AModule
                 _isInitialLoadPending = false;
                 _isAutoSaveActive = false;
             }
-            Warning($"Initial load failed: {reason}");
+            Warning(_dc, $"Initial load failed: {reason}");
             onError(reason);
         }
         

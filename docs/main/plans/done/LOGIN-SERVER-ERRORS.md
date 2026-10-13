@@ -1,7 +1,8 @@
 # Login Errors Matched to the exli Backend — Plan
 
-> **Status:** proposed; Fable-reviewed 2026-10-12; owner decided D1 (401 + JSON) and D2 (keep the server's voice); filed as **KAR-423** (agent-ready) · **Repos:** Karawan (client) and `../exli` (server) · **Written:** 2026-10-12
-> **Builds on:** the login-screen feedback change (uncommitted in Karawan: `AutoSave.cs`, `ServerErrorText.cs`, `logos/Scene.cs`, `menu.xml`)
+> **Status:** done (KAR-423, implemented 2026-10-13); Fable-reviewed 2026-10-12; owner decided D1 (401 + JSON) and D2 (keep the server's voice) · **Repos:** Karawan (client) and `../exli` (server) · **Written:** 2026-10-12
+> **Implemented as:** exli `ApiUserController`, `ApiUserPlug`, `SaveGameController`, `test/exli_web/controllers/api_test.exs`; Karawan `nogameCode/nogame/modules/ServerErrorText.cs` (`DescribeLogin`, `IsNoSaveYet`, `StatusLine`), `AutoSave.cs`, `scenes/logos/Scene.cs` (`_displayLoginStatus`). The contract as it now stands: `docs/main/docs/persistence/GAME_SERVER_API.md`. See **Outcome** at the end for what differs from the plan.
+> **Builds on:** the login-screen feedback change (PR #136, ce3abcc8)
 > **Thinktank:** component notes `login-menu` and `exli`; owner conventions for `login-menu` (a failed online login is reported with the server's message and never silently falls back to offline play; START starts the selected mode)
 
 ## Goal
@@ -95,3 +96,17 @@ The local setup below (throwaway Postgres, exli test-port override, local exli w
 - `docs/main/docs/STATUS-LOG.md` — an entry for both changes. CLAUDE.md only if the current state changes.
 - exli `README.md` — the API contract, the test command, and how production runs it (Coolify, Dockerfile mode, from git; `fly.toml` and `start-server.sh` are stale — delete them or mark them as such, owner's call). Configuring a Coolify health check (for example on `/`) would let Coolify keep the old container serving until the new one is up, which shrinks the row-12 window. Owner's call, outside the code.
 - Thinktank: the `exli` component note revised to the new answers.
+
+## Outcome (2026-10-13)
+
+Implemented as planned, with these differences and results:
+
+- **S4:** `Accounts.add_save` inserts a struct without a changeset, so a failed insert *raises* (500 through `ErrorJSON`) rather than returning `{:error, _}`. Row 9's "200 although not stored" therefore never happened for database errors; the new `{:error, _}` branch is kept for the contract. Bad parameters (missing or non-string title/gamedata) now answer 400, a case the plan did not list for `create`.
+- **S3/S5 on production data: not done.** No production database is reachable from the development machine. Still to run by the owner: `select count(*) from games where name is null;` (then delete those rows, their `saves` go with them) and `select max(octet_length(gamedata)) from saves;` (raise `Plug.Parsers` `length` only if near 8 MB).
+- **C1 cap:** measured, not eyeballed. Prototype 17 runs about 8 px per character; the longest line exli causes, `access refused: I'm sorry, I don't remember you. Please log in again.`, is 69 characters and 550 px of the 560 px line. `ServerErrorText.StatusLineLength` = 69; `MaxPlainTextLength` = 200.
+- **C3** also covers a 2xx failure: the old server's 200 for a wrong password now reads `login failed: I'm sorry, I do not recognize you.` without `(200)`.
+- **C4:** `AutoSave` uses `Dc.Database`; all its `Trace`/`Warning`/`Error` calls carry it.
+- **C6** also guards the "new (globally)" path: the probe before destroying the online save accepts only exli's 404, like the load path.
+- **Tests:** exli 146 (130 + 16 new API tests), green. Karawan xUnit 1831 passed, 26 failed — the same 26 `engine.streets` failures master has. `ServerErrorTextTests` 34.
+- **End to end** (desktop build, `dev-local.sh`, auto-login, all verified 2026-10-13): wrong password and unknown eMail → one request, 401, `login failed: I'm sorry, I do not recognize you. (401)`; garbage stored token → 403 → token dropped → login 200 → save 404 → new online game → save 200; a foreign 404 (a plain HTTP server standing in for Traefik) → `online save: server answered 404 File not found`, no local game; server stopped → two retries for a returning player as for a new one, then `server not reachable: Connection refused (…)`. Against the **old** exli code: wrong password quoted without `(200)`, old "no save" text accepted, new game created and saved.
+- **Not verified:** the shipped (old) client against the new server; read from the old code only (compatibility table above). Production after the deploy (verification step 4) is the owner's.
