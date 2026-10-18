@@ -3,6 +3,13 @@
 **Prerequisites**: None (first step).
 **Read also**: `REFERENCE.md` for codebase file locations.
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - There is no `TestbedRootModule`: `Testbed/TestbedMain.cs:150-207` boots inline (casette `Loader`, `InterpretConfig`, `Props.Set` to switch visuals off unconditionally, `EasyCreateHeadless`, `SetupMetaGen.PrepareMetaGen`, `WorldLoaderProvideFragments`) and never calls `Loader.StartGame`.
+> - `Location`, `Route` and `SpatialModel` live in `JoyceCode/engine/tale/SpatialModel.cs`; `Testbed/SpatialModel.cs` is only a forwarding note.
+> - Population now uses 8 roles (`TalePopulationGenerator.cs:19`), not 4.
+> - The shipped design: [../ARCHITECTURE.md](../ARCHITECTURE.md); the Testbed today: `docs/testing/docs/TESTBED.md`.
+
+
 ---
 
 ## Goal

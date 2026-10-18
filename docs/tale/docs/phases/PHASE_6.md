@@ -2,6 +2,13 @@
 
 > **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/TalePopulationGenerator.cs:15`, `JoyceCode/engine/tale/TaleManager.cs:95` (PopulateCluster), `:275` (DepopulateCluster), `nogameCode/nogame/modules/tale/TaleModule.cs:486` (ClusterCompletedEvent subscription) - **Verified:** 2026-07-21
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - `TaleManager.DepopulateCluster` exists but **has no caller**, so no deactivation runs (KAR-434). The lifecycle methods are `PopulateCluster(ClusterDesc, SpatialModel, DateTime?)` and `DepopulateCluster`, not `RegisterCluster`/`UnregisterCluster`.
+> - Persistence is conversation-memory based: an NPC survives dematerialisation as Tier 2 only if `HasPlayerDeviation` is set **and** the player conversed with it within `TaleManager.ConversationMemorySeconds` (1800 s); otherwise `ForgetSchedule` drops it (`TaleSpawnOperator.cs:438-467`, `TaleManager.IsScheduleAlive`).
+> - `HasPlayerDeviation` is set only in `TaleModule` (on `tale.npc.remember`, on the trust bump at conversation end, and on load), never by `StoryletSelector`, and does not propagate to groups. There is no `DeviatedAtClusterIndex`.
+> - Shipped design: [../ARCHITECTURE.md](../ARCHITECTURE.md), [../REFERENCE.md](../REFERENCE.md).
+
+
 
 Phase 6 bridges the TALE simulation (Phases 0-5) with the live game engine. It replaces the placeholder `TaleSpawnOperator` wiring with the full Tier 3 → Tier 2 → Tier 1 pipeline: deterministic NPC population per cluster, schedule-aware spawning, and deviation-only persistence.
 

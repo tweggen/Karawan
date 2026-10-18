@@ -1,543 +1,257 @@
 # Phase 7: Spatial Grounding & Navigation
 
-> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/SpatialModel.cs:105`, `JoyceCode/engine/tale/TaleManager.cs:23`, `JoyceCode/engine/tale/NpcSchedule.cs:34,140`, `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs:21` - **Verified:** 2026-07-21
+> **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/SpatialModel.cs:10,163`, `JoyceCode/engine/tale/TaleManager.cs:23,95,587`, `JoyceCode/engine/tale/NpcSchedule.cs:140`, `JoyceCode/engine/tale/IRouteGenerator.cs:17`, `nogameCode/nogame/characters/citizen/NavMeshRouteGenerator.cs:21`, `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs:78` - **Verified:** 2026-10-18 (rewritten from the code, KAR-431)
 
+Phase 7 ties the TALE simulation's logical locations to world coordinates:
+each cluster gets its own `SpatialModel`, every location has a reachable
+standing position on the pavement, NPCs travel along real street routes, NPCs
+at indoor locations are not shown, and each schedule tracks a world position
+for fragment-based spawning.
 
-Phase 7 bridges the TALE simulation's logical locations (from `SpatialModel`) with precise world coordinates and NPC visibility. NPCs now materialize at exact entry points, occupy buildings indoors (invisible to players), and compute street routes dynamically.
+This document describes the shipped code. The original March 2026 design
+(shop doors at shopfront midpoints only, a straight-line routing stub, a
+`JObject`-based save format) was superseded; sections 7B, 7C and the
+serialization part of 7E were rewritten on 2026-10-18.
 
-**Status**: ✅ **IMPLEMENTATION COMPLETE** (2026-03-16)
-
-**Prerequisites**: Phase 6 (seed-based population, cluster lifecycle), spatial geometry (buildings, shops, street segments).
+**Prerequisites**: Phase 6 (seed-based population, cluster lifecycle), the
+cluster's street and building geometry, and — for entry points and routing —
+the satnav `NavMap`.
 
 ---
 
 ## Design Principles
 
-1. **Location entry points**: NPCs spawn at door/shop-front positions, not building centroids, preventing clipping into walls.
-2. **Per-cluster spatial models**: Each cluster instance has its own `SpatialModel` extracted from `ClusterDesc` geometry, supporting dynamic world generation.
-3. **Indoor invisibility**: NPCs staying at indoor locations (shops, offices, homes) skip behavior setup and fade from player view.
-4. **Fragment-accurate position**: `NpcSchedule.CurrentWorldPosition` is updated on each timestep, enabling proper fragment-based spawning.
-5. **Pathfinding infrastructure**: `PrecomputedRoute` on movement phases supports future A* street navigation; currently uses straight-line fallback.
+1. **Stand on the pavement, never in the road.** Every location has an entry
+   position snapped to a pedestrian lane where navigation data exists.
+   Junction (street) locations spread their NPCs over the sidewalk corners.
+2. **Per-cluster spatial models**, extracted from `ClusterDesc` when the
+   cluster completes.
+3. **Indoor invisibility**: NPCs staying at any non-street location get no
+   visible behaviour.
+4. **Real routes, safe fallback**: travel uses A* over the street graph via
+   `IRouteGenerator`; a missing route means a straight line for short hops
+   and staying put for long ones.
+5. **Fragment-accurate position**: `NpcSchedule.CurrentWorldPosition` follows
+   the NPC's current activity so fragment queries find it.
 
 ---
 
-## Phase 7A — SpatialModel Wire-up
+## Phase 7A — Per-cluster SpatialModel
 
-**Goal**: Change from a single global `SpatialModel` to per-cluster models, created when clusters populate and destroyed when they depopulate.
+`TaleManager` keeps one model per cluster
+(`Dictionary<int, SpatialModel> _spatialModels`, `TaleManager.cs:23`).
 
-### Changes to TaleManager
+| API | Where |
+|---|---|
+| `TaleManager.Initialize(StoryletLibrary library, int seed = 42)` | `TaleManager.cs:77` |
+| `TaleManager.PopulateCluster(ClusterDesc clusterDesc, SpatialModel spatialModel, DateTime? gameNow = null)` — stores the model, generates schedules | `TaleManager.cs:95,107` |
+| `TaleManager.DepopulateCluster(int clusterIndex)` | `TaleManager.cs:275` — **currently has no caller**, see KAR-434 |
+| `TaleManager.GetSpatialModel(int clusterIndex)` | `TaleManager.cs:864` |
+| `SpatialModel.ExtractFrom(ClusterDesc cluster, NavCluster navCluster = null)` | `SpatialModel.cs:163` |
+| `TalePopulationGenerator.Generate(ClusterDesc, SpatialModel, HashSet<int> skipIndices = null)` | `TalePopulationGenerator.cs:40` |
 
-```csharp
-// OLD: single global model
-private SpatialModel _spatialModel;
+Population happens in three places, each extracting the model with the
+cluster's `NavCluster` (looked up in `NavMap.TopCluster.Content.Clusters` by
+`IdString`) and passing the current game time:
 
-// NEW: per-cluster dictionary
-private Dictionary<int, SpatialModel> _spatialModels = new();
+- `TaleModule._onClusterCompleted` (`TaleModule.cs:72`, extract at `:115`,
+  populate at `:130`), which also runs `SpatialModel.ValidateReachability`;
+- the catch-up loop for clusters completed before TALE activated
+  (`TaleModule.cs:500-501`);
+- `TaleSpawnOperator._ensureClusterPopulated` (`TaleSpawnOperator.cs:60,80-81`).
 
-// Updated Initialize signature
-public void Initialize(StoryletLibrary library, int seed = 42)
-    // No longer takes SpatialModel parameter
-
-// Updated PopulateCluster
-public void PopulateCluster(ClusterDesc clusterDesc, SpatialModel spatialModel)
-{
-    int clusterIndex = /* computed from clusterDesc */;
-    _spatialModels[clusterIndex] = spatialModel;
-    var schedules = _generator.Generate(clusterDesc, spatialModel, skipMask);
-    // ... register schedules
-}
-
-// Updated DepopulateCluster
-public void DepopulateCluster(int clusterIndex)
-{
-    _spatialModels.Remove(clusterIndex);
-    // ... unregister schedules
-}
-
-// New accessor
-public SpatialModel GetSpatialModel(int clusterIndex) =>
-    _spatialModels.TryGetValue(clusterIndex, out var model) ? model : null;
-
-// Updated AdvanceNpc
-public StoryletDefinition AdvanceNpc(int npcId, DateTime gameTime)
-{
-    var schedule = GetSchedule(npcId);
-    var spatialModel = GetSpatialModel(schedule.ClusterIndex);
-    // ... use spatialModel.GetLocation(schedule.CurrentLocationId)
-}
-```
-
-### Changes to TaleModule
-
-In `nogameCode/nogame/modules/tale/TaleModule.cs`, when a cluster completes:
-
-```csharp
-private void _onClusterCompleted(ClusterCompletedEvent ev)
-{
-    var spatialModel = SpatialModel.ExtractFrom(ev.Desc);
-    _taleManager.PopulateCluster(ev.Desc, spatialModel);
-    Trace($"TALE: Populated cluster with spatial: {spatialModel.BuildingCount} buildings, {spatialModel.ShopCount} shops.");
-}
-```
-
-And update the initialization call:
-```csharp
-// OLD: _taleManager.Initialize(_storyletLibrary, null);
-// NEW:
-_taleManager.Initialize(_storyletLibrary, seed);
-```
-
-### Changes to TalePopulationGenerator
-
-Updated `Generate()` signature:
-```csharp
-public List<NpcSchedule> Generate(ClusterDesc clusterDesc, SpatialModel spatialModel, HashSet<int> skipIndices = null)
-```
-
-Use the `spatialModel` in `GenerateNpc()` to assign location IDs:
-```csharp
-private void GenerateNpc(int npcIndex, RandomSource rnd, SpatialModel spatialModel)
-{
-    var schedule = new NpcSchedule { /* ... */ };
-
-    // Assign home location by role
-    schedule.HomeLocationId = AssignLocationByRole(rnd, spatialModel, role, "residential");
-
-    // Assign workplace by role
-    schedule.WorkplaceLocationId = AssignLocationByRole(rnd, spatialModel, role, "workplace");
-
-    // ... etc
-}
-
-private int AssignLocationByRole(RandomSource rnd, SpatialModel spatialModel, string role, string preferredType)
-{
-    // Filter locations by role affinity (merchants → shops, workers → offices/streets, etc.)
-    var candidates = spatialModel.GetLocations()
-        .Where(loc => IsRoleValidForLocation(role, loc))
-        .ToList();
-
-    return candidates.Count > 0 ? candidates[rnd.NextInt(candidates.Count)].Id : -1;
-}
-```
+Building locations take their type from the building's role tags:
+`residential` → `home`, `warehouse`, `office`; **an untagged building is a
+`home`** (`SpatialModel.cs:271-278`). A building with a shopfront becomes a
+`shop` or, for `Drink`/`Eat`, a `social_venue`.
 
 ---
 
 ## Phase 7B — Entry Points
 
-**Goal**: Compute door/entry positions for each location so NPCs materialize at realistic spawn points instead of building centroids.
+Every `Location` (`SpatialModel.cs:10`) carries:
 
-### Changes to SpatialModel.Location
+| Field | Meaning |
+|---|---|
+| `Position` | building centre, or the junction centre for a street location |
+| `EntryPosition` | where an NPC stands: door, shopfront or sidewalk corner |
+| `EntryCandidates` | street locations only: all sidewalk corners of the junction; `EntryPosition` is always `[0]` |
+| `IsPedestrianReachable` | false when navigation data exists but no pedestrian lane is near the entry; defaults to true without nav data so bake and testbed callers keep the location |
 
-Add to the `Location` class:
-```csharp
-public Vector3 EntryPosition;  // Door/shop-front position at street level
-```
+**Use `Location.EntryPositionFor(npcId)`** (`SpatialModel.cs:38`) wherever an
+NPC's standing point is needed. It picks `EntryCandidates[npcId mod n]`, so
+NPCs bound to the same junction spread over its corners deterministically;
+without candidates it returns `EntryPosition` (or `Position` if that is zero).
 
-### SpatialModel.ExtractFrom() Updates
+How each kind of location gets its entry (`ExtractFrom`, `SpatialModel.cs:163`):
 
-When extracting locations from cluster geometry:
+- **Shops and venues**: the midpoint of the shopfront's first two points
+  (`ComputeShopEntryPosition`, `:635`), at the shop's **own storey** height
+  (`BuildingFooting.StoreyGroundAt`, `:240-248`) — shopfronts are aligned to
+  storeys, and a door a storey below its window would be in the wall. The
+  result is snapped to the nearest pedestrian lane within
+  `PedestrianSnapRadius` (50 m, `:73`) by `_snapToPedestrianLane` (`:251`).
+- **Other buildings**: the first perimeter point moved 2 m towards the
+  centre, at the **pavement height at that point**
+  (`BuildingFooting.PavementHeightAt`, `:290-307`; a block's kerb can fall
+  13 m across the block on the shipped terrain), then snapped the same way
+  (`:314`).
+- **Street locations (junctions)**: `_computeStreetEntryCandidates`
+  (`:500`), never the junction centre when anything better exists:
+  1. with nav data, the endpoints of pedestrian NavLanes near the junction
+     (sidewalk corners; endpoints, not projections, because the nearest lane
+     is usually a crossing), deduplicated, nearest first, within 15 m of the
+     nearest corner (`CornerSpreadTolerance`), at most 6
+     (`MaxEntryCandidates`, `:481`);
+  2. nav data but no corner in range: the street point's section corners,
+     each pushed 1 m outward, flagged **unreachable**;
+  3. no nav data: the same section corners, flagged reachable;
+  4. only for a degenerate street point: the raw junction centre.
 
-```csharp
-public static SpatialModel ExtractFrom(ClusterDesc cluster)
-{
-    var model = new SpatialModel();
-    float streetHeight = cluster.AverageHeight + MetaGen.ClusterStreetHeight + MetaGen.QuarterSidewalkOffset;
+  Junctions that exist only to hold up a ramp or bridge deck get no street
+  location (`StreetLocationJunctionsOf`, `:150`).
 
-    // Extract shops
-    foreach (var shopFront in cluster.ShopFronts)
-    {
-        var loc = new Location
-        {
-            Type = "shop",
-            Position = shopFront.Center,
-            EntryPosition = ComputeShopEntryPosition(shopFront, streetHeight),
-            // ... other fields
-        };
-        model.AddLocation(loc);
-    }
+**Known gap:** `TaleManager.AdvanceNpc` sets
+`CurrentWorldPosition = loc.Position` (`TaleManager.cs:832`), which for a
+street location is the junction centre, not the NPC's corner. Only fragment
+bucketing reads it (7E). Tracked in KAR-436.
 
-    // Extract buildings (offices, homes, etc.)
-    foreach (var building in cluster.Buildings)
-    {
-        var loc = new Location
-        {
-            Type = "office", // or inferred from building metadata in Phase 7b
-            Position = building.Center,
-            EntryPosition = new Vector3(building.Center.X, streetHeight, building.Center.Z),
-            // ... other fields
-        };
-        model.AddLocation(loc);
-    }
+### NpcSchedule.PositionAt
 
-    // Extract street segments
-    foreach (var segment in cluster.Streets)
-    {
-        var loc = new Location
-        {
-            Type = "street_segment",
-            Position = segment.Center,
-            EntryPosition = segment.Center, // Street NPCs can appear anywhere on the street
-            // ...
-        };
-        model.AddLocation(loc);
-    }
+`PositionAt(DateTime gameTime, SpatialModel model)` (`NpcSchedule.cs:140`) is
+a pure function of the schedule:
 
-    return model;
-}
-
-private static Vector3 ComputeShopEntryPosition(ShopFront shopFront, float streetHeight)
-{
-    // Use midpoint of first two corner points as door position
-    if (shopFront.Points.Count >= 2)
-    {
-        var p0 = shopFront.Points[0];
-        var p1 = shopFront.Points[1];
-        return new Vector3(
-            (p0.X + p1.X) / 2f,
-            streetHeight,
-            (p0.Z + p1.Z) / 2f
-        );
-    }
-    return new Vector3(shopFront.Center.X, streetHeight, shopFront.Center.Z);
-}
-```
-
-### NpcSchedule.PositionAt() Update
-
-When querying an NPC's current position, prefer the entry position:
-
-```csharp
-public Vector3 PositionAt(DateTime gameTime, SpatialModel model)
-{
-    if (model != null)
-    {
-        var loc = model.GetLocation(CurrentLocationId);
-        if (loc != null)
-        {
-            // Prefer EntryPosition if set (not zero vector)
-            if (loc.EntryPosition != Vector3.Zero)
-                return loc.EntryPosition;
-            return loc.Position;
-        }
-    }
-    return HomePosition;
-}
-```
+- in transit (`IsInTransit` and `TransitStart ≤ gameTime < TransitEnd`): a
+  linear interpolation between `EntryPositionFor(NpcId)` of the transit
+  source and destination;
+- otherwise: `EntryPositionFor(NpcId)` of the current location;
+- `HomePosition` when there is no model or location (the latter logs an
+  error).
 
 ---
 
-## Phase 7C — Street Pathfinding
+## Phase 7C — Street Routing
 
-**Goal**: Compute routes along street segments when NPCs travel between distant locations.
-
-### StreetRouteBuilder Class
-
-New file: `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs`
+Routing is pluggable and real:
 
 ```csharp
-public static class StreetRouteBuilder
+// JoyceCode/engine/tale/IRouteGenerator.cs:17
+public interface IRouteGenerator
 {
-    /// <summary>
-    /// Build a street route from start to end position using A* pathfinding.
-    /// Falls back to null (straight line) on any error.
-    /// </summary>
-    public static async Task<SegmentRoute> BuildAsync(Vector3 startPos, Vector3 endPos, NavMap navMap)
-    {
-        if (navMap?.TopCluster == null)
-            return null;
-
-        // Create cursors for start and end positions
-        var startCursor = navMap.TopCluster.TryCreateCursor(startPos);
-        var endCursor = navMap.TopCluster.TryCreateCursor(endPos);
-
-        if (startCursor == null || endCursor == null)
-            return null;
-
-        try
-        {
-            // A* pathfinding over street network
-            var pathfinder = new LocalPathfinder(startCursor, endCursor);
-            var path = pathfinder.FindPath();
-
-            if (path == null || path.Count == 0)
-                return null;
-
-            // Convert path waypoints to SegmentRoute
-            var route = new SegmentRoute();
-            foreach (var waypoint in path)
-            {
-                // Build SegmentEnd with geometry from waypoint
-                var end = new SegmentEnd
-                {
-                    PositionDescription = new PositionDescription { /* from waypoint */ },
-                    // ... other fields
-                };
-                route.Segments.Add(end);
-            }
-
-            return route;
-        }
-        catch
-        {
-            return null;  // Fallback to straight-line movement
-        }
-    }
+    Task<SegmentRoute> GetRouteAsync(Vector3 fromPos, Vector3 toPos, PositionDescription startPod,
+        RoutingPreferences? preferences = null,
+        TransportationType transportType = TransportationType.Pedestrian);
 }
 ```
 
-### GoToStrategyPart Update
+- **Binding**: `models/nogame.implementations.json:12` maps
+  `engine.tale.IRouteGenerator` to
+  `nogame.characters.citizen.NavMeshRouteGenerator`.
+- **`NavMeshRouteGenerator.GetRouteAsync`** (`NavMeshRouteGenerator.cs:26`)
+  takes the `NavMap` from DI and calls the builder under a 100 ms
+  cancellation timeout (`TimeoutMs`, `:24`); no `NavMap` or a timeout means
+  `null`.
+- **`StreetRouteBuilder.BuildAsync`** (`StreetRouteBuilder.cs:78`) runs A*
+  over the street graph:
 
-Add `PrecomputedRoute` property:
+  ```csharp
+  public static async Task<SegmentRoute> BuildAsync(Vector3 fromPos, Vector3 toPos, NavMap navMap,
+      PositionDescription startPod,
+      TransportationType transportType = TransportationType.Pedestrian,
+      RoutingPreferences? preferences = null,
+      CancellationToken cancellationToken = default)
+  ```
 
-```csharp
-public class GoToStrategyPart : AStrategyPart
-{
-    public SegmentRoute PrecomputedRoute { get; set; }
+  It returns `null` on any failure; the caller decides the fallback.
 
-    public override void OnEnter()
-    {
-        // Use precomputed route if available
-        SegmentRoute route = PrecomputedRoute ?? BuildStraightLineRoute(startPos, endPos, /* ... */);
+**Callers** in `TaleEntityStrategy`
+(`nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs`):
 
-        _navigator = new SegmentNavigator(route);
-        // ... continue movement
-    }
-}
-```
+- `_travelToCurrentDestination` (`:322`, used by `_advanceAndTravelAsync`
+  and `_resumeTravelAsync`): destination is `destLoc.EntryPositionFor(_npcId)`
+  (`:336-340`); a location of `"current"` or a destination under 2 m skips
+  travel; the route is requested with the NPC's `_routingPreferences` and
+  `schedule.PreferredTransportationType` (`:365-368`).
+- `SpawnInTravel` (`:495`, route at `:532-535`) for NPCs materialised
+  mid-transit.
 
-### TaleEntityStrategy Update
-
-In `_advanceAndTravel()`, set up the route before entering GoToStrategyPart:
-
-```csharp
-private void _advanceAndTravel()
-{
-    // ... get destination location
-
-    var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
-    var destLoc = spatialModel?.GetLocation(schedule.CurrentLocationId);
-
-    if (destLoc != null && _goTo != null)
-    {
-        // TODO: Wire NavMap service and call:
-        // var route = await StreetRouteBuilder.BuildAsync(
-        //     startPos, destLoc.EntryPosition, navMap);
-        // _goTo.PrecomputedRoute = route;
-
-        // For now: straight-line fallback
-        _goTo.PrecomputedRoute = null;
-    }
-}
-```
+Both apply the same fallback: **no route and more than 10 m to go → the NPC
+stays and starts its activity** instead of walking through buildings;
+otherwise `GoToStrategyPart.PrecomputedRoute` gets the route (`:401`,
+`:567`), and a `null` route means `GoToStrategyPart` walks a two-point
+straight line (`GoToStrategyPart.cs:14,31`). Everything after the `await`
+runs on a thread-pool thread, so strategy changes go through
+`TriggerStrategyOnLogicalThread`.
 
 ---
 
 ## Phase 7D — Building Occupancy
 
-**Goal**: NPCs at indoor locations (shops, offices, homes) do not spawn visible entities; they remain Tier 3 only.
-
-### StayAtStrategyPart Update
-
-Add `IsIndoorActivity` flag:
-
-```csharp
-public class StayAtStrategyPart : AStrategyPart
-{
-    public bool IsIndoorActivity { get; set; } = false;
-
-    public override void OnEnter()
-    {
-        if (!IsIndoorActivity)
-        {
-            // Setup idle behavior only for outdoor activities (street segments)
-            _idleBehavior = new IdleBehavior { /* ... */ };
-            _entity.Set(new engine.behave.components.Behavior(_idleBehavior));
-        }
-        else
-        {
-            // Indoor: NPC is invisible, no behavior needed
-        }
-
-        // Update position
-        _entity.Set(new Transform { Position = _schedule.PositionAt(DateTime.UtcNow, _spatialModel) });
-    }
-}
-```
-
-### TaleEntityStrategy Update
-
-Detect and flag indoor activities:
-
-```csharp
-private void _setupActivity()
-{
-    var nextStorylet = _getCurrentStorylet();
-    var nextActivity = nextStorylet.GetActivity();  // Returns activity type
-
-    _stayAt.IsIndoorActivity = false;
-
-    var spatialModel = _taleManager.GetSpatialModel(schedule.ClusterIndex);
-    if (spatialModel != null)
-    {
-        var loc = spatialModel.GetLocation(schedule.CurrentLocationId);
-        if (loc != null && loc.Type != "street_segment")
-        {
-            // Non-street location = indoor
-            _stayAt.IsIndoorActivity = true;
-        }
-    }
-}
-```
+`StayAtStrategyPart.IsIndoorActivity` (`StayAtStrategyPart.cs:34`) hides
+the NPC: no idle behaviour, no animation. `TaleEntityStrategy._setupActivity`
+sets it for **every location whose type is not `street_segment`**
+(`TaleEntityStrategy.cs:436-445`). Outdoor NPCs get a
+`TaleConversationBehavior` so the player can talk to them (`:464`).
 
 ---
 
 ## Phase 7E — Fragment-Accurate Position
 
-**Goal**: Track exact world position of each NPC so spawning uses current activity location, not home location.
+- `NpcSchedule.CurrentWorldPosition` is updated in `TaleManager.AdvanceNpc`
+  from the destination location (`TaleManager.cs:828-832`; see the 7B gap).
+- `TaleManager.GetNpcsInFragment(Index3)` (`TaleManager.cs:587`) buckets by
+  `CurrentWorldPosition`, falling back to `HomePosition` when it is zero
+  (`:594`).
 
-### NpcSchedule Update
+### Serialization
 
-Add world position tracking:
+Deviated schedules are saved with `System.Text.Json.Nodes.JsonObject`
+(`TaleModule.SerializeNpcSchedule`, `TaleModule.cs:585`; the reverse at
+`:695-710`). Positions are flat float keys, read with a `0` default so older
+saves load:
 
-```csharp
-public class NpcSchedule
-{
-    public Vector3 CurrentWorldPosition;  // Updated each simulation tick
-
-    // ... other fields
-}
+```
+homePositionX/Y/Z, workplacePositionX/Y/Z, currentWorldPositionX/Y/Z
 ```
 
-### TaleManager.AdvanceNpc() Update
-
-Update position after each storylet advance:
-
-```csharp
-public StoryletDefinition AdvanceNpc(int npcId, DateTime gameTime)
-{
-    var schedule = GetSchedule(npcId);
-    if (schedule == null) return null;
-
-    var spatialModel = GetSpatialModel(schedule.ClusterIndex);
-
-    // Advance storylet and apply postconditions
-    var nextStorylet = _selector.SelectNext(schedule, /* ... */);
-
-    // Update world position to current activity location
-    var currentLoc = spatialModel?.GetLocation(schedule.CurrentLocationId);
-    if (currentLoc != null)
-        schedule.CurrentWorldPosition = currentLoc.EntryPosition != Vector3.Zero
-            ? currentLoc.EntryPosition
-            : currentLoc.Position;
-
-    return nextStorylet;
-}
-```
-
-### TaleManager.GetNpcsInFragment() Update
-
-Use `CurrentWorldPosition` for fragment filtering:
-
-```csharp
-public List<NpcSchedule> GetNpcsInFragment(Index3 fragmentIndex)
-{
-    return AllSchedules
-        .Where(schedule =>
-        {
-            // Use CurrentWorldPosition if set, otherwise fall back to HomePosition
-            var checkPos = schedule.CurrentWorldPosition != Vector3.Zero
-                ? schedule.CurrentWorldPosition
-                : schedule.HomePosition;
-            return Fragment.PosToIndex(checkPos) == fragmentIndex;
-        })
-        .ToList();
-}
-```
-
-### Serialization Update
-
-In `TaleModule.SerializeNpcSchedule()` and `DeserializeNpcSchedule()`:
-
-```csharp
-private JObject SerializeNpcSchedule(NpcSchedule schedule)
-{
-    return new JObject
-    {
-        ["CurrentWorldPosition"] = new JArray(schedule.CurrentWorldPosition.X, schedule.CurrentWorldPosition.Y, schedule.CurrentWorldPosition.Z),
-        // ... other fields
-    };
-}
-
-private NpcSchedule DeserializeNpcSchedule(JObject obj)
-{
-    var schedule = new NpcSchedule { /* ... */ };
-
-    if (obj["CurrentWorldPosition"] is JArray posArray && posArray.Count == 3)
-        schedule.CurrentWorldPosition = new Vector3(
-            (float)posArray[0],
-            (float)posArray[1],
-            (float)posArray[2]
-        );
-
-    return schedule;
-}
-```
+(`TaleModule.cs:627-629`, `:700-710`).
 
 ---
 
-## Implementation Order
+## Files
 
-```
-Phase 7A (Per-cluster SpatialModel)
-    │
-    ▼
-Phase 7B (Entry Points) ────── NPCs spawn at doors, not walls
-    │
-    ▼
-Phase 7C (Pathfinding) ─────── Infrastructure in place for future A* wiring
-    │
-    ▼
-Phase 7D (Building Occupancy) ── NPCs invisible indoors
-    │
-    ▼
-Phase 7E (Fragment Position) ──── Accurate spawning per current activity
-```
-
-Each phase builds on the previous. Phase 7B is the first major user-facing improvement (no more clipping). Phase 7D makes NPCs feel "inside buildings." Phase 7E ensures consistency with fragment-based spawning.
-
----
-
-## Files Created/Modified
-
-| File | Change |
-|------|--------|
-| `JoyceCode/engine/tale/TaleManager.cs` | Per-cluster spatial models, per-cluster initialization, GetSpatialModel accessor |
-| `JoyceCode/engine/tale/TalePopulationGenerator.cs` | Accept SpatialModel, role-based location assignment |
-| `JoyceCode/engine/tale/NpcSchedule.cs` | CurrentWorldPosition field, EntryPosition support in PositionAt() |
-| `JoyceCode/engine/tale/SpatialModel.cs` | Location.EntryPosition field, ExtractFrom() compute entry positions |
-| `nogameCode/nogame/modules/tale/TaleModule.cs` | Call SpatialModel.ExtractFrom(), pass to PopulateCluster(), serialize/deserialize CurrentWorldPosition |
-| `nogameCode/nogame/characters/citizen/GoToStrategyPart.cs` | PrecomputedRoute property, use in OnEnter() |
-| `nogameCode/nogame/characters/citizen/StayAtStrategyPart.cs` | IsIndoorActivity flag, skip behavior setup when indoor |
-| `nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs` | _setupActivity detects indoor, _advanceAndTravel wires pathfinding stub |
-| `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs` | **Create** — A* pathfinding wrapper |
-| `nogameCode/nogameCode.projitems` | Add StreetRouteBuilder.cs to compilation |
+| File | Role |
+|------|------|
+| `JoyceCode/engine/tale/SpatialModel.cs` | `Location`, `EntryPositionFor`, `ExtractFrom`, entry computation, `ValidateReachability` |
+| `JoyceCode/engine/tale/TaleManager.cs` | per-cluster models, `PopulateCluster`, `AdvanceNpc` position, `GetNpcsInFragment` |
+| `JoyceCode/engine/tale/NpcSchedule.cs` | `CurrentWorldPosition`, transit fields, `PositionAt` |
+| `JoyceCode/engine/tale/TalePopulationGenerator.cs` | role-based location assignment from the model |
+| `JoyceCode/engine/tale/IRouteGenerator.cs` | routing interface |
+| `nogameCode/nogame/characters/citizen/NavMeshRouteGenerator.cs` | `IRouteGenerator` over the NavMap, 100 ms timeout |
+| `nogameCode/nogame/characters/citizen/StreetRouteBuilder.cs` | A* street route builder |
+| `nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs` | travel, fallback, indoor detection |
+| `nogameCode/nogame/characters/citizen/GoToStrategyPart.cs` | `PrecomputedRoute`, straight-line fallback |
+| `nogameCode/nogame/characters/citizen/StayAtStrategyPart.cs` | `IsIndoorActivity` |
+| `nogameCode/nogame/modules/tale/TaleModule.cs` | cluster population, schedule (de)serialization |
 
 ---
 
 ## Validation
 
-- Approach a cluster → NPCs spawn at entry positions (visible in debug view)
-- Leave and return → same NPCs, same positions
-- NPCs at indoor locations fade invisibly
-- `CurrentWorldPosition` updated correctly across activity changes
-- Save/load preserves position state
-- No visible clipping or wall-phasing
-
----
+- `models/tests/tale/phase7-spatial/` holds 102 script **outlines** that
+  the ExpectEngine cannot execute and no `run_tests.sh` tier runs (see
+  `../tests/PHASE_7.md`; KAR-433).
+- xUnit: `tests/JoyceCode.Tests/engine/tale/StreetEntryPositionTests.cs`
+  pins the junction entry candidates.
+- In the game: NPCs at junctions stand on different sidewalk corners, never
+  in the roadway; NPCs at shops and offices are not visible; NPCs walk along
+  streets rather than through buildings.
 
 ## Open Questions
 
-1. **NavMap service injection**: How to cleanly access NavMap from TaleEntityStrategy for async pathfinding? Currently stubbed pending architecture review.
-2. **Building role metadata**: Where should building types (residential/office/warehouse) be declared? Phase 7b proposes `Building.Tags`.
-3. **Street density**: Should path-following reduce pathfinding load by caching routes per cluster pair? Or precompute at cluster load time?
-4. **Performance**: With A* enabled, will 100+ simultaneous NPC movements cause frame stutters? May need async work queue or LOD fallback.
+1. `CurrentWorldPosition` for street locations uses the junction centre
+   (KAR-436).
+2. `DepopulateCluster` is never called, so per-cluster models and schedules
+   outlive their cluster (KAR-434).
+3. Route caching per location pair has not been needed so far; the 100 ms
+   timeout bounds the cost per request.

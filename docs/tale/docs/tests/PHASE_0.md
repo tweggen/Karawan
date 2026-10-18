@@ -1,5 +1,10 @@
 # Phase 0 Detailed Test Scripts — DES Engine
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - Every script runs the same fixed world (10 NPCs, 3 locations, `TestRunner/TestRunnerMain.cs:246-300`) and checks event streams only (`npc_created`, `node_arrival`, ...). The per-test setups and "verify trust > 0.7" style checks below describe intent, not what the scripts assert.
+> - Test 20 now runs through `CommunityDetector`, not `GroupDetector` cliques. Run tests with `./run_tests.sh phase0` (TestRunner, `JOYCE_TEST_SCRIPT` relative to `models/`), see `../PROCESS_TALE.md`.
+
+
 ## Overview
 
 Phase 0 validates the **discrete event simulation (DES) engine**, the foundation for all TALE phases. This document provides detailed specifications for 20 test scripts organized into 6 categories.

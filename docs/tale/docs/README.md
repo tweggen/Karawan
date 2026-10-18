@@ -1,13 +1,14 @@
 # TALE Narrative System Documentation
 
-The TALE system is a comprehensive narrative simulation engine that powers NPC behavior, dialogue, relationships, and quest systems in Silicon Desert 2.
+TALE simulates the people of Silicon Desert 2's cities: their routines, relationships and factions, and their conversations with the player. Its goal is stories that emerge from that society rather than being generated ([CONCEPT.md](CONCEPT.md)). Quests are a separate system (`engine/quest`).
 
 ## Quick Navigation
 
 ### For New Developers
 1. Start with [OVERVIEW.md](OVERVIEW.md) — System overview
-2. Read [ARCHITECTURE.md](ARCHITECTURE.md) — System design and components
-3. See [PROCESS_TALE.md](PROCESS_TALE.md) for development workflow
+2. Read [ARCHITECTURE.md](ARCHITECTURE.md) — the shipped design, class by class
+3. Read [CONCEPT.md](CONCEPT.md) — the goal, and [the roadmap towards it](../plans/proposed/TALE-EMERGENT-STORIES.md)
+4. See [PROCESS_TALE.md](PROCESS_TALE.md) for development workflow
 
 ### By Category
 
@@ -33,15 +34,15 @@ Test specifications and testing infrastructure
 Problem analysis, design solutions, and implementation challenges
 
 - [NPC_COMMUTING.md](design/NPC_COMMUTING.md) — NPC pathfinding & movement
-- [NPC_STORIES.md](design/NPC_STORIES.md) — Character backstory & narrative arcs
+- [NPC_STORIES.md](design/NPC_STORIES.md) — Earlier player-facing vision (social capital, player verbs); partly superseded by CONCEPT.md
 - [Full design docs](design/)
 
 #### 💡 **Concepts** — [concepts/](concepts/)
 Foundational, theoretical, and architectural concepts
 
-- [NARRATION.md](concepts/NARRATION.md) — Narration system concept
-- [ROLES.md](../plans/done/ROLE-REGISTRY.md) — Role abstraction
-- [INTERACTIONS.md](../plans/done/INTERACTION-TYPE-REGISTRY.md) — Interaction types
+- [NARRATION.md](concepts/NARRATION.md) — Reference for the JSON narration runtime (`engine/narration`) that conversations run on
+- [ROLE-REGISTRY.md](../plans/done/ROLE-REGISTRY.md) — Role abstraction (plan, done)
+- [INTERACTION-TYPE-REGISTRY.md](../plans/done/INTERACTION-TYPE-REGISTRY.md) — Interaction types (plan, done)
 - [Full concepts](concepts/)
 
 ## Key Documents
@@ -49,8 +50,11 @@ Foundational, theoretical, and architectural concepts
 | Document | Purpose |
 |----------|---------|
 | [OVERVIEW.md](OVERVIEW.md) | What is TALE? System goals and scope |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | How TALE works: components, lifecycle, interactions |
-| [REFERENCE.md](REFERENCE.md) | Class and system reference |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | How TALE works as shipped: components, lifecycle, interactions |
+| [CONCEPT.md](CONCEPT.md) | What TALE is for: emergent stories from a living society |
+| [REFERENCE.md](REFERENCE.md) | Storylet format, roles, tiers, persistence rules |
+
+The original March 2026 concept (story graphs, emotional arcs, graph rewriting — never built) is kept in [../archive/](../archive/) (`ARCHITECTURE_CONCEPT_2026-03.md`, `CONCEPT_2026-03.md`, `PHASE_4_PLAYER_SOCIAL_CAPITAL.md`).
 
 ## Development Workflow
 
@@ -73,12 +77,12 @@ Foundational, theoretical, and architectural concepts
 
 Live status: `CLAUDE.md` ("Current State"); history: `docs/main/docs/STATUS-LOG.md`.
 
-- ✅ **Phase 0-8**: Core simulation engine complete (273 test files, 102 of them in `phase7-spatial/`, which no `run_tests.sh` tier runs — open, tracked separately)
+- ✅ **Phases 0–3, 5–8**: core simulation engine built, partly differently from the phase docs (see their banners and [ARCHITECTURE.md](ARCHITECTURE.md)); Phase 4 (player social capital) was never built and is archived (273 test files, 102 of them in `phase7-spatial/`, which no `run_tests.sh` tier runs — open, tracked separately)
 - ✅ **Phase C1-C4**: NPC conversation system complete (29 tests)
 - ✅ **TALE-SOCIAL D1-D5 and E**: scenario pre-computation and living factions complete ([PHASE_D_SOCIAL.md](phases/PHASE_D_SOCIAL.md), [PHASE_E_SOCIAL.md](phases/PHASE_E_SOCIAL.md)); tested by xUnit in `tests/JoyceCode.Tests/engine/tale/`. Acting on the five D5 tuning concerns is in flight.
 - ⚠️ **Routing Phase D** (multi-objective pathfinding, [MULTI-OBJECTIVE-ROUTING.md](../../navigation/docs/MULTI-OBJECTIVE-ROUTING.md)) is a *separate* workstream that shares the letter: D2 (multi-objective A*) and D4 (role-based preferences) are in flight.
 
-**Total:** 302 test files, 200 in standard regression suite (60-day simulations)
+**Total:** 302 test files, 200 in the standard regression suite (60-day simulations). ⚠️ 49 of those 200 (all of phase 5 and C1–C4) currently assert nothing — they use an `"expected"` block the runner ignores (KAR-433).
 
 ## Where Things Are
 
@@ -100,4 +104,4 @@ Live status: `CLAUDE.md` ("Current State"); history: `docs/main/docs/STATUS-LOG.
 
 ---
 
-**Last Updated:** 2026-10-12
+**Last Updated:** 2026-10-18 (KAR-431)

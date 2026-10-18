@@ -110,16 +110,16 @@ The full plan is split into self-contained files in `docs/tale/`. Each file can 
 
 | File | Phase | Summary |
 |------|-------|---------|
-| [OVERVIEW.md](tale/OVERVIEW.md) | — | Phase map, dependencies, reading order |
-| [REFERENCE.md](tale/REFERENCE.md) | — | Shared concepts: properties, verbs, interaction primitives, roles, codebase files |
-| [PHASE_0A_TESTBED_INFRA.md](tale/PHASE_0A_TESTBED_INFRA.md) | 0A | Headless bootstrap, ClusterViewer, spatial model extraction |
-| [PHASE_0B_DES_ENGINE.md](tale/PHASE_0B_DES_ENGINE.md) | 0B | Discrete event simulation: event queue, NpcSchedule, encounter resolver |
-| [PHASE_0C_OUTPUT.md](tale/PHASE_0C_OUTPUT.md) | 0C | Event log schema, metrics JSON, target metrics, CLI, automated iteration |
-| [PHASE_1_STORIES.md](tale/PHASE_1_STORIES.md) | 1 | Storylet authoring format, roles, initial library, NpcNarrativeState, property balancing |
-| [PHASE_2_STRATEGIES.md](tale/PHASE_2_STRATEGIES.md) | 2 | Strategy executors for spatial verbs, visual daily routines |
-| [PHASE_3_INTERACTIONS.md](tale/PHASE_3_INTERACTIONS.md) | 3 | Interaction pool, interaction storylets, encounter probability tuning |
-| [PHASE_4_PLAYER.md](tale/PHASE_4_PLAYER.md) | 4 | Player enters NPC storylines, overhear/dialogue, social capital |
-| [PHASE_5_ESCALATION.md](tale/PHASE_5_ESCALATION.md) | 5 | Branching, interrupts, escalation storylets, emergent power structures |
+| [OVERVIEW.md](../../docs/OVERVIEW.md) | — | Phase map, dependencies, reading order |
+| [REFERENCE.md](../../docs/REFERENCE.md) | — | Shared concepts: properties, verbs, interaction primitives, roles, codebase files |
+| [PHASE_0A_TESTBED_INFRA.md](../../docs/phases/PHASE_0A.md) | 0A | Headless bootstrap, ClusterViewer, spatial model extraction |
+| [PHASE_0B_DES_ENGINE.md](../../docs/phases/PHASE_0B.md) | 0B | Discrete event simulation: event queue, NpcSchedule, encounter resolver |
+| [PHASE_0C_OUTPUT.md](../../docs/phases/PHASE_0C.md) | 0C | Event log schema, metrics JSON, target metrics, CLI, automated iteration |
+| [PHASE_1_STORIES.md](../../docs/phases/PHASE_1.md) | 1 | Storylet authoring format, roles, initial library, NpcNarrativeState, property balancing |
+| [PHASE_2_STRATEGIES.md](../../docs/phases/PHASE_2_STRATEGIES.md) | 2 | Strategy executors for spatial verbs, visual daily routines |
+| [PHASE_3_INTERACTIONS.md](../../docs/phases/PHASE_3.md) | 3 | Interaction pool, interaction storylets, encounter probability tuning |
+| [PHASE_4_PLAYER.md](../../archive/PHASE_4_PLAYER_SOCIAL_CAPITAL.md) | 4 | Player enters NPC storylines, overhear/dialogue, social capital |
+| [PHASE_5_ESCALATION.md](../../docs/phases/PHASE_5.md) | 5 | Branching, interrupts, escalation storylets, emergent power structures |
 
 ## The Iteration Loop
 
@@ -134,14 +134,14 @@ Write/adjust story content (storylets, roles, preconditions, probabilities)
   → Re-run
 ```
 
-Claude Code can execute this loop autonomously. See [PHASE_0C_OUTPUT.md](tale/PHASE_0C_OUTPUT.md) for the structured output format, target metrics, and automated iteration protocol.
+Claude Code can execute this loop autonomously. See [PHASE_0C_OUTPUT.md](../../docs/phases/PHASE_0C.md) for the structured output format, target metrics, and automated iteration protocol.
 
 ## Design Documents
 
 For architectural context and rationale behind the plan:
-- [NPC_STORIES_DESIGN.md](NPC_STORIES_DESIGN.md) — NPC-centric narrative vision, social capital, simulation tiers, transport tubes
-- [TESTBED_PLAN.md](TESTBED_PLAN.md) — Testbed architecture, DES design, spatial model, encounter probability model
-- [TALE_CONCEPT.md](../../docs/CONCEPT.md) — Storylet templates, emotional arcs, graph rewriting
+- [NPC_STORIES_DESIGN.md](../../docs/design/NPC_STORIES.md) — NPC-centric narrative vision, social capital, simulation tiers, transport tubes
+- [TESTBED_PLAN.md](../../../testing/docs/TESTBED.md) — Testbed architecture, DES design, spatial model, encounter probability model
+- [TALE_CONCEPT.md](../../archive/CONCEPT_2026-03.md) (archived March 2026 concept) — Storylet templates, emotional arcs, graph rewriting
 
 ## Phase Dependencies
 

@@ -2,6 +2,13 @@
 
 > **Status:** implemented - **Implemented as:** `JoyceCode/engine/tale/ArcStack.cs:21-44`, `JoyceCode/engine/tale/StoryletDefinition.cs:94` (InterruptPriority), `models/tale/escalation.json`, `models/tests/tale/phase5-escalation/` - **Verified:** 2026-07-21
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - `InterruptScope` is `{ Nest, Replace, Cancel }` (`ArcStack.cs:6`); `Parallel` and fork/join were never built. There is no `InterruptCandidate` class or category ladder: a storylet's single `InterruptPriority` decides the scope, `>= 8` Replace, otherwise Nest (`DesSimulation.cs:444,469`). Cancel is handled but never produced (KAR-436).
+> - The `ArcStack` API is `SetInterrupt`, `ClearInterrupt`, `Push`, `TryPop`, `HasPendingInterrupt`; `PausedStorylet` holds `StoryletId`, `RemainingDurationMinutes`, `PropertiesAtPause`.
+> - `models/tale/escalation.json` has 17 storylets: demand_protection, collect_protection, threaten_harder, form_trade_partnership, investigate_complaint, establish_patrol, prepare_arrest, form_gang, leave_gang, flee_cluster, seek_revenge, territory_claim, intimidate_together, report_crime, organize_criminal_operation, profit_sharing, defend_territory. `hire_worker`, `become_informant`, `community_meeting`, `arrest` and `detained` do not exist.
+> - The phase-5 test scripts currently assert nothing (KAR-433). Shipped design: [../ARCHITECTURE.md](../ARCHITECTURE.md).
+
+
 
 **Status**: ✅ **IMPLEMENTATION COMPLETE** (2026-03-14)
 - ArcStack interrupt system implemented
@@ -217,7 +224,7 @@ Run DES for 365 days. Check:
 ### Validation Results
 
 ✅ **All 20 Phase 5 tests passing**
-✅ **Total TALE test suite: 122/122 passing** (Phases 0-5)
+✅ **Total TALE test suite: 122/122 passing** (Phases 0-5, as of 2026-03; the 20 phase-5 scripts assert nothing, KAR-433)
 ✅ **Simulation duration**: 60 days (sufficient for gang formation)
 ✅ **Escalation metrics**: Gangs form, protection rackets trigger, authority responds
 ✅ **Interrupt system**: All 3 scopes (Nest/Replace/Cancel) working correctly
@@ -279,4 +286,4 @@ Phase 5 is **COMPLETE AND PRODUCTION-READY**. The TALE narrative system now incl
 - ✅ Player integration with quests (Phase 4)
 - ✅ Emergent escalation with interrupts and branching (Phase 5)
 
-All 122 tests pass. The system is ready for deployment.
+All 122 tests passed at the time (2026-03). See the banner at the top for what was built differently.

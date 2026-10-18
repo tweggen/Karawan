@@ -1,5 +1,10 @@
 # Phase 1 Detailed Test Scripts — Storylet System
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - Every script runs the same fixed world (10 NPCs, 3 locations) with `StoryletLibrary.LoadFromDirectory(models/tale)` and checks event streams only. Setups such as parse-error or empty-directory libraries (tests 19, 20) are never created; the specs below describe intent.
+> - `models/tale/` now holds 15 role files plus `conversations/` and `interactions/`. Run with `./run_tests.sh phase1`, see `../PROCESS_TALE.md`.
+
+
 ## Overview
 
 Phase 1 validates the **Storylet System**, the JSON-driven story selection engine. This document provides detailed specifications for 20 test scripts organized into 5 categories.

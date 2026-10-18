@@ -1,5 +1,8 @@
 # Phase 4 — Player Intersection
 
+> **Archived 2026-10-18 (KAR-431). Never built.** `PlayerSocialCapital`, `SocialTier`, `overhear_text` and the player as an interaction-pool participant do not exist. Player–NPC interaction shipped as the Phase C conversation system ([../plans/done/PHASE_C-NPC-CONVERSATIONS.md](../plans/done/PHASE_C-NPC-CONVERSATIONS.md)). Bringing the player into the pool is stage S3 of [../plans/proposed/TALE-EMERGENT-STORIES.md](../plans/proposed/TALE-EMERGENT-STORIES.md). The test scripts in `models/tests/tale/phase4-player/` still exist and run as DES smoke tests.
+
+
 **Prerequisites**: Phase 2 (strategy executors, visible NPCs), Phase 3 (interaction pool).
 **Read also**: `REFERENCE.md` for interaction primitives, relationship tiers.
 

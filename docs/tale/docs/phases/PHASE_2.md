@@ -2,6 +2,13 @@
 
 Comprehensive design for abstracting relationship tier system and group classification into configuration-driven registries.
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - Both registries shipped **rule-based**, not with pluggable condition classes. `RelationshipTierDefinition` has only `Id`, `DisplayName`, `MinTrust`, `MaxTrust`; `RelationshipTierRegistry.GetTierFromTrust` returns the tier id string, in registration order. `RelationshipTracker.TierFromTrust` is still static.
+> - Group types are `GroupTypeDefinition { Id, DisplayName, Priority, Rules }` with `GroupClassificationRule { Type, Parameters }`; `GroupTypeRegistry` evaluates `authority_threshold`, `property_threshold` and `combined_threshold` in a switch. `IGroupClassificationCondition` and the `*Condition` classes do not exist. `property_threshold` is a marked hack, unused by shipped data (KAR-436). An empty member list classifies as `unknown`.
+> - Config: `models/nogame.relationship-tiers.json` at `/relationships/tiers` and `models/nogame.group-types.json` at `/groups/types`, both bare arrays. Shipped tiers: stranger, acquaintance, friend, ally.
+> - Shipped design: [../ARCHITECTURE.md](../ARCHITECTURE.md), [../REFERENCE.md](../REFERENCE.md).
+
+
 ---
 
 ## Part 1: Relationship Tiers
@@ -165,7 +172,7 @@ public class RelationshipTierRegistry : ObjectRegistry<RelationshipTierDefinitio
 }
 ```
 
-### 3. Configuration Format: nogame.relationshipTiers.json
+### 3. Configuration Format: nogame.relationship-tiers.json (shipped: `/relationships/tiers`, a bare array)
 
 ```json
 {
@@ -603,7 +610,7 @@ public class GroupTypeRegistry : ObjectRegistry<GroupTypeDefinition>
 }
 ```
 
-### 5. Configuration Format: nogame.groupTypes.json
+### 5. Configuration Format: nogame.group-types.json (shipped: `/groups/types`, a bare array)
 
 ```json
 {

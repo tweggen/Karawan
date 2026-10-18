@@ -1,5 +1,9 @@
 # TALE Phase 4: Player Integration (Quests & Navigation) — Test Specifications
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - Phase 4 as designed (player social capital, overhear text) was never built; player–NPC interaction went through Phase C conversations (`PHASE_C.md`). These scripts drive no player, satnav or quest log: they are smoke tests whose assertions are DES-event proxies (`encounter`, `request_emitted`, `day_summary`). The original design is archived at `../../archive/PHASE_4_PLAYER_SOCIAL_CAPITAL.md`.
+
+
 ## Overview
 
 Phase 4 tests validate the **player quest system** that integrates the NPC interaction system (Phase 3) with player-facing gameplay. Players can receive quests from NPCs with active requests, navigate to quest locations via satnav, and complete objectives.

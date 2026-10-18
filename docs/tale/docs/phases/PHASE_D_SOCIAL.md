@@ -138,13 +138,13 @@ Median (rather than mean or range midpoint) is robust against asymmetric categor
 |---|---|---|
 | `ScenarioFileNameTests` | 8 | Hash determinism, `sc-` prefix, URL-safe base64, key format stability, `Of`/`OfKey` consistency |
 | `ScenarioExporterTests` | 2 | Round-trip preserves all fields, write produces non-empty artifact |
-| `ScenarioApplicatorTests` | 11 | Null/empty inputs, single-pair copy, all-five-property overwrite, wealth-descending pairing, `GroupRank == -1`, both-direction trust edges, scenario role overflow, real role overflow, edges crossing unmatched ranks, determinism across calls |
+| `ScenarioApplicatorTests` | 13 | Null/empty inputs, single-pair copy, all-five-property overwrite, wealth-descending pairing, `GroupRank == -1`, both-direction trust edges, scenario role overflow, real role overflow, edges crossing unmatched ranks, determinism across calls |
 | `ScenarioSelectorTests` | 6 | Empty requests, determinism, closest-median small/medium, seeded round-robin, negative cluster seed |
 | `ScenarioCompilerTests` | 2 | Same-seed byte-equality (the core seedability assertion), different-seed divergence |
 | `ScenarioStatisticsTests` (D5) | 7 | Empty scenario, group counts, relationship density formula, role distribution, property summary, determinism, category aggregation |
 | `RoutingPreferencesTests` (pre-existing) | 10 | Revived as a side effect of wiring up the .csproj |
 
-**Total: 46 tests, 168 ms via `dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj`.**
+**Total: 48 tests (46 when written; 2026-10-18 count), 168 ms via `dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj`.**
 
 The compiler determinism test is the heart of D4: it runs `ScenarioCompiler.CompileInMemory` twice with the same `(category, index, seed, npcCount, simulationDays)` and asserts NPC count, role assignments, properties, group ranks, and trust edge values all match field-for-field. If any code path inside the synthetic spatial model builder, the synthetic NPC builder, or `DesSimulation` ever reaches an unseeded RNG, this test catches it.
 

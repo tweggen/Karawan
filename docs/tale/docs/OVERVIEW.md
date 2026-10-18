@@ -74,10 +74,12 @@ test directory of their own.
 ## Documentation Map
 
 ### Implementation & Concepts
-- **REFERENCE.md** — Shared concepts (properties, verbs, roles, interaction primitives, simulation tiers, seed generation, deviation tracking)
+- **ARCHITECTURE.md** — The shipped design, class by class
+- **CONCEPT.md** — The goal (emergent stories from a living society) and, in `../plans/proposed/TALE-EMERGENT-STORIES.md`, the roadmap towards it
+- **REFERENCE.md** — Shared concepts (properties, storylet format, roles, interaction primitives, simulation tiers, seed generation, deviation and persistence)
 - **phases/PHASE_0A.md … PHASE_0C.md** — DES engine implementation (complete)
 - **phases/PHASE_3.md** — NPC-NPC interaction system implementation (complete)
-- **phases/PHASE_1.md, PHASE_2.md, PHASE_4.md, PHASE_5.md** — Phases 1, 2, 4, 5
+- **phases/PHASE_1.md, PHASE_2.md, PHASE_5.md** — Phases 1, 2, 5 (built partly differently; see each doc's banner). Phase 4 (player social capital) was never built: `../archive/PHASE_4_PLAYER_SOCIAL_CAPITAL.md`
 - **phases/PHASE_6.md** — Production integration: seed-based population, cluster lifecycle, spawn rework, deviation persistence (complete)
 - **phases/PHASE_7.md** — Spatial grounding & navigation: per-cluster models, entry points, street pathfinding, building occupancy, fragment position tracking (complete)
 - **`../plans/done/PHASE_7B-BUILDING-ROLE-TAGGING.md`** — Building role tagging: semantic building types, explicit tag system, generator operators (complete)
@@ -107,9 +109,13 @@ test directory of their own.
 ## Where Code Lives
 
 - **Engine narrative code**: `JoyceCode/engine/tale/` — production DES engine
-  - Phase 0: DesSimulation, EventQueue, RelationshipTracker, JsonlEventLogger
+  - Phase 0: DesSimulation, EventQueue, EncounterResolver, RelationshipTracker, JsonlEventLogger
+  - Phase 1: StoryletDefinition / StoryletLibrary, StoryletSelector
   - Phase 3: InteractionPool, InteractionRequest, InteractionSignal
-  - Phase 6: TaleManager (schedule registry), NpcSchedule, StoryletSelector
+  - Phase 5: ArcStack (interrupt stack)
+  - Phase 6: TaleManager (schedule registry), NpcSchedule, TalePopulationGenerator
+  - Registries: RoleRegistry, InteractionTypeRegistry, RelationshipTierRegistry, GroupTypeRegistry
+  - TALE-SOCIAL: `bake/` (Phase D), CommunityDetector, RuntimeSocialEvolver, GroupActions, ClusterSocialState (Phase E)
 - **Production integration**: `nogameCode/nogame/`
   - TALE module: `modules/tale/TaleModule.cs` — bootstraps library + TaleManager
   - TALE spawn: `characters/citizen/TaleSpawnOperator.cs` — materializes Tier 3 → Tier 2/1
@@ -117,9 +123,10 @@ test directory of their own.
   - Scene hook: `scenes/root/Scene.cs` — registers TaleSpawnOperator with SpawnController
 - **Testbed driver**: `Testbed/` project — thin CLI harness for simulation
 - **Story content**: JSON data files in `models/tale/` — storylet definitions, role-specific content
-  - Main files: merchant.json, worker.json, drifter.json, socialite.json, authority.json, universal.json
-  - Interaction storylets consolidated into above files
-- **Design documents**: `docs/tale/docs/` — design/NPC_STORIES.md, CONCEPT.md, ARCHITECTURE.md, etc.; testbed in `docs/testing/docs/TESTBED.md`
+  - Role files: authority, drifter, merchant, socialite, worker, hustler, nightworker, reveler, factory_worker, office_worker, service_worker
+  - Cross-role files: universal.json, desperation.json, escalation.json
+  - `interactions/` — request/claim storylet pairs (Phase 3); `conversations/` — dialogue scripts (Phase C)
+- **Design documents**: `docs/tale/docs/` — ARCHITECTURE.md (shipped), CONCEPT.md (goal), design/NPC_STORIES.md, etc.; the original March 2026 concept is in `../archive/`; testbed in `docs/testing/docs/TESTBED.md`
 
 ## The Iteration Loop
 
@@ -149,8 +156,9 @@ dotnet run -c Release --project Testbed -- --days 365 --quiet --events-file none
 dotnet run --project Testbed -- --days 30 --traces 5 --events-file events.jsonl --trace-file traces.log --graph-file graph.json
 
 # Run a specific phase test
-JOYCE_TEST_SCRIPT=models/tests/tale/phase0-des/01-initialization.json \
-  dotnet run --project nogame/nogame.csproj
+# (scripts run under TestRunner; the path is relative to models/ — see Running Test Suites)
+JOYCE_TEST_SCRIPT=tests/tale/phase0-des/01-initialization.json \
+  ./TestRunner/bin/Release/net10.0/TestRunner
 ```
 
 ## Running Test Suites

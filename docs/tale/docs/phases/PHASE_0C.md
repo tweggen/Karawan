@@ -3,6 +3,14 @@
 **Prerequisites**: Phase 0B (DES runs and produces events).
 **Read also**: `REFERENCE.md` for base properties and roles.
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - `JsonlEventLogger` emits 12 event types: `npc_created`, `node_arrival`, `encounter`, `relationship_changed`, `day_summary`, `request_emitted`, `request_claimed`, `signal_emitted`, `interrupt_fired`, `storylet_resumed`, `escalation_triggered`, `gang_formed`. `request_resolved` does not exist, and `node_arrival` carries no `verb`.
+> - Testbed flags (`TestbedMain.cs:94-116`): `--days`, `--seed`, `--npcs`, `--traces`, `--events-file`, `--trace-file`, `--graph-file`, `--targets`, `--quiet`, plus `--diagnose-streets`, `--validate-streets`, `--test-pathfinding`. `--cluster`, `--params` and `--batch` do not exist (the cluster is always `clusters[0]`); there is `Testbed/testbed_targets.json` but no `testbed_params.json`.
+> - In `JoyceCode/engine/tale/SimMetrics.cs`, `routine_completion_rate` and `request_fulfillment_rate` are hard-coded to 1.0 (KAR-436); the escalation block reports `npcs_in_groups_at_end`, `total_groups_at_end`, `groups_by_type`.
+> - Storylets live in `models/tale/*.json` and roles in `models/nogame.roles.json`, not `storylets/` and `roles/`.
+> - Current reference: `docs/testing/docs/TESTBED.md`.
+
+
 ---
 
 ## Goal

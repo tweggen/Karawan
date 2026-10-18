@@ -4,7 +4,10 @@
 > traced over the `BlockGraph` 2-core, one building per piece of buildable land, terrain-following
 > and grade-separated city — see `docs/roadmap/proposed/CITY-3D-OPEN-POINTS.md`). The home counts,
 > diagnostics and open questions here have not been re-measured on the current city; that is open
-> and tracked separately. Read them as history until then.
+> and tracked in KAR-435. Read them as history until then.
+> Since the rework, untagged buildings default to `home` (`SpatialModel.cs:271`) and the quarter
+> generator defaults them to residential (`QuarterGenerator.cs:116-118`), so the "3 homes" premise
+> may no longer hold (verified 2026-10-18, KAR-431).
 
 **Date:** 2026-03-23
 **Status:** Design phase - no implementation yet
@@ -87,7 +90,7 @@ These must be answered before implementing a solution:
 - **Question**: What commuting behavior would create compelling visuals and feel right?
 
 ### 4. **NPC Population Per Cluster**
-- **Current**: Unlimited, based on cluster parameters
+- **Current**: 3 NPCs per street point, capped at 4095 (`TalePopulationGenerator.ComputeNpcCount`, 12-bit NPC index)
 - **Proposal**: Define target NPC count per cluster type
   - Small cluster: 20-30 NPCs
   - Medium cluster: 50-100 NPCs
@@ -136,9 +139,9 @@ return random(candidates)  // ← Clustering happens here
 
 ### Role-to-Location Type Mapping
 - `worker` / `authority` / `nightworker` → prefer `office` or `warehouse` ✓
-- `merchant` → prefer `shop`
-- `reveler` → prefer `social_venue`; `socialite` → `street_segment` (workplace) / `social_venue` (venue)
-- `drifter` / `hustler` → prefer `street_segment`
+- `merchant` → prefer `shop` (home may also be a shop)
+- `reveler` → prefer `social_venue`; `socialite` → `street_segment` (workplace) / `social_venue` (venue); socialite home may be a `street_segment`
+- `drifter` / `hustler` → prefer `street_segment` (also as venue; drifter home may be a `street_segment`)
 - Fallback for all → random from all pedestrian-reachable locations
 
 ---
