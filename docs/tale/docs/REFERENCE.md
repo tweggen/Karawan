@@ -145,7 +145,7 @@ The DES built in Phase 0 IS the Tier 3 system. Same code runs in testbed and pro
 ### Tier Transitions
 
 - **3 → 2 → 1 (materialization):** `SpawnController` detects underpopulated visible fragments, `TaleSpawnOperator` looks up existing Tier 3 `NpcSchedule` from `TaleManager` and creates an ECS entity with `TaleEntityStrategy` + visuals.
-- **1 → 2 → 3 (dematerialization):** `SpawnController` detects overpopulated fragments, `TaleSpawnOperator` destroys the ECS entity. What happens to the schedule depends on the player (see [Deviation Tracking & Persistence](#deviation-tracking--persistence)): a never-engaged NPC's schedule stays in `TaleManager` as Tier 3; an NPC the player engaged with **and** talked to within the last `TaleManager.ConversationMemorySeconds` (1800 s) is frozen as Tier 2; an engaged NPC the player has not talked to recently is dropped (`ForgetSchedule`), so its slot is regenerated from seed.
+- **1 → 2 → 3 (dematerialization):** *As designed* (the rest of this bullet): `SpawnController` detects overpopulated fragments, `TaleSpawnOperator` destroys the ECS entity. **In practice this path never runs** (ARCHITECTURE §6.3): TALE entities die only when their fragment unloads or the wiper removes them, the schedule stays as Tier 3, and nothing is dropped. S0 (W3) replaces it. What happens to the schedule depends on the player (see [Deviation Tracking & Persistence](#deviation-tracking--persistence)): a never-engaged NPC's schedule stays in `TaleManager` as Tier 3; an NPC the player engaged with **and** talked to within the last `TaleManager.ConversationMemorySeconds` (1800 s) is frozen as Tier 2; an engaged NPC the player has not talked to recently is dropped (`ForgetSchedule`), so its slot is regenerated from seed.
 - Transitions are lossless only for those kept schedules.
 
 ### Cluster Population Lifecycle
@@ -201,7 +201,7 @@ From a single NPC seed, the following are deterministic:
 |-------|--------------|-------------|---------|
 | **Unobserved / never engaged** | None | Not saved; regenerated from seed | NPC the player never talked to |
 | **Engaged, recent** | `HasPlayerDeviation` set, conversation within 1800 s | Kept as Tier 2 while in range; saved | Player just talked to the NPC |
-| **Engaged, aged out** | `HasPlayerDeviation` set, no recent conversation | Dropped at dematerialization (`ForgetSchedule`) | Player talked to the NPC long ago |
+| **Engaged, aged out** | `HasPlayerDeviation` set, no recent conversation | Designed to be dropped at dematerialization (`ForgetSchedule`); in practice never reached (ARCHITECTURE §6.3) | Player talked to the NPC long ago |
 
 There is no group or "recursive" propagation: only the NPC the player talked to is marked.
 

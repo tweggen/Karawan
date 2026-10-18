@@ -30,23 +30,28 @@ plan and tickets once it is accepted.
 
 ## S0 — Ground to stand on (prerequisites)
 
+> Stage plan: [TALE-S0-GROUNDWORK.md](TALE-S0-GROUNDWORK.md) (KAR-437).
+
 You can't tune a society you can't measure or see, the test suite can't
 tell when social behaviour breaks, and today the society both stands still
-away from the player and forgets the player.
+away from the player, and NPCs are marked as despawned by the wrong
+fragment.
 
 - **KAR-433** — 49 TALE scripts assert nothing; fix them and make an empty
   script fail.
-- **Remember the player.** An NPC the player talked to is dropped once it
-  dematerialises more than `ConversationMemorySeconds` (1800 s) after the
-  last conversation (`TaleSpawnOperator.cs:438-469` →
-  `TaleManager.ForgetSchedule`), together with its `Trust` and
-  `player_fact.*`. Snapshots are taken only when saving and applied only at
-  the next population. So the NPCs the player built a relationship with
-  are exactly the ones that vanish. New rule: an NPC with a `Trust[-1]`
-  entry or any `player_fact.*` is never forgotten; at most it goes back to
-  Tier 3, or it is snapshotted into `ClusterSocialState` before the drop
-  and restored when it is next populated. Everything from S1 on depends on
-  this.
+- **Remember the player, explicitly.** The code has a path that drops an
+  NPC the player talked to 30 minutes after the last conversation
+  (`TaleSpawnOperator.TerminateCharacters` → `TaleManager.ForgetSchedule`),
+  but it never runs: the spawn system counts entities by behaviour type,
+  and TALE NPCs never carry the `IdleBehavior` their operator registers,
+  so no TALE NPC is ever terminated by distance. They die only when their
+  fragment unloads. In-session the player's NPCs therefore survive today,
+  but by accident, and dematerialisation is tracked by the schedule's
+  fragment instead of the entity's, which can leave an NPC that never
+  respawns or create a second entity for one NPC. New rule: an NPC with a
+  `Trust[-1]` entry or any `player_fact.*` is never removed (not on
+  depopulation either), and dematerialisation follows the entity's death.
+  Details: [TALE-S0-GROUNDWORK.md](TALE-S0-GROUNDWORK.md) W3.
 - **KAR-434** — wire `DepopulateCluster`, so the snapshots this relies on
   are taken when a cluster is left, not only when saving. (Its comment at
   `TaleSpawnOperator.cs:463-464` claims it already removes schedules.)
@@ -99,6 +104,8 @@ away from the player and forgets the player.
 
 ## S1 — The player in the social graph
 
+> Stage plan: [TALE-S1-PLAYER-IN-GRAPH.md](TALE-S1-PLAYER-IN-GRAPH.md) (KAR-438).
+
 Today the player's only relationship is `Trust[-1]` per NPC: it starts at
 0.5 on first contact and rises by 0.02 whenever a conversation ends
 (`TaleModule.cs:766-767`).
@@ -134,7 +141,7 @@ Today the player's only relationship is `Trust[-1]` per NPC: it starts at
   in the cluster (§9) is computed from the same data and exposed as
   `player.standing`.
 - `Trust[-1]` is already serialised in snapshots and in the deviation
-  record; with S0's forget rule it now also survives play.
+  record; S0 makes its survival in play an explicit rule.
 
 *Done when:* helping one member of a group changes how the group's other
 members greet the player, and a hit on an NPC lowers the victim's and a
