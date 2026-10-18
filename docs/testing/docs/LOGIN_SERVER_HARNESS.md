@@ -83,7 +83,7 @@ day: log in for a token, store a save, read it back.
 
 On a fresh user, a successful run shows in exli's log as
 `POST /api/public/users/log_in` → 200, `GET /api/auth/save_game` → 404
-("didn't save any game yet", so the game starts a new online game), and then
+(`{"error": "no saved game yet"}`, so the game starts a new online game), and then
 periodic `POST /api/auth/save_game` → 200.
 
 ### Login-screen cases to try
