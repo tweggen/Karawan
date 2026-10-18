@@ -188,12 +188,22 @@ The live game has no interrupts.
 | 2 | An ECS entity whose `TaleEntityStrategy` is frozen (`EnterTier2Mode`, `TaleEntityStrategy.cs:139`). |
 | 1 | A fully materialised NPC near the player, spawned by `TaleSpawnOperator`. |
 
-When an NPC dematerialises (`TaleSpawnOperator.cs:430-467`), it stays as
-Tier 2 only if `HasPlayerDeviation` is set **and** the player talked to it
-within `TaleManager.ConversationMemorySeconds` (1800 s, `TaleManager.cs:700`;
-`RecordConversation` / `HasRecentConversation`). A deviated NPC without a
-recent conversation is dropped with `ForgetSchedule`, and `IsScheduleAlive`
-then reports false. `HasPlayerDeviation` is set only in `TaleModule`:
+**What actually happens (verified 2026-10-18, S0 plan):** TALE entities
+die only when the fragment that created them unloads (`Fragment.RemoveFragmentEntities`,
+by owner) or through the wiper; `TaleSpawnOperator.PurgeFragment` then
+clears the materialised flag for the NPCs whose *schedule position* lies in
+that fragment, which is not always the fragment that owned the entity. The
+schedule itself stays in `TaleManager`, so the NPC returns as Tier 3.
+
+**Dead code:** `TaleSpawnOperator.TerminateCharacters` (`:430-467`) would
+keep a dematerialising NPC as Tier 2 if `HasPlayerDeviation` is set and the
+player talked to it within `TaleManager.ConversationMemorySeconds` (1800 s),
+and drop other deviated NPCs with `ForgetSchedule`. It is never called:
+`SpawnSystem` counts entities by exact behaviour type, the operator
+registers `IdleBehavior` (`TaleSpawnOperator.cs:57`), and TALE NPCs carry
+`TaleConversationBehavior`, `TaleWalkBehavior` or none, so the count is
+always 0 and no TALE NPC is ever terminated by distance. Tier 2 is
+therefore unreachable in practice. S0 (W3) replaces this. `HasPlayerDeviation` is set only in `TaleModule`:
 - by the narration function `tale.npc.remember` (`:385`);
 - at the end of a conversation script, together with +0.02 player trust
   (`:767-768`);
