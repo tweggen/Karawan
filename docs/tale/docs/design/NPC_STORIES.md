@@ -1,6 +1,12 @@
 # NPC-Centric Narrative Design
 *Player as witness, catalyst, and social nexus*
 
+> **Vision, largely unbuilt (verified 2026-10-18, KAR-431):**
+> - This is a **vision** document. Never built: transport tubes / FIFO travel, player social-capital tiers and per-cluster player reputation, the recursively subdivided lazy story graph, fork/join of arcs.
+> - What exists toward it: per-NPC trust including trust toward the player, factions that form and change at runtime (Phase E), Phase C conversations, and Tier 1/2/3 simulation. Story-pinning exists only as "NPCs talked to recently survive as Tier 2".
+> - The current concept and the path from the shipped system to this vision: [../CONCEPT.md](../CONCEPT.md). Shipped design: [../ARCHITECTURE.md](../ARCHITECTURE.md).
+
+
 ## Core Concept
 
 Every NPC has their own story arc running independently. The player is **not** the protagonist of a central questline — instead, the player's story emerges from **increasing entanglement** with NPC storylines. The player may:
@@ -59,7 +65,7 @@ There is no XP bar. Progression is felt through the changing texture of interact
 
 NPC stories don't need to be individually authored. They are:
 
-- **Generated from storylet templates** parameterized by NPC traits, faction, location, and emotional tone (see `../CONCEPT.md`).
+- **Generated from storylet templates** parameterized by NPC traits, faction, location, and emotional tone (see the archived `../../archive/CONCEPT_2026-03.md`; never built that way).
 - **Run as lightweight state machines** — most tick silently in the background.
 - **Elaborated on demand** — narrative detail only renders when the player is nearby or involved.
 - **Branch-sensitive** — at key moments, if the player is present and has relevant knowledge, they can nudge the outcome. Otherwise the story resolves on its own.
@@ -220,7 +226,7 @@ When an external event branches off a new storyline from an existing one, the TA
 
 - **Branch conditions**: What external events can interrupt an edge? (player interaction, NPC-NPC story collision, world state change)
 - **Branch priority**: When multiple events target the same edge, which wins?
-- **Branch scope**: Does the branch replace the current arc, run parallel, or nest inside it and return? (Maps to `../CONCEPT.md`'s graph rewriting: substitution, parallel composition, nested expansion)
+- **Branch scope**: Does the branch replace the current arc, run parallel, or nest inside it and return? (Maps to the archived `../../archive/CONCEPT_2026-03.md`'s graph rewriting: substitution, parallel composition, nested expansion)
 - **Merge/return**: When a branched storyline resolves, does the NPC return to the original arc, or is it invalidated?
 
 These are fundamentally control flow constructs:
@@ -238,6 +244,6 @@ These must be expressible in the TALE DSL — either as explicit first-class con
 
 ## Relationship to Existing Systems
 
-- **Storylets & Arcs**: `../CONCEPT.md` provides the generation framework (storylet templates, emotional arcs, graph rewriting). NPC stories are assembled from this pool.
+- **Storylets & Arcs**: the archived `../../archive/CONCEPT_2026-03.md` described the generation framework (storylet templates, emotional arcs, graph rewriting). NPC stories are assembled from this pool.
 - **Quest System**: Existing quest infrastructure (QuestFactory, strategies, SatnavService) handles the player-facing side when an NPC story becomes a player quest.
 - **World Generation**: Cluster/fragment operators already generate the physical world. NPC story generation would be an additional layer seeded by cluster properties.

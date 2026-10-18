@@ -1,8 +1,13 @@
 # Phase C Test Scripts: NPC Conversation System
 
 **Last Audit:** 2026-04-07
-**Phase Status:** Proposed (tests defined before implementation)
+**Phase Status:** Implemented (C1–C4); the test scripts assert nothing yet, see the note below
 **Total Tests:** 29 across 4 phases
+
+> **Status corrected (verified 2026-10-18, KAR-431):**
+> - The conversation system is **implemented** (C1–C4; see `../../plans/done/TALE-NPC-CONVERSATION-SYSTEM-C1-C4.md`), but **these 29 scripts currently assert nothing**: they declare an `"expected"` block and `ExpectEngine/ScriptRunner.cs:58` reads only `"steps"` (KAR-433). Several would fail if they ran: they expect 11 NPCs (the runner creates 10) and `dialogue_started`, which no code emits.
+> - The 30 s conversation cooldown was replaced by `Narration.MayConverse()` (`TaleConversationBehavior.cs`). `./run_tests.sh` takes one argument only, so `./run_tests.sh phaseC1 phaseC2 ...` runs just the first.
+
 
 ---
 

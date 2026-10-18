@@ -11,7 +11,7 @@
 
 ## Context
 
-The TALE architecture (docs/tale/TALE_ARCHITECTURE.md) promises NPCs that develop over time and form factions. Phase D pre-computes social structure (groups, trust edges, property snapshots) in an offline 365-day DES bake and re-attaches it at cluster population. Despite this, **no faction formation is observable in the live game**. Investigation (2026-07-13) found three stacked causes:
+The TALE architecture (then `docs/tale/TALE_ARCHITECTURE.md`, now archived as `docs/tale/archive/ARCHITECTURE_CONCEPT_2026-03.md`) promises NPCs that develop over time and form factions. Phase D pre-computes social structure (groups, trust edges, property snapshots) in an offline 365-day DES bake and re-attaches it at cluster population. Despite this, **no faction formation is observable in the live game**. Investigation (2026-07-13) found three stacked causes:
 
 ### Cause 1: Zero social simulation at runtime
 `EncounterResolver`, `RelationshipTracker`, and `GroupDetector` are used ONLY inside `DesSimulation` (bake + tests). The live game (`TaleManager`) never generates NPC-NPC encounters, never updates `NpcSchedule.Trust`, and never (re-)detects groups. Social structure is a frozen snapshot applied once in `PopulateCluster` (`TaleManager.cs:145-187`) — and discarded on `DepopulateCluster` (`TaleManager.cs:242-264`) for all non-deviated NPCs.

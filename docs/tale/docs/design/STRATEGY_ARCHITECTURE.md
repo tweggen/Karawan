@@ -132,6 +132,26 @@ Transitions:
   flee/recover timer expires → "walk"
 ```
 
+### TALE NPC
+
+```
+citizen.TaleEntityStrategy (AOneOfStrategy)
+├── "travel"   → GoToStrategyPart   — walks the route from engine.tale.IRouteGenerator
+│                                      (NavMeshRouteGenerator) to the storylet's location
+├── "activity" → StayAtStrategyPart — stays for the storylet's duration; outdoors it runs
+│                                      TaleConversationBehavior, indoors (IsIndoorActivity)
+│                                      the NPC is hidden
+├── "flee"     → FleeStrategy       — on a hit event, as for citizens
+└── "recover"  → RecoverStrategy    — on a crash event, as for citizens
+
+Transitions:
+  advance storylet (TaleManager) → "travel" → "activity" → advance storylet → ...
+  hit → "flee", crash → "recover"; when they end, resume the interrupted phase
+```
+
+Used for TALE-driven NPCs instead of `citizen.EntityStrategy`; the citizen strategy remains for
+non-TALE pedestrians. In Tier 2 the entity stays alive with the strategy frozen.
+
 ### NPC Nice Day (Stationary)
 
 ```
@@ -178,15 +198,20 @@ Strategies subscribe to engine events in `OnEnter()`, unsubscribe in `OnExit()`.
 **Core framework** (`JoyceCode/engine/behave/`):
 - `IEntityStrategy.cs`, `IStrategyPart.cs`, `IStrategyController.cs`
 - `AStrategyPart.cs`, `AEntityStrategyPart.cs`
-- `strategies/AOneOfStrategy.cs`
+- `strategies/AOneOfStrategy.cs`, `ICompositeStrategy.cs`
+- `StateBehavior.cs`, `IStatePart.cs`, `JsonStatePart.cs`
 - `StrategyManager.cs`, `BehaviorManager.cs`
 - `components/Strategy.cs`, `components/Behavior.cs`
 - `systems/BehaviorSystem.cs`
 
 **Citizen strategies** (`nogameCode/nogame/characters/citizen/`):
 - `EntityStrategy.cs`, `WalkStrategy.cs`, `FleeStrategy.cs`, `RecoverStrategy.cs`
+- TALE: `TaleEntityStrategy.cs`, `GoToStrategyPart.cs`, `StayAtStrategyPart.cs`, `TaleConversationBehavior.cs`, `NavMeshRouteGenerator.cs`
+
+**Nice-day NPCs** (`nogameCode/nogame/npcs/niceday/`):
+- `EntityStrategy.cs`, `RestStrategy.cs`
 
 **Quest strategies** (`nogameCode/nogame/quests/`):
 - `Taxi/TaxiQuestStrategy.cs`, `Taxi/PickupStrategy.cs`, `Taxi/DrivingStrategy.cs`
-- `HelloFishmonger/HelloFishmongerStrategy.cs`
-- `VisitAgentTwelve/VisitAgentTwelveStrategy.cs`
+- `HelloFishmonger/HelloFishmongerStrategy.cs`, `HelloFishmonger/TrailStrategy.cs`
+- `VisitAgentTwelve/VisitAgentTwelveStrategy.cs`, `VisitAgentTwelve/NavigateStrategy.cs`

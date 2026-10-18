@@ -1,7 +1,20 @@
 # Phase 1 — Story Generation + Content
 
 **Prerequisites**: Phase 0A (spatial model) or Phase 0B (DES engine for testing).
-**Read also**: `REFERENCE.md` for base properties, spatial verbs, roles.
+**Read also**: `REFERENCE.md` for base properties, the storylet format, roles.
+
+> **Built differently (verified 2026-10-18, KAR-431).** This is the Phase 1 *plan*. Phase 1
+> shipped, but not in this shape; the shipped storylet format is in
+> [REFERENCE.md § Storylet Format](../REFERENCE.md#storylet-format) and the system in
+> [ARCHITECTURE.md](../ARCHITECTURE.md). Differences:
+> - **No spatial verbs.** Storylets have no `verb` / `verb_params`; they declare `location`, `duration_minutes` (or `_min`/`_max`) and a **top-level** `time_of_day`. The game runs every storylet as GoTo → StayAt.
+> - **No `NpcNarrativeState`.** NPC state lives in `NpcSchedule` (current storylet, schedule step, group id, `ArcStack`); there is no graph depth or position.
+> - **Morality drift** (`DesSimulation`, DES only): `-(desperation − 0.4)·0.03` while desperation > 0.4, `+0.003` while desperation < 0.2. Social contact plays no part; the live game applies no drift.
+> - **Interaction types are data**, in `models/nogame.interactions.json` (`InteractionTypeRegistry`, conditions in `engine/tale/conditions/`), with trust deltas about double those in §3 (greet +0.04, chat +0.06, trade +0.05, help +0.10, argue −0.08, rob −0.30, blackmail −0.40, intimidate −0.20, recruit +0.16, report_crime +0.04, arrest −0.60, patrol_check 0).
+> - **Group detection** was Bron-Kerbosch cliques with trust ≥ 0.75 (not 0.6), size ≥ 3; Phase E replaced it with `CommunityDetector` (label propagation, see `PHASE_E_SOCIAL.md`). Group types are rule-based in `models/nogame.group-types.json`.
+> - **Selector seed** is `new Random(npc.Seed + npc.ScheduleStep * 7919)` with `Seed` = NPC id, not `npcSeed + graphDepth + graphPosition`.
+> - The `detained` storylet was never built; `has_relationship` and `role` preconditions are not parsed.
+> - The library grew to 96 storylets in 14 role and theme files in `models/tale/`, plus 20 request/claim storylets in `models/tale/interactions/`. Validation runs through `run_tests.sh` / TestRunner (`models/tests/tale/phase1-storylets`), not the Testbed.
 
 ---
 

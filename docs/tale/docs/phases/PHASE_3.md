@@ -3,6 +3,13 @@
 **Prerequisites**: Phase 1 (storylets), Phase 0B (DES with encounter resolver).
 **Read also**: `REFERENCE.md` for interaction primitives, relationship tiers.
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - `InteractionPool` shipped with `EmitRequest(...)` returning an id, `FindMatchingRequest(type, roleFilter)` and `HasSignal(id, type)` (`InteractionPool.cs`). Claims are declared as `"claim_trigger": { request_type, role_match, interrupt_scope }` and matched in `DesSimulation`, not in `EncounterResolver`.
+> - The interaction library is 10 files (20 request/claim storylets) in `models/tale/interactions/{social,conflict,criminal,economic}/`, not the list below; interaction types are data in `models/nogame.interactions.json` (see `../../plans/done/INTERACTION-TYPE-REGISTRY.md`).
+> - Never built: the `wait_for` verb and the sweep parameters (`P_venue` sweep, `claim_eagerness`, `request_rate_multiplier`).
+> - Shipped design: [../ARCHITECTURE.md](../ARCHITECTURE.md).
+
+
 ---
 
 ## Goal

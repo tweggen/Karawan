@@ -77,7 +77,8 @@ Each test is a JSON file: `NN-descriptive-name.json`
 ./run_tests.sh phase0       # Run all Phase 0 tests
 ./run_tests.sh phase5       # Run all Phase 5 tests
 ./run_tests.sh phaseC1      # Run all C1 tests
-./run_tests.sh 01-init.json # Run specific test (finds it anywhere in models/tests/tale/)
+./run_tests.sh 01-initialization.json # Run specific test (finds it anywhere in models/tests/tale/)
+./run_tests.sh bugfix       # Entity-behaviour bugfix tests (not DES; JOYCE_TEST_SCRIPT=entity-behavior-tests)
 ```
 
 ---
@@ -90,13 +91,13 @@ Each test is a JSON file: `NN-descriptive-name.json`
 docs/tale/
 ├── docs/
 │   ├── README.md                       # Overview
-│   ├── OVERVIEW.md / CONCEPT.md / ARCHITECTURE.md / REFERENCE.md
-│   ├── phases/PHASE_N.md               # Phase design docs (0A-0C, 1-8, D_SOCIAL, E_SOCIAL)
+│   ├── OVERVIEW.md / ARCHITECTURE.md (shipped) / CONCEPT.md (goal) / REFERENCE.md
+│   ├── phases/PHASE_N.md               # Phase design docs (0A-0C, 1-3, 5-8, D_SOCIAL, E_SOCIAL; Phase 4 archived)
 │   ├── tests/PHASE_N.md                # Detailed test specifications per phase (PHASE_C.md for C1-C4)
 │   ├── tests/STRATEGY.md               # How to maintain test docs (quarterly audit cycle)
 │   ├── concepts/ and design/           # Narration, NPC stories, commuting, strategy architecture
 ├── plans/{proposed,done}/              # Phase plans (e.g. done/PHASE_7B-*, done/PHASE_C-*)
-└── archive/                            # Superseded documents (incl. TALE_TESTS_{FRAMEWORK,TEST_PLAN,QUICK_START}.md)
+└── archive/                            # Superseded documents (incl. the March 2026 concept and TALE_TESTS_{FRAMEWORK,TEST_PLAN,QUICK_START}.md)
 ```
 
 ### When to Update Which Docs
@@ -126,14 +127,14 @@ docs/tale/
 ### Implementing a New TALE Phase
 
 ```bash
-1. EnterPlanMode: Create docs/roadmap/proposed/PHASE-N-NAME.md
+1. EnterPlanMode: Create docs/tale/plans/proposed/PHASE-N-NAME.md
 2. Create: docs/tale/docs/phases/PHASE_N.md (design document)
 3. Create: models/tests/tale/phaseN-*/  (test directory)
 4. Create: docs/tale/docs/tests/PHASE_N.md (test specifications)
 5. Implement code + tests
 6. Update: docs/testing/docs/TESTING_STRATEGY.md (add phase to test phases table)
 7. Update: CLAUDE.md (update phase status)
-8. Move: docs/roadmap/proposed/ → docs/roadmap/done/
+8. Move: docs/tale/plans/proposed/ → docs/tale/plans/done/
 9. Commit: "Implement Phase N: Description"
 ```
 

@@ -1,5 +1,9 @@
 # Test Documentation Strategy
 
+> **Note (verified 2026-10-18, KAR-431):**
+> - The process below was **never adopted**: `verify_test_docs.sh` does not exist (its `phase$phase/` glob would not match `phase0-des` either), no phase design doc has a "Test Coverage" section, and only phase0, phase1 and phase3 have README files. The counts are current: 200 scripts run, phase 7's 102 excluded.
+
+
 ## Overview
 
 The TALE test documentation consists of detailed test specifications across 7 phases. This document provides a strategy for maintaining and updating these specifications as the system evolves, without losing context or creating conflicts between specification and implementation.

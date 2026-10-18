@@ -1,5 +1,9 @@
 # Phase 5 Test Scripts — Branching, Interrupts & Escalation
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - **These 20 scripts currently assert nothing.** They declare an `"expected"` block, but `ExpectEngine/ScriptRunner.cs:58` reads only `"steps"`, so each passes immediately (KAR-433). Some would fail if they ran (they expect 11 NPCs; the runner creates 10). The Cancel test (03) cannot be meaningful while nothing produces `InterruptScope.Cancel` (KAR-436).
+
+
 **Status**: ✅ **COMPLETE** — All 20 tests implemented and passing (20/20)
 
 **Test Location**: `models/tests/tale/phase5-escalation/`

@@ -1,5 +1,9 @@
 # TALE Phase 2: Strategies (Multi-Phase Quest Composition) — Test Specifications
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - There is no multi-phase strategy engine for these scripts to exercise. They are smoke tests whose assertions are DES-event proxies (`day_summary`, `node_arrival`, `npc_created`, `encounter`); the phase/nesting/persistence specs below are intent. The in-game NPC strategy is `TaleEntityStrategy` (see `../design/STRATEGY_ARCHITECTURE.md`).
+
+
 ## Overview
 
 Phase 2 tests validate the **strategy system** that translates DES storylets into multi-phase quests. Strategies compose storylets across multiple **phases** (e.g., taxi: passenger_waiting → driver_en_route → passenger_delivered), with phase transitions triggered by conditions or time.

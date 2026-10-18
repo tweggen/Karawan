@@ -66,13 +66,13 @@ When spawning a TALE NPC:
 ## Build & Test Status
 
 ✅ **Build:** `dotnet build nogame/nogame.csproj` succeeds without errors
-✅ **Tests:** All 171 regression tests pass (Phase 0-7 all passing, no behavior changes)
+✅ **Tests (at the time, 2026-03):** All 171 regression tests passed (Phase 0-7 all passing, no behavior changes)
 ✅ **Determinism:** NPCs get stable models across save/load cycles (same seed = same model)
 
 ## Files Modified
 
 1. **JoyceCode/engine/tale/RoleDefinition.cs** — Added `Models` property
-2. **models/nogame.roles.json** — Added `"models"` arrays to all 9 role definitions
+2. **models/nogame.roles.json** — Added `"models"` arrays to the role definitions (today 8 of the 13 roles carry one)
 3. **nogameCode/nogame/characters/citizen/CharacterModelDescriptionFactory.cs** — Added optional `models` parameter to `CreateCitizen()`
 4. **nogameCode/nogame/characters/citizen/TaleSpawnOperator.cs** — Look up role's model pool (now lines 322-331)
 5. **CLAUDE.md** — Updated Phase 8 status

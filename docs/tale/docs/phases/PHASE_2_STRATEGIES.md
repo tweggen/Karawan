@@ -3,6 +3,12 @@
 **Prerequisites**: Phase 1 (storylet library exists, NpcNarrativeState works).
 **Read also**: `REFERENCE.md` for spatial verb alphabet.
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - The spatial verb executors (`follow`, `interact_with`, `use_transport`, `wait_for`) were never built, and storylets carry no `verb`/`verb_params`: they declare `location`, `duration_minutes(_min/_max)` and `time_of_day`.
+> - What shipped is `nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs`, an `AOneOfStrategy` with travel / activity / flee / recover phases built from `GoToStrategyPart` and `StayAtStrategyPart`, alongside (not replacing) the citizen `EntityStrategy`. `NpcNarrativeState` does not exist; state lives in `NpcSchedule`.
+> - Shipped design: [../ARCHITECTURE.md](../ARCHITECTURE.md), [../design/STRATEGY_ARCHITECTURE.md](../design/STRATEGY_ARCHITECTURE.md).
+
+
 ---
 
 ## Goal

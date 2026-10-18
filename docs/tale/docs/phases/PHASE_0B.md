@@ -3,6 +3,13 @@
 **Prerequisites**: Phase 0A (spatial model exists, NPCs assigned to locations).
 **Read also**: `REFERENCE.md` for spatial verbs, base properties, simulation tiers.
 
+> **Built differently (verified 2026-10-18, KAR-431):**
+> - The encounter API is `EncounterResolver.CheckEncounters(...)` returning `(otherId, time)` (`EncounterResolver.cs:68`); there is no `ResolveEncounters`.
+> - Transit (shared-segment) encounters were never built; only the `street_segment` location type maps to `P_Street`.
+> - The hard-coded worker template was replaced by `StoryletSelector`; `NpcSchedule` has since gained `ArcStack`, `GroupId`, transit and conversation fields.
+> - There is no spatial verb alphabet (see [../REFERENCE.md](../REFERENCE.md)). Shipped design: [../ARCHITECTURE.md](../ARCHITECTURE.md).
+
+
 ---
 
 ## Goal
