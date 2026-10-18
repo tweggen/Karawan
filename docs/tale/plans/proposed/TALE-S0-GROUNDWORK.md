@@ -443,8 +443,8 @@ in-game log lines.
   fixing the never-written `_dailyInterruptsByNpc`), requests emitted and
   fulfilled by id. `completion_rate` changes meaning: from "finished
   without being cut short" (always 1.0, finding 9) to "share of
-  selections that are the NPC's own routine" — **owner to confirm**
-  (§11). `ComputeFinalMetrics` gets a `social` block from the shared
+  selections that are the NPC's own routine" (owner agreed,
+  2026-10-18). `ComputeFinalMetrics` gets a `social` block from the shared
   calculator; `CheckTargets` checks the targets already present in
   `testbed_targets.json`.
 - **Debug category:** `Dc.TaleMetrics` (`DebugCategories.cs`) with
@@ -555,11 +555,10 @@ written into roadmap §S0 and §12 here.
 
 *(Filled in by W4, W5 and W9.)*
 
-## 13. Open questions for the owner
+## 13. Owner decisions and notes
 
-1. **`completion_rate` meaning (W6):** the old meaning is 1.0 by
-   construction. Proposed: share of selections that are the NPC's own
-   routine (not forced or interrupted). Alternative: drop the metric.
+1. **`completion_rate` meaning (W6):** decided 2026-10-18 — the share of
+   selections that are the NPC's own routine (not forced or interrupted).
 2. **S2 note (no decision needed now):** S2's gossip will give `Trust[-1]`
    to NPCs the player never met; under W3's rule they would all be kept
    and saved. S2 decides whether "heard of" needs only the snapshot and
