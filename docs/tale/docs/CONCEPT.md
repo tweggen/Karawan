@@ -59,8 +59,10 @@ society.
    group membership and NPC state, survives saves and leaving the cluster,
    and reaches people the player never met — through their relationships.
 6. **Everything stays deterministic and cheap.** Seeds decide populations;
-   social evolution has its own RNG; most NPCs are abstract schedules ticked
-   in the background, and only those near the player are elaborated.
+   social evolution has its own RNG; most NPCs are abstract schedules that
+   should advance cheaply in the background, and only those near the player
+   are elaborated. (Today an abstract schedule advances only during the
+   warm-up at population; the roadmap's S0 adds the background tick.)
 
 ## 4. How a story emerges — one example
 
@@ -85,9 +87,10 @@ society.
 | NPCs with needs, roles and daily routines | **shipped** — schedules and storylets per role (Phases 0–1). The five Phase 8 occupations have content but are never assigned (KAR-436) |
 | NPC–NPC encounters changing trust | **shipped**, live and in DES — data-driven interaction types (Phases 1, 3, E3) |
 | Factions forming and evolving | **shipped**, live — community detection, runtime evolver, group verbs, save-game (Phases D, E) |
-| Player talks to NPCs; dialogue reflects state and faction | **shipped** — Phase C conversations, faction routing (E5) |
+| Player talks to NPCs; dialogue reflects state and faction | **shipped** — Phase C conversations; faction-flavoured lines through the `npc.group_*` props (E5) |
 | Requests between NPCs, escalation chains, interrupts | **DES only** — request/claim/signal pool, conditional postconditions and Nest/Replace run in `DesSimulation` (bake, tests, Testbed); the live game's `TaleManager` applies plain postconditions and group verbs only |
-| Player relationships | **minimal** — `Trust[-1]` per NPC, +0.02 per conversation; no group-level standing |
+| Player relationships | **minimal and fragile** — `Trust[-1]` per NPC, starting at 0.5 and +0.02 per conversation; no group-level standing; an NPC the player talked to is forgotten (schedule and trust dropped) once it dematerialises more than 30 minutes after the last conversation |
+| Society away from the player | **trust only** — encounters and re-detection run for the whole cluster, but abstract schedules don't advance after the warm-up, so they meet at stale locations |
 | NPCs involving the player | **missing** — the player never joins the interaction pool; NPCs never ask |
 | Groups acting as groups (goals, conflicts between groups) | **missing** — groups exist and gather, but have no aims |
 | Consequences travelling through relationships | **missing** — no gossip, no reputation within a group or cluster |
