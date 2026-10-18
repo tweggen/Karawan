@@ -87,13 +87,13 @@ Line references are from `origin/master` at `ee10f446`.
 
 | W | Package | Needs |
 |---|---|---|
-| S1-a | Player trust baseline: one writer, first contact, save migration | S0 W3 |
+| S1-a | Player trust baseline: one writer, first contact | S0 W3 |
 | S1-b | Player interaction model (engine) | S1-a |
 | S1-c | Conversations: default chat, `tale.interact`, `tale.pay` | S1-b |
 | S1-d | World actions and witnesses | S1-b |
 | S1-e | Group standing and the greeting | S1-a, S1-b (S1-c/d to show it in play) |
 | S1-f | Standing level per cluster | S1-e, S0 W7/W8 |
-| S1-g | Taxi fare and passenger (optional, small) | S1-b |
+| S1-g | Taxi fare (passenger binding optional) | S1-b |
 
 S1-c, S1-d, S1-e and S1-g can run in parallel after S1-b.
 
@@ -112,28 +112,13 @@ S1-c, S1-d, S1-e and S1-g can run in parallel after S1-b.
 - **Narration** reads `PlayerTrust.Get` instead of the 0.5 default
   (`TaleNarrationBindings.cs:84`); `npc.met_player` keeps meaning "has an
   entry" (S2 will separate "met" from "heard of").
-- **Old saves.** Old values are always 0.5 + 0.02·n. Proposed: shift
-  `Trust[-1]` by −0.35 on load when a scale marker is missing (`"ptScale": 2`
-  on each NPC object of the deviation array — `TaleDeviations` is a bare
-  JSON array, `TaleModule.cs:198-210,245`, and wrapping it would make the
-  try/catch silently drop every deviated NPC — and on each cluster object
-  in `ClusterSocialState.ToJson`; both readers ignore unknown keys).
-  `MigrateLegacy` runs before `RegisterNpc` (`TaleModule.cs:250-257`). The
-  snapshot marker is for consistency only: snapshot `-1` entries are never
-  restored onto a live schedule today, because every `Trust[-1]` writer
-  sets `HasPlayerDeviation` and so the NPC comes from the deviation
-  record. The −0.35 shift keeps the number of conversations under the old
-  linear rule (the new
-  flattened, rate-limited chat gives a slightly different value for the
-  same count — acceptable).
-  No new save field and no `DbVersion` bump. The shift is engine code
-  (`PlayerTrust.MigrateLegacy`) so it can be tested. **Owner question**
-  (§10): migrate, or accept that dev saves keep old values.
+- **Old saves: no migration** (owner, 2026-10-18). Development saves keep
+  their old values (0.5 + 0.02·n, i.e. "friend"); new games use the new
+  scale. No marker, no load-time shift, no `DbVersion` bump.
 
 *Done when:* no code reads `Trust[-1]` with a 0.5 default; a first
 conversation leaves `Trust[-1]` at the first-contact value plus one chat;
-an old save loads shifted and re-saves with the marker; tests for
-baseline, clamping, `MarkPlayerContact`, migration pass.
+tests for baseline, clamping and `MarkPlayerContact` pass.
 
 ## 4. S1-b — Player interaction model (engine)
 
@@ -157,9 +142,10 @@ New player-only ids, with `conditionClassName: null`:
 | `drive` | +0.08 | — | taxi passenger (S1-g) |
 
 Existing `chat` gets a player block of +0.02 (today's value), cooldown 60
-game minutes, repeat scale 0.25; `help` gets +0.12 with a 12-game-hour
-cooldown and repeat scale 0.3 (chosen so that one help from first contact
-moves the helped NPC's group past the warm-greeting threshold, S1-e). A
+game minutes, repeat scale 0.25; `help` gets +0.4 with a 12-game-hour
+cooldown and repeat scale 0.3: one help is meant to count a lot (owner,
+2026-10-18) — from first contact it lifts the helped NPC to ≈ 0.49 and
+that NPC's group standing to ≈ +0.2 (S1-e). A
 type without `cooldownMinutes` has no rate limit; `repeatScale` defaults
 to 1. All numbers are first guesses to tune; tests pin the combinations
 the done-when criteria depend on.
@@ -305,16 +291,18 @@ views.
 
 - **Member regard:** map `Trust[-1]` to [−1, 1] around the first-contact
   value B0: `(t − B0)/B0` below, `(t − B0)/(1 − B0)` above. Harm weighs
-  more than help near the baseline — **owner to confirm** (§10).
+  more than help per unit of trust near the baseline; with `help` at +0.4
+  one help and one hit are of similar size in group standing (owner,
+  2026-10-18: one help ≈ +0.2).
 - **Weight (standing in the group):** how much the other members trust
   member i, `w_i = 0.25 + mean_j Trust_j[i]`, normalised to mean 1 over
   the roster.
 - **Group standing:** over members who know the player only,
   `gs = Σ ŵ_i·r(t_i) / (Σ ŵ_i + K)`, K = 1 (one neutral member's worth of
   prior); 0 when nobody knows the player. Size doesn't dilute it. With
-  S1-b's numbers, one help from first contact gives t = 0.15 + 0.12·0.85 ≈
-  0.25, r ≈ 0.12, gs ≈ +0.06 (equal weights); one hit gives t = 0
-  (clamped), r = −1, gs = −0.5. Computed on demand
+  S1-b's numbers, one help from first contact gives t = 0.15 + 0.4·0.85 =
+  0.49, r = 0.4, gs = +0.2 (equal weights); one hit gives t = 0 (clamped),
+  r = −1, gs = −0.5. A single chat moves gs by only ≈ 0.01. Computed on demand
   (`PlayerStandingCalculator.ForGroup`, pure; `TaleManager` wrapper on the
   logical thread), no cache.
 - **Dialogue props:** `npc.group_standing` and `npc.group_known` (members
@@ -343,7 +331,9 @@ standing.
 
 ## 8. S1-f — Standing level per cluster
 
-- **Inputs per cluster:** `warm(x)` = NPCs with `Trust[-1] ≥ x`;
+- **Inputs per cluster:** `known(x, y)` = NPCs with `Trust[-1] ≥ x`
+  (liked) **or** `≤ y` (feared) — notoriety counts too (owner,
+  2026-10-18);
   `groups(y, k)` = groups with `|gs| ≥ y` and at least k members who know
   the player; S3's favour record and S4's rival groups (0 in S1).
 - **First-guess thresholds** (config, tunable), with hysteresis:
@@ -351,15 +341,16 @@ standing.
   | Level | Enter | Leave |
   |---|---|---|
   | anonymous | default | — |
-  | recognised | `warm(0.30) ≥ 3` | `warm(0.26) < 2` |
+  | recognised | `known(0.30, 0.05) ≥ 3` | `known(0.26, 0.08) < 2` |
   | connected | `groups(0.15, 2) ≥ 1` (positive or negative) | `groups(0.10, 2) == 0` |
   | entangled | favours in ≥ 2 directions and standing with ≥ 2 rival groups | either below 1 |
 
   Entangled is unreachable in S1 by construction; a test asserts it.
-  With K = 1, n members at regard r give gs = n·r/(n+1), so positive
-  "connected" needs about two helps (12 game hours apart) on each of two
-  members, while one hit with a witness reaches negative "connected" —
-  consistent with harm weighing more (§10 Q2); tests use those cases. The
+  With K = 1, n members at regard r give gs = n·r/(n+1): helping two
+  members of a group once each gives ≈ +0.27 (positive "connected"), and
+  one hit with a witness from the same group reaches negative
+  "connected"; tests use those cases. Helping or hitting three NPCs makes
+  the player "recognised". The
   level is the highest entered and not left; with no state (after a load,
   first visit) only enter thresholds apply. State is transient, so
   nothing new is saved (roadmap §9.1).
@@ -378,14 +369,15 @@ standing.
 *Done when:* tests pass for the thresholds, hysteresis, negative standing
 counting as connected, per-cluster independence, no-state evaluation and
 unreachable entangled; the props change only on transitions; in the game
-three NPCs at ≥ 0.30 flip the panel to "recognised" within one social tick,
+helping three NPCs (or hitting three) flips the panel to "recognised"
+within one social tick,
 and another cluster shows "anonymous".
 
-## 9. S1-g — Taxi fare and passenger (optional)
+## 9. S1-g — Taxi fare (passenger binding optional)
 
 - **Fare:** on taxi success (`TaxiQuestStrategy.cs:29-33`) add
   `GameState.Cash += 30 + distance/10` — the money source that pay and
-  bribe need. **Owner question** (§10) whether cash is the currency.
+  bribe need. Cash is the currency (owner, 2026-10-18).
 - **Passenger (optional):** bind the passenger to the nearest materialised
   TALE NPC within 30 m of the pickup marker (ties by id), store
   it in `TaxiQuestData` (`PassengerNpcId` plus a `HasPassengerNpc` flag,
@@ -395,17 +387,14 @@ and another cluster shows "anonymous".
 *Done when:* a taxi run raises cash; with the passenger binding, that
 NPC's trust rises; `TaxiQuestData` from old saves still loads.
 
-## 10. Open questions for the owner
+## 10. Owner decisions (2026-10-18)
 
-1. **Old saves (S1-a):** shift old player trust by −0.35 on load (keeps
-   the number of conversations under the old rule), or accept that dev
-   saves keep old values?
-2. **Harm vs help (S1-e):** harm weighs more than help near the baseline
-   (one hit ≈ −0.5 group standing, one help ≈ +0.06). Intended?
-3. **Notoriety (S1-f):** "recognised" counts only NPCs who like the
-   player. Should being widely feared (many NPCs near 0) also count?
-4. **Currency (S1-g):** is `GameState.Cash`, earned by taxi fares, the
-   money for paying and bribing? (Alternative: reuse cubes.)
+1. **Old saves:** no migration; development saves keep their values, new
+   games use the new scale (S1-a).
+2. **Help vs harm:** one help should count a lot — about +0.2 group
+   standing; `help` is +0.4 trust (S1-b, S1-e).
+3. **Notoriety:** being feared counts towards "recognised" (S1-f).
+4. **Currency:** `GameState.Cash`, earned by taxi fares (S1-g).
 
 ## 11. Risks
 
