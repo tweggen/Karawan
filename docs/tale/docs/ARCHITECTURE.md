@@ -355,6 +355,7 @@ TALE `Location`s: homes, workplaces, shops, venues and street junctions.
 | `Scenario*` | `bake/` | Phase D bake and apply. |
 | `TaleModule`, `TaleNarrationBindings`, `GroupNameGenerator` | `nogameCode/nogame/modules/tale/` | Game wiring, persistence, narration props. |
 | `TaleSpawnOperator`, `TaleEntityStrategy`, `NavMeshRouteGenerator`, `TaleConversationBehavior` | `nogameCode/nogame/characters/citizen/` | Materialisation and in-game behaviour. |
+| `TaleOverlayText`, `TaleOverlayModule` | `TaleOverlayText.cs`, `nogameCode/nogame/modules/debugger/` | Per-NPC debug overlay (§13). |
 
 ## 12. Testing
 
@@ -363,3 +364,22 @@ TestRunner runs them against a fixed DES world. Commands and tiers are in
 [PROCESS_TALE.md](PROCESS_TALE.md). The phase-5 and Phase C scripts currently
 assert nothing (KAR-433). Unit tests for the engine parts are in
 `tests/JoyceCode.Tests/engine/tale/`.
+
+## 13. Observability
+
+**Per-NPC overlay** (S0 W7, KAR-449). Set the property `debug.tale.overlay`
+(F12 → Config → Props) and every materialised TALE NPC carries a label,
+visible within 40 m:
+
+```
+role | storylet [T2]
+g{id} {group name} | trust {Trust[-1]}
+```
+
+`[T2]` marks a Tier-2 NPC; `trust -` means the NPC has no `Trust[-1]` entry.
+`TaleOverlayModule` (`nogameCode/nogame/modules/debugger/`) refreshes the
+labels twice a second on the logical thread from the entities that carry
+`TaleNpcId`. It keeps its own npcId → label map and deletes a label once its
+NPC entity is gone, because the death paths do not delete children. With the
+property off, no label entity exists. The text comes from the pure
+`engine.tale.TaleOverlayText.Format`, tested in `TaleOverlayTextTests`.
