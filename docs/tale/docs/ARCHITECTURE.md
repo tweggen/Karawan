@@ -173,10 +173,23 @@ The live game has no interrupts.
 - **Populate:** `PopulateCluster(clusterDesc, spatialModel, gameNow)` (`:95`)
   runs on cluster completion. It is called from `TaleSpawnOperator.cs:81` and
   `TaleModule.cs:130,501`. It:
-  1. generates the schedules;
-  2. applies a baked scenario (§6.4);
-  3. seeds the group table and overlays saved social snapshots;
-  4. warms the schedules up to the live game clock.
+  1. generates the schedules (each starts at its home's entry position);
+  2. warms them up with exactly **two** `AdvanceNpc` calls per NPC — one
+     at the game clock ± a per-NPC offset of up to 45 min, one at the game
+     clock — not a simulated day;
+  3. applies a baked scenario (§6.4);
+  4. seeds the group table and overlays saved social snapshots.
+
+  After the warm-up a schedule that is not materialised stands still (the
+  background tick is S0 W5, KAR-450).
+- **Advancing:** `AdvanceNpc` is deterministic per NPC: storylet choice,
+  duration, time jitter and street choice draw from sources seeded by
+  (NPC id, schedule step), so the result does not depend on which other
+  NPCs were advanced or in what order. It sets `CurrentWorldPosition` to the
+  location's `EntryPositionFor(NpcId)`, where `PositionAt` puts the NPC.
+  `TaleManager`'s collections are concurrent because spawn workers call it
+  from pool threads; advancing the *same* NPC from two threads at once is
+  still a caller error (S0 W2, KAR-446).
 - **Depopulate:** `DepopulateCluster` (`:275`) would snapshot social state and
   remove the cluster's schedules, but **nothing calls it** (KAR-434).
 
