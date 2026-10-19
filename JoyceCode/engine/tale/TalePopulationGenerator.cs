@@ -100,6 +100,7 @@ public class TalePopulationGenerator
         // Assign location IDs from spatial model (if available)
         int homeLocId, workLocId;
         Vector3 homePos, workPos;
+        Vector3? birthPos = null;
 
         if (spatialModel != null && spatialModel.Locations.Count > 0)
         {
@@ -109,6 +110,11 @@ public class TalePopulationGenerator
             var workLoc = spatialModel.GetLocation(workLocId);
             homePos = homeLoc?.Position ?? Vector3.Zero;
             workPos = workLoc?.Position ?? Vector3.Zero;
+
+            // Stand where AdvanceNpc would put the NPC at this location, so
+            // fragment bucketing agrees with PositionAt from the first poll.
+            if (homeLoc != null && homePos != Vector3.Zero)
+                birthPos = homeLoc.EntryPositionFor(npcId);
 
             // If location lookup failed, fall back to street points
             if (homePos == Vector3.Zero && streetPoints.Count > 0)
@@ -188,7 +194,7 @@ public class TalePopulationGenerator
             WorkplacePosition = workPos,
             CurrentLocationId = homeLocId,
             Properties = properties,
-            CurrentWorldPosition = homePos,
+            CurrentWorldPosition = birthPos ?? homePos,
             Trust = new Dictionary<int, float>(),
             HasPlayerDeviation = false,
             RoutingPreferences = routingPreferences,

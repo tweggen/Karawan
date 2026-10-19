@@ -173,10 +173,23 @@ The live game has no interrupts.
 - **Populate:** `PopulateCluster(clusterDesc, spatialModel, gameNow)` (`:95`)
   runs on cluster completion. It is called from `TaleSpawnOperator.cs:81` and
   `TaleModule.cs:130,501`. It:
-  1. generates the schedules;
-  2. applies a baked scenario (§6.4);
-  3. seeds the group table and overlays saved social snapshots;
-  4. warms the schedules up to the live game clock.
+  1. generates the schedules (each starts at its home's entry position);
+  2. warms them up with exactly **two** `AdvanceNpc` calls per NPC — one
+     at the game clock ± a per-NPC offset of up to 45 min, one at the game
+     clock — not a simulated day;
+  3. applies a baked scenario (§6.4);
+  4. seeds the group table and overlays saved social snapshots.
+
+  After the warm-up a schedule that is not materialised stands still (the
+  background tick is S0 W5, KAR-450).
+- **Advancing:** `AdvanceNpc` is deterministic per NPC: storylet choice,
+  duration, time jitter and street choice draw from sources seeded by
+  (NPC id, schedule step), so the result does not depend on which other
+  NPCs were advanced or in what order. It sets `CurrentWorldPosition` to the
+  location's `EntryPositionFor(NpcId)`, where `PositionAt` puts the NPC.
+  `TaleManager`'s collections are concurrent because spawn workers call it
+  from pool threads; advancing the *same* NPC from two threads at once is
+  still a caller error (S0 W2, KAR-446).
 - **Depopulate:** `DepopulateCluster` (`:275`) would snapshot social state and
   remove the cluster's schedules, but **nothing calls it** (KAR-434).
 
@@ -355,6 +368,7 @@ TALE `Location`s: homes, workplaces, shops, venues and street junctions.
 | `Scenario*` | `bake/` | Phase D bake and apply. |
 | `TaleModule`, `TaleNarrationBindings`, `GroupNameGenerator` | `nogameCode/nogame/modules/tale/` | Game wiring, persistence, narration props. |
 | `TaleSpawnOperator`, `TaleEntityStrategy`, `NavMeshRouteGenerator`, `TaleConversationBehavior` | `nogameCode/nogame/characters/citizen/` | Materialisation and in-game behaviour. |
+| `TaleOverlayText`, `TaleOverlayModule` | `TaleOverlayText.cs`, `nogameCode/nogame/modules/debugger/` | Per-NPC debug overlay (§13). |
 
 ## 12. Testing
 
@@ -363,3 +377,22 @@ TestRunner runs them against a fixed DES world. Commands and tiers are in
 [PROCESS_TALE.md](PROCESS_TALE.md). The phase-5 and Phase C scripts currently
 assert nothing (KAR-433). Unit tests for the engine parts are in
 `tests/JoyceCode.Tests/engine/tale/`.
+
+## 13. Observability
+
+**Per-NPC overlay** (S0 W7, KAR-449). Set the property `debug.tale.overlay`
+(F12 → Config → Props) and every materialised TALE NPC carries a label,
+visible within 40 m:
+
+```
+role | storylet [T2]
+g{id} {group name} | trust {Trust[-1]}
+```
+
+`[T2]` marks a Tier-2 NPC; `trust -` means the NPC has no `Trust[-1]` entry.
+`TaleOverlayModule` (`nogameCode/nogame/modules/debugger/`) refreshes the
+labels twice a second on the logical thread from the entities that carry
+`TaleNpcId`. It keeps its own npcId → label map and deletes a label once its
+NPC entity is gone, because the death paths do not delete children. With the
+property off, no label entity exists. The text comes from the pure
+`engine.tale.TaleOverlayText.Format`, tested in `TaleOverlayTextTests`.
