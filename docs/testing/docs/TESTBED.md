@@ -847,6 +847,14 @@ The testbed compares its output against these targets and:
 
 The checked-in `Testbed/testbed_targets.json` carries looser values than the example above (e.g. `routine_completion_rate` max 1.00, `escalation_first_conflict_day` max 60). It is looked up from `--targets`, then next to the binary, the working directory and `Testbed/`.
 
+`CheckTargets` checks `routine_completion_rate`, `request_fulfillment_rate`, `interrupts_per_day_mean`, `role_completion_rate_min.all_roles`, `property_mean_daily_range`, `escalation_first_conflict_day` and the three graph targets. It skips a metric that is null, such as a fulfilment rate with no requests. `escalation_fraction_at_day_180` is not computed yet.
+
+**Since S0 W6 (KAR-448, 2026-10-19):**
+- The rates are counted rather than hard-coded. `routine_completion_rate` is the share of selections that are the NPC's own routine (normal or resumed). `selections_by_source` breaks the selections down by source.
+- The output has a `social` block: groups and sizes, trust density (the same definition as the bake report's `RelationshipDensity`), strong pairs, intra- and inter-group trust, contact with the player, and churn per day. It comes from `engine.tale.SocialMetricsCalculator`, the same calculator the game's log line and the TALE panel use.
+- The Testbed registers the TALE registries from the game config via `nogame.modules.tale.TaleRegistryLoader`. Without that it crashed in `DesSimulation.SeedNpc`, which needs `RoleRegistry`.
+- The first run, 120 NPCs over 60 days with seed 42, fails its targets. `routine_completion_rate` is 0.75, and about 2,900 interrupts are set per day, because each encounter re-sets a pending interrupt. Every pair has trust (density 1.0). These numbers are for W9 (KAR-452) to baseline, not settled tuning.
+
 ---
 
 ## Automated Iteration with Claude Code

@@ -71,6 +71,18 @@ public class ScenarioCompiler
     /// </summary>
     public Scenario CompileInMemory()
     {
+        var sim = RunSimulation(SimulationDays);
+        return ScenarioExporter.Build(CategoryName, Index, Seed, SimulationDays, sim);
+    }
+
+
+    /// <summary>
+    /// The bake's simulation, run for the given number of days and returned
+    /// instead of exported: synthetic city, synthetic population, real
+    /// storylets. Tests use it to look at a DES run's metrics.
+    /// </summary>
+    public DesSimulation RunSimulation(int days)
+    {
         var spatial = BuildSyntheticSpatialModel(NpcCount, Seed);
         var schedules = BuildSyntheticNpcs(NpcCount, spatial, Seed);
 
@@ -79,9 +91,8 @@ public class ScenarioCompiler
         var sim = new DesSimulation();
         var simStart = new DateTime(2024, 1, 1, 0, 0, 0);
         sim.Initialize(spatial, schedules, library, new NullEventLogger(), simStart, Seed);
-        sim.RunUntil(simStart.AddDays(SimulationDays));
-
-        return ScenarioExporter.Build(CategoryName, Index, Seed, SimulationDays, sim);
+        sim.RunUntil(simStart.AddDays(days));
+        return sim;
     }
 
 

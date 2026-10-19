@@ -165,6 +165,12 @@ public class TestbedMain
 
         var iasset = new AssetImplementation();
         iasset.WithLoader();
+
+        // The DES reads RoleRegistry & co. through I.Get; fill them from the
+        // same config the game uses.
+        nogame.modules.tale.TaleRegistryLoader.Register();
+        nogame.modules.tale.TaleRegistryLoader.LoadFromConfig(I.Get<engine.casette.Loader>());
+
         I.Get<engine.casette.Loader>().InterpretConfig();
 
         Props.Set("nogame.CreateTrees", false);
@@ -402,7 +408,7 @@ public class TestbedMain
         // Compute and emit metrics
         var metrics = sim.Metrics.ComputeFinalMetrics(
             sim.Npcs, sim.Relationships, _days, sim.Encounters.TotalEncounters,
-            sim.Encounters, spatialModel);
+            sim.Encounters, spatialModel, sim.ComputeSocialMetrics());
 
         string runId = $"{DateTime.Now:yyyyMMdd_HHmmss}_seed{_seed}";
         var (pass, warnings) = CheckTargets(metrics);
@@ -686,6 +692,52 @@ public class TestbedMain
             // Check routine_completion_rate
             CheckRange(metrics, "routine_completion_rate", root, warnings, ref pass);
 
+            // Check request_fulfillment_rate (null when no request was emitted)
+            CheckRange(metrics, "request_fulfillment_rate", root, warnings, ref pass);
+
+            // Check interrupts_per_day_mean
+            if (root.TryGetProperty("interrupts_per_day_mean", out var ipd)
+                && metrics.TryGetValue("interrupts_per_day", out var ipdObj)
+                && ipdObj is Dictionary<string, object> ipdDict)
+                CheckMinMax(ipdDict, "mean", ipd, warnings, ref pass);
+
+            // Check every role's completion rate against role_completion_rate_min.all_roles
+            if (root.TryGetProperty("role_completion_rate_min", out var rcr)
+                && rcr.TryGetProperty("all_roles", out var allRoles)
+                && metrics.TryGetValue("role_breakdown", out var rbObj)
+                && rbObj is Dictionary<string, object> roles)
+            {
+                double min = allRoles.GetDouble();
+                foreach (var (role, roleObj) in roles)
+                {
+                    if (roleObj is Dictionary<string, object> rd
+                        && rd.TryGetValue("completion_rate", out var cr) && cr != null
+                        && Convert.ToDouble(cr) < min)
+                    {
+                        warnings.Add($"role {role} completion_rate {Convert.ToDouble(cr):F3} below target minimum {min:F3}");
+                        pass = false;
+                    }
+                }
+            }
+
+            // Check property_mean_daily_range
+            if (root.TryGetProperty("property_mean_daily_range", out var pmdr)
+                && metrics.TryGetValue("properties", out var propsObj)
+                && propsObj is Dictionary<string, object> props)
+            {
+                foreach (var prop in pmdr.EnumerateObject())
+                {
+                    if (props.TryGetValue(prop.Name, out var pObj) && pObj is Dictionary<string, object> pd)
+                        CheckMinMax(pd, "mean_daily_range", prop.Value, warnings, ref pass);
+                }
+            }
+
+            // Check escalation_first_conflict_day
+            if (root.TryGetProperty("escalation_first_conflict_day", out var efc)
+                && metrics.TryGetValue("escalation", out var escObj)
+                && escObj is Dictionary<string, object> esc)
+                CheckMinMax(esc, "first_conflict_day", efc, warnings, ref pass);
+
             // Check graph metrics
             if (metrics.TryGetValue("graph", out var graphObj) && graphObj is Dictionary<string, object> graph)
             {
@@ -710,7 +762,7 @@ public class TestbedMain
         JsonElement root, List<string> warnings, ref bool pass)
     {
         if (!root.TryGetProperty(key, out var target)) return;
-        if (!metrics.TryGetValue(key, out var valueObj)) return;
+        if (!metrics.TryGetValue(key, out var valueObj) || valueObj == null) return;
         double value = Convert.ToDouble(valueObj);
         CheckMinMax(value, key, target, warnings, ref pass);
     }
@@ -719,7 +771,7 @@ public class TestbedMain
     private static void CheckMinMax(Dictionary<string, object> dict, string key,
         JsonElement target, List<string> warnings, ref bool pass)
     {
-        if (!dict.TryGetValue(key, out var valueObj)) return;
+        if (!dict.TryGetValue(key, out var valueObj) || valueObj == null) return;
         double value = Convert.ToDouble(valueObj);
         CheckMinMax(value, key, target, warnings, ref pass);
     }

@@ -365,6 +365,8 @@ TALE `Location`s: homes, workplaces, shops, venues and street junctions.
 | `SpatialModel`, `Location` | `SpatialModel.cs` | TALE view of a cluster. |
 | `IRouteGenerator` | `IRouteGenerator.cs` | Routing seam. |
 | `JsonlEventLogger`, `SimMetrics` | same-named files | DES event log and metrics (Testbed, tests). |
+| `SocialMetricsCalculator`, `SocialMetrics`, `SocialMetricsHistory`, `TrustPair`, `SocialBakeInfo` | `SocialMetrics.cs` | Shared social metrics (§13). |
+| `GroupMatching` | `GroupMatching.cs` | Which old group a new community continues, by overlap; used by re-detection and churn. |
 | `Scenario*` | `bake/` | Phase D bake and apply. |
 | `TaleModule`, `TaleNarrationBindings`, `GroupNameGenerator` | `nogameCode/nogame/modules/tale/` | Game wiring, persistence, narration props. |
 | `TaleSpawnOperator`, `TaleEntityStrategy`, `NavMeshRouteGenerator`, `TaleConversationBehavior` | `nogameCode/nogame/characters/citizen/` | Materialisation and in-game behaviour. |
@@ -379,6 +381,42 @@ assert nothing (KAR-433). Unit tests for the engine parts are in
 `tests/JoyceCode.Tests/engine/tale/`.
 
 ## 13. Observability
+
+**Social metrics** (S0 W6, KAR-448). `SocialMetricsCalculator.Compute`
+(`JoyceCode/engine/tale/SocialMetrics.cs`) is pure and is the one place
+social numbers are computed. Its inputs:
+- NPC–NPC trust pairs: `TrustPair.FromSchedules` in the live game,
+  `FromTracker` in DES. Player trust (`-1`) is never a pair.
+- Group membership, always from `NpcSchedule.GroupId`.
+- Optionally: the group table (types and the schedule/roster mismatch), the
+  bake result, and a `SocialMetricsHistory`.
+
+It reports:
+- Group counts by type, group sizes and the membership share.
+- `GroupTableMismatch`.
+- Known pairs and trust density (the bake report's `RelationshipDensity`).
+- Strong pairs (≥ 0.6, `CommunityDetector`'s threshold).
+- Intra- and inter-group trust, and an inter-group matrix.
+- Who met the player, and their mean `Trust[-1]`.
+- The bake match ratio and coverage.
+- Membership churn and group turnover per day.
+
+Callers:
+- `TaleManager.ComputeSocialMetrics(i)` (logical thread) for a populated
+  cluster. `TaleManager.GetBakeInfo(i)` keeps what `ScenarioApplicator`
+  did at the last populate.
+- `DesSimulation.ComputeSocialMetrics()` for a DES run; the Testbed's
+  `social` block is its `ToDictionary()`.
+- With `debug.category.talemetrics` on, `TaleModule` logs `ToLogLine()`
+  per populated cluster whenever the game date changes.
+
+**Churn** needs to know that a renumbered group is the same group.
+`SocialMetricsHistory` lives on `ClusterSocialState` and is transient:
+not in the save JSON, so a loaded game starts a fresh history. At each day
+roll it keeps the rosters at the start of the day and matches them to
+today's with `GroupMatching.Match`, the rule re-detection uses to keep a
+group's identity. It holds 120 daily samples. DES regroups every 30 days
+and the live game every 2 hours, so their churn numbers do not compare.
 
 **Per-NPC overlay** (S0 W7, KAR-449). Set the property `debug.tale.overlay`
 (F12 → Config → Props) and every materialised TALE NPC carries a label,

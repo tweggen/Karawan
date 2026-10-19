@@ -79,6 +79,12 @@ public class ClusterSocialState
     /// <summary>Snapshots from the last depopulation, keyed by NpcId.</summary>
     public Dictionary<int, NpcSocialSnapshot> Snapshots = new();
 
+    /// <summary>
+    /// Group movement over the last days, for the social metrics (S0 W6).
+    /// Transient: not part of ToJson, so a loaded game starts a fresh history.
+    /// </summary>
+    public SocialMetricsHistory MetricsHistory = new();
+
 
     /// <summary>
     /// Capture one NPC's social state into the snapshot table.

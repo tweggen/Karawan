@@ -253,32 +253,21 @@ public class RuntimeSocialEvolver
         stats.Communities = detection.TotalGroups;
 
         var newTable = new Dictionary<int, RuntimeGroup>();
-        var claimedExisting = new HashSet<int>();
 
-        foreach (var community in detection.Groups)
+        // Find the existing group each community most plausibly continues
+        // (GroupMatching: best member intersection, claimed at most once, the
+        // overlap covering at least half of the existing group's roster).
+        var continues = GroupMatching.Match(
+            detection.Groups.Select(c => (IReadOnlyCollection<int>)c.MemberIds).ToList(),
+            social.Groups.Values.Select(g => (g.GroupId, (IReadOnlyCollection<int>)g.MemberIds)));
+
+        for (int i = 0; i < detection.Groups.Count; i++)
         {
-            // Find the existing group this community most plausibly continues:
-            // best member intersection, claimed at most once, and the overlap
-            // must cover at least half of the existing group's roster.
-            RuntimeGroup bestExisting = null;
-            int bestOverlap = 0;
-            foreach (var existing in social.Groups.Values)
-            {
-                if (claimedExisting.Contains(existing.GroupId)) continue;
-                int overlap = existing.MemberIds.Count(community.MemberIds.Contains);
-                if (overlap > bestOverlap ||
-                    (overlap == bestOverlap && bestExisting != null && existing.GroupId < bestExisting.GroupId))
-                {
-                    bestOverlap = overlap;
-                    bestExisting = existing;
-                }
-            }
-
+            var community = detection.Groups[i];
             RuntimeGroup group;
-            if (bestExisting != null && bestOverlap * 2 >= bestExisting.MemberIds.Count)
+            if (continues[i] != -1)
             {
-                claimedExisting.Add(bestExisting.GroupId);
-                group = bestExisting;
+                group = social.Groups[continues[i]];
                 group.Type = community.Type;
                 group.MemberIds = new List<int>(community.MemberIds);
                 stats.KeptIdentity++;

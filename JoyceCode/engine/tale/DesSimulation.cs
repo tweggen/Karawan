@@ -36,6 +36,7 @@ public class DesSimulation
     private DateTime _startTime;
     private Random _rng;
     private int _lastGroupDetectionDay;
+    private SocialMetricsHistory _socialHistory;
 
     // Reusable buffer for property deltas
     private readonly ConcurrentDictionary<string, float> _deltasBuffer = new();
@@ -47,6 +48,7 @@ public class DesSimulation
     public IReadOnlyDictionary<int, NpcSchedule> Npcs => _npcs;
     public GroupDetectionResult LastGroupDetection { get; private set; }
     public InteractionPool InteractionPool => _interactionPool;
+    public SocialMetricsHistory SocialHistory => _socialHistory;
 
     // Trace collection for sampled NPCs
     public record struct TraceEntry(
@@ -92,6 +94,7 @@ public class DesSimulation
         _simSocial = new ClusterSocialState { NextGroupId = 100000 };
         _interactionPool = new InteractionPool();
         _lastGroupDetectionDay = 0;
+        _socialHistory = new SocialMetricsHistory();
 
         _npcs = new Dictionary<int, NpcSchedule>(npcs.Count);
         foreach (var npc in npcs)
@@ -107,6 +110,8 @@ public class DesSimulation
 
             SeedNpc(npc, startTime);
         }
+
+        _socialHistory.Start(startTime, _npcs.Values);
     }
 
 
@@ -137,6 +142,8 @@ public class DesSimulation
                     _metrics.OnGroupDetection(LastGroupDetection, completedDay);
                     _lastGroupDetectionDay = completedDay;
                 }
+
+                _socialHistory.RollDay(nextDayBoundary, _npcs.Values);
 
                 _metrics.OnDayEnd();
                 _encounters.ClearDailyDedup();
@@ -179,6 +186,28 @@ public class DesSimulation
 
         _metrics.OnDayEnd();
         _logger.Flush();
+    }
+
+
+    /// <summary>
+    /// The shared social metrics of this run (S0 W6): trust from the
+    /// RelationshipTracker, membership from the schedules, types from the last
+    /// detection and from verb-formed groups, churn from the day history.
+    /// </summary>
+    public SocialMetrics ComputeSocialMetrics()
+    {
+        var table = new Dictionary<int, RuntimeGroup>();
+        if (LastGroupDetection != null)
+        {
+            foreach (var g in LastGroupDetection.Groups)
+                table[g.GroupId] = new RuntimeGroup { GroupId = g.GroupId, Type = g.Type, MemberIds = g.MemberIds };
+        }
+        foreach (var (id, g) in _simSocial.Groups)
+            table[id] = g;
+
+        return SocialMetricsCalculator.Compute(
+            _npcs.Values.ToList(), TrustPair.FromTracker(_relationships, _npcs.Keys), table,
+            bake: null, history: _socialHistory);
     }
 
 
@@ -238,12 +267,14 @@ public class DesSimulation
 
         // 2. Select next storylet (with interrupt and escalation resolution)
         StoryletDefinition next;
+        SelectionSource source;
 
         // 2a. Handle forced next storylet from conditional postcondition
         if (npc.NextForcedStorylet != null)
         {
             next = _library.GetById(npc.NextForcedStorylet) ?? _storylets.SelectNext(npc, _clock);
             npc.NextForcedStorylet = null;
+            source = SelectionSource.Forced;
         }
         // 2b. Handle pending interrupt
         else if (npc.ArcStack.HasPendingInterrupt)
@@ -262,16 +293,19 @@ public class DesSimulation
                     PropertiesAtPause = new Dictionary<string, float>(npc.Properties)
                 });
                 next = _library.GetById(interruptId) ?? _storylets.SelectNext(npc, _clock);
+                source = SelectionSource.InterruptNest;
             }
             else if (scope == InterruptScope.Replace)
             {
                 // Simply replace current with interrupt (don't pause)
                 next = _library.GetById(interruptId) ?? _storylets.SelectNext(npc, _clock);
+                source = SelectionSource.InterruptReplace;
             }
             else // Cancel
             {
                 // Fall through to normal selection
                 next = _storylets.SelectNext(npc, _clock);
+                source = SelectionSource.Routine;
             }
         }
         // 2c. Resume paused arc if no pending interrupt
@@ -280,12 +314,16 @@ public class DesSimulation
             var resumed = npc.ArcStack.TryPop()!.Value;
             next = _library.GetById(resumed.StoryletId) ?? _storylets.SelectNext(npc, _clock);
             _logger.LogStoryletResumed(npc.NpcId, resumed.StoryletId, day, _clock);
+            source = SelectionSource.Resumed;
         }
         else
         {
             // Normal selection
             next = _storylets.SelectNext(npc, _clock);
+            source = SelectionSource.Routine;
         }
+
+        _metrics.OnSelection(npc.Role, source);
 
         npc.ScheduleStep++;
 
@@ -315,6 +353,7 @@ public class DesSimulation
             _logger.LogRequestEmitted(requestId, npc.NpcId, next.RequestPostcondition.Type,
                 reqLoc, next.RequestPostcondition.Urgency,
                 next.RequestPostcondition.TimeoutMinutes, next.Id, _clock, day);
+            _metrics.OnRequestEmitted(requestId);
         }
 
         // 7. Register presence for encounter detection
@@ -445,7 +484,7 @@ public class DesSimulation
                         schedB.ArcStack.SetInterrupt(defA.Id, scope);
                         _logger.LogInterruptFired(schedB.NpcId, defA.Id, scope.ToString(),
                             schedB.CurrentStorylet, day, encounterTime);
-                        _metrics.OnInterrupt();
+                        _metrics.OnInterrupt(schedB.NpcId, schedB.Role);
                     }
                 }
             }
@@ -470,7 +509,7 @@ public class DesSimulation
                         schedA.ArcStack.SetInterrupt(defB2.Id, scope);
                         _logger.LogInterruptFired(schedA.NpcId, defB2.Id, scope.ToString(),
                             schedA.CurrentStorylet, day, encounterTime);
-                        _metrics.OnInterrupt();
+                        _metrics.OnInterrupt(schedA.NpcId, schedA.Role);
                     }
                 }
             }
@@ -507,6 +546,7 @@ public class DesSimulation
                 if (_interactionPool.ClaimRequest(request.Id, npcId))
                 {
                     _logger.LogRequestClaimed(request.Id, npcId, encounterTime, day);
+                    _metrics.OnRequestFulfilled(request.Id);
                     // Emit fulfillment signal for direct Tier-2 claim
                     int signalId = _interactionPool.EmitSignal(request.Id, "request_fulfilled", npcId, encounterTime);
                     _logger.LogSignalEmitted(signalId, request.Id, "request_fulfilled", npcId, encounterTime, day);
@@ -541,6 +581,7 @@ public class DesSimulation
                 int signalId = _interactionPool.EmitSignal(request.Id, "request_fulfilled",
                     -1, dayBoundary); // -1 = abstract/system source
                 _logger.LogSignalEmitted(signalId, request.Id, "request_fulfilled", -1, dayBoundary, completedDay);
+                _metrics.OnRequestFulfilled(request.Id);
             }
         }
     }

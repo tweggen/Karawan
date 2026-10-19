@@ -408,6 +408,15 @@ numbers are written into this plan.
 
 ## 8. W6 — Shared social metrics
 
+> **Status:** implemented (KAR-448), as planned, with two deviations:
+> - The Testbed crashed before reaching the DES: since the role
+>   abstraction it never registered `RoleRegistry`. The registry
+>   registration and config loading moved out of `TaleModule` into
+>   `nogame.modules.tale.TaleRegistryLoader`, which the Testbed now calls
+>   too.
+> - `interrupts_per_day` counts interrupts *set*, overwrites included;
+>   the applied ones are in `selections_by_source`.
+
 One calculator, used by a test, the panel (W8), the Testbed and the
 in-game log lines.
 
