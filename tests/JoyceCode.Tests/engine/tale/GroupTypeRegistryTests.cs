@@ -151,4 +151,28 @@ public class GroupTypeRegistryTests
         var registry = MakeDefaultRegistry();
         Assert.Equal("unknown", registry.ClassifyGroup(new List<int>(), new Dictionary<int, NpcSchedule>()));
     }
+
+
+    [Fact]
+    public void UnknownRuleType_NeverMatches_AndClassificationFallsThrough()
+    {
+        // property_threshold was removed (KAR-436). A type that still uses it
+        // must not win, even at the highest priority: classification goes on
+        // to the next type that does match.
+        var registry = MakeDefaultRegistry();
+        registry.Add("legacy", new GroupTypeDefinition
+        {
+            Id = "legacy", DisplayName = "Legacy", Priority = 1000,
+            Rules = { new GroupClassificationRule
+                { Type = "property_threshold", Parameters = { ["property"] = 0f, ["value"] = 0.9f } } }
+        });
+        var npcs = ToDict(
+            MakeNpc(1, "drifter", wealth: 0.1f, morality: 0.2f),
+            MakeNpc(2, "hustler", wealth: 0.2f, morality: 0.3f),
+            MakeNpc(3, "drifter", wealth: 0.15f, morality: 0.1f));
+
+        Assert.Equal("criminal", registry.ClassifyGroup(npcs.Keys.ToList(), npcs));
+        // Asked twice: still no match (the warning is emitted only once).
+        Assert.Equal("criminal", registry.ClassifyGroup(npcs.Keys.ToList(), npcs));
+    }
 }

@@ -4,7 +4,7 @@ Comprehensive design for abstracting relationship tier system and group classifi
 
 > **Built differently (verified 2026-10-18, KAR-431):**
 > - Both registries shipped **rule-based**, not with pluggable condition classes. `RelationshipTierDefinition` has only `Id`, `DisplayName`, `MinTrust`, `MaxTrust`; `RelationshipTierRegistry.GetTierFromTrust` returns the tier id string, in registration order. `RelationshipTracker.TierFromTrust` is still static.
-> - Group types are `GroupTypeDefinition { Id, DisplayName, Priority, Rules }` with `GroupClassificationRule { Type, Parameters }`; `GroupTypeRegistry` evaluates `authority_threshold`, `property_threshold` and `combined_threshold` in a switch. `IGroupClassificationCondition` and the `*Condition` classes do not exist. `property_threshold` is a marked hack, unused by shipped data (KAR-436). An empty member list classifies as `unknown`.
+> - Group types are `GroupTypeDefinition { Id, DisplayName, Priority, Rules }` with `GroupClassificationRule { Type, Parameters }`; `GroupTypeRegistry` evaluates `authority_threshold` and `combined_threshold` in a switch. `IGroupClassificationCondition` and the `*Condition` classes do not exist. `property_threshold` was removed in KAR-436 (2026-10-19). It needed a string parameter in a float-only dictionary, and no shipped data used it. An unknown rule type now never matches, with one warning per type. An empty member list classifies as `unknown`.
 > - Config: `models/nogame.relationship-tiers.json` at `/relationships/tiers` and `models/nogame.group-types.json` at `/groups/types`, both bare arrays. Shipped tiers: stranger, acquaintance, friend, ally.
 > - Shipped design: [../ARCHITECTURE.md](../ARCHITECTURE.md), [../REFERENCE.md](../REFERENCE.md).
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static engine.Logger;
 
 namespace engine.tale;
 
@@ -101,10 +102,30 @@ public class GroupTypeRegistry : ObjectRegistry<GroupTypeDefinition>
         return rule.Type switch
         {
             "authority_threshold" => EvaluateAuthorityThreshold(rule, stats),
-            "property_threshold" => EvaluatePropertyThreshold(rule, stats),
             "combined_threshold" => EvaluateCombinedThreshold(rule, stats),
-            _ => false
+            _ => _unknownRuleType(rule.Type)
         };
+    }
+
+
+    private static readonly HashSet<string> _warnedRuleTypes = new();
+
+    /**
+     * An unknown rule never matches, so its group type can never be chosen.
+     * Say so once per type instead of silently classifying everything else.
+     * "property_threshold" was removed (KAR-436): it needed a string parameter
+     * in the float-only Parameters dictionary and read the property name from
+     * the first key; no shipped type used it. Use combined_threshold.
+     */
+    private static bool _unknownRuleType(string type)
+    {
+        lock (_warnedRuleTypes)
+        {
+            if (_warnedRuleTypes.Add(type ?? ""))
+                Warning($"GroupTypeRegistry: unknown classification rule type \"{type}\"; the rule never matches. " +
+                        "Known types: authority_threshold, combined_threshold.");
+        }
+        return false;
     }
 
     private bool EvaluateAuthorityThreshold(GroupClassificationRule rule, GroupStatistics stats)
@@ -112,36 +133,6 @@ public class GroupTypeRegistry : ObjectRegistry<GroupTypeDefinition>
         if (!rule.Parameters.TryGetValue("minimum_ratio", out float minRatio))
             return false;
         return stats.AuthorityRatio >= minRatio;
-    }
-
-    private bool EvaluatePropertyThreshold(GroupClassificationRule rule, GroupStatistics stats)
-    {
-        if (!rule.Parameters.TryGetValue("property", out float _))
-            return false; // Should be string, but Parameters is float dict - see below
-
-        var property = rule.Parameters.Keys.FirstOrDefault(); // Hack for string property name
-        if (property == null || !rule.Parameters.TryGetValue("value", out float threshold))
-            return false;
-
-        var @operator = rule.Parameters.ContainsKey("operator") ? (int)rule.Parameters["operator"] : 0;
-        // Operators: 0=less_than, 1=greater_than, 2=equal
-
-        float value = property switch
-        {
-            "wealth" => stats.AverageWealth,
-            "morality" => stats.AverageMorality,
-            "anger" => stats.AverageAnger,
-            "reputation" => stats.AverageReputation,
-            _ => 0f
-        };
-
-        return @operator switch
-        {
-            0 => value < threshold,    // less_than
-            1 => value > threshold,    // greater_than
-            2 => Math.Abs(value - threshold) < 0.01f, // equal
-            _ => false
-        };
     }
 
     private bool EvaluateCombinedThreshold(GroupClassificationRule rule, GroupStatistics stats)
