@@ -76,7 +76,7 @@ public class FleeStrategy : AEntityStrategyPart
         _entity.Remove<engine.behave.components.Behavior>();
         
         var sm = I.Get<SubscriptionManager>();
-        sm.Unsubscribe(EntityStrategy.CrashEventPath(_entity), _onHitEvent);
+        sm.Unsubscribe(EntityStrategy.HitEventPath(_entity), _onHitEvent);
     }
 
     
