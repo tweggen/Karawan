@@ -16,6 +16,11 @@ only the current state and the rules that follow from this history.
 > `CITY-3D-OPEN-POINTS.md`, …) are the authoritative record.
 
 ## Status as of September 7, 2026 (moved from CLAUDE.md)
+- 📏 **NPC commuting re-measured on the shipped city (KAR-435, 2026-10-19)**: new Testbed mode `--measure-population N` runs the game's spatial extraction and population generator on the first 8 of 70 clusters.
+  - Large clusters have 28–78 home buildings (formerly 3) but sit at the 4,095-NPC cap. That is 41–118 residents per home building and up to 159 in one, yet only 0.9–3.0 per storey.
+  - The crowding comes from `AssignLocationByRole` choosing homes uniformly instead of by `Capacity`. Load balancing is still worth doing, as an owner decision, because it moves every home.
+  - New finding: none of the 8 clusters has a `shop` location (only fishmonger `Game2` shops map to it), so merchants work at a random reachable location.
+  - Details: `docs/tale/docs/design/NPC_COMMUTING.md`.
 - ✅ **TALE minor code issues settled (KAR-436, 2026-10-19)**:
   - The `property_threshold` group rule is removed. It read the property name from the first key of a float-only dictionary, and no shipped type used it. An unknown rule type now never matches, with one warning per type instead of failing silently.
   - `InterruptScope.Cancel` stays, documented as kept on purpose: it is handled but never produced, and S2b decides how storylets declare a scope. The parsed claim-trigger `interrupt_scope` is unused for the same reason.
