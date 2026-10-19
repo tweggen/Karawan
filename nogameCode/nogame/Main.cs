@@ -30,6 +30,7 @@ public class Main : AModule
         new SharedModule<engine.quest.QuestTriggeredModule>(),
         new SharedModule<engine.quest.QuestCompletionModule>(),
         new MyModule<nogame.modules.debugger.DebuggerToggle>(),
+        new MyModule<nogame.modules.debugger.TaleOverlayModule>(),
 
     };
 

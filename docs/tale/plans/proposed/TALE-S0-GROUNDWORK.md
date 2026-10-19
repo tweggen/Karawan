@@ -463,6 +463,9 @@ the Testbed JSON has a `social` block, and
 
 ## 9. W7 — Per-NPC debug overlay
 
+> **Status:** implemented (KAR-449). The in-game check is still open. The
+> labels use `|` as separator because the OSD font has no middle dot.
+
 - New `nogameCode/nogame/modules/debugger/TaleOverlayModule.cs`,
   registered next to `DebuggerToggle` (`nogame/Main.cs:32`).
 - A **child label entity** per materialised TALE NPC (an entity holds one
