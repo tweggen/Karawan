@@ -1,16 +1,44 @@
 # NPC Commuting & Population Density Design Challenge
 
-> ⚠️ **Note (2026-10-12): the measurements below predate the Aug–Sep 2026 city rework** (blocks
-> traced over the `BlockGraph` 2-core, one building per piece of buildable land, terrain-following
-> and grade-separated city — see `docs/roadmap/proposed/CITY-3D-OPEN-POINTS.md`). The home counts,
-> diagnostics and open questions here have not been re-measured on the current city; that is open
-> and tracked in KAR-435. Read them as history until then.
-> Since the rework, untagged buildings default to `home` (`SpatialModel.cs:271`) and the quarter
-> generator defaults them to residential (`QuarterGenerator.cs:116-118`), so the "3 homes" premise
-> may no longer hold (verified 2026-10-18, KAR-431).
+## Re-measured on the shipped city (2026-10-19, KAR-435)
+
+Measured at `9d202ac2` with `dotnet run --project Testbed -- --measure-population 8`.
+- The measurement runs the game's own `SpatialModel.ExtractFrom` and `TalePopulationGenerator.Generate`, the two calls `TaleManager.PopulateCluster` makes, on the first eight of 70 clusters of the shipped city: terrain-following, grade-separated, one building per piece of land.
+- The Testbed has no `NavCluster`, so every location counts as pedestrian-reachable. The numbers are an upper bound on what the game's reachability filter leaves.
+
+| # | cluster | size m | buildings | home | office | warehouse | shop | social_venue | street | NPCs | NPCs in a home | per home building | per home storey | most in one home |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | Yelukhdidru | 1000 | 28 | 5 | 4 | 18 | 0 | 1 | 91 | 279 | 269 | 53.8 | 1.6 | 70 |
+| 1 | Ufyo | 3782 | 554 | 53 | 52 | 410 | 0 | 127 | 1578 | 4095 | 3667 | 69.2 | 1.8 | 84 |
+| 2 | Jeeslufa | 3759 | 589 | 29 | 50 | 458 | 0 | 176 | 1565 | 4095 | 3282 | 113.2 | 2.8 | 159 |
+| 3 | Seeeegi | 3789 | 592 | 73 | 96 | 372 | 0 | 164 | 1643 | 4095 | 3198 | 43.8 | 1.3 | 69 |
+| 4 | Uaskeeu | 3764 | 416 | 28 | 49 | 312 | 0 | 103 | 1561 | 4095 | 3311 | 118.3 | 3.0 | 157 |
+| 5 | Ekhgi | 3797 | 579 | 57 | 79 | 414 | 0 | 94 | 1688 | 4095 | 3316 | 58.2 | 1.5 | 83 |
+| 6 | Fofep | 3713 | 550 | 78 | 105 | 323 | 0 | 151 | 1526 | 4095 | 3189 | 40.9 | 0.9 | 66 |
+| 7 | Gokseeosatee | 1041 | 16 | 4 | 4 | 7 | 0 | 9 | 103 | 309 | 259 | 64.8 | 1.6 | 89 |
+
+Column notes:
+- "per home storey" uses `Location.Capacity`, which is the building's storey count (height / 3 m).
+- The remaining NPCs (10–22 %) live at a `street_segment`; drifters and socialites may.
+- Workplaces spread out: the median workplace has 2–4 NPCs and the busiest 17–45. Warehouses take the most workers, then streets.
+
+### Conclusion
+
+1. **The "3 homes" premise is gone for large clusters.** They have 28–78 home buildings, against 3 before the rework.
+   - The two small clusters (≈ 1 km) still have only 4–5 homes for about 280–310 NPCs.
+   - Homes are still a minority: 5–13 % of buildings. Warehouses are 55–78 %, because most buildings are tagged and only untagged ones default to `home`.
+2. **Every large cluster sits at the population cap.** At 3 NPCs per street point, about 1,560 street points ask for about 4,700 NPCs, and `ComputeNpcCount` caps them at 4,095 (the 12-bit NPC index).
+3. **Housing capacity is no longer the problem; distribution is.** Per storey, the load is 0.9–3.0 NPCs, which is plausible for apartment towers. Per building it is 41–118 on average and up to 159 in one home.
+   - The cause is that `AssignLocationByRole` picks a home uniformly at random, ignoring `Capacity`. A low house therefore gets as many residents as a tower, and dozens of NPCs share a door.
+   - Load balancing, i.e. weighting the home choice by `Capacity`, is still worth doing. It is deterministic and cheap, but it changes every NPC's home, so it changes the bake inputs and test baselines. That is the owner's call, which is why this re-measurement does not make the change.
+4. **New: no `shop` locations at all.** Only the fishmonger pass in shopping zones (`GenerateShopsOperator`, `Game2`) produces type `shop`, and none of the eight clusters got one. Drink/Eat shops become `social_venue`. A merchant's workplace (`shop`) therefore falls back to a random reachable location, mostly a street segment.
+
+The historical write-up below (2026-03-23) is kept as history. Its numbers describe the old flat city.
+
+---
 
 **Date:** 2026-03-23
-**Status:** Design phase - no implementation yet
+**Status (2026-03-23):** Design phase - no implementation yet. *Superseded by the 2026-10-19 measurement above.*
 **Owner:** Next Claude instance
 
 ---
