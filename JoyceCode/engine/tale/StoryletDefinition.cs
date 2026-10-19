@@ -103,6 +103,17 @@ public class StoryletDefinition
         return DurationMinutesMin + (float)(rng.NextDouble() * (DurationMinutesMax - DurationMinutesMin));
     }
 
+    /// <summary>
+    /// Duration drawn from a per-NPC source, so the result does not depend
+    /// on how many other NPCs drew before (TaleManager.AdvanceNpc).
+    /// </summary>
+    public float GetDuration(builtin.tools.RandomSource rnd)
+    {
+        if (Math.Abs(DurationMinutesMax - DurationMinutesMin) < 0.1f)
+            return DurationMinutesMin;
+        return DurationMinutesMin + rnd.GetFloat() * (DurationMinutesMax - DurationMinutesMin);
+    }
+
     public StoryletLocationType ResolveLocationType()
     {
         return LocationRef switch
