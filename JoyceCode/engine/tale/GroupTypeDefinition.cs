@@ -29,7 +29,8 @@ public class GroupTypeDefinition
 public class GroupClassificationRule
 {
     /// <summary>
-    /// Rule type: "authority_threshold", "property_threshold", etc.
+    /// Rule type: "authority_threshold" or "combined_threshold"; any other
+    /// type never matches (GroupTypeRegistry warns once per type).
     /// Determines how Parameters are interpreted.
     /// </summary>
     public string Type { get; set; }
@@ -38,7 +39,7 @@ public class GroupClassificationRule
     /// Parameters for the rule (varies by Type).
     /// Examples:
     ///   - authority_threshold: { "minimum_ratio": 0.5 }
-    ///   - property_threshold: { "property": "wealth", "operator": "less_than", "value": 0.3 }
+    ///   - combined_threshold: { "wealth_max": 0.3, "morality_max": 0.4 } (also wealth_min, reputation_min)
     /// </summary>
     public Dictionary<string, float> Parameters { get; set; } = new();
 }

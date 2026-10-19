@@ -335,7 +335,7 @@ TALE `Location`s: homes, workplaces, shops, venues and street junctions.
 | `/roles` | `models/nogame.roles.json` | `RoleRegistry` |
 | `/interactions` | `models/nogame.interactions.json` | `InteractionTypeRegistry` |
 | `/relationships/tiers` | `models/nogame.relationship-tiers.json` | `RelationshipTierRegistry` |
-| `/groups/types` | `models/nogame.group-types.json` | `GroupTypeRegistry` (rule-based: `authority_threshold`, `property_threshold`, `combined_threshold`) |
+| `/groups/types` | `models/nogame.group-types.json` | `GroupTypeRegistry` (rule-based: `authority_threshold`, `combined_threshold`; any other rule type never matches and is warned about once) |
 | `/scenarios` | `models/nogame.scenarios.json` | scenario bake categories |
 | `/resources/list` (`taleStorylet`) | `models/nogame.resources.json` | storylet files |
 

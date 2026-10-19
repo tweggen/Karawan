@@ -843,6 +843,8 @@ The testbed compares its output against these targets and:
 2. Populates the `"warnings"` array with specific violations
 3. Returns exit code 0 (pass) or 1 (fail) — usable in automated loops (CI does not run the testbed)
 
+**Population measurement (KAR-435):** `--measure-population N` skips the DES. It runs the game's `SpatialModel.ExtractFrom` and `TalePopulationGenerator.Generate` on the first N clusters and prints JSON: location counts by type, NPCs, and home/workplace load (distinct locations, NPCs per location, NPCs per home building and per home storey). There is no NavCluster, so every location counts as reachable. Results: `docs/tale/docs/design/NPC_COMMUTING.md`.
+
 The checked-in `Testbed/testbed_targets.json` carries looser values than the example above (e.g. `routine_completion_rate` max 1.00, `escalation_first_conflict_day` max 60). It is looked up from `--targets`, then next to the binary, the working directory and `Testbed/`.
 
 `CheckTargets` checks `routine_completion_rate`, `request_fulfillment_rate`, `interrupts_per_day_mean`, `role_completion_rate_min.all_roles`, `property_mean_daily_range`, `escalation_first_conflict_day` and the three graph targets. It skips a metric that is null, such as a fulfilment rate with no requests. `escalation_fraction_at_day_180` is not computed yet.

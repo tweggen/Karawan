@@ -29,6 +29,7 @@ public class TestbedMain
     private static bool _diagnoseStreets = false;
     private static bool _validateStreets = false;
     private static bool _testPathfinding = false;
+    private static int _measurePopulation = 0;
 
 
     private static string _determineResourcePath()
@@ -113,6 +114,8 @@ public class TestbedMain
                     _validateStreets = true; break;
                 case "--test-pathfinding":
                     _testPathfinding = true; break;
+                case "--measure-population" when i + 1 < args.Length:
+                    _measurePopulation = int.Parse(args[++i]); break;
                 case "--quiet":
                     _quiet = true; break;
                 default:
@@ -220,6 +223,16 @@ public class TestbedMain
             Log("Failed to generate cluster. Exiting.");
             e.Exit();
             Environment.Exit(1);
+        }
+
+        // If measure-population is set, measure the game's population on the first N clusters
+        if (_measurePopulation > 0)
+        {
+            string json = null;
+            e.TaskMainThread(() => { json = MeasurePopulation(_measurePopulation); }).Wait();
+            Console.Out.WriteLine(json);
+            e.Exit();
+            Environment.Exit(0);
         }
 
         // If diagnose-streets flag is set, run diagnostics instead of simulation
@@ -571,6 +584,78 @@ public class TestbedMain
 
         var jsonOpts = new JsonSerializerOptions { WriteIndented = true };
         File.WriteAllText(_graphFile, JsonSerializer.Serialize(graph, jsonOpts));
+    }
+
+
+    /**
+     * KAR-435: how the game populates the first n clusters - the same
+     * SpatialModel.ExtractFrom and TalePopulationGenerator.Generate that
+     * TaleManager.PopulateCluster uses. No NavCluster here, so every location
+     * counts as pedestrian-reachable: the counts are an upper bound on what the
+     * game's reachability filter leaves.
+     */
+    private static string MeasurePopulation(int n)
+    {
+        var clusters = I.Get<ClusterList>().GetClusterList();
+        var generator = new TalePopulationGenerator();
+        var result = new List<Dictionary<string, object>>();
+
+        foreach (var cluster in clusters.Take(n))
+        {
+            var spatial = SpatialModel.ExtractFrom(cluster);
+            var schedules = generator.Generate(cluster, spatial);
+
+            var byType = spatial.Locations.GroupBy(l => l.Type)
+                .OrderBy(g => g.Key)
+                .ToDictionary(g => g.Key, g => (object)g.Count());
+
+            Dictionary<string, object> Usage(Func<NpcSchedule, int> pick)
+            {
+                var perLocation = schedules.GroupBy(pick).Select(g => (id: g.Key, count: g.Count())).ToList();
+                var byLocType = schedules.GroupBy(s => spatial.GetLocation(pick(s))?.Type ?? "none")
+                    .OrderBy(g => g.Key)
+                    .ToDictionary(g => g.Key, g => (object)g.Count());
+                var counts = perLocation.Select(p => p.count).OrderBy(c => c).ToList();
+                return new Dictionary<string, object>
+                {
+                    ["distinct_locations"] = perLocation.Count,
+                    ["npcs_by_location_type"] = byLocType,
+                    ["max_npcs_per_location"] = counts.Count > 0 ? counts[^1] : 0,
+                    ["median_npcs_per_location"] = counts.Count > 0 ? counts[counts.Count / 2] : 0,
+                    ["top5_npcs_per_location"] = counts.AsEnumerable().Reverse().Take(5).ToList()
+                };
+            }
+
+            var homesOnly = schedules.Where(s => spatial.GetLocation(s.HomeLocationId)?.Type == "home").ToList();
+            int homeLocations = spatial.Locations.Count(l => l.Type == "home");
+
+            result.Add(new Dictionary<string, object>
+            {
+                ["cluster_index"] = cluster.Index,
+                ["name"] = cluster.Name,
+                ["size"] = Math.Round(cluster.Size, 1),
+                ["locations"] = spatial.Locations.Count,
+                ["locations_by_type"] = byType,
+                ["buildings"] = spatial.BuildingCount,
+                ["npcs"] = schedules.Count,
+                ["homes"] = Usage(s => s.HomeLocationId),
+                ["workplaces"] = Usage(s => s.WorkplaceLocationId),
+                ["npcs_living_in_a_home"] = homesOnly.Count,
+                ["npcs_per_home_building"] = homeLocations > 0
+                    ? Math.Round((double)homesOnly.Count / homeLocations, 2) : 0,
+                // Location.Capacity is the building's storey count (height / 3 m)
+                ["home_storeys"] = spatial.Locations.Where(l => l.Type == "home").Sum(l => l.Capacity),
+                ["npcs_per_home_storey"] = spatial.Locations.Where(l => l.Type == "home").Sum(l => l.Capacity) is int st && st > 0
+                    ? Math.Round((double)homesOnly.Count / st, 2) : 0
+            });
+        }
+
+        return JsonSerializer.Serialize(new Dictionary<string, object>
+        {
+            ["measured_clusters"] = result.Count,
+            ["total_clusters"] = clusters.Count,
+            ["clusters"] = result
+        }, new JsonSerializerOptions { WriteIndented = true });
     }
 
 
