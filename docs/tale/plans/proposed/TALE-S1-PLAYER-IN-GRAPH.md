@@ -80,20 +80,20 @@ Line references are from `origin/master` at `ee10f446`.
     leak 0.5 into the next conversation unless special-cased.
 11. **Side finding:** `FleeStrategy` subscribes to `HitEventPath`
     (`FleeStrategy.cs:89`) but unsubscribes from `CrashEventPath` (`:79`),
-    a leaked subscription per flee (confirmed in review; to be filed as a
-    bug).
+    a leaked subscription per flee (confirmed in review; filed as
+    KAR-453).
 
 ## 2. Work packages and order
 
-| W | Package | Needs |
-|---|---|---|
-| S1-a | Player trust baseline: one writer, first contact | S0 W3 |
-| S1-b | Player interaction model (engine) | S1-a |
-| S1-c | Conversations: default chat, `tale.interact`, `tale.pay` | S1-b |
-| S1-d | World actions and witnesses | S1-b |
-| S1-e | Group standing and the greeting | S1-a, S1-b (S1-c/d to show it in play) |
-| S1-f | Standing level per cluster | S1-e, S0 W7/W8 |
-| S1-g | Taxi fare (passenger binding optional) | S1-b |
+| W | Package | Ticket | Needs |
+|---|---|---|---|
+| S1-a | Player trust baseline: one writer, first contact | KAR-454 | S0 W3 |
+| S1-b | Player interaction model (engine) | KAR-455 | S1-a |
+| S1-c | Conversations: default chat, `tale.interact`, `tale.pay` | KAR-456 | S1-b |
+| S1-d | World actions and witnesses | KAR-457 | S1-b |
+| S1-e | Group standing and the greeting | KAR-458 | S1-a, S1-b (S1-c/d to show it in play) |
+| S1-f | Standing level per cluster | KAR-460 | S1-e, S0 W7/W8 |
+| S1-g | Taxi fare (passenger binding optional) | KAR-459 | S1-b |
 
 S1-c, S1-d, S1-e and S1-g can run in parallel after S1-b.
 

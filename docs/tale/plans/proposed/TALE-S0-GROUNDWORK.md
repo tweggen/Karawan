@@ -105,8 +105,8 @@ the packages:
 | W5 | Background tick for Tier-3 schedules | KAR-450 | W2, W3 |
 | W6 | Shared social metrics (incl. Testbed rates) | KAR-448 | — |
 | W7 | Per-NPC debug overlay | KAR-449 | — |
-| W8 | ImGui TALE panel | to file | W6 |
-| W9 | Measurements and baselines | to file | W5, W6, KAR-435; W8 for the live readout |
+| W8 | ImGui TALE panel | KAR-451 | W6 |
+| W9 | Measurements and baselines | KAR-452 | W5, W6, KAR-435; W8 for the live readout |
 | — | Re-measure NPC commuting | KAR-435 | — |
 
 W1, W2, W6, W7 and KAR-435 can start in parallel. The critical path is
