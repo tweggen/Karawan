@@ -3,6 +3,14 @@ using System.Collections.Generic;
 
 namespace engine.tale;
 
+/// <summary>
+/// How an interrupt treats the storylet it interrupts. DES produces only Nest
+/// and Replace (InterruptPriority >= 8 ? Replace : Nest). Cancel is handled
+/// (DesSimulation falls through to normal selection) but never produced, and is
+/// kept on purpose: S2b, which ports interrupts to the live game, decides how
+/// storylets declare their scope (KAR-436). The claim trigger's parsed
+/// "interrupt_scope" is unused for the same reason.
+/// </summary>
 public enum InterruptScope { Nest, Replace, Cancel }
 
 /// <summary>
