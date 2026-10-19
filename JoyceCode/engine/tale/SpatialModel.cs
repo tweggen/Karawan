@@ -66,6 +66,7 @@ public class SpatialModel
     public int StreetPointCount;
 
     private Dictionary<int, Location> _locationsById;
+    private List<Location> _streetLocations;
     private const float WalkingSpeedMetersPerMinute = 75f; // ~4.5 km/h
 
     // Single source of truth for "a pedestrian lane counts as within reach".
@@ -75,9 +76,29 @@ public class SpatialModel
 
     public void BuildIndex()
     {
-        _locationsById = new Dictionary<int, Location>(Locations.Count);
+        var byId = new Dictionary<int, Location>(Locations.Count);
+        var streets = new List<Location>();
         foreach (var loc in Locations)
-            _locationsById[loc.Id] = loc;
+        {
+            byId[loc.Id] = loc;
+            if (loc.Type == "street_segment") streets.Add(loc);
+        }
+        _streetLocations = streets;
+        _locationsById = byId;
+    }
+
+
+    /// <summary>
+    /// All street_segment locations, in Locations order. Built with the id
+    /// index; like it, call BuildIndex again after changing Locations.
+    /// </summary>
+    public IReadOnlyList<Location> StreetLocations
+    {
+        get
+        {
+            if (_streetLocations == null) BuildIndex();
+            return _streetLocations;
+        }
     }
 
 
