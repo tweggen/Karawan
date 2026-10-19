@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using engine.joyce;
 using engine.world;
 using static engine.Logger;
@@ -644,13 +645,51 @@ public class TaleManager
         _schedules[schedule.NpcId] = schedule;
 
         if (schedule.HasPlayerDeviation)
-        {
-            _deviationSkipMasks.AddOrUpdate(schedule.ClusterIndex,
-                _ => new HashSet<int> { schedule.NpcIndex },
-                (_, mask) => mask.Contains(schedule.NpcIndex)
-                    ? mask
-                    : new HashSet<int>(mask) { schedule.NpcIndex });
-        }
+            _addToSkipMask(schedule);
+    }
+
+
+    private void _addToSkipMask(NpcSchedule schedule)
+    {
+        _deviationSkipMasks.AddOrUpdate(schedule.ClusterIndex,
+            _ => new HashSet<int> { schedule.NpcIndex },
+            (_, mask) => mask.Contains(schedule.NpcIndex)
+                ? mask
+                : new HashSet<int>(mask) { schedule.NpcIndex });
+    }
+
+
+    /// <summary>
+    /// TALE S0 W3: the one place that marks an NPC as touched by the player.
+    /// Call it whenever Trust[-1] or a player_fact.* is written. It sets
+    /// HasPlayerDeviation, so the save includes the NPC, and puts the NPC into
+    /// its cluster's skip mask, so a repopulation cannot regenerate the same
+    /// NpcId over it.
+    /// </summary>
+    public void MarkPlayerContact(NpcSchedule schedule)
+    {
+        if (schedule == null) return;
+        schedule.HasPlayerDeviation = true;
+        _addToSkipMask(schedule);
+    }
+
+
+    private int _unflaggedPlayerContacts;
+
+    /// <summary>
+    /// How many schedules were found known to the player but not flagged
+    /// (each is warned about and flagged). Nonzero means a writer of Trust[-1]
+    /// or player_fact.* bypassed MarkPlayerContact.
+    /// </summary>
+    public int UnflaggedPlayerContacts => _unflaggedPlayerContacts;
+
+    private void _checkPlayerFlag(NpcSchedule schedule)
+    {
+        if (schedule.HasPlayerDeviation || !schedule.IsKnownToPlayer) return;
+        Interlocked.Increment(ref _unflaggedPlayerContacts);
+        Warning(_dc, $"NPC {schedule.NpcId} is known to the player (Trust[-1] or player_fact.*) "
+                     + "but was never marked; marking it now. Its writer must call MarkPlayerContact.");
+        MarkPlayerContact(schedule);
     }
 
 
@@ -666,7 +705,10 @@ public class TaleManager
     /// <summary>
     /// Get all NPC schedules whose current position falls in the given fragment.
     /// Used by TaleSpawnOperator to decide which NPCs to materialize.
-    /// Uses CurrentWorldPosition if set (NPC has deviated), otherwise falls back to HomePosition.
+    /// Uses CurrentWorldPosition (the current location's entry position, or where
+    /// the entity last stood when it was dematerialised), else HomePosition.
+    /// This is where the NPC is, not which fragment owns its entity: despawn
+    /// follows the owner (TaleEntityOwnership), never this bucket.
     /// </summary>
     public List<NpcSchedule> GetNpcsInFragment(Index3 idxFragment)
     {
@@ -711,6 +753,7 @@ public class TaleManager
         var result = new List<NpcSchedule>();
         foreach (var kvp in _schedules)
         {
+            _checkPlayerFlag(kvp.Value);
             if (kvp.Value.HasPlayerDeviation)
             {
                 result.Add(kvp.Value);
@@ -742,6 +785,33 @@ public class TaleManager
 
 
     /// <summary>
+    /// TALE S0 W3: an NPC's entity is gone (its owner fragment unloaded, or the
+    /// wiper took it). Records where the entity last stood, when known, so the
+    /// NPC is bucketed there, and clears the materialised flag. It never removes
+    /// the schedule: Trust[-1] and player_fact.* survive.
+    /// </summary>
+    public void OnNpcDematerialized(int npcId, Vector3? worldPos)
+    {
+        if (_schedules.TryGetValue(npcId, out var schedule))
+        {
+            if (worldPos.HasValue)
+                schedule.CurrentWorldPosition = worldPos.Value;
+            _checkPlayerFlag(schedule);
+        }
+        _tier2NpcIds.TryRemove(npcId, out _);
+        SetDematerialized(npcId);
+    }
+
+
+    /*
+     * Tier 2 (an entity kept alive with a frozen strategy after despawn) is
+     * unused since S0 W3 (KAR-447): the only path that entered it,
+     * TaleSpawnOperator.TerminateCharacters, never ran, because TALE NPCs are
+     * never despawned by distance. These members stay for a later stage to
+     * remove or revive.
+     */
+
+    /// <summary>
     /// Check if an NPC is currently in Tier 2 (noticed but with frozen strategy).
     /// </summary>
     public bool IsTier2(int npcId) => _tier2NpcIds.ContainsKey(npcId);
@@ -764,23 +834,9 @@ public class TaleManager
     public bool IsScheduleAlive(int npcId) => _schedules.ContainsKey(npcId);
 
     /// <summary>
-    /// Drop an NPC's schedule entirely. Called by the dematerialization decay path
-    /// (TaleSpawnOperator.TerminateCharacters) when an NPC is no longer "remembered"
-    /// (HasPlayerDeviation cleared, or never set, AND no recent conversation).
-    /// The NPC's slot can be re-randomized by future cluster repopulation.
-    /// </summary>
-    public void ForgetSchedule(int npcId)
-    {
-        _schedules.TryRemove(npcId, out _);
-        _tier2NpcIds.TryRemove(npcId, out _);
-    }
-
-
-    /// <summary>
-    /// Default wall-clock window used by the decay path in TaleSpawnOperator
-    /// to decide whether an NPC is still "remembered" at dematerialization time.
-    /// 1800 s = 30 minutes. Other call sites are free to pass their own window
-    /// to <see cref="HasRecentConversation"/>.
+    /// A 30-minute wall-clock window for <see cref="HasRecentConversation"/>.
+    /// Unused since S0 W3 (KAR-447): the decay path that read it, which would
+    /// have forgotten NPCs the player talked to, was dead code and is removed.
     /// </summary>
     public const double ConversationMemorySeconds = 1800.0;
 
@@ -790,9 +846,8 @@ public class TaleManager
     /// initiates a conversation. No-op if NPC unknown.
     ///
     /// This used to double as an anti-spam cooldown; that gate has been removed.
-    /// The timestamp is a memory signal: the dematerialization decay path
-    /// (TaleSpawnOperator.TerminateCharacters) checks it to decide whether to
-    /// preserve the NPC as Tier-2 or drop the schedule as forgettable.
+    /// It is a memory signal only; nothing in the game decides on it since
+    /// S0 W3 removed the decay path.
     /// </summary>
     public void RecordConversation(int npcId)
     {

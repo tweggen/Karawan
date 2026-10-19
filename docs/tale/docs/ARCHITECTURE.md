@@ -46,7 +46,7 @@ community detection (Phase E). The player meets NPCs through conversations
 | `Trust` | `Dictionary<int,float>` keyed by the other NPC's id; the player is key `-1`. |
 | `GroupId` | Faction membership, `-1` = none. |
 | `ArcStack`, `LastEncounterPartnerId`, `NextForcedStorylet` | Interrupt support (DES only, §4). |
-| `HasPlayerDeviation`, `LastConversationTime` | Player engagement; decides whether the NPC survives dematerialisation (§6.3). |
+| `HasPlayerDeviation`, `IsKnownToPlayer`, `LastConversationTime` | Player engagement: a flagged NPC is saved and skip-masked; a schedule the player has touched is never removed (§6.3). `LastConversationTime` decides nothing since S0 W3. |
 | `PreferredTransportationType`, `RoutingPreferences` | Routing inputs for the in-game walker. |
 
 There is no separate narrative-state object. All per-NPC state lives on the
@@ -201,26 +201,44 @@ The live game has no interrupts.
 | 2 | An ECS entity whose `TaleEntityStrategy` is frozen (`EnterTier2Mode`, `TaleEntityStrategy.cs:139`). |
 | 1 | A fully materialised NPC near the player, spawned by `TaleSpawnOperator`. |
 
-**What actually happens (verified 2026-10-18, S0 plan):** TALE entities
-die only when the fragment that created them unloads (`Fragment.RemoveFragmentEntities`,
-by owner) or through the wiper; `TaleSpawnOperator.PurgeFragment` then
-clears the materialised flag for the NPCs whose *schedule position* lies in
-that fragment, which is not always the fragment that owned the entity. The
-schedule itself stays in `TaleManager`, so the NPC returns as Tier 3.
+**Despawn follows the entity (S0 W3, KAR-447).** A TALE entity dies when
+the fragment that created it (its `Owner`) unloads, or through the wiper
+(entities with a behaviour outside the loaded area); TALE NPCs are never
+despawned by distance — `SpawnSystem` counts entities by exact behaviour
+type, the operator registers `IdleBehavior`, and TALE NPCs carry
+`TaleConversationBehavior`, `TaleWalkBehavior` or none, so
+`TerminateCharacters` is never called and is an empty member.
+- `TaleSpawnOperator` keeps an ownership map npcId → (owner fragment,
+  entity) in `engine.tale.TaleEntityOwnership`, written in the entity-setup
+  action together with `InCreation--`.
+- `PurgeFragment(idx)` dematerialises exactly the NPCs whose entity `idx`
+  owns — wherever their schedule now points — and records where each
+  entity stood (`TaleManager.OnNpcDematerialized`). Before W3 it cleared
+  the flag for NPCs whose *schedule position* lay in the fragment, which
+  left NPCs that never respawned or made a second entity for one NPC.
+- Each poll of a fragment drops ownership entries whose entity died while
+  the fragment stays loaded (the wiper), and dematerialises those NPCs.
+- The spawn status reports the NPCs bucketed in the fragment that have a
+  live entity as resident (`SpawnStatus.Dead`), so spawns are queued only
+  for missing NPCs instead of `MinCharacters` no-op spawns every poll.
+- A spawn whose fragment was purged while it was in creation drops its
+  entity at setup instead of leaving an entity no fragment owns.
 
-**Dead code:** `TaleSpawnOperator.TerminateCharacters` (`:430-467`) would
-keep a dematerialising NPC as Tier 2 if `HasPlayerDeviation` is set and the
-player talked to it within `TaleManager.ConversationMemorySeconds` (1800 s),
-and drop other deviated NPCs with `ForgetSchedule`. It is never called:
-`SpawnSystem` counts entities by exact behaviour type, the operator
-registers `IdleBehavior` (`TaleSpawnOperator.cs:57`), and TALE NPCs carry
-`TaleConversationBehavior`, `TaleWalkBehavior` or none, so the count is
-always 0 and no TALE NPC is ever terminated by distance. Tier 2 is
-therefore unreachable in practice. S0 (W3) replaces this. `HasPlayerDeviation` is set only in `TaleModule`:
-- by the narration function `tale.npc.remember` (`:385`);
-- at the end of a conversation script, together with +0.02 player trust
-  (`:767-768`);
-- when a saved game is restored (`:254`, `:678`).
+**The player's NPCs are kept explicitly.** `NpcSchedule.IsKnownToPlayer`
+is `HasPlayerDeviation`, a `Trust[-1]` entry or any `player_fact.*`
+property. Dematerialising never removes a schedule (the 30-minute
+`ForgetSchedule` path is deleted). `TaleManager.MarkPlayerContact` is the
+one place that sets `HasPlayerDeviation`, and it also adds the NPC to its
+cluster's skip mask; `TaleModule` calls it on `tale.npc.remember` and at
+the trust bump at the end of a conversation script, and a saved game's
+schedules are flagged on load (`RegisterNpc`). A schedule found known to
+the player but unflagged (at dematerialisation or when the save collects
+deviated NPCs) is warned about and flagged, so the save cannot miss it.
+
+Tier 2 (a frozen entity kept after despawn) is unused: its only entry was
+the dead `TerminateCharacters` path. `EnterTier2Mode`/`ExitTier2Mode`,
+`IsTier2` and `ConversationMemorySeconds` remain for a later stage to
+remove or revive.
 
 ### 6.4 Social structure
 
