@@ -68,6 +68,12 @@ public class TaleManager
     private readonly object _loSocial = new();
 
     /// <summary>
+    /// What the scenario bake did to each cluster at its last populate (S0 W6).
+    /// Guarded by _loSocial.
+    /// </summary>
+    private readonly Dictionary<int, SocialBakeInfo> _bakeInfo = new();
+
+    /// <summary>
     /// Hook for game-layer group naming (flavor text is game content, not
     /// engine). Args: clusterIndex, groupId, groupType. Null → empty names.
     /// </summary>
@@ -180,6 +186,20 @@ public class TaleManager
                     {
                         var stats = applicator.Apply(scenario, schedules);
                         _buildGroupTable(clusterIndex, stats.Groups);
+                        lock (_loSocial)
+                        {
+                            _bakeInfo[clusterIndex] = new SocialBakeInfo
+                            {
+                                Category = bakeRequest.CategoryName,
+                                Index = bakeRequest.Index,
+                                RealNpcCount = schedules.Count,
+                                ScenarioNpcCount = scenario.NpcCount,
+                                MatchedNpcCount = stats.MatchedNpcCount,
+                                RelationshipsApplied = stats.RelationshipsApplied,
+                                RelationshipsSkipped = stats.RelationshipsSkipped,
+                                GroupsTouched = stats.GroupsTouched
+                            };
+                        }
                         Trace(_dc, $"Applied scenario {bakeRequest.CategoryName}/{bakeRequest.Index} " +
                               $"to cluster {clusterIndex}: matched {stats.MatchedNpcCount}/{schedules.Count} npcs " +
                               $"(unmatched scenario={stats.UnmatchedScenarioRanks}, real={stats.UnmatchedRealNpcs}), " +
@@ -434,6 +454,60 @@ public class TaleManager
                 _socialStates[clusterIndex] = social;
             }
             return social;
+        }
+    }
+
+
+    /// <summary>
+    /// What the scenario bake did to the cluster at its last populate, or null
+    /// when no scenario was applied.
+    /// </summary>
+    public SocialBakeInfo GetBakeInfo(int clusterIndex)
+    {
+        lock (_loSocial)
+        {
+            return _bakeInfo.GetValueOrDefault(clusterIndex);
+        }
+    }
+
+
+    /// <summary>
+    /// The shared social metrics of one populated cluster (S0 W6): trust from
+    /// the schedules, types and mismatch from the group table, the bake result
+    /// and the churn history. Logical thread: it reads the schedules' Trust
+    /// dictionaries, which the social frame mutates there.
+    /// </summary>
+    public SocialMetrics ComputeSocialMetrics(int clusterIndex)
+    {
+        var npcs = GetNpcsInCluster(clusterIndex);
+        Dictionary<int, RuntimeGroup> table = null;
+        SocialMetricsHistory history = null;
+        SocialBakeInfo bake;
+        lock (_loSocial)
+        {
+            if (_socialStates.TryGetValue(clusterIndex, out var social))
+            {
+                table = new Dictionary<int, RuntimeGroup>(social.Groups);
+                history = social.MetricsHistory;
+            }
+            bake = _bakeInfo.GetValueOrDefault(clusterIndex);
+        }
+
+        return SocialMetricsCalculator.Compute(npcs, TrustPair.FromSchedules(npcs), table, bake, history);
+    }
+
+
+    /// <summary>
+    /// A game day ended for this cluster: close its metrics history day.
+    /// Returns the day's sample, or null when this only started the history.
+    /// </summary>
+    public SocialDaySample? RollSocialMetricsDay(int clusterIndex, DateTime gameDate)
+    {
+        var npcs = GetNpcsInCluster(clusterIndex);
+        var social = GetOrCreateSocialState(clusterIndex);
+        lock (_loSocial)
+        {
+            return social.MetricsHistory.RollDay(gameDate, npcs);
         }
     }
 

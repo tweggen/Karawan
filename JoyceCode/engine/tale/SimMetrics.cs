@@ -5,6 +5,23 @@ using System.Linq;
 namespace engine.tale;
 
 /// <summary>
+/// Where a DES storylet selection came from (S0 W6). Routine and Resumed are
+/// the NPC's own routine; the rest were forced on it or interrupted it.
+/// </summary>
+public enum SelectionSource
+{
+    /// <summary>Normal selection, including after a Cancel-scope interrupt.</summary>
+    Routine,
+    /// <summary>A paused storylet popped off the arc stack.</summary>
+    Resumed,
+    /// <summary>A conditional postcondition forced the next storylet.</summary>
+    Forced,
+    InterruptNest,
+    InterruptReplace
+}
+
+
+/// <summary>
 /// Accumulates metrics during DES simulation. After simulation completes,
 /// call ComputeFinalMetrics() to get the result dictionary.
 /// </summary>
@@ -38,6 +55,20 @@ public class MetricsCollector
     public int TotalInterrupts;
     private readonly Dictionary<int, int> _dailyInterruptsByNpc = new();
     private readonly List<int> _dailyInterruptCounts = new();
+
+    // Selection sources (S0 W6): what the completion rates are computed from.
+    private readonly Dictionary<SelectionSource, int> _selectionsBySource = new();
+    private readonly Dictionary<string, (int own, int total)> _selectionsByRole = new();
+    private readonly Dictionary<string, int> _interruptsByRole = new();
+
+    // Requests by id: abstract resolution signals the same request every day,
+    // so fulfilment is a set, not a counter.
+    private readonly HashSet<int> _requestsEmitted = new();
+    private readonly HashSet<int> _requestsFulfilled = new();
+
+    public IReadOnlyDictionary<SelectionSource, int> SelectionsBySource => _selectionsBySource;
+    public int RequestsEmitted => _requestsEmitted.Count;
+    public int RequestsFulfilled => _requestsFulfilled.Count;
 
 
     public void RegisterNpc(string role)
@@ -106,10 +137,61 @@ public class MetricsCollector
         _dailyEncounters.GetValueOrDefault(npcId, 0);
 
 
-    public void OnInterrupt()
+    public static bool IsOwnRoutine(SelectionSource source) =>
+        source is SelectionSource.Routine or SelectionSource.Resumed;
+
+
+    public void OnSelection(string role, SelectionSource source)
+    {
+        _selectionsBySource.TryGetValue(source, out int c);
+        _selectionsBySource[source] = c + 1;
+
+        string key = role.ToLowerInvariant();
+        _selectionsByRole.TryGetValue(key, out var acc);
+        _selectionsByRole[key] = (acc.own + (IsOwnRoutine(source) ? 1 : 0), acc.total + 1);
+    }
+
+
+    /// <summary>An interrupt was set on this NPC.</summary>
+    public void OnInterrupt(int npcId, string role)
     {
         TotalInterrupts++;
+        _dailyInterruptsByNpc.TryGetValue(npcId, out int c);
+        _dailyInterruptsByNpc[npcId] = c + 1;
+
+        string key = role.ToLowerInvariant();
+        _interruptsByRole.TryGetValue(key, out int rc);
+        _interruptsByRole[key] = rc + 1;
     }
+
+
+    public void OnRequestEmitted(int requestId) => _requestsEmitted.Add(requestId);
+
+    public void OnRequestFulfilled(int requestId)
+    {
+        if (_requestsEmitted.Contains(requestId)) _requestsFulfilled.Add(requestId);
+    }
+
+
+    /// <summary>
+    /// Share of all selections that were the NPC's own routine (owner decision
+    /// 2026-10-18); null before the first selection.
+    /// </summary>
+    public double? RoutineCompletionRate
+    {
+        get
+        {
+            int total = _selectionsBySource.Values.Sum();
+            if (total == 0) return null;
+            int own = _selectionsBySource.Where(kv => IsOwnRoutine(kv.Key)).Sum(kv => kv.Value);
+            return (double)own / total;
+        }
+    }
+
+
+    /// <summary>Share of emitted requests that were fulfilled; null when none were emitted.</summary>
+    public double? RequestFulfillmentRate =>
+        _requestsEmitted.Count > 0 ? (double)_requestsFulfilled.Count / _requestsEmitted.Count : null;
 
 
     public void OnDayEnd()
@@ -151,7 +233,8 @@ public class MetricsCollector
         IReadOnlyDictionary<int, NpcSchedule> npcs,
         RelationshipTracker relationships,
         int totalDays, int totalEncounters, EncounterResolver encounterResolver,
-        SpatialModel spatial)
+        SpatialModel spatial,
+        SocialMetrics social = null)
     {
         int npcCount = npcs.Count;
 
@@ -182,12 +265,17 @@ public class MetricsCollector
         foreach (var role in NpcCountByRole.Keys)
         {
             int count = NpcCountByRole.GetValueOrDefault(role, 0);
-            // Completion rate = fraction completed without interruption (no interrupts yet = 1.0)
-            roleBreakdown[role.ToLowerInvariant()] = new Dictionary<string, object>
+            string key = role.ToLowerInvariant();
+            // completion_rate: share of this role's selections that were its own
+            // routine; mean_interrupts: interrupts set per NPC of the role over the run.
+            var (own, total) = _selectionsByRole.GetValueOrDefault(key);
+            roleBreakdown[key] = new Dictionary<string, object>
             {
                 ["count"] = count,
-                ["completion_rate"] = 1.0,
-                ["mean_interrupts"] = 0.0
+                ["completion_rate"] = total > 0 ? Math.Round((double)own / total, 3) : null,
+                ["mean_interrupts"] = count > 0
+                    ? Math.Round((double)_interruptsByRole.GetValueOrDefault(key) / count, 3)
+                    : 0.0
             };
         }
 
@@ -239,13 +327,20 @@ public class MetricsCollector
             interruptsPerDay["p95"] = 0;
         }
 
-        return new Dictionary<string, object>
+        var result = new Dictionary<string, object>
         {
-            ["routine_completion_rate"] = 1.0,
+            ["routine_completion_rate"] = RoutineCompletionRate.HasValue
+                ? Math.Round(RoutineCompletionRate.Value, 3) : null,
+            ["selections_by_source"] = Enum.GetValues<SelectionSource>()
+                .ToDictionary(src => src.ToString().ToLowerInvariant(),
+                    src => (object)_selectionsBySource.GetValueOrDefault(src)),
             ["interrupts_per_day"] = interruptsPerDay,
             ["interactions_total"] = totalInteractions,
             ["interactions_by_type"] = InteractionsByType.ToDictionary(kv => kv.Key, kv => (object)kv.Value),
-            ["request_fulfillment_rate"] = 1.0,
+            ["request_fulfillment_rate"] = RequestFulfillmentRate.HasValue
+                ? Math.Round(RequestFulfillmentRate.Value, 3) : null,
+            ["requests_emitted"] = _requestsEmitted.Count,
+            ["requests_fulfilled"] = _requestsFulfilled.Count,
             ["graph"] = new Dictionary<string, object>
             {
                 ["nodes"] = npcCount,
@@ -266,6 +361,11 @@ public class MetricsCollector
             },
             ["location_hotspots"] = hotspots
         };
+
+        if (social != null)
+            result["social"] = social.ToDictionary();
+
+        return result;
     }
 
 

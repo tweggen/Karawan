@@ -508,6 +508,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\CommunityDetector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RuntimeSocialEvolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupActions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupMatching.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupDetector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\JsonlEventLogger.cs" />
@@ -535,6 +536,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RelationshipTierDefinition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RelationshipTierRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupTypeDefinition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\SocialMetrics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupTypeRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\IRouteGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resources.cs" />

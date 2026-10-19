@@ -42,6 +42,8 @@ public class TaleModule : AModule
      */
     private readonly RuntimeSocialEvolver _socialEvolver = new();
     private DateTime _lastSocialTickGameTime = DateTime.MinValue;
+    private DateTime _lastMetricsDate = DateTime.MinValue;
+    private static readonly engine.Dc _dcMetrics = engine.Dc.TaleMetrics;
     private readonly Dictionary<int, DateTime> _lastRedetectGameTime = new();
     private int _socialTickRoundRobin;
 
@@ -334,11 +336,7 @@ public class TaleModule : AModule
                   + $"({library.GetCandidates("worker").Count} candidates for role 'worker').");
 
             // Create and register Role and Interaction registries
-            I.Register<RoleRegistry>(() => new RoleRegistry());
-            I.Register<InteractionTypeRegistry>(() => new InteractionTypeRegistry());
-            I.Register<RelationshipTierRegistry>(() => new RelationshipTierRegistry());
-            I.Register<GroupTypeRegistry>(() => new GroupTypeRegistry());
-            Trace("TALE: RoleRegistry, InteractionTypeRegistry, RelationshipTierRegistry, and GroupTypeRegistry registered.");
+            TaleRegistryLoader.Register();
 
             // TALE-SOCIAL Phase D2: register the runtime scenario library + selector.
             // These are lazy singletons; the library only touches disk when something
@@ -395,89 +393,7 @@ public class TaleModule : AModule
             }
 
             // Load roles and interaction types from config
-            var loader = I.Get<engine.casette.Loader>();
-
-            loader.WhenLoaded("/roles", (path, rolesNode) =>
-            {
-                var registry = I.Get<RoleRegistry>();
-                if (rolesNode is JsonArray rolesArray)
-                {
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    options.Converters.Add(new ValueTupleFloatFloatConverter());
-                    foreach (JsonNode roleNode in rolesArray)
-                    {
-                        var def = JsonSerializer.Deserialize<RoleDefinition>(roleNode.ToJsonString(), options);
-                        if (def != null && !string.IsNullOrEmpty(def.Id))
-                            registry.Add(def.Id, def);
-                        else if (def != null)
-                            Warning($"TALE: Role definition has null or empty Id: {roleNode.ToJsonString()}");
-                    }
-                    Trace($"TALE: Loaded {rolesArray.Count} role definitions.");
-                }
-                else
-                    Warning($"TALE: /roles is not a JsonArray, got {rolesNode?.GetType().Name ?? "null"}");
-            }, 100);
-
-            loader.WhenLoaded("/interactions", (path, interactionsNode) =>
-            {
-                var registry = I.Get<InteractionTypeRegistry>();
-                if (interactionsNode is JsonArray interactionsArray)
-                {
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    foreach (JsonNode typeNode in interactionsArray)
-                    {
-                        var def = JsonSerializer.Deserialize<InteractionTypeDefinition>(typeNode.ToJsonString(), options);
-                        if (def != null && !string.IsNullOrEmpty(def.Id))
-                            registry.Add(def.Id, def);
-                        else if (def != null)
-                            Warning($"TALE: Interaction type has null or empty Id: {typeNode.ToJsonString()}");
-                    }
-                    registry.FinalizeOrder();
-                    Trace($"TALE: Loaded {interactionsArray.Count} interaction type definitions.");
-                }
-                else
-                    Warning($"TALE: /interactions is not a JsonArray, got {interactionsNode?.GetType().Name ?? "null"}");
-            }, 100);
-
-            loader.WhenLoaded("/relationships/tiers", (path, tiersNode) =>
-            {
-                var registry = I.Get<RelationshipTierRegistry>();
-                if (tiersNode is JsonArray tiersArray)
-                {
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    foreach (JsonNode tierNode in tiersArray)
-                    {
-                        var def = JsonSerializer.Deserialize<RelationshipTierDefinition>(tierNode.ToJsonString(), options);
-                        if (def != null && !string.IsNullOrEmpty(def.Id))
-                            registry.Add(def.Id, def);
-                        else if (def != null)
-                            Warning($"TALE: Relationship tier has null or empty Id: {tierNode.ToJsonString()}");
-                    }
-                    Trace($"TALE: Loaded {tiersArray.Count} relationship tier definitions.");
-                }
-                else
-                    Warning($"TALE: /relationships/tiers is not a JsonArray, got {tiersNode?.GetType().Name ?? "null"}");
-            }, 100);
-
-            loader.WhenLoaded("/groups/types", (path, typesNode) =>
-            {
-                var registry = I.Get<GroupTypeRegistry>();
-                if (typesNode is JsonArray typesArray)
-                {
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    foreach (JsonNode typeNode in typesArray)
-                    {
-                        var def = JsonSerializer.Deserialize<GroupTypeDefinition>(typeNode.ToJsonString(), options);
-                        if (def != null && !string.IsNullOrEmpty(def.Id))
-                            registry.Add(def.Id, def);
-                        else if (def != null)
-                            Warning($"TALE: Group type has null or empty Id: {typeNode.ToJsonString()}");
-                    }
-                    Trace($"TALE: Loaded {typesArray.Count} group type definitions.");
-                }
-                else
-                    Warning($"TALE: /groups/types is not a JsonArray, got {typesNode?.GetType().Name ?? "null"}");
-            }, 100);
+            TaleRegistryLoader.LoadFromConfig(I.Get<engine.casette.Loader>());
 
             // Get cluster list for lifecycle events
             _clusterList = I.Get<ClusterList>();
@@ -533,11 +449,37 @@ public class TaleModule : AModule
     /// game time (12.5 real seconds at the default 30-min game day), for one
     /// cluster at a time.
     /// </summary>
+    /**
+     * S0 W6: when the game date changes, close the metrics history day of every
+     * populated cluster and, with debug.category.talemetrics on, log its metrics.
+     */
+    private void _rollSocialMetricsDay(DateTime gameNow)
+    {
+        if (gameNow.Date == _lastMetricsDate) return;
+        _lastMetricsDate = gameNow.Date;
+
+        foreach (int clusterIndex in _taleManager.GetPopulatedClusters())
+        {
+            var sample = _taleManager.RollSocialMetricsDay(clusterIndex, gameNow);
+            if (sample != null && Is(_dcMetrics))
+            {
+                var day = sample.Value;
+                string metrics = _taleManager.ComputeSocialMetrics(clusterIndex).ToLogLine();
+                Trace(_dcMetrics, $"Cluster {clusterIndex} day {day.Date:yyyy-MM-dd}: " +
+                      $"{day.MembershipChanges} membership changes, " +
+                      $"+{day.GroupsCreated}/-{day.GroupsDissolved} groups. {metrics}");
+            }
+        }
+    }
+
+
     private void _onSocialFrame(object sender, float dt)
     {
         var maybeNow = _tryGetGameNow();
         if (maybeNow == null || _taleManager == null) return;
         DateTime gameNow = maybeNow.Value;
+
+        _rollSocialMetricsDay(gameNow);
 
         if (_lastSocialTickGameTime == DateTime.MinValue)
         {
