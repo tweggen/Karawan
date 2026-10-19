@@ -80,6 +80,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\daynite\FogColor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\daynite\Controller.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\debugger\DebuggerToggle.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\debugger\TaleOverlayModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\Gameplay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\GameSetup.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\map\Module.cs" />

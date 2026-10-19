@@ -537,6 +537,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RelationshipTierRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupTypeDefinition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\SocialMetrics.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleOverlayText.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupTypeRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\IRouteGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resources.cs" />

@@ -20,40 +20,48 @@ public class TaleManager
 
     private StoryletLibrary _library;
     private StoryletSelector _selector;
-    private Dictionary<int, SpatialModel> _spatialModels = new();
-    private Random _rng;
+    /*
+     * Spawn workers call AdvanceNpc and the queries below from pool threads
+     * while the logical thread populates, registers and ticks, so every
+     * collection here is concurrent. Sets are ConcurrentDictionary<int, byte>.
+     * This guards the collections, not a single schedule: two threads
+     * advancing the SAME NPC at once is still a caller error.
+     */
+    private readonly ConcurrentDictionary<int, SpatialModel> _spatialModels = new();
 
     /// <summary>
     /// All schedules by NpcId. Includes both generated (primary) and deviated NPCs.
     /// </summary>
-    private Dictionary<int, NpcSchedule> _schedules = new();
+    private readonly ConcurrentDictionary<int, NpcSchedule> _schedules = new();
 
     /// <summary>
     /// Track which clusters are currently populated.
     /// </summary>
-    private HashSet<int> _populatedClusters = new();
+    private readonly ConcurrentDictionary<int, byte> _populatedClusters = new();
 
     /// <summary>
     /// Deviation skip masks per cluster: cluster index → set of NPC indices to skip on regeneration.
+    /// Copy-on-write: a published set is never modified, so readers may hold it.
     /// </summary>
-    private Dictionary<int, HashSet<int>> _deviationSkipMasks = new();
+    private readonly ConcurrentDictionary<int, HashSet<int>> _deviationSkipMasks = new();
 
     /// <summary>
     /// NPC IDs that are currently materialized as Tier 2/1 ECS entities.
     /// </summary>
-    private HashSet<int> _materializedNpcIds = new();
+    private readonly ConcurrentDictionary<int, byte> _materializedNpcIds = new();
 
     /// <summary>
     /// NPC IDs that are currently in Tier 2 (noticed but dematerialized, map icon visible).
     /// These remain in _materializedNpcIds; strategy is frozen.
     /// </summary>
-    private HashSet<int> _tier2NpcIds = new();
+    private readonly ConcurrentDictionary<int, byte> _tier2NpcIds = new();
 
     /// <summary>
-    /// Reusable buffer for property deltas in ApplyPostconditions.
-    /// Uses ConcurrentDictionary for thread-safe concurrent NPC spawning.
+    /// Per-thread buffer for property deltas in ApplyPostconditions. It only
+    /// feeds logging (the deltas are written to npc.Properties directly), and
+    /// one buffer per thread keeps concurrent advances from clearing each other's.
     /// </summary>
-    private readonly ConcurrentDictionary<string, float> _deltasBuffer = new();
+    [ThreadStatic] private static ConcurrentDictionary<string, float> _deltasBuffer;
 
     private readonly TalePopulationGenerator _generator = new();
 
@@ -62,7 +70,7 @@ public class TaleManager
     /// Deliberately NOT cleared on DepopulateCluster — the snapshots carry
     /// evolved trust/groups across populate cycles within a session.
     /// Guarded by _loSocial: AdvanceNpc runs concurrently during spawn
-    /// catch-up (see _deltasBuffer) and later phases mutate the table there.
+    /// catch-up and later phases mutate the table there.
     /// </summary>
     private readonly Dictionary<int, ClusterSocialState> _socialStates = new();
     private readonly object _loSocial = new();
@@ -80,11 +88,14 @@ public class TaleManager
     public Func<int, int, string, string> GroupNameProvider;
 
 
+    /// <summary>
+    /// The seed is unused since S0 W2: AdvanceNpc draws from per-(NPC, step)
+    /// sources, so results don't depend on call order. Kept for callers.
+    /// </summary>
     public void Initialize(StoryletLibrary library, int seed = 42)
     {
         _library = library;
         _selector = new StoryletSelector(library);
-        _rng = new Random(seed);
     }
 
 
@@ -102,7 +113,7 @@ public class TaleManager
     {
         int clusterIndex = clusterDesc.Index;
 
-        if (_populatedClusters.Contains(clusterIndex))
+        if (_populatedClusters.ContainsKey(clusterIndex))
         {
             Trace(_dc, $"Cluster {clusterIndex} already populated, skipping.");
             return;
@@ -154,7 +165,7 @@ public class TaleManager
             DateTime npcTime = gameStartTime.AddMinutes(offsetMinutes);
 
             AdvanceNpc(schedule.NpcId, npcTime);
-            Trace(_dc, $"Advanced NPC {schedule.NpcId} through full cycle (24+ hours) to {npcTime:HH:mm} " +
+            Trace(_dc, $"Warm-up step 1 of 2 for NPC {schedule.NpcId} at {npcTime:HH:mm} " +
                   $"(offset {offsetMinutes:+0;-0} min), now at location {schedule.CurrentLocationId}");
         }
 
@@ -283,7 +294,7 @@ public class TaleManager
                   $"worldPos={s.CurrentWorldPosition} homeLoc={s.HomeLocationId} inTransit={s.IsInTransit}");
         }
 
-        _populatedClusters.Add(clusterIndex);
+        _populatedClusters[clusterIndex] = 0;
     }
 
 
@@ -294,7 +305,7 @@ public class TaleManager
     /// </summary>
     public void DepopulateCluster(int clusterIndex)
     {
-        if (!_populatedClusters.Contains(clusterIndex))
+        if (!_populatedClusters.ContainsKey(clusterIndex))
             return;
 
         var toRemove = new List<int>();
@@ -333,19 +344,19 @@ public class TaleManager
 
         foreach (var npcId in toRemove)
         {
-            _schedules.Remove(npcId);
-            _materializedNpcIds.Remove(npcId);
+            _schedules.TryRemove(npcId, out _);
+            _materializedNpcIds.TryRemove(npcId, out _);
         }
 
-        _populatedClusters.Remove(clusterIndex);
-        _spatialModels.Remove(clusterIndex);
+        _populatedClusters.TryRemove(clusterIndex, out _);
+        _spatialModels.TryRemove(clusterIndex, out _);
     }
 
 
     /// <summary>
     /// Check if a cluster is currently populated.
     /// </summary>
-    public bool IsClusterPopulated(int clusterIndex) => _populatedClusters.Contains(clusterIndex);
+    public bool IsClusterPopulated(int clusterIndex) => _populatedClusters.ContainsKey(clusterIndex);
 
 
     /// <summary>
@@ -354,7 +365,7 @@ public class TaleManager
     /// </summary>
     public List<int> GetPopulatedClusters()
     {
-        var list = _populatedClusters.ToList();
+        var list = _populatedClusters.Keys.ToList();
         list.Sort();
         return list;
     }
@@ -533,7 +544,7 @@ public class TaleManager
     {
         lock (_loSocial)
         {
-            foreach (int clusterIndex in _populatedClusters)
+            foreach (int clusterIndex in _populatedClusters.Keys)
             {
                 if (!_socialStates.TryGetValue(clusterIndex, out var social))
                 {
@@ -634,12 +645,11 @@ public class TaleManager
 
         if (schedule.HasPlayerDeviation)
         {
-            if (!_deviationSkipMasks.TryGetValue(schedule.ClusterIndex, out var mask))
-            {
-                mask = new HashSet<int>();
-                _deviationSkipMasks[schedule.ClusterIndex] = mask;
-            }
-            mask.Add(schedule.NpcIndex);
+            _deviationSkipMasks.AddOrUpdate(schedule.ClusterIndex,
+                _ => new HashSet<int> { schedule.NpcIndex },
+                (_, mask) => mask.Contains(schedule.NpcIndex)
+                    ? mask
+                    : new HashSet<int>(mask) { schedule.NpcIndex });
         }
     }
 
@@ -711,7 +721,8 @@ public class TaleManager
 
 
     /// <summary>
-    /// Get the deviation skip mask for a cluster.
+    /// Get the deviation skip mask for a cluster. The returned set is a
+    /// snapshot: never modify it.
     /// </summary>
     public HashSet<int> GetDeviationSkipMask(int clusterIndex)
     {
@@ -723,27 +734,27 @@ public class TaleManager
 
     #region Materialization Tracking
 
-    public bool IsMaterialized(int npcId) => _materializedNpcIds.Contains(npcId);
+    public bool IsMaterialized(int npcId) => _materializedNpcIds.ContainsKey(npcId);
 
-    public void SetMaterialized(int npcId) => _materializedNpcIds.Add(npcId);
+    public void SetMaterialized(int npcId) => _materializedNpcIds[npcId] = 0;
 
-    public void SetDematerialized(int npcId) => _materializedNpcIds.Remove(npcId);
+    public void SetDematerialized(int npcId) => _materializedNpcIds.TryRemove(npcId, out _);
 
 
     /// <summary>
     /// Check if an NPC is currently in Tier 2 (noticed but with frozen strategy).
     /// </summary>
-    public bool IsTier2(int npcId) => _tier2NpcIds.Contains(npcId);
+    public bool IsTier2(int npcId) => _tier2NpcIds.ContainsKey(npcId);
 
     /// <summary>
     /// Demote an NPC to Tier 2: entity stays alive but strategy is frozen.
     /// </summary>
-    public void SetTier2(int npcId) => _tier2NpcIds.Add(npcId);
+    public void SetTier2(int npcId) => _tier2NpcIds[npcId] = 0;
 
     /// <summary>
     /// Clear Tier 2 flag when promoting back to Tier 1 or destroying.
     /// </summary>
-    public void ClearTier2(int npcId) => _tier2NpcIds.Remove(npcId);
+    public void ClearTier2(int npcId) => _tier2NpcIds.TryRemove(npcId, out _);
 
     /// <summary>
     /// True iff a schedule with this id is still tracked. Cheap guard for callers
@@ -760,8 +771,8 @@ public class TaleManager
     /// </summary>
     public void ForgetSchedule(int npcId)
     {
-        _schedules.Remove(npcId);
-        _tier2NpcIds.Remove(npcId);
+        _schedules.TryRemove(npcId, out _);
+        _tier2NpcIds.TryRemove(npcId, out _);
     }
 
 
@@ -824,6 +835,7 @@ public class TaleManager
         string previousStorylet = npc.CurrentStorylet;
         if (previousStorylet != null)
         {
+            _deltasBuffer ??= new ConcurrentDictionary<string, float>();
             float previousDuration = (float)(npc.CurrentEnd - npc.CurrentStart).TotalMinutes;
             var prevDef = _library.GetById(previousStorylet);
             if (prevDef != null)
@@ -869,8 +881,9 @@ public class TaleManager
             travelMinutes = spatialModel.GetTravelTime(npc.CurrentLocationId, destination);
         }
 
-        // Determine duration
-        float durationMinutes = next.GetDuration(_rng);
+        // Determine duration (per NPC and step, independent of other NPCs)
+        float durationMinutes = next.GetDuration(
+            new builtin.tools.RandomSource(npc.NpcId.ToString() + "-dur-" + npc.ScheduleStep));
 
         // Time randomization: ±5 minutes per NPC per schedule step
         // E.g., worker scheduled to arrive at 8:00 might arrive at 7:55-8:05
@@ -898,12 +911,14 @@ public class TaleManager
         npc.CurrentStart = actualStart;
         npc.CurrentEnd = actualStart + TimeSpan.FromMinutes(durationMinutes);
 
-        // Update current world position from location
+        // Update current world position from location: where this NPC stands
+        // (PositionAt uses the same entry position), so fragment bucketing in
+        // GetNpcsInFragment agrees with where the entity appears.
         if (_spatialModels.TryGetValue(npc.ClusterIndex, out spatialModel) && spatialModel != null)
         {
             var loc = spatialModel.GetLocation(destination);
             if (loc != null)
-                npc.CurrentWorldPosition = loc.Position;
+                npc.CurrentWorldPosition = loc.EntryPositionFor(npc.NpcId);
         }
 
         return next;
@@ -929,6 +944,16 @@ public class TaleManager
         if (!_schedules.TryGetValue(npcId, out var npc)) return Vector3.Zero;
         var spatialModel = _spatialModels.TryGetValue(npc.ClusterIndex, out var model) ? model : null;
         return npc.PositionAt(gameNow, spatialModel);
+    }
+
+
+    /// <summary>
+    /// Test seam: install a cluster's spatial model without PopulateCluster
+    /// (which needs a generated ClusterDesc).
+    /// </summary>
+    internal void SetSpatialModelForTests(int clusterIndex, SpatialModel spatialModel)
+    {
+        _spatialModels[clusterIndex] = spatialModel;
     }
 
 
@@ -1084,10 +1109,12 @@ public class TaleManager
             // CRITICAL: Only pick street locations from the SAME cluster as the NPC
             // Street points are cluster-relative, so mixing clusters causes pathfinding to fail
             // (NavCluster.TryCreateCursor checks AABB containment for both start and end positions)
-            var streetLocations = spatialModel.Locations.FindAll(l => l.Type == "street_segment");
+            var streetLocations = spatialModel.StreetLocations;
             if (streetLocations.Count > 0)
             {
-                int randomIdx = _rng.Next(streetLocations.Count);
+                // ScheduleStep was already incremented for this advance.
+                var streetRng = new builtin.tools.RandomSource(npc.NpcId.ToString() + "-street-" + npc.ScheduleStep);
+                int randomIdx = Math.Min(streetRng.GetInt(streetLocations.Count), streetLocations.Count - 1);
                 return streetLocations[randomIdx].Id;
             }
         }

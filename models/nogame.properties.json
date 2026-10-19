@@ -11,6 +11,7 @@
     "world.CreateStreets": true,
     "world.CreateClusterQuarters": true,
     "debug.options.flatshading": false,
+    "debug.tale.overlay": false,
     "nogame.characters.cube.maxDistance": 400.0,
     "nogame.characters.car3.maxDistance": 800.0,
     "nogame.characters.tram.maxDistance": 1600.0,

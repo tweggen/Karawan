@@ -111,10 +111,10 @@ How each kind of location gets its entry (`ExtractFrom`, `SpatialModel.cs:163`):
   Junctions that exist only to hold up a ramp or bridge deck get no street
   location (`StreetLocationJunctionsOf`, `:150`).
 
-**Known gap:** `TaleManager.AdvanceNpc` sets
-`CurrentWorldPosition = loc.Position` (`TaleManager.cs:832`), which for a
-street location is the junction centre, not the NPC's corner. Only fragment
-bucketing reads it (7E). Tracked in KAR-436.
+`TaleManager.AdvanceNpc` and `TalePopulationGenerator` set
+`CurrentWorldPosition` to `EntryPositionFor(NpcId)`, the NPC's corner, so
+fragment bucketing (7E), its only reader, agrees with `PositionAt` (S0 W2,
+KAR-446; it used to be the junction centre).
 
 ### NpcSchedule.PositionAt
 
