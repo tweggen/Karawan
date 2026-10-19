@@ -14,7 +14,7 @@ Karawan is a C# game engine ("Joyce") and game ("Silicon Desert 2") targeting .N
 3. `docs/testing/docs/` — Testing infrastructure (see `TESTING_STRATEGY.md`)
 4. `docs/main/docs/PROCESS_DOCS.md` — Documentation organization guidelines
 
-**History lives in `docs/main/docs/STATUS-LOG.md`** — the full write-up of every fix, work package and phase (measurements, mutation results, what was found and NOT fixed). This file keeps only the current state and the rules that history taught. When something lands: write the entry there, and add a line here only if it changes the current state or teaches a rule.
+**History lives in `docs/main/docs/STATUS-LOG.md`** — the full write-up of every fix, work package and phase (measurements, mutation results, what was found and NOT fixed). This file keeps only the current state and the rules that history taught. When something lands: write the entry as a new file in `docs/main/docs/status-log.d/` (never edit STATUS-LOG.md in a PR — parallel PRs conflict; see the README there), and add a line here only if it changes the current state or teaches a rule.
 
 ### Current State (as of September 7, 2026)
 

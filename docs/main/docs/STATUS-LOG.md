@@ -5,8 +5,10 @@ The detailed write-ups of fixes, work packages and phases that used to live in
 `CLAUDE.md` — loaded in full by every agent session — stays short and carries
 only the current state and the rules that follow from this history.
 
-> **Status:** living reference — add a new entry at the TOP of the list when a
-> fix or work package lands; put the one-line rule it teaches (if any) into
+> **Status:** living reference. When a fix or work package lands, do NOT edit
+> this file: add the entry as a fragment in `status-log.d/` (see its README);
+> a roll-up PR folds fragments in here, newest at the top. Fragments not yet
+> rolled up are the newest history — read them too. Put the one-line rule it teaches (if any) into
 > `CLAUDE.md`'s "Rules and gotchas".
 >
 > **Reading it:** entries are newest first within each work stream, and several
