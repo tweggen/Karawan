@@ -51,8 +51,11 @@ After implementation completes:
 
 CLAUDE.md is loaded in full by every agent session, so it carries only the
 **current state** and the **rules** — one or two lines each. The full write-up of
-a fix or work package (measurements, what was found and not fixed) goes at the
-top of `docs/main/docs/STATUS-LOG.md`.
+a fix or work package (measurements, what was found and not fixed) goes into
+`docs/main/docs/STATUS-LOG.md` — **as a new fragment file in
+`docs/main/docs/status-log.d/`, never as an edit to STATUS-LOG.md itself**, so
+that parallel PRs cannot conflict. Naming, format and the roll-up are in
+`docs/main/docs/status-log.d/README.md`.
 
 #### b) **Subsystem-specific documentation** — Update design/spec docs for the affected area:
 - If modifying **TALE narrative system**: See `PROCESS_TALE.md` for paths
@@ -226,6 +229,7 @@ Before committing changes, verify:
 - [ ] All requested features implemented and tested
 - [ ] Code follows existing patterns and style
 - [ ] `CLAUDE.md` updated (if applicable)
+- [ ] Status-log fragment added in `docs/main/docs/status-log.d/` (STATUS-LOG.md itself untouched)
 - [ ] Subsystem design/spec docs updated (if applicable)
 - [ ] Test documentation updated (if tests changed)
 - [ ] Other affected documentation updated (search for references)
