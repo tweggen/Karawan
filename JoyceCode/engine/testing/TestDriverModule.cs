@@ -33,6 +33,12 @@ public sealed class TestDriverModule : AModule
 
     public static int? ExitCode { get; private set; }
 
+    /*
+     * One script per process: the game's root module and a host such as
+     * TestRunner may both activate a TestDriverModule.
+     */
+    private static int _started;
+
     public override IEnumerable<IModuleDependency> ModuleDepends()
         => new List<IModuleDependency>();
 
@@ -41,6 +47,12 @@ public sealed class TestDriverModule : AModule
         string scriptPath = _resolveScriptPath();
         if (string.IsNullOrEmpty(scriptPath))
         {
+            return;
+        }
+
+        if (System.Threading.Interlocked.Exchange(ref _started, 1) != 0)
+        {
+            Trace($"TestDriverModule: a test script already runs in this process; not starting '{scriptPath}' again.");
             return;
         }
 

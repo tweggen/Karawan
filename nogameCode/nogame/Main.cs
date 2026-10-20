@@ -31,6 +31,9 @@ public class Main : AModule
         new SharedModule<engine.quest.QuestCompletionModule>(),
         new MyModule<nogame.modules.debugger.DebuggerToggle>(),
         new MyModule<nogame.modules.debugger.TaleOverlayModule>(),
+        // Idle unless JOYCE_TEST_SCRIPT / test.script is set: the tests/run-*.sh
+        // game smoke scripts (KAR-428). TestRunner activates its own instance.
+        new MyModule<engine.testing.TestDriverModule>(),
 
     };
 
