@@ -47,8 +47,34 @@ public class NpcSchedule
     public int LastEncounterPartnerId = -1;
     public string? NextForcedStorylet;
 
-    // Phase 6: Deviation tracking
+    // Phase 6: Deviation tracking. Set only through TaleManager.MarkPlayerContact
+    // (or RegisterNpc for schedules loaded from a save): the save includes only
+    // flagged NPCs, and the flag also puts the NPC into its cluster's skip mask.
     public bool HasPlayerDeviation;
+
+    /// <summary>
+    /// TALE S0 W3: the player has touched this NPC — it is flagged, holds a
+    /// trust value toward the player (Trust[-1]) or remembers a player_fact.*.
+    /// Such a schedule is never removed from TaleManager. Normally equal to
+    /// HasPlayerDeviation; TaleManager warns and flags a schedule where the
+    /// two disagree.
+    /// </summary>
+    public bool IsKnownToPlayer
+    {
+        get
+        {
+            if (HasPlayerDeviation) return true;
+            if (Trust != null && Trust.ContainsKey(-1)) return true;
+            if (Properties != null)
+            {
+                foreach (var key in Properties.Keys)
+                {
+                    if (key.StartsWith("player_fact.", StringComparison.Ordinal)) return true;
+                }
+            }
+            return false;
+        }
+    }
 
     // Phase D: Routing preferences
     /// <summary>
@@ -84,14 +110,14 @@ public class NpcSchedule
     /// UTC timestamp of the last time the player initiated a conversation with this NPC.
     /// DateTime.MinValue = never talked to.
     ///
-    /// Drives the dematerialization decay rule: at TerminateCharacters time, an NPC
-    /// is preserved as Tier-2 only if HasPlayerDeviation is set AND this timestamp
-    /// is within TaleManager.ConversationMemorySeconds. Otherwise the schedule is
-    /// dropped via TaleManager.ForgetSchedule and the slot becomes re-randomizable.
+    /// Read by TaleManager.HasRecentConversation. Nothing in the shipped game
+    /// decides on it any more: the Tier-2 / forget path that used it was dead
+    /// code (TALE NPCs are never despawned by distance) and was removed in
+    /// S0 W3 (KAR-447); an NPC the player knows is never forgotten.
     ///
     /// NOT a cooldown — conversations are not gated on this. Stamped by
     /// TaleManager.RecordConversation (called from Tale*Behavior.OnAction). On
-    /// load, set to UtcNow so saved deviated NPCs aren't immediately aged out.
+    /// load, set to UtcNow.
     /// </summary>
     public DateTime LastConversationTime = DateTime.MinValue;
 

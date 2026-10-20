@@ -145,7 +145,7 @@ The DES built in Phase 0 IS the Tier 3 system. Same code runs in testbed and pro
 ### Tier Transitions
 
 - **3 → 2 → 1 (materialization):** `SpawnController` detects underpopulated visible fragments, `TaleSpawnOperator` looks up existing Tier 3 `NpcSchedule` from `TaleManager` and creates an ECS entity with `TaleEntityStrategy` + visuals.
-- **1 → 2 → 3 (dematerialization):** *As designed* (the rest of this bullet): `SpawnController` detects overpopulated fragments, `TaleSpawnOperator` destroys the ECS entity. **In practice this path never runs** (ARCHITECTURE §6.3): TALE entities die only when their fragment unloads or the wiper removes them, the schedule stays as Tier 3, and nothing is dropped. S0 (W3) replaces it. What happens to the schedule depends on the player (see [Deviation Tracking & Persistence](#deviation-tracking--persistence)): a never-engaged NPC's schedule stays in `TaleManager` as Tier 3; an NPC the player engaged with **and** talked to within the last `TaleManager.ConversationMemorySeconds` (1800 s) is frozen as Tier 2; an engaged NPC the player has not talked to recently is dropped (`ForgetSchedule`), so its slot is regenerated from seed.
+- **1 → 3 (dematerialization):** a TALE entity dies with the fragment that created it, or through the wiper; TALE NPCs are never despawned by distance. `TaleSpawnOperator.PurgeFragment` dematerialises the NPCs whose entity the purged fragment owned and records where they stood; the schedule always stays in `TaleManager` as Tier 3 (ARCHITECTURE §6.3, S0 W3). Tier 2 is unused.
 - Transitions are lossless only for those kept schedules.
 
 ### Cluster Population Lifecycle
@@ -200,8 +200,7 @@ From a single NPC seed, the following are deterministic:
 | State | Player Impact | Persistence | Example |
 |-------|--------------|-------------|---------|
 | **Unobserved / never engaged** | None | Not saved; regenerated from seed | NPC the player never talked to |
-| **Engaged, recent** | `HasPlayerDeviation` set, conversation within 1800 s | Kept as Tier 2 while in range; saved | Player just talked to the NPC |
-| **Engaged, aged out** | `HasPlayerDeviation` set, no recent conversation | Designed to be dropped at dematerialization (`ForgetSchedule`); in practice never reached (ARCHITECTURE §6.3) | Player talked to the NPC long ago |
+| **Known to the player** | `HasPlayerDeviation` set (`Trust[-1]` or a `player_fact.*` written) | Never removed from `TaleManager`; saved; skip-masked so regeneration cannot overwrite it | Player talked to the NPC, at any time |
 
 There is no group or "recursive" propagation: only the NPC the player talked to is marked.
 
@@ -223,10 +222,11 @@ The skip mask prevents duplicates without cascading seed shifts.
 
 ### HasPlayerDeviation Flag
 
-Set only in `nogameCode/nogame/modules/tale/TaleModule.cs`:
+Set only through `TaleManager.MarkPlayerContact` (which also adds the NPC to the skip mask), called from `nogameCode/nogame/modules/tale/TaleModule.cs`:
 - at the end of a conversation script, together with a +0.02 trust step towards the player (`Trust[-1]`);
 - by the narration action `tale.npc.remember`, which stores a `player_fact.<fact>` property;
-- on every schedule loaded from the save (which also counts as a recent conversation, so it is not aged out at once).
+
+and on every schedule loaded from the save (`RegisterNpc`). Any new writer of `Trust[-1]` or `player_fact.*` must call `MarkPlayerContact`; a schedule that is `IsKnownToPlayer` without the flag is warned about and flagged.
 
 Storylet postconditions never set it.
 

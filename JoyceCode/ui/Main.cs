@@ -181,7 +181,10 @@ public class Main
 
                 if (ImGui.Button("Flush"))
                 {
-                    I.Get<MetaGen>().Loader.WorldLoaderReleaseFragments();
+                    // ImGui renders on the render thread; releasing fragments purges
+                    // spawn bookkeeping and entities, which belong to the logical thread.
+                    I.Get<engine.Engine>().QueueMainThreadAction(
+                        () => I.Get<MetaGen>().Loader.WorldLoaderReleaseFragments());
                 }
             }
             

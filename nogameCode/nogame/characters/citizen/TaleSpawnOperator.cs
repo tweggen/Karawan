@@ -33,6 +33,14 @@ public class TaleSpawnOperator : ISpawnOperator
 
     private Dictionary<Index3, SpawnStatus> _mapFragmentStatus = new();
 
+    /*
+     * S0 W3 (KAR-447): which fragment owns each materialised NPC's entity.
+     * The entity dies with that fragment (EntityCreator sets it as Owner),
+     * wherever the NPC has walked since, so despawn follows this map, not the
+     * schedule position. Guarded by _lo; liveness is read on the logical thread.
+     */
+    private TaleEntityOwnership<DefaultEcs.Entity> _ownership = new(e => e.IsAlive);
+
 
     public TaleSpawnOperator(TaleManager taleManager)
     {
@@ -164,10 +172,29 @@ public class TaleSpawnOperator : ISpawnOperator
         var cd = _clusterHeatMap.GetClusterDesc(idxFragment);
         _ensureClusterPopulated(cd);
 
+        /*
+         * Entities the wiper (or anything else) killed while their owner fragment
+         * stays loaded: no purge will come for them, so dematerialise them here.
+         */
+        foreach (var npcId in _ownership.RemoveDeadOwnedBy(idxFragment))
+        {
+            Trace(_dc, $"NPC {npcId}'s entity died while fragment {idxFragment} is loaded; dematerialising.");
+            _taleManager.OnNpcDematerialized(npcId, null);
+        }
+
         var npcsInFragment = _taleManager.GetNpcsInFragment(idxFragment);
         int npcCount = npcsInFragment.Count;
         spawnStatus.MinCharacters = (ushort)npcCount;
         spawnStatus.MaxCharacters = (ushort)npcCount;
+
+        /*
+         * The spawn system never counts TALE entities (it counts IdleBehavior,
+         * which they never carry), so report the ones that stand here as
+         * resident. Together with InCreation this makes the controller queue
+         * spawns only for NPCs that are actually missing. NPCs still in creation
+         * have no ownership entry yet and are counted by InCreation alone.
+         */
+        spawnStatus.Dead = (ushort)_ownership.CountAlive(npcsInFragment.Select(n => n.NpcId));
     }
 
 
@@ -181,19 +208,29 @@ public class TaleSpawnOperator : ISpawnOperator
     }
 
 
+    /**
+     * The fragment unloads and takes the entities it owns with it. Dematerialise
+     * exactly those NPCs, whichever fragment their schedule now points into,
+     * and remember where each entity stood. The loader calls this before it
+     * removes the fragment's entities, so they are still readable here.
+     */
     public void PurgeFragment(in Index3 idxFragment)
     {
+        bool canReadEntities = DefaultEcs.Entity.OkThread == null
+                               || DefaultEcs.Entity.OkThread == System.Threading.Thread.CurrentThread;
         lock (_lo)
         {
-            // Dematerialize all NPCs in this fragment
-            var npcsInFragment = _taleManager.GetNpcsInFragment(idxFragment);
-            foreach (var npc in npcsInFragment)
+            foreach (var (npcId, entity) in _ownership.RemoveOwnedBy(idxFragment))
             {
-                // Clear Tier 2 flag if set (entity will be destroyed)
-                if (_taleManager.IsTier2(npc.NpcId))
-                    _taleManager.ClearTier2(npc.NpcId);
-
-                _taleManager.SetDematerialized(npc.NpcId);
+                Vector3? worldPos = null;
+                if (canReadEntities
+                    && entity.IsAlive
+                    && entity.Has<engine.joyce.components.Transform3ToWorld>())
+                {
+                    worldPos = entity.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
+                }
+                Trace(_dc, $"Fragment {idxFragment} purged; dematerialising NPC {npcId} at {worldPos}.");
+                _taleManager.OnNpcDematerialized(npcId, worldPos);
             }
 
             _mapFragmentStatus.Remove(idxFragment);
@@ -220,7 +257,9 @@ public class TaleSpawnOperator : ISpawnOperator
 
         if (targetNpc == null)
         {
-            // Trace($"TALE SPAWN: No unmaterialized NPC found in fragment {idxFragment}.");
+            // With the resident count (S0 W3) this should be rare: only while an
+            // NPC owned elsewhere has just walked in and the bucket is stale.
+            Trace(_dc, $"No unmaterialized NPC found in fragment {idxFragment}; spawn is a no-op.");
             return () => { };
         }
 
@@ -354,6 +393,21 @@ public class TaleSpawnOperator : ISpawnOperator
 
                 _engine.QueueEntitySetupAction(CharacterCreator.EntityName, e =>
                 {
+                    /*
+                     * The owner fragment was purged while this NPC was in creation:
+                     * it has already removed its entities and would never take this
+                     * one along. Drop it; the NPC respawns wherever it stands.
+                     */
+                    if (!_loader.TryGetFragment(idxFragment, out _))
+                    {
+                        Trace(_dc, $"Fragment {idxFragment} went away while NPC {npcId} was in creation; dropping it.");
+                        e.Disable();
+                        I.Get<HierarchyApi>().Delete(ref e);
+                        _taleManager.SetDematerialized(npcId);
+                        spawnStatus.InCreation--;
+                        return;
+                    }
+
                     creator.CreateLogical(e);
                     CharacterCreator.AddMapIcon(e, schedule.Role);
 
@@ -391,6 +445,12 @@ public class TaleSpawnOperator : ISpawnOperator
                         taleStrategy.SpawnInTravel();
                     }
 
+                    // Ownership and InCreation-- in the same action, so the NPC is
+                    // counted exactly once at every poll (S0 W3).
+                    lock (_lo)
+                    {
+                        _ownership.Record(npcId, idxFragment, e);
+                    }
                     spawnStatus.InCreation--;
                 });
             }
@@ -404,89 +464,16 @@ public class TaleSpawnOperator : ISpawnOperator
     }
 
 
+    /**
+     * Never called for TALE NPCs: the spawn system counts entities by exact
+     * behaviour type, this operator registers IdleBehavior, and TALE NPCs never
+     * carry it, so no fragment is ever "too full". TALE entities die with their
+     * owner fragment (PurgeFragment) or through the wiper (the liveness check in
+     * _findSpawnStatus_nl). The former Tier-2 freeze and 30-minute forget path
+     * here was dead code and was removed in S0 W3 (KAR-447); an NPC the player
+     * knows is never forgotten.
+     */
     public void TerminateCharacters(List<(Index3, DefaultEcs.Entity)> listKills)
     {
-        List<SpawnStatus> listSpawnStatus = new(listKills.Count);
-        List<(Index3 fragment, DefaultEcs.Entity entity)> listToDestroy = new();
-
-        foreach (var kill in listKills)
-        {
-            lock (_lo)
-            {
-                _findSpawnStatus_nl(kill.Item1, out var spawnStatus);
-                listSpawnStatus.Add(spawnStatus);
-                spawnStatus.IsDying++;
-            }
-        }
-
-        // Sync entity positions to schedule before destroying / demoting
-        foreach (var kill in listKills)
-        {
-            var entity = kill.Item2;
-            if (entity.IsAlive
-                && entity.Has<engine.tale.components.TaleNpcId>()
-                && entity.Has<engine.joyce.components.Transform3ToWorld>())
-            {
-                int npcId = entity.Get<engine.tale.components.TaleNpcId>().NpcId;
-                var worldPos = entity.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
-                var schedule = _taleManager.GetSchedule(npcId);
-                if (schedule != null)
-                {
-                    schedule.CurrentWorldPosition = worldPos;
-                    Trace(_dc, $"Synced NPC {npcId} position to {worldPos} before dematerialization.");
-
-                    // Decay-based persistence: only NPCs the player has actually engaged with
-                    // (HasPlayerDeviation set by conversation end or tale.npc.remember) AND
-                    // talked to recently (within ConversationMemorySeconds) survive as Tier-2.
-                    // Older "remembered" NPCs and never-engaged NPCs are dropped — their slot
-                    // can be re-randomized by future cluster repopulation.
-                    bool isRemembered = schedule.HasPlayerDeviation
-                        && _taleManager.HasRecentConversation(npcId, TaleManager.ConversationMemorySeconds);
-
-                    if (isRemembered)
-                    {
-                        _taleManager.SetTier2(npcId);
-                        Trace(_dc, $"Demoting NPC {npcId} to Tier 2 (recent conversation).");
-
-                        // Freeze strategy by entering Tier 2 mode
-                        if (entity.Has<engine.behave.components.Strategy>())
-                        {
-                            var strategy = entity.Get<engine.behave.components.Strategy>().EntityStrategy;
-                            if (strategy is TaleEntityStrategy tes)
-                                tes.EnterTier2Mode();
-                        }
-                        // Skip the destroy path for this entity
-                        continue;
-                    }
-
-                    // Forgettable: drop the schedule so the slot can be re-randomized.
-                    // Only do this if the schedule was previously deviated; non-deviated
-                    // schedules are removed by DepopulateCluster on cluster unload.
-                    if (schedule.HasPlayerDeviation)
-                    {
-                        Trace(_dc, $"NPC {npcId} aged out (no recent conversation), forgetting schedule.");
-                        _taleManager.ForgetSchedule(npcId);
-                    }
-                }
-            }
-
-            // Schedule was missing, never deviated, or aged out: queue for entity destruction
-            listToDestroy.Add(kill);
-        }
-
-        _engine.QueueCleanupAction(() =>
-        {
-            foreach (var kill in listToDestroy)
-            {
-                var entity = kill.entity;
-                entity.Disable();
-                I.Get<HierarchyApi>().Delete(ref entity);
-            }
-
-            foreach (var spawnStatus in listSpawnStatus)
-            {
-                spawnStatus.IsDying--;
-            }
-        });
     }
 }
