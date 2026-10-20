@@ -80,8 +80,8 @@ public static class TaleNarrationBindings
 
             // Trust / relationship props
             schedule.Trust ??= new Dictionary<int, float>();
-            bool hasMetPlayer = schedule.Trust.ContainsKey(-1);
-            float trustForPlayer = schedule.Trust.GetValueOrDefault(-1, 0.5f);
+            bool hasMetPlayer = PlayerTrust.Knows(schedule);
+            float trustForPlayer = PlayerTrust.Get(schedule);
             Props.Set("npc.met_player", hasMetPlayer ? "true" : "false");
             Props.Set("npc.trust_player", trustForPlayer);
             Props.Set("npc.group_id", (float)schedule.GroupId);
