@@ -171,6 +171,28 @@ public class TaleSpawnOperator : ISpawnOperator
         // Ensure cluster is populated on-demand (avoids race with ClusterCompletedEvent)
         var cd = _clusterHeatMap.GetClusterDesc(idxFragment);
         _ensureClusterPopulated(cd);
+        if (cd != null)
+        {
+            // The heat map rounds its cluster extent outwards, so its cluster
+            // may not intersect the fragment strictly; it is resident anyway.
+            _taleManager.Residency.FragmentActive(cd.Index, idxFragment);
+        }
+
+        /*
+         * S0 W4: this fragment keeps every cluster it intersects populated, not
+         * only the heat map's (which picks one), so a border fragment keeps a
+         * neighbour's NPCs too, and a neighbour left earlier is repopulated.
+         * A neighbour not yet generated is populated once it completes, rather
+         * than generating its streets here on the logical thread.
+         */
+        foreach (var cdTouching in _clustersTouching(idxFragment))
+        {
+            _taleManager.Residency.FragmentActive(cdTouching.Index, idxFragment);
+            if (cdTouching == cd || cdTouching.IsCompleted)
+            {
+                _ensureClusterPopulated(cdTouching);
+            }
+        }
 
         /*
          * Entities the wiper (or anything else) killed while their owner fragment
@@ -195,6 +217,21 @@ public class TaleSpawnOperator : ISpawnOperator
          * have no ownership entry yet and are counted by InCreation alone.
          */
         spawnStatus.Dead = (ushort)_ownership.CountAlive(npcsInFragment.Select(n => n.NpcId));
+    }
+
+
+    private static IEnumerable<ClusterDesc> _clustersTouching(Index3 idxFragment)
+    {
+        var aabbFragment = Fragment.GetAABB(idxFragment);
+        foreach (var cd in I.Get<ClusterList>().GetClusterList())
+        {
+            var aabbCluster = cd.AABB;
+            if (aabbCluster.AA.X < aabbFragment.BB.X && aabbFragment.AA.X < aabbCluster.BB.X
+                && aabbCluster.AA.Z < aabbFragment.BB.Z && aabbFragment.AA.Z < aabbCluster.BB.Z)
+            {
+                yield return cd;
+            }
+        }
     }
 
 
@@ -235,6 +272,8 @@ public class TaleSpawnOperator : ISpawnOperator
 
             _mapFragmentStatus.Remove(idxFragment);
         }
+
+        _taleManager.Residency.FragmentPurged(idxFragment, DateTime.UtcNow);
     }
 
 

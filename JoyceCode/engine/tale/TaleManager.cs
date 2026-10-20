@@ -67,6 +67,12 @@ public class TaleManager
     private readonly TalePopulationGenerator _generator = new();
 
     /// <summary>
+    /// Which loaded fragments keep each cluster populated (S0 W4). The spawn
+    /// operator writes it, TaleModule depopulates what it reports as due.
+    /// </summary>
+    public TaleClusterResidency Residency { get; } = new();
+
+    /// <summary>
     /// Per-cluster social state (group table + depopulation snapshots).
     /// Deliberately NOT cleared on DepopulateCluster — the snapshots carry
     /// evolved trust/groups across populate cycles within a session.
@@ -112,13 +118,29 @@ public class TaleManager
     /// </summary>
     public void PopulateCluster(ClusterDesc clusterDesc, SpatialModel spatialModel, DateTime? gameNow = null)
     {
-        int clusterIndex = clusterDesc.Index;
+        PopulateClusterWith(clusterDesc.Index, spatialModel, gameNow,
+            skipMask => _generator.Generate(clusterDesc, spatialModel, skipMask));
+    }
 
+
+    /// <summary>
+    /// PopulateCluster with the schedule generation passed in, so tests can
+    /// populate without a generated ClusterDesc (S0 W4). <paramref name="generate"/>
+    /// gets the cluster's skip mask (may be null) and returns the fresh
+    /// schedules. <paramref name="applyScenario"/>, when given, replaces the
+    /// scenario bake lookup and returns the groups it applied.
+    /// </summary>
+    internal void PopulateClusterWith(
+        int clusterIndex, SpatialModel spatialModel, DateTime? gameNow,
+        Func<HashSet<int>, List<NpcSchedule>> generate,
+        Func<List<NpcSchedule>, IReadOnlyList<bake.ScenarioApplicator.AppliedGroup>> applyScenario = null)
+    {
         if (_populatedClusters.ContainsKey(clusterIndex))
         {
             Trace(_dc, $"Cluster {clusterIndex} already populated, skipping.");
             return;
         }
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         if (spatialModel != null)
         {
@@ -142,7 +164,7 @@ public class TaleManager
         }
 
         _deviationSkipMasks.TryGetValue(clusterIndex, out var skipMask);
-        var schedules = _generator.Generate(clusterDesc, spatialModel, skipMask);
+        var schedules = generate(skipMask);
 
         foreach (var schedule in schedules)
         {
@@ -158,6 +180,11 @@ public class TaleManager
         DateTime gameStartTime = gameNow ?? new DateTime(2000, 1, 1, 0, 0, 0)
             .AddDays(1).AddHours(22).AddMinutes(46);
 
+        // S0 W4: the warm-up fires no group verbs. They would run against the
+        // group table before the snapshot overlay restores GroupId, and on a
+        // first population a group formed here would keep _buildGroupTable
+        // from seeding the bake's groups at all.
+
         foreach (var schedule in schedules)
         {
             // Deterministic per-NPC offset: seed RNG from NpcId
@@ -165,7 +192,7 @@ public class TaleManager
             int offsetMinutes = offsetRng.GetInt(91) - 45; // ±45 minutes: 0-90 becomes -45 to 45
             DateTime npcTime = gameStartTime.AddMinutes(offsetMinutes);
 
-            AdvanceNpc(schedule.NpcId, npcTime);
+            _advanceNpc(schedule.NpcId, npcTime, applyGroupVerbs: false);
             Trace(_dc, $"Warm-up step 1 of 2 for NPC {schedule.NpcId} at {npcTime:HH:mm} " +
                   $"(offset {offsetMinutes:+0;-0} min), now at location {schedule.CurrentLocationId}");
         }
@@ -173,7 +200,7 @@ public class TaleManager
         // Final advance to actual game start time so all transit phases align with spawn time
         foreach (var schedule in schedules)
         {
-            AdvanceNpc(schedule.NpcId, gameStartTime);
+            _advanceNpc(schedule.NpcId, gameStartTime, applyGroupVerbs: false);
         }
 
         // TALE-SOCIAL Phase D3: re-attach a baked scenario's groups, trust edges
@@ -183,7 +210,11 @@ public class TaleManager
         // scenario's settled state, so the cluster starts with realistic
         // post-simulation social structure but staggered storylet timing.
         // Skipped silently if no scenarios are configured (selector returns null).
-        try
+        if (applyScenario != null)
+        {
+            _buildGroupTable(clusterIndex, applyScenario(schedules));
+        }
+        else try
         {
             var selector = I.Get<engine.tale.bake.ScenarioSelector>();
             var library = I.Get<engine.tale.bake.ScenarioLibrary>();
@@ -266,7 +297,8 @@ public class TaleManager
                 inTransit.Add(schedule);
         }
         string distrib = string.Join(", ", fragmentCounts.Select(kv => $"{kv.Key}={kv.Value}"));
-        Trace(_dc, $"Populated cluster {clusterIndex} with {schedules.Count} NPCs. " +
+        Trace(_dc, $"Populated cluster {clusterIndex} with {schedules.Count} NPCs " +
+              $"in {stopwatch.ElapsedMilliseconds} ms. " +
               $"Total schedules now: {_schedules.Count}. Fragment distribution: {distrib}");
         Trace(_dc, $"{inTransit.Count}/{schedules.Count} NPCs in transit at spawn time ({gameStartTime:HH:mm})");
 
@@ -300,9 +332,14 @@ public class TaleManager
 
 
     /// <summary>
-    /// Depopulate a cluster: remove non-deviated schedules (they can be regenerated).
-    /// Deviated NPCs remain in _schedules and their indices stay in the skip mask.
-    /// Also removes the spatial model for this cluster.
+    /// Depopulate a cluster: remove the schedules that can be regenerated.
+    /// An NPC known to the player (IsKnownToPlayer) is kept as the same object
+    /// and put into the cluster's skip mask, so the next PopulateCluster does
+    /// not generate the same NpcId over it. Every NPC's social state is
+    /// snapshotted first and restored on return. Clears the materialised and
+    /// Tier-2 flags of all of the cluster's NPCs and drops its spatial model.
+    /// Called by TaleModule once no fragment of the cluster has been loaded for
+    /// a grace period (S0 W4, TaleClusterResidency), so its entities are gone.
     /// </summary>
     public void DepopulateCluster(int clusterIndex)
     {
@@ -310,9 +347,23 @@ public class TaleManager
             return;
 
         var toRemove = new List<int>();
+        int kept = 0;
         foreach (var kvp in _schedules)
         {
-            if (kvp.Value.ClusterIndex == clusterIndex && !kvp.Value.HasPlayerDeviation)
+            var schedule = kvp.Value;
+            if (schedule.ClusterIndex != clusterIndex) continue;
+
+            _materializedNpcIds.TryRemove(kvp.Key, out _);
+            _tier2NpcIds.TryRemove(kvp.Key, out _);
+
+            _checkPlayerFlag(schedule);
+            if (schedule.IsKnownToPlayer)
+            {
+                // Flagged NPCs normally are in the mask already; make sure.
+                MarkPlayerContact(schedule);
+                kept++;
+            }
+            else
             {
                 toRemove.Add(kvp.Key);
             }
@@ -346,8 +397,9 @@ public class TaleManager
         foreach (var npcId in toRemove)
         {
             _schedules.TryRemove(npcId, out _);
-            _materializedNpcIds.TryRemove(npcId, out _);
         }
+        Trace(_dc, $"Depopulated cluster {clusterIndex}: removed {toRemove.Count} schedules, " +
+              $"kept {kept} known to the player. Total schedules now: {_schedules.Count}.");
 
         _populatedClusters.TryRemove(clusterIndex, out _);
         _spatialModels.TryRemove(clusterIndex, out _);
@@ -411,6 +463,18 @@ public class TaleManager
             {
                 Trace(engine.Dc.TaleSocial, $"Cluster {clusterIndex}: group table already has " +
                       $"{social.Groups.Count} groups (evolved state); not reseeding from bake.");
+                return;
+            }
+
+            /*
+             * S0 W4: a cluster that was depopulated before is a return visit. Its
+             * snapshots restore every NPC's GroupId, so seeding the bake's groups
+             * into an emptied table would list members that belong to no group.
+             */
+            if (social.Snapshots.Count > 0)
+            {
+                Trace(engine.Dc.TaleSocial, $"Cluster {clusterIndex}: snapshots exist (return visit); " +
+                      $"not reseeding the group table from bake.");
                 return;
             }
 
@@ -883,6 +947,10 @@ public class TaleManager
     /// arrive/depart at exact scheduled times — more realistic scheduling variation.
     /// </summary>
     public StoryletDefinition AdvanceNpc(int npcId, DateTime gameNow)
+        => _advanceNpc(npcId, gameNow, applyGroupVerbs: true);
+
+
+    private StoryletDefinition _advanceNpc(int npcId, DateTime gameNow, bool applyGroupVerbs)
     {
         if (!_schedules.TryGetValue(npcId, out var npc)) return null;
 
@@ -900,7 +968,7 @@ public class TaleManager
 
             // TALE-SOCIAL Phase E4: fire the completed storylet's group verb
             // (form/join/leave), e.g. form_gang founding a criminal group.
-            if (prevDef?.GroupAction != null)
+            if (applyGroupVerbs && prevDef?.GroupAction != null)
                 _applyGroupVerb(npc, prevDef.GroupAction, gameNow);
         }
 
