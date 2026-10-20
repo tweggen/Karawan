@@ -297,23 +297,43 @@ public class RuntimeSocialEvolver
 
         // Authored (storylet-formed) groups survive detection even when the
         // trust graph doesn't reproduce them; members not claimed by a
-        // detected community stay in their authored group.
+        // detected community stay in their authored group. A member a
+        // community claimed has left it (KAR-466): the roster keeps only the
+        // members whose GroupId is still this group, and like a storylet
+        // leave (GroupActions) a group of fewer than two dissolves.
         foreach (var existing in social.Groups.Values)
         {
             if (newTable.ContainsKey(existing.GroupId)) continue;
-            if (existing.Authored)
-            {
-                newTable[existing.GroupId] = existing;
-                foreach (int memberId in existing.MemberIds)
-                {
-                    if (npcs.TryGetValue(memberId, out var npc) && npc.GroupId == -1)
-                        npc.GroupId = existing.GroupId;
-                }
-            }
-            else
+            if (!existing.Authored)
             {
                 stats.Dissolved++;
+                continue;
             }
+
+            var kept = new List<int>();
+            foreach (int memberId in existing.MemberIds)
+            {
+                if (!npcs.TryGetValue(memberId, out var npc))
+                {
+                    kept.Add(memberId);
+                    continue;
+                }
+                if (npc.GroupId == -1) npc.GroupId = existing.GroupId;
+                if (npc.GroupId == existing.GroupId) kept.Add(memberId);
+            }
+
+            if (kept.Count < 2)
+            {
+                foreach (int memberId in kept)
+                {
+                    if (npcs.TryGetValue(memberId, out var npc)) npc.GroupId = -1;
+                }
+                stats.Dissolved++;
+                continue;
+            }
+
+            existing.MemberIds = kept;
+            newTable[existing.GroupId] = existing;
         }
 
         social.Groups = newTable;
