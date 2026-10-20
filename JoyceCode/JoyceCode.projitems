@@ -509,7 +509,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RuntimeSocialEvolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupActions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupMatching.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupDetector.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupDetectionResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\JsonlEventLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionRequest.cs" />
