@@ -190,8 +190,25 @@ The live game has no interrupts.
   `TaleSpawnOperator` populates every cluster that a polled fragment
   intersects (a neighbour only once it is generated), not just the heat
   map's.
-  After the warm-up a schedule that is not materialised stands still (the
-  background tick is S0 W5, KAR-450).
+- **Background tick (S0 W5, KAR-450):** schedules no entity runs (Tier 3)
+  of populated clusters keep living their day.
+  `TaleManager.AdvanceAbstractSchedules(now, scanBudget, advanceBudget)`
+  runs every logical frame from `TaleModule._onSocialFrame`, a slice at a
+  time: a cursor walks the clusters' sorted id index (`GetNpcIdsInCluster`)
+  and stops after 512 scanned or 16 advanced. Each schedule steps at the
+  **end of its storylets** (event time), never at or before its previous
+  step (`NpcSchedule.LastAdvanceTime` + 1 min: a short storylet with
+  negative jitter can end before it starts), at most 32 steps; more than a
+  day behind, or at the cap, it resyncs with one step at now. A failed
+  selection backs that NPC off for 10 game minutes. Because each NPC's
+  randomness is per (NPC, step) (W2), the result does not depend on how often
+  the tick runs. `CatchUpCluster` (unbudgeted) runs before each encounter
+  tick, so encounters see current locations. Materialised NPCs are skipped:
+  their entity advances them. Stats (`AbstractTickStats`) are traced once
+  per game hour (TaleManager category). Measured at 4095 NPCs: mean 0.023 ms
+  per slice, p99.9 0.07 ms; the few calls over 1 ms coincide with a gen-0 GC
+  or first-use JIT. Live `AdvanceNpc` rules apply (no forced storylets, arc
+  stack or interrupts until S2b), so properties drift under live rules.
 - **Advancing:** `AdvanceNpc` is deterministic per NPC: storylet choice,
   duration, time jitter and street choice draw from sources seeded by
   (NPC id, schedule step), so the result does not depend on which other
@@ -267,7 +284,8 @@ deviated NPCs) is warned about and flagged, so the save cannot miss it.
 Tier 2 (a frozen entity kept after despawn) is unused: its only entry was
 the dead `TerminateCharacters` path. `EnterTier2Mode`/`ExitTier2Mode`,
 `IsTier2` and `ConversationMemorySeconds` remain for a later stage to
-remove or revive.
+remove or revive. `ExitTier2Mode` advances only if the storylet has ended
+and otherwise resumes travel, so a schedule cannot advance twice (S0 W5).
 
 ### 6.4 Social structure
 

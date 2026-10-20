@@ -36,6 +36,13 @@ public class TaleManager
     private readonly ConcurrentDictionary<int, NpcSchedule> _schedules = new();
 
     /// <summary>
+    /// The NpcIds of each cluster's schedules, ascending (S0 W5), so the
+    /// background tick and the per-cluster queries need not scan every
+    /// schedule. Copy-on-write: a published array is never modified.
+    /// </summary>
+    private readonly ConcurrentDictionary<int, int[]> _clusterNpcIds = new();
+
+    /// <summary>
     /// Track which clusters are currently populated.
     /// </summary>
     private readonly ConcurrentDictionary<int, byte> _populatedClusters = new();
@@ -170,6 +177,7 @@ public class TaleManager
         {
             _schedules[schedule.NpcId] = schedule;
         }
+        _rebuildClusterIndex(clusterIndex);
 
         // Warm up newly generated schedules so NPCs are mid-storylet when the player
         // first encounters them, instead of all parked at their home location. Anchor
@@ -397,7 +405,9 @@ public class TaleManager
         foreach (var npcId in toRemove)
         {
             _schedules.TryRemove(npcId, out _);
+            _advanceBackoff.Remove(npcId);
         }
+        _rebuildClusterIndex(clusterIndex);
         Trace(_dc, $"Depopulated cluster {clusterIndex}: removed {toRemove.Count} schedules, " +
               $"kept {kept} known to the player. Total schedules now: {_schedules.Count}.");
 
@@ -430,12 +440,50 @@ public class TaleManager
     public List<NpcSchedule> GetNpcsInCluster(int clusterIndex)
     {
         var result = new List<NpcSchedule>();
-        foreach (var kvp in _schedules)
+        foreach (int npcId in GetNpcIdsInCluster(clusterIndex))
         {
-            if (kvp.Value.ClusterIndex == clusterIndex)
-                result.Add(kvp.Value);
+            if (_schedules.TryGetValue(npcId, out var schedule))
+                result.Add(schedule);
         }
         return result;
+    }
+
+
+    /// <summary>
+    /// The NpcIds of a cluster's schedules, ascending. The array is a
+    /// snapshot; do not modify it.
+    /// </summary>
+    public IReadOnlyList<int> GetNpcIdsInCluster(int clusterIndex)
+        => _clusterNpcIds.TryGetValue(clusterIndex, out var ids) ? ids : Array.Empty<int>();
+
+
+    private void _rebuildClusterIndex(int clusterIndex)
+    {
+        var ids = new List<int>();
+        foreach (var kvp in _schedules)
+        {
+            if (kvp.Value.ClusterIndex == clusterIndex) ids.Add(kvp.Key);
+        }
+        ids.Sort();
+        _clusterNpcIds[clusterIndex] = ids.ToArray();
+    }
+
+
+    private void _addToClusterIndex(NpcSchedule schedule)
+    {
+        _clusterNpcIds.AddOrUpdate(schedule.ClusterIndex,
+            _ => new[] { schedule.NpcId },
+            (_, ids) =>
+            {
+                int at = Array.BinarySearch(ids, schedule.NpcId);
+                if (at >= 0) return ids;
+                at = ~at;
+                var grown = new int[ids.Length + 1];
+                Array.Copy(ids, 0, grown, 0, at);
+                grown[at] = schedule.NpcId;
+                Array.Copy(ids, at, grown, at + 1, ids.Length - at);
+                return grown;
+            });
     }
 
 
@@ -671,10 +719,10 @@ public class TaleManager
             }
 
             var byId = new Dictionary<int, NpcSchedule>();
-            foreach (var kvp in _schedules)
+            foreach (int npcId in GetNpcIdsInCluster(npc.ClusterIndex))
             {
-                if (kvp.Value.ClusterIndex == npc.ClusterIndex)
-                    byId[kvp.Key] = kvp.Value;
+                if (_schedules.TryGetValue(npcId, out var other))
+                    byId[npcId] = other;
             }
 
             GroupActions.Apply(action, npc, byId, social, GroupNameProvider,
@@ -707,6 +755,7 @@ public class TaleManager
     public void RegisterNpc(NpcSchedule schedule)
     {
         _schedules[schedule.NpcId] = schedule;
+        _addToClusterIndex(schedule);
 
         if (schedule.HasPlayerDeviation)
             _addToSkipMask(schedule);
@@ -993,6 +1042,7 @@ public class TaleManager
         }
 
         npc.ScheduleStep++;
+        npc.LastAdvanceTime = gameNow;
 
         // Resolve destination
         int destination = ResolveLocation(npc, next);
@@ -1086,6 +1136,160 @@ public class TaleManager
     public SpatialModel GetSpatialModel(int clusterIndex)
     {
         return _spatialModels.TryGetValue(clusterIndex, out var model) ? model : null;
+    }
+
+    #endregion
+
+
+    #region Background Tick (S0 W5)
+
+    /// <summary>Most AdvanceNpc steps one catch-up takes before it resyncs at now.</summary>
+    public const int MaxCatchUpSteps = 32;
+
+    /// <summary>A schedule further behind than this is resynced with one step at now.</summary>
+    public static readonly TimeSpan MaxCatchUpLag = TimeSpan.FromHours(24);
+
+    /// <summary>How long a schedule whose selection failed waits before the tick retries it.</summary>
+    public static readonly TimeSpan FailedAdvanceBackoff = TimeSpan.FromMinutes(10);
+
+    /*
+     * Only the logical thread runs the tick, so its cursor and the backoff
+     * table need no lock. Spawn workers advance only materialised NPCs, which
+     * the tick skips; SetMaterialized happens on the logical thread before
+     * a worker starts.
+     */
+    private int _tickClusterIndex = int.MinValue;
+    private int _tickNpcPos;
+    private readonly Dictionary<int, DateTime> _advanceBackoff = new();
+
+
+    /// <summary>
+    /// Advance the schedules no entity runs (Tier 3) of all populated
+    /// clusters to <paramref name="now"/>, a slice per call: a cursor walks the
+    /// clusters and their NPCs and stops after <paramref name="scanBudget"/>
+    /// schedules looked at or <paramref name="advanceBudget"/> advanced. Call it
+    /// every logical frame. Each schedule steps at the end of its storylets
+    /// (event time), so the result does not depend on how often this runs.
+    /// </summary>
+    public AbstractTickStats AdvanceAbstractSchedules(DateTime now, int scanBudget = 512, int advanceBudget = 16)
+    {
+        var stats = new AbstractTickStats();
+        long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+
+        var clusters = GetPopulatedClusters();
+        if (clusters.Count > 0)
+        {
+            // Resume at the cursor's cluster, or the next one if it went away.
+            int ci = clusters.FindIndex(c => c >= _tickClusterIndex);
+            if (ci < 0) ci = 0;
+            if (clusters[ci] != _tickClusterIndex) _tickNpcPos = 0;
+
+            int clustersEntered = 0;
+            while (stats.Scanned < scanBudget && stats.Advanced < advanceBudget)
+            {
+                int clusterIndex = clusters[ci];
+                _tickClusterIndex = clusterIndex;
+                var ids = GetNpcIdsInCluster(clusterIndex);
+                if (_tickNpcPos >= ids.Count)
+                {
+                    // Past this cluster's end: on to the next. A full lap with
+                    // nothing left to scan ends the slice.
+                    if (++clustersEntered > clusters.Count) break;
+                    ci = (ci + 1) % clusters.Count;
+                    _tickClusterIndex = clusters[ci];
+                    _tickNpcPos = 0;
+                    continue;
+                }
+
+                int npcId = ids[_tickNpcPos++];
+                _catchUpNpc(npcId, now, stats);
+            }
+        }
+
+        stats.ElapsedTicks = System.Diagnostics.Stopwatch.GetTimestamp() - t0;
+        return stats;
+    }
+
+
+    /// <summary>
+    /// Advance every Tier-3 schedule of one cluster to <paramref name="now"/>,
+    /// without a budget. Run before anything reads the cluster's current
+    /// locations (the encounter tick).
+    /// </summary>
+    public AbstractTickStats CatchUpCluster(int clusterIndex, DateTime now)
+    {
+        var stats = new AbstractTickStats();
+        long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+        foreach (int npcId in GetNpcIdsInCluster(clusterIndex))
+        {
+            _catchUpNpc(npcId, now, stats);
+        }
+        stats.ElapsedTicks = System.Diagnostics.Stopwatch.GetTimestamp() - t0;
+        return stats;
+    }
+
+
+    private void _catchUpNpc(int npcId, DateTime now, AbstractTickStats stats)
+    {
+        stats.Scanned++;
+        if (!_schedules.TryGetValue(npcId, out var npc)) return;
+        if (_materializedNpcIds.ContainsKey(npcId))
+        {
+            stats.SkippedMaterialised++;
+            return;
+        }
+        if (npc.CurrentEnd > now) return;
+        if (_advanceBackoff.TryGetValue(npcId, out var retryAt))
+        {
+            if (now < retryAt) return;
+            _advanceBackoff.Remove(npcId);
+        }
+
+        stats.Advanced++;
+
+        if (now - npc.CurrentEnd > MaxCatchUpLag)
+        {
+            // Game time jumped (a pause, a load): don't replay a day per NPC.
+            stats.Resynced++;
+            _advanceOrBackOff(npc, now, now, stats);
+            return;
+        }
+
+        int steps = 0;
+        while (npc.CurrentEnd <= now)
+        {
+            if (steps == MaxCatchUpSteps)
+            {
+                stats.Capped++;
+                _advanceOrBackOff(npc, now, now, stats);
+                return;
+            }
+
+            // Step where the storylet ended, but strictly after the last step:
+            // a short storylet with negative jitter can end before it started.
+            DateTime evt = npc.CurrentEnd;
+            DateTime notBefore = npc.LastAdvanceTime + TimeSpan.FromMinutes(1);
+            if (evt < notBefore) evt = notBefore;
+            if (evt > now) return;
+
+            if (!_advanceOrBackOff(npc, evt, now, stats)) return;
+            steps++;
+        }
+    }
+
+
+    private bool _advanceOrBackOff(NpcSchedule npc, DateTime evt, DateTime now, AbstractTickStats stats)
+    {
+        if (_advanceNpc(npc.NpcId, evt, applyGroupVerbs: true) == null)
+        {
+            // Selection keeps failing for some schedules; don't retry (and
+            // warn) every slice.
+            stats.BackedOff++;
+            _advanceBackoff[npc.NpcId] = now + FailedAdvanceBackoff;
+            return false;
+        }
+        stats.Steps++;
+        return true;
     }
 
     #endregion

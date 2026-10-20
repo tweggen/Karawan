@@ -21,6 +21,14 @@ public class NpcSchedule
     public string CurrentStorylet;
     public DateTime CurrentStart;
     public DateTime CurrentEnd;
+
+    /// <summary>
+    /// The game time of the last AdvanceNpc (S0 W5). The background tick
+    /// steps at CurrentEnd, but never at or before this, because a short
+    /// storylet with negative jitter can end before it was selected. Runtime
+    /// only, not saved.
+    /// </summary>
+    public DateTime LastAdvanceTime;
     public int ScheduleStep;
 
     // Assigned locations (from spatial model assignment)

@@ -111,6 +111,8 @@ least once — which the `TestRunner` build above does. A green run is currently
 phase 5 and C1–C4 (49) use an `"expected"` block that `ScriptRunner` ignores and pass
 vacuously, and the 102 `phase7-spatial` scripts are prose placeholders no tier runs
 (KAR-433). Don't take a green TALE run as evidence for those areas.
+Tests tagged `[Trait("Category", "Perf")]` measure and log rather than gate;
+CI runs `--filter "Category!=Perf"`.
 
 **Build notes:**
 - The `nogame/generated/` directory is auto-created by an `EnsureGeneratedDirectory` MSBuild target before asset compilation. If you see build errors about missing generated files, verify this target runs first.

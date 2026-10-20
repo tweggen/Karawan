@@ -44,6 +44,7 @@ public class TaleModule : AModule
     private DateTime _lastSocialTickGameTime = DateTime.MinValue;
     private DateTime _lastMetricsDate = DateTime.MinValue;
     private static readonly engine.Dc _dcMetrics = engine.Dc.TaleMetrics;
+    private static readonly engine.Dc _dcTaleManager = engine.Dc.TaleManager;
     private readonly Dictionary<int, DateTime> _lastRedetectGameTime = new();
     private int _socialTickRoundRobin;
 
@@ -58,6 +59,17 @@ public class TaleModule : AModule
      */
     public double DepopulateGraceSeconds = 60.0;
     private DateTime _lastResidencyCheck = DateTime.MinValue;
+
+    /*
+     * S0 W5: the background tick advances the schedules no entity runs, a
+     * slice per logical frame. Stats are summed and traced once per game hour.
+     */
+    // 16 advances per frame: at 4095 NPCs, p99.9 0.07 ms per slice; 64 gave
+    // longer bursts with no gain (BackgroundTickTests perf, S0 W5).
+    public int AbstractTickScanBudget = 512;
+    public int AbstractTickAdvanceBudget = 16;
+    private readonly AbstractTickStats _abstractTickStats = new();
+    private DateTime _abstractTickStatsHour = DateTime.MinValue;
 
     /// <summary>
     /// Get the pedestrian pipe controller for NPC movement.
@@ -505,6 +517,27 @@ public class TaleModule : AModule
     }
 
 
+    /**
+     * S0 W5: one slice of the background tick, and once per game hour a trace
+     * of what it did (TaleManager debug category).
+     */
+    private void _advanceAbstractSchedules(DateTime gameNow)
+    {
+        _abstractTickStats.Add(_taleManager.AdvanceAbstractSchedules(
+            gameNow, AbstractTickScanBudget, AbstractTickAdvanceBudget));
+
+        var hour = new DateTime(gameNow.Year, gameNow.Month, gameNow.Day, gameNow.Hour, 0, 0);
+        if (hour == _abstractTickStatsHour) return;
+        if (_abstractTickStatsHour != DateTime.MinValue)
+        {
+            Trace(_dcTaleManager, $"Background tick {_abstractTickStatsHour:yyyy-MM-dd HH}:00: " +
+                  $"{_abstractTickStats} over {_taleManager.GetPopulatedClusters().Count} populated clusters.");
+        }
+        _abstractTickStatsHour = hour;
+        _abstractTickStats.Reset();
+    }
+
+
     private void _onSocialFrame(object sender, float dt)
     {
         if (_taleManager == null) return;
@@ -514,6 +547,7 @@ public class TaleModule : AModule
         if (maybeNow == null) return;
         DateTime gameNow = maybeNow.Value;
 
+        _advanceAbstractSchedules(gameNow);
         _rollSocialMetricsDay(gameNow);
 
         if (_lastSocialTickGameTime == DateTime.MinValue)
@@ -527,6 +561,9 @@ public class TaleModule : AModule
         var clusters = _taleManager.GetPopulatedClusters();
         if (clusters.Count == 0) return;
         int clusterIndex = clusters[_socialTickRoundRobin++ % clusters.Count];
+
+        // Encounters must see where the NPCs are now, not where the slice left them.
+        _abstractTickStats.Add(_taleManager.CatchUpCluster(clusterIndex, gameNow));
 
         var npcs = _taleManager.GetNpcsInCluster(clusterIndex);
         if (npcs.Count == 0) return;

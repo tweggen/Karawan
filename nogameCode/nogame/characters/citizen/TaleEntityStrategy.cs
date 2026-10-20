@@ -151,7 +151,13 @@ public class TaleEntityStrategy : AOneOfStrategy
     {
         _isTier2 = false;
         Trace(_dc, $"NPC {_npcId} exiting Tier 2 mode, resuming schedule.");
-        _advanceAndTravel();
+        // Advance only if the storylet has ended: the schedule may have moved
+        // on meanwhile (S0 W5 background tick), and must not advance twice.
+        var schedule = _taleManager.GetSchedule(_npcId);
+        if (schedule == null || _getGameNow() >= schedule.CurrentEnd)
+            _advanceAndTravel();
+        else
+            _resumeTravel();
     }
 
 

@@ -270,4 +270,4 @@ jobs:
         working-directory: Karawan
         env:
           TEST: 'true'
-        run: dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj --verbosity normal
+        run: dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj --verbosity normal --filter "Category!=Perf"

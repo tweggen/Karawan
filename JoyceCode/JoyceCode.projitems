@@ -540,6 +540,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleOverlayText.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleEntityOwnership.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleClusterResidency.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\AbstractTickStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupTypeRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\IRouteGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resources.cs" />
