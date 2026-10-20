@@ -127,8 +127,8 @@ Signature updated to include routing preferences:
 
 ```csharp
 Task<SegmentRoute> GetRouteAsync(Vector3 fromPos, Vector3 toPos, PositionDescription startPod,
-    RoutingPreferences? preferences = null,
-    TransportationType transportType = TransportationType.Pedestrian);
+    TransportationType transportType,
+    RoutingPreferences? preferences = null);
 ```
 
 ### StreetRouteBuilder.cs (MODIFIED)
@@ -138,7 +138,7 @@ BuildAsync signature updated to pass preferences through to pathfinder:
 ```csharp
 public static async Task<SegmentRoute> BuildAsync(Vector3 fromPos, Vector3 toPos, NavMap navMap,
     PositionDescription startPod,
-    TransportationType transportType = TransportationType.Pedestrian,
+    TransportationType transportType,
     RoutingPreferences? preferences = null,
     CancellationToken cancellationToken = default)
 {
@@ -155,8 +155,8 @@ Passes preferences from route request through to builder:
 
 ```csharp
 public async Task<SegmentRoute> GetRouteAsync(Vector3 fromPos, Vector3 toPos, PositionDescription startPod,
-    RoutingPreferences? preferences = null,
-    TransportationType transportType = TransportationType.Pedestrian)
+    TransportationType transportType,
+    RoutingPreferences? preferences = null)
 {
     // ...
     var route = await StreetRouteBuilder.BuildAsync(fromPos, toPos, navMap, startPod,
@@ -165,7 +165,7 @@ public async Task<SegmentRoute> GetRouteAsync(Vector3 fromPos, Vector3 toPos, Po
 }
 ```
 
-The `TransportationType.Pedestrian` defaults on `GetRouteAsync` / `BuildAsync` are still in the code, against the CLAUDE.md rule that routing names its transport type — open, tracked separately.
+`GetRouteAsync` and `BuildAsync` take the transport type without a default (KAR-426), like `LocalPathfinder` and `TryCreateCursor`: every caller names it, so the cursor and the A* use the same type. `TransportTypeNoDefaultTests` scans JoyceCode and nogameCode for a defaulted `TransportationType` parameter.
 
 **Files Modified**:
 - `JoyceCode/builtin/modules/satnav/LocalPathfinder.cs`
@@ -212,7 +212,7 @@ private async Task _travelToCurrentDestination(DateTime gameNow)
     // ...
     UpdateRoutingPreferences(gameNow);
     var route = await routeGen.GetRouteAsync(_currentPosition.Position, destination,
-        _currentPosition, _routingPreferences, schedule.PreferredTransportationType);
+        _currentPosition, schedule.PreferredTransportationType, _routingPreferences);
     // ...
 }
 ```
