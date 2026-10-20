@@ -29,9 +29,41 @@ JOYCE_TEST_SCRIPT="tests/tale/phase0-des/01-initialization.json" \
 ```bash
 ./run_tests.sh phase0
 ./run_tests.sh smoke
-./run_tests.sh all            # 200 tests, 60-day sims
+./run_tests.sh all            # 161 tests, 60-day sims
 ./run_tests_parallel.sh all   # same, in parallel
 ```
+
+## Events a script can expect
+
+The DES run bridges `IEventLogger` calls to engine events (`TestEventLogger`). Codes are
+`id:detail…`, so a script matches the detail with `codeMatches` (KAR-433):
+
+| Type | Code |
+|---|---|
+| `npc_created` | `npcId:role` (11: ten NPCs and the player proxy) |
+| `node_arrival` | storylet id |
+| `encounter` | `npcA:npcB:interactionType` |
+| `relationship_changed` | `npcA:npcB:newTier` |
+| `day_summary` | day number (one per NPC per day) |
+| `request_emitted` | `requestId:requestType` |
+| `request_claimed` | requestId |
+| `signal_emitted` | `signalId:signalType` |
+| `interrupt_fired` | `npcId:scope:interruptStorylet` (scope `Nest` / `Replace`) |
+| `storylet_resumed` | `npcId:storylet` |
+| `escalation_triggered` | `npcId:storylet:targetNpcId` |
+| `gang_formed` | `groupId:groupType` |
+
+When the simulation ends, the runner prints an **event tally** (per type, and per detail) to
+stdout: what the fixed world produces, to write expectations against. At seed 42 and 60 days
+there are no `gang_formed` events, only Nest interrupts (from `demand_protection` and
+`investigate_complaint`), and every escalation comes after day 30, when the DES first detects
+groups.
+
+The Phase 6 setup pushes `world.cluster.completed` and `tale.cluster.populated` itself, so
+waiting for them checks nothing. It also runs a few TaleManager checks and pushes
+`tale.check` with code `<name>:pass` or `<name>:fail`: `deviation_skip_mask`,
+`primary_not_in_skip_mask`, `get_schedule_missing_null`, `empty_fragment_no_npcs`,
+`depopulate_unknown_noop`.
 
 ## Architecture
 
@@ -122,4 +154,4 @@ The TestDriverModule is registered in `models/nogame.implementations.json` but i
 
 ✅ **Implemented**: Full initialization pipeline working
 ✅ **Tested**: Confirms TestDriverModule activation
-✅ **In use**: `run_tests.sh` / `run_tests_parallel.sh` drive it for all 200 regression tests (not run by CI)
+✅ **In use**: `run_tests.sh` / `run_tests_parallel.sh` drive it for all 161 regression tests (not run by CI; `TaleScriptsLoadTests` in xUnit does check every script is valid)

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using engine;
 
@@ -351,11 +352,13 @@ public class TestRunnerMain
             var simEnd = simStart.AddDays(simDays);  // Configurable duration for regression/recalibration
 
             // Use test event logger that bridges to engine's SubscriptionManager for test framework
-            sim.Initialize(spatial, schedules, library, new TestEventLogger(), simStart, seed: 42);
+            var eventLogger = new TestEventLogger();
+            sim.Initialize(spatial, schedules, library, eventLogger, simStart, seed: 42);
             Console.WriteLine("DES simulation initialized. Running...");
 
             sim.RunUntil(simEnd);
             Console.WriteLine($"DES simulation completed. {sim.EventsProcessed} events processed.");
+            eventLogger.PrintTally();
         })
         {
             IsBackground = true,
@@ -582,6 +585,37 @@ public class TestRunnerMain
         var npcsInFrag = taleManager.GetNpcsInFragment(homeFragment);
         Console.WriteLine($"Phase 6: GetNpcsInFragment({homeFragment.I},{homeFragment.K}) returned {npcsInFrag.Count} NPCs");
 
+        /*
+         * Checks a script can assert (KAR-433): each pushes tale.check with
+         * code "<name>:pass" or "<name>:fail"; a script expects the pass.
+         */
+        void Check(string name, System.Func<bool> condition)
+        {
+            bool ok;
+            try { ok = condition(); }
+            catch (System.Exception ex)
+            {
+                Console.Error.WriteLine($"Phase 6 check {name} threw: {ex}");
+                ok = false;
+            }
+            Console.WriteLine($"Phase 6 check {name}: {(ok ? "pass" : "fail")}");
+            eventQueue.Push(new engine.news.Event("tale.check", $"{name}:{(ok ? "pass" : "fail")}"));
+        }
+
+        Check("deviation_skip_mask", () => skipMask != null && skipMask.Contains(deviatedNpc.NpcIndex));
+        Check("primary_not_in_skip_mask", () => skipMask != null
+            && schedules.Where(s => !s.HasPlayerDeviation).All(s => !skipMask.Contains(s.NpcIndex)));
+        Check("get_schedule_missing_null", () => taleManager.GetSchedule(999999) == null);
+        Check("empty_fragment_no_npcs", () =>
+            taleManager.GetNpcsInFragment(new engine.joyce.Index3(100000, 0, 100000)).Count == 0);
+        Check("depopulate_unknown_noop", () =>
+        {
+            var before = taleManager.GetPopulatedClusters();
+            taleManager.DepopulateCluster(999);
+            return taleManager.GetPopulatedClusters().SequenceEqual(before)
+                && taleManager.GetSchedule(firstNpc.NpcId) != null;
+        });
+
         Console.WriteLine("Phase 6 test setup complete.");
     }
 }
@@ -672,82 +706,110 @@ internal class TestEventLogger : engine.tale.IEventLogger
 
     public bool WantsDaySummary => true;
 
+    /*
+     * Events per type and per code without its leading id, printed when the
+     * simulation ends: what a script can expect from the fixed world.
+     */
+    private readonly System.Collections.Generic.SortedDictionary<string, int> _tally = new(System.StringComparer.Ordinal);
+
     public TestEventLogger()
     {
         _eventQueue = engine.I.Get<engine.news.EventQueue>();
+    }
+
+    /// <summary>
+    /// Codes are "id:detail..." so a script can match the detail with
+    /// codeMatches, e.g. "^\\d+:Nest:" for a Nest interrupt.
+    /// </summary>
+    private void _push(string type, string code)
+    {
+        _eventQueue.Push(new engine.news.Event(type, code));
+        _tally.TryGetValue(type, out int nType); _tally[type] = nType + 1;
+        int colon = code.IndexOf(':');
+        if (type == "node_arrival" || (colon >= 0 && type != "encounter" && type != "relationship_changed"))
+        {
+            string key = $"{type} {code.Substring(colon + 1)}";
+            _tally.TryGetValue(key, out int nKey); _tally[key] = nKey + 1;
+        }
+    }
+
+    public void PrintTally()
+    {
+        System.Console.WriteLine("Event tally:");
+        foreach (var (key, n) in _tally) System.Console.WriteLine($"  {key}: {n}");
     }
 
     public void LogNpcCreated(int npcId, int seed, string role, int homeLocationId,
         int workplaceLocationId, System.Collections.Generic.List<int> socialVenues,
         System.Collections.Generic.Dictionary<string, float> props, System.DateTime gameTime)
     {
-        _eventQueue.Push(new engine.news.Event("npc_created", npcId.ToString()));
+        _push("npc_created", $"{npcId}:{role}");
     }
 
     public void LogNodeArrival(int npcId, string storylet, int locationId, string locationType,
         System.DateTime gameTime, int day, System.Collections.Generic.Dictionary<string, float> props,
         System.Collections.Generic.Dictionary<string, float> deltas)
     {
-        _eventQueue.Push(new engine.news.Event("node_arrival", storylet));
+        _push("node_arrival", storylet);
     }
 
     public void LogEncounter(int npcA, int npcB, string interactionType, int locationId,
         string locationType, System.DateTime gameTime, int day,
         float trustBefore, float trustAfter)
     {
-        _eventQueue.Push(new engine.news.Event("encounter", $"{npcA}:{npcB}"));
+        _push("encounter", $"{npcA}:{npcB}:{interactionType}");
     }
 
     public void LogRelationshipChanged(int npcA, int npcB, string oldTier, string newTier,
         float trust, int interactionCount, System.DateTime gameTime, int day)
     {
-        _eventQueue.Push(new engine.news.Event("relationship_changed", $"{npcA}:{npcB}"));
+        _push("relationship_changed", $"{npcA}:{npcB}:{newTier}");
     }
 
     public void LogDaySummary(int npcId, int day, int storyletsCompleted, int encounters,
         System.Collections.Generic.Dictionary<string, float> props, System.Collections.Generic.Dictionary<int, float> topRelationships)
     {
-        _eventQueue.Push(new engine.news.Event("day_summary", day.ToString()));
+        _push("day_summary", day.ToString());
     }
 
     public void LogRequestEmitted(int requestId, int requesterId, string requestType, int locationId,
         float urgency, int timeoutMinutes, string storyletContext, System.DateTime gameTime, int day)
     {
-        _eventQueue.Push(new engine.news.Event("request_emitted", requestId.ToString()));
+        _push("request_emitted", $"{requestId}:{requestType}");
     }
 
     public void LogRequestClaimed(int requestId, int claimerId, System.DateTime gameTime, int day)
     {
-        _eventQueue.Push(new engine.news.Event("request_claimed", requestId.ToString()));
+        _push("request_claimed", requestId.ToString());
     }
 
     public void LogSignalEmitted(int signalId, int requestId, string signalType, int sourceNpcId,
         System.DateTime gameTime, int day)
     {
-        _eventQueue.Push(new engine.news.Event("signal_emitted", signalId.ToString()));
+        _push("signal_emitted", $"{signalId}:{signalType}");
     }
 
     public void LogInterruptFired(int npcId, string interruptStorylet, string scope,
         string pausedStorylet, int day, System.DateTime gameTime)
     {
-        _eventQueue.Push(new engine.news.Event("interrupt_fired", npcId.ToString()));
+        _push("interrupt_fired", $"{npcId}:{scope}:{interruptStorylet}");
     }
 
     public void LogStoryletResumed(int npcId, string storylet, int day, System.DateTime gameTime)
     {
-        _eventQueue.Push(new engine.news.Event("storylet_resumed", npcId.ToString()));
+        _push("storylet_resumed", $"{npcId}:{storylet}");
     }
 
     public void LogEscalationTriggered(int npcId, string escalationId, int targetNpcId,
         int day, System.DateTime gameTime)
     {
-        _eventQueue.Push(new engine.news.Event("escalation_triggered", $"{npcId}:{escalationId}"));
+        _push("escalation_triggered", $"{npcId}:{escalationId}:{targetNpcId}");
     }
 
     public void LogGangFormed(int groupId, System.Collections.Generic.List<int> members, string groupType,
         int day, System.DateTime gameTime)
     {
-        _eventQueue.Push(new engine.news.Event("gang_formed", groupId.ToString()));
+        _push("gang_formed", $"{groupId}:{groupType}");
     }
 
     public void Flush() { }

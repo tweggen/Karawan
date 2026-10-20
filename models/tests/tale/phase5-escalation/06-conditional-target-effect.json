@@ -1,10 +1,37 @@
 {
   "name": "Conditional postconditions - target property effects",
-  "description": "Postconditions_if can apply effects to target NPC (target_* properties)",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "encounter", "count": { "min": 1 } },
-    { "code": "escalation_triggered", "count": { "min": 1 } }
+  "description": "demand_protection's branches test the partner's fear (target_fear); a triggered escalation names the partner it applied to.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "encounter"
+      },
+      "timeout": 60,
+      "comment": "NPCs meet"
+    },
+    {
+      "expect": {
+        "type": "escalation_triggered",
+        "codeMatches": "^\\d+:demand_protection:\\d+$"
+      },
+      "timeout": 60,
+      "comment": "demand_protection triggers against a partner"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

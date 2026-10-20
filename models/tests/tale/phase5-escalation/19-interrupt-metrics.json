@@ -1,10 +1,30 @@
 {
-  "name": "Interrupt metrics tracked correctly",
-  "description": "MetricsCollector.TotalInterrupts incremented on each interrupt, interrupts_per_day computed",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "interrupt_fired", "count": { "min": 1 } },
-    { "code": "day_summary", "count": { "min": 50 } }
+  "name": "Interrupts recur over the run",
+  "description": "Interrupts are not a one-off: at least 50 fire during the 60-day run (73 at seed 42).",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "interrupt_fired"
+      },
+      "count": 50,
+      "timeout": 90,
+      "comment": "50 interrupts"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

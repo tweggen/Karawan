@@ -400,7 +400,7 @@ public class TaleModule : AModule
                         var currentSchedule = TaleNarrationBindings.GetCurrentSchedule();
                         if (currentSchedule != null && desc.Params.TryGetValue("fact", out var factObj))
                         {
-                            currentSchedule.Properties[$"player_fact.{factObj}"] = 1f;
+                            PlayerConversation.Remember(currentSchedule, factObj.ToString());
                             _taleManager.MarkPlayerContact(currentSchedule);
                             Trace($"TALE: NPC {currentSchedule.NpcId} remembered fact '{factObj}'");
                         }
@@ -776,9 +776,7 @@ public class TaleModule : AModule
             var currentSchedule = TaleNarrationBindings.GetCurrentSchedule();
             if (currentSchedule != null)
             {
-                currentSchedule.Trust ??= new Dictionary<int, float>();
-                float current = currentSchedule.Trust.GetValueOrDefault(-1, 0.5f);
-                currentSchedule.Trust[-1] = Math.Min(1f, current + 0.02f);
+                PlayerConversation.OnEnded(currentSchedule);
                 _taleManager.MarkPlayerContact(currentSchedule);
                 Trace($"TALE: Trust incremented for NPC {currentSchedule.NpcId} (now {currentSchedule.Trust[-1]:F2})");
             }

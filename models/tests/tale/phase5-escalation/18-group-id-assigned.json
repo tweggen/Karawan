@@ -1,10 +1,38 @@
 {
-  "name": "GroupId assignment via GroupDetector",
-  "description": "GroupDetector.Detect assigns GroupId to NPCs in detected groups",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "day_summary", "count": { "min": 25 } },
-    { "code": "gang_formed", "count": { "min": 1 } }
+  "name": "GroupId assignment via group detection",
+  "description": "profit_sharing and leave_gang require in_group; leave_gang's group verb takes the NPC out of its group.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "code": "profit_sharing"
+      },
+      "timeout": 90,
+      "comment": "An in-group storylet runs"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "code": "leave_gang"
+      },
+      "timeout": 90,
+      "comment": "A member leaves the group"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

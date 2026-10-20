@@ -1,10 +1,38 @@
 {
   "name": "Protection racket - victim complies",
-  "description": "demand_protection triggers with target.fear > 0.5, sets protection_established tag",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "escalation_triggered", "count": { "min": 1 } },
-    { "code": "node_arrival", "count": { "min": 20 } }
+  "description": "When the target's fear is at least 0.5, demand_protection's first branch forces collect_protection.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "escalation_triggered",
+        "codeMatches": ":demand_protection:"
+      },
+      "timeout": 60,
+      "comment": "Protection demanded"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "code": "collect_protection"
+      },
+      "timeout": 60,
+      "comment": "The racketeer collects (victim complied)"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

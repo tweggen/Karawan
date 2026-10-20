@@ -1,10 +1,30 @@
 {
   "name": "In-group precondition filtering",
-  "description": "Storylets with in_group precondition only unlock after NPC joins group",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "gang_formed", "count": { "min": 1 } },
-    { "code": "node_arrival", "count": { "min": 20 } }
+  "description": "intimidate_together requires in_group; it can only run once DES group detection has given drifters a GroupId.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "code": "intimidate_together"
+      },
+      "timeout": 90,
+      "comment": "An in-group drifter storylet runs"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

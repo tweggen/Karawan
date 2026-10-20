@@ -117,6 +117,12 @@ rates) in W6; its other items stay in KAR-436 or moved to S2b.
 
 ## 3. W1 — TALE scripts that check something (KAR-433)
 
+> **Status:** implemented (KAR-433), 2026-10-20. Phase 5 rewritten (15 kept, 5 removed);
+> C1–C4 removed and their pure rules moved to xUnit (`ConversationRulesTests`); phase 7's
+> placeholders deleted; `ScriptRunner` validation plus `TaleScriptsLoadTests` in CI; both
+> mutation checks fail named xUnit tests. Not done: 34 phase-6 scripts still wait only for
+> harness-pushed events (KAR-468). Details: `docs/tale/docs/tests/PHASE_5.md`, `PHASE_C.md`.
+
 As in KAR-433 and its scope update:
 
 - Convert the 49 phase-5 and C1–C4 scripts from the ignored `"expected"`

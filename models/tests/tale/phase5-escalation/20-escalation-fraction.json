@@ -1,10 +1,39 @@
 {
-  "name": "Escalation events distributed across simulation",
-  "description": "Multiple escalation_triggered events occur throughout 60-day simulation",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "escalation_triggered", "count": { "min": 3 } },
-    { "code": "day_summary", "count": { "min": 50 } }
+  "name": "Escalations start once groups exist",
+  "description": "demand_protection needs in_group, and the DES detects groups every 30 days, so no escalation happens before day 30 (measured: all 21 at seed 42 come after it). After the first detection they recur: at least 3 in the second half of the run.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "day_summary",
+        "code": "30"
+      },
+      "timeout": 60,
+      "comment": "Day 30: first group detection"
+    },
+    {
+      "expect": {
+        "type": "escalation_triggered",
+        "codeMatches": ":demand_protection:"
+      },
+      "count": 3,
+      "timeout": 60,
+      "comment": "Escalations follow"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

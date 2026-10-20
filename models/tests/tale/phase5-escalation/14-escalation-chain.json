@@ -1,11 +1,46 @@
 {
-  "name": "Escalation chain - multiple triggers",
-  "description": "form_gang triggers which enables more escalation storylets via in_group precondition",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "gang_formed", "count": { "min": 1 } },
-    { "code": "escalation_triggered", "count": { "min": 1 } },
-    { "code": "request_emitted", "count": { "min": 0 } }
+  "name": "Escalation chain - report, investigation, arrest",
+  "description": "crime_report request, then investigate_crime, then prepare_arrest, which needs the evidence_found tag: each link enables the next.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "request_emitted",
+        "codeMatches": "^\\d+:crime_report$"
+      },
+      "timeout": 60,
+      "comment": "A crime is reported"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "code": "investigate_crime"
+      },
+      "timeout": 60,
+      "comment": "Investigation"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "code": "prepare_arrest"
+      },
+      "timeout": 60,
+      "comment": "Arrest prepared (evidence_found tag set)"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

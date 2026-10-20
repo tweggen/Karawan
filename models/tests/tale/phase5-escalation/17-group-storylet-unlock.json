@@ -1,11 +1,30 @@
 {
   "name": "Group-exclusive storylet unlock",
-  "description": "After gang formation, group-exclusive escalation storylets become available",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "day_summary", "count": { "min": 25 } },
-    { "code": "gang_formed", "count": { "min": 1 } },
-    { "code": "escalation_triggered", "count": { "min": 1 } }
+  "description": "organize_criminal_operation requires in_group, morality <= 0.2 and reputation >= 0.5: group membership plus property drift unlock it.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "code": "organize_criminal_operation"
+      },
+      "timeout": 90,
+      "comment": "Group-exclusive criminal operation runs"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

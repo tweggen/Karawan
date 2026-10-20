@@ -57,7 +57,7 @@ JOYCE_TEST_JOBS="${JOYCE_TEST_JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || nproc)}"
 export JOYCE_TEST_TIMEOUT_SCALE="${JOYCE_TEST_TIMEOUT_SCALE:-1.0}"
 export JOYCE_TEST_SLEEP_SCALE="${JOYCE_TEST_SLEEP_SCALE:-0.1}"
 
-ALL_PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet" "phaseC3-tone" "phaseC4-trust")
+ALL_PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population")
 
 PHASES=()
 TESTS=()

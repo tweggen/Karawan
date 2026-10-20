@@ -25,16 +25,15 @@ Run tests at different levels depending on your change:
 **Before Pushing (Standard Regression)**:
 ```bash
 ./run_tests.sh all    # ~5 minutes (same as 'standard')
-# All 200 tests with 60-day simulations
-# Currently: Phase 0-6 (171) + C1-C4 (29) = 200 test files
-# phase7-spatial (102) is in no tier and has no phaseN filter — open, tracked separately
+# All 161 tests with 60-day simulations: phase 0-6
+# C1-C4 and phase7-spatial were removed (KAR-433): see tests/PHASE_C.md, tests/PHASE_7.md
 # See docs/testing/docs/TESTING_STRATEGY.md for full list
 ```
 
 **Pre-Merge (Full Regression)**:
 ```bash
 ./run_tests.sh full   # ~15-20 minutes
-# Same 200 tests with 120-day simulations
+# Same 161 tests with 120-day simulations
 ```
 
 **TALE-SOCIAL D/E (xUnit, not `run_tests.sh`)**:
@@ -214,19 +213,15 @@ The TALE system maintains detailed test documentation that needs periodic refres
 | 2 | Strategies | 20 | ✅ Complete |
 | 3 | Interactions | 22 | ✅ Complete |
 | 4 | Quests | 20 | ✅ Complete |
-| 5 | Escalation | 20 | ✅ Complete |
-| 6 | Population | 49 | ✅ Complete |
-| 7 | Spatial Grounding | 102 (`phase7-spatial/`, in no tier — open, tracked separately) | ✅ Complete |
+| 5 | Escalation | 15 | ✅ Complete |
+| 6 | Population | 44 (34 check only harness events, KAR-468) | ✅ Complete |
+| 7 | Spatial Grounding | xUnit (placeholders removed, KAR-433) | ✅ Complete |
 | 7B | Building Role Tagging | (integrated) | ✅ Complete |
 | 8 | Occupations | (integrated) | ✅ Complete |
-| C1 | Conversation Infrastructure | 8 | ✅ Complete |
-| C2 | Storylet-Specific Dialogue | 6 | ✅ Complete |
-| C3 | Mood/Tone Branches | 6 | ✅ Complete |
-| C4 | Trust, Memory & Hooks | 9 | ✅ Complete |
+| C1–C4 | Conversation system | xUnit `ConversationRulesTests` for the pure rules; the rest only by hand (`tests/PHASE_C.md`) | ✅ Complete |
 | SOCIAL D1–D5 | Scenario pre-computation (bake, apply, statistics) | xUnit, `tests/JoyceCode.Tests/engine/tale/bake/` | ✅ Complete |
 | SOCIAL E | Living factions | xUnit, `tests/JoyceCode.Tests/engine/tale/` | ✅ Complete |
 
-**Total TALE tests: 302 test files**
-**Standard regression suite: 200 tests (60-day simulations)**
+**Standard regression suite: 161 scripts (60-day simulations)**
 
 Routing Phase D (`docs/navigation/docs/MULTI-OBJECTIVE-ROUTING.md`) is a separate workstream, not a TALE phase.

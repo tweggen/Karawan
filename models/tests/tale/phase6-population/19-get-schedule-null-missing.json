@@ -7,9 +7,16 @@
   "globalTimeout": 30,
   "steps": [
     {
-      "action": "quit",
-      "result": "pass",
+      "expect": {
+        "type": "tale.check",
+        "code": "get_schedule_missing_null:pass"
+      },
+      "timeout": 10,
       "comment": "GetSchedule(999999) returns null, no crash"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
     }
   ]
 }

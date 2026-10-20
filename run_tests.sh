@@ -64,11 +64,11 @@ if [ "$FILTER" = "smoke" ]; then
     TALE_SIM_DAYS=10
 elif [ "$FILTER" = "standard" ] || [ "$FILTER" = "all" ]; then
     # Standard tier: all tests, 60-day simulations
-    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet" "phaseC3-tone" "phaseC4-trust")
+    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population")
     TALE_SIM_DAYS=60
 elif [ "$FILTER" = "full" ]; then
     # Full tier: all tests, 120-day simulations
-    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population" "phaseC1-infrastructure" "phaseC2-storylet" "phaseC3-tone" "phaseC4-trust")
+    PHASES=("phase0-des" "phase1-storylets" "phase2-strategies" "phase3-interactions" "phase4-player" "phase5-escalation" "phase6-population")
     TALE_SIM_DAYS=120
 elif [ "$FILTER" = "phase0" ]; then
     PHASES=("phase0-des")
@@ -84,14 +84,6 @@ elif [ "$FILTER" = "phase5" ]; then
     PHASES=("phase5-escalation")
 elif [ "$FILTER" = "phase6" ]; then
     PHASES=("phase6-population")
-elif [ "$FILTER" = "phaseC1" ]; then
-    PHASES=("phaseC1-infrastructure")
-elif [ "$FILTER" = "phaseC2" ]; then
-    PHASES=("phaseC2-storylet")
-elif [ "$FILTER" = "phaseC3" ]; then
-    PHASES=("phaseC3-tone")
-elif [ "$FILTER" = "phaseC4" ]; then
-    PHASES=("phaseC4-trust")
 elif [ "$FILTER" = "bugfix" ]; then
     # Entity-level behavior bugfix tests (not DES simulation)
     echo -e "${YELLOW}=== Entity Behavior Bugfix Tests ===${NC}"
