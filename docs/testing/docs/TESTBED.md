@@ -843,6 +843,8 @@ The testbed compares its output against these targets and:
 2. Populates the `"warnings"` array with specific violations
 3. Returns exit code 0 (pass) or 1 (fail) — usable in automated loops (CI does not run the testbed)
 
+**Arrival measurement (S0 W9, KAR-452):** `--tale-arrival [--cluster small|medium|large|all|<name>] [--days N]` populates real clusters as the game does (shipped storylet resources and registries, scenario bake, warm-up) at the game's start time, then runs N game days in 10-minute steps with the background tick (`CatchUpCluster`), the encounter tick, re-detection every 2 game hours and the metrics day roll. stdout carries deterministic JSON (two runs are byte-identical): the cluster-size distribution, per cluster W6's metrics at arrival, after one day and at the end, hourly density within 100 m on day one (`NpcDensityCounter`: at the start pose and over all street locations, split into street/venue/home-or-work), property means, and the social-state size after leaving. Timings (populate, catch-up, repopulate) go to stderr. Results: `docs/tale/plans/proposed/TALE-S0-GROUNDWORK.md` §12.
+
 **Population measurement (KAR-435):** `--measure-population N` skips the DES. It runs the game's `SpatialModel.ExtractFrom` and `TalePopulationGenerator.Generate` on the first N clusters and prints JSON: location counts by type, NPCs, and home/workplace load (distinct locations, NPCs per location, NPCs per home building and per home storey). There is no NavCluster, so every location counts as reachable. Results: `docs/tale/docs/design/NPC_COMMUTING.md`.
 
 The checked-in `Testbed/testbed_targets.json` carries looser values than the example above (e.g. `routine_completion_rate` max 1.00, `escalation_first_conflict_day` max 60). It is looked up from `--targets`, then next to the binary, the working directory and `Testbed/`.
@@ -924,9 +926,13 @@ Options:
   --diagnose-streets    Run street-generation diagnostics over all clusters, then exit
   --validate-streets    Validate nav-map connectivity of every cluster, then exit
   --test-pathfinding    Run pathfinding route diagnostics on the first cluster, then exit
+  --measure-population N  Measure homes/workplaces of the first N clusters (KAR-435), then exit
+  --cluster SEL         small | medium | large (fewest, median, most NPCs) | all | a cluster name;
+                        picks the DES cluster, and the clusters --tale-arrival measures
+  --tale-arrival        Measure what the player meets on arrival (S0 W9), then exit
 ```
 
-The target is always the first cluster (`cluster_index` 0); there is no `--cluster`, `--params` or `--batch` (see Phase C). Progress and the cluster statistics go to stderr (`--quiet` silences the Testbed's own progress lines); the metrics JSON is written to stdout.
+Without `--cluster` the DES runs on the first cluster (`cluster_index` 0) — which in the shipped city has 5 homes and no workplace, so all NPCs crowd one venue and the metrics are degenerate; pass `--cluster medium`. There is no `--params` or `--batch` (see Phase C). Run the Testbed with the repository as working directory: it walks up to find `models/`. Progress and the cluster statistics go to stderr (`--quiet` silences the Testbed's own progress lines); the metrics JSON is written to stdout.
 
 ---
 

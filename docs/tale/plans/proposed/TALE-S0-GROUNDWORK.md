@@ -591,6 +591,94 @@ written into roadmap §S0 and §12 here.
   `Advanced` per hour for clusters the player isn't in; evolver presence
   varying by time of day) are pending a play session.
 
+- **W9 (KAR-452, 2026-10-20):** `Testbed --tale-arrival [--cluster
+  small|medium|large|all|<name>] [--days N]` (`Testbed/TaleArrival.cs`)
+  populates real clusters as the game does (shipped storylet resources and
+  registries, scenario bake, warm-up) at the game's start time
+  (`GameState.GameT0`, 19:00), then runs N game days in 10-minute steps:
+  W5's catch-up, the encounter tick, re-detection every 2 h, the metrics
+  day roll. JSON on stdout, timings on stderr; two runs of `--cluster all
+  --days 7` gave byte-identical JSON. The shared counter is
+  `NpcDensityCounter` (in W6's `SocialMetrics.cs`); the registry loader
+  already existed (`TaleRegistryLoader`). Measured on this dev machine,
+  Release; timings from the two quiet runs of three (one overlapped other
+  builds and was 1.5–3x slower):
+
+  | | small | medium | large |
+  |---|---|---|---|
+  | cluster | 50 "Akika" | 15 "Seefu" | 69 "Deees" |
+  | NPCs / locations / street locations | 168 / 64 / 56 | 4095 / 2083 / 1485 | 4095 / 2007 / 1518 |
+  | bake scenario, match ratio | medium/2, 0.70 | medium/7, 0.061 | medium/5, 0.054 |
+  | groups at arrival → after 7 days | 6 → 6 | 12 → 21 | 9 → 29 |
+  | NPCs in groups at arrival | 92 (55 %) | 175 (4.3 %) | 146 (3.6 %) |
+  | churn per day (7-day mean) | 0.17 | 3.8 | 2.7 |
+  | group-table mismatch after 1 day | 6 | 8 | 3 (KAR-466) |
+  | AdvanceNpc steps per NPC per game day | 31 (59 on day 1) | 24 | 26 |
+  | catch-up cost per game day (two quiet runs) | 0.15–0.24 s | 1.7–2.2 s | 1.7–2.1 s |
+  | populate at arrival / repopulate on return | 0.12 s / 0.04 s | 1.0 s / 0.40 s | 0.40 s / 0.37 s |
+  | social state JSON after leaving | 0.15 MB | 2.0 MB | 2.1 MB |
+
+  **Density within 100 m, day 1 hourly** (visible = on the street; an NPC at
+  any non-street location is hidden indoors, `TaleEntityStrategy.cs:449`):
+
+  | | small | medium | large |
+  |---|---|---|---|
+  | visible, mean over street locations | 2.4 (0.9 at 18:00 … 4.3 at 05:00) | 5.3 (3.7 at 18:00 … 6.4 at 04:00) | 5.1 (3.3 at 12:00 … 6.8 at 01:00) |
+  | all NPCs, mean over street locations | 6.7 | 10.1 | 10.5 |
+  | street locations with ≥ 4 visible | 9–34 % | 31–45 % | 29–63 % |
+  | at the start pose: visible / all | 1–10 / 3–14 | 0–4 / 1–8 | 0–4 / 0–16 |
+
+  **Property drift (means, arrival → 1 day → 7 days, large cluster):**
+  hunger 0.02 → 0.49 → 0.43, fatigue 0.12 → 0.52 → 0.44, happiness 0.57 →
+  0.70 → 0.89, **wealth 0.46 → 0.33 → 0.19**, anger 0.06 → 0.03 → 0.02,
+  morality, fear, reputation, health flat. The medium cluster is the same
+  (wealth 0.48 → 0.27); the small one keeps its wealth (0.36 → 0.41).
+
+  **Clusters:** 70, NPC counts 168 … 4095, **45 at the 4095 cap**
+  (median 4095, 25th percentile 996), 206 667 NPCs in all.
+
+  Readings:
+  - Even the largest clusters show about 5 visible NPCs within 100 m of a
+    street location, fewer at the start pose; the owner's 4–5
+    opportunities within 100 m (§8 Q4) would need nearly every visible NPC
+    to be one. S5 should count situations (an NPC, a pair, a group) or use
+    a wider radius.
+  - Streets are busier at night than at midday (workers indoors at work,
+    night roles out); the evening rush is the quietest hour.
+  - The bake shapes 5–6 % of a capped cluster's NPCs (scenario ≤ 250
+    NPCs): 96 % of the NPCs meet the player ungrouped. That settles S4's
+    choice against "the bake alone"; either enable the large scenarios or
+    let S4's group logic run on W5's tick.
+  - Wealth halves in a week under live rules (no DES-only forced
+    storylets or interrupts until S2b): a drift towards desperation, as
+    plan §7 warned. A finding for S2b.
+  - Populating a capped cluster takes 0.4–1.0 s on the logical thread
+    (inside the spawn poll): a hitch when the player reaches a new
+    cluster. Repopulation after W4 costs 0.4 s.
+  - A capped cluster's social state is ~2 MB of JSON in one LiteDB string
+    per cluster visited.
+  - **DES baseline** (`Testbed --cluster medium --days 30|90`, 500 NPCs on
+    cluster 15, 10 s / 17 s wall clock): completion 0.998 / 0.997;
+    interrupts per NPC-day 28.5 / 30.9 (above `testbed_targets.json`'s
+    maximum 3, which predates W6 making the rate real — the target needs
+    re-tuning); groups 29 / 57 (social 25, trade 4 → social 30, criminal
+    27; first gang on day 60); NPCs in groups 23 % / 98 %; trust density
+    0.094 / 0.164; strong pairs 137 / 1572; mean intra-/inter-group trust
+    0.76 / 0.10 → 0.64 / 0.13; churn per day 0 / 5.5; mismatch 0. Property
+    means at day 90: wealth 0.22, health 0.32, morality 0.36, hunger 0.46,
+    happiness 1.0. The DES therefore grows a fully grouped, criminal-heavy
+    society by day 90, where the live game (bake + tick, above) starts with
+    4 % grouped. Before W9 the default run used `clusters[0]` (5 homes, no
+    workplace: all NPCs in one venue, a complete trust graph) and the
+    Testbed's own `NpcAssigner` still looked for a `workplace` type that
+    the spatial model does not have (it has `office`/`warehouse`), so no
+    NPC had a workplace; both are fixed (`--cluster`, assigner types).
+  - Not measured headless (need a play session): the in-game cross-check
+    (TaleMetrics now logs schedule- and entity-based counts within 100 m
+    of the player each game hour, the arrival metrics at each populate and
+    on entering a cluster), the spawn-poll overhead before/after W3, and
+    the number of populated clusters in a normal session.
+
 ## 13. Owner decisions and notes
 
 1. **`completion_rate` meaning (W6):** decided 2026-10-18 — the share of

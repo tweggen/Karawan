@@ -336,6 +336,13 @@ public class TaleManager
         }
 
         _populatedClusters[clusterIndex] = 0;
+
+        // S0 W9: what the player meets in this cluster.
+        if (Is(engine.Dc.TaleMetrics))
+        {
+            Trace(engine.Dc.TaleMetrics, $"Cluster {clusterIndex} populated: " +
+                  $"{ComputeSocialMetrics(clusterIndex).ToLogLine()}");
+        }
     }
 
 
