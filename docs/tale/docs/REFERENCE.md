@@ -223,10 +223,10 @@ The skip mask prevents duplicates without cascading seed shifts.
 ### HasPlayerDeviation Flag
 
 Set only through `TaleManager.MarkPlayerContact` (which also adds the NPC to the skip mask), called from `nogameCode/nogame/modules/tale/TaleModule.cs`:
-- at the end of a conversation script, together with a +0.02 trust step towards the player (`Trust[-1]`);
+- at the end of a conversation script, by the +0.02 trust step towards the player (`Trust[-1]`), which goes through `TaleManager.ApplyPlayerTrust`, the one writer of `Trust[-1]` (S1-a);
 - by the narration action `tale.npc.remember`, which stores a `player_fact.<fact>` property;
 
-and on every schedule loaded from the save (`RegisterNpc`). Any new writer of `Trust[-1]` or `player_fact.*` must call `MarkPlayerContact`; a schedule that is `IsKnownToPlayer` without the flag is warned about and flagged.
+and on every schedule loaded from the save (`RegisterNpc`). Any new writer of `Trust[-1]` must use `ApplyPlayerTrust`, and of `player_fact.*` must call `MarkPlayerContact`; a schedule that is `IsKnownToPlayer` without the flag is warned about and flagged.
 
 Storylet postconditions never set it.
 

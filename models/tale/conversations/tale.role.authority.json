@@ -8,7 +8,7 @@
           "goto": [
             { "if": "func.npcGroupType() == 'patrol_unit'", "goto": "patrol" },
             { "if": "props.npc.met_player == 'false'", "goto": "first_meeting" },
-            { "if": "props.npc.trust_player > 0.65", "goto": "trusted" },
+            { "if": "props.npc.trust_player > 0.305", "goto": "trusted" },
             { "else": "acquaintance" }
           ]
         }

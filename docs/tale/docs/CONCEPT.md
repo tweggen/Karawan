@@ -89,7 +89,7 @@ society.
 | Factions forming and evolving | **shipped**, live — community detection, runtime evolver, group verbs, save-game (Phases D, E) |
 | Player talks to NPCs; dialogue reflects state and faction | **shipped** — Phase C conversations; faction-flavoured lines through the `npc.group_*` props (E5) |
 | Requests between NPCs, escalation chains, interrupts | **DES only** — request/claim/signal pool, conditional postconditions and Nest/Replace run in `DesSimulation` (bake, tests, Testbed); the live game's `TaleManager` applies plain postconditions and group verbs only |
-| Player relationships | **minimal** — `Trust[-1]` per NPC, starting at 0.5 and +0.02 per conversation; no group-level standing. It survives in play only because the code path meant to forget such NPCs never runs (roadmap S0) |
+| Player relationships | **minimal** — `Trust[-1]` per NPC, starting at 0.15 on first contact (S1-a) and +0.02 per conversation; no group-level standing. It survives in play only because the code path meant to forget such NPCs never runs (roadmap S0) |
 | Society away from the player | **trust only** — encounters and re-detection run for the whole cluster, but abstract schedules don't advance after the warm-up, so they meet at stale locations |
 | NPCs involving the player | **missing** — the player never joins the interaction pool; NPCs never ask |
 | Groups acting as groups (goals, conflicts between groups) | **missing** — groups exist and gather, but have no aims |

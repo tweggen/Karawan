@@ -88,24 +88,64 @@ public class ConversationRulesTests
     }
 
 
-    // C4 01, 02: first contact starts at 0.5 and every conversation adds 0.02.
+    // C4 01, 02 (scale since S1-a): the first conversation starts at the
+    // first-contact value, every conversation adds 0.02, and the NPC is marked.
     [Fact]
     public void ConversationTrust_StartsAtFirstContact_AndRisesPerConversation()
     {
+        var tm = new TaleManager();
         var npc = new NpcSchedule { NpcId = 3 };
 
-        Assert.Equal(0.52f, PlayerConversation.OnEnded(npc), 4);
-        Assert.Equal(0.54f, PlayerConversation.OnEnded(npc), 4);
-        Assert.Equal(0.54f, npc.Trust[-1], 4);
-        Assert.True(npc.IsKnownToPlayer);
+        Assert.Equal(PlayerTrust.FirstContact + 0.02f, PlayerConversation.OnEnded(tm, npc), 4);
+        Assert.Equal(PlayerTrust.FirstContact + 0.04f, PlayerConversation.OnEnded(tm, npc), 4);
+        Assert.Equal(0.19f, npc.Trust[-1], 4);
+        Assert.True(npc.HasPlayerDeviation);
     }
 
     [Fact]
     public void ConversationTrust_IsCappedAtOne()
     {
         var npc = new NpcSchedule { NpcId = 3, Trust = new Dictionary<int, float> { [-1] = 0.99f } };
-        Assert.Equal(1f, PlayerConversation.OnEnded(npc));
+        Assert.Equal(1f, PlayerConversation.OnEnded(new TaleManager(), npc));
     }
+
+    private static float _gate(string script)
+    {
+        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !System.IO.Directory.Exists(System.IO.Path.Combine(dir.FullName, "models", "tale", "conversations")))
+            dir = dir.Parent;
+        Assert.NotNull(dir);
+        string text = System.IO.File.ReadAllText(
+            System.IO.Path.Combine(dir!.FullName, "models", "tale", "conversations", script));
+        var m = System.Text.RegularExpressions.Regex.Match(text, @"props\.npc\.trust_player > ([0-9.]+)");
+        Assert.True(m.Success, script);
+        return float.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>Conversations that must have ended before the gate opens.</summary>
+    private static int _conversationsUntil(float gate)
+    {
+        var tm = new TaleManager();
+        var npc = new NpcSchedule { NpcId = 3 };
+        int n = 0;
+        while (!(PlayerTrust.Knows(npc) && PlayerTrust.Get(npc) > gate) && n < 1000)
+        {
+            PlayerConversation.OnEnded(tm, npc);
+            n++;
+        }
+        return n;
+    }
+
+    // S1-a moved first contact from 0.5 to 0.15; the role-script gates were
+    // moved with it so they open after as many conversations as before.
+    [Theory]
+    [InlineData("tale.role.merchant.json", 3)]
+    [InlineData("tale.role.authority.json", 8)]
+    public void RoleScriptTrustGates_OpenAfterTheSameNumberOfConversations(string script, int conversations)
+    {
+        Assert.Equal(conversations, _conversationsUntil(_gate(script)));
+    }
+
 
     // C4 06.
     [Fact]

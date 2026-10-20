@@ -901,9 +901,8 @@ public class TaleModule : AModule
             var currentSchedule = TaleNarrationBindings.GetCurrentSchedule();
             if (currentSchedule != null)
             {
-                PlayerConversation.OnEnded(currentSchedule);
-                _taleManager.MarkPlayerContact(currentSchedule);
-                Trace($"TALE: Trust incremented for NPC {currentSchedule.NpcId} (now {currentSchedule.Trust[-1]:F2})");
+                float trust = PlayerConversation.OnEnded(_taleManager, currentSchedule);
+                Trace($"TALE: Trust incremented for NPC {currentSchedule.NpcId} (now {trust:F2})");
             }
             TaleNarrationBindings.ClearNpcProps();
         }

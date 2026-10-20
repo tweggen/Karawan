@@ -341,10 +341,21 @@ Scripts live in `models/tale/conversations/` and are mounted in
 Before the script runs, `InjectNpcProps` exposes the NPC's state as narration
 props:
 - its properties: `npc.hunger` … `npc.fear`, `npc.role`;
-- the player relationship: `npc.met_player`, `npc.trust_player`;
+- the player relationship: `npc.met_player` (the NPC has a `Trust[-1]` entry) and
+  `npc.trust_player` (`PlayerTrust.Get`: the entry, or the first-contact value 0.15);
 - the faction: `npc.group_id`, `npc.has_group`, `npc.group_type`,
   `npc.group_name`, `npc.group_size`;
 - remembered facts: `npc.player_fact.*`.
+
+**Player trust** (S1-a, KAR-454). `Trust[-1]` is the NPC's trust in the player. No entry
+means the NPC does not know the player; the first contact starts at
+`PlayerTrust.FirstContact = 0.15`, the stranger/acquaintance boundary of
+`nogame.relationship-tiers.json` (it used to start at 0.5, already "friend"). The one
+writer is `TaleManager.ApplyPlayerTrust(schedule, delta)` (`PlayerStanding.cs`): it creates
+the entry, adds, clamps to [0, 1], calls `MarkPlayerContact` and bumps
+`PlayerTrustVersion`. A finished conversation applies +0.02 through it
+(`PlayerConversation.OnEnded`) until S1-c replaces that with the chat interaction. Old saves
+keep their values; there is no migration (owner, 2026-10-18).
 
 The narration functions include `npcGroupType()` and `npcGroupName()`.
 Dialogue can gate on trust, remember player facts (`tale.npc.remember`) and

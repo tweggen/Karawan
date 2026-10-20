@@ -6,7 +6,7 @@
         {
           "goto": [
             { "if": "func.npcGroupType() == 'trade'", "goto": "consortium" },
-            { "if": "props.npc.met_player == 'true' && props.npc.trust_player > 0.55", "goto": "returning" },
+            { "if": "props.npc.met_player == 'true' && props.npc.trust_player > 0.205", "goto": "returning" },
             { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
             { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
             { "if": "func.npcMood() == 'tired'", "goto": "tired" },
