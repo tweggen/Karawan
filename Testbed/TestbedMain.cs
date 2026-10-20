@@ -30,6 +30,9 @@ public class TestbedMain
     private static bool _validateStreets = false;
     private static bool _testPathfinding = false;
     private static int _measurePopulation = 0;
+    private static bool _taleArrival = false;
+    private static string _clusterSelection = null;
+    private static int _desClusterIndex = 0;
 
 
     private static string _determineResourcePath()
@@ -116,6 +119,10 @@ public class TestbedMain
                     _testPathfinding = true; break;
                 case "--measure-population" when i + 1 < args.Length:
                     _measurePopulation = int.Parse(args[++i]); break;
+                case "--tale-arrival":
+                    _taleArrival = true; break;
+                case "--cluster" when i + 1 < args.Length:
+                    _clusterSelection = args[++i]; break;
                 case "--quiet":
                     _quiet = true; break;
                 default:
@@ -206,7 +213,13 @@ public class TestbedMain
                 return;
             }
 
-            targetCluster = clusters[0];
+            // clusters[0] has 5 homes and no workplace in the shipped city, so
+            // its DES run is degenerate; --cluster small|medium|large|<name>
+            // picks a representative one (S0 W9).
+            targetCluster = _clusterSelection != null
+                ? TaleArrival.Select(_clusterSelection, Log, out _).FirstOrDefault().Cluster ?? clusters[0]
+                : clusters[0];
+            _desClusterIndex = targetCluster.Index;
             Log($"Target cluster: \"{targetCluster.Name}\" at {targetCluster.Pos}, size={targetCluster.Size}");
 
             var worldMetaGen = I.Get<MetaGen>();
@@ -230,6 +243,16 @@ public class TestbedMain
         {
             string json = null;
             e.TaskMainThread(() => { json = MeasurePopulation(_measurePopulation); }).Wait();
+            Console.Out.WriteLine(json);
+            e.Exit();
+            Environment.Exit(0);
+        }
+
+        // S0 W9: what the player meets on arrival (--tale-arrival [--cluster small|medium|large|all|<name>] [--days N])
+        if (_taleArrival)
+        {
+            string json = null;
+            e.TaskMainThread(() => { json = TaleArrival.Run(_clusterSelection ?? "all", _days, Log); }).Wait();
             Console.Out.WriteLine(json);
             e.Exit();
             Environment.Exit(0);
@@ -418,7 +441,7 @@ public class TestbedMain
             ["run_id"] = runId,
             ["config"] = new Dictionary<string, object>
             {
-                ["cluster_index"] = 0,
+                ["cluster_index"] = _desClusterIndex,
                 ["npc_count"] = _npcCount,
                 ["days_simulated"] = _days,
                 ["seed"] = _seed,

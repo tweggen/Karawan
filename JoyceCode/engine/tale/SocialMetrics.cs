@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Numerics;
 
 namespace engine.tale;
 
@@ -473,4 +474,89 @@ public static class SocialMetricsCalculator
 
     /// <summary>The Trust key under which an NPC holds its trust in the player.</summary>
     public const int PlayerTrustKey = -1;
+}
+
+
+/// <summary>
+/// How many NPCs are near a point at a game time, by where they are (S0 W9):
+/// on the street (walking between locations or standing at a street
+/// location), in a venue (shop, bar, any other non-home location) or at home
+/// or work. Only the street NPCs are visible: an NPC at any non-street
+/// location is indoors (Phase 7).
+/// </summary>
+public readonly record struct NpcDensity(int Street, int Venue, int HomeOrWork)
+{
+    public int Total => Street + Venue + HomeOrWork;
+
+    public override string ToString() =>
+        $"{Total} (street {Street}, venue {Venue}, home/work {HomeOrWork})";
+}
+
+
+public enum NpcWhereabouts { Street, Venue, HomeOrWork }
+
+
+public static class NpcDensityCounter
+{
+    /// <summary>
+    /// Count the NPCs whose schedule puts them within <paramref name="radius"/>
+    /// (horizontal) of <paramref name="centre"/> at <paramref name="gameNow"/>.
+    /// Uses NpcSchedule.PositionAt, where a spawned NPC would appear, not
+    /// CurrentWorldPosition, which is the destination while travelling. The
+    /// headless measurement and the in-game cross-check both use this.
+    /// </summary>
+    public static NpcDensity CountNear(
+        IEnumerable<NpcSchedule> npcs, SpatialModel model, Vector3 centre, float radius, DateTime gameNow)
+        => CountNear(Locate(npcs, model, gameNow), centre, radius);
+
+
+    /// <summary>
+    /// Where each NPC is at <paramref name="gameNow"/>; compute once and count
+    /// around many centres.
+    /// </summary>
+    public static List<(Vector3 Position, NpcWhereabouts Where)> Locate(
+        IEnumerable<NpcSchedule> npcs, SpatialModel model, DateTime gameNow)
+    {
+        var result = new List<(Vector3, NpcWhereabouts)>();
+        foreach (var npc in npcs)
+        {
+            result.Add((npc.PositionAt(gameNow, model), _whereabouts(npc, model, gameNow)));
+        }
+        return result;
+    }
+
+
+    public static NpcDensity CountNear(
+        IReadOnlyList<(Vector3 Position, NpcWhereabouts Where)> located, Vector3 centre, float radius)
+    {
+        int street = 0, venue = 0, homeOrWork = 0;
+        float r2 = radius * radius;
+        foreach (var (pos, where) in located)
+        {
+            float dx = pos.X - centre.X, dz = pos.Z - centre.Z;
+            if (dx * dx + dz * dz > r2) continue;
+            switch (where)
+            {
+                case NpcWhereabouts.Street: street++; break;
+                case NpcWhereabouts.Venue: venue++; break;
+                default: homeOrWork++; break;
+            }
+        }
+        return new NpcDensity(street, venue, homeOrWork);
+    }
+
+
+    private static NpcWhereabouts _whereabouts(NpcSchedule npc, SpatialModel model, DateTime gameNow)
+    {
+        if (npc.IsInTransit && gameNow >= npc.TransitStart && gameNow < npc.TransitEnd)
+            return NpcWhereabouts.Street;
+        if (npc.CurrentLocationId == npc.HomeLocationId || npc.CurrentLocationId == npc.WorkplaceLocationId)
+            return NpcWhereabouts.HomeOrWork;
+        return model?.GetLocation(npc.CurrentLocationId)?.Type switch
+        {
+            "street_segment" => NpcWhereabouts.Street,
+            "home" or "office" or "warehouse" => NpcWhereabouts.HomeOrWork,
+            _ => NpcWhereabouts.Venue
+        };
+    }
 }

@@ -37,7 +37,9 @@ public static class NpcAssigner
 
         // Partition locations by type
         var homes = model.Locations.Where(l => l.Type == "home").ToList();
-        var workplaces = model.Locations.Where(l => l.Type == "workplace").ToList();
+        // The spatial model has no "workplace" type: workplaces are offices and
+        // warehouses (the game's generator was fixed in f8a4f293; this copy was not).
+        var workplaces = model.Locations.Where(l => l.Type is "office" or "warehouse").ToList();
         var shops = model.Locations.Where(l => l.Type == "shop").ToList();
         var socialVenues = model.Locations.Where(l => l.Type == "social_venue").ToList();
 
