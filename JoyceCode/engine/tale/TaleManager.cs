@@ -637,6 +637,62 @@ public class TaleManager
 
 
     /// <summary>
+    /// The cluster's metrics history samples, oldest first, copied (S0 W8).
+    /// </summary>
+    public List<SocialDaySample> GetSocialMetricsSamples(int clusterIndex)
+    {
+        lock (_loSocial)
+        {
+            return _socialStates.TryGetValue(clusterIndex, out var social)
+                ? social.MetricsHistory.Samples.ToList()
+                : new List<SocialDaySample>();
+        }
+    }
+
+
+    /// <summary>
+    /// A copy of the cluster's group table, each group copied too, so it can
+    /// be read while the social frame changes the original (S0 W8).
+    /// </summary>
+    public Dictionary<int, RuntimeGroup> CopyGroupTable(int clusterIndex)
+    {
+        lock (_loSocial)
+        {
+            var copy = new Dictionary<int, RuntimeGroup>();
+            if (!_socialStates.TryGetValue(clusterIndex, out var social)) return copy;
+            foreach (var (id, g) in social.Groups)
+            {
+                copy[id] = new RuntimeGroup
+                {
+                    GroupId = g.GroupId, Type = g.Type, Name = g.Name,
+                    MemberIds = new List<int>(g.MemberIds),
+                    HangoutLocationId = g.HangoutLocationId, Authored = g.Authored
+                };
+            }
+            return copy;
+        }
+    }
+
+
+    /// <summary>
+    /// Re-detect the cluster's groups (Phase E3) under _loSocial: it rewrites
+    /// the group table, which storylet group verbs change concurrently during
+    /// spawn catch-up (_applyGroupVerb). Null when the cluster has no social
+    /// state.
+    /// </summary>
+    public RuntimeSocialEvolver.RedetectStats RedetectGroups(
+        int clusterIndex, RuntimeSocialEvolver evolver, Func<int, int, string, string> nameProvider)
+    {
+        var npcs = GetNpcsInCluster(clusterIndex);
+        lock (_loSocial)
+        {
+            if (!_socialStates.TryGetValue(clusterIndex, out var social)) return null;
+            return evolver.Redetect(clusterIndex, social, npcs.ToDictionary(n => n.NpcId), nameProvider);
+        }
+    }
+
+
+    /// <summary>
     /// All social states, for save-game serialization (Phase E6).
     /// </summary>
     public List<ClusterSocialState> GetAllSocialStates()

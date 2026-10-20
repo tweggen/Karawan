@@ -231,4 +231,60 @@ public class RuntimeSocialEvolverTests
         Assert.True(group.Authored);
         Assert.All(npcs.Values, n => Assert.Equal(7, n.GroupId));
     }
+
+    /*
+     * KAR-466: NPCs 1..4 trust each other 0.9, so detection forms a community
+     * of them. NPC 1 was also in authored group 9 with NPCs 5..8.
+     */
+    private static (Dictionary<int, NpcSchedule> npcs, ClusterSocialState social) _authoredOverlap(params int[] authoredRoster)
+    {
+        var npcs = Enumerable.Range(1, 8).Select(i => MakeNpc(i, 500)).ToDictionary(n => n.NpcId);
+        for (int a = 1; a <= 4; a++)
+            for (int b = 1; b <= 4; b++)
+                if (a != b) npcs[a].Trust[b] = 0.9f;
+        foreach (int id in authoredRoster) npcs[id].GroupId = 9;
+
+        var social = new ClusterSocialState { ClusterIndex = 1, NextGroupId = 10 };
+        social.Groups[9] = new RuntimeGroup
+        {
+            GroupId = 9, Type = "criminal", Name = "The Stray Dogs",
+            MemberIds = authoredRoster.ToList(), Authored = true
+        };
+        return (npcs, social);
+    }
+
+    [Fact]
+    public void Redetect_AuthoredGroupLosesTheMemberACommunityClaimed()
+    {
+        var (npcs, social) = _authoredOverlap(1, 5, 6, 7, 8);
+
+        new RuntimeSocialEvolver().Redetect(1, social, npcs, (c, g, t) => $"gen-{g}");
+
+        var detected = social.Groups.Values.Single(g => !g.Authored);
+        Assert.Equal(new List<int> { 1, 2, 3, 4 }, detected.MemberIds);
+        Assert.Equal(new List<int> { 5, 6, 7, 8 }, social.Groups[9].MemberIds);
+        Assert.Equal(detected.GroupId, npcs[1].GroupId);
+        Assert.All(new[] { 5, 6, 7, 8 }, id => Assert.Equal(9, npcs[id].GroupId));
+        Assert.Equal(0, SocialMetricsCalculator.Compute(
+            npcs.Values.ToList(), TrustPair.FromSchedules(npcs.Values), social.Groups).GroupTableMismatch);
+    }
+
+    /*
+     * A community that takes half an authored roster continues the group
+     * (GroupMatching), so pruning alone cannot leave fewer than two members;
+     * a roster that is already down to one dissolves like a storylet leave.
+     */
+    [Fact]
+    public void Redetect_AuthoredGroupOfOne_Dissolves()
+    {
+        var (npcs, social) = _authoredOverlap(5);
+
+        var stats = new RuntimeSocialEvolver().Redetect(1, social, npcs, (c, g, t) => $"gen-{g}");
+
+        Assert.False(social.Groups.ContainsKey(9));
+        Assert.Equal(1, stats.Dissolved);
+        Assert.Equal(-1, npcs[5].GroupId);
+        Assert.Equal(0, SocialMetricsCalculator.Compute(
+            npcs.Values.ToList(), TrustPair.FromSchedules(npcs.Values), social.Groups).GroupTableMismatch);
+    }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -59,6 +60,12 @@ public class TaleModule : AModule
      */
     public double DepopulateGraceSeconds = 60.0;
     private DateTime _lastResidencyCheck = DateTime.MinValue;
+
+    /*
+     * S0 W8: the snapshot hand-over to the ImGui TALE panel.
+     */
+    private readonly TaleDebugState _debugState = new();
+    private DateTime _lastDebugSnapshot = DateTime.MinValue;
 
     /*
      * S0 W5: the background tick advances the schedules no entity runs, a
@@ -381,6 +388,7 @@ public class TaleModule : AModule
             _taleManager.GroupNameProvider = GroupNameGenerator.Generate;
 
             I.Register<TaleManager>(() => _taleManager);
+            I.Register<TaleDebugState>(() => _debugState);
             Trace("TALE: TaleManager registered.");
 
             // Register narration bindings for NPC conversations
@@ -538,6 +546,55 @@ public class TaleModule : AModule
     }
 
 
+    /**
+     * S0 W8: while the editor is open, once a real second, copy one cluster
+     * into a snapshot for the ImGui TALE panel, which renders on the render
+     * thread and must not read TaleManager itself.
+     */
+    private void _buildDebugSnapshot(DateTime gameNow)
+    {
+        if (!(bool)Props.Get("engine.editor.isOpen", false)) return;
+        var now = DateTime.UtcNow;
+        if ((now - _lastDebugSnapshot).TotalSeconds < 1.0) return;
+        _lastDebugSnapshot = now;
+
+        Vector3 playerPos = default;
+        if (_engine.Player.TryGet(out var ePlayer)
+            && ePlayer.IsAlive && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
+        {
+            playerPos = ePlayer.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
+        }
+
+        var populated = _taleManager.GetPopulatedClusters();
+        int playersCluster = _clusterList?.GetClusterAt(playerPos)?.Index ?? -1;
+        int clusterIndex = _debugState.RequestedClusterIndex;
+        if (clusterIndex < 0 || !populated.Contains(clusterIndex))
+        {
+            clusterIndex = populated.Contains(playersCluster) ? playersCluster
+                : populated.Count > 0 ? populated[0] : -1;
+        }
+
+        int npcId = _debugState.RequestedNpcId;
+        if (npcId < 0)
+        {
+            var eSelected = _debugState.SelectedEntity;
+            if (eSelected != default && eSelected.IsAlive && eSelected.Has<engine.tale.components.TaleNpcId>())
+                npcId = eSelected.Get<engine.tale.components.TaleNpcId>().NpcId;
+        }
+
+        try
+        {
+            _debugState.Latest = TaleDebugSnapshotBuilder.Build(
+                _taleManager, clusterIndex, gameNow, playerPos, npcId, clusterIndex == playersCluster);
+        }
+        catch (InvalidOperationException)
+        {
+            // A spawn catch-up thread changed a schedule's dictionaries while
+            // we copied them. Debug view: try again next second.
+        }
+    }
+
+
     private void _onSocialFrame(object sender, float dt)
     {
         if (_taleManager == null) return;
@@ -549,6 +606,7 @@ public class TaleModule : AModule
 
         _advanceAbstractSchedules(gameNow);
         _rollSocialMetricsDay(gameNow);
+        _buildDebugSnapshot(gameNow);
 
         if (_lastSocialTickGameTime == DateTime.MinValue)
         {
@@ -581,12 +639,9 @@ public class TaleModule : AModule
         if ((gameNow - lastRedetect).TotalHours < RedetectGameHours) return;
         _lastRedetectGameTime[clusterIndex] = gameNow;
 
-        var social = _taleManager.GetSocialState(clusterIndex);
-        if (social == null) return;
-
-        var byId = npcs.ToDictionary(n => n.NpcId);
-        var rstats = _socialEvolver.Redetect(clusterIndex, social, byId, GroupNameGenerator.Generate);
-        string groupSummary = string.Join(", ", social.Groups.Values.Select(
+        var rstats = _taleManager.RedetectGroups(clusterIndex, _socialEvolver, GroupNameGenerator.Generate);
+        if (rstats == null) return;
+        string groupSummary = string.Join(", ", _taleManager.CopyGroupTable(clusterIndex).Values.Select(
             g => $"\"{g.Name}\" [{g.Type}] x{g.MemberIds.Count}"));
         Trace(_dcSocial, $"Cluster {clusterIndex} re-detect @{gameNow:HH:mm}: " +
               $"{rstats.Communities} communities ({rstats.KeptIdentity} kept identity, " +

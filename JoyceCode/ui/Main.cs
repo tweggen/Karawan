@@ -25,6 +25,7 @@ public class Main
     private EntityState _sharedEntityState;
     private Entities _uiEntities;
     private EntityInspector _uiEntityInspector;
+    private Tale _uiTale;
     private Monitor _uiMonitor;
     private Assets _uiAssets;
 
@@ -225,6 +226,11 @@ public class Main
                 _uiEntityInspector.Render(dt);
             }
 
+            if (ImGui.CollapsingHeader("TALE"))
+            {
+                _uiTale.Render(dt);
+            }
+
             if (ImGui.CollapsingHeader("Monitor"))
             {
                 _uiMonitor.Render(dt);
@@ -323,5 +329,6 @@ public class Main
         _sharedEntityState = new EntityState(this);
         _uiEntities = new Entities(this, _sharedEntityState);
         _uiEntityInspector = new EntityInspector(this, _sharedEntityState);
+        _uiTale = new Tale(this, _sharedEntityState);
     }
 }

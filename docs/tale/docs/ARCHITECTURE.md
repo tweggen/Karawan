@@ -436,6 +436,7 @@ TALE `Location`s: homes, workplaces, shops, venues and street junctions.
 | `TaleModule`, `TaleNarrationBindings`, `GroupNameGenerator` | `nogameCode/nogame/modules/tale/` | Game wiring, persistence, narration props. |
 | `TaleSpawnOperator`, `TaleEntityStrategy`, `NavMeshRouteGenerator`, `TaleConversationBehavior` | `nogameCode/nogame/characters/citizen/` | Materialisation and in-game behaviour. |
 | `TaleOverlayText`, `TaleOverlayModule` | `TaleOverlayText.cs`, `nogameCode/nogame/modules/debugger/` | Per-NPC debug overlay (§13). |
+| `TaleDebugSnapshot`, `TaleDebugSnapshotBuilder`, `TaleDebugState`; `joyce.ui.Tale` | `TaleDebugSnapshot*.cs`; `JoyceCode/ui/Tale.cs` | ImGui TALE panel and its snapshot (§13). |
 
 ## 12. Testing
 
@@ -502,3 +503,28 @@ labels twice a second on the logical thread from the entities that carry
 NPC entity is gone, because the death paths do not delete children. With the
 property off, no label entity exists. The text comes from the pure
 `engine.tale.TaleOverlayText.Format`, tested in `TaleOverlayTextTests`.
+
+**ImGui TALE panel** (S0 W8, KAR-451). F12 → TALE shows one populated
+cluster (the player's unless another is chosen):
+- counts, the overlay switch and the W6 metrics with a churn sparkline;
+- groups by size, each with name, type, hangout and its distance, and the
+  mean `Trust[-1]` of the members who met the player; expandable to members;
+- the inter-group trust of the 12 largest groups, read from the W6 metrics;
+- every NPC's `Trust[-1]`, highest first;
+- the selected NPC: the inspector's entity if it carries `TaleNpcId`, or an
+  NPC id typed or clicked in the pane. Shows schedule, location, group,
+  flags, properties and its eight strongest trust entries.
+
+ImGui renders on the render thread, so the pane never reads `TaleManager`.
+While the editor is open (`engine.editor.isOpen`), `TaleModule._onSocialFrame`
+builds a `TaleDebugSnapshot` with the pure `TaleDebugSnapshotBuilder.Build`
+at most once a real second, on the logical thread, and publishes it in
+`TaleDebugState.Latest`. Everything in the snapshot is a copy, so it stays
+as built while the manager changes (`TaleDebugSnapshotTests`). The pane
+writes back only `TaleDebugState`'s request fields. A spawn catch-up thread
+changing a schedule mid-copy throws; the frame skips that snapshot and tries
+again a second later.
+
+Re-detection now runs under `TaleManager`'s social lock
+(`TaleManager.RedetectGroups`): it rewrites the group table, which storylet
+group verbs change from spawn catch-up threads.
