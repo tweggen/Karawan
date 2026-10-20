@@ -87,10 +87,10 @@ fragment.
     player's standing per NPC and per group, and the metrics above.
 - **Measure NPC density around the player:** how many TALE NPCs are within
   100 m of the player, by time of day, in a small and a medium cluster.
-  Materialisation has no indoor/outdoor notion (every NPC in a loaded
-  fragment is spawned, standing at a building entry when "at home"), so
-  count by location type: on the street or at a venue versus at home or at
-  work. S5's target (§8 Q4) is only meaningful against this number.
+  An NPC at any non-street location is spawned but hidden indoors
+  (`TaleEntityStrategy.cs:449`), so count by where it is: on the street
+  (visible), at a venue, or at home or work. S5's target (§8 Q4) is only
+  meaningful against this number.
 
 *Done when:*
 - reverting the +0.02 conversation trust or dropping the group verb in
@@ -101,6 +101,36 @@ fragment.
 - the debug views show one NPC's and one group's state in the running game;
 - the baseline and the density numbers are written into this plan, under
   S0 (they set S4's bake option and S5's target).
+
+**Measured (S0 W9, 2026-10-20; tables and method in
+[TALE-S0-GROUNDWORK.md](TALE-S0-GROUNDWORK.md) §12):**
+- **Clusters:** 70; NPCs 168 … 4095 per cluster, 45 clusters at the 4095
+  cap, 206 667 NPCs in all.
+- **Density (for S5):** within 100 m of a street location, on average
+  about **5 visible NPCs** in a capped cluster (3.3 at the quietest hour,
+  6.8 at the busiest; ~10 counting those indoors) and 2.4 in the smallest
+  cluster. Streets are busier at night than at midday. At the player's
+  start pose it is 0–4 visible. The 4–5 opportunities of §8 Q4 would need
+  nearly every visible NPC to be one: S5 should count situations (an NPC,
+  a pair, a group's activity) or widen the radius.
+- **Society at arrival (for S4):** the bake matches 5–6 % of a capped
+  cluster's NPCs (scenario ≤ 250 NPCs), so 96 % meet the player ungrouped
+  (9–12 groups of 3–53); in the smallest cluster 55 % are grouped. A week
+  of live evolution grows 12 → 21 and 9 → 29 groups with 3–4 membership
+  changes per day. The DES on 500 NPCs reaches 98 % grouped and 27
+  criminal groups by day 90. **The bake alone will not give a capped
+  cluster rivalries:** S4 needs either the large scenarios or group logic
+  running on the background tick.
+- **Drift (for S2b):** under live rules wealth halves in a week (0.46 →
+  0.19); hunger and fatigue settle near 0.4–0.5, happiness climbs to 0.9.
+- **Cost:** the background tick costs ~1.7–2.2 s of CPU per game day for a
+  capped cluster (24–26 steps per NPC per day), ≈ 1 ms per real second at a
+  30-minute day; populating a capped cluster blocks the logical thread
+  0.4–1.0 s (repopulation 0.4 s); its social state is ~2 MB of JSON.
+- **Pending a play session:** the in-game cross-check of these densities
+  (TaleMetrics logs both counts within 100 m of the player each game hour),
+  the spawn-poll overhead, and the number of clusters populated in a normal
+  session.
 
 ## S1 — The player in the social graph
 

@@ -21,7 +21,8 @@ The pure rules moved out of nogame into JoyceCode so they can be tested; nogame 
 | C2 02, C2 03, C2 05 | the first tag with a `tale.tag.{tag}` script | same |
 | — | `tale.{storyletId}` before tags; `tale.generic` last | same |
 | C3 01–04 | `npcMood()` / `npcWealthLabel()` thresholds and order | `NpcMoodText` |
-| C4 01, C4 02 | first contact 0.5, +0.02 per finished conversation, capped at 1 | `PlayerConversation.OnEnded` |
+| C4 01, C4 02 | first contact 0.15 (S1-a), +0.02 per finished conversation, capped at 1, contact marked | `PlayerConversation.OnEnded` → `TaleManager.ApplyPlayerTrust` |
+| C4 03, C4 04 (gates only) | the merchant's `returning` gate opens after 3 conversations, the authority's `trusted` after 8 | `RoleScriptTrustGates_OpenAfterTheSameNumberOfConversations` |
 | C4 06 | `tale.npc.remember` stores `player_fact.{fact}` | `PlayerConversation.Remember` |
 
 `TaleModule` still has to *call* `PlayerConversation.OnEnded` on `ScriptEndedEvent`; that

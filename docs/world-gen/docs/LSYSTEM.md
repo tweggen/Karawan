@@ -150,27 +150,43 @@ L-Systems are defined in JSON with three main sections: seed, rules, and macros.
 
 **Macros**: Final expansion rules applied once at the end to convert abstract parts into geometry.
 
-### Configuration Objects
+### Parametric L-Systems and Their Config
 
-For parametric L-systems (like buildings), you can define configuration objects:
+A definition with `"type": "parametric"` keeps its complex logic in C# and carries its
+parameters in a `config` object inside the definition. Today that is `house1`, read by
+`HouseInstanceGenerator` (`nogameCode/nogame/cities/`); a missing field falls back to the
+generator's default:
 
 ```json
 {
-  "configs": {
-    "house1": {
-      "storyHeight": 3.0,
-      "minSegmentStories": 4,
-      "shrinkAmount": 2.0,
-      "segmentProbability": 0.8,
-      "materials": {
-        "wall": "materials/buildingwall2",
-        "roof": "materials/buildingroof3",
-        "floor": "materials/buildingfloor1"
-      }
+  "lsystems": [
+    {
+      "name": "house1",
+      "type": "parametric",
+      "config": {
+        "storyHeight": 3.0,
+        "minSegmentStories": 4,
+        "shrinkAmount": 2.0,
+        "segmentProbability": 0.8,
+        "upperSegmentProbability": 0.9,
+        "singleBlockProbability": 0.1,
+        "materials": {
+          "walls": "nogame.cities.houses.materials.houses.win3",
+          "powerlines": "nogame.characters.house.materials.powerlines"
+        }
+      },
+      "seed": { "parts": [ ... ] },
+      "rules": [ ... ],
+      "macros": [ ... ]
     }
-  }
+  ]
 }
 ```
+
+The fields are `LSystemConfig` (`JoyceCode/builtin/tools/Lindenmayer/LSystemDefinition.cs`).
+There is no top-level `configs` object: an earlier editor format
+`{ "definitions": {...}, "configs": {...} }` was never read by the game and was removed from
+Aihao (KAR-430).
 
 ## Lua Integration
 
@@ -217,7 +233,7 @@ The Aihao IDE includes a visual editor for L-Systems accessible via the "lsystem
 
 The editor uses a 3-pane layout:
 
-1. **Left Pane**: Tree view listing all L-system definitions and configurations
+1. **Left Pane**: Tree view listing all L-system definitions, and under each parametric one its config
 2. **Center Pane**: Main editor for the selected definition or configuration
 3. **Right Pane**: Detail panel for selected rules/macros
 
@@ -239,9 +255,13 @@ When a rule is selected, the detail panel shows:
 
 ### Config Editor
 
-For parametric configurations:
-- Story height, min segment stories, shrink amount, segment probability
-- Materials map with key-value pairs
+For a parametric definition's config:
+- Story height, min segment stories, shrink amount, and the segment, upper-segment and
+  single-block probabilities
+- Materials map with key-value pairs (`walls`, `powerlines` for `house1`)
+
+"+ Config" adds a config to the selected definition, which makes it parametric; removing the
+definition removes its config.
 
 ### Workflow
 
@@ -251,7 +271,7 @@ For parametric configurations:
 4. Select a definition or config from the left pane
 5. Edit properties in the center pane
 6. For rules/macros, click to select and edit details in the right pane
-7. Use the toolbar buttons to add new definitions or configs
+7. Use the toolbar buttons to add new definitions, or a config to the selected definition
 8. Save changes with the Save button
 
 ## File Locations

@@ -94,7 +94,10 @@ public class TaleModule : AModule
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<modules.daynite.Controller>(),
-        new SharedModule<Saver>()
+        new SharedModule<Saver>(),
+        // Player position for the density cross-check (S0 W9); the save hook
+        // already read it from here.
+        new SharedModule<nogame.modules.AutoSave>()
     };
 
 
@@ -497,6 +500,8 @@ public class TaleModule : AModule
         if ((now - _lastResidencyCheck).TotalSeconds < 1.0) return;
         _lastResidencyCheck = now;
 
+        if (Is(_dcMetrics)) _logPlayerClusterChange();
+
         var due = _taleManager.Residency.DueForDepopulate(
             _taleManager.GetPopulatedClusters(), now, TimeSpan.FromSeconds(DepopulateGraceSeconds));
         foreach (int clusterIndex in due)
@@ -527,6 +532,71 @@ public class TaleModule : AModule
         }
         _abstractTickStatsHour = hour;
         _abstractTickStats.Reset();
+
+        if (Is(_dcMetrics)) _logDensityNearPlayer(gameNow);
+    }
+
+
+    /**
+     * S0 W9 cross-check, once per game hour with debug.category.talemetrics:
+     * NPCs within 100 m of the player by schedule (the counter the headless
+     * --tale-arrival measurement uses) against the TALE entities actually there.
+     */
+    private void _logDensityNearPlayer(DateTime gameNow)
+    {
+        const float radius = 100f;
+        var playerPos = M<nogame.modules.AutoSave>().GameState.PlayerPosition;
+
+        var bySchedule = new NpcDensity(0, 0, 0);
+        foreach (int clusterIndex in _taleManager.GetPopulatedClusters())
+        {
+            var d = NpcDensityCounter.CountNear(_taleManager.GetNpcsInCluster(clusterIndex),
+                _taleManager.GetSpatialModel(clusterIndex), playerPos, radius, gameNow);
+            bySchedule = new NpcDensity(bySchedule.Street + d.Street, bySchedule.Venue + d.Venue,
+                bySchedule.HomeOrWork + d.HomeOrWork);
+        }
+
+        int byEntity = 0;
+        foreach (var e in _engine.GetEcsWorld().GetEntities()
+                     .With<engine.tale.components.TaleNpcId>()
+                     .With<engine.joyce.components.Transform3ToWorld>().AsEnumerable())
+        {
+            var p = e.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
+            float dx = p.X - playerPos.X, dz = p.Z - playerPos.Z;
+            if (dx * dx + dz * dz <= radius * radius) byEntity++;
+        }
+
+        Trace(_dcMetrics, $"Density within {radius:F0} m of the player at {gameNow:HH:mm}: " +
+                          $"schedules {bySchedule}, entities {byEntity}.");
+    }
+
+
+    /**
+     * S0 W9: log a cluster's arrival metrics when the player enters it.
+     */
+    private int _playerClusterIndex = -1;
+
+    private void _logPlayerClusterChange()
+    {
+        var playerPos = M<nogame.modules.AutoSave>().GameState.PlayerPosition;
+        int found = -1;
+        foreach (var cd in _clusterList.GetClusterList())
+        {
+            var aabb = cd.AABB;
+            if (playerPos.X >= aabb.AA.X && playerPos.X <= aabb.BB.X
+                && playerPos.Z >= aabb.AA.Z && playerPos.Z <= aabb.BB.Z)
+            {
+                found = cd.Index;
+                break;
+            }
+        }
+        if (found == _playerClusterIndex) return;
+        _playerClusterIndex = found;
+        if (found >= 0 && _taleManager.IsClusterPopulated(found))
+        {
+            Trace(_dcMetrics, $"Player entered cluster {found}: " +
+                              $"{_taleManager.ComputeSocialMetrics(found).ToLogLine()}");
+        }
     }
 
 
@@ -646,9 +716,8 @@ public class TaleModule : AModule
             var currentSchedule = TaleNarrationBindings.GetCurrentSchedule();
             if (currentSchedule != null)
             {
-                PlayerConversation.OnEnded(currentSchedule);
-                _taleManager.MarkPlayerContact(currentSchedule);
-                Trace($"TALE: Trust incremented for NPC {currentSchedule.NpcId} (now {currentSchedule.Trust[-1]:F2})");
+                float trust = PlayerConversation.OnEnded(_taleManager, currentSchedule);
+                Trace($"TALE: Trust incremented for NPC {currentSchedule.NpcId} (now {trust:F2})");
             }
             TaleNarrationBindings.ClearNpcProps();
         }

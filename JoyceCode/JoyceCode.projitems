@@ -510,7 +510,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RuntimeSocialEvolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupActions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupMatching.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupDetector.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\GroupDetectionResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\JsonlEventLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\InteractionRequest.cs" />
@@ -542,6 +542,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\NpcMoodText.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerConversation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\NpcScheduleJson.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerStanding.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleDebugSnapshotBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleDebugSnapshot.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleOverlayText.cs" />

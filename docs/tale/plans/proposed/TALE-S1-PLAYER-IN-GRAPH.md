@@ -99,6 +99,10 @@ S1-c, S1-d, S1-e and S1-g can run in parallel after S1-b.
 
 ## 3. S1-a — Player trust baseline
 
+> **Status:** implemented (KAR-454), 2026-10-20. Deviation: the two role-script gates were
+> moved now (merchant `> 0.205`, authority `> 0.305`) so they open after the same 3 and 8
+> conversations as before; S1-c retunes them again for the chat rule. A test pins the counts.
+
 - **No entry means "doesn't know the player".** First contact starts at
   `PlayerTrust.FirstContact = 0.15` (the stranger/acquaintance boundary),
   then applies the interaction's change. Values are clamped to [0, 1] on

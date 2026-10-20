@@ -336,6 +336,13 @@ public class TaleManager
         }
 
         _populatedClusters[clusterIndex] = 0;
+
+        // S0 W9: what the player meets in this cluster.
+        if (Is(engine.Dc.TaleMetrics))
+        {
+            Trace(engine.Dc.TaleMetrics, $"Cluster {clusterIndex} populated: " +
+                  $"{ComputeSocialMetrics(clusterIndex).ToLogLine()}");
+        }
     }
 
 
@@ -840,6 +847,30 @@ public class TaleManager
         if (schedule == null) return;
         schedule.HasPlayerDeviation = true;
         _addToSkipMask(schedule);
+    }
+
+
+    private int _playerTrustVersion;
+
+    /// <summary>
+    /// Bumped by every ApplyPlayerTrust: a cheap dirty flag for readers that
+    /// aggregate player trust (S1-f's standing level).
+    /// </summary>
+    public int PlayerTrustVersion => Volatile.Read(ref _playerTrustVersion);
+
+
+    /// <summary>
+    /// TALE S1-a: the one writer of an NPC's trust in the player (Trust[-1]).
+    /// A first contact starts at PlayerTrust.FirstContact; the result is
+    /// clamped to [0, 1]; the NPC is marked as touched by the player. Returns
+    /// the new value.
+    /// </summary>
+    public float ApplyPlayerTrust(NpcSchedule schedule, float delta)
+    {
+        float next = PlayerTrust.Apply(schedule, delta);
+        MarkPlayerContact(schedule);
+        Interlocked.Increment(ref _playerTrustVersion);
+        return next;
     }
 
 
