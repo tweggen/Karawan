@@ -541,6 +541,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\ConversationScriptResolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\NpcMoodText.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerConversation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\NpcScheduleJson.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleDebugSnapshotBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleDebugSnapshot.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleOverlayText.cs" />

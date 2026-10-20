@@ -30,7 +30,7 @@ The game's login and online save against the exli backend on your machine: throw
 
 ```bash
 # Run tests
-./run_tests.sh all          # All 161 tests (60 days)
+./run_tests.sh all          # All 133 tests (60 days)
 ./run_tests.sh phaseN       # Specific phase
 ./run_tests.sh smoke        # Quick validation (~1 min)
 ./run_tests_parallel.sh all # Same filters, all cores

@@ -39,15 +39,30 @@ public class TalePopulationGenerator
     /// <returns>List of generated NpcSchedule objects (excludes skipped indices).</returns>
     public List<NpcSchedule> Generate(ClusterDesc clusterDesc, SpatialModel spatialModel, HashSet<int> skipIndices = null)
     {
-        int clusterIndex = clusterDesc.Index;
-        string clusterSeed = clusterDesc.GetKey();
+        var input = new PopulationInput(
+            clusterDesc.Index, clusterDesc.GetKey(), CollectStreetPoints(clusterDesc),
+            clusterDesc.GetAttributeIntensity(clusterDesc.Pos, ClusterDesc.LocationAttributes.Downtown),
+            clusterDesc.Pos);
+        return GenerateFrom(input, spatialModel, skipIndices);
+    }
 
-        int npcCount = ComputeNpcCount(clusterDesc);
-        var streetPoints = CollectStreetPoints(clusterDesc);
 
+    /// <summary>
+    /// What the generator takes from a cluster. A seam so the generation itself
+    /// can be tested without a generated city (KAR-468).
+    /// </summary>
+    internal sealed record PopulationInput(
+        int ClusterIndex, string ClusterSeed, IReadOnlyList<Vector3> StreetPoints,
+        float DowntownIntensity, Vector3 ClusterPos);
+
+
+    internal List<NpcSchedule> GenerateFrom(PopulationInput input, SpatialModel spatialModel, HashSet<int> skipIndices = null)
+    {
+        var streetPoints = input.StreetPoints;
         if (streetPoints.Count == 0)
             return new List<NpcSchedule>();
 
+        int npcCount = NpcCountFor(streetPoints.Count);
         var schedules = new List<NpcSchedule>(npcCount);
 
         for (int i = 0; i < npcCount; i++)
@@ -55,12 +70,16 @@ public class TalePopulationGenerator
             if (skipIndices != null && skipIndices.Contains(i))
                 continue;
 
-            var schedule = GenerateNpc(clusterIndex, i, clusterSeed, clusterDesc, streetPoints, spatialModel);
-            schedules.Add(schedule);
+            schedules.Add(GenerateNpc(input, i, spatialModel));
         }
 
         return schedules;
     }
+
+
+    /// <summary>3 per street point, at least 1, at most 4095 (the 12-bit NPC index).</summary>
+    internal static int NpcCountFor(int streetPointCount) =>
+        streetPointCount == 0 ? 0 : Math.Min(Math.Max(1, streetPointCount * NpcsPerStreetPoint), 4095);
 
 
     /// <summary>
@@ -69,33 +88,25 @@ public class TalePopulationGenerator
     /// </summary>
     public int ComputeNpcCount(ClusterDesc clusterDesc)
     {
-        var streetPoints = CollectStreetPoints(clusterDesc);
-        if (streetPoints.Count == 0) return 0;
-
-        // Scale with street density, capped at 4096 (12-bit NPC index limit)
-        int count = Math.Max(1, streetPoints.Count * NpcsPerStreetPoint);
-        return Math.Min(count, 4095);
+        return NpcCountFor(CollectStreetPoints(clusterDesc).Count);
     }
 
 
     /// <summary>
     /// Generate a single NPC with fully independent seed.
     /// </summary>
-    private NpcSchedule GenerateNpc(
-        int clusterIndex,
-        int npcIndex,
-        string clusterSeed,
-        ClusterDesc clusterDesc,
-        List<Vector3> streetPoints,
-        SpatialModel spatialModel)
+    private NpcSchedule GenerateNpc(PopulationInput input, int npcIndex, SpatialModel spatialModel)
     {
+        int clusterIndex = input.ClusterIndex;
+        var streetPoints = input.StreetPoints;
+
         // Independent seed per NPC — skipping other indices has no effect
-        var rnd = new RandomSource(clusterSeed + "-npc-" + npcIndex);
+        var rnd = new RandomSource(input.ClusterSeed + "-npc-" + npcIndex);
 
         int npcId = NpcSchedule.MakeNpcId(clusterIndex, npcIndex);
 
         // Assign role
-        string role = PickRole(rnd, clusterDesc);
+        string role = PickRole(rnd, input.DowntownIntensity);
 
         // Assign location IDs from spatial model (if available)
         int homeLocId, workLocId;
@@ -145,7 +156,7 @@ public class TalePopulationGenerator
                 Warning($"TALE GEN: No spatial model or street points for cluster, NPCs may spawn at origin");
                 homeLocId = 0;
                 workLocId = 0;
-                homePos = clusterDesc.Pos + new Vector3(0, 5f, 0);
+                homePos = input.ClusterPos + new Vector3(0, 5f, 0);
                 workPos = homePos;
             }
         }
@@ -293,11 +304,9 @@ public class TalePopulationGenerator
     }
 
 
-    private string PickRole(RandomSource rnd, ClusterDesc clusterDesc)
+    private string PickRole(RandomSource rnd, float downtown)
     {
         // Adjust weights based on cluster character
-        float downtown = clusterDesc.GetAttributeIntensity(clusterDesc.Pos, ClusterDesc.LocationAttributes.Downtown);
-
         float[] weights = new float[Roles.Length];
         Array.Copy(DefaultRoleWeights, weights, Roles.Length);
 

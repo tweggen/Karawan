@@ -39,11 +39,11 @@ This directory contains implementation tasks and comprehensive test suites for t
 
 | Suite | Where | Count | Run by |
 |-------|-------|-------|--------|
-| Phases 0–6 | `models/tests/tale/phase0-des/` … `phase6-population/` | 161 JSON | `./run_tests.sh all` / `full` |
+| Phases 0–6 | `models/tests/tale/phase0-des/` … `phase6-population/` | 133 JSON | `./run_tests.sh all` / `full` |
 | C1–C4 | pure rules in `tests/JoyceCode.Tests/engine/tale/ConversationRulesTests.cs` | xUnit | `dotnet test …` (scenario scripts removed, KAR-433) |
 | TALE-SOCIAL D/E | `tests/JoyceCode.Tests/engine/tale/` (incl. `bake/`) | xUnit | `dotnet test tests/JoyceCode.Tests/JoyceCode.Tests.csproj` |
 
-A green TALE run is 161 scripts (60-day simulations); 34 phase-6 scripts still check only harness events (KAR-468). Phase 8 and 7B have no
+A green TALE run is 133 scripts (60-day simulations). Phase 8 and 7B have no
 test directory of their own.
 
 - **Framework**: ExpectEngine with JSON format, lock-free event channels, event injection/monitoring

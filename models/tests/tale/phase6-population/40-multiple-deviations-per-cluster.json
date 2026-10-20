@@ -7,14 +7,16 @@
   "globalTimeout": 30,
   "steps": [
     {
-      "expect": { "type": "tale.cluster.populated" },
-      "timeout": 25,
-      "comment": "Deviate indices 2, 7, 15 in same cluster"
+      "expect": {
+        "type": "tale.check",
+        "code": "multiple_deviations_per_cluster:pass"
+      },
+      "timeout": 10,
+      "comment": "Multiple NPCs in same cluster can be independently deviated"
     },
     {
       "action": "quit",
-      "result": "pass",
-      "comment": "Skip mask contains {2, 7, 15}, all three survive depopulation"
+      "result": "pass"
     }
   ]
 }

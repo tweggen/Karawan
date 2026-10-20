@@ -107,11 +107,11 @@ dotnet build TestRunner/TestRunner.csproj -c Release
 Three xUnit tests (`BakedAnimationLayoutTests` ×2, `BakedModelEquivalenceTests`) read
 baked assets from `nogame/generated/` and fail until the asset pipeline has run at
 least once — which the `TestRunner` build above does. A green run is currently
-2118 xUnit + 161 TALE. `ScriptRunner` rejects a script without an `expect` step or with an
-unknown key, and xUnit's `TaleScriptsLoadTests` loads every script (KAR-433). ⚠️ 34 of the
-44 phase-6 scripts still wait only for events the harness pushes itself (KAR-468), and the
-conversation system (Phase C) is tested only in its pure rules (`ConversationRulesTests`):
-don't take a green TALE run as evidence for those areas.
+2117 xUnit + 133 TALE. `ScriptRunner` rejects a script without an `expect` step or with an
+unknown key, and xUnit's `TaleScriptsLoadTests` loads every script (KAR-433). ⚠️ The
+conversation system (Phase C) and the spawn operator are tested only in their pure parts
+(`ConversationRulesTests`, `DespawnBookkeepingTests`): don't take a green TALE run as evidence
+for them.
 Tests tagged `[Trait("Category", "Perf")]` measure and log rather than gate;
 CI runs `--filter "Category!=Perf"`.
 

@@ -7,14 +7,16 @@
   "globalTimeout": 30,
   "steps": [
     {
-      "expect": { "type": "tale.cluster.populated" },
-      "timeout": 25,
-      "comment": "Cluster populated, mark 2 NPCs as deviated"
+      "expect": {
+        "type": "tale.check",
+        "code": "deviated_npcs_only:pass"
+      },
+      "timeout": 10,
+      "comment": "GetDeviatedNpcs returns only NPCs with HasPlayerDeviation=true"
     },
     {
       "action": "quit",
-      "result": "pass",
-      "comment": "GetDeviatedNpcs returns exactly 2 NPCs, GetAllDeviatedNpcs also returns 2"
+      "result": "pass"
     }
   ]
 }

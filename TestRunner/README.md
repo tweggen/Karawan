@@ -29,7 +29,7 @@ JOYCE_TEST_SCRIPT="tests/tale/phase0-des/01-initialization.json" \
 ```bash
 ./run_tests.sh phase0
 ./run_tests.sh smoke
-./run_tests.sh all            # 161 tests, 60-day sims
+./run_tests.sh all            # 133 tests, 60-day sims
 ./run_tests_parallel.sh all   # same, in parallel
 ```
 
@@ -63,7 +63,7 @@ The Phase 6 setup pushes `world.cluster.completed` and `tale.cluster.populated` 
 waiting for them checks nothing. It also runs a few TaleManager checks and pushes
 `tale.check` with code `<name>:pass` or `<name>:fail`: `deviation_skip_mask`,
 `primary_not_in_skip_mask`, `get_schedule_missing_null`, `empty_fragment_no_npcs`,
-`depopulate_unknown_noop`.
+`depopulate_unknown_noop` and the others listed in `docs/tale/docs/tests/PHASE_6.md`.
 
 ## Architecture
 
@@ -154,4 +154,4 @@ The TestDriverModule is registered in `models/nogame.implementations.json` but i
 
 ✅ **Implemented**: Full initialization pipeline working
 ✅ **Tested**: Confirms TestDriverModule activation
-✅ **In use**: `run_tests.sh` / `run_tests_parallel.sh` drive it for all 161 regression tests (not run by CI; `TaleScriptsLoadTests` in xUnit does check every script is valid)
+✅ **In use**: `run_tests.sh` / `run_tests_parallel.sh` drive it for all 133 regression tests (not run by CI; `TaleScriptsLoadTests` in xUnit does check every script is valid)

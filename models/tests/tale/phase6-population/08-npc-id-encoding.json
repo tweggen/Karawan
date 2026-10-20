@@ -7,19 +7,16 @@
   "globalTimeout": 30,
   "steps": [
     {
-      "expect": { "type": "world.cluster.completed" },
-      "timeout": 20,
-      "comment": "Cluster completes"
-    },
-    {
-      "expect": { "type": "tale.cluster.populated" },
+      "expect": {
+        "type": "tale.check",
+        "code": "npc_id_encoding:pass"
+      },
       "timeout": 10,
-      "comment": "MakeNpcId/GetClusterIndex/GetNpcIndex round-trip correctly for all NPCs"
+      "comment": "NPC IDs encode cluster index (20 bits) + NPC index (12 bits) correctly"
     },
     {
       "action": "quit",
-      "result": "pass",
-      "comment": "NPC IDs are globally unique and decode back to correct cluster+index"
+      "result": "pass"
     }
   ]
 }
