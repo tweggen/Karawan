@@ -25,6 +25,8 @@ public partial class LSystemConfigViewModel : ObservableObject
     [ObservableProperty] private int _minSegmentStories = 4;
     [ObservableProperty] private float _shrinkAmount = 2.0f;
     [ObservableProperty] private float _segmentProbability = 0.8f;
+    [ObservableProperty] private float _upperSegmentProbability = 0.9f;
+    [ObservableProperty] private float _singleBlockProbability = 0.1f;
 
     public ObservableCollection<LSystemParamViewModel> Materials { get; } = new();
 
@@ -42,6 +44,8 @@ public partial class LSystemConfigViewModel : ObservableObject
     partial void OnMinSegmentStoriesChanged(int value) => _onModified?.Invoke();
     partial void OnShrinkAmountChanged(float value) => _onModified?.Invoke();
     partial void OnSegmentProbabilityChanged(float value) => _onModified?.Invoke();
+    partial void OnUpperSegmentProbabilityChanged(float value) => _onModified?.Invoke();
+    partial void OnSingleBlockProbabilityChanged(float value) => _onModified?.Invoke();
 
     public void LoadFromJson(string name, JsonObject obj)
     {
@@ -55,6 +59,10 @@ public partial class LSystemConfigViewModel : ObservableObject
             ShrinkAmount = GetFloat(saNode);
         if (obj.TryGetPropertyValue("segmentProbability", out var spNode))
             SegmentProbability = GetFloat(spNode);
+        if (obj.TryGetPropertyValue("upperSegmentProbability", out var uspNode))
+            UpperSegmentProbability = GetFloat(uspNode);
+        if (obj.TryGetPropertyValue("singleBlockProbability", out var sbpNode))
+            SingleBlockProbability = GetFloat(sbpNode);
 
         Materials.Clear();
         if (obj.TryGetPropertyValue("materials", out var matsNode) && matsNode is JsonObject matsObj)
@@ -75,7 +83,9 @@ public partial class LSystemConfigViewModel : ObservableObject
             ["storyHeight"] = StoryHeight,
             ["minSegmentStories"] = MinSegmentStories,
             ["shrinkAmount"] = ShrinkAmount,
-            ["segmentProbability"] = SegmentProbability
+            ["segmentProbability"] = SegmentProbability,
+            ["upperSegmentProbability"] = UpperSegmentProbability,
+            ["singleBlockProbability"] = SingleBlockProbability
         };
 
         if (Materials.Count > 0)
@@ -173,9 +183,6 @@ public partial class LSystemEditorViewModel : ObservableObject
     // Internal storage
     private JsonObject? _fullLSystemsObj;
 
-    // Track whether we loaded from array format (true) or object format (false)
-    private bool _usesArrayFormat;
-
     partial void OnSelectedTreeItemChanged(object? value)
     {
         if (value is LSystemTreeItem item)
@@ -210,10 +217,14 @@ public partial class LSystemEditorViewModel : ObservableObject
         SelectedConfig = null;
         CurrentEditor = null;
 
-        // Try array format first (actual file format: { "lsystems": [...] })
+        /*
+         * The one format the game reads (LSystemCatalog, HouseInstanceGenerator):
+         * { "lsystems": [ ... ] }. A parametric definition carries its config
+         * inside ("type": "parametric", "config": {...}); the editor lists that
+         * config as its own tree item under the definition's name.
+         */
         if (lsystemsObj.TryGetPropertyValue("lsystems", out var lsystemsNode) && lsystemsNode is JsonArray lsystemsArr)
         {
-            _usesArrayFormat = true;
             foreach (var item in lsystemsArr)
             {
                 if (item is JsonObject itemObj)
@@ -221,7 +232,6 @@ public partial class LSystemEditorViewModel : ObservableObject
                     var name = itemObj["name"]?.GetValue<string>() ?? "";
                     var type = itemObj["type"]?.GetValue<string>() ?? "";
 
-                    // All items are definitions (they have seed, rules, macros)
                     var def = new LSystemDefinitionViewModel();
                     def.LoadFromJson(name, itemObj);
                     def.SetModifiedCallback(() => IsDirty = true);
@@ -229,53 +239,13 @@ public partial class LSystemEditorViewModel : ObservableObject
 
                     TreeItems.Add(new LSystemTreeItem { Name = name, Type = "definition" });
 
-                    // Parametric items also have embedded config
                     if (type == "parametric" && itemObj.TryGetPropertyValue("config", out var cfgNode) && cfgNode is JsonObject cfgObj)
                     {
                         var cfg = new LSystemConfigViewModel();
                         cfg.LoadFromJson(name, cfgObj);
                         cfg.SetModifiedCallback(() => IsDirty = true);
                         Configs.Add(cfg);
-                        // Note: config is associated with the definition by name, not a separate tree item
-                    }
-                }
-            }
-        }
-        // Fall back to object format (for compatibility: { "definitions": {...}, "configs": {...} })
-        else
-        {
-            _usesArrayFormat = false;
-
-            // Load definitions
-            if (lsystemsObj.TryGetPropertyValue("definitions", out var defsNode) && defsNode is JsonObject defsObj)
-            {
-                foreach (var kvp in defsObj)
-                {
-                    if (kvp.Value is JsonObject defObj)
-                    {
-                        var def = new LSystemDefinitionViewModel();
-                        def.LoadFromJson(kvp.Key, defObj);
-                        def.SetModifiedCallback(() => IsDirty = true);
-                        Definitions.Add(def);
-
-                        TreeItems.Add(new LSystemTreeItem { Name = kvp.Key, Type = "definition" });
-                    }
-                }
-            }
-
-            // Load configurations
-            if (lsystemsObj.TryGetPropertyValue("configs", out var cfgsNode) && cfgsNode is JsonObject cfgsObj)
-            {
-                foreach (var kvp in cfgsObj)
-                {
-                    if (kvp.Value is JsonObject cfgObj)
-                    {
-                        var cfg = new LSystemConfigViewModel();
-                        cfg.LoadFromJson(kvp.Key, cfgObj);
-                        cfg.SetModifiedCallback(() => IsDirty = true);
-                        Configs.Add(cfg);
-
-                        TreeItems.Add(new LSystemTreeItem { Name = kvp.Key, Type = "config" });
+                        TreeItems.Add(new LSystemTreeItem { Name = name, Type = "config" });
                     }
                 }
             }
@@ -294,46 +264,22 @@ public partial class LSystemEditorViewModel : ObservableObject
     {
         var result = new JsonObject();
 
-        if (_usesArrayFormat)
+        var lsystemsArr = new JsonArray();
+        foreach (var def in Definitions)
         {
-            // Write in array format: { "lsystems": [...] }
-            var lsystemsArr = new JsonArray();
-            foreach (var def in Definitions)
+            var defJson = def.ToJson();
+
+            // A config belongs to the definition of the same name and makes it parametric.
+            var cfg = Configs.FirstOrDefault(c => c.Name == def.Name);
+            if (cfg != null)
             {
-                var defJson = def.ToJson();
-
-                // Check if this definition has an associated config (parametric L-system)
-                var cfg = Configs.FirstOrDefault(c => c.Name == def.Name);
-                if (cfg != null)
-                {
-                    defJson["type"] = "parametric";
-                    defJson["config"] = cfg.ToJson();
-                }
-
-                lsystemsArr.Add(defJson);
+                defJson["type"] = "parametric";
+                defJson["config"] = cfg.ToJson();
             }
-            result["lsystems"] = lsystemsArr;
+
+            lsystemsArr.Add(defJson);
         }
-        else
-        {
-            // Write in object format: { "definitions": {...}, "configs": {...} }
-            var defsObj = new JsonObject();
-            foreach (var def in Definitions)
-            {
-                defsObj[def.Name] = def.ToJson();
-            }
-            result["definitions"] = defsObj;
-
-            if (Configs.Count > 0)
-            {
-                var cfgsObj = new JsonObject();
-                foreach (var cfg in Configs)
-                {
-                    cfgsObj[cfg.Name] = cfg.ToJson();
-                }
-                result["configs"] = cfgsObj;
-            }
-        }
+        result["lsystems"] = lsystemsArr;
 
         return result;
     }
@@ -353,12 +299,22 @@ public partial class LSystemEditorViewModel : ObservableObject
     [RelayCommand]
     private void AddConfig()
     {
-        var name = $"newConfig{Configs.Count + 1}";
-        var cfg = new LSystemConfigViewModel { Name = name };
+        /*
+         * A config exists only as part of a definition (the game reads it from
+         * the parametric definition), so it is added to the selected one.
+         */
+        var def = SelectedDefinition;
+        if (def == null || Configs.Any(c => c.Name == def.Name)) return;
+
+        var cfg = new LSystemConfigViewModel { Name = def.Name };
         cfg.SetModifiedCallback(() => IsDirty = true);
         Configs.Add(cfg);
-        TreeItems.Add(new LSystemTreeItem { Name = name, Type = "config" });
-        SelectedTreeItem = TreeItems.Last();
+
+        var defItem = TreeItems.FirstOrDefault(t => t.Type == "definition" && t.Name == def.Name);
+        var cfgItem = new LSystemTreeItem { Name = def.Name, Type = "config" };
+        int at = defItem != null ? TreeItems.IndexOf(defItem) + 1 : TreeItems.Count;
+        TreeItems.Insert(at, cfgItem);
+        SelectedTreeItem = cfgItem;
         IsDirty = true;
     }
 
@@ -374,6 +330,13 @@ public partial class LSystemEditorViewModel : ObservableObject
                 {
                     Definitions.Remove(def);
                     TreeItems.Remove(item);
+
+                    // Its config goes with it.
+                    var cfg = Configs.FirstOrDefault(c => c.Name == def.Name);
+                    if (cfg != null) Configs.Remove(cfg);
+                    var cfgItem = TreeItems.FirstOrDefault(t => t.Type == "config" && t.Name == def.Name);
+                    if (cfgItem != null) TreeItems.Remove(cfgItem);
+
                     SelectedTreeItem = TreeItems.FirstOrDefault();
                     IsDirty = true;
                 }

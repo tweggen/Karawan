@@ -421,7 +421,7 @@ TALE `Location`s: homes, workplaces, shops, venues and street junctions.
 | `EncounterResolver` | `EncounterResolver.cs` | Encounter probabilities. |
 | `RelationshipTracker` | `RelationshipTracker.cs` | Trust per pair, interaction type. |
 | `InteractionPool` | `InteractionPool.cs` | Requests, claims, signals. |
-| `GroupDetector` | `GroupDetector.cs` | Old clique detector (Bron-Kerbosch). No production caller since Phase E; only tests reference it. |
+| `DetectedGroup`, `GroupDetectionResult` | `GroupDetectionResult.cs` | `CommunityDetector`'s result. The old Bron-Kerbosch `GroupDetector` was removed (KAR-430). |
 | `CommunityDetector` | `CommunityDetector.cs` | Faction detection. |
 | `ClusterSocialState` | `ClusterSocialState.cs` | Group table and snapshots. |
 | `RuntimeSocialEvolver` | `RuntimeSocialEvolver.cs` | Live encounters and re-detection. |
