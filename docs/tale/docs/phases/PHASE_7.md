@@ -45,7 +45,7 @@ the satnav `NavMap`.
 |---|---|
 | `TaleManager.Initialize(StoryletLibrary library, int seed = 42)` | `TaleManager.cs:77` |
 | `TaleManager.PopulateCluster(ClusterDesc clusterDesc, SpatialModel spatialModel, DateTime? gameNow = null)` — stores the model, generates schedules | `TaleManager.cs:95,107` |
-| `TaleManager.DepopulateCluster(int clusterIndex)` | `TaleManager.cs:275` — **currently has no caller**, see KAR-434 |
+| `TaleManager.DepopulateCluster(int clusterIndex)` | `TaleManager.cs` — called by `TaleModule` once no fragment touches the cluster (S0 W4, KAR-434) |
 | `TaleManager.GetSpatialModel(int clusterIndex)` | `TaleManager.cs:864` |
 | `SpatialModel.ExtractFrom(ClusterDesc cluster, NavCluster navCluster = null)` | `SpatialModel.cs:163` |
 | `TalePopulationGenerator.Generate(ClusterDesc, SpatialModel, HashSet<int> skipIndices = null)` | `TalePopulationGenerator.cs:40` |
@@ -251,7 +251,7 @@ homePositionX/Y/Z, workplacePositionX/Y/Z, currentWorldPositionX/Y/Z
 
 1. `CurrentWorldPosition` for street locations uses the junction centre
    (KAR-436).
-2. `DepopulateCluster` is never called, so per-cluster models and schedules
-   outlive their cluster (KAR-434).
+2. ~~`DepopulateCluster` is never called~~ — wired in S0 W4 (KAR-434); the
+   spatial model is dropped with the cluster.
 3. Route caching per location pair has not been needed so far; the 100 ms
    timeout bounds the cost per request.

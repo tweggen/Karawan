@@ -50,6 +50,15 @@ public class TaleModule : AModule
     public double SocialTickGameMinutes = 10.0;
     public double RedetectGameHours = 2.0;
 
+    /*
+     * S0 W4: a cluster no loaded fragment has touched for this long (real
+     * time) is depopulated. Longer than the loader's KeepFragmentMinTime
+     * (25 s), so the purged fragments' entities are gone and driving along a
+     * cluster edge does not depopulate and repopulate it back and forth.
+     */
+    public double DepopulateGraceSeconds = 60.0;
+    private DateTime _lastResidencyCheck = DateTime.MinValue;
+
     /// <summary>
     /// Get the pedestrian pipe controller for NPC movement.
     /// </summary>
@@ -473,10 +482,36 @@ public class TaleModule : AModule
     }
 
 
+    /**
+     * S0 W4: depopulate the clusters that have had no resident fragment for
+     * the grace period. Once a second; real time, like the loader's own
+     * fragment lifetimes.
+     */
+    private void _depopulateLeftClusters()
+    {
+        var now = DateTime.UtcNow;
+        if ((now - _lastResidencyCheck).TotalSeconds < 1.0) return;
+        _lastResidencyCheck = now;
+
+        var due = _taleManager.Residency.DueForDepopulate(
+            _taleManager.GetPopulatedClusters(), now, TimeSpan.FromSeconds(DepopulateGraceSeconds));
+        foreach (int clusterIndex in due)
+        {
+            Trace($"TALE: no fragment of cluster {clusterIndex} loaded for {DepopulateGraceSeconds:F0} s; depopulating.");
+            _taleManager.DepopulateCluster(clusterIndex);
+            _taleManager.Residency.Depopulated(clusterIndex);
+            _lastRedetectGameTime.Remove(clusterIndex);
+        }
+    }
+
+
     private void _onSocialFrame(object sender, float dt)
     {
+        if (_taleManager == null) return;
+        _depopulateLeftClusters();
+
         var maybeNow = _tryGetGameNow();
-        if (maybeNow == null || _taleManager == null) return;
+        if (maybeNow == null) return;
         DateTime gameNow = maybeNow.Value;
 
         _rollSocialMetricsDay(gameNow);

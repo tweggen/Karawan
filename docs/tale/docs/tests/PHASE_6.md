@@ -1,7 +1,7 @@
 # Phase 6 Test Scripts — Seed-Based Population & Cluster Lifecycle
 
 > **Built differently (verified 2026-10-18, KAR-431):**
-> - The depopulate tests (11–17) do not exercise depopulation: they wait for `tale.cluster.populated`, which `TestRunnerMain.cs` emits itself, and `TaleManager.DepopulateCluster` has no caller (KAR-434).
+> - The depopulate tests (11–17) do not exercise depopulation: they wait for `tale.cluster.populated`, which `TestRunnerMain.cs` emits itself. Depopulation is wired in the game since S0 W4 (KAR-434) and tested in xUnit instead: `ClusterDepopulateTests` and `TaleClusterResidencyTests`.
 
 
 **Status**: 49 test scripts created

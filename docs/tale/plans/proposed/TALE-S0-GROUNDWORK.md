@@ -567,6 +567,17 @@ written into roadmap §S0 and §12 here.
 
 *(Filled in by W4, W5 and W9.)*
 
+- **W4 (KAR-434, 2026-10-20):** implemented as planned, plus: the heat
+  map's cluster is always counted resident (it rounds outwards, so it may
+  not intersect the fragment strictly); a populated cluster never seen
+  resident starts its grace period at the first check, so clusters
+  populated on completion far from the player are depopulated too; a return
+  visit never reseeds the bake's groups (an emptied table would otherwise
+  list members of no group). **Repopulation time of the largest cluster:
+  not yet measured** — needs a play session; `PopulateCluster` now logs
+  its duration ("Populated cluster N with M NPCs in X ms", category
+  TaleManager; excludes `SpatialModel.ExtractFrom`).
+
 ## 13. Owner decisions and notes
 
 1. **`completion_rate` meaning (W6):** decided 2026-10-18 — the share of

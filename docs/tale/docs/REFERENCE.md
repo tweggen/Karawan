@@ -154,8 +154,8 @@ NPC populations are **per-cluster**, created on demand:
 
 1. **Cluster activation** (`ClusterCompletedEvent` in `TaleModule`, or on demand from `TaleSpawnOperator`): `TaleManager.PopulateCluster` generates `NpcSchedule` objects deterministically from the cluster seed, skipping deviated indices, applies the baked social scenario (Phase D) and overlays the cluster's `ClusterSocialState` snapshot (Phase E).
 2. **Active cluster**: All tiers running. `TaleSpawnOperator` materializes/dematerializes NPCs based on fragment visibility.
-3. **Cluster deactivation**: *designed* as `TaleManager.DepopulateCluster` — snapshot social state, drop non-deviated schedules. **Nothing calls it today** (KAR-434), so a visited cluster's schedules stay in memory.
-4. **Cluster reactivation**: Regenerate from seed, **skip deviated NPC indices**, overlay deviated NPCs from save.
+3. **Cluster deactivation** (S0 W4): once no loaded fragment has touched the cluster for 60 s real time (`TaleClusterResidency`, checked in `TaleModule`), `TaleManager.DepopulateCluster` snapshots every NPC's social state, keeps every NPC known to the player (and adds it to the skip mask), and drops the other schedules.
+4. **Cluster reactivation**: the next spawn poll of a fragment touching the cluster repopulates it: regenerate from seed, **skip the kept NPCs' indices** (they are still there, unchanged), warm up without group verbs, overlay the social snapshots. The bake does not reseed groups on a return visit.
 
 ---
 

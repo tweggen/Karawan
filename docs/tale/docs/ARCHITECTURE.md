@@ -176,10 +176,20 @@ The live game has no interrupts.
   1. generates the schedules (each starts at its home's entry position);
   2. warms them up with exactly **two** `AdvanceNpc` calls per NPC — one
      at the game clock ± a per-NPC offset of up to 45 min, one at the game
-     clock — not a simulated day;
+     clock — not a simulated day. The warm-up fires **no group verbs**: they
+     would act on the group table before the snapshots restore `GroupId`,
+     and a group formed there would stop step 4 from seeding the bake's
+     groups (S0 W4);
   3. applies a baked scenario (§6.4);
-  4. seeds the group table and overlays saved social snapshots.
+  4. seeds the group table — only on a first visit: an existing table or
+     existing snapshots (a return visit) win over the bake — and overlays
+     the social snapshots.
 
+  Kept NPCs (see Depopulate) are in the skip mask, so they are not
+  regenerated; they are the same objects as before.
+  `TaleSpawnOperator` populates every cluster that a polled fragment
+  intersects (a neighbour only once it is generated), not just the heat
+  map's.
   After the warm-up a schedule that is not materialised stands still (the
   background tick is S0 W5, KAR-450).
 - **Advancing:** `AdvanceNpc` is deterministic per NPC: storylet choice,
@@ -190,8 +200,27 @@ The live game has no interrupts.
   `TaleManager`'s collections are concurrent because spawn workers call it
   from pool threads; advancing the *same* NPC from two threads at once is
   still a caller error (S0 W2, KAR-446).
-- **Depopulate:** `DepopulateCluster` (`:275`) would snapshot social state and
-  remove the cluster's schedules, but **nothing calls it** (KAR-434).
+- **Depopulate (S0 W4, KAR-434):** there is no cluster-unload event, so
+  `TaleClusterResidency` (`TaleManager.Residency`) counts the loaded
+  fragments that touch each cluster: the spawn operator's poll reports a
+  fragment active for every cluster it intersects, `PurgeFragment` reports
+  it gone. `TaleModule._onSocialFrame` checks once a second and calls
+  `DepopulateCluster` for a populated cluster no fragment has touched for
+  `DepopulateGraceSeconds` (60 s real time, longer than the loader's
+  25 s `KeepFragmentMinTime`, so the entities are gone and a cluster edge
+  does not flap). A fragment becoming active cancels it. `DepopulateCluster`:
+  - snapshots every NPC's social state (trust, group, five properties) into
+    `ClusterSocialState`;
+  - keeps every NPC `IsKnownToPlayer` (flag, `Trust[-1]` or any
+    `player_fact.*`) as the same object and puts it into the skip mask —
+    without that, the next populate would generate the same `NpcId` over it;
+  - removes all other schedules, clears the materialised and Tier-2 flags of
+    the cluster's NPCs and drops its spatial model.
+
+  Returning repopulates on the next poll: regenerate all but the skip mask,
+  warm up, bake (skipped, see above), overlay the snapshots. Test seam:
+  `PopulateClusterWith(index, model, now, generate, applyScenario)`
+  (`ClusterDepopulateTests`, `TaleClusterResidencyTests`).
 
 ### 6.3 Tiers and survival
 
