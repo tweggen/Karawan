@@ -503,6 +503,14 @@ after driving away.
 
 ## 10. W8 — ImGui TALE panel
 
+> **Status:** implemented (KAR-451), with three deviations. The density
+> line waits for W9's counter. The panel also takes an NPC id typed in or
+> clicked in a list (`RequestedNpcId`), and the inspector's selection
+> reaches the logical thread as the entity (`TaleDebugState.SelectedEntity`),
+> because only that thread may read its `TaleNpcId`. Group standing is
+> the plain mean of `Trust[-1]` over the members who have one, until S1-e
+> (KAR-458) defines it. The in-game check is still open.
+
 - **Snapshot, not live reads** (finding 10). New
   `engine/tale/TaleDebugSnapshot.cs` (immutable) and a pure, tested
   `TaleDebugSnapshotBuilder.Build(manager, clusterIndex, gameNow,
