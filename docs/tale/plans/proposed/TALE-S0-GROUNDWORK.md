@@ -577,6 +577,19 @@ written into roadmap §S0 and §12 here.
   not yet measured** — needs a play session; `PopulateCluster` now logs
   its duration ("Populated cluster N with M NPCs in X ms", category
   TaleManager; excludes `SpatialModel.ExtractFrom`).
+- **W5 (KAR-450, 2026-10-20):** implemented as planned, except: the
+  default **advance budget is 16, not 64** — measured below; the optional
+  transit-position refresh was left out (bucketing still uses the
+  destination's entry position while an abstract NPC travels). Perf test
+  (`BackgroundTickTests.PerfOneGameDayAt4095Npcs`, one game day = 108 000
+  frames, 4095 NPCs, one cluster, this dev machine): 53 094 steps a day
+  (~13 per NPC); mean 0.023 ms per slice; p99 0.05 ms, p99.9 0.07 ms at
+  budget 16 (0.22 ms at 64). Calls over 1 ms: 1–2 per game day at 16, 2–3 at
+  64, almost all during a gen-0 GC caused by `AdvanceNpc`'s allocations,
+  plus first-use JIT; so the "no call over 1 ms" target holds for the tick's
+  own work but not for GC pauses that land in it. In-game checks (non-zero
+  `Advanced` per hour for clusters the player isn't in; evolver presence
+  varying by time of day) are pending a play session.
 
 ## 13. Owner decisions and notes
 
