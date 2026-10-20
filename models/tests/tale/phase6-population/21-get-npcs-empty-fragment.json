@@ -7,9 +7,16 @@
   "globalTimeout": 30,
   "steps": [
     {
-      "action": "quit",
-      "result": "pass",
+      "expect": {
+        "type": "tale.check",
+        "code": "empty_fragment_no_npcs:pass"
+      },
+      "timeout": 10,
       "comment": "Query for distant fragment returns empty list, no crash"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
     }
   ]
 }

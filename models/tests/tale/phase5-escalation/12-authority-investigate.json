@@ -1,10 +1,38 @@
 {
   "name": "Authority investigation on crime report",
-  "description": "authority investigates crime_report request via claim_trigger",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "request_emitted", "count": { "min": 1 } },
-    { "code": "escalation_triggered", "count": { "min": 1 } }
+  "description": "A witness emits a crime_report request; an authority NPC runs investigate_crime afterwards.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "request_emitted",
+        "codeMatches": "^\\d+:crime_report$"
+      },
+      "timeout": 60,
+      "comment": "A crime is reported"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "code": "investigate_crime"
+      },
+      "timeout": 60,
+      "comment": "An authority investigates"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

@@ -7,9 +7,16 @@
   "globalTimeout": 30,
   "steps": [
     {
-      "action": "quit",
-      "result": "pass",
+      "expect": {
+        "type": "tale.check",
+        "code": "depopulate_unknown_noop:pass"
+      },
+      "timeout": 10,
       "comment": "DepopulateCluster(999) on unknown cluster index does not crash"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
     }
   ]
 }

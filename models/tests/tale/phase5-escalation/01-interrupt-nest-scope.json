@@ -1,10 +1,37 @@
 {
   "name": "Interrupt with Nest scope - pauses and resumes",
-  "description": "NPC with interrupt priority 5+ storylet triggers Nest interrupt on partner, pausing their arc",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "interrupt_fired", "count": { "min": 1 } },
-    { "code": "storylet_resumed", "count": { "min": 1 } }
+  "description": "A priority-5+ storylet with conditional postconditions interrupts the partner with Nest scope; the paused storylet later resumes from the arc stack.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "interrupt_fired",
+        "codeMatches": "^\\d+:Nest:"
+      },
+      "timeout": 60,
+      "comment": "A Nest interrupt fires"
+    },
+    {
+      "expect": {
+        "type": "storylet_resumed"
+      },
+      "timeout": 60,
+      "comment": "A paused storylet resumes"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

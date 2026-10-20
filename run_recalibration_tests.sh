@@ -38,12 +38,10 @@ elif [ "$FILTER" = "phase5" ]; then
     PHASES=("phase5-escalation")
 elif [ "$FILTER" = "phase6" ]; then
     PHASES=("phase6-population")
-elif [ "$FILTER" = "phase7" ]; then
-    PHASES=("phase7-spatial")
 elif [ "$FILTER" = "all" ]; then
     # Recalibration suite: phases with emergent structures
     # Skip phases 0-3 (pure functional tests, don't need extended runs)
-    PHASES=("phase4-player" "phase5-escalation" "phase6-population" "phase7-spatial")
+    PHASES=("phase4-player" "phase5-escalation" "phase6-population")
 else
     # Assume it's a specific test file
     PHASES=()

@@ -1,10 +1,38 @@
 {
   "name": "Conditional postconditions - forced next storylet",
-  "description": "Postconditions_if can force next storylet via storylet_next field",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "escalation_triggered", "count": { "min": 1 } },
-    { "code": "node_arrival", "count": { "min": 20 } }
+  "description": "A matched branch of demand_protection forces its storylet_next (collect_protection or threaten_harder) as the NPC's next storylet.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "escalation_triggered",
+        "codeMatches": ":demand_protection:"
+      },
+      "timeout": 60,
+      "comment": "demand_protection branch matched"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "codeMatches": "^(collect_protection|threaten_harder)$"
+      },
+      "timeout": 60,
+      "comment": "The forced next storylet runs"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

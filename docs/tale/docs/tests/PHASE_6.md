@@ -4,7 +4,14 @@
 > - The depopulate tests (11–17) do not exercise depopulation: they wait for `tale.cluster.populated`, which `TestRunnerMain.cs` emits itself. Depopulation is wired in the game since S0 W4 (KAR-434) and tested in xUnit instead: `ClusterDepopulateTests` and `TaleClusterResidencyTests`.
 
 
-**Status**: 49 test scripts created
+> - **KAR-433 (2026-10-20):** ten scripts had only a `quit` step. Five now assert a real check the
+>   Phase 6 setup runs and reports as `tale.check` (`17`, `19`, `21`, `37`, `38`; codes in
+>   `TestRunner/README.md`). Five are removed: `27` (spawn operator, not in this harness) and the
+>   save/load round-trips `44`, `45`, `47`, `48` (the serialisation is private to `TaleModule`).
+>   The remaining 34 wait only for `world.cluster.completed` / `tale.cluster.populated`, which
+>   the setup pushes unconditionally: they pass whatever TaleManager does (KAR-468).
+
+**Status**: 44 test scripts
 
 **Test Location**: `models/tests/tale/phase6-population/`
 

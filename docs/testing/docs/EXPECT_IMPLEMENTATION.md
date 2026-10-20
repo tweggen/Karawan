@@ -119,10 +119,21 @@ A plain game run (`dotnet run --project Karawan/Karawan.csproj` with `JOYCE_TEST
 ```
 
 **Step types:**
-- `expect` — wait for an event matching type (and optionally code), using FishForEvent (skips non-matching)
+- `expect` — wait for an event matching `type` and optionally `code` (exact) and/or `codeMatches` (a .NET regex over the code), using FishForEvent: non-matching events are skipped **and consumed**, so expect steps match in order. `"count": n` (on the step) waits for n matching events within the one `timeout`.
 - `inject` — push an event into the engine's EventQueue
 - `sleep` — wait N milliseconds
 - `action` — control flow (currently: `quit` with `pass` or `fail` result)
+
+**Validation (KAR-433).** `ScriptRunner.LoadFromStream` rejects a script that
+- has a top-level key other than `name`, `description`, `globalTimeout`, `steps` and the
+  documentation keys `phase`, `category`, `priority`, `preconditions`, `expectedOutcome`;
+- has no steps, or no `expect` step — a script that checks nothing must not pass;
+- has a step with an unknown key, or with not exactly one of `expect`/`inject`/`sleep`/`action`;
+- has an `expect` with a key other than `type`/`code`/`codeMatches`, or a `count` below 1.
+
+The host reports the rejection as an Error. 49 TALE scripts once declared their checks in an
+`"expected"` block nobody read and passed with no steps; `TaleScriptsLoadTests` (xUnit, so CI)
+loads every script under `models/tests/tale/` through this validation.
 
 ## Files Modified
 

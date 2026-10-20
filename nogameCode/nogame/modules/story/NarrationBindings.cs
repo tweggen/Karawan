@@ -323,19 +323,13 @@ public static class NarrationBindings
             var fatigue = (float)(object)Props.Get("npc.fatigue", 0.5f);
             var wealth  = (float)(object)Props.Get("npc.wealth",  0.5f);
 
-            if (anger > 0.7f)                          return "frustrated";
-            if (hunger > 0.7f || wealth < 0.2f)        return "desperate";
-            if (fatigue > 0.7f)                        return "tired";
-            return "neutral";
+            return engine.tale.NpcMoodText.Mood(anger, hunger, fatigue, wealth);
         });
 
         manager.RegisterFunction("npcWealthLabel", (args) =>
         {
             var wealth = (float)(object)Props.Get("npc.wealth", 0.5f);
-            if (wealth < 0.15f) return "broke";
-            if (wealth < 0.35f) return "struggling";
-            if (wealth <= 0.65f) return "comfortable";
-            return "wealthy";
+            return engine.tale.NpcMoodText.WealthLabel(wealth);
         });
 
         manager.RegisterFunction("npcRole", (args) =>

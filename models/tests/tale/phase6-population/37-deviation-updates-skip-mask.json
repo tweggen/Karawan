@@ -7,9 +7,16 @@
   "globalTimeout": 30,
   "steps": [
     {
-      "action": "quit",
-      "result": "pass",
+      "expect": {
+        "type": "tale.check",
+        "code": "deviation_skip_mask:pass"
+      },
+      "timeout": 10,
       "comment": "RegisterNpc(deviated) adds NpcIndex to _deviationSkipMasks[ClusterIndex]"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
     }
   ]
 }

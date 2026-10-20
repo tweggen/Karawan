@@ -14,7 +14,7 @@ Outside TALE: the game's login and online save are tested against a local exli b
 
 **Purpose**: Quick functional validation of core systems
 **Simulation Duration**: 60 days (fast feedback)
-**Run Time**: ~5 minutes for all 200 tests
+**Run Time**: ~5 minutes for all 161 tests
 **When to Run**: After code changes (not run by CI — see *Continuous Integration*)
 
 ### Tiers
@@ -22,11 +22,11 @@ Outside TALE: the game's login and online save are tested against a local exli b
 | Filter | Tests | `TALE_SIM_DAYS` | Notes |
 |--------|-------|-----------------|-------|
 | `smoke` | 10, listed in `models/tests/tale/.smoke-tests` | 10 | ~1 minute |
-| `standard` (= `all`, the default) | 200, all scripts in the 11 phase dirs below | 60 | the regression gate |
-| `full` | same 200 | 120 | |
+| `standard` (= `all`, the default) | 161, all scripts in the 7 phase dirs below | 60 | the regression gate |
+| `full` | same 161 | 120 | |
 | `bugfix` | entity-level behaviour checks (`JOYCE_TEST_SCRIPT=entity-behavior-tests`, `BehaviorBugfixTests` in TestRunner) | — | not DES scripts |
 
-`phase7-spatial` (102 scripts) is in no `run_tests.sh` tier; only `run_recalibration_tests.sh` names it.
+Every script must assert something: `ScriptRunner` rejects a script with no `expect` step or an unknown key, and xUnit's `TaleScriptsLoadTests` loads them all, so CI catches one (KAR-433). The phase7-spatial placeholders and the C1–C4 scripts were removed then.
 
 ### Usage
 
@@ -65,18 +65,14 @@ Outside TALE: the game's login and online save are tested against a local exli b
 | 2 | Strategy System | 20 | Multi-phase state machines, transitions | 60 days |
 | 3 | Interaction System | 22 | Request/signal lifecycle, claiming | 60 days |
 | 4 | Quest/Player System | 20 | Quest mechanics, satnav, follow/unfollow | 60 days |
-| 5 | Escalation/Interrupts | 20 | Interrupt scopes, conditional branches | 60 days |
-| 6 | Population Management | 49 | Generation, deviance, persistence | 60 days |
-| C1 | Conversation Infrastructure | 8 | Behavior attachment, generic/role/tag fallback, indoor NPCs | 60 days |
-| C2 | Storylet-Specific Dialogue | 6 | Explicit override, tag fallback, precedence, wealth gating | 60 days |
-| C3 | Mood/Tone Branches | 6 | NPC mood functions, wealth labels, tone-aware dialogue | 60 days |
-| C4 | Trust, Memory & Quest Hooks | 9 | Trust accumulation, player memory facts, conversation cooldown | 60 days |
+| 5 | Escalation/Interrupts | 15 | Nest interrupts, conditional branches, in-group storylets | 60 days |
+| 6 | Population Management | 44 | Generation, deviance (34 only wait for harness events, KAR-468) | 60 days |
 
-**Total**: 200 regression tests
+**Total**: 161 regression tests
 
 ## Recalibration Tests (`run_recalibration_tests.sh`)
 
-> ⚠️ `run_recalibration_tests.sh` hard-codes `TestRunner/bin/Release/net9.0/TestRunner.dll` (no fallback to the current `net10.0` output) and executes the `.dll` without `dotnet`, so as checked in it stops at "TestRunner not found". Open, tracked separately together with the unrun `phase7-spatial` scripts. Running TestRunner directly with `TALE_SIM_DAYS=365` (below) works.
+> ⚠️ `run_recalibration_tests.sh` hard-codes `TestRunner/bin/Release/net9.0/TestRunner.dll` (no fallback to the current `net10.0` output) and executes the `.dll` without `dotnet`, so as checked in it stops at "TestRunner not found". Open, tracked separately. Running TestRunner directly with `TALE_SIM_DAYS=365` (below) works.
 
 **Purpose**: Verify emergent structures and equilibrium behavior
 **Simulation Duration**: 365 days (1 year, configurable)
@@ -182,8 +178,8 @@ Phase: phase0-des
   [phase0-des] 01-initialization.json ... ✓ PASS
   ...
 === Summary ===
-Passed: 200/200
-Failed: 0/200
+Passed: 161/161
+Failed: 0/161
 All tests passed!
 ```
 

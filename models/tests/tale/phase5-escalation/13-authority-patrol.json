@@ -1,10 +1,39 @@
 {
   "name": "Authority patrol establishment",
-  "description": "establish_patrol triggered by anger > 0.5, authority sets up patrol route",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "escalation_triggered", "count": { "min": 1 } },
-    { "code": "node_arrival", "count": { "min": 20 } }
+  "description": "Authority NPCs patrol the street and venues repeatedly over the run.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "code": "patrol"
+      },
+      "count": 5,
+      "timeout": 60,
+      "comment": "Street patrols"
+    },
+    {
+      "expect": {
+        "type": "node_arrival",
+        "code": "patrol_venue"
+      },
+      "timeout": 60,
+      "comment": "Venue patrol"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

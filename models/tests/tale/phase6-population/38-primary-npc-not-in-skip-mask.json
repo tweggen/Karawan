@@ -7,9 +7,16 @@
   "globalTimeout": 30,
   "steps": [
     {
-      "action": "quit",
-      "result": "pass",
+      "expect": {
+        "type": "tale.check",
+        "code": "primary_not_in_skip_mask:pass"
+      },
+      "timeout": 10,
       "comment": "Primary NPC registration only adds to _schedules, not _deviationSkipMasks"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
     }
   ]
 }

@@ -26,9 +26,9 @@ As of March 2026, the TALE system uses a **two-tier testing approach** to balanc
 
 **Purpose**: Quick functional validation of core TALE systems
 **Simulation Duration**: 60 days (fast feedback)
-**Total Time**: ~5 minutes for all 200 tests
+**Total Time**: ~5 minutes for all 161 tests
 **When to Run**: After every code change (locally — CI does not run it)
-**Status**: ✅ All 200 tests passing across 11 phases
+**Status**: ✅ All 161 tests passing across 7 phases
 
 The regression test suite consists of 200 JSON test scripts organized by phase:
 - **Phase 0** (20 tests): DES engine core — event queue, scheduling, properties

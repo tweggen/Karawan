@@ -1,10 +1,38 @@
 {
-  "name": "Interrupt priority - higher priority wins",
-  "description": "Only storylets with higher interrupt priority than current can interrupt",
-  "globalTimeout": 60,
-  "expected": [
-    { "code": "npc_created", "count": 11 },
-    { "code": "interrupt_fired", "count": { "min": 1 } },
-    { "code": "day_summary", "count": { "min": 50 } }
+  "name": "Interrupt sources - both priority-6+ escalation storylets interrupt",
+  "description": "Interrupts come from the two storylets with conditional postconditions and interrupt priority >= 5: investigate_complaint (6) and demand_protection (7). Each must interrupt a partner at least once.",
+  "phase": "phase-5",
+  "category": "escalation",
+  "priority": "high",
+  "globalTimeout": 120,
+  "steps": [
+    {
+      "expect": {
+        "type": "npc_created"
+      },
+      "count": 11,
+      "timeout": 10,
+      "comment": "10 NPCs and the player proxy created"
+    },
+    {
+      "expect": {
+        "type": "interrupt_fired",
+        "codeMatches": "^\\d+:Nest:investigate_complaint$"
+      },
+      "timeout": 60,
+      "comment": "investigate_complaint interrupts a partner"
+    },
+    {
+      "expect": {
+        "type": "interrupt_fired",
+        "codeMatches": "^\\d+:Nest:demand_protection$"
+      },
+      "timeout": 60,
+      "comment": "demand_protection interrupts a partner"
+    },
+    {
+      "action": "quit",
+      "result": "pass"
+    }
   ]
 }

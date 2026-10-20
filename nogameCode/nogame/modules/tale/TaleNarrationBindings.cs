@@ -207,56 +207,11 @@ public static class TaleNarrationBindings
     /// </summary>
     public static string ResolveScript(StoryletDefinition storylet, string role)
     {
-        if (storylet == null)
-        {
-            Trace("TALE NARRATION BINDINGS: Storylet is null, using tale.generic");
-            return "tale.generic";
-        }
-
-        // Level 1: Explicit conversation script override
-        if (!string.IsNullOrEmpty(storylet.ConversationScript))
-        {
-            Trace($"TALE NARRATION BINDINGS: Resolved script via explicit override: {storylet.ConversationScript}");
-            return storylet.ConversationScript;
-        }
-
-        // Level 2: Auto-named by storylet ID
-        string idScript = $"tale.{storylet.Id}";
-        if (ScriptExists(idScript))
-        {
-            Trace($"TALE NARRATION BINDINGS: Resolved script via storylet ID: {idScript}");
-            return idScript;
-        }
-
-        // Level 3: First matching tag
-        if (storylet.Tags != null && storylet.Tags.Length > 0)
-        {
-            foreach (var tag in storylet.Tags)
-            {
-                string tagScript = $"tale.tag.{tag}";
-                if (ScriptExists(tagScript))
-                {
-                    Trace($"TALE NARRATION BINDINGS: Resolved script via tag '{tag}': {tagScript}");
-                    return tagScript;
-                }
-            }
-        }
-
-        // Level 4: Role fallback
-        if (!string.IsNullOrEmpty(role))
-        {
-            string roleScript = $"tale.role.{role}";
-            if (ScriptExists(roleScript))
-            {
-                Trace($"TALE NARRATION BINDINGS: Resolved script via role '{role}': {roleScript}");
-                return roleScript;
-            }
-        }
-
-        // Level 5: Generic catch-all
-        Trace("TALE NARRATION BINDINGS: Resolved script via generic fallback");
-        return "tale.generic";
+        string script = ConversationScriptResolver.Resolve(storylet, role, ScriptExists);
+        Trace($"TALE NARRATION BINDINGS: Resolved script {script} for storylet {storylet?.Id ?? "(none)"}, role {role}");
+        return script;
     }
+
 
     private static bool ScriptExists(string scriptName)
     {

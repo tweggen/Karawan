@@ -442,8 +442,11 @@ TALE `Location`s: homes, workplaces, shops, venues and street junctions.
 
 TALE scenario tests are JSON scripts in `models/tests/tale/phase*/`. The
 TestRunner runs them against a fixed DES world. Commands and tiers are in
-[PROCESS_TALE.md](PROCESS_TALE.md). The phase-5 and Phase C scripts currently
-assert nothing (KAR-433). Unit tests for the engine parts are in
+[PROCESS_TALE.md](PROCESS_TALE.md). Every script must assert something:
+`ScriptRunner` rejects one without an `expect` step (KAR-433), and
+`TaleScriptsLoadTests` checks them all in CI. Most phase-6 scripts still wait
+only for events the harness pushes itself (KAR-468). The conversation rules
+are xUnit tests (`ConversationRulesTests`). Unit tests for the engine parts are in
 `tests/JoyceCode.Tests/engine/tale/`.
 
 ## 13. Observability
