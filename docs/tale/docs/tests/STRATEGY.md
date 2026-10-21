@@ -1,7 +1,7 @@
 # Test Documentation Strategy
 
 > **Note (verified 2026-10-18, KAR-431):**
-> - The process below was **never adopted**: `verify_test_docs.sh` does not exist (its `phase$phase/` glob would not match `phase0-des` either), no phase design doc has a "Test Coverage" section, and only phase0, phase1 and phase3 have README files. The counts are current: 161 scripts run (KAR-433 removed phase 7's placeholders and the C1–C4 scripts).
+> - The process below was **never adopted**: `verify_test_docs.sh` does not exist (its `phase$phase/` glob would not match `phase0-des` either), no phase design doc has a "Test Coverage" section, and only phase0, phase1 and phase3 have README files. The counts are current: 133 scripts run (KAR-433 removed phase 7's placeholders and the C1–C4 scripts).
 
 
 ## Overview
@@ -29,7 +29,7 @@ The TALE test documentation consists of detailed test specifications across 7 ph
 - Rationale for design decisions
 
 ### Actual Test Implementations (`models/tests/tale/phase*/`)
-- 161 JSON test scripts in the 60-day regression suite (`./run_tests.sh all`)
+- 133 JSON test scripts in the 60-day regression suite (`./run_tests.sh all`)
 - Each script follows ExpectEngine format
 - **Source of Truth**: These are the authoritative test specifications
 

@@ -7,14 +7,16 @@
   "globalTimeout": 30,
   "steps": [
     {
-      "expect": { "type": "tale.cluster.populated" },
-      "timeout": 25,
-      "comment": "Register deviated NPC at cluster 0 index 7"
+      "expect": {
+        "type": "tale.check",
+        "code": "skip_mask_exact:pass"
+      },
+      "timeout": 10,
+      "comment": "GetDeviationSkipMask returns correct set of deviated NPC indices"
     },
     {
       "action": "quit",
-      "result": "pass",
-      "comment": "Skip mask for cluster 0 contains {7}, null for unknown clusters"
+      "result": "pass"
     }
   ]
 }

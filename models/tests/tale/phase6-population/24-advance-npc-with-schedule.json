@@ -7,14 +7,16 @@
   "globalTimeout": 30,
   "steps": [
     {
-      "expect": { "type": "tale.cluster.populated" },
-      "timeout": 25,
-      "comment": "Cluster populated, NPCs have valid roles for storylet selection"
+      "expect": {
+        "type": "tale.check",
+        "code": "advance_npc_selects_storylet:pass"
+      },
+      "timeout": 10,
+      "comment": "AdvanceNpc works correctly with populated NPC schedule"
     },
     {
       "action": "quit",
-      "result": "pass",
-      "comment": "AdvanceNpc returns non-null StoryletDefinition, updates schedule state"
+      "result": "pass"
     }
   ]
 }

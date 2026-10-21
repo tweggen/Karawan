@@ -19,15 +19,15 @@ For why the suite is split into regression and recalibration runs, see
 ## Quick Start
 
 ```bash
-./run_tests.sh all              # standard tier: 161 tests, 60-day sims (the gate before commit)
+./run_tests.sh all              # standard tier: 133 tests, 60-day sims (the gate before commit)
 ./run_tests_parallel.sh all     # same tests, one TestRunner process per test across all cores
 ```
 
 A green run ends with:
 ```
 === Summary ===
-Passed: 161/161
-Failed: 0/161
+Passed: 133/133
+Failed: 0/133
 All tests passed!
 ```
 

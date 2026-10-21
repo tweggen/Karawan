@@ -616,6 +616,53 @@ public class TestRunnerMain
                 && taleManager.GetSchedule(firstNpc.NpcId) != null;
         });
 
+        Check("npc_id_encoding", () => schedules.Concat(schedules2).All(s =>
+            engine.tale.NpcSchedule.GetClusterIndex(s.NpcId) == s.ClusterIndex
+            && engine.tale.NpcSchedule.GetNpcIndex(s.NpcId) == s.NpcIndex));
+        Check("get_schedule_returns_npc", () => schedules.Concat(schedules2)
+            .All(s => ReferenceEquals(taleManager.GetSchedule(s.NpcId), s)));
+        // Fragments are matched horizontally (I, K), by current position, else home.
+        bool InHomeFragment(engine.tale.NpcSchedule n)
+        {
+            var f = engine.world.Fragment.PosToIndex3(n.CurrentWorldPosition != System.Numerics.Vector3.Zero
+                ? n.CurrentWorldPosition : n.HomePosition);
+            return f.I == homeFragment.I && f.K == homeFragment.K;
+        }
+        Check("npcs_in_home_fragment", () => npcsInFrag.All(InHomeFragment)
+            && taleManager.AllSchedules.Values.Where(InHomeFragment).Count() == npcsInFrag.Count
+            && npcsInFrag.Count > 0);
+        Check("deviated_npcs_only", () =>
+            taleManager.GetAllDeviatedNpcs().Select(n => n.NpcId).SequenceEqual(new[] { deviatedNpc.NpcId }));
+        Check("skip_mask_exact", () => skipMask != null && skipMask.SetEquals(new[] { deviatedNpc.NpcIndex }));
+        Check("advance_npc_selects_storylet", () => storylet != null
+            && firstNpc.CurrentStorylet == storylet.Id && firstNpc.ScheduleStep > 0);
+        Check("all_schedules_readable", () => taleManager.AllSchedules.Count == schedules.Count + schedules2.Count
+            && schedules.Concat(schedules2).All(s => taleManager.AllSchedules.ContainsKey(s.NpcId)));
+        Check("deviation_flag_default_false", () => schedules.Concat(schedules2)
+            .Where(s => s != deviatedNpc).All(s => !s.HasPlayerDeviation));
+        Check("materialization_tracking", () =>
+        {
+            int id = schedules[1].NpcId;
+            if (taleManager.IsMaterialized(id)) return false;
+            taleManager.SetMaterialized(id);
+            bool on = taleManager.IsMaterialized(id);
+            taleManager.SetDematerialized(id);
+            return on && !taleManager.IsMaterialized(id) && taleManager.GetSchedule(id) != null;
+        });
+
+        // A second deviation in cluster 0 and one in cluster 1.
+        var deviated2 = schedules[5];
+        deviated2.HasPlayerDeviation = true;
+        taleManager.RegisterNpc(deviated2);
+        var deviatedOther = schedules2[3];
+        deviatedOther.HasPlayerDeviation = true;
+        taleManager.RegisterNpc(deviatedOther);
+        Check("multiple_deviations_per_cluster", () =>
+            taleManager.GetDeviationSkipMask(clusterIndex).SetEquals(new[] { deviatedNpc.NpcIndex, deviated2.NpcIndex }));
+        Check("deviations_across_clusters", () =>
+            taleManager.GetDeviationSkipMask(clusterIndex2).SetEquals(new[] { deviatedOther.NpcIndex })
+            && taleManager.GetDeviationSkipMask(clusterIndex).SetEquals(new[] { deviatedNpc.NpcIndex, deviated2.NpcIndex }));
+
         Console.WriteLine("Phase 6 test setup complete.");
     }
 }
