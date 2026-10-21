@@ -41,9 +41,26 @@ public class TaleScriptsLoadTests
     }
 
 
+    /// <summary>The game-process scripts (tests/run-*.sh), models/tests/*.json.</summary>
+    public static IEnumerable<object[]> GameScripts() =>
+        Directory.GetFiles(Path.GetDirectoryName(_findTaleTestsDir())!, "*.json", SearchOption.TopDirectoryOnly)
+            .OrderBy(f => f, StringComparer.Ordinal)
+            .Select(f => new object[] { Path.GetFileName(f) });
+
+
+    [Theory]
+    [MemberData(nameof(GameScripts))]
+    public void GameScript_Loads(string fileName)
+    {
+        using var stream = File.OpenRead(Path.Combine(Path.GetDirectoryName(_findTaleTestsDir())!, fileName));
+        ScriptRunner.LoadFromStream(stream);
+    }
+
+
     [Fact]
     public void ThereAreScripts()
     {
         Assert.True(Scripts().Count() > 100);
+        Assert.True(GameScripts().Count() >= 6);
     }
 }

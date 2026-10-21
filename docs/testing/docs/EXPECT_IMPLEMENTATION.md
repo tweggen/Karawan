@@ -42,7 +42,7 @@ Bridges the engine's event system to ExpectEngine.
 
 ### 3. First Test Script
 
-**Location:** `models/tests/startup-smoke.json` (a game-process script; see *Running Tests* for its current status)
+**Location:** `models/tests/startup-smoke.json` (a game-process script, run by `tests/run-startup-smoke.sh`; see *Game smoke scripts*)
 
 Verifies the critical startup path:
 1. Root scene kicks off (`nogame.scenes.root.Scene.kickoff`)
@@ -52,7 +52,11 @@ Verifies the critical startup path:
 ## How It Works
 
 ### Activation
-`TestDriverModule` is **not** part of the game's module graph (commit `8059624e`, 2026-03-14, removed it from `nogameCode/nogame/Main.cs`). The host that wants a test activates it explicitly: `TestRunner/TestRunnerMain.cs` resolves it with `I.Get<engine.testing.TestDriverModule>()` (registered in `models/nogame.implementations.json`) and calls `ModuleActivate()`. On activation it returns immediately (no-op) unless a script path is set:
+`TestDriverModule` is activated twice over, and runs at most one script per process:
+- **In the game**, as a `MyModule` of `nogameCode/nogame/Main.cs` (re-added in KAR-428; commit `8059624e` had removed it, which left the game-process scripts silently inert).
+- **In `TestRunner/TestRunnerMain.cs`**, which resolves it with `I.Get<engine.testing.TestDriverModule>()` (registered in `models/nogame.implementations.json`) and calls `ModuleActivate()`.
+
+A static guard lets only the first activation start a script. On activation it returns immediately (no-op) unless a script path is set:
 - **GlobalSettings** `test.script` — path to a JSON test script (relative to `models/`)
 - **Environment variable** `JOYCE_TEST_SCRIPT` — same, used only when `test.script` is empty
 
@@ -87,7 +91,25 @@ echo $?  # 0 = pass, 1 = fail
 
 `TestRunner` also starts the TALE DES simulation on a background thread (or the Phase 6 cluster-lifecycle setup when the script path contains `phase6`), which is what the TALE scripts expect against. Timeout knobs read by `ScriptRunner`: `JOYCE_TEST_TIMEOUT_SCALE` (multiplies every in-script timeout) and `JOYCE_TEST_SLEEP_SCALE` (multiplies `sleep` steps).
 
-A plain game run (`dotnet run --project Karawan/Karawan.csproj` with `JOYCE_TEST_SCRIPT` set) no longer activates the module, so the game-process scripts under `models/tests/*.json` (`startup-smoke.json`, `taxi-quest-smoke.json`, ...) and the `tests/run-*.sh` wrappers that launch the game with `JOYCE_TEST_SCRIPT` do not currently execute a script. Whether to re-wire or retire them is open, tracked separately.
+### Game smoke scripts
+
+The scripts directly under `models/tests/` run in the real game (window, world generation,
+narration), launched by the `tests/run-*.sh` wrappers. Each starts Karawan with
+`JOYCE_TEST_SCRIPT`, an isolated `--rwpath` and `--setting debug.option.autoLogin=local` (which
+skips the login menu), and exits with the script's result:
+
+| Wrapper | Script(s) | Asserts |
+|---|---|---|
+| `run-startup-smoke.sh` | `startup-smoke.json` | root scene kickoff, narration starts and reaches a node |
+| `run-world-gen-smoke.sh` | `world-gen-smoke.json` | a cluster completes |
+| `run-taxi-markers-visible.sh` | `taxi-markers-visible.json` | a taxi NPC marker spawns |
+| `run-taxi-quest-smoke.sh` | `taxi-quest-smoke.json` | `quest.autoTrigger` fires the taxi quest |
+| `run-narration-save-restore.sh` | `narration-save.json`, `narration-restore-verify.json` | narration resumes at the saved node after a restart |
+
+Build first (`dotnet build Karawan/Karawan.csproj`; the wrappers use `--no-build`). They need a
+display and are not run by CI. A failing expectation exits 1 (checked in KAR-428 with a script
+waiting for an event that never comes). xUnit `TaleScriptsLoadTests.GameScript_Loads` checks
+the scripts pass `ScriptRunner`'s validation.
 
 ## JSON Test Script Format
 
