@@ -121,7 +121,9 @@ public class TaleSpawnOperator : ISpawnOperator
         SegmentRoute route;
         try
         {
-            route = await StreetRouteBuilder.BuildAsync(fromPos, toPos, navMap, startPod);
+            // The type the NPC walks with (TaleEntityStrategy), so the sample lies on its route.
+            route = await StreetRouteBuilder.BuildAsync(fromPos, toPos, navMap, startPod,
+                schedule.PreferredTransportationType);
         }
         catch { return null; }
         if (route == null || route.Segments.Count < 2) return null;

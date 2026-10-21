@@ -51,7 +51,7 @@ Each of these cost a debugging round; the story behind each is in `STATUS-LOG.md
 **Streets & navigation**
 - **Say `Ramp`/`Bridge`/`Tunnel`, never "non-`Street`"** — `ConnectorBridge` strokes are ordinary ground roads; `StrokeKinds.IsStructure` is the one expression.
 - **Generator flags are injected, not read from `GlobalSettings`** — the one global read is in `ClusterDesc._generateStrokes`, because a process global cannot be driven both ways in one test run.
-- **Routing names its transport type** — `LocalPathfinder`, `TryCreateCursor`, satnav `Route` and `ToSomewhere.TransportType` have no default; cursor and A* must use the same type.
+- **Routing names its transport type** — `LocalPathfinder`, `TryCreateCursor`, satnav `Route`, `ToSomewhere.TransportType`, `IRouteGenerator.GetRouteAsync` and `StreetRouteBuilder.BuildAsync` have no default (source-scanned, `TransportTypeNoDefaultTests`); cursor and A* must use the same type.
 - **Every `NavJunction` is built by `NavJunction.At` / `Between` / `AtNavigationHeight`** (source-scanned). It carries `GroundHeight`; each consumer adds its own offset (`NavigationHeightOf`, `WalkingHeightOf`).
 - **A character's animation driver is a CALL to `SetAnimation`, not a mention** — every creation site must reach one; a character with no `Body` cannot use `IdleBehavior` (`CharacterAnimationDriverTests`).
 

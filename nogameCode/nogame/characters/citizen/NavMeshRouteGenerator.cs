@@ -24,8 +24,8 @@ public class NavMeshRouteGenerator : IRouteGenerator
     private const float TimeoutMs = 100f; // Max pathfinding time before giving up (allows fallback)
 
     public async Task<SegmentRoute> GetRouteAsync(Vector3 fromPos, Vector3 toPos, PositionDescription startPod,
-        RoutingPreferences? preferences = null,
-        TransportationType transportType = TransportationType.Pedestrian)
+        TransportationType transportType,
+        RoutingPreferences? preferences = null)
     {
         Trace(_dc, $"NavMeshRouteGenerator: Computing route from {fromPos} to {toPos}");
         try

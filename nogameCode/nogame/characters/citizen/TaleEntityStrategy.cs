@@ -372,7 +372,7 @@ public class TaleEntityStrategy : AOneOfStrategy
             if (routeGen != null)
             {
                 route = await routeGen.GetRouteAsync(_currentPosition.Position, destination, _currentPosition,
-                    _routingPreferences, schedule.PreferredTransportationType);
+                    schedule.PreferredTransportationType, _routingPreferences);
                 if (route != null)
                     Trace(_dc, $"NPC {_npcId} got NavMesh route ({route.Segments.Count} segments)");
                 else
@@ -539,7 +539,7 @@ public class TaleEntityStrategy : AOneOfStrategy
             if (routeGen != null)
             {
                 route = await routeGen.GetRouteAsync(_currentPosition.Position, dest, _currentPosition,
-                    _routingPreferences, schedule.PreferredTransportationType);
+                    schedule.PreferredTransportationType, _routingPreferences);
                 if (route != null)
                     Trace(_dc, $"NPC {_npcId} SpawnInTravel got route ({route.Segments.Count} segments)");
                 else

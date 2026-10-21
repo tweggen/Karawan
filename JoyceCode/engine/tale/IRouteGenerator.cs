@@ -26,6 +26,6 @@ public interface IRouteGenerator
     /// <param name="transportType">Transportation type for this route</param>
     /// <returns>SegmentRoute representing the path, or null if pathfinding fails</returns>
     Task<SegmentRoute> GetRouteAsync(Vector3 fromPos, Vector3 toPos, PositionDescription startPod,
-        RoutingPreferences? preferences = null,
-        TransportationType transportType = TransportationType.Pedestrian);
+        TransportationType transportType,
+        RoutingPreferences? preferences = null);
 }

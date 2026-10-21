@@ -76,7 +76,7 @@ public static class StreetRouteBuilder
     /// Returns null if pathfinding fails, in which case the caller should fall back to straight-line movement.
     /// </summary>
     public static async Task<SegmentRoute> BuildAsync(Vector3 fromPos, Vector3 toPos, NavMap navMap, PositionDescription startPod,
-        TransportationType transportType = TransportationType.Pedestrian,
+        TransportationType transportType,
         RoutingPreferences? preferences = null,
         CancellationToken cancellationToken = default)
     {
