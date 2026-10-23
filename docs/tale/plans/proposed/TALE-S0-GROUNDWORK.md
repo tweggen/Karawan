@@ -673,9 +673,11 @@ written into roadmap §S0 and §12 here.
     per cluster visited.
   - **DES baseline** (`Testbed --cluster medium --days 30|90`, 500 NPCs on
     cluster 15, 10 s / 17 s wall clock): completion 0.998 / 0.997;
-    interrupts per NPC-day 28.5 / 30.9 (above `testbed_targets.json`'s
-    maximum 3, which predates W6 making the rate real — the target needs
-    re-tuning); groups 29 / 57 (social 25, trade 4 → social 30, criminal
+    interrupts 28.5 / 30.9 per day for the whole cluster, i.e. 0.057 /
+    0.062 per NPC-day (first written here as "per NPC-day": the metric was
+    a cluster total until KAR-467 divided it by the NPC count; the design
+    target is 1–3 per NPC-day, so interrupts are about twenty times rarer
+    than designed — a finding for S2b); groups 29 / 57 (social 25, trade 4 → social 30, criminal
     27; first gang on day 60); NPCs in groups 23 % / 98 %; trust density
     0.094 / 0.164; strong pairs 137 / 1572; mean intra-/inter-group trust
     0.76 / 0.10 → 0.64 / 0.13; churn per day 0 / 5.5; mismatch 0. Property

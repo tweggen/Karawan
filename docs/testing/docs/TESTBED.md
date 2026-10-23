@@ -849,6 +849,8 @@ The testbed compares its output against these targets and:
 
 The checked-in `Testbed/testbed_targets.json` carries looser values than the example above (e.g. `routine_completion_rate` max 1.00, `escalation_first_conflict_day` max 60). It is looked up from `--targets`, then next to the binary, the working directory and `Testbed/`.
 
+**Interrupt target (KAR-467, 2026-10-23):** `interrupts_per_day` reports interrupts set **per NPC-day** (`mean`, `median`, `std`, `p5`, `p95`) plus `cluster_mean`, the whole cluster's daily count. Until then `mean` was the cluster count, which put a 500-NPC run at ~28 and failed the target of at most 3 on every run. Measured on `--cluster medium` / `large`, 30 days: 0.057 / 0.064 per NPC-day. That is far below the 1–3 designed above: interrupts come only from storylets with `postconditions_if` and `interrupt_priority` ≥ 5 meeting an NPC with a lower-priority storylet. The checked-in target therefore keeps `min` 0.0 (the example's 1.0 would fail) and `max` 3.0; raising the rate is S2b's business (live interrupts). `--cluster small` picks a cluster with no homes ("insufficient locations for NPC assignment") and fails nearly every target by construction; measure on `medium` or `large`.
+
 `CheckTargets` checks `routine_completion_rate`, `request_fulfillment_rate`, `interrupts_per_day_mean`, `role_completion_rate_min.all_roles`, `property_mean_daily_range`, `escalation_first_conflict_day` and the three graph targets. It skips a metric that is null, such as a fulfilment rate with no requests. `escalation_fraction_at_day_180` is not computed yet.
 
 **Since S0 W6 (KAR-448, 2026-10-19):**
