@@ -30,6 +30,8 @@ public class TaxiQuestStrategy : AOneOfStrategy
         }
         else if (strategy == Strategies["driving"])
         {
+            // TALE S1-g: the passenger arrived; the run pays.
+            if (_entity.Has<TaxiQuestData>()) TaxiFare.Pay(_entity.Get<TaxiQuestData>());
             TriggerStrategy(null);
             I.Get<engine.quest.QuestFactory>().DeactivateQuest(_entity);
         }

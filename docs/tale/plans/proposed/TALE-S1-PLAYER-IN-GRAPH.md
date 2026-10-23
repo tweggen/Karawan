@@ -395,6 +395,11 @@ and another cluster shows "anonymous".
 
 ## 9. S1-g — Taxi fare (passenger binding optional)
 
+> **Status:** implemented with the passenger binding (KAR-459), 2026-10-23. The taxi quest
+> starts in the driving phase at the player's position (the pickup marker), so the fare
+> distance is measured there and stored as `TaxiQuestData.FareDistance`; saves from before
+> have 0 and pay the base fare of 30. `drive` has no cooldown.
+
 - **Fare:** on taxi success (`TaxiQuestStrategy.cs:29-33`) add
   `GameState.Cash += 30 + distance/10` — the money source that pay and
   bribe need. Cash is the currency (owner, 2026-10-18).
