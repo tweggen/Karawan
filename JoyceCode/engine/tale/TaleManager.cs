@@ -874,6 +874,31 @@ public class TaleManager
     }
 
 
+    private PlayerInteractions _playerInteractions;
+
+    /// <summary>
+    /// TALE S1-b: the player interaction model. Built on first use from the
+    /// registered InteractionTypeRegistry; tests may set their own.
+    /// </summary>
+    public PlayerInteractions PlayerInteractions
+    {
+        get => _playerInteractions ??= new PlayerInteractions(this, I.Get<InteractionTypeRegistry>());
+        set => _playerInteractions = value;
+    }
+
+
+    /// <summary>TALE S1-b: the player did <paramref name="interactionId"/> to the NPC (logical thread).</summary>
+    public PlayerInteractionResult ApplyPlayerInteraction(int npcId, string interactionId, DateTime gameNow,
+        float cashPaid = 0f)
+        => PlayerInteractions.Apply(npcId, interactionId, gameNow, cashPaid);
+
+
+    /// <summary>TALE S1-b: a bystander saw the player do it to the victim (logical thread).</summary>
+    public PlayerInteractionResult ApplyWitnessedPlayerInteraction(int witnessId, int victimId,
+        string interactionId, DateTime gameNow, float distance)
+        => PlayerInteractions.ApplyWitnessed(witnessId, victimId, interactionId, gameNow, distance);
+
+
     private int _unflaggedPlayerContacts;
 
     /// <summary>

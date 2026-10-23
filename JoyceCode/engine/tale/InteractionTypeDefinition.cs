@@ -49,4 +49,10 @@ public class InteractionTypeDefinition
     /// - "probability": 0.4
     /// </summary>
     public Dictionary<string, float> ConditionParameters { get; set; } = new();
+
+    /// <summary>
+    /// TALE S1-b: the effect on an NPC when the player is the other side;
+    /// null for types the player never takes part in.
+    /// </summary>
+    public PlayerInteractionSpec Player { get; set; }
 }
