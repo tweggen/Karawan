@@ -27,7 +27,7 @@ public static class TaleNarrationBindings
     /// <summary>The game clock for interactions applied from here; set by TaleModule.</summary>
     public static Func<DateTime>? GameNowProvider { get; set; }
 
-    private static DateTime _gameNow()
+    public static DateTime GameNow()
     {
         try { return GameNowProvider?.Invoke() ?? global::nogame.GameState.GameT0; }
         catch { return global::nogame.GameState.GameT0; }
@@ -104,7 +104,7 @@ public static class TaleNarrationBindings
     {
         try
         {
-            if (!PlayerConversation.OnViolence(I.Get<TaleManager>(), Session, npcId, action, _gameNow()))
+            if (!PlayerConversation.OnViolence(I.Get<TaleManager>(), Session, npcId, action, GameNow()))
                 return false;
             Trace($"TALE NARRATION BINDINGS: conversation with NPC {npcId} ended by violence ({reason}, {action})");
             I.Get<global::nogame.modules.story.Narration>().CancelConversation();

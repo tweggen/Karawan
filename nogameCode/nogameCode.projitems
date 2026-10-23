@@ -101,6 +101,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\IdentifyCameraFocusModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\MainPlayModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\PlayerVehicleSpeed.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\PlayerPosition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\PlingPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\UpdateEmissionContext.cs" />
@@ -119,6 +120,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\tale\TaleModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\tale\TaleRegistryLoader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\tale\TaleNarrationBindings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\tale\PlayerActionReporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\World.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\CharacterModelDescriptionFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\npcs\niceday\CharacterState.cs" />

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using static engine.Logger;
 
 namespace engine.tale;
@@ -9,6 +10,13 @@ public readonly record struct PlayerInteractionResult(
     bool Applied, float TrustBefore, float TrustAfter, float Scale)
 {
     public static readonly PlayerInteractionResult None = new(false, 0f, 0f, 0f);
+}
+
+
+/// <summary>What a world action of the player did: to the victim, and who saw it.</summary>
+public sealed record PlayerActionReport(PlayerInteractionResult Victim, IReadOnlyList<Witness> Witnesses)
+{
+    public static readonly PlayerActionReport None = new(PlayerInteractionResult.None, Array.Empty<Witness>());
 }
 
 
@@ -106,6 +114,31 @@ public class PlayerInteractions
         Trace(_dc, $"player {interactionId} on npc={victimId} witnessed by npc={witnessId} at {distance:F1} m: "
                    + $"trust {result.TrustBefore:F3} -> {result.TrustAfter:F3}");
         return result;
+    }
+
+
+    /// <summary>
+    /// TALE S1-d: the player did <paramref name="interactionId"/> to
+    /// <paramref name="victimId"/> at <paramref name="at"/>. Applies it to the
+    /// victim and, if that counted (a repeat inside the cooldown does not),
+    /// to the witnesses <see cref="WitnessSelector"/> picks from
+    /// <paramref name="candidates"/>; <paramref name="lineOfSight"/> is asked
+    /// only if the type's witness block wants it.
+    /// </summary>
+    public PlayerActionReport Report(int victimId, string interactionId, Vector3 at, DateTime gameNow,
+        IEnumerable<(int NpcId, Vector3 Position)> candidates, Func<int, Vector3, bool> lineOfSight = null)
+    {
+        var victim = Apply(victimId, interactionId, gameNow);
+        if (!victim.Applied) return new PlayerActionReport(victim, Array.Empty<Witness>());
+
+        var w = _types.Get(interactionId).Player?.Witness;
+        if (w == null || w.Radius <= 0f) return new PlayerActionReport(victim, Array.Empty<Witness>());
+
+        var witnesses = WitnessSelector.Select(at, candidates, victimId, w.Radius, w.MaxCount,
+            w.LineOfSight ? lineOfSight : null);
+        foreach (var witness in witnesses)
+            ApplyWitnessed(witness.NpcId, victimId, interactionId, gameNow, witness.Distance);
+        return new PlayerActionReport(victim, witnesses);
     }
 
 

@@ -206,10 +206,10 @@ unchanged.
 ## 5. S1-c — Conversations: default chat, `tale.interact`, `tale.pay`
 
 > **Status:** implemented (KAR-456), 2026-10-23. Deviations: the hostile branch keys on
-> `player_fact.hit_me` (S1-b's fact name), not `assaulted_me`; the assault on a hit partner is
-> applied from `TaleConversationBehavior.OnCollision`, the one place that sees the other
-> body's layers until S1-d attributes hits generally (repeat scale 0 keeps S1-d's report from
-> doubling it); a vehicle contact only closes the dialogue; gates are merchant 0.19 and
+> `player_fact.hit_me` (S1-b's fact name), not `assaulted_me`; S1-c applied the assault on a
+> hit partner from `TaleConversationBehavior.OnCollision` — since S1-d that only closes the
+> dialogue and the strategy's report applies the assault with its witnesses (applying it
+> twice would have dropped the witnesses: the second call is a repeat); gates are merchant 0.19 and
 > authority 0.27 (3 and 8 conversations an hour apart). `tale.npc.remember` also hops to the
 > logical thread now.
 
@@ -264,6 +264,14 @@ raises trust and wealth; a quest narration ending during a conversation
 applies nothing to the NPC.
 
 ## 6. S1-d — World actions and witnesses
+
+> **Status:** implemented (KAR-457), 2026-10-23. `HoverModule` records the speed in
+> `PlayerVehicleSpeed` (higher of the last two frames); the engine side is
+> `PlayerInteractions.Report` / `TaleManager.ReportPlayerAction`, so the pipeline test needs no
+> ECS. Since a conversation partner's assault now comes from this report, S1-c's
+> `TaleConversationBehavior` only closes the dialogue (a second apply would be a repeat and
+> drop the witnesses). The nogame half (router → strategy → reporter) is not covered by a
+> TestRunner script — TestRunner has no physics contacts — so it is the in-game check below.
 
 - **Attribution in the router.** `CitizenCollisionRouter.Dispatch` puts
   `"player"` into the event's `Code` when the other body carries a player

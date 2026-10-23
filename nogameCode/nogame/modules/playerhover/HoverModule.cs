@@ -126,6 +126,7 @@ public class HoverModule : AModule, IInputPart
     {
         if (!_eShip.Has<Transform3ToWorld>()) return;
         Vector3 velShip = _prefShip.Velocity.Linear;
+        PlayerVehicleSpeed.Record(velShip.Length());
 
         
         /*
@@ -162,6 +163,7 @@ public class HoverModule : AModule, IInputPart
     {
         M<InputEventPipeline>().RemoveInputPart(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
+        PlayerVehicleSpeed.Reset();
 
         _stopHoverSound();
 

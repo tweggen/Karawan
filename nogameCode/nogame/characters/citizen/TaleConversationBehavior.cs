@@ -121,11 +121,12 @@ public class TaleConversationBehavior : ANearbyBehavior
         {
             /*
              * Close this NPC's conversation before the hit switches it to flee
-             * (S1-c, finding 4). A player weapon is an assault on the partner;
-             * a vehicle only ends the talk until S1-d can tell a ram from a touch.
+             * (S1-c, finding 4). The assault or run-over itself, with its
+             * witnesses, is reported once from the strategy's Hit/Crash handler
+             * (S1-d), which the Dispatch below triggers.
              */
             if (CitizenCollisionRouter.IsWeapon(other))
-                _cancelIfConversing(PlayerActionClassifier.Classify(other.SolidLayerMask), "hit");
+                _cancelIfConversing(PlayerAction.None, "hit");
             else if (CitizenCollisionRouter.IsVehicle(other))
                 _cancelIfConversing(PlayerAction.None, "crash");
         }

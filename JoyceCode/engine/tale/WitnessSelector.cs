@@ -60,4 +60,16 @@ public static class WitnessSelector
         }
         return result;
     }
+
+
+    /// <summary>
+    /// TALE S1-d: whether a ray hit blocks a witness's view. Only the environment
+    /// does (buildings, bridges, movable scenery); a body without collision
+    /// properties counts as static environment, as in the contact filter.
+    /// NPCs, the player and vehicles do not block the view.
+    /// </summary>
+    public static bool IsOccluder(engine.physics.CollisionProperties props) =>
+        props == null
+        || (props.SolidLayerMask & (engine.physics.CollisionProperties.Layers.StaticEnvironment
+                                    | engine.physics.CollisionProperties.Layers.MovableEnvironment)) != 0;
 }

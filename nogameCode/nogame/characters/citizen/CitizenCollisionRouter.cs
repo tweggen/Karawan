@@ -21,9 +21,17 @@ namespace nogame.characters.citizen;
  * When more than one bit is set (e.g. a player weapon also carries the
  * PlayerCharacter bit -- not the current configuration, but defensive),
  * Hit/Crash take precedence and the bump is suppressed.
+ *
+ * TALE S1-d: a Hit or Crash the player caused carries Code = PlayerCode —
+ * a player weapon, or the player's ship at run-over speed (measured before
+ * the contact, PlayerVehicleSpeed). The NPC's strategy reports it.
  */
 internal static class CitizenCollisionRouter
 {
+    /// <summary>Event code of a Hit or Crash the player caused (S1-d).</summary>
+    public const string PlayerCode = "player";
+
+
     public static bool IsWeapon(CollisionProperties other) =>
         other != null
         && 0 != (other.SolidLayerMask & CollisionProperties.Layers.AnyWeapon);
@@ -46,14 +54,18 @@ internal static class CitizenCollisionRouter
 
         bool isWeapon = IsWeapon(other);
         bool isVehicle = IsVehicle(other);
+        var action = engine.tale.PlayerActionClassifier.Attribute(
+            other.SolidLayerMask, nogame.modules.playerhover.PlayerVehicleSpeed.Recent);
 
         if (isWeapon)
         {
-            q.Push(new Event(EntityStrategy.HitEventPath(me.Entity), ""));
+            q.Push(new Event(EntityStrategy.HitEventPath(me.Entity),
+                action == engine.tale.PlayerAction.Assault ? PlayerCode : ""));
         }
         if (isVehicle)
         {
-            q.Push(new Event(EntityStrategy.CrashEventPath(me.Entity), ""));
+            q.Push(new Event(EntityStrategy.CrashEventPath(me.Entity),
+                action == engine.tale.PlayerAction.RunOver ? PlayerCode : ""));
         }
         if (!isWeapon && !isVehicle && IsPlayerCharacter(other))
         {

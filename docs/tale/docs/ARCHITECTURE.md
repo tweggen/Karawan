@@ -388,9 +388,25 @@ block — unless the script applied one itself (`tale.interact`, `tale.pay`) or 
 turned violent. A weapon or vehicle contact on the partner calls
 `TaleNarrationBindings.EndByViolence` from `TaleConversationBehavior.OnCollision` (and again
 from `TaleEntityStrategy`'s hit/crash handlers, a no-op the second time), which marks the
-session, applies `assault` for a player weapon, and cancels the dialogue before the NPC
-flees. A vehicle contact applies nothing until S1-d can tell a ram from a touch.
+session and cancels the dialogue before the NPC flees; the assault or run-over itself comes
+from the world-action report below (S1-d).
 `tale.interact` and `tale.pay` hop to the logical thread and the script awaits them.
+
+**World actions and witnesses** (S1-d, KAR-457). `CitizenCollisionRouter.Dispatch` puts
+`Code = "player"` on a Hit or Crash the player caused:
+`PlayerActionClassifier.Attribute(otherLayers, PlayerVehicleSpeed.Recent)` — a player weapon
+is an assault; the player's ship is a run-over only at ≥ 4 m/s, judged by the higher of the
+last two frames' speeds that `HoverModule` records (the contact arrives after the physics
+step, when the impact may already have slowed the ship); NPC vehicles and weapons are none.
+`TaleEntityStrategy`'s Hit/Crash handlers (before the recover check, so a punch during
+recovery counts) call `nogame.modules.tale.PlayerActionReporter`, which runs
+`TaleManager.ReportPlayerAction`: the victim takes the interaction; if that counted (the
+3-minute cooldown with repeat scale 0 turns one punch's several contact episodes into one),
+the materialised TALE NPCs within the witness radius, nearest first, at most 8, take their
+share — each after one `RayCastSync` from eye height (1.6 m) to the event (1 m), blocked only
+by environment bodies (`WitnessSelector.IsOccluder`; NPCs, the player and vehicles don't
+block, terrain has no collider). Witnesses get `player_fact.saw_<…>` and become known to the
+player, so they are kept and saved.
 
 The narration functions include `npcGroupType()` and `npcGroupName()`.
 Dialogue can gate on trust, remember player facts (`tale.npc.remember`) and

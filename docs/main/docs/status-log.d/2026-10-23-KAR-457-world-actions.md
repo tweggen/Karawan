@@ -1,0 +1,7 @@
+### 2026-10-23 — KAR-457 (TALE S1-d): punching and running over NPCs counts, and others see it
+
+- `CitizenCollisionRouter` marks a Hit or Crash the player caused with `Code = "player"`: a player weapon is an assault, the player's ship a run-over only at ≥ 4 m/s (`PlayerActionClassifier.Attribute`, speed from `PlayerVehicleSpeed`, which `HoverModule` records — the higher of the last two frames, since the contact arrives after the impact). NPC cars produce nothing.
+- `TaleEntityStrategy` reports it through `PlayerActionReporter` → `TaleManager.ReportPlayerAction`: the victim takes `assault` / `run_over`; if that counted, up to 8 materialised TALE NPCs within 25 / 40 m who have a line of sight (one ray each, blocked only by environment bodies) take a weaker share, groupmates of the victim 1.5× more, and remember `saw_assault` / `saw_run_over`.
+- A hit on a conversation partner: the conversation behaviour now only closes the dialogue; the assault and its witnesses come from this report.
+- Tests: `PlayerActionPipelineTests` (attribution with the speed gate, victim, witnesses with a wall and distance, one punch = one count, occluders). In-game checks pending: a punch lowers the victim's trust once and a nearby witness's less; an NPC behind a building is unaffected; ramming at speed counts, touching while parked doesn't; NPC cars produce nothing; save/load keeps it.
+- Docs: ARCHITECTURE §7, `TALE-S1-PLAYER-IN-GRAPH.md` §5/§6 status.

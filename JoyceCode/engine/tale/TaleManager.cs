@@ -899,6 +899,12 @@ public class TaleManager
         => PlayerInteractions.ApplyWitnessed(witnessId, victimId, interactionId, gameNow, distance);
 
 
+    /// <summary>TALE S1-d: a world action of the player, to the victim and its witnesses (logical thread).</summary>
+    public PlayerActionReport ReportPlayerAction(int victimId, string interactionId, Vector3 at, DateTime gameNow,
+        IEnumerable<(int NpcId, Vector3 Position)> candidates, Func<int, Vector3, bool> lineOfSight = null)
+        => PlayerInteractions.Report(victimId, interactionId, at, gameNow, candidates, lineOfSight);
+
+
     private int _unflaggedPlayerContacts;
 
     /// <summary>
