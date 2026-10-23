@@ -317,6 +317,13 @@ views.
 
 ## 7. S1-e — Group standing and the greeting
 
+> **Status:** implemented (KAR-458), 2026-10-23. Regard is clamped to [−1, 1]. The roster is
+> the group table's (`RuntimeGroup.MemberIds`); the W8 panel's per-group standing uses
+> `NpcSchedule.GroupId` rosters like the rest of the panel (they differ only while W6's
+> mismatch count is non-zero). The greeting branch tests `met_player == 'false'` and comes
+> after the `hostile` branch. "After a conversation `npc.group_standing` reads 0" is
+> `ClearNpcProps`' special case; `Props` can't be built in xUnit, so it is not tested.
+
 - **Member regard:** map `Trust[-1]` to [−1, 1] around the first-contact
   value B0: `(t − B0)/B0` below, `(t − B0)/(1 − B0)` above. Harm weighs
   more than help per unit of trust near the baseline; with `help` at +0.4

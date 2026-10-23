@@ -94,7 +94,7 @@ public class Tale : APart
             string hangout = g.HangoutLocationId < 0 ? "no hangout"
                 : $"hangout {g.HangoutLocationId}" + (g.HangoutDistance.HasValue ? $" @ {g.HangoutDistance.Value:F0} m" : "");
             string label = $"g{g.GroupId} {g.Name} [{g.Type}] x{g.MemberIds.Count}, {hangout}, " +
-                           $"player {_f(g.MeanPlayerTrust)} ({g.MembersWhoMetPlayer} met)###g{g.GroupId}";
+                           $"player {_f(g.MeanPlayerTrust)} ({g.MembersWhoMetPlayer} met), standing {g.Standing:+0.00;-0.00;0}###g{g.GroupId}";
             if (ImGui.TreeNode(label))
             {
                 foreach (int id in g.MemberIds)

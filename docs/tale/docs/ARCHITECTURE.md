@@ -380,6 +380,18 @@ prefix) and `PlayerActionClassifier.Classify(otherLayers)` (player weapon → as
 vehicle → run-over, anything else → none) are pure helpers for S1-d, which wires them to
 the collision events.
 
+**Group standing** (S1-e, KAR-458). What a group thinks of the player comes from its
+members: each member's regard `r = (t − 0.15)/0.15` below first contact and
+`(t − 0.15)/0.85` above it (harm weighs more per unit of trust), weighted by the member's
+standing inside the group (`0.25 + the others' mean trust in them`, normalised to mean 1),
+over the members who know the player: `Σ ŵ·r / (Σ ŵ + 1)` — the 1 is one neutral member's
+worth of prior, and the group's size does not dilute it. One `help` from first contact gives
++0.2, one hit −0.5, a chat ≈ +0.01. `PlayerStandingCalculator.ForGroup` (pure) /
+`TaleManager.GetGroupStanding`, computed on demand from the group table's roster, nothing
+cached or saved. Dialogue reads `npc.group_standing` and `npc.group_known` (other members who
+know the player); `ClearNpcProps` resets both to 0. The routine and generic scripts greet a
+member who never met the player warmly at ≥ 0.05 and coldly at ≤ −0.15, naming the group.
+
 **Taxi fares** (S1-g, KAR-459). A finished taxi run adds `30 + metres/10` to
 `GameState.Cash` (`nogame.quests.Taxi.TaxiFare`), the money `tale.pay` spends; the distance
 (pickup to destination) is stored in `TaxiQuestData.FareDistance` when the quest starts. The
@@ -578,7 +590,7 @@ property off, no label entity exists. The text comes from the pure
 cluster (the player's unless another is chosen):
 - counts, the overlay switch and the W6 metrics with a churn sparkline;
 - groups by size, each with name, type, hangout and its distance, and the
-  mean `Trust[-1]` of the members who met the player; expandable to members;
+  mean `Trust[-1]` of the members who met the player and the group's standing (S1-e); expandable to members;
 - the inter-group trust of the 12 largest groups, read from the W6 metrics;
 - every NPC's `Trust[-1]`, highest first;
 - the selected NPC: the inspector's entity if it carries `TaleNpcId`, or an

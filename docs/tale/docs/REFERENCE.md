@@ -149,7 +149,9 @@ A conversation that ends naturally applies `chat`, unless the script raised `tal
 or a successful `tale.pay`, or the player hit or rammed the partner (the dialogue then closes
 at once, and a hit applies `assault`). Another script ending, such as a quest narration
 started from the dialogue, applies nothing. Props: `player.cash` (choice conditions, e.g.
-`props.player.cash >= 20`), `npc.player_fact.<fact>`.
+`props.player.cash >= 20`), `npc.player_fact.<fact>`, and (S1-e) `npc.group_standing` (the
+NPC's group's standing with the player, −1…1, 0 when ungrouped) and `npc.group_known` (other
+members who know the player).
 
 ## NPC Roles
 

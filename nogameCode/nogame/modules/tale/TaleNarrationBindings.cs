@@ -189,12 +189,24 @@ public static class TaleNarrationBindings
             Props.Set("npc.group_name", groupName);
             Props.Set("npc.group_size", groupSize);
 
+            // TALE S1-e: what the NPC's group thinks of the player, and how many
+            // other members know the player. 0 when ungrouped.
+            var standing = GroupStanding.None;
+            if (hasGroup)
+            {
+                try { standing = I.Get<TaleManager>().GetGroupStanding(schedule.NpcId); }
+                catch { /* TaleManager unavailable: neutral */ }
+            }
+            Props.Set("npc.group_standing", standing.Standing);
+            Props.Set("npc.group_known", (float)standing.Known);
+
             // Track injected keys for cleanup
             _injectedKeys.AddRange(new[] {
                 "npc.hunger", "npc.anger", "npc.fatigue", "npc.health",
                 "npc.wealth", "npc.happiness", "npc.reputation", "npc.morality", "npc.fear",
                 "npc.role", "npc.met_player", "npc.trust_player", "npc.group_id",
-                "npc.has_group", "npc.group_type", "npc.group_name", "npc.group_size"
+                "npc.has_group", "npc.group_type", "npc.group_name", "npc.group_size",
+                "npc.group_standing", "npc.group_known"
             });
 
             // Memory flags written by the tale.npc.remember event handler. Exposed to
@@ -250,6 +262,10 @@ public static class TaleNarrationBindings
                 else if (key == "npc.group_size" || key == "npc.group_id")
                 {
                     Props.Set(key, key == "npc.group_id" ? -1f : 0f);
+                }
+                else if (key == "npc.group_standing" || key == "npc.group_known")
+                {
+                    Props.Set(key, 0f); // S1-e: neutral is 0, not the 0.5 of normalised stats
                 }
                 else if (key.StartsWith("npc.player_fact."))
                 {

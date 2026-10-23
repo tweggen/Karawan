@@ -6,6 +6,8 @@
         {
           "goto": [
             { "if": "props.npc.player_fact.hit_me == 1", "goto": "hostile" },
+            { "if": "props.npc.met_player == 'false' && props.npc.group_standing >= 0.05", "goto": "group_warm" },
+            { "if": "props.npc.met_player == 'false' && props.npc.group_standing <= -0.15", "goto": "group_cold" },
             { "if": "props.npc.hunger > 0.7", "goto": "hungry" },
             { "if": "props.npc.anger > 0.7", "goto": "angry" },
             { "if": "props.npc.fatigue > 0.7", "goto": "tired" },
@@ -72,6 +74,26 @@
           "texts": [
             "You. Stay away from me.",
             "Don't come any closer. I remember what you did."
+          ]
+        }
+      ]
+    },
+    "group_warm": {
+      "flow": [
+        {
+          "texts": [
+            "{func.npcGroupName()} speaks well of you. Good to meet you.",
+            "You're the one {func.npcGroupName()} talks about. Welcome."
+          ]
+        }
+      ]
+    },
+    "group_cold": {
+      "flow": [
+        {
+          "texts": [
+            "{func.npcGroupName()} knows about you. Keep your distance.",
+            "I've heard what you're like. My people don't forget."
           ]
         }
       ]

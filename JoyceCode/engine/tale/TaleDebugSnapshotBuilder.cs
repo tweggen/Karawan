@@ -121,7 +121,8 @@ public static class TaleDebugSnapshotBuilder
                 HangoutLocationId: hangout,
                 HangoutDistance: hangoutLoc != null ? Vector3.Distance(playerPos, hangoutLoc.EntryPosition) : null,
                 MembersWhoMetPlayer: met,
-                MeanPlayerTrust: met > 0 ? sum / met : null));
+                MeanPlayerTrust: met > 0 ? sum / met : null,
+                Standing: PlayerStandingCalculator.ForGroup(members.Select(id => byId[id]).ToList()).Standing));
         }
 
         groups.Sort((a, b) => a.MemberIds.Count != b.MemberIds.Count
