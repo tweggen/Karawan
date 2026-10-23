@@ -93,7 +93,8 @@
         "minTrust": 0.2,
         "maxTrust": 0.8,
         "probability": 0.5
-      }
+      },
+      "player": { "trustDelta": 0.02, "cooldownMinutes": 60, "repeatScale": 0.25 }
     },
     {
       "id": "trade",
@@ -119,7 +120,8 @@
         "minTrust": 0.5,
         "maxTrust": 1.0,
         "probability": 0.5
-      }
+      },
+      "player": { "trustDelta": 0.4, "cooldownMinutes": 720, "repeatScale": 0.3, "targetFact": "helped_me" }
     },
     {
       "id": "report_crime",
@@ -147,5 +149,87 @@
       "selectionPriority": 0,
       "conditionClassName": null,
       "conditionParameters": {}
+    },
+    {
+      "id": "assault",
+      "displayName": "Assault (player)",
+      "trustDelta": -0.25,
+      "category": "conflict",
+      "selectionPriority": 0,
+      "conditionClassName": null,
+      "conditionParameters": {},
+      "player": {
+        "trustDelta": -0.25,
+        "targetProperties": { "fear": 0.25, "anger": 0.15 },
+        "targetFact": "hit_me",
+        "cooldownMinutes": 3,
+        "repeatScale": 0.0,
+        "witness": { "factor": 0.35, "radius": 25, "maxCount": 8, "fact": "saw_assault",
+                     "properties": { "fear": 0.1 }, "lineOfSight": true }
+      }
+    },
+    {
+      "id": "run_over",
+      "displayName": "Run over (player)",
+      "trustDelta": -0.45,
+      "category": "conflict",
+      "selectionPriority": 0,
+      "conditionClassName": null,
+      "conditionParameters": {},
+      "player": {
+        "trustDelta": -0.45,
+        "targetProperties": { "fear": 0.35, "anger": 0.25, "health": -0.3 },
+        "targetFact": "ran_me_over",
+        "cooldownMinutes": 3,
+        "repeatScale": 0.0,
+        "witness": { "factor": 0.4, "radius": 40, "maxCount": 8, "fact": "saw_run_over",
+                     "properties": { "fear": 0.15 }, "lineOfSight": true }
+      }
+    },
+    {
+      "id": "pay",
+      "displayName": "Payment (player)",
+      "trustDelta": 0.06,
+      "category": "positive",
+      "selectionPriority": 0,
+      "conditionClassName": null,
+      "conditionParameters": {},
+      "player": {
+        "trustDelta": 0.06,
+        "targetFact": "paid_me",
+        "cooldownMinutes": 1440,
+        "repeatScale": 0.0,
+        "wealthPerCash": 0.002
+      }
+    },
+    {
+      "id": "bribe",
+      "displayName": "Bribe (player)",
+      "trustDelta": 0.04,
+      "category": "special",
+      "selectionPriority": 0,
+      "conditionClassName": null,
+      "conditionParameters": {},
+      "player": {
+        "trustDelta": 0.04,
+        "targetProperties": { "morality": -0.02 },
+        "targetFact": "bribed_me",
+        "cooldownMinutes": 1440,
+        "repeatScale": 0.0,
+        "wealthPerCash": 0.002
+      }
+    },
+    {
+      "id": "drive",
+      "displayName": "Lift (player)",
+      "trustDelta": 0.08,
+      "category": "positive",
+      "selectionPriority": 0,
+      "conditionClassName": null,
+      "conditionParameters": {},
+      "player": {
+        "trustDelta": 0.08,
+        "targetFact": "drove_me"
+      }
     }
   ]

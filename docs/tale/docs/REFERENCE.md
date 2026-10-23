@@ -106,6 +106,33 @@ exists only in `DesSimulation` (see above).
 
 ---
 
+## Player Interactions (S1-b)
+
+Optional `player` block on an entry of `models/nogame.interactions.json`; applies only to
+the NPC when the player is the other side (`engine.tale.PlayerInteractionSpec`).
+
+| Key | Meaning | Default |
+|-----|---------|---------|
+| `trustDelta` | change of `Trust[-1]`; replaces the type's NPC–NPC `trustDelta`; positive values are flattened by `(1 − trust)` | 0 |
+| `targetProperties` | added to the NPC's properties, clamped to [0, 1] | none |
+| `targetFact` | sets `player_fact.<name>` = 1 | none |
+| `cooldownMinutes` | game minutes during which repeats are scaled | none (no rate limit) |
+| `repeatScale` | the n-th repeat inside the cooldown is scaled by `repeatScale^n`; 0 drops it | 1 |
+| `wealthPerCash` | wealth added per unit of cash paid (never rate-limited) | 0 |
+| `witness.factor` | witness's trust change as a share of the victim's | — |
+| `witness.radius` | metres; strength falls from 1 at the event to 0.5 at the radius; × 1.5 for the victim's groupmates | — |
+| `witness.maxCount` | nearest witnesses that count | 8 |
+| `witness.fact` | sets `player_fact.<name>` = 1 on the witness | none |
+| `witness.properties` | added to the witness's properties, scaled like the trust change | none |
+| `witness.lineOfSight` | only witnesses with a clear line of sight count (S1-d) | true |
+
+Shipped (first guesses, to tune): `chat` +0.02 (60 min, ×0.25); `help` +0.4 (12 h, ×0.3,
+`helped_me`); `assault` −0.25, fear +0.25, anger +0.15 (3 min, ×0; witnesses 25 m, 0.35);
+`run_over` −0.45, fear +0.35, anger +0.25, health −0.3 (3 min, ×0; witnesses 40 m, 0.4);
+`pay` +0.06 and `bribe` +0.04, morality −0.02 (a game day, ×0; wealth 0.002 per cash);
+`drive` +0.08. A known type without a block applies its NPC–NPC `trustDelta` to the player,
+without cooldown. Chushi's and TestRunner's hard-coded registries have no player blocks.
+
 ## NPC Roles
 
 Roles decide which storylets an NPC may pick and when it wakes. They are defined in

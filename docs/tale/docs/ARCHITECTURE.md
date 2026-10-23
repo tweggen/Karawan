@@ -357,6 +357,31 @@ the entry, adds, clamps to [0, 1], calls `MarkPlayerContact` and bumps
 (`PlayerConversation.OnEnded`) until S1-c replaces that with the chat interaction. Old saves
 keep their values; there is no migration (owner, 2026-10-18).
 
+**Player interactions** (S1-b, KAR-455). An interaction type in `nogame.interactions.json`
+may carry a `player` block (`PlayerInteractionSpec`): what the type does to an NPC when the
+player is the other side — `trustDelta`, `targetProperties`, `targetFact`, `cooldownMinutes`,
+`repeatScale`, `wealthPerCash` and a `witness` block. Player-only types (`assault`,
+`run_over`, `pay`, `bribe`, `drive`) have no condition class, so NPC pairs never select them;
+`chat` and `help` carry player blocks next to their NPC–NPC values.
+`TaleManager.ApplyPlayerInteraction(npcId, id, gameNow, cashPaid)` and
+`ApplyWitnessedPlayerInteraction(witnessId, victimId, id, gameNow, distance)` go through
+`PlayerInteractions`, which:
+- scales repeats inside the cooldown by `repeatScale^n`, counted from the last full
+  application (in memory only; `assault`/`run_over` use scale 0, so the several contact
+  episodes of one punch count once);
+- flattens a positive trust change by `(1 − trust)` and writes it through
+  `ApplyPlayerTrust`; one `help` from first contact gives 0.49;
+- adds the target properties (scaled, clamped) and wealth from cash (cash is never
+  rate-limited), and sets `player_fact.<targetFact>`;
+- for a witness: strength `factor × (1 − 0.5·d/radius)`, × 1.5 for the victim's
+  groupmates, its own cooldown, `player_fact.<witness.fact>`.
+
+`WitnessSelector.Select` (nearest first, ties by id, capped, line of sight only along that
+prefix) and `PlayerActionClassifier.Classify(otherLayers)` (player weapon → assault, player
+vehicle → run-over, anything else → none) are pure helpers for S1-d, which wires them to
+the collision events. Nothing calls `ApplyPlayerInteraction` in the game yet: S1-c
+(conversations), S1-d (world actions) and S1-g (taxi) do.
+
 The narration functions include `npcGroupType()` and `npcGroupName()`.
 Dialogue can gate on trust, remember player facts (`tale.npc.remember`) and
 trigger quests. History: `../plans/done/PHASE_C-NPC-CONVERSATIONS.md`,

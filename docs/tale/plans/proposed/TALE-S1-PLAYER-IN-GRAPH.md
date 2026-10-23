@@ -126,6 +126,14 @@ tests for baseline, clamping and `MarkPlayerContact` pass.
 
 ## 4. S1-b — Player interaction model (engine)
 
+> **Status:** implemented (KAR-455), 2026-10-23. Deviations: `ApplyWitnessed` also takes the
+> witness's distance (the strength formula needs it); the cooldown counts from the last full
+> application; `pay`/`bribe` use repeat scale 0 (trust once a game day) while the cash always
+> reaches the NPC's wealth; `wealthPerCash` is 0.002 until S1-g knows the fares; a known type
+> without a player block applies its NPC–NPC `trustDelta`. Targets: `chat`/`help` facts are
+> `helped_me` (help only), `hit_me`, `ran_me_over`, `paid_me`, `bribed_me`, `drove_me`;
+> witness facts `saw_assault`, `saw_run_over`.
+
 **Data:** an optional `player` block on interaction types in
 `models/nogame.interactions.json`, applied only in the NPC→player
 direction (the player has no trust store). Fields: `trustDelta`
