@@ -61,6 +61,8 @@ public class TaleEntityStrategy : AOneOfStrategy
 
     private void _onCrashEvent(Event ev)
     {
+        // S1-c: a crash ends this NPC's conversation before it collapses (no-op if not its partner).
+        nogame.modules.tale.TaleNarrationBindings.EndByViolence(_npcId, PlayerAction.None, "crash event");
         _capturePreInterruptStrategy();
         TriggerStrategy("recover");
     }
@@ -68,6 +70,8 @@ public class TaleEntityStrategy : AOneOfStrategy
 
     private void _onHitEvent(Event ev)
     {
+        // S1-c: a hit ends this NPC's conversation before it flees (no-op if not its partner).
+        nogame.modules.tale.TaleNarrationBindings.EndByViolence(_npcId, PlayerAction.None, "hit event");
         var active = GetActiveStrategy();
         if (active != Strategies["recover"])
         {

@@ -1,0 +1,8 @@
+### 2026-10-23 — KAR-456 (TALE S1-c): conversations apply interactions; a punch ends the dialogue
+
+- A conversation is a `ConversationSession` (npc, script). When its own script ends, `PlayerConversation.OnEnded` applies the shipped `chat` interaction (+0.02 × (1 − trust), an hour's cooldown, ×0.25 per repeat) instead of the flat +0.02 — unless the script applied an interaction itself or the player turned violent. A quest narration ending during a conversation applies nothing.
+- **Bug fixed (S1 plan finding 4):** hitting the conversation partner used to leave the dialogue open while the NPC fled, and its end then *raised* trust. Now the hit closes the dialogue at once, applies `assault`, and no chat. `_cancelIfConversing` tested `!MayConverse()`, which never held during a conversation.
+- New narration events `tale.interact` (`id`) and `tale.pay` (`amount`, `id` pay/bribe, from `GameState.Cash`); handlers hop to the logical thread and the script awaits them; `player.cash` is a prop.
+- Scripts: merchant `desperate` offers pay 20 (only with the cash), help, leave; authority offers a bribe of 50; a `hostile` branch for NPCs the player hit in the merchant, generic and routine scripts. Trust gates retuned to 0.19 / 0.27 (still 3 / 8 conversations).
+- Tests: `PlayerConversationTests` (session rules, pay, scripts), `ConversationRulesTests` on the shipped chat. In-game checks pending: a punch closes the dialogue; the pay choice appears with ≥ 20 cash (cash has no source until S1-g).
+- Docs: ARCHITECTURE §7, REFERENCE (conversation actions), PHASE_C tests, PHASE_6, CONCEPT, `TALE-S1-PLAYER-IN-GRAPH.md` §5 status.

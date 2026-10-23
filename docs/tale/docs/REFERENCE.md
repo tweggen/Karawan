@@ -133,6 +133,24 @@ Shipped (first guesses, to tune): `chat` +0.02 (60 min, ×0.25); `help` +0.4 (12
 `drive` +0.08. A known type without a block applies its NPC–NPC `trustDelta` to the player,
 without cooldown. Chushi's and TestRunner's hard-coded registries have no player blocks.
 
+## Conversation Actions (S1-c)
+
+Narration events a TALE conversation script can raise (`"events": [{ "type": … }]`); they act
+on the conversation's NPC, on the logical thread, and the script waits for them, so later
+nodes see `npc.trust_player`, `npc.wealth` and `player.cash` updated.
+
+| Event | Params | Effect |
+|-------|--------|--------|
+| `tale.npc.remember` | `fact` | sets `player_fact.<fact>` = 1 |
+| `tale.interact` | `id` | applies the interaction type `id` (its player block) |
+| `tale.pay` | `amount`, `id` = `pay` (default) or `bribe` | if `GameState.Cash` ≥ `amount`: subtracts it, applies `id` with that cash |
+
+A conversation that ends naturally applies `chat`, unless the script raised `tale.interact`
+or a successful `tale.pay`, or the player hit or rammed the partner (the dialogue then closes
+at once, and a hit applies `assault`). Another script ending, such as a quest narration
+started from the dialogue, applies nothing. Props: `player.cash` (choice conditions, e.g.
+`props.player.cash >= 20`), `npc.player_fact.<fact>`.
+
 ## NPC Roles
 
 Roles decide which storylets an NPC may pick and when it wakes. They are defined in
@@ -250,7 +268,7 @@ The skip mask prevents duplicates without cascading seed shifts.
 ### HasPlayerDeviation Flag
 
 Set only through `TaleManager.MarkPlayerContact` (which also adds the NPC to the skip mask), called from `nogameCode/nogame/modules/tale/TaleModule.cs`:
-- at the end of a conversation script, by the +0.02 trust step towards the player (`Trust[-1]`), which goes through `TaleManager.ApplyPlayerTrust`, the one writer of `Trust[-1]` (S1-a);
+- at the end of a conversation script, by the default `chat` interaction (S1-c), and by the narration actions `tale.interact` and `tale.pay` — all through `TaleManager.ApplyPlayerInteraction` → `ApplyPlayerTrust`, the one writer of `Trust[-1]` (S1-a);
 - by the narration action `tale.npc.remember`, which stores a `player_fact.<fact>` property;
 
 and on every schedule loaded from the save (`RegisterNpc`). Any new writer of `Trust[-1]` must use `ApplyPlayerTrust`, and of `player_fact.*` must call `MarkPlayerContact`; a schedule that is `IsKnownToPlayer` without the flag is warned about and flagged.

@@ -19,6 +19,21 @@ public static class TaleNarrationBindings
     private static NpcSchedule? _currentSchedule;
 
     /// <summary>
+    /// TALE S1-c: the running conversation, from BeginSession until its script
+    /// ends (ClearNpcProps). Logical thread only.
+    /// </summary>
+    public static ConversationSession? Session { get; private set; }
+
+    /// <summary>The game clock for interactions applied from here; set by TaleModule.</summary>
+    public static Func<DateTime>? GameNowProvider { get; set; }
+
+    private static DateTime _gameNow()
+    {
+        try { return GameNowProvider?.Invoke() ?? global::nogame.GameState.GameT0; }
+        catch { return global::nogame.GameState.GameT0; }
+    }
+
+    /// <summary>
     /// Placeholder for future narration event wiring.
     /// Event subscription is handled directly in TaleModule.OnModuleActivate().
     /// </summary>
@@ -44,6 +59,64 @@ public static class TaleNarrationBindings
     {
         _currentSchedule = schedule;
     }
+
+    /// <summary>TALE S1-c: a conversation with <paramref name="npcId"/> runs <paramref name="scriptName"/>.</summary>
+    public static void BeginSession(int npcId, string scriptName)
+    {
+        Session = new ConversationSession(npcId, scriptName);
+    }
+
+
+    /// <summary>
+    /// The player's cash, or null before autosave has a game state (its getter
+    /// throws until then).
+    /// </summary>
+    public static global::nogame.GameState? TryGetGameState()
+    {
+        try { return I.Get<global::nogame.modules.AutoSave>().GameState; }
+        catch { return null; }
+    }
+
+
+    /// <summary>
+    /// TALE S1-c: refresh what an interaction inside the conversation changed,
+    /// so later nodes of the same script see it: trust, met, wealth, cash.
+    /// </summary>
+    public static void RefreshPlayerProps(NpcSchedule? schedule)
+    {
+        if (schedule != null)
+        {
+            Props.Set("npc.met_player", PlayerTrust.Knows(schedule) ? "true" : "false");
+            Props.Set("npc.trust_player", PlayerTrust.Get(schedule));
+            Props.Set("npc.wealth", schedule.Properties?.GetValueOrDefault("wealth", 0.5f) ?? 0.5f);
+        }
+        Props.Set("player.cash", (float)(TryGetGameState()?.Cash ?? 0));
+    }
+
+
+    /// <summary>
+    /// TALE S1-c: the player hit or rammed NPC <paramref name="npcId"/>. If it is
+    /// the conversation partner, the conversation is cancelled by violence
+    /// (no chat at its end), the action is applied, and the dialogue closes.
+    /// Returns whether it was the partner. Logical thread.
+    /// </summary>
+    public static bool EndByViolence(int npcId, PlayerAction action, string reason)
+    {
+        try
+        {
+            if (!PlayerConversation.OnViolence(I.Get<TaleManager>(), Session, npcId, action, _gameNow()))
+                return false;
+            Trace($"TALE NARRATION BINDINGS: conversation with NPC {npcId} ended by violence ({reason}, {action})");
+            I.Get<global::nogame.modules.story.Narration>().CancelConversation();
+            return true;
+        }
+        catch (Exception e)
+        {
+            Error($"TALE NARRATION BINDINGS: Exception ending conversation by violence: {e.Message}");
+            return false;
+        }
+    }
+
 
     /// <summary>
     /// Inject TALE NPC properties into narration Props system.
@@ -85,6 +158,7 @@ public static class TaleNarrationBindings
             Props.Set("npc.met_player", hasMetPlayer ? "true" : "false");
             Props.Set("npc.trust_player", trustForPlayer);
             Props.Set("npc.group_id", (float)schedule.GroupId);
+            Props.Set("player.cash", (float)(TryGetGameState()?.Cash ?? 0));
 
             // Phase E5: faction props from the runtime group table, so
             // dialogue can reference the NPC's group by name and type.
@@ -189,6 +263,7 @@ public static class TaleNarrationBindings
 
             _injectedKeys.Clear();
             SetCurrentSchedule(null);
+            Session = null;
             Trace("TALE NARRATION BINDINGS: Cleared NPC props");
         }
         catch (Exception e)

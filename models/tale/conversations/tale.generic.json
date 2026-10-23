@@ -5,6 +5,7 @@
       "flow": [
         {
           "goto": [
+            { "if": "props.npc.player_fact.hit_me == 1", "goto": "hostile" },
             { "if": "props.npc.hunger > 0.7", "goto": "hungry" },
             { "if": "props.npc.anger > 0.7", "goto": "angry" },
             { "if": "props.npc.fatigue > 0.7", "goto": "tired" },
@@ -61,6 +62,16 @@
             "Hey.",
             "Nice enough day.",
             "You heading somewhere?"
+          ]
+        }
+      ]
+    },
+    "hostile": {
+      "flow": [
+        {
+          "texts": [
+            "You. Stay away from me.",
+            "Don't come any closer. I remember what you did."
           ]
         }
       ]
