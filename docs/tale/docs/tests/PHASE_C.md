@@ -21,12 +21,14 @@ The pure rules moved out of nogame into JoyceCode so they can be tested; nogame 
 | C2 02, C2 03, C2 05 | the first tag with a `tale.tag.{tag}` script | same |
 | — | `tale.{storyletId}` before tags; `tale.generic` last | same |
 | C3 01–04 | `npcMood()` / `npcWealthLabel()` thresholds and order | `NpcMoodText` |
-| C4 01, C4 02 | first contact 0.15 (S1-a), +0.02 per finished conversation, capped at 1, contact marked | `PlayerConversation.OnEnded` → `TaleManager.ApplyPlayerTrust` |
-| C4 03, C4 04 (gates only) | the merchant's `returning` gate opens after 3 conversations, the authority's `trusted` after 8 | `RoleScriptTrustGates_OpenAfterTheSameNumberOfConversations` |
+| C4 01, C4 02 | first contact 0.15 (S1-a); a finished conversation applies the shipped `chat` (+0.02 × (1 − trust), S1-c), capped at 1, contact marked | `PlayerConversation.OnEnded` → `TaleManager.ApplyPlayerInteraction` |
+| C4 03, C4 04 (gates only) | the merchant's `returning` gate (0.19) opens after 3 conversations an hour apart, the authority's `trusted` (0.27) after 8 | `RoleScriptTrustGates_OpenAfterTheSameNumberOfConversations` |
+| S1-c | violence on the partner ends the conversation without chat (assault applied); another script ending applies nothing; `tale.interact` / `tale.pay` replace the chat; pay needs the cash | `PlayerConversationTests` |
 | C4 06 | `tale.npc.remember` stores `player_fact.{fact}` | `PlayerConversation.Remember` |
 
-`TaleModule` still has to *call* `PlayerConversation.OnEnded` on `ScriptEndedEvent`; that
-wiring is not tested. S1-a (KAR-454) replaces the trust rule.
+`TaleModule` still has to *call* `PlayerConversation.OnEnded` on `ScriptEndedEvent`, and
+`TaleConversationBehavior` / `TaleEntityStrategy` `TaleNarrationBindings.EndByViolence` on a
+hit; that wiring is not tested (in-game check: a punch closes the dialogue).
 
 ## Not verified anywhere
 

@@ -4,11 +4,31 @@
     "entry": {
       "flow": [
         {
+          "goto": [
+            { "if": "props.npc.player_fact.hit_me == 1", "goto": "hostile" },
+            { "else": "default" }
+          ]
+        }
+      ]
+    },
+    "default": {
+      "flow": [
+        {
           "texts": [
             "Just getting through the day.",
             "Same as always.",
             "It's been a day.",
             "Nothing new to report."
+          ]
+        }
+      ]
+    },
+    "hostile": {
+      "flow": [
+        {
+          "texts": [
+            "You. Stay away from me.",
+            "Don't come any closer. I remember what you did."
           ]
         }
       ]

@@ -5,7 +5,7 @@
 > **Built differently (verified 2026-10-18, KAR-431):**
 > - Deactivation runs since S0 W4 (KAR-434): `TaleModule` depopulates a cluster no loaded fragment has touched for 60 s (`TaleClusterResidency`); it keeps every NPC known to the player, not just flagged ones, and adds them to the skip mask (ARCHITECTURE §6.2). The lifecycle methods are `PopulateCluster(ClusterDesc, SpatialModel, DateTime?)` and `DepopulateCluster`, not `RegisterCluster`/`UnregisterCluster`.
 > - Persistence: a schedule the player has touched is never removed; dematerialisation keeps every schedule as Tier 3 and despawn follows the entity's owner fragment (S0 W3, KAR-447, ARCHITECTURE §6.3). The former conversation-memory rule (Tier 2 within 1800 s, else `ForgetSchedule`) was dead code and is deleted.
-> - `HasPlayerDeviation` is set only in `TaleModule` (on `tale.npc.remember`, on the trust bump at conversation end, and on load), never by `StoryletSelector`, and does not propagate to groups. There is no `DeviatedAtClusterIndex`.
+> - `HasPlayerDeviation` is set only in `TaleModule` (on `tale.npc.remember`, on every player interaction — the conversation's `chat`, `tale.interact`, `tale.pay` — and on load), never by `StoryletSelector`, and does not propagate to groups. There is no `DeviatedAtClusterIndex`.
 > - Shipped design: [../ARCHITECTURE.md](../ARCHITECTURE.md), [../REFERENCE.md](../REFERENCE.md).
 
 

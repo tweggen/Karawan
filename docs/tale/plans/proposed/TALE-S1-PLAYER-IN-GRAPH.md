@@ -205,6 +205,14 @@ unchanged.
 
 ## 5. S1-c — Conversations: default chat, `tale.interact`, `tale.pay`
 
+> **Status:** implemented (KAR-456), 2026-10-23. Deviations: the hostile branch keys on
+> `player_fact.hit_me` (S1-b's fact name), not `assaulted_me`; the assault on a hit partner is
+> applied from `TaleConversationBehavior.OnCollision`, the one place that sees the other
+> body's layers until S1-d attributes hits generally (repeat scale 0 keeps S1-d's report from
+> doubling it); a vehicle contact only closes the dialogue; gates are merchant 0.19 and
+> authority 0.27 (3 and 8 conversations an hour apart). `tale.npc.remember` also hops to the
+> logical thread now.
+
 - **Conversation session** in `TaleNarrationBindings`: npc id, whether the
   script applied an explicit interaction, whether it was cancelled by
   violence.

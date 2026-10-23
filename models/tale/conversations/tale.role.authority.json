@@ -8,7 +8,7 @@
           "goto": [
             { "if": "func.npcGroupType() == 'patrol_unit'", "goto": "patrol" },
             { "if": "props.npc.met_player == 'false'", "goto": "first_meeting" },
-            { "if": "props.npc.trust_player > 0.305", "goto": "trusted" },
+            { "if": "props.npc.trust_player > 0.27", "goto": "trusted" },
             { "else": "acquaintance" }
           ]
         }
@@ -42,6 +42,12 @@
             "You again. What is it?",
             "I remember you. Make it quick."
           ]
+        },
+        {
+          "choices": [
+            { "text": "Maybe this helps you forget you saw me. (50)", "condition": "props.player.cash >= 50", "goto": "bribed" },
+            { "text": "Nothing. Just passing.", "goto": "dismissed" }
+          ]
         }
       ]
     },
@@ -51,6 +57,31 @@
           "texts": [
             "Quiet night. For now.",
             "Between you and me, there's been activity two blocks east."
+          ]
+        }
+      ]
+    },
+    "bribed": {
+      "flow": [
+        {
+          "events": [
+            { "type": "tale.pay", "id": "bribe", "amount": 50 }
+          ]
+        },
+        {
+          "texts": [
+            "I didn't see anything. Neither did you.",
+            "Hm. Consider this conversation over."
+          ]
+        }
+      ]
+    },
+    "dismissed": {
+      "flow": [
+        {
+          "texts": [
+            "Then keep moving.",
+            "Good. Keep it that way."
           ]
         }
       ]

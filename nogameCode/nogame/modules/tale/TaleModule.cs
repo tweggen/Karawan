@@ -382,6 +382,7 @@ public class TaleModule : AModule
             try
             {
                 TaleNarrationBindings.Register();
+                TaleNarrationBindings.GameNowProvider = _gameNowOrStart;
 
                 // Phase C4: Subscribe to ScriptEndedEvent for trust increment
                 Subscribe(engine.narration.ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
@@ -390,16 +391,60 @@ public class TaleModule : AModule
                 var narrationMgr = I.Get<NarrationManager>();
                 if (narrationMgr != null)
                 {
-                    narrationMgr.RegisterEventHandler("tale.npc.remember", async desc =>
+                    narrationMgr.RegisterEventHandler("tale.npc.remember", desc =>
                     {
                         var currentSchedule = TaleNarrationBindings.GetCurrentSchedule();
-                        if (currentSchedule != null && desc.Params.TryGetValue("fact", out var factObj))
+                        if (currentSchedule == null || !desc.Params.TryGetValue("fact", out var factObj))
+                            return Task.CompletedTask;
+                        string fact = factObj?.ToString();
+                        return _onLogicalThread("tale.npc.remember", () =>
                         {
-                            PlayerConversation.Remember(currentSchedule, factObj.ToString());
+                            PlayerConversation.Remember(currentSchedule, fact);
                             _taleManager.MarkPlayerContact(currentSchedule);
-                            Trace($"TALE: NPC {currentSchedule.NpcId} remembered fact '{factObj}'");
-                        }
-                        await Task.CompletedTask;
+                            Trace($"TALE: NPC {currentSchedule.NpcId} remembered fact '{fact}'");
+                        });
+                    });
+
+                    // TALE S1-c: the script applies an interaction to its NPC.
+                    narrationMgr.RegisterEventHandler("tale.interact", desc =>
+                    {
+                        var session = TaleNarrationBindings.Session;
+                        var schedule = TaleNarrationBindings.GetCurrentSchedule();
+                        string id = desc.Params.TryGetValue("id", out var idObj) ? idObj?.ToString() : null;
+                        if (session == null || string.IsNullOrEmpty(id)) return Task.CompletedTask;
+                        return _onLogicalThread("tale.interact", () =>
+                        {
+                            var r = PlayerConversation.Interact(_taleManager, session, id, _gameNowOrStart());
+                            TaleNarrationBindings.RefreshPlayerProps(schedule);
+                            Trace($"TALE: conversation applied '{id}' to NPC {session.NpcId}: trust {r.TrustAfter:F3}");
+                        });
+                    });
+
+                    // TALE S1-c: the player pays (or bribes) the NPC from GameState.Cash.
+                    narrationMgr.RegisterEventHandler("tale.pay", desc =>
+                    {
+                        var session = TaleNarrationBindings.Session;
+                        var schedule = TaleNarrationBindings.GetCurrentSchedule();
+                        string id = desc.Params.TryGetValue("id", out var idObj) ? idObj?.ToString() : "pay";
+                        int amount = !desc.Params.TryGetValue("amount", out var amountObj) ? 0
+                            : amountObj is double d ? (int)Math.Round(d)
+                            : int.TryParse(amountObj?.ToString(), System.Globalization.NumberStyles.Integer,
+                                System.Globalization.CultureInfo.InvariantCulture, out int a) ? a : 0;
+                        if (session == null) return Task.CompletedTask;
+                        return _onLogicalThread("tale.pay", () =>
+                        {
+                            var gameState = TaleNarrationBindings.TryGetGameState();
+                            if (gameState == null)
+                            {
+                                Warning($"TALE: tale.pay before the game state exists; nothing paid.");
+                                return;
+                            }
+                            int cash = gameState.Cash;
+                            bool paid = PlayerConversation.Pay(_taleManager, session, id, amount, ref cash, _gameNowOrStart());
+                            gameState.Cash = cash;
+                            TaleNarrationBindings.RefreshPlayerProps(schedule);
+                            Trace($"TALE: tale.pay {id} {amount} to NPC {session.NpcId}: {(paid ? "paid" : "refused")}, cash now {cash}");
+                        });
                     });
                 }
             }
@@ -705,20 +750,47 @@ public class TaleModule : AModule
 
 
 
+    private DateTime _gameNowOrStart() => _tryGetGameNow() ?? nogame.GameState.GameT0;
+
+
+    /*
+     * Narration event handlers may run after an await, off the logical
+     * thread: run the action there and let the narration await it, so later
+     * nodes of the script see the result. Nothing blocks the logical thread.
+     */
+    private Task _onLogicalThread(string what, Action action)
+    {
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _engine.QueueMainThreadAction(() =>
+        {
+            try { action(); }
+            catch (Exception e) { Warning($"TALE: {what} failed: {e.Message}"); }
+            finally { tcs.TrySetResult(); }
+        });
+        return tcs.Task;
+    }
+
+
     /// <summary>
-    /// Handle ScriptEndedEvent: increment Trust[-1] for the current NPC.
-    /// Phase C4: Trust tracking via conversation count.
+    /// Handle ScriptEndedEvent (Phase C4, S1-c): when the conversation's own
+    /// script ends, apply the default chat unless it was cut short by violence
+    /// or the script applied an interaction itself. Another script ending — a
+    /// quest narration started during the conversation — changes nothing.
     /// </summary>
     private void _onScriptEnded(engine.news.Event ev)
     {
         try
         {
-            var currentSchedule = TaleNarrationBindings.GetCurrentSchedule();
-            if (currentSchedule != null)
-            {
-                float trust = PlayerConversation.OnEnded(_taleManager, currentSchedule);
-                Trace($"TALE: Trust incremented for NPC {currentSchedule.NpcId} (now {trust:F2})");
-            }
+            var session = TaleNarrationBindings.Session;
+            if (session == null) return;
+            string ended = (ev as engine.narration.ScriptEndedEvent)?.ScriptName ?? ev.Code;
+            if (ended != session.ScriptName) return;
+
+            var r = PlayerConversation.OnEnded(_taleManager, session, ended, _gameNowOrStart());
+            Trace(r.Applied
+                ? $"TALE: chat with NPC {session.NpcId}: trust {r.TrustBefore:F3} -> {r.TrustAfter:F3} (scale {r.Scale:F2})"
+                : $"TALE: conversation with NPC {session.NpcId} ended without chat "
+                  + $"(violence={session.CancelledByViolence}, explicit={session.AppliedInteraction})");
             TaleNarrationBindings.ClearNpcProps();
         }
         catch (Exception e)

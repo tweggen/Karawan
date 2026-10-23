@@ -353,8 +353,7 @@ means the NPC does not know the player; the first contact starts at
 `nogame.relationship-tiers.json` (it used to start at 0.5, already "friend"). The one
 writer is `TaleManager.ApplyPlayerTrust(schedule, delta)` (`PlayerStanding.cs`): it creates
 the entry, adds, clamps to [0, 1], calls `MarkPlayerContact` and bumps
-`PlayerTrustVersion`. A finished conversation applies +0.02 through it
-(`PlayerConversation.OnEnded`) until S1-c replaces that with the chat interaction. Old saves
+`PlayerTrustVersion`. Old saves
 keep their values; there is no migration (owner, 2026-10-18).
 
 **Player interactions** (S1-b, KAR-455). An interaction type in `nogame.interactions.json`
@@ -379,8 +378,19 @@ player is the other side — `trustDelta`, `targetProperties`, `targetFact`, `co
 `WitnessSelector.Select` (nearest first, ties by id, capped, line of sight only along that
 prefix) and `PlayerActionClassifier.Classify(otherLayers)` (player weapon → assault, player
 vehicle → run-over, anything else → none) are pure helpers for S1-d, which wires them to
-the collision events. Nothing calls `ApplyPlayerInteraction` in the game yet: S1-c
-(conversations), S1-d (world actions) and S1-g (taxi) do.
+the collision events.
+
+**Conversations** (S1-c, KAR-456). "E to talk" opens a `ConversationSession`
+(`TaleNarrationBindings.BeginSession`: npc, script). When that script ends
+(`ScriptEndedEvent` with the same name; another script ending changes nothing),
+`PlayerConversation.OnEnded` applies the `chat` interaction — rate-limited by its player
+block — unless the script applied one itself (`tale.interact`, `tale.pay`) or the player
+turned violent. A weapon or vehicle contact on the partner calls
+`TaleNarrationBindings.EndByViolence` from `TaleConversationBehavior.OnCollision` (and again
+from `TaleEntityStrategy`'s hit/crash handlers, a no-op the second time), which marks the
+session, applies `assault` for a player weapon, and cancels the dialogue before the NPC
+flees. A vehicle contact applies nothing until S1-d can tell a ram from a touch.
+`tale.interact` and `tale.pay` hop to the logical thread and the script awaits them.
 
 The narration functions include `npcGroupType()` and `npcGroupName()`.
 Dialogue can gate on trust, remember player facts (`tale.npc.remember`) and

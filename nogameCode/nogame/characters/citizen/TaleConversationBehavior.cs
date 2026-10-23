@@ -119,28 +119,32 @@ public class TaleConversationBehavior : ANearbyBehavior
 
         if (other != null)
         {
-            if (CitizenCollisionRouter.IsWeapon(other)) _cancelIfConversing("hit");
-            else if (CitizenCollisionRouter.IsVehicle(other)) _cancelIfConversing("crash");
+            /*
+             * Close this NPC's conversation before the hit switches it to flee
+             * (S1-c, finding 4). A player weapon is an assault on the partner;
+             * a vehicle only ends the talk until S1-d can tell a ram from a touch.
+             */
+            if (CitizenCollisionRouter.IsWeapon(other))
+                _cancelIfConversing(PlayerActionClassifier.Classify(other.SolidLayerMask), "hit");
+            else if (CitizenCollisionRouter.IsVehicle(other))
+                _cancelIfConversing(PlayerAction.None, "crash");
         }
 
         CitizenCollisionRouter.Dispatch(
             cev.ContactInfo.PropertiesA, other, cev.ContactInfo.ContactNormal);
     }
 
-    private void _cancelIfConversing(string reason)
+    private void _cancelIfConversing(PlayerAction action, string reason)
     {
-        var narration = I.Get<Narration>();
-        if (narration != null && !narration.MayConverse())
+        if (TaleNarrationBindings.EndByViolence(_npcId, action, reason))
         {
             Trace(_dc, $"NPC {_npcId} conversation cancelled ({reason})");
-            if (_conversationTimeout != null)
-            {
-                _conversationTimeout.CancelNow();
-            }
-            else
-            {
-                narration.CancelConversation();
-            }
+        }
+        else if (_conversationTimeout != null)
+        {
+            // This NPC's conversation runs but has no session (never expected): still close it.
+            Trace(_dc, $"NPC {_npcId} conversation cancelled without a session ({reason})");
+            _conversationTimeout.CancelNow();
         }
     }
 
@@ -199,6 +203,9 @@ public class TaleConversationBehavior : ANearbyBehavior
             string scriptName = TaleNarrationBindings.ResolveScript(currentStorylet, schedule.Role);
 
             Trace(_dc, $"NPC {_npcId} ({schedule.Role}) triggered conversation, using script '{scriptName}'");
+
+            // TALE S1-c: the session decides what the conversation's end applies.
+            TaleNarrationBindings.BeginSession(_npcId, scriptName);
 
             // Arm timeout watcher BEFORE triggering so we catch the first NodeReached.
             _disposeConversationTimeout();

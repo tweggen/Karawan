@@ -5,8 +5,9 @@
       "flow": [
         {
           "goto": [
+            { "if": "props.npc.player_fact.hit_me == 1", "goto": "hostile" },
             { "if": "func.npcGroupType() == 'trade'", "goto": "consortium" },
-            { "if": "props.npc.met_player == 'true' && props.npc.trust_player > 0.205", "goto": "returning" },
+            { "if": "props.npc.met_player == 'true' && props.npc.trust_player > 0.19", "goto": "returning" },
             { "if": "func.npcMood() == 'frustrated'", "goto": "frustrated" },
             { "if": "func.npcMood() == 'desperate'", "goto": "desperate" },
             { "if": "func.npcMood() == 'tired'", "goto": "tired" },
@@ -53,6 +54,13 @@
             "I can't keep the shelves stocked. Money's too tight.",
             "Business has been rough. Really rough."
           ]
+        },
+        {
+          "choices": [
+            { "text": "Here, take 20.", "condition": "props.player.cash >= 20", "goto": "paid" },
+            { "text": "I'll put in a word for you around here.", "goto": "helped" },
+            { "text": "Good luck.", "goto": "leave" }
+          ]
         }
       ]
     },
@@ -73,6 +81,56 @@
             "Business is business.",
             "Things are moving, slowly.",
             "You buying or just looking?"
+          ]
+        }
+      ]
+    },
+    "hostile": {
+      "flow": [
+        {
+          "texts": [
+            "You. Stay away from me.",
+            "Don't come any closer. I remember what you did."
+          ]
+        }
+      ]
+    },
+    "paid": {
+      "flow": [
+        {
+          "events": [
+            { "type": "tale.pay", "id": "pay", "amount": 20 }
+          ]
+        },
+        {
+          "texts": [
+            "You'd do that? Thank you. I won't forget it.",
+            "That keeps the lights on another day. Thank you."
+          ]
+        }
+      ]
+    },
+    "helped": {
+      "flow": [
+        {
+          "events": [
+            { "type": "tale.interact", "id": "help" }
+          ]
+        },
+        {
+          "texts": [
+            "That would mean a lot. People listen to you.",
+            "Thanks. A good word goes a long way here."
+          ]
+        }
+      ]
+    },
+    "leave": {
+      "flow": [
+        {
+          "texts": [
+            "Yeah. Thanks anyway.",
+            "Sure. See you around."
           ]
         }
       ]

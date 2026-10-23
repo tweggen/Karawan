@@ -88,25 +88,36 @@ public class ConversationRulesTests
     }
 
 
-    // C4 01, 02 (scale since S1-a): the first conversation starts at the
-    // first-contact value, every conversation adds 0.02, and the NPC is marked.
+    private static readonly DateTime T0 = new(2000, 1, 2, 12, 0, 0);
+
+    /* One natural conversation end at <paramref name="at"/>, through the session rule (S1-c). */
+    private static PlayerInteractionResult _converse(TaleManager tm, NpcSchedule npc, DateTime at)
+        => PlayerConversation.OnEnded(tm, new ConversationSession(npc.NpcId, "tale.generic"), "tale.generic", at);
+
+
+    // C4 01, 02 (scale since S1-a, rule since S1-c): the first conversation starts at
+    // the first-contact value, each one applies the shipped chat (+0.02, flattened by
+    // 1 − trust), and the NPC is marked. Removing chat's player block or chat fails this.
     [Fact]
     public void ConversationTrust_StartsAtFirstContact_AndRisesPerConversation()
     {
-        var tm = new TaleManager();
+        var tm = ShippedInteractions.Manager();
         var npc = new NpcSchedule { NpcId = 3 };
+        tm.RegisterNpc(npc);
 
-        Assert.Equal(PlayerTrust.FirstContact + 0.02f, PlayerConversation.OnEnded(tm, npc), 4);
-        Assert.Equal(PlayerTrust.FirstContact + 0.04f, PlayerConversation.OnEnded(tm, npc), 4);
-        Assert.Equal(0.19f, npc.Trust[-1], 4);
+        float t1 = PlayerTrust.FirstContact + 0.02f * (1f - PlayerTrust.FirstContact);
+        Assert.Equal(t1, _converse(tm, npc, T0).TrustAfter, 4);
+        Assert.Equal(t1 + 0.02f * (1f - t1), _converse(tm, npc, T0.AddHours(2)).TrustAfter, 4);
         Assert.True(npc.HasPlayerDeviation);
     }
 
     [Fact]
     public void ConversationTrust_IsCappedAtOne()
     {
-        var npc = new NpcSchedule { NpcId = 3, Trust = new Dictionary<int, float> { [-1] = 0.99f } };
-        Assert.Equal(1f, PlayerConversation.OnEnded(new TaleManager(), npc));
+        var tm = ShippedInteractions.Manager();
+        var npc = new NpcSchedule { NpcId = 3, Trust = new Dictionary<int, float> { [-1] = 0.999f } };
+        tm.RegisterNpc(npc);
+        Assert.True(_converse(tm, npc, T0).TrustAfter <= 1f);
     }
 
     private static float _gate(string script)
@@ -122,22 +133,23 @@ public class ConversationRulesTests
         return float.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Conversations that must have ended before the gate opens.</summary>
+    /// <summary>Conversations, each a game hour apart (full chat), that must have ended before the gate opens.</summary>
     private static int _conversationsUntil(float gate)
     {
-        var tm = new TaleManager();
+        var tm = ShippedInteractions.Manager();
         var npc = new NpcSchedule { NpcId = 3 };
+        tm.RegisterNpc(npc);
         int n = 0;
         while (!(PlayerTrust.Knows(npc) && PlayerTrust.Get(npc) > gate) && n < 1000)
         {
-            PlayerConversation.OnEnded(tm, npc);
+            _converse(tm, npc, T0.AddHours(n));
             n++;
         }
         return n;
     }
 
-    // S1-a moved first contact from 0.5 to 0.15; the role-script gates were
-    // moved with it so they open after as many conversations as before.
+    // S1-a moved first contact from 0.5 to 0.15, S1-c made a chat +0.02 × (1 − trust);
+    // the role-script gates moved with both so they open after as many conversations as before.
     [Theory]
     [InlineData("tale.role.merchant.json", 3)]
     [InlineData("tale.role.authority.json", 8)]
