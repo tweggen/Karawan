@@ -29,6 +29,29 @@ public static class PlayerActionClassifier
     }
 
 
+    /// <summary>
+    /// TALE S1-d: the player's ship must have been at least this fast (m/s) before
+    /// the contact for it to be a run-over; a parked or creeping ship only touches.
+    /// </summary>
+    public const float RunOverMinSpeed = 4f;
+
+
+    /// <summary>
+    /// TALE S1-d: what a contact means once the ship's speed is known. A player
+    /// weapon is an assault; the player's vehicle is a run-over only at
+    /// <see cref="RunOverMinSpeed"/> or faster (measured before the contact,
+    /// since the post-solve velocity may already be reduced); NPC vehicles and
+    /// weapons are none.
+    /// </summary>
+    public static PlayerAction Attribute(CollisionProperties.Layers otherLayers, float playerVehicleSpeed)
+    {
+        var action = Classify(otherLayers);
+        if (action == PlayerAction.RunOver && playerVehicleSpeed < RunOverMinSpeed)
+            return (otherLayers & CollisionProperties.Layers.PlayerWeapon) != 0 ? PlayerAction.Assault : PlayerAction.None;
+        return action;
+    }
+
+
     /// <summary>The interaction type id that applies the action, or null for None.</summary>
     public static string InteractionId(PlayerAction action) => action switch
     {

@@ -59,10 +59,22 @@ public class TaleEntityStrategy : AOneOfStrategy
     public RoutingPreferences RoutingPreferences => _routingPreferences;
 
 
+    /* S1-d: a Hit/Crash the router attributed to the player becomes an assault / run-over. */
+    private void _reportIfPlayer(Event ev, PlayerAction action)
+    {
+        if (ev.Code != CitizenCollisionRouter.PlayerCode) return;
+        Vector3 at = _entity.IsAlive && _entity.Has<engine.joyce.components.Transform3ToWorld>()
+            ? _entity.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation
+            : Vector3.Zero;
+        nogame.modules.tale.PlayerActionReporter.Report(_npcId, action, at);
+    }
+
+
     private void _onCrashEvent(Event ev)
     {
         // S1-c: a crash ends this NPC's conversation before it collapses (no-op if not its partner).
         nogame.modules.tale.TaleNarrationBindings.EndByViolence(_npcId, PlayerAction.None, "crash event");
+        _reportIfPlayer(ev, PlayerAction.RunOver);
         _capturePreInterruptStrategy();
         TriggerStrategy("recover");
     }
@@ -72,6 +84,8 @@ public class TaleEntityStrategy : AOneOfStrategy
     {
         // S1-c: a hit ends this NPC's conversation before it flees (no-op if not its partner).
         nogame.modules.tale.TaleNarrationBindings.EndByViolence(_npcId, PlayerAction.None, "hit event");
+        // Before the recover check: a punch during recovery still counts.
+        _reportIfPlayer(ev, PlayerAction.Assault);
         var active = GetActiveStrategy();
         if (active != Strategies["recover"])
         {
