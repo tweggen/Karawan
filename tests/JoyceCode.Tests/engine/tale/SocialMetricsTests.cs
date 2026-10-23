@@ -372,7 +372,8 @@ public class SocialMetricsTests
         Assert.Equal(Math.Round(2.0 / 3, 3), d["routine_completion_rate"]);
         Assert.Equal(0.0, d["request_fulfillment_rate"]);
         var ipd = Assert.IsType<Dictionary<string, object>>(d["interrupts_per_day"]);
-        Assert.Equal(1.0, ipd["mean"]);                // 2 interrupts on day 1, 0 on day 2
+        Assert.Equal(1.0, ipd["cluster_mean"]);        // 2 interrupts on day 1, 0 on day 2
+        Assert.Equal(0.5, ipd["mean"]);                // per NPC-day: two NPCs
         var roles = Assert.IsType<Dictionary<string, object>>(d["role_breakdown"]);
         var worker = Assert.IsType<Dictionary<string, object>>(roles["worker"]);
         Assert.Equal(0.5, worker["completion_rate"]);

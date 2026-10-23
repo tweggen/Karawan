@@ -304,27 +304,30 @@ public class MetricsCollector
 
         int totalInteractions = InteractionsByType.Values.Sum();
 
-        // Compute interrupt statistics
+        // Interrupt statistics per NPC-day, the unit of the design target (1-3
+        // per NPC per day, TESTBED.md); cluster_mean is the whole cluster's
+        // daily count before dividing.
         var interruptsPerDay = new Dictionary<string, object>();
-        if (_dailyInterruptCounts.Count > 0)
+        if (_dailyInterruptCounts.Count > 0 && npcCount > 0)
         {
-            double meanInterrupts = _dailyInterruptCounts.Average();
-            var sorted = _dailyInterruptCounts.OrderBy(x => x).ToList();
-            int median = sorted[sorted.Count / 2];
+            var sorted = _dailyInterruptCounts.Select(x => (double)x / npcCount).OrderBy(x => x).ToList();
+            double meanInterrupts = sorted.Average();
             double std = Math.Sqrt(sorted.Average(x => (x - meanInterrupts) * (x - meanInterrupts)));
-            interruptsPerDay["mean"] = Math.Round(meanInterrupts, 2);
-            interruptsPerDay["median"] = median;
-            interruptsPerDay["std"] = Math.Round(std, 2);
-            interruptsPerDay["p5"] = sorted[(int)(sorted.Count * 0.05)];
-            interruptsPerDay["p95"] = sorted[(int)(sorted.Count * 0.95)];
+            interruptsPerDay["mean"] = Math.Round(meanInterrupts, 3);
+            interruptsPerDay["median"] = Math.Round(sorted[sorted.Count / 2], 3);
+            interruptsPerDay["std"] = Math.Round(std, 3);
+            interruptsPerDay["p5"] = Math.Round(sorted[(int)(sorted.Count * 0.05)], 3);
+            interruptsPerDay["p95"] = Math.Round(sorted[(int)(sorted.Count * 0.95)], 3);
+            interruptsPerDay["cluster_mean"] = Math.Round(_dailyInterruptCounts.Average(), 2);
         }
         else
         {
             interruptsPerDay["mean"] = 0.0;
-            interruptsPerDay["median"] = 0;
+            interruptsPerDay["median"] = 0.0;
             interruptsPerDay["std"] = 0.0;
-            interruptsPerDay["p5"] = 0;
-            interruptsPerDay["p95"] = 0;
+            interruptsPerDay["p5"] = 0.0;
+            interruptsPerDay["p95"] = 0.0;
+            interruptsPerDay["cluster_mean"] = 0.0;
         }
 
         var result = new Dictionary<string, object>
