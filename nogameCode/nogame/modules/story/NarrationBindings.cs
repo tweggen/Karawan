@@ -240,11 +240,16 @@ public static class NarrationBindings
                         LongDescription = "Drive the passenger to their target location."
                     });
 
+                    // TALE S1-g: the fare grows with the distance; a TALE NPC at the pickup is the passenger.
+                    bool hasPassenger = nogame.quests.Taxi.TaxiFare.TryFindPassenger(v3Player, out int passengerId);
                     eQuest.Set(new nogame.quests.Taxi.TaxiQuestData
                     {
                         GuestPosition = Vector3.Zero,
                         DestinationPosition = destPod.Position,
-                        Phase = 1
+                        Phase = 1,
+                        FareDistance = nogame.quests.Taxi.TaxiFare.DistanceOf(v3Player, destPod.Position),
+                        HasPassengerNpc = hasPassenger,
+                        PassengerNpcId = passengerId
                     });
 
                     var spawnerModule = (nogame.quests.Taxi.TaxiNpcSpawnerModule)

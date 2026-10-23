@@ -317,6 +317,23 @@ public class PlayerInteractionsTests
 
 
     [Fact]
+    public void Drive_ATaxiLift_RaisesThePassengersTrust_EveryTime()
+    {
+        // S1-g: the taxi run applies "drive" to the TALE NPC bound as passenger; no cooldown.
+        var npc = Npc(1);
+        var (tm, _) = Setup(npc);
+
+        var first = tm.ApplyPlayerInteraction(npc.NpcId, "drive", T0);
+        var second = tm.ApplyPlayerInteraction(npc.NpcId, "drive", T0.AddMinutes(5));
+
+        Assert.Equal(0.15f + 0.08f * 0.85f, first.TrustAfter, 4);
+        Assert.Equal(1f, second.Scale);
+        Assert.True(second.TrustAfter > first.TrustAfter);
+        Assert.Equal(1f, npc.Properties["player_fact.drove_me"]);
+    }
+
+
+    [Fact]
     public void UnknownInteractionOrNpc_ChangesNothing()
     {
         var npc = Npc(1);

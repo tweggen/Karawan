@@ -380,6 +380,13 @@ prefix) and `PlayerActionClassifier.Classify(otherLayers)` (player weapon → as
 vehicle → run-over, anything else → none) are pure helpers for S1-d, which wires them to
 the collision events.
 
+**Taxi fares** (S1-g, KAR-459). A finished taxi run adds `30 + metres/10` to
+`GameState.Cash` (`nogame.quests.Taxi.TaxiFare`), the money `tale.pay` spends; the distance
+(pickup to destination) is stored in `TaxiQuestData.FareDistance` when the quest starts. The
+nearest materialised TALE NPC within 30 m of the pickup becomes the passenger
+(`HasPassengerNpc`, `PassengerNpcId`) and takes `drive` (+0.08) on arrival; the passenger
+still looks like the taxi cube.
+
 **Conversations** (S1-c, KAR-456). "E to talk" opens a `ConversationSession`
 (`TaleNarrationBindings.BeginSession`: npc, script). When that script ends
 (`ScriptEndedEvent` with the same name; another script ending changes nothing),

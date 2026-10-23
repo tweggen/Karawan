@@ -136,6 +136,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\HelloFishmonger\HelloFishmongerStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\HelloFishmonger\TrailStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\Taxi\TaxiQuestData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\Taxi\TaxiFare.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\Taxi\TaxiQuestCreator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\Taxi\TaxiQuestStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\Taxi\PickupStrategy.cs" />
