@@ -17,7 +17,8 @@ public sealed record TaleDebugGroup(
     int HangoutLocationId,
     float? HangoutDistance,
     int MembersWhoMetPlayer,
-    double? MeanPlayerTrust);
+    double? MeanPlayerTrust,
+    float Standing = 0f);
 
 
 /// <summary>One NPC's trust in the player, for the standing list.</summary>

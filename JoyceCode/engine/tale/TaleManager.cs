@@ -795,6 +795,28 @@ public class TaleManager
 
 
     /// <summary>
+    /// TALE S1-e: the standing of the NPC's group with the player, and how many
+    /// of the other members know the player; None when ungrouped. Logical thread.
+    /// </summary>
+    public GroupStanding GetGroupStanding(int npcId)
+    {
+        var npc = GetSchedule(npcId);
+        if (npc == null || npc.GroupId < 0) return GroupStanding.None;
+        return GetGroupStanding(npc.ClusterIndex, npc.GroupId, npcId);
+    }
+
+
+    /// <summary>TALE S1-e: a group's standing with the player; <paramref name="excludeId"/> is left out of Known.</summary>
+    public GroupStanding GetGroupStanding(int clusterIndex, int groupId, int excludeId = int.MinValue)
+    {
+        var group = GetGroup(clusterIndex, groupId);
+        if (group == null) return GroupStanding.None;
+        var members = group.MemberIds.Select(GetSchedule).ToList();
+        return PlayerStandingCalculator.ForGroup(members, excludeId);
+    }
+
+
+    /// <summary>
     /// The NPC's groupmates (excluding the NPC itself); empty when ungrouped
     /// or unknown.
     /// </summary>

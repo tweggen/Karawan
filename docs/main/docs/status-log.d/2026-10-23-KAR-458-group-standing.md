@@ -1,0 +1,7 @@
+### 2026-10-23 — KAR-458 (TALE S1-e): groups have a standing with the player, and greet by it
+
+- `PlayerStandingCalculator.ForGroup` / `TaleManager.GetGroupStanding`: each member's regard for the player (`(t − 0.15)/0.15` below first contact, `(t − 0.15)/0.85` above), weighted by the member's standing inside the group (0.25 + the others' mean trust in them, normalised), over the members who know the player, shrunk by one neutral member's worth: `Σ ŵ·r / (Σ ŵ + 1)`. Size does not dilute it. One help from first contact → +0.2 (the owner's target), one hit → −0.5, a chat ≈ +0.01. Computed on demand, nothing saved.
+- Dialogue props `npc.group_standing` and `npc.group_known`, reset to 0 after a conversation. The routine and generic scripts greet members who never met the player warmly at ≥ 0.05 ("{group} speaks well of you") and coldly at ≤ −0.15; the panel shows each group's standing.
+- `NarrationConditionEvaluator` takes an optional prop resolver (default `Props.Get`), so tests evaluate the scripts' conditions.
+- Tests: `GroupStandingTests` (formula, central vs peripheral, size, harm, missing schedules, NPC–NPC trust ignored; the routine and generic scripts route to the warm greeting after one help on another member and to the cold one after a hit). In-game check pending: after helping one member, another member of the group greets warmly; the panel shows the standing.
+- Docs: ARCHITECTURE §7 and §13, REFERENCE, `TALE-S1-PLAYER-IN-GRAPH.md` §7 status.

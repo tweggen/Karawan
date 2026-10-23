@@ -23,6 +23,15 @@ public class NarrationConditionEvaluator
 
     private readonly Dictionary<string, Func<string[], string>> _functions = new();
 
+    /* Where props.key comes from; Props.Get by default. A test passes its own (Props can't be built in xUnit). */
+    private readonly Func<string, object> _propResolver;
+
+
+    public NarrationConditionEvaluator(Func<string, object> propResolver = null)
+    {
+        _propResolver = propResolver ?? (key => Props.Get(key, null));
+    }
+
 
     public void RegisterFunction(string name, Func<string[], string> fn)
     {
@@ -122,7 +131,7 @@ public class NarrationConditionEvaluator
         {
             pos++;
             string key = token.Substring(6);
-            return Props.Get(key, null);
+            return _propResolver(key);
         }
 
         // func.name(args)
