@@ -1389,7 +1389,8 @@ public class Engine
         I.Register<engine.Resources>(() => new Resources());
         I.Register<engine.SceneSequencer>(() => new SceneSequencer(this));
         I.Register<engine.physics.ObjectCatalogue>(() => new engine.physics.ObjectCatalogue());
-        I.Register<System.Net.Http.HttpClient>(() => new System.Net.Http.HttpClient());
+        // KAR-469: races IPv6 against IPv4, so a dead IPv6 address cannot time the login out.
+        I.Register<System.Net.Http.HttpClient>(() => engine.net.HappyEyeballs.CreateHttpClient());
 
         I.Register<BakedAnimationCatalogue>(() => new BakedAnimationCatalogue());
 

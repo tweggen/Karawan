@@ -1,0 +1,6 @@
+### 2026-10-24 — KAR-469: the game's HTTP client races IPv6 against IPv4
+
+- **Incident:** after a server upgrade the game could not log in (both "load global" and "new global") while the web page could. The host had lost its IPv6 (Hetzner sends no router advertisements here, and Docker 29 turned IPv6 forwarding on), but DNS still published the AAAA record. A bare `HttpClient` tries addresses in order, IPv6 first, and waited until the 15 s `LoginTimeout`; browsers race the families and fell back to IPv4. The host got a static IPv6 netplan override (`/etc/netplan/60-eth0-ipv6.yaml`).
+- **Fix in the game:** `engine.net.HappyEyeballs` (RFC 8305) — the first address gets 250 ms, then the other family starts beside it, first connection wins, losers are cancelled or disposed. `Engine.cs` registers the racing `HttpClient` on desktop; Android keeps its native handler.
+- Tests: `HappyEyeballsTests` (order, a hanging IPv6 losing to IPv4 in ~250 ms, a working IPv6 winning alone, refused IPv6 falling back at once, single-family hosts, all failing, late losers disposed, cancellation, real sockets with a dead IPv6, and HttpClient end to end). Checked once against the live server: login API answers 401 for a wrong password through the new handler.
+- Docs: `GAME_SERVER_API.md` (Connecting).

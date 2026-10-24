@@ -1,6 +1,6 @@
 # Game Server API — the Client/Server Contract
 
-> **Status:** living reference · **Last updated:** 2026-10-13 (KAR-423)
+> **Status:** living reference · **Last updated:** 2026-10-24 (KAR-469)
 
 What the game's online login and cloud save (`nogame/modules/AutoSave.cs`)
 send to the exli backend, what exli answers, and what the player sees. The
@@ -37,6 +37,21 @@ whole status line once, in `Scene._displayLoginStatus`, to
 holds about 8 px per character in Prototype 17, and the longest line exli
 causes is exactly 69 characters (550 px, measured with SkiaSharp).
 
+## Connecting (IPv4 and IPv6)
+
+`silicondesert.io` publishes an IPv4 (A) and an IPv6 (AAAA) address. On
+desktop the game's `HttpClient` (registered in `Engine.cs`) races them
+(`engine.net.HappyEyeballs`, RFC 8305): the first address — normally IPv6 —
+gets 250 ms alone, then the next family starts beside it, and the first
+connection wins. A bare `HttpClient` tries the addresses one after the other
+and waits for each, so a published IPv6 address that does not answer used to
+run the login into its 15 s `LoginTimeout` before IPv4 was tried, while
+browsers (which race) kept working — the outage of 2026-10-24, when the host
+lost its IPv6 after an upgrade. On Android the platform's native handler
+stays (the .NET for Android default). Check the server with `curl -4` and
+`curl -6` against `/api/public/users/log_in`: both must answer 401 for a
+wrong password.
+
 ## Older servers and clients
 
 Every combination works; client and server ship in either order.
@@ -56,6 +71,9 @@ Every combination works; client and server ship in either order.
 
 ## History
 
+- KAR-469 (2026-10-24): desktop connections race IPv6 and IPv4 (see
+  Connecting); the server's lost IPv6 was restored with a static netplan
+  override on the host.
 - KAR-423 (2026-10-13): the statuses and JSON bodies above; before it, a
   wrong login answered 200, a bad token 500, and "no save" carried the
   player's eMail. Plan: `docs/main/plans/done/LOGIN-SERVER-ERRORS.md`.
