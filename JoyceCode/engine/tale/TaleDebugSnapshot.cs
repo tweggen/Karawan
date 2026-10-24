@@ -77,7 +77,8 @@ public sealed record TaleDebugSnapshot(
     IReadOnlyList<int> MatrixGroupIds,
     IReadOnlyList<IReadOnlyList<double?>> InterGroupMatrix,
     IReadOnlyList<TaleDebugPlayerTrust> PlayerStanding,
-    TaleDebugNpc Selected)
+    TaleDebugNpc Selected,
+    StandingReading? StandingLevel = null)
 {
     /// <summary>The inter-group matrix shows at most this many groups, the largest.</summary>
     public const int MatrixSize = 12;

@@ -366,6 +366,14 @@ standing.
 
 ## 8. S1-f — Standing level per cluster
 
+> **Status:** implemented (KAR-460), 2026-10-24. Deviations: the thresholds are a
+> `StandingThresholds` object on `TaleManager` (defaults as below), not yet a config file; the
+> cache key is `PlayerTrustVersion` plus a group-table signature (groups and roster sizes), so
+> a member-weight change from NPC–NPC trust alone waits for the next trust write or regroup;
+> the player's cluster is refreshed once a real second (`ClusterList.GetClusterAt`), without
+> `CLUSTER_CHANGED`; the W7 overlay is unchanged (the level is per cluster, not per NPC) — the
+> W8 panel shows the level and its inputs.
+
 - **Inputs per cluster:** `known(x, y)` = NPCs with `Trust[-1] ≥ x`
   (liked) **or** `≤ y` (feared) — notoriety counts too (owner,
   2026-10-18);

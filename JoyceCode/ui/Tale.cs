@@ -73,6 +73,12 @@ public class Tale : APart
         ImGui.Text($"Pairs {m.KnownPairs}, density {_f(m.TrustDensity)}, strong {m.StrongPairs}");
         ImGui.Text($"Trust intra {_f(m.MeanIntraGroupTrust)}, inter {_f(m.MeanInterGroupTrust)}");
         ImGui.Text($"Met the player {m.MetPlayer} ({_f(m.MetPlayerShare)}), mean trust {_f(m.MeanPlayerTrust)}");
+        if (snap.StandingLevel is { } level)
+        {
+            var i = level.Inputs;
+            ImGui.Text($"Player standing: {level.Name} (known {i.KnownEnter}/{i.KnownStay}, " +
+                       $"groups {i.GroupsEnter}/{i.GroupsStay}, favours {i.FavourDirections}, rivals {i.RivalGroups})");
+        }
         if (m.Bake != null)
             ImGui.Text($"Bake {m.Bake.Category}/{m.Bake.Index}: match {_f(m.Bake.MatchRatio)}, " +
                        $"coverage {_f(m.Bake.Coverage)}");

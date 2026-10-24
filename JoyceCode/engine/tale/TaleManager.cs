@@ -816,6 +816,65 @@ public class TaleManager
     }
 
 
+    /// <summary>TALE S1-f: thresholds of the standing levels (first guesses, tunable).</summary>
+    public StandingThresholds StandingThresholds { get; set; } = new();
+
+    private readonly object _loStanding = new();
+    private readonly Dictionary<int, (int TrustVersion, long GroupSignature, StandingReading Reading)> _standingCache = new();
+    private readonly Dictionary<int, StandingLevel> _standingLevels = new();
+
+
+    /// <summary>
+    /// TALE S1-f: the player's standing level in a cluster, with hysteresis
+    /// against the level this cluster had last time it was read. Cached until
+    /// a player-trust write or a group-table change; the previous levels are
+    /// transient (nothing saved), so after a load only the enter conditions
+    /// apply. Logical thread.
+    /// </summary>
+    public StandingReading GetPlayerStanding(int clusterIndex)
+    {
+        int trustVersion = PlayerTrustVersion;
+        long signature = _groupSignature(clusterIndex);
+        lock (_loStanding)
+        {
+            if (_standingCache.TryGetValue(clusterIndex, out var cached)
+                && cached.TrustVersion == trustVersion && cached.GroupSignature == signature)
+                return cached.Reading;
+        }
+
+        var groupIds = new List<int>();
+        lock (_loSocial)
+        {
+            if (_socialStates.TryGetValue(clusterIndex, out var social)) groupIds.AddRange(social.Groups.Keys);
+        }
+        var groups = groupIds.Select(id => GetGroupStanding(clusterIndex, id)).ToList();
+        var inputs = PlayerStandingLevel.Measure(GetNpcsInCluster(clusterIndex), groups, StandingThresholds);
+
+        lock (_loStanding)
+        {
+            StandingLevel? previous = _standingLevels.TryGetValue(clusterIndex, out var p) ? p : null;
+            var reading = new StandingReading(PlayerStandingLevel.Evaluate(inputs, previous, StandingThresholds), inputs);
+            _standingLevels[clusterIndex] = reading.Level;
+            _standingCache[clusterIndex] = (trustVersion, signature, reading);
+            return reading;
+        }
+    }
+
+
+    /* Changes whenever a group appears, disappears or changes its roster size. */
+    private long _groupSignature(int clusterIndex)
+    {
+        lock (_loSocial)
+        {
+            if (!_socialStates.TryGetValue(clusterIndex, out var social)) return 0;
+            long sig = social.Groups.Count;
+            foreach (var (id, g) in social.Groups)
+                sig = sig * 1000003L + id * 7919L + g.MemberIds.Count;
+            return sig;
+        }
+    }
+
+
     /// <summary>
     /// The NPC's groupmates (excluding the NPC itself); empty when ungrouped
     /// or unknown.
