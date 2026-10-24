@@ -379,6 +379,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\ElevationSegment.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Engine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\net\HappyEyeballs.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityComponentTypeReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\AABB.cs" />
