@@ -392,6 +392,19 @@ cached or saved. Dialogue reads `npc.group_standing` and `npc.group_known` (othe
 know the player); `ClearNpcProps` resets both to 0. The routine and generic scripts greet a
 member who never met the player warmly at ≥ 0.05 and coldly at ≤ −0.15, naming the group.
 
+**Standing level** (S1-f, KAR-460). Per cluster, the player is `anonymous`, `recognised`
+(≥ 3 NPCs trust the player ≥ 0.30 or fear them ≤ 0.05 — notoriety counts), `connected`
+(a group with ≥ 2 members who know the player holds |standing| ≥ 0.15, either sign) or
+`entangled` (favours both ways and standing with rival groups — S3/S4, unreachable in S1).
+Each level has a lower stay condition (recognised 2 NPCs at 0.26/0.08, connected 0.10), so it
+does not flicker; the level is the highest entered and not left, against the level this
+cluster had when last read. `TaleManager.GetPlayerStanding(clusterIndex)` (thresholds in
+`StandingThresholds`) caches the reading until a player-trust write or a group-table change;
+the remembered levels are transient, so after a load only the enter conditions apply.
+`TaleModule` publishes the level of the cluster the player was last inside once a real second,
+and a conversation publishes its NPC's cluster when it starts, as `props.player.standing`
+(name) and `props.player.standing_rank` (0–3), only on a transition.
+
 **Taxi fares** (S1-g, KAR-459). A finished taxi run adds `30 + metres/10` to
 `GameState.Cash` (`nogame.quests.Taxi.TaxiFare`), the money `tale.pay` spends; the distance
 (pickup to destination) is stored in `TaxiQuestData.FareDistance` when the quest starts. The
@@ -591,6 +604,7 @@ cluster (the player's unless another is chosen):
 - counts, the overlay switch and the W6 metrics with a churn sparkline;
 - groups by size, each with name, type, hangout and its distance, and the
   mean `Trust[-1]` of the members who met the player and the group's standing (S1-e); expandable to members;
+  the player's standing level in the cluster and its inputs (S1-f);
 - the inter-group trust of the 12 largest groups, read from the W6 metrics;
 - every NPC's `Trust[-1]`, highest first;
 - the selected NPC: the inspector's entity if it carries `TaleNpcId`, or an

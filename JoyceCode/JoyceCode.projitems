@@ -543,6 +543,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerConversation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\NpcScheduleJson.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerStanding.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerStandingLevel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerActionClassifier.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerInteractions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerInteractionSpec.cs" />

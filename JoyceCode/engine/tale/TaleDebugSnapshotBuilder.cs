@@ -60,7 +60,8 @@ public static class TaleDebugSnapshotBuilder
             MatrixGroupIds: matrixIds,
             InterGroupMatrix: Matrix(matrixIds, metrics),
             PlayerStanding: standing,
-            Selected: selectedNpcId >= 0 ? _npc(manager, selectedNpcId) : null);
+            Selected: selectedNpcId >= 0 ? _npc(manager, selectedNpcId) : null,
+            StandingLevel: manager.GetPlayerStanding(clusterIndex));
     }
 
 

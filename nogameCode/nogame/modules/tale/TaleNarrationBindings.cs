@@ -60,6 +60,23 @@ public static class TaleNarrationBindings
         _currentSchedule = schedule;
     }
 
+    private static readonly StandingPublisher _standingPublisher = new();
+
+    /// <summary>
+    /// TALE S1-f: publish the player's standing level as props.player.standing
+    /// (name) and props.player.standing_rank (0–3) — only when it changed.
+    /// TaleModule publishes the player's cluster once a second; a conversation
+    /// publishes its NPC's cluster when it starts. Logical thread.
+    /// </summary>
+    public static void PublishStanding(StandingReading reading)
+    {
+        if (!_standingPublisher.Changed(reading.Level)) return;
+        Props.Set("player.standing", reading.Name);
+        Props.Set("player.standing_rank", (float)(int)reading.Level);
+        Trace($"TALE NARRATION BINDINGS: player standing now {reading.Name} ({reading.Inputs})");
+    }
+
+
     /// <summary>TALE S1-c: a conversation with <paramref name="npcId"/> runs <paramref name="scriptName"/>.</summary>
     public static void BeginSession(int npcId, string scriptName)
     {
@@ -199,6 +216,10 @@ public static class TaleNarrationBindings
             }
             Props.Set("npc.group_standing", standing.Standing);
             Props.Set("npc.group_known", (float)standing.Known);
+
+            // TALE S1-f: dialogue reads the standing in the NPC's own cluster.
+            try { PublishStanding(I.Get<TaleManager>().GetPlayerStanding(schedule.ClusterIndex)); }
+            catch { /* TaleManager unavailable */ }
 
             // Track injected keys for cleanup
             _injectedKeys.AddRange(new[] {

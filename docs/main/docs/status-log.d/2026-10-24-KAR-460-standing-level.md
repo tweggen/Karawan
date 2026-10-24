@@ -1,0 +1,8 @@
+### 2026-10-24 — KAR-460 (TALE S1-f): the player's standing level per cluster
+
+- Per cluster the player is `anonymous`, `recognised` (≥ 3 NPCs trust them ≥ 0.30 or fear them ≤ 0.05), `connected` (a group with ≥ 2 members who know the player holds |standing| ≥ 0.15, liked or hated) or `entangled` (needs S3's favours and S4's rival groups: unreachable in S1, and a test asserts it). Each level has a lower stay condition, so it doesn't flicker; after a load only the enter conditions apply (nothing is saved).
+- `TaleManager.GetPlayerStanding(clusterIndex)` (`PlayerStandingLevel`, `StandingThresholds`) caches the reading until a player-trust write or a group-table change. `TaleModule` publishes the level of the player's cluster once a second, a conversation that of its NPC's cluster, as `props.player.standing` / `player.standing_rank` — only on a transition. The TALE panel shows the level and its inputs.
+- With S1's numbers: helping (or hitting) three NPCs → recognised; helping two members of one group → connected (+0.27); one hit seen by a groupmate → connected the bad way; chatting with ten NPCs → still anonymous.
+- Tests: `StandingLevelTests` (thresholds, notoriety, hysteresis by inputs and through the manager, negative connected, per-cluster independence, no-state evaluation, unreachable entangled, cache, transitions only). In-game check pending: helping three NPCs flips the panel to "recognised" within a second; another cluster shows "anonymous".
+- This completes stage S1's packages (KAR-454…460).
+- Docs: ARCHITECTURE §7 and §13, REFERENCE, `TALE-S1-PLAYER-IN-GRAPH.md` §8 status.

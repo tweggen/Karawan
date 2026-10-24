@@ -645,6 +645,33 @@ public class TaleModule : AModule
     }
 
 
+    /*
+     * S1-f: once a real second, read the player's standing level in the
+     * cluster the player was last inside (between clusters, the last one
+     * stays) and publish it to the dialogue props if it changed.
+     */
+    private DateTime _lastStandingPublish;
+    private int _standingClusterIndex = -1;
+
+    private void _publishPlayerStanding()
+    {
+        var now = DateTime.UtcNow;
+        if ((now - _lastStandingPublish).TotalSeconds < 1.0) return;
+        _lastStandingPublish = now;
+
+        if (_engine.Player.TryGet(out var ePlayer)
+            && ePlayer.IsAlive && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
+        {
+            var playerPos = ePlayer.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
+            int found = _clusterList?.GetClusterAt(playerPos)?.Index ?? -1;
+            if (found >= 0) _standingClusterIndex = found;
+        }
+        if (_standingClusterIndex < 0 || !_taleManager.IsClusterPopulated(_standingClusterIndex)) return;
+
+        TaleNarrationBindings.PublishStanding(_taleManager.GetPlayerStanding(_standingClusterIndex));
+    }
+
+
     /**
      * S0 W8: while the editor is open, once a real second, copy one cluster
      * into a snapshot for the ImGui TALE panel, which renders on the render
@@ -705,6 +732,7 @@ public class TaleModule : AModule
 
         _advanceAbstractSchedules(gameNow);
         _rollSocialMetricsDay(gameNow);
+        _publishPlayerStanding();
         _buildDebugSnapshot(gameNow);
 
         if (_lastSocialTickGameTime == DateTime.MinValue)
