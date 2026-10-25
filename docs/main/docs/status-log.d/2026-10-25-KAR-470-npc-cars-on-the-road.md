@@ -1,0 +1,8 @@
+### 2026-10-25 — KAR-470: NPC cars ride the road, not the terrain
+
+- **Report:** the player's car seemed to hover above the NPC cars.
+- **Cause:** `StreetNavigationController.NavigatorGetTransformation` placed every NPC car at the conformed terrain + 3 m; the road never entered into it. The player rides 1 m above the drawn road. Measured over eight terrain cities with grade separation: the old car height was off the drawn road by 0.77 m (median), 4.4 m (p99), 11.7 m (worst) on streets, 4.5 m median on ramps and 9.3 m median (18.7 m worst) on decks — the car drove under the bridge it was on. Not a regression of KAR-465.
+- **Fix:** `RoadSurface.IsOnCarriageway` and `RoadSurface.HeightUnderVehicle` (the current stroke's drawn surface; the next stroke's once the car is on its carriageway; a junction cap's own height between). The controller caches each stroke's surface and adds the player's clearance (`ClusterNavigationHeight − CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE`). Trams and the cube characters, which overwrote the navigator's height with terrain + 3 m, now add their offset to the navigator's height. A flat city's ground streets keep the old expressions bit for bit.
+- **Not changed (follow-up ticket):** crashed cars (`AfterCrashBehavior`) and knocked-down citizens (`RecoverBehavior`) still servo to and clip at the terrain height.
+- Tests: `VehicleRoadHeightTests` (103 923 lane points on the drawn road, 31 862 junction-cap crossings at the cap's height, 31 843 points onto the next stroke; the old height's error recorded). In-game check pending.
+- Docs: `CITY-3D-OPEN-POINTS.md`.

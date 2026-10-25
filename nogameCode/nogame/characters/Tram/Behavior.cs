@@ -29,11 +29,10 @@ internal class Behavior : ABehavior
             entity,
             true, 0x0000ffff,
             qOrientation,
-            vPosition with
-            {
-                Y = _clusterDesc.GroundHeightAt(vPosition)
-                    + MetaGen.ClusterNavigationHeight + _height
-            }
+            // KAR-470: the navigator's own height rides the road (ground + Height on a flat
+            // city's ground streets, the drawn road plus the clearance elsewhere); the tram
+            // sits its own offset above that.
+            vPosition with { Y = vPosition.Y + _height }
         );
     }
     

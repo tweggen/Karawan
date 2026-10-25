@@ -547,10 +547,56 @@ public class StreetNavigationController : INavigator
         orientation = Quaternion.CreateFromRotationMatrix(rot);
         float x = _v2Pos.X + _clusterDesc.Pos.X;
         float z = _v2Pos.Y + _clusterDesc.Pos.Z;
-        position = new Vector3(
-            x,
-            _clusterDesc.GroundHeightAt(new Vector3(x, 0f, z)) + _height,
-            z);
+        position = new Vector3(x, _rideHeight(x, z), z);
+    }
+
+
+    /*
+     * KAR-470: the car rides the road it is on, like the player - Height above the
+     * street's ground, which is the drawn road surface plus the player's clearance
+     * (HoverSurfaceProbe.SurfaceClearance). It used to ride the terrain + Height, which
+     * a terrain-following city's roads stand on only approximately (measured: 0.77 m off
+     * at the median, 11.7 m at worst) and a ramp or deck not at all (median 4.5 m and
+     * 9.3 m off, the car under the bridge it was driving over).
+     *
+     * A flat city's ground streets keep the old expression bit for bit: there the
+     * terrain IS the road's ground, and the road surface plus the clearance is the same
+     * number reached by a different sum.
+     */
+    private engine.streets.Stroke _surfaceStroke, _surfaceNextStroke;
+    private engine.streets.generation.RoadSurface? _surface, _surfaceNext;
+
+    private float _rideHeight(float x, float z)
+    {
+        var heightSource = _clusterDesc.StreetHeightSource;
+        var current = _currentStroke;
+        bool onTheGround = heightSource.IsFlat
+                           && (current == null || (current.A.Level == 0 && current.B.Level == 0));
+        if (onTheGround || current == null)
+        {
+            return _clusterDesc.GroundHeightAt(new Vector3(x, 0f, z)) + _height;
+        }
+
+        if (!ReferenceEquals(current, _surfaceStroke))
+        {
+            _surfaceStroke = current;
+            _surface = engine.streets.generation.RoadSurface.OfStroke(current, heightSource, Vector2.Zero);
+        }
+        if (!ReferenceEquals(_nextStroke, _surfaceNextStroke))
+        {
+            _surfaceNextStroke = _nextStroke;
+            _surfaceNext = _nextStroke == null
+                ? null
+                : engine.streets.generation.RoadSurface.OfStroke(_nextStroke, heightSource, Vector2.Zero);
+        }
+
+        if (_surface is not { } road)
+        {
+            return _clusterDesc.GroundHeightAt(new Vector3(x, 0f, z)) + _height;
+        }
+
+        float surface = engine.streets.generation.RoadSurface.HeightUnderVehicle(road, _surfaceNext, _v2Pos);
+        return surface + (_height - MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE);
     }
 
 

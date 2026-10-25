@@ -71,6 +71,18 @@ carriageway. See **(j)** below and §7o. And **(o)**, the street trunk running i
 building — its cause closed by WP-O1 and its symptom by WP-O2, both on 2026-09-07, with
 WP-O3 (`BuildingFooting` per estate rather than per block) still to come.
 
+**Reported and cleared 2026-10-25 (KAR-470):** *the player's car hovers above the NPC
+cars.* NPC cars never read the road: `StreetNavigationController` put them at the conformed
+TERRAIN + 3 m, while the player rides 1 m above the drawn road. Measured over eight terrain
+cities with grade separation, the old car height was off the road by **0.77 m at the median,
+4.4 m at p99 and 11.7 m at worst on ordinary streets, 4.5 m (median) on ramps and 9.3 m
+(median, 18.7 m worst) on decks** — under the bridge it was driving over. Cars, trams and
+the cube characters now ride `RoadSurface.HeightUnderVehicle` (the current stroke's drawn
+surface, the next stroke's once on its carriageway, a junction cap's own height between)
+plus the player's clearance; a flat city's ground streets keep the old expression bit for
+bit. Crashed cars and knocked-down citizens still servo to the terrain - filed separately.
+In-game check pending.
+
 **Reported 2026-10-20 and cleared 2026-10-25 (KAR-465):** *the car collides with the "bridge
 top" driving up a ramp.* ⚠️ **The ramp-meets-deck junction was the obvious suspect and is
 not it** (two arms, no slab, dead straight, colliders meeting exactly). The edge was the

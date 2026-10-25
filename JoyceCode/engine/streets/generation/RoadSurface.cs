@@ -551,6 +551,47 @@ public readonly struct RoadSurface
 
 
     /**
+     * Whether a plan position is on this stroke's carriageway: between its two kerb lines
+     * (with <paramref name="margin"/> metres to spare) and between its two junction seams.
+     * Off it, SurfaceHeightAt answers a junction's height or clamps across - right over
+     * this stroke's own caps, wrong over some other stroke's road.
+     */
+    public bool IsOnCarriageway(in Vector2 p, float margin = 0.5f)
+    {
+        float dl = _distanceToChord(p, _leftA, _leftB);
+        float dr = _distanceToChord(p, _rightA, _rightB);
+        if (dl > _width + margin || dr > _width + margin) return false;
+
+        float d = AxialAt(p);
+        float u = _lateralFractionAt(p);
+        bool pastA = (d - _dLeftA) - (_dRightA - _dLeftA) * u > 0f;
+        bool beforeB = (d - _dLeftB) - (_dRightB - _dLeftB) * u < 0f;
+        return pastA && beforeB;
+    }
+
+
+    /**
+     * The drawn road's height under a vehicle at <paramref name="p"/> that is driving
+     * <paramref name="current"/> and about to turn onto <paramref name="next"/> (KAR-470).
+     *
+     * On the current stroke's carriageway, or over its junction caps, that is the current
+     * surface - which answers a cap's own height beyond each seam. Only once the vehicle
+     * is on the next stroke's carriageway, before its controller has switched strokes, is
+     * the next surface asked: an angled next stroke would otherwise be consulted for points
+     * that merely project into its length.
+     */
+    public static float HeightUnderVehicle(in RoadSurface current, in RoadSurface? next, in Vector2 p)
+    {
+        if (next is { } n && !current.IsOnCarriageway(p) && n.IsOnCarriageway(p))
+        {
+            return n.SurfaceHeightAt(p);
+        }
+
+        return current.SurfaceHeightAt(p);
+    }
+
+
+    /**
      * How far along the stroke a plan position is, in metres from the A junction.
      */
     public float AxialAt(in Vector2 p) => Vector2.Dot(p - _origin, _unit);
