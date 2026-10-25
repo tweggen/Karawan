@@ -639,6 +639,42 @@ points and their own midpoint, so both of its triangles are degenerate — which
 is missing there: two strokes meeting head on hand their surfaces to each other and their
 boxes overlap across the junction.
 
+### The stroke collider is the carriageway the mesh draws (KAR-465, 2026-10-25)
+
+Reported from play: *"When driving up a bridge ramp, the player car collides with the
+bridge top part."* ⚠️ **The paragraph above had the slab's effect half backwards.** "A flat
+slab at the junction's one height wins wherever a box has climbed above the road" — where a
+box has climbed above the road the BOX is higher and still wins; and on a branch FALLING
+away from the junction the box sinks below the road inside the cap, so the slab's edge, flat
+at the junction's height, stands up out of the road exactly where the carriageway leaves the
+cap. A ship climbing that branch drives into it. Measured over the seventy shipped cities
+with grade separation on: **32 484 street ends with an edge over 0.5 m and 2 812 over 1 m,
+48 ramp feet over 1 m, the worst 2.3 m** (a ramp foot at a seven-arm junction). The
+obvious suspect — the junction where a ramp meets its deck — **is not it**: every one of the
+1 474 deck junctions has exactly two arms (no slab), runs dead straight (bend ≤ 0.21°) and
+the two boxes met exactly.
+
+The fix removes the cause rather than the slab: `engine.streets.generation.CarriagewayCollider`
+builds each stroke's collider on the four corners `RoadSurface.TryCornersOf` hands the mesh,
+at the two junction heights the mesh gives them, so it begins at the section chord at the
+junction's height — where the slab begins at the same height — and reaches into no junction
+at all. Neither the ridge nor the edge can exist. `DeckCollider` keeps only `IsNeededFor`.
+
+**One prism is not enough, and the number is why it is written down.** Every vertex the mesh
+emits lies on one of the two kerbs, each rising linearly from its A to its B corner, and the
+mesh joins a left and a right kerb point at the same axial position. Where an end is oblique
+the kerbs have different lengths and therefore different slopes, the drawn surface is
+twisted, and one convex hull over the four corners bridges above it — **up to 1.8 m**. So
+the carriageway is cut into axial slices at every corner's axial position and, where the
+kerbs climb at different rates, finer, so that a slice's length times the slope difference
+stays under 0.2 m; ends that overlap (the mesh's "a and b ends overlapping" quad) get one
+prism over the four corners. Measured: **5.0 prisms per stroke** (was one box), the top
+within **4.7 cm of the drawn road at the 99th percentile and 0.17 m at worst, never below
+it**, and every branch end meets its slab within 0.1 mm. `CarriagewayColliderTests` pins
+it over eight terrain cities. Not a cached artefact: no `DbVersion` bump. Flat city: only
+its raised strokes have colliders, and those now end at the section chord too, where the
+floor plane (ground) or the neighbouring deck stroke (two-arm deck junction) meets them.
+
 **The height lives in `JunctionCollider.SurfaceHeightOf`, not at the call site**, and that
 is the one mutation that survived the first round. Reading `AverageHeight` instead of the
 junction's own relaxed height compiles, leaves a flat city bit for bit identical — so every

@@ -8,12 +8,13 @@ namespace engine.streets.generation;
 /**
  * The slab that stands in for one junction cap in the physics world.
  *
- * A stroke's DeckCollider spans junction centre to junction centre, so the boxes of the
- * streets meeting at a junction all reach its middle and overlap there. What none of
- * them covers is the area BETWEEN the branches - the outer corners of the cap that
- * GenerateClusterStreetsOperator._generateJunction fills with a fan. Over that wedge the
- * hover probe's ray finds nothing built, falls back to the terrain height, and the ship
- * is commanded down onto the edges of the converging stroke boxes.
+ * The strokes' colliders (CarriagewayCollider) cover each carriageway up to the section
+ * chord where it leaves the cap, at the junction's height, and no further; the cap
+ * itself - the fan GenerateClusterStreetsOperator._generateJunction draws - is this
+ * slab's, flat at that same height, so the two meet without an edge. (Until KAR-465 the
+ * strokes were boxes from junction centre to junction centre: they overlapped across the
+ * middle, left the wedges between the branches to this slab, climbed out of it on a
+ * rising branch and let its edge stand up out of the road on a falling one.)
  *
  * So the cap gets a slab of its own, under the same two conditions the stroke colliders
  * are emitted under: a flat city's fragment floor plane already covers every junction on
