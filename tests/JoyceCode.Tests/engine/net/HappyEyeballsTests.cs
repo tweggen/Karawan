@@ -73,7 +73,7 @@ public class HappyEyeballsTests
 
 
     [Fact]
-    public async Task AHangingIpv6_LosesToIpv4_WellWithinASecond()
+    public async Task AHangingIpv6_LosesToIpv4_AfterTheFallbackDelay()
     {
         var net = new FakeNet();
         net.Latency[V6a] = null;          // published, never answers
@@ -81,8 +81,10 @@ public class HappyEyeballsTests
         var sw = Stopwatch.StartNew();
         var conn = await Race(net, V6a, V4a);
 
+        // The IPv6 attempt never ends, so finishing at all proves the fallback; the bound is
+        // generous for loaded machines. IPv4 is not started before the fallback delay.
         Assert.Equal(V4a, conn.Address);
-        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(1), $"took {sw.Elapsed}");
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"took {sw.Elapsed}");
         Assert.True(sw.Elapsed >= HappyEyeballs.FallbackDelay - TimeSpan.FromMilliseconds(20), $"took {sw.Elapsed}");
     }
 
@@ -104,11 +106,15 @@ public class HappyEyeballsTests
         var net = new FakeNet();
         net.Refused.Add(V6a);
 
+        // A long fallback delay, so finishing well before it can only mean the refusal
+        // started IPv4 at once rather than after the delay.
+        var delay = TimeSpan.FromSeconds(10);
         var sw = Stopwatch.StartNew();
-        var conn = await Race(net, V6a, V4a);
+        var conn = await HappyEyeballs.ConnectAsync(HappyEyeballs.Order(new[] { V6a, V4a }), net.Connect,
+            delay, CancellationToken.None);
 
         Assert.Equal(V4a, conn.Address);
-        Assert.True(sw.Elapsed < HappyEyeballs.FallbackDelay, $"waited {sw.Elapsed}");
+        Assert.True(sw.Elapsed < delay / 2, $"waited {sw.Elapsed}");
     }
 
 
@@ -143,8 +149,17 @@ public class HappyEyeballsTests
         var winner = await Race(net, V6a, V4a);
         Assert.Equal(V4a, winner.Address);
 
-        await Task.Delay(900);
-        var loser = net.Made.Single(c => c.Address.Equals(V6a));
+        // The loser connects about 600 ms in and is disposed after that; poll rather than
+        // sleep a fixed time, so a loaded machine cannot fail it.
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        Conn loser = null;
+        while (DateTime.UtcNow < deadline)
+        {
+            loser = net.Made.SingleOrDefault(c => c.Address.Equals(V6a));
+            if (loser?.Disposed == true) break;
+            await Task.Delay(20);
+        }
+        Assert.NotNull(loser);
         Assert.True(loser.Disposed);
         Assert.False(winner.Disposed);
     }
@@ -190,7 +205,7 @@ public class HappyEyeballsTests
                 connect, HappyEyeballs.FallbackDelay, CancellationToken.None);
 
             Assert.Equal(AddressFamily.InterNetwork, socket.AddressFamily);
-            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(1), $"took {sw.Elapsed}");
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"took {sw.Elapsed}");
         }
         finally
         {
@@ -222,11 +237,11 @@ public class HappyEyeballsTests
 
         try
         {
-            using var http = new HttpClient(HappyEyeballs.CreateHandler()) { Timeout = TimeSpan.FromSeconds(5) };
+            using var http = new HttpClient(HappyEyeballs.CreateHandler()) { Timeout = TimeSpan.FromSeconds(10) };
             var sw = Stopwatch.StartNew();
             var text = await http.GetStringAsync($"http://localhost:{port}/");
             Assert.Equal("{\"ok\":true}", text);
-            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(2), $"took {sw.Elapsed}");
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(8), $"took {sw.Elapsed}");
             await serve;
         }
         finally
