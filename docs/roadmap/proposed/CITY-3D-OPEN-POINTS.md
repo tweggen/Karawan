@@ -71,6 +71,17 @@ carriageway. See **(j)** below and §7o. And **(o)**, the street trunk running i
 building — its cause closed by WP-O1 and its symptom by WP-O2, both on 2026-09-07, with
 WP-O3 (`BuildingFooting` per estate rather than per block) still to come.
 
+**Reported 2026-10-20 and cleared 2026-10-25 (KAR-465):** *the car collides with the "bridge
+top" driving up a ramp.* ⚠️ **The ramp-meets-deck junction was the obvious suspect and is
+not it** (two arms, no slab, dead straight, colliders meeting exactly). The edge was the
+junction cap's flat slab standing out of every branch that FALLS away from a junction,
+because each stroke's collider was a box from junction centre to junction centre while the
+mesh holds each end flat at the junction's height: 2 812 street ends and 48 ramp feet over
+1 m in the shipped world, worst 2.3 m. Stroke colliders are now prisms over the carriageway
+the mesh draws (`CarriagewayCollider`, sliced where the road twists). See
+`STREETS-3D-TOPOLOGY.md`, *The stroke collider is the carriageway the mesh draws*. In-game
+check pending.
+
 **Cleared 2026-09-03:** **(k)** — half of the ordinary citizen's walk was in the road. It was
 the last plan-level defect this page carried as *found and not fixed*, it was present and
 identical in the flat city, and **the ledger had the angle condition backwards**: it is the

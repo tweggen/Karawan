@@ -974,14 +974,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         }
 
         /*
-         * A tilted box under each road surface the fragment floor does not cover: every
+         * A collider under each road surface the fragment floor does not cover: every
          * deck and ramp, and every street at all once the city follows its terrain.
          * Without one a vehicle drives through the bridge instead of over it, or through
          * the hillside road and out the other end.
          *
-         * The junction caps between them get a slab each, below - see JunctionCollider.
+         * Built on the carriageway's own four corners at its two junction heights, the
+         * same numbers the mesh uses, so it ends at the section chord exactly where the
+         * junction cap's slab (below) begins at the same height - see CarriagewayCollider
+         * for the box from junction centre to junction centre it replaces, and the edge
+         * it left standing in every junction (KAR-465).
          */
         var colliderHeights = _clusterDesc.StreetHeightSource;
+        Vector3 v3ClusterOrigin = new Vector3(cx, 0f, cz) + worldFragment.Position;
 
         foreach (var stroke in strokeStore.GetStrokes())
         {
@@ -1003,57 +1008,27 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 continue;
             }
 
-            Vector3 worldA = new Vector3(stroke.A.Pos.X + cx, 0f, stroke.A.Pos.Y + cz)
-                             + worldFragment.Position
-                             with
-                             {
-                                 Y = generation.RoadSurface.HeightAtJunction(
-                                     colliderHeights, stroke.A)
-                             };
-            Vector3 worldB = new Vector3(stroke.B.Pos.X + cx, 0f, stroke.B.Pos.Y + cz)
-                             + worldFragment.Position
-                             with
-                             {
-                                 Y = generation.RoadSurface.HeightAtJunction(
-                                     colliderHeights, stroke.B)
-                             };
-
-            var collider = generation.DeckCollider.For(
-                worldA, worldB, stroke.StreetWidth(), 0.1f);
-
-            if (collider.Length < 0.001f)
+            if (!generation.RoadSurface.TryCornersOf(
+                    stroke, out var v2al, out var v2ar, out var v2bl, out var v2br, out _))
             {
+                /*
+                 * The mesh loop refuses the same stroke loudly; nothing is drawn here
+                 * either, so there is nothing to drive on.
+                 */
                 continue;
             }
 
-            listCreatePhysics.Add((IList<StaticHandle> staticHandles) =>
+            var carriageway = generation.CarriagewayCollider.For(
+                stroke.A.Pos, stroke.Unit,
+                v2al, v2ar, v2bl, v2br, v3ClusterOrigin,
+                generation.RoadSurface.HeightAtJunction(colliderHeights, stroke.A),
+                generation.RoadSurface.HeightAtJunction(colliderHeights, stroke.B),
+                0.1f);
+
+            foreach (var slice in carriageway.Slices)
             {
-                lock (worldFragment.Engine.Simulation)
-                {
-                    var deckShape = new TypedIndex()
-                    {
-                        Packed = (uint)engine.physics.actions.CreateBoxShape.Execute(
-                            worldFragment.Engine.PLog,
-                            worldFragment.Engine.Simulation,
-                            collider.Length,
-                            collider.Thickness,
-                            collider.Width,
-                            out var pDeckBody
-                        )
-                    };
-
-                    StaticHandle deckHandle = worldFragment.Engine.Simulation.Statics.Add(
-                        new StaticDescription(collider.Position, collider.Orientation, deckShape));
-
-                    return () =>
-                    {
-                        lock (worldFragment.Engine.Simulation)
-                        {
-                            worldFragment.Engine.Simulation.Statics.Remove(deckHandle);
-                        }
-                    };
-                }
-            });
+                listCreatePhysics.Add(_hullStatic(worldFragment, slice));
+            }
         }
 
         /*
@@ -1068,8 +1043,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          * colliders above, so a flat city - where the fragment floor plane already covers
          * every junction on the ground - is untouched.
          */
-        Vector3 v3ClusterOrigin = new Vector3(cx, 0f, cz) + worldFragment.Position;
-
         foreach (var streetPoint in strokeStore.GetStreetPoints())
         {
             if (!generation.JunctionCollider.IsNeededFor(streetPoint, groundIsFlat))
@@ -1098,49 +1071,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 continue;
             }
 
-            listCreatePhysics.Add((IList<StaticHandle> staticHandles) =>
-            {
-                lock (worldFragment.Engine.Simulation)
-                {
-                    var simulation = worldFragment.Engine.Simulation;
-                    var bufferPool = simulation.BufferPool;
-
-                    int nPoints = cap.Points.Count;
-                    bufferPool.Take<Vector3>(nPoints, out var hullPoints);
-                    for (int i = 0; i < nPoints; ++i)
-                    {
-                        hullPoints[i] = cap.Points[i];
-                    }
-
-                    /*
-                     * The hull comes back centred on its own centroid, so the static
-                     * carries that centroid as its position - the same contract
-                     * ExtrudePoly.BuildStaticPhys builds its compounds under.
-                     */
-                    bool created = ConvexHullHelper.CreateShape(
-                        hullPoints.Slice(nPoints), bufferPool, out var v3HullCentre, out var hull);
-                    bufferPool.Return(ref hullPoints);
-
-                    if (!created)
-                    {
-                        return () => { };
-                    }
-
-                    var hullShape = simulation.Shapes.Add(hull);
-
-                    StaticHandle capHandle = simulation.Statics.Add(
-                        new StaticDescription(v3HullCentre, Quaternion.Identity, hullShape));
-
-                    return () =>
-                    {
-                        lock (worldFragment.Engine.Simulation)
-                        {
-                            worldFragment.Engine.Simulation.Statics.Remove(capHandle);
-                            hull.Dispose(bufferPool);
-                        }
-                    };
-                }
-            });
+            listCreatePhysics.Add(_hullStatic(worldFragment, cap.Points));
         }
 
         /*
@@ -1154,6 +1085,59 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     }
 
     
+    /**
+     * A static convex hull over the given world-space points, as a physics creator for
+     * AddStaticInstance: the carriageway prisms and the junction cap slabs.
+     */
+    private static Func<IList<StaticHandle>, Action> _hullStatic(
+        world.Fragment worldFragment, IReadOnlyList<Vector3> points)
+    {
+        return (IList<StaticHandle> staticHandles) =>
+        {
+            lock (worldFragment.Engine.Simulation)
+            {
+                var simulation = worldFragment.Engine.Simulation;
+                var bufferPool = simulation.BufferPool;
+
+                int nPoints = points.Count;
+                bufferPool.Take<Vector3>(nPoints, out var hullPoints);
+                for (int i = 0; i < nPoints; ++i)
+                {
+                    hullPoints[i] = points[i];
+                }
+
+                /*
+                 * The hull comes back centred on its own centroid, so the static
+                 * carries that centroid as its position - the same contract
+                 * ExtrudePoly.BuildStaticPhys builds its compounds under.
+                 */
+                bool created = ConvexHullHelper.CreateShape(
+                    hullPoints.Slice(nPoints), bufferPool, out var v3HullCentre, out var hull);
+                bufferPool.Return(ref hullPoints);
+
+                if (!created)
+                {
+                    return () => { };
+                }
+
+                var hullShape = simulation.Shapes.Add(hull);
+
+                StaticHandle handle = simulation.Statics.Add(
+                    new StaticDescription(v3HullCentre, Quaternion.Identity, hullShape));
+
+                return () =>
+                {
+                    lock (worldFragment.Engine.Simulation)
+                    {
+                        worldFragment.Engine.Simulation.Statics.Remove(handle);
+                        hull.Dispose(bufferPool);
+                    }
+                };
+            }
+        };
+    }
+
+
     /**
      * Create meshes for all street strokes with their "A" StreetPoint in this fragment.
      */
