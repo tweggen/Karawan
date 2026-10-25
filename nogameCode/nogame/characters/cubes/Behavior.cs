@@ -29,11 +29,8 @@ namespace nogame.characters.cubes
             engine.I.Get<engine.joyce.TransformApi>().SetTransforms(
                 entity,
                 true, 0x0000ffff,
-                qOrientation, vPosition with
-                {
-                    Y = _clusterDesc.GroundHeightAt(vPosition)
-                        + MetaGen.ClusterNavigationHeight + 0.3f
-                }
+                // KAR-470: on the road the navigator rides, not on the terrain.
+                qOrientation, vPosition with { Y = vPosition.Y + 0.3f }
             );
         }
 
