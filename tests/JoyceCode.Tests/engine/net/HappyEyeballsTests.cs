@@ -40,6 +40,7 @@ public class HappyEyeballsTests
     {
         public readonly Dictionary<IPAddress, TimeSpan?> Latency = new();     // null = hangs
         public readonly HashSet<IPAddress> Refused = new();
+        public readonly Dictionary<IPAddress, TaskCompletionSource> Gates = new();   // connects when released
         public readonly ConcurrentQueue<IPAddress> Started = new();
         public readonly ConcurrentQueue<Conn> Made = new();
 
@@ -47,6 +48,7 @@ public class HappyEyeballsTests
         {
             Started.Enqueue(ip);
             if (Refused.Contains(ip)) throw new SocketException((int)SocketError.ConnectionRefused);
+            if (Gates.TryGetValue(ip, out var gate)) await gate.Task;
             var latency = Latency.GetValueOrDefault(ip, TimeSpan.Zero);
             if (latency == null) await Task.Delay(Timeout.Infinite, ct);
             else if (latency > TimeSpan.Zero) await Task.Delay(latency.Value, CancellationToken.None);
@@ -142,15 +144,16 @@ public class HappyEyeballsTests
     [Fact]
     public async Task ALateLoser_IsDisposed()
     {
+        // The IPv6 attempt connects only when released, after the race is decided - so the
+        // order does not depend on timers, which a loaded machine can delay past each other.
         var net = new FakeNet();
-        net.Latency[V6a] = TimeSpan.FromMilliseconds(600);    // slow, but it does connect
-        net.Latency[V4a] = TimeSpan.FromMilliseconds(10);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        net.Gates[V6a] = release;
 
         var winner = await Race(net, V6a, V4a);
         Assert.Equal(V4a, winner.Address);
 
-        // The loser connects about 600 ms in and is disposed after that; poll rather than
-        // sleep a fixed time, so a loaded machine cannot fail it.
+        release.SetResult();
         var deadline = DateTime.UtcNow.AddSeconds(10);
         Conn loser = null;
         while (DateTime.UtcNow < deadline)
