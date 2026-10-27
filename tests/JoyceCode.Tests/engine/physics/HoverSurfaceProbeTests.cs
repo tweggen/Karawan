@@ -201,16 +201,122 @@ public class HoverSurfaceProbeTests
     [Fact]
     public void TheProbeCastsDownwardsFromAboveTheShipAndIgnoresIt()
     {
+        // Since KAR-471 the cast lives in HoverSurfaceProbe, shared by every hovering body.
+        string probe = File.ReadAllText(Path.Combine(
+            _repoRoot(), "JoyceCode/engine/physics/HoverSurfaceProbe.cs"));
+        Assert.Contains("RayCastSync(origin, -Vector3.UnitY", probe);
+        Assert.Contains("position with { Y = position.Y + probeAbove }", probe);
+        Assert.Contains("props.Entity == self", probe);
+
         string hover = File.ReadAllText(Path.Combine(
             _repoRoot(), "nogameCode/nogame/modules/playerhover/HoverController.cs"));
-
-        Assert.Contains("RayCastSync(vOrigin, -Vector3.UnitY", hover);
-        Assert.Contains("vShipPos.Y + SurfaceProbeAbove", hover);
-        Assert.Contains("props.Entity == _eTarget", hover);
+        Assert.Contains("HoverSurfaceProbe.SurfaceBelow(", hover);
+        Assert.Contains("vShipPos, _eTarget, SurfaceProbeAbove, SurfaceProbeBelow", hover);
 
         Assert.True(hover.Contains("HoverSurfaceProbe.HoverTargetHeight"),
             "the hover loop no longer combines its terrain height with the surface the "
             + "ship is actually over, so it is back to aiming at the terrain under a road "
             + "that stands on fill - i.e. commanding a descent into the road.");
+    }
+
+
+    /**
+     * The other two hovering bodies ask the same probe rather than the terrain alone - the
+     * pattern that threw them out of every road cutting (KAR-471).
+     */
+    [Fact]
+    public void CrashedCarsAndFallenCitizensAskTheProbeToo()
+    {
+        string crash = File.ReadAllText(Path.Combine(
+            _repoRoot(), "nogameCode/nogame/characters/car3/AfterCrashBehavior.cs"));
+        Assert.Contains("HoverSurfaceProbe.SurfaceBelow(", crash);
+        Assert.Contains("HoverSurfaceProbe.VehicleTargetHeight(", crash);
+        Assert.Contains("HoverSurfaceProbe.NeedsRescue(", crash);
+
+        string recover = File.ReadAllText(Path.Combine(
+            _repoRoot(), "nogameCode/nogame/characters/citizen/RecoverBehavior.cs"));
+        Assert.Contains("HoverSurfaceProbe.SurfaceBelow(", recover);
+        Assert.Contains("!isOverBuiltGround && vTargetPos.Y < heightAtTarget", recover);
+    }
+
+
+    /*
+     * ================================ KAR-471 =============================================
+     * Shared by the player, crashed NPC cars and knocked-down citizens.
+     */
+
+    [Fact]
+    public void AVehicleRidesWhatIsBuilt_EvenBelowTheTerrain()
+    {
+        // A road cutting: the terrain beside the road is 4 m above the road surface.
+        float roadSurface = 100f;
+        float terrainHover = roadSurface + 4f + MetaGen.ClusterNavigationHeight - MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE + 2f;
+
+        Assert.Equal(roadSurface + HoverSurfaceProbe.SurfaceClearance,
+            HoverSurfaceProbe.VehicleTargetHeight(terrainHover, roadSurface));
+        // The player's rule keeps the terrain as a floor - the difference this ticket is about.
+        Assert.Equal(terrainHover, HoverSurfaceProbe.HoverTargetHeight(terrainHover, roadSurface));
+    }
+
+
+    [Fact]
+    public void AVehicleOverNothingBuiltFliesTheTerrain()
+    {
+        Assert.Equal(42f, HoverSurfaceProbe.VehicleTargetHeight(42f, null));
+    }
+
+
+    [Theory]
+    [InlineData(50f)]
+    [InlineData(-3.5f)]
+    [InlineData(1234.5f)]
+    public void AFlatCityVehicleAimsWhereItAlwaysDid(float averageHeight)
+    {
+        Assert.Equal(_terrainHoverHeight(averageHeight),
+            HoverSurfaceProbe.VehicleTargetHeight(_terrainHoverHeight(averageHeight), _flatCitySurface(averageHeight)),
+            4);
+    }
+
+
+    [Fact]
+    public void ARescueOnlyForABodyThatHasGoneThroughTheWorld()
+    {
+        const float terrain = 100f;
+        // Resting deep in a cutting, road below it: no.
+        Assert.False(HoverSurfaceProbe.NeedsRescue(terrain, terrain - 8f, 0f, terrain - 9f));
+        // Falling, deep, but a built surface below will catch it: no.
+        Assert.False(HoverSurfaceProbe.NeedsRescue(terrain, terrain - 8f, -10f, terrain - 20f));
+        // Falling, shallow: no.
+        Assert.False(HoverSurfaceProbe.NeedsRescue(terrain, terrain - 2f, -10f, null));
+        // Deep, nothing below, but resting: no.
+        Assert.False(HoverSurfaceProbe.NeedsRescue(terrain, terrain - 8f, -1f, null));
+        // Deep, falling, nothing below: yes.
+        Assert.True(HoverSurfaceProbe.NeedsRescue(terrain, terrain - 8f, -10f, null));
+    }
+
+
+    [Fact]
+    public void WhatTheProbeCountsAsASurface()
+    {
+        var world = new DefaultEcs.World();
+        var self = world.CreateEntity();
+        var other = world.CreateEntity();
+
+        CollisionProperties Props(DefaultEcs.Entity e, CollisionProperties.Layers mask) => new()
+        {
+            Entity = e, SolidLayerMask = mask,
+            Flags = CollisionProperties.CollisionFlags.IsTangible
+        };
+
+        Assert.False(HoverSurfaceProbe.IsProbeSurface(Props(self, CollisionProperties.Layers.StaticEnvironment), true, self));
+        Assert.True(HoverSurfaceProbe.IsProbeSurface(Props(other, CollisionProperties.Layers.StaticEnvironment), false, self));
+        Assert.False(HoverSurfaceProbe.IsProbeSurface(Props(other, CollisionProperties.Layers.NpcVehicle), false, self));
+        Assert.False(HoverSurfaceProbe.IsProbeSurface(Props(other, CollisionProperties.Layers.NpcCharacter), true, self));
+        Assert.False(HoverSurfaceProbe.IsProbeSurface(
+            new CollisionProperties { Entity = other, SolidLayerMask = CollisionProperties.Layers.StaticEnvironment }, true, self),
+            "a body that is not tangible is not a surface");
+        // The city's raw statics carry no properties: static and kinematic count, dynamic does not.
+        Assert.True(HoverSurfaceProbe.IsProbeSurface(null, true, self));
+        Assert.False(HoverSurfaceProbe.IsProbeSurface(null, false, self));
     }
 }

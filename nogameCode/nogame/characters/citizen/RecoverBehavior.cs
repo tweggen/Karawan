@@ -42,6 +42,21 @@ public class RecoverBehavior : ABehavior
         float LevelUpThrust = 16f;
         float LevelDownThrust = 16f;
 
+        /*
+         * KAR-471: only over open ground is the terrain the floor. Where something is built
+         * under the citizen - the road or pavement they fell on, a deck, a cutting below the
+         * hillside - they already lie where the walking code put them, and lifting them to
+         * the terrain threw a citizen knocked down in a road cutting up onto the hillside.
+         * The probe takes the simulation lock itself, so it runs outside the lock below.
+         */
+        Vector3 vProbePos;
+        lock (_engine.Simulation)
+        {
+            vProbePos = entity.Get<engine.physics.components.Body>().Reference.Pose.Position;
+        }
+        bool isOverBuiltGround = null != engine.physics.HoverSurfaceProbe.SurfaceBelow(
+            I.Get<engine.physics.API>(), vProbePos, entity);
+
         lock (_engine.Simulation)
         {
             var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
@@ -50,9 +65,9 @@ public class RecoverBehavior : ABehavior
             float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
 
             /*
-             * Clip at bottom
+             * Clip at bottom - over open ground only.
              */
-            if (vTargetPos.Y < heightAtTarget)
+            if (!isOverBuiltGround && vTargetPos.Y < heightAtTarget)
             {
                 vTargetPos.Y = heightAtTarget;
                 prefTarget.Pose.Position = vTargetPos;

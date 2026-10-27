@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 
 namespace engine.physics;
 
@@ -114,4 +115,105 @@ public static class HoverSurfaceProbe
 
         return Single.Max(terrainHoverHeight, surfaceHeightBelow.Value + SurfaceClearance);
     }
+
+
+    /*
+     * ================================ shared by every hovering body ===================
+     *
+     * The player's ship, a crashed NPC car and a knocked-down citizen all need to know
+     * what is built under them (KAR-471). The ray cast and the rule for which hits count
+     * lived in HoverController alone; the other two compared themselves with the terrain
+     * and were thrown out of every road cutting.
+     */
+
+    /** How far above the body the probe starts: a ray beginning inside a convex shape reports nothing. */
+    public const float DefaultProbeAbove = 2f;
+
+    /** How far below the body the probe looks; deep enough to cover the drop from a deck to the street under it. */
+    public const float DefaultProbeBelow = 24f;
+
+    /** How far below the terrain-derived height a body must be before it is put back on top. */
+    public const float DefaultRescueDepth = 4f;
+
+    /** Vertical speed, in m/s, above which a body counts as falling rather than resting on something. */
+    public const float DefaultRestingVerticalSpeed = 2f;
+
+
+    /**
+     * Does a ray hit count as a surface to hover over?
+     *
+     * A hit on the body itself never does. A body with collision properties counts when it
+     * is tangible and not one of the moving kinds (IsHoverSurface). A collider with no
+     * properties at all is the city's own fabric - the fragment floor plane, the
+     * carriageway and junction prisms are raw statics - and counts when static or
+     * kinematic; an unlabelled DYNAMIC body is a loose object, and hovering over loose
+     * objects turns a hover vehicle into a pogo stick.
+     */
+    public static bool IsProbeSurface(CollisionProperties props, bool isStaticOrKinematic, in DefaultEcs.Entity self)
+    {
+        if (props != null)
+        {
+            if (props.Entity == self) return false;
+            return 0 != (props.Flags & CollisionProperties.CollisionFlags.IsTangible)
+                   && IsHoverSurface(props.SolidLayerMask);
+        }
+
+        return isStaticOrKinematic;
+    }
+
+
+    /**
+     * Top of the nearest built surface under <paramref name="position"/>, or null when
+     * there is none - over open country, off the world, or high above everything.
+     * API.RayCastSync takes the simulation lock itself: call it from the logical thread and
+     * do NOT wrap it in a lock of its own.
+     */
+    public static float? SurfaceBelow(API physics, in Vector3 position, in DefaultEcs.Entity self,
+        float probeAbove = DefaultProbeAbove, float probeBelow = DefaultProbeBelow)
+    {
+        Vector3 origin = position with { Y = position.Y + probeAbove };
+        float closest = Single.MaxValue;
+        var me = self;
+
+        physics.RayCastSync(origin, -Vector3.UnitY, probeAbove + probeBelow,
+            (BepuPhysics.Collidables.CollidableReference cRef, CollisionProperties props, float t, Vector3 _) =>
+            {
+                bool isStaticOrKinematic = cRef.Mobility is BepuPhysics.Collidables.CollidableMobility.Static
+                    or BepuPhysics.Collidables.CollidableMobility.Kinematic;
+                if (IsProbeSurface(props, isStaticOrKinematic, me) && t < closest)
+                {
+                    closest = t;
+                }
+            });
+
+        return closest == Single.MaxValue ? null : origin.Y - closest;
+    }
+
+
+    /**
+     * The height a hover VEHICLE that is not the player - a crashed NPC car - should aim
+     * at: the built surface under it plus SurfaceClearance when there is one, the terrain-
+     * derived height only where nothing is built.
+     *
+     * Unlike HoverTargetHeight this lets a built surface LOWER the target: in a road
+     * cutting the terrain beside the road is higher than the road, and a vehicle that
+     * aimed at the terrain there climbed out of the road. It is the height NPC traffic
+     * rides at (KAR-470), so a crashed car stays level with the cars around it.
+     */
+    public static float VehicleTargetHeight(float terrainHoverHeight, float? surfaceHeightBelow)
+        => surfaceHeightBelow is { } surface ? surface + SurfaceClearance : terrainHoverHeight;
+
+
+    /**
+     * Must a body be put back on top of the terrain? Only when it has gone through the
+     * world: more than <paramref name="rescueDepth"/> below the terrain-derived height,
+     * falling, and with nothing built under it. Depth alone would catch a body resting in
+     * a cutting, falling alone a body mid-bounce, and a built surface below means the
+     * body is above something that will catch it.
+     */
+    public static bool NeedsRescue(float terrainHeight, float y, float verticalVelocity, float? surfaceHeightBelow,
+        float rescueDepth = DefaultRescueDepth, float restingVerticalSpeed = DefaultRestingVerticalSpeed)
+        => surfaceHeightBelow is null
+           && verticalVelocity < -restingVerticalSpeed
+           && terrainHeight - y > rescueDepth;
 }

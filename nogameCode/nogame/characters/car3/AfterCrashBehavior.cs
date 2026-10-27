@@ -50,16 +50,32 @@ public class AfterCrashBehavior : ABehavior
             float LevelUpThrust = 16f;
             float LevelDownThrust = 16f;
 
+            /*
+             * KAR-471: hover over what is BUILT under the car - the road it crashed on, a
+             * deck, a cutting below the hillside - and over the terrain only where nothing
+             * is. It used to aim at the terrain and clip to it, which threw a car crashed in
+             * a road cutting up onto the hillside and pressed one crashed on a bridge down
+             * against the deck. The probe takes the simulation lock itself, so it runs
+             * outside the lock below.
+             */
+            Vector3 vProbePos;
+            lock (_engine.Simulation)
+            {
+                vProbePos = entity.Get<engine.physics.components.Body>().Reference.Pose.Position;
+            }
+            float terrainHeight = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vProbePos);
+            float? surfaceBelow = engine.physics.HoverSurfaceProbe.SurfaceBelow(
+                I.Get<engine.physics.API>(), vProbePos, entity);
+            float targetHeight = engine.physics.HoverSurfaceProbe.VehicleTargetHeight(terrainHeight, surfaceBelow);
+
             lock (_engine.Simulation)
             {
                 var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
 
                 Vector3 vTargetPos = prefTarget.Pose.Position;
                 Vector3 vTargetVelocity = prefTarget.Velocity.Linear;
-                float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
                 {
-                    var properDeltaY = 0;
-                    var deltaY = vTargetPos.Y - (heightAtTarget + properDeltaY);
+                    var deltaY = vTargetPos.Y - targetHeight;
                     const float threshDiff = 0.01f;
 
                     Vector3 impulse;
@@ -81,13 +97,16 @@ public class AfterCrashBehavior : ABehavior
 
 
                 /*
-                 * Clip at bottom
+                 * The rescue, for a car that has gone through the world: far below the
+                 * terrain, falling, and nothing built under it. A car resting in a cutting
+                 * is none of these.
                  */
-                if (vTargetPos.Y < heightAtTarget)
+                if (engine.physics.HoverSurfaceProbe.NeedsRescue(
+                        terrainHeight, vTargetPos.Y, vTargetVelocity.Y, surfaceBelow))
                 {
-                    vTargetPos.Y = heightAtTarget;
+                    vTargetPos.Y = terrainHeight;
                     prefTarget.Pose.Position = vTargetPos;
-                    vTotalImpulse += new Vector3(0f, 10f, 0f);
+                    prefTarget.Velocity.Linear = vTargetVelocity with { Y = 0f };
                 }
 
                 /*

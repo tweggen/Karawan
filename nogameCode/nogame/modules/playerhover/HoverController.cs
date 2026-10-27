@@ -284,60 +284,13 @@ internal class HoverController : AController
      */
     private float? _probeSurfaceBelow(Vector3 vShipPos)
     {
-        var aPhysics = I.Get<engine.physics.API>();
-
-        Vector3 vOrigin = vShipPos with { Y = vShipPos.Y + SurfaceProbeAbove };
-        float closestCollision = Single.MaxValue;
-
-        aPhysics.RayCastSync(vOrigin, -Vector3.UnitY, SurfaceProbeAbove + SurfaceProbeBelow,
-            (BepuPhysics.Collidables.CollidableReference cRef,
-                engine.physics.CollisionProperties props, float t, Vector3 vThisCollision) =>
-            {
-                /*
-                 * Never the ship itself. Its own collision body is a disc at exactly the
-                 * point this ray passes through.
-                 */
-                if (props != null && props.Entity == _eTarget)
-                {
-                    return;
-                }
-
-                bool isSurface;
-                if (props != null)
-                {
-                    isSurface =
-                        0 != (props.Flags &
-                              engine.physics.CollisionProperties.CollisionFlags.IsTangible)
-                        && engine.physics.HoverSurfaceProbe.IsHoverSurface(props.SolidLayerMask);
-                }
-                else
-                {
-                    /*
-                     * A collider with no properties at all is the city's own fabric: the
-                     * fragment floor plane and every per-stroke deck collider are raw
-                     * statics added straight to the simulation. Static and kinematic
-                     * only, though - an unlabelled DYNAMIC body is a loose object, and
-                     * hovering over loose objects turns the ship into a pogo stick.
-                     * WalkController accepts all three because a walking player wanting
-                     * to know whether they are about to fall genuinely does not care.
-                     */
-                    isSurface =
-                        cRef.Mobility is BepuPhysics.Collidables.CollidableMobility.Static
-                            or BepuPhysics.Collidables.CollidableMobility.Kinematic;
-                }
-
-                if (isSurface && t < closestCollision)
-                {
-                    closestCollision = t;
-                }
-            });
-
-        if (closestCollision == Single.MaxValue)
-        {
-            return null;
-        }
-
-        return vOrigin.Y - closestCollision;
+        /*
+         * Shared with every other hovering body since KAR-471: never the ship itself, the
+         * city's raw statics count, loose dynamic bodies and anything that walks or drives
+         * do not - see HoverSurfaceProbe.IsProbeSurface.
+         */
+        return engine.physics.HoverSurfaceProbe.SurfaceBelow(
+            I.Get<engine.physics.API>(), vShipPos, _eTarget, SurfaceProbeAbove, SurfaceProbeBelow);
     }
 
 
