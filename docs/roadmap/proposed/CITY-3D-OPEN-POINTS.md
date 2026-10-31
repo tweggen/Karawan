@@ -73,11 +73,12 @@ WP-O3 (`BuildingFooting` per estate rather than per block) still to come.
 
 **Cleared 2026-10-27 (KAR-471):** crashed NPC cars and knocked-down citizens no longer jump out
 of road cuttings: they ask the shared `HoverSurfaceProbe.SurfaceBelow` and take the terrain as
-their floor only over open ground. ⚠️ **Open, an owner decision:** the PLAYER's hover target is
-still `max(terrain + 3 m, built surface + 1 m)`, and in a cutting the terrain beside the road
-is higher than the road, so the ship floats above it — at **43.8 % of ground-street points,
-median 0.55 m, > 1 m at 10.9 %, worst 10.4 m** (eight terrain cities). NPC traffic rides the
-road itself since KAR-470, so the player now visibly hovers above it there.
+their floor only over open ground. **Decided and cleared 2026-10-31 (KAR-472):** the player's
+hover target was `max(terrain + 3 m, built surface + 1 m)`, which floated the ship above the
+road in cuttings — at **43.8 % of ground-street points, median 0.55 m, > 1 m at 10.9 %, worst
+10.4 m** (eight terrain cities), above the NPC traffic riding the road since KAR-470. The owner
+chose that the ship rides the road like the traffic: `VehicleTargetHeight`, the terrain only
+over open ground. In-game check pending.
 
 **Reported and cleared 2026-10-25 (KAR-470):** *the player's car hovers above the NPC
 cars.* NPC cars never read the road: `StreetNavigationController` put them at the conformed
