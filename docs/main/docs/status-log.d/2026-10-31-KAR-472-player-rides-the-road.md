@@ -1,0 +1,7 @@
+### 2026-10-31 — KAR-472: the player's ship rides the road in cuttings, like the traffic
+
+- **Owner decision:** the ship should ride the road, not float over it. Its hover target was `max(terrain + 3 m, built surface + 1 m)`; in a road cutting the terrain beside the road is higher than the road, so the ship floated above it — at 43.8 % of ground-street points in eight terrain cities, median 0.55 m, over 1 m at 10.9 %, worst 10.4 m — and, since KAR-470, above the NPC cars riding the road.
+- **Change:** `HoverController` aims at `HoverSurfaceProbe.VehicleTargetHeight` (the built surface + clearance wherever the probe finds one, the terrain only over open ground). The terrain push-up and tilt apply only with nothing built under the ship (they used to lift it out of every cutting), and the rescue uses `NeedsRescue`. `HoverTargetHeight`, the maximum, is removed — nothing uses it any more.
+- Flat city unchanged: floor plane + clearance is exactly the old terrain + 3 m target.
+- Tests: `HoverSurfaceProbeTests` moved to `VehicleTargetHeight` (flat-city gate, a road on fill raises the target, a road in a cutting is ridden, open ground flies the terrain); the source scan pins the player to `VehicleTargetHeight`, the gated push-up and `NeedsRescue`. In-game check pending: level with NPC cars in cuttings, on fills and on bridges; outside cities the ship still flies the terrain.
+- Docs: `STREETS-3D-TOPOLOGY.md` (the maximum marked superseded), `CITY-3D-OPEN-POINTS.md`.

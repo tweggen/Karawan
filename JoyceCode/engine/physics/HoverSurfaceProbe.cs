@@ -24,11 +24,13 @@ namespace engine.physics;
  * So ask the physics world instead. A ray straight down from the ship reports the
  * surface it is over, exactly the way the walking player already finds the floor.
  *
- * IT IS AN ADDITION, NOT A REPLACEMENT, and that is the part to get right. The ray sees
- * only things with COLLIDERS, and the terrain has none, so outside a city - and inside
- * one, over anything the city did not build on - it reports nothing at all. The two
- * answers are therefore combined with a MAXIMUM: the terrain height is a floor the ship
- * never flies below, and a built surface can only ever raise the target above it.
+ * The ray sees only things with COLLIDERS, and the terrain has none, so outside a city -
+ * and inside one, over anything the city did not build on - it reports nothing at all,
+ * and the terrain height is the answer there. Where it does find a built surface, that
+ * surface wins, also BELOW the terrain beside it: a road in a cutting is driven on, not
+ * flown over (VehicleTargetHeight). The two used to be combined with a maximum, which
+ * floated the ship above the road in every cutting - at 43.8 % of ground-street points
+ * in the terrain city - until the owner decided otherwise (2026-10-31, KAR-472).
  */
 public static class HoverSurfaceProbe
 {
@@ -47,7 +49,7 @@ public static class HoverSurfaceProbe
      *       + ClusterNavigationHeight - CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
      *   = AverageHeight + ClusterNavigationHeight
      *
-     * which is the terrain-derived target exactly, so the maximum below changes nothing
+     * which is the terrain-derived target exactly, so taking the surface changes nothing
      * whatsoever. Any other clearance - ClusterNavigationHeight itself, most temptingly -
      * moves the entire default city vertically.
      */
@@ -91,30 +93,6 @@ public static class HoverSurfaceProbe
      */
     public static bool IsHoverSurface(CollisionProperties.Layers solidLayerMask)
         => 0 != (solidLayerMask & ~MovingLayers);
-
-
-    /**
-     * The height the hover loop should fly at.
-     *
-     * @param terrainHoverHeight
-     *     What the loop has always used: the terrain sample under the ship plus
-     *     ClusterNavigationHeight.
-     * @param surfaceHeightBelow
-     *     Top of the nearest built surface under the ship, or null when the probe found
-     *     nothing - off the edge of the world, over open country, or high above
-     *     everything. Falling back to the terrain height there is not a degraded mode,
-     *     it is the answer: outside a city the terrain is the only thing the ship can
-     *     be over, and that is precisely the case the existing height was built for.
-     */
-    public static float HoverTargetHeight(float terrainHoverHeight, float? surfaceHeightBelow)
-    {
-        if (surfaceHeightBelow is null)
-        {
-            return terrainHoverHeight;
-        }
-
-        return Single.Max(terrainHoverHeight, surfaceHeightBelow.Value + SurfaceClearance);
-    }
 
 
     /*
@@ -191,14 +169,14 @@ public static class HoverSurfaceProbe
 
 
     /**
-     * The height a hover VEHICLE that is not the player - a crashed NPC car - should aim
-     * at: the built surface under it plus SurfaceClearance when there is one, the terrain-
-     * derived height only where nothing is built.
+     * The height a hover vehicle - the player's ship (KAR-472), a crashed NPC car
+     * (KAR-471) - aims at: the built surface under it plus SurfaceClearance when there is
+     * one, the terrain-derived height only where nothing is built.
      *
-     * Unlike HoverTargetHeight this lets a built surface LOWER the target: in a road
-     * cutting the terrain beside the road is higher than the road, and a vehicle that
-     * aimed at the terrain there climbed out of the road. It is the height NPC traffic
-     * rides at (KAR-470), so a crashed car stays level with the cars around it.
+     * A built surface may LOWER the target: in a road cutting the terrain beside the road
+     * is higher than the road, and a vehicle that aimed at the terrain there floated above
+     * the road or climbed out of it. It is the height NPC traffic rides at (KAR-470), so
+     * every vehicle on a road rides level with the others.
      */
     public static float VehicleTargetHeight(float terrainHoverHeight, float? surfaceHeightBelow)
         => surfaceHeightBelow is { } surface ? surface + SurfaceClearance : terrainHoverHeight;

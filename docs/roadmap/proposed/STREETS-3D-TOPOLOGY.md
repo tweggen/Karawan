@@ -537,6 +537,16 @@ combines the two with a **maximum**: a built surface may raise the target, never
 it. That also settles the cutting, where the road is *below* the terrain beside it and
 taking the ray's answer would fly the ship down into the cutting walls.
 
+> ⚠️ **Superseded 2026-10-31 (KAR-472, owner decision).** The maximum floated the ship
+> above the road in every cutting — at **43.8 % of ground-street points** in eight terrain
+> cities, median 0.55 m, over 1 m at 10.9 %, worst 10.4 m — and once NPC traffic rode the
+> road itself (KAR-470) the player visibly hovered above it. "The cutting walls" are the
+> terrain *beside* the road; the ship over the road is between them. The target is now
+> `HoverSurfaceProbe.VehicleTargetHeight`: the built surface + `SurfaceClearance` wherever
+> the ray finds one, the terrain only over open ground, and the terrain push-up and the
+> rescue apply only with nothing built under the ship. The flat-city arithmetic below is
+> unchanged.
+
 **The clearance is derived, and a flat city comes out identical.** This is the arithmetic
 the change is gated on. In a flat city every drivable surface — the fragment floor plane
 (top face at `AverageHeight + CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE`), the quarter floors
