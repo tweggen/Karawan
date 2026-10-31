@@ -37,16 +37,11 @@ public class HoverSurfaceProbeTests
      *
      * In a flat city the probe finds the floor plane on every single frame, so if the two
      * terms disagreed by so much as a decimetre the entire default game would move
-     * vertically - and upwards, since the combination is a maximum. They do not disagree:
-     * the clearance is the difference between the two constants that put the surface and
-     * the old target where they are, so the ray term reproduces the terrain term exactly
-     * and the maximum is a no-op.
+     * vertically. They do not disagree: the clearance is the difference between the two
+     * constants that put the surface and the old target where they are, so the ray term
+     * reproduces the terrain term exactly.
      *
-     * Note the assertion is on the TERM, not merely on the combined result. A clearance
-     * that was too small would also leave the maximum picking the terrain height and pass
-     * a test that only looked at the answer - right up to the first hillside, where the
-     * road stands proud and the too-small clearance becomes the new command to descend
-     * into it.
+     * Note the assertion is on the TERM, not merely on the combined result.
      */
     [Theory]
     [InlineData(0f)]
@@ -59,7 +54,7 @@ public class HoverSurfaceProbeTests
 
         Assert.Equal(terrain, surface + HoverSurfaceProbe.SurfaceClearance, 4);
 
-        Assert.Equal(terrain, HoverSurfaceProbe.HoverTargetHeight(terrain, surface), 4);
+        Assert.Equal(terrain, HoverSurfaceProbe.VehicleTargetHeight(terrain, surface), 4);
     }
 
 
@@ -93,7 +88,7 @@ public class HoverSurfaceProbeTests
         float terrain = terrainUnderTheRoad + MetaGen.ClusterNavigationHeight;
         float road = terrainUnderTheRoad + fill + MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
 
-        float target = HoverSurfaceProbe.HoverTargetHeight(terrain, road);
+        float target = HoverSurfaceProbe.VehicleTargetHeight(terrain, road);
 
         Assert.Equal(road + HoverSurfaceProbe.SurfaceClearance, target, 4);
         Assert.True(target > road,
@@ -103,13 +98,13 @@ public class HoverSurfaceProbeTests
 
 
     /**
-     * And the other sign, which is the one that keeps the ship out of the hillside. A
-     * road in a CUTTING is below the terrain beside it, and the ray finds it; taking it
-     * would fly the ship down into the cutting walls the terrain sample is warning about.
-     * The maximum refuses.
+     * And the other sign. A road in a CUTTING is below the terrain beside it, and the ray
+     * finds it. The ship used to keep the terrain as its floor there and float above the
+     * road - at 43.8 % of ground-street points in the terrain city, up to 10.4 m, above the
+     * NPC traffic riding the road. It rides the road now (owner decision, KAR-472).
      */
     [Fact]
-    public void ARoadInACuttingDoesNotLowerTheTarget()
+    public void ARoadInACuttingIsRiddenNotFlownOver()
     {
         const float terrainBesideTheRoad = 100f;
         const float cut = 6f;
@@ -117,7 +112,7 @@ public class HoverSurfaceProbeTests
         float terrain = terrainBesideTheRoad + MetaGen.ClusterNavigationHeight;
         float road = terrainBesideTheRoad - cut + MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
 
-        Assert.Equal(terrain, HoverSurfaceProbe.HoverTargetHeight(terrain, road), 4);
+        Assert.Equal(road + HoverSurfaceProbe.SurfaceClearance, HoverSurfaceProbe.VehicleTargetHeight(terrain, road), 4);
     }
 
 
@@ -130,8 +125,8 @@ public class HoverSurfaceProbeTests
     [Fact]
     public void NothingUnderTheShipMeansTheTerrainHeight()
     {
-        Assert.Equal(37.5f, HoverSurfaceProbe.HoverTargetHeight(37.5f, null), 4);
-        Assert.Equal(-4f, HoverSurfaceProbe.HoverTargetHeight(-4f, null), 4);
+        Assert.Equal(37.5f, HoverSurfaceProbe.VehicleTargetHeight(37.5f, null), 4);
+        Assert.Equal(-4f, HoverSurfaceProbe.VehicleTargetHeight(-4f, null), 4);
     }
 
 
@@ -213,10 +208,12 @@ public class HoverSurfaceProbeTests
         Assert.Contains("HoverSurfaceProbe.SurfaceBelow(", hover);
         Assert.Contains("vShipPos, _eTarget, SurfaceProbeAbove, SurfaceProbeBelow", hover);
 
-        Assert.True(hover.Contains("HoverSurfaceProbe.HoverTargetHeight"),
-            "the hover loop no longer combines its terrain height with the surface the "
-            + "ship is actually over, so it is back to aiming at the terrain under a road "
-            + "that stands on fill - i.e. commanding a descent into the road.");
+        Assert.True(hover.Contains("HoverSurfaceProbe.VehicleTargetHeight("),
+            "the hover loop no longer rides the surface the ship is actually over, so it is "
+            + "back to aiming at the terrain - descending into roads on fill, or floating above "
+            + "roads in cuttings (KAR-472).");
+        Assert.Contains("HoverSurfaceProbe.NeedsRescue(", hover);
+        Assert.Contains("surfaceBelow is null && vTargetPos.Y < heightAtTarget", hover);
     }
 
 
@@ -254,8 +251,6 @@ public class HoverSurfaceProbeTests
 
         Assert.Equal(roadSurface + HoverSurfaceProbe.SurfaceClearance,
             HoverSurfaceProbe.VehicleTargetHeight(terrainHover, roadSurface));
-        // The player's rule keeps the terrain as a floor - the difference this ticket is about.
-        Assert.Equal(terrainHover, HoverSurfaceProbe.HoverTargetHeight(terrainHover, roadSurface));
     }
 
 

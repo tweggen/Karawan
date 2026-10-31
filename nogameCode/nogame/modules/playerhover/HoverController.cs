@@ -346,14 +346,18 @@ internal class HoverController : AController
          * height is BELOW the road the ship is riding. Aiming there means commanding a
          * descent into the road for as long as the ship drives along it.
          *
-         * The maximum is the whole safety argument, and HoverSurfaceProbe carries it: the
-         * ray sees colliders only, the terrain has none, so a built surface may raise the
-         * target and may never lower it. The clearance is derived so that a flat city -
-         * where the floor plane is exactly CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE up and the
-         * old target exactly ClusterNavigationHeight - comes out identical.
+         * Where something is built under the ship it rides THAT, like NPC traffic (KAR-470),
+         * also where it lies below the terrain beside it - a road cutting. It used to take
+         * the higher of the two, which floated the ship above the road in every cutting:
+         * at 43.8 % of ground-street points, up to 10.4 m (owner decision 2026-10-31,
+         * KAR-472). The terrain is the target only over open ground, where nothing has a
+         * collider. The clearance is derived so that a flat city - floor plane at
+         * CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE, old target at ClusterNavigationHeight -
+         * comes out identical.
          */
-        float hoverHeightAtTarget = engine.physics.HoverSurfaceProbe.HoverTargetHeight(
-            heightAtTarget, _probeSurfaceBelow(vTargetPos));
+        float? surfaceBelow = _probeSurfaceBelow(vTargetPos);
+        float hoverHeightAtTarget = engine.physics.HoverSurfaceProbe.VehicleTargetHeight(
+            heightAtTarget, surfaceBelow);
 
         {
             var properDeltaY = 0;
@@ -567,7 +571,12 @@ internal class HoverController : AController
          * ship standing on a road that the probe has raised the target to is not below
          * anything; it has arrived.
          */
-        if (vTargetPos.Y < heightAtTarget)
+        /*
+         * Below the terrain with nothing built under the ship: it is inside the hill, so
+         * push it out. Not over a built surface - a road in a cutting is below the terrain
+         * beside it by definition, and pushing there lifted the ship out of every cutting.
+         */
+        if (surfaceBelow is null && vTargetPos.Y < heightAtTarget)
         {
             /*
              * Read the height at our front, or kind of at the front.
@@ -583,31 +592,27 @@ internal class HoverController : AController
             /*
              * A force, so that a collider under the ship can win against it. This used to
              * also assign Pose.Position outright on every frame it was under the ground,
-             * which no contact can argue with - it drove straight through a deck and, in
-             * a city that keeps its terrain, hauled the ship out of every road cutting it
-             * entered, since a cutting is below the ground beside it by definition.
+             * which no contact can argue with - it drove straight through a deck.
              */
             vTotalImpulse += new Vector3(0f, 10f, 0f);
+        }
 
-            /*
-             * The rescue, for the one case the forces cannot recover from: the ship has
-             * gone through the world and is falling with nothing beneath it. Both
-             * conditions matter. Depth alone would catch a ship legitimately parked at
-             * the bottom of a cutting; falling alone would catch it mid-bounce.
-             */
-            bool isFalling = vTargetVelocity.Y < -RestingVerticalSpeed;
-            if (isFalling && (heightAtTarget - vTargetPos.Y) > RescueDepth)
+        /*
+         * The rescue, for the one case the forces cannot recover from: the ship has gone
+         * through the world - far below the terrain, falling, and nothing built under it.
+         */
+        if (engine.physics.HoverSurfaceProbe.NeedsRescue(
+                heightAtTarget, vTargetPos.Y, vTargetVelocity.Y, surfaceBelow, RescueDepth, RestingVerticalSpeed))
+        {
+            Warning(
+                $"Player ship was {heightAtTarget - vTargetPos.Y:F1}m below the ground "
+                + $"and falling at {-vTargetVelocity.Y:F1}m/s; putting it back on top.");
+
+            vTargetPos.Y = heightAtTarget;
+            lock (_engine.Simulation)
             {
-                Warning(
-                    $"Player ship was {heightAtTarget - vTargetPos.Y:F1}m below the ground "
-                    + $"and falling at {-vTargetVelocity.Y:F1}m/s; putting it back on top.");
-
-                vTargetPos.Y = heightAtTarget;
-                lock (_engine.Simulation)
-                {
-                    _prefTarget.Pose.Position = vTargetPos;
-                    _prefTarget.Velocity.Linear = _prefTarget.Velocity.Linear with { Y = 0f };
-                }
+                _prefTarget.Pose.Position = vTargetPos;
+                _prefTarget.Velocity.Linear = _prefTarget.Velocity.Linear with { Y = 0f };
             }
         }
 
