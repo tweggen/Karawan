@@ -8,12 +8,22 @@ using static engine.Logger;
 
 namespace nogame.characters.car3;
 
-public class AfterCrashBehavior : ABehavior
+/**
+ * A car's few seconds after a crash: a dynamic body that bounces and settles, then hands
+ * back to the behaviour it replaced.
+ *
+ * Transient, so it is saved as that behaviour (IPersistsAs): a quest car saved mid-crash -
+ * the HelloFishmonger car carries a Creator and is saved - loads driving again. The
+ * parameterless constructor is for saves written before that, which hold this class itself:
+ * they load as a wreck that has nothing to hand back to and so stays where it settled.
+ */
+public class AfterCrashBehavior : ABehavior, IPersistsAs
 {
-    private engine.Engine _engine;
     private DefaultEcs.Entity _entity;
 
     private IBehavior _oldBehavior = null;
+
+    public object PersistAs => _oldBehavior;
 
     static private float LIFETIME = 10f;
     private float t = 0;
@@ -37,6 +47,7 @@ public class AfterCrashBehavior : ABehavior
     
     public override void Behave(in Entity entity, float dt)
     {
+        _engine ??= I.Get<engine.Engine>();
         if (t < LIFETIME)
         {
             t += dt;
@@ -144,6 +155,12 @@ public class AfterCrashBehavior : ABehavior
     }
 
     
+    [System.Text.Json.Serialization.JsonConstructor]
+    public AfterCrashBehavior()
+    {
+    }
+
+
     public AfterCrashBehavior(engine.Engine engine0, DefaultEcs.Entity entity0)
     {
         _engine = engine0;

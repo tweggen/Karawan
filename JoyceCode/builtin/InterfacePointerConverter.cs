@@ -79,16 +79,22 @@ public class InterfacePointerConverter<T> : JsonConverter<T> where T : class
                 reader.Read(); 
             } else if (reader.ValueTextEquals(s_implementationUtf8))
             {
+                reader.Read();
+
+                /*
+                 * Write emits a null implementation WITHOUT assembly and class, so a null
+                 * needs no type - before, every saved null provider failed to load here.
+                 */
+                if (reader.TokenType == JsonTokenType.Null)
+                {
+                    reader.Read();
+                    haveImplementation = true;
+                    return null;
+                }
+
                 if (!haveType)
                 {
                     ErrorThrow<InvalidOperationException>($"found implementation without previously defined type.");
-                }
-
-                reader.Read();
-                if (reader.TokenType == JsonTokenType.Null)
-                {
-                    haveImplementation = true;
-                    return null;
                 }
                 else
                 {
@@ -109,6 +115,14 @@ public class InterfacePointerConverter<T> : JsonConverter<T> where T : class
         T iBehavior,
         JsonSerializerOptions options)
     {
+        /*
+         * A transient implementation is saved as what it stands in for (IPersistsAs).
+         */
+        while (iBehavior is engine.behave.IPersistsAs transient)
+        {
+            iBehavior = transient.PersistAs as T;
+        }
+
         writer.WriteStartObject();
         if (null != iBehavior)
         {
