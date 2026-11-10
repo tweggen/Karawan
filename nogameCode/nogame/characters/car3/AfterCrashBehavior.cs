@@ -48,6 +48,22 @@ public class AfterCrashBehavior : ABehavior, IPersistsAs
     public override void Behave(in Entity entity, float dt)
     {
         _engine ??= I.Get<engine.Engine>();
+
+        /*
+         * A car loaded from a save is rebuilt from its persistable components only, and the
+         * physics Body is not one of them: there is nothing to bounce or settle. Hand back
+         * to the driving behaviour if there is one (it does not need the body), otherwise
+         * stay inert. Reading the body here used to throw on every frame (KAR-474).
+         */
+        if (!entity.Has<engine.physics.components.Body>())
+        {
+            if (null != _oldBehavior && entity.Has<engine.behave.components.Behavior>())
+            {
+                entity.Get<engine.behave.components.Behavior>().Provider = _oldBehavior;
+            }
+            return;
+        }
+
         if (t < LIFETIME)
         {
             t += dt;
