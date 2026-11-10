@@ -78,5 +78,10 @@ public class TransientBehaviorSaveTests
         Assert.Contains("class AfterCrashBehavior : ABehavior, IPersistsAs", src);
         Assert.Contains("public object PersistAs => _oldBehavior;", src);
         Assert.Matches(@"\[System\.Text\.Json\.Serialization\.JsonConstructor\]\s*public AfterCrashBehavior\(\)", src);
+        // A loaded car has no physics Body (EntitySaver restores persistable components
+        // only); Behave must check before it reads one, or a loaded wreck throws each frame.
+        int guard = src.IndexOf("if (!entity.Has<engine.physics.components.Body>())");
+        int firstRead = src.IndexOf("entity.Get<engine.physics.components.Body>()");
+        Assert.True(guard >= 0 && guard < firstRead, "Behave reads the Body before checking it exists");
     }
 }
