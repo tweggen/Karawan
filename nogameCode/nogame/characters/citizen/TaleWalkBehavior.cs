@@ -165,8 +165,20 @@ public class TaleWalkBehavior : ANearbyBehavior
 
         if (_isPaused && other != null)
         {
-            if (CitizenCollisionRouter.IsWeapon(other)) _cancelConversation("hit");
-            else if (CitizenCollisionRouter.IsVehicle(other)) _cancelConversation("crash");
+            /*
+             * Close the dialogue as violence first (S1-c), so its end applies no chat;
+             * the assault or run-over itself is reported from the strategy's Hit/Crash
+             * handler, which the Dispatch below triggers. Only if this NPC is not the
+             * session's partner, fall back to a plain cancel.
+             */
+            if (CitizenCollisionRouter.IsWeapon(other))
+            {
+                if (!TaleNarrationBindings.EndByViolence(_npcId, PlayerAction.None, "hit")) _cancelConversation("hit");
+            }
+            else if (CitizenCollisionRouter.IsVehicle(other))
+            {
+                if (!TaleNarrationBindings.EndByViolence(_npcId, PlayerAction.None, "crash")) _cancelConversation("crash");
+            }
         }
 
         CitizenCollisionRouter.Dispatch(
@@ -212,6 +224,11 @@ public class TaleWalkBehavior : ANearbyBehavior
             _pauseWalking(scriptName);
 
             Trace(_dc, $"NPC {_npcId} paused for conversation, script '{scriptName}'");
+
+            // TALE S1-c: the session decides what the conversation's end applies. Without
+            // it the end applied nothing - no chat, no trust, the NPC never "met" the
+            // player - for every walking NPC, i.e. most of them (KAR-476).
+            TaleNarrationBindings.BeginSession(_npcId, scriptName);
             narration.TriggerConversation(scriptName, _npcId.ToString());
         }
         catch (Exception e)
