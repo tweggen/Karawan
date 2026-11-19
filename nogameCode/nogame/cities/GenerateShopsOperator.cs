@@ -44,253 +44,61 @@ class GenerateShopsOperator : IClusterOperator
     private void _createShops(Context ctx, float shopDistance, Func<Vector3, float> funcProbab, MapIcon.IconCode iconCode)
     {
         var clusterDesc = ctx.ClusterDesc;
-        float shopArea = shopDistance*shopDistance;
-        float clusterArea = ctx.ClusterDesc.Size * ctx.ClusterDesc.Size;
-        int nTries = (int)(clusterArea / shopArea);
-
-        HashSet<Vector3> setPositions = new();
-
-        var quarterStore = clusterDesc.QuarterStore();
-        for (int t = 0; t < nTries; t++)
+        var placed = ShopPlacement.Place(clusterDesc, clusterDesc.QuarterStore(), ctx.Rnd,
+            shopDistance, funcProbab, iconCode, TraceDetail);
+        foreach (var shop in placed)
         {
-            bool isBadTry = false; 
-            Vector2 v2TryLocal = new(
-                    (ctx.Rnd.GetFloat()-0.5f) * clusterDesc.Size,
-                    (ctx.Rnd.GetFloat()-0.5f) * clusterDesc.Size);
-            Vector2 v2TryGlobal = v2TryLocal + ctx.ClusterDesc.Pos2;
+            var quarter = shop.Quarter;
+            var shopBuilding = shop.Building;
+            var v3ShopLocal = shop.Local;
+            int t = shop.Try;
 
             /*
-             * A sample COORDINATE, not a position: this asks a probability field how
-             * shoppy a spot is. Deliberately still the cluster average, because feeding
-             * it the terrain would make which shops exist depend on the ground under
-             * them - a generation change, and not one this work is about.
+             * Create the POI right in the middle of the shopfront ShopPlacement chose.
              */
-            float shopIntensity = funcProbab(new Vector3(v2TryGlobal.X, clusterDesc.AverageHeight, v2TryGlobal.Y));
+            var e = I.Get<engine.Engine>();
 
-            if (shopIntensity < 0.5f)
-            {
-                isBadTry = true;
-                if (TraceDetail) Trace($"Discarding shop {t} outside of shopping zone.");
-                continue;
-            }
-
-            var quarter = quarterStore.GuessQuarter(v2TryGlobal);
-            if (null == quarter)
-            {
-                isBadTry = true;
-                if (TraceDetail) Trace($"Discarding shop {t} because null quarter.");
-                continue;
-            }
-            
             /*
-             * Just randomly pick an estate.
-             */
-            var estates = quarter.GetEstates();
-            if (null == estates || 0 == estates.Count)
-            {
-                isBadTry = true;
-                if (TraceDetail) Trace($"Discarding shop {t} because no estates.");
-                continue;
-            }
-
-            int nEstates = estates.Count;
-            int estateStartIdx = (int)(ctx.Rnd.GetFloat() * nEstates);
-            IList<engine.streets.Building> buildings = null; 
-            for (int estateOfs = 0; estateOfs < nEstates; estateOfs++)
-            {
-                int estateIdx = (estateStartIdx + estateOfs) % nEstates;
-                engine.streets.Estate myEstate = estates[estateIdx];
-                buildings = myEstate.GetBuildings();
-                if (null != buildings && buildings.Count > 0)
-                {
-                    break;
-                }
-            }
-            
-            if (null == buildings || buildings.Count == 0)
-            {
-                isBadTry = true;
-                if (TraceDetail) Trace($"Discarding shop {t} because no building.");
-                continue;
-            }
-            
-            /*
-             * TXWTODO: Iterate through the building's shop fronts until we found the first one
-             * to use.
+             * The interaction point goes on the SAME storey as the window it belongs
+             * to. It used to be the only thing on a block that did not ask the quarter
+             * at all - it sampled ClusterDesc.GroundHeightAt, i.e. the TERRAIN, which
+             * on a hillside city is neither the block floor nor the shop - and
+             * ShopNearbyBehavior scores in 3-D with a radius of 16 m, so a shop whose
+             * window and whose interaction point are a storey apart is a shop that
+             * cannot be entered from in front of its own door.
              *
-             * ... we right now just take the first one.
+             * Read here rather than inside the queued action: this is generation-time
+             * geometry, and the two must not be able to answer differently.
              */
-            int nBuildings = buildings.Count;
-            int buildingStartIdx = (int)(ctx.Rnd.GetFloat() * nBuildings);
-            IList<engine.streets.ShopFront> shopFronts = null;
+            float shopGroundY = engine.streets.generation.BuildingFooting.StoreyGroundAt(
+                quarter, shopBuilding, new Vector2(v3ShopLocal.X, v3ShopLocal.Z));
 
-            /*
-             * Which building the shopfront belongs to, and not merely which block: a block
-             * carries several buildings since WP-O2 and each is founded on its own piece of
-             * ground, so the storey a shop is on is a question about the building.
-             */
-            engine.streets.Building shopBuilding = null;
-            for (int buildingOfs = 0; buildingOfs < nBuildings; buildingOfs++)
+            e.QueueEntitySetupAction("poi.shop", (DefaultEcs.Entity ePOI) =>
             {
-                int buildingIdx = (buildingStartIdx + buildingOfs) % nBuildings;
-                engine.streets.Building myBuilding = buildings[buildingIdx];
-                shopFronts = myBuilding.GetShopFronts();
-                if (null != shopFronts && shopFronts.Count > 0)
+                var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal) with
                 {
-                    shopBuilding = myBuilding;
-                    break;
-                }
-            }
-
-            if (null == shopFronts || shopFronts.Count == 0)
-            {
-                isBadTry = false;
-                if (TraceDetail) Trace($"Discarding shop {t} because no shop.");
-                continue;
-            }
-
-            int nShops = shopFronts.Count;
-            int shopStartIdx = (int)(ctx.Rnd.GetFloat() * nShops);
-            for (int shopOfs=0; shopOfs<nShops; shopOfs++)
-            {
-                int shopIdx = (shopStartIdx + shopOfs) % nShops;
-                var myShopFront = shopFronts[shopIdx];
-                if (myShopFront.Tags.Contains("shop"))
+                    Y = shopGroundY + 2.5f + 1f
+                };
+                if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
+                
+                I.Get<TransformApi>().SetTransforms(ePOI, false,
+                    MapCameraMask, Quaternion.Identity, v3ShopGlobal);
+                var shopNearbyBehavior = new ShopNearbyBehavior() {
+                    EPOI = ePOI
+                };
+                ePOI.Set(new engine.behave.components.Behavior(shopNearbyBehavior)
                 {
-                    // no bad try.
-                    if (TraceDetail) Trace($"Not using {t} because shopFront already tagged shop, trying to find another one for this try.");
-                    continue;
-                }
-
-                // Reject up-front (before any side effects) so we never end up
-                // with a shopfront tagged but no POI created.
-                var myShopFrontPoints = myShopFront.GetPoints();
-                if (null == myShopFrontPoints || myShopFrontPoints.Count < 2)
-                {
-                    if (TraceDetail) Trace($"Discarding shop {t} because no shop front points.");
-                    continue;
-                }
-
-                var nShopFronts = myShopFrontPoints.Count;
-                int shopFrontIdx = (int)(ctx.Rnd.GetFloat() * nShopFronts);
-                Vector3 v3ShopLocal = (myShopFrontPoints[(shopFrontIdx) % nShopFronts] +
-                                       myShopFrontPoints[(shopFrontIdx + 1) % nShopFronts]) / 2f;
-
-                if (setPositions.Contains(v3ShopLocal))
-                {
-                    if (TraceDetail) Trace($"Discarding shop at {v3ShopLocal} because it already exists.");
-                    continue;
-                }
-
-                if (!_hasPedestrianAccess(v3ShopLocal, quarter))
-                {
-                    if (TraceDetail) Trace($"Discarding shop at {v3ShopLocal} because shopfront does not face a sidewalk.");
-                    continue;
-                }
-
-                /*
-                 * Tag the new shop.
-                 */
-                // TXWTODO: This is a wrong tag, and no meaningful set of tags either.
-                string tagShop = $"shop {iconCode}";
-                myShopFront.Tags.Add(tagShop);
-
-                setPositions.Add(v3ShopLocal);
-
-                // TXWTODO:Remove the actual creation of  entities from this.
-                // TXWTODO: We shouldn't create POIs right here, should we?
-                /*
-                 * Create POI right in the middle.
-                 */
-                var e = I.Get<engine.Engine>();
-
-                /*
-                 * The interaction point goes on the SAME storey as the window it belongs
-                 * to. It used to be the only thing on a block that did not ask the quarter
-                 * at all - it sampled ClusterDesc.GroundHeightAt, i.e. the TERRAIN, which
-                 * on a hillside city is neither the block floor nor the shop - and
-                 * ShopNearbyBehavior scores in 3-D with a radius of 16 m, so a shop whose
-                 * window and whose interaction point are a storey apart is a shop that
-                 * cannot be entered from in front of its own door.
-                 *
-                 * Read here rather than inside the queued action: this is generation-time
-                 * geometry, and the two must not be able to answer differently.
-                 */
-                float shopGroundY = engine.streets.generation.BuildingFooting.StoreyGroundAt(
-                    quarter, shopBuilding, new Vector2(v3ShopLocal.X, v3ShopLocal.Z));
-
-                e.QueueEntitySetupAction("poi.shop", (DefaultEcs.Entity ePOI) =>
-                {
-                    var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal) with
-                    {
-                        Y = shopGroundY + 2.5f + 1f
-                    };
-                    if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
-                    
-                    I.Get<TransformApi>().SetTransforms(ePOI, false,
-                        MapCameraMask, Quaternion.Identity, v3ShopGlobal);
-                    var shopNearbyBehavior = new ShopNearbyBehavior() {
-                        EPOI = ePOI
-                    };
-                    ePOI.Set(new engine.behave.components.Behavior(shopNearbyBehavior)
-                    {
-                        Flags = (ushort)engine.behave.components.Behavior.BehaviorFlags.DontVisibInRange,
-                        MaxDistance = (short)shopNearbyBehavior.Distance
-                    });
-                    
-                    DefaultEcs.Entity eMapMarker = e.CreateEntity($"poi.shop map marker");
-                    I.Get<HierarchyApi>().SetParent(eMapMarker, ePOI);
-                    I.Get<TransformApi>().SetTransforms(eMapMarker, true,
-                        MapCameraMask, Quaternion.Identity, Vector3.UnitY * (25f + (t + 5f*(float)iconCode)));
-                    eMapMarker.Set(new engine.world.components.MapIcon() { Code = iconCode });
+                    Flags = (ushort)engine.behave.components.Behavior.BehaviorFlags.DontVisibInRange,
+                    MaxDistance = (short)shopNearbyBehavior.Distance
                 });
-                break;
-            }
-            
-            // We placed a shop if isBadTry==false
+                
+                DefaultEcs.Entity eMapMarker = e.CreateEntity($"poi.shop map marker");
+                I.Get<HierarchyApi>().SetParent(eMapMarker, ePOI);
+                I.Get<TransformApi>().SetTransforms(eMapMarker, true,
+                    MapCameraMask, Quaternion.Identity, Vector3.UnitY * (25f + (t + 5f*(float)iconCode)));
+                eMapMarker.Set(new engine.world.components.MapIcon() { Code = iconCode });
+            });
         }
-    }
-
-
-    /// <summary>
-    /// Check if a shopfront midpoint sits next to a sidewalk. Sidewalks run along
-    /// the perimeter of each quarter (built by GenerateNavMapOperator from delim
-    /// segments), so a shopfront facing the quarter interior or wedged between
-    /// neighbouring buildings has no pedestrian NavLane in front of it. Reusing
-    /// the navmap's source data (quarter delims) avoids a sync wait on
-    /// NavCluster.Content, which is built lazily and async.
-    ///
-    /// Mirrors the validity rule in GenerateNavMapOperator: a quarter with fewer
-    /// than 3 delims gets no sidewalks at all.
-    /// </summary>
-    private static bool _hasPedestrianAccess(Vector3 v3ShopLocal, engine.streets.Quarter quarter)
-    {
-        const float SidewalkRadiusSq = 5f * 5f;
-
-        var delims = quarter.GetDelims();
-        if (delims.Count < 3) return false;
-
-        var v2Shop = new Vector2(v3ShopLocal.X, v3ShopLocal.Z);
-
-        for (int i = 0; i < delims.Count; i++)
-        {
-            var a = delims[i].StartPoint;
-            var b = delims[(i + 1) % delims.Count].StartPoint;
-
-            var ab = b - a;
-            float lenSq = Vector2.Dot(ab, ab);
-            if (lenSq < 0.0001f) continue;
-
-            var ap = v2Shop - a;
-            float t = Math.Clamp(Vector2.Dot(ap, ab) / lenSq, 0f, 1f);
-            var proj = a + t * ab;
-            var d = v2Shop - proj;
-
-            if (Vector2.Dot(d, d) <= SidewalkRadiusSq)
-                return true;
-        }
-
-        return false;
     }
 
 

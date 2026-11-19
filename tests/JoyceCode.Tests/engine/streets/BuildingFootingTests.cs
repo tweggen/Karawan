@@ -954,12 +954,18 @@ public class BuildingFootingTests
         Assert.DoesNotContain("clusterDesc.GroundHeightAt", source);
 
         /*
-         * ...on the storey of the building the shopfront belongs to, which this operator
+         * ...on the storey of the building the shopfront belongs to, which the placement
          * has to carry out of the loop that picked it. Naming the variable rather than
-         * merely the call, for the reason above.
+         * merely the call, for the reason above. Since KAR-479 the loop is
+         * ShopPlacement.Place and the operator creates the POI from what it returns.
          */
-        Assert.Contains("StoreyGroundAt(\n                    quarter, shopBuilding,",
-            source.Replace("\r\n", "\n"));
-        Assert.Contains("shopBuilding = myBuilding;", source);
+        string flat = System.Text.RegularExpressions.Regex.Replace(source, @"\s+", " ");
+        Assert.Contains("StoreyGroundAt( quarter, shopBuilding,", flat);
+        Assert.Contains("var shopBuilding = shop.Building;", source);
+
+        string placement = File.ReadAllText(Path.GetFullPath(Path.Combine(
+            root, "..", "nogameCode", "nogame", "cities", "ShopPlacement.cs")));
+        Assert.Contains("shopBuilding = myBuilding;", placement);
+        Assert.Contains("new PlacedShop(quarter, shopBuilding,", placement);
     }
 }
