@@ -53,7 +53,8 @@ public class ClusterGroundHeightTests
             "the flat fragment floor plane, emitted only when the city really is flat",
 
         // Genuinely not a position.
-        ["nogameCode/nogame/cities/GenerateShopsOperator.cs"] =
+        // (KAR-479: moved with the placement out of GenerateShopsOperator.)
+        ["nogameCode/nogame/cities/ShopPlacement.cs"] =
             "a probability-field sample coordinate, not somewhere a shop is put",
 
         // Fallback for an estate with no block, which should not happen.

@@ -1,0 +1,23 @@
+### 2026-11-19 — KAR-479: downtown blocks get shops again
+
+- **Report (Windows playtest):** TALE logged Yelukhdidru as "28 buildings, 1 shops"; the map seemed to show several shops, and all eight TALE groups shared one hangout.
+- **Measured, not assumed** (shipped world "mydear", terrain city, grade separation on):
+  - **28 buildings is correct.** Yelukhdidru is 1000 m across with 28 blocks.
+  - **1 shop was also what the city really had**, which is the bug.
+  - **The extra magenta "shops" on the map are NPCs.** `CharacterCreator.AddMapIcon` draws TALE NPCs by role with the shop symbols: socialite and reveler as Drink, merchant as Eat, worker and nightworker as Game2.
+- **Cause:** since `3ebe1802` (2026-05-10) a shop front counted as facing a sidewalk only within 5 m of the block's kerb line, where the pedestrian lane runs. A building stands its block's `SidewalkWidth` back from that line, and downtown pavements are 6 m. So every kerb-facing front of every downtown block was refused, exactly where shops belong; 70–95 % of attempts died there. Before the fix:
+  - Yelukhdidru: 0 Game2, 1 Drink, 0 Eat.
+  - Ufyo: 0 / 47 / 84.
+  - Jeeslufa: 0 / 81 / 105.
+  - No Game2 shop in any of the three.
+- **Fix:**
+  - The radius is `max(5 m, SidewalkWidth + 1 m)`, so 1, 2 and 4 m pavements keep the old rule.
+  - A shop front already holding a shop is now recognised. The check asked for a bare `"shop"` tag, which no front carries, so a later kind could land on a taken front: 4 doubles in Yelukhdidru.
+- **After:** Yelukhdidru 8 / 21 / 20, Ufyo 59 / 175 / 214, Jeeslufa 60 / 208 / 257. That is about one shop per 100 m of eligible zone, the density the operator was written for. The TALE bake already assumes about one shop per 10 NPCs plus social venues, so the live city now comes closer to the society it was baked for.
+- **Refactor:** the placement moved verbatim into `nogame.cities.ShopPlacement` (engine-only, linked into the tests); `GenerateShopsOperator` creates the POIs from its result. All random draws stay in the placement, so the split itself moves no shop. No `DbVersion` bump: shops are not cached.
+- **Tests:**
+  - `ShopPlacementTests` (7) on Yelukhdidru and Ufyo: every kind present, one shop per front, every shop faces its pavement, and wide pavements get shops.
+  - Mutation checks: the old radius fails 5 of them, the old tag check fails 2.
+  - Repointed the source scans `ClusterGroundHeightTests` (allow list) and `BuildingFootingTests.TheShopPoiAsksTheBlock` at the new file.
+  - xUnit 2234 pass; the 26 failures are the known KAR-461 drift. TALE 133/133.
+- **Pending in game:** downtown shows lit shop windows, and the TALE populate line for Yelukhdidru reports about 49 shops. Whether this changes KAR-477 (all groups criminal) is to be seen.
