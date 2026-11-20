@@ -56,12 +56,15 @@ public class IntercityTrackElevationOperator : IOperator
          * data from source, modifying the data along the way.
          */
 
-        var stepX = (esTarget.Rect2.B.X - esTarget.Rect2.A.X) / esTarget.nHoriz;
-        var stepZ = (esTarget.Rect2.B.Y - esTarget.Rect2.A.Y) / esTarget.nVert;
+        /*
+         * KAR-484: the samples' real positions, from the segment itself. This used to divide
+         * the extent by nHoriz - the point count, not the step count - and so took every
+         * sample to be up to a grid step short of where it is, restarting at every fragment:
+         * the carved groove wandered off the station axis by 8.6 m at the median and up to
+         * 36 m over the shipped lines.
+         */
+        float gridStep = engine.world.MetaGen.FragmentSize / engine.world.MetaGen.GroundResolution;
 
-        //var minDist = Single.Max(_line.Width / 2f, stepX / 2f);
-        var minDist = 2f*stepX;
-        
         /*
          * Copy data from source to target, modifying it.
          *
@@ -69,45 +72,17 @@ public class IntercityTrackElevationOperator : IOperator
          */
         for (int tez = 0; tez < esTarget.nVert; tez++)
         {
-            var z = esTarget.Rect2.A.Y
-                    + ((esTarget.Rect2.B.Y - esTarget.Rect2.A.Y) * tez)
-                    / esTarget.nVert;
+            var z = esTarget.SampleZ(tez);
 
             for (int tex = 0; tex < esTarget.nHoriz; tex++)
             {
-                /*
-                 * Compute the absolute position derived from the target
-                 * coordinates.
-                 *
-                 * Then check, wether this is within the bounds of the
-                 * city.
-                 */
-                var x = esTarget.Rect2.A.X
-                        + ((esTarget.Rect2.B.X - esTarget.Rect2.A.X) * tex)
-                        / esTarget.nHoriz;
+                var x = esTarget.SampleX(tex);
 
                 ElevationPixel epxSource = erSource.Elevations[tez, tex];
                 ElevationPixel epxDest = epxSource;
-                
-                bool hitsIntercity = false;
-                float dist = 0f;
-                
-                /*
-                 * Compute distance from point to line.
-                 */
-                {
-                    var vt = new Vector2(x, z);
 
-                    vt -= va;
-
-                    dist = V2Dot(vt, vup);
-                }
-
-                if (Single.Abs(dist) <= minDist)
-                {
-                    hitsIntercity = true;
-                    // Trace($"Hits intercity at {x}, {z}");
-                }
+                bool hitsIntercity = engine.world.IntercityCorridor.IsInCarvedBand(
+                    new Vector2(x, z), va, vb, gridStep);
 
                 if (hitsIntercity)
                 {
