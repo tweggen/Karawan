@@ -13,7 +13,7 @@ public class Location
     public string Type; // "home", "workplace", "shop", "social_venue", "street_segment"
     public Vector3 Position;
     public Vector3 EntryPosition; // Door/shop front position at street level
-    public int Capacity;
+    public int Capacity;  // people it holds (KAR-482); 0 = no limit worth weighing (a junction)
     public string ShopType; // null if not a shop, else "Eat", "Drink", "Game2"
     public int QuarterIndex;
     public int EstateIndex;
@@ -24,10 +24,10 @@ public class Location
     // info is available and the entry point can't be reached on foot.
     public bool IsPedestrianReachable = true;
 
-    // For street (junction) locations: all sidewalk corners around the junction.
-    // EntryPosition is always EntryCandidates[0]. Null/empty for building locations
-    // (single entry). Lets multiple NPCs bound to the same junction spread across
-    // its corners instead of stacking on one point — pick with EntryPositionFor.
+    // Where NPCs stand: for a junction its sidewalk corners, for a building's home,
+    // office or warehouse its footprint corners (KAR-482); null for shops (single
+    // entry). EntryPosition is always EntryCandidates[0]. Lets NPCs bound to one place
+    // spread over it instead of stacking on one point — pick with EntryPositionFor.
     public List<Vector3> EntryCandidates;
 
     /// <summary>
@@ -182,12 +182,19 @@ public class SpatialModel
 
 
     public static SpatialModel ExtractFrom(ClusterDesc cluster, builtin.modules.satnav.desc.NavCluster navCluster = null)
+        => ExtractFrom(cluster, cluster.QuarterStore(), cluster.StrokeStore(), navCluster);
+
+
+    /**
+     * The same from stores already in hand: ClusterDesc.QuarterStore() generates through
+     * MetaGen, which a test does not have (KAR-482 measures the shipped cities here).
+     */
+    internal static SpatialModel ExtractFrom(ClusterDesc cluster, QuarterStore quarterStore, StrokeStore strokeStore,
+        builtin.modules.satnav.desc.NavCluster navCluster = null)
     {
         var model = new SpatialModel();
         int locationId = 0;
 
-        var quarterStore = cluster.QuarterStore();
-        var strokeStore = cluster.StrokeStore();
         var streetPointToLocation = new Dictionary<int, int>();
 
         var heightSource = cluster.StreetHeightSource;
@@ -277,7 +284,7 @@ public class SpatialModel
                                 Type = locationType,
                                 Position = buildingCenter,
                                 EntryPosition = snappedEntry,
-                                Capacity = (int)MathF.Max(1, building.GetHeight() / 3f),
+                                Capacity = ShopCapacity,
                                 ShopType = shopType,
                                 QuarterIndex = qi,
                                 EstateIndex = ei,
@@ -286,65 +293,30 @@ public class SpatialModel
                         }
                     }
 
-                    if (!hasShop)
+                    /*
+                     * What the building is used for, whether or not it has shops (KAR-482):
+                     * shops take the ground floor, the floors above still house people and
+                     * jobs. Shops used to erase that, and a building used one way only, so
+                     * Yelukhdidru - 28 buildings, 11 with shops - had ONE home for 279 NPCs.
+                     */
+                    var doors = _buildingDoors(building, quarter, cluster, navCluster);
+                    var buildingCentre = building.GetCenter() + cluster.Pos;
+                    buildingCentre.Y = streetHeight;
+
+                    foreach (var use in UsesOf(building))
                     {
-                        // Determine location type from building role tags
-                        string type = "home";  // default
-                        if (building.Tags.Contains("residential"))
-                            type = "home";
-                        else if (building.Tags.Contains("warehouse"))
-                            type = "warehouse";
-                        else if (building.Tags.Contains("office"))
-                            type = "office";
-
-                        var buildingCenter = building.GetCenter() + cluster.Pos;
-                        buildingCenter.Y = streetHeight;
-
-                        // Compute entry position on building's edge (perimeter point)
-                        // If building has points, use the first point; otherwise fall back to center
-                        var buildingPoints = building.GetPoints();
-                        Vector3 entryPos;
-                        if (buildingPoints.Count > 0)
-                        {
-                            // Use first point on building perimeter, offset towards center slightly
-                            var perimeterPoint = buildingPoints[0] + cluster.Pos;
-                            perimeterPoint.Y = 0; // Reset Y to cluster local height
-                            var direction = Vector3.Normalize(buildingCenter - perimeterPoint);
-                            // Move a small distance from perimeter towards center to avoid exact edge
-                            var offset = direction * 2f; // 2 meter offset from edge
-                            /*
-                             * The door's own pavement height, not the building centre's:
-                             * these two are up to a block apart, and a block's kerb falls
-                             * 13 m across itself on the shipped terrain.
-                             */
-                            entryPos = new Vector3(
-                                perimeterPoint.X + offset.X,
-                                streets.generation.BuildingFooting.PavementHeightAt(
-                                    quarter,
-                                    new Vector2(
-                                        perimeterPoint.X + offset.X - cluster.Pos.X,
-                                        perimeterPoint.Z + offset.Z - cluster.Pos.Z)),
-                                perimeterPoint.Z + offset.Z);
-                        }
-                        else
-                        {
-                            // Fallback: use building center if no points available
-                            entryPos = buildingCenter;
-                        }
-
-                        var (snappedEntry, isReachable) = _snapToPedestrianLane(navCluster, entryPos);
-
                         model.Locations.Add(new Location
                         {
                             Id = locationId++,
-                            Type = type,
-                            Position = buildingCenter,
-                            EntryPosition = snappedEntry,
-                            Capacity = (int)MathF.Max(1, building.GetHeight() / 3f),
+                            Type = use,
+                            Position = buildingCentre,
+                            EntryPosition = doors.Candidates[0],
+                            EntryCandidates = doors.Candidates,
+                            Capacity = CapacityOf(building, use),
                             ShopType = null,
                             QuarterIndex = qi,
                             EstateIndex = ei,
-                            IsPedestrianReachable = isReachable
+                            IsPedestrianReachable = doors.IsReachable
                         });
                     }
                 }
@@ -446,6 +418,113 @@ public class SpatialModel
     /// lane is in range, returns the original position and reports it as reachable so the
     /// caller doesn't accidentally drop locations in environments without nav data.
     /// </summary>
+    /** People one storey of a building holds, by what it is used for (KAR-482). */
+    public static int PeoplePerStorey(string use) => use switch
+    {
+        "home" => 4,
+        "office" => 8,
+        "warehouse" => 2,
+        _ => 4
+    };
+
+    /** People a shop or venue location holds - one shopfront's worth. */
+    public const int ShopCapacity = 8;
+
+
+    /**
+     * The location types a building provides, one per use (KAR-482): residential is a home,
+     * office an office, warehouse a warehouse, and a building with no role a home.
+     *
+     * An office building of MixedUseStoreys or more also houses people - flats above the
+     * offices. QuarterGenerator gives the residential role only near the centre of the
+     * Living field, so a city built mostly of office towers had a handful of homes for
+     * hundreds of NPCs (Yelukhdidru: 5 homes for 279 even once shops stopped erasing them).
+     */
+    public static IReadOnlyList<string> UsesOf(Building building)
+    {
+        var uses = new List<string>(3);
+        bool office = building.Tags.Contains("office");
+        if (building.Tags.Contains("residential")
+            || (office && StoreysOf(building) >= MixedUseStoreys))
+        {
+            uses.Add("home");
+        }
+        if (office) uses.Add("office");
+        if (building.Tags.Contains("warehouse")) uses.Add("warehouse");
+        if (uses.Count == 0) uses.Add("home");
+        return uses;
+    }
+
+
+    public const int MixedUseStoreys = 3;
+
+
+    public static int StoreysOf(Building building) => (int)MathF.Max(1, building.GetHeight() / 3f);
+
+
+    /**
+     * The people one use of a building holds: its share of the storeys - a building used
+     * three ways gives each a third, not all of them every floor - at that use's density.
+     */
+    public static int CapacityOf(Building building, string use) =>
+        Math.Max(1, StoreysOf(building) * PeoplePerStorey(use) / UsesOf(building).Count);
+
+
+    /**
+     * Where NPCs stand at a building: a point at each corner of its footprint and at the
+     * middle of each wall, each 2 m from it towards the centre at the pavement's height
+     * there, snapped to the pedestrian network. The first is the single door every NPC used to share; NPCs of
+     * one building now spread over its corners (Location.EntryPositionFor), as they
+     * already did over a junction's.
+     */
+    private static (List<Vector3> Candidates, bool IsReachable) _buildingDoors(
+        Building building, Quarter quarter, ClusterDesc cluster,
+        builtin.modules.satnav.desc.NavCluster navCluster)
+    {
+        var centre = building.GetCenter() + cluster.Pos;
+        var points = building.GetPoints();
+        var reachable = new List<Vector3>();
+        var unreachable = new List<Vector3>();
+
+        /*
+         * Every corner and the middle of every wall: a building's NPCs share these, so
+         * the more there are the fewer stand on any one.
+         */
+        var spots = new List<Vector3>(points.Count * 2);
+        for (int i = 0; i < points.Count; ++i)
+        {
+            spots.Add(points[i]);
+            spots.Add((points[i] + points[(i + 1) % points.Count]) / 2f);
+        }
+
+        foreach (var p in spots)
+        {
+            var corner = p + cluster.Pos;
+            corner.Y = 0f;
+            var flatCentre = centre with { Y = 0f };
+            var toCentre = flatCentre - corner;
+            if (toCentre.LengthSquared() < 1e-6f) continue;
+            var at = corner + Vector3.Normalize(toCentre) * 2f;
+            var door = new Vector3(at.X,
+                streets.generation.BuildingFooting.PavementHeightAt(
+                    quarter, new Vector2(at.X - cluster.Pos.X, at.Z - cluster.Pos.Z)),
+                at.Z);
+
+            var (snapped, isReachable) = _snapToPedestrianLane(navCluster, door);
+            (isReachable ? reachable : unreachable).Add(snapped);
+        }
+
+        if (reachable.Count > 0) return (reachable, true);
+        if (unreachable.Count > 0) return (unreachable, false);
+
+        var fallback = centre with
+        {
+            Y = streets.generation.BuildingFooting.PavementHeightAt(quarter, new Vector2(centre.X - cluster.Pos.X, centre.Z - cluster.Pos.Z))
+        };
+        return (new List<Vector3> { fallback }, true);
+    }
+
+
     private static (Vector3 snapped, bool isReachable) _snapToPedestrianLane(
         builtin.modules.satnav.desc.NavCluster navCluster,
         Vector3 position,
