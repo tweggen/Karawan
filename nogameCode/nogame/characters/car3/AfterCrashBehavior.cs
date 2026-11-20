@@ -12,10 +12,10 @@ namespace nogame.characters.car3;
  * A car's few seconds after a crash: a dynamic body that bounces and settles, then hands
  * back to the behaviour it replaced.
  *
- * Transient, so it is saved as that behaviour (IPersistsAs): a quest car saved mid-crash -
- * the HelloFishmonger car carries a Creator and is saved - loads driving again. The
- * parameterless constructor is for saves written before that, which hold this class itself:
- * they load as a wreck that has nothing to hand back to and so stays where it settled.
+ * Transient, so it is saved as that behaviour (IPersistsAs), and a resumed chase asks it
+ * for the street the car will drive on (FishmongerCar.DrivingFrom). The parameterless
+ * constructor is for older saves that hold this class itself on the quest car they stored;
+ * those cars are removed on load since KAR-475 (HelloFishmongerModule).
  */
 public class AfterCrashBehavior : ABehavior, IPersistsAs
 {
