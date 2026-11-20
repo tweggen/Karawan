@@ -526,11 +526,17 @@ public class WalkController : AController, IInputPart
         bool needAdjust = true;
         
         /*
-         * First clip the height to world ground. Anything covered by physics must be above.
-         * This means, I can very well intersect physical floor with my legs. So we still
-         * need to raycast the floor.
+         * First clip the height to the floor: the built surface under the walker where there
+         * is one - pavement, road, deck - and the terrain only over open ground. The terrain
+         * alone lifted the player above the pavement wherever the ground beside the kerb
+         * rises, and sank it into the block floor where it falls; walking NPCs stand on the
+         * pavement. The probe takes the simulation lock itself, so it runs outside the lock
+         * below.
          */
-        float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetWalkingHeightAt(vNewTargetPos);
+        float terrainWalkingHeight = I.Get<engine.world.MetaGen>().Loader.GetWalkingHeightAt(vNewTargetPos);
+        float? surfaceBelow = engine.physics.HoverSurfaceProbe.SurfaceBelow(
+            I.Get<engine.physics.API>(), vNewTargetPos, _eTarget);
+        float heightAtTarget = engine.physics.HoverSurfaceProbe.WalkingFloorHeight(terrainWalkingHeight, surfaceBelow);
 
         {
             if (vNewTargetPos.Y < heightAtTarget)
@@ -562,6 +568,19 @@ public class WalkController : AController, IInputPart
                      */
                     _verticalImpulse = 0f;
                 }
+            }
+            else if (surfaceBelow != null && JumpState.Grounded == _jumpState
+                     && vNewTargetPos.Y > heightAtTarget)
+            {
+                /*
+                 * Standing above a built floor: step down onto it, no faster than the
+                 * step-down branch below (20 m/s). Nothing else lowers a walker that is
+                 * standing still - the ray cast below looks along the motion, not down,
+                 * and only while moving - so one that stepped out of the ship, which rides
+                 * a metre above the road, stood in mid air until it walked.
+                 */
+                vNewTargetPos.Y = Single.Max(heightAtTarget, vNewTargetPos.Y - 20f * 1f / 60f);
+                isOnGround = true;
             }
         }
 

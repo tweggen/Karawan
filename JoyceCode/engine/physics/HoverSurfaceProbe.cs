@@ -183,6 +183,21 @@ public static class HoverSurfaceProbe
 
 
     /**
+     * The floor a walker stands on: the top of the built surface under it - a pavement,
+     * a road, a deck - and the terrain-derived walking height only where nothing is built.
+     *
+     * The walking player used to stand on the terrain-derived height alone. In the
+     * terrain-following city that is not the pavement: measured over eight shipped cities
+     * it stood more than 0.3 m above the drawn pavement at 43 % of pavement points, more
+     * than 1 m at 28 %, up to 10.6 m, while walking NPCs stood on the pavement
+     * (GoToStrategyPart). In a flat city the two agree on the pavement, and on a road the
+     * walker now stands on the road rather than a kerb's height above it.
+     */
+    public static float WalkingFloorHeight(float terrainWalkingHeight, float? surfaceHeightBelow)
+        => surfaceHeightBelow ?? terrainWalkingHeight;
+
+
+    /**
      * Must a body be put back on top of the terrain? Only when it has gone through the
      * world: more than <paramref name="rescueDepth"/> below the terrain-derived height,
      * falling, and with nothing built under it. Depth alone would catch a body resting in
