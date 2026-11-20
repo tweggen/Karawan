@@ -54,6 +54,18 @@ public class Scores : engine.AController
         {
             ref var cScoreOsdText = ref _eScoreDisplay.Get<engine.draw.components.OSDText>();
             cScoreOsdText.Text = $"{speed}";
+
+            /*
+             * KAR-483: on an intercity highway the speed shows in the boost colour, and the
+             * gauge behind it fills with how much of the boost is on.
+             */
+            float boost = nogame.modules.playerhover.PlayerVehicleSpeed.Boost;
+            bool boosted = boost > 1.05f;
+            cScoreOsdText.TextColor = boosted ? 0xff22aaeeu : 0xff448822u;
+            cScoreOsdText.GaugeColor = boosted ? 0x4422aaeeu : 0x44448822u;
+            cScoreOsdText.GaugeValue = boosted
+                ? (ushort)(4095f * Math.Clamp((boost - 1f) / (engine.world.IntercityCorridor.BoostFactor - 1f), 0f, 1f))
+                : (ushort)0;
             // cScoreOsdText.GaugeValue = (ushort)(4096f * speed / 200f);
         }
         {

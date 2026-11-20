@@ -104,6 +104,43 @@ internal class HoverController : AController
 
 
     private float _lastTurnMotion = 0f;
+
+
+    /*
+     * KAR-483: the intercity corridors are highways. _boost multiplies the ship's thrust -
+     * and with it, through LinearDamping, its cruising speed - by up to
+     * IntercityCorridor.BoostFactor inside one, and runs out gradually after.
+     */
+    private float _boost = 1f;
+    private List<engine.world.IntercityCorridor.Line> _corridorLines;
+
+    /** The current boost, for display. */
+    public float CorridorBoost => _boost;
+
+
+    /*
+     * The corridors, read once from the intercity network once it exists. Null while it
+     * does not, so a ship in a city before the network is built simply has no corridors.
+     */
+    private IReadOnlyList<engine.world.IntercityCorridor.Line> _corridors()
+    {
+        if (_corridorLines != null) return _corridorLines;
+        try
+        {
+            var lines = new List<engine.world.IntercityCorridor.Line>();
+            foreach (var line in I.Get<nogame.intercity.Network>().Lines)
+            {
+                lines.Add(new engine.world.IntercityCorridor.Line(
+                    line.StationA.Pos2, line.StationB.Pos2, line.Height));
+            }
+            if (lines.Count > 0) _corridorLines = lines;
+            return lines;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
     private bool _traceControllers;
 
 
@@ -403,6 +440,18 @@ internal class HoverController : AController
         float radiansTurnVehicle = 0f;
 
         /*
+         * KAR-483: which corridor, if any, the ship is in, and how boosted it is.
+         */
+        engine.world.IntercityCorridor.Position? corridor = null;
+        if (engine.world.IntercityCorridor.TryLocate(vTargetPos, _corridors(), out var corridorPosition))
+        {
+            corridor = corridorPosition;
+        }
+        _boost = engine.world.IntercityCorridor.NextBoost(
+            _boost, engine.world.IntercityCorridor.TargetBoost(corridor), dt);
+        PlayerVehicleSpeed.Boost = _boost;
+
+        /*
          * If I shall control the ship.
          */
         if (_engine.State == Engine.EngineState.Running)
@@ -429,6 +478,7 @@ internal class HoverController : AController
             var upMotion = 0;
                 // controllerState.AnalogLeftStickVert;
             float turnMotion;
+            float playerTurnMotion;
             {
                 // TXWTODO: Define constants for each of the sensitivities
                 /*
@@ -439,6 +489,7 @@ internal class HoverController : AController
                     + controllerState.AnalogLeftStickHoriz
                     + controllerState.WASDHoriz
                     + controllerState.TouchLeftPushHoriz * 0.5f;
+                playerTurnMotion = inputTurnMotion;
                  
                 float maxThreshold;
                 if (_lastTurnMotion == 0)
@@ -466,7 +517,7 @@ internal class HoverController : AController
             if (frontMotion != 0f)
             {
                 // The acceleration looks wrong when combined with rotation.
-                vTotalImpulse += LinearThrust * vFront * frontMotion / 256f;
+                vTotalImpulse += LinearThrust * _boost * vFront * frontMotion / 256f;
 
                 /*
                  * Move nose down when accelerating and vice versa.
@@ -519,6 +570,24 @@ internal class HoverController : AController
                     }
                 }
                 radiansTurnVehicle += direction * ((float)turnMotion / 255f) * degreesPerSecond / 180f * Single.Pi * dt;
+            }
+
+            /*
+             * KAR-483: in a corridor, help the ship keep its lane - turning, like the
+             * player's own input, since sideways velocity is removed below anyway. It yields
+             * to the player's steering and does nothing for a ship pointing across the
+             * corridor.
+             */
+            if (corridor is { } inCorridor)
+            {
+                var front2 = new Vector2(vFront.X, vFront.Z);
+                if (front2.LengthSquared() > 1e-6f)
+                {
+                    front2 = Vector2.Normalize(front2);
+                    float speedAlongFront = Vector3.Dot(vTargetVelocity with { Y = 0f }, vFront with { Y = 0f });
+                    radiansTurnVehicle += engine.world.IntercityCorridor.AssistTurn(
+                        inCorridor, front2, speedAlongFront, playerTurnMotion / 255f, dt);
+                }
             }
         }
 

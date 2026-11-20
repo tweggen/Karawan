@@ -20,9 +20,16 @@ public static class PlayerVehicleSpeed
         _current = speed;
     }
 
+    /// <summary>
+    /// KAR-483: how much the intercity corridor currently boosts the ship (1 = none);
+    /// set by HoverController, read by the speed display.
+    /// </summary>
+    public static float Boost { get; set; } = 1f;
+
     public static void Reset()
     {
         _previous = 0f;
         _current = 0f;
+        Boost = 1f;
     }
 }
