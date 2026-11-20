@@ -63,8 +63,6 @@ public class IntercityTrackElevationOperator : IOperator
          * the carved groove wandered off the station axis by 8.6 m at the median and up to
          * 36 m over the shipped lines.
          */
-        float gridStep = engine.world.MetaGen.FragmentSize / engine.world.MetaGen.GroundResolution;
-
         /*
          * Copy data from source to target, modifying it.
          *
@@ -82,7 +80,7 @@ public class IntercityTrackElevationOperator : IOperator
                 ElevationPixel epxDest = epxSource;
 
                 bool hitsIntercity = engine.world.IntercityCorridor.IsInCarvedBand(
-                    new Vector2(x, z), va, vb, gridStep);
+                    new Vector2(x, z), va, vb);
 
                 if (hitsIntercity)
                 {
@@ -99,40 +97,21 @@ public class IntercityTrackElevationOperator : IOperator
     public bool ElevationOperatorIntersects(engine.geom.AABB aabb)
     {
         /*
-         * Does it roughly intersect?
+         * Does it roughly intersect? The stations' box grown by the carved band.
          */
         if (!_aabb.IntersectsXZ(aabb))
         {
             return false;
         }
 
-        var vd = _line.StationB.Pos2 - _line.StationA.Pos2;
-        var vp = new Vector2(vd.Y, -vd.X);
-        var vup = V2Normalize(vp);
-        var lineWidthHalf = vup * (_line.Width / 2f);
-        engine.geom.Line ll1 = new(_line.StationA.Pos2-lineWidthHalf, _line.StationB.Pos2-lineWidthHalf);
-        engine.geom.Line ll2 = new(_line.StationA.Pos2+lineWidthHalf, _line.StationB.Pos2+lineWidthHalf);
-
-        Vector2 v1 = new(aabb.AA.X, aabb.AA.Z);
-        Vector2 v2 = new(aabb.AA.X, aabb.BB.Z);
-        Vector2 v3 = new(aabb.BB.X, aabb.BB.Z);
-        Vector2 v4 = new(aabb.BB.X, aabb.AA.Z);
-        engine.geom.Line l1 = new(v1, v2); 
-        engine.geom.Line l2 = new(v2, v3); 
-        engine.geom.Line l3 = new(v3, v4); 
-        engine.geom.Line l4 = new(v4, v1); 
         /*
-         * Does it exactly intersect?
+         * Exactly: does the rectangle hold any of the band between the stations (KAR-484)?
+         * The line's own +-Width/2 edges crossing its border was the question before, which
+         * left the band uncarved in a neighbour the axis itself does not reach.
          */
-        if (true
-            && null == ll1.Intersect(l1) && null == ll1.Intersect(l2) && null == ll1.Intersect(l3) && null == ll1.Intersect(l4)
-            && null == ll2.Intersect(l1) && null == ll2.Intersect(l2) && null == ll2.Intersect(l3) && null == ll2.Intersect(l4)
-        )
-        {
-            return false;
-        }
-
-        return true;
+        return engine.world.IntercityCorridor.BandTouches(
+            new Vector2(aabb.AA.X, aabb.AA.Z), new Vector2(aabb.BB.X, aabb.BB.Z),
+            _line.StationA.Pos2, _line.StationB.Pos2);
     }
 
 
@@ -154,6 +133,15 @@ public class IntercityTrackElevationOperator : IOperator
         _aabb.Add(line.StationB.Position with { Y = line.Height });
         _aabb.Add(line.StationB.Position with
             { Y = engine.world.IntercityLine.VehicleHeightOf(line.Height) });
+        /*
+         * Grown by the carved band either side: the stations alone span no depth across an
+         * axis-aligned line, which rejected every neighbour fragment the band reaches into.
+         */
+        float band = engine.world.IntercityCorridor.CarveHalfWidth;
+        _aabb.Add(line.StationA.Position + new Vector3(-band, 0f, -band));
+        _aabb.Add(line.StationA.Position + new Vector3(band, 0f, band));
+        _aabb.Add(line.StationB.Position + new Vector3(-band, 0f, -band));
+        _aabb.Add(line.StationB.Position + new Vector3(band, 0f, band));
         _strKey = strKey;
         // _rnd = new builtin.tools.RandomSource(strKey);
     }

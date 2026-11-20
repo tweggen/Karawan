@@ -34,24 +34,69 @@ public static class IntercityCorridor
         Vector2 Axis, float HeightAboveTrack);
 
 
+    /** The elevation grid step: FragmentSize / GroundResolution (20 m). */
+    public static float GridStep => MetaGen.FragmentSize / MetaGen.GroundResolution;
+
     /**
-     * Half the flattened band: IntercityTrackElevationOperator flattens |distance| <= 2 x
-     * its grid step, and the grid step is FragmentSize / GroundResolution (20 m).
+     * How far either side of the station axis IntercityTrackElevationOperator flattens:
+     * three grid steps (60 m).
+     *
+     * The terrain between samples is interpolated over triangles, so a point is on flat
+     * ground only where all three corners of its triangle were flattened - at worst a cell
+     * diagonal inside the carved band. Two steps (40 m), as before, left as little as 12 m
+     * of flat floor beside the axis over the shipped lines; three leave at least 31.5 m.
      */
-    public static float HalfWidth => 2f * MetaGen.FragmentSize / MetaGen.GroundResolution;
+    public static float CarveHalfWidth => 3f * GridStep;
+
+    /**
+     * The corridor: the floor guaranteed flat whatever the line's direction - the carved
+     * band less a cell diagonal (~31.7 m either side). Beyond it is interpolated slope.
+     */
+    public static float HalfWidth => CarveHalfWidth - GridStep * MathF.Sqrt(2f);
 
     /**
      * The carving rule IntercityTrackElevationOperator applies to every elevation sample:
-     * flattened when within two grid steps of the infinite line through the stations.
+     * flattened when within CarveHalfWidth of the infinite line through the stations.
      * Shared, so the band the corridor assumes is the band the terrain gets.
      */
-    public static bool IsInCarvedBand(in Vector2 sample, in Vector2 stationA, in Vector2 stationB, float gridStep)
+    public static bool IsInCarvedBand(in Vector2 sample, in Vector2 stationA, in Vector2 stationB)
     {
         var ab = stationB - stationA;
         float length = ab.Length();
         if (length < 1e-3f) return false;
         float lateral = Vector2.Dot(sample - stationA, RightOf(ab / length));
-        return MathF.Abs(lateral) <= 2f * gridStep;
+        return MathF.Abs(lateral) <= CarveHalfWidth;
+    }
+
+
+    /**
+     * Whether a rectangle (a fragment) holds any of a line's band between its stations,
+     * i.e. whether the operator must run on it. The operator used to ask whether the line's
+     * own +-2.5 m edges crossed the rectangle's border, inside the stations' bounding box -
+     * so where the axis ran within a band's width of a fragment border the neighbour's
+     * share was never carved (179 samples on 24 shipped lines at 40 m, 429 on 39 at 60 m).
+     */
+    public static bool BandTouches(in Vector2 min, in Vector2 max, in Vector2 stationA, in Vector2 stationB)
+    {
+        var ab = stationB - stationA;
+        float length = ab.Length();
+        if (length < 1e-3f) return false;
+        var axis = ab / length;
+        var right = RightOf(axis);
+
+        float latMin = Single.MaxValue, latMax = Single.MinValue, alongMin = Single.MaxValue, alongMax = Single.MinValue;
+        foreach (var c in new[] { min, new Vector2(min.X, max.Y), max, new Vector2(max.X, min.Y) })
+        {
+            float lat = Vector2.Dot(c - stationA, right);
+            float along = Vector2.Dot(c - stationA, axis);
+            latMin = MathF.Min(latMin, lat);
+            latMax = MathF.Max(latMax, lat);
+            alongMin = MathF.Min(alongMin, along);
+            alongMax = MathF.Max(alongMax, along);
+        }
+
+        return latMin <= CarveHalfWidth && latMax >= -CarveHalfWidth
+            && alongMin <= length && alongMax >= 0f;
     }
 
 
