@@ -295,13 +295,34 @@ public class TalePopulationGenerator
             }
         }
 
-        // Pick random candidate
         if (candidates.Count == 0)
             return 0;
 
-        int idx = rnd.GetInt(candidates.Count - 1);
-        return candidates[idx];
+        /*
+         * KAR-482: weighted by what each candidate holds, so a ten storey block of flats
+         * takes ten times the residents of a one storey house. Still ONE draw of the NPC's
+         * own seed, as the uniform pick was, so each NPC stays independent of every other
+         * (a skipped index changes nobody else) and nothing drawn after this moves.
+         * Occupancy follows capacity on average; it is not a hard cap.
+         */
+        float total = 0f;
+        foreach (int id in candidates) total += _weightOf(spatialModel.GetLocation(id));
+        float pick = rnd.GetFloat() * total;
+        foreach (int id in candidates)
+        {
+            pick -= _weightOf(spatialModel.GetLocation(id));
+            if (pick < 0f) return id;
+        }
+        return candidates[^1];
     }
+
+
+    /*
+     * A junction has no capacity and weighs as one small building, so street-dwelling roles
+     * keep choosing streets at about the old rate.
+     */
+    private static float _weightOf(Location loc) =>
+        loc == null ? 0f : MathF.Max(SpatialModel.PeoplePerStorey("home"), loc.Capacity);
 
 
     private string PickRole(RandomSource rnd, float downtown)
