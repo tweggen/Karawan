@@ -39,6 +39,13 @@ public class RoutingPreferences
     public float Urgency { get; set; } = 0.0f;
 
     /// <summary>
+    /// KAR-481: how far onto the pavement this NPC walks (PedestrianRoute.WaypointFor).
+    /// Set from NpcWalkStyle wherever an NPC's routing starts, so whatever a save or a
+    /// bake holds here is overwritten; the default is the shared fixed offset.
+    /// </summary>
+    public float SidewalkOffset { get; set; } = builtin.modules.satnav.PedestrianRoute.SidewalkOffset;
+
+    /// <summary>
     /// Compute a cost multiplier for a specific lane.
     /// Values > 1.0 make the lane less desirable.
     /// </summary>

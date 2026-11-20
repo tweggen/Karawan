@@ -198,6 +198,7 @@ public class TaleEntityStrategy : AOneOfStrategy
 
         // Copy schedule's RoutingPreferences (includes role-based goal)
         _routingPreferences = schedule.RoutingPreferences;
+        _routingPreferences.SidewalkOffset = NpcWalkStyle.For(_npcId).SidewalkOffset;
 
         // Update deadline and urgency for on-time/safe routing
         if (schedule.NextEventTime.HasValue)
@@ -454,7 +455,8 @@ public class TaleEntityStrategy : AOneOfStrategy
         // Clamp to reasonable range (2s to 5min real time)
         realSeconds = Math.Clamp(realSeconds, 2f, 300f);
 
-        _stayAt.StayDurationSeconds = realSeconds;
+        // KAR-481: NPCs that arrived together must not all leave in one frame.
+        _stayAt.StayDurationSeconds = NpcWalkStyle.For(_npcId).StayDurationSeconds(realSeconds);
 
         // Detect if this is an indoor activity based on location type
         _stayAt.IsIndoorActivity = false;
@@ -645,6 +647,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         // Initialize routing preferences from the NPC's schedule (set during generation)
         var schedule = taleManager.GetSchedule(npcId);
         _routingPreferences = schedule?.RoutingPreferences ?? new RoutingPreferences();
+        _routingPreferences.SidewalkOffset = NpcWalkStyle.For(npcId).SidewalkOffset;
 
         _goTo = new GoToStrategyPart
         {
@@ -741,9 +744,13 @@ public class TaleEntityStrategy : AOneOfStrategy
             return false;
         }
 
+        /*
+         * ~4.5 km/h, each NPC at its own pace (KAR-481): at one shared speed, NPCs that
+         * left one door for one destination stayed one figure for the whole walk.
+         */
         var characterState = new CharacterState
         {
-            BasicSpeed = 4.5f / 3.6f // ~4.5 km/h walking speed
+            BasicSpeed = 4.5f / 3.6f * NpcWalkStyle.For(schedule.NpcId).SpeedFactor
         };
 
         strategy = new TaleEntityStrategy(schedule.NpcId, taleManager, cmd, pod, characterState);

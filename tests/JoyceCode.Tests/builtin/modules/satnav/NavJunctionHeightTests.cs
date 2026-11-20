@@ -292,7 +292,8 @@ public class NavJunctionHeightTests
 
         string source = File.ReadAllText(path);
 
-        Assert.Contains("PedestrianRoute.WaypointFor(lane)", source);
+        // KAR-481: with the NPC's own distance onto the pavement; the height is the lane's.
+        Assert.Contains("PedestrianRoute.WaypointAt(lane,", source);
 
         /*
          * The defect in its original form: one height for the whole route.

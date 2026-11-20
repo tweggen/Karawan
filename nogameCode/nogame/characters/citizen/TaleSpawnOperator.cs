@@ -122,8 +122,15 @@ public class TaleSpawnOperator : ISpawnOperator
         try
         {
             // The type the NPC walks with (TaleEntityStrategy), so the sample lies on its route.
+            /*
+             * With the NPC's own distance onto the pavement, so the sample lies on the
+             * line it will walk (KAR-481). Only the offset: the A* costs of its routing
+             * preferences are not this sample's business.
+             */
+            var walkStyle = NpcWalkStyle.For(schedule.NpcId);
             route = await StreetRouteBuilder.BuildAsync(fromPos, toPos, navMap, startPod,
-                schedule.PreferredTransportationType);
+                schedule.PreferredTransportationType,
+                new RoutingPreferences { SidewalkOffset = walkStyle.SidewalkOffset });
         }
         catch { return null; }
         if (route == null || route.Segments.Count < 2) return null;
@@ -131,6 +138,16 @@ public class TaleSpawnOperator : ISpawnOperator
         float t = (float)((gameTime - schedule.TransitStart).TotalSeconds
                           / (schedule.TransitEnd - schedule.TransitStart).TotalSeconds);
         t = Math.Clamp(t, 0f, 1f);
+
+        /*
+         * KAR-481: the warm-up advances every NPC at one game start time, so every NPC in
+         * transit has the same TransitStart and, on a shared route, the same t - they used
+         * to materialise as one figure. Each now stands at its own phase along the route.
+         */
+        float routeLength = 0f;
+        for (int i = 1; i < route.Segments.Count; i++)
+            routeLength += Vector3.Distance(route.Segments[i - 1].Position, route.Segments[i].Position);
+        t = NpcWalkStyle.For(schedule.NpcId).RouteFraction(t, routeLength);
 
         return _sampleRouteAt(route, t);
     }
