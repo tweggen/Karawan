@@ -32,8 +32,9 @@ public class IntercityCorridorTests
     [Fact]
     public void TheBandIsWhatTheElevationOperatorFlattens()
     {
-        // 2 x (FragmentSize / GroundResolution) = 2 x 20 m either side of the axis.
-        Assert.Equal(40f, IntercityCorridor.HalfWidth);
+        // Carved 3 x 20 m either side; flat for certain a cell diagonal less (KAR-484).
+        Assert.Equal(60f, IntercityCorridor.CarveHalfWidth);
+        Assert.Equal(60f - 20f * MathF.Sqrt(2f), IntercityCorridor.HalfWidth, 4);
         // KAR-484: the lane is the middle of the groove.
         Assert.Equal(0f, IntercityCorridor.LaneOffset);
     }
@@ -156,7 +157,7 @@ public class IntercityCorridorTests
     [Fact]
     public void TheAssistYieldsAndIsBounded()
     {
-        IntercityCorridor.TryLocate(new Vector3(2500, 103, -35), One, out var far);
+        Assert.True(IntercityCorridor.TryLocate(new Vector3(2500, 103, -25), One, out var far));
         var east = new Vector2(1, 0);
         float dt = 1f / 60f;
 
