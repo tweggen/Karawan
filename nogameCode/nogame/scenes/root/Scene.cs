@@ -48,6 +48,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<builtin.modules.Stats>() { ShallActivate = false },
         new SharedModule<nogame.modules.story.Narration>(),
         new SharedModule<nogame.quests.Taxi.TaxiNpcSpawnerModule>(),
+        new SharedModule<nogame.quests.HelloFishmonger.HelloFishmongerModule>(),
         new SharedModule<nogame.modules.tale.TaleModule>(),
         new SharedModule<builtin.controllers.InputController>(),
         new SharedModule<InputEventPipeline>(),

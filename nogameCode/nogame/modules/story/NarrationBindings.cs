@@ -100,38 +100,11 @@ public static class NarrationBindings
                 });
             });
 
-        questFactory.RegisterQuest("nogame.quests.HelloFishmonger.Quest",
+        questFactory.RegisterQuest(nogame.quests.HelloFishmonger.HelloFishmongerQuestCreator.QuestId,
             async (engine, eQuest) =>
             {
-                string targetCarName = "Fishmonger's car";
-
-                var mcp = new ModelCacheParams()
-                {
-                    Url = "car6.obj",
-                    Properties = new()
-                    {
-                        ["primarycolor"] = "#ffffff00"
-                    },
-                    Params = new()
-                    {
-                        GeomFlags = 0 | InstantiateModelParams.CENTER_X
-                                      | InstantiateModelParams.CENTER_Z
-                                      | InstantiateModelParams.ROTATE_Y180
-                                      | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
-                                      | InstantiateModelParams.BUILD_PHYSICS
-                                      | InstantiateModelParams.PHYSICS_DETECTABLE
-                                      | InstantiateModelParams.PHYSICS_TANGIBLE
-                                      | InstantiateModelParams.PHYSICS_CALLBACKS,
-                        MaxDistance = 150,
-                        SolidLayerMask = CollisionProperties.Layers.NpcVehicle,
-                        SensitiveLayerMask = CollisionProperties.Layers.AnyVehicle,
-                        Name = targetCarName
-                    }
-                };
-
-                var model = await I.Get<ModelCache>().LoadModel(mcp);
-
-                Entity eCarEntity = default;
+                var mcp = nogame.quests.HelloFishmonger.FishmongerCar.ModelParams();
+                var model = await nogame.quests.HelloFishmonger.FishmongerCar.LoadModelAsync(mcp);
 
                 await engine.TaskMainThread(() =>
                 {
@@ -157,39 +130,26 @@ public static class NarrationBindings
                     I.Get<MetaGen>().Loader.TryGetFragment(
                         Fragment.PosToIndex3(spStart.Pos3 + v3Cluster), out var worldFragment);
 
-                    eCarEntity = engine.CreateEntity(targetCarName);
-
-                    CharacterCreator.SetupCharacterMT(
-                        eCarEntity,
-                        clusterDesc, worldFragment, spStart,
-                        model, mcp,
-                        new nogame.characters.car3.Behavior()
-                        {
-                            Navigator = new StreetNavigationController()
-                            {
-                                ClusterDesc = clusterDesc,
-                                StartPoint = spStart,
-                                Seed = 100,
-                                Speed = 35f
-                            }
-                        },
-                        null
-                    );
-
-                    eCarEntity.Set(new EntityName(targetCarName));
-                    eCarEntity.Set(new Creator(Creator.CreatorId_Hardcoded));
-
-                    ref var cBehavior = ref eCarEntity.Get<Behavior>();
-                    cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
+                    var eCarEntity = nogame.quests.HelloFishmonger.FishmongerCar.CreateLT(
+                        engine, model, mcp, clusterDesc, worldFragment, spStart);
 
                     eQuest.Set(new engine.quest.components.QuestInfo
                     {
-                        QuestId = "nogame.quests.HelloFishmonger.Quest",
+                        QuestId = nogame.quests.HelloFishmonger.HelloFishmongerQuestCreator.QuestId,
                         Title = "Trail the car.",
                         ShortDescription =
                             "The car quickly is departing. Follow it to its target!",
                         LongDescription = "Isn't this a chase again?"
                     });
+
+                    /*
+                     * KAR-475: the quest is what is saved, by its creator; the car is made
+                     * again from it on load and carries no Creator of its own.
+                     */
+                    var hfModule = (nogame.quests.HelloFishmonger.HelloFishmongerModule)
+                        I.Get<ModuleFactory>().FindModule(typeof(nogame.quests.HelloFishmonger.HelloFishmongerModule), false);
+                    eQuest.Set(new engine.world.components.Creator(
+                        I.Get<engine.world.CreatorRegistry>().FindCreatorId(hfModule.QuestCreator)));
 
                     eQuest.Set(new engine.behave.components.Strategy(
                         new nogame.quests.HelloFishmonger.HelloFishmongerStrategy(eCarEntity)));

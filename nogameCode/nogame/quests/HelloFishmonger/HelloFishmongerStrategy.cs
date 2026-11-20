@@ -22,8 +22,13 @@ public class HelloFishmongerStrategy : AOneOfStrategy
     }
 
 
+    /** The car being trailed; HelloFishmongerQuestCreator saves where it drives. */
+    public Entity CarEntity { get; }
+
+
     public HelloFishmongerStrategy(Entity eCarEntity)
     {
+        CarEntity = eCarEntity;
         Strategies = new()
         {
             {
