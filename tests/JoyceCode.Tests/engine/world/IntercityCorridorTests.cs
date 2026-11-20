@@ -34,7 +34,8 @@ public class IntercityCorridorTests
     {
         // 2 x (FragmentSize / GroundResolution) = 2 x 20 m either side of the axis.
         Assert.Equal(40f, IntercityCorridor.HalfWidth);
-        Assert.Equal(20f, IntercityCorridor.LaneOffset);
+        // KAR-484: the lane is the middle of the groove.
+        Assert.Equal(0f, IntercityCorridor.LaneOffset);
     }
 
 
@@ -130,25 +131,25 @@ public class IntercityCorridorTests
 
 
     [Fact]
-    public void TheAssistSteersTowardsTheLane_AndThatLaneIsOnTheRightOfTravel()
+    public void TheAssistSteersTowardsTheMiddleOfTheGroove()
     {
-        IntercityCorridor.TryLocate(new Vector3(2500, 103, 0), One, out var onAxis);
         var east = new Vector2(1, 0);
         var west = new Vector2(-1, 0);
+        float dt = 1f / 60f;
 
-        Assert.Equal(20f, IntercityCorridor.LaneCentreOf(onAxis, east));    // right of travel: +Z
-        Assert.Equal(-20f, IntercityCorridor.LaneCentreOf(onAxis, west));
+        IntercityCorridor.TryLocate(new Vector3(2500, 103, 0), One, out var onAxis);
+        Assert.Equal(0f, IntercityCorridor.LaneCentreOf(onAxis, east));
+        Assert.Equal(0f, IntercityCorridor.LaneCentreOf(onAxis, west));
+        Assert.InRange(IntercityCorridor.AssistTurn(onAxis, east, 75f, 0f, dt), -1e-5f, 1e-5f);
+        Assert.InRange(IntercityCorridor.AssistTurn(onAxis, west, 75f, 0f, dt), -1e-5f, 1e-5f);
 
-        // On the axis, heading east: the lane is to the right, so turn right (positive).
-        Assert.True(IntercityCorridor.AssistTurn(onAxis, east, 75f, 0f, 1f / 60f) > 0f);
-        // Heading west, the lane is at -Z, which is right of west too.
-        Assert.True(IntercityCorridor.AssistTurn(onAxis, west, 75f, 0f, 1f / 60f) > 0f);
-
-        IntercityCorridor.TryLocate(new Vector3(2500, 103, 20), One, out var inLane);
-        Assert.InRange(IntercityCorridor.AssistTurn(inLane, east, 75f, 0f, 1f / 60f), -1e-5f, 1e-5f);
-
-        IntercityCorridor.TryLocate(new Vector3(2500, 103, 35), One, out var tooFarRight);
-        Assert.True(IntercityCorridor.AssistTurn(tooFarRight, east, 75f, 0f, 1f / 60f) < 0f);
+        // +Z is right of east: a ship there turns left (negative), one at -Z right.
+        IntercityCorridor.TryLocate(new Vector3(2500, 103, 20), One, out var rightOfAxis);
+        IntercityCorridor.TryLocate(new Vector3(2500, 103, -20), One, out var leftOfAxis);
+        Assert.True(IntercityCorridor.AssistTurn(rightOfAxis, east, 75f, 0f, dt) < 0f);
+        Assert.True(IntercityCorridor.AssistTurn(leftOfAxis, east, 75f, 0f, dt) > 0f);
+        // Heading west, +Z is on its left: turn right.
+        Assert.True(IntercityCorridor.AssistTurn(rightOfAxis, west, 75f, 0f, dt) > 0f);
     }
 
 
@@ -170,8 +171,8 @@ public class IntercityCorridorTests
 
 
     /**
-     * Closed loop: a ship let go hands-off in the wrong half at 75 m/s settles into its
-     * own lane and stays there, rather than oscillating out of the band.
+     * Closed loop: a ship let go hands-off 30 m off the axis at 75 m/s settles into the
+     * groove's middle and stays there, rather than oscillating out of the band.
      */
     [Fact]
     public void HandsOffTheShipSettlesIntoItsLane()
@@ -188,11 +189,11 @@ public class IntercityCorridorTests
             var right = IntercityCorridor.RightOf(front);
             front = Vector2.Normalize(front * MathF.Cos(a) + right * MathF.Sin(a));
             pos += front * speed * dt;
-            if (frame > 60 * 25) worst = MathF.Max(worst, MathF.Abs(p.Lateral - 20f));
+            if (frame > 60 * 25) worst = MathF.Max(worst, MathF.Abs(p.Lateral));
         }
 
-        _out.WriteLine($"after 25 s: lane error at most {worst:F2} m");
-        Assert.True(worst < 1.5f, $"{worst} m off the lane centre after settling");
+        _out.WriteLine($"after 25 s: off the groove's middle by at most {worst:F2} m");
+        Assert.True(worst < 1.5f, $"{worst} m off the groove's middle after settling");
         Assert.True(Vector2.Dot(front, new Vector2(1, 0)) > 0.999f);
     }
 

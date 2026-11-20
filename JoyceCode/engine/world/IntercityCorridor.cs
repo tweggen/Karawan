@@ -12,8 +12,8 @@ namespace engine.world;
  * A corridor is the band IntercityTrackElevationOperator flattens between the two stations
  * of an intercity line: everything within two elevation grid steps of the station axis is
  * set to the line's one track height, which cuts a groove through the terrain. Nothing is
- * drawn there and there are no lanes; the lane this assists is defined here - right of the
- * axis in the direction of travel.
+ * drawn there and there are no lanes; the lane this assists is defined here - the middle of
+ * the groove (LaneOffset).
  *
  * Pure arithmetic over plan positions, so it is tested without a game.
  */
@@ -40,6 +40,21 @@ public static class IntercityCorridor
      */
     public static float HalfWidth => 2f * MetaGen.FragmentSize / MetaGen.GroundResolution;
 
+    /**
+     * The carving rule IntercityTrackElevationOperator applies to every elevation sample:
+     * flattened when within two grid steps of the infinite line through the stations.
+     * Shared, so the band the corridor assumes is the band the terrain gets.
+     */
+    public static bool IsInCarvedBand(in Vector2 sample, in Vector2 stationA, in Vector2 stationB, float gridStep)
+    {
+        var ab = stationB - stationA;
+        float length = ab.Length();
+        if (length < 1e-3f) return false;
+        float lateral = Vector2.Dot(sample - stationA, RightOf(ab / length));
+        return MathF.Abs(lateral) <= 2f * gridStep;
+    }
+
+
     /** The ship counts as in the corridor up to this far above the track (it hovers ~3 m). */
     public const float MaxHeightAboveTrack = 15f;
 
@@ -52,8 +67,13 @@ public static class IntercityCorridor
     /** How fast, in factor per second, a boost runs out once the ship is out of it. */
     public const float BoostDecayPerSecond = 0.5f;
 
-    /** The lane centre: this far right of the axis in the direction of travel. */
-    public static float LaneOffset => HalfWidth / 2f;
+    /**
+     * The lane centre: this far right of the axis in the direction of travel. Zero - the
+     * middle of the groove (KAR-484): it carries no traffic and reads as one lane, and its
+     * carved flat is only about +-30 m, so the 20 m keep-right lane KAR-483 started with ran
+     * along its edge. Keep-right comes back with oncoming traffic, by setting this.
+     */
+    public const float LaneOffset = 0f;
 
     /** How fast the assist turns towards the lane, per radian off, at most MaxAssistTurnRate. */
     public const float AssistGain = 1.5f;
