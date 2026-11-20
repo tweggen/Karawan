@@ -21,6 +21,7 @@
   "nogame.modules.osd.Display": null,
   "nogame.modules.osd.Camera": null,
   "nogame.quests.Taxi.TaxiNpcSpawnerModule": null,
+  "nogame.quests.HelloFishmonger.HelloFishmongerModule": null,
   "builtin.controllers.InputMapper": {
     "comment": [
       "WP-6.4: the button bindings that used to live here as MapButtonToLogical have",
