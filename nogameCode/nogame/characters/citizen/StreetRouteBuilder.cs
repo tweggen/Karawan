@@ -196,7 +196,8 @@ public static class StreetRouteBuilder
                  */
                 route.Segments.Add(new SegmentEnd
                 {
-                    Position = builtin.modules.satnav.PedestrianRoute.WaypointFor(lane),
+                    Position = builtin.modules.satnav.PedestrianRoute.WaypointAt(lane,
+                        preferences?.SidewalkOffset ?? builtin.modules.satnav.PedestrianRoute.SidewalkOffset),
                     Up = up,
                     Right = right
                 });

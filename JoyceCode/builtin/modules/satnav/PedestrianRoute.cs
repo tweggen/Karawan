@@ -42,7 +42,15 @@ public static class PedestrianRoute
      * A lane with no kerb side - every pedestrian crossing, since a crossing is in the
      * roadway by definition - keeps the centre line.
      */
-    public static Vector3 WaypointFor(NavLane lane)
+    public static Vector3 WaypointFor(NavLane lane) => WaypointAt(lane, SidewalkOffset);
+
+
+    /**
+     * The same with a walker's own distance onto the pavement (KAR-481: TALE NPCs keep
+     * NpcWalkStyle.SidewalkOffset, so two of them on one route walk side by side rather
+     * than inside each other).
+     */
+    public static Vector3 WaypointAt(NavLane lane, float sidewalkOffset)
     {
         /*
          * The junction's own height, not the previous waypoint's and not the terrain's.
@@ -51,7 +59,7 @@ public static class PedestrianRoute
          */
         Vector3 v3End = lane.End.Position with { Y = lane.End.WalkingHeight };
 
-        return v3End + lane.KerbSide * SidewalkOffset;
+        return v3End + lane.KerbSide * sidewalkOffset;
     }
 
 
