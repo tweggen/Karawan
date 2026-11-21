@@ -506,6 +506,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\IEventLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\StoryletSelector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\DesSimulation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleSocialRules.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RelationshipTracker.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\SimMetrics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\StoryletDefinition.cs" />

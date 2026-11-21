@@ -32,6 +32,7 @@ public class DesSimulation
     /// </summary>
     private ClusterSocialState _simSocial;
     private InteractionPool _interactionPool;
+    private TaleSocialRules _rules;
     private DateTime _clock;
     private DateTime _startTime;
     private Random _rng;
@@ -93,6 +94,7 @@ public class DesSimulation
         _groupDetector = new CommunityDetector();
         _simSocial = new ClusterSocialState { NextGroupId = 100000 };
         _interactionPool = new InteractionPool();
+        _rules = new TaleSocialRules(_library, _storylets, _interactionPool, _logger, _metrics);
         _lastGroupDetectionDay = 0;
         _socialHistory = new SocialMetricsHistory();
 
@@ -266,64 +268,8 @@ public class DesSimulation
             _metrics.OnPropertyChanged(npc.NpcId, kvp.Key, kvp.Value);
 
         // 2. Select next storylet (with interrupt and escalation resolution)
-        StoryletDefinition next;
-        SelectionSource source;
-
-        // 2a. Handle forced next storylet from conditional postcondition
-        if (npc.NextForcedStorylet != null)
-        {
-            next = _library.GetById(npc.NextForcedStorylet) ?? _storylets.SelectNext(npc, _clock);
-            npc.NextForcedStorylet = null;
-            source = SelectionSource.Forced;
-        }
-        // 2b. Handle pending interrupt
-        else if (npc.ArcStack.HasPendingInterrupt)
-        {
-            var scope = npc.ArcStack.PendingInterruptScope!.Value;
-            var interruptId = npc.ArcStack.PendingInterruptStorylet!;
-            npc.ArcStack.ClearInterrupt();
-
-            if (scope == InterruptScope.Nest)
-            {
-                // Pause current storylet, switch to interrupt
-                npc.ArcStack.Push(new PausedStorylet
-                {
-                    StoryletId = previousStorylet,
-                    RemainingDurationMinutes = Math.Max(0, (float)(npc.CurrentEnd - _clock).TotalMinutes),
-                    PropertiesAtPause = new Dictionary<string, float>(npc.Properties)
-                });
-                next = _library.GetById(interruptId) ?? _storylets.SelectNext(npc, _clock);
-                source = SelectionSource.InterruptNest;
-            }
-            else if (scope == InterruptScope.Replace)
-            {
-                // Simply replace current with interrupt (don't pause)
-                next = _library.GetById(interruptId) ?? _storylets.SelectNext(npc, _clock);
-                source = SelectionSource.InterruptReplace;
-            }
-            else // Cancel
-            {
-                // Fall through to normal selection
-                next = _storylets.SelectNext(npc, _clock);
-                source = SelectionSource.Routine;
-            }
-        }
-        // 2c. Resume paused arc if no pending interrupt
-        else if (npc.ArcStack.PausedArcs.Count > 0)
-        {
-            var resumed = npc.ArcStack.TryPop()!.Value;
-            next = _library.GetById(resumed.StoryletId) ?? _storylets.SelectNext(npc, _clock);
-            _logger.LogStoryletResumed(npc.NpcId, resumed.StoryletId, day, _clock);
-            source = SelectionSource.Resumed;
-        }
-        else
-        {
-            // Normal selection
-            next = _storylets.SelectNext(npc, _clock);
-            source = SelectionSource.Routine;
-        }
-
-        _metrics.OnSelection(npc.Role, source);
+        // TaleSocialRules: forced, pending interrupt, resumed arc, else routine (KAR-486).
+        var (next, source) = _rules.SelectNext(npc, previousStorylet, _clock, day);
 
         npc.ScheduleStep++;
 
@@ -342,19 +288,8 @@ public class DesSimulation
         npc.CurrentStart = _clock + TimeSpan.FromMinutes(travelMinutes);
         npc.CurrentEnd = npc.CurrentStart + TimeSpan.FromMinutes(durationMinutes);
 
-        // 6b. Emit interaction request if postcondition specifies one
-        if (next.RequestPostcondition != null)
-        {
-            int reqLoc = destination; // Use current location
-            DateTime reqTimeout = _clock.AddMinutes(next.RequestPostcondition.TimeoutMinutes);
-            int requestId = _interactionPool.EmitRequest(
-                npc.NpcId, next.RequestPostcondition.Type, reqLoc,
-                next.RequestPostcondition.Urgency, reqTimeout, next.Id);
-            _logger.LogRequestEmitted(requestId, npc.NpcId, next.RequestPostcondition.Type,
-                reqLoc, next.RequestPostcondition.Urgency,
-                next.RequestPostcondition.TimeoutMinutes, next.Id, _clock, day);
-            _metrics.OnRequestEmitted(requestId);
-        }
+        // 6b. Emit interaction request if postcondition specifies one (TaleSocialRules)
+        _rules.EmitRequest(npc, next, destination, _clock, day);
 
         // 7. Register presence for encounter detection
         _encounters.RegisterPresence(npc.NpcId, destination, npc.CurrentStart, npc.CurrentEnd);
@@ -409,8 +344,8 @@ public class DesSimulation
         if (schedB != null) schedB.LastEncounterPartnerId = npcA;
 
         // Check for interaction requests that either NPC can claim
-        CheckAndClaimRequests(npcA, npcB, encounterTime, day);
-        CheckAndClaimRequests(npcB, npcA, encounterTime, day);
+        _rules.ClaimRequests(schedA, encounterTime, day);
+        _rules.ClaimRequests(schedB, encounterTime, day);
 
         // Determine interaction type using NPC-aware overload
         float currentTrust = _relationships.GetTrust(npcA, npcB);
@@ -461,180 +396,13 @@ public class DesSimulation
             }
         }
 
-        // Phase 5: Apply conditional postconditions and trigger escalation/interrupts
-        if (schedA != null && schedB != null)
-        {
-            // Check if A's current storylet has conditional postconditions
-            var defA = _library.GetById(schedA.CurrentStorylet);
-            if (defA?.PostconditionsIf != null)
-            {
-                string? nextA = StoryletSelector.ApplyConditionalPostconditions(defA, schedA, schedB);
-                if (nextA != null)
-                {
-                    schedA.NextForcedStorylet = nextA;
-                    _logger.LogEscalationTriggered(schedA.NpcId, defA.Id, schedB.NpcId, day, encounterTime);
-                }
-                // Trigger interrupt on B if A's storylet has high priority
-                if (defA.InterruptPriority >= 5)
-                {
-                    var defB = _library.GetById(schedB.CurrentStorylet);
-                    if (defB == null || defB.InterruptPriority < defA.InterruptPriority)
-                    {
-                        var scope = defA.InterruptPriority >= 8 ? InterruptScope.Replace : InterruptScope.Nest;
-                        schedB.ArcStack.SetInterrupt(defA.Id, scope);
-                        _logger.LogInterruptFired(schedB.NpcId, defA.Id, scope.ToString(),
-                            schedB.CurrentStorylet, day, encounterTime);
-                        _metrics.OnInterrupt(schedB.NpcId, schedB.Role);
-                    }
-                }
-            }
-
-            // Check if B's current storylet has conditional postconditions (symmetric)
-            var defB2 = _library.GetById(schedB.CurrentStorylet);
-            if (defB2?.PostconditionsIf != null)
-            {
-                string? nextB = StoryletSelector.ApplyConditionalPostconditions(defB2, schedB, schedA);
-                if (nextB != null)
-                {
-                    schedB.NextForcedStorylet = nextB;
-                    _logger.LogEscalationTriggered(schedB.NpcId, defB2.Id, schedA.NpcId, day, encounterTime);
-                }
-                // Trigger interrupt on A if B's storylet has high priority
-                if (defB2.InterruptPriority >= 5)
-                {
-                    var defA2 = _library.GetById(schedA.CurrentStorylet);
-                    if (defA2 == null || defA2.InterruptPriority < defB2.InterruptPriority)
-                    {
-                        var scope = defB2.InterruptPriority >= 8 ? InterruptScope.Replace : InterruptScope.Nest;
-                        schedA.ArcStack.SetInterrupt(defB2.Id, scope);
-                        _logger.LogInterruptFired(schedA.NpcId, defB2.Id, scope.ToString(),
-                            schedA.CurrentStorylet, day, encounterTime);
-                        _metrics.OnInterrupt(schedA.NpcId, schedA.Role);
-                    }
-                }
-            }
-        }
+        // Phase 5: conditional postconditions, escalation and interrupts (TaleSocialRules)
+        _rules.ApplyEncounterConditionals(schedA, schedB, encounterTime, day);
     }
-
-
-    private void CheckAndClaimRequests(int npcId, int otherNpcId, DateTime encounterTime, int day)
-    {
-        var npc = _npcs.GetValueOrDefault(npcId);
-        if (npc == null) return;
-
-        // Find active requests this NPC can claim
-        var activeRequests = _interactionPool.GetActiveRequests(encounterTime);
-        foreach (var request in activeRequests)
-        {
-            // Skip if already claimed
-            if (request.ClaimerId.HasValue) continue;
-
-            /*
-             * The storylets that can claim it. Several may - an authority answers a crime
-             * report by investigate_crime or investigate_complaint - and the claim picks one by
-             * weight (KAR-477), seeded by the request and the claimer so it neither depends on
-             * the order the library lists them in nor draws from the simulation's own random
-             * stream. It used to take the first, so the others never ran.
-             */
-            var matching = new List<StoryletDefinition>();
-            foreach (var candidate in _library.GetCandidates(npc.Role))
-            {
-                if (candidate.ClaimTrigger == null) continue;
-                if (candidate.ClaimTrigger.RequestType != request.Type) continue;
-                if (candidate.ClaimTrigger.RoleMatch != null &&
-                    candidate.ClaimTrigger.RoleMatch.Length > 0 &&
-                    !candidate.ClaimTrigger.RoleMatch.Contains(npc.Role.ToLowerInvariant()))
-                    continue;
-                matching.Add(candidate);
-            }
-            if (matching.Count == 0) continue;
-            var storylet = _pickClaimStorylet(matching, request.Id, npcId);
-
-            // Claim the request
-            if (_interactionPool.ClaimRequest(request.Id, npcId))
-            {
-                _logger.LogRequestClaimed(request.Id, npcId, encounterTime, day);
-                _metrics.OnRequestFulfilled(request.Id);
-
-                /*
-                 * KAR-477: the claim starts the storylet that claims it - investigating the
-                 * crime, fleeing the threat - as the trigger's interrupt scope says (nest by
-                 * default). The claim used to be recorded and signalled and the storylet
-                 * never run; claim-triggered storylets happened only because ordinary
-                 * selection picked them without any claim, which it no longer does.
-                 */
-                if (npc.ArcStack.PendingInterruptStorylet == null)
-                {
-                    var scope = _claimScopeOf(storylet.ClaimTrigger);
-                    npc.ArcStack.SetInterrupt(storylet.Id, scope);
-                    _logger.LogInterruptFired(npc.NpcId, storylet.Id, scope.ToString(),
-                        npc.CurrentStorylet, day, encounterTime);
-                    _metrics.OnInterrupt(npc.NpcId, npc.Role);
-                }
-
-                // Emit fulfillment signal for direct Tier-2 claim
-                int signalId = _interactionPool.EmitSignal(request.Id, "request_fulfilled", npcId, encounterTime);
-                _logger.LogSignalEmitted(signalId, request.Id, "request_fulfilled", npcId, encounterTime, day);
-                break; // Only claim one request per encounter
-            }
-        }
-    }
-
-
-    private static StoryletDefinition _pickClaimStorylet(List<StoryletDefinition> matching, int requestId, int npcId)
-    {
-        if (matching.Count == 1) return matching[0];
-        float total = 0f;
-        foreach (var m in matching) total += Math.Max(0f, m.Weight);
-        if (total <= 0f) return matching[0];
-        var rng = new Random(unchecked(requestId * 7919 + npcId * 104729));
-        float pick = (float)rng.NextDouble() * total;
-        foreach (var m in matching)
-        {
-            pick -= Math.Max(0f, m.Weight);
-            if (pick < 0f) return m;
-        }
-        return matching[^1];
-    }
-
-
-    private static InterruptScope _claimScopeOf(InteractionClaimTrigger trigger) =>
-        (trigger?.InterruptScope ?? "").ToLowerInvariant() switch
-        {
-            "replace" => InterruptScope.Replace,
-            "cancel" => InterruptScope.Cancel,
-            _ => InterruptScope.Nest
-        };
 
 
     private void ResolveInteractionsDaily(DateTime dayBoundary, int completedDay)
-    {
-        // Purge expired requests
-        int expiredCount = _interactionPool.PurgeExpired(dayBoundary);
-
-        // Tier 3 abstract resolution: for unclaimed requests, check if any Tier 3 NPC matches
-        var activeRequests = _interactionPool.GetActiveRequests(dayBoundary);
-        foreach (var request in activeRequests)
-        {
-            if (request.ClaimerId.HasValue) continue; // Already claimed
-
-            // Get matching request types and candidate roles
-            var requestTypeCapabilities = GetCapableRoles(request.Type);
-            var candidates = _npcs.Values
-                .Where(n => requestTypeCapabilities.Contains(n.Role.ToLowerInvariant()))
-                .ToList();
-
-            if (candidates.Any())
-            {
-                // Pick a random candidate to fulfill abstractly
-                var chosen = candidates[_rng.Next(candidates.Count)];
-                int signalId = _interactionPool.EmitSignal(request.Id, "request_fulfilled",
-                    -1, dayBoundary); // -1 = abstract/system source
-                _logger.LogSignalEmitted(signalId, request.Id, "request_fulfilled", -1, dayBoundary, completedDay);
-                _metrics.OnRequestFulfilled(request.Id);
-            }
-        }
-    }
+        => _rules.ResolveDaily(dayBoundary, completedDay, _npcs.Values, GetCapableRoles, _rng);
 
 
     private HashSet<string> GetCapableRoles(string requestType)
