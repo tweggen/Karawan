@@ -32,6 +32,14 @@ public class EncounterResolver
     public float P_Workplace = 0.04f;
     public float TimeQuantumMinutes = 15f;
 
+    /**
+     * How many co-present NPCs one CheckEncounters call rolls an encounter against; the rest
+     * are only pruned. Unlimited by default, which the DES uses, so bakes are unchanged. The
+     * live game caps it (KAR-489): with 4095 NPCs at one workplace every arrival rolled
+     * against thousands, 0.7 ms per arrival.
+     */
+    public int MaxCandidatesPerCheck = int.MaxValue;
+
     // Active presences: locationId → list of (NpcId, From, To)
     // Only contains presences that haven't ended yet relative to current time
     private readonly Dictionary<int, List<PresenceWindow>> _activeByLocation = new();
@@ -82,6 +90,7 @@ public class EncounterResolver
 
         // Scan with inline compaction: remove expired entries
         int writeIdx = 0;
+        int candidates = 0;
         for (int i = 0; i < list.Count; i++)
         {
             var presence = list[i];
@@ -96,6 +105,16 @@ public class EncounterResolver
             writeIdx++;
 
             if (presence.NpcId == npcId) continue;
+            if (candidates >= MaxCandidatesPerCheck)
+            {
+                // Nothing removed so far: the rest can stay as it is, untouched (live only).
+                if (writeIdx == i + 1)
+                {
+                    writeIdx = list.Count;
+                    break;
+                }
+                continue;
+            }
 
             // Daily pair dedup
             long pairKey = PairKey(npcId, presence.NpcId);
@@ -105,6 +124,7 @@ public class EncounterResolver
             var overlapStart = from > presence.From ? from : presence.From;
             var overlapEnd = to < presence.To ? to : presence.To;
             if (overlapStart >= overlapEnd) continue;
+            candidates++;
 
             float overlapMinutes = (float)(overlapEnd - overlapStart).TotalMinutes;
             float p = 1f - MathF.Pow(1f - pBase, overlapMinutes / TimeQuantumMinutes);

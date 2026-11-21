@@ -50,6 +50,29 @@ public class TaleSpawnOperator : ISpawnOperator
         _taleManager = taleManager
                        ?? throw new ArgumentNullException(nameof(taleManager),
                            "TaleSpawnOperator requires a TaleManager; TaleModule likely failed to activate.");
+        _taleManager.OnInterruptSet = _onInterruptSet;
+    }
+
+
+    /*
+     * TALE S2b-d: an interrupt was set on an NPC. If it has an entity, its TaleEntityStrategy
+     * hears about it through an event - the way hits and crashes arrive. Called under TALE's
+     * locks from spawn workers or the logical thread, so it only queues: the entity is looked
+     * up and the event pushed on the logical thread in a later frame. A Tier-3 NPC has no
+     * entity; the background tick steps its interrupt.
+     */
+    private void _onInterruptSet(int npcId)
+    {
+        _engine.QueueMainThreadAction(() =>
+        {
+            DefaultEcs.Entity entity;
+            lock (_lo)
+            {
+                if (!_ownership.TryGet(npcId, out entity)) return;
+            }
+            if (!entity.IsAlive) return;
+            I.Get<engine.news.EventQueue>().Push(new engine.news.Event(EntityStrategy.InterruptEventPath(entity), ""));
+        });
     }
 
 

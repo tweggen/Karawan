@@ -104,7 +104,8 @@ public class TaleManager
     {
         public readonly object Lock = new();
         public readonly InteractionPool Pool = new();
-        public readonly EncounterResolver Encounters = new();
+        /* Like RuntimeSocialEvolver.MaxPairsPerLocation: a crowded place does not roll against everyone. */
+        public readonly EncounterResolver Encounters = new() { MaxCandidatesPerCheck = 12 };
         public TaleSocialRules Rules;
         public DateTime ResolvedDay = DateTime.MinValue;
         public readonly Queue<(NpcSchedule A, NpcSchedule B, DateTime Time)> PendingEncounters = new();
@@ -112,8 +113,19 @@ public class TaleManager
 
     private readonly ConcurrentDictionary<int, LiveSocial> _liveSocial = new();
 
+    /**
+     * S2b-d: set when an interrupt is set on an NPC, with its id. The game layer
+     * (TaleSpawnOperator) tells the NPC's entity, if it has one; a Tier-3 NPC needs nothing,
+     * the background tick steps it. Called under TALE's locks, from spawn workers or the
+     * logical thread: a handler only hands off.
+     */
+    public Action<int> OnInterruptSet;
+
+
     /** Off: _advanceNpc runs no live social rules (routine selection only), for baseline measurements. */
     internal bool LiveSocialRules = true;
+
+    private TaleSocialRules _orphanRules;
 
 
     /** The cluster's live request pool, for tests and the debug panel; null when not populated. */
@@ -372,7 +384,10 @@ public class TaleManager
 
         // S2b-b: the live social state, after the warm-up, which emits no requests.
         var live = new LiveSocial();
-        live.Rules = new TaleSocialRules(_library, _selector, live.Pool, new NullEventLogger(), metrics: null);
+        live.Rules = new TaleSocialRules(_library, _selector, live.Pool, new NullEventLogger(), metrics: null)
+        {
+            InterruptSet = npc => OnInterruptSet?.Invoke(npc.NpcId)
+        };
         _liveSocial[clusterIndex] = live;
 
         _populatedClusters[clusterIndex] = 0;
@@ -1281,6 +1296,21 @@ public class TaleManager
                     next = live.Rules.SelectNext(npc, previousStorylet, gameNow, 0).Next;
                 }
             }
+            else if (runSocialRules && LiveSocialRules)
+            {
+                /*
+                 * No live state (an NPC registered outside a populated cluster): still the
+                 * shared selection order, so a pending interrupt or paused arc is honoured
+                 * (S2b-d). Without one it is routine selection, as before.
+                 */
+                _orphanRules ??= new TaleSocialRules(_library, _selector, new InteractionPool(),
+                    new NullEventLogger(), metrics: null);
+                lock (_orphanRules)
+                lock (_loSocial)
+                {
+                    next = _orphanRules.SelectNext(npc, previousStorylet, gameNow, 0).Next;
+                }
+            }
             else
             {
                 next = _selector.SelectNext(npc, gameNow);
@@ -1632,7 +1662,12 @@ public class TaleManager
             stats.SkippedMaterialised++;
             return;
         }
-        if (npc.CurrentEnd > now) return;
+        /*
+         * S2b-d: a pending interrupt counts as an ended storylet, stepped at the time it was
+         * set (not before the last step: the monotonic guard below).
+         */
+        bool interrupted = npc.ArcStack.HasPendingInterrupt;
+        if (npc.CurrentEnd > now && !interrupted) return;
         if (_advanceBackoff.TryGetValue(npcId, out var retryAt))
         {
             if (now < retryAt) return;
@@ -1641,7 +1676,7 @@ public class TaleManager
 
         stats.Advanced++;
 
-        if (now - npc.CurrentEnd > MaxCatchUpLag)
+        if (!interrupted && now - npc.CurrentEnd > MaxCatchUpLag)
         {
             // Game time jumped (a pause, a load): don't replay a day per NPC.
             stats.Resynced++;
@@ -1650,7 +1685,7 @@ public class TaleManager
         }
 
         int steps = 0;
-        while (npc.CurrentEnd <= now)
+        while (npc.CurrentEnd <= now || npc.ArcStack.HasPendingInterrupt)
         {
             if (steps == MaxCatchUpSteps)
             {
@@ -1662,6 +1697,8 @@ public class TaleManager
             // Step where the storylet ended, but strictly after the last step:
             // a short storylet with negative jitter can end before it started.
             DateTime evt = npc.CurrentEnd;
+            if (npc.ArcStack.HasPendingInterrupt && npc.ArcStack.PendingInterruptAt < evt)
+                evt = npc.ArcStack.PendingInterruptAt;
             DateTime notBefore = npc.LastAdvanceTime + TimeSpan.FromMinutes(1);
             if (evt < notBefore) evt = notBefore;
             if (evt > now) return;

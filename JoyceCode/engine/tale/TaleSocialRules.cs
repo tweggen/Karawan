@@ -40,6 +40,12 @@ public sealed class TaleSocialRules
 
     public InteractionPool Pool => _pool;
 
+    /**
+     * Called after an interrupt is set on an NPC (S2b-d): the live game tells the NPC's
+     * entity, if it has one. Runs under the driver's locks, so it must only hand off.
+     */
+    public Action<NpcSchedule>? InterruptSet;
+
 
     public TaleSocialRules(StoryletLibrary library, StoryletSelector selector, InteractionPool pool,
         IEventLogger logger, MetricsCollector? metrics)
@@ -195,10 +201,11 @@ public sealed class TaleSocialRules
                 if (npc.ArcStack.PendingInterruptStorylet == null)
                 {
                     var scope = ClaimScopeOf(storylet.ClaimTrigger);
-                    npc.ArcStack.SetInterrupt(storylet.Id, scope);
+                    npc.ArcStack.SetInterrupt(storylet.Id, scope, encounterTime);
                     _logger.LogInterruptFired(npc.NpcId, storylet.Id, scope.ToString(),
                         npc.CurrentStorylet, day, encounterTime);
                     _metrics?.OnInterrupt(npc.NpcId, npc.Role);
+                    InterruptSet?.Invoke(npc);
                 }
 
                 // Emit fulfillment signal for direct Tier-2 claim
@@ -282,10 +289,11 @@ public sealed class TaleSocialRules
                 if (defB == null || defB.InterruptPriority < defA.InterruptPriority)
                 {
                     var scope = defA.InterruptPriority >= 8 ? InterruptScope.Replace : InterruptScope.Nest;
-                    schedB.ArcStack.SetInterrupt(defA.Id, scope);
+                    schedB.ArcStack.SetInterrupt(defA.Id, scope, encounterTime);
                     _logger.LogInterruptFired(schedB.NpcId, defA.Id, scope.ToString(),
                         schedB.CurrentStorylet, day, encounterTime);
                     _metrics?.OnInterrupt(schedB.NpcId, schedB.Role);
+                    InterruptSet?.Invoke(schedB);
                 }
             }
         }
@@ -308,10 +316,11 @@ public sealed class TaleSocialRules
                 if (defA2 == null || defA2.InterruptPriority < defB2.InterruptPriority)
                 {
                     var scope = defB2.InterruptPriority >= 8 ? InterruptScope.Replace : InterruptScope.Nest;
-                    schedA.ArcStack.SetInterrupt(defB2.Id, scope);
+                    schedA.ArcStack.SetInterrupt(defB2.Id, scope, encounterTime);
                     _logger.LogInterruptFired(schedA.NpcId, defB2.Id, scope.ToString(),
                         schedA.CurrentStorylet, day, encounterTime);
                     _metrics?.OnInterrupt(schedA.NpcId, schedA.Role);
+                    InterruptSet?.Invoke(schedA);
                 }
             }
         }

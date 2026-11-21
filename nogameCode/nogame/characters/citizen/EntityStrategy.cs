@@ -36,6 +36,10 @@ public class EntityStrategy : AOneOfStrategy
     static public string HitEventPath(in DefaultEcs.Entity e) =>
         $"@{e.ToString()}/nogame.characters.citizen.onHit";
 
+    /** TALE S2b-d: the NPC's schedule has a pending interrupt (TaleEntityStrategy). */
+    static public string InterruptEventPath(in DefaultEcs.Entity e) =>
+        $"@{e.ToString()}/nogame.characters.citizen.onInterrupt";
+
     /**
      * Soft push: the player's body contacted the NPC. Subscribed by
      * walking behaviors to apply a brief lateral offset to their navigator.
