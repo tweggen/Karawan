@@ -510,6 +510,13 @@ public class ConsoleMain
         {
             Path.Combine(resourcePath, "nogame.json"),
             Path.Combine(resourcePath, "nogame.scenarios.json"),
+            /*
+             * The bake types its groups by these rules (mirrored into
+             * _CreateDefaultGroupTypeRegistry); a change must re-bake, or the scenarios keep the
+             * old types (KAR-477). Code changes to the selector or the classifier are not
+             * seen here - touch this file or a storylet to force a re-bake after one.
+             */
+            Path.Combine(resourcePath, "nogame.group-types.json"),
         };
 
         foreach (var configFile in mainConfigFiles)
@@ -626,8 +633,13 @@ public class ConsoleMain
         r.Add("trade", new engine.tale.GroupTypeDefinition
         {
             Id = "trade", DisplayName = "Trading Partnership", Priority = 80,
-            Rules = { new engine.tale.GroupClassificationRule
-                { Type = "combined_threshold", Parameters = { ["wealth_min"] = 0.5f, ["reputation_min"] = 0.5f } } }
+            Rules =
+            {
+                new engine.tale.GroupClassificationRule
+                    { Type = "trader_threshold", Parameters = { ["minimum_ratio"] = 0.4f } },
+                new engine.tale.GroupClassificationRule
+                    { Type = "combined_threshold", Parameters = { ["wealth_min"] = 0.5f } }
+            }
         });
         r.Add("social", new engine.tale.GroupTypeDefinition
         {

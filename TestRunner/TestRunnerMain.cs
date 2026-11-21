@@ -106,8 +106,13 @@ public class TestRunnerMain
         registry.Add("trade", new engine.tale.GroupTypeDefinition
         {
             Id = "trade", DisplayName = "Trading Partnership", Priority = 80,
-            Rules = { new engine.tale.GroupClassificationRule
-                { Type = "combined_threshold", Parameters = { ["wealth_min"] = 0.5f, ["reputation_min"] = 0.5f } } }
+            Rules =
+            {
+                new engine.tale.GroupClassificationRule
+                    { Type = "trader_threshold", Parameters = { ["minimum_ratio"] = 0.4f } },
+                new engine.tale.GroupClassificationRule
+                    { Type = "combined_threshold", Parameters = { ["wealth_min"] = 0.5f } }
+            }
         });
         registry.Add("social", new engine.tale.GroupTypeDefinition
         {

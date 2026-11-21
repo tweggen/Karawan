@@ -71,7 +71,7 @@ A real entry (`models/tale/worker.json`):
 | `postconditions` | String-valued entries change the NPC's own properties when the storylet completes: `"+0.1"` / `"-0.1"` add, `"=0.5"` sets (`StoryletSelector.ApplyPostconditions`). Hunger rises in the background unless the storylet changes it. |
 | `postconditions.group` | `"form"`, `"join"` or `"leave"` — a group verb, run by `GroupActions` (Phase E4). |
 | `postconditions.request` | `{ type, location, urgency, timeout_minutes, variable_key }` — emit a request into the `InteractionPool`. |
-| `claim_trigger` | `{ request_type, role_match }` — the storylet is the answer to such a request. (`interrupt_scope` is parsed but never read.) |
+| `claim_trigger` | `{ request_type, role_match, interrupt_scope }` — the storylet is the answer to such a request. It runs only when an NPC claims one (as an interrupt with `interrupt_scope`, default `nest`), never by ordinary selection (KAR-477). |
 | `postconditions_if` | Ordered branches `{ condition, then, storylet_next }`, evaluated when two NPCs meet. Keys prefixed `target_` test or change the *other* NPC; the first matching branch applies, and its `storylet_next` becomes the NPC's next storylet. |
 | `interrupt_priority` | Integer. When two NPCs meet, a storylet with priority ≥ 5 interrupts the other NPC's lower-priority storylet: priority ≥ 8 replaces it, otherwise it nests (paused, then resumed from the `ArcStack`). |
 | `conversation_script` | Narration script used when the player talks to the NPC during this storylet (Phase C2); otherwise the script is resolved by storylet id, tag, role, then `tale.generic`. |
