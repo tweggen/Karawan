@@ -91,6 +91,9 @@ public static class BehaviorBugfixTests
         failures += RunTest("S2b-d: a walking NPC is interrupted, then resumes its storylet",
             () => TestS2bd_WalkingNpcIsInterruptedAndResumes(engine));
 
+        failures += RunTest("S2b-e: refused protection -> threat -> a materialised bystander flees (shipped storylets)",
+            () => TestS2be_RefusedProtectionMakesAMaterialisedBystanderFlee(engine));
+
         Console.WriteLine($"\n=== Results: {(failures == 0 ? "ALL PASSED" : $"{failures} FAILED")} ===\n");
         return failures;
     }
@@ -107,6 +110,7 @@ public static class BehaviorBugfixTests
         catch (Exception e)
         {
             Console.WriteLine($"FAIL (exception: {e.Message})");
+            Console.WriteLine(e.StackTrace);
             return 1;
         }
     }
@@ -541,6 +545,92 @@ public static class BehaviorBugfixTests
         {
             if (entity.IsAlive) entity.Dispose();
             try { System.IO.Directory.Delete(dir, true); } catch { }
+        }
+    }
+
+
+    /// <summary>
+    /// TALE S2b-e (KAR-490) acceptance, materialised half, with the shipped storylets: a
+    /// drifter's demand_protection is refused (target fear 0.2), the refusal forces
+    /// threaten_harder, which issues a threat; a walking, materialised bystander claims it and
+    /// - through its entity's interrupt event - flees (flee_from_threat, Nest), then resumes.
+    /// The rules run directly on a pool here (no populated cluster in this harness); the
+    /// strategy and TaleManager are the shipped code paths.
+    /// </summary>
+    private static bool TestS2be_RefusedProtectionMakesAMaterialisedBystanderFlee(Engine engine)
+    {
+        var world = engine.GetEcsWorldAnyThread();
+        var entity = world.CreateEntity();
+        try
+        {
+            string talePath = System.IO.Path.Combine(GlobalSettings.Get("Engine.ResourcePath"), "tale");
+            var library = new StoryletLibrary();
+            library.LoadFromDirectory(talePath);
+            var taleManager = new TaleManager();
+            taleManager.Initialize(library, 42);
+            var rules = new TaleSocialRules(library, new StoryletSelector(library), new InteractionPool(),
+                new NullEventLogger(), null);
+
+            var drifter = _createTestSchedule(401);
+            drifter.Role = "drifter";
+            drifter.CurrentStorylet = "demand_protection";
+            drifter.Properties["wealth"] = 0.7f;
+            drifter.Properties["anger"] = 0.3f;
+            var target = _createTestSchedule(402);
+            target.Properties["fear"] = 0.2f;
+            var bystander = _createTestSchedule(403);
+            bystander.CurrentStorylet = "work_manual";
+            foreach (var npc in new[] { drifter, target, bystander }) taleManager.RegisterNpc(npc);
+            var t = new DateTime(2024, 1, 1, 10, 0, 0);
+
+            rules.ApplyEncounterConditionals(drifter, target, t, 0);
+            if (drifter.NextForcedStorylet != "threaten_harder")
+            {
+                Console.Write($"(not escalated: forced {drifter.NextForcedStorylet}) ");
+                return false;
+            }
+            var threaten = taleManager.AdvanceNpc(drifter.NpcId, t.AddMinutes(1));
+            if (threaten?.Id != "threaten_harder" || threaten.RequestPostcondition?.Type != "threat")
+            {
+                Console.Write($"(drifter runs {threaten?.Id}) ");
+                return false;
+            }
+            rules.EmitRequest(drifter, threaten, drifter.CurrentLocationId, t.AddMinutes(1), 0);
+
+            var pod = new PositionDescription { Position = new Vector3(20, 2, 20) };
+            if (!TaleEntityStrategy.TryCreate(bystander, taleManager, pod, _createTestCmd(), out var strategy))
+                return false;
+            strategy.OnAttach(engine, entity);
+            strategy.OnEnter();
+            strategy.TriggerStrategy("travel");
+
+            rules.ClaimRequests(bystander, t.AddMinutes(2), 0);
+            if (bystander.ArcStack.PendingInterruptStorylet != "flee_from_threat")
+            {
+                Console.Write($"(no claim: pending {bystander.ArcStack.PendingInterruptStorylet}) ");
+                return false;
+            }
+
+            var handler = typeof(TaleEntityStrategy).GetMethod("_onInterruptEvent",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            handler.Invoke(strategy, new object[] { new engine.news.Event("test", "") });
+            if (bystander.CurrentStorylet != "flee_from_threat" || bystander.ArcStack.PausedArcs.Count != 1)
+            {
+                Console.Write($"(after the event: {bystander.CurrentStorylet}, paused {bystander.ArcStack.PausedArcs.Count}) ");
+                return false;
+            }
+
+            strategy.GiveUpStrategy(strategy.Strategies["activity"]);
+            if (bystander.CurrentStorylet != "work_manual" || bystander.ArcStack.PausedArcs.Count != 0)
+            {
+                Console.Write($"(after the flight: {bystander.CurrentStorylet}, paused {bystander.ArcStack.PausedArcs.Count}) ");
+                return false;
+            }
+            return true;
+        }
+        finally
+        {
+            if (entity.IsAlive) entity.Dispose();
         }
     }
 

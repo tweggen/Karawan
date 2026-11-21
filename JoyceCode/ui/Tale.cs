@@ -145,6 +145,41 @@ public class Tale : APart
     }
 
 
+    /*
+     * TALE S2b-e: the cluster's open requests and the NPCs with an interrupt pending or a
+     * storylet paused. Selecting one shows it below.
+     */
+    private void _renderRequests(TaleDebugState state, TaleDebugSnapshot snap)
+    {
+        var requests = snap.OpenRequests ?? System.Array.Empty<TaleDebugRequest>();
+        if (ImGui.TreeNode($"Open requests ({requests.Count})###requests"))
+        {
+            foreach (var r in requests)
+            {
+                string claim = r.ClaimerId >= 0 ? $"claimed by {r.ClaimerId}" : "unclaimed";
+                if (ImGui.Selectable($"#{r.Id} {r.Type} from NPC {r.RequesterId} ({r.StoryletContext}) at {r.LocationId}, " +
+                                     $"{r.EmittedAt:HH:mm}-{r.Timeout:HH:mm}, {claim}###r{r.Id}",
+                        state.RequestedNpcId == r.RequesterId))
+                    _requestNpc(state, r.ClaimerId >= 0 ? r.ClaimerId : r.RequesterId);
+            }
+            ImGui.TreePop();
+        }
+
+        var interruptions = snap.Interruptions ?? System.Array.Empty<TaleDebugInterruption>();
+        if (ImGui.TreeNode($"Interruptions ({interruptions.Count} NPCs)###interruptions"))
+        {
+            foreach (var i in interruptions)
+            {
+                string pending = i.PendingInterrupt != null ? $"pending {i.PendingInterrupt}" : "running";
+                if (ImGui.Selectable($"NPC {i.NpcId} {i.Role}: {i.CurrentStorylet}, {pending}, " +
+                                     $"{i.PausedCount} paused###i{i.NpcId}", state.RequestedNpcId == i.NpcId))
+                    _requestNpc(state, i.NpcId);
+            }
+            ImGui.TreePop();
+        }
+    }
+
+
     private void _renderStanding(TaleDebugState state, TaleDebugSnapshot snap)
     {
         if (!ImGui.TreeNode($"Player standing ({snap.PlayerStanding.Count} NPCs)###standing")) return;
@@ -184,6 +219,10 @@ public class Tale : APart
         ImGui.Text($"NPC {npc.NpcId} (cluster {npc.ClusterIndex}), {npc.Role}");
         ImGui.Text($"Storylet {npc.CurrentStorylet} {npc.CurrentStart:HH:mm}-{npc.CurrentEnd:HH:mm}" +
                    (npc.NextForcedStorylet != null ? $", next forced {npc.NextForcedStorylet}" : ""));
+        if (npc.PendingInterrupt != null)
+            ImGui.Text($"Interrupt pending: {npc.PendingInterrupt} ({npc.PendingInterruptScope}) since {npc.PendingInterruptAt:HH:mm}");
+        if (npc.PausedStorylets is { Count: > 0 } paused)
+            ImGui.Text($"Paused: {string.Join(" < ", paused)}");
         ImGui.Text($"At {npc.CurrentLocationId} ({npc.CurrentLocationType ?? "?"})" +
                    (npc.IsInTransit ? $", in transit to {npc.TransitToLocationId}" : "") +
                    $"; home {npc.HomeLocationId}, work {npc.WorkplaceLocationId}");
@@ -235,6 +274,7 @@ public class Tale : APart
         _renderMetrics(snap);
         _renderGroups(state, snap);
         _renderMatrix(snap);
+        _renderRequests(state, snap);
         _renderStanding(state, snap);
         _renderSelected(state, snap);
     }
