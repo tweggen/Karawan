@@ -89,6 +89,37 @@ public class TaleManager
     private readonly Dictionary<int, ClusterSocialState> _socialStates = new();
     private readonly object _loSocial = new();
 
+
+    /*
+     * TALE S2b-b (KAR-487): what a populated cluster needs to run requests, claims and
+     * interrupts live - its request pool, its arrival encounter model and the shared rules
+     * over them. Created when the cluster is populated, dropped when it is depopulated, never
+     * saved: requests live minutes.
+     *
+     * Lock is taken around every use; _advanceNpc runs on spawn workers and on the logical
+     * thread. Lock order: Lock first, then _loSocial - never the other way round. _loSocial
+     * guards every ArcStack write, the partner's included.
+     */
+    private sealed class LiveSocial
+    {
+        public readonly object Lock = new();
+        public readonly InteractionPool Pool = new();
+        public readonly EncounterResolver Encounters = new();
+        public TaleSocialRules Rules;
+        public DateTime HousekeptDay = DateTime.MinValue;
+    }
+
+    private readonly ConcurrentDictionary<int, LiveSocial> _liveSocial = new();
+
+
+    /** The cluster's live request pool, for tests and the debug panel; null when not populated. */
+    internal InteractionPool GetRequestPool(int clusterIndex) =>
+        _liveSocial.TryGetValue(clusterIndex, out var live) ? live.Pool : null;
+
+    /** The cluster's live encounter model, for tests (they set its probabilities); null when not populated. */
+    internal EncounterResolver GetLiveEncounters(int clusterIndex) =>
+        _liveSocial.TryGetValue(clusterIndex, out var live) ? live.Encounters : null;
+
     /// <summary>
     /// What the scenario bake did to each cluster at its last populate (S0 W6).
     /// Guarded by _loSocial.
@@ -200,7 +231,7 @@ public class TaleManager
             int offsetMinutes = offsetRng.GetInt(91) - 45; // ±45 minutes: 0-90 becomes -45 to 45
             DateTime npcTime = gameStartTime.AddMinutes(offsetMinutes);
 
-            _advanceNpc(schedule.NpcId, npcTime, applyGroupVerbs: false);
+            _advanceNpc(schedule.NpcId, npcTime, applyGroupVerbs: false, runSocialRules: false);
             Trace(_dc, $"Warm-up step 1 of 2 for NPC {schedule.NpcId} at {npcTime:HH:mm} " +
                   $"(offset {offsetMinutes:+0;-0} min), now at location {schedule.CurrentLocationId}");
         }
@@ -208,7 +239,7 @@ public class TaleManager
         // Final advance to actual game start time so all transit phases align with spawn time
         foreach (var schedule in schedules)
         {
-            _advanceNpc(schedule.NpcId, gameStartTime, applyGroupVerbs: false);
+            _advanceNpc(schedule.NpcId, gameStartTime, applyGroupVerbs: false, runSocialRules: false);
         }
 
         // TALE-SOCIAL Phase D3: re-attach a baked scenario's groups, trust edges
@@ -335,6 +366,11 @@ public class TaleManager
                   $"worldPos={s.CurrentWorldPosition} homeLoc={s.HomeLocationId} inTransit={s.IsInTransit}");
         }
 
+        // S2b-b: the live social state, after the warm-up, which emits no requests.
+        var live = new LiveSocial();
+        live.Rules = new TaleSocialRules(_library, _selector, live.Pool, new NullEventLogger(), metrics: null);
+        _liveSocial[clusterIndex] = live;
+
         _populatedClusters[clusterIndex] = 0;
 
         // S0 W9: what the player meets in this cluster.
@@ -420,6 +456,7 @@ public class TaleManager
 
         _populatedClusters.TryRemove(clusterIndex, out _);
         _spatialModels.TryRemove(clusterIndex, out _);
+        _liveSocial.TryRemove(clusterIndex, out _);
     }
 
 
@@ -1198,7 +1235,8 @@ public class TaleManager
         => _advanceNpc(npcId, gameNow, applyGroupVerbs: true);
 
 
-    private StoryletDefinition _advanceNpc(int npcId, DateTime gameNow, bool applyGroupVerbs)
+    private StoryletDefinition _advanceNpc(int npcId, DateTime gameNow, bool applyGroupVerbs,
+        bool runSocialRules = true)
     {
         if (!_schedules.TryGetValue(npcId, out var npc)) return null;
 
@@ -1220,11 +1258,29 @@ public class TaleManager
                 _applyGroupVerb(npc, prevDef.GroupAction, gameNow);
         }
 
-        // Select next storylet
+        /*
+         * Select the next storylet. In a populated cluster through the shared rules
+         * (S2b-b): a forced storylet, then a pending interrupt, then a paused arc, then
+         * routine. The populate warm-up and clusters without live state select routine only.
+         */
+        LiveSocial live = null;
+        if (runSocialRules) _liveSocial.TryGetValue(npc.ClusterIndex, out live);
+
         StoryletDefinition next;
         try
         {
-            next = _selector.SelectNext(npc, gameNow);
+            if (live != null)
+            {
+                lock (live.Lock)
+                lock (_loSocial)
+                {
+                    next = live.Rules.SelectNext(npc, previousStorylet, gameNow, 0).Next;
+                }
+            }
+            else
+            {
+                next = _selector.SelectNext(npc, gameNow);
+            }
         }
         catch (InvalidOperationException ex)
         {
@@ -1293,7 +1349,60 @@ public class TaleManager
                 npc.CurrentWorldPosition = loc.EntryPositionFor(npc.NpcId);
         }
 
+        if (live != null)
+        {
+            _runArrival(live, npc, next, destination, gameNow, spatialModel);
+        }
+
         return next;
+    }
+
+
+    /*
+     * S2b-b: what happens when an NPC arrives, as in the DES's node arrival: the request its
+     * new storylet emits, its presence at the destination, and the encounters it has there -
+     * by the DES's encounter model (probability by location type and overlap, daily pair
+     * dedup), with claims in both directions. The partner may be the claimer: a threatener
+     * arrives and emits, the target already standing there claims it and flees.
+     */
+    private void _runArrival(LiveSocial live, NpcSchedule npc, StoryletDefinition next, int destination,
+        DateTime gameNow, SpatialModel spatialModel)
+    {
+        string locationType = spatialModel?.GetLocation(destination)?.Type ?? "street_segment";
+
+        // Per NPC and step, so the outcome does not depend on what other NPCs do.
+        var rng = new Random(unchecked(npc.NpcId * 7919 + npc.ScheduleStep * 104729));
+
+        lock (live.Lock)
+        {
+            /*
+             * Light housekeeping once a game day, until S2b-c moves purge and day resolution
+             * into the social frame: expired requests and stale presence windows would
+             * otherwise grow for the whole session.
+             */
+            if (gameNow.Date != live.HousekeptDay)
+            {
+                live.HousekeptDay = gameNow.Date;
+                live.Pool.PurgeExpired(gameNow);
+                live.Encounters.ClearDailyDedup();
+                live.Encounters.ClearBefore(gameNow.AddHours(-2));
+            }
+
+            live.Rules.EmitRequest(npc, next, destination, gameNow, 0);
+            live.Encounters.RegisterPresence(npc.NpcId, destination, npc.CurrentStart, npc.CurrentEnd);
+
+            var encounters = live.Encounters.CheckEncounters(
+                npc.NpcId, destination, npc.CurrentStart, npc.CurrentEnd, locationType, rng);
+            foreach (var (otherId, time) in encounters)
+            {
+                if (!_schedules.TryGetValue(otherId, out var partner)) continue;
+                lock (_loSocial)
+                {
+                    live.Rules.ClaimRequests(npc, time, 0);
+                    live.Rules.ClaimRequests(partner, time, 0);
+                }
+            }
+        }
     }
 
     
