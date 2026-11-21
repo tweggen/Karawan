@@ -222,6 +222,95 @@ public class LiveRequestClaimTests
 
 
     [Fact]
+    public void TheBackgroundTickAppliesATier3InterruptAtItsTimeAndLaterResumes()
+    {
+        var tm = _populated();
+        var raised = new List<int>();
+        tm.OnInterruptSet = id => raised.Add(id);
+        var thug = tm.GetSchedule(Id(0));
+        var bystander = tm.GetSchedule(Id(1));
+        tm.GetSchedule(Id(2)).CurrentLocationId = -1;
+        DateTime t = T0.AddHours(11);
+
+        tm.AdvanceNpc(bystander.NpcId, t);                 // loiters for 600 minutes
+        DateTime loiterEnd = bystander.CurrentEnd;
+        tm.AdvanceNpc(thug.NpcId, t.AddMinutes(10));        // threatens; the bystander claims
+        Assert.Equal("flee", bystander.ArcStack.PendingInterruptStorylet);
+        Assert.Equal(new[] { bystander.NpcId }, raised);
+        DateTime at = bystander.ArcStack.PendingInterruptAt;
+        Assert.True(at >= t && at <= t.AddMinutes(15), $"interrupt set at {at}");   // the threat starts at +10 ±5 min
+
+        // The next background tick steps it at the interrupt's time, long before loitering ends.
+        tm.AdvanceAbstractSchedules(t.AddMinutes(16), int.MaxValue, int.MaxValue);
+        Assert.Equal("flee", bystander.CurrentStorylet);
+        Assert.False(bystander.ArcStack.HasPendingInterrupt);
+        Assert.Equal(at, bystander.LastAdvanceTime);
+        Assert.Single(bystander.ArcStack.PausedArcs);
+        Assert.True(bystander.CurrentEnd < loiterEnd);
+
+        // When the 20-minute flight ends, the loitering resumes.
+        tm.AdvanceAbstractSchedules(t.AddMinutes(50), int.MaxValue, int.MaxValue);
+        Assert.Equal("loiter", bystander.CurrentStorylet);
+        Assert.Empty(bystander.ArcStack.PausedArcs);
+    }
+
+
+    [Fact]
+    public void AnNpcOutsideAPopulatedClusterStillHonoursAPendingInterrupt()
+    {
+        var tm = _populated();
+        var stray = new NpcSchedule
+        {
+            NpcId = NpcSchedule.MakeNpcId(99, 0), NpcIndex = 0, ClusterIndex = 99, Seed = 5, Role = "bystander",
+            CurrentStorylet = "loiter", CurrentLocationId = -1,
+            Properties = new Dictionary<string, float>(), Trust = new Dictionary<int, float>(),
+        };
+        tm.RegisterNpc(stray);
+        stray.ArcStack.SetInterrupt("flee", InterruptScope.Nest, T0);
+        Assert.Equal("flee", tm.AdvanceNpc(stray.NpcId, T0).Id);
+    }
+
+
+    /** The materialised side (TaleEntityStrategy) lives in nogame; its guards are pinned by source. */
+    [Fact]
+    public void AMaterialisedNpcIsNotInterruptedInAConversationWithThePlayer()
+    {
+        string root = Path.GetFullPath(Path.Combine(global::engine.GameRoot.PathTo("JoyceCode"), ".."));
+        string src = File.ReadAllText(Path.Combine(root, "nogameCode/nogame/characters/citizen/TaleEntityStrategy.cs"));
+        Assert.Contains("TaleNarrationBindings.Session?.NpcId == _npcId", src);
+
+        int handler = src.IndexOf("private void _onInterruptEvent(", StringComparison.Ordinal);
+        Assert.True(handler > 0);
+        string body = src.Substring(handler, src.IndexOf("_advanceAndTravel();", handler, StringComparison.Ordinal) - handler);
+        Assert.Contains("if (_inPlayerConversation()) return;", body);
+        Assert.Contains("if (_isTier2) return;", body);
+        Assert.Contains("Strategies[\"flee\"]", body);
+
+        // The flee/recover return path takes a pending interrupt, with the same guards.
+        Assert.Contains("if (_hasPendingInterrupt() && !_isTier2 && !_inPlayerConversation())", src);
+        Assert.Contains("sm.Subscribe(EntityStrategy.InterruptEventPath(_entity), _onInterruptEvent);", src);
+        Assert.Contains("sm.Unsubscribe(EntityStrategy.InterruptEventPath(_entity), _onInterruptEvent);", src);
+    }
+
+
+    [Theory]
+    [InlineData(int.MaxValue, 9)]
+    [InlineData(2, 2)]
+    public void ACrowdedPlaceRollsAgainstAtMostTheCappedNumberOfNpcs(int cap, int expected)
+    {
+        var resolver = new EncounterResolver { P_Venue = 1f, MaxCandidatesPerCheck = cap };
+        for (int i = 1; i <= 9; i++) resolver.RegisterPresence(i, 7, T0, T0.AddHours(1));
+        resolver.RegisterPresence(0, 7, T0, T0.AddHours(1));
+        var met = resolver.CheckEncounters(0, 7, T0, T0.AddHours(1), "social_venue", new Random(1));
+        Assert.Equal(expected, met.Count);
+
+        // The capped scan leaves everyone registered: the next arrival still sees them all.
+        var again = resolver.CheckEncounters(42, 7, T0, T0.AddHours(1), "social_venue", new Random(2));
+        Assert.Equal(Math.Min(cap, 10), again.Count);
+    }
+
+
+    [Fact]
     public void DepopulatingDropsTheLiveState()
     {
         var tm = _populated();

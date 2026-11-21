@@ -141,7 +141,18 @@ populate warm-up) and claims on arrival in both directions. Since S2b-c (KAR-488
 tick lets happen (`RuntimeSocialEvolver.TickEncounters`) is queued and run a few per frame by
 `TaleManager.TickLiveSocial`: claims both ways, conditional postconditions (escalation) and the
 interrupts they bring. The same call purges expired requests every frame and resolves the day at
-midnight. Materialised NPCs obey interrupts from S2b-d.
+midnight.
+
+Since S2b-d (KAR-489) interrupts reach running NPCs:
+- **Tier 3:** the background tick treats a pending interrupt as an ended storylet and steps it at
+  the time it was set (`ArcStack.PendingInterruptAt`), not before the last step.
+- **Materialised:** `TaleManager.OnInterruptSet` → `TaleSpawnOperator` queues, on the logical
+  thread, an `EntityStrategy.InterruptEventPath` event on the NPC's entity; `TaleEntityStrategy`
+  ends the walk or stay and advances, which runs the interrupt. It waits while the NPC flees or
+  recovers (their return path takes it), in Tier 2 (`ExitTier2Mode` takes it) and while the NPC is
+  in a conversation with the player (`TaleNarrationBindings.Session`; the stay's end takes it).
+  A route that comes back for a superseded travel is dropped.
+- An NPC registered outside a populated cluster still selects in the shared order.
 
 ## 5. Interaction pool (DES; live per cluster since S2b-b)
 

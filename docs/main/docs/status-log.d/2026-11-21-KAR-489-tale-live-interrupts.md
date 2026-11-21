@@ -1,0 +1,27 @@
+### 2026-11-21 — KAR-489 (TALE S2b-d): interrupts reach running NPCs
+
+- **Tier 3:**
+  - `ArcStack.SetInterrupt` records when an interrupt was set (`PendingInterruptAt`); the shared rules pass the encounter time.
+  - The background tick (`_catchUpNpc`) treats a pending interrupt as an ended storylet and steps it at that time, held to the monotonic guard.
+  - A Nest pauses the current storylet with its remaining time; the paused storylet resumes once the interrupt ends, with a fresh duration, as in the DES.
+- **Materialised:**
+  - `TaleSocialRules.InterruptSet` → `TaleManager.OnInterruptSet(npcId)`. `TaleSpawnOperator` registers that callback; it queues a main-thread action, which resolves the entity (`_ownership`) and pushes `EntityStrategy.InterruptEventPath`.
+  - `TaleEntityStrategy` subscribes in OnEnter, unsubscribes in OnExit; on the event it ends the walk or stay and advances.
+  - **Defined cases:**
+    - flee/recover go first, and their return path takes the interrupt;
+    - Tier 2 waits for `ExitTier2Mode`;
+    - a conversation with the player (`TaleNarrationBindings.Session?.NpcId`) waits for the stay to end;
+    - a route that arrives for a superseded travel is dropped (travel generation).
+- An NPC outside a populated cluster now also selects in the shared order (forced → interrupt → paused → routine). Without any of those it is routine selection, as before.
+- **Fixed on the way, a KAR-487 regression:** each live arrival rolled an encounter against every NPC present. With 4095 NPCs at one workplace that cost 0.7 ms per arrival: `BackgroundTickTests`' toy Perf theory had not finished after 25 minutes; 240 game minutes took 7.1 s against 0.03 s without live rules.
+  - `EncounterResolver.MaxCandidatesPerCheck` caps how many co-present NPCs one arrival rolls against. It is unlimited by default (the DES); the live game uses 12, like `RuntimeSocialEvolver.MaxPairsPerLocation`. The scan also stops early once capped, if nothing has been pruned so far.
+  - Result: 0.16 s for those 240 minutes; the full Perf theory runs in 94 s (slice mean 0.035 ms). Ufyo is unchanged (slice mean 0.19 ms, TickEncounters p99 2.0 ms). The live claim rate went from 87 % to 90 % (DES 89 %).
+- **Not changed:** the DES. The interrupt time is recorded but unused there, and all 13 scenarios re-baked byte-identical after the last change (the DES keeps an uncapped encounter model).
+- **Tests:**
+  - xUnit `LiveRequestClaimTests` (+3):
+    - a Tier-3 Nest is applied by the next background tick exactly at its time, and the loitering resumes after the flight;
+    - an NPC outside a populated cluster honours a pending interrupt;
+    - the materialised guards are pinned by source scan;
+    - a crowded place rolls against at most the cap, and a capped scan leaves every presence registered.
+  - xUnit 2302 pass; the 26 failures are the known KAR-461 drift. TALE 133/133.
+  - TestRunner (`./run_tests.sh bugfix`, not part of `all`): a walking NPC is interrupted, runs the interrupt as a Nest, and resumes its storylet when the stay ends. All 8 entity tests pass.

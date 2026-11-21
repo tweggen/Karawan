@@ -88,6 +88,9 @@ public static class BehaviorBugfixTests
         failures += RunTest("BugB: RecoverBehavior resets death animation flag on reattach",
             () => TestBugB_RecoverBehaviorResetsDeathAnimFlag());
 
+        failures += RunTest("S2b-d: a walking NPC is interrupted, then resumes its storylet",
+            () => TestS2bd_WalkingNpcIsInterruptedAndResumes(engine));
+
         Console.WriteLine($"\n=== Results: {(failures == 0 ? "ALL PASSED" : $"{failures} FAILED")} ===\n");
         return failures;
     }
@@ -463,6 +466,84 @@ public static class BehaviorBugfixTests
             if (entity.IsAlive) entity.Dispose();
         }
     }
+
+    /// <summary>
+    /// TALE S2b-d (KAR-489): an interrupt reaches a materialised NPC as an event on its
+    /// entity. Mid-walk, the NPC drops the walk and runs the interrupt (a Nest pauses its
+    /// storylet); when the interrupt's stay ends, the paused storylet resumes.
+    /// The handler is invoked directly: the event queue is not pumped in this harness.
+    /// </summary>
+    private static bool TestS2bd_WalkingNpcIsInterruptedAndResumes(Engine engine)
+    {
+        var world = engine.GetEcsWorldAnyThread();
+        var entity = world.CreateEntity();
+        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tale-s2bd-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            System.IO.Directory.CreateDirectory(dir);
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "s2bd.json"), """
+            [
+              { "id": "errand_test", "roles": ["worker"], "duration_minutes": 240, "location": "current" },
+              { "id": "flee_test", "roles": ["nobody"], "duration_minutes": 20, "location": "current" },
+              { "id": "wander", "roles": ["fallback_only"], "duration_minutes": 30, "location": "current", "tags": ["fallback"] },
+              { "id": "rest", "roles": ["fallback_only"], "duration_minutes": 60, "location": "current", "tags": ["fallback"] }
+            ]
+            """);
+            var library = new StoryletLibrary();
+            library.LoadFromDirectory(dir);
+
+            var taleManager = new TaleManager();
+            taleManager.Initialize(library, 42);
+            var schedule = _createTestSchedule(300);
+            schedule.CurrentStorylet = "errand_test";
+            taleManager.RegisterNpc(schedule);
+
+            var pod = new PositionDescription { Position = new Vector3(20, 2, 20) };
+            if (!TaleEntityStrategy.TryCreate(schedule, taleManager, pod, _createTestCmd(), out var strategy))
+                return false;
+            strategy.OnAttach(engine, entity);
+            strategy.OnEnter();
+
+            strategy.TriggerStrategy("travel");
+            if (strategy.GetActiveStrategy() != strategy.Strategies["travel"])
+            {
+                Console.Write("(setup: not walking) ");
+                return false;
+            }
+
+            schedule.ArcStack.SetInterrupt("flee_test", InterruptScope.Nest, schedule.CurrentStart);
+            var handler = typeof(TaleEntityStrategy).GetMethod("_onInterruptEvent",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            handler.Invoke(strategy, new object[] { new engine.news.Event("test", "") });
+
+            if (schedule.CurrentStorylet != "flee_test" || schedule.ArcStack.PausedArcs.Count != 1
+                || schedule.ArcStack.HasPendingInterrupt)
+            {
+                Console.Write($"(after the event: storylet {schedule.CurrentStorylet}, paused {schedule.ArcStack.PausedArcs.Count}) ");
+                return false;
+            }
+            if (strategy.GetActiveStrategy() != strategy.Strategies["activity"])
+            {
+                Console.Write("(the walk did not end) ");
+                return false;
+            }
+
+            // The interrupt's stay ends: the paused errand resumes.
+            strategy.GiveUpStrategy(strategy.Strategies["activity"]);
+            if (schedule.CurrentStorylet != "errand_test" || schedule.ArcStack.PausedArcs.Count != 0)
+            {
+                Console.Write($"(after the stay: storylet {schedule.CurrentStorylet}, paused {schedule.ArcStack.PausedArcs.Count}) ");
+                return false;
+            }
+            return true;
+        }
+        finally
+        {
+            if (entity.IsAlive) entity.Dispose();
+            try { System.IO.Directory.Delete(dir, true); } catch { }
+        }
+    }
+
 
     /// <summary>
     /// Bug B secondary: RecoverBehavior._deathAnimationTriggered must reset on OnAttach.

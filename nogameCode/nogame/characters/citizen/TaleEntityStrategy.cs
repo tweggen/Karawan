@@ -47,6 +47,9 @@ public class TaleEntityStrategy : AOneOfStrategy
     /// </summary>
     private string _preInterruptStrategyName = null;
 
+    /** Incremented per travel; a route that comes back for an older travel is dropped (S2b-d). */
+    private int _travelGeneration;
+
     /// <summary>
     /// Seconds of real time per game day. Used to convert game-time
     /// storylet durations to real-time StayAt durations.
@@ -95,6 +98,34 @@ public class TaleEntityStrategy : AOneOfStrategy
     }
 
 
+    /*
+     * TALE S2b-d: the schedule has a pending interrupt - a claim, an escalation. Applied by
+     * ending the current walk or stay and advancing, which runs the interrupt (a Nest pauses
+     * the current storylet; the schedule resumes it later). Not now:
+     *   - while fleeing or recovering: their return path takes it (GiveUpStrategy);
+     *   - in Tier 2: ExitTier2Mode takes it;
+     *   - while in a conversation with the player: the stay's own end takes it.
+     */
+    private void _onInterruptEvent(Event ev)
+    {
+        if (!_hasPendingInterrupt()) return;
+        if (_isTier2) return;
+        var active = GetActiveStrategy();
+        if (active == Strategies["flee"] || active == Strategies["recover"]) return;
+        if (_inPlayerConversation()) return;
+        Trace(_dc, $"NPC {_npcId} interrupted, advancing to the interrupt");
+        _advanceAndTravel();
+    }
+
+
+    private bool _hasPendingInterrupt() =>
+        _taleManager.GetSchedule(_npcId)?.ArcStack.HasPendingInterrupt ?? false;
+
+
+    private bool _inPlayerConversation() =>
+        nogame.modules.tale.TaleNarrationBindings.Session?.NpcId == _npcId;
+
+
     private void _capturePreInterruptStrategy()
     {
         var active = GetActiveStrategy();
@@ -135,7 +166,13 @@ public class TaleEntityStrategy : AOneOfStrategy
             string prior = _preInterruptStrategyName;
             _preInterruptStrategyName = null;
 
-            if (prior == "travel")
+            if (_hasPendingInterrupt() && !_isTier2 && !_inPlayerConversation())
+            {
+                // S2b-d: an interrupt that arrived during flee/recover runs now.
+                Trace(_dc, $"NPC {_npcId} flee/recover complete, taking the pending interrupt");
+                _advanceAndTravel();
+            }
+            else if (prior == "travel")
             {
                 Trace(_dc, $"NPC {_npcId} flee/recover complete, resuming travel");
                 _resumeTravel();
@@ -172,7 +209,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         // Advance only if the storylet has ended: the schedule may have moved
         // on meanwhile (S0 W5 background tick), and must not advance twice.
         var schedule = _taleManager.GetSchedule(_npcId);
-        if (schedule == null || _getGameNow() >= schedule.CurrentEnd)
+        if (schedule == null || _getGameNow() >= schedule.CurrentEnd || schedule.ArcStack.HasPendingInterrupt)
             _advanceAndTravel();
         else
             _resumeTravel();
@@ -346,6 +383,8 @@ public class TaleEntityStrategy : AOneOfStrategy
     /// </summary>
     private async System.Threading.Tasks.Task _travelToCurrentDestination(DateTime gameNow)
     {
+        // S2b-d: an interrupt can start a new travel while this one awaits its route.
+        int generation = System.Threading.Interlocked.Increment(ref _travelGeneration);
         var schedule = _taleManager.GetSchedule(_npcId);
         if (schedule == null) return;
 
@@ -412,6 +451,11 @@ public class TaleEntityStrategy : AOneOfStrategy
          * Past the await above: thread pool thread, and the NPC may have been
          * depopulated meanwhile. See SpawnInTravel for the full reasoning.
          */
+        if (generation != System.Threading.Volatile.Read(ref _travelGeneration))
+        {
+            Trace(_dc, $"NPC {_npcId} route arrived for a superseded travel, dropped");
+            return;
+        }
 
         if (route == null && distToDestination > 10f)
         {
@@ -610,6 +654,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         var sm = I.Get<SubscriptionManager>();
         sm.Unsubscribe(EntityStrategy.CrashEventPath(_entity), _onCrashEvent);
         sm.Unsubscribe(EntityStrategy.HitEventPath(_entity), _onHitEvent);
+        sm.Unsubscribe(EntityStrategy.InterruptEventPath(_entity), _onInterruptEvent);
         base.OnExit();
     }
 
@@ -625,6 +670,7 @@ public class TaleEntityStrategy : AOneOfStrategy
         var sm = I.Get<SubscriptionManager>();
         sm.Subscribe(EntityStrategy.CrashEventPath(_entity), _onCrashEvent);
         sm.Subscribe(EntityStrategy.HitEventPath(_entity), _onHitEvent);
+        sm.Subscribe(EntityStrategy.InterruptEventPath(_entity), _onInterruptEvent);
     }
 
     #endregion

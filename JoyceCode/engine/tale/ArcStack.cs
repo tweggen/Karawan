@@ -33,16 +33,21 @@ public class ArcStack
 
     public bool HasPendingInterrupt => PendingInterruptStorylet != null;
 
-    public void SetInterrupt(string storyletId, InterruptScope scope)
+    /** When the pending interrupt was set (game time); the live background tick steps it then (S2b-d). */
+    public DateTime PendingInterruptAt;
+
+    public void SetInterrupt(string storyletId, InterruptScope scope, DateTime at = default)
     {
         PendingInterruptStorylet = storyletId;
         PendingInterruptScope = scope;
+        PendingInterruptAt = at;
     }
 
     public void ClearInterrupt()
     {
         PendingInterruptStorylet = null;
         PendingInterruptScope = null;
+        PendingInterruptAt = default;
     }
 
     public void Push(PausedStorylet s) => PausedArcs.Push(s);
