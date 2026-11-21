@@ -200,6 +200,8 @@ one diffusion function).
 
 ## S2b — Requests, escalation and interrupts in the live game
 
+> Stage plan: [TALE-S2B-LIVE-ESCALATION.md](TALE-S2B-LIVE-ESCALATION.md) (KAR-440, reviewed GREEN 2026-11-21).
+
 Requests and claims, conditional postconditions (`postconditions_if`,
 `target_…`) and interrupts run only in `DesSimulation` (`:373-545`,
 `ApplyConditionalPostconditions` called only at `:432,457`). The live
