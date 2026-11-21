@@ -25,6 +25,17 @@ public sealed record TaleDebugGroup(
 public sealed record TaleDebugPlayerTrust(int NpcId, string Role, int GroupId, float Trust);
 
 
+/// <summary>An open request in the cluster's live pool (TALE S2b-e). ClaimerId -1: unclaimed.</summary>
+public sealed record TaleDebugRequest(
+    int Id, string Type, int RequesterId, string StoryletContext, int LocationId,
+    float Urgency, DateTime EmittedAt, DateTime Timeout, int ClaimerId);
+
+
+/// <summary>An NPC with a pending interrupt or a paused storylet (TALE S2b-e).</summary>
+public sealed record TaleDebugInterruption(
+    int NpcId, string Role, string CurrentStorylet, string PendingInterrupt, int PausedCount);
+
+
 /// <summary>
 /// The selected NPC in full. Copies only: nothing here is shared with the
 /// schedule it came from.
@@ -52,7 +63,11 @@ public sealed record TaleDebugNpc(
     bool HasPlayerDeviation,
     bool IsKnownToPlayer,
     IReadOnlyList<KeyValuePair<string, float>> Properties,
-    IReadOnlyList<KeyValuePair<int, float>> StrongestTrust);
+    IReadOnlyList<KeyValuePair<int, float>> StrongestTrust,
+    string PendingInterrupt = null,
+    string PendingInterruptScope = null,
+    DateTime? PendingInterruptAt = null,
+    IReadOnlyList<string> PausedStorylets = null);
 
 
 /// <summary>
@@ -78,7 +93,9 @@ public sealed record TaleDebugSnapshot(
     IReadOnlyList<IReadOnlyList<double?>> InterGroupMatrix,
     IReadOnlyList<TaleDebugPlayerTrust> PlayerStanding,
     TaleDebugNpc Selected,
-    StandingReading? StandingLevel = null)
+    StandingReading? StandingLevel = null,
+    IReadOnlyList<TaleDebugRequest> OpenRequests = null,
+    IReadOnlyList<TaleDebugInterruption> Interruptions = null)
 {
     /// <summary>The inter-group matrix shows at most this many groups, the largest.</summary>
     public const int MatrixSize = 12;

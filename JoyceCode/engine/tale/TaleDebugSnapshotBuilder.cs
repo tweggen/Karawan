@@ -28,8 +28,13 @@ public static class TaleDebugSnapshotBuilder
 
         int materialized = 0, tier2 = 0, known = 0, inTransit = 0;
         var standing = new List<TaleDebugPlayerTrust>();
+        var interruptions = new List<TaleDebugInterruption>();
         foreach (var npc in npcs)
         {
+            var arcs = npc.ArcStack;
+            if (arcs.HasPendingInterrupt || arcs.PausedArcs.Count > 0)
+                interruptions.Add(new TaleDebugInterruption(npc.NpcId, npc.Role, npc.CurrentStorylet,
+                    arcs.PendingInterruptStorylet, arcs.PausedArcs.Count));
             if (manager.IsMaterialized(npc.NpcId)) materialized++;
             if (manager.IsTier2(npc.NpcId)) tier2++;
             if (npc.IsKnownToPlayer) known++;
@@ -61,7 +66,9 @@ public static class TaleDebugSnapshotBuilder
             InterGroupMatrix: Matrix(matrixIds, metrics),
             PlayerStanding: standing,
             Selected: selectedNpcId >= 0 ? _npc(manager, selectedNpcId) : null,
-            StandingLevel: manager.GetPlayerStanding(clusterIndex));
+            StandingLevel: manager.GetPlayerStanding(clusterIndex),
+            OpenRequests: manager.CopyOpenRequests(clusterIndex, gameNow),
+            Interruptions: interruptions);
     }
 
 
@@ -182,6 +189,10 @@ public static class TaleDebugSnapshotBuilder
             HasPlayerDeviation: npc.HasPlayerDeviation,
             IsKnownToPlayer: npc.IsKnownToPlayer,
             Properties: properties,
-            StrongestTrust: strongest);
+            StrongestTrust: strongest,
+            PendingInterrupt: npc.ArcStack.PendingInterruptStorylet,
+            PendingInterruptScope: npc.ArcStack.PendingInterruptScope?.ToString(),
+            PendingInterruptAt: npc.ArcStack.HasPendingInterrupt ? npc.ArcStack.PendingInterruptAt : null,
+            PausedStorylets: npc.ArcStack.PausedArcs.Select(p => p.StoryletId).ToList());
     }
 }

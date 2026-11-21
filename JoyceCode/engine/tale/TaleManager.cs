@@ -132,6 +132,28 @@ public class TaleManager
     internal InteractionPool GetRequestPool(int clusterIndex) =>
         _liveSocial.TryGetValue(clusterIndex, out var live) ? live.Pool : null;
 
+    /**
+     * S2b-e: the cluster's requests that have not timed out, claimed or not, oldest first,
+     * copied under the pool's lock for the TALE panel. Empty when the cluster has no live state.
+     */
+    public List<TaleDebugRequest> CopyOpenRequests(int clusterIndex, DateTime gameNow)
+    {
+        var list = new List<TaleDebugRequest>();
+        if (!_liveSocial.TryGetValue(clusterIndex, out var live)) return list;
+        lock (live.Lock)
+        {
+            foreach (var r in live.Pool.Requests.Values)
+            {
+                if (r.Timeout <= gameNow) continue;
+                list.Add(new TaleDebugRequest(r.Id, r.Type, r.RequesterId, r.StoryletContext, r.LocationId,
+                    r.Urgency, r.EmittedAt, r.Timeout, r.ClaimerId ?? -1));
+            }
+        }
+        list.Sort((a, b) => a.Id.CompareTo(b.Id));
+        return list;
+    }
+
+
     /** The cluster's live encounter model, for tests (they set its probabilities); null when not populated. */
     internal EncounterResolver GetLiveEncounters(int clusterIndex) =>
         _liveSocial.TryGetValue(clusterIndex, out var live) ? live.Encounters : null;
@@ -1696,9 +1718,15 @@ public class TaleManager
 
             // Step where the storylet ended, but strictly after the last step:
             // a short storylet with negative jitter can end before it started.
-            DateTime evt = npc.CurrentEnd;
-            if (npc.ArcStack.HasPendingInterrupt && npc.ArcStack.PendingInterruptAt < evt)
-                evt = npc.ArcStack.PendingInterruptAt;
+            /*
+             * A pending interrupt is stepped at the time it was set - never earlier, even when
+             * the storylet ended before it and the tick had not got to it yet (KAR-490): the
+             * selection would take the interrupt there, before it existed, and the catch-up
+             * would run on past it.
+             */
+            DateTime evt = npc.ArcStack.HasPendingInterrupt
+                ? npc.ArcStack.PendingInterruptAt
+                : npc.CurrentEnd;
             DateTime notBefore = npc.LastAdvanceTime + TimeSpan.FromMinutes(1);
             if (evt < notBefore) evt = notBefore;
             if (evt > now) return;

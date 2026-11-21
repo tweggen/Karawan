@@ -154,6 +154,11 @@ Since S2b-d (KAR-489) interrupts reach running NPCs:
   A route that comes back for a superseded travel is dropped.
 - An NPC registered outside a populated cluster still selects in the shared order.
 
+The TALE panel (ImGui, `JoyceCode/ui/Tale.cs`) shows the cluster's open requests (type,
+requester, storylet, timeout, claimer) and the NPCs with a pending interrupt or a paused storylet;
+the selected NPC shows its pending interrupt (scope, time) and its paused storylets (S2b-e,
+KAR-490).
+
 ## 5. Interaction pool (DES; live per cluster since S2b-b)
 
 `InteractionPool` (`InteractionPool.cs`) holds `InteractionRequest`s and

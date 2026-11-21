@@ -556,8 +556,9 @@ public class StoryletLibrary
     }
 
 
+    /** Null for an unknown id, and for no id at all (an NPC that has not run a storylet yet). */
     public StoryletDefinition GetById(string id) =>
-        _byId.GetValueOrDefault(id);
+        id == null ? null : _byId.GetValueOrDefault(id);
 
 
     public StoryletDefinition GetFallback(TimeSpan timeOfDay)
