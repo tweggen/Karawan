@@ -731,6 +731,7 @@ public class TaleModule : AModule
         DateTime gameNow = maybeNow.Value;
 
         _advanceAbstractSchedules(gameNow);
+        _taleManager.TickLiveSocial(gameNow);
         _rollSocialMetricsDay(gameNow);
         _publishPlayerStanding();
         _buildDebugSnapshot(gameNow);
@@ -754,7 +755,8 @@ public class TaleModule : AModule
         if (npcs.Count == 0) return;
         var spatial = _taleManager.GetSpatialModel(clusterIndex);
 
-        var stats = _socialEvolver.TickEncounters(clusterIndex, npcs, spatial, gameNow);
+        var stats = _socialEvolver.TickEncounters(clusterIndex, npcs, spatial, gameNow,
+            (a, b, t) => _taleManager.OnLiveEncounter(clusterIndex, a, b, t));
         if (stats.Encounters > 0 || stats.PairsSampled > 0)
         {
             Trace(_dcSocial, $"Cluster {clusterIndex} tick @{gameNow:HH:mm}: " +

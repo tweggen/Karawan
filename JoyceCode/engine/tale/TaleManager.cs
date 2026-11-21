@@ -106,10 +106,14 @@ public class TaleManager
         public readonly InteractionPool Pool = new();
         public readonly EncounterResolver Encounters = new();
         public TaleSocialRules Rules;
-        public DateTime HousekeptDay = DateTime.MinValue;
+        public DateTime ResolvedDay = DateTime.MinValue;
+        public readonly Queue<(NpcSchedule A, NpcSchedule B, DateTime Time)> PendingEncounters = new();
     }
 
     private readonly ConcurrentDictionary<int, LiveSocial> _liveSocial = new();
+
+    /** Off: _advanceNpc runs no live social rules (routine selection only), for baseline measurements. */
+    internal bool LiveSocialRules = true;
 
 
     /** The cluster's live request pool, for tests and the debug panel; null when not populated. */
@@ -1264,7 +1268,7 @@ public class TaleManager
          * routine. The populate warm-up and clusters without live state select routine only.
          */
         LiveSocial live = null;
-        if (runSocialRules) _liveSocial.TryGetValue(npc.ClusterIndex, out live);
+        if (runSocialRules && LiveSocialRules) _liveSocial.TryGetValue(npc.ClusterIndex, out live);
 
         StoryletDefinition next;
         try
@@ -1359,6 +1363,101 @@ public class TaleManager
 
 
     /*
+     * S2b-c (KAR-488): an encounter the social tick lets happen (RuntimeSocialEvolver) runs
+     * the shared encounter rules: each side may claim a request, and each side's storylet's
+     * conditional postconditions may force an escalation and interrupt the partner.
+     *
+     * Queued here and run by TickLiveSocial a few per frame, in order, at the encounter's
+     * time. Measured at 4095 NPCs (Ufyo), a claim walks ~750 open requests, ~32 us per
+     * encounter and ~50 encounters per social tick: run inline that doubled TickEncounters
+     * to 4.9 ms p99. An index by request type would claim a different request first than
+     * the DES does, which changes every bake.
+     */
+    public void OnLiveEncounter(int clusterIndex, NpcSchedule a, NpcSchedule b, DateTime time)
+    {
+        if (a == null || b == null) return;
+        if (!_liveSocial.TryGetValue(clusterIndex, out var live)) return;
+        lock (live.Lock)
+        {
+            live.PendingEncounters.Enqueue((a, b, time));
+        }
+    }
+
+
+    /** How many queued encounters TickLiveSocial runs per call and cluster. */
+    public int EncountersPerTick = 4;
+
+
+    /*
+     * S2b-c: the social frame's request housekeeping for every populated cluster. Expired
+     * requests are purged on every call; at each day boundary the day is resolved as in the
+     * DES (unclaimed requests a capable role exists for are fulfilled abstractly), and the
+     * arrival encounter model forgets the day's pairs and presence older than two hours.
+     */
+    public void TickLiveSocial(DateTime gameNow) => TickLiveSocial(gameNow, EncountersPerTick);
+
+
+    public void TickLiveSocial(DateTime gameNow, int encounterBudget)
+    {
+        foreach (var (clusterIndex, live) in _liveSocial)
+        {
+            lock (live.Lock)
+            {
+                if (live.PendingEncounters.Count > 0)
+                {
+                    lock (_loSocial)
+                    {
+                        for (int i = 0; i < encounterBudget && live.PendingEncounters.Count > 0; i++)
+                        {
+                            var (a, b, time) = live.PendingEncounters.Dequeue();
+                            live.Rules.ClaimRequests(a, time, 0);
+                            live.Rules.ClaimRequests(b, time, 0);
+                            live.Rules.ApplyEncounterConditionals(a, b, time, 0);
+                        }
+                    }
+                }
+
+                if (live.ResolvedDay == DateTime.MinValue)
+                {
+                    live.ResolvedDay = gameNow.Date;
+                }
+                else if (gameNow.Date != live.ResolvedDay)
+                {
+                    live.ResolvedDay = gameNow.Date;
+                    int day = (int)(gameNow.Date - new DateTime(2000, 1, 1)).TotalDays;
+                    var rng = new Random(unchecked(clusterIndex * 73856093 ^ day * 19349663));
+                    live.Rules.ResolveDaily(gameNow.Date, day,
+                        GetNpcsInCluster(clusterIndex), CapableRolesOf, rng);
+                    live.Encounters.ClearDailyDedup();
+                }
+                live.Pool.PurgeExpired(gameNow);
+                live.Encounters.ClearBefore(gameNow.AddHours(-2));
+            }
+        }
+    }
+
+
+    /** Which roles can fulfil a request type, for day resolution; the RoleRegistry's by default, settable by tests. */
+    internal Func<string, HashSet<string>> CapableRolesOf = _capableRoles;
+
+
+    private static HashSet<string> _capableRoles(string requestType)
+    {
+        var capable = new HashSet<string>();
+        RoleRegistry registry;
+        try { registry = I.Get<RoleRegistry>(); }
+        catch (Exception) { return capable; }   // no registry (bare tests): nothing resolves abstractly
+        foreach (var roleId in registry.GetKeys())
+        {
+            var roleDef = registry.Get(roleId);
+            if (roleDef?.FulfillableRequestTypes?.Contains(requestType) ?? false)
+                capable.Add(roleId);
+        }
+        return capable;
+    }
+
+
+    /*
      * S2b-b: what happens when an NPC arrives, as in the DES's node arrival: the request its
      * new storylet emits, its presence at the destination, and the encounters it has there -
      * by the DES's encounter model (probability by location type and overlap, daily pair
@@ -1375,19 +1474,6 @@ public class TaleManager
 
         lock (live.Lock)
         {
-            /*
-             * Light housekeeping once a game day, until S2b-c moves purge and day resolution
-             * into the social frame: expired requests and stale presence windows would
-             * otherwise grow for the whole session.
-             */
-            if (gameNow.Date != live.HousekeptDay)
-            {
-                live.HousekeptDay = gameNow.Date;
-                live.Pool.PurgeExpired(gameNow);
-                live.Encounters.ClearDailyDedup();
-                live.Encounters.ClearBefore(gameNow.AddHours(-2));
-            }
-
             live.Rules.EmitRequest(npc, next, destination, gameNow, 0);
             live.Encounters.RegisterPresence(npc.NpcId, destination, npc.CurrentStart, npc.CurrentEnd);
 

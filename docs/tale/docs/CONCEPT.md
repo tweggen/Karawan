@@ -88,7 +88,7 @@ society.
 | NPC–NPC encounters changing trust | **shipped**, live and in DES — data-driven interaction types (Phases 1, 3, E3) |
 | Factions forming and evolving | **shipped**, live — community detection, runtime evolver, group verbs, save-game (Phases D, E) |
 | Player talks to NPCs; dialogue reflects state and faction | **shipped** — Phase C conversations; faction-flavoured lines through the `npc.group_*` props (E5) |
-| Requests between NPCs, escalation chains, interrupts | **DES, partly live** — the rules are shared (`TaleSocialRules`). Live since S2b-b: per-cluster request pool, requests emitted, claims on arrival, interrupts in Tier-3 selection. Still DES only: encounter-time conditional postconditions, day resolution, interrupts on materialised NPCs (S2b-c/d) |
+| Requests between NPCs, escalation chains, interrupts | **DES, partly live** — the rules are shared (`TaleSocialRules`). Live since S2b-b/c: per-cluster request pool, requests emitted, claims on arrival and in social-tick encounters, escalation by conditional postconditions, day resolution, interrupts in Tier-3 selection. Not yet: materialised NPCs obeying interrupts (S2b-d) |
 | Player relationships | **minimal** — `Trust[-1]` per NPC, starting at 0.15 on first contact (S1-a), changed by player interactions (S1-b: chat, help, pay, bribe, assault, …); no group-level standing. It survives in play only because the code path meant to forget such NPCs never runs (roadmap S0) |
 | Society away from the player | **trust only** — encounters and re-detection run for the whole cluster, but abstract schedules don't advance after the warm-up, so they meet at stale locations |
 | NPCs involving the player | **missing** — the player never joins the interaction pool; NPCs never ask |

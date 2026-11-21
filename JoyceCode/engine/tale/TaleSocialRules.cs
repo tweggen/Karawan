@@ -29,6 +29,15 @@ public sealed class TaleSocialRules
     private readonly IEventLogger _logger;
     private readonly MetricsCollector? _metrics;
 
+    /*
+     * Per role, the request types any of its storylets can claim (KAR-488). The library is
+     * fixed once loaded, so this is filled lazily and never invalidated. Most roles claim
+     * few types and most encounters have nothing to claim: without it every encounter
+     * walked every open request and the role's storylets for each, 40 ms p99 per social
+     * tick at 4095 NPCs.
+     */
+    private readonly Dictionary<string, HashSet<string>> _claimableByRole = new();
+
     public InteractionPool Pool => _pool;
 
 
@@ -139,13 +148,19 @@ public sealed class TaleSocialRules
     public void ClaimRequests(NpcSchedule npc, DateTime encounterTime, int day)
     {
         if (npc == null) return;
+        var claimable = _claimableTypesOf(npc.Role);
+        if (claimable.Count == 0) return;
 
-        // Find active requests this NPC can claim
-        var activeRequests = _pool.GetActiveRequests(encounterTime);
-        foreach (var request in activeRequests)
+        /*
+         * The active requests (unclaimed, not timed out) in the pool's order, as
+         * GetActiveRequests lists them, without copying them into a list per encounter.
+         * Claiming one only changes that request, and the loop ends right after it.
+         */
+        foreach (var request in _pool.Requests.Values)
         {
-            // Skip if already claimed
             if (request.ClaimerId.HasValue) continue;
+            if (request.Timeout <= encounterTime) continue;
+            if (!claimable.Contains(request.Type)) continue;
 
             /*
              * The storylets that can claim it. Several may - an authority answers a crime
@@ -192,6 +207,24 @@ public sealed class TaleSocialRules
                 break; // Only claim one request per encounter
             }
         }
+    }
+
+
+    private HashSet<string> _claimableTypesOf(string role)
+    {
+        if (_claimableByRole.TryGetValue(role, out var types)) return types;
+        types = new HashSet<string>();
+        string lower = role.ToLowerInvariant();
+        foreach (var candidate in _library.GetCandidates(role))
+        {
+            var trigger = candidate.ClaimTrigger;
+            if (trigger?.RequestType == null) continue;
+            if (trigger.RoleMatch != null && trigger.RoleMatch.Length > 0 && !trigger.RoleMatch.Contains(lower))
+                continue;
+            types.Add(trigger.RequestType);
+        }
+        _claimableByRole[role] = types;
+        return types;
     }
 
 

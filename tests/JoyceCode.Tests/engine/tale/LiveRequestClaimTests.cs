@@ -25,6 +25,11 @@ public class LiveRequestClaimTests
       { "id": "threaten", "roles": ["thug"], "duration_minutes": 600, "location": "current",
         "postconditions": { "request": { "type": "threat", "location": "current", "urgency": 0.9, "timeout_minutes": 600 } } },
       { "id": "loiter", "roles": ["bystander"], "duration_minutes": 600, "location": "current" },
+      { "id": "demand", "roles": ["extortionist"], "duration_minutes": 600, "location": "current",
+        "interrupt_priority": 6,
+        "postconditions_if": [
+          { "condition": { "target_fear": { "max": 0.5 } }, "then": { }, "storylet_next": "threaten" }
+        ] },
       { "id": "flee", "roles": ["bystander"], "claim_trigger": { "request_type": "threat", "role_match": [] },
         "duration_minutes": 20, "location": "current" },
       { "id": "wander", "roles": ["fallback_only"], "duration_minutes": 30, "location": "current", "tags": ["fallback"] },
@@ -59,7 +64,7 @@ public class LiveRequestClaimTests
         tm.PopulateClusterWith(Cluster, model, T0, _ =>
         {
             var list = new List<NpcSchedule>();
-            string[] roles = { "thug", "bystander" };
+            string[] roles = { "thug", "bystander", "extortionist" };
             for (int i = 0; i < roles.Length; i++)
             {
                 list.Add(new NpcSchedule
@@ -76,6 +81,19 @@ public class LiveRequestClaimTests
         // Certain encounters, so the test pins the rules rather than a probability.
         tm.GetLiveEncounters(Cluster).P_Venue = 1f;
         return tm;
+    }
+
+
+    /** Two social ticks: the first only starts the window, the second lets everyone meet. */
+    private static void _tick(TaleManager tm, DateTime t)
+    {
+        var evolver = new RuntimeSocialEvolver { P_Venue = 1f, MaxWindowMinutes = 600f };
+        var npcs = tm.GetNpcsInCluster(Cluster);
+        var spatial = tm.GetSpatialModel(Cluster);
+        evolver.TickEncounters(Cluster, npcs, spatial, t);
+        evolver.TickEncounters(Cluster, npcs, spatial, t.AddMinutes(30),
+            (a, b, at) => tm.OnLiveEncounter(Cluster, a, b, at));
+        tm.TickLiveSocial(t.AddMinutes(30), int.MaxValue);   // run every queued encounter
     }
 
 
@@ -113,6 +131,93 @@ public class LiveRequestClaimTests
         Assert.Single(bystander.ArcStack.PausedArcs);
         Assert.Equal("loiter", tm.AdvanceNpc(bystander.NpcId, t.AddMinutes(25)).Id);
         Assert.Empty(bystander.ArcStack.PausedArcs);
+    }
+
+
+    [Fact]
+    public void ASocialTickEncounterClaimsAndSetsTheInterrupt()
+    {
+        var tm = _populated();
+        var thug = tm.GetSchedule(Id(0));
+        var bystander = tm.GetSchedule(Id(1));
+        DateTime t = T0.AddHours(11);
+
+        // The thug threatens while nobody is registered at the venue: unclaimed.
+        tm.AdvanceNpc(thug.NpcId, t);
+        var request = Assert.Single(tm.GetRequestPool(Cluster).Requests.Values);
+        Assert.Null(request.ClaimerId);
+
+        // The social tick lets thug and bystander meet (the extortionist is elsewhere);
+        // the bystander claims and will flee.
+        tm.GetSchedule(Id(2)).CurrentLocationId = -1;
+        _tick(tm, t);
+        Assert.Equal(bystander.NpcId, request.ClaimerId);
+        Assert.Equal("flee", bystander.ArcStack.PendingInterruptStorylet);
+    }
+
+
+    [Fact]
+    public void ASocialTickEncounterEscalatesAndInterruptsThePartner()
+    {
+        var tm = _populated();
+        var extortionist = tm.GetSchedule(Id(2));
+        var bystander = tm.GetSchedule(Id(1));
+        DateTime t = T0.AddHours(11);
+        Assert.Equal("demand", extortionist.CurrentStorylet);
+        bystander.Properties["fear"] = 0.2f;
+
+        _tick(tm, t);
+
+        // Refused (fear <= 0.5): the extortionist's next storylet is forced to the threat ...
+        Assert.Equal("threaten", extortionist.NextForcedStorylet);
+        // ... and its priority-6 demand nests into the bystander's lower-priority loitering.
+        Assert.Equal("demand", bystander.ArcStack.PendingInterruptStorylet);
+        Assert.Equal(InterruptScope.Nest, bystander.ArcStack.PendingInterruptScope);
+
+        Assert.Equal("threaten", tm.AdvanceNpc(extortionist.NpcId, t.AddMinutes(31)).Id);
+    }
+
+
+    [Fact]
+    public void QueuedEncountersRunAFewPerTickInOrder()
+    {
+        var tm = _populated();
+        var thug = tm.GetSchedule(Id(0));
+        var bystander = tm.GetSchedule(Id(1));
+        DateTime t = T0.AddHours(11);
+        tm.AdvanceNpc(thug.NpcId, t);
+        tm.TickLiveSocial(t);
+
+        tm.OnLiveEncounter(Cluster, thug, thug, t);         // runs first, claims nothing
+        tm.OnLiveEncounter(Cluster, thug, bystander, t);
+        tm.TickLiveSocial(t, 1);
+        Assert.Null(bystander.ArcStack.PendingInterruptStorylet);
+        tm.TickLiveSocial(t, 1);
+        Assert.Equal("flee", bystander.ArcStack.PendingInterruptStorylet);
+    }
+
+
+    [Fact]
+    public void TheSocialFramePurgesExpiredRequestsAndResolvesTheDay()
+    {
+        var tm = _populated();
+        tm.CapableRolesOf = type => type == "threat" ? new HashSet<string> { "bystander" } : new HashSet<string>();
+        DateTime t = T0.AddHours(11);
+        tm.TickLiveSocial(t);
+
+        // A threat at 23:00, unclaimed: resolved abstractly at midnight, purged at its 09:00 timeout.
+        tm.AdvanceNpc(Id(0), t);
+        var pool = tm.GetRequestPool(Cluster);
+        int first = Assert.Single(pool.Requests.Keys);
+
+        tm.TickLiveSocial(t.AddMinutes(30));
+        Assert.Single(pool.Requests);
+
+        tm.TickLiveSocial(t.AddHours(1).AddMinutes(1));   // midnight passed: the day is resolved
+        Assert.True(pool.HasSignal(first, "request_fulfilled"));
+
+        tm.TickLiveSocial(t.AddHours(11));                // past the 600-minute timeout: purged
+        Assert.Empty(pool.Requests);
     }
 
 

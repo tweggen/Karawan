@@ -137,9 +137,11 @@ scope follows from the priority: **≥ 8 → Replace, otherwise Nest**
 
 Live (S2b-b, KAR-487): each populated cluster has its own request pool and arrival encounter
 model; `_advanceNpc` selects through `TaleSocialRules.SelectNext`, emits requests (not during the
-populate warm-up) and claims on arrival in both directions. Encounter-time conditional
-postconditions, the social-frame claims and the day resolution follow in S2b-c; materialised NPCs
-obey interrupts from S2b-d.
+populate warm-up) and claims on arrival in both directions. Since S2b-c (KAR-488) every encounter the social
+tick lets happen (`RuntimeSocialEvolver.TickEncounters`) is queued and run a few per frame by
+`TaleManager.TickLiveSocial`: claims both ways, conditional postconditions (escalation) and the
+interrupts they bring. The same call purges expired requests every frame and resolves the day at
+midnight. Materialised NPCs obey interrupts from S2b-d.
 
 ## 5. Interaction pool (DES; live per cluster since S2b-b)
 
