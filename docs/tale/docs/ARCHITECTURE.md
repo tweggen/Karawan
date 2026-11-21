@@ -45,7 +45,7 @@ community detection (Phase E). The player meets NPCs through conversations
 | `Properties` | `Dictionary<string,float>`, 0..1: hunger, anger, fatigue, health, wealth, happiness, reputation, morality, fear, … |
 | `Trust` | `Dictionary<int,float>` keyed by the other NPC's id; the player is key `-1`. |
 | `GroupId` | Faction membership, `-1` = none. |
-| `ArcStack`, `LastEncounterPartnerId`, `NextForcedStorylet` | Interrupt support (DES only, §4). |
+| `ArcStack`, `LastEncounterPartnerId`, `NextForcedStorylet` | Interrupt support (§4). Not saved. |
 | `HasPlayerDeviation`, `IsKnownToPlayer`, `LastConversationTime` | Player engagement: a flagged NPC is saved and skip-masked; a schedule the player has touched is never removed (§6.3). `LastConversationTime` decides nothing since S0 W3. |
 | `PreferredTransportationType`, `RoutingPreferences` | Routing inputs for the in-game walker. |
 
@@ -119,21 +119,29 @@ Desperation is derived, not stored (`ComputeDesperation`, `:59`):
   (`NextForcedStorylet`). Only `DesSimulation` calls it, at an encounter.
 - **Group verbs** run through `GroupActions` (§6.4).
 
-## 4. Interrupts (DES only)
+## 4. Interrupts
+
+The rules live in `TaleSocialRules` (KAR-486), which `DesSimulation` calls and the live
+`TaleManager` is moving to (S2b, `../plans/proposed/TALE-S2B-LIVE-ESCALATION.md`).
 
 When two NPCs meet in `DesSimulation`, a storylet with `InterruptPriority ≥ 5`
 can interrupt the partner's storylet if the partner's priority is lower. The
 scope follows from the priority: **≥ 8 → Replace, otherwise Nest**
-(`DesSimulation.cs:439-469`).
+(`TaleSocialRules.ApplyEncounterConditionals`).
 - **Nest** pushes the partner's current storylet onto its `ArcStack` and
   resumes it afterwards (`storylet_resumed`).
 - **Replace** discards the partner's current storylet.
-- **Cancel** has a branch in `DesSimulation.cs:271`, but nothing produces it
-  (KAR-436).
+- **Cancel** has a branch in `TaleSocialRules.SelectNext`; only a claim trigger with
+  `interrupt_scope: cancel` produces it.
+- A **claim** starts the claiming storylet as an interrupt with its trigger's scope (KAR-477).
 
-The live game has no interrupts.
+Live (S2b-b, KAR-487): each populated cluster has its own request pool and arrival encounter
+model; `_advanceNpc` selects through `TaleSocialRules.SelectNext`, emits requests (not during the
+populate warm-up) and claims on arrival in both directions. Encounter-time conditional
+postconditions, the social-frame claims and the day resolution follow in S2b-c; materialised NPCs
+obey interrupts from S2b-d.
 
-## 5. Interaction pool (DES only)
+## 5. Interaction pool (DES; live per cluster since S2b-b)
 
 `InteractionPool` (`InteractionPool.cs`) holds `InteractionRequest`s and
 `InteractionSignal`s:
