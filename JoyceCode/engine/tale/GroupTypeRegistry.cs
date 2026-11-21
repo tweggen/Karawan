@@ -78,6 +78,8 @@ public class GroupTypeRegistry : ObjectRegistry<GroupTypeDefinition>
 
             if (npc.Role == "authority")
                 stats.AuthorityCount++;
+            if (npc.Role is "merchant" or "hustler")
+                stats.TraderCount++;
 
             count++;
         }
@@ -89,6 +91,7 @@ public class GroupTypeRegistry : ObjectRegistry<GroupTypeDefinition>
             stats.AverageAnger /= count;
             stats.AverageReputation /= count;
             stats.AuthorityRatio = (float)stats.AuthorityCount / count;
+            stats.TraderRatio = (float)stats.TraderCount / count;
         }
 
         return stats;
@@ -103,6 +106,7 @@ public class GroupTypeRegistry : ObjectRegistry<GroupTypeDefinition>
         {
             "authority_threshold" => EvaluateAuthorityThreshold(rule, stats),
             "combined_threshold" => EvaluateCombinedThreshold(rule, stats),
+            "trader_threshold" => EvaluateTraderThreshold(rule, stats),
             _ => _unknownRuleType(rule.Type)
         };
     }
@@ -123,7 +127,7 @@ public class GroupTypeRegistry : ObjectRegistry<GroupTypeDefinition>
         {
             if (_warnedRuleTypes.Add(type ?? ""))
                 Warning($"GroupTypeRegistry: unknown classification rule type \"{type}\"; the rule never matches. " +
-                        "Known types: authority_threshold, combined_threshold.");
+                        "Known types: authority_threshold, combined_threshold, trader_threshold.");
         }
         return false;
     }
@@ -133,6 +137,19 @@ public class GroupTypeRegistry : ObjectRegistry<GroupTypeDefinition>
         if (!rule.Parameters.TryGetValue("minimum_ratio", out float minRatio))
             return false;
         return stats.AuthorityRatio >= minRatio;
+    }
+
+    /**
+     * The share of the group that trades - merchants and hustlers (KAR-477). A trading
+     * partnership used to be any group with mean wealth and reputation of 0.5 or more,
+     * which is the average of a bake's population: 32 of 45 groups over four medium bakes,
+     * office workers and socialites included. With at least 40 % traders: 10 of 45.
+     */
+    private bool EvaluateTraderThreshold(GroupClassificationRule rule, GroupStatistics stats)
+    {
+        if (!rule.Parameters.TryGetValue("minimum_ratio", out float minRatio))
+            return false;
+        return stats.TraderRatio >= minRatio;
     }
 
     private bool EvaluateCombinedThreshold(GroupClassificationRule rule, GroupStatistics stats)
@@ -158,6 +175,8 @@ public class GroupTypeRegistry : ObjectRegistry<GroupTypeDefinition>
         public int TotalMembers;
         public int AuthorityCount;
         public float AuthorityRatio;
+        public int TraderCount;
+        public float TraderRatio;
         public float AverageWealth;
         public float AverageMorality;
         public float AverageAnger;

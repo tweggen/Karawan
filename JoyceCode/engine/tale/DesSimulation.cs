@@ -529,32 +529,82 @@ public class DesSimulation
             // Skip if already claimed
             if (request.ClaimerId.HasValue) continue;
 
-            // Look for a storylet with a matching claim trigger
-            var candidates = _library.GetCandidates(npc.Role);
-            foreach (var storylet in candidates)
+            /*
+             * The storylets that can claim it. Several may - an authority answers a crime
+             * report by investigate_crime or investigate_complaint - and the claim picks one by
+             * weight (KAR-477), seeded by the request and the claimer so it neither depends on
+             * the order the library lists them in nor draws from the simulation's own random
+             * stream. It used to take the first, so the others never ran.
+             */
+            var matching = new List<StoryletDefinition>();
+            foreach (var candidate in _library.GetCandidates(npc.Role))
             {
-                if (storylet.ClaimTrigger == null) continue;
-                if (storylet.ClaimTrigger.RequestType != request.Type) continue;
-
-                // Check if NPC's role matches the claim trigger
-                if (storylet.ClaimTrigger.RoleMatch != null &&
-                    storylet.ClaimTrigger.RoleMatch.Length > 0 &&
-                    !storylet.ClaimTrigger.RoleMatch.Contains(npc.Role.ToLowerInvariant()))
+                if (candidate.ClaimTrigger == null) continue;
+                if (candidate.ClaimTrigger.RequestType != request.Type) continue;
+                if (candidate.ClaimTrigger.RoleMatch != null &&
+                    candidate.ClaimTrigger.RoleMatch.Length > 0 &&
+                    !candidate.ClaimTrigger.RoleMatch.Contains(npc.Role.ToLowerInvariant()))
                     continue;
+                matching.Add(candidate);
+            }
+            if (matching.Count == 0) continue;
+            var storylet = _pickClaimStorylet(matching, request.Id, npcId);
 
-                // Claim the request
-                if (_interactionPool.ClaimRequest(request.Id, npcId))
+            // Claim the request
+            if (_interactionPool.ClaimRequest(request.Id, npcId))
+            {
+                _logger.LogRequestClaimed(request.Id, npcId, encounterTime, day);
+                _metrics.OnRequestFulfilled(request.Id);
+
+                /*
+                 * KAR-477: the claim starts the storylet that claims it - investigating the
+                 * crime, fleeing the threat - as the trigger's interrupt scope says (nest by
+                 * default). The claim used to be recorded and signalled and the storylet
+                 * never run; claim-triggered storylets happened only because ordinary
+                 * selection picked them without any claim, which it no longer does.
+                 */
+                if (npc.ArcStack.PendingInterruptStorylet == null)
                 {
-                    _logger.LogRequestClaimed(request.Id, npcId, encounterTime, day);
-                    _metrics.OnRequestFulfilled(request.Id);
-                    // Emit fulfillment signal for direct Tier-2 claim
-                    int signalId = _interactionPool.EmitSignal(request.Id, "request_fulfilled", npcId, encounterTime);
-                    _logger.LogSignalEmitted(signalId, request.Id, "request_fulfilled", npcId, encounterTime, day);
-                    break; // Only claim one request per encounter
+                    var scope = _claimScopeOf(storylet.ClaimTrigger);
+                    npc.ArcStack.SetInterrupt(storylet.Id, scope);
+                    _logger.LogInterruptFired(npc.NpcId, storylet.Id, scope.ToString(),
+                        npc.CurrentStorylet, day, encounterTime);
+                    _metrics.OnInterrupt(npc.NpcId, npc.Role);
                 }
+
+                // Emit fulfillment signal for direct Tier-2 claim
+                int signalId = _interactionPool.EmitSignal(request.Id, "request_fulfilled", npcId, encounterTime);
+                _logger.LogSignalEmitted(signalId, request.Id, "request_fulfilled", npcId, encounterTime, day);
+                break; // Only claim one request per encounter
             }
         }
     }
+
+
+    private static StoryletDefinition _pickClaimStorylet(List<StoryletDefinition> matching, int requestId, int npcId)
+    {
+        if (matching.Count == 1) return matching[0];
+        float total = 0f;
+        foreach (var m in matching) total += Math.Max(0f, m.Weight);
+        if (total <= 0f) return matching[0];
+        var rng = new Random(unchecked(requestId * 7919 + npcId * 104729));
+        float pick = (float)rng.NextDouble() * total;
+        foreach (var m in matching)
+        {
+            pick -= Math.Max(0f, m.Weight);
+            if (pick < 0f) return m;
+        }
+        return matching[^1];
+    }
+
+
+    private static InterruptScope _claimScopeOf(InteractionClaimTrigger trigger) =>
+        (trigger?.InterruptScope ?? "").ToLowerInvariant() switch
+        {
+            "replace" => InterruptScope.Replace,
+            "cancel" => InterruptScope.Cancel,
+            _ => InterruptScope.Nest
+        };
 
 
     private void ResolveInteractionsDaily(DateTime dayBoundary, int completedDay)

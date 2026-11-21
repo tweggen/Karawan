@@ -79,6 +79,16 @@ public class StoryletSelector
         {
             if (def == null)
                 continue;  // Skip null entries (defensive)
+            /*
+             * KAR-477: a storylet with a claim trigger is what an NPC does when it claims
+             * someone's request - fleeing a threat, paying blackmail, arguing - and starts only
+             * through that claim (DesSimulation). With no preconditions and the default weight
+             * it used to win ordinary selection over the routine: about 40 % of a city fled
+             * threats nobody made or paid blackmail nobody demanded, and a 365-day bake drained
+             * wealth 0.46 -> 0.28 and morality 0.64 -> 0.14, typing 8 of 12 groups criminal.
+             */
+            if (def.ClaimTrigger != null)
+                continue;
             if (!PassesPreconditions(def, npc, timeOfDay, desperation, morality))
                 continue;
             candidates.Add(def);

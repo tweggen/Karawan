@@ -40,6 +40,7 @@ public class GroupClassificationRule
     /// Examples:
     ///   - authority_threshold: { "minimum_ratio": 0.5 }
     ///   - combined_threshold: { "wealth_max": 0.3, "morality_max": 0.4 } (also wealth_min, reputation_min)
+    ///   - trader_threshold: { "minimum_ratio": 0.4 } (share of merchants and hustlers)
     /// </summary>
     public Dictionary<string, float> Parameters { get; set; } = new();
 }

@@ -57,8 +57,11 @@ public class GroupTypeRegistryTests
         r.Add("trade", new GroupTypeDefinition
         {
             Id = "trade", DisplayName = "Trading Partnership", Priority = 80,
-            Rules = { new GroupClassificationRule
-                { Type = "combined_threshold", Parameters = { ["wealth_min"] = 0.5f, ["reputation_min"] = 0.5f } } }
+            Rules =
+            {
+                new GroupClassificationRule { Type = "trader_threshold", Parameters = { ["minimum_ratio"] = 0.4f } },
+                new GroupClassificationRule { Type = "combined_threshold", Parameters = { ["wealth_min"] = 0.5f } }
+            }
         });
         r.Add("social", new GroupTypeDefinition
         {
@@ -104,6 +107,81 @@ public class GroupTypeRegistryTests
 
         Assert.Equal("trade", registry.ClassifyGroup(npcs.Keys.ToList(), npcs));
     }
+
+    /**
+     * KAR-477: wealth and reputation alone no longer make a trading partnership - a
+     * well-off circle of office workers and socialites is social. Before, it was trade, and
+     * 32 of 45 groups over four medium bakes were.
+     */
+    [Fact]
+    public void AWellOffGroupWithoutTradersIsSocial()
+    {
+        var registry = MakeDefaultRegistry();
+        var npcs = ToDict(
+            MakeNpc(1, "worker", wealth: 0.8f, morality: 0.6f, reputation: 0.8f),
+            MakeNpc(2, "worker", wealth: 0.7f, morality: 0.7f, reputation: 0.7f),
+            MakeNpc(3, "socialite", wealth: 0.6f, morality: 0.6f, reputation: 0.9f));
+
+        Assert.Equal("social", registry.ClassifyGroup(npcs.Keys.ToList(), npcs));
+    }
+
+
+    [Fact]
+    public void TradeNeedsTradersAndMeans()
+    {
+        var registry = MakeDefaultRegistry();
+        // Two of five trade (40 %), and the group is not poor: trade, whatever its reputation.
+        var npcs = ToDict(
+            MakeNpc(1, "merchant", wealth: 0.6f, morality: 0.6f, reputation: 0.2f),
+            MakeNpc(2, "hustler", wealth: 0.6f, morality: 0.6f, reputation: 0.2f),
+            MakeNpc(3, "worker", wealth: 0.6f, morality: 0.6f, reputation: 0.2f),
+            MakeNpc(4, "worker", wealth: 0.5f, morality: 0.6f, reputation: 0.2f),
+            MakeNpc(5, "drifter", wealth: 0.5f, morality: 0.6f, reputation: 0.2f));
+        Assert.Equal("trade", registry.ClassifyGroup(npcs.Keys.ToList(), npcs));
+
+        // Traders who are poor are not a trading partnership.
+        var poor = ToDict(
+            MakeNpc(1, "merchant", wealth: 0.3f, morality: 0.6f),
+            MakeNpc(2, "merchant", wealth: 0.4f, morality: 0.6f),
+            MakeNpc(3, "worker", wealth: 0.4f, morality: 0.6f));
+        Assert.Equal("social", registry.ClassifyGroup(poor.Keys.ToList(), poor));
+    }
+
+
+    /**
+     * The registry is written out three times besides models/nogame.group-types.json -
+     * Chushi (the bake), TestRunner (the TALE suite) and this file - because they do not
+     * read the JSON. Every rule of the JSON must appear in each copy, or the bake types
+     * groups by different rules than the game.
+     */
+    [Fact]
+    public void TheCodeMirrorsMatchTheShippedGroupTypes()
+    {
+        string root = System.IO.Path.GetFullPath(System.IO.Path.Combine(global::engine.GameRoot.PathTo("JoyceCode"), ".."));
+        var json = System.Text.Json.Nodes.JsonNode.Parse(System.IO.File.ReadAllText(
+            System.IO.Path.Combine(root, "models", "nogame.group-types.json")))!.AsArray();
+
+        foreach (var file in new[] { "Chushi/ConsoleMain.cs", "TestRunner/TestRunnerMain.cs",
+                                     "tests/JoyceCode.Tests/engine/tale/GroupTypeRegistryTests.cs" })
+        {
+            string src = System.Text.RegularExpressions.Regex.Replace(
+                System.IO.File.ReadAllText(System.IO.Path.Combine(root, file)), @"\s+", "");
+            foreach (var type in json)
+            {
+                foreach (var rule in type!["rules"]!.AsArray())
+                {
+                    string ruleType = rule!["type"]!.GetValue<string>();
+                    var parms = rule["parameters"]!.AsObject()
+                        .Select(kv => $"[\"{kv.Key}\"]={kv.Value!.GetValue<float>().ToString(System.Globalization.CultureInfo.InvariantCulture)}f");
+                    string expected = $"Type=\"{ruleType}\",Parameters={{{string.Join(",", parms)}}}";
+                    Assert.True(src.Contains(expected), $"{file} lacks {type["id"]}'s rule {expected}");
+                }
+            }
+            // The old trade rule, as a mirror wrote it.
+            Assert.DoesNotContain("[\"wealth_min\"]=0.5f,[\"reputation_min\"]", src);
+        }
+    }
+
 
     [Fact]
     public void PatrolRule_FiresOnMajorityAuthority()

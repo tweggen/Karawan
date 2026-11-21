@@ -17,18 +17,18 @@
     {
       "expect": {
         "type": "node_arrival",
-        "code": "profit_sharing"
+        "code": "leave_gang"
       },
       "timeout": 90,
-      "comment": "An in-group storylet runs"
+      "comment": "A member leaves the group (in this world before any profit is shared)"
     },
     {
       "expect": {
         "type": "node_arrival",
-        "code": "leave_gang"
+        "code": "profit_sharing"
       },
       "timeout": 90,
-      "comment": "A member leaves the group"
+      "comment": "An in-group storylet runs"
     },
     {
       "action": "quit",

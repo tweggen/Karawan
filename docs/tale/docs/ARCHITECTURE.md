@@ -139,11 +139,19 @@ The live game has no interrupts.
 `InteractionSignal`s:
 1. A storylet's `"request"` postcondition makes the NPC call `EmitRequest`
    (type, location, urgency, timeout).
-2. When two NPCs meet, `DesSimulation.CheckAndClaimRequests` (`:481`) looks
-   for a request matching one of the claimer's `claim_trigger` storylets
-   (`FindMatchingRequest`) and claims it (`ClaimRequest`). The claimer then
-   runs that storylet and a `request_fulfilled` signal is emitted
-   (`EmitSignal`).
+2. When two NPCs meet, `DesSimulation.CheckAndClaimRequests` looks for a
+   request matching one of the claimer's `claim_trigger` storylets and claims
+   it (`ClaimRequest`). Where several match (a crime report: `investigate_crime`
+   or `investigate_complaint`) one is picked by weight, seeded by request and
+   claimer. The claim sets it as the claimer's interrupt with the trigger's
+   `interrupt_scope` (nest by default), and a `request_fulfilled` signal is
+   emitted (`EmitSignal`). Before KAR-477 the claim ran nothing: these
+   storylets happened only because ordinary selection picked them.
+   **A `claim_trigger` storylet is never chosen by ordinary selection**
+   (`StoryletSelector.SelectNext` skips it). With no preconditions and the
+   default weight it used to outweigh the routine: ~40 % of a city fled
+   threats nobody made, and the bake drained morality to 0.12, typing 58 of 90
+   baked groups criminal.
 3. A requester's `wait_edge` waits for that signal (`HasSignal`) or falls back
    on timeout.
 4. Requests nobody claims are resolved abstractly at the day boundary by any
@@ -494,7 +502,7 @@ TALE `Location`s: homes, workplaces, shops, venues and street junctions.
 | `/roles` | `models/nogame.roles.json` | `RoleRegistry` |
 | `/interactions` | `models/nogame.interactions.json` | `InteractionTypeRegistry` |
 | `/relationships/tiers` | `models/nogame.relationship-tiers.json` | `RelationshipTierRegistry` |
-| `/groups/types` | `models/nogame.group-types.json` | `GroupTypeRegistry` (rule-based: `authority_threshold`, `combined_threshold`; any other rule type never matches and is warned about once) |
+| `/groups/types` | `models/nogame.group-types.json` | `GroupTypeRegistry` (rule-based: `authority_threshold`, `combined_threshold`, `trader_threshold` - the share of merchants and hustlers, which a trading partnership needs since KAR-477; any other rule type never matches and is warned about once). Mirrored in code by Chushi and TestRunner; `GroupTypeRegistryTests` checks the mirrors, and Chushi re-bakes when the file changes |
 | `/scenarios` | `models/nogame.scenarios.json` | scenario bake categories |
 | `/resources/list` (`taleStorylet`) | `models/nogame.resources.json` | storylet files |
 

@@ -32,10 +32,15 @@
       "priority": 80,
       "rules": [
         {
+          "type": "trader_threshold",
+          "parameters": {
+            "minimum_ratio": 0.4
+          }
+        },
+        {
           "type": "combined_threshold",
           "parameters": {
-            "wealth_min": 0.5,
-            "reputation_min": 0.5
+            "wealth_min": 0.5
           }
         }
       ]
