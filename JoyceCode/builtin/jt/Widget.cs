@@ -1146,6 +1146,20 @@ public class Widget : IDisposable
     }
 
 
+    /**
+     * Hand the focus to the next focussable widget, as the Tab key does. Whether it moved.
+     */
+    protected bool _focusNext()
+    {
+        var wRoot = Root;
+        if (wRoot == null) return false;
+        var wNewFocus = wRoot.FindOffsetFocussableChild(this, OffsetOrientation.DontCare, 1);
+        if (wNewFocus == null) return false;
+        wRoot.SetFocussedChild(wNewFocus);
+        return true;
+    }
+
+
     protected void _emitSelected(engine.news.Event ev)
     {
         _emitEvent("onClick");
@@ -1294,18 +1308,9 @@ public class Widget : IDisposable
                         actionSelect(ev);
                         break;
                     case "(tab)":
-                        if (IsFocussed)
+                        if (IsFocussed && _focusNext())
                         {
-                            wRoot = Root;
-                            if (wRoot != null)
-                            {
-                                var wNewFocus = wRoot.FindOffsetFocussableChild(this, OffsetOrientation.DontCare, 1);
-                                if (wNewFocus != null)
-                                {
-                                    wRoot.SetFocussedChild(wNewFocus);
-                                    ev.IsHandled = true;
-                                }
-                            }
+                            ev.IsHandled = true;
                         }
                         break;
                 }

@@ -39,13 +39,15 @@ Usage in JT XML:
 
 ### Control Character Filtering
 
-`Platform._onKeyChar` translates control characters into proper key events instead of inserting them as literal text:
+Text reaches a text field already composed, by two paths: `INPUT_KEY_CHARACTER` (SDL's text input, desktop) and `INPUT_TEXT_REPLACE` (the soft keyboard's commit through `KarawanInputConnection`). Many soft keyboards commit `"\n"` for their Enter key. `InputWidget` runs both through `engine.inputs.TextInputFilter.Split` (KAR-425), which separates printable runs from control characters:
 
-- `\b` (0x08) → `(backspace)` press+release
-- `\t` (0x09) → `(tab)` press+release
-- `\n`/`\r` → `(enter)` press+release
-- `\x7f` (DEL) → `(delete)` press+release
-- Other `char.IsControl()` characters → silently dropped
+- `\b` (0x08) → backspace
+- `\x7f` (DEL) → delete
+- `\n` / `\r` (and `\r\n`, once) → Enter: the field is selected (accepted), as by the `(enter)` key
+- `\t` → Tab: focus moves to the next field, as by the `(tab)` key
+- Other `char.IsControl()` characters → dropped
+
+The actions are applied in the widget directly, not by pushing synthetic key events: key events resolve by `ScanCode`, and a synthetic one has none. (This used to live in `Platform._onKeyChar`, which went with the Silk input path in WP-3.5/WP-5.3.)
 
 ### Keyboard Landscape Mode
 

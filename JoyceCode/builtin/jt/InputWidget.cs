@@ -130,16 +130,45 @@ public class InputWidget : TextWidget
      * Handle INPUT_TEXT_REPLACE from Android IME:
      * Delete Data1 characters before cursor, then insert Code.
      */
-    protected void _replaceText(int deleteCount, string newText)
+    protected void _replaceText(int deleteCount, string newText, engine.news.Event ev)
     {
         for (int i = 0; i < deleteCount; i++)
         {
             _backspace();
         }
 
-        if (!string.IsNullOrEmpty(newText))
+        _applyText(newText, ev);
+    }
+
+
+    /**
+     * Typed text into the field (KAR-425): printable runs are inserted, the control
+     * characters among them act as the keys they stand for - so a soft keyboard's
+     * committed "\n" accepts the field like Enter does instead of being stored.
+     */
+    protected void _applyText(string text, engine.news.Event ev)
+    {
+        foreach (var piece in engine.inputs.TextInputFilter.Split(text))
         {
-            _insert(newText);
+            switch (piece.Control)
+            {
+                case engine.inputs.TextInputFilter.Control.None:
+                    _insert(piece.Text);
+                    break;
+                case engine.inputs.TextInputFilter.Control.Backspace:
+                    _backspace();
+                    break;
+                case engine.inputs.TextInputFilter.Control.Delete:
+                    _delete();
+                    break;
+                case engine.inputs.TextInputFilter.Control.Enter:
+                    // As the Enter key: the base widget selects (accepts) a leaf widget.
+                    if (ev != null) _emitSelected(ev);
+                    break;
+                case engine.inputs.TextInputFilter.Control.Tab:
+                    _focusNext();
+                    break;
+            }
         }
     }
 
@@ -160,15 +189,15 @@ public class InputWidget : TextWidget
                  * Atomic text replacement from Android IME.
                  * Delete the composing region and insert committed text.
                  */
-                _replaceText((int)ev.Data1, ev.Code);
+                _replaceText((int)ev.Data1, ev.Code, ev);
                 ev.IsHandled = true;
             }
             else if (ev.Type.StartsWith(Event.INPUT_KEY_CHARACTER))
             {
                 /*
-                 * Insert input at current cursor.
+                 * Insert input at current cursor, its control characters acting as keys.
                  */
-                _insert(ev.Code);
+                _applyText(ev.Code, ev);
                 ev.IsHandled = true;
 
             }
