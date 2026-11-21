@@ -216,8 +216,8 @@ This is the largest single item in the plan. It needs:
 - shared code with DES (as `GroupActions` already is), accepting that live
   encounters use a different RNG than DES.
 
-Decide here whether the unloaded `models/tale/interactions/` files ship or
-are deleted (KAR-436).
+The unloaded `models/tale/interactions/` files were deleted (KAR-491): every
+storylet in them duplicated a shipped one.
 
 *Done when:* an escalation chain observed in DES (e.g. a protection demand
 followed by the merchant's fear and a request for help) also plays out in
@@ -243,9 +243,8 @@ player never takes part.
   failing applies its own change. Start with one request type end to end:
   `order_food` (worker, drifter; request `food_delivery`) answered by the
   player instead of the merchant's `deliver_food`. A `help_request`, which
-  `provide_help` (worker, socialite) claims, is emitted only by the unloaded
-  `interactions/social/help.json`, so it is a candidate only if S2b ships
-  that file.
+  `provide_help` (worker, socialite) claims, is emitted by `ask_for_help` in
+  `worker.json`.
 - **Favours are remembered:** a completed or refused trust-gated request is
   recorded on both sides (owed / owing), which §9's upper levels read.
 - NPCs' own claims keep priority, so the society does not start waiting for

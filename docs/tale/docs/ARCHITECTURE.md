@@ -92,8 +92,8 @@ Storylets are JSON arrays in `models/tale/*.json`. The parser is
   what loads are one declaration.
 - **Headless:** TestRunner, the Chushi scenario bake and the Testbed call
   `LoadFromDirectory("models/tale")`, which reads only the top-level `*.json`.
-- **`models/tale/interactions/`:** the ten files there are loaded by neither
-  path. The request and claim storylets that run come from the role files.
+- **`models/tale/interactions/`** was deleted (KAR-491): it was loaded by
+  neither path, and every storylet in it duplicated one in the role files.
 - **Fallbacks:** `GetFallback` uses `wander` by day and `rest` by night.
 
 ### 3.3 Selection (`StoryletSelector.SelectNext`, `StoryletSelector.cs:69`)
@@ -152,8 +152,9 @@ The live game has no interrupts.
    default weight it used to outweigh the routine: ~40 % of a city fled
    threats nobody made, and the bake drained morality to 0.12, typing 58 of 90
    baked groups criminal.
-3. A requester's `wait_edge` waits for that signal (`HasSignal`) or falls back
-   on timeout.
+3. A `wait_edge` (a requester waiting for that signal, `HasSignal`, or a
+   fallback on timeout) is parsed but **not implemented**, neither in the DES
+   nor live; it is planned with S3.
 4. Requests nobody claims are resolved abstractly at the day boundary by any
    matching NPC; the signal source is `-1` (`:525-542`).
 

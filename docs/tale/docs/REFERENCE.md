@@ -26,8 +26,8 @@ Specific roles may add entries (e.g., `inventory_stress` for merchants). Trust i
 
 ## Storylet Format
 
-A storylet is one entry of a JSON array in `models/tale/*.json` (role and theme files) or
-`models/tale/interactions/<category>/*.json` (request/claim pairs). It says **where** the
+A storylet is one entry of a JSON array in `models/tale/*.json` (role and theme files;
+request and claim storylets live there too). It says **where** the
 NPC goes, **how long** it stays, **when** it may be chosen, and **what it changes**.
 There is no verb: the game turns every storylet into a travel phase (`GoToStrategyPart`)
 followed by an activity phase (`StayAtStrategyPart`) in `TaleEntityStrategy`.
