@@ -16,7 +16,7 @@
 - **Fixed on the way, a KAR-487 regression:** each live arrival rolled an encounter against every NPC present. With 4095 NPCs at one workplace that cost 0.7 ms per arrival: `BackgroundTickTests`' toy Perf theory had not finished after 25 minutes; 240 game minutes took 7.1 s against 0.03 s without live rules.
   - `EncounterResolver.MaxCandidatesPerCheck` caps how many co-present NPCs one arrival rolls against. It is unlimited by default (the DES); the live game uses 12, like `RuntimeSocialEvolver.MaxPairsPerLocation`. The scan also stops early once capped, if nothing has been pruned so far.
   - Result: 0.16 s for those 240 minutes; the full Perf theory runs in 94 s (slice mean 0.035 ms). Ufyo is unchanged (slice mean 0.19 ms, TickEncounters p99 2.0 ms). The live claim rate went from 87 % to 90 % (DES 89 %).
-- **Not changed:** the DES. The interrupt time is recorded but unused there, and all 13 scenarios are unaffected (the shared rules only gained the time argument and a callback).
+- **Not changed:** the DES. The interrupt time is recorded but unused there, and all 13 scenarios re-baked byte-identical after the last change (the DES keeps an uncapped encounter model).
 - **Tests:**
   - xUnit `LiveRequestClaimTests` (+3):
     - a Tier-3 Nest is applied by the next background tick exactly at its time, and the loitering resumes after the flight;
