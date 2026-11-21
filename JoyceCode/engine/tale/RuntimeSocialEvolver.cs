@@ -95,7 +95,8 @@ public class RuntimeSocialEvolver
         int clusterIndex,
         IReadOnlyList<NpcSchedule> npcs,
         SpatialModel spatial,
-        DateTime gameNow)
+        DateTime gameNow,
+        Action<NpcSchedule, NpcSchedule, DateTime> onEncounter = null)
     {
         var stats = new TickStats();
         var st = _getTickState(clusterIndex);
@@ -168,7 +169,7 @@ public class RuntimeSocialEvolver
                     for (int j = i + 1; j < present.Count; j++)
                     {
                         stats.PairsSampled++;
-                        _tryEncounter(present[i], present[j], p, rng, st, stats);
+                        _tryEncounter(present[i], present[j], p, rng, st, stats, gameNow, onEncounter);
                     }
                 }
             }
@@ -181,7 +182,7 @@ public class RuntimeSocialEvolver
                     int j = rng.Next(present.Count);
                     if (i == j) continue;
                     stats.PairsSampled++;
-                    _tryEncounter(present[i], present[j], p, rng, st, stats);
+                    _tryEncounter(present[i], present[j], p, rng, st, stats, gameNow, onEncounter);
                 }
             }
         }
@@ -191,7 +192,8 @@ public class RuntimeSocialEvolver
 
 
     private void _tryEncounter(NpcSchedule a, NpcSchedule b, float p, Random rng,
-        ClusterTickState st, TickStats stats)
+        ClusterTickState st, TickStats stats, DateTime gameNow,
+        Action<NpcSchedule, NpcSchedule, DateTime> onEncounter)
     {
         long pairKey = RelationshipTracker.PairKey(a.NpcId, b.NpcId);
         if (st.DailyDedup.Contains(pairKey)) return;
@@ -232,6 +234,10 @@ public class RuntimeSocialEvolver
 
         Trace(_dc, $"Encounter: npc {a.NpcId} × npc {b.NpcId} [{type}] trust {avgTrust:F2} → " +
               $"{(a.Trust[b.NpcId] + b.Trust[a.NpcId]) / 2f:F2}");
+
+        // S2b-c (KAR-488): what else the meeting means - claims, escalation, interrupts -
+        // by the shared rules, after the trust change, as in the DES's ProcessEncounter.
+        onEncounter?.Invoke(a, b, gameNow);
     }
 
 
