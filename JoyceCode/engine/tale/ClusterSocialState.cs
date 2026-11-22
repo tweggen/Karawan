@@ -49,6 +49,9 @@ public class NpcSocialSnapshot
     public int GroupId = -1;
     public Dictionary<int, float> Trust = new();
     public Dictionary<string, float> SocialProps = new();
+
+    /** TALE S2: the NPC's hearsay of the player; null if none. Immutable, shared by reference. */
+    public PlayerHearsay Hearsay;
 }
 
 
@@ -91,7 +94,7 @@ public class ClusterSocialState
     /// </summary>
     public void SnapshotNpc(NpcSchedule npc)
     {
-        var snap = new NpcSocialSnapshot { GroupId = npc.GroupId };
+        var snap = new NpcSocialSnapshot { GroupId = npc.GroupId, Hearsay = npc.Hearsay };
         if (npc.Trust != null)
         {
             foreach (var (id, t) in npc.Trust) snap.Trust[id] = t;
@@ -120,6 +123,7 @@ public class ClusterSocialState
             return false;
 
         npc.GroupId = snap.GroupId;
+        npc.Hearsay = snap.Hearsay;
         npc.Trust ??= new Dictionary<int, float>();
         npc.Trust.Clear();
         foreach (var (id, t) in snap.Trust) npc.Trust[id] = t;
@@ -159,13 +163,15 @@ public class ClusterSocialState
             foreach (var (id, t) in snap.Trust) jTrust[id.ToString()] = t;
             var jProps = new JsonObject();
             foreach (var (key, v) in snap.SocialProps) jProps[key] = v;
-            jSnapshots.Add(new JsonObject
+            var jSnap = new JsonObject
             {
                 ["npcId"] = npcId,
                 ["groupId"] = snap.GroupId,
                 ["trust"] = jTrust,
                 ["props"] = jProps
-            });
+            };
+            if (snap.Hearsay != null) jSnap["hearsay"] = snap.Hearsay.ToJson();
+            jSnapshots.Add(jSnap);
         }
 
         return new JsonObject
@@ -224,7 +230,8 @@ public class ClusterSocialState
                 if (npcId < 0) continue;
                 var snap = new NpcSocialSnapshot
                 {
-                    GroupId = so["groupId"]?.GetValue<int>() ?? -1
+                    GroupId = so["groupId"]?.GetValue<int>() ?? -1,
+                    Hearsay = PlayerHearsay.FromJson(so["hearsay"])
                 };
                 if (so["trust"] is JsonObject jTrust)
                 {

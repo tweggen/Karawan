@@ -185,10 +185,13 @@ interaction) and are visible in the S0 debug views.
 > heard opinions apart from `Trust[-1]` ("hearsay"); the first bullet below is refined there.
 
 - During NPC–NPC encounters (`RuntimeSocialEvolver`, and DES for tests),
-  opinions of the player diffuse: each side's `Trust[-1]` moves a little
-  towards the other's, weighted by their mutual trust. Strong opinions
-  travel further than weak ones. An NPC without an entry doesn't join in
-  until it has heard something (S1's baseline).
+  opinions of the player diffuse as **hearsay**: a record of what an NPC has
+  heard, kept apart from `Trust[-1]` (a trust entry means "met"). Each
+  telling halves the opinion, a listener weighs it by its trust in the
+  teller, and only strong opinions travel. Witnesses know at once, the
+  first generation hears within a day, and no further generation within
+  that day (owner, 2026-11-22). Detail in
+  [TALE-S2-GOSSIP.md](TALE-S2-GOSSIP.md).
 - `player_fact.*` entries (`tale.npc.remember`, and S1's witness entries)
   spread the same way with a probability, so "the player beat up a
   syndicate member" can reach the syndicate.
@@ -400,8 +403,9 @@ entangled. What it means to bring them back:
 
    So the levels are how "progression" shows without an XP bar: the same
    density of opportunities (§8 Q4), with a different mix.
-4. **They arrive in steps.** Recognised needs S1; connected needs group
-   standing (S1) and gossip (S2) to mean anything; entangled needs the
+4. **They arrive in steps.** Recognised needs S1, and with S2 also counts
+   NPCs who only heard of the player (owner, 2026-11-22); connected needs group
+   standing (S1); entangled needs the
    favour record (S3) and rival groups with aims (S4). The level is defined
    in S1 but only fully meaningful after S4.
 5. **They go down as well as up.** Harm, refusal and time lower trust; in

@@ -47,6 +47,13 @@ public class NpcSchedule
     // Per-NPC trust relationships
     public Dictionary<int, float> Trust;
 
+    /**
+     * TALE S2 (KAR-496): what the NPC has heard of the player, apart from Trust[-1]. Null if
+     * nothing. Immutable; replaced by reference under TALE's locks, read without them. Not
+     * part of IsKnownToPlayer: hearsay does not make an NPC known or deviated.
+     */
+    public PlayerHearsay Hearsay;
+
     // Group membership (-1 = no group)
     public int GroupId = -1;
 

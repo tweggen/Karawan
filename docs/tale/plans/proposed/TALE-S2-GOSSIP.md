@@ -3,7 +3,7 @@
 > Stage S2 of [TALE-EMERGENT-STORIES.md](TALE-EMERGENT-STORIES.md) (KAR-439).
 > Depends on S1 (done 2026-11-22) and S0 (done); uses S2b's shared rules (`TaleSocialRules`,
 > KAR-486..490).
-> **Status:** proposed; reviewed GREEN (Fable, 2026-11-22, three passes, §9) · **Written:** 2026-11-22
+> **Status:** proposed; reviewed GREEN (Fable, 2026-11-22, three passes, §9); owner's answers in §6 · **Written:** 2026-11-22
 
 What the player does to one NPC stays with that NPC and the witnesses who saw it (S1). In
 a living society it should travel: the syndicate hears that someone beat up one of its
@@ -108,6 +108,10 @@ values computed from the state **before** the exchange. a's view, as b receives 
    out.
 2. **Only strong opinions travel:** nothing is told if |told| < `MinTold` (0.15). Weak
    impressions stay with the NPC that has them.
+   A hearer retells only once it has held its hearsay for `RetellAfter` (1 game day,
+   owner answer 1); first-hand knowledge (the victim, a witness) is told at once. The
+   listener's `Generation` is the teller's plus one (first-hand counts as 0); a record
+   keeps the lowest generation it has heard.
 3. **b listens in proportion to how much it trusts a:** `w = Listen × trustBA`
    (`Listen` 0.5). Then:
    - **confirmation** (b has a record, the same sign, |told| ≤ |Regard|): only
@@ -152,6 +156,7 @@ the first-hand facts S1 writes:
 | `player_fact.ran_me_over`, `saw_run_over` | `ran_someone_over` |
 | `player_fact.helped_me` | `helped_someone` |
 | `player_fact.paid_me` | `pays_people` |
+| `player_fact.bribed_me` | nothing: bribes do not travel (owner answer 4) |
 | hearsay tag of a | the same tag, with probability `FactRelay` (0.5) |
 
 A first-hand fact is passed on with probability `FactTell` (0.8). Draws come from the
@@ -219,7 +224,7 @@ the panel) read it on the logical thread.
    applies; it is the stronger signal.
 2. **First contact.** When an NPC with hearsay meets the player the first time, its
    start moves from `FirstContact` by `Prejudice × Regard × Weight(gameNow)`
-   (`Prejudice` 0.1). The mechanism:
+   (`Prejudice` 0.2, owner answer 3). The mechanism:
    - **A new helper, `PlayerTrust.StartFor(npc, gameNow)`:** the NPC's entry if it has
      one, else `FirstContact` shifted by the hearsay's current weight.
    - **`PlayerTrust.Apply(npc, delta, gameNow)`** creates the entry from `StartFor`, so
@@ -241,10 +246,9 @@ the panel) read it on the logical thread.
 
    After that the NPC knows the player and its own experience counts. The hearsay record
    stays (still shown, still retold, first-hand first).
-3. **Not read by group standing or the standing level.** Both stay first-hand. Whether
-   hearsay should count towards the standing level's "recognised" (notoriety), and with
-   it the roadmap's §9.4 ("connected needs group standing and gossip"), is owner question
-   2 (§6).
+3. **Group standing stays first-hand; the standing level's "recognised" counts hearsay**
+   (owner answer 2). NPCs with present hearsay count towards "recognised" beside the NPCs
+   who know the player; "connected" and "entangled" stay on group standing and favours.
 4. **Instruments.**
    - `SocialMetrics` gains the hearsay count and share, split into members of one group
      (a `groupId` parameter: the victim's `GroupId` in S2-d) and the rest, and the
@@ -279,10 +283,9 @@ the panel) read it on the logical thread.
   `ApplyPlayerInteraction`), run the social tick for a game day: an NPC in the victim's
   circle that never met the player gets the hearsay greeting (S2-c) and the panel shows it.
 - **Reach (S2-d)**, measured in Ufyo (4095 NPCs) with the shipped content, one punch and
-  one help, after one and after three game days: how many NPCs carry hearsay, in and
-  outside the victim's group, and the distribution of |Regard|. Tuning target, first guess
-  for the owner to judge: within a day most of the victim's group and a handful of
-  friends outside it; never most of the city.
+  one help, after one, two and three game days: hearsay holders per generation, in and
+  outside the victim's group, and the distribution of |Regard|. The owner's target: after
+  the first day only generation 1; generation 2 (harm only) from the second day.
 - **Save:** hearsay survives depopulation, save and load; an NPC with hearsay only is not
   deviated and not in the skip mask; a record decayed below 0.05 is not restored as
   present.
@@ -291,17 +294,18 @@ the panel) read it on the logical thread.
 - **Performance:** `TickEncounters` p99 stays within its 2 ms budget (KAR-488's
   measurement, re-run).
 
-## 6. Owner questions
+## 6. Owner questions — answered 2026-11-22
 
-1. **Reach:** how far should one punch travel in a day? (§5's first guess.)
-2. **Notoriety:** should NPCs who only heard of the player count towards the standing
-   level's "recognised"?
-3. **Prejudice:** a strong rumour shifts the first contact by up to ±0.1 trust. Stronger,
-   weaker, or none?
-4. **Which facts travel:** §2.3 includes paying. Should bribes travel (to authorities)?
-5. **Help and harm travel differently:** with one shared attenuation, a punch travels two
-   hops and a help one (§2.2). Accept that (good deeds spread less than bad ones), or give
-   help its own, weaker attenuation?
+1. **Reach, measured in generations** (hops from a first-hand source, the victim or a
+   witness): witnesses know at once, the first generation within a day, and no further
+   generation within that day. → **`RetellAfter` = 1 game day** (§2.2): hearsay is
+   retold only once held that long; first-hand knowledge is told at once. Every record
+   carries its `Generation`, and S2-d measures reach by generation and day.
+2. **Notoriety: yes.** "Isn't recognition about the name being heard?" NPCs with present
+   hearsay count towards the standing level's "recognised" (S2-c, §3.3).
+3. **Prejudice: ±0.2** (`Prejudice` 0.2, §3.2).
+4. **Bribes do not travel:** `player_fact.bribed_me` is not in the fact map (§2.3).
+5. **Help travelling one hop and harm two: agreed.**
 
 ## 7. Not in S2
 
