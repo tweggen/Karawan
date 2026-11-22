@@ -181,6 +181,9 @@ interaction) and are visible in the S0 debug views.
 
 ## S2 — Consequences travel (gossip)
 
+> Stage plan: [TALE-S2-GOSSIP.md](TALE-S2-GOSSIP.md) (reviewed GREEN 2026-11-22). It keeps
+> heard opinions apart from `Trust[-1]` ("hearsay"); the first bullet below is refined there.
+
 - During NPC–NPC encounters (`RuntimeSocialEvolver`, and DES for tests),
   opinions of the player diffuse: each side's `Trust[-1]` moves a little
   towards the other's, weighted by their mutual trust. Strong opinions
