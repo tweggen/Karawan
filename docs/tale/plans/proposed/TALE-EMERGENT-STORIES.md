@@ -30,7 +30,7 @@ plan and tickets once it is accepted.
 
 ## S0 — Ground to stand on (prerequisites)
 
-> Stage plan: [TALE-S0-GROUNDWORK.md](TALE-S0-GROUNDWORK.md) (KAR-437).
+> Stage plan: [TALE-S0-GROUNDWORK.md](../done/TALE-S0-GROUNDWORK.md) (KAR-437).
 
 You can't tune a society you can't measure or see, the test suite can't
 tell when social behaviour breaks, and today the society both stands still
@@ -51,7 +51,7 @@ fragment.
   respawns or create a second entity for one NPC. New rule: an NPC with a
   `Trust[-1]` entry or any `player_fact.*` is never removed (not on
   depopulation either), and dematerialisation follows the entity's death.
-  Details: [TALE-S0-GROUNDWORK.md](TALE-S0-GROUNDWORK.md) W3.
+  Details: [TALE-S0-GROUNDWORK.md](../done/TALE-S0-GROUNDWORK.md) W3.
 - **KAR-434** — wire `DepopulateCluster`, so the snapshots this relies on
   are taken when a cluster is left, not only when saving. (Its comment at
   `TaleSpawnOperator.cs:463-464` claims it already removes schedules.)
@@ -103,7 +103,7 @@ fragment.
   S0 (they set S4's bake option and S5's target).
 
 **Measured (S0 W9, 2026-10-20; tables and method in
-[TALE-S0-GROUNDWORK.md](TALE-S0-GROUNDWORK.md) §12):**
+[TALE-S0-GROUNDWORK.md](../done/TALE-S0-GROUNDWORK.md) §12):**
 - **Clusters:** 70; NPCs 168 … 4095 per cluster, 45 clusters at the 4095
   cap, 206 667 NPCs in all.
 - **Density (for S5):** within 100 m of a street location, on average
@@ -134,7 +134,7 @@ fragment.
 
 ## S1 — The player in the social graph
 
-> Stage plan: [TALE-S1-PLAYER-IN-GRAPH.md](TALE-S1-PLAYER-IN-GRAPH.md) (KAR-438).
+> Stage plan: [TALE-S1-PLAYER-IN-GRAPH.md](../done/TALE-S1-PLAYER-IN-GRAPH.md) (KAR-438).
 
 Today the player's only relationship is `Trust[-1]` per NPC: it starts at
 0.5 on first contact and rises by 0.02 whenever a conversation ends

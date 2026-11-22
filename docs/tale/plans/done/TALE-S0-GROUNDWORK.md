@@ -1,7 +1,7 @@
 # TALE S0 — Ground to Stand On (stage plan)
 
-> **Status:** proposed; review GREEN 2026-10-18 (Fable, three rounds) · **Written:** 2026-10-18 · **Ticket:** KAR-437 (stage S0)
-> **Roadmap:** [TALE-EMERGENT-STORIES.md](TALE-EMERGENT-STORIES.md) §S0 · **Shipped design:** [../../docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md)
+> **Status:** done (KAR-437 closed); review GREEN 2026-10-18 (Fable, three rounds) · **Written:** 2026-10-18 · **Ticket:** KAR-437 (stage S0)
+> **Roadmap:** [TALE-EMERGENT-STORIES.md](../proposed/TALE-EMERGENT-STORIES.md) §S0 · **Shipped design:** [../../docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md)
 
 S0 makes the society measurable, visible and continuous before S1 lets the
 player into it. It has nine work packages (W1…W9). This plan says what each
