@@ -127,6 +127,56 @@ public class TalePopulationDistributionTests
      * one (the skip mask of a cluster's player-known NPCs) changes nobody else. A
      * capacity-weighted pick must keep it - weighting, not counting who is already there.
      */
+    /*
+     * KAR-492: each city's role mix follows PickRole's weights. Before, the per-NPC source
+     * was RandomSource over "<cluster>-npc-<i>", whose first draws lie on a lattice: the start
+     * city had 1 drifter and 2 merchants among 279 NPCs (weights: ~6 and ~56).
+     */
+    /*
+     * Measured after the fix: Ufyo (4095) within 3 points of every weight. Yelukhdidru (279)
+     * is a fair but unlucky draw - workers 36 % against 27 %, drifters 2 against ~6: over 200
+     * cluster keys the first draw's chi-square has mean 8.9 and p95 16.8 (uniform: 9, 16.9),
+     * and the start city's key is the largest of the 200 (33). Exact proportions would make
+     * each NPC's role depend on the others', which the seed hierarchy forbids.
+     */
+    [Theory]
+    [InlineData("Yelukhdidru", 0.10)]
+    [InlineData("Ufyo", 0.03)]
+    public void RoleSharesFollowTheWeights(string name, double tolerance)
+    {
+        var c = _city(name);
+        string[] roles = { "worker", "merchant", "socialite", "drifter", "authority", "nightworker", "hustler", "reveler" };
+        float[] w = { 0.30f, 0.13f, 0.15f, 0.12f, 0.10f, 0.08f, 0.07f, 0.05f };
+        float d = c.Input.DowntownIntensity;
+        w[1] += d * 0.10f; w[4] += d * 0.05f; w[6] += d * 0.05f; w[7] += d * 0.03f;
+        w[3] = Math.Max(0.02f, w[3] - d * 0.10f);
+        float total = w.Sum();
+
+        var counts = c.Npcs.GroupBy(n => n.Role).ToDictionary(g => g.Key, g => g.Count());
+        var report = roles.Select((r, i) =>
+            $"{r} {counts.GetValueOrDefault(r)}/{c.Npcs.Count} (weight {w[i] / total:P0})");
+        _out.WriteLine($"{name}, downtown {d:F2}: {string.Join(", ", report)}");
+        for (int i = 0; i < roles.Length; i++)
+        {
+            double share = counts.GetValueOrDefault(roles[i]) / (double)c.Npcs.Count;
+            Assert.True(Math.Abs(share - w[i] / total) <= tolerance,
+                $"{roles[i]}: {share:P1} against {w[i] / total:P1}");
+        }
+    }
+
+
+    [Fact]
+    public void TheMixedSourceIsUniformOverSimilarSeeds()
+    {
+        var bins = new int[10];
+        const int n = 5000;
+        for (int i = 0; i < n; i++)
+            bins[Math.Min(9, (int)(RandomSource.Mixed("cluster-clusters-mydear-3-npc-" + i).GetFloat() * 10))]++;
+        _out.WriteLine($"deciles of the first draw over {n} seeds: {string.Join(" ", bins)}");
+        Assert.All(bins, b => Assert.InRange(b, 420, 580));
+    }
+
+
     [Fact]
     public void SkippingAnNpcChangesNobodyElse()
     {

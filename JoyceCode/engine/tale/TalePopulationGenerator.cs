@@ -101,7 +101,8 @@ public class TalePopulationGenerator
         var streetPoints = input.StreetPoints;
 
         // Independent seed per NPC — skipping other indices has no effect
-        var rnd = new RandomSource(input.ClusterSeed + "-npc-" + npcIndex);
+        // Mixed (KAR-492): over similar seeds the ordinary source skewed every city's role mix.
+        var rnd = RandomSource.Mixed(input.ClusterSeed + "-npc-" + npcIndex);
 
         int npcId = NpcSchedule.MakeNpcId(clusterIndex, npcIndex);
 

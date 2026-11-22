@@ -265,7 +265,7 @@ public class TaleManager
         foreach (var schedule in schedules)
         {
             // Deterministic per-NPC offset: seed RNG from NpcId
-            var offsetRng = new builtin.tools.RandomSource(schedule.NpcId.ToString());
+            var offsetRng = builtin.tools.RandomSource.Mixed(schedule.NpcId.ToString());
             int offsetMinutes = offsetRng.GetInt(91) - 45; // ±45 minutes: 0-90 becomes -45 to 45
             DateTime npcTime = gameStartTime.AddMinutes(offsetMinutes);
 
@@ -1367,11 +1367,11 @@ public class TaleManager
 
         // Determine duration (per NPC and step, independent of other NPCs)
         float durationMinutes = next.GetDuration(
-            new builtin.tools.RandomSource(npc.NpcId.ToString() + "-dur-" + npc.ScheduleStep));
+            builtin.tools.RandomSource.Mixed(npc.NpcId.ToString() + "-dur-" + npc.ScheduleStep));
 
         // Time randomization: ±5 minutes per NPC per schedule step
         // E.g., worker scheduled to arrive at 8:00 might arrive at 7:55-8:05
-        var timeRng = new builtin.tools.RandomSource(npc.NpcId.ToString() + "-time-" + npc.ScheduleStep);
+        var timeRng = builtin.tools.RandomSource.Mixed(npc.NpcId.ToString() + "-time-" + npc.ScheduleStep);
         int timeOffsetMinutes = timeRng.GetInt(11) - 5; // ±5 minutes: 0-10 becomes -5 to 5
         DateTime actualStart = gameNow + TimeSpan.FromMinutes(travelMinutes + timeOffsetMinutes);
 
@@ -1899,7 +1899,7 @@ public class TaleManager
             if (streetLocations.Count > 0)
             {
                 // ScheduleStep was already incremented for this advance.
-                var streetRng = new builtin.tools.RandomSource(npc.NpcId.ToString() + "-street-" + npc.ScheduleStep);
+                var streetRng = builtin.tools.RandomSource.Mixed(npc.NpcId.ToString() + "-street-" + npc.ScheduleStep);
                 int randomIdx = Math.Min(streetRng.GetInt(streetLocations.Count), streetLocations.Count - 1);
                 return streetLocations[randomIdx].Id;
             }
