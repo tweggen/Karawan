@@ -269,7 +269,11 @@ public class TaleWalkBehavior : ANearbyBehavior
 
     private void _pauseWalking(string scriptName)
     {
-        _savedSpeed = Navigator.Speed;
+        /*
+         * KAR-493: only on the first pause. Talking again while paused used to save the
+         * paused speed, 0, and the NPC "resumed" at it - standing for good.
+         */
+        if (!_isPaused) _savedSpeed = Navigator.Speed;
         Navigator.Speed = 0;
         _isPaused = true;
         _previousSpeed = float.MinValue; // force animation update to idle
