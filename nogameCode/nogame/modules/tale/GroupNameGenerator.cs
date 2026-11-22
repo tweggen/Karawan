@@ -34,7 +34,7 @@ public static class GroupNameGenerator
 
     public static string Generate(int clusterIndex, int groupId, string groupType)
     {
-        var rnd = new RandomSource($"{clusterIndex}-group-{groupId}");
+        var rnd = RandomSource.Mixed($"{clusterIndex}-group-{groupId}");
         var (adjectives, nouns) = groupType switch
         {
             "criminal" => (CriminalAdjectives, CriminalNouns),

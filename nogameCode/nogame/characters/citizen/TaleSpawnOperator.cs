@@ -436,7 +436,7 @@ public class TaleSpawnOperator : ISpawnOperator
                 var pod = new PositionDescription { Position = spawnPosition, ClusterDesc = cd };
 
                 // Create character model deterministically from NPC seed
-                var npcRnd = new builtin.tools.RandomSource(cd.GetKey() + "-npc-" + schedule.NpcIndex + "-model");
+                var npcRnd = builtin.tools.RandomSource.Mixed(cd.GetKey() + "-npc-" + schedule.NpcIndex + "-model");
 
                 // Look up the role's model pool (if defined). If registry not ready yet, abort and retry.
                 var roleRegistry = I.Get<engine.tale.RoleRegistry>();
