@@ -24,11 +24,22 @@ internal sealed class ConversationTimeout : IDisposable
 {
     public float TimeoutSeconds { get; set; } = 3.0f;
 
+    /** How long to wait for the conversation to start before giving up on it (KAR-493). */
+    public const int StartTimeoutMs = 2000;
+
     private readonly Engine _engine;
     private readonly string _scriptName;
     private Action _onEnded;
     private CancellationTokenSource _cts;
     private bool _disposed;
+
+    /*
+     * KAR-493: a ScriptEnded counts only once this conversation has started. Talking to an
+     * NPC again ends the running conversation first, and that end - same script name -
+     * arrives after the new watcher exists; it used to end the new conversation at once.
+     */
+    private bool _started;
+    private CancellationTokenSource _startCts;
 
     public ConversationTimeout(Engine engine, string scriptName, Action onEnded)
     {
@@ -39,6 +50,57 @@ internal sealed class ConversationTimeout : IDisposable
         var sm = I.Get<SubscriptionManager>();
         sm.Subscribe(NodeReachedEvent.EVENT_TYPE, _onNodeReached);
         sm.Subscribe(ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
+        sm.Subscribe(ScriptStartedEvent.EVENT_TYPE, _onScriptStarted);
+        _scheduleStartTimeout();
+    }
+
+
+    private void _onScriptStarted(Event ev)
+    {
+        if (_disposed) return;
+        if (ev is not ScriptStartedEvent sev || sev.ScriptName != _scriptName) return;
+        _started = true;
+        _cancelStartTimeout();
+    }
+
+
+    /*
+     * If the conversation never starts (the narration refused it), end the watch, so its
+     * owner resumes instead of waiting forever.
+     */
+    private void _scheduleStartTimeout()
+    {
+        var cts = new CancellationTokenSource();
+        _startCts = cts;
+        var token = cts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(StartTimeoutMs, token);
+            }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+            _engine.QueueMainThreadAction(() =>
+            {
+                if (token.IsCancellationRequested || _disposed || _started) return;
+                _fireEnded();
+            });
+        });
+    }
+
+
+    private void _cancelStartTimeout()
+    {
+        var cts = _startCts;
+        _startCts = null;
+        if (cts != null)
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
     }
 
 
@@ -70,6 +132,7 @@ internal sealed class ConversationTimeout : IDisposable
     {
         if (_disposed) return;
         if (ev is ScriptEndedEvent sev && sev.ScriptName != _scriptName) return;
+        if (!_started) return;   // the end of the conversation this one replaced
         _fireEnded();
     }
 
@@ -131,9 +194,11 @@ internal sealed class ConversationTimeout : IDisposable
         if (_disposed) return;
         _disposed = true;
         _cancelTimer();
+        _cancelStartTimeout();
 
         var sm = I.Get<SubscriptionManager>();
         sm.Unsubscribe(NodeReachedEvent.EVENT_TYPE, _onNodeReached);
         sm.Unsubscribe(ScriptEndedEvent.EVENT_TYPE, _onScriptEnded);
+        sm.Unsubscribe(ScriptStartedEvent.EVENT_TYPE, _onScriptStarted);
     }
 }

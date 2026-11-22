@@ -94,6 +94,12 @@ public static class BehaviorBugfixTests
         failures += RunTest("S2b-e: refused protection -> threat -> a materialised bystander flees (shipped storylets)",
             () => TestS2be_RefusedProtectionMakesAMaterialisedBystanderFlee(engine));
 
+        failures += RunTest("KAR-493: the end of a replaced conversation does not end its successor",
+            () => TestKar493_ReplacedConversationsEndIsIgnored(engine));
+
+        failures += RunTest("KAR-493: talking to a walking NPC twice, it walks on afterwards",
+            () => TestKar493_TalkingTwiceKeepsTheWalkingSpeed());
+
         Console.WriteLine($"\n=== Results: {(failures == 0 ? "ALL PASSED" : $"{failures} FAILED")} ===\n");
         return failures;
     }
@@ -632,6 +638,80 @@ public static class BehaviorBugfixTests
         {
             if (entity.IsAlive) entity.Dispose();
         }
+    }
+
+
+    private static readonly BindingFlags _np = BindingFlags.Instance | BindingFlags.NonPublic;
+
+
+    /// <summary>
+    /// KAR-493: pressing E again ends the running conversation (same script) before starting
+    /// the next; that ScriptEnded reached the new watcher and ended the new conversation.
+    /// A watcher now counts an end only after its own script has started.
+    /// </summary>
+    private static bool TestKar493_ReplacedConversationsEndIsIgnored(Engine engine)
+    {
+        var type = typeof(TaleWalkBehavior).Assembly.GetType("nogame.tools.ConversationTimeout");
+        int ended = 0;
+        Action onEnded = () => ended++;
+        var watcher = (IDisposable)Activator.CreateInstance(type, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            null, new object[] { engine, "chat_test", onEnded }, null);
+        try
+        {
+            type.GetMethod("_onScriptEnded", _np).Invoke(watcher, new object[] { new engine.narration.ScriptEndedEvent("chat_test") });
+            if (ended != 0)
+            {
+                Console.Write("(the replaced conversation's end ended the new one) ");
+                return false;
+            }
+            type.GetMethod("_onScriptStarted", _np).Invoke(watcher,
+                new object[] { new engine.narration.ScriptStartedEvent("chat_test", "conversation", "1") });
+            type.GetMethod("_onScriptEnded", _np).Invoke(watcher, new object[] { new engine.narration.ScriptEndedEvent("chat_test") });
+            if (ended != 1)
+            {
+                Console.Write($"(its own end: ended {ended} times) ");
+                return false;
+            }
+            return true;
+        }
+        finally
+        {
+            watcher.Dispose();
+        }
+    }
+
+
+    /// <summary>
+    /// KAR-493: a second E while paused saved the paused speed (0) as the walking speed, and
+    /// the NPC resumed at it - it never walked again.
+    /// </summary>
+    private static bool TestKar493_TalkingTwiceKeepsTheWalkingSpeed()
+    {
+        var pod = new PositionDescription { Position = new Vector3(0, 0, 0) };
+        var route = new builtin.tools.SegmentRoute();
+        route.Segments.Add(new builtin.tools.SegmentEnd { Position = Vector3.Zero, Up = Vector3.UnitY, Right = Vector3.UnitX, PositionDescription = pod });
+        route.Segments.Add(new builtin.tools.SegmentEnd { Position = new Vector3(10, 0, 0), Up = Vector3.UnitY, Right = Vector3.UnitX });
+        var walk = new TaleWalkBehavior(493, null)
+        {
+            Navigator = new builtin.tools.SegmentNavigator { SegmentRoute = route, Position = pod }
+        };
+        walk.Navigator.Speed = 1.25f;
+        var pause = typeof(TaleWalkBehavior).GetMethod("_pauseWalking", _np);
+        var resume = typeof(TaleWalkBehavior).GetMethod("_resumeWalking", _np);
+        pause.Invoke(walk, new object[] { "chat_test" });
+        pause.Invoke(walk, new object[] { "chat_test" });
+        if (walk.Navigator.Speed != 0f)
+        {
+            Console.Write("(not paused) ");
+            return false;
+        }
+        resume.Invoke(walk, null);
+        if (Math.Abs(walk.Navigator.Speed - 1.25f) > 1e-6f)
+        {
+            Console.Write($"(resumed at {walk.Navigator.Speed}) ");
+            return false;
+        }
+        return true;
     }
 
 
