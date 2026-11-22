@@ -1,7 +1,7 @@
 # TALE S1 — The Player in the Social Graph (stage plan)
 
-> **Status:** proposed; review GREEN 2026-10-18 (Fable, two rounds) · **Written:** 2026-10-18 · **Ticket:** KAR-438 (stage S1)
-> **Roadmap:** [TALE-EMERGENT-STORIES.md](TALE-EMERGENT-STORIES.md) §S1, §8 Q2, §9 · **Needs:** [TALE-S0-GROUNDWORK.md](TALE-S0-GROUNDWORK.md)
+> **Status:** done 2026-11-22 (owner confirmed in game: a punched member's group greets coldly); review GREEN 2026-10-18 (Fable, two rounds) · **Written:** 2026-10-18 · **Ticket:** KAR-438 (stage S1)
+> **Roadmap:** [TALE-EMERGENT-STORIES.md](../proposed/TALE-EMERGENT-STORIES.md) §S1, §8 Q2, §9 · **Needs:** [TALE-S0-GROUNDWORK.md](TALE-S0-GROUNDWORK.md)
 
 S1 makes the player a participant in the society: a defined trust baseline,
 conversation choices and world actions (hitting, running over, paying,
