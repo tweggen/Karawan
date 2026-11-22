@@ -95,7 +95,8 @@ public sealed record TaleDebugSnapshot(
     TaleDebugNpc Selected,
     StandingReading? StandingLevel = null,
     IReadOnlyList<TaleDebugRequest> OpenRequests = null,
-    IReadOnlyList<TaleDebugInterruption> Interruptions = null)
+    IReadOnlyList<TaleDebugInterruption> Interruptions = null,
+    IReadOnlyList<KeyValuePair<string, int>> RoleCounts = null)
 {
     /// <summary>The inter-group matrix shows at most this many groups, the largest.</summary>
     public const int MatrixSize = 12;

@@ -136,6 +136,12 @@ public class TaleDebugSnapshotTests
         Assert.Equal(30f, snap.Groups[0].HangoutDistance!.Value, 3);
         Assert.Equal(NpcCount, snap.NpcCount);
         Assert.Null(snap.Selected);
+
+        // KAR-494: every NPC is counted under its role, most first.
+        Assert.Equal(NpcCount, snap.RoleCounts.Sum(kv => kv.Value));
+        var byRole = tm.GetNpcsInCluster(Cluster).GroupBy(n => n.Role).ToDictionary(g => g.Key, g => g.Count());
+        Assert.All(snap.RoleCounts, kv => Assert.Equal(byRole[kv.Key], kv.Value));
+        Assert.True(snap.RoleCounts.Zip(snap.RoleCounts.Skip(1)).All(p => p.First.Value >= p.Second.Value));
     }
 
 
