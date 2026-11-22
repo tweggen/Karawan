@@ -29,8 +29,11 @@ public static class TaleDebugSnapshotBuilder
         int materialized = 0, tier2 = 0, known = 0, inTransit = 0;
         var standing = new List<TaleDebugPlayerTrust>();
         var interruptions = new List<TaleDebugInterruption>();
+        var roles = new Dictionary<string, int>();
         foreach (var npc in npcs)
         {
+            string role = npc.Role ?? "?";
+            roles[role] = roles.GetValueOrDefault(role) + 1;
             var arcs = npc.ArcStack;
             if (arcs.HasPendingInterrupt || arcs.PausedArcs.Count > 0)
                 interruptions.Add(new TaleDebugInterruption(npc.NpcId, npc.Role, npc.CurrentStorylet,
@@ -68,7 +71,9 @@ public static class TaleDebugSnapshotBuilder
             Selected: selectedNpcId >= 0 ? _npc(manager, selectedNpcId) : null,
             StandingLevel: manager.GetPlayerStanding(clusterIndex),
             OpenRequests: manager.CopyOpenRequests(clusterIndex, gameNow),
-            Interruptions: interruptions);
+            Interruptions: interruptions,
+            // KAR-494: most first, then by name.
+            RoleCounts: roles.OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal).ToList());
     }
 
 

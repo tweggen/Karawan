@@ -51,6 +51,8 @@ public class Tale : APart
         ImGui.Text($"Game time {snap.GameNow:yyyy-MM-dd HH:mm}");
         ImGui.Text($"{snap.NpcCount} NPCs: {snap.Materialized} materialised, {snap.Tier2} tier 2, " +
                    $"{snap.InTransit} in transit, {snap.KnownToPlayer} known to the player");
+        if (snap.RoleCounts is { Count: > 0 } roles)
+            ImGui.TextWrapped("Roles: " + string.Join(", ", roles.Select(kv => $"{kv.Key} {kv.Value}")));
         ImGui.Text("Density near the player: (W9's counter, not there yet)");
 
         bool overlay = (bool)Props.Get(OverlayProp, false);
