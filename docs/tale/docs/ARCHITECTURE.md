@@ -427,6 +427,26 @@ cached or saved. Dialogue reads `npc.group_standing` and `npc.group_known` (othe
 know the player); `ClearNpcProps` resets both to 0. The routine and generic scripts greet a
 member who never met the player warmly at ≥ 0.05 and coldly at ≤ −0.15, naming the group.
 
+**Hearsay** (S2, KAR-496..498; plan `../plans/proposed/TALE-S2-GOSSIP.md`).
+- **The record.** What an NPC has *heard* of the player is kept apart from `Trust[-1]`
+  (which means "met"): an immutable `NpcSchedule.Hearsay` (`PlayerHearsay`) with regard,
+  weight, facts, generation and times. It is carried by the social snapshot and
+  `NpcScheduleJson`, and it does not make the NPC known or deviated.
+- **How it spreads.** `PlayerGossip.Exchange` runs at every encounter:
+  - every telling carries half its source's regard; tellings below 0.15 stay untold;
+  - a listener weighs a telling by its trust in the teller;
+  - hearsay is retold only after a game day, so there is one generation per day;
+  - the weight halves every 3 game days;
+  - bribes never travel.
+- **What reads it:**
+  - the routine and generic scripts greet an NPC who never met the player from hearsay
+    (weight ≥ 0.2; ≤ −0.2 "I've heard about you", ≥ 0.15 "helped out"), after the group
+    greeting;
+  - a first contact starts at `PlayerTrust.StartFor` = 0.15 + 0.2 × regard × weight;
+  - the standing level's "recognised" counts heard NPCs (weight and |regard| ≥ 0.2);
+  - `HearsayMetrics` and the TALE panel show holders per generation and the selected
+    NPC's record.
+
 **Standing level** (S1-f, KAR-460). Per cluster, the player is `anonymous`, `recognised`
 (≥ 3 NPCs trust the player ≥ 0.30 or fear them ≤ 0.05 — notoriety counts), `connected`
 (a group with ≥ 2 members who know the player holds |standing| ≥ 0.15, either sign) or

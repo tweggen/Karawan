@@ -30,6 +30,10 @@ public static class PlayerGossip
     };
 
 
+    /** Every fact tag hearsay can carry; narration publishes one flag per tag. */
+    public static readonly string[] HeardFacts = { "hurt_someone", "ran_someone_over", "helped_someone", "pays_people" };
+
+
     /** What one NPC tells: the regard, its generation, and the candidate facts with their odds. */
     private readonly record struct Telling(float Told, int Generation, List<(string Fact, float Chance)> Facts);
 

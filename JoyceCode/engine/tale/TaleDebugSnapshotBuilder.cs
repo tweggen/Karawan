@@ -68,12 +68,13 @@ public static class TaleDebugSnapshotBuilder
             MatrixGroupIds: matrixIds,
             InterGroupMatrix: Matrix(matrixIds, metrics),
             PlayerStanding: standing,
-            Selected: selectedNpcId >= 0 ? _npc(manager, selectedNpcId) : null,
-            StandingLevel: manager.GetPlayerStanding(clusterIndex),
+            Selected: selectedNpcId >= 0 ? _npc(manager, selectedNpcId, gameNow) : null,
+            StandingLevel: manager.GetPlayerStanding(clusterIndex, gameNow),
             OpenRequests: manager.CopyOpenRequests(clusterIndex, gameNow),
             Interruptions: interruptions,
             // KAR-494: most first, then by name.
-            RoleCounts: roles.OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal).ToList());
+            RoleCounts: roles.OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal).ToList(),
+            Hearsay: HearsayMetrics.Measure(npcs, gameNow));
     }
 
 
@@ -145,7 +146,7 @@ public static class TaleDebugSnapshotBuilder
     }
 
 
-    private static TaleDebugNpc _npc(TaleManager manager, int npcId)
+    private static TaleDebugNpc _npc(TaleManager manager, int npcId, DateTime gameNow)
     {
         var npc = manager.GetSchedule(npcId);
         if (npc == null) return null;
@@ -198,6 +199,9 @@ public static class TaleDebugSnapshotBuilder
             PendingInterrupt: npc.ArcStack.PendingInterruptStorylet,
             PendingInterruptScope: npc.ArcStack.PendingInterruptScope?.ToString(),
             PendingInterruptAt: npc.ArcStack.HasPendingInterrupt ? npc.ArcStack.PendingInterruptAt : null,
-            PausedStorylets: npc.ArcStack.PausedArcs.Select(p => p.StoryletId).ToList());
+            PausedStorylets: npc.ArcStack.PausedArcs.Select(p => p.StoryletId).ToList(),
+            Hearsay: npc.Hearsay is { } h && h.IsPresentAt(gameNow)
+                ? new TaleDebugHearsay(h.Regard, h.WeightAt(gameNow), h.Facts, h.Generation, h.HeardAt, h.UpdatedAt)
+                : null);
     }
 }

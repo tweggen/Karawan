@@ -21,6 +21,27 @@ public static class PlayerTrust
     public static bool Knows(NpcSchedule npc) => npc?.Trust != null && npc.Trust.ContainsKey(Key);
 
 
+    /**
+     * TALE S2 (owner, 2026-11-22): a rumour moves a first contact by up to this much trust,
+     * scaled by the hearsay's regard and current weight.
+     */
+    public const float Prejudice = 0.2f;
+
+
+    /**
+     * Where the NPC's trust in the player starts for an interaction at
+     * <paramref name="gameNow"/>: its entry, or FirstContact shifted by what it has heard
+     * (KAR-498). Without a time (default) there is no prejudice.
+     */
+    public static float StartFor(NpcSchedule npc, DateTime gameNow = default)
+    {
+        if (npc?.Trust != null && npc.Trust.TryGetValue(Key, out float t)) return t;
+        var heard = npc?.Hearsay;
+        if (gameNow == default || heard == null || !heard.IsPresentAt(gameNow)) return FirstContact;
+        return Math.Clamp(FirstContact + Prejudice * heard.Regard * heard.WeightAt(gameNow), 0f, 1f);
+    }
+
+
     /// <summary>The NPC's trust in the player: its entry, or FirstContact if it has none.</summary>
     public static float Get(NpcSchedule npc) =>
         npc?.Trust != null && npc.Trust.TryGetValue(Key, out float t) ? t : FirstContact;
@@ -31,10 +52,10 @@ public static class PlayerTrust
     /// clamp to [0, 1]; returns the new value. Only TaleManager.ApplyPlayerTrust
     /// calls this, so the contact is always marked.
     /// </summary>
-    internal static float Apply(NpcSchedule npc, float delta)
+    internal static float Apply(NpcSchedule npc, float delta, DateTime gameNow = default)
     {
         npc.Trust ??= new Dictionary<int, float>();
-        float next = Math.Clamp(Get(npc) + delta, 0f, 1f);
+        float next = Math.Clamp(StartFor(npc, gameNow) + delta, 0f, 1f);
         npc.Trust[Key] = next;
         return next;
     }

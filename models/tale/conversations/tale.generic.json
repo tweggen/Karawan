@@ -8,6 +8,9 @@
             { "if": "props.npc.player_fact.hit_me == 1", "goto": "hostile" },
             { "if": "props.npc.met_player == 'false' && props.npc.group_standing >= 0.05", "goto": "group_warm" },
             { "if": "props.npc.met_player == 'false' && props.npc.group_standing <= -0.15", "goto": "group_cold" },
+            { "if": "props.npc.met_player == 'false' && props.npc.heard_weight >= 0.2 && props.npc.heard_player <= -0.2 && props.npc.heard_hurt_someone == 1", "goto": "heard_hurt" },
+            { "if": "props.npc.met_player == 'false' && props.npc.heard_weight >= 0.2 && props.npc.heard_player <= -0.2", "goto": "heard_bad" },
+            { "if": "props.npc.met_player == 'false' && props.npc.heard_weight >= 0.2 && props.npc.heard_player >= 0.15", "goto": "heard_good" },
             { "if": "props.npc.hunger > 0.7", "goto": "hungry" },
             { "if": "props.npc.anger > 0.7", "goto": "angry" },
             { "if": "props.npc.fatigue > 0.7", "goto": "tired" },
@@ -74,6 +77,36 @@
           "texts": [
             "You. Stay away from me.",
             "Don't come any closer. I remember what you did."
+          ]
+        }
+      ]
+    },
+    "heard_hurt": {
+      "flow": [
+        {
+          "texts": [
+            "I've heard about you. You hurt one of ours.",
+            "People talk. Keep your hands to yourself around here."
+          ]
+        }
+      ]
+    },
+    "heard_bad": {
+      "flow": [
+        {
+          "texts": [
+            "I've heard things about you. None of them good.",
+            "Word gets around. I'll keep my eye on you."
+          ]
+        }
+      ]
+    },
+    "heard_good": {
+      "flow": [
+        {
+          "texts": [
+            "You're the one who helped out, aren't you?",
+            "I've heard good things about you."
           ]
         }
       ]

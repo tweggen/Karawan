@@ -67,7 +67,13 @@ public sealed record TaleDebugNpc(
     string PendingInterrupt = null,
     string PendingInterruptScope = null,
     DateTime? PendingInterruptAt = null,
-    IReadOnlyList<string> PausedStorylets = null);
+    IReadOnlyList<string> PausedStorylets = null,
+    TaleDebugHearsay Hearsay = null);
+
+
+/// <summary>TALE S2: what the selected NPC has heard of the player, at the snapshot's time.</summary>
+public sealed record TaleDebugHearsay(
+    float Regard, float Weight, IReadOnlyList<string> Facts, int Generation, DateTime HeardAt, DateTime UpdatedAt);
 
 
 /// <summary>
@@ -96,7 +102,8 @@ public sealed record TaleDebugSnapshot(
     StandingReading? StandingLevel = null,
     IReadOnlyList<TaleDebugRequest> OpenRequests = null,
     IReadOnlyList<TaleDebugInterruption> Interruptions = null,
-    IReadOnlyList<KeyValuePair<string, int>> RoleCounts = null)
+    IReadOnlyList<KeyValuePair<string, int>> RoleCounts = null,
+    HearsayReading Hearsay = null)
 {
     /// <summary>The inter-group matrix shows at most this many groups, the largest.</summary>
     public const int MatrixSize = 12;

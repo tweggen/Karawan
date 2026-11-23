@@ -153,7 +153,10 @@ started from the dialogue, applies nothing. Props: `player.cash` (choice conditi
 NPC's group's standing with the player, −1…1, 0 when ungrouped) and `npc.group_known` (other
 members who know the player); (S1-f) `player.standing` (`anonymous`, `recognised`,
 `connected`, `entangled`) and `player.standing_rank` (0–3), the player's level in the
-conversation NPC's cluster.
+conversation NPC's cluster; (S2-c) `npc.heard_player` (what the NPC has heard of the player,
+−1…1, 0 without hearsay), `npc.heard_weight` (how firmly, 0…1, faded to the game time) and
+`npc.heard_<fact>` (0/1, for `hurt_someone`, `ran_someone_over`, `helped_someone`,
+`pays_people`). All are set for every NPC and reset to 0 by `ClearNpcProps`.
 
 ## NPC Roles
 

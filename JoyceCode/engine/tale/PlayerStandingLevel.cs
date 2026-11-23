@@ -31,6 +31,14 @@ public sealed class StandingThresholds
     public float RecognisedStayFeared = 0.08f;
     public int RecognisedStayCount = 2;
 
+    /*
+     * TALE S2 (owner, 2026-11-22: "recognition is about the name being heard"): an NPC that
+     * never met the player but has firm enough hearsay counts too, liked or feared alike.
+     * The same firmness as the hearsay greeting.
+     */
+    public float RecognisedHeardWeight = 0.2f;
+    public float RecognisedHeardRegard = 0.2f;
+
     /* Connected: a group holds a clear opinion of the player, positive or negative. */
     public float ConnectedStanding = 0.15f;
     public float ConnectedStayStanding = 0.10f;
@@ -72,14 +80,26 @@ public static class PlayerStandingLevel
     /// groups (S4) do not exist yet: 0.
     /// </summary>
     public static StandingInputs Measure(IEnumerable<NpcSchedule> npcs, IEnumerable<GroupStanding> groups,
-        StandingThresholds t)
+        StandingThresholds t, DateTime gameNow = default)
     {
         int knownEnter = 0, knownStay = 0;
         if (npcs != null)
         {
             foreach (var npc in npcs)
             {
-                if (!PlayerTrust.Knows(npc)) continue;
+                if (!PlayerTrust.Knows(npc))
+                {
+                    // S2: heard of the player, at gameNow (without a time, hearsay is not read).
+                    var heard = npc.Hearsay;
+                    if (gameNow != default && heard != null
+                        && heard.WeightAt(gameNow) >= t.RecognisedHeardWeight
+                        && Math.Abs(heard.Regard) >= t.RecognisedHeardRegard)
+                    {
+                        knownEnter++;
+                        knownStay++;
+                    }
+                    continue;
+                }
                 float trust = PlayerTrust.Get(npc);
                 if (trust >= t.RecognisedLiked || trust <= t.RecognisedFeared) knownEnter++;
                 if (trust >= t.RecognisedStayLiked || trust <= t.RecognisedStayFeared) knownStay++;

@@ -51,6 +51,12 @@ public class Tale : APart
         ImGui.Text($"Game time {snap.GameNow:yyyy-MM-dd HH:mm}");
         ImGui.Text($"{snap.NpcCount} NPCs: {snap.Materialized} materialised, {snap.Tier2} tier 2, " +
                    $"{snap.InTransit} in transit, {snap.KnownToPlayer} known to the player");
+        if (snap.Hearsay is { } hs)
+            ImGui.Text($"Heard of the player: {hs.Holders} NPCs ({hs.Share:P0}), " +
+                       $"first-hand {hs.KnowFirstHand}" +
+                       (hs.ByGeneration.Count > 0
+                           ? "; " + string.Join(", ", hs.ByGeneration.Select(kv => $"gen {kv.Key}: {kv.Value}"))
+                           : ""));
         if (snap.RoleCounts is { Count: > 0 } roles)
             ImGui.TextWrapped("Roles: " + string.Join(", ", roles.Select(kv => $"{kv.Key} {kv.Value}")));
         ImGui.Text("Density near the player: (W9's counter, not there yet)");
@@ -221,6 +227,10 @@ public class Tale : APart
         ImGui.Text($"NPC {npc.NpcId} (cluster {npc.ClusterIndex}), {npc.Role}");
         ImGui.Text($"Storylet {npc.CurrentStorylet} {npc.CurrentStart:HH:mm}-{npc.CurrentEnd:HH:mm}" +
                    (npc.NextForcedStorylet != null ? $", next forced {npc.NextForcedStorylet}" : ""));
+        if (npc.Hearsay is { } heard)
+            ImGui.Text($"Heard of the player: regard {_f(heard.Regard)}, weight {_f(heard.Weight)}, " +
+                       $"gen {heard.Generation}, since {heard.HeardAt:MM-dd HH:mm}" +
+                       (heard.Facts.Count > 0 ? $" ({string.Join(", ", heard.Facts)})" : ""));
         if (npc.PendingInterrupt != null)
             ImGui.Text($"Interrupt pending: {npc.PendingInterrupt} ({npc.PendingInterruptScope}) since {npc.PendingInterruptAt:HH:mm}");
         if (npc.PausedStorylets is { Count: > 0 } paused)

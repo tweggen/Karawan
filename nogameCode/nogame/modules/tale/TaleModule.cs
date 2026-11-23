@@ -668,7 +668,8 @@ public class TaleModule : AModule
         }
         if (_standingClusterIndex < 0 || !_taleManager.IsClusterPopulated(_standingClusterIndex)) return;
 
-        TaleNarrationBindings.PublishStanding(_taleManager.GetPlayerStanding(_standingClusterIndex));
+        TaleNarrationBindings.PublishStanding(_taleManager.GetPlayerStanding(_standingClusterIndex,
+            _tryGetGameNow() ?? default));
     }
 
 
