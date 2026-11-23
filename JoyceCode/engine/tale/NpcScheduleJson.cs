@@ -101,6 +101,9 @@ public static class NpcScheduleJson
         }
         jo["trust"] = jTrust;
 
+        // TALE S2: hearsay of the player (optional).
+        if (npc.Hearsay != null) jo["hearsay"] = npc.Hearsay.ToJson();
+
         // Social venue IDs
         if (npc.SocialVenueIds != null)
         {
@@ -167,6 +170,7 @@ public static class NpcScheduleJson
 
         // Properties
         npc.Properties = new System.Collections.Generic.Dictionary<string, float>();
+        npc.Hearsay = PlayerHearsay.FromJson(jo["hearsay"]);
         if (jo["properties"] is JsonObject jProps)
         {
             foreach (var kvp in jProps)
