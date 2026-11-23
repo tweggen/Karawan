@@ -32,7 +32,7 @@ public class LiveSocialPerfTests : IClassFixture<ScenarioCompilerTests.RegistryF
     private static readonly DateTime T0 = new(2000, 1, 2, 6, 0, 0);
 
 
-    private static (ClusterDesc Cd, SpatialModel Model, Func<List<NpcSchedule>> Npcs) _ufyo()
+    internal static (ClusterDesc Cd, SpatialModel Model, Func<List<NpcSchedule>> Npcs) _ufyo()
     {
         new GenerateClustersOperator("mydear")._generateClusterList(null, out var clusters);
         var cd = clusters.Single(x => x.Name == "Ufyo");
@@ -54,7 +54,7 @@ public class LiveSocialPerfTests : IClassFixture<ScenarioCompilerTests.RegistryF
     }
 
 
-    private static StoryletLibrary _shipped()
+    internal static StoryletLibrary _shipped()
     {
         string tale = Path.GetFullPath(Path.Combine(global::engine.GameRoot.PathTo("JoyceCode"), "..", "models", "tale"));
         var library = new StoryletLibrary();
