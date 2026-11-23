@@ -898,7 +898,7 @@ public class TaleManager
     public StandingThresholds StandingThresholds { get; set; } = new();
 
     private readonly object _loStanding = new();
-    private readonly Dictionary<int, (int TrustVersion, long GroupSignature, StandingReading Reading)> _standingCache = new();
+    private readonly Dictionary<int, (int TrustVersion, long Hour, long GroupSignature, StandingReading Reading)> _standingCache = new();
     private readonly Dictionary<int, StandingLevel> _standingLevels = new();
 
 
@@ -909,14 +909,19 @@ public class TaleManager
     /// transient (nothing saved), so after a load only the enter conditions
     /// apply. Logical thread.
     /// </summary>
-    public StandingReading GetPlayerStanding(int clusterIndex)
+    public StandingReading GetPlayerStanding(int clusterIndex, DateTime gameNow = default)
     {
         int trustVersion = PlayerTrustVersion;
+        /*
+         * S2: hearsay changes without a trust write (gossip) and fades with time, so a reading
+         * holds for a game hour at most: a new rumour shows within an hour.
+         */
+        long hour = gameNow == default ? 0 : gameNow.Ticks / TimeSpan.TicksPerHour;
         long signature = _groupSignature(clusterIndex);
         lock (_loStanding)
         {
             if (_standingCache.TryGetValue(clusterIndex, out var cached)
-                && cached.TrustVersion == trustVersion && cached.GroupSignature == signature)
+                && cached.TrustVersion == trustVersion && cached.Hour == hour && cached.GroupSignature == signature)
                 return cached.Reading;
         }
 
@@ -926,14 +931,14 @@ public class TaleManager
             if (_socialStates.TryGetValue(clusterIndex, out var social)) groupIds.AddRange(social.Groups.Keys);
         }
         var groups = groupIds.Select(id => GetGroupStanding(clusterIndex, id)).ToList();
-        var inputs = PlayerStandingLevel.Measure(GetNpcsInCluster(clusterIndex), groups, StandingThresholds);
+        var inputs = PlayerStandingLevel.Measure(GetNpcsInCluster(clusterIndex), groups, StandingThresholds, gameNow);
 
         lock (_loStanding)
         {
             StandingLevel? previous = _standingLevels.TryGetValue(clusterIndex, out var p) ? p : null;
             var reading = new StandingReading(PlayerStandingLevel.Evaluate(inputs, previous, StandingThresholds), inputs);
             _standingLevels[clusterIndex] = reading.Level;
-            _standingCache[clusterIndex] = (trustVersion, signature, reading);
+            _standingCache[clusterIndex] = (trustVersion, hour, signature, reading);
             return reading;
         }
     }
@@ -1024,9 +1029,10 @@ public class TaleManager
     /// clamped to [0, 1]; the NPC is marked as touched by the player. Returns
     /// the new value.
     /// </summary>
-    public float ApplyPlayerTrust(NpcSchedule schedule, float delta)
+    public float ApplyPlayerTrust(NpcSchedule schedule, float delta, DateTime gameNow = default)
     {
-        float next = PlayerTrust.Apply(schedule, delta);
+        // S2: a first contact starts from what the NPC heard, at gameNow (PlayerTrust.StartFor).
+        float next = PlayerTrust.Apply(schedule, delta, gameNow);
         MarkPlayerContact(schedule);
         Interlocked.Increment(ref _playerTrustVersion);
         return next;

@@ -509,6 +509,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\TaleSocialRules.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerHearsay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\PlayerGossip.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\tale\HearsayMetrics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\RelationshipTracker.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\SimMetrics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\tale\StoryletDefinition.cs" />

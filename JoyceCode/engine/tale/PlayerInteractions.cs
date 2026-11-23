@@ -75,7 +75,7 @@ public class PlayerInteractions
             return new PlayerInteractionResult(false, PlayerTrust.Get(npc), PlayerTrust.Get(npc), 0f);
         }
 
-        var result = _applyTrust(npc, trustDelta * scale, scale);
+        var result = _applyTrust(npc, trustDelta * scale, scale, gameNow);
         if (spec != null)
         {
             _addProperties(npc, spec.TargetProperties, scale);
@@ -107,7 +107,7 @@ public class PlayerInteractions
         float scale = _repeatScale(witnessId, "witness:" + interactionId, spec, gameNow);
         if (scale <= 0f) return new PlayerInteractionResult(false, PlayerTrust.Get(witness), PlayerTrust.Get(witness), 0f);
 
-        var result = _applyTrust(witness, spec.TrustDelta * w.Factor * strength * scale, scale);
+        var result = _applyTrust(witness, spec.TrustDelta * w.Factor * strength * scale, scale, gameNow);
         _addProperties(witness, w.Properties, strength * scale);
         _setFact(witness, w.Fact);
 
@@ -194,12 +194,15 @@ public class PlayerInteractions
     }
 
 
-    /* A positive change is flattened by (1 − trust): it shrinks as trust nears 1. */
-    private PlayerInteractionResult _applyTrust(NpcSchedule npc, float delta, float scale)
+    /*
+     * A positive change is flattened by (1 − trust): it shrinks as trust nears 1. "Before" is
+     * where the NPC starts, a first contact shifted by what it heard (S2, StartFor).
+     */
+    private PlayerInteractionResult _applyTrust(NpcSchedule npc, float delta, float scale, DateTime gameNow)
     {
-        float before = PlayerTrust.Get(npc);
+        float before = PlayerTrust.StartFor(npc, gameNow);
         if (delta > 0f) delta *= 1f - before;
-        float after = _manager.ApplyPlayerTrust(npc, delta);
+        float after = _manager.ApplyPlayerTrust(npc, delta, gameNow);
         return new PlayerInteractionResult(true, before, after, scale);
     }
 

@@ -217,8 +217,26 @@ public static class TaleNarrationBindings
             Props.Set("npc.group_standing", standing.Standing);
             Props.Set("npc.group_known", (float)standing.Known);
 
+            /*
+             * TALE S2 (KAR-498): what the NPC has heard of the player, for every NPC - 0 without
+             * a record - so a prop never keeps the previous NPC's value or ClearNpcProps' 0.5.
+             */
+            var heard = schedule.Hearsay;
+            DateTime now = GameNow();
+            bool present = heard != null && heard.IsPresentAt(now);
+            Props.Set("npc.heard_player", present ? heard.Regard : 0f);
+            Props.Set("npc.heard_weight", present ? heard.WeightAt(now) : 0f);
+            _injectedKeys.Add("npc.heard_player");
+            _injectedKeys.Add("npc.heard_weight");
+            foreach (var fact in PlayerGossip.HeardFacts)
+            {
+                string key = "npc.heard_" + fact;
+                Props.Set(key, present && heard.Has(fact) ? 1f : 0f);
+                _injectedKeys.Add(key);
+            }
+
             // TALE S1-f: dialogue reads the standing in the NPC's own cluster.
-            try { PublishStanding(I.Get<TaleManager>().GetPlayerStanding(schedule.ClusterIndex)); }
+            try { PublishStanding(I.Get<TaleManager>().GetPlayerStanding(schedule.ClusterIndex, now)); }
             catch { /* TaleManager unavailable */ }
 
             // Track injected keys for cleanup
@@ -291,6 +309,10 @@ public static class TaleNarrationBindings
                 else if (key.StartsWith("npc.player_fact."))
                 {
                     Props.Set(key, 0f); // Memory flags are 0/1, not normalized stats
+                }
+                else if (key.StartsWith("npc.heard_"))
+                {
+                    Props.Set(key, 0f); // TALE S2: no hearsay is 0, never the 0.5 below
                 }
                 else
                 {

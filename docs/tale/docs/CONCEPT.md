@@ -93,7 +93,7 @@ society.
 | Society away from the player | **trust only** — encounters and re-detection run for the whole cluster, but abstract schedules don't advance after the warm-up, so they meet at stale locations |
 | NPCs involving the player | **missing** — the player never joins the interaction pool; NPCs never ask |
 | Groups acting as groups (goals, conflicts between groups) | **missing** — groups exist and gather, but have no aims |
-| Consequences travelling through relationships | **missing** — no gossip, no reputation within a group or cluster |
+| Consequences travelling through relationships | **gossip (S2)** — opinions of the player travel as hearsay between NPCs, one generation per game day; NPCs who never met the player greet from it, and it counts towards "recognised" |
 | Recognising and surfacing an emerging story | **missing** — no quest arises from TALE state |
 
 The roadmap plan takes the DES-only and missing rows in order.
