@@ -147,5 +147,13 @@ public sealed class GossipSettings
      */
     public TimeSpan RetellAfter = TimeSpan.FromDays(1);
 
+    /*
+     * Close ties hear without a chance meeting (owner, 2026-11-23: phones and social media):
+     * a teller tells its strongest ties of at least CloseTie trust, at most MaxTiesTold of
+     * them, each once per game day.
+     */
+    public float CloseTie = 0.5f;
+    public int MaxTiesTold = 4;
+
     public static readonly GossipSettings Default = new();
 }

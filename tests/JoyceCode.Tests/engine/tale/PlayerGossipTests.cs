@@ -211,6 +211,57 @@ public class PlayerGossipTests
     }
 
 
+    /** KAR-499 (owner: phones and social media): close ties hear without meeting. */
+    [Fact]
+    public void ATellerTellsItsStrongestCloseTiesOncePerDay()
+    {
+        var victim = _victim(1);
+        var all = new Dictionary<int, NpcSchedule> { [1] = victim };
+        for (int i = 2; i <= 8; i++)
+        {
+            var n = _npc(i);
+            n.Trust[1] = 0.8f;                                 // everyone trusts the victim
+            all[i] = n;
+        }
+        // The victim's own ties: six close ones of different strength, one too weak.
+        victim.Trust[2] = 0.9f; victim.Trust[3] = 0.6f; victim.Trust[4] = 0.95f;
+        victim.Trust[5] = 0.7f; victim.Trust[6] = 0.55f; victim.Trust[7] = 0.5f; victim.Trust[8] = 0.3f;
+
+        var told = new HashSet<long>();
+        int heard = PlayerGossip.TellCloseTies(victim, id => all.GetValueOrDefault(id), T0,
+            (t, l) => new CountingRandom(), told);
+        Assert.Equal(4, heard);                                  // MaxTiesTold
+        Assert.Equal(new[] { 2, 3, 4, 5 }, all.Values.Where(n => n.Hearsay != null).Select(n => n.NpcId).OrderBy(i => i));
+        Assert.Equal(-0.5f, all[4].Hearsay.Regard, 4);
+        Assert.Equal(0.4f, all[4].Hearsay.Weight, 4);            // Listen 0.5 x trust 0.8
+
+        // Again the same day: nobody new hears, and nothing is told twice.
+        Assert.Equal(0, PlayerGossip.TellCloseTies(victim, id => all.GetValueOrDefault(id), T0.AddHours(2),
+            (t, l) => new CountingRandom(), told));
+        Assert.Equal(0.4f, all[4].Hearsay.Weight, 4);
+    }
+
+
+    [Fact]
+    public void AHearerTellsItsTiesOnlyADayLater()
+    {
+        var hearer = _npc(1);
+        hearer.Hearsay = new PlayerHearsay(-0.5f, 0.5f, new[] { "hurt_someone" }, T0, T0, 1);
+        hearer.Trust[2] = 0.9f;
+        var friend = _npc(2);
+        friend.Trust[1] = 0.9f;
+        var all = new Dictionary<int, NpcSchedule> { [1] = hearer, [2] = friend };
+
+        Assert.False(PlayerGossip.HasSomethingToTell(hearer, T0.AddHours(12)));
+        Assert.Equal(0, PlayerGossip.TellCloseTies(hearer, id => all.GetValueOrDefault(id), T0.AddHours(12),
+            (t, l) => new CountingRandom(), new HashSet<long>()));
+        Assert.Equal(1, PlayerGossip.TellCloseTies(hearer, id => all.GetValueOrDefault(id), T0.AddDays(1).AddHours(1),
+            (t, l) => new CountingRandom(), new HashSet<long>()));
+        Assert.Equal(2, friend.Hearsay.Generation);
+        Assert.Equal(-0.25f, friend.Hearsay.Regard, 4);
+    }
+
+
     [Fact]
     public void HearsaySurvivesTheSnapshotAndBothJsonForms()
     {

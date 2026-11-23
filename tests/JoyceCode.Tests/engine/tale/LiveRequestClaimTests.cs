@@ -339,6 +339,28 @@ public class LiveRequestClaimTests
     }
 
 
+    /** KAR-499: within the hour a punched victim's close friends hear, without meeting it. */
+    [Fact]
+    public void CloseTiesHearWithinTheHourWithoutMeeting()
+    {
+        var tm = _populated();
+        var victim = tm.GetSchedule(Id(0));
+        var friend = tm.GetSchedule(Id(1));
+        var stranger = tm.GetSchedule(Id(2));
+        DateTime t = T0.AddHours(11);
+        tm.TickLiveSocial(t);
+        tm.ApplyPlayerTrust(victim, -0.15f);
+        victim.Properties["player_fact.hit_me"] = 1f;
+        victim.Trust[friend.NpcId] = 0.9f;
+        friend.Trust[victim.NpcId] = 0.8f;
+        stranger.Trust[victim.NpcId] = 0.8f;                     // trusts it, but is not its tie
+
+        tm.TickLiveSocial(t.AddMinutes(61));
+        Assert.Equal(-0.5f, friend.Hearsay.Regard, 4);
+        Assert.Null(stranger.Hearsay);
+    }
+
+
     [Fact]
     public void DepopulatingDropsTheLiveState()
     {
