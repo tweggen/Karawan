@@ -310,6 +310,35 @@ public class LiveRequestClaimTests
     }
 
 
+    /** KAR-497: both live encounter sites pass on what a victim thinks of the player. */
+    [Fact]
+    public void LiveEncountersPassOnAPunchedVictimsOpinion()
+    {
+        var tm = _populated();
+        var victim = tm.GetSchedule(Id(0));
+        var friend = tm.GetSchedule(Id(1));
+        var neighbour = tm.GetSchedule(Id(2));
+        DateTime t = T0.AddHours(11);
+        tm.ApplyPlayerTrust(victim, -0.15f);                    // punched: trust 0
+        victim.Properties["player_fact.hit_me"] = 1f;
+        friend.Trust[victim.NpcId] = 0.8f;
+        neighbour.Trust[victim.NpcId] = 0.6f;
+
+        // The social tick: queued, then drained with the shared rules.
+        tm.OnLiveEncounter(Cluster, victim, friend, t);
+        tm.TickLiveSocial(t, int.MaxValue);
+        Assert.Equal(-0.5f, friend.Hearsay.Regard, 4);
+        Assert.Equal(0.4f, friend.Hearsay.Weight, 4);
+        Assert.False(PlayerTrust.Knows(friend));
+
+        // An arrival: the neighbour arrives where the victim stands and hears it there.
+        tm.AdvanceNpc(victim.NpcId, t);
+        tm.AdvanceNpc(neighbour.NpcId, t.AddMinutes(1));
+        Assert.NotNull(neighbour.Hearsay);
+        Assert.Equal(1, neighbour.Hearsay.Generation);
+    }
+
+
     [Fact]
     public void DepopulatingDropsTheLiveState()
     {

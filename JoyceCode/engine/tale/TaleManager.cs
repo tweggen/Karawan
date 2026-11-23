@@ -1465,6 +1465,7 @@ public class TaleManager
                             live.Rules.ClaimRequests(a, time, 0);
                             live.Rules.ClaimRequests(b, time, 0);
                             live.Rules.ApplyEncounterConditionals(a, b, time, 0);
+                            _gossip(a, b, time, new Random(_gossipSeed(a.NpcId, b.NpcId, time)));
                         }
                     }
                 }
@@ -1491,6 +1492,30 @@ public class TaleManager
 
     /** Which roles can fulfil a request type, for day resolution; the RoleRegistry's by default, settable by tests. */
     internal Func<string, HashSet<string>> CapableRolesOf = _capableRoles;
+
+
+    /*
+     * TALE S2 (KAR-497): an encounter passes on opinions of the player (PlayerGossip), with
+     * each side's own trust in the other - after the encounter's trust change. Caller holds
+     * the cluster lock and _loSocial.
+     */
+    private static void _gossip(NpcSchedule a, NpcSchedule b, DateTime time, Random rng)
+    {
+        float trustAB = a.Trust != null && a.Trust.TryGetValue(b.NpcId, out float tab) ? tab : 0f;
+        float trustBA = b.Trust != null && b.Trust.TryGetValue(a.NpcId, out float tba) ? tba : 0f;
+        PlayerGossip.Exchange(a, b, trustAB, trustBA, time, rng);
+    }
+
+
+    /** The social tick's gossip source: from the queued pair and time (the tick index is not queued). */
+    private static int _gossipSeed(int a, int b, DateTime time)
+    {
+        long pair = RelationshipTracker.PairKey(a, b);
+        ulong z = (ulong)pair ^ (ulong)time.Ticks ^ 0x9E3779B97F4A7C15UL;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBUL;
+        return (int)(z ^ (z >> 31));
+    }
 
 
     private static HashSet<string> _capableRoles(string requestType)
@@ -1538,6 +1563,8 @@ public class TaleManager
                 {
                     live.Rules.ClaimRequests(npc, time, 0);
                     live.Rules.ClaimRequests(partner, time, 0);
+                    // After CheckEncounters' draws, so gossip does not change who meets.
+                    _gossip(npc, partner, time, rng);
                 }
             }
         }
