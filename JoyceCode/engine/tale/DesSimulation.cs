@@ -78,14 +78,16 @@ public class DesSimulation
 
 
     public void Initialize(SpatialModel model, List<NpcSchedule> npcs,
-        StoryletLibrary library, IEventLogger logger, DateTime startTime, int seed = 42)
+        StoryletLibrary library, IEventLogger logger, DateTime startTime, int seed = 42,
+        Random rng = null)
     {
         _spatial = model;
         _library = library;
         _logger = logger;
         _startTime = startTime;
         _clock = startTime;
-        _rng = new Random(seed);
+        // An injected source lets tests count the simulation's draws (KAR-497).
+        _rng = rng ?? new Random(seed);
         _queue = new EventQueue();
         _encounters = new EncounterResolver();
         _storylets = new StoryletSelector(library);
@@ -362,6 +364,14 @@ public class DesSimulation
 
         // Update trust
         var (oldTrust, newTrust, oldTier, newTier) = _relationships.RecordInteraction(npcA, npcB, interactionType, day);
+
+        /*
+         * TALE S2 (KAR-497): opinions of the player travel. The DES keeps NPC trust per pair,
+         * symmetric, so both directions get it. Draws from _rng only when either side has
+         * something to tell: the bake has no player, so it draws nothing and stays as it was.
+         */
+        if (schedA != null && schedB != null)
+            PlayerGossip.Exchange(schedA, schedB, newTrust, newTrust, encounterTime, _rng);
 
         // Log encounter
         _logger.LogEncounter(Math.Min(npcA, npcB), Math.Max(npcA, npcB),
