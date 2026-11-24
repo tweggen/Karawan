@@ -99,4 +99,47 @@ public class GossipReachPerfTests : IClassFixture<ScenarioCompilerTests.Registry
         var end = HearsayMetrics.Measure(tm.GetNpcsInCluster(cd.Index), T0.AddDays(3), victim.GroupId);
         Assert.Equal(1, end.KnowFirstHand);                      // hearing is not meeting
     }
+
+
+    /*
+     * The hourly close-tie pass alone (KAR-499): TickLiveSocial calls that cross a game hour
+     * against calls that do not, on Ufyo with a spread rumour, so its cost reads apart from
+     * the rest of the frame.
+     */
+    [Fact]
+    [Trait("Category", "Perf")]
+    public void TheHourlyCloseTiePassCost()
+    {
+        var (cd, model, generate) = LiveSocialPerfTests._ufyo();
+        var tm = ShippedInteractions.Manager();
+        tm.Initialize(LiveSocialPerfTests._shipped());
+        var scenario = _mediumScenario();
+        tm.PopulateClusterWith(cd.Index, model, T0, _ => generate(),
+            npcs => new ScenarioApplicator().Apply(scenario, npcs).Groups);
+        var npcs = tm.GetNpcsInCluster(cd.Index);
+        foreach (var n in npcs.Where(n => n.Trust != null).Take(40))
+            tm.ApplyPlayerInteraction(n.NpcId, "assault", T0);          // 40 first-hand tellers
+
+        var sw = new System.Diagnostics.Stopwatch();
+        var crossing = new List<double>();
+        var within = new List<double>();
+        tm.TickLiveSocial(T0, int.MaxValue);
+        for (int h = 1; h <= 48; h++)
+        {
+            var at = T0.AddHours(h);
+            // The pass, slice by slice (NetworkScanBudget NPCs per call), then idle calls.
+            for (int m = 0; m < 8; m++)
+            {
+                sw.Restart(); tm.TickLiveSocial(at.AddMinutes(m), int.MaxValue); sw.Stop();
+                crossing.Add(sw.Elapsed.TotalMilliseconds);
+            }
+            sw.Restart(); tm.TickLiveSocial(at.AddMinutes(30), int.MaxValue); sw.Stop();
+            within.Add(sw.Elapsed.TotalMilliseconds);
+        }
+        crossing.Sort(); within.Sort();
+        _out.WriteLine($"hourly pass over {npcs.Count} NPCs in slices of {tm.NetworkScanBudget}, 40 tellers: " +
+                       $"per slice median {crossing[crossing.Count / 2]:F3} ms, p99 {crossing[(int)(crossing.Count * 0.99)]:F3} ms, " +
+                       $"max {crossing[^1]:F3} ms; idle median {within[24]:F3} ms, max {within[^1]:F3} ms; " +
+                       $"{HearsayMetrics.Measure(npcs, T0.AddHours(48)).Holders} NPCs heard");
+    }
 }

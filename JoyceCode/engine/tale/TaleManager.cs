@@ -108,6 +108,12 @@ public class TaleManager
         public readonly EncounterResolver Encounters = new() { MaxCandidatesPerCheck = 12 };
         public TaleSocialRules Rules;
         public DateTime ResolvedDay = DateTime.MinValue;
+
+        /* S2 (KAR-499): close ties hear once per game hour; each pair once per game day. */
+        public long NetworkHour = -1;
+        public int NetworkCursor = int.MaxValue;
+        public DateTime ToldDay = DateTime.MinValue;
+        public readonly HashSet<long> ToldToday = new();
         public readonly Queue<(NpcSchedule A, NpcSchedule B, DateTime Time)> PendingEncounters = new();
     }
 
@@ -1442,6 +1448,10 @@ public class TaleManager
     }
 
 
+    /** How many NPCs the hourly close-tie pass (S2) looks at per TickLiveSocial call and cluster. */
+    public int NetworkScanBudget = 512;
+
+
     /** How many queued encounters TickLiveSocial runs per call and cluster. */
     public int EncountersPerTick = 4;
 
@@ -1491,6 +1501,42 @@ public class TaleManager
                 }
                 live.Pool.PurgeExpired(gameNow);
                 live.Encounters.ClearBefore(gameNow.AddHours(-2));
+
+                /*
+                 * S2 (owner, 2026-11-23): once a game hour, everyone with something to tell
+                 * tells its closest ties, no chance meeting needed - phones and social media.
+                 */
+                long hourNow = gameNow.Ticks / TimeSpan.TicksPerHour;
+                if (hourNow != live.NetworkHour)
+                {
+                    live.NetworkHour = hourNow;
+                    live.NetworkCursor = 0;
+                    if (gameNow.Date != live.ToldDay)
+                    {
+                        live.ToldDay = gameNow.Date;
+                        live.ToldToday.Clear();
+                    }
+                }
+
+                /*
+                 * The pass walks the city in slices of NetworkScanBudget NPCs per call, like the
+                 * background tick: in one go it took 1.5 ms median at 4095 NPCs (KAR-499).
+                 */
+                var ids = GetNpcIdsInCluster(clusterIndex);
+                if (live.NetworkCursor < ids.Count)
+                {
+                    int end = Math.Min(ids.Count, live.NetworkCursor + NetworkScanBudget);
+                    lock (_loSocial)
+                    {
+                        for (int i = live.NetworkCursor; i < end; i++)
+                        {
+                            if (!_schedules.TryGetValue(ids[i], out var teller)) continue;
+                            PlayerGossip.TellCloseTies(teller, id => _schedules.TryGetValue(id, out var n) ? n : null,
+                                gameNow, (t, l) => new Random(_gossipSeed(t, l, gameNow)), live.ToldToday);
+                        }
+                    }
+                    live.NetworkCursor = end;
+                }
             }
         }
     }

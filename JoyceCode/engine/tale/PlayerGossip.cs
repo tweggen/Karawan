@@ -103,6 +103,63 @@ public static class PlayerGossip
     }
 
 
+    /**
+     * One NPC tells another, in one direction, without meeting (KAR-499): the same rules as
+     * an encounter's telling. Returns whether the listener's record changed.
+     */
+    public static bool Tell(NpcSchedule teller, NpcSchedule listener, float listenerTrustInTeller,
+        DateTime time, Random rng, GossipSettings settings = null)
+    {
+        if (teller == null || listener == null || ReferenceEquals(teller, listener)) return false;
+        var s = settings ?? GossipSettings.Default;
+        var telling = _tellingOf(teller, time, s);
+        return telling != null && _listen(listener, telling.Value, listenerTrustInTeller, time, rng, s);
+    }
+
+
+    /** Whether the NPC has something to tell at <paramref name="time"/> (cheap enough to scan a city). */
+    public static bool HasSomethingToTell(NpcSchedule npc, DateTime time, GossipSettings settings = null)
+    {
+        var s = settings ?? GossipSettings.Default;
+        if (PlayerTrust.Knows(npc))
+            return Math.Abs(s.Relay * PlayerStandingCalculator.Regard(PlayerTrust.Get(npc))) >= s.MinTold;
+        var heard = npc.Hearsay;
+        return heard != null && heard.IsPresentAt(time, s) && time - heard.HeardAt >= s.RetellAfter
+               && Math.Abs(s.Relay * heard.Regard) >= s.MinTold;
+    }
+
+
+    /**
+     * The teller tells its strongest close ties (owner, 2026-11-23: phones and social media):
+     * trust at least CloseTie, at most MaxTiesTold, strongest first, each pair once per game
+     * day (<paramref name="toldToday"/>, keyed by teller and listener). Returns how many heard.
+     */
+    public static int TellCloseTies(NpcSchedule teller, Func<int, NpcSchedule> lookup, DateTime time,
+        Func<int, int, Random> rngFor, ISet<long> toldToday, GossipSettings settings = null)
+    {
+        var s = settings ?? GossipSettings.Default;
+        if (teller?.Trust == null || !HasSomethingToTell(teller, time, s)) return 0;
+
+        var ties = new List<KeyValuePair<int, float>>();
+        foreach (var kv in teller.Trust)
+            if (kv.Key >= 0 && kv.Value >= s.CloseTie) ties.Add(kv);
+        ties.Sort((a, b) => a.Value != b.Value ? b.Value.CompareTo(a.Value) : a.Key.CompareTo(b.Key));
+
+        int heard = 0;
+        for (int i = 0; i < ties.Count && i < s.MaxTiesTold; i++)
+        {
+            int listenerId = ties[i].Key;
+            long key = ((long)teller.NpcId << 32) | (uint)listenerId;
+            if (!toldToday.Add(key)) continue;
+            var listener = lookup(listenerId);
+            if (listener == null) continue;
+            float trust = listener.Trust != null && listener.Trust.TryGetValue(teller.NpcId, out float t) ? t : 0f;
+            if (Tell(teller, listener, trust, time, rngFor(teller.NpcId, listenerId), s)) heard++;
+        }
+        return heard;
+    }
+
+
     private static bool _listen(NpcSchedule listener, Telling t, float trustInTeller, DateTime time,
         Random rng, GossipSettings s)
     {
