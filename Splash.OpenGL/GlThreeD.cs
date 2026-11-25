@@ -1087,6 +1087,8 @@ public class GlThreeD : IThreeD
             Trace($"On this platform GL_MAX_ELEMENTS_VERTICES == {maxVertices}, GL_MAX_ELEMENTS_INDICES == {maxIndices}, GL_MAX_ELEMENT_INDEX = n/a (needs GL 4.3)");
         }
 
+        GlDiagnostics.LogContext(_gl, _hasGL43, AnimStrategy.ToString(), GlDbg.Active.ToString());
+
         /*
          * Report anything the setup above raised, here, rather than leaving it in the
          * queue for the first DrawMeshInstanced to find and blame on "pre-existing"

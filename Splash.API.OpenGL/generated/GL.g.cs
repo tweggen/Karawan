@@ -147,6 +147,12 @@ namespace Splash.API.OpenGL
         MaxElementIndex = 0x8D6B,
         MaxElementsIndices = 0x80E9,
         MaxElementsVertices = 0x80E8,
+        MaxShaderStorageBlockSize = 0x90DE,
+        MaxShaderStorageBufferBindings = 0x90DD,
+        MaxTextureSize = 0xD33,
+        MaxUniformBlockSize = 0x8A30,
+        MaxVertexShaderStorageBlocks = 0x90D6,
+        MaxVertexUniformComponents = 0x8B4A,
     }
 
     public enum InternalFormat : uint
@@ -195,6 +201,9 @@ namespace Splash.API.OpenGL
     public enum StringName : uint
     {
         Extensions = 0x1F03,
+        Renderer = 0x1F01,
+        ShadingLanguageVersion = 0x8B8C,
+        Vendor = 0x1F00,
         Version = 0x1F02,
     }
 

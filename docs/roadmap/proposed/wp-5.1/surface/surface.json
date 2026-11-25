@@ -3072,7 +3072,13 @@
   "GetPName": [
    "MaxElementIndex",
    "MaxElementsIndices",
-   "MaxElementsVertices"
+   "MaxElementsVertices",
+   "MaxShaderStorageBlockSize",
+   "MaxShaderStorageBufferBindings",
+   "MaxTextureSize",
+   "MaxUniformBlockSize",
+   "MaxVertexShaderStorageBlocks",
+   "MaxVertexUniformComponents"
   ],
   "InternalFormat": [
    "Rgba",
@@ -3103,6 +3109,9 @@
   ],
   "StringName": [
    "Extensions",
+   "Renderer",
+   "ShadingLanguageVersion",
+   "Vendor",
    "Version"
   ],
   "TextureMagFilter": [
@@ -3227,6 +3236,12 @@
   "GetPName.MaxElementIndex": "36203",
   "GetPName.MaxElementsIndices": "33001",
   "GetPName.MaxElementsVertices": "33000",
+  "GetPName.MaxShaderStorageBlockSize": "37086",
+  "GetPName.MaxShaderStorageBufferBindings": "37085",
+  "GetPName.MaxTextureSize": "3379",
+  "GetPName.MaxUniformBlockSize": "35376",
+  "GetPName.MaxVertexShaderStorageBlocks": "37078",
+  "GetPName.MaxVertexUniformComponents": "35658",
   "InternalFormat.Rgba": "6408",
   "InternalFormat.Rgba8": "32856",
   "PixelFormat.Bgra": "32993",
@@ -3239,6 +3254,9 @@
   "ShaderType.VertexShader": "35633",
   "SizedInternalFormat.Rgba8": "32856",
   "StringName.Extensions": "7939",
+  "StringName.Renderer": "7937",
+  "StringName.ShadingLanguageVersion": "35724",
+  "StringName.Vendor": "7936",
   "StringName.Version": "7938",
   "TextureMagFilter.Linear": "9729",
   "TextureMinFilter.Linear": "9729",
