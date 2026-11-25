@@ -13,6 +13,7 @@
     <Folder Include="$(MSBuildThisFileDirectory)engine\world\systems\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\BakeStamps.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelAnimationCollectionReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelAnimationCollectionWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\baking\ModelFileName.cs" />
