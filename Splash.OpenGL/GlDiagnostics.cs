@@ -71,6 +71,48 @@ public static class GlDiagnostics
         Khr,
     }
 
+    /**
+     * KAR-500: one unfiltered line at startup naming the GPU, driver and context this run
+     * got, and the limits the skinning paths depend on. A machine-specific rendering fault
+     * (the walking player invisible on one Intel notebook only) could not be placed from
+     * the log, because nothing in it said which GPU the game ran on.
+     *
+     * The storage-buffer limits are queried only where the context has SSBOs (desktop GL
+     * 4.3+, the same gate as the SSBO animation strategy); asking a 4.1 or ES context for
+     * them is GL_INVALID_ENUM, not an answer. Errors raised here are left for the GlDbg
+     * check that follows the context setup.
+     */
+    public static void LogContext(GL gl, bool hasStorageBuffers, string animStrategy, string debugMode)
+    {
+        static string str(GL gl, StringName name)
+        {
+            try { return gl.GetStringS(name); }
+            catch (Exception) { return "?"; }
+        }
+
+        static string num(GL gl, GetPName name)
+        {
+            int value = -1;
+            gl.GetInteger(name, out value);
+            return value.ToString();
+        }
+
+        string limits = $"MAX_TEXTURE_SIZE={num(gl, GetPName.MaxTextureSize)}"
+                        + $", MAX_UNIFORM_BLOCK_SIZE={num(gl, GetPName.MaxUniformBlockSize)}"
+                        + $", MAX_VERTEX_UNIFORM_COMPONENTS={num(gl, GetPName.MaxVertexUniformComponents)}";
+        if (hasStorageBuffers)
+        {
+            limits += $", MAX_SHADER_STORAGE_BLOCK_SIZE={num(gl, GetPName.MaxShaderStorageBlockSize)}"
+                      + $", MAX_SHADER_STORAGE_BUFFER_BINDINGS={num(gl, GetPName.MaxShaderStorageBufferBindings)}"
+                      + $", MAX_VERTEX_SHADER_STORAGE_BLOCKS={num(gl, GetPName.MaxVertexShaderStorageBlocks)}";
+        }
+
+        Trace($"GL context: vendor=\"{str(gl, StringName.Vendor)}\", renderer=\"{str(gl, StringName.Renderer)}\", "
+              + $"version=\"{str(gl, StringName.Version)}\", glsl=\"{str(gl, StringName.ShadingLanguageVersion)}\"; "
+              + $"animations={animStrategy}, errors={debugMode}; {limits}");
+    }
+
+
     /** True once the driver is pushing messages, which is what makes polling redundant. */
     public static bool IsCallbackActive { get; private set; }
 
