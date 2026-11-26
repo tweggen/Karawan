@@ -245,6 +245,45 @@ Equivalence between the two load paths is asserted per model by
 `frame * NBones + boneIndex` and a reorder renders a foreign pose plausibly
 instead of failing.
 
+### When a bake is redone: inputs AND baker (KAR-501)
+
+Chushi skips a bake only if **both** hold:
+
+1. **Inputs older than the output** — the fbx sources, `nogame.animations.json` /
+   `nogame.resources.json`, for scenarios the game config and `models/tale/**`.
+2. **Same baker** — the stamp recorded for the file in
+   `nogame/generated/bake-manifest.json` equals the running baker's:
+   - `mo-`: `model-v{BakeVersions.Model}-{baker hash}`
+   - `ac-`: `animation-v{BakeVersions.Animation}-{baker hash}`
+   - `sc-`: `scenario-v{BakeVersions.Scenario}` — **no baker hash**: a scenario bake takes
+     about an hour and the DES changes with almost every engine commit. After a change to
+     the simulation, the selector or the classifier, bump `BakeVersions.Scenario`
+     (`JoyceCode/builtin/baking/BakeStamps.cs`). Version 1 adopts scenario bakes made
+     before stamps existed.
+
+The **baker hash** covers every file in the directory Chushi runs from (its published
+output: Chushi, Joyce, Mazu, JoyceFbx, native Assimp, the runtime), without `.pdb`/`.xml`.
+Builds are deterministic, so republishing unchanged sources keeps the hash; any code
+change re-bakes all models and animations, which takes about 7 s. Bump `BakeVersions.Model`
+/ `.Animation` only for a deliberate format change that should also invalidate other
+machines' bakes made by the same binaries.
+
+Why: `nogame/generated/` is not under `bin/obj`, so a clean build never removes it, and the
+names hash the input *names* only. Before KAR-501 a file baked by an old baker survived
+indefinitely and looked current — measured 2026-11-25, re-baking the August files changed
+the content of 13 of 14 animation collections and 3 of 13 models. A model and its
+animations must come from the same baker (bone indices, global frame layout), and the
+stamp guarantees that after every run.
+
+Chushi logs its identity (`Baker identity: … (from <dir>)`, which also shows WHICH
+published Chushi the build ran) and one line per file: `baking`/`skipping` and why. A bake
+that is about to run loses its stamp before it starts; a failed bake leaves none, so it is
+re-baked next time.
+
+**Do not compare bakes by size or file hash.** The `Lz4BlockArray` output is not
+byte-stable: two consecutive bakes on one machine differ in 17 of 27 files while the
+decoded content is identical (KAR-502).
+
 ---
 
 ## Runtime asset lookup (desktop)

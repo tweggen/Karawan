@@ -136,6 +136,48 @@ public class ConsoleMain
         Trace($"Running compilation tasks...");
         List<Task> listTasks = new();
 
+        /*
+         * KAR-501: the identity of THIS baker. A file baked by another one - older code, a
+         * different importer, another runtime - is re-baked, whatever the timestamps say.
+         * The stamps live in one bake-manifest.json per output directory.
+         */
+        string bakerHash = builtin.baking.BakerIdentity.HashDirectory(AppContext.BaseDirectory);
+        string modelStamp = builtin.baking.BakerIdentity.ModelStamp(bakerHash);
+        string animationStamp = builtin.baking.BakerIdentity.AnimationStamp(bakerHash);
+        string scenarioStamp = builtin.baking.BakerIdentity.ScenarioStamp();
+        Trace($"Baker identity: {bakerHash} (from {AppContext.BaseDirectory}); stamps {modelStamp}, {animationStamp}, {scenarioStamp}.");
+        Dictionary<string, builtin.baking.BakeManifest> manifests = new();
+        builtin.baking.BakeManifest manifestFor(string directory)
+        {
+            string key = Path.GetFullPath(directory);
+            if (!manifests.TryGetValue(key, out var m))
+            {
+                m = builtin.baking.BakeManifest.Load(key);
+                manifests[key] = m;
+            }
+            return m;
+        }
+        void saveManifests()
+        {
+            foreach (var (dir, m) in manifests) m.Save(dir);
+        }
+
+        /*
+         * Decide one file. A file to be baked loses its stamp now (saved before any bake
+         * starts), so a bake that dies half-way leaves no stamp vouching for half a file.
+         */
+        bool needsBake(string kind, string directory, string fileName, string? staleReason, string stamp,
+            bool adoptUnstamped = false)
+        {
+            var manifest = manifestFor(directory);
+            var recorded = manifest.StampOf(fileName);
+            var decision = builtin.baking.BakeDecision.Of(staleReason, recorded, stamp, adoptUnstamped);
+            Trace($"{kind}: {(decision.Bake ? "baking" : "skipping")} {fileName} - {decision.Reason}.");
+            if (decision.Bake) manifest.Forget(fileName);
+            else if (recorded == null) manifest.Record(fileName, stamp);
+            return decision.Bake;
+        }
+
         var availableAnims = iassetDesktop.AvailableAnimations;
         foreach (var strAnimKey in availableAnims)
         {
@@ -166,9 +208,10 @@ public class ConsoleMain
             string fileName = builtin.baking.ModelAnimationCollectionReader.ModelAnimationCollectionFileName(
                 Path.GetFileName(uriModel), uriAnimations);
             string filePath = Path.GetFullPath(Path.Combine(outputDirectory, fileName));
-            if (_IsAnimationUpToDate(filePath, uriModel, uriAnimations, Path.GetFullPath(strResourcePath)))
+            if (!needsBake("AnimationCompiler", outputDirectory, fileName,
+                    _IsAnimationStale(filePath, uriModel, uriAnimations, Path.GetFullPath(strResourcePath)),
+                    animationStamp))
             {
-                Trace($"AnimationCompiler: skipping {fileName} — output is up-to-date.");
                 continue;
             }
 
@@ -179,7 +222,12 @@ public class ConsoleMain
                 OutputDirectory = outputDirectory
             };
 
-            listTasks.Add(Task.Run(() => comp.Compile()));
+            var animManifest = manifestFor(outputDirectory);
+            listTasks.Add(Task.Run(async () =>
+            {
+                await comp.Compile();
+                animManifest.Record(fileName, animationStamp);
+            }));
         }
 
         /*
@@ -206,13 +254,15 @@ public class ConsoleMain
             {
                 string fileName = builtin.baking.ModelFileName.Of(req.ModelFileName, req.Properties);
                 string filePath = Path.GetFullPath(Path.Combine(modelOutputDirectory, fileName));
-                if (_IsModelUpToDate(filePath, req.Uri, Path.GetFullPath(strResourcePath)))
+                if (!needsBake("ModelCompiler", modelOutputDirectory, fileName,
+                        _IsModelStale(filePath, req.Uri, Path.GetFullPath(strResourcePath)),
+                        modelStamp))
                 {
-                    Trace($"ModelCompiler: skipping {fileName} — output is up-to-date.");
                     continue;
                 }
 
                 var captured = req;
+                var modelManifest = manifestFor(modelOutputDirectory);
                 var modelComp = new ModelCompiler
                 {
                     ModelUrl = captured.ModelFileName,
@@ -231,6 +281,7 @@ public class ConsoleMain
                     try
                     {
                         await modelComp.Compile();
+                        modelManifest.Record(fileName, modelStamp);
                     }
                     catch (Exception ex)
                     {
@@ -267,14 +318,16 @@ public class ConsoleMain
             // Skip compilation if output exists and all sources are older.
             string fileName = engine.tale.bake.ScenarioFileName.Of(req.CategoryName, req.Index, req.Seed);
             string filePath = Path.GetFullPath(Path.Combine(scenarioOutputDirectory, fileName));
-            if (_IsScenarioUpToDate(filePath, Path.GetFullPath(strResourcePath)))
+            if (!needsBake("ScenarioCompiler", scenarioOutputDirectory, fileName,
+                    _IsScenarioStale(filePath, Path.GetFullPath(strResourcePath)),
+                    scenarioStamp, adoptUnstamped: BakeVersionsScenarioAdoptsUnstamped))
             {
-                Trace($"ScenarioCompiler: skipping {req.CategoryName}/{req.Index} — output is up-to-date.");
                 continue;
             }
 
             // Capture-by-value for the closure.
             var captured = req;
+            var scenarioManifest = manifestFor(scenarioOutputDirectory);
             var scenarioComp = new engine.tale.bake.ScenarioCompiler
             {
                 CategoryName = captured.CategoryName,
@@ -289,6 +342,7 @@ public class ConsoleMain
                 try
                 {
                     scenarioComp.Compile();
+                    scenarioManifest.Record(fileName, scenarioStamp);
                 }
                 catch (Exception ex)
                 {
@@ -297,6 +351,9 @@ public class ConsoleMain
                 }
             }));
         }
+
+        // The stamps of the files about to be baked are gone before any of them is written.
+        saveManifests();
 
         try
         {
@@ -325,6 +382,12 @@ public class ConsoleMain
                 }
             }
             throw;
+        }
+        finally
+        {
+            // Whatever finished gets its stamp, even if another bake failed: a failed scenario
+            // must not cost the other scenarios their stamps (an hour of re-baking).
+            saveManifests();
         }
 
         /*
@@ -387,15 +450,23 @@ public class ConsoleMain
     }
 
 
+    /**
+     * Scenario bakes made before stamps existed are adopted at BakeVersions.Scenario 1
+     * instead of costing every machine an hour; from version 2 on they must carry a stamp.
+     */
+    private static bool BakeVersionsScenarioAdoptsUnstamped => builtin.baking.BakeVersions.Scenario == 1;
+
+
     /// <summary>
     /// Check if a pre-baked animation file is up-to-date (makefile-style incremental build).
-    /// Returns true if the output file exists and is newer than the model and animation source files.
+    /// Returns why the output is stale (missing, or a source is newer), null if its inputs are older.
+    /// Whether the BAKER changed is decided separately by the stamp (KAR-501).
     /// </summary>
-    private static bool _IsAnimationUpToDate(string outputPath, string modelUrl, string animationUrls, string resourcePath)
+    private static string? _IsAnimationStale(string outputPath, string modelUrl, string animationUrls, string resourcePath)
     {
         if (!File.Exists(outputPath))
         {
-            return false;  // Output missing, needs compilation
+            return "Output missing, needs compilation";
         }
 
         var outputTime = File.GetLastWriteTimeUtc(outputPath);
@@ -407,7 +478,7 @@ public class ConsoleMain
             var modelTime = File.GetLastWriteTimeUtc(modelPath);
             if (modelTime > outputTime)
             {
-                return false;  // Model is newer, needs recompilation
+                return "Model is newer, needs recompilation";
             }
         }
 
@@ -425,7 +496,7 @@ public class ConsoleMain
                     var animTime = File.GetLastWriteTimeUtc(animPath);
                     if (animTime > outputTime)
                     {
-                        return false;  // Animation file is newer, needs recompilation
+                        return "Animation file is newer, needs recompilation";
                     }
                 }
             }
@@ -438,23 +509,24 @@ public class ConsoleMain
             var configTime = File.GetLastWriteTimeUtc(animConfigPath);
             if (configTime > outputTime)
             {
-                return false;  // Config is newer, needs recompilation
+                return "Config is newer, needs recompilation";
             }
         }
 
-        return true;  // All sources are older or missing, output is up-to-date
+        return null;  // All sources are older or missing, output is up-to-date
     }
 
     /// <summary>
     /// Check if a baked model file is up-to-date (makefile-style incremental build).
-    /// Returns true if the output exists and is newer than the model source and the
-    /// resource declaration that decides how it is baked.
+    /// Returns why the output is stale (missing, or older than the model source or the
+    /// resource declaration that decides how it is baked), null otherwise. The baker itself
+    /// is checked separately by the stamp (KAR-501).
     /// </summary>
-    private static bool _IsModelUpToDate(string outputPath, string modelUri, string resourcePath)
+    private static string? _IsModelStale(string outputPath, string modelUri, string resourcePath)
     {
         if (!File.Exists(outputPath))
         {
-            return false;  // Output missing, needs compilation
+            return "Output missing, needs compilation";
         }
 
         var outputTime = File.GetLastWriteTimeUtc(outputPath);
@@ -464,7 +536,7 @@ public class ConsoleMain
         {
             if (File.GetLastWriteTimeUtc(modelPath) > outputTime)
             {
-                return false;  // Model is newer, needs recompilation
+                return "Model is newer, needs recompilation";
             }
         }
 
@@ -480,26 +552,27 @@ public class ConsoleMain
         {
             if (File.GetLastWriteTimeUtc(resourceConfigPath) > outputTime)
             {
-                return false;  // Declaration is newer, needs recompilation
+                return "Declaration is newer, needs recompilation";
             }
         }
 
-        return true;
+        return null;
     }
 
     /// <summary>
     /// Check if a pre-baked scenario file is up-to-date (makefile-style incremental build).
-    /// Returns true if the output file exists and is newer than all source files
-    /// (game config and TALE definitions).
+    /// Returns why the output is stale (missing, or older than a game config or TALE
+    /// definition file), null otherwise. Code changes are covered only by
+    /// BakeVersions.Scenario (KAR-501).
     /// </summary>
-    private static bool _IsScenarioUpToDate(string outputPath, string resourcePath)
+    private static string? _IsScenarioStale(string outputPath, string resourcePath)
     {
         // Conservative check: only skip if we're 100% sure output is up-to-date.
         // If anything is in doubt, recompile to ensure we don't miss files.
 
         if (!File.Exists(outputPath))
         {
-            return false;  // Output missing, needs compilation
+            return "Output missing, needs compilation";
         }
 
         var outputTime = File.GetLastWriteTimeUtc(outputPath);
@@ -514,7 +587,7 @@ public class ConsoleMain
              * The bake types its groups by these rules (mirrored into
              * _CreateDefaultGroupTypeRegistry); a change must re-bake, or the scenarios keep the
              * old types (KAR-477). Code changes to the selector or the classifier are not
-             * seen here - touch this file or a storylet to force a re-bake after one.
+             * seen here - bump builtin.baking.BakeVersions.Scenario after one (KAR-501).
              */
             Path.Combine(resourcePath, "nogame.group-types.json"),
         };
@@ -524,13 +597,13 @@ public class ConsoleMain
             if (!File.Exists(configFile))
             {
                 // Config file missing - we can't verify up-to-date status, must recompile
-                return false;
+                return "config file missing, cannot judge";
             }
 
             var configTime = File.GetLastWriteTimeUtc(configFile);
             if (configTime > outputTime)
             {
-                return false;  // Config is newer, needs recompilation
+                return "Config is newer, needs recompilation";
             }
         }
 
@@ -542,7 +615,7 @@ public class ConsoleMain
             if (taleFiles.Length == 0)
             {
                 // No TALE files found - uncertain state, must recompile
-                return false;
+                return "no TALE files found, cannot judge";
             }
 
             foreach (var taleFile in taleFiles)
@@ -550,18 +623,18 @@ public class ConsoleMain
                 var taleTime = File.GetLastWriteTimeUtc(taleFile);
                 if (taleTime > outputTime)
                 {
-                    return false;  // TALE definition is newer, needs recompilation
+                    return "TALE definition is newer, needs recompilation";
                 }
             }
         }
         else
         {
             // Tale directory missing - uncertain state, must recompile
-            return false;
+            return "tale directory missing, cannot judge";
         }
 
         // All checks passed - output appears to be up-to-date
-        return true;
+        return null;
     }
 
     /*
