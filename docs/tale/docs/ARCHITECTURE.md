@@ -122,7 +122,7 @@ Desperation is derived, not stored (`ComputeDesperation`, `:59`):
 ## 4. Interrupts
 
 The rules live in `TaleSocialRules` (KAR-486), which `DesSimulation` calls and the live
-`TaleManager` is moving to (S2b, `../plans/proposed/TALE-S2B-LIVE-ESCALATION.md`).
+`TaleManager` is moving to (S2b, `../plans/done/TALE-S2B-LIVE-ESCALATION.md`).
 
 When two NPCs meet in `DesSimulation`, a storylet with `InterruptPriority ≥ 5`
 can interrupt the partner's storylet if the partner's priority is lower. The
@@ -427,7 +427,7 @@ cached or saved. Dialogue reads `npc.group_standing` and `npc.group_known` (othe
 know the player); `ClearNpcProps` resets both to 0. The routine and generic scripts greet a
 member who never met the player warmly at ≥ 0.05 and coldly at ≤ −0.15, naming the group.
 
-**Hearsay** (S2, KAR-496..498; plan `../plans/proposed/TALE-S2-GOSSIP.md`).
+**Hearsay** (S2, KAR-496..498; plan `../plans/done/TALE-S2-GOSSIP.md`).
 - **The record.** What an NPC has *heard* of the player is kept apart from `Trust[-1]`
   (which means "met"): an immutable `NpcSchedule.Hearsay` (`PlayerHearsay`) with regard,
   weight, facts, generation and times. It is carried by the social snapshot and

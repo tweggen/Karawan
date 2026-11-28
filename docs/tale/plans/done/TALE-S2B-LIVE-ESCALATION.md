@@ -1,9 +1,9 @@
 # TALE S2b — Requests, escalation and interrupts in the live game
 
-> Stage S2b of [TALE-EMERGENT-STORIES.md](TALE-EMERGENT-STORIES.md) (KAR-440).
+> Stage S2b of [TALE-EMERGENT-STORIES.md](../proposed/TALE-EMERGENT-STORIES.md) (KAR-440).
 > Depends on S0 (done). Builds on KAR-477 (PR #191, merged 2026-11-21): claim-triggered
 > storylets start only through claims, and a claim starts its storylet as an interrupt.
-> **Status:** proposed; reviewed GREEN (Fable, 2026-11-21, four passes, §10).
+> **Status:** done 2026-11-28 (owner confirmed in game: refused protection → threat → the victim flees); reviewed GREEN (Fable, 2026-11-21, four passes, §10).
 
 The factions TALE grows are meant to *do* things: demand protection, threaten, report
 crimes, investigate, flee. All of that machinery runs in the offline simulation
