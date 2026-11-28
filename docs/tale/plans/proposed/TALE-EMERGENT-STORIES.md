@@ -233,6 +233,9 @@ the live game, for a materialised NPC and for a Tier-3 one, with a test.
 
 ## S3 — NPCs ask the player
 
+> Stage plan: [TALE-S3-NPCS-ASK.md](TALE-S3-NPCS-ASK.md) (KAR-441, reviewed GREEN 2026-11-28). It offers
+> requests from an NPC's need, not only from the short-lived pool entry, and folds in KAR-495.
+
 The request/claim/signal pool is NPC-only; after S2b it runs live, but the
 player never takes part.
 
