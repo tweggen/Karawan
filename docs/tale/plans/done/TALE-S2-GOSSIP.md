@@ -1,9 +1,9 @@
 # TALE S2 — Consequences travel (gossip)
 
-> Stage S2 of [TALE-EMERGENT-STORIES.md](TALE-EMERGENT-STORIES.md) (KAR-439).
+> Stage S2 of [TALE-EMERGENT-STORIES.md](../proposed/TALE-EMERGENT-STORIES.md) (KAR-439).
 > Depends on S1 (done 2026-11-22) and S0 (done); uses S2b's shared rules (`TaleSocialRules`,
 > KAR-486..490).
-> **Status:** proposed; reviewed GREEN (Fable, 2026-11-22, three passes, §9); owner's answers in §6 · **Written:** 2026-11-22
+> **Status:** done 2026-11-28 (owner confirmed in game: hearsay greetings, close ties hear within a day); reviewed GREEN (Fable, 2026-11-22, three passes, §9); owner's answers in §6 · **Written:** 2026-11-22
 
 What the player does to one NPC stays with that NPC and the witnesses who saw it (S1). In
 a living society it should travel: the syndicate hears that someone beat up one of its

@@ -181,7 +181,7 @@ interaction) and are visible in the S0 debug views.
 
 ## S2 — Consequences travel (gossip)
 
-> Stage plan: [TALE-S2-GOSSIP.md](TALE-S2-GOSSIP.md) (reviewed GREEN 2026-11-22). It keeps
+> Stage plan: [TALE-S2-GOSSIP.md](../done/TALE-S2-GOSSIP.md) (KAR-439, done 2026-11-28; reviewed GREEN 2026-11-22). It keeps
 > heard opinions apart from `Trust[-1]` ("hearsay"); the first bullet below is refined there.
 
 - During NPC–NPC encounters (`RuntimeSocialEvolver`, and DES for tests),
@@ -191,7 +191,7 @@ interaction) and are visible in the S0 debug views.
   teller, and only strong opinions travel. Witnesses know at once, the
   first generation hears within a day, and no further generation within
   that day (owner, 2026-11-22). Detail in
-  [TALE-S2-GOSSIP.md](TALE-S2-GOSSIP.md).
+  [TALE-S2-GOSSIP.md](../done/TALE-S2-GOSSIP.md).
 - `player_fact.*` entries (`tale.npc.remember`, and S1's witness entries)
   spread the same way with a probability, so "the player beat up a
   syndicate member" can reach the syndicate.
@@ -206,7 +206,7 @@ one diffusion function).
 
 ## S2b — Requests, escalation and interrupts in the live game
 
-> Stage plan: [TALE-S2B-LIVE-ESCALATION.md](TALE-S2B-LIVE-ESCALATION.md) (KAR-440, reviewed GREEN 2026-11-21).
+> Stage plan: [TALE-S2B-LIVE-ESCALATION.md](../done/TALE-S2B-LIVE-ESCALATION.md) (KAR-440, done 2026-11-28; reviewed GREEN 2026-11-21).
 
 Requests and claims, conditional postconditions (`postconditions_if`,
 `target_…`) and interrupts run only in `DesSimulation` (`:373-545`,
