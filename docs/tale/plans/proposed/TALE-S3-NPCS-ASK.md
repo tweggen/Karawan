@@ -3,7 +3,7 @@
 > Stage S3 of [TALE-EMERGENT-STORIES.md](TALE-EMERGENT-STORIES.md) (KAR-441).
 > Depends on S1 and S2b (both done; S2b's live request pool is what S3 builds on). Folds in
 > KAR-495 (the player's "help" is almost unreachable in game).
-> **Status:** proposed; **review GREEN** (Fable, round 3, 2026-11-28; rounds 1–2 YELLOW, all findings worked in, §10) · **Written:**
+> **Status:** proposed; owner decisions D1, D2, D5 taken 2026-11-28 (§5); **review GREEN** (Fable, round 3, 2026-11-28; rounds 1–2 YELLOW, all findings worked in, §10) · **Written:**
 > 2026-11-28 · Line references are from `origin/master` at `078ed3b0` (still valid at `cab71a9e`).
 
 Until now only NPCs answer each other's requests. S3 lets the player answer them: an NPC
@@ -172,7 +172,7 @@ a `"gate"` (§4.4).
 | **S3-a** | Engine: `PlayerRequestRegistry` (the JSON above), `TaleManager.FindPlayerOffer(npcId, now)` / `AcceptPlayerOffer` / `CompletePlayerRequest` / `FailPlayerRequest`, `InteractionPool.PlayerClaimerId = −2`, the favour record and `FavourDirections` (§4.5), interaction ids `let_down` and `encourage` (§4.6), `EmittedAt` set at emission. Pure and testable without ECS. **Measurement gate** (§6): S3-b and S3-c start only when it passes. | — |
 | **S3-b** | Conversation: props `npc.offer.type`, `npc.offer.pickup`, `player.has_delivery`; events `tale.request.accept` / `tale.request.decline`; the offer branch (§4.3). Desperate merchant: "put in a word" → `encourage`. | a (gate passed) |
 | **S3-c** | Quest: `nogame.quests.Delivery` — `DeliveryQuestModule` holding the pending `PlayerRequest` (§4.2), `DeliveryQuestData` (persistable), creator, strategy with phases pickup → deliver (`ToLocation`, `OwnerQuestEntity`), deadline → `DeactivateQuest(isSuccess: false)` (first use of the failure path), **a new "give up" in the quest log** (Lua binding `giveUpQuest(id)` + an `<option>` next to Follow/Unfollow in `models/menu/menu.xml:104-112`, finding 15), save/load. | a (gate passed) |
-| **S3-d** | Trust-gated requests: the gate (§4.4), the first trust-gated type, interaction id `refused_me`. | a, b, c, owner D2 |
+| **S3-d** | Trust-gated requests: the gate (§4.4), the first trust-gated type, interaction id `refused_me`. | a, b, c (D2 decided: a lift) |
 | **S3-e** | Acceptance (§6), TALE panel and debug snapshot (`TaleManager.cs:155`, `TaleDebugSnapshot.cs:28`, `ui/Tale.cs:167,171`: −1 unclaimed, −2 claimed by the player, else an NPC id; open offers; the player's accepted request; favours), docs. | b, c (d for the trust-gated part) |
 
 S3-b and S3-c can run in parallel after S3-a. New files go into `JoyceCode/JoyceCode.projitems`
@@ -296,19 +296,22 @@ them and the bake does not read them; the bake-identity check pins it.
 
 - **D1 — Reward.** A fulfilled request applies `help` (+0.4, cooldown 720, repeat 0.3) —
   recommended, matching the owner's "one help counts a lot" and the rule that help costs time.
-  "Put in a word" drops to `encourage` (+0.03, cooldown 60, repeat 0.25). *Owner to confirm.*
+  "Put in a word" drops to `encourage` (+0.03, cooldown 60, repeat 0.25). **Decided (owner,
+  2026-11-28): yes.** Follow-up (owner): balance the request volume against the size of help —
+  once requests are frequent, +0.4 per fulfilment may lift standing too fast; tuned after S3-e
+  with the gate's numbers and play sessions (its own ticket).
 - **D2 — The first trust-gated request.** Candidates: (a) `help_request` answered by **giving
   the NPC a lift** to a location of its choice (time; reuses the taxi's driving phase, the
   passenger as today a cube), (b) `help_request` answered by **lending cash** (costs cash —
   against the owner's rule unless repaid), (c) defer trust-gated requests to S4, where group
-  aims supply better ones (protection, taking sides). Recommended: (a). *Owner to choose.*
+  aims supply better ones (protection, taking sides). **Decided (owner, 2026-11-28): (a), a
+  lift** — "this classic GTA kind of vibe".
 - **D3 — No waiting window** before the player may take a request (§2). Recommended.
 - **D4 — One player request at a time** (`QuestFactory`'s one entity per quest id; a second
   offer is hidden while one runs). Recommended for S3; S5 may lift it.
 - **D5 — Money.** Recommended: **none in S3** — the player neither pays for the food nor is
   paid, and no NPC's wealth changes. Paying the player belongs to the
-  economy plan (KAR-485). *Owner to confirm*; the alternative is the requester paying a tip on
-  delivery (`GameState.Cash`).
+  economy plan (KAR-485). **Decided (owner, 2026-11-28): no money in S3.**
 - **D6 — The NPC side is unchanged.** NPC claims still emit `request_fulfilled` at claim time
   (finding 4); S3 does not touch `TaleSocialRules`' NPC path, so the bake stays byte-identical.
   Only the `EmittedAt` fix touches shared code: `EmittedAt` is read only by the debug snapshot
